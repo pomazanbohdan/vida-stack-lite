@@ -4120,6 +4120,171 @@ speedup. Tool/API call totals and token counts are unavailable. Continue from
 the current projection at `isCutoverEvidence` without replaying the failed
 relative-path attempt.
 
+### Bun-cli-run key411 selector evidence — 2026-10-24
+
+The next bound zero was `isCutoverEvidence`. The focused test adds an unexpected
+key to an otherwise valid prepared-selector evidence record, then rebinds its
+decision, selector and commit digests so it reaches the exact-key validator.
+The public `run()` route refuses before workspace identity/configuration,
+database opening or consumer work. Blind review also checked the valid-shape
+six-evidence path through the validators to the active-maintenance refusal. It
+does not claim global no-write or runtime qualification. See
+`DIAG/bun-cli-run-key411-design-path-20261024-01.md` and
+`DIAG/bun-cli-run-key411-final-review-20261024-01.md`.
+
+Commit `0f5b9ffc429d0d83a1a9a6954321ec63502922fe` was pushed before the sole
+coverage stage. Stage `/workspace/contour-stage-89i9BU`, run
+`c14abb76-2be1-4b83-b33d-17039fe5b63a`, exited 0 in 196,291.21 ms under the
+unchanged 330,000 ms bound. Native receipts show no timeout, complete capture,
+unchanged image inputs and successful publication. The bound image is source
+tree `c680cf634d6095b36da07affd37552d67809f732`, input fingerprint
+`a5dd2c9a3b8a6950622b6f33503d666f63000bb2e5bd23de424b724844d72704`, manifest
+SHA-256 `29f76d930c4c0f30bb8f27c35c5e0ee877d7597720b52de2dd68387f36ddafbe`.
+Projection was 371/557 F, 1716/2863 L, 1820/3143 S and 2099/3663 B; max CC
+501, max entry CRAP 992, 1,381 attempts, status `BLOCKED`. The next zero became
+`requireForwardFileLeaf`; no contour closure was established.
+
+### Bun-cli-run key412 forward bundle leaf — 2026-10-24
+
+Two blind read-only designs agreed that complete parent repair authority plus
+a valid child forward proof can exercise `requireForwardFileLeaf` through
+`forwardUpdateAuthority`. The test extends the existing fixture. Its malformed
+source-path refusal uses the direct authority validator and does not point a
+Source symlink into the measured checkout. The positive path uses a one-file
+temporary bundle and asserts a null authority result after validating the
+bundle path, restored bundle bytes/modes/metadata, absent session-handoff DB,
+and unchanged `.agent` authority evidence. It makes no runtime, loader,
+database or consumer effect. Design artifacts are
+`DIAG/bun-cli-run-key412-design-leaf-20261024-01.md` and
+`DIAG/bun-cli-run-key412-design-fixture-20261024-01.md`; independent review is
+`DIAG/bun-cli-run-key412-final-review-20261024-01.md`.
+
+There were six failed target attempts before the final shape. Two early fixture
+errors (undefined payload digest and invalid review evidence) appeared in
+terminal output but were not saved because the initial tee path was wrong.
+Later captured failures were missing repair-parent cutover authority, baseline
+snapshot taken before fixture construction, active-selector identity mismatch,
+and a syntax error from a duplicate `else`. Their raw logs and retained failure
+fixtures remain; none is a test kill. Target-only passes followed while the
+no-write oracle and types were tightened. The final target passed 1 test, with
+103 filtered and 15 expectations, in 1.322 s total (19.74 ms case time). No
+full suite was repeated.
+
+Scoped formatter and type-aware Oxlint passed. The first normal commit hook
+strict check rejected nullable snapshot assertions; explicit `assert.ok`
+narrowing fixed the issue. The final target and strict check passed. Commit
+`f26abbda474ef8e5ec37ef55d1634cf6b035b261` passed normal hooks and was pushed.
+
+Exactly one coverage stage then ran at `/workspace/contour-stage-3ZXm2W`, run
+`5627a2ea-26fe-40d3-ba4c-6002fc1ee729`: exit 0, no timeout, 176,802.72 ms
+under the unchanged 330,000 ms bound, complete stdout/stderr capture (7,977 /
+15,894 bytes), observed group closure, unchanged boot/image inputs and
+successful publication. The image binds source tree
+`b659a1588028ae847cf66c68e33853093759b47a`, input fingerprint
+`260fa21b70f4fe00e8506c824db2499ac2db835e0eb9044924c9b91529b6cbfe`, manifest
+SHA-256 `3a19012241e50d98e92e6d881a3aa7f21662c9f0a5676613a6f5a8178798dcf4`.
+Its bound report is
+`/workspace/.vida-quality-inputs/545c6320173d4224ab5cacdf98c24996bad50320/repository/packages/agent/coverage/bun-unified/diagnostics/5627a2ea-26fe-40d3-ba4c-6002fc1ee729.focused-coverage.json`.
+Projection is now 379/557 F, 1777/2863 L, 1888/3143 S and 2185/3663 B; max
+CC 501, max entry CRAP 992, 1,383 attempts, still `BLOCKED`. The report records
+`requireForwardFileLeaf` function hit 1 and branchMap entry 58, line 564, hits
+`[0,1]`. Do not claim exact branch closure. An independent objective review is
+recorded below for the unvisited throw arm; the contour remains active. The next
+report-order zero is `requireSelectorRecord` at `bin/run.ts:569`.
+
+#### Objective disposition: `requireForwardFileLeaf` falsy arm
+
+Per [TESTING objective coverage skips](../../../packages/agent/TESTING.md#objective-coverage-skips),
+only this branch arm is dispositioned: bound report/run
+`5627a2ea-26fe-40d3-ba4c-6002fc1ee729`, contour `bun-cli-run`, source
+`packages/agent/bin/run.ts` SHA-256
+`58b28b3a5adc9ca733579829de5e23975ab4c14a1542b959c43204ded135f591`, report
+Source fingerprint `e365c5c58a27395a351afce83fc90a6688a3395da4d11b216b274beb6571b91c`,
+test fingerprint `bd8115335b6142a813a15f68a1650e6d9fd7f0969b5807aa5fdaba90ef1604e8`,
+and configured consumer context `agent-runtime.config.v1.yaml` digest
+`d4d7c762c07dbb40bf89432548f9f117ebd99170bd756102c43e2a0af8decb97`, root
+identity SHA-256
+`af1a892ebc750f20732951994a999432dcc925546503fd7445f8ff829c051ddc`.
+Selection is focused-diagnostic `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`; the shard exited 0, which is not full
+contour qualification. Exact counter: branchMap key `58`, `if` at line 564,
+columns 2–92, hits `[0,1]`; `requireForwardFileLeaf` functionMap key `54` at
+line 563 has hit `1`. The mapped expression is
+`if (!leaf) fail('GAP-VIDA-RUN-SELECTOR-001', 'Installed forward bundle path is invalid.');`.
+
+The independent blind review
+`DIAG/bun-cli-run-key412-objective-review-20261024-01.md` traced the sole caller
+at line 1741 to `forwardUpdateAuthority`'s bound successor manifest. Every
+entry is parsed through `parsePreparedPayloadEntry` and
+`isPreparedRelativePath`, which requires a positive-length string and rejects
+empty, `.` and `..` path components. Therefore `parts.at(-1)` is nonempty on
+the supported validated route. `skipInstalledBundle` bypasses the loop rather
+than creating a falsy leaf. A malformed internal map key would require bypassing
+the supported manifest validator; exporting the private helper solely to inject
+that value is not a behavior-level test. Root independently checked the exact
+Source expression and validator/caller chain. This is an objective skip for
+only the `!leaf` true/throw arm, not a missing fixture or broad function skip.
+Keep the original denominator, zero hit and `BLOCKED` status. Reopen if the
+manifest contract, validator, caller or accepted inputs change. This disposition
+does not close the contour, frozen CRAP or mutation evidence.
+
+### Bun-cli-run key413 mutable selector record — 2026-10-24
+
+The report-order function zero was `requireSelectorRecord` at `bin/run.ts:569`.
+Blind Luna traced the public `forwardUpdateAuthority` return path and confirmed
+that a valid nonempty `preserved_mutable_outputs` record reaches this helper;
+its non-record refusal is rejected earlier by the validated record contract.
+The design extends the existing `forward-leaf` fixture, preserving one
+parent/successor chain rather than adding another setup. See
+`DIAG/bun-cli-run-key413-design-selector-20261024-01.md`.
+
+The fixture now binds the template-rendered runtime config and configured
+changelog path in both manifests. It derives the preserved-output record from
+those digests plus distinct staged/current output bytes, then asserts that the
+exported authority route returns that exact record. It also compares config and
+changelog bytes and file metadata before/after, along with the existing
+installed-bundle and `.agent` afterimages and absent Host DB. The test invokes
+the public authority function; it does not export the private helper, call
+`run()`, write runtime state, or execute consumer effects.
+
+The first focused invocation omitted the coverage-mode environment required
+to register this coverage-only test and matched zero tests. A second broad
+`forward` pattern passed an unrelated CLI test; neither attempt is behavior
+evidence. Both raw logs are retained at
+`DIAG/bun-cli-run-key413-target-20261024-01.log` and
+`DIAG/bun-cli-run-key413-target-20261024-02.log`. With the producer's
+`AGENT_RUNTIME_NATIVE_COVERAGE_MAIN=1` gate and exact test-name pattern, the
+target passed 1 test, 103 filtered, 17 expectations, 26.35 ms case time and
+1.411 s total; see `DIAG/bun-cli-run-key413-target-20261024-03.log`. No full
+suite was run.
+
+Scoped formatter passed after one formatting correction; strict on the changed
+test and type-aware Oxlint both passed. Independent review found no concrete
+issue: `DIAG/bun-cli-run-key413-final-review-20261024-01.md`. The first static
+logs were written under `packages/agent/.agent/work/core-runtime-reactivation/DIAG/`
+because the shell ran from that package with a relative path; they remain
+intact. Subsequent target logs use the canonical root WORK path. `git diff
+--check` is clean. The pending coverage stage is the only numeric measure for
+this packet; until it terminates, do not claim new coverage or disposition the
+`requireSelectorRecord` non-record arm.
+
+### Recent execution cost and order comparison
+
+Measured producer times for keys410/411/412 were 182,091.09 / 196,291.21 /
+176,802.72 ms. Each stage used a different immutable image and source/test
+inputs, so these figures do not compare ordering or parallelism causally.
+Producer concurrency stayed at one. Observed order was focused target,
+scoped static gates, independent review, ordinary hook-backed commit and push,
+then one contour stage. Static-first might have caught the key412 nullability
+issue before the commit hook; that is an inference, not a matched measurement.
+An unfiltered run would repeat 103 unrelated tests for this edit; that cost was
+not measured because no full suite ran. Fixture setup and runner overhead are
+not separately reported; aggregate tool/API and token counts are unavailable.
+The tee-path mistakes are the confirmed capture inefficiency. Later attempts
+and producer output have separate retained logs/receipts. No repository
+test-script defect was established. `vex status` showed stale clusters, so only
+bounded `rg` Source fallback was used; no index refresh or rebuild was started.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review

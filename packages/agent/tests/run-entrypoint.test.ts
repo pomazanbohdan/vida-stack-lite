@@ -3529,6 +3529,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       files: { path: string; sha256: string; size: number; source_path?: string; source_sha256?: string }[];
       unresolved_integration_paths: unknown[];
     },
+    preservedMutableOutput?: Record<string, string>,
   ) => {
     const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
     const generation = 'fixture-forward-leaf';
@@ -3569,7 +3570,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           new_size: launcher.length,
         },
       ],
-      preserved_mutable_outputs: [],
+      preserved_mutable_outputs: preservedMutableOutput ? [preservedMutableOutput] : [],
     };
     const planSha = digestBytes(record(plan));
     const evidence: Record<string, unknown>[] = [];
@@ -4055,6 +4056,44 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const parentLauncherSha256 = 'c'.repeat(64);
         const successorLauncherSha256 = 'e'.repeat(64);
         const sharedPayloadSha256 = '1'.repeat(64);
+        const changelogPath = 'docs/agent-instructions/agent-instructions.changelog.jsonl';
+        const changelogBytes = Buffer.from('installed changelog fixture\n');
+        const stagedChangelogBytes = Buffer.from('staged changelog fixture\n');
+        const configBytes =
+          scenario === 'forward-leaf'
+            ? Buffer.from(
+                readFileSync(
+                  path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'),
+                  'utf8',
+                ).replaceAll('{{BUNDLE}}', 'vida-agent'),
+              )
+            : null;
+        const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+        const configSha256 = configBytes ? digestBytes(configBytes) : null;
+        const stagedChangelogSha256 = digestBytes(stagedChangelogBytes);
+        const preservedMutableOutput =
+          configSha256 === null
+            ? null
+            : {
+                path: changelogPath,
+                config_path: 'agent-runtime.config.v1.yaml',
+                config_pointer: 'research_decision.paths.changelog',
+                config_sha256: configSha256,
+                staged_sha256: stagedChangelogSha256,
+                installed_sha256_at_inspection: digestBytes(changelogBytes),
+              };
+        const preservedManifestEntries =
+          configSha256 === null || !configBytes
+            ? []
+            : [
+                { path: 'agent-runtime.config.v1.yaml', sha256: configSha256, size: configBytes.length },
+                { path: changelogPath, sha256: stagedChangelogSha256, size: stagedChangelogBytes.length },
+              ];
+        if (configBytes) {
+          mkdirSync(path.dirname(path.join(root, changelogPath)), { recursive: true });
+          writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
+          writeFileSync(path.join(root, changelogPath), changelogBytes);
+        }
         const parentManifest = {
           schema: 'VidaAgentPreparedPayload/v1',
           files: [
@@ -4065,6 +4104,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               size: 1,
               source_sha256: parentLauncherSha256,
             },
+            ...preservedManifestEntries,
           ],
           unresolved_integration_paths: [],
         };
@@ -4078,6 +4118,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               source_path: scenario === 'forward-leaf' ? 'fixture/payload.json' : '../outside',
               source_sha256: sharedPayloadSha256,
             },
+            ...preservedManifestEntries,
             {
               path: 'vida-agent/bin/run.mjs',
               sha256: successorLauncherSha256,
@@ -4310,10 +4351,22 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const forwardRoot = path.join(root, '.agent', 'cutover', 'fixture-forward-leaf');
         const forwardFixture =
           scenario === 'forward-leaf'
-            ? buildForwardLeafFixture(root, childSelector, childSha, digestRecord(repairCutoff), successorManifest)
+            ? buildForwardLeafFixture(
+                root,
+                childSelector,
+                childSha,
+                digestRecord(repairCutoff),
+                successorManifest,
+                preservedMutableOutput ?? undefined,
+              )
             : null;
         const bundleRoot = path.join(root, 'vida-agent');
         const bundlePaths = [bundleRoot, path.join(bundleRoot, 'bin'), path.join(bundleRoot, 'bin', 'run.mjs')];
+        const preservedPaths = preservedMutableOutput
+          ? ['agent-runtime.config.v1.yaml', changelogPath].map((relative) => path.join(root, relative))
+          : [];
+        const beforePreservedBytes = preservedPaths.map((file) => readFileSync(file));
+        const beforePreservedMetadata = preservedPaths.map(snapshotAuthorityMetadata);
         const beforeBundle = forwardFixture ? snapshotAuthorityFixture(bundleRoot) : null;
         const beforeBundleMetadata = forwardFixture ? bundlePaths.map(snapshotAuthorityMetadata) : null;
         const before = snapshotAuthorityFixture(path.join(root, '.agent'));
@@ -4347,10 +4400,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           assert.ok(beforeBundleMetadata);
           expect(
             forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot),
-          ).toBeNull();
+          ).toEqual(preservedMutableOutput);
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
           expect(readFileSync(path.join(bundleRoot, 'bin', 'run.mjs'))).toEqual(forwardFixture.launcher);
+          expect(preservedPaths.map((file) => readFileSync(file))).toEqual(beforePreservedBytes);
+          expect(preservedPaths.map(snapshotAuthorityMetadata)).toEqual(beforePreservedMetadata);
         }
         expect(existsSync(hostDatabasePath)).toBe(false);
         expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(before);
