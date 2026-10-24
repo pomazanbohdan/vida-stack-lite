@@ -5393,3 +5393,92 @@ component coverage and objective skips do not settle those claims.
 That Git source also preserves the prior historical reference chain.
 No Git history, original receipt/log/archive, UNKNOWN fence or acceptance
 criterion is deleted. Older next-actions are provenance, not current instructions.
+
+### Key427 early CLI guards and terminal stage
+
+Key427 grouped the first report-ordered branch gaps in `bin/run.ts` with the
+nearby zero-callable readonly-release helpers, instead of spending another
+full producer stage on only one small branch. The focused tests exercise
+filesystem predicates (including missing paths and propagated `ENOTDIR`),
+record/field guards, readonly release-plan/match/array helpers and their map
+callback, plus the public CLI missing-value error. Only internal helper seams
+were exported from the non-package CLI entrypoint; package exports and runtime
+behavior were unchanged.
+
+The final static-first checks passed: Bun 1.4.4 formatting, strict test
+typecheck across 510 files, and locked Oxlint. The final focused target passed
+2 tests, 57 filtered, 0 failed, 22 expectations in 2.85 s
+(`DIAG/bun-cli-run-key427-target-20261024-05.log`). Blind native Luna's
+independent review found no must-fix
+(`DIAG/bun-cli-run-key427-review-20261024-01.md`); the comment-hygiene review
+removed redundant JSDoc-only annotations from newly exported helpers. Ordinary
+commit hooks passed on source commit `a2995224d2e7cb0ac7913b03371c9f9a6d6de223`.
+
+That source commit was pushed to `main` before its single coverage stage. The
+stage completed in 202,851.166 ms (330,000 ms bound), exit 0, no timeout or
+spawn error; capture was complete, the process group closed, boot and immutable
+image inputs were unchanged, and publication completed. The exact native
+terminal capture is
+`DIAG/bun-cli-run-key427-stage-20261024-01.log`; producer receipts and raw
+stdout/stderr remain at `/workspace/contour-stage-dmO2wQ`. Its selected tests
+were 124 passing across `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`, 0 failures, 2,284 expectations, 196.09 s
+test time. The image source tree is `0a458f83ddbd3d427cd4a11c4eceb47a3a2ab535`,
+input fingerprint `612573bc02713176e19eaba25dea45daf609c60138af57912f8d3cbda15b9de2`,
+and manifest digest
+`5e34130062d0a3e91029d8bb990b589c6ce8fbcb763d68f03ce764df4149f027`.
+
+Run `8415a7f1-2854-4374-86b9-b21e28f81876` published
+`/workspace/.vida-quality-inputs/5a58b9c2b381b8d755d2b7f8bb8dd2a6e247731e/repository/packages/agent/coverage/bun-unified/diagnostics/8415a7f1-2854-4374-86b9-b21e28f81876.focused-coverage.json`.
+The producer-owned projection now records F/L/S/B
+`428/555`, `1935/2860`, `2073/3138`, `2389/3660`; max CC 501 and max entry
+CRAP 992. Status remains `BLOCKED`, exact coverage is open, and no objective
+disposition was applied. The first remaining uncovered branch is
+`isPacketOnlyDevelopmentStage` at `bin/run.ts:319`, with branch counters
+`[8,0]`; nearby remaining arms are the unmatched-action path at line 349
+`[1,0]`, unchanged-status path at line 356 `[6,0]`, and non-research-stage
+path at line 412 `[6,0]`. They are the candidate for one bounded Key428 packet;
+the report's next zero-callable is `isStoppedSourceTerminalRecord` at line
+3624, which follows these earlier branch gaps.
+
+Measured sequence for Key427 was scoped static gates, independent review,
+normal hook-backed source commit/push, then one serial producer stage
+(concurrency 1). The stage's 196.09 s test time and 202.85 s wall time are
+observations, not proof of improvement against Key426's different image and
+inputs (219.45 s tests; 225.46 s stage). Static-first remains preferable as a
+failure-order hypothesis because it catches type/lint issues before the
+targeted runtime test; width 2 remains unmeasured and has contention risk.
+Tool/API-call and model-token counts are not available from receipts. The stage
+also retained `/tmp/vida-run-uninitialized-LLSNwR` because that child outcome
+was unknown; preserve it and its raw evidence, and do not replay it. No test
+script defect or safe cleanup candidate was established in this packet.
+
+### Key428 remaining early helper branches (prepared, stage pending)
+
+The report-ordered branch cluster after Key427 is four missing arms in
+`bin/run.ts`: packet-only development-stage detection (line 319), unmatched
+delivery observation identity (line 349), unchanged non-incomplete research
+status (line 356), and research-stage instruction aliases (line 412). One
+focused test now exercises those pure decisions with explicit result
+assertions. The four existing helper bodies are unchanged; only test seams
+were exported from the CLI module, which is absent from the package `exports`
+map. The `describeIssuedAction` fixture uses a complete `SessionBridgeRequest`
+shape rather than an unchecked cast. Redundant JSDoc type comments were removed
+as part of exposing these already TypeScript-typed functions.
+
+Static-first checks passed with package-pinned Bun 1.4.4: format check on the
+two changed source/test files, strict `tests/tsconfig.json` check over 510
+files, and locked Oxlint. The focused target passed 1 test, 59 filtered, 0
+failures, 7 expectations in 1.407 s. Logs are
+`DIAG/bun-cli-run-key428-format-20261024-05.log`,
+`DIAG/bun-cli-run-key428-typecheck-20261024-03.log`,
+`DIAG/bun-cli-run-key428-lint-20261024-03.log`, and
+`DIAG/bun-cli-run-key428-target-20261024-02.log`.
+
+Blind native Luna review found no must-fix and confirmed no package API leak;
+the reviewer noted only that the unrelated no-activation branch remains
+outside this packet. The retained review note is
+`DIAG/bun-cli-run-key428-review-20261024-01.md`. `git diff --check` passed.
+No CRAP, mutation, objective disposition, or parallel producer was used. The
+single modified-input coverage stage, normal hooks, commit, and push are still
+pending; do not start the stage until the commit is terminal.

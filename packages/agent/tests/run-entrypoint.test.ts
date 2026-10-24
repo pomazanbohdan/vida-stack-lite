@@ -25,6 +25,7 @@ import {
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { finishWorkspaceDatabaseClose, type DatabaseWorkOutcome } from '../src/config/workspace-database-raw.ts';
 import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.ts';
+import type { SessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import { boundedSpawnSync, commandOutcomeUnknown, executionBudget, pinnedEnvironment } from '../bin/bun.ts';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -49,17 +50,21 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
+  addObservationForAction,
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
   checkedDirectory,
   compareStrings,
+  describeIssuedAction,
   forwardUpdateAuthority,
   historicalConfiguredContexts,
   historicalReleaseInspection,
   isActiveRuntimeSelectorRecord,
   isHistoricalRunHistory,
+  isPacketOnlyDevelopmentStage,
   isResearchSourceReference,
   isReadonlyReleasePlan,
+  markUncertainResearchStatus,
   parseReadonlyReleaseArray,
   pathExists,
   recordField,
@@ -858,6 +863,59 @@ test('readonly release validators preserve plans, unique matches, arrays and CLI
     'request.json',
   ];
   await assert.rejects(run(args), { message: 'Readonly release requires mode, exact root and request' });
+});
+
+test('run action helpers preserve packet-only, observation, and research decisions', () => {
+  expect(isPacketOnlyDevelopmentStage({ consumes: ['DevelopmentTaskPacket/v1'] })).toBe(true);
+  expect(isPacketOnlyDevelopmentStage({ consumes: ['DevelopmentTaskPacket/v1', 'ImplementationResult/v1'] })).toBe(
+    false,
+  );
+
+  const item = { request: { action_id: 'delivery-action' }, status: 'issued' };
+  const observation = { action_id: 'delivery-action', status: 'reported_complete' };
+  expect(addObservationForAction(item, 'different-action', observation)).toBe(item);
+  expect(addObservationForAction(item, 'delivery-action', observation)).toEqual({ ...item, observation });
+
+  expect(
+    markUncertainResearchStatus({ action_id: 'research-action', status: 'research_preparation_incomplete' }),
+  ).toEqual({ action_id: 'research-action', status: 'issued_outcome_uncertain' });
+  expect(markUncertainResearchStatus({ action_id: 'research-action', status: 'reported' })).toEqual({
+    action_id: 'research-action',
+    status: 'reported',
+  });
+
+  const activation = { schema: 'InstructionActivationUse/v1' };
+  const bindings = [{ instruction_id: 'research-instruction' }];
+  const request: SessionBridgeRequest = {
+    schema: 'VidaSessionRequest/v1',
+    run_id: 'research-run',
+    workflow_id: 'research-workflow',
+    wave_index: 0,
+    action_id: 'a'.repeat(64),
+    assignment_index: 0,
+    stage_id: 'research-stage',
+    role: 'researcher',
+    config_digest: 'b'.repeat(64),
+    scope_digest: 'c'.repeat(64),
+    bindings_manifest_ref: 'd'.repeat(64),
+  };
+  expect(
+    describeIssuedAction(
+      {
+        request,
+        issue_id: 'research-issue',
+        research_activation: { use: activation },
+      },
+      new Map([[request.action_id, bindings]]),
+      [{ id: 'research-stage', kind: 'research' }],
+    ),
+  ).toMatchObject({
+    issue_id: 'research-issue',
+    instruction_activation: activation,
+    instruction_bindings: bindings,
+    research_instruction_activation: activation,
+    research_instruction_bindings: bindings,
+  });
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {

@@ -311,8 +311,7 @@ function observationList<Item extends { observation: unknown }>(item: Item): unk
   return item.observation ? [item.observation] : [];
 }
 
-/** @template {{consumes: readonly string[]}} Stage @param {Stage | undefined} stage @returns {boolean} */
-function isPacketOnlyDevelopmentStage<Stage extends { consumes: readonly string[] }>(
+export function isPacketOnlyDevelopmentStage<Stage extends { consumes: readonly string[] }>(
   stage: Stage | undefined,
 ): boolean {
   return Boolean(
@@ -340,8 +339,7 @@ function isResearchOutputForStage<Stage extends { id: string; produces: readonly
   return stage.id === stageId && isResearchOutputStage(stage);
 }
 
-/** @template {{request: {action_id: string}}} Item @param {Item} item @param {string} actionId @param {unknown} observation @returns {Item | (Item & {observation: unknown})} */
-function addObservationForAction<Item extends { request: { action_id: string } }>(
+export function addObservationForAction<Item extends { request: { action_id: string } }>(
   item: Item,
   actionId: string,
   observation: unknown,
@@ -349,8 +347,7 @@ function addObservationForAction<Item extends { request: { action_id: string } }
   return item.request.action_id === actionId ? { ...item, observation } : item;
 }
 
-/** @template {{action_id: string, status: string}} Item @param {Item} item @returns {Item} */
-function markUncertainResearchStatus<Item extends { action_id: string; status: string }>(item: Item): Item {
+export function markUncertainResearchStatus<Item extends { action_id: string; status: string }>(item: Item): Item {
   return {
     ...item,
     status: item.status === 'research_preparation_incomplete' ? 'issued_outcome_uncertain' : item.status,
@@ -377,14 +374,7 @@ function isUnissuedKind<Entry extends { issue_id: unknown; kind: string }>(entry
   return !entry.issue_id && entry.kind === kind;
 }
 
-/**
- * @template {{request: import('../src/orchestration/mastra-session-bridge-contract.ts').SessionBridgeRequest, issue_id: string | null, host_reservation?: {receipt: {attempt: {attempt_id: string}}} | null, research_activation?: {use: unknown} | null}} Item
- * @param {Item} item
- * @param {Map<string, unknown>} researchBindings
- * @param {readonly {id: string, kind: string}[]} stages
- * @returns {RunIssuedAction}
- */
-function describeIssuedAction<
+export function describeIssuedAction<
   Item extends {
     request: import('../src/orchestration/mastra-session-bridge-contract.ts').SessionBridgeRequest;
     issue_id: string | null;
