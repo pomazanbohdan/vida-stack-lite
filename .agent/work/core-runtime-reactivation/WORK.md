@@ -8533,6 +8533,12 @@ its manifest SHA-256 is
 The image binds source commit
 `bd270473a9d0568c153da4936620920bfe3622bb` and tree
 `b965268a7c61b968ceb337ff6d91e6044b63b640`.
+The first stage command was issued from the repository root and failed at
+argument lookup with `Script not found "test:contour:stage"`; it created no
+stage and launched no producer. Its capture is
+`DIAG/key469-stage-20261024-01.log`. The only command that launched a producer
+ran from `packages/agent` and is captured at
+`DIAG/key469-stage-20261024-02.log`.
 
 The selected coverage run ended UNKNOWN. In the existing test
 `rejects stale project identity without creating Work`, the owned child receipt
