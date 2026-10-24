@@ -7576,6 +7576,62 @@ semantic target rerun was needed. Independent blind review completed with no
 must-fix findings, confirming ID189 reachability, exact refusal, no-write
 assertions, and marker cleanup; its report is
 `DIAG/bun-cli-run-key459-blind-review-20261024-01.md`. Normal commit/push and
-one changed-input stage remain. The previous Key458 stage is terminal,
-committed and pushed; no producer is active. No Vex refresh, disk survey, or
-cleanup is planned.
+one changed-input stage then completed; terminal results follow. The previous
+Key458 stage was terminal before this producer began. No Vex refresh, disk
+survey, or cleanup is planned.
+
+### Key459 terminal — forward-marker branch
+
+The packet was committed and ordinarily pushed as
+`0ad91a0c365f981f3324947427a69e4a28e56b68`, then one stage ran at the sole
+producer in `/workspace/contour-stage-UHrWEn`. The native receipt records exit
+0, no signal/spawn error/timeout, complete untruncated capture (7,976 stdout
+bytes and 17,380 stderr bytes), observed process and process-group termination,
+no termination attempts, unchanged boot and unchanged immutable image inputs.
+It binds source tree `b56835135a01cd057ba835cc78c10cc1930142e8`, input
+fingerprint `7fa8c23a0574e9f9c8834dbce58ec2f9386a1b3809cbf9c456a745658a9ba3ce`,
+and image manifest SHA-256
+`f7594f97f66f53a59d61dff9f9d11974da2c510fabdd6368eef0feebca3ced4f`.
+
+Run `ea1ad1cf-63b2-40a0-9f13-a46fe8e9d480` passed 127 tests and 2,620
+expectations across the two selected files, with zero failures. Suite time was
+217.06 s; native elapsed time was 222,653.686 ms. ID189 now has hits `[1,4]`;
+ID190 is `[1,0]` and ID191 `[1,0,0]`, showing the incomplete-forward refusal
+also reached the first nested guard/operand while leaving their other arms open.
+The producer projection is F441/555, L2034/2860, S2184/3138, B2569/3660,
+maximum CC/entry CRAP 501, status `BLOCKED`; denominators and fences remain
+unchanged. The report is retained at
+`/workspace/.vida-quality-inputs/1276c000cc5f6eaf1d0012a5c52029a6bdc256ba/repository/packages/agent/coverage/bun-unified/diagnostics/ea1ad1cf-63b2-40a0-9f13-a46fe8e9d480.focused-coverage.json`.
+The stage admission receipt recorded 13,309,501,440 scratch bytes available
+against the existing 2,147,483,648-byte minimum; this is not a repeated disk
+survey.
+
+Captured test output retained fixture roots for `/tmp/vida-run-uninitialized-qWZg3h`
+(`child-outcome-unknown`), `/tmp/vida-unprepared-state-6i3mFE`
+(`completion-not-marked`), `/tmp/vida-unprepared-state-KITuvV`
+(`deadline-expired`), and `/tmp/vida-unprepared-state-DKv7xU`
+(`database-close-failed`). These are fixture-owned retention records, not suite
+failures; this packet performed no cleanup or relocation.
+
+### Three-hour execution comparison — 2026-10-24 14:51:40–17:51:40 UTC
+
+Eleven serial one-worker terminal stages fall in this receipt-based window:
+Key445 and Keys450–459. Together they ran 1,397 selected test cases and 28,051
+expectations. Measured producer time totals 2,341,100.287 ms, averages
+212,827.299 ms, and ranges 196,979.462–228,950.409 ms. Key444 ended at 14:45:14
+and is outside this window; Key445 at 14:52:52 is inside. Inputs, selected
+files, cache state, and hosts differ, so this is one-worker cost evidence, not a
+controlled speed comparison.
+
+| Check order / producer parallelism | Measured fact | Decision or hypothesis |
+| --- | --- | --- |
+| Reuse current report, map one reachable guard, batch its fixture case, target/static/review, commit/push, then one changed-input stage at 1x | All eleven stages used one producer; each ran 127 selected tests. Key459 took 222.654 s and covered ID189's missing arm. | Retain this sequence; no measured A/B ordering result exists. |
+| Full stage before review or for every subfix at 1x | Mean stage cost was 212.827 s, with 196.979–228.950 s observed range. | One skipped repeat is an estimated 3.55 minutes saved, not a controlled measurement. |
+| Two or four concurrent numeric stages | No qualified parallel receipt exists. | Keep one producer; 2x/4x remains unmeasured and conflicts with the serial producer contract. |
+
+Across Keys456–459, the retained ledger shows 14 focused invocations: four
+Key456 fixture/setup attempts failed and ten invocations passed. Key459 needed
+one package-selected target run (1/83) before stage. The earlier Key458 packet
+used two extra targets (26.28 s total) before settling on TESTING's wrapper and
+final fixture shape; Key459 chose `bun bin/bun.ts test` first. Platform-wide
+tool-call and model-token totals remain unavailable.
