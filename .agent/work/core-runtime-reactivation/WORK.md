@@ -4346,12 +4346,43 @@ clean. No coverage disposition is claimed until the single post-commit,
 post-push `bun-cli-run` coverage stage terminates and its immutable report is
 reviewed.
 
+#### Key414 stage result
+
+The ordinary coverage producer ran once from `/workspace/contour-stage-lt0URv`
+against source commit `bb278469391b9a478142c3f617cfe0ea5fd41ed4`. Terminal
+receipt `DIAG/bun-cli-run-key414-stage-20261024-01.log` records run
+`94e7ce73-fda8-4148-9640-6baebca047fb`, exit 0, elapsed 185,087.102391 ms,
+`timed_out=false`, complete capture, closed process group, unchanged boot and
+image inputs, and published execution image. Source tree:
+`eeb54535fe005d199c16dc24455e69ccaf3eb9a3`; image input fingerprint
+`baebc45cf97a9a6589981120a365ba3cb945472ede9c1fbac8283434ecae6984`; image
+manifest SHA-256
+`0df7bc367c1caa3796b392aa55c1d50481fdbc90e273e143011c28cd83fe9ab4`.
+Bound immutable report:
+`/workspace/.vida-quality-inputs/4e4d6d502f5bb3545c9ffa357b73c02552f5cc34/repository/packages/agent/coverage/bun-unified/diagnostics/94e7ce73-fda8-4148-9640-6baebca047fb.focused-coverage.json`.
+
+In that report, `readForwardDocumentationEvidence` functionMap key 71 is hit
+once and its nested path callback key 72 is hit five times. The unsafe-path
+branch key 105 records `[1,0]`; binary path-condition key 106 records
+`[1,1,1,1]`, and path-part predicate key 107 records `[5,5,5,4]`. The 16 MiB
+size branch key 108 remains `[0,0]`; no size-path coverage is claimed. The
+current test reaches the path reader and exercises a refusal but not a complete
+accepted documentation proof. Both `parseForwardJournal` functionMap key 73
+and its map callback key 74 remain zero; continue there within this same
+contour, while separately addressing the still-reachable size gate.
+
+The projection now reports `386/557 · 1801/2863 · 1912/3143 · 2217/3663`, max
+CC/entry-CRAP `501/992`, attempts `1387`, status `BLOCKED`. Its delta from
+key413 is measured, but the images and test fingerprints differ, so do not
+attribute all count movement causally to this one case. Producer concurrency
+remained one. Tool/API and token totals are unavailable.
+
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413 were 182,091.09 / 196,291.21 /
-176,802.72 / 184,266.83 ms. Each stage used a different immutable image and
-source/test inputs, so these figures do not compare ordering or parallelism
-causally.
+Measured producer times for keys410/411/412/413/414 were 182,091.09 /
+196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 ms. Each stage used a
+different immutable image and source/test inputs, so these figures do not
+compare ordering or parallelism causally.
 Producer concurrency stayed at one. Observed order was focused target,
 scoped static gates, independent review, ordinary hook-backed commit and push,
 then one contour stage. Static-first might have caught the key412 nullability
