@@ -3373,16 +3373,58 @@ capture wrappers should use an absolute path or the repository-root-relative
 The next unhit entry in the same contour's exact report is key 402,
 `bin/run.ts#fn:run#0/closure:CallExpression:arguments[2]#4` (CC 1 / CRAP 2,
 body at line 6933 in this source image). It is the close callback in the catch
-for the later full-project-set context load; the earlier selected-project
-context and selection ledger must succeed first. A blind read-only review
-identified a candidate where the selected project's profile is valid but a
-second configured project causes only the later full-set context to fail.
-Existing multi-project fixtures do not yet prove that asymmetric path-profile
-condition, so this remains a hypothesis, not an objective disposition or test
-result. Continue from this exact entry; do not repeat keys 379–387 or start
-another producer before the next bounded test packet is verified. Keep the
-contour open until its governed selection is exact or has an independently
-accepted objective disposition.
+for the later full-project-set context load. The bounded fixture and evidence
+for this key are recorded below; its numeric counter remains unqualified until
+the next producer report.
+
+### Multi-project context failure close callback — 2026-10-24
+
+The focused public-run test uses the existing two-project fixture. It keeps the
+selected `mutation-project` path profile valid, allows both configured
+projects in the temporary default team, and gives only `alpha-project` a
+repository-relative `documentation_policy_path` whose file is deliberately
+absent. The temporary runtime config and initialization digest are written
+together, then public `run()` receives both project IDs. It opens the admission
+ledger, fails the later full project-set context with
+`GAP-RTNEW-PATH-PROFILE-001`, and enters key 402's close callback. The test
+checks the exact missing-path error and uses the existing read-only
+`inspectHostWorkspaceDatabase` helper to verify that work, journal, and
+admission-attempt rows remain empty. The missing policy file also remains
+absent. The blind review confirmed this exact call path; no direct DB state
+fabrication, DB cutover or consumer action is involved.
+
+Two fixture attempts did not reach that catch and were retained as ordinary
+test failures: `bun-cli-run-key402-target-20261024-01.log` returned normally
+because the CLI initially selected only `mutation-project` (test body
+1,909.55 ms; root `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-project-set-close-BG48bW`);
+`...-02.log` added `alpha-project` but was rejected at the earlier team-project
+allowlist with `RuntimeConfigError` (body 430.75 ms; root
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-project-set-close-Ropp0b`).
+The corrected configuration and selection passed four times: `.03.log`
+before the read-only row assertions (body 569.94 ms, 4 expectations), `.04.log`
+after them (body 584.43 ms, 5 expectations), `.05.log` with the local async
+rejection wrapper (body 586.52 ms, 5 expectations), and `.06.log` with the
+exact typed error message (body 696.06 ms, 5 expectations). The final command
+selected 1 test, filtered 98, had 0 failures and took 2.05 s. Neither failed
+attempt is a product failure, kill or objective skip.
+
+Final scoped strict checking found no errors in 141 files (590.25 ms), Oxlint
+passed, and the pinned formatter check passed. Normal commit hooks first passed
+formatting on 536 files and strict checking on 543, then caught two test-only
+lint issues in sequence: the direct rejection matcher needed the repository's
+`Promise.resolve(expect(...).rejects...)` pattern, and its asymmetric
+`expect.stringContaining` value had unsafe typing. The test now compares the
+exact `PathProfileError` message. The final focused rerun and scoped checks
+pass. A blind read-only review verified the full-set failure and confirmed the
+Host database inspection helper does not create schema or mutate state; the
+last matcher-only change preserves that path. The static checks ran in parallel
+in under a second together; target runs stayed serial. Up-front verification of CLI
+project selection, team allowlist and secondary path target would likely have
+avoided the two short failures; this is a process hypothesis. The 1.82 s
+filtered result is not comparable with the prior 179.06 s producer stage, which
+used a different workload. No setup-only, token or aggregate tool-call meter is
+available. The next step is one current-producer coverage stage on this reviewed
+test, then follow only its exact remaining unhit entries.
 
 ## Owners and acceptance boundaries
 

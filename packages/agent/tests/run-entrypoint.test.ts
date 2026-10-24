@@ -4297,6 +4297,75 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 30_000);
 
+    test('closes the intake ledger when a secondary project path profile fails', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-project-set-close-'));
+      const fixture = ownedMutationFixture(root, 30_000);
+      let completed = false;
+      try {
+        const { args, initialization, initializationPath, config } = createFixture(root, 'agent-runtime-new', true);
+        const defaultTeam = config.teams['default-development'];
+        assert.ok(defaultTeam);
+        const missingPolicyPath = 'docs/agent-instructions/unavailable-alpha-policy.v1.json';
+        const secondaryProfileFailure: AgentRuntimeConfig = {
+          ...config,
+          teams: {
+            ...config.teams,
+            'default-development': {
+              ...defaultTeam,
+              allowed_projects: [...defaultTeam.allowed_projects, 'alpha-project'],
+            },
+          },
+          projects: config.projects.map((project) =>
+            project.project_id === 'alpha-project'
+              ? {
+                  ...project,
+                  path_overrides: {
+                    ...project.path_overrides,
+                    documentation_policy_path: missingPolicyPath,
+                  },
+                }
+              : project,
+          ),
+        };
+        writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), record(secondaryProfileFailure));
+        const activeConfig = loadRuntimeConfig(root);
+        expect(
+          activeConfig.projects.find((project) => project.project_id === 'alpha-project')?.path_overrides
+            ?.documentation_policy_path,
+        ).toBe(missingPolicyPath);
+        writeFileSync(
+          initializationPath,
+          record({ ...initialization, config_digest: runtimeConfigDigest(activeConfig) }),
+        );
+        const admitted = prepareMutationIntake([...args, '--project', 'alpha-project'], activeConfig);
+        await Promise.resolve(
+          expect(run(admitted.admissionArgs)).rejects.toMatchObject({
+            code: 'GAP-RTNEW-PATH-PROFILE-001',
+            message: `GAP-RTNEW-PATH-PROFILE-001: path documentation_policy_path is unavailable: ${missingPolicyPath}`,
+          }),
+        );
+        const databaseRelativePath = path.relative(root, sessionHandoffDatabasePath(root, activeConfig));
+        const afterFailure = inspectHostWorkspaceDatabase(
+          root,
+          databaseRelativePath,
+          deriveWorkspaceId(activeConfig.repository.repository_id, root),
+        );
+        expect({
+          work: afterFailure.work,
+          journals: afterFailure.journals,
+          attempts: afterFailure.admission_attempts,
+        }).toEqual({ work: [], journals: [], attempts: [] });
+        expect(existsSync(path.join(root, missingPolicyPath))).toBe(false);
+        completed = true;
+      } finally {
+        if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
+        else
+          process.stderr.write(
+            `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} project-set close fixture: ${root}\n`,
+          );
+      }
+    }, 30_000);
+
     const contextDenials = [
       {
         name: 'stale repository identity',
