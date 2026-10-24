@@ -6990,13 +6990,7 @@ remain 501. This closes no contour and grants no numeric PASS.
 
 ### Key452 forward preservation and integration-retirement boundaries
 
-The latest report selects ID149 at `bin/run.ts:1618`, `[0,24]`. The exact branch
-is the forward-manifest preservation guard. Its first two terms are entailed by
-`requireForwardUpdatePlan` → `hasForwardPlanCollections`, which requires the
-changed and preservation values to be arrays. The validator leaves preservation
-array length unconstrained, so two entries reach the true refusal arm.
-
-The latest report selects ID149 at `bin/run.ts:1618`, `[0,24]`. The first two
+The preceding report selected ID149 at `bin/run.ts:1618`, `[0,24]`. The first two
 terms are entailed by `requireForwardUpdatePlan` → `hasForwardPlanCollections`,
 which requires arrays; the reachable bound is `preserved_mutable_outputs.length
 > 1`. The leaf fixture duplicates a valid config/changelog binding before
@@ -7034,15 +7028,39 @@ found layout differences; the package formatter corrected them. The first
 ordinary commit hook then caught a nullable-buffer type error; the explicit
 null guard is now covered by the final target and scoped checks, and no hook was
 bypassed. Only one focused composite test was run; there was no redundant
-full-suite run. The modified inputs still need one changed-input stage after
-ordinary commit hooks and push.
+full-suite run.
 
-### Three-hour execution comparison, 2026-10-24 12:33–15:33 UTC
+The one changed-input producer stage completed at `/workspace/contour-stage-j7xRxe`
+for commit `af382a2f07ad756de0188bb089a73a0794cb4d9e`. Run
+`04be7d37-bad3-4b61-b0e7-f88683024334` exited 0 in 228,520.523 ms with complete
+capture, closed group, unchanged boot and image inputs, and published coverage.
+The immutable image binds source tree `393577a6f074b540313a781c3bdd67c129b9547b`,
+input fingerprint `e24a413d3c926de73acee5d79a4200d50f33303478aa5c31936c8872df4e02d0`,
+and manifest SHA-256 `fb7cb7f70a08dd83c0b672d0068cc14c0a47b91fb453632e6551c11537bc1a42`.
+The report is
+`/workspace/.vida-quality-inputs/564c95aadc5a1539475637bc700a55c954512c5f/repository/packages/agent/coverage/bun-unified/diagnostics/04be7d37-bad3-4b61-b0e7-f88683024334.focused-coverage.json`.
 
-Nine one-worker changed-input stages have terminal receipts in this window:
+The selected Bun run passed 127 tests, 2,516 expectations, and 0 failures in
+222.35 seconds. The new branch counts are ID149 `[1,26]`, ID151 `[1,25]`, ID152
+`[26,1]`, and ID154 `[1,9]`; their preceding counts were `[0,24]`, `[0,24]`,
+`[24,0]`, and `[0,9]`. Projection now reads F441/555, L2018/2860, S2168/3138,
+B2528/3660: no denominator changes, maxima remain 501, and the operation remains
+`BLOCKED`. This packet closes no contour and grants no qualification.
+
+Five focused invocations were used while the fixture was corrected and then
+rechecked after the commit-hook type error; their harness-inclusive durations
+were 2.27, 2.20, 1.78, 2.50 and 1.96 seconds (10.71 seconds total). The first
+three did not validate the final afterimage/assertion placement; the last two
+validated the corrected fixture and explicit null guard. No full suite was
+repeated before the single producer stage.
+
+### Three-hour execution comparison, 2026-10-24 12:52–15:52 UTC
+
+Ten one-worker changed-input stages have terminal receipts in this window:
 Key434 258,991.524 ms, Key436 208,820.746 ms, Key438 208,414.802 ms,
 Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms,
-Key445 202,793.193 ms, Key450 199,063.248 ms, and Key451 228,950.409 ms. The
+Key445 202,793.193 ms, Key450 199,063.248 ms, Key451 228,950.409 ms, and Key452
+228,520.523 ms. The
 observed range is 199,063.248–258,991.524 ms. Source commits, inputs, test counts, and host/cache
 conditions differ, so these receipts give a one-worker cost range only; they do
 not establish a speedup, regression, limiter, or controlled check-order result.
@@ -7051,11 +7069,15 @@ inconclusive.
 
 | Check order and producer parallelism | Evidence and decision |
 | --- | --- |
-| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | The nine prior terminal stages and current Key452 packet use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. The final Key452 target took 2.50 seconds with harness startup; static checks were below one second where timed. |
+| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | All ten terminal stages above and Key452 use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. The final Key452 target took 1.96 seconds with harness startup; static checks were below one second where timed. |
 | Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 199–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
 | Run two or four full numeric stages concurrently | No qualified run measured this option. It conflicts with TESTING's single producer and has no comparable speed, resource or correctness evidence. Keep numeric parallelism at one. |
 
-Platform totals for tool calls and token usage are unavailable. Do not infer them
-from chat messages or source-run operation counts. The prior single disk receipt
-and admission threshold remain current; this audit did not repeat disk checks or
-cleanup. The existing timer and its schedule remain unchanged.
+Platform totals for tool calls and model-token usage are unavailable. One
+unbounded jq selection accidentally emitted the full coverage map; the tool
+reported 560,673 original output tokens and 1,194,115 omitted bytes before
+truncation. This is output-surface metadata, not model-token consumption, and no
+conclusion above relies on that dump. The follow-up query selected four branch
+IDs only. The prior single disk receipt and admission threshold remain current;
+this audit did not repeat disk checks or cleanup. The existing timer and its
+schedule remain unchanged.
