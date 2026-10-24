@@ -5311,6 +5311,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'forward-partial-integration-retirement',
       'forward-preserved-output-pointer-mismatch',
       'forward-generated-root-agents-added',
+      'forward-generated-root-agents-provenance-mismatch',
+      'forward-generated-root-agents-installed-drift',
+      'forward-generated-root-agents-parent-lineage',
+      'forward-source-provenance-mismatch',
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-baseline-path-non-string',
@@ -5365,6 +5369,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-partial-integration-retirement' ||
           scenario === 'forward-preserved-output-pointer-mismatch' ||
           scenario === 'forward-generated-root-agents-added' ||
+          scenario === 'forward-generated-root-agents-provenance-mismatch' ||
+          scenario === 'forward-generated-root-agents-installed-drift' ||
+          scenario === 'forward-generated-root-agents-parent-lineage' ||
+          scenario === 'forward-source-provenance-mismatch' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
           scenario === 'repair-default-installed-bundle' ||
           scenario === 'repair-installed-payload-drift' ||
@@ -5380,7 +5388,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           : null;
         const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
         const configSha256 = configBytes ? digestBytes(configBytes) : null;
-        const generatedRootAgentsScenario = scenario === 'forward-generated-root-agents-added';
+        const generatedRootAgentsScenario =
+          scenario === 'forward-generated-root-agents-added' ||
+          scenario === 'forward-generated-root-agents-provenance-mismatch' ||
+          scenario === 'forward-generated-root-agents-installed-drift' ||
+          scenario === 'forward-generated-root-agents-parent-lineage';
         const agentsTemplatePath = 'vida-agent/templates/AGENTS.template.md';
         const agentsTemplateBytes = generatedRootAgentsScenario
           ? readFileSync(path.join(packageRoot, 'templates/AGENTS.template.md'))
@@ -5739,43 +5751,104 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         writeFileSync(path.join(childRoot, 'cutoff-witness.json'), record(repairCutoff));
         if (scenario === 'repair-maintenance-lock-active')
           writeFileSync(path.join(childRoot, 'maintenance-lock.v1.json'), record(repairLock));
+        const buildScenarioForwardLeaf = (
+          parentSelector: Parameters<typeof forwardUpdateAuthority>[1],
+          parentSelectorSha: string,
+          parentCutoffSha: string,
+          parentManifest: Parameters<typeof buildForwardLeafFixture>[4],
+          generation: string,
+          launcher: Uint8Array,
+          additionalSuccessorFiles: {
+            path: string;
+            bytes: Uint8Array;
+            source_path: string;
+            source_sha256: string;
+          }[] = [],
+        ) =>
+          buildForwardLeafFixture(
+            root,
+            parentSelector,
+            parentSelectorSha,
+            parentCutoffSha,
+            parentManifest,
+            preservedMutableOutput ?? undefined,
+            documentationChange ?? undefined,
+            {
+              generation,
+              launcher,
+              additionalPreservedMutableOutputs:
+                scenario === 'forward-preserved-output-overbound' && preservedMutableOutput
+                  ? [preservedMutableOutput]
+                  : [],
+              additionalRetiredPaths: scenario === 'forward-partial-integration-retirement' ? ['AGENT.sidecar.md'] : [],
+              additionalSuccessorFiles,
+            },
+          );
         const forwardRoot = path.join(root, '.agent', 'cutover', 'fixture-forward-leaf');
-        const forwardFixture = forwardScenario
-          ? buildForwardLeafFixture(
-              root,
-              childSelector,
-              childSha,
-              digestRecord(repairCutoff),
-              successorManifest,
-              preservedMutableOutput ?? undefined,
-              documentationChange ?? undefined,
-              {
-                launcher:
-                  scenario === 'repair-default-installed-bundle' ||
-                  scenario === 'repair-installed-payload-drift' ||
-                  scenario === 'repair-maintenance-lock-active'
-                    ? successorLauncherBytes
-                    : Buffer.from('y'),
-                additionalPreservedMutableOutputs:
-                  scenario === 'forward-preserved-output-overbound' && preservedMutableOutput
-                    ? [preservedMutableOutput]
-                    : [],
-                additionalRetiredPaths:
-                  scenario === 'forward-partial-integration-retirement' ? ['AGENT.sidecar.md'] : [],
-                additionalSuccessorFiles:
-                  generatedRootAgentsScenario && generatedRootAgentsBytes && agentsTemplateSha256
-                    ? [
-                        {
-                          path: 'AGENTS.md',
-                          bytes: generatedRootAgentsBytes,
-                          source_path: agentsTemplatePath,
-                          source_sha256: agentsTemplateSha256,
-                        },
-                      ]
-                    : [],
-              },
-            )
-          : null;
+        const generatedAgentsSuccessorFile =
+          generatedRootAgentsScenario && generatedRootAgentsBytes && agentsTemplateSha256
+            ? [
+                {
+                  path: 'AGENTS.md',
+                  bytes: generatedRootAgentsBytes,
+                  source_path: agentsTemplatePath,
+                  source_sha256:
+                    scenario === 'forward-generated-root-agents-provenance-mismatch'
+                      ? '0'.repeat(64)
+                      : agentsTemplateSha256,
+                },
+              ]
+            : [];
+        const sourceProvenanceSuccessorFile =
+          scenario === 'forward-source-provenance-mismatch'
+            ? [
+                {
+                  path: 'vida-agent/forward-source-provenance.txt',
+                  bytes: Buffer.from('forward source provenance fixture\n'),
+                  source_path: 'vida-agent/forward-source-provenance.txt',
+                  source_sha256: digestBytes(Buffer.from('different source preimage\n')),
+                },
+              ]
+            : [];
+        let generatedRootParentForwardFixture: ReturnType<typeof buildForwardLeafFixture> | null = null;
+        let forwardFixture: ReturnType<typeof buildForwardLeafFixture> | null = null;
+        if (scenario === 'forward-generated-root-agents-parent-lineage') {
+          assert.ok(generatedRootAgentsBytes);
+          assert.ok(agentsTemplateSha256);
+          generatedRootParentForwardFixture = buildScenarioForwardLeaf(
+            childSelector,
+            childSha,
+            digestRecord(repairCutoff),
+            successorManifest,
+            'fixture-forward-generated-parent',
+            Buffer.from('fixture generated-root parent launcher\n'),
+            generatedAgentsSuccessorFile,
+          );
+          forwardFixture = buildScenarioForwardLeaf(
+            generatedRootParentForwardFixture.selector,
+            generatedRootParentForwardFixture.selectorSha,
+            generatedRootParentForwardFixture.cutoffSha,
+            generatedRootParentForwardFixture.successorManifest,
+            'fixture-forward-leaf',
+            Buffer.from('fixture generated-root lineage leaf launcher\n'),
+          );
+        } else if (forwardScenario) {
+          forwardFixture = buildScenarioForwardLeaf(
+            childSelector,
+            childSha,
+            digestRecord(repairCutoff),
+            successorManifest,
+            'fixture-forward-leaf',
+            scenario === 'repair-default-installed-bundle' ||
+              scenario === 'repair-installed-payload-drift' ||
+              scenario === 'repair-maintenance-lock-active'
+              ? successorLauncherBytes
+              : Buffer.from('y'),
+            [...generatedAgentsSuccessorFile, ...sourceProvenanceSuccessorFile],
+          );
+        }
+        if (scenario === 'forward-generated-root-agents-installed-drift')
+          writeFileSync(path.join(root, 'AGENTS.md'), 'installed generated AGENTS drift\n');
         if (scenario === 'forward-parent-cutoff-drift') {
           assert.ok(forwardFixture);
           writeFileSync(
@@ -5987,7 +6060,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-partial-integration-retirement' ||
           scenario === 'forward-preserved-output-pointer-mismatch' ||
           scenario === 'forward-payload-manifest-digest' ||
-          scenario === 'forward-installed-bundle-inventory-mismatch'
+          scenario === 'forward-installed-bundle-inventory-mismatch' ||
+          scenario === 'forward-source-provenance-mismatch' ||
+          scenario === 'forward-generated-root-agents-provenance-mismatch' ||
+          scenario === 'forward-generated-root-agents-installed-drift'
         ) {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);
@@ -6019,14 +6095,22 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                       ? 'Only the complete project-owned integration pair may retire.'
                       : scenario === 'forward-preserved-output-pointer-mismatch'
                         ? 'Configured mutable-output preservation proof invalid.'
-                        : scenario === 'forward-payload-manifest-digest'
-                          ? 'Repair payload manifest drift.'
-                          : 'Installed bundle inventory differs from forward manifest.',
+                        : scenario === 'forward-source-provenance-mismatch'
+                          ? 'Selected source provenance differs.'
+                          : scenario === 'forward-generated-root-agents-provenance-mismatch'
+                            ? 'Generated root AGENTS provenance differs.'
+                            : scenario === 'forward-generated-root-agents-installed-drift'
+                              ? 'Installed generated root AGENTS drift.'
+                              : scenario === 'forward-payload-manifest-digest'
+                                ? 'Repair payload manifest drift.'
+                                : 'Installed bundle inventory differs from forward manifest.',
           });
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
           expect(preservedPaths.map((file) => readFileSync(file))).toEqual(beforePreservedBytes);
           expect(preservedPaths.map(snapshotAuthorityMetadata)).toEqual(beforePreservedMetadata);
+          if (scenario === 'forward-source-provenance-mismatch')
+            expect(existsSync(path.join(root, 'vida-agent', 'forward-source-provenance.txt'))).toBe(false);
         } else if (scenario === 'forward-installed-bundle-symlink') {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);
@@ -6144,12 +6228,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           assert.ok(beforeBundle);
           assert.ok(beforeBundleMetadata);
           if (generatedRootAgentsScenario) {
-            const parentPaths = new Set(successorManifest.files.map((entry) => entry.path));
+            const selectedParentManifest = generatedRootParentForwardFixture?.successorManifest ?? successorManifest;
+            const parentPaths = new Set(selectedParentManifest.files.map((entry) => entry.path));
             const generatedAgentsEntry = forwardFixture.successorManifest.files.find(
               (entry) => entry.path === 'AGENTS.md',
             );
             expect(parentPaths.has(agentsTemplatePath)).toBe(true);
-            expect(parentPaths.has('AGENTS.md')).toBe(false);
+            expect(parentPaths.has('AGENTS.md')).toBe(scenario === 'forward-generated-root-agents-parent-lineage');
             assert.ok(agentsTemplateSha256);
             assert.ok(generatedRootAgentsBytes);
             expect(generatedAgentsEntry).toMatchObject({
@@ -6159,6 +6244,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               source_path: agentsTemplatePath,
               source_sha256: agentsTemplateSha256,
             });
+            if (scenario === 'forward-generated-root-agents-parent-lineage')
+              expect(selectedParentManifest.files.find((entry) => entry.path === 'AGENTS.md')).toMatchObject({
+                path: 'AGENTS.md',
+                sha256: digestBytes(generatedRootAgentsBytes),
+                size: generatedRootAgentsBytes.length,
+                source_path: agentsTemplatePath,
+                source_sha256: agentsTemplateSha256,
+              });
           }
           expect(
             forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot),
