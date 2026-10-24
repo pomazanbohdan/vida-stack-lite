@@ -5641,10 +5641,40 @@ supported-flow counterexample. Record the dispositions as objective skips only;
 do not change F/L/S/B, denominator, or `BLOCKED`. The projection in
 `CONTOUR-STATUS.*` was updated by its producer and is not hand-edited.
 
-The next report-ordered zero counters for the same contour are branch 80 at
-line 688 (default argument), branch 85 at line 814 (repair review entry), and
-branch 88 at line 859 (parent-selector exact fields); they need bounded source
-analysis before choosing the next packet. No second producer is running.
+### Key429 next report-ordered branch packet prepared
+
+A bounded blind source review found the next report-zero branches reachable:
+branch 80 at `run.ts:688` is `repairAuthority`'s default `false` and should be
+exercised through a valid repair fixture with a matching installed successor
+launcher; branch 85 at `:814` reaches the review-entry guard with the three
+required kinds retained but a failing status; branch 88 at `:859` reaches the
+repair parent exact-field guard by adding one extra selector property and
+rebinding the existing fixture's dependent hashes. The second focused test
+packet now contains exactly those cases. No production source changed.
+
+The selected test passed after that addition: 1 pass, 116 filtered, 104
+expectations, 0 failures. The final run is `target-10`; formatter, test
+TypeScript strict check, Oxlint, and `git diff --check` all pass. Logs are
+`DIAG/bun-cli-run-key429-target-20261024-10.log`,
+`DIAG/bun-cli-run-key429-format-20261024-10.log`,
+`DIAG/bun-cli-run-key429-typecheck-20261024-10.log`, and
+`DIAG/bun-cli-run-key429-lint-20261024-11.log`. Independent final test-diff
+review found no must-fix. It caught that the parent selector extra field was
+added after its decision digest; the fixture now includes the field in
+`parentIntent` before hashing, so all dependent repair and selector hashes bind
+the intended record. Review evidence is retained in
+`DIAG/bun-cli-run-key429-final-review-20261024.md`.
+
+`target-08` exposed identical launcher bytes in the repair and forward parent,
+causing an earlier changed-path refusal; its retained fixture is
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-repair-forward-leaf-BwiWL1`.
+The fixture now uses separate `x` repair-installed and `y` forward-successor
+bytes. Target-09 passed before the parent-hash review correction; target-10 is
+the final result after it.
+
+Coverage from the last committed report remains the only qualification until
+this second packet is committed/pushed and run once by the current producer.
+No second producer is running.
 
 Measured sequence: three scoped static checks parallel (~14.5 s wall), one
 focused target (1.35 s), blind review, hook-backed commit/push, then one serial

@@ -5173,6 +5173,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   test('repair and forward authority reject malformed evidence without writes', async () => {
     for (const scenario of [
       'parent-evidence-mismatch',
+      'repair-review-entry-status',
+      'repair-parent-selector-extra-field',
+      'repair-default-installed-bundle',
       'malformed-source-path',
       'malformed-payload-manifest',
       'duplicate-payload-path',
@@ -5204,7 +5207,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         mkdirSync(childRoot, { recursive: true });
         const archiveManifestSha256 = 'a'.repeat(64);
         const parentLauncherSha256 = 'c'.repeat(64);
-        const successorLauncherSha256 = 'e'.repeat(64);
+        const successorLauncherBytes = Buffer.from('x');
+        const successorLauncherSha256 = createHash('sha256').update(successorLauncherBytes).digest('hex');
         const sharedPayloadSha256 = '1'.repeat(64);
         const changelogPath = 'docs/agent-instructions/agent-instructions.changelog.jsonl';
         const documentationPath = 'docs/agent-instructions/documentation-policy.v1.json';
@@ -5224,6 +5228,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-installed-bundle-inventory-mismatch' ||
           scenario === 'forward-installed-bundle-symlink' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
+          scenario === 'repair-default-installed-bundle' ||
           documentationChange !== null;
         const configBytes = forwardScenario
           ? Buffer.from(
@@ -5331,6 +5336,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           plan_sha256: 'f'.repeat(64),
           payload_manifest_sha256: parentPayloadManifestSha256,
           state_policy: 'clean_start_no_ticket_transfer',
+          ...(scenario === 'repair-parent-selector-extra-field' ? { unexpected_field: 'fixture' } : {}),
         };
         const parentEvidence = Object.fromEntries(
           ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime'].map((kind, index) => {
@@ -5446,7 +5452,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             kind,
             path: relativePath,
             sha256: createHash('sha256').update(bytes).digest('hex'),
-            status: 'passed',
+            status: scenario === 'repair-review-entry-status' && kind === 'assurance' ? 'failed' : 'passed',
           };
         });
         const repairAuthorization = {
@@ -5549,6 +5555,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               successorManifest,
               preservedMutableOutput ?? undefined,
               documentationChange ?? undefined,
+              { launcher: scenario === 'repair-default-installed-bundle' ? successorLauncherBytes : Buffer.from('y') },
             )
           : null;
         if (scenario === 'forward-installed-bundle-inventory-mismatch')
@@ -5623,10 +5630,18 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             code: 'GAP-VIDA-RUN-SELECTOR-001',
             message: 'Repair parent evidence is invalid.',
           });
+        } else if (scenario === 'repair-default-installed-bundle') {
+          assert.ok(beforeBundle);
+          assert.ok(beforeBundleMetadata);
+          expect(repairAuthority(root, childSelector, childSha, childRoot)).toBeUndefined();
+          expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
+          expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
         } else if (
           scenario === 'malformed-source-path' ||
           scenario === 'malformed-payload-manifest' ||
-          scenario === 'duplicate-payload-path'
+          scenario === 'duplicate-payload-path' ||
+          scenario === 'repair-review-entry-status' ||
+          scenario === 'repair-parent-selector-extra-field'
         ) {
           let caught: unknown;
           try {
@@ -5639,7 +5654,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             message:
               scenario === 'malformed-payload-manifest'
                 ? 'Repair payload manifest is invalid.'
-                : 'Repair payload entry is invalid.',
+                : scenario === 'repair-review-entry-status'
+                  ? 'Repair review bindings are invalid.'
+                  : scenario === 'repair-parent-selector-extra-field'
+                    ? 'Repair parent authority is invalid.'
+                    : 'Repair payload entry is invalid.',
           });
         } else if (
           scenario === 'forward-payload-manifest-digest' ||

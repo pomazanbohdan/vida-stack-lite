@@ -33,3 +33,16 @@ The producer's terminal receipt binds this report to source commit
 `c33425384c0a7593ef4f8302140b88ea7a49e16c`, source tree
 `961713ff2dc1dfea2671b40e0f922b8cccfb633e`, and execution-image manifest
 `d787367d42e82f9e3ebce5cc3410ec2c053becb7a7e416f023f15169e254b5f5`.
+
+## Key429 next-packet review
+
+The read-only source review confirmed all three next zero branches are
+reachable: the repair default argument selects installed-bundle validation;
+an evidence entry with a failed status passes the required-kind array guard
+and reaches the per-entry refusal; an extra parent-selector field reaches its
+exact-field refusal when the fixture rebinds the dependent repair records. The
+final test-diff review confirmed the target assertions and hash bindings. It
+initially found that the extra field was added after
+`parentDecision.selector_intent_sha256` had been computed; the fixture was
+corrected to add the field to `parentIntent` before computing that digest, and
+all downstream hashes are rebuilt. Final review found no remaining must-fix.
