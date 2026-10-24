@@ -426,6 +426,11 @@ the exported public inspection path and require the session-absent diagnosis.
 Assert the selector remains absent, the cutover directory remains empty, and
 the Host projection remains equal to its before-image. A missing cutover
 directory and a nonempty cutover directory exercise different branches.
+For an otherwise schema-valid staged selector whose `runtime` is not
+`vida-agent`, public inspection must return the exact selector-binding refusal.
+Compare the selector and staged authority snapshots before and after the call,
+verify the Host projection and empty admission-attempt list are unchanged, then
+restore the original selector bytes.
 For forward documentation authority, keep a CLEAR checkpoint schema- and digest-
 valid while pointing its receipt at a contained readable baseline path under a
 different work directory; assert the exact work/path mismatch refusal and

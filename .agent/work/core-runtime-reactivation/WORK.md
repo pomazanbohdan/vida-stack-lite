@@ -7450,3 +7450,40 @@ unavailable. One broad `git diff` selection of the generated one-line
 that read. Future projection verification is limited to `git status --short`,
 `git diff --stat`, and selected JSON fields; do not print that line-oriented
 snapshot as a diff.
+
+### Key458 next branch plan — invalid active-selector binding
+
+The latest accepted report makes ID187 at `bin/run.ts:1809` the next missing
+arm, with hits `[0,4]`. The selector record validator accepts exact string
+fields without enforcing their binding values, so a schema-valid staged record
+with `runtime: "foreign-runtime"` reaches this guard and must fail with
+`GAP-VIDA-RUN-SELECTOR-001` / `Active selector does not bind this installed
+bundle.` A blind native Luna analysis of the current report and source confirms
+that the public inspection path is reachable and that an objective skip is not
+justified; see
+`DIAG/bun-cli-run-key458-id187-blind-analysis-20261024-01.md`.
+
+The packet extends the existing staged-selector fixture. It writes only the
+wrong runtime field, calls public `run(... --inspect true)`, asserts the exact
+refusal plus unchanged staged authority and Host projection/empty admission
+attempts, then restores and compares the original selector bytes under
+`finally`. There are no consumer effects. The final package-selected target
+passed 1/1 with 74 expectations. Scoped strict TypeScript passed all 510 test
+files, pinned Oxlint passed, and pinned Bun formatting passed for the changed
+test file. The format, strict and Oxlint checks ran concurrently as independent
+read-only checks; numeric work remains serial. Independent blind review is
+complete with no must-fix findings; it confirms ID187 reachability, exact
+refusal, no-write assertions, documentation accuracy and `finally`
+restoration. Its report is
+`DIAG/bun-cli-run-key458-blind-review-20261024-01.md`. Normal commit/push and
+one changed-input producer stage remain.
+
+The first focused invocation used direct `bun test`; it passed on Bun 1.4.4 but
+did not follow TESTING's package-selection wrapper. That command was retained,
+then the target was rerun using `bun bin/bun.ts test` and once more after moving
+the fixture before-image into `try/finally`; the last package-selected run is
+the qualifying target receipt. This was one avoidable extra focused invocation
+(about 14.4 seconds) caused by choosing the runner too late. Future targets
+start with the TESTING wrapper. An initial one-file format check also found
+style issues, fixed by the one-file formatter; no test or compile failure
+occurred. No Vex refresh, second producer, disk survey, or cleanup is planned.

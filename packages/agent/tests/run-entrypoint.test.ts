@@ -8718,6 +8718,29 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             }
             expect(snapshotAuthorityFixture(cutoverRoot)).toEqual(cutoverBeforeInspection);
             expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
+            const invalidBindingBytes = Buffer.from(record({ ...stagedSelector, runtime: 'foreign-runtime' }));
+            writeFileSync(selectorPath, invalidBindingBytes);
+            try {
+              const beforeInvalidBindingInspection = snapshotAuthorityFixture(path.join(root, '.agent'));
+              await runWithPackageIdentity(
+                {
+                  code: 'GAP-VIDA-RUN-SELECTOR-001',
+                  message: 'Active selector does not bind this installed bundle.',
+                },
+                [...inspectArgs, '--inspect', 'true'],
+              );
+              expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeInvalidBindingInspection);
+              expect(readFileSync(selectorPath).equals(invalidBindingBytes)).toBe(true);
+              expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(
+                afterDatabaseInspection,
+              );
+              expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId).admission_attempts).toEqual(
+                [],
+              );
+            } finally {
+              writeFileSync(selectorPath, selectorBytes);
+            }
+            expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
             expect(fixture.invoke(stagedAdmitted.admissionArgs, 0).runtime_selector_observed).toBe(true);
             for (const changed of [
               { cutover_id: 'other-generation' },
