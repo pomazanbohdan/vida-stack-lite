@@ -5575,10 +5575,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }, 60_000);
 
     test('validates an accepted delivery proposal through public run', async () => {
-      let fixture: Omit<FailedFinalCorrectionFixture, 'preparationPath'> | undefined;
+      let fixture: FailedFinalCorrectionFixture | undefined;
       let completed = false;
       try {
-        fixture = await createFailedFinalCorrectionFixture('passing', { preparationInputs: false });
+        fixture = await createFailedFinalCorrectionFixture('passing');
         const delivery = fixture.journal.state.completed
           .flatMap((wave) => wave.items)
           .find((item) => item.request.stage_id === 'prepare_delivery');
@@ -5592,6 +5592,56 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           schema: 'VidaDeliveryProposal/v1',
           destination: 'isolated-fixture',
         });
+
+        const work = fixture.store.readHostStateSnapshot(fixture.identity).work;
+        assert.ok(work);
+        const projectId = fixture.identity.project_ids[0];
+        assert.ok(projectId);
+        const version = fixture.journal.version;
+        const assurance = requireRecord(
+          await run([
+            '--project-root',
+            fixture.root,
+            '--repository',
+            fixture.config.repository.repository_id,
+            '--project',
+            projectId,
+            '--work-path',
+            'AGENT.sidecar.md',
+            '--work-id',
+            fixture.identity.work_id,
+            '--attempt',
+            '1',
+            '--scope-digest',
+            work.binding.work_source_revision,
+            '--team',
+            fixture.producerInput.selection.team,
+            '--kind',
+            fixture.producerInput.selection.kind,
+            '--intent',
+            fixture.producerInput.selection.intent,
+            '--workflow',
+            fixture.producerInput.workflowId,
+            '--expected-revision',
+            String(version.revision),
+            '--expected-digest',
+            version.digest,
+            '--prepare-assurance',
+            path.join(fixture.root, fixture.preparationPath),
+          ]),
+          'public final assurance preparation result',
+        );
+        expect(assurance.status).toBe('assurance_resumed');
+        expect(assurance.assurance_status).toBe('ready');
+        expect(assurance.issued_actions).toEqual([]);
+        assert.ok(Array.isArray(assurance.next_actions));
+        const nextActions = assurance.next_actions.map((action) => requireRecord(action, 'final assurance action'));
+        expect(nextActions.map((action) => [action.kind, action.perspective, action.issue_id])).toEqual([
+          ['review', 'correctness', null],
+          ['review', 'security', null],
+          ['review', 'assurance', null],
+        ]);
+        expect(nextActions.every((action) => action.tool === 'spawn_agent')).toBe(true);
         completed = true;
       } finally {
         fixture?.close(completed);
