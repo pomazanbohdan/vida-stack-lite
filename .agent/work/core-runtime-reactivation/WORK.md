@@ -3336,12 +3336,46 @@ remain unsupported by this evidence; keep stage concurrency at 1x. Tool-call,
 setup-only and token counts are not exposed by the retained receipts and remain
 unmeasured.
 
-The next authorized numeric action is one current-producer coverage stage on
-the reviewed commit. Reuse the current immutable image through its owner; keep
-all launch, request, execution, publication, stdout, stderr and scratch
-artifacts. Reconcile only the producer-owned projection after its terminal
-receipt. Keys 381–387 remain unqualified until that report is checked; exact
-F/L/S/B and the wider contour remain open.
+### Accepted-research recovery coverage stage — 2026-10-24
+
+The single current-producer coverage stage completed on commit
+`ad8caf3c6ddae11a186f65eaac522705b20c2fca` as run
+`12a0fb1a-00a1-4616-9167-2afd4f2a637c` in
+`/workspace/contour-stage-xV6VHy`. Its native execution receipt reports
+179,055.41 ms, producer exit 0, no signal or timeout, a terminated owned
+process group, complete untruncated capture, unchanged image inputs and
+published report. Producer stdout (7,975 bytes) and stderr (13,608 bytes),
+`launch.json`, `request.json`, `execution.json`, `publication.json` and scratch
+remain at the exact stage path. The report is
+`12a0fb1a-00a1-4616-9167-2afd4f2a637c.focused-coverage.json` under the image
+root `/workspace/.vida-quality-inputs/79002a8ea9b707637df00737baf2f73d51b17919/repository`;
+its manifest SHA-256 is
+`00b6c378c3fe7e20f88ead69bfa47913f2d7e3406c0e9fb31aa8666beafda55b`, and the
+source tree matches commit `ad8caf3`.
+
+The exact report records coverage 1 for keys 379–387, including 381–387 in
+`bin/run.ts#fn:run#0/property:verifyCurrent#0`; the newly added accepted-
+research recovery lineage therefore moved those seven keys from zero to one.
+The producer-owned projection now reports 312/557 functions, 1442/2863 lines,
+1535/3143 statements and 1829/3663 branches. Operation status remains BLOCKED;
+this is not contour closure, exact F/L/S/B completion, nor a CRAP qualification.
+Maximum CC 501 and entry CRAP 992 are diagnostic metadata only. No zero was
+converted to an objective disposition.
+
+The outer shell wrapper returned 1 because its auxiliary `tee` path was
+relative to `packages/agent` and did not open. The stage's own receipt remains
+independently complete and published, with full producer captures retained, so
+the stage was not replayed. The wrapper command error is a tooling invocation
+issue, not a TIMEOUT, incomplete producer capture or product failure. Future
+capture wrappers should use an absolute path or the repository-root-relative
+`../../.agent/.../DIAG` path from `packages/agent`.
+
+The next unhit entry in the same contour's exact report is key 402,
+`bin/run.ts#fn:run#0/closure:CallExpression:arguments[2]#4` (CC 1 / CRAP 2,
+body at line 6933 in this source image). Continue this contour from that exact
+report entry; do not repeat keys 379–387 or start another producer before the
+next bounded test packet is verified. Keep the contour open until its governed
+selection is exact or has an independently accepted objective disposition.
 
 ## Owners and acceptance boundaries
 
