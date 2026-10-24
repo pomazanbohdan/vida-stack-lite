@@ -3144,6 +3144,97 @@ establish the needed lease/lineage/authority/CAS, retain an objective GAP for
 independent review rather than fabricate state or treat an unhit counter as
 closed.
 
+### Key379 expired-recovery callback — 2026-10-24
+
+The latest existing `bun-cli-run` producer report `1681f4f6-0648-45ec-90f1-856cbe309b79`
+still records key 379 at zero hits and the contour BLOCKED/unqualified. Its
+source/image, stage receipts and raw streams remain those recorded above; this
+work reuses them and does not replay that image. The route is reachable through
+the already admitted research continuation in
+`keeps CAS and report handling bound to one admitted attempt`: accepted reports
+leave an unissued next wave, no assignment attempts and no current approved
+source-write authority. This removes the need to invent or separately build a
+completed-source-report fixture.
+
+The two earlier focused attempts are preserved and are not numeric evidence.
+`bun-cli-run-key379-target-20261024-01.log` stopped at HostState's
+`expired recovery historical outcomes must already be accepted` guard after
+41.94 s/113 expectations; its rejected fixture did not reach `verifyCurrent`.
+`bun-cli-run-key379-target-20261024-02.log` stopped at the fixture's incorrect
+INTAKE expectation (actual PLAN) after 38.64 s/104 expectations; it tested the
+wrong writer-frontier shape. The next command
+`bun-cli-run-key379-target-20261024-04.log` matched zero tests in 1.40 s because
+the case is registered only under a coverage-mode environment flag; this is a
+selection/setup error, not a test failure. These attempts retain their original
+fixtures/logs and were not deleted or replayed.
+
+The corrected focused case now uses the existing admitted mutation intake and
+public research/report flow. Before recovery it checks INTAKE lifecycle, empty
+assignment attempts, accepted completed observations, a wholly unissued current
+wave, exactly one active matching lease claim, and absence of a current approved
+execution authority. It advances Bun's fake clock just past the persisted
+ticket/claim expiry, passes the required current Journal CAS and explicit
+`--rebind-current-bundle true`, and calls public `run()`. The exact
+`GAP-VIDA-RUN-CONTEXT-001 / Expired recovery requires the existing attributable
+source authority.` refusal proves the prior HostState expiry/CAS/history/claim
+gates passed. A full before/after projection equality covers Work, Ledger and
+claims, Journal, ledger version and admission attempts. The old mistaken probe
+was removed from the separate source-writer fixture; key 391's writer-renewal
+path remains unchanged.
+
+Scoped final checks passed on the final diff: package-pinned Bun 1.4.4 strict
+check of the changed test and imports (141 files, 741 ms), local Oxlint on the
+changed test (exit 0), and package-pinned formatting check (one file, 13 ms).
+The exact coverage-gated test then passed with seed 113: 1 pass, 96 filtered,
+0 fail, 119 expectations; test body 47,611 ms and whole Bun invocation 48.79 s.
+Its complete raw output is
+`DIAG/bun-cli-run-key379-target-20261024-06.log`. The prior pre-strengthening
+pass in `...-05.log` was 1/0, 117 expectations and 44.52 s; it was superseded by
+the final run after adding the matching active-claim assertions. Neither focused
+pass by itself publishes a contour numerator; the counter awaits the current
+producer's post-commit changed-input report.
+
+Blind native Luna reviewed the final route and the preserved key391 coverage;
+it found no blocker. The exact read-only review is retained in
+`DIAG/bun-cli-run-key379-review-20261024-01.md`. The reviewer confirmed that
+the expected callback error can occur only after the HostState recovery gates,
+and that the final state projection is unchanged. Its optional ticket-owner
+assertions are not required to establish callback reachability because the test
+already asserts the unique active matching claim and receives the callback's
+exact refusal.
+
+For this packet, measured work was serial: reuse receipt and caller evidence,
+scoped strict/lint/format, one exact test, then blind review. The unsuccessful
+fixture order cost two completed attempts (41.94 s and 38.64 s) before the
+required HostState preconditions were understood. Registering the test before
+running it would have avoided the 1.40 s no-match command. Reusing the admitted
+research state avoided a new fixture setup; setup time is not separately
+instrumented, so no setup-only saving is claimed. A full prior stage took
+186,366.5 ms and established other counters on different inputs; it is not
+comparable to the 48.79 s focused case and should not be used as a speed ratio.
+The measured static checks totaled less than one second, but do not replace the
+test or numeric producer.
+
+For future checks, the evidence supports this order: read exact receipts and
+gate order; run changed-file strict/lint/format; run the single coverage-gated
+case; obtain independent review; then commit/push and run one changed-input
+stage. Running the stage before fixing a bounded fixture can spend roughly three
+minutes before discovering a local selection issue; this is a process
+hypothesis, since the prior stage had different inputs. Parallel static checks
+and the focused test, or multiple numeric jobs, have no comparable measurements
+here; avoid concurrent producers and keep numeric stage concurrency at 1x.
+The logs expose test duration/expectation counts but not total tool-call counts,
+setup-only time, filesystem operation counts or token use; these remain
+unmeasured rather than estimated.
+
+No product source, runtime, loader, DB behavior, budgets, denominator, fences or
+projection were changed. The existing one-time disk check remains authoritative;
+this packet performed no disk rescan or cleanup. After the documentation
+contract check and normal hooks/push, run exactly one current-producer stage on
+the committed Source. Keep bun-cli-run open unless that report and exact
+counter/projection prove closure or an independently reviewed objective
+disposition.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review

@@ -4837,6 +4837,84 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         } finally {
           writeFileSync(reportFile, originalReportBytes);
         }
+        const beforeExpiredRecovery = inspectClaimProjection();
+        const recoveryWork = beforeExpiredRecovery.work[0];
+        const recoveryJournal = beforeExpiredRecovery.journals[0];
+        assert.ok(recoveryWork?.state.lease && beforeExpiredRecovery.ledger && recoveryJournal);
+        const recoveryLease = recoveryWork.state.lease;
+        const recoveryTicket = beforeExpiredRecovery.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === recoveryLease.ticket_id,
+        );
+        assert.ok(recoveryTicket?.expires_at);
+        const recoveryClaims = beforeExpiredRecovery.ledger.claims.filter(
+          (claim) => claim.ticket_id === recoveryLease.ticket_id && claim.status === 'active',
+        );
+        expect(recoveryClaims).toHaveLength(1);
+        expect(recoveryClaims[0]).toMatchObject({
+          work_id: recoveryWork.identity.work_id,
+          thread_id: recoveryLease.thread_id,
+          generation: recoveryLease.generation,
+          lease_expires_at: recoveryTicket.expires_at,
+        });
+        expect(recoveryWork.state.lifecycle.phase).toBe('INTAKE');
+        expect(recoveryWork.state.execution.assignment_attempts).toEqual([]);
+        expect(recoveryJournal.state.completed.length).toBeGreaterThan(0);
+        expect(
+          recoveryJournal.state.completed.every(
+            (wave) =>
+              wave.items.length > 0 &&
+              wave.items.every(
+                (item) =>
+                  item.issue_id !== null &&
+                  item.observation?.status === 'reported_complete' &&
+                  item.host_reservation === undefined,
+              ),
+          ),
+        ).toBe(true);
+        expect(
+          recoveryJournal.state.items.every(
+            (item) => item.issue_id === null && item.observation === null && item.host_reservation === undefined,
+          ),
+        ).toBe(true);
+        expect(
+          recoveryWork.state.lifecycle.references.some(
+            (reference) =>
+              reference.kind === 'execution_approval' &&
+              reference.disposition === 'current' &&
+              reference.decision === 'approved',
+          ),
+        ).toBe(false);
+        const recoveryScope = recoveryJournal.state.source_scope;
+        assert.ok(recoveryScope);
+        const recoveryExpiresAt = Date.parse(recoveryTicket.expires_at) + 1;
+        expect(Number.isFinite(recoveryExpiresAt)).toBe(true);
+        try {
+          setSystemTime(new Date(recoveryExpiresAt));
+          await assert.rejects(
+            run([
+              ...admitted.args,
+              ...expected(recoveryJournal.version),
+              '--recover-expired-lease',
+              'true',
+              '--rebind-current-bundle',
+              'true',
+              '--native-session-handle',
+              admitted.nativeSessionHandle,
+              '--lease-generation',
+              String(recoveryLease.generation),
+            ]),
+            (error: unknown) => {
+              expect(error).toMatchObject({
+                code: 'GAP-VIDA-RUN-CONTEXT-001',
+                message: 'Expired recovery requires the existing attributable source authority.',
+              });
+              return true;
+            },
+          );
+          expect(inspectClaimProjection()).toEqual(beforeExpiredRecovery);
+        } finally {
+          setSystemTime();
+        }
         let sourceWriterRoot: string | undefined;
         let sourceWriterFixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
         let sourceWriterCompleted = false;
@@ -4850,9 +4928,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           sourceWriterClockRestored = false;
           setSystemTime(new Date(clockFloor));
           await prepareInitialSourceFrontier(sourceWriterFixture, 'writer');
+          const sourceWriterInput = admittedInput(sourceWriterFixture);
           const issuedWriter = await issueInitialSourceFixtureWriter(sourceWriterFixture);
           const beforeWriterRenewal = continuationState(sourceWriterFixture);
-          const sourceWriterInput = admittedInput(sourceWriterFixture);
           const sourceWriterItem = beforeWriterRenewal.journal.items[0];
           const sourceScope = beforeWriterRenewal.journal.source_scope;
           assert.ok(sourceWriterItem?.issue_id && sourceScope);
