@@ -6854,3 +6854,19 @@ Keep raw counters `[0,5]` for both IDs; these skips add no hits, do not change
 denominators or BLOCKED, and do not qualify frozen or exact coverage. The next
 report-selected candidate is ID136 at `bin/run.ts:1401` (`[2,0]`); no disposition
 is claimed until its preceding guards are checked.
+
+### Key447 objective disposition: committed parent proof comparison ID136
+
+A blind report-bound review classified the false arm at `run.ts:1401` (`[2,0]`)
+as objectively unreachable. The caller filters the policy event so its path is
+exactly `relative` and binds its digests to the matching plan change. A returned
+proof must bind `baseline.policy_path` to that event/change path; a mismatch
+throws before return and is caught. The verifier returns only that bound
+`baseline.policy_path`, so a successful result different from `relative` cannot
+reach the comparison. The existing valid historical-parent route covers the
+true arm. Evidence is retained in
+`DIAG/bun-cli-run-key447-id136-review-20261024-01.md`.
+
+Keep the raw `[2,0]` and denominator; this skip adds no hits and changes neither
+BLOCKED nor pending frozen/full qualification. The next report candidate is
+ID138 at `run.ts:1420` (`[15,0]`), whose non-Error catch arm is under blind review.
