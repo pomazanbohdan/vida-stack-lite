@@ -8591,3 +8591,118 @@ prompt contract because the strict native route reports unsupported isolation.
 The next action is normal commit and push, followed by one changed-input stage
 through the existing producer. Do not start another producer or edit the
 generated projection. The prior UNKNOWN remains retained and fenced.
+
+### Key469 in-process denial correction and terminal stage — 2026-10-24 21:17 UTC
+
+The direct `run(candidate)` substitution did not preserve the public CLI error
+contract: its focused target failed all nine denial cases (18 expectations,
+3.40 s). Keep that capture at
+`DIAG/key469-no-work-context-matrix-target-01.log` and all nine named fixture
+roots in the preceding entry. The corrected tests use the already-exported
+`main()` in-process with `isMain: true`, `execute: run`, and local output/exit
+collectors. They retain the normalized public denial envelope, assert the exact
+four-field JSON with `toEqual`, check no stdout and exit code 1, and verify no
+Work or Journal afterimage. The scoped Bun 1.4.4 target passed 9/9 tests and 47
+expectations in 2.32 s. Pinned typecheck passed with 545 captured TypeScript
+files, zero diagnostics, and 104 project files; Oxlint, formatting, the
+canonical WORK link check, and `git diff --check` passed. The blind in-process
+review found no must-fix; its exact-envelope suggestion is in the final test.
+The separate comment review found zero changed comments or suppressions.
+
+The normal source/test commit `f88cffd` and WORK launch-record commit `f752c8d`
+are pushed to `main`. The sole changed-input producer then ran once for source
+commit `f752c8db56379fd4ec35c6735f700b83b55b09de` and tree
+`cdc4833a8e1e705b8dddfd704717864264a1b3b0`, at
+`/workspace/contour-stage-VWia7x`. The immutable image is
+`/workspace/.vida-quality-inputs/71853fe3bc580803f4d0b5c05a92807e797f2be0/repository`,
+fingerprint `c323e30481ddc25d57a0f098f10b5569b24cf89a6ca43e3f40134423de6a8d4a`,
+manifest SHA-256
+`00f7854576489cb98d14b68394959c9b35319b2407e9de84f2a8651cdac19a0b`. Its native
+execution receipt records 246,906.084471 ms, exit 0, no timeout/signal/spawn
+error, complete non-truncated capture, observed owned process-group
+termination, unchanged boot and unchanged image inputs. Root capture is
+`DIAG/key469-stage-20261024-03.log`; native `execution.json`,
+`publication.json`, stdout and stderr remain at the exact stage root.
+
+Run `447d5d8b-fab6-41d4-a383-4bfaffe3af0e` completed 128 tests and 2,728
+expectations across the two selected files. The owner published a
+`focused-diagnostic`, not a full qualification. Current raw totals are F441/555,
+L2058/2860, S2216/3138, B2610/3660, max CC 501 and max entry CRAP 501; operation
+status remains `BLOCKED`. Relative to the previously accepted Key468 report,
+this adds eight lines, eleven statements and thirteen branches, with no
+function or denominator change. In `bin/run.ts`, ID230 moved `[0,166]` to
+`[1,168]`, ID231 `[0,106]` to `[1,106]`, and ID243 `[1,40]` to `[1,41]`.
+The diagnostic report remains bound to the immutable image and is at
+`/workspace/.vida-quality-inputs/71853fe3bc580803f4d0b5c05a92807e797f2be0/repository/packages/agent/coverage/bun-unified/diagnostics/447d5d8b-fab6-41d4-a383-4bfaffe3af0e.focused-coverage.json`.
+
+The blind bounded trace reviewed the current report's raw ID241 `[0,8]`, ID242
+`[0,48]`, ID244 `[0,50]`, and ID245 `[0,50]`. Only the true arms of ID241
+(`requireHistoricalReviewAction`) and ID242 (`parseWorkflowWorkItem`) meet the
+objective-disposition rule through supported public routes. Preserve their raw
+counters; add no hits, remove no denominator, and leave `BLOCKED` unchanged.
+IDs244 and 245 remain reachable through public nonempty `--kind` and `--intent`
+values; their `safeParse` checks are the first enum validation. The next
+bounded packet is to test those two invalid public values together. Existing
+reviewed IDs228, 233, 234, and 236 remain narrow dispositions only; none is a
+coverage or qualification adjustment.
+
+For the exact receipt window 2026-10-24 18:18:26–21:18:26 UTC, reuse the prior
+20:26 receipt aggregate and the two Key469 terminal receipts. Keys458/459 are
+outside the new boundary (their projection times are 17:41:00 and 17:51:40).
+There are eleven serial producer attempts: eight exited 0 and three exited 1.
+Ten attempts completed their selected suite; those ran 1,271 tests (1,269 pass,
+two fail) and 26,770 expectations. The eleventh is the retained Key469
+`SIGKILL`/`ETIMEDOUT` child attempt: it ended UNKNOWN before a suite denominator
+or report existed, so it is excluded from those totals and must not be replayed
+or counted as a kill. Outer stage time totals 2,504,776.012517 ms, mean
+227,706.910228 ms, range 202,198.726–271,158.850 ms. The producer-level
+captures and groups closed; the failed Key469 child capture/cleanup evidence
+remains incomplete/ESRCH at its own layer.
+
+| Check order / numeric parallelism | Measured evidence | Limitation |
+| --- | --- | --- |
+| Focus the target, run scoped checks and independent review, commit/push, then one changed-input producer at 1x | The corrected 9-case target took 2.32 s; the final stage took 246.906 s and published the diagnostic. | This is the successful order for the corrected packet. |
+| Run the full stage before the exact target, then repair and restage at 1x | The first Key469 stage took 271.159 s and published no report; the later exact target exposed the public/internal error mismatch. | A target-first order could have avoided that failed stage, but this is a counterfactual, not a matched A/B trial. |
+| Two or four numeric producers concurrently | No qualified 2x/4x receipt exists. | Keep numeric parallelism at one; higher concurrency remains unmeasured and outside the current single-producer contract. |
+
+Model-token totals and platform-wide tool-call totals are unavailable and are
+not inferred from terminal output. The previous one-time checkout/scratch/
+retained inventory is reused; no second filesystem survey, wide `du`, cleanup,
+or reindex ran. The current stage's `launch.json` admission receipt records
+12,083,400,704 scratch bytes against the unchanged 2,147,483,648-byte floor
+(9,935,917,056 bytes above); this is an admission receipt, not a new survey. A concise
+post-stage process sample found no live Bun/bwrap/tini owner and no zombie
+younger than five minutes; the existing 730 PID-1-owned zombies remain outside
+cleanup custody and were not signalled. Projection was updated only by the
+existing producer after its terminal outcome.
+
+### Key470 public workflow-enum rejection packet — pre-stage
+
+The accepted Key469 report leaves ID244 `[0,50]` at `run.ts:2239` and ID245
+`[0,50]` at `:2241`. A bounded blind Luna review confirmed that otherwise-valid
+public CLI args with nonempty but invalid `--kind` or `--intent` reach the
+corresponding `workflowSelectionBase` `safeParse` before the later Host Work
+execution guard; both arms are reachable, not skip candidates. Added both
+negative values to the existing public denial matrix and factored their
+repeated argv replacement through one `withRunOption` helper. Each case runs
+the public `main()` boundary, checks the exact blocked envelope, exit/no-stdout,
+and empty Work/Journal afterimage in its own temporary root.
+
+The first package-selected Bun 1.4.4 target passed 2/2 tests and 14
+expectations in 3.23 s. After the helper removed that small duplication, the
+final target re-ran and passed 2/2 tests, 14 expectations, zero failures, in
+2.33 s. Final scoped strict
+typecheck passed with 545 captured TS files and zero diagnostics plus 104
+package-project files; Oxlint, one-file format check, and `git diff --check`
+also passed. The first documentation-check command used a path relative to the
+package cwd even though the checker resolves selections from repository root;
+its missing-document result is retained at `DIAG/key470-docs-check-01.log`.
+The corrected root-relative selection passed at
+`DIAG/key470-docs-check-02.log`. Captures are
+`DIAG/key470-kind-intent-target-02.log`,
+`DIAG/key470-kind-intent-typecheck-02.log`,
+`DIAG/key470-kind-intent-oxlint-02.log`, and
+`DIAG/key470-kind-intent-format-02.log`. Blind Luna review found no must-fix;
+its independent reachability result is recorded above. Commit/push and one
+changed-input stage remain pending. Keep the numeric producer at one and do not
+run this stage until the normal hooks and push terminate successfully.

@@ -7328,6 +7328,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       );
     }, 30_000);
 
+    const withRunOption = (args: readonly string[], flag: string, value: string) => {
+      const candidate = [...args];
+      const index = candidate.indexOf(flag);
+      if (index < 0 || index + 1 >= candidate.length) throw Error(`fixture does not include a value for ${flag}`);
+      candidate[index + 1] = value;
+      return candidate;
+    };
     const contextDenials = [
       {
         name: 'stale repository identity',
@@ -7408,6 +7415,24 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           code: 'GAP-VIDA-RUN-WORKFLOW-001',
           message:
             'The requested workflow is not configured for this selection. Next action: inspect the exact work and check its issued contract before retrying.',
+        },
+      },
+      {
+        name: 'invalid workflow kind',
+        candidate: (args: readonly string[]) => withRunOption(args, '--kind', 'not-a-work-item-kind'),
+        expected: {
+          code: 'GAP-VIDA-RUN-EXECUTION-001',
+          message:
+            'The requested run was blocked by runtime validation. Next action: inspect the exact work and check its issued contract before retrying.',
+        },
+      },
+      {
+        name: 'invalid workflow intent',
+        candidate: (args: readonly string[]) => withRunOption(args, '--intent', 'not-a-work-item-intent'),
+        expected: {
+          code: 'GAP-VIDA-RUN-EXECUTION-001',
+          message:
+            'The requested run was blocked by runtime validation. Next action: inspect the exact work and check its issued contract before retrying.',
         },
       },
     ] as const;
