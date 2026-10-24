@@ -7967,21 +7967,21 @@ cleanup and sibling progression. Logs are retained as
 unmodified. The first static pass after the serial change is also retained.
 Test-created retained fixture paths and the failed stage tree were not deleted.
 
-For the receipt-based rolling window 2026-10-24 16:15:49–19:15:49 UTC, exact
+For the receipt-based rolling window 2026-10-24 16:25:18–19:25:18 UTC, exact
 `execution.json` modification times put Keys454, 455, 456, 457, 458, 459, 460,
-462, 463 and both Key464 stages inside it. Keys452 and 453 ended before the
-window (15:52:03 and 16:07:31). The eleven current-window stage attempts ran
-1,397 selected tests and 28,747 expectations in aggregate. Elapsed time totals
-2,394,274.643 ms, mean 217,661.331 ms, and range 196,979.462–253,196.590 ms.
-Ten stages exited 0; Key464's first stage is the one failed suite described
-above, and its corrected retry succeeded below. These receipts measure serial
-1x producer cost across differing inputs, caches, and host conditions, not a
-controlled performance comparison.
+462, 463, both Key464 stages and Key465 inside it. Keys452 and 453 ended before
+the window (15:52:03 and 16:07:31). The twelve current-window stage attempts ran
+1,524 selected tests and 31,441 expectations in aggregate. Elapsed time totals
+2,602,774.654 ms, mean 216,897.888 ms, and range 196,979.462–253,196.590 ms.
+Eleven stages exited 0; Key464's first stage is the one failed suite described
+above, and its corrected retry and Key465 succeeded below. These receipts
+measure serial 1x producer cost across differing inputs, caches, and host
+conditions, not a controlled performance comparison.
 
 | Check order / numeric parallelism | Measured evidence | Inference or limitation |
 | --- | --- | --- |
-| Reuse the accepted report, trace and batch reachable gaps, run target/static/review, commit and push, then one changed-input stage at 1x | Ten successful stages in the window used this pattern; the first Key464 stage exposed the module-mock isolation defect, and the justified corrected retry passed. | Keep this order. The failed stage produced actionable regression evidence rather than a valid coverage update. |
-| Stage before review or once per subfix at 1x | Current-window mean is 217.661 s; the failed stage alone cost 236.373 s. | Avoidable early stages would cost about 3.63 minutes at the observed mean. This is an estimate, not a matched sequence trial. |
+| Reuse the accepted report, trace and batch reachable gaps, run target/static/review, commit and push, then one changed-input stage at 1x | Eleven successful stages in the window used this pattern; the first Key464 stage exposed the module-mock isolation defect, and the justified corrected retry passed. | Keep this order. The failed stage produced actionable regression evidence rather than a valid coverage update. |
+| Stage before review or once per subfix at 1x | Current-window mean is 216.898 s; the failed stage alone cost 236.373 s. | Avoidable early stages would cost about 3.61 minutes at the observed mean. This is an estimate, not a matched sequence trial. |
 | Two or four numeric stages in parallel | No qualified 2x/4x receipt exists. | Keep one producer; higher numeric parallelism is unmeasured and conflicts with the current single-owner policy. |
 
 The corrected retry ran once at `/workspace/contour-stage-Vef1O4` from commit
@@ -7997,9 +7997,9 @@ tests, 2,689 expectations, 0 failures in 217.38 s. The published report is
 root stage capture is `DIAG/bun-cli-run-key464-stagefix-20261024-01.log`.
 Projection owner reported attempt 1,472, accepted `focused-diagnostic`, and
 `BLOCKED`: F441/555, L2044/2860, S2195/3138, B2585/3660, max CC/entry CRAP 501.
-ID214 is now `[1,1]`; the next zero arm is ID215 at `run.ts:2029`, `[0,2]`.
-The remaining ID217 `[0,3]`, ID218 `[0,2]`, and ID220 `[1,0]` remain as
-reported in the exact current report.
+ID214 is `[1,1]` and ID215 is now `[1,2]`, so both arms are covered. ID217
+`[0,3]`, ID218 `[0,2]`, and ID220 `[1,0]` remain as reported in the exact
+current report.
 
 Observable local work for this packet: three focused invocations (initial
 isolated 1/1 pass, serial-only pair 1 pass/1 fail, and corrected pair 2/2 pass),
@@ -8058,6 +8058,52 @@ found no must-fix and confirmed exact branch reachability, error shape,
 afterimage/pending-file assertions, mock restoration and scope; the reviewer
 ran no tests. Logs: `DIAG/key465-id215-typecheck-01.log`,
 `DIAG/key465-id215-oxlint-01.log`, `DIAG/key465-id215-format-01.log`, and
-`DIAG/key465-id215-target-01.log`. No full stage has run for Key465 yet. After
-WORK/docs/test are ready, commit and push normally, then run exactly one
-changed-input stage through the existing producer.
+`DIAG/key465-id215-target-01.log`. At that pre-stage point the stage was
+pending. WORK/docs/test were committed and pushed normally, then one
+changed-input stage ran through the existing producer.
+
+### Key465 changed-input coverage stage terminal — 2026-10-24 19:25 UTC
+
+The sole producer ran once for commit `21ef5fc7b71c32f87853339c956c3c8d0332c45e`
+at `/workspace/contour-stage-dZZJ8Q`. Its native `execution.json` records
+208,500.011 ms elapsed, exit 0, no signal/spawn error/timeout, complete
+non-truncated capture, observed process-group closure, unchanged boot and image
+inputs. The image manifest SHA is
+`950cf8b94683550007bdac9bb0aff67332000f81a7920cc83599db4e79259f35`; native
+stdout/stderr receipts are 7,976/17,369 bytes with hashes in that execution
+receipt. The published run is
+`182761e7-1d72-4a65-8979-c040acf79a01`, report
+`/workspace/.vida-quality-inputs/432eae0c6e2416197a4ed1b9ca96f3008ad1d65c/repository/packages/agent/coverage/bun-unified/diagnostics/182761e7-1d72-4a65-8979-c040acf79a01.focused-coverage.json`;
+root stage capture is `DIAG/bun-cli-run-key465-stage-20261024-01.log`. The suite
+passed 127/127 tests, 2,694 expectations and 0 failures in 203.33 s. Projection
+owner advanced to attempt 1,474, accepted `focused-diagnostic`, and remains
+`BLOCKED`: F441/555, L2044/2860, S2196/3138, B2586/3660, max CC/entry CRAP 501.
+ID215 is `[1,2]` (both arms covered); the next zero branch is ID217 `[0,3]`.
+
+### Key466 ID217 early cutoff-lock refusal — current packet
+
+ID217 is the first guard after the null-selector check in `advanceCutoff`:
+`pathExists(cutoff-witness.lock)` must refuse before runtime-config loading,
+database imports or SQLite work. The existing cutoff SQLite process fixture
+creates an exclusive fixture-owned marker before spawning its live database
+owner, checks the exact refusal code/message and byte-identical lock/witness
+afterimages, removes the marker only while its bytes still match, and asserts
+absence before continuing the original SQLite busy, process-termination and
+retry assertions. This keeps both boundaries distinct in one existing fixture.
+
+The target passed twice: the first run passed 1/1 with 11 expectations, 7.53 s
+including concurrent scoped static checks; after correcting a Bun
+`await-thenable` lint warning and formatting, it passed again 1/1, 11
+expectations, 4.96 s including harness (3.362 s test body). Typecheck passed
+(545 captured TypeScript files and 104 project files, zero diagnostics); final
+direct Oxlint, formatter, and `git diff --check` passed. The initial Oxlint and
+format failure logs remain retained, followed by the final logs:
+`DIAG/key466-id217-final-typecheck-01.log`,
+`DIAG/key466-id217-final-oxlint-01.log`,
+`DIAG/key466-id217-final-format-01.log`, and
+`DIAG/key466-id217-final-target-01.log`. Fresh blind Luna review found no
+must-fix and confirmed the early marker guard precedes the child/SQLite flow,
+marker ownership/release is safe, and the existing busy/termination/retry path
+remains intact. No full stage has run for Key466. The next step is normal
+commit/push, then exactly one changed-input stage; no objective skip, numeric
+parallelism, disk resurvey or cleanup is proposed.

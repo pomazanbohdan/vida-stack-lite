@@ -2499,6 +2499,45 @@ test('cutoff SQLite exclusion rejects a live owner and recovers after process te
         2,
       ) + '\n',
     );
+    const selector: ActiveSelectorState = {
+      generationRoot,
+      generation: 'fixture-generation',
+      selectorSha,
+      planSha256: 'a'.repeat(64),
+      archiveManifestSha256: 'b'.repeat(64),
+      repaired: false,
+      forward: false,
+      currentMutableOutput: null,
+    };
+    const values = {
+      project_root: root,
+      repository: 'fixture-repository',
+      work_id: 'new-work',
+      attempt: '1',
+      scope_digest: 'a'.repeat(64),
+    };
+    const cutoffLockPath = path.join(generationRoot, 'cutoff-witness.lock');
+    const cutoffLockBytes = Buffer.from('fixture-owned cutoff marker\n');
+    const witnessBeforeMarkerCheck = readFileSync(witnessPath);
+    writeFileSync(cutoffLockPath, cutoffLockBytes, { flag: 'wx' });
+    let markerChecksPassed = false;
+    try {
+      await Promise.resolve(
+        expect(advanceCutoff(selector, values)).rejects.toMatchObject({
+          code: 'GAP-VIDA-RUN-CUTOFF-001',
+          message: 'Cutoff witness is held or unsafe.',
+        }),
+      );
+      expect(existsSync(cutoffLockPath)).toBe(true);
+      expect(readFileSync(cutoffLockPath)).toEqual(cutoffLockBytes);
+      expect(readFileSync(witnessPath)).toEqual(witnessBeforeMarkerCheck);
+      markerChecksPassed = true;
+    } finally {
+      if (markerChecksPassed && existsSync(cutoffLockPath) && readFileSync(cutoffLockPath).equals(cutoffLockBytes))
+        unlinkSync(cutoffLockPath);
+    }
+    expect(existsSync(cutoffLockPath)).toBe(false);
+
     const config = loadRuntimeConfig(root);
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
@@ -2560,23 +2599,6 @@ test('cutoff SQLite exclusion rejects a live owner and recovers after process te
           `\nstdout:\n${stdout}\nstderr:\n${stderr}`,
       );
     }
-    const selector: ActiveSelectorState = {
-      generationRoot,
-      generation: 'fixture-generation',
-      selectorSha,
-      planSha256: 'a'.repeat(64),
-      archiveManifestSha256: 'b'.repeat(64),
-      repaired: false,
-      forward: false,
-      currentMutableOutput: null,
-    };
-    const values = {
-      project_root: root,
-      repository: 'fixture-repository',
-      work_id: 'new-work',
-      attempt: '1',
-      scope_digest: 'a'.repeat(64),
-    };
     await Promise.resolve(
       expect(advanceCutoff(selector, values)).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CUTOFF-001' }),
     );

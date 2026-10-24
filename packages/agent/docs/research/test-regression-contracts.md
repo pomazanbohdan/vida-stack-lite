@@ -1520,7 +1520,7 @@ Keep5s cases and distinguish this component proof from a native disk failure.
 
 The first admitted new-work attempt closes rollback, even if preparation fails. Initialization alone does not. A cutoff witness and current bindings must prove that boundary. Verify writer/verifier integrity against the same persisted JSON bytes. Do not claim that filesystem and SQL effects are jointly atomic.
 
-Retained-selector exclusion uses the existing SQLite boundary. Check owner exclusion, process termination and later progress. Orphan locks need supported repair or retirement. PID, age or absence alone does not authorize deletion. Directory flush support is not a universal power-loss guarantee.
+Retained-selector exclusion uses the existing SQLite boundary. Before spawning its live SQLite owner, the existing fixture may create its own `cutoff-witness.lock` marker and call `advanceCutoff`; require the exact `GAP-VIDA-RUN-CUTOFF-001` / `Cutoff witness is held or unsafe.` refusal, unchanged marker bytes and unchanged witness bytes. Remove only that fixture-owned marker after its beforeimage still matches, then continue the independent SQLite busy/termination/retry case. Orphan locks need supported repair or retirement. PID, age or absence alone does not authorize deletion. Directory flush support is not a universal power-loss guarantee.
 
 Research repair uses validators, dependencies and schemas from the executing package. Failed research creates no success artifact. Task-packet-only synthesis does not need unrelated research. Research dispatch interruption preserves issue identity and UNKNOWN exposure. Do not replay it automatically.
 
