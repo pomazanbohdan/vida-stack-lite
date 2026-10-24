@@ -6090,43 +6090,50 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const invalidEvidenceSelectorPath = path.join(root, '.agent', 'active-runtime-selector.v1.json');
             const invalidEvidenceDecisionPath = path.join(generationRoot, 'activation-decision.v1.json');
             const invalidEvidenceCommitPath = path.join(generationRoot, 'selector-commit.json');
+            const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+            const bundlePath = path.join(root, 'vida-agent');
+            const retainedBundlePath = path.join(root, '.vida-agent-fixture-original');
+            const runWithPackageIdentity = async (expected: { code: string; message: string }) => {
+              renameSync(bundlePath, retainedBundlePath);
+              let bundleRestored = false;
+              try {
+                symlinkSync(packageRoot, bundlePath, process.platform === 'win32' ? 'junction' : 'dir');
+                await Promise.resolve(expect(run(admitted.args)).rejects.toMatchObject(expected));
+              } finally {
+                const currentBundle = lstatSync(bundlePath, { throwIfNoEntry: false });
+                if (currentBundle?.isSymbolicLink()) unlinkSync(bundlePath);
+                if (!existsSync(bundlePath)) renameSync(retainedBundlePath, bundlePath);
+                bundleRestored =
+                  existsSync(bundlePath) && !lstatSync(bundlePath).isSymbolicLink() && !existsSync(retainedBundlePath);
+              }
+              expect(bundleRestored).toBe(true);
+            };
             writeFileSync(invalidEvidenceSelectorPath, record(invalidSelector));
             writeFileSync(invalidEvidenceDecisionPath, record(invalidDecision));
             writeFileSync(invalidEvidenceCommitPath, record(invalidCommit));
             const beforeInvalidEvidenceRun = snapshotAuthorityFixture(path.join(root, '.agent'));
-            const invalidEvidenceDatabasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
-            const databaseBeforeInvalidEvidenceRun = existsSync(invalidEvidenceDatabasePath)
-              ? readFileSync(invalidEvidenceDatabasePath)
-              : undefined;
-            const bundlePath = path.join(root, 'vida-agent');
-            const retainedBundlePath = path.join(root, '.vida-agent-fixture-original');
-            renameSync(bundlePath, retainedBundlePath);
-            let bundleRestored = false;
-            try {
-              symlinkSync(packageRoot, bundlePath, process.platform === 'win32' ? 'junction' : 'dir');
-              await Promise.resolve(
-                expect(run(admitted.args)).rejects.toMatchObject({
-                  code: 'GAP-VIDA-RUN-SELECTOR-001',
-                  message: 'Prepared cutover decision or selector commit is invalid.',
-                }),
-              );
-              expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeInvalidEvidenceRun);
-              expect(existsSync(invalidEvidenceDatabasePath)).toBe(databaseBeforeInvalidEvidenceRun !== undefined);
-              if (databaseBeforeInvalidEvidenceRun !== undefined)
-                expect(readFileSync(invalidEvidenceDatabasePath).equals(databaseBeforeInvalidEvidenceRun)).toBe(true);
-            } finally {
-              const currentBundle = lstatSync(bundlePath, { throwIfNoEntry: false });
-              if (currentBundle?.isSymbolicLink()) unlinkSync(bundlePath);
-              if (!existsSync(bundlePath)) renameSync(retainedBundlePath, bundlePath);
-              writeFileSync(invalidEvidenceSelectorPath, record(selector));
-              writeFileSync(invalidEvidenceDecisionPath, record(activationDecision));
-              writeFileSync(invalidEvidenceCommitPath, record(selectorCommit));
-              bundleRestored =
-                existsSync(bundlePath) && !lstatSync(bundlePath).isSymbolicLink() && !existsSync(retainedBundlePath);
-            }
-            expect(bundleRestored).toBe(true);
+            expect(existsSync(databasePath)).toBe(false);
+            await runWithPackageIdentity({
+              code: 'GAP-VIDA-RUN-SELECTOR-001',
+              message: 'Prepared cutover decision or selector commit is invalid.',
+            });
+            expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeInvalidEvidenceRun);
+            expect(existsSync(databasePath)).toBe(false);
 
-            const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+            writeFileSync(invalidEvidenceSelectorPath, record(selector));
+            writeFileSync(invalidEvidenceDecisionPath, record(activationDecision));
+            writeFileSync(invalidEvidenceCommitPath, record(selectorCommit));
+            const maintenanceLockPath = path.join(generationRoot, 'maintenance-lock.v1.json');
+            writeFileSync(maintenanceLockPath, record({ schema: 'VidaCutoverMaintenanceLock/v1' }));
+            const beforeValidEvidenceRun = snapshotAuthorityFixture(path.join(root, '.agent'));
+            await runWithPackageIdentity({
+              code: 'GAP-VIDA-RUN-SELECTOR-001',
+              message: 'Cutover maintenance is still active.',
+            });
+            expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeValidEvidenceRun);
+            expect(existsSync(databasePath)).toBe(false);
+            unlinkSync(maintenanceLockPath);
+
             mkdirSync(path.dirname(databasePath), { recursive: true });
             const database = new Database(databasePath, { strict: true });
             new HostStateStore(
