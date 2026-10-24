@@ -3902,6 +3902,81 @@ Continue only `bun-cli-run` from the newly projected zero. Do not replay the
 failed zero-match invocation, merge coverage maxima across images, repeat the
 completed stage, or run CRAP/mutation during this F/L/S/B phase.
 
+### Bun-cli-run key408 interrupted research-preparation guard — 2026-10-24
+
+The prior projection identified `isResearchPreparationUnsafe` at
+`bin/run.ts:328-332` as the current zero-count callable. The implementation
+remains unchanged. The new behavior-level case in
+`packages/agent/tests/run-entrypoint.test.ts` creates two research assignments,
+issues the public research wave, then CAS-writes a schema-valid `preparing`
+journal with one issued item and one unissued item. It validates the resulting
+row through `openConfiguredMastraSessionLedger().resume()` before calling
+public `run()` with `--issue-wave true` and the current revision/digest. The
+entrypoint rejects with the exact
+`GAP-VIDA-RUN-EXECUTION-001` / `Research preparation is not safely resumable
+for the current wave.` response. Work, ledger, journal and admission-attempt
+projections are equal before and after. The test does not assert whole-directory
+immutability and performs no research dispatch or consumer effect.
+
+The fixture work exposed nine unsuccessful setup/invocation iterations before
+the exact refusal was demonstrated: stale `possible` exposure, a call without
+the mutating `--issue-wave` option, expected-version parsing at the wrong CLI
+arm, stale issue-bound row fields, and premature/malformed report paths. Those
+are test-construction failures, not confirmed product defects; their attempt
+roots remain in `/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-*`.
+One otherwise-correct refusal changed SQLite `-wal`/`-shm` sidecars while a
+reader opened the DB. The final oracle therefore compares semantic Host rows
+instead of claiming a byte-for-byte `.agent` directory snapshot. That narrower
+assertion avoids treating transient SQLite bookkeeping as a product write.
+The ordinary commit hook also caught `expect.any(String)` as an unsafe `any[]`
+argument; the final assertion compares the typed issued ID directly. The hook
+then passed without bypasses.
+
+With package-selected Bun 1.4.4, the final exact target passed: 1 pass, 8
+filtered, 14 expectations; 3,954.89 ms for the test case and 5.28 s for the
+invocation. Formatter and scoped strict checks passed (one file / 144 files),
+and type-aware Oxlint passed. Native blind Luna reachability and final reviews
+found no correctness defect. They confirm the function is reached through the
+public route and the fixture satisfies the persisted-ledger parser, while
+explicitly limiting the claim: the `issue_id === null` operand is the true
+short-circuit arm; the true `observation` and `host_reservation` arms are not
+independently closed. No objective disposition is claimed. Reports are
+`DIAG/bun-cli-run-key408-reachability-review-20261024-01.md`,
+`DIAG/bun-cli-run-key408-final-review-20261024-01.md`, and
+`DIAG/bun-cli-run-key408-fixture-failure-review-20261024-01.md`.
+
+After commit `4ee41a964e56cc91aa4ded1f2d01aa3f81a9c2c4` passed normal hooks and
+was pushed, exactly one pinned coverage stage ran for the changed inputs at
+`/workspace/contour-stage-eBbBD8`. Run
+`6bcbbca6-28f4-463d-80bf-6294f84f4b28` exited 0 in 190,066.92 ms under the
+unchanged 330,000 ms timeout. Native receipts show complete, untruncated
+stdout/stderr capture (7,970 / 14,265 bytes), observed process-group
+termination, unchanged boot and image inputs, and successful publication. The
+bound image records tree
+`38a59d8a768db29d0fa0ad9f22f4e10e46c6c05b`, input fingerprint
+`cc7533589d9cde25e62353fee147002d20ae08cfcf196f519bb94f0a384bbf85` and
+manifest SHA-256
+`c36ec831d6018ad23ac09d032b435b3736a64d38aa85fd8ccf2a938c1ac29e9a`. Its
+projection is 341/557 F, 1561/2863 L, 1661/3143 S and 1952/3663 B, with max
+CC 501, max entry CRAP 992, 1,373 attempts and `BLOCKED`. Versus the preceding
+distinct image this report adds +1 F, +7 L, +7 S and +9 B; do not merge maxima
+or interpret that delta as a matched performance comparison. The focused
+report marks the callable itself covered, but does not expose branch-location
+counters; exact F/L/S/B closure is not established and the contour remains
+open. Historical exact contours remain 17/46.
+
+The target took 3.95 s and the full pinned stage 190.07 s. The prior stage was
+166.79 s, but different commits/images and uncontrolled conditions prevent a
+causal runtime comparison. The small-target-first order rejected several
+invalid fixtures before spending another stage; no matched serial/parallel
+timing exists. The measured producer level remained one. Aggregate tool/API
+calls and token counts are unavailable from receipts. The next report-order
+zero is `addObservationForAction` at `bin/run.ts:352`; first resolve the
+remaining guard-operand reachability/evidence from the bound report and
+existing Source before changing focus. Do not replay any failed fixture, run
+another full stage for this image, or record an objective skip without the
+TESTING proof.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
