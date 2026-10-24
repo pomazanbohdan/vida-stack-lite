@@ -7670,9 +7670,9 @@ This review/target sequence reused the exact report and source slice; Vex was
 not callable in this session, and the existing receipt already records the
 stale index, so no refresh or duplicate source index was started. No new disk
 survey or cleanup was performed. The prior stage admission receipt remains the
-available capacity evidence. The normal commit/push and one changed-input run
-by the existing serial producer are still pending; current report counters and
-the BLOCKED state must not be advanced by these local tests.
+available capacity evidence. Commit `e972f593d1ce06ac203ef4b1db170867547c161c`
+was ordinarily pushed; its changed-input stage then completed. Terminal details
+follow. The focused target itself did not advance report counters or BLOCKED.
 
 Across Keys456–459, the retained ledger shows 14 focused invocations: four
 Key456 fixture/setup attempts failed and ten invocations passed. Key459 needed
@@ -7680,3 +7680,71 @@ one package-selected target run (1/83) before stage. The earlier Key458 packet
 used two extra targets (26.28 s total) before settling on TESTING's wrapper and
 final fixture shape; Key459 chose `bun bin/bun.ts test` first. Platform-wide
 tool-call and model-token totals remain unavailable.
+
+### Key460 changed-input coverage stage terminal — 18:20 UTC
+
+After normal commit hooks and ordinary push, the existing single producer ran
+`bun run test:contour:stage --contour bun-cli-run --lane coverage` once at
+`/workspace/contour-stage-HD6KwY`. The terminal outcome records exit 0, no
+signal/spawn error/timeout, complete capture, closed process group, unchanged
+boot and image inputs, and publication by the existing owner. Its elapsed time
+was 208,433.299 ms. The root command capture is
+`DIAG/bun-cli-run-key460-stage-20261024-01.log`; the stage retains
+`request.json`, `launch.json`, `execution.json`, `publication.json`,
+`stdout.log`, and `stderr.log`.
+
+The immutable image binds source commit `e972f593d1ce06ac203ef4b1db170867547c161c`,
+tree `3f14157c6f509fc7a3e7b04fdb15f519b12fe18f`, input fingerprint
+`fe216467d92b269a415ce93c2b9f9340356fffa67c8a11c579084d3e73fb287c`, and
+image-manifest SHA-256
+`65c0db8889a288020c049738fc68c511cdf7169abd006a61b54e013e79b0d5fa`.
+Run `0bf46107-20b7-4c49-b537-546108d43032` passed 127 tests and 2,665
+expectations across the two selected files; test time was 202.66 s. Its report is
+`/workspace/.vida-quality-inputs/9830768058469b976ead9c718bcc5eccc432244a/repository/packages/agent/coverage/bun-unified/diagnostics/0bf46107-20b7-4c49-b537-546108d43032.focused-coverage.json`,
+report SHA-256 `1869a265d0dd1c6e2ffab72265f3127ac960817b29d999ce1cca998f9838f338`,
+and report-manifest SHA-256
+`bd60c94497281db3230165a4f82d97fd60ee9937fb8eda6b650840dc83c525a6`.
+
+The producer-owned projection now has 1,465 attempts and records accepted
+focused-diagnostic status, still `BLOCKED`. F/L/S/B is F441/555, L2040/2860,
+S2190/3138, B2580/3660; max CC and entry CRAP remain 501. The narrowed current
+report query for IDs 189–201 found ID190 `[2,1]`, ID191 `[3,2,2]`, ID192
+`[2,7]`, ID193 `[1,1]`, ID194 `[2,1,1]`, ID196 `[1,4]`, ID198 `[1,3]`, and
+ID199 all ten operands positive. IDs189 `[3,9]`, 195 `[5,2]`, 197 `[5,5,4]`,
+and 201 all thirteen operands also remain positive. ID200 is still `[0,3]` at
+`run.ts:1881`; this stage therefore did not close the contour or qualify the
+numeric gate.
+
+### Key462 ID200 repair — focused check passed, stage pending
+
+The blind Luna source trace corrected its earlier reachability claim: the
+existing nested `evidence.parity.unexpected` case passes ID200's outer guard and
+refuses later in evidence validation. ID200 requires an unexpected top-level
+decision key. The new case adds that key while recomputing decision, selector,
+and commit digests; it also rebinds the released lock's activation-decision
+digest and the release receipt's lock digest so the earlier maintenance-proof
+check cannot mask the target guard. It restores six original files in `finally`
+and verifies the original bytes. A follow-up blind Luna review found no
+remaining must-fix; no source production code changed.
+
+The package-selected target passed 1/1 with 118 filtered and 176 expectations
+in 29.88 s. Final pinned strict typecheck (545 captured TypeScript files, 0
+diagnostics), Oxlint, formatter on the two changed files, and scoped
+`git diff --check` passed. The first static pass caught a duplicate copy of the
+new block and formatter differences; both were fixed before the passing target.
+The release-proof rebind was added after independent review, then the target and
+all final scoped checks passed. The run log is
+`DIAG/key462-focused-runentrypoint-target-01.log`. The owner projection remains
+at Key460 until the next producer terminal result. Commit/push and exactly one
+changed-input stage for this corrected packet remain pending.
+
+Post-stage inspection accidentally expanded large outputs once: asking `jq
+keys` of the attempts array printed its index list, including 996 elements;
+including `.metrics[0]` in a projection query expanded the full function map
+(tool reported about 56,900 output tokens); and an unbounded diff of the
+minified 7 MB projection emitted a tool-truncated estimate of 2,035,437 tokens.
+These were read-only and did not trigger suites, hashing, or indexing. Subsequent
+queries select `.attempts[-1]`, scalar bindings, and branch IDs 189–201 only.
+These wrapper output estimates are not platform model-token usage; aggregate
+tool-call and billed-token counts remain unavailable. Preserve the single
+producer and use narrow projections/diffs to avoid repeating this overhead.

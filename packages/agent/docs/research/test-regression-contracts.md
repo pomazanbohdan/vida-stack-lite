@@ -439,15 +439,18 @@ the original afterimage. This covers forward selection and its guard only; it
 does not grant forward-update authority.
 In the released-selector fixture, exercise the prepared-selector refusal with an
 unsupported state policy, the prepared-journal refusal with a changed journal
-status, and the activation-decision refusal after recomputing the selector and
-commit digests around an extra evidence field. Use public `--inspect true` for
-each case. Also exercise the repair selector's incomplete-fields refusal and
-the repair-authority reader's schema-valid but incomplete records. For the
-forward branch, cover digest-operand evaluation with valid digests and a wrong
-state policy, then reach its reader with the supported policy and a wrong-schema
-forward-intent record. Require exact diagnostics and unchanged `.agent` and Host
-database snapshots after each refusal. Restore every original file in `finally`. These
-inspections do not apply a cutover or authorize consumer work.
+status, then recompute selector and commit digests for both a nested extra
+evidence key and an unexpected top-level decision key. Use public inspection
+(`--inspect true`) for each case. Also exercise the repair selector's
+incomplete-fields refusal and the repair-authority reader's schema-valid but
+incomplete records. For the top-level-key case, update the released lock's
+activation-decision digest and the release receipt's lock digest, then restore
+both original records in `finally`. For the forward branch, cover digest-operand evaluation
+with valid digests and a wrong state policy, then reach its reader with the
+supported policy and a wrong-schema forward-intent record. Require exact
+diagnostics and unchanged `.agent` and Host database snapshots after each
+refusal. Restore every original file in `finally`.
+These inspections do not apply a cutover or authorize consumer work.
 For forward documentation authority, keep a CLEAR checkpoint schema- and digest-
 valid while pointing its receipt at a contained readable baseline path under a
 different work directory; assert the exact work/path mismatch refusal and

@@ -8512,6 +8512,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const activationDecisionBytes = readFileSync(activationDecisionPath);
             const selectorCommitPath = path.join(generationRoot, 'selector-commit.json');
             const selectorCommitBytes = readFileSync(selectorCommitPath);
+            const releasedLockPath = path.join(generationRoot, 'maintenance-lock.released.v1.json');
+            const releasedLockBytes = readFileSync(releasedLockPath);
+            const maintenanceReleasePath = path.join(generationRoot, 'maintenance-release.v1.json');
+            const maintenanceReleaseBytes = readFileSync(maintenanceReleasePath);
             try {
               writeFileSync(selectorPath, record({ ...selector, state_policy: 'forward_only_preserve_work' }));
               await expectReadOnlyRefusal({
@@ -8535,16 +8539,54 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 code: 'GAP-VIDA-RUN-SELECTOR-001',
                 message: 'Prepared cutover decision or selector commit is invalid.',
               });
+
+              const invalidDecisionShape = { ...activationDecision, unexpected: 'reject-extra-field' };
+              const invalidDecisionShapeSha256 = createHash('sha256')
+                .update(record(invalidDecisionShape))
+                .digest('hex');
+              const invalidShapeSelector = {
+                ...selector,
+                activation_decision_sha256: invalidDecisionShapeSha256,
+              };
+              const invalidShapeSelectorSha256 = createHash('sha256')
+                .update(record(invalidShapeSelector))
+                .digest('hex');
+              const invalidShapeCommit = {
+                ...selectorCommit,
+                activation_decision_sha256: invalidDecisionShapeSha256,
+                selector_sha256: invalidShapeSelectorSha256,
+              };
+              const invalidShapeReleasedLock = {
+                ...releasedLock,
+                activation_decision_sha256: invalidDecisionShapeSha256,
+              };
+              const invalidShapeMaintenanceRelease = {
+                ...release,
+                lock_sha256: createHash('sha256').update(record(invalidShapeReleasedLock)).digest('hex'),
+              };
+              writeFileSync(selectorPath, record(invalidShapeSelector));
+              writeFileSync(activationDecisionPath, record(invalidDecisionShape));
+              writeFileSync(selectorCommitPath, record(invalidShapeCommit));
+              writeFileSync(releasedLockPath, record(invalidShapeReleasedLock));
+              writeFileSync(maintenanceReleasePath, record(invalidShapeMaintenanceRelease));
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Prepared cutover decision or selector commit is invalid.',
+              });
             } finally {
               writeFileSync(selectorPath, selectorBytes);
               writeFileSync(preparedInstallPath, preparedInstallBytes);
               writeFileSync(activationDecisionPath, activationDecisionBytes);
               writeFileSync(selectorCommitPath, selectorCommitBytes);
+              writeFileSync(releasedLockPath, releasedLockBytes);
+              writeFileSync(maintenanceReleasePath, maintenanceReleaseBytes);
             }
             expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
             expect(readFileSync(preparedInstallPath).equals(preparedInstallBytes)).toBe(true);
             expect(readFileSync(activationDecisionPath).equals(activationDecisionBytes)).toBe(true);
             expect(readFileSync(selectorCommitPath).equals(selectorCommitBytes)).toBe(true);
+            expect(readFileSync(releasedLockPath).equals(releasedLockBytes)).toBe(true);
+            expect(readFileSync(maintenanceReleasePath).equals(maintenanceReleaseBytes)).toBe(true);
 
             const forwardIntentPath = path.join(generationRoot, 'forward-intent.v1.json');
             expect(existsSync(forwardIntentPath)).toBe(false);
