@@ -5176,6 +5176,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'repair-review-entry-status',
       'repair-parent-selector-extra-field',
       'repair-default-installed-bundle',
+      'repair-payload-delta-mismatch',
+      'repair-installed-payload-drift',
+      'repair-maintenance-lock-active',
+      'repair-release-proof-extra-field',
       'malformed-source-path',
       'malformed-payload-manifest',
       'duplicate-payload-path',
@@ -5229,6 +5233,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-installed-bundle-symlink' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
           scenario === 'repair-default-installed-bundle' ||
+          scenario === 'repair-installed-payload-drift' ||
+          scenario === 'repair-maintenance-lock-active' ||
           documentationChange !== null;
         const configBytes = forwardScenario
           ? Buffer.from(
@@ -5294,10 +5300,16 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         };
         const successorPayloadEntry = {
           path: 'fixture/payload.json',
-          sha256: sharedPayloadSha256,
+          sha256: scenario === 'repair-payload-delta-mismatch' ? '2'.repeat(64) : sharedPayloadSha256,
           size: 1,
-          source_path: forwardScenario || scenario === 'duplicate-payload-path' ? 'fixture/payload.json' : '../outside',
-          source_sha256: sharedPayloadSha256,
+          source_path:
+            forwardScenario ||
+            scenario === 'duplicate-payload-path' ||
+            scenario === 'repair-payload-delta-mismatch' ||
+            scenario === 'repair-release-proof-extra-field'
+              ? 'fixture/payload.json'
+              : '../outside',
+          source_sha256: scenario === 'repair-payload-delta-mismatch' ? '2'.repeat(64) : sharedPayloadSha256,
         };
         const successorManifest = {
           schema: 'VidaAgentPreparedPayload/v1',
@@ -5527,6 +5539,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           generation: childGeneration,
           selector_sha256: childSha,
           first_admitted_work_attempt: null,
+          ...(scenario === 'repair-release-proof-extra-field' ? { unexpected_field: 'fixture' } : {}),
         };
         const childCommit = {
           schema: 'VidaActiveLauncherRepairSelectorCommit/v1',
@@ -5545,6 +5558,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         writeFileSync(path.join(childRoot, 'maintenance-lock.released.v1.json'), record(repairLock));
         writeFileSync(path.join(childRoot, 'maintenance-release.v1.json'), record(repairRelease));
         writeFileSync(path.join(childRoot, 'cutoff-witness.json'), record(repairCutoff));
+        if (scenario === 'repair-maintenance-lock-active')
+          writeFileSync(path.join(childRoot, 'maintenance-lock.v1.json'), record(repairLock));
         const forwardRoot = path.join(root, '.agent', 'cutover', 'fixture-forward-leaf');
         const forwardFixture = forwardScenario
           ? buildForwardLeafFixture(
@@ -5555,7 +5570,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               successorManifest,
               preservedMutableOutput ?? undefined,
               documentationChange ?? undefined,
-              { launcher: scenario === 'repair-default-installed-bundle' ? successorLauncherBytes : Buffer.from('y') },
+              {
+                launcher:
+                  scenario === 'repair-default-installed-bundle' ||
+                  scenario === 'repair-installed-payload-drift' ||
+                  scenario === 'repair-maintenance-lock-active'
+                    ? successorLauncherBytes
+                    : Buffer.from('y'),
+              },
             )
           : null;
         if (scenario === 'forward-installed-bundle-inventory-mismatch')
@@ -5590,6 +5612,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           );
         const bundleRoot = path.join(root, 'vida-agent');
         const bundlePaths = [bundleRoot, path.join(bundleRoot, 'bin'), path.join(bundleRoot, 'bin', 'run.mjs')];
+        if (scenario === 'repair-installed-payload-drift')
+          writeFileSync(path.join(bundleRoot, 'bin', 'run.mjs'), Buffer.from('drifted launcher'));
         const preservedPaths = preservedMutableOutput
           ? ['agent-runtime.config.v1.yaml', changelogPath].map((relative) => path.join(root, relative))
           : [];
@@ -5641,7 +5665,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'malformed-payload-manifest' ||
           scenario === 'duplicate-payload-path' ||
           scenario === 'repair-review-entry-status' ||
-          scenario === 'repair-parent-selector-extra-field'
+          scenario === 'repair-parent-selector-extra-field' ||
+          scenario === 'repair-payload-delta-mismatch' ||
+          scenario === 'repair-release-proof-extra-field'
         ) {
           let caught: unknown;
           try {
@@ -5658,8 +5684,30 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                   ? 'Repair review bindings are invalid.'
                   : scenario === 'repair-parent-selector-extra-field'
                     ? 'Repair parent authority is invalid.'
-                    : 'Repair payload entry is invalid.',
+                    : scenario === 'repair-payload-delta-mismatch'
+                      ? 'Repair payload delta is invalid.'
+                      : scenario === 'repair-release-proof-extra-field'
+                        ? 'Repair release proof is invalid.'
+                        : 'Repair payload entry is invalid.',
           });
+        } else if (scenario === 'repair-installed-payload-drift' || scenario === 'repair-maintenance-lock-active') {
+          assert.ok(beforeBundle);
+          assert.ok(beforeBundleMetadata);
+          let caught: unknown;
+          try {
+            repairAuthority(root, childSelector, childSha, childRoot);
+          } catch (error) {
+            caught = error;
+          }
+          expect(caught).toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+            message:
+              scenario === 'repair-installed-payload-drift'
+                ? 'Installed repair payload drift.'
+                : 'Launcher repair maintenance is still active.',
+          });
+          expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
+          expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
         } else if (
           scenario === 'forward-payload-manifest-digest' ||
           scenario === 'forward-installed-bundle-inventory-mismatch'

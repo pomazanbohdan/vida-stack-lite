@@ -5736,3 +5736,86 @@ speedup. Full-suite-first and producer concurrency above one remain unmeasured.
 The test log proves Bun used `1x PARALLEL`; model-token and aggregate tool/API
 call telemetry are unavailable. The accidental oversized-output incidents
 recorded above remain a corrective constraint on subsequent analysis.
+
+### bun-cli-run repair authority guard packet — Key430, 2026-10-24
+
+The packet adds four cases to the existing single composite authority fixture,
+without changing product Source or the selected test set: a valid-path
+non-launcher digest mismatch reaches `run.ts:1060`; a matching installed
+launcher deliberately changed after bundle preparation reaches `:1087`; an
+active generation lock reaches `:1091` after the installed-bundle check; and
+one extra cutoff-witness key reaches the exact release-proof guard at `:1101`.
+The refusal cases compare the installed bundle bytes and metadata where that
+boundary applies, and the common afterimage keeps `.agent` unchanged. The
+installed-drift fixture was manually reviewed after the first passing target:
+the prepared launcher now matches the successor digest before the test applies
+the drift, so the expected guard is causally isolated. This was corrected before
+the final target.
+
+Scoped Bun 1.4.4 format, `tsc --project tests/tsconfig.json --noEmit`, Oxlint,
+and `git diff --check` pass for the final diff. The final focused invocation is
+`target-06`: 1 pass, 116 filtered, 124 expectations, zero failures, 1.395 s
+command time; the case body was 194.14 ms. The final logs are
+`DIAG/bun-cli-run-key430-format-check-20261024-06.log`,
+`DIAG/bun-cli-run-key430-strict-20261024-06.log`,
+`DIAG/bun-cli-run-key430-oxlint-20261024-06.log`,
+`DIAG/bun-cli-run-key430-diff-check-20261024-01.log`, and
+`DIAG/bun-cli-run-key430-target-20261024-06.log`. Target selection used
+`AGENT_RUNTIME_V8_COVERAGE=1`; omitting that gate would select no coverage-only
+case. Failed attempts `target-01` through `target-04` are preserved and were
+fixture failures, not product failures: an invalid payload source path masked
+the delta guard; the same stale path masked release-proof validation; then the
+attempt-positive branch's template config failed runtime-config validation;
+after removing that synthetic-history route, the bare fixture had no bound
+config. `target-05` passed but did not prove the installed-drift premise because
+its installed launcher did not match before mutation; it is superseded by
+`target-06`. No attempt was made to clean retained failed roots.
+
+The positive `first_admitted_work_attempt` arm at `run.ts:1108` remains open.
+The provisional test required either an invalid template or an unbound bare
+fixture, so it was removed rather than manufacturing admitted history. The
+existing independent review also nominated `:1085` as an objective skip because
+bound-manifest path validation entails a nonempty leaf, but it is not rebound to
+the next report here; no objective disposition is claimed. Keep the contour
+active and the numeric queue blocked until all remaining branches are tested or
+independently disposed under TESTING.
+
+The prior bounded Luna source review proposed and traced the four reachable
+guards and the `:1085` prerequisite, but it did not inspect this final diff.
+Current Pstack delegation is gapped: `.codex/README.md` routes resolution via
+`codex plugin list --json`, which returned remote catalog 451
+`no_biscuit_no_service`; local `/home/agent/.codex/plugins/cache` and `repos`
+are empty, and the tooling lock contains no Pstack plugin entry. Therefore the
+installed `pstack-worker-contract prepare` executable cannot be resolved in
+this host; no new Luna dispatch or independent final-diff review is claimed.
+The relevant `bun-test` leaf exists at `.agents/skills/bun-test/SKILL.md` and
+was used with the package `TESTING.md` policy.
+
+Observed order for this packet was formatter, parallel scoped strict/Oxlint,
+one selected composite target, then root source-to-fixture review. Because four
+early targets exposed fixture precondition errors, this order repeated the
+static pair six times; the final pair and target alone qualify the final diff.
+For the next packet, read each selected branch's parser/guard prerequisites and
+review its complete fixture state before launching the target, then do one
+format, parallel static pair, and one focused invocation. That is a process
+improvement hypothesis, not a measured runtime reduction. Running the full
+contour before the focused case would spend the latest measured 204.80 s stage
+on a packet whose target exposes fixture errors in roughly 1.2–2.2 s; this
+packet did not measure a controlled full-first comparison. Numeric producer
+concurrency remains one; a second producer is disallowed. Focused Bun used
+`1x PARALLEL`. Token and aggregate tool-call telemetry are unavailable.
+
+At inspection there was no live Bun/coverage/TS producer. Fourteen old defunct
+Bun process entries with PPID 1 were visible; no live owner can reap them from
+this shell, and none was started by this packet. Do not attribute them to the
+current producer or attempt unsafe deletion. The earlier one-time filesystem
+capacity check remains the comparison source; this packet did not rerun `df`,
+`du`, cleanup, scan, or hash inventory. No cache or evidence path was removed.
+
+Root's manual final-diff review plus the focused assertions support running the
+one serial selected-contour producer next. The fresh blind final-diff review is
+an explicit Pstack tooling GAP, not a completed review. After the producer
+terminal receipt, bind its report to commit, source/test/config fingerprints,
+reconcile exact F/L/S/B counters, preserve all raw receipts and UNKNOWNs, and
+update only this contour's producer-owned projection. Do not promote a skip,
+merge historic counts, or begin a second contour.
