@@ -4798,10 +4798,11 @@ report flow and `HostStateStore.readDeliveredWorkContinuation` in
 non-reported item status, then sets top-level `action_status` to `reported`
 only when every item is reported. The guarded caller reaches the helper only
 when that top-level status is `reported`. Therefore `!observation` is an
-objective-unreachable arm on this supported caller path. This disposition is
-recorded without adding hits, reducing the denominator, or changing
-`BLOCKED`. The reachable `observation.status !== 'reported_complete'` arm stays
-covered by the failed-report case. Review evidence is in
+unreachable value on this supported caller path. The bound stage records both
+`if` outcomes at line 2272 and both binary-expression evaluation counters, so
+the numeric report has no missing branch here. No objective disposition was
+applied. The failed-report case covers the true outcome and the complete-report
+case covers the false outcome. Review evidence is in
 `DIAG/bun-cli-run-key419-independent-review-20261024-01.md`; the scoped
 no-comments review found no deletions or `MUST KILL` items in
 `DIAG/bun-cli-run-key419-comment-review-20261024-01.md`.
@@ -4832,15 +4833,43 @@ The last disk inventory and admission result remain authoritative; this packet
 did not rescan or clean disk. Vex remains unqualified for current Source, so
 bounded `rg` fallback was used without refresh or reindex.
 
-The next step is the ordinary commit and push after review and hooks, followed
-by one producer-owned `bun-cli-run` coverage stage. The producer projection
-will determine the next callable and whether any exact metric changed.
+The first raw coverage query selected the entire `.coverage` object and emitted
+an oversized tool response. The tool reported 560,354 original tokens and
+1,192,838 omitted bytes. The query changed no files. Subsequent reads selected
+only the report summary, one source's target function and branches, and the
+first zero functions. Keep this as a confirmed audit-output waste; do not repeat
+the broad projection read.
+
+#### Key419 bound stage result
+
+After commit `8754c277a7b5cd48aafaf1cf3a2c71e8464f588d` passed its hooks and
+pushed to `work`, one `bun-cli-run` coverage stage used the current producer.
+Run `1a85de5a-f22b-4894-bebc-cb5a60b8314b` used tree
+`36243f02089bb3941a9fd4372885b00b766d252e`, input fingerprint
+`cce6444184ed7880728e27ecb8c759c94c3e106b22845223d8d080b3d3db42a8`, and
+manifest digest
+`7a9947e875f85e30164b68980be2703b16a7d5e2b0408e1870ac5938afbcb0db`. It
+completed with exit 0 in 215,386.40 ms, without timeout or spawn error. Capture
+was complete, the process group terminated, the boot ID stayed the same, image
+inputs were unchanged, and the report was published. The stage receipt is
+`DIAG/bun-cli-run-key419-stage-20261024-01.log`; its retained stage directory
+is `/workspace/contour-stage-xO4mWq`.
+
+The producer ran 116 tests across `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`. All passed with 2,261 expectations. Its
+projection reports F/L/S/B `409/555`, `1899/2859`, `2023/3138`, and
+`2318/3661`, max CC 501, max entry CRAP 992, and `BLOCKED`. Relative to Key418,
+the run adds two functions, 15 lines, 15 statements, and ten branches. The
+report measures `requireReportedCompleteObservation` at 1.0 function coverage
+with CRAP 3. The next zero function in report order is
+`isCompletedReadonlyRelease` at `bin/run.ts:2288`. Continue there; do not replay
+Key419 or combine its counters with another image.
 
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416/417/418 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417/418/419 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
-202,630.39 / 187,589.41 / 191,494.56 ms. Each stage used different immutable image and source/test
+202,630.39 / 187,589.41 / 191,494.56 / 215,386.40 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and
