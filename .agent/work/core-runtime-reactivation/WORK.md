@@ -7338,3 +7338,39 @@ input stage is not yet run.
 | Reuse the report, map branch preconditions, batch one fixture, then target/static/review, commit/push, one changed-input stage at 1x | Ten prior terminal stages in the rolling window used one numeric producer; this packet's final target used 11.80 s including startup. | Retain this order. Moving independent type/format checks and review before the first target is a reasonable hypothesis to reduce reruns; it has not been A/B measured. |
 | Run a full stage before reviewing each candidate or subfix at 1x | Historical one-worker stage costs here average 217.134 s and range 196.979–236.748 s. | Full-stage-first repeats are materially expensive by measured duration; one avoided run would save about 3.6 minutes, an estimate, not a controlled comparison. |
 | Run 2x or 4x numeric stages concurrently | No qualified parallel receipt exists. | Keep one producer. Parallel full runs remain unmeasured and violate the serial contour owner policy. |
+
+### Key456 changed-input stage terminal — 17:14 UTC
+
+The ordinary source commit `9e600b918e441d9ff0ed0bdcfa62885bc077ba5c` was
+used for the one current-producer stage at
+`/workspace/contour-stage-E7VZct`. The native execution receipt is terminal:
+exit 0, no signal/spawn error/timeout, complete non-truncated capture (7,977
+stdout bytes and 17,384 stderr bytes), process and process-group termination
+observed, no termination attempts, boot unchanged, and image inputs unchanged.
+The report binds source tree `b1675fdf4cefc99c4636f5d17e50ba367393168f`, input
+fingerprint `a1d0b1a4349e564e0e9e84826ce4b41fb0b2149364185887f8ffed8af2243dd0`,
+and image manifest SHA-256
+`ef6ed4cde50e17406f02ed697f7e6c1f7023425c4fcec20517ba15c62d378d25`.
+
+The selected run `034060d7-1113-468c-8c86-c0a963ce7840` passed 127 tests and
+2,594 expectations across its two selected files, with zero failures. Suite
+time was 201.23 s and native elapsed time 206,613.861 ms. Branch IDs181 and 182
+now each have hits `[2,1]` at `run.ts:1767` and `run.ts:1770`; the previous
+missing arm in each was zero. Projection is F441/555, L2031/2860, S2181/3138,
+B2564/3660, max CC/entry CRAP 501, operation status `BLOCKED`. Denominators and
+the blocked status are unchanged; this packet closes neither the contour nor
+its other gaps.
+
+The report is retained at
+`/workspace/.vida-quality-inputs/b7f87aab81d014c75a49f72745a15ef90a68fee4/repository/packages/agent/coverage/bun-unified/diagnostics/034060d7-1113-468c-8c86-c0a963ce7840.focused-coverage.json`.
+The execution receipt recorded 13,618,036,736 available scratch bytes against
+the existing 2,147,483,648-byte minimum. This is stage admission evidence, not
+a new filesystem survey. No cleanup was performed.
+
+For the terminal-time rolling window 2026-10-24 14:14:44–17:14:44 UTC, eleven
+one-worker terminal stages (Keys439, 442, 444, 445, 450, 451, 452, 453, 454,
+455, 456) total 2,377,950.393 ms, average 216,177.308 ms, range
+196,979.462–236,747.830 ms. Inputs and host conditions differ, so this is a
+measured historical cost range, not a speedup comparison. The same
+check-before-stage order remains the measured choice; first-stage ordering and
+parallel full runs remain hypotheses or unqualified options as noted above.
