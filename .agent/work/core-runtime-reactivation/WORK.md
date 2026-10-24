@@ -6808,3 +6808,31 @@ checks the fixture snapshot, and restores its original one-event bytes; the
 other transition cases remain independently scoped. The review receipt is
 `DIAG/bun-cli-run-key445-test-review-20261024-01.md`. The one changed-input
 coverage stage remains pending after normal hooks and push.
+
+### Key445 changed-input coverage stage terminal
+
+The Key445 packet commit `62deee5e6c35551cf4b98dccf1e318ca912ec85e` passed
+normal hooks and was pushed to `main`. The existing serial coverage producer ran
+once at `/workspace/contour-stage-sCJTVF`: run
+`59af34f3-c546-40c0-925f-dd38866fdc11`, exit 0, no signal/spawn error/timeout,
+complete capture, closed group, unchanged boot and unchanged immutable image.
+The image binds tree `d1f09dd76ea71ef87d6b9b2bf6adf51d280b4cd6`, input fingerprint
+`76341dc1ff46f743e991e777f1cde28fcab8fa493c0c02fab5b8d8cd9a28deec`, and
+manifest digest `2dee71fb8881fea84794a0b8d3d85fb4557ae0dcbe597d4147429e06cc5ea563`.
+The root terminal capture is `DIAG/bun-cli-run-key445-stage-20261024-01.log`;
+native launch, terminal, capture and image evidence remains in the stage tree.
+
+The one-worker stage completed 127 tests with 0 failures and 2,468 expectations;
+test time was 197.16 seconds and total elapsed time 202,793.193 ms. The prior
+projection was F441/555, L2013/2860, S2162/3138, B2520/3660; it is now F441/555,
+L2014/2860, S2163/3138, B2522/3660. ID119 at `bin/run.ts:1258` is now `[3,1]`
+and ID120 at line 1259 is `[1,3]`. ID119's accepted input was a duplicate valid
+journal event; no denominator changed. Operation status remains BLOCKED,
+`max_cc`/`max_entry_crap` remain 501, and full/frozen qualification remains
+pending.
+
+This is another 1x PARALLEL stage. The different test inputs and host/cache
+conditions still do not establish a speedup against Key439/442/444; higher
+numeric parallelism remains unqualified. The next selected review groups the
+adjacent guard candidates ID129 and ID130 at lines 1361/1363; no skip or hit is
+claimed pending independent review.
