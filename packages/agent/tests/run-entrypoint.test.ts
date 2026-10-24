@@ -5254,6 +5254,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-baseline-path-non-string',
+      'forward-documentation-baseline-work-id-mismatch',
       'forward-documentation-evidence-under-bound',
       'forward-documentation-evidence-over-bound',
     ] as const) {
@@ -5288,6 +5289,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const documentationChange =
           scenario === 'forward-documentation-path-refusal' ||
           scenario === 'forward-documentation-baseline-path-non-string' ||
+          scenario === 'forward-documentation-baseline-work-id-mismatch' ||
           scenario === 'forward-documentation-evidence-under-bound' ||
           scenario === 'forward-documentation-evidence-over-bound'
             ? { path: documentationPath, bytes: documentationNewBytes }
@@ -5667,16 +5669,46 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             truncateSync(evidenceFile, 16 * 1024 * 1024 + 1);
           else writeFileSync(evidenceFile, '{}\n');
         }
+        if (scenario === 'forward-documentation-baseline-work-id-mismatch') {
+          const baselineBody = {
+            schema: 'DocumentationClearCheckpoint/v1',
+            clear_id: 'fixture-forward-baseline',
+            work_id: 'fixture-forward-baseline-owner',
+            source_revision: 'fixture-source-revision',
+            repository_id: 'fixture-repository',
+            project_id: 'fixture-project',
+            project_context_digest: '1'.repeat(64),
+            config_digest: '2'.repeat(64),
+            scope_digest: '3'.repeat(64),
+            policy_id: 'fixture-policy',
+            policy_path: documentationPath,
+            policy_digest: '4'.repeat(64),
+            inventory_digest: '5'.repeat(64),
+            documents: [],
+            baseline_path: null,
+            baseline_digest: null,
+            phase: 'baseline',
+            status: 'pass',
+            required: false,
+            gaps: [],
+            created_at: '2026-10-24T00:00:00.000Z',
+          };
+          const baselinePath = path.join(root, '.agent/work/decoy/documentation-baseline-0001.v1.json');
+          mkdirSync(path.dirname(baselinePath), { recursive: true });
+          writeFileSync(baselinePath, record({ ...baselineBody, digest: canonicalJsonDigest(baselineBody) }));
+        }
         if (documentationChange)
           writeFileSync(
             path.join(forwardRoot, 'documentation-forward.v1.json'),
             record({
               schema: 'VidaForwardLifecycleClearBinding/v1',
               baseline_path:
-                scenario === 'forward-documentation-baseline-path-non-string'
-                  ? null
-                  : (forwardEvidencePath ??
-                    `.agent/work/${childGeneration}/documentation-baseline-0001.v1.json/../refused.json`),
+                scenario === 'forward-documentation-baseline-work-id-mismatch'
+                  ? '.agent/work/decoy/documentation-baseline-0001.v1.json'
+                  : scenario === 'forward-documentation-baseline-path-non-string'
+                    ? null
+                    : (forwardEvidencePath ??
+                      `.agent/work/${childGeneration}/documentation-baseline-0001.v1.json/../refused.json`),
             }),
           );
         const bundleRoot = path.join(root, 'vida-agent');
@@ -5884,6 +5916,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         } else if (
           scenario === 'forward-documentation-path-refusal' ||
           scenario === 'forward-documentation-baseline-path-non-string' ||
+          scenario === 'forward-documentation-baseline-work-id-mismatch' ||
           scenario === 'forward-documentation-evidence-under-bound' ||
           scenario === 'forward-documentation-evidence-over-bound'
         ) {
@@ -5900,13 +5933,15 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(caught).toMatchObject({
             code: 'GAP-VIDA-RUN-SELECTOR-001',
             message:
-              scenario === 'forward-documentation-baseline-path-non-string'
-                ? 'Forward policy proof invalid: leaf baseline path is invalid'
-                : scenario === 'forward-documentation-path-refusal'
-                  ? 'Forward policy proof invalid: Forward documentation evidence path invalid.'
-                  : scenario === 'forward-documentation-evidence-under-bound'
-                    ? 'Forward policy proof invalid: forward documentation proof: CLEAR checkpoint schema invalid'
-                    : 'Forward policy proof invalid: Forward documentation evidence exceeds bound.',
+              scenario === 'forward-documentation-baseline-work-id-mismatch'
+                ? 'Forward policy proof invalid: leaf baseline work path differs'
+                : scenario === 'forward-documentation-baseline-path-non-string'
+                  ? 'Forward policy proof invalid: leaf baseline path is invalid'
+                  : scenario === 'forward-documentation-path-refusal'
+                    ? 'Forward policy proof invalid: Forward documentation evidence path invalid.'
+                    : scenario === 'forward-documentation-evidence-under-bound'
+                      ? 'Forward policy proof invalid: forward documentation proof: CLEAR checkpoint schema invalid'
+                      : 'Forward policy proof invalid: Forward documentation evidence exceeds bound.',
           });
           assert.ok(beforeDocumentationBytes);
           assert.ok(beforeDocumentationMetadata);

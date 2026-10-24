@@ -13,8 +13,8 @@ owns commands, timeouts, evidence gates and accepted policy. Its
 owns detailed scenario-specific requirements. Read both before changing an
 affected owner.
 
-For stopped-source CLI authorization-path refusals, follow the regression
-contract's path-binding and unchanged-Host evidence requirements.
+For stopped-source and forward-authority path refusals, follow the regression
+contract's path-binding and unchanged-fixture evidence requirements.
 
 For Initial Source binding-checkpoint paths, reuse the queued TaskSource fixture
 named in TESTING's shared-helper contract. An issued same-work action remains

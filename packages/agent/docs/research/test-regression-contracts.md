@@ -407,6 +407,11 @@ Forward negative DTOs keep their header digests coherent while varying required
 field types, plan collections, changed-file members, parent selector shape and
 review item shape. Each must refuse at its intended boundary before review receipt
 reads and preserve the complete bounded fixture tree.
+For forward documentation authority, keep a CLEAR checkpoint schema- and digest-
+valid while pointing its receipt at a contained readable baseline path under a
+different work directory; assert the exact work/path mismatch refusal and
+unchanged fixture. Traversal and non-string baseline-path cases stop earlier and
+do not cover this later binding guard.
 Public recovery-review negative exports vary exact outer keys, caller identity,
 owner/CAS bindings, source snapshot/entries, context and required observation.
 Every input remains malformed and must refuse before opening the recovery route,

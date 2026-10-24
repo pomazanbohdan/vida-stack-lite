@@ -6620,3 +6620,69 @@ The next current-report gap candidate is `bin/run.ts:1226`, branch ID113
 Its reachability disposition is pending blind read-only review. The earlier
 report-bound skip decisions for IDs55/58/59 and ID98 remain unchanged and add
 no hits. No second full stage, CRAP or mutation run was started.
+
+### Key440 objective disposition: `requireRunString` ID113
+
+A fresh report-bound blind native Luna review traced branch ID113 at
+`bin/run.ts:1226` through every caller and its schema/parser prerequisites.
+The rejecting arm is objectively unreachable: the CLEAR schema requires
+`baseline.work_id` to be a string, the transition schema requires the
+changelog path and target digest to be strings, and the caller rejects a
+missing/non-record `source_admission` before the target-digest call. The
+selected test's malformed baseline *path* is rejected before this helper and
+is not misrepresented as a counterexample. The review applied the TESTING
+causal-prerequisite rule and found no supported counterexample. Its evidence
+is retained in `DIAG/bun-cli-run-key440-id113-review-20261024-01.md`.
+
+ID113 remains `[0,10]`; the disposition adds no hit and changes no denominator,
+BLOCKED status, or frozen qualification. No replay or extra full stage was run
+for this unchanged objective skip. The next report candidate, ID114 at
+`run.ts:1232`, is under a separate blind reachability review before any test
+fixture is added.
+
+### Key441 review and Key442 fixture for branch ID114
+
+The blind report-bound review found ID114 at `bin/run.ts:1232` reachable through
+`forwardUpdateAuthority`: the CLEAR schema and parser permit a valid nonempty
+`work_id` at a contained checkpoint path whose directory prefix names another
+work item. The supported producer normally writes matching values, but the
+public authority check must reject a readable mismatched receipt/checkpoint.
+The current traversal and non-string cases fail at earlier guards, so they do
+not cover ID114. The reviewer proposed a minimal contained `decoy` checkpoint
+fixture and confirmed the TESTING rule does not allow skipping this reachable
+case. Evidence is in
+`DIAG/bun-cli-run-key441-id114-review-20261024-01.md`.
+
+Key442 extends the existing forward-documentation refusal scenario table with
+one valid schema/digest checkpoint under `.agent/work/decoy/`, a distinct
+checkpoint `work_id`, the receipt's contained path, and an exact refusal
+assertion. Existing beforeimage assertions cover the `.agent` tree, bundle,
+documentation bytes/metadata and preserved outputs. The focused test passed:
+1 pass, 118 filtered, 0 failures, 149 expectations, 2.15 s. Checked-JS strict
+passed 227 files (1,016.57 ms); configured Oxlint exited 0; the one-file
+formatter check passed. A blind independent review found no must-fix and ran
+no tests; its note is
+`DIAG/bun-cli-run-key442-test-review-20261024-01.md`. The changed-input full
+producer stage remains pending normal commit/hooks and push.
+
+### Verification order and bounded parallelism observations
+
+Two actual packet orders are now recorded. Key439 ran formatting, strict, Oxlint,
+then the exact behavior test and independent review in sequence. Key441 ran a
+single-file formatter, the exact focused behavior test, then checked-JS strict
+and configured Oxlint as two independent static processes in parallel, followed
+by the single-file format check and blind review. Key441 measured 26 ms for the
+format write, 2.15 s for the selected test, 1,016.57 ms for strict and 22 ms
+for format check; Oxlint completed after one 1 s poll plus a 5.7 s wait. These
+are command observations on different inputs, not a controlled comparison of
+wall-time or CPU savings. Running target, strict and Oxlint all together is a
+third possible order, but remains unmeasured and may contend for CPU. No such
+benchmark was run.
+
+For numeric work, Key438 and Key439 each used exactly one serial coverage
+producer; elapsed values and test counts differ, so they cannot qualify 2x/4x
+parallelism. Tool-event totals and billed model tokens are not exposed by the
+available runtime, so command and expectation counts are not presented as API
+usage or token estimates. Key441 used one targeted Bun test (149 expectations),
+one format write/check pair, one strict process, one Oxlint process, two
+read-only native Luna reviews, and will require one producer stage after push.
