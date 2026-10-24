@@ -3372,10 +3372,17 @@ capture wrappers should use an absolute path or the repository-root-relative
 
 The next unhit entry in the same contour's exact report is key 402,
 `bin/run.ts#fn:run#0/closure:CallExpression:arguments[2]#4` (CC 1 / CRAP 2,
-body at line 6933 in this source image). Continue this contour from that exact
-report entry; do not repeat keys 379–387 or start another producer before the
-next bounded test packet is verified. Keep the contour open until its governed
-selection is exact or has an independently accepted objective disposition.
+body at line 6933 in this source image). It is the close callback in the catch
+for the later full-project-set context load; the earlier selected-project
+context and selection ledger must succeed first. A blind read-only review
+identified a candidate where the selected project's profile is valid but a
+second configured project causes only the later full-set context to fail.
+Existing multi-project fixtures do not yet prove that asymmetric path-profile
+condition, so this remains a hypothesis, not an objective disposition or test
+result. Continue from this exact entry; do not repeat keys 379–387 or start
+another producer before the next bounded test packet is verified. Keep the
+contour open until its governed selection is exact or has an independently
+accepted objective disposition.
 
 ## Owners and acceptance boundaries
 
