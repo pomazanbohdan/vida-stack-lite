@@ -4377,6 +4377,115 @@ key413 is measured, but the images and test fingerprints differ, so do not
 attribute all count movement causally to this one case. Producer concurrency
 remained one. Tool/API and token totals are unavailable.
 
+### Bun-cli-run key415 forward documentation journal and size gates — 2026-10-24
+
+The key414 report left `readForwardDocumentationEvidence`'s 16 MiB size arms
+and both `parseForwardJournal` mappings at zero. The accepted public route
+reaches the parser only after forward authority, payload and documentation
+proof validation. The design and review artifacts are
+`DIAG/bun-cli-run-key415-design-journal-20261024-01.md`,
+`DIAG/bun-cli-run-key415-reader-gate-review-20261024-02.md`, and
+`DIAG/bun-cli-run-key415-final-review-20261024-02.md`.
+
+Moved the unchanged parser body from `bin/run.ts` to
+`src/documentation/forward-journal.ts`. Its direct test covers both the record
+and non-record outcomes of the map callback. Extended the existing refusal
+fixture with a two-byte under-bound evidence file and a regular file of exactly
+16 MiB plus one byte. Added one public-route case that creates an isolated
+candidate bundle, obtains source admission through the real candidate verifier,
+runs the public documentation-policy plan/apply/resume flow against a real
+CLEAR baseline, then calls `forwardUpdateAuthority` with its applied closeout
+and journal event. The case checks every admission binding and compares
+before/after `.agent` bytes, the session database, current policy, changelog,
+launcher, and candidate manifest/policy bytes and metadata. This is a bounded
+no-write claim over those paths. Fixture-only synthetic review records do not
+attest real approvals, delivery, cutover, or runtime acceptance. No consumer
+effect or runtime/loader/DB cutover ran.
+
+The first under-bound attempt had an incorrect expected diagnostic; its exact
+failed fixture remains at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-repair-forward-documentation-evidence-under-bound-9uBKz4`.
+Three later integration attempts exposed test setup errors, not product defects:
+the target path was not the configured canonical policy path, the dynamic
+import namespace was checked as a plain record, and apply/resume correctly
+omitted the plan-only target option. Their unaltered terminal logs are
+`DIAG/bun-cli-run-key415-integration-20261024-01.log`,
+`DIAG/bun-cli-run-key415-target-20261024-03.log`, and
+`DIAG/bun-cli-run-key415-target-20261024-04.log`. The retained failed fixture
+roots are `/home/agent/.cache/vida-cloud-tooling/tmp/policy-u0Lf4B`,
+`/home/agent/.cache/vida-cloud-tooling/tmp/policy-feyYaW`, and
+`/home/agent/.cache/vida-cloud-tooling/tmp/policy-zqLNND`. They are outside the
+owner's bounded cleanup roots and remain untouched. No FAIL artifact was
+deleted.
+
+An early strict attempt rejected the new TypeScript module's `.ts` import;
+switching the runtime import to `.js` matched the package's source convention.
+The first type-aware lint attempt also caught the untyped dynamic module result
+and an insufficient narrowing of the closeout path. A runtime shape check and
+explicit string narrowing fixed both. The original strict and lint failures
+remain at `DIAG/bun-cli-run-key415-strict-20261024-02.log` and
+`DIAG/bun-cli-run-key415-lint-20261024-03.log`.
+
+The latest serial pinned invocation passed the parser, size-gate and admitted
+public-authority cases after the commit-hook type guard: three pass, 103
+filtered, 75 expectations; case times were 0.23 ms, 106.64 ms, and 5,499.22 ms,
+with 6.93 s total process time. This supersedes the earlier pre-guard focused
+run, retained at `DIAG/bun-cli-run-key415-target-20261024-05.log`; the final
+source-bound target log is `DIAG/bun-cli-run-key415-target-20261024-06.log`.
+The final strict check passed 104 files in 756.61 ms, type-aware Oxlint passed
+on the three changed files, and scoped formatter check passed in 21 ms. Logs
+for those earlier static checks are `DIAG/bun-cli-run-key415-strict-20261024-07.log`,
+`DIAG/bun-cli-run-key415-lint-20261024-07.log`, and
+`DIAG/bun-cli-run-key415-format-check-20261024-02.log`. Blind native Luna's
+final review found no concrete defect; it limits the no-write claim to the
+observed paths and notes the fixture's maintenance cost. Review:
+`DIAG/bun-cli-run-key415-final-review-20261024-02.md`. The initial comment
+review missed the untracked module; its one retry explicitly read the current
+file, and found no remaining comment or suppression. Both artifacts remain at
+`DIAG/bun-cli-run-key415-no-comments-20261024-01.md` and
+`DIAG/bun-cli-run-key415-no-comments-20261024-02.md`.
+
+The latest successful focused run is one process at serial width one. A single
+invocation placed the cheap parser and reader cases before the 6.4 s public
+fixture. Earlier separate parser/reader invocations took 1.39 s and 1.45 s on
+different test inputs; those figures cannot estimate a matched startup saving.
+Parallel execution was not measured. The public proof requires separate plan,
+fence/apply, resume and final authority reads; the resulting setup cost is
+observed, but no profile isolates its limiting resource. The three failed
+fixture attempts add 2.45 s, 1.84 s, and 4.00 s process time on changing inputs,
+so they do not compare a stable order. Strict/format/lint-first is the accepted
+order for the next packet. Full-suite timing, API call totals and token totals
+are unavailable. The last disk check and admission comparison are reused; this
+packet did not rescan or clean disk.
+
+The focused tests passed after the final Source correction. The earlier scoped
+strict, lint, and format checks passed after removal of redundant JSDoc and
+before the commit-hook-required type guard; the ordinary commit hook is the
+broader final type/format gate for the now-updated Source. The single full
+contour stage will bind the final committed inputs.
+
+The first ordinary commit attempt ran the repository hook and was correctly
+rejected by the whole-package TypeScript check: the optional successor payload
+digest needed an explicit runtime string guard at the new integration fixture.
+Formatting had passed; no commit was created. The fixture now rejects a
+missing digest explicitly before comparing the candidate manifest, preserving
+the behavior assertion while satisfying the broader type boundary. This is a
+new local test-quality correction; the hook's terminal output is preserved in
+the current session transcript and the normal hook must pass on retry.
+
+After that fix, the focused target rerun passed (log
+`DIAG/bun-cli-run-key415-target-20261024-06.log`). Its first scoped formatter
+check caught formatting in the test file; the pinned formatter corrected only
+the three changed Source files, and the following check passed in 20 ms. The
+post-guard type-aware Oxlint check also passed for those files. Receipts:
+`DIAG/bun-cli-run-key415-format-check-20261024-03.log`,
+`DIAG/bun-cli-run-key415-format-check-20261024-04.log`, and
+`DIAG/bun-cli-run-key415-lint-20261024-08.log`.
+
+No numeric disposition is claimed before the one ordinary post-push coverage
+stage. Keep `bun-cli-run` open until the bound report is reviewed and each
+remaining path is covered or independently dispositioned under TESTING.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414 were 182,091.09 /

@@ -18,6 +18,7 @@ import {
 } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { standaloneRuntime } from './bun.ts';
+import { parseForwardJournal } from '../src/documentation/forward-journal.js';
 import {
   runRepeatedOptions,
   runScalarOptionFields,
@@ -1154,19 +1155,6 @@ function readForwardDocumentationEvidence(projectRoot: string, relative: string)
   if (bytes.length > 16 * 1024 * 1024)
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward documentation evidence exceeds bound.');
   return bytes;
-}
-
-/** @param {string} text @returns {Record<string, unknown>[]} */
-function parseForwardJournal(text: string): Record<string, unknown>[] {
-  return text
-    .trim()
-    .split('\n')
-    .map((line) => {
-      /** @type {unknown} */
-      const value: unknown = JSON.parse(line);
-      if (!isRecord(value)) throw Error('leaf forward journal event is invalid');
-      return value;
-    });
 }
 
 /** @param {string} projectRoot @param {string} generationRelative @param {ForwardUpdatePlan} plan @param {ForwardUpdateAuthorization} authorization @param {string} relative @param {{manifest: Record<string, unknown>, files: Map<string, PreparedPayloadEntry>}} oldManifest @param {{manifest: Record<string, unknown>, files: Map<string, PreparedPayloadEntry>}} newManifest @param {(file: string) => Buffer} read @returns {void} */
