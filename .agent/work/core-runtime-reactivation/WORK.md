@@ -6013,17 +6013,18 @@ Pstack fresh independent review is still a tooling/access GAP. Keep
 `bun-cli-run` active and select the next reachable uncovered path from its
 current report; do not promote ID98, advance contour, or run CRAP/mutation.
 
-### bun-cli-run forward documentation binding packet — Key432 pre-stage, 2026-10-24
+### bun-cli-run forward documentation binding packet — Key432, 2026-10-24
 
-The Key431 report left branch ID109 at `run.ts:1176` with `[0,1]`. Key432 adds
-one malformed-evidence case to the existing composite test: the forwarding
-binding record has `baseline_path: null`. The established forwarding fixture
-still supplies the valid surrounding plan, manifests and changed document;
-`readCurrentForwardDocumentationAuthority` therefore reaches its explicit
-non-string path guard before reading a baseline file. The test requires the
-exact wrapped `leaf baseline path is invalid` refusal and reuses the existing
-bundle, document and `.agent` no-write snapshots. It changes no product Source
-or runtime state.
+Correction to my initial branch selection: the Key431 report had ID110 at
+`run.ts:1198` with `[0,4]`; ID109 at `:1176` is the separate canonical
+identity check and remains `[0,1]`. Key432 adds one malformed-evidence case to
+the existing composite test: the forwarding binding record has
+`baseline_path: null`. The established forwarding fixture still supplies the
+valid surrounding plan, manifests and changed document;
+`readCurrentForwardDocumentationAuthority` reaches its explicit non-string
+path guard before reading a baseline file. The test requires the exact wrapped
+`leaf baseline path is invalid` refusal and reuses the bundle, document and
+`.agent` no-write snapshots. It changes no product Source or runtime state.
 
 Root manually traced the fixture into the mapped guard and confirmed that the
 assertion would fail if the guard were removed or the wrong refusal returned.
@@ -6041,9 +6042,65 @@ Receipts are `DIAG/bun-cli-run-key432-format-write-20261024-01.log`,
 
 This packet again used prerequisite-first review, parallel read-only static
 checks, and one serial target, with no failed fixture retries. It is another
-single observation, not a controlled speed comparison. No projection is
-updated from a focused test; the next producer must be one complete pinned
-`bun-cli-run` stage after ordinary commit/push and hook completion, and the
-resulting report will decide whether ID109 was hit. Keep ID98 undispositioned,
-retain all earlier receipts, and do not advance the contour or run
-CRAP/mutation.
+single observation, not a controlled speed comparison. Its projection and
+terminal stage result follow below. Keep ID98 undispositioned, retain all
+earlier receipts, and do not advance the contour or run CRAP/mutation.
+
+### Key432 serial coverage outcome — 2026-10-24
+
+After commit `bd4969cfdd874a56f07522c704126954a45afc2e` was pushed normally,
+one pinned `bun-cli-run` coverage stage completed in 188,596.968 ms of the
+330,000 ms allowance. Stage `/workspace/contour-stage-c6bevO`, scratch
+`scratch-FwJylc`, and run `4ddb57f5-feec-4506-b9b9-48c1f32eeb0c` remain
+retained. Exit was 0, signal/spawn error null, no timeout, capture complete,
+owned process group closed, boot/image inputs unchanged, and publication
+`published`. `execution.json` binds stdout 7,977 bytes (SHA-256
+`c31d3b71699b3d4427a41ae85e780b681a8733f7678753dc9bb6e4527af46144`) and
+stderr 17,124 bytes (SHA-256
+`648809ed7a575d4ad1538543b25e3008c80c8f71a4dbcb45234e5e14f2ce199f`), both
+fully retained and untruncated. Launch, request, execution, publication, raw
+streams and stage scratch remain at the stage path.
+
+The immutable image is
+`/workspace/.vida-quality-inputs/e35a71e5134d250be75e5f822414e71f4bff12f0/`;
+manifest SHA-256 `1843164b0f0a94784f3385257b56fb5d45a7c48966f42449fa7658130278f879`,
+source tree `93d525460b1b49c9c6d8faaffb442f86a23af94a`, input fingerprint
+`d87ce16b15ce0ea7a09eddc21a1350e35f9b017103a0efcfe6035824706b3c56`, and
+source commit match the stage. The bound report is
+`/workspace/.vida-quality-inputs/e35a71e5134d250be75e5f822414e71f4bff12f0/repository/packages/agent/coverage/bun-unified/diagnostics/4ddb57f5-feec-4506-b9b9-48c1f32eeb0c.focused-coverage.json`;
+run-manifest SHA-256
+`f0fa36982469cf9052b49b1c16842ae4d3bfa765b6d13ee368fb0faacdd91de5`, report
+SHA-256 `09bbb5b53171141977b990e8d39b6193d5390d58f63cb6aed027aeae062fe959`,
+Source fingerprint `5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851`,
+test fingerprint `1a6a69a76e770e85185cff66f467e3163c7edadbd4aa77ef2b06d1f8ea97bee4`,
+and tool fingerprint
+`24bd1e808b0f5f38ec8aef7a0b184695f5bf1e539046abdfc9dc65c42885bbc7`.
+
+Package Bun 1.4.4 ran the two selected files with `1x PARALLEL`: 125 tests
+passed, zero failed, 2,381 expectations, 183.10 s test time. The TS-only gate
+captured 545 files and 0 diagnostics. The producer-owned projection now
+records F `428/555`, L `1953/2860`, S `2097/3138`, B `2416/3660`, max CC 501,
+max entry CRAP 992, still `BLOCKED`. Relative to Key431, statements and
+branches each increased by one; functions, lines and all denominators are
+unchanged. The bound report shows ID110 `:1198` `[1,4]` (the null-path guard
+was hit), ID109 `:1176` `[0,1]` (still open), ID98 `:1085` `[0,3]`, and ID104
+`:1108` `[20,1,1]`. No skip or disposition was applied. The report is still a
+focused diagnostic (`full_qualification=false`, frozen budget pending); the
+operation-outcome row remains `BLOCKED; unqualified; selection unbound`.
+
+Raw stderr retains four deliberate uncertain test fixtures:
+`/tmp/vida-unprepared-state-wuV9qI` (`deadline-expired`),
+`/tmp/vida-unprepared-state-uozKBA` (`database-close-failed`),
+`/tmp/vida-unprepared-state-8lHxpS` (`completion-not-marked`), and
+`/tmp/vida-run-uninitialized-jJtAV9` (`child-outcome-unknown`). Preserve these;
+they are fixtures, not stage timeouts. The stage's own scratch-admission
+receipt observed 15,305,670,656 available bytes against the unchanged
+2,147,483,648-byte minimum. No separate disk audit, scan, cleanup, or fixture
+removal occurred.
+
+The preflight-first packet used zero retries before its one complete stage;
+the stage runtime is not a controlled speed comparison against Key431's
+197.47 s run. Model-token and aggregate tool/API-call telemetry remain
+unavailable. Pstack's independent-review tooling GAP remains open. Continue
+the `bun-cli-run` queue at the reachable ID109 identity check, preserve ID98
+as undispositioned, and do not advance contour or run CRAP/mutation.
