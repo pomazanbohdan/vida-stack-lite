@@ -5114,6 +5114,33 @@ Projection was updated by the producer owner. No objective disposition was
 applied. The next report-ordered zero callable in `bin/run.ts` is
 `historicalReleaseInspection` at line 2884.
 
+#### Key424 historical inspection selection
+
+`historicalReleaseInspection` is the next report-ordered zero callable. Its
+single caller constructs a fresh inspection and selects a supplied one only
+for `apply`; all other inputs select the fresh object. The route decoder
+requires a supplied inspection for supported `apply` and disallows one for
+`inspect`, while the selector's declared domain also has an apply-without-
+supplied fallback. No duplicate selector was found. The packet exports this
+small selector for the existing internal test import and adds a focused test
+with distinct `current` and `supplied` records. Strict identity assertions
+cover apply+supplied, inspect+supplied, and apply+undefined without a database,
+consumer effect, or objective skip.
+
+Blind native Luna review
+(`DIAG/bun-cli-run-key424-review-20261024-01.md`) confirmed the object shape,
+selection contract and branch-distinguishing assertions; no must-fix was found.
+The reviewer noted its review scope did not include package-level export
+analysis; this diff changes no package manifest or export map. Scoped checks
+passed: package-pinned Bun 1.4.4 format check for both changed files, strict
+`tests/tsconfig.json` check across 510 files, locked Oxlint, and one focused
+test (1 pass, 54 filtered, 0 failed, 1.282 s). Receipts are
+`DIAG/bun-cli-run-key424-format-20261024-01.log`,
+`DIAG/bun-cli-run-key424-typecheck-20261024-01.log`,
+`DIAG/bun-cli-run-key424-lint-20261024-01.log`, and
+`DIAG/bun-cli-run-key424-target-20261024-01.log`. This is focused evidence;
+commit/push and the single current-producer stage remain pending.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423 were 182,091.09 /

@@ -52,6 +52,7 @@ import {
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
   forwardUpdateAuthority,
+  historicalReleaseInspection,
   isResearchSourceReference,
   repairAuthority,
   requireNoCompletedReadonlyRelease,
@@ -654,6 +655,27 @@ test('recovery operation guard returns a retained operation and rejects a missin
     () => requireRecoveryOperation(null),
     (error: unknown) => error instanceof Error && error.message === 'Recovery review operation is unavailable',
   );
+});
+
+test('historical release inspection selects supplied CAS only for apply mode', () => {
+  const current = {
+    expectedWork: { revision: 1, digest: 'work-current' },
+    expectedLedger: { revision: 2, digest: 'ledger-current' },
+    expectedJournal: { revision: 3, digest: 'journal-current' },
+    expectedMaintenanceGeneration: 4,
+    baseline_binding: 'baseline-current',
+    receipt_binding: 'receipt-current',
+    current_config_binding: 'config-current',
+    engine_binding: 'engine-current',
+    request_binding: 'request-current',
+    preimage_binding: null,
+    nativeSessionHandle: 'session-current',
+  };
+  const supplied = { ...current, request_binding: 'request-supplied' };
+
+  assert.equal(historicalReleaseInspection('apply', supplied, current), supplied);
+  assert.equal(historicalReleaseInspection('inspect', supplied, current), current);
+  assert.equal(historicalReleaseInspection('apply', undefined, current), current);
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {

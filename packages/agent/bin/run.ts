@@ -2877,7 +2877,7 @@ function parseHistoricalOwnerReleaseRequest(
 }
 
 /** @param {'inspect' | 'apply'} mode @param {HistoricalOwnerReleaseInspection | undefined} supplied @param {HistoricalOwnerReleaseInspection} current @returns {HistoricalOwnerReleaseInspection} */
-function historicalReleaseInspection(
+export function historicalReleaseInspection(
   mode: 'inspect' | 'apply',
   supplied: HistoricalOwnerReleaseInspection | undefined,
   current: HistoricalOwnerReleaseInspection,
