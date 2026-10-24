@@ -3824,6 +3824,84 @@ only +1/+4/+5/+3, not a combined maximum. The report's next zero is
 coverage, frozen CRAP or mutation credit is claimed; bun-cli-run remains
 BLOCKED. Continue with that zero under the same one-contour sequence.
 
+### Three-hour bun-cli-run audit and key407 mapped-payload guard — 2026-10-24 00:39:43–03:39:43 UTC
+
+The read-only Git history for this three-hour window contains 16 commits: eight
+focused-test packets and eight WORK/projection records. The active partition
+remained `bun-cli-run`; historical exact F/L/S/B closure remains 17/46. The
+available receipts support packet timings and outcomes, not a controlled
+comparison of implementation or test order. They do not record aggregate
+tool/API calls or token counts.
+
+Two blind native Luna design reports independently converged on exercising the
+existing repair authority through public `run()` with a digest-bound prepared
+payload, plus an independent final correctness review. The scoped change is
+only in `tests/run-entrypoint.test.ts`: it reuses the existing parent-evidence
+fixture, keeps its invalid-parent-evidence refusal, and adds a mapped successor
+payload whose `source_path` traverses above the project root. The public entry
+point returns `GAP-VIDA-RUN-SELECTOR-001` / `Repair payload entry is invalid.`
+before project context or the host handoff database is opened. Assertions bind
+the exact error, unchanged `.agent` authority bytes and absent session-handoff
+database. No product Source, selector API, runtime, loader, database cutover or
+consumer effect changed. The design reports and final review are retained at
+`DIAG/bun-cli-run-key407-design-a-20261024-01.md`,
+`DIAG/bun-cli-run-key407-design-b-20261024-01.md` and
+`DIAG/bun-cli-run-key407-final-review-20261024-01.md`; the final reviewer found
+no correctness issue.
+
+The exact filtered Bun target passed once: 1 pass, 8 filtered, 8 expectations,
+1.55 s invocation time. Scoped typecheck passed for 144 files (1,153.07 ms),
+formatter check passed (42 ms), and type-aware Oxlint returned no diagnostics.
+Normal commit hooks also passed formatting on 536 files and strict checking on
+543 files. The current sequence verified the narrow behavior first, ran the
+independent static checks concurrently, obtained read-only review, then
+committed and pushed before starting a single coverage producer. One earlier
+filter invocation had a misspelled mutation-part environment variable and
+matched zero tests; it executed no test body and was corrected before the
+passing target. That was an invocation mistake, not a test or product failure.
+
+Exactly one pinned changed-input coverage stage ran after the push. Native
+outcome receipts are in `/workspace/contour-stage-9sjWH8`; run
+`938e9d5b-cbce-49c9-a55e-ef810acd0efe` exited 0 in 166,789.46 ms under the
+unchanged 330,000 ms timeout. Capture completed, the owned process group closed,
+boot and image inputs remained unchanged, and publication succeeded. The image
+binds commit `4c868ebe65eae242170e4b767398f2affb037073`, source tree
+`f33c661aa112074f156038649c05b9fcd1728d76`, input fingerprint
+`f9289a79018120b960e4a34540714d8ec19922dbb22129096e9adab654d89cca` and
+manifest SHA-256
+`c16c045729c4d6e9d8e9d5cb90e1cc3102f5b5e7d451ab257b94d17f4016ccb2`. The
+focused report is
+`/workspace/.vida-quality-inputs/4d581552a4bb59a067b966191f80226964b09932/repository/packages/agent/coverage/bun-unified/diagnostics/938e9d5b-cbce-49c9-a55e-ef810acd0efe.focused-coverage.json`.
+
+The projection owner now reports 340/557 F, 1554/2863 L, 1654/3143 S and
+1943/3663 B, 1,371 attempts, max CC 501, max entry CRAP 992, and `BLOCKED`.
+This is a distinct bound report, not a union with prior maxima; no objective
+skip, exact-coverage closure, CRAP or mutation result is claimed. Its next
+zero-count callable is `isResearchPreparationUnsafe` at `bin/run.ts:328-332`,
+on the preparing research-wave resume refusal at line 8877.
+
+The three latest stage envelopes measured 175,671.79 ms, 175,151.30 ms and
+166,789.46 ms respectively. The last is about 8.36 s lower than the prior
+stage, but these are different source/test images and uncontrolled conditions;
+they do not establish a speedup from the chosen ordering or parallelism. The
+current small-target-first order avoids spending a stage on a malformed or
+zero-match test selection. A static-first serial variant could reject format
+or type errors earlier, while a full-suite-first variant would broaden the
+early feedback cost; neither has a matched timing receipt here. Static checks
+ran concurrently, but no serial control exists. The measured producer level is
+one; concurrent producers would break the single-owner/custody rule. Keep that
+limit. Retained stage receipts show no capture, timeout, boot or image-input
+defect in this packet, but they are not evidence that every testing script
+path is defect-free. The repository lifecycle command `vida-agent instructions`
+is unavailable in this environment; checked-in lifecycle guidance was used.
+The optional `pstack-worker-contract` shell command was also unavailable;
+native Luna collaboration remained available and its read-only outputs were
+kept separate from the root-owned Git, WORK and numeric records.
+
+Continue only `bun-cli-run` from the newly projected zero. Do not replay the
+failed zero-match invocation, merge coverage maxima across images, repeat the
+completed stage, or run CRAP/mutation during this F/L/S/B phase.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
