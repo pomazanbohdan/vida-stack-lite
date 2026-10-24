@@ -5938,10 +5938,77 @@ unavailable.
 Pstack resolution remains unavailable on this host under the recorded
 `.codex/README.md`/tooling-lock procedure, so no fresh blind Luna final-diff
 review is claimed. No objective skip is applied to ID98, and no denominator,
-projection, or contour status is changed by this pre-stage packet. Next: after
-normal commit/push and hook terminal completion, run exactly one pinned
-`bun-cli-run` stage, retain its full native receipts and raw streams, and bind
-the resulting report to the commit and fingerprints before recording counts.
-Do not start another contour or run CRAP/mutation. The prior one-time disk
-check remains the source; no new disk scan, cleanup, receipt deletion, or
-retained-fixture removal occurred.
+projection, or contour status was changed by this pre-stage packet. Its single
+post-commit stage result follows below. Do not start another contour or run
+CRAP/mutation. The prior one-time disk check remains the source; no new disk
+scan, cleanup, receipt deletion, or retained-fixture removal occurred.
+
+### Key431 serial coverage outcome — 2026-10-24
+
+After commit `68f451852ef7fbb2ab5aeeb55e86bfb9b5686d4d` was pushed normally,
+one pinned `bun-cli-run` coverage stage completed from `packages/agent` in
+197,472.929 ms of the 330,000 ms allowance. Stage directory
+`/workspace/contour-stage-kHZErn`, scratch `scratch-yxFaex`, and run
+`f68f5293-8264-4ad2-b27e-b25bf4c15bf0` are retained. Exit was 0, signal and
+spawn error null, no timeout, complete capture, owned process group closed,
+boot unchanged, image inputs unchanged, and publication `published`.
+`execution.json` binds stdout 7,980 bytes (SHA-256
+`08a03781f1f6780fb00396fc908dedb998ba9fb02e5ff89164a51a130b04a11e`) and
+stderr 17,133 bytes (SHA-256
+`29f24931ff9468fefbd4363a0a0f48f1e1fb13f01e399c84a956a1168a6f81e`), fully
+retained and untruncated. Launch, request, execution, publication, both raw
+streams and stage scratch remain at that path.
+
+The immutable image is
+`/workspace/.vida-quality-inputs/2aba656d3eeaa36d01f0fd343e52ca956bd07967/`;
+manifest SHA-256 `61494dea40d8cb19aa46ede2f0160037fd818f172b89ce73cd5a51434a110f1b`,
+source tree `841066c3520d15f8be3e83ead55923718b63fc9e`, input fingerprint
+`409ffac73cafcf05a932fe354fadb43b241aa89555d34b5f438d2091c5b2bb4d`, and
+source commit match the stage. The bound diagnostic report is
+`/workspace/.vida-quality-inputs/2aba656d3eeaa36d01f0fd343e52ca956bd07967/repository/packages/agent/coverage/bun-unified/diagnostics/f68f5293-8264-4ad2-b27e-b25bf4c15bf0.focused-coverage.json`;
+run manifest SHA-256
+`5dc24705f668e2626c58797789e029ed0ab010da3e5e0419d8722abdd2a24864`, report
+SHA-256 `7ddbcd774c6b2da391459f699725735bc40e8907b2d63926bdb51a2201024458`,
+Source fingerprint `5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851`,
+test fingerprint `b1ed5563617a279b0a14fdcbc3d9279451f6b72c48b18fcc71099ccabb1e4b7e`,
+and tool fingerprint
+`ba53f07f43018f1ff2102f352d8b0c7c33b8ecb0dfc1583c0558531fde4514d1`.
+
+Package Bun 1.4.4 ran the two selected files with `1x PARALLEL`: 125 tests
+passed, zero failed, 2,371 expectations, 191.93 s test time. The TS-only gate
+captured 545 files with zero diagnostics. The producer-owned projection now
+records F `428/555`, L `1953/2860`, S `2096/3138`, B `2415/3660`, max CC 501,
+max entry CRAP 992, still `BLOCKED`. Compared with Key430, only branches
+increase (+2); functions, lines, statements and all denominators stay fixed.
+At `run.ts:1108`, branch ID104 is now `[19,1,1]`, so its positive admitted
+attempt arm is covered by the real helper transition. ID98 at `:1085` remains
+`[0,3]`; it is not skipped or dispositioned because no fresh report-bound
+independent review is available. The operation-outcome entry remains
+`BLOCKED; unqualified; selection unbound`; the diagnostic is not full
+qualification (`full_qualification=false`, frozen budget pending). No CRAP,
+mutation, queue advance, or manual projection edit occurred.
+
+The stage retained four intentional unknown-custody test fixtures in raw
+stderr: `/tmp/vida-unprepared-state-EXywxw` (`deadline-expired`),
+`/tmp/vida-unprepared-state-7bTxML` (`database-close-failed`),
+`/tmp/vida-unprepared-state-d2YIbY` (`completion-not-marked`), and
+`/tmp/vida-run-uninitialized-v8JE0E` (`child-outcome-unknown`). These are
+protected test evidence, not producer timeouts or stage failures. The stage's
+own scratch-admission receipt observed 15,407,783,936 available bytes against
+the unchanged 2,147,483,648-byte minimum. This is recorded from that producer
+receipt; no second filesystem audit, broad scan, or cleanup was run.
+
+One report-inspection command accidentally selected `.metrics` including all
+555 function records and caused an oversized response; the tool reported
+2,013,937 original tokens and 7,007,169 bytes omitted. No result from that
+response was used. The follow-up selected only the single `bin/run.ts` metric
+and the branch entries at six exact source lines; keep using bounded report
+queries. The existing raw stage receipts remain the authoritative evidence.
+
+Compared with the immediately preceding packet, the preflight-first Key431
+target passed once and added the intended two branch hits; its only full
+producer was the one serial stage above. The report shows no coverage or stage
+failure. Model-token and aggregate tool/API-call totals remain unavailable.
+Pstack fresh independent review is still a tooling/access GAP. Keep
+`bun-cli-run` active and select the next reachable uncovered path from its
+current report; do not promote ID98, advance contour, or run CRAP/mutation.
