@@ -420,6 +420,10 @@ fixture restored; the journal parser itself does not enforce phase uniqueness.
 For parent cutoff drift, keep the child plan unchanged and change only the
 schema-valid parent cutoff witness. Require the exact parent selector or cutoff
 drift refusal and compare the complete fixture afterimage.
+For a parent with both repair and forward authority markers, require the exact
+ambiguous-authority refusal before either authority is followed, and compare the
+complete fixture afterimage. The presence of both marker paths is the conflict;
+the guard must reject the pair before parsing or applying either record.
 Public recovery-review negative exports vary exact outer keys, caller identity,
 owner/CAS bindings, source snapshot/entries, context and required observation.
 Every input remains malformed and must refuse before opening the recovery route,

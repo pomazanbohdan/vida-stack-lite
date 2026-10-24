@@ -6914,28 +6914,76 @@ comments, suppressions or `MUST KILL` flags. Both workers received independently
 prepared native read-only prompt contracts; those contracts explicitly do not
 enforce tool isolation. Neither worker edited files or ran tests.
 
-The last completed numeric stage remains Key445, run
-`59af34f3-c546-40c0-925f-dd38866fdc11`. Until the next stage completes, the
-projection remains F441/555, L2014/2860, S2163/3138 and B2522/3660. ID145 stays
-`[0,31]`, operation status stays BLOCKED, and the maxima stay 501. No numeric
-change is claimed from the focused test. One changed-input stage remains after
-ordinary commit and push.
+### Key450 changed-input coverage stage terminal
 
-### Three-hour execution comparison, 2026-10-24 12:06–15:06 UTC
+The Key450 packet was committed and pushed as `b43b03f582c3f62c7eac9dac18e03758c669188f`.
+The existing single coverage producer completed once at
+`/workspace/contour-stage-tvbcYY`, run
+`e0aee97d-57ae-4f15-bd82-a54f03b768a1`. The terminal receipt records exit 0,
+no signal/spawn error/timeout, complete stdout/stderr capture, observed process
+and group termination, unchanged boot, and unchanged image inputs. Its elapsed
+time was 199,063.247957 ms under the unchanged 330,000 ms bound. The selected
+two-file suite passed 127 tests with 0 failures and 2,474 expectations; its test
+time was 194.18 seconds.
 
-The current receipts show seven one-worker changed-input stages in this window:
+Image binding: repository
+`/workspace/.vida-quality-inputs/4d754b75019952e22f3a987f99b3f6ce64edef69/repository`,
+tree `5fcc12932e640188ce434de2acce2f3ae459c06f`, input fingerprint
+`0a1df0358e75ab3135aa6ff8b5bf5aaf4fec84c29ea2af60115938bde37db73`,
+manifest SHA-256 `739effb449ef969eb1820daf78f54eb1ba33bb9dd1c7dde8f4436728a80a6eba`.
+The source commit remains `b43b03f582c3f62c7eac9dac18e03758c669188f`; the report
+is
+`/workspace/.vida-quality-inputs/4d754b75019952e22f3a987f99b3f6ce64edef69/repository/packages/agent/coverage/bun-unified/diagnostics/e0aee97d-57ae-4f15-bd82-a54f03b768a1.focused-coverage.json`.
+Native launch, execution, publication and raw
+stdout/stderr receipts remain under `/workspace/contour-stage-tvbcYY`.
+
+The projection advanced to F441/555, L2015/2860, S2164/3138 and B2523/3660.
+ID145 at `bin/run.ts:1597` is now `[1,31]`; denominators and maxima remain
+unchanged, `max_cc`/`max_entry_crap` remain 501, and the operation stays BLOCKED
+with frozen qualification pending. This is one newly observed line, statement
+and branch hit, not a contour closure or numeric PASS.
+
+### Key451 parent authority ambiguity case
+
+The next adjacent gap is ID147 at `bin/run.ts:1607`, currently `[0,31]` in the
+Key450 report. Its true arm is reachable with the existing parent repair fixture:
+add the parent `forward-intent.v1.json` marker while retaining the existing
+`repair-plan.v1.json`. The guard compares both marker paths and refuses before
+either authority record is parsed. The case asserts the exact selector refusal,
+complete `.agent` and installed-bundle afterimages, and preserved root-level
+config/changelog bytes and metadata. A final blind native Luna review found no
+must-fix; the reviewer confirmed each prerequisite and the afterimages. Its
+optional prose note was applied by clarifying that the presence of both markers
+is the conflict.
+
+The first six filtered attempts did not execute this test because the test file
+registers it only when one of mutation, V8 coverage or native coverage mode is
+active (`run-entrypoint.test.ts:3107`). Exact patterns either matched zero tests
+or selected unrelated ordinary tests; all six raw logs remain in `DIAG`.
+Setting `AGENT_RUNTIME_V8_COVERAGE=1` selected the intended composite test. The
+final run passed 1 test, 169 expectations, 0 failures in 1.73 seconds. This is a
+test-selection command constraint, not a product defect or coverage result.
+Checked-JS strict passed 227 files in 561.62 ms, configured Oxlint exited 0, and
+the one-file formatter check passed in 26 ms. The independent review was
+read-only and did not run tests or edit files. One serial changed-input stage
+remains after normal commit hooks and push.
+
+### Three-hour execution comparison, 2026-10-24 12:24–15:24 UTC
+
+Eight one-worker changed-input stages have terminal receipts in this window:
 Key434 258,991.524 ms, Key436 208,820.746 ms, Key438 208,414.802 ms,
-Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms, and
-Key445 202,793.193 ms. Their raw elapsed range is 202,793.193–258,991.524 ms.
-The commits, input sets, test counts and host/cache conditions differ. These
-stages establish a single-worker cost range, not a speedup, regression, limiter,
-or controlled comparison of check ordering. No profile or matched A/B/A/B run
-exists, so the benchmark verdict is inconclusive.
+Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms,
+Key445 202,793.193 ms, and Key450 199,063.248 ms. The observed range is
+199,063.248–258,991.524 ms. Source commits, inputs, test counts, and host/cache
+conditions differ, so these receipts give a one-worker cost range only; they do
+not establish a speedup, regression, limiter, or controlled check-order result.
+There is no profile or matched A/B/A/B run, so the benchmark verdict remains
+inconclusive.
 
 | Check order and producer parallelism | Evidence and decision |
 | --- | --- |
-| Reuse the current report, review causal prerequisites, make a focused case, run scoped strict/lint and independent review, then run one changed-input stage at 1x PARALLEL | This is the verified Key439/442/444/445 sequence. Key450 has completed the focused checks and reviews; its single full stage waits for push. It keeps one producer and reuses the current fixture. |
-| Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 203–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
+| Reuse the current report, review causal prerequisites, make a focused case, run the gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | The eight terminal stages above and the current Key451 pre-stage packet follow this order. Key451 also exposed a coverage-mode registration gate; future focused commands must set the mode before filtering. |
+| Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 199–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
 | Run two or four full numeric stages concurrently | No qualified run measured this option. It conflicts with TESTING's single producer and has no comparable speed, resource or correctness evidence. Keep numeric parallelism at one. |
 
 Platform totals for tool calls and token usage are unavailable. Do not infer them

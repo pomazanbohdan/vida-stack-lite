@@ -5277,6 +5277,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'forward-installed-bundle-inventory-mismatch',
       'forward-installed-bundle-symlink',
       'forward-parent-cutoff-drift',
+      'forward-parent-authority-ambiguous',
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-baseline-path-non-string',
@@ -5326,6 +5327,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-installed-bundle-inventory-mismatch' ||
           scenario === 'forward-installed-bundle-symlink' ||
           scenario === 'forward-parent-cutoff-drift' ||
+          scenario === 'forward-parent-authority-ambiguous' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
           scenario === 'repair-default-installed-bundle' ||
           scenario === 'repair-installed-payload-drift' ||
@@ -5686,6 +5688,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             }),
           );
         }
+        if (scenario === 'forward-parent-authority-ambiguous') {
+          assert.ok(forwardFixture);
+          writeFileSync(
+            path.join(childRoot, 'forward-intent.v1.json'),
+            record({ schema: 'VidaForwardUpdateMaintenance/v1', operation_id: parentGeneration }),
+          );
+        }
         if (scenario === 'forward-installed-bundle-inventory-mismatch')
           writeFileSync(path.join(root, 'vida-agent', 'bin', 'unlisted.mjs'), 'unlisted installed bundle file\n');
         if (scenario === 'forward-payload-manifest-digest') {
@@ -5873,6 +5882,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
         } else if (
           scenario === 'forward-parent-cutoff-drift' ||
+          scenario === 'forward-parent-authority-ambiguous' ||
           scenario === 'forward-payload-manifest-digest' ||
           scenario === 'forward-installed-bundle-inventory-mismatch'
         ) {
@@ -5890,12 +5900,16 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             message:
               scenario === 'forward-parent-cutoff-drift'
                 ? 'Forward parent selector or cutoff drift.'
-                : scenario === 'forward-payload-manifest-digest'
-                  ? 'Repair payload manifest drift.'
-                  : 'Installed bundle inventory differs from forward manifest.',
+                : scenario === 'forward-parent-authority-ambiguous'
+                  ? 'Forward parent authority type is ambiguous.'
+                  : scenario === 'forward-payload-manifest-digest'
+                    ? 'Repair payload manifest drift.'
+                    : 'Installed bundle inventory differs from forward manifest.',
           });
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
+          expect(preservedPaths.map((file) => readFileSync(file))).toEqual(beforePreservedBytes);
+          expect(preservedPaths.map(snapshotAuthorityMetadata)).toEqual(beforePreservedMetadata);
         } else if (scenario === 'forward-installed-bundle-symlink') {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);
