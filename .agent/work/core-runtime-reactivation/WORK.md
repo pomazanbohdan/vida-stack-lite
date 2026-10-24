@@ -8862,3 +8862,64 @@ for one selected document and 11 local links at
 `DIAG/key471-risk-observer-docs-check-01.log`; `git diff --check` passed.
 Commit/push and one corrected changed-input stage remain pending; do not start
 the producer before normal hooks and push terminate.
+
+### Key471 observer-correction stage failure — 2026-10-24 21:52 UTC
+
+The sole producer ran source commit `1607df430c7f8811de91b74093f232daae4e69bd`
+once in `/workspace/contour-stage-vDvrOO`. The immutable image binds tree
+`cb0ac04ea1a82fb412eadad8c744cbd849bfe718`, fingerprint
+`006e54846285374c4a9b15dc3f46f08aa7e0f32731004254360f3c2dcb74a9cc`, and
+manifest SHA-256
+`f36316ba08f4ceff7b157981dc5aef65c8911b5aaea5ab88359577899eddf2c6`. Native
+execution ended after 148,016.105824 ms with exit 1, no timeout/signal/spawn
+error, complete capture, closed owned group, unchanged boot and unchanged image
+inputs. Publication is `unknown-or-partial`; no coverage report was published
+and no F/L/S/B hits are accepted from this attempt. Preserve
+`/workspace/contour-stage-vDvrOO/{request.json,launch.json,execution.json,publication-error.json,stdout.log,stderr.log}`
+and `DIAG/key471-stage-20261024-02.log`. The captures contain 7,718 stdout
+bytes and 22,688 stderr bytes, both complete and non-truncated.
+
+The two selected test files reached 133 tests and 2,617 expectations: 130
+passed and three failed. Both the medium-risk fixture and the existing CAS
+prepared-run fixture attempted the same unique focused observer. The
+`coverage-cli-child.ts:820` duplicate-launch assertion rejected the repeated
+`run-admission-prepared` subject, then the preload finalizer found only two of
+three required focused CLI subjects. This is a known test instrumentation
+failure, not a kill, objective skip or timeout. Retain the exact fixture roots
+reported by the run:
+`/tmp/vida-run-lifecycle-risk-PUqWrH`,
+`/tmp/vida-run-mutation-J5Xchq`, and
+`/tmp/vida-run-uninitialized-kVR8eW`; the last has an UNKNOWN child-outcome
+marker. Do not clean or replay these roots.
+
+The failed-stage admission receipt observed 11,776,417,792 scratch bytes
+against the unchanged 2,147,483,648-byte floor, a 9,628,934,144-byte margin.
+This is receipt evidence on the already inventoried filesystem, not a new
+survey. A post-terminal check found no live Bun/bwrap/tini processes; no cleanup
+or signals were issued. The producer alone updated projection.
+
+### Key471 single-observer repair — pre-stage — 2026-10-24 21:54 UTC
+
+The blind read-only Luna trace recommends exactly one `run-admission-prepared`
+observer in the coverage-selected run. Keep the medium-risk behavior fixture
+unarmed, arm only the high-risk admitted fixture, and leave the existing CAS
+prepared-run child unarmed. This preserves one unique subject; high risk makes
+`value === 'low' || value === 'medium' || value === 'high'` evaluate all three
+operands in ID257 while retaining the same argv, prepared status and UNKNOWN
+root-retention behavior. It does not issue a wave or invoke a consumer.
+
+The package-selected Bun 1.4.4 target with
+`AGENT_RUNTIME_MUTATION_PART=bun` passed both risk cases (2 pass, 8 filtered,
+10 expectations, 8.61 s) at
+`DIAG/key471-risk-observer-target-03.log`. Scoped strict passed with 545
+captured TypeScript files and zero diagnostics plus 104 project files; Oxlint
+and one-file format checks passed at
+`DIAG/key471-risk-observer-{typecheck,oxlint,format}-02.log`. Independent blind
+review confirmed the single high-risk observer is the existing prepared-only
+subject and has no consumer effect. One projection query accidentally selected
+the entire `attempts` array and returned a truncated tool payload (reported as
+1,250,239 omitted bytes / 574,704 token-equivalent output); no files changed and
+no scan/hash/test ran. The follow-up query bounded results by receipt timestamp.
+This is output volume, not billed-token accounting. The next action is one corrected
+changed-input stage after the normal commit and push terminate; keep the failed
+stage and all retained UNKNOWN evidence intact.

@@ -6637,7 +6637,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         try {
           const { args, config } = createFixture(root);
           const admitted = prepareMutationIntake(args, config, { risk });
-          expect(fixture.invoke(admitted.admissionArgs, 0, 'run-admission-prepared').status).toBe('prepared');
+          const coverageRole = risk === 'high' ? 'run-admission-prepared' : undefined;
+          expect(fixture.invoke(admitted.admissionArgs, 0, coverageRole).status).toBe('prepared');
           completed = true;
         } finally {
           if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
@@ -7518,7 +7519,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           runtimePaths,
         );
         expect(runtimeSnapshot.entries.every((entry) => entry.exists)).toBe(true);
-        const prepared = fixture.invoke(admitted.admissionArgs, 0, 'run-admission-prepared');
+        const prepared = fixture.invoke(admitted.admissionArgs);
         expect(prepared.status).toBe('prepared');
         const preparedActions = requireNextActions(prepared);
         const preparedVersion = requireStateVersion(prepared.state_version);
