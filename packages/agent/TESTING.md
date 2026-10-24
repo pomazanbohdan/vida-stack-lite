@@ -1966,11 +1966,18 @@ as a qualified package-profile result.
 Reconcile each edited enclosing case with its exact selected declaration before
 launch. Similar family names can select a different unchanged case. Reuse the
 current inventory or selected declaration; do not add a full-suite AST pass.
+Include both sides of an observer pairing when the later action uses the prepared
+invocation's Work or argv. Check the declared observer roles against that inventory.
+A standalone acceptance case cannot verify the cross-step binding.
 Verify each correction with focused cases, then perform one complete selected-contour
 coverage stage after the checked packet is integrated. Do not form another SDK/image
 or repeat the full stage for each assertion. Reuse read-only analysis while Root
 implements; keep extra writers and other contours closed. Projected coverage gains
 remain hypotheses until the complete report records them.
+
+Documentation-only follow-ups require their documentation checks, not another
+coverage stage. Use the [Cloud reference's bounded evidence reads](../../.codex/README.md#bootstrap-and-ownership)
+for terminal reporting.
 
 If an expanded composite exceeds its case bound, first separate independent proof
 groups into named cases with independent roots and the same existing per-test

@@ -79,8 +79,27 @@ Search results are candidates, not exhaustive binding, types or deletion proof.
 Stale, unsupported, empty or truncated results require current Source fallback.
 Use native shell for AST search, machine JSON, diffs, compiler/test failures and
 exact evidence. LeanCTX raw output can merge streams, redact and truncate.
-For minified generated projections, review the maintained compact Markdown or
-schema-decoded selected records; a raw one-line JSON diff can emit megabytes.
+For contour status, read the existing stage capture's `VidaContourProgress/v1`
+and `VidaContourStageOutcome/v2` records first. They already contain counters,
+status, report locations and terminal custody. Use the maintained compact
+Markdown for history. Open a raw report only for a specific unresolved field.
+Do not regenerate the projection, inventory, hashes or producer output to answer
+a status question.
+
+For a necessary JSON read, inspect its schema and selected key types before
+extracting values with the existing TypeScript owner or an owned diagnostic.
+Emit an explicit list of scalar fields or bounded counter arrays. Fields named
+`coverage`, `metrics`, `execution_scope` and `attempts` can contain large trees;
+their names do not establish a summary shape. Do not print them wholesale.
+A tool output limit truncates delivery after generation; it does not bound the
+query. After truncation, narrow the local selector before another read. Preserve
+the report and reuse it without rerunning a producer.
+
+Read long instructions in bounded sections with explicit line ranges. Carry
+already-read rules forward within the task and reread only changed or newly
+relevant sections. Batch independent selected reads, with a combined output
+size that fits the response limit. Do not concatenate several long files into
+one capped response and treat the truncated result as a complete read.
 
 The lead owns staged checks and Git mutations. Delegated readers make no Git
 calls during those checks. Outside that freeze, use `git --no-optional-locks`
@@ -96,6 +115,9 @@ proposal and use a separate corrected artifact.
 If a command returns a live session ID, wait for its terminal exit before any
 dependent Git operation. Printed formatting/typecheck PASS rows are not commit
 completion; an early push can return up-to-date before the commit exists.
+Reuse that session for observation. For a long-running check, wait 30 to 60 seconds
+per observation instead of repeated one-second polls. Inspect a separate process
+list only when custody is uncertain or the next producer needs admission.
 
 Vex is the single primary index. ast-index and its original skill are inactive
 fallback material; never maintain both indexes simultaneously. A switch has one

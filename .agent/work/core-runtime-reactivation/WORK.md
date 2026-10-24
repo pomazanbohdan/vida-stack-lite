@@ -4,6 +4,38 @@ Status date:2026-10-24. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Execution-step optimization, 2026-10-24
+
+This documentation packet keeps bun-cli-run as the active contour and reuses
+Key471's completed stage. Its capture is the literal repository-relative path
+`.agent/work/core-runtime-reactivation/DIAG/key471-stage-20261024-04.log`,
+not the historical DIAG alias above. No producer, image, test or inventory is
+needed to change execution guidance.
+
+Pstack 1.17.5 and Superpowers 7.0.0 are installed and enabled. The installed
+cache paths resolve their skills. Remote plugin-catalog discovery returned 451,
+but local skill reads succeeded. Subtract Before You Add selects the existing
+stage summary instead of a new parser. Guard the Context Window selects scalar
+report fields and bounded instruction sections. Superpowers systematic debugging
+traces the oversized output to broad field selection rather than report failure.
+This packet itself also concatenated long instruction reads and received a
+truncated 27,015-token-equivalent tool payload. That is tool-output volume,
+not billed-token accounting, and reinforces the need for bounded reads.
+
+The Cloud reference now owns summary-first evidence reads, key-type inspection,
+scalar output selection, sectioned instruction reads and 30-to-60-second native
+session waits. TESTING extends its existing packet sequence with paired observer
+cases in the same focused invocation and documentation-only follow-up checks.
+The existing ordering comparison remains in the Key471 pre-stage record below.
+The two failed observer stages took 148,016.105824 and 156,242.032423 ms, but
+these different-input receipts establish no measured speedup for the new guidance.
+Numeric concurrency stays at one producer. Exact coverage, all budgets, receipts,
+retention and Git terminal gates remain unchanged.
+
+The focused documentation check passed for three documents and 50 local links.
+Final diff review and `git diff --check` passed. Commit hooks retain their own checks.
+The producer-owned projection files remain unstaged. No timer or schedule changes.
+
 ## Current sequential F/L/S/B cycle
 
 The active contour is **bun-cli-run only**, the next declared partition
