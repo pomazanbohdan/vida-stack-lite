@@ -7114,8 +7114,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           const beforeReport = readDatabase();
           await Promise.resolve(
             expect(run([...args, '--report', reportPath])).rejects.toMatchObject({
-              code: 'GAP-VIDA-RUN-CONTEXT-001',
-              message: 'Delivered prewriter Journal version is stale.',
+              code: 'GAP-VIDA-RUN-CLI-001',
+              message:
+                'Mutation modes require one mode and an exact expected state version; renewal also requires the current owner and lease generation.',
             }),
           );
           expect(readDatabase()).toEqual(beforeReport);
@@ -7155,7 +7156,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 message: 'Delivered prewriter continuation has no current Host work.',
               }),
             );
-            expect(matchingSnapshotCount).toBe(2);
+            expect(matchingSnapshotCount).toBe(3);
             expect(readDatabase()).toEqual(beforeReport);
             expect(readFileSync(reportPath)).toEqual(reportBefore);
           } finally {

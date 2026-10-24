@@ -1341,11 +1341,13 @@ Require the same run/attempt, the new reviewer cohort, one developer suffix and
 retained failed reports. Synthetic seeded reports isolate engine continuation;
 they do not prove public report admission or native endpoint qualification.
 For the public configured-frontier report path, require the expected Journal
-version before processing an observation; missing version and a continuation
-whose current Host snapshot has no Work both fail with their exact context
-error. Reuse one issued-wave fixture, preserve the native DB and report bytes
-after each refusal, and inject the absent Work only in the second bound snapshot
-read so the normal selection and persisted continuation remain intact.
+version before processing an observation; missing version fails at the CLI
+contract and a continuation whose current Host snapshot has no Work fails at
+the context guard. Assert each exact error. Reuse one issued-wave fixture,
+preserve the native DB and report bytes after each refusal, and inject the
+absent Work in the second matching snapshot read, then assert the public
+refusal and the observed three matching reads. This keeps the normal selection
+intact while proving the missing-Work guard rather than the later engine path.
 Check the shared accepted-contract revision resolver for ordinary admissions,
 configured continuations and failed-wave recovery. Preserve original Scope and
 Acceptance bytes while current Source changes. Deny a missing recovery view,

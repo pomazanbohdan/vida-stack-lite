@@ -8274,15 +8274,17 @@ The exact branch map at `coverage[.../packages/agent/bin/run.ts]` records IDs227
 `[0,2]`, 234 `[0,7]`, 235 `[7,7]`, and 236 `[0,3]`.
 
 The existing `rejects a configured-frontier report whose action was not issued`
-fixture now also requires the exact stale-Journal denial when expected version
-arguments are absent (ID230), with the native DB and report bytes unchanged. A
-second invocation injects `work:null` only on the second matching Host snapshot,
-after selection and while the persisted continuation remains available; it
-requires the exact missing-current-Work denial (ID227), unchanged DB/report
-bytes, and restores the spy in `finally`. The old unmatched-action refusal
-remains asserted in the same issued-wave fixture. This batches related errors
-without another setup fixture. The reference contract documents the public
-errors and afterimage checks.
+fixture also checks the missing-expected-version refusal before processing the
+report. This is the CLI contract error `GAP-VIDA-RUN-CLI-001`, not branch ID230:
+the first producer attempt disproved the original assumption that this input
+reaches `requireRunValue`. The native DB and report bytes remain unchanged. A
+second invocation injects `work:null` on the second matching Host snapshot,
+after normal selection; it requires the exact missing-current-Work denial
+(ID227), unchanged DB/report bytes, and restores the spy in `finally`. The
+public call makes three matching snapshot reads in total; injection on the
+third read reaches a different engine error. The old unmatched-action refusal
+remains asserted in the same issued-wave fixture. The reference contract
+documents the CLI and context denials plus their afterimage checks.
 
 The first independent branch review mistakenly read numeric IDs from a function
 map and was discarded. A corrected blind Luna review used the report's exact
@@ -8313,4 +8315,50 @@ The full changed-input producer stage remains the authoritative execution of
 the modified nested fixture. Independent blind Luna review found no must-fix
 in the assertions, snapshot-count targeting, afterimages or documentation.
 Run `git diff --check`, then commit/push normally and stage the changed inputs
-once; projection remains producer-owned.
+once; projection remains producer-owned. The initial failed stage and the
+focused retries below are retained as evidence and do not count as new report
+coverage.
+
+### Key468 first changed-input stage and focused correction evidence — 2026-10-24
+
+The first Key468 packet was committed as `7479a621363523da4b4589cd5b39619868a9b566`
+and staged once in `/workspace/contour-stage-yrjiPB`. The native receipt records
+202,198.725575 ms, exit 1, no timeout, complete capture, observed process-group
+close, and unchanged boot/image inputs. Its selected suite had 126 passes and
+one failure with 2,716 expectations. The failure showed that omitting the
+expected version is rejected by the CLI parser (`GAP-VIDA-RUN-CLI-001`, exact
+message retained in the raw stage log), rather than reaching the deeper stale
+Journal guard originally attributed to ID230. The producer published no
+report; this attempt adds no numeric coverage, and the prior accepted report
+and `BLOCKED` state remain authoritative. Preserve its raw stage log and
+execution receipt.
+
+Focused target evidence is also retained. `target-09.log` exercised the
+missing-Work refusal after injecting on the second matching snapshot; that
+exact refusal matched, but the final count assertion was incorrectly `2`
+instead of the observed `3` (0 pass, 1 failed assertion, 10 expectations). Its
+failure fixture root is
+`/home/agent/.cache/vida-cloud-tooling/tmp/frontier-repair-host-hIFmho`.
+`target-10.log` changed injection to the third read; this reached the distinct
+`Session engine: configured continuation engine unavailable` error before the
+missing-Work guard (0 pass, 1 fail, 9 expectations). Its failure fixture root
+is `/home/agent/.cache/vida-cloud-tooling/tmp/frontier-repair-host-h31NgS`.
+Both roots and logs are retained; neither is cleanup material. The final test
+injects on read two, asserts the exact missing-Work refusal and total read
+count three. Its durable focused capture `DIAG/key468-id227-230-target-12.log`
+passes 1/1 test with 12 expectations, zero failures, and 118 filtered tests on
+Bun 1.4.4. One immediately preceding successful console capture (`target-11`)
+did not write a file because its relative `DIAG` destination did not exist;
+the correctly captured `target-12` run replaces it as the durable positive
+target evidence, without affecting the earlier failure records.
+
+After the final assertion correction, typecheck passed for 545 captured TS
+files (zero diagnostics; 104 project files), Oxlint exited 0, and Bun 1.4.4
+format check passed for the changed test file. Durable check captures are
+`DIAG/key468-id227-230-typecheck-04.log`,
+`DIAG/key468-id227-230-oxlint-05.log`, and
+`DIAG/key468-id227-230-format-06.log`. A blind native Luna follow-up independently
+reviewed the revised second-read injection/three-read assertion and found no
+must-fix issue. `git diff --check` remains the final precommit check. No
+objective skip or counter change is claimed until a normal producer publishes
+and rebinds a report.
