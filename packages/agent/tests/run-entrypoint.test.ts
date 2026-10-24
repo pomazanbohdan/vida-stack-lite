@@ -6,6 +6,7 @@ import {
   openAdmittedWorkspaceDatabase,
   closeWorkspaceDatabaseWithAdmission,
 } from '../src/config/storage-read-admission.ts';
+import { documentationPolicyTransitionFence } from '../src/documentation/policy-transition.ts';
 import { sessionBridgeDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { nativeDatabaseSnapshotReader } from './helpers/native-database-snapshot.ts';
 import { observeWorkStateSchemaCompiles } from './helpers/ajv-compile-observer.ts';
@@ -4642,6 +4643,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         });
         expectReadOnly(before);
       };
+      const withoutForwardSourceAdmission = () => {
+        const plan: Record<string, unknown> = { ...transitionPlan, source_admission: null };
+        plan.fence_binding = documentationPolicyTransitionFence(plan);
+        const { operation_digest: _operationDigest, ...operationBody } = transition;
+        const nextBody = { ...operationBody, plan, plan_digest: canonicalJsonDigest(plan) };
+        return { ...nextBody, operation_digest: canonicalJsonDigest(nextBody) };
+      };
       const encodeEvents = (events: unknown[]) =>
         Buffer.from(events.map((event) => JSON.stringify(event)).join('\n') + '\n');
       writeFileSync(documentFile, newDocumentBytes);
@@ -4649,6 +4657,15 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       const beforeHistory = snapshot();
       expect(forwardUpdateAuthority(root, history.selector, history.selectorSha, history.generationRoot)).toBeNull();
       expectReadOnly(beforeHistory);
+
+      withRestoredBytes(transitionFile, record(withoutForwardSourceAdmission()), () =>
+        expectAuthorityRefusal(
+          history.selector,
+          history.selectorSha,
+          history.generationRoot,
+          'leaf transition plan is invalid',
+        ),
+      );
 
       writeFileSync(documentFile, oldDocumentBytes);
       const historicalBaseline = await executeDocumentationClearFromWork(input, 'baseline');

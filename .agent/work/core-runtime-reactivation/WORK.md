@@ -6104,3 +6104,39 @@ the stage runtime is not a controlled speed comparison against Key431's
 unavailable. Pstack's independent-review tooling GAP remains open. Continue
 the `bun-cli-run` queue at the reachable ID109 identity check, preserve ID98
 as undispositioned, and do not advance contour or run CRAP/mutation.
+
+### bun-cli-run forward documentation binding packet — Key433, 2026-10-24
+
+The Key432 bound report left ID111 at `run.ts:1208` uncovered. The existing
+admitted-applied-CLEAR integration fixture now reuses its valid transition and
+temporarily sets only `source_admission` to `null`. The test recomputes the
+production `documentationPolicyTransitionFence`, plan digest, and whole
+operation digest, so the envelope remains schema-valid and integrity-bound.
+`forwardUpdateAuthority` must then return the exact `leaf transition plan is
+invalid` refusal through its public boundary; the existing authority snapshots
+verify no writes. The original operation bytes are restored in `finally`.
+This is a focused invalid-authority case; it changes no product Source,
+operational database, runtime, or consumer state.
+
+Package-selected Bun 1.4.4 ran this one existing integration test once: 1 pass,
+116 filtered, 35 expectations, zero failures; test body 6,561.53 ms and command
+9.00 s. Scoped format-check passed; strict test TypeScript passed for 510 files;
+Oxlint and `git diff --check` passed. Receipts are
+`DIAG/bun-cli-run-key433-format-write-20261024-02.log`,
+`DIAG/bun-cli-run-key433-format-check-20261024-01.log`,
+`DIAG/bun-cli-run-key433-strict-20261024-01.log`,
+`DIAG/bun-cli-run-key433-oxlint-20261024-01.log`,
+`DIAG/bun-cli-run-key433-diff-check-20261024-01.log`, and
+`DIAG/bun-cli-run-key433-target-20261024-01.log`. The first formatter invocation
+ran but its relative `DIAG/...` tee target was absent from the package cwd and
+returned 1; that output was not preserved as a file. A second scoped invocation
+used the retained absolute DIAG path and passed. Keep the recorded capture
+failure and all prior stage evidence; this is not a producer outcome.
+
+No current Pstack/worker contract is available, so root performed a direct
+source-to-fixture review only; independent blind Luna review remains an access
+GAP. No objective skip was proposed. This packet used static checks before one
+serial targeted test, without retries or a full suite. Full pinned producer
+stage remains pending; no new numeric coverage result is claimed. Continue
+`bun-cli-run`, preserve ID98 as undispositioned, and do not run CRAP/mutation or
+advance the contour.
