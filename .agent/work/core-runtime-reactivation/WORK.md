@@ -7967,34 +7967,97 @@ cleanup and sibling progression. Logs are retained as
 unmodified. The first static pass after the serial change is also retained.
 Test-created retained fixture paths and the failed stage tree were not deleted.
 
-For the receipt-based rolling window 2026-10-24 16:08:32–19:08:32 UTC, exact
+For the receipt-based rolling window 2026-10-24 16:15:49–19:15:49 UTC, exact
 `execution.json` modification times put Keys454, 455, 456, 457, 458, 459, 460,
-462, 463 and 464 inside it. Keys452 and 453 ended before the window (15:52:03
-and 16:07:31). The ten current-window stages ran 1,270 selected tests and
-26,058 expectations in aggregate. Their elapsed time totals 2,171,698.023 ms,
-mean 217,169.802 ms, and range 196,979.462–253,196.590 ms. Nine stages exited
-0; Key464 is the one test failure described above. These receipts measure
-serial 1x producer cost across differing inputs, caches, and host conditions,
-not a controlled performance comparison.
+462, 463 and both Key464 stages inside it. Keys452 and 453 ended before the
+window (15:52:03 and 16:07:31). The eleven current-window stage attempts ran
+1,397 selected tests and 28,747 expectations in aggregate. Elapsed time totals
+2,394,274.643 ms, mean 217,661.331 ms, and range 196,979.462–253,196.590 ms.
+Ten stages exited 0; Key464's first stage is the one failed suite described
+above, and its corrected retry succeeded below. These receipts measure serial
+1x producer cost across differing inputs, caches, and host conditions, not a
+controlled performance comparison.
 
 | Check order / numeric parallelism | Measured evidence | Inference or limitation |
 | --- | --- | --- |
-| Reuse the accepted report, trace and batch reachable gaps, run target/static/review, commit and push, then one changed-input stage at 1x | Nine successful stages in the window used this pattern; one stage exposed the module-mock isolation defect before publishing. | Keep this order. The failed stage produced actionable regression evidence rather than a valid coverage update. |
-| Stage before review or once per subfix at 1x | Current-window mean is 217.170 s; the failed stage alone cost 236.373 s. | Avoidable early stages would cost about 3.62 minutes at the observed mean. This is an estimate, not a matched sequence trial. |
+| Reuse the accepted report, trace and batch reachable gaps, run target/static/review, commit and push, then one changed-input stage at 1x | Ten successful stages in the window used this pattern; the first Key464 stage exposed the module-mock isolation defect, and the justified corrected retry passed. | Keep this order. The failed stage produced actionable regression evidence rather than a valid coverage update. |
+| Stage before review or once per subfix at 1x | Current-window mean is 217.661 s; the failed stage alone cost 236.373 s. | Avoidable early stages would cost about 3.63 minutes at the observed mean. This is an estimate, not a matched sequence trial. |
 | Two or four numeric stages in parallel | No qualified 2x/4x receipt exists. | Keep one producer; higher numeric parallelism is unmeasured and conflicts with the current single-owner policy. |
 
-Observable local work for this packet: one prior isolated target (1 pass), one
-paired target exposing the leak (1 pass/1 fail), one paired target passing after
-alias rebinding (2 pass), three scoped typecheck/lint/format rounds across the
-iterations, one normal commit/push, and one failed full producer stage. This is
-not a platform-wide tool-call count. Platform model-token and tool-call
-aggregates remain unavailable; the earlier oversized projection output was
-executor-reported output volume, not model-token consumption. A bounded file
-listing of the failed stage also truncated; subsequent reads were narrowed to
-its four native JSON receipts and exact stderr lines. No broad source scan, Vex
-refresh, second disk check, cleanup, or parallel producer was run.
+The corrected retry ran once at `/workspace/contour-stage-Vef1O4` from commit
+`030f8ba5f5cfb9a86f33fe3904267648555d37cd`, report run
+`acd89091-516c-462a-84ab-fb1b45dc113f`. Native elapsed time was 222,576.620 ms;
+exit 0, no timeout/signal/spawn error, capture complete and non-truncated,
+process group closed, boot and image inputs unchanged. The stage preserved the
+image manifest SHA `2ccb8ebe22cf572d3c59eb352a5c361497735d704c716c7cb8d4f3b06e5d4463`
+and native stdout/stderr receipts (7,979 / 17,381 bytes with hashes in
+`/workspace/contour-stage-Vef1O4/execution.json`). Its suite passed 127/127
+tests, 2,689 expectations, 0 failures in 217.38 s. The published report is
+`/workspace/.vida-quality-inputs/e33dd127d0c27ed3911e84c7d804aaae775b7ade/repository/packages/agent/coverage/bun-unified/diagnostics/acd89091-516c-462a-84ab-fb1b45dc113f.focused-coverage.json`;
+root stage capture is `DIAG/bun-cli-run-key464-stagefix-20261024-01.log`.
+Projection owner reported attempt 1,472, accepted `focused-diagnostic`, and
+`BLOCKED`: F441/555, L2044/2860, S2195/3138, B2585/3660, max CC/entry CRAP 501.
+ID214 is now `[1,1]`; the next zero arm is ID215 at `run.ts:2029`, `[0,2]`.
+The remaining ID217 `[0,3]`, ID218 `[0,2]`, and ID220 `[1,0]` remain as
+reported in the exact current report.
 
-The corrected source/docs/WORK packet is ready for the normal hooks, commit,
-push, and exactly one justified changed-input producer stage. That rerun is
-required because the first stage exposed the interaction; do not publish or
-attribute the failed-run metrics as current coverage.
+Observable local work for this packet: three focused invocations (initial
+isolated 1/1 pass, serial-only pair 1 pass/1 fail, and corrected pair 2/2 pass),
+two full producer stages (first failed with one test failure, second passed),
+three rounds of scoped typecheck/Oxlint/format, and two normal commit/push
+sequences. This is an invocation count, not a platform tool-call total. The
+platform does not expose reliable model-token or total tool-call aggregates.
+This turn also had two avoidable broad jq outputs: dumping the report's entire
+`metrics[0]` emitted 56,861 executor output tokens, and leaving projection
+`.attempts` unfiltered emitted 567,954; both were truncated and changed no
+files. A malformed first `branchMap` selection and one wrong top-level
+execution-receipt query also returned errors/nulls. The corrected single
+branch-map query selected only IDs214, 215, 217, 218 and 220. These are output
+and report-read inefficiencies, not test, source, timeout, hash, or mutation
+failures. A bounded file listing of the failed stage also truncated; subsequent
+reads used its exact receipts and stderr. No Vex refresh, second disk check,
+cleanup, broad Source scan/hash, or concurrent producer was run.
+
+### Key465 next gap plan — ID215 mismatch afterimage
+
+The accepted Key464 report confirms ID215 at `bin/run.ts:2029` remains
+`[0,2]`: after successful pending-file write/fsync/close/rename,
+`writeDurable` verifies the published bytes and rejects a mismatch. The fresh
+blind Luna trace found the existing serial durable-publication fixture can
+cover this arm within its existing `node:fs` fault mock. The test wraps
+`renameSync` for only `fault-afterimage.json`, captures the just-published
+canonical bytes, then corrupts that final path before the verification read.
+`originalFs` must still observe the canonical beforeimage and changed afterimage,
+and the directory must contain no pending sibling. Assert `RunCliError` with
+exact code `GAP-VIDA-RUN-CUTOFF-001` and message
+`Cutoff witness publication failed.` Rebind Bun's live aliases to original
+exports in `finally` before afterimage checks/cleanup. This extends the existing
+test and fixture; no contour expansion, objective skip, or production-code
+change is proposed.
+
+### Key465 ID215 afterimage-mismatch packet — pre-stage record
+
+The active report's branch map gives ID215 `[0,2]` at `run.ts:2029`; adjacent
+ID214 is now `[1,1]`. The serial publication test has been extended, without
+another test or fixture, to intercept only the owned target's successful
+`renameSync`, capture its canonical published bytes, then corrupt that target
+before the writer's post-rename verification. It asserts exact `RunCliError`
+code `GAP-VIDA-RUN-CUTOFF-001` and message `Cutoff witness publication
+failed.`, retained corrupted bytes, and only the owned target plus the
+existing `occupied` directory—no pending sibling. The native `node:fs` aliases
+are rebound in `finally` before assertions and fixture cleanup. This reaches
+the identified verification arm; it does not assert an objective skip or modify
+production behavior.
+
+The focused pair (the durable-publication case and the formerly affected
+`repair and forward authority...` sibling) passed 2/2, 281 expectations, zero
+failures, 1.85 s on pinned Bun 1.4.4. Scoped typecheck passed (545 captured
+TypeScript files and 104 project files, zero diagnostics); direct Oxlint,
+formatter and whitespace checks passed. Fresh independent blind Luna review
+found no must-fix and confirmed exact branch reachability, error shape,
+afterimage/pending-file assertions, mock restoration and scope; the reviewer
+ran no tests. Logs: `DIAG/key465-id215-typecheck-01.log`,
+`DIAG/key465-id215-oxlint-01.log`, `DIAG/key465-id215-format-01.log`, and
+`DIAG/key465-id215-target-01.log`. No full stage has run for Key465 yet. After
+WORK/docs/test are ready, commit and push normally, then run exactly one
+changed-input stage through the existing producer.

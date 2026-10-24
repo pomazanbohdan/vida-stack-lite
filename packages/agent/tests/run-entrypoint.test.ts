@@ -2319,7 +2319,7 @@ const nativeCoverageMode = process.env.AGENT_RUNTIME_NATIVE_COVERAGE_MAIN === '1
 const ordinaryDescribe = mutationMode ? describe.skip : describe;
 
 // `mock.module` changes Bun's process-wide module registry; keep fault injection isolated from sibling tests.
-test.serial('durable controller publication cleans only its own pending file when publication fails', async () => {
+test.serial('durable controller publication preserves cleanup and afterimage failures', async () => {
   const root = originalFs.mkdtempSync(path.join(tmpdir(), 'vida-durable-fault-'));
   let assertionsPassed = false;
   try {
@@ -2405,6 +2405,45 @@ test.serial('durable controller publication cleans only its own pending file whe
 
       if (pendingPath && originalFs.existsSync(pendingPath)) originalFs.unlinkSync(pendingPath);
     }
+
+    const afterimageTarget = path.join(root, 'fault-afterimage.json');
+    const expectedBytes = Buffer.from('{\n  "schema": "FixtureController/v1"\n}\n');
+    const corruptedBytes = Buffer.from('changed after publication\n');
+    const events: string[] = [];
+    let publishedBytes: Buffer | undefined;
+    let outcome: unknown;
+    try {
+      await mock.module('node:fs', () => ({
+        ...originalFs,
+        renameSync(...args: Parameters<typeof originalFs.renameSync>): void {
+          const destination = args[1];
+          originalFs.renameSync(...args);
+          if (typeof destination === 'string' && destination === afterimageTarget) {
+            events.push('rename');
+            publishedBytes = originalFs.readFileSync(afterimageTarget);
+            originalFs.writeFileSync(afterimageTarget, corruptedBytes);
+            events.push('corrupt-afterimage');
+          }
+        },
+      }));
+
+      try {
+        writeDurable(afterimageTarget, { schema: 'FixtureController/v1' });
+      } catch (error) {
+        outcome = error;
+      }
+    } finally {
+      await mock.module('node:fs', () => originalFs);
+    }
+
+    expect(events).toEqual(['rename', 'corrupt-afterimage']);
+    expect(publishedBytes).toEqual(expectedBytes);
+    expect(outcome).toMatchObject({
+      code: 'GAP-VIDA-RUN-CUTOFF-001',
+      message: 'Cutoff witness publication failed.',
+    });
+    expect(originalFs.readFileSync(afterimageTarget)).toEqual(corruptedBytes);
+    expect(originalFs.readdirSync(root).sort()).toEqual(['fault-afterimage.json', 'occupied']);
     assertionsPassed = true;
   } finally {
     if (assertionsPassed) originalFs.rmSync(root, { recursive: true, force: true });

@@ -449,17 +449,20 @@ state whose `forward` flag is true while a maintenance-lock marker exists.
 Require the guard's documented short-circuit and prove the marker bytes are
 unchanged. This unit case assumes forward authority was already validated by
 `activeSelector`; it does not replace the public selector-authority checks.
-For `writeDurable` cleanup, extend the existing publication-failure test with
-an injected `fsyncSync` error followed by a pending-file `unlinkSync` error.
-Use a serial test with a locked Bun `node:fs` mock because the module registry
-is process-wide, and retain original filesystem exports for the fixture. A
-non-`ENOENT` cleanup error must preserve both causes in the
-`AggregateError` and leave the owned pending bytes until Bun's live `node:fs`
-aliases are rebound to the original exports;
-an `ENOENT` cleanup result must preserve the original fsync error after the
-pending path is gone. Assert call order and restore the module mock in
-`finally` by remocking the original exports, then clean only the owned fixture
-through those exports.
+For `writeDurable`, extend the existing publication-failure test with injected
+`fsyncSync` and pending-file `unlinkSync` errors, plus an afterimage mismatch
+immediately after the successful rename. Use a serial test with a locked Bun
+`node:fs` mock because the module registry is process-wide, and retain original
+filesystem exports for the fixture. A non-`ENOENT` cleanup error must preserve
+both causes in the `AggregateError` and leave the owned pending bytes until
+Bun's live `node:fs` aliases are rebound to the original exports; an `ENOENT`
+cleanup result must preserve the original fsync error after the pending path is
+gone. For the afterimage mismatch, require the exact `RunCliError` code
+`GAP-VIDA-RUN-CUTOFF-001` and message `Cutoff witness publication failed.`,
+verify the just-published canonical bytes before injecting corruption, then
+assert the corrupted final bytes and absence of a pending sibling through the
+original exports. Assert call order and rebind the original exports in `finally`
+before afterimage checks and fixture cleanup.
 In the released-selector fixture, exercise the prepared-selector refusal with an
 unsupported state policy, the prepared-journal refusal with a changed journal
 status, then recompute selector and commit digests for both a nested extra
