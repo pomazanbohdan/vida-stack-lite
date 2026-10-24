@@ -3530,6 +3530,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       unresolved_integration_paths: unknown[];
     },
     preservedMutableOutput?: Record<string, string>,
+    documentationChange?: { path: string; bytes: Uint8Array },
   ) => {
     const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
     const generation = 'fixture-forward-leaf';
@@ -3540,12 +3541,22 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     const launcherSha = digestBytes(launcher);
     const launcherEntry = parentManifest.files.find((entry) => entry.path === 'vida-agent/bin/run.mjs');
     if (!launcherEntry) throw new Error('forward fixture parent launcher is missing');
+    const documentationEntry = documentationChange
+      ? parentManifest.files.find((entry) => entry.path === documentationChange.path)
+      : undefined;
+    if (documentationChange && !documentationEntry) throw new Error('forward fixture parent documentation is missing');
     const successorManifest = {
       schema: parentManifest.schema,
       files: parentManifest.files.map((entry) =>
         entry.path === 'vida-agent/bin/run.mjs'
           ? { path: entry.path, sha256: launcherSha, size: launcher.length, source_sha256: launcherSha }
-          : entry,
+          : documentationChange && entry.path === documentationChange.path
+            ? {
+                path: entry.path,
+                sha256: digestBytes(documentationChange.bytes),
+                size: documentationChange.bytes.length,
+              }
+            : entry,
       ),
       unresolved_integration_paths: parentManifest.unresolved_integration_paths,
     };
@@ -3569,7 +3580,18 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           old_size: launcherEntry.size,
           new_size: launcher.length,
         },
-      ],
+        ...(documentationChange && documentationEntry
+          ? [
+              {
+                path: documentationChange.path,
+                old_sha256: documentationEntry.sha256,
+                new_sha256: digestBytes(documentationChange.bytes),
+                old_size: documentationEntry.size,
+                new_size: documentationChange.bytes.length,
+              },
+            ]
+          : []),
+      ].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)),
       preserved_mutable_outputs: preservedMutableOutput ? [preservedMutableOutput] : [],
     };
     const planSha = digestBytes(record(plan));
@@ -4041,7 +4063,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   });
 
   test('repair authority rejects malformed evidence and forward leaf validation stays read-only', () => {
-    for (const scenario of ['parent-evidence-mismatch', 'malformed-source-path', 'forward-leaf'] as const) {
+    for (const scenario of [
+      'parent-evidence-mismatch',
+      'malformed-source-path',
+      'forward-leaf',
+      'forward-documentation-path-refusal',
+    ] as const) {
       const root = mkdtempSync(path.join(tmpdir(), `vida-repair-${scenario}-`));
       let completed = false;
       try {
@@ -4057,17 +4084,24 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const successorLauncherSha256 = 'e'.repeat(64);
         const sharedPayloadSha256 = '1'.repeat(64);
         const changelogPath = 'docs/agent-instructions/agent-instructions.changelog.jsonl';
+        const documentationPath = 'docs/agent-instructions/documentation-policy.v1.json';
         const changelogBytes = Buffer.from('installed changelog fixture\n');
         const stagedChangelogBytes = Buffer.from('staged changelog fixture\n');
-        const configBytes =
-          scenario === 'forward-leaf'
-            ? Buffer.from(
-                readFileSync(
-                  path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'),
-                  'utf8',
-                ).replaceAll('{{BUNDLE}}', 'vida-agent'),
-              )
+        const documentationOldBytes = Buffer.from('old documentation policy fixture\n');
+        const documentationNewBytes = Buffer.from('forwarded documentation policy fixture\n');
+        const documentationChange =
+          scenario === 'forward-documentation-path-refusal'
+            ? { path: documentationPath, bytes: documentationNewBytes }
             : null;
+        const forwardScenario = scenario === 'forward-leaf' || documentationChange !== null;
+        const configBytes = forwardScenario
+          ? Buffer.from(
+              readFileSync(
+                path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'),
+                'utf8',
+              ).replaceAll('{{BUNDLE}}', 'vida-agent'),
+            )
+          : null;
         const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
         const configSha256 = configBytes ? digestBytes(configBytes) : null;
         const stagedChangelogSha256 = digestBytes(stagedChangelogBytes);
@@ -4094,6 +4128,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
           writeFileSync(path.join(root, changelogPath), changelogBytes);
         }
+        if (documentationChange) {
+          mkdirSync(path.dirname(path.join(root, documentationChange.path)), { recursive: true });
+          writeFileSync(path.join(root, documentationChange.path), documentationChange.bytes);
+        }
         const parentManifest = {
           schema: 'VidaAgentPreparedPayload/v1',
           files: [
@@ -4104,6 +4142,16 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               size: 1,
               source_sha256: parentLauncherSha256,
             },
+            ...(documentationChange
+              ? [
+                  {
+                    path: documentationChange.path,
+                    sha256: digestBytes(documentationOldBytes),
+                    size: documentationOldBytes.length,
+                    source_sha256: digestBytes(documentationOldBytes),
+                  },
+                ]
+              : []),
             ...preservedManifestEntries,
           ],
           unresolved_integration_paths: [],
@@ -4115,9 +4163,19 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               path: 'fixture/payload.json',
               sha256: sharedPayloadSha256,
               size: 1,
-              source_path: scenario === 'forward-leaf' ? 'fixture/payload.json' : '../outside',
+              source_path: forwardScenario ? 'fixture/payload.json' : '../outside',
               source_sha256: sharedPayloadSha256,
             },
+            ...(documentationChange
+              ? [
+                  {
+                    path: documentationChange.path,
+                    sha256: digestBytes(documentationOldBytes),
+                    size: documentationOldBytes.length,
+                    source_sha256: digestBytes(documentationOldBytes),
+                  },
+                ]
+              : []),
             ...preservedManifestEntries,
             {
               path: 'vida-agent/bin/run.mjs',
@@ -4349,17 +4407,25 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         writeFileSync(path.join(childRoot, 'maintenance-release.v1.json'), record(repairRelease));
         writeFileSync(path.join(childRoot, 'cutoff-witness.json'), record(repairCutoff));
         const forwardRoot = path.join(root, '.agent', 'cutover', 'fixture-forward-leaf');
-        const forwardFixture =
-          scenario === 'forward-leaf'
-            ? buildForwardLeafFixture(
-                root,
-                childSelector,
-                childSha,
-                digestRecord(repairCutoff),
-                successorManifest,
-                preservedMutableOutput ?? undefined,
-              )
-            : null;
+        const forwardFixture = forwardScenario
+          ? buildForwardLeafFixture(
+              root,
+              childSelector,
+              childSha,
+              digestRecord(repairCutoff),
+              successorManifest,
+              preservedMutableOutput ?? undefined,
+              documentationChange ?? undefined,
+            )
+          : null;
+        if (documentationChange)
+          writeFileSync(
+            path.join(forwardRoot, 'documentation-forward.v1.json'),
+            record({
+              schema: 'VidaForwardLifecycleClearBinding/v1',
+              baseline_path: `.agent/work/${childGeneration}/documentation-baseline-0001.v1.json/../refused.json`,
+            }),
+          );
         const bundleRoot = path.join(root, 'vida-agent');
         const bundlePaths = [bundleRoot, path.join(bundleRoot, 'bin'), path.join(bundleRoot, 'bin', 'run.mjs')];
         const preservedPaths = preservedMutableOutput
@@ -4369,6 +4435,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const beforePreservedMetadata = preservedPaths.map(snapshotAuthorityMetadata);
         const beforeBundle = forwardFixture ? snapshotAuthorityFixture(bundleRoot) : null;
         const beforeBundleMetadata = forwardFixture ? bundlePaths.map(snapshotAuthorityMetadata) : null;
+        const documentationFile = documentationChange ? path.join(root, documentationChange.path) : null;
+        const beforeDocumentationBytes = documentationFile ? readFileSync(documentationFile) : null;
+        const beforeDocumentationMetadata = documentationFile ? snapshotAuthorityMetadata(documentationFile) : null;
         const before = snapshotAuthorityFixture(path.join(root, '.agent'));
         const hostDatabasePath = path.join(root, '.agent', 'work', 'session-handoff.v1.sqlite');
         expect(existsSync(hostDatabasePath)).toBe(false);
@@ -4394,6 +4463,29 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             code: 'GAP-VIDA-RUN-SELECTOR-001',
             message: 'Repair payload entry is invalid.',
           });
+        } else if (scenario === 'forward-documentation-path-refusal') {
+          assert.ok(forwardFixture);
+          assert.ok(beforeBundle);
+          assert.ok(beforeBundleMetadata);
+          assert.ok(documentationFile);
+          let caught: unknown;
+          try {
+            forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot);
+          } catch (error) {
+            caught = error;
+          }
+          expect(caught).toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+            message: 'Forward policy proof invalid: Forward documentation evidence path invalid.',
+          });
+          assert.ok(beforeDocumentationBytes);
+          assert.ok(beforeDocumentationMetadata);
+          expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
+          expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
+          expect(readFileSync(documentationFile)).toEqual(beforeDocumentationBytes);
+          expect(snapshotAuthorityMetadata(documentationFile)).toEqual(beforeDocumentationMetadata);
+          expect(preservedPaths.map((file) => readFileSync(file))).toEqual(beforePreservedBytes);
+          expect(preservedPaths.map(snapshotAuthorityMetadata)).toEqual(beforePreservedMetadata);
         } else {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);

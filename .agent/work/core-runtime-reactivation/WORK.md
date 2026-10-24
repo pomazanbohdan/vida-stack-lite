@@ -4302,6 +4302,50 @@ does not add hits. The next zero in report order is
 `readForwardDocumentationEvidence` at `bin/run.ts:1140` (with its nested
 closure counter at line 1145); continue this same contour there.
 
+### Bun-cli-run key414 forward documentation path reader — 2026-10-24
+
+The bound key413 report's next zero function was
+`readForwardDocumentationEvidence` at `bin/run.ts:1140`; its nested path-part
+callback at line 1145 was also zero. The bounded design is
+`DIAG/bun-cli-run-key414-design-forward-docs-20261024-01.md`. It traced the
+public `forwardUpdateAuthority` -> `forwardPolicyAuthority` -> current-leaf
+documentation read and identified the existing repair/forward leaf fixture as
+the smallest maintained setup to extend.
+
+Reused that one fixture and selector chain. Added a changed documentation-policy
+manifest entry and a file-backed forward lifecycle record whose `baseline_path`
+contains a `..` component. Calling the exported authority function reaches the
+documentation evidence reader and must refuse this unsafe relative path before
+later proof parsing. The test checks the exact wrapped selector error and
+before/after `.agent`, installed bundle, documentation-file bytes/metadata,
+preserved config/changelog bytes/metadata, plus absent session DB. This packet
+does not assert that the complete documentation proof is accepted; that
+successful route remains open if the producer report still shows it uncovered.
+No runtime execution or consumer effect is invoked.
+
+The initial strict check caught two nullable snapshot assertion types
+(`NonSharedBuffer | null` and metadata-or-null); explicit `assert.ok` narrowing
+fixed both before the target. The failed static attempt is retained at
+`DIAG/bun-cli-run-key414-strict-20261024-01.log`. Final formatter passed on the
+one changed file, strict reported no errors in 146 files (486.50 ms), and
+type-aware Oxlint on the exact file exited 0 without diagnostics. The exact
+coverage-only target passed 1 test, 103 filtered, 27 expectations, 37.29 ms
+case time / 1.66 s invocation; no full suite ran. Raw logs are
+`DIAG/bun-cli-run-key414-fmt-20261024-03.log`,
+`DIAG/bun-cli-run-key414-strict-20261024-03.log`,
+`DIAG/bun-cli-run-key414-oxlint-20261024-01.log`, and
+`DIAG/bun-cli-run-key414-target-20261024-01.log`.
+
+Independent blind native Luna review found no concrete issue; it confirmed the
+public route, changed-manifest bindings, targeted refusal, and bounded no-write
+assertions. It also notes that snapshots are limited to the observed `.agent`,
+bundle, documentation, config/changelog and absent-DB paths; this is not a claim
+about every path outside the fixture's observed set. Review artifact:
+`DIAG/bun-cli-run-key414-final-review-20261024-01.md`. `git diff --check` is
+clean. No coverage disposition is claimed until the single post-commit,
+post-push `bun-cli-run` coverage stage terminates and its immutable report is
+reviewed.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413 were 182,091.09 / 196,291.21 /
