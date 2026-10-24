@@ -4742,11 +4742,105 @@ the exact-error correction was independently confirmed in
 report is retained at
 `DIAG/bun-cli-run-key418-final-review-20261024-02.md`.
 
+#### Key418 bound stage result
+
+The ordinary hook-backed commit/push completed before one bound coverage-stage
+run. Run `21c909fb-c689-4de2-9f27-7e7836c97046` used source commit
+`ca5d4090190889fc4b42455da8acc6b695d83f33`, tree
+`039cb3aa839b9bbc32a790e8a36b229d46c295a7`, input fingerprint
+`d80c94791e8074021d1eaf7976e905de5d4bc914b2bae289442c4d41b35198a0`, and
+manifest digest
+`f63b3236bf1657a77354774583fac400c4c7eedd6e1e96b6ea3a1836b383ef3c`.
+The producer ended exit 0 in 191,494.56 ms with no timeout or spawn error;
+capture was complete, the process group closed, boot and image inputs remained
+unchanged, and the report was published. The retained producer receipt is
+`DIAG/bun-cli-run-key418-stage-20261024-01.log`; its temporary stage directory
+was `/workspace/contour-stage-skDjoh`.
+
+The stage ran 114 tests across the two selected files, with 2,243 expectations
+and no failures. Producer-owned projection now reports F/L/S/B `407/555`,
+`1884/2859`, `2008/3138`, and `2308/3661`, max CC 501, max entry CRAP 992,
+and `BLOCKED`. Relative to Key417, this adds one function, four lines, four
+statements and 24 branches. The raw process report records nine calls to
+`hasPreparedMaintenanceBindings` at line 1961. `requireReportedCompleteObservation`
+at line 2267 is the next zero callable in report order. Other zero statements
+remain in the active-selector staged-journal path at lines 1945, 1946, 1953
+and 1976; exact contour coverage is still incomplete. No full numeric
+qualification or closure is claimed.
+
+The producer exit confirms there was no active Bun/Node process after the
+stage. Earlier process inspection showed 14 defunct Bun records already owned
+by PID 1, including PID 672302 at 2:36:47 age; these are not live producers and
+cannot be reaped by this session. No signals or cleanup were attempted. The
+native stage receipt records `group_closed: true`; there is no evidence to
+attribute those pre-existing zombies to Key418.
+
+#### Key419 configured-frontier report gate
+
+Key418 identified `requireReportedCompleteObservation` at `bin/run.ts:2267` as
+the next zero callable. Key419 adds two public `run --report` cases in
+`tests/run-entrypoint.test.ts`. A shared `issueConfiguredFrontierWave` helper
+removes duplicated setup and returns the native request, journal, bound work,
+and versioned report arguments.
+
+The failed-report case records `reported_failed`, then checks the exact
+`GAP-VIDA-RUN-CONTEXT-001` rejection, confirms the bridge was not opened, and
+compares completed journal rows before and after. The complete-report case uses
+the existing `createPrewriterPreparationObservation` fixture and checks that a
+valid final report passes the gate and reaches `MastraSessionBridge.open` with
+the bound identity and attempt. The test stops at that boundary with a sentinel
+rejection. It does not claim a successful engine resume or perform consumer
+effects.
+
+Independent behavior review found no test defects. It verified the public
+report flow and `HostStateStore.readDeliveredWorkContinuation` in
+`src/host-state.ts:14528-14545`. The lookup maps a missing observation to a
+non-reported item status, then sets top-level `action_status` to `reported`
+only when every item is reported. The guarded caller reaches the helper only
+when that top-level status is `reported`. Therefore `!observation` is an
+objective-unreachable arm on this supported caller path. This disposition is
+recorded without adding hits, reducing the denominator, or changing
+`BLOCKED`. The reachable `observation.status !== 'reported_complete'` arm stays
+covered by the failed-report case. Review evidence is in
+`DIAG/bun-cli-run-key419-independent-review-20261024-01.md`; the scoped
+no-comments review found no deletions or `MUST KILL` items in
+`DIAG/bun-cli-run-key419-comment-review-20261024-01.md`.
+
+Package-pinned Bun 1.4.4 formatting passed on the changed test file. Strict
+`tests/tsconfig.json` checking passed for 510 files; the locked Oxlint gate
+exited 0. The final selected run passed both cases with 18 expectations in
+6.69 s. Its unmodified receipt is
+`DIAG/bun-cli-run-key419-target-20261024-09.log`. Earlier retained attempts
+include unmatched selections (`target-01` through `target-03`), two draft test
+failures in `target-07`, the incorrect empty-completed-wave assertions in
+`target-08`, and the corresponding typecheck failures in
+`test-typecheck-01` and `test-typecheck-02`. Those failures came from test
+registration, fixture wiring, and an assertion that ignored an existing
+completed wave. The assertions and fixture setup were corrected; no product
+failure was observed. All attempt logs and failed fixture roots remain
+untouched.
+
+This packet used serial width one for formatting, strict check, lint, and the
+selected tests. Static-first caught the unresolved test references before the
+final target run. The earlier target-first drafts found fixture and assertion
+errors, but they used different inputs and do not form a controlled timing
+comparison. Width two for static checks or tests is unmeasured; no concurrent
+producer ran. The existing Key418 full stage took 191,494.56 ms on different
+immutable inputs, so it is not a before/after speed comparison. Aggregate
+assistant tool/API counts and token usage are not available from the receipts.
+The last disk inventory and admission result remain authoritative; this packet
+did not rescan or clean disk. Vex remains unqualified for current Source, so
+bounded `rg` fallback was used without refresh or reindex.
+
+The next step is the ordinary commit and push after review and hooks, followed
+by one producer-owned `bun-cli-run` coverage stage. The producer projection
+will determine the next callable and whether any exact metric changed.
+
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416/417 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417/418 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
-202,630.39 / 187,589.41 ms. Each stage used different immutable image and source/test
+202,630.39 / 187,589.41 / 191,494.56 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and

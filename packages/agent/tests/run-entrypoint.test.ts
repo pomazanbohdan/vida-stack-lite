@@ -666,6 +666,7 @@ import {
   seedFrontierHostFixture,
   withConfiguredFrontierHostFixture,
 } from './helpers/configured-frontier-host-fixture.ts';
+import { createPrewriterPreparationObservation } from './helpers/public-prewriter-fixture.ts';
 import { applyDeliveredWorkContinuationPlan } from '../bin/runtime-code-rebind.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -5731,6 +5732,50 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         ],
       };
     };
+    type ConfiguredFrontierHostAction = Parameters<typeof withConfiguredFrontierHostFixture>[0];
+    type ConfiguredFrontierRunFixture = Parameters<ConfiguredFrontierHostAction>[0];
+    type ConfiguredFrontierRunSetup = Parameters<ConfiguredFrontierHostAction>[1];
+    const issueConfiguredFrontierWave = async (
+      fixture: ConfiguredFrontierRunFixture,
+      setup: ConfiguredFrontierRunSetup,
+    ) => {
+      const { root, config, input, intakePath } = setup;
+      const { request } = bindConfiguredFrontierCurrentRuntimeEndpoint(input, { root, config, intakePath });
+      seedFrontierHostFixture(fixture, input);
+      await bindControlledRuntimeInitialization(root, config, fixture.store);
+      const { args } = configuredFrontierRunArgs(root, request, false),
+        expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ],
+        issued = parseTestRunPayload(
+          await runSuccessfully([
+            ...args,
+            ...expected(requireStateVersion(input.receipt.journal_version)),
+            '--issue-wave',
+            'true',
+          ]),
+        ),
+        initial = fixture.store.readDeliveredWorkContinuation(request.identity, request.attempt);
+      if (!initial) throw new Error('Configured-frontier issue did not persist its native continuation');
+      expect(issued.status).toBe('issued');
+      expect(initial.action_status).toBe('issued');
+      expect(initial.items.length).toBeGreaterThan(0);
+      return {
+        request,
+        initial,
+        successorWork: input.receipt.successor_work,
+        reportArgs: (version: StateVersion, reportPath: string) => [
+          ...args,
+          ...expected(version),
+          '--report',
+          reportPath,
+        ],
+        stateVersion: requireStateVersion(issued.state_version),
+      };
+    };
 
     test('maps configured-frontier Source paths and closes the ledger when its snapshot fails', async () => {
       await withConfiguredFrontierHostFixture(async (fixture, setup) => {
@@ -5859,6 +5904,136 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             ).rejects.toThrow('Prewriter report has no matching retained issuance.'),
           );
           expect(readDatabase()).toEqual(beforeReport);
+        },
+        'normal',
+        'unmatched-prewriter-report',
+      );
+    }, 30_000);
+
+    test('rejects a reported_failed configured-frontier observation before resuming the wave', async () => {
+      await withConfiguredFrontierHostFixture(
+        async (fixture, setup) => {
+          const root = setup.root;
+          const {
+            request,
+            initial,
+            reportArgs,
+            stateVersion: issuedVersion,
+          } = await issueConfiguredFrontierWave(fixture, setup);
+          let stateVersion = issuedVersion;
+          const bridgeOpenSpy = spyOn(MastraSessionBridge, 'open');
+          try {
+            for (const [index, item] of initial.items.entries()) {
+              if (typeof item.issue_id !== 'string')
+                throw new Error('Configured-frontier issue is missing its retained ID');
+              const summary = `Configured-frontier failed report ${index}`;
+              const observation = {
+                schema: 'VidaSessionObservation/v1',
+                action_id: item.request.action_id,
+                issue_id: item.issue_id,
+                agent_id: 'fixture:configured-frontier-failed-report',
+                tool_call_ref: 'fixture:configured-frontier-failed-report-' + index,
+                status: 'reported_failed',
+                summary,
+                output_digest: canonicalJsonDigest(summary),
+                evidence_refs: ['fixture:configured-frontier-failed-report-evidence'],
+              } as const;
+              const reportPath = path.join(root, `configured-frontier-failed-report-${index}.json`);
+              writeFileSync(reportPath, JSON.stringify(observation));
+              const reportArguments = reportArgs(stateVersion, reportPath);
+              if (index === initial.items.length - 1) {
+                await Promise.resolve(
+                  expect(run(reportArguments)).rejects.toMatchObject({
+                    code: 'GAP-VIDA-RUN-CONTEXT-001',
+                    message: 'The current prewriter wave contains a failed or incomplete report.',
+                  }),
+                );
+                expect(bridgeOpenSpy).not.toHaveBeenCalled();
+              } else await runSuccessfully(reportArguments);
+              const current = fixture.store.readDeliveredWorkContinuation(request.identity, request.attempt);
+              if (!current) throw new Error('Configured-frontier report removed its native continuation');
+              stateVersion = current.journal.version;
+            }
+          } finally {
+            bridgeOpenSpy.mockRestore();
+          }
+          const reported = fixture.store.readDeliveredWorkContinuation(request.identity, request.attempt);
+          if (!reported) throw new Error('Configured-frontier report did not remain in the native ledger');
+          expect(reported.action_status).toBe('reported');
+          expect(reported.items.map((item) => item.observation?.status)).toEqual(
+            initial.items.map(() => 'reported_failed'),
+          );
+          expect(reported.journal.state.completed).toEqual(initial.journal.state.completed);
+        },
+        'normal',
+        'unmatched-prewriter-report',
+      );
+    }, 30_000);
+
+    test('accepts a complete prewriter report before bridge resume', async () => {
+      await withConfiguredFrontierHostFixture(
+        async (fixture, setup) => {
+          const root = setup.root;
+          const {
+            request,
+            initial,
+            successorWork,
+            reportArgs,
+            stateVersion: issuedVersion,
+          } = await issueConfiguredFrontierWave(fixture, setup);
+          let stateVersion = issuedVersion;
+          const bridgeOpenSpy = spyOn(MastraSessionBridge, 'open');
+          try {
+            bridgeOpenSpy.mockRejectedValue(new Error('configured-frontier-resume-sentinel'));
+            for (const [index, item] of initial.items.entries()) {
+              if (typeof item.issue_id !== 'string')
+                throw new Error('Configured-frontier issue is missing its retained ID');
+              const preparation = createPrewriterPreparationObservation(
+                { issue_id: item.issue_id, request: item.request },
+                { work: successorWork, workId: request.identity.work_id },
+                request.attempt,
+              );
+              const summary = JSON.stringify(preparation);
+              const observation = {
+                schema: 'VidaSessionObservation/v1',
+                action_id: item.request.action_id,
+                issue_id: item.issue_id,
+                agent_id: preparation.observer_id,
+                tool_call_ref: 'fixture:configured-frontier-complete-report-' + index,
+                status: 'reported_complete',
+                summary,
+                output_digest: canonicalJsonDigest(summary),
+                evidence_refs: preparation.evidence_refs,
+              } as const;
+              const reportPath = path.join(root, `configured-frontier-complete-report-${index}.json`);
+              writeFileSync(reportPath, JSON.stringify(observation));
+              const reportArguments = reportArgs(stateVersion, reportPath);
+              if (index === initial.items.length - 1) {
+                await Promise.resolve(
+                  expect(run(reportArguments)).rejects.toThrow('configured-frontier-resume-sentinel'),
+                );
+                expect(bridgeOpenSpy).toHaveBeenCalledTimes(1);
+                expect(bridgeOpenSpy.mock.calls[0]?.[0]).toMatchObject({
+                  configuredFrontier: { identity: request.identity, attempt: request.attempt },
+                });
+              } else await runSuccessfully(reportArguments);
+              const current = fixture.store.readDeliveredWorkContinuation(request.identity, request.attempt);
+              if (!current) throw new Error('Configured-frontier report removed its native continuation');
+              stateVersion = current.journal.version;
+            }
+          } finally {
+            bridgeOpenSpy.mockRestore();
+          }
+          const reported = fixture.store.readDeliveredWorkContinuation(request.identity, request.attempt);
+          if (!reported) throw new Error('Complete configured-frontier reports lost their native continuation');
+          expect(reported.action_status).toBe('reported');
+          expect(reported.items.map((item) => item.observation?.status)).toEqual(
+            initial.items.map(() => 'reported_complete'),
+          );
+          expect(reported.journal.state.items.map((item) => item.observation?.status)).toEqual(
+            initial.items.map(() => 'reported_complete'),
+          );
+          expect(reported.journal.state.completed).toEqual(initial.journal.state.completed);
         },
         'normal',
         'unmatched-prewriter-report',
