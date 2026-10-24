@@ -2887,7 +2887,9 @@ export function historicalReleaseInspection(
 }
 
 /** @param {unknown} value @returns {value is {schema: 'VidaAgentRunResult/v1', next_actions: unknown[]}} */
-function isHistoricalRunHistory(value: unknown): value is { schema: 'VidaAgentRunResult/v1'; next_actions: unknown[] } {
+export function isHistoricalRunHistory(
+  value: unknown,
+): value is { schema: 'VidaAgentRunResult/v1'; next_actions: unknown[] } {
   return isRecord(value) && value.schema === 'VidaAgentRunResult/v1' && isUnknownArray(value.next_actions);
 }
 
@@ -2904,7 +2906,7 @@ function isHistoricalConfiguredContext(
 }
 
 /** @param {readonly unknown[]} actions @returns {Array<Record<string, unknown> & {schema: 'ConfiguredContext/v1', digest: string}>} */
-function historicalConfiguredContexts(
+export function historicalConfiguredContexts(
   actions: readonly unknown[],
 ): Array<Record<string, unknown> & { schema: 'ConfiguredContext/v1'; digest: string }> {
   return actions.flatMap((action) => {
@@ -2914,7 +2916,7 @@ function historicalConfiguredContexts(
 }
 
 /** @template T @param {T | undefined} value @returns {T} */
-function requireHistoricalItem<T>(value: T | undefined): T {
+export function requireHistoricalItem<T>(value: T | undefined): T {
   if (value === undefined) throw Error('Historical context history action differs');
   return value;
 }

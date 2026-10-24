@@ -5167,6 +5167,42 @@ Projection was updated by the producer owner. No objective disposition was
 applied. The next report-ordered zero callable in `bin/run.ts` is
 `isHistoricalRunHistory` at line 2890.
 
+#### Key425 historical context helper cluster
+
+To take a larger related packet before the next full stage, this change covers
+the next five report-ordered zero callables in one focused test: run-history
+shape guard, configured-context guard, ordered context collector and its
+inline `flatMap` callback, plus the Journal-item guard. It adds no new
+production validation or callback abstraction. `isHistoricalConfiguredContext`
+remains private and is reached through the collector. A bounded Luna review
+checked the nearby `runtime-config-rebind.ts` helper and historical capture
+CLI predicate: they have distinct correlation/fallback or command-boundary
+behavior, so this packet does not consolidate them or change accepted data.
+
+The test covers rich valid and invalid run-history records, null, an array
+masquerading as a record, wrong schema and wrong action-array shape; collector
+inputs include a non-record action, absent/null context, array/wrong-schema/
+non-string-digest contexts, and one valid context. It also checks preserved
+context output, `requireHistoricalItem` identity and its exact undefined
+refusal. That undefined branch is helper-contract evidence: its only normal
+caller rejects non-single Journal matches immediately before indexing. No
+objective skip, consumer effect, or behavior change was introduced.
+
+Blind native Luna review
+(`DIAG/bun-cli-run-key425-review-20261024-01.md`) confirmed the inline callback
+is exercised through the collector, the listed cases cover the helpers' key
+branches, and no must-fix or duplicate source logic was found. The bounded
+review noted three module-level exports are test seams in this CLI module and
+found no package API concern. Static-first checks passed after the formatter
+applied one line-wrap correction: final package-pinned Bun 1.4.4 format check
+for both files, strict `tests/tsconfig.json` check across 510 files, locked
+Oxlint, and focused target (1 pass, 55 filtered, 0 failed, 1.189 s). Receipts
+are `DIAG/bun-cli-run-key425-format-20261024-02.log`,
+`DIAG/bun-cli-run-key425-typecheck-20261024-02.log`,
+`DIAG/bun-cli-run-key425-lint-20261024-02.log`, and
+`DIAG/bun-cli-run-key425-target-20261024-02.log`. Ordinary commit/push and one
+current-producer stage remain pending.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423/424 were 182,091.09 /

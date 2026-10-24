@@ -52,10 +52,13 @@ import {
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
   forwardUpdateAuthority,
+  historicalConfiguredContexts,
   historicalReleaseInspection,
+  isHistoricalRunHistory,
   isResearchSourceReference,
   repairAuthority,
   requireNoCompletedReadonlyRelease,
+  requireHistoricalItem,
   requireRecoveryOperation,
   run,
   writeDurable,
@@ -676,6 +679,42 @@ test('historical release inspection selects supplied CAS only for apply mode', (
   assert.equal(historicalReleaseInspection('apply', supplied, current), supplied);
   assert.equal(historicalReleaseInspection('inspect', supplied, current), current);
   assert.equal(historicalReleaseInspection('apply', undefined, current), current);
+});
+
+test('historical context guards preserve only configured action context records', () => {
+  const context = { schema: 'ConfiguredContext/v1', digest: 'context-digest', source: 'retained' };
+  const arrayHistory: unknown = Object.assign([], {
+    schema: 'VidaAgentRunResult/v1',
+    next_actions: [],
+  });
+  const arrayContext: unknown = Object.assign([], { schema: 'ConfiguredContext/v1', digest: 'context-digest' });
+  const historyCases: readonly [string, unknown, boolean][] = [
+    ['run result record', { schema: 'VidaAgentRunResult/v1', next_actions: [] }, true],
+    ['null history', null, false],
+    ['array with run result fields', arrayHistory, false],
+    ['wrong run-result schema', { schema: 'Other/v1', next_actions: [] }, false],
+    ['missing action array', { schema: 'VidaAgentRunResult/v1', next_actions: null }, false],
+  ];
+
+  for (const [label, value, expected] of historyCases) assert.equal(isHistoricalRunHistory(value), expected, label);
+
+  assert.deepEqual(
+    historicalConfiguredContexts([
+      null,
+      {},
+      { configured_context: null },
+      { configured_context: arrayContext },
+      { configured_context: { schema: 'Other/v1', digest: 'wrong-context' } },
+      { configured_context: { schema: 'ConfiguredContext/v1', digest: 1 } },
+      { configured_context: context },
+    ]),
+    [context],
+  );
+  assert.equal(requireHistoricalItem(context), context);
+  assert.throws(() => requireHistoricalItem(undefined), {
+    name: 'Error',
+    message: 'Historical context history action differs',
+  });
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
