@@ -5819,3 +5819,72 @@ terminal receipt, bind its report to commit, source/test/config fingerprints,
 reconcile exact F/L/S/B counters, preserve all raw receipts and UNKNOWNs, and
 update only this contour's producer-owned projection. Do not promote a skip,
 merge historic counts, or begin a second contour.
+
+### Key430 serial coverage outcome — 2026-10-24
+
+The first invocation of the documented stage command from the repository root
+failed before producer startup because `bin/bun.ts` is package-relative. Its
+original log is `DIAG/bun-cli-run-key430-stage-20261024-01.log`; no image or
+numeric attempt was created. After a no-live-process check, the same command was
+run once from `packages/agent` and exited successfully. Stage
+`/workspace/contour-stage-VUU08E`, scratch `scratch-Sd9CbO`, run
+`814b010c-b76a-4408-8e49-48dfdde213f6`, commit
+`de3cbe0934d48900e42b93d5eef68a4bb347a0bc` completed in 201,492.235 ms of the
+330,000 ms allowance. Exit was 0, signal/spawn error null, no timeout, owned
+process group terminated and closed, capture complete, boot and image inputs
+unchanged, publication `published`. `execution.json` binds stdout 7,975 bytes
+(SHA-256 `f11ae500fe5d1c47bc92cf27f482c16cc5151cf5289b039a6544ba52920061a7`)
+and stderr 17,123 bytes (SHA-256
+`27fdecdf5ced7c1c66f2a6de9c7fd6b6e9bb5ccc69074416906f2dd795c99985`), each
+fully retained and untruncated. `launch.json`, `request.json`, `execution.json`,
+`publication.json`, both raw streams, and `scratch-Sd9CbO` remain in the stage
+directory; do not replay or clean them.
+
+The immutable execution image is `/workspace/.vida-quality-inputs/fc699ffd2cc45f71b78ea58ba6f72fc265c3697a/`, manifest SHA-256
+`c8433bb8b9417a0f672cd3ebdf353f4823e9ca4c98c68bc3c2421a36f1424bdd`, source
+tree `f03d563bdbd5644e0bb2a3466fe657c34153c0eb`, input fingerprint
+`d3a75bf524fbe8464fa292be3d00472d0931778912f3d80adf9bb550559f3086`. The
+bound focused report is
+`/workspace/.vida-quality-inputs/fc699ffd2cc45f71b78ea58ba6f72fc265c3697a/repository/packages/agent/coverage/bun-unified/diagnostics/814b010c-b76a-4408-8e49-48dfdde213f6.focused-coverage.json`, report manifest SHA-256
+`3b51f76fc56c0c3f6b727255b5170f3833244822ecc393f290d0ae6069e0c197`, source
+fingerprint `5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851`,
+test fingerprint `9fc4d03a9f9973e465c986b0557a2a12eddcb908e60e7bb3b73ee3665ed5fcc1`,
+and tool fingerprint
+`4173e9346c17055840cca57165cedaaa53fa8ec4333b60af793c1779a9aefce8`. Bun
+1.4.4 ran 125 tests across the two declared files, 125 passed, zero failed,
+2,366 expectations, `1x PARALLEL`, 196.22 s test time. The TS-only gate
+captured 545 TypeScript files and 0 diagnostics. The shard itself is terminal
+status 0 with `unknown=false`; two deliberately retained test fixtures in the
+raw log remain protected: `/tmp/vida-unprepared-state-ZeirAL`
+(`database-close-failed`) and `/tmp/vida-run-uninitialized-ef1iqH`
+(`child-outcome-unknown`). Neither is replayed or cleaned.
+
+The producer-owned projection now records `428/555` functions, `1953/2860`
+lines, `2096/3138` statements and `2413/3660` branches, max CC `501`, max entry
+CRAP `992`, status `BLOCKED`. Relative to the prior admitted report this packet
+adds 0 functions, 3 lines, 4 statements, and 4 branches; no denominator changed.
+Exact branch-arm counters in this report are: ID93 `run.ts:1060` `[1,21]`,
+ID98 `:1085` `[0,3]`, ID99 `:1087` `[1,2]`, ID101 `:1091` `[1,19]`, ID102
+`:1101` `[1,18]`, and ID104 `:1108` `[18,0,0]`. The four positive-arm cases
+match this report; ID98 has only a prior review candidate, not an accepted
+disposition bound to this report/test identity. ID104 remains an open positive
+string-history path. Do not change denominator, mark PASS, or advance contour.
+The operation-outcome projection row remains `BLOCKED; unqualified; selection
+unbound`, while the diagnostic coverage row is selection-bound. The producer
+updated both `CONTOUR-STATUS` files; no manual numeric edit was made.
+
+One report-summary query accidentally selected the entire per-file `.coverage`
+map; the tool reported 1,191,599 bytes omitted and truncated the response. No
+decision used that output. Follow-up queries select the single bound `run.ts`
+entry and exact line counters only; do not serialize `.coverage` wholesale.
+The six focused-attempt sequence, fixture failures, scoped static gates and
+alternative-order analysis above remain the measured 3-hour cost record. No
+second suite, producer, AST/Vex scan, disk scan or cleanup was run after the
+stage. Fourteen old PID-1 Bun zombies remained visible after terminal close;
+the run receipt independently confirms the current process group is closed.
+
+The next eligible work is still `bun-cli-run`: trace a supported source for
+ID104 without manufacturing admitted history, and get a fresh independent
+objective-skip review for ID98 only if the Pstack contract becomes available.
+The Pstack final-diff review gap remains open. No CRAP or mutation run is
+permitted in this coverage phase.
