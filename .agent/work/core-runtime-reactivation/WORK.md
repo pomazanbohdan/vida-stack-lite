@@ -6870,3 +6870,20 @@ true arm. Evidence is retained in
 Keep the raw `[2,0]` and denominator; this skip adds no hits and changes neither
 BLOCKED nor pending frozen/full qualification. The next report candidate is
 ID138 at `run.ts:1420` (`[15,0]`), whose non-Error catch arm is under blind review.
+
+### Key448 objective disposition: non-Error catch arm ID138
+
+A blind report-bound review found no supported CLI path that can make the
+`error instanceof Error` conditional false. Inputs are JSON/filesystem records,
+and the authority route owns its reader; it cannot receive a proxy/getter/callback
+that throws a primitive. Project errors use `Error` or `fail()` (`RunCliError
+extends Error`); parsers/proof helpers throw `Error`, while Node filesystem
+errors are Error instances or translated by `fail()`. The selected fixtures
+cover public leaf refusals, malformed records and cycle/bound guards. The
+reviewer traced these throw sources under TESTING's causal prerequisite rule.
+Evidence is `DIAG/bun-cli-run-key448-id138-review-20261024-01.md`.
+
+Keep raw ID138 `[15,0]`; the skip adds no hits, does not alter the denominator,
+BLOCKED or frozen/full pending status. The next report-selected candidate is
+ID145 at `bin/run.ts:1597` (`[0,31]`); its input contract will be reviewed before
+adding a scenario or objective skip.
