@@ -4366,6 +4366,73 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 30_000);
 
+    test('closes the intake ledger when the admission Host snapshot read fails', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-admission-snapshot-close-'));
+      let completed = false;
+      let restoreSnapshotSpy: (() => void) | undefined;
+      let restoreDatabaseCloseSpy: (() => void) | undefined;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config);
+        const workId = args[args.indexOf('--work-id') + 1];
+        assert.ok(workId);
+        const databasePath = path.resolve(sessionHandoffDatabasePath(root, config));
+        const failure = new Error('injected admission Host snapshot read failure');
+        let snapshotFailureInjected = false;
+        const originalRead = Reflect.get(
+          HostStateStore.prototype,
+          'readHostStateSnapshot',
+        ) as HostStateStore['readHostStateSnapshot'];
+        const snapshotSpy = spyOn(HostStateStore.prototype, 'readHostStateSnapshot').mockImplementation(function (
+          this: HostStateStore,
+          identity: WorkIdentity,
+        ) {
+          if (!snapshotFailureInjected && identity.work_id === workId) {
+            snapshotFailureInjected = true;
+            throw failure;
+          }
+          return Reflect.apply(originalRead, this, [identity]) as ReturnType<HostStateStore['readHostStateSnapshot']>;
+        });
+        restoreSnapshotSpy = () => snapshotSpy.mockRestore();
+        const originalClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+        const closedDatabasePaths: string[] = [];
+        const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+          this: Database,
+          ...parameters: Parameters<Database['close']>
+        ) {
+          const filename = path.resolve(this.filename);
+          Reflect.apply(originalClose, this, parameters);
+          if (filename === databasePath) closedDatabasePaths.push(filename);
+        });
+        restoreDatabaseCloseSpy = () => closeSpy.mockRestore();
+
+        await Promise.resolve(expect(run(admitted.admissionArgs)).rejects.toBe(failure));
+        expect(snapshotFailureInjected).toBe(true);
+        expect(closedDatabasePaths).toEqual([databasePath]);
+
+        restoreSnapshotSpy();
+        restoreSnapshotSpy = undefined;
+        restoreDatabaseCloseSpy();
+        restoreDatabaseCloseSpy = undefined;
+        const afterFailure = inspectHostWorkspaceDatabase(
+          root,
+          path.relative(root, databasePath),
+          deriveWorkspaceId(config.repository.repository_id, root),
+        );
+        expect({
+          work: afterFailure.work,
+          journals: afterFailure.journals,
+          attempts: afterFailure.admission_attempts,
+        }).toEqual({ work: [], journals: [], attempts: [] });
+        completed = true;
+      } finally {
+        restoreSnapshotSpy?.();
+        restoreDatabaseCloseSpy?.();
+        if (completed) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed admission snapshot close fixture: ${root}\n`);
+      }
+    }, 30_000);
+
     const contextDenials = [
       {
         name: 'stale repository identity',

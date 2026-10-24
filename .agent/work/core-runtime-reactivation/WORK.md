@@ -3487,6 +3487,71 @@ checked-in `packages/agent/instructions/development-lifecycle.md` and current
 repository policy were used instead. This remains an execution-tool GAP, not
 evidence of runtime qualification.
 
+The first Vex `usages` query reported a stale index and automatically updated
+one changed file (0 deleted, 11,151 symbols), then returned no references for
+the requested name. This was an unintended incremental update because Vex's
+configured auto-update ran without an explicit update flag. No further Vex
+queries or index builds are used for this packet; bounded Source reads own the
+remaining branch analysis. The Vex result adds no coverage evidence.
+
+### Key403 admission-snapshot close case — 2026-10-24
+
+The bounded public-run test now injects one failure for the temporary intake's
+work ID at `HostStateStore.readHostStateSnapshot`. Its spy calls the original
+method for every other ID and restores before the read-only database
+inspection. A second restored spy observes and calls through the close on the
+exact session-handoff database path. The caller receives the same injected
+error, and the post-failure inspection finds no Work, Journal or admission
+attempt rows. This covers the intended close behavior without changing product
+Source. The database assertion is limited to those three collections; this test
+does not claim full schema and row equality.
+
+The first format check failed for this new test. Bun's package-selected
+formatter rewrote the test, and the next scoped checks passed: strict TypeScript
+check of the test project (509 files, 1.93 s), Oxlint on the changed test, and
+format check on the changed test. The target ran serially and passed one test
+with five assertions, 99 filtered tests, a 494.64 ms body and a 1.85 s
+invocation. Its attempt log is
+`DIAG/bun-cli-run-key403-target-20261024-01.log`; the initial formatter failure
+and corrected formatter/check logs are preserved beside it.
+
+The independent read-only Luna correctness and comment reviews are complete.
+The test commit alone gives key 403 no numeric credit; one current-producer
+report must bind the changed input. Static checks ran concurrently; the focused test
+ran alone. This packet has no comparable sequential-static timing and no
+setup-only, token, filesystem-operation or aggregate tool-call counter, so it
+does not claim a speedup. The previously measured 178.85 s stage used different
+inputs and is not a comparable test runtime.
+
+The bounded correctness review at
+`DIAG/bun-cli-run-key403-review-20261024-01.md` found that the ordinary intake
+reaches the admission-snapshot catch, the error identity survives close, and
+the configured SQLite path closes exactly once. It noted that the post-error
+assertion covers only Work, Journal and admission-attempt collections. The test
+and this record make no full-database no-write claim.
+
+The comment review at
+`DIAG/bun-cli-run-key403-comments-review-20261024-01.md` found no added comments,
+suppression or test-only workaround. The reviewer did not inspect Git diff
+provenance under its read-only assignment; Root checked the changed test and
+WORK directly.
+
+The first commit attempt ran the normal hooks but aborted before creating a
+commit. Formatting and strict TypeScript passed; Oxlint rejected the two direct
+prototype-method captures as `typescript(unbound-method)`. The captured hook
+output is `DIAG/bun-cli-run-key403-commit-hook-20261024-01.log`. The test now
+captures the methods with `Reflect.get` and invokes them with `Reflect.apply`,
+which keeps their original receivers and avoids the lint error. The formatter
+needed one more pass after that edit. Final strict checking passed 509 files in
+1.03 s, Oxlint and formatting passed on the changed test, and the target passed
+again with one test, five assertions, 99 filtered tests, a 462.86 ms body and a
+1.70 s invocation in
+`DIAG/bun-cli-run-key403-target-20261024-02.log`. The final independent review
+at `DIAG/bun-cli-run-key403-final-review-20261024-01.md` confirms that the
+reflection-based method capture preserves the receivers, reachability and
+restoration. It repeats the documented limit that the inspector checks three
+collections, not the full database. No commit or producer stage has started.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
