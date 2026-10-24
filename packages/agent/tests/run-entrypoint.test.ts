@@ -3349,19 +3349,39 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     plan_sha256: 'b'.repeat(64),
   };
 
-  const snapshotAuthorityFixture = (root: string) => {
-    const entries: { path: string; kind: 'directory' | 'file'; bytes?: string }[] = [];
+  const snapshotAuthorityFixture = (root: string, includeMetadata = false) => {
+    const entries: {
+      path: string;
+      kind: 'directory' | 'file';
+      bytes?: string;
+      metadata?: { device: bigint; inode: bigint; mode: bigint; size: bigint; modified: bigint; changed: bigint };
+    }[] = [];
     const visit = (relative: string) => {
       for (const name of readdirSync(path.join(root, relative)).sort()) {
         const child = relative ? `${relative}/${name}` : name;
         const file = path.join(root, ...child.split('/'));
-        const info = lstatSync(file);
+        const info = lstatSync(file, { bigint: true });
         if (info.isSymbolicLink()) throw new Error('authority fixture contains a symbolic link');
+        const metadata = includeMetadata
+          ? {
+              device: info.dev,
+              inode: info.ino,
+              mode: info.mode,
+              size: info.size,
+              modified: info.mtimeNs,
+              changed: info.ctimeNs,
+            }
+          : undefined;
         if (info.isDirectory()) {
-          entries.push({ path: child, kind: 'directory' });
+          entries.push({ path: child, kind: 'directory', ...(metadata ? { metadata } : {}) });
           visit(child);
         } else if (info.isFile()) {
-          entries.push({ path: child, kind: 'file', bytes: readFileSync(file).toString('base64') });
+          entries.push({
+            path: child,
+            kind: 'file',
+            bytes: readFileSync(file).toString('base64'),
+            ...(metadata ? { metadata } : {}),
+          });
         } else throw new Error('authority fixture contains an unsupported entry');
       }
     };
@@ -3548,6 +3568,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       generation?: string;
       launcher?: Uint8Array;
       additionalChanges?: { path: string; bytes: Uint8Array }[];
+      omitPlanChangedPaths?: string[];
     } = {},
   ) => {
     const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -3588,6 +3609,25 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     };
     const oldManifestSha = digestBytes(record(parentManifest));
     const newManifestSha = digestBytes(record(successorManifest));
+    const changed = [
+      {
+        path: 'vida-agent/bin/run.mjs',
+        old_sha256: launcherEntry.sha256,
+        new_sha256: launcherSha,
+        old_size: launcherEntry.size,
+        new_size: launcher.length,
+      },
+      ...documentationEntries.map(({ change, entry }) => ({
+        path: change.path,
+        old_sha256: entry.sha256,
+        new_sha256: digestBytes(change.bytes),
+        old_size: entry.size,
+        new_size: change.bytes.length,
+      })),
+    ].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
+    const omittedPlanChanges = new Set(options.omitPlanChangedPaths ?? []);
+    if ([...omittedPlanChanges].some((item) => !changed.some((entry) => entry.path === item)))
+      throw new Error('forward fixture omitted plan path is not changed');
     const plan: Record<string, unknown> = {
       schema: 'VidaForwardUpdateMaintenance/v1',
       operation_id: generation,
@@ -3598,22 +3638,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       first_admitted_work_attempt: null,
       old_payload_manifest_sha256: oldManifestSha,
       new_payload_manifest_sha256: newManifestSha,
-      changed: [
-        {
-          path: 'vida-agent/bin/run.mjs',
-          old_sha256: launcherEntry.sha256,
-          new_sha256: launcherSha,
-          old_size: launcherEntry.size,
-          new_size: launcher.length,
-        },
-        ...documentationEntries.map(({ change, entry }) => ({
-          path: change.path,
-          old_sha256: entry.sha256,
-          new_sha256: digestBytes(change.bytes),
-          old_size: entry.size,
-          new_size: change.bytes.length,
-        })),
-      ].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0)),
+      changed: changed.filter((entry) => !omittedPlanChanges.has(entry.path)),
       preserved_mutable_outputs: preservedMutableOutput ? [preservedMutableOutput] : [],
     };
     const planSha = digestBytes(record(plan));
@@ -4183,9 +4208,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       const databasePath = path.join(agentRoot, 'work', 'session-handoff.v1.sqlite');
       const policyPath = path.join(root, ...f.policyPath.split('/'));
       const changelogPath = path.join(root, ...f.oldPolicy.changelog_path.split('/'));
+      const workRoot = path.join(root, '.agent', 'work', f.work);
       const launcherPath = path.join(bundleRoot, 'bin', 'run.mjs');
       const snapshot = () => ({
-        agent: snapshotAuthorityFixture(agentRoot),
+        agent: snapshotAuthorityFixture(agentRoot, true),
         database: readFileSync(databasePath),
         policy: readFileSync(policyPath),
         changelog: readFileSync(changelogPath),
@@ -4194,11 +4220,48 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         candidateManifest: readFileSync(candidateManifestPath),
         candidatePolicy: readFileSync(payloadPolicyPath),
         evidenceMetadata: [
+          snapshotAuthorityMetadata(databasePath),
+          snapshotAuthorityMetadata(agentRoot),
+          snapshotAuthorityMetadata(policyPath),
+          snapshotAuthorityMetadata(changelogPath),
+          snapshotAuthorityMetadata(launcherPath),
+          snapshotAuthorityMetadata(documentFile),
+          snapshotAuthorityMetadata(workRoot),
           snapshotAuthorityMetadata(candidateManifestPath),
           snapshotAuthorityMetadata(payloadPolicyPath),
         ],
       });
       const expectReadOnly = (before: ReturnType<typeof snapshot>) => expect(snapshot()).toEqual(before);
+      const withRestoredBytes = (file: string, bytes: string | Uint8Array, action: () => void) => {
+        const original = readFileSync(file);
+        writeFileSync(file, bytes);
+        try {
+          action();
+        } finally {
+          writeFileSync(file, original);
+        }
+      };
+      const expectAuthorityRefusal = (
+        selector: Parameters<typeof forwardUpdateAuthority>[1],
+        selectorSha: string,
+        generationRoot: string,
+        reason: string,
+      ) => {
+        const before = snapshot();
+        let caught: unknown;
+        try {
+          forwardUpdateAuthority(root, selector, selectorSha, generationRoot);
+        } catch (error) {
+          caught = error;
+        }
+        expect(caught).toMatchObject({
+          code: 'GAP-VIDA-RUN-SELECTOR-001',
+          message: `Forward policy proof invalid: ${reason}`,
+        });
+        expectReadOnly(before);
+      };
+      const encodeEvents = (events: unknown[]) =>
+        Buffer.from(events.map((event) => JSON.stringify(event)).join('\n') + '\n');
       writeFileSync(documentFile, newDocumentBytes);
       writeFileSync(path.join(bundleRoot, 'bin', 'run.mjs'), historyLauncher);
       const beforeHistory = snapshot();
@@ -4243,10 +4306,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         pointer: matchingPolicyEvent.pointer,
         timestamp: new Date().toISOString(),
       };
-      writeFileSync(
-        changelogPath,
-        Buffer.concat([beforeHistoricalChangelog, Buffer.from(JSON.stringify(historicalDocumentEvent) + '\n')]),
-      );
+      const historicalChangelogBytes = Buffer.concat([
+        beforeHistoricalChangelog,
+        Buffer.from(JSON.stringify(historicalDocumentEvent) + '\n'),
+      ]);
+      writeFileSync(changelogPath, historicalChangelogBytes);
       unlinkSync(transitionFile);
       let historicalCloseout: Awaited<ReturnType<typeof executeDocumentationClearFromWork>>;
       try {
@@ -4261,6 +4325,100 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       const beforeLeaf = snapshot();
       expect(forwardUpdateAuthority(root, forward.selector, forward.selectorSha, forwardRoot)).toBeNull();
       expectReadOnly(beforeLeaf);
+
+      const installedPolicyBytes = readFileSync(policyPath);
+      const installedPolicy = requireRecord(
+        JSON.parse(installedPolicyBytes.toString('utf8')),
+        'installed policy identity',
+      );
+      const missingChangelogPolicy = record({ ...installedPolicy, changelog_path: null, changelog_required: false });
+      withRestoredBytes(policyPath, missingChangelogPolicy, () =>
+        expectAuthorityRefusal(
+          forward.selector,
+          forward.selectorSha,
+          forwardRoot,
+          'committed policy changelog path is invalid',
+        ),
+      );
+
+      withRestoredBytes(changelogPath, encodeEvents([historicalDocumentEvent]), () =>
+        expectAuthorityRefusal(
+          forward.selector,
+          forward.selectorSha,
+          forwardRoot,
+          'committed policy event missing or ambiguous',
+        ),
+      );
+      const invalidWorkEvent = { ...matchingPolicyEvent, work_id: 'bad work id' };
+      withRestoredBytes(changelogPath, encodeEvents([invalidWorkEvent, historicalDocumentEvent]), () =>
+        expectAuthorityRefusal(forward.selector, forward.selectorSha, forwardRoot, 'committed event work invalid'),
+      );
+      withRestoredBytes(changelogPath, encodeEvents([matchingPolicyEvent]), () =>
+        expectAuthorityRefusal(
+          forward.selector,
+          forward.selectorSha,
+          forwardRoot,
+          'committed policy event/CLEAR closure missing or ambiguous',
+        ),
+      );
+
+      const malformedCheckpoint = path.join(workRoot, 'documentation-baseline-9999.v1.json');
+      writeFileSync(malformedCheckpoint, '{}\n');
+      try {
+        const beforeMalformedCheckpoint = snapshot();
+        expect(forwardUpdateAuthority(root, forward.selector, forward.selectorSha, forwardRoot)).toBeNull();
+        expectReadOnly(beforeMalformedCheckpoint);
+      } finally {
+        rmSync(malformedCheckpoint, { force: true });
+      }
+
+      const excessCheckpoints = Array.from({ length: 257 }, (_, index) =>
+        path.join(workRoot, `documentation-baseline-${String(7000 + index).padStart(4, '0')}.v1.json`),
+      );
+      for (const file of excessCheckpoints) writeFileSync(file, '');
+      try {
+        expectAuthorityRefusal(
+          forward.selector,
+          forward.selectorSha,
+          forwardRoot,
+          'committed checkpoint inventory exceeds bound',
+        );
+      } finally {
+        for (const file of excessCheckpoints) rmSync(file, { force: true });
+      }
+
+      const incompleteHistory = buildForwardLeafFixture(
+        root,
+        lineage.selector,
+        lineage.selectorSha,
+        lineage.cutoffSha,
+        repairSuccessorManifest,
+        undefined,
+        { path: f.policyPath, bytes: Buffer.from(targetPolicy) },
+        {
+          generation: 'fixture-forward-history-missing-change',
+          launcher: historyLauncher,
+          additionalChanges: [{ path: documentPath, bytes: newDocumentBytes }],
+          omitPlanChangedPaths: [f.policyPath],
+        },
+      );
+      const incompleteOuter = buildForwardLeafFixture(
+        root,
+        incompleteHistory.selector,
+        incompleteHistory.selectorSha,
+        incompleteHistory.cutoffSha,
+        incompleteHistory.successorManifest,
+        undefined,
+        undefined,
+        { generation: 'fixture-forward-leaf-missing-change', launcher: selectedLauncher },
+      );
+      writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(incompleteOuter.selector));
+      expectAuthorityRefusal(
+        incompleteOuter.selector,
+        incompleteOuter.selectorSha,
+        incompleteOuter.generationRoot,
+        'committed policy change is missing',
+      );
       completed = true;
     } finally {
       if (completed) rmSync(root, { recursive: true, force: true });

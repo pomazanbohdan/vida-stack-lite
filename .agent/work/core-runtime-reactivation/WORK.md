@@ -4575,22 +4575,119 @@ the transition writer emits that record shape. Its no-write snapshots cover the 
 database, policy, changelog, launcher, document and candidate inputs, so this
 is path-bounded no-write evidence rather than a claim about every copied file
 or metadata field. No Key416 coverage closure is claimed before the next
-post-commit producer outcome. The current generated projection remains solely
-the Key415 stage result above.
+post-commit producer outcome.
+
+#### Key416 bound coverage result
+
+After the normal hook-backed commit `357403d9dc0e11b02655479e83094bb23a51be30`
+was pushed, the current owner ran one pinned coverage stage. Its native
+terminal capture is
+`DIAG/bun-cli-run-key416-stage-20261024-01.log`; the run completed in
+202,630.39 ms with exit 0, no signal/timeout/spawn error, complete capture,
+closed process group, unchanged boot and image inputs, and a published report.
+Run ID is `9ff8314a-81b6-4a04-9944-d595e05c9f70`; all 1,391 attempts were
+accounted. It selected `bin/run.ts`, `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`. The exact image is
+`/workspace/.vida-quality-inputs/238320e20031d877b76cd3f2512a06924bcc6e7b/repository`,
+bound to source tree `9fbbf6c79fa9e8db4bd1b1cfdfb7c3f8468e2761`, input
+fingerprint `39c87f3081268e05875fbcb34837a616dc86004096282a7db8a9ad4b978cf13c`,
+and manifest SHA-256
+`3b7fad3f7da75eb3d70549ce2a23f8d16277873e9d2c0e052e31f9cef22204db`.
+
+The immutable focused report is
+`/workspace/.vida-quality-inputs/238320e20031d877b76cd3f2512a06924bcc6e7b/repository/packages/agent/coverage/bun-unified/diagnostics/9ff8314a-81b6-4a04-9944-d595e05c9f70.focused-coverage.json`;
+the sibling `diagnostics/operation-outcomes/9ff8314a-81b6-4a04-9944-d595e05c9f70.json`
+records `BLOCKED`, `quality_complete=false`,
+`resource_safe_to_advance=false`, `unattempted_count=0`,
+`report_rejected=false`, `execution_complete=true`, and pending frozen-budget
+qualification. This is a bound focused diagnostic, not full qualification.
+F/L/S/B are 406/555 functions, 1879/2859 lines, 1997/3138 statements, and
+2278/3661 branches. Versus Key415, the measured deltas are +9/+38/+42/+27;
+the frozen ceilings remain max CC 501 and entry CRAP 992. The current
+`CONTOUR-STATUS` projection was updated by the stage owner.
+
+The Key416 test appeared as a passing stage case in captured stderr; the
+coverage counter review found 114 passing tests in the two selected files.
+The raw process coverage receipt shows positive counters for
+`forwardPolicyAuthority` (key 86, 5), all ten nested callables at keys 87–96,
+and `forwardUpdateAuthority` (key 97, 35).
+Nine statement counters remain zero at lines 1358, 1365, 1374, 1376, 1378,
+1380, 1388, 1394 and 1431; nine branch arms remain zero at 1358, 1365, 1374,
+1376, 1378, 1380, 1388, 1431 and the non-`Error` arm at 1435. The earlier
+counter concern was a misread of static `source_maps`, not a report failure;
+the Luna review found no instrumentation/merge defect in the supplied receipt.
+Use the raw process coverage file when mapping observed statement/branch
+counts. The independent reachability review is recorded in
+`DIAG/bun-cli-run-key416-zero-arm-review-20261024-01.md`. It objectively
+disposes three arms under the supported schema/native path only: line 1376
+(`filter` with length one is dense and has index zero), line 1378 (`work_id`
+must be a string under the event schema), and the non-`Error` arm at line 1435
+(reaching it requires injected non-`Error` throws/primitive monkeypatching).
+These are objective dispositions, not hits or denominator changes, and do not
+turn the `BLOCKED` report into `PASS`. The other seven zero statements and
+branch arms (1358, 1365, 1374, 1380, 1388, 1394, 1431) are testable with small
+variants of the existing admitted-history/CLEAR fixture.
+
+#### Key417 denial variants
+
+Key417 extends that same fixture, with no second package copy. It exercises
+the schema-valid missing-changelog policy, missing policy event, unsafe
+nonempty `work_id`, missing document event, malformed extra checkpoint,
+257-name checkpoint inventory, and self-consistently bound plan that omits a
+manifest-detected policy change. Each error case asserts the exact
+`GAP-VIDA-RUN-SELECTOR-001` refusal and compares the fixture snapshot before
+and after; malformed checkpoint skipping instead asserts the admitted history
+still succeeds with bytes unchanged. The final target run passed under
+package-pinned Bun 1.4.4: 1 pass, 105 filtered, 33 expectations, 5,683.56 ms
+case time and 7.09 s total
+(`DIAG/bun-cli-run-key417-target-20261024-03.log`).
+
+Scoped format write/check passed on one file (67 ms / 15 ms), strict passed 104
+TypeScript files in 396.26 ms, and type-aware Oxlint passed on the changed
+selection with no diagnostics. Receipts are
+`DIAG/bun-cli-run-key417-format-20261024-03.log`,
+`DIAG/bun-cli-run-key417-format-check-20261024-03.log`,
+`DIAG/bun-cli-run-key417-strict-20261024-03.log`, and
+`DIAG/bun-cli-run-key417-lint-20261024-03.log`.
+The documentation checker passed after this WORK update: 2 selected documents,
+11 local links and no failures
+(`DIAG/bun-cli-run-key417-docs-20261024-01.log`).
+
+The independent review first found that byte/name snapshots missed metadata;
+the final test now captures `.agent` descendants and its root metadata in the
+same tree walk, plus metadata for the SQLite file, policy, changelog, launcher,
+document, work directory, candidate manifest and candidate policy. Before/after
+comparison happens around each authority call, before fixture cleanup restores
+substituted bytes, so same-byte writes during the call are visible. The
+candidate payload tree is not recursively snapshotted because this authority
+reader does not consume it; the persisted manifest and policy are included.
+The superseding final review is recorded in
+`DIAG/bun-cli-run-key417-final-review-20261024-02.md`. No Key417 coverage
+closure is claimed until the normal hook-backed commit/push and one bound
+coverage-stage terminal outcome.
 
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414 were 182,091.09 /
-196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 ms. Each stage used a
-different immutable image and source/test inputs, so these figures do not
-compare ordering or parallelism causally.
+Measured producer times for keys410/411/412/413/414/415/416 were 182,091.09 /
+196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
+202,630.39 ms. Each stage used different immutable image and source/test
+inputs, so these figures do not compare ordering or parallelism causally.
+Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
+stage capture; those executions have different producer/test environments and
+are not a controlled speed comparison.
 Producer concurrency stayed at one. Observed order was focused target,
-scoped static gates, independent review, ordinary hook-backed commit and push,
-then one contour stage. Static-first might have caught the key412 nullability
-issue before the commit hook; that is an inference, not a matched measurement.
-An unfiltered run would repeat 103 unrelated tests for this edit; that cost was
-not measured because no full suite ran. Fixture setup and runner overhead are
-not separately reported; aggregate tool/API and token counts are unavailable.
+scoped formatting/strict/lint, independent review, ordinary hook-backed commit
+and push, then one contour stage. A static-first order could have caught a
+type issue before spending 9.85 s on the focused target; this is a savings
+hypothesis, not a matched comparison (the prior Key415 hook caught a nullability
+issue after target tests). Parallel width 2 for target plus strict/lint is
+untested; the longest measured scoped gate is about 9.8 s lint, so possible
+wall-time overlap is offset by contention risk and formatter must remain
+exclusive. Width 1 remains the only measured producer setting and the chosen
+test setting. An unfiltered run would repeat 105 unrelated tests for Key417;
+that cost is not measured because no full suite ran. Fixture setup/runner
+overhead are not separately reported; aggregate tool/API and token counts are
+unavailable.
 The tee-path mistakes are the confirmed capture inefficiency. Later attempts
 and producer output have separate retained logs/receipts. No repository
 test-script defect was established. `vex status` showed stale clusters, so only
