@@ -6771,3 +6771,40 @@ Key439, Key442 and Key444 stages measured 236,747.830 ms, 206,242.701 ms and
 these numbers do not prove a speedup or justify added numeric parallelism. The
 next report candidate is ID119 at `bin/run.ts:1258` (`[3,0]`); a blind
 read-only review of the journal cardinality guard is pending.
+
+### Key445 review for forward-journal cardinality branch ID119
+
+The blind report-bound review found ID119 at `bin/run.ts:1258` reachable: the
+forward-journal parser accepts object records but does not require a unique
+`documentation_closeout_verified` event. Zero or duplicate matches yield an
+undefined proof event, then the current-leaf authority check refuses at
+`run.ts:1259–1260`; the public wrapper returns the exact selector refusal.
+TESTING's causal-prerequisite rule supports a real duplicate-event case rather
+than a skip. The existing admitted authority fixture already has a valid event,
+public selector call, exact refusal helper, and `withRestoredBytes`, so the
+small repair appends that event once and checks unchanged state without a new
+fixture. Evidence is in `DIAG/bun-cli-run-key445-id119-review-20261024-01.md`.
+
+### Key445 candidate test for forward-journal cardinality ID119
+
+A blind report-bound review confirmed ID119 is reachable when a valid
+`documentation_closeout_verified` event appears zero or multiple times: the
+journal parser accepts object records without uniqueness enforcement, and the
+public current-leaf route reaches the cardinality check before receipt binding.
+The existing fixture already owns the valid event, public call, exact refusal
+helper and restoration helper. Key445 reuses that event and appends it once to
+a temporary journal; it does not add another fixture or change product Source.
+The independent trace is `DIAG/bun-cli-run-key445-id119-review-20261024-01.md`.
+
+The focused test passed: 1 pass, 118 filtered, 0 failures, 54 expectations,
+16.87 s command time. Checked-JS strict passed 227 files (1,005.24 ms),
+configured Oxlint exited 0, and the one-file formatter check passed (16 ms).
+The focused independent test review is pending. No changed-input full producer
+stage has run for Key445.
+
+Key445's blind independent test review completed with no must-fix. It confirmed
+the duplicate journal remains valid JSONL, reaches the exact cardinality refusal,
+checks the fixture snapshot, and restores its original one-event bytes; the
+other transition cases remain independently scoped. The review receipt is
+`DIAG/bun-cli-run-key445-test-review-20261024-01.md`. The one changed-input
+coverage stage remains pending after normal hooks and push.

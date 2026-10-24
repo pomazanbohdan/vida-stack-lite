@@ -4606,7 +4606,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         closeout_sha256: closeout.sha256,
       };
       writeFileSync(path.join(history.generationRoot, receiptPath), record(binding));
-      writeFileSync(path.join(history.generationRoot, 'forward-journal.v1.jsonl'), JSON.stringify(event) + '\n');
+      const forwardJournalPath = path.join(history.generationRoot, 'forward-journal.v1.jsonl'),
+        forwardJournalBytes = Buffer.from(JSON.stringify(event) + '\n');
+      writeFileSync(forwardJournalPath, forwardJournalBytes);
       unlinkSync(path.join(lineage.repairRoot, 'maintenance-lock.v1.json'));
 
       const agentRoot = path.join(root, '.agent');
@@ -4700,6 +4702,15 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
       expect(forwardUpdateAuthority(root, history.selector, history.selectorSha, history.generationRoot)).toBeNull();
       expectReadOnly(beforeHistory);
+
+      withRestoredBytes(forwardJournalPath, Buffer.concat([forwardJournalBytes, forwardJournalBytes]), () =>
+        expectAuthorityRefusal(
+          history.selector,
+          history.selectorSha,
+          history.generationRoot,
+          'leaf forward journal/receipt differs',
+        ),
+      );
 
       withRestoredBytes(transitionFile, record(withoutForwardCloseout()), () =>
         expectAuthorityRefusal(
