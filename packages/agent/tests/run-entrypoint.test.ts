@@ -5417,6 +5417,159 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 60_000);
 
+    test('refuses partially issued research preparation before context admission through public run', async () => {
+      let root: string | undefined;
+      let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+      let completed = false;
+      try {
+        fixture = await createInitialSourceWorkFixture({
+          researchSynthesis: true,
+          researchAssignments: 2,
+          onRoot: (value) => (root = value),
+        });
+        const sourceFixture = fixture;
+        const input = admittedInput(sourceFixture);
+        const initial = continuationState(sourceFixture);
+        const sourceScope = initial.journal.source_scope;
+        assert.ok(sourceScope && sourceFixture.store && sourceFixture.bridge && sourceFixture.ledger);
+        const projectId = sourceFixture.identity.project_ids[0];
+        assert.ok(projectId);
+        const args = [
+          '--project-root',
+          sourceFixture.root,
+          '--repository',
+          sourceFixture.config.repository.repository_id,
+          '--project',
+          projectId,
+          '--work-path',
+          sourceFixture.documents[0],
+          '--work-id',
+          sourceFixture.identity.work_id,
+          '--attempt',
+          '1',
+          '--scope-digest',
+          sourceScope.digest,
+          '--team',
+          input.selection.team,
+          '--kind',
+          input.selection.kind,
+          '--intent',
+          input.selection.intent,
+          '--workflow',
+          'task_execution',
+        ];
+        await bindControlledRuntimeInitialization(sourceFixture.root, sourceFixture.config, sourceFixture.store);
+        await sourceFixture.bridge.close();
+        sourceFixture.bridge = null;
+        sourceFixture.ledger.close();
+        sourceFixture.ledger = null;
+        sourceFixture.database?.close(true);
+        sourceFixture.database = null;
+        sourceFixture.store = null;
+
+        const expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ];
+        const prepared = parseTestRunPayload(await run(args));
+        const preparedVersion = requireStateVersion(prepared.state_version);
+        const issued = parseTestRunPayload(await run([...args, ...expected(preparedVersion), '--issue-wave', 'true']));
+        const issuedActions = requireIssuedActions(issued);
+        expect(issuedActions).toHaveLength(2);
+        const issuedAction = issuedActions[0];
+        assert.ok(issuedAction?.issue_id);
+        let journalVersion: StateVersion | undefined;
+        const workspaceId = deriveWorkspaceId(sourceFixture.config.repository.repository_id, sourceFixture.root);
+        const databasePath = sessionHandoffDatabasePath(sourceFixture.root, sourceFixture.config);
+        const database = new Database(databasePath);
+        try {
+          const row = database
+            .query(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+            )
+            .get(workspaceId, sourceFixture.identity.work_id, 1) as {
+            revision: number;
+            payload: string;
+            digest: string;
+          } | null;
+          assert.ok(row);
+          const state = JSON.parse(row.payload) as {
+            research_wave_exposure?: string;
+            items: { readonly issue_id: string | null }[];
+          };
+          expect(state.research_wave_exposure).toBe('possible');
+          expect(state.items).toHaveLength(2);
+          expect(state.items.every((item) => item.issue_id !== null)).toBe(true);
+          const partial = {
+            ...state,
+            research_wave_exposure: 'preparing' as const,
+            items: state.items.map((item, index) => {
+              if (index !== 1) return item;
+              const unprepared = { ...item, issue_id: null, observation: null } as Record<string, unknown>;
+              delete unprepared.host_reservation;
+              delete unprepared.research_activation;
+              delete unprepared.research_normalization;
+              return unprepared as typeof item;
+            }),
+          };
+          const update = database
+            .query(
+              'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+            )
+            .run(
+              row.revision + 1,
+              canonicalJson(partial),
+              canonicalJsonDigest(partial),
+              workspaceId,
+              sourceFixture.identity.work_id,
+              1,
+              row.revision,
+              row.digest,
+            );
+          expect(update.changes).toBe(1);
+          journalVersion = { revision: row.revision + 1, digest: canonicalJsonDigest(partial) };
+        } finally {
+          database.close(true);
+        }
+
+        const databaseRelativePath = path.relative(sourceFixture.root, databasePath);
+        const beforeRecovery = inspectHostWorkspaceDatabase(sourceFixture.root, databaseRelativePath, workspaceId);
+        const journal = beforeRecovery.journals[0];
+        assert.ok(journal);
+        expect(journal.state.research_wave_exposure).toBe('preparing');
+        expect(journal.state.items.map((item) => item.issue_id)).toEqual([issuedAction.issue_id, null]);
+        expect(journal.state.items[0]?.issue_id).toBe(issuedAction.issue_id);
+        assert.ok(journalVersion);
+        const validatingLedger = openConfiguredMastraSessionLedger(sourceFixture.root);
+        try {
+          expect(validatingLedger.resume(sourceFixture.identity.work_id, 1)?.state).toEqual(journal.state);
+        } finally {
+          validatingLedger.close();
+        }
+        await Promise.resolve(
+          expect(run([...args, ...expected(journalVersion), '--issue-wave', 'true'])).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-EXECUTION-001',
+            message: 'Research preparation is not safely resumable for the current wave.',
+          }),
+        );
+        const afterRecovery = inspectHostWorkspaceDatabase(sourceFixture.root, databaseRelativePath, workspaceId);
+        expect(afterRecovery.work).toEqual(beforeRecovery.work);
+        expect(afterRecovery.ledger).toEqual(beforeRecovery.ledger);
+        expect(afterRecovery.journals).toEqual(beforeRecovery.journals);
+        expect(afterRecovery.admission_attempts).toEqual(beforeRecovery.admission_attempts);
+        completed = true;
+      } finally {
+        try {
+          await fixture?.close();
+        } finally {
+          if (root && completed) rmSync(root, { recursive: true, force: true });
+          else if (root) process.stderr.write(`Retained unsafe research preparation fixture: ${root}\n`);
+        }
+      }
+    }, 60_000);
+
     test('recovers an authorized source lease after accepted research through public run', async () => {
       let root: string | undefined;
       let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
