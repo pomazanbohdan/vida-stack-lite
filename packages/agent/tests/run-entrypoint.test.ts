@@ -3535,7 +3535,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   const prepareMutationIntake = (
     args: readonly string[],
     config: AgentRuntimeConfig,
-    options: { readonly sourcePath?: string } = {},
+    options: { readonly sourcePath?: string; readonly risk?: 'low' | 'medium' | 'high' } = {},
   ) => {
     const valueAfter = (flag: string) => {
       const index = args.indexOf(flag);
@@ -3619,7 +3619,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       acceptance_path: relative('acceptance.json'),
       runtime_code_paths: runtimePaths,
       route: 'R2',
-      risk: 'low',
+      risk: options.risk ?? 'low',
       change_kind: 'fix',
     };
     writeFileSync(path.join(workDir, 'scope.json'), record(scope));
@@ -6629,6 +6629,26 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     });
 
+    for (const risk of ['medium', 'high'] as const) {
+      test(`accepts ${risk} lifecycle risk on admitted workflow work`, async () => {
+        const root = mkdtempSync(path.join(tmpdir(), 'vida-run-lifecycle-risk-'));
+        const fixture = ownedMutationFixture(root, 30_000);
+        let completed = false;
+        try {
+          const { args, config } = createFixture(root);
+          const admitted = prepareMutationIntake(args, config, { risk });
+          expect(fixture.invoke(admitted.admissionArgs).status).toBe('prepared');
+          completed = true;
+        } finally {
+          if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
+          else
+            process.stderr.write(
+              `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} ${risk}-risk run fixture: ${root}\n`,
+            );
+        }
+      }, 30_000);
+    }
+
     test('CLI rejects a changed scope after component preparation without issuing its wave', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-persisted-'));
       const fixture = ownedMutationFixture(root, 30_000);
@@ -9603,6 +9623,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         wrongMessage: 'Recovery review requires exact mode, root and caller-history export',
         invalid: (root: string) => ['--mode', 'invalid', '--project-root', root, '--request', 'request.json'],
         invalidMessage: 'Recovery review mode or argument set invalid',
+        missingMode: (root: string) => [
+          '--project-root',
+          root,
+          '--request',
+          'request.json',
+          '--unexpected-option',
+          'value',
+        ],
       },
     ];
     for (const entry of cases) {
@@ -9623,6 +9651,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       };
       await refuseOnEmptyRoot(entry.wrong, entry.wrongMessage);
       if (entry.invalid && entry.invalidMessage) await refuseOnEmptyRoot(entry.invalid, entry.invalidMessage);
+      if ('missingMode' in entry)
+        await refuseOnEmptyRoot(entry.missingMode, 'Recovery review mode or argument set invalid');
     }
   });
 

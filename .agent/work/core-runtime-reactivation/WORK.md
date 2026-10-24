@@ -8759,3 +8759,37 @@ Bun/bwrap/tini process and no zombie younger than five minutes; the existing
 The producer alone updated projection. IDs254, 257, and 261 are the next
 bounded frontier review; no additional skips or coverage claims are made until
 that source/report trace completes.
+
+### Key471 lifecycle-risk and malformed recovery-mode packet — pre-stage
+
+The bounded blind trace of the Key470 report established ID254 `[0,55]` at
+`run.ts:2472` as one narrow objective skip: the sole `assertStandardRunOptions`
+caller follows task-source dispatch, which returns before that assertion for
+task-source values. Preserve its raw counter and denominator. The same trace
+kept ID257 `[15,0,0]` at `:2487` and ID261 `[2701,0]` at `:2538` active: medium
+and high are supported lifecycle risks, and recovery-review checks a missing
+mode only after the six-token arity check.
+
+Extend the existing `prepareMutationIntake` helper to accept the existing
+low/medium/high risk union, then use the public intake/admission path to prepare
+one medium-risk and one high-risk workflow. Add a three-pair malformed
+`--recovery-review` case that omits `--mode` while preserving arity, and assert
+the exact argument refusal plus an empty repository-root afterimage. A blind
+native Luna review confirmed both risk fixtures reach `isLifecycleRisk` through
+`workflowWork.lifecycle.risk`, and the missing-mode case reaches the nullish
+fallback before refusal; none issues a wave, report, runtime action, or
+consumer effect. Failure/UNKNOWN fixture retention remains enabled.
+
+The selected Bun 1.4.4 target passed all three tests with 22 expectations on
+each run (7.59 s, 7.53 s, and 8.38 s). Repeats followed the test control-flow
+change made to resolve the scoped type errors. The first typecheck found a `string | undefined`
+message-union error; its fixed type guard then triggered TS2774 because a
+function-valued property test is always true. Simplifying to property-existence
+narrowing resolved it. Final scoped strict passed with 545 captured TS files,
+zero diagnostics, and 104 project files; Oxlint, formatting and `git diff --check`
+passed. Preserve all failed captures alongside final ones:
+`DIAG/key471-risk-and-missing-mode-target-01.log`, `-target-02.log`,
+`-target-03.log`, `-typecheck-01.log`, `-typecheck-02.log`,
+`-typecheck-03.log`, `-oxlint-03.log`, and `-format-03.log`. The normal commit
+and push plus one changed-input stage remain pending; do not start the producer
+before hooks and push terminate.
