@@ -3980,6 +3980,80 @@ zero is `addObservationForAction` at `bin/run.ts:352`. Do not replay any failed
 fixture, run another full stage for this image, or record an objective skip
 without the TESTING proof.
 
+### Bun-cli-run key409 delivery-observation path — 2026-10-24
+
+The key408 changed-input report marked `isResearchPreparationUnsafe` covered;
+its current raw receipt also confirmed all three line-331 binary-expression
+locations. The next zero in the bound function ordering was
+`addObservationForAction` at `bin/run.ts:348-356`. Native blind Luna found the
+smallest reusable public route in the existing
+`createFailedFinalCorrectionFixture`: its passing variant drives writer,
+validators, tester, and the final delivery-report submission through public
+`run()`. The exact `prepare_delivery` report path calls
+`addObservationForAction` while constructing the candidate Journal for
+`preparedDelivery` validation. No new workflow implementation or test-only
+product API was added.
+
+The new `run-entrypoint.test.ts` case asserts the persisted completed delivery
+item is bound to its action and issue IDs, reports `reported_complete`, and
+contains a parseable `VidaDeliveryProposal/v1` for the isolated fixture. It
+does not assert that the report is write-free: persistence is the intended
+behavior. The source edit stays in a temporary test fixture; no deployment,
+runtime acceptance, or consumer effect occurs. Setting
+`preparationInputs:false` skips unrelated documentation-preparation artifacts
+while keeping the delivery report path. This is a setup simplification, not a
+measured speed improvement.
+
+The exact filtered target passed both before and after that option change: 1
+pass, 8 filtered, 0 failures, 2 expectations. The initial test case took
+11,293.51 ms; the final test case took 13,007.79 ms (12.65 s and 14.28 s total
+invocations respectively). These unpaired runs do not show a timing reduction.
+The first scoped strict run correctly rejected the helper-overload type because
+the variable required `preparationPath`; the test now uses
+`Omit<FailedFinalCorrectionFixture, 'preparationPath'>`. Formatter, strict on
+146 files, and type-aware Oxlint then passed. The normal commit hook passed
+formatting on 536 files and strict checking on 543 files. Blind Luna's final
+review initially identified the overload mismatch, then confirmed it resolved;
+the public route, behavior assertion and success/failure cleanup have no
+remaining review finding. Raw target/static attempts and the review are
+retained in `DIAG/bun-cli-run-key409-target-20261024-01.log`,
+`DIAG/bun-cli-run-key409-target-20261024-02.log`,
+`DIAG/bun-cli-run-key409-format-20261024-02.log`,
+`DIAG/bun-cli-run-key409-strict-20261024-01.log`,
+`DIAG/bun-cli-run-key409-strict-20261024-02.log`,
+`DIAG/bun-cli-run-key409-oxlint-20261024-02.log`,
+`DIAG/bun-cli-run-key409-design-path-20261024-01.md`, and
+`DIAG/bun-cli-run-key409-final-review-20261024-01.md`.
+
+After commit `89767f5cc9fadc6a9df0f9cdb9c52f378199185c` passed hooks and was
+pushed, exactly one pinned coverage stage ran in
+`/workspace/contour-stage-uQzoM3`. Run
+`bedceb5b-d293-458c-aeb7-e9edb1e0b7c0` exited 0 in 193,810.09 ms under the
+unchanged 330,000 ms timeout. Complete untruncated stdout/stderr (7,976 /
+15,889 bytes), observed group termination, unchanged boot/image inputs, and
+publication are recorded in native receipts. The bound source tree is
+`4c319536073688baeb2fd65a0cc3c1518710d2b6`, input fingerprint
+`7da253a8a98b8dcc28856ea50ae70abec9ebea0d0b7a54787329a15634c2eee6`, and
+manifest SHA-256
+`a0f8b100bc7962b68d82fe7e8fc0a5dd6a15110095f05fa437204ff7f359eaca`. The
+projection is now 361/557 F, 1666/2863 L, 1770/3143 S and 2015/3663 B, with
+max CC 501, max entry CRAP 992, 1,375 attempts and `BLOCKED`. The observed
+delta against the preceding distinct image is +20/+105/+109/+63. It is not a
+matched comparison: source/test inputs differ, so this is neither a causal
+speed claim nor an aggregate maximum. The report-order next zero is
+`isUnissuedKind` at `bin/run.ts:380`. Historical exact contours remain 17/46;
+no objective disposition, CRAP, mutation credit, or exact contour closure is
+claimed.
+
+The target-first then scoped-parallel-static-gates order used one behavior
+target and three read-only checks; the only strict rerun was justified by the
+reported type mismatch. The producer level stayed one. Prior stage elapsed
+time was 190,066.92 ms versus 193,810.09 ms here, but these are unpaired images
+and no parallel producer comparison exists. Aggregate tool/API calls and
+token counts remain unavailable from receipts. Continue in `bun-cli-run` at
+the next report-order zero; do not repeat this completed stage or replay the
+overload compile error as a test kill.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
