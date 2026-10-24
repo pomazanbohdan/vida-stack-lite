@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { recoverFailedPrewriterOwner } from '../bin/recover-failed-prewriter-owner.ts';
-import { afterAll, describe, expect, setSystemTime, test, spyOn } from 'bun:test';
+import { afterAll, describe, expect, mock, setSystemTime, test, spyOn } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import {
   openAdmittedWorkspaceDatabase,
@@ -47,6 +47,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
+import * as fs from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:net';
 import path from 'node:path';
@@ -125,6 +126,9 @@ import {
   type TerminalUtf8SpawnResult,
   type TestRunPayload,
 } from './helpers/run-entrypoint-test-support.ts';
+
+// Bun updates imported module namespaces when a module mock is registered.
+const originalFs = Object.freeze({ ...fs });
 
 test('readonly local inspection validates decoded rows and retains uncertain journal custody without writes', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-readonly-inspection-'));
@@ -2314,16 +2318,96 @@ const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
 const nativeCoverageMode = process.env.AGENT_RUNTIME_NATIVE_COVERAGE_MAIN === '1';
 const ordinaryDescribe = mutationMode ? describe.skip : describe;
 
-test('durable controller publication cleans only its own pending file when publication fails', () => {
-  const root = mkdtempSync(path.join(tmpdir(), 'vida-durable-fault-'));
+test('durable controller publication cleans only its own pending file when publication fails', async () => {
+  const root = originalFs.mkdtempSync(path.join(tmpdir(), 'vida-durable-fault-'));
+  let assertionsPassed = false;
   try {
     const target = path.join(root, 'occupied');
-    mkdirSync(target);
+    originalFs.mkdirSync(target);
     expect(() => writeDurable(target, { schema: 'FixtureController/v1' })).toThrow();
-    expect(readdirSync(root)).toEqual(['occupied']);
-    expect(readdirSync(target)).toEqual([]);
+    expect(originalFs.readdirSync(root)).toEqual(['occupied']);
+    expect(originalFs.readdirSync(target)).toEqual([]);
+
+    for (const cleanupCode of ['EIO', 'ENOENT'] as const) {
+      const faultTarget = path.join(root, `fault-${cleanupCode}.json`);
+      const bodyError = Object.assign(new Error('injected controller fsync failure'), { code: 'EIO' });
+      const cleanupError = Object.assign(new Error(`injected pending unlink ${cleanupCode}`), {
+        code: cleanupCode,
+      });
+      const events: string[] = [];
+      let pendingPath: string | undefined;
+      let ownedFd: number | undefined;
+
+      try {
+        await mock.module('node:fs', () => ({
+          ...originalFs,
+          openSync(...args: Parameters<typeof originalFs.openSync>): number {
+            const file = args[0];
+            const fd = originalFs.openSync(...args);
+            if (typeof file === 'string' && file.startsWith(`${faultTarget}.pending-`)) {
+              pendingPath = file;
+              ownedFd = fd;
+              events.push('open');
+            }
+            return fd;
+          },
+          writeFileSync(
+            ...args: Parameters<typeof originalFs.writeFileSync>
+          ): ReturnType<typeof originalFs.writeFileSync> {
+            if (typeof args[0] === 'number' && args[0] === ownedFd) events.push('write');
+            return originalFs.writeFileSync(...args);
+          },
+          fsyncSync(fd: number): void {
+            if (fd === ownedFd) {
+              events.push('fsync');
+              throw bodyError;
+            }
+            return originalFs.fsyncSync(fd);
+          },
+          closeSync(fd: number): void {
+            if (fd === ownedFd) events.push('close');
+            return originalFs.closeSync(fd);
+          },
+          unlinkSync(file: Parameters<typeof originalFs.unlinkSync>[0]): void {
+            if (file === pendingPath) {
+              events.push('unlink');
+              if (cleanupCode === 'ENOENT') originalFs.unlinkSync(file);
+              throw cleanupError;
+            }
+            return originalFs.unlinkSync(file);
+          },
+        }));
+
+        let outcome: unknown;
+        try {
+          writeDurable(faultTarget, { schema: 'FixtureController/v1' });
+        } catch (error) {
+          outcome = error;
+        }
+        expect(events).toEqual(['open', 'write', 'fsync', 'close', 'unlink']);
+        expect(pendingPath).toBeDefined();
+        if (!pendingPath) throw new Error('durable writer did not expose its owned pending path');
+        if (cleanupCode === 'ENOENT') expect(originalFs.existsSync(pendingPath)).toBe(false);
+        else {
+          expect(originalFs.existsSync(pendingPath)).toBe(true);
+          expect(originalFs.readFileSync(pendingPath)).toEqual(
+            Buffer.from('{\n  "schema": "FixtureController/v1"\n}\n'),
+          );
+        }
+        if (cleanupCode === 'EIO') {
+          expect(outcome).toBeInstanceOf(AggregateError);
+          expect((outcome as AggregateError).errors).toEqual([bodyError, cleanupError]);
+        } else expect(outcome).toBe(bodyError);
+      } finally {
+        mock.restore();
+      }
+
+      if (pendingPath && originalFs.existsSync(pendingPath)) originalFs.unlinkSync(pendingPath);
+    }
+    assertionsPassed = true;
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    if (assertionsPassed) originalFs.rmSync(root, { recursive: true, force: true });
+    else process.stderr.write(`Retained durable fault fixture after failed assertions: ${root}\n`);
   }
 });
 

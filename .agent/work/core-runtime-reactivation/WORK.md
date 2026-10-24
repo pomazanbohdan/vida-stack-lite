@@ -7858,3 +7858,62 @@ against the 2,147,483,648-byte minimum; no second disk check or cleanup was
 performed. No Vex refresh was run because its index remains stale/unavailable.
 One normal commit/push and then one changed-input stage through the existing
 producer are next; no stage is active now.
+
+### Key464 ID214 cleanup-error packet — pre-stage plan, 2026-10-24
+
+The accepted Key463 report `47269586-f649-4c7c-901d-cb5b385187ab` maps ID214
+to `bin/run.ts:2024–25`, `if (nodeErrorCode(cleanupError) !== 'ENOENT')`, with
+counts `[0,0]`. The bounded read-only Luna trace confirms that this branch
+requires a primary `writeDurable` failure followed by failure to unlink its own
+pending file. The existing run-entrypoint publication-failure test forces a
+rename error but cleans its pending file successfully; it does not hit ID214.
+The separate `controller-durable-write.test.ts` demonstrates a Bun `mock.module`
+filesystem fault-injection pattern, but is outside this contour's declared test
+selection. The active test file can extend its existing durable-publication
+case with that pattern without changing the contour scope or adding another test
+fixture.
+
+The batched case injects `fsyncSync` EIO followed by `unlinkSync` EIO and ENOENT:
+EIO must retain the exact AggregateError causes and owned pending bytes; ENOENT
+must leave no pending path and rethrow the original fsync error. It keeps
+original `node:fs` exports for setup, afterimages and cleanup, restores Bun's
+module mock in `finally`, and retains the root if assertions fail. This is
+covered behavior, not an objective skip or platform waiver. The regression
+contract records the two outcomes.
+
+Static checks first caught a trailing-comma syntax error (TS1013), which was
+fixed before the final pass; the failed attempt logs were retained. The first
+review also identified that `await mock.module('node:fs', () => originalFs)`
+would install another mock rather than restore the registry. The test now calls
+`mock.restore()` in `finally`; the independent blind Luna follow-up confirmed
+this is safe because this file has no concurrent tests or other module-mock
+usage. The frozen original fs namespace is still used for cleanup. No must-fix
+remains.
+
+Final scoped `bun run typecheck` passed (545 captured source files and the
+104-file TS project, zero diagnostics), direct Oxlint on the changed test
+passed, formatter check on the two changed files passed, and `git diff --check`
+passed. The focused target passed once: 1/1 test, 13 expectations, zero
+failures, 1.90 s total (6.01 ms test body), using Bun 1.4.4. Raw attempt logs
+are retained at `DIAG/key464-id214-typecheck-03.log`,
+`DIAG/key464-id214-oxlint-03.log`, `DIAG/key464-id214-format-03.log`, and
+`DIAG/key464-id214-target-01.log`; earlier failed static attempts remain
+unmodified. No contour stage has run for Key464 yet.
+
+Workflow-cost observations: two narrow JSON queries used an incorrect field
+shape, and a `tail -n90` read the oversized projection markdown, so output was
+truncated. One earlier `jq` selection accidentally emitted the broad `.coverage`
+object (executor reported about 194,692 output tokens and truncated it). These
+were read/command-shaping inefficiencies only; they changed no files, started
+no tests/index/hash work, and do not establish model-token consumption. The
+corrected reads were limited to branch-map candidates. As in Key463, platform
+tool-call and model-token totals are unavailable. Keep the existing order
+(receipt/report reuse, bounded source and target, scoped static/review, commit
+and push, then one producer stage); no A/B or parallel stage comparison is
+available, and 2x/4x producer parallelism remains unmeasured and out of scope.
+
+No objective skip or denominator change is proposed. Tracked source changes
+are limited to the existing durable-publication regression and its research
+contract. The producer-owned projection files remain unstaged. The next step
+is one normal commit/push, then one changed-input stage through the existing
+producer; no producer is active.

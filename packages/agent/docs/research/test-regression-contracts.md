@@ -449,6 +449,14 @@ state whose `forward` flag is true while a maintenance-lock marker exists.
 Require the guard's documented short-circuit and prove the marker bytes are
 unchanged. This unit case assumes forward authority was already validated by
 `activeSelector`; it does not replace the public selector-authority checks.
+For `writeDurable` cleanup, extend the existing publication-failure test with
+an injected `fsyncSync` error followed by a pending-file `unlinkSync` error.
+Use a locked Bun `node:fs` mock and retain original filesystem exports for the
+fixture. A non-`ENOENT` cleanup error must preserve both causes in the
+`AggregateError` and leave the owned pending bytes until the mock is restored;
+an `ENOENT` cleanup result must preserve the original fsync error after the
+pending path is gone. Assert call order and restore the module mock in
+`finally`, then clean only the owned fixture through the original exports.
 In the released-selector fixture, exercise the prepared-selector refusal with an
 unsupported state policy, the prepared-journal refusal with a changed journal
 status, then recompute selector and commit digests for both a nested extra
