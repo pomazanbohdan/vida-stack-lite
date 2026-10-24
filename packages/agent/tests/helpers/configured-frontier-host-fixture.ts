@@ -2,7 +2,13 @@ import { createHash, randomUUID } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { loadRuntimeConfig } from '../../src/config/runtime-config.ts';
+import {
+  loadRuntimeConfig,
+  readRuntimePackageResourceBytes,
+  runtimePackageAccess,
+  runtimePackageCodePaths,
+} from '../../src/config/runtime-config.ts';
+import { loadProjectSetContext } from '../../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
@@ -20,6 +26,7 @@ import type {
   DeliveredWorkContinuationRequest,
   ClosedConfigRebindProof,
 } from '../../src/orchestration/delivered-work-continuation.ts';
+import { snapshotRuntimePackageSources } from '../../src/orchestration/scoped-source-snapshot.ts';
 import type * as continuationProjection from '../../src/orchestration/delivered-work-continuation.ts';
 import { configuredFrontierRepairFixture } from './configured-frontier-fixture.ts';
 import { hasUnresolvedFixtureOperations } from './unresolved-governance-fixture.ts';
@@ -232,6 +239,97 @@ export function useNormalConfigEndpointProof(input: { receipt: ConfiguredFrontie
     }),
   };
   return input;
+}
+
+export function bindConfiguredFrontierCurrentRuntimeEndpoint(
+  input: {
+    receipt: ConfiguredFrontierReceipt;
+    current: { work: WorkState; work_version: StateVersion };
+  },
+  options: { root: string; config: ReturnType<typeof loadRuntimeConfig>; intakePath: string },
+) {
+  const { root, config, intakePath } = options;
+  const access = runtimePackageAccess();
+  const currentCode = snapshotRuntimePackageSources(
+    access,
+    config.runtime.bundle,
+    runtimePackageCodePaths(config.runtime.bundle, access),
+  );
+  const schemaDigest = createHash('sha256')
+    .update(readRuntimePackageResourceBytes(access, 'schemas/agent-runtime-config.v1.schema.json', 'fixture schema'))
+    .digest('hex');
+  const original = input.receipt;
+  const intakeRef = original.prior_work.artifacts.find(
+    (ref) => ref.artifact_id === 'local-session-intake' && ref.schema === 'VidaLocalSessionIntake/v1',
+  );
+  if (!intakeRef) throw new Error('Original local-session intake artifact is missing');
+  const originalProof = original.request.sourceTransition;
+  if (originalProof.status !== 'closed_config_rebind_proven')
+    throw new Error('Configured frontier fixture did not provide a closed config rebind proof');
+  const transition = {
+    ...originalProof.transition,
+    target_runtime_code_digest: currentCode.digest,
+    target_schema_digest: schemaDigest,
+    original_intake_ref: intakePath,
+    original_intake_sha256: intakeRef.sha256,
+  };
+  const sourceTransition = {
+    ...originalProof,
+    transition,
+    transition_digest: canonicalJsonDigest(transition),
+  };
+  const project = loadProjectSetContext(
+    root,
+    config,
+    config.repository.repository_id,
+    original.request.identity.project_ids,
+  );
+  const request = {
+    ...original.request,
+    targetRuntimeCodeDigest: currentCode.digest,
+    targetSchemaDigest: schemaDigest,
+    targetProjectContextDigest: project.project_context_digest,
+    sourceTransition,
+  };
+  const successorBinding = {
+    ...original.successor_binding,
+    runtime_source_revision: currentCode.digest,
+    runtime_code_digest: currentCode.digest,
+    schema_digest: schemaDigest,
+  };
+  const successorWork = {
+    ...original.successor_work,
+    binding: successorBinding,
+    lifecycle: {
+      ...original.successor_work.lifecycle,
+      config_binding: {
+        ...original.successor_work.lifecycle.config_binding,
+        schema_digest: schemaDigest,
+        runtime_code_digest: currentCode.digest,
+      },
+    },
+  };
+  const workVersion = { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) };
+  input.receipt = {
+    ...original,
+    request,
+    request_digest: canonicalJsonDigest(request),
+    successor_binding: successorBinding,
+    successor_work: successorWork,
+    work_version: workVersion,
+    authorization: {
+      ...original.authorization,
+      request_digest: canonicalJsonDigest(request),
+      transition_digest: sourceTransition.transition_digest,
+    },
+    continuation_id: canonicalJsonDigest({
+      identity: request.identity,
+      attempt: request.attempt,
+      action_id: request.action.request.action_id,
+      transition_digest: sourceTransition.transition_digest,
+    }),
+  };
+  return { access, request, sourceTransition, transition };
 }
 
 export function withFrontierJournalFixture(

@@ -3552,6 +3552,97 @@ reflection-based method capture preserves the receivers, reachability and
 restoration. It repeats the documented limit that the inspector checks three
 collections, not the full database. No commit or producer stage has started.
 
+### bun-cli-run configured-frontier Source-path mapping — key404 packet — 2026-10-24
+
+The last completed predecessor stage is the pinned coverage run on commit
+`74c7f19939d4d7d4cc1c90d683819be343a09684`, run
+`32e3fe21-1a2f-434c-9022-55e0825d0e47`, in `/workspace/contour-stage-Va5apI`.
+Its native execution receipt records 167,698.05 ms, producer exit 0, no signal
+or timeout, observed process-group termination, complete untruncated capture,
+and unchanged image inputs. It retained 7,975 stdout bytes and 13,848 stderr
+bytes, plus launch/request/execution/publication receipts and scratch. The
+focused report is
+`/workspace/.vida-quality-inputs/3e3c966118a953e48fb9336af37eb0cd2a60f392/repository/packages/agent/coverage/bun-unified/diagnostics/32e3fe21-1a2f-434c-9022-55e0825d0e47.focused-coverage.json`.
+The projection now reads 314/557 functions, 1446/2863 lines, 1539/3143
+statements and 1829/3663 branches. The operation remains BLOCKED and the report
+is focused diagnostic evidence, not exact contour closure, F/L/S/B
+qualification, or CRAP/mutation qualification. This predecessor report moves
+the next test packet to the configured-frontier mapping at `bin/run.ts:6975-6977`.
+
+The key404 test packet removes the roughly 80-line duplicated runtime-endpoint
+binding from `delivered-work-continuation.test.ts` and shares the explicit
+fixture helper in `tests/helpers/configured-frontier-host-fixture.ts`. The new
+case invokes public `run()` with a configured-frontier request, records the
+exact Source paths handed to the Host snapshot, injects the snapshot error,
+observes the close on the HostState owner that threw, and compares persisted
+Work, Ledger payload/version, and Journal state before and after. It does not
+change product Source or claim full-database immutability. The bounded Luna
+review recommends this shared helper over hiding the rebind in the fixture
+factory. Its first pass identified two test-quality gaps: the state assertion
+omitted `ledger_version`, and the helper mutated `input.current` although the
+callers only need the receipt. Both were corrected; the recheck found no
+remaining concrete issue. Review and recheck are preserved at
+`DIAG/bun-cli-run-key404-review-20261024-01.md`. The separate comments review
+at `DIAG/bun-cli-run-key404-comments-review-20261024-01.md` found no comment,
+suppression or workaround changes.
+
+The focused-test attempts exposed setup and selection causes rather than
+product failures. Three ordinary name-filter controls registered zero tests
+because this case is inside the existing runtime-coverage guard; the accepted
+target command therefore sets `AGENT_RUNTIME_V8_COVERAGE=1` and selects one file
+and one name. The first registered run found a missing fixture import; the
+next lacked controlled runtime-initialization authority; the following close
+spy counted three unrelated session ledgers. The test now imports the project
+context loader, binds initialization through the existing controlled fixture,
+and attributes closure to the exact failing HostStateStore. Retained unresolved
+fixture roots are
+`/home/agent/.cache/vida-cloud-tooling/tmp/frontier-repair-host-ea4UWK`,
+`.../frontier-repair-host-OXZCuy`, and
+`.../frontier-repair-host-bPYf84`; logs and mode-selection controls remain in
+`DIAG/bun-cli-run-key404-*`. A direct package TypeScript invocation also
+reported TS6059 because its package-root setting pulls in the root
+`tooling/agent/sdk-coverage-readiness.ts`; the generated scoped project instead
+uses the repository root and the three changed tests. This was a check-command
+configuration mismatch, not a source error. Early formatter and Oxlint
+findings were repaired without suppressions; the method-receiver case uses a
+WeakSet to attribute the thrown HostStateStore without aliasing `this`.
+
+Final checks on the corrected diff were serial: the pinned Bun formatter passed
+for three files in 16 ms; the scoped strict project passed with no diagnostics
+in 148 files (498.81 ms); type-aware Oxlint passed for the three changed files
+with zero warnings; and the exact V8-guarded test passed once, with 100 tests
+filtered, zero failures, five expectation calls, a 1,456.38 ms body and a 3.44 s
+invocation. Logs are `DIAG/bun-cli-run-key404-format-20261024-03.log`,
+`DIAG/bun-cli-run-key404-strict-20261024-04.log`,
+`DIAG/bun-cli-run-key404-oxlint-20261024-03.log` and
+`DIAG/bun-cli-run-key404-target-20261024-06.log`. No full suite, CRAP pass,
+mutation run, or key404 producer run has occurred in this packet.
+
+The measured order comparison is limited. The three no-mode controls each
+spent 1.16–1.96 s and selected zero tests; checking the registration guard
+before running the filtered test removes that false-empty attempt. For key403,
+the preceding WORK entry records concurrent scoped static checks followed by
+one serial focused test; for this key404 packet the final format, strict,
+Oxlint, and target commands ran one after another. Their inputs differ, and no
+same-input concurrency comparison exists, so this is not evidence of a speedup.
+The 167.70 s predecessor producer used different test inputs and is not
+comparable to the 3.44 s focused invocation. Producer concurrency stays at
+1x. Receipts do not expose setup-only time, aggregate tool-call count, or token
+usage; those costs remain unmeasured. The actionable simplification is to
+select the guarded test mode and its exact file/name before launch, reuse the
+existing configured-frontier helper, then run scoped static checks and one
+focused test before the independent review and one producer stage.
+
+Pstack's subtract-before-add, model-the-domain, test-behavior-not-implementation,
+fix-root-causes, prove-it-works, and verifiable-sequence principles informed
+this packet. The installed Pstack route is available, but the reviewer could
+not find its requested `refactoring` leaf or `playbooks/investigation.md`; this
+is an advisory skill-file GAP, not simulated use. The repository's checked-in
+TESTING command remains authoritative. After the packet is committed and
+pushed, run exactly one current producer over these changed inputs; retain its
+native terminal/capture/group receipts and let the existing projection owner
+update metrics. Until that report exists, key404 has no numeric credit.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review

@@ -18,6 +18,7 @@ import {
   type WorkState,
 } from '../src/host-state.ts';
 import {
+  MastraSessionLedger,
   openConfiguredMastraSessionLedger,
   sessionHandoffDatabasePath,
 } from '../src/orchestration/persistent-session-handoff.ts';
@@ -651,6 +652,11 @@ import {
   continuationRequestFor,
   trackContinuationFixtureRoot,
 } from './helpers/delivered-work-continuation-fixture.ts';
+import {
+  bindConfiguredFrontierCurrentRuntimeEndpoint,
+  seedFrontierHostFixture,
+  withConfiguredFrontierHostFixture,
+} from './helpers/configured-frontier-host-fixture.ts';
 import { applyDeliveredWorkContinuationPlan } from '../bin/runtime-code-rebind.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -4431,6 +4437,105 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         if (completed) rmSync(root, { recursive: true, force: true });
         else process.stderr.write(`Retained failed admission snapshot close fixture: ${root}\n`);
       }
+    }, 30_000);
+
+    test('maps configured-frontier Source paths and closes the ledger when its snapshot fails', async () => {
+      await withConfiguredFrontierHostFixture(async (fixture, setup) => {
+        const { root, config, workspaceId, input, intakePath } = setup;
+        const { request } = bindConfiguredFrontierCurrentRuntimeEndpoint(input, { root, config, intakePath });
+        seedFrontierHostFixture(fixture, input);
+        await bindControlledRuntimeInitialization(root, config, fixture.store);
+        const workId = request.identity.work_id;
+        const databasePath = path.resolve(sessionHandoffDatabasePath(root, config));
+        const databaseRelativePath = path.relative(root, databasePath);
+        const sourcePaths = request.currentSourceScope.entries.map((entry) => entry.path);
+        const workPath = sourcePaths[0];
+        if (!workPath) throw new Error('Configured frontier has no current Source path');
+        const before = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        const failure = new Error('injected configured-frontier Source snapshot failure');
+        const capturedSourcePaths: string[][] = [];
+        let snapshotFailureInjected = false;
+        const failedHostStates = new WeakSet<HostStateStore>();
+        const originalSnapshot = Reflect.get(
+          HostStateStore.prototype,
+          'snapshotCurrentTaskSourceSources',
+        ) as HostStateStore['snapshotCurrentTaskSourceSources'];
+        const snapshotSpy = spyOn(HostStateStore.prototype, 'snapshotCurrentTaskSourceSources').mockImplementation(
+          function (
+            this: HostStateStore,
+            identity: WorkIdentity,
+            threadId: string,
+            paths: readonly string[],
+            attempt?: number,
+          ) {
+            if (!snapshotFailureInjected && identity.work_id === workId) {
+              snapshotFailureInjected = true;
+              failedHostStates.add(this);
+              capturedSourcePaths.push([...paths]);
+              throw failure;
+            }
+            return Reflect.apply(originalSnapshot, this, [identity, threadId, paths, attempt]) as ReturnType<
+              HostStateStore['snapshotCurrentTaskSourceSources']
+            >;
+          },
+        );
+        const originalClose = Reflect.get(MastraSessionLedger.prototype, 'close') as MastraSessionLedger['close'];
+        const closedOwnerLedgers: MastraSessionLedger[] = [];
+        const closeSpy = spyOn(MastraSessionLedger.prototype, 'close').mockImplementation(function (
+          this: MastraSessionLedger,
+          ...parameters: Parameters<MastraSessionLedger['close']>
+        ) {
+          Reflect.apply(originalClose, this, parameters);
+          if (failedHostStates.has(this.hostState)) closedOwnerLedgers.push(this);
+        });
+        const args = [
+          '--project-root',
+          root,
+          '--repository',
+          request.identity.repository_id,
+          '--project',
+          request.identity.project_ids[0] ?? '',
+          '--work-path',
+          workPath,
+          '--work-id',
+          workId,
+          '--attempt',
+          String(request.attempt),
+          '--scope-digest',
+          request.currentSourceScope.digest,
+          '--team',
+          'default-development',
+          '--kind',
+          'task',
+          '--intent',
+          'task_execution',
+          '--workflow',
+          request.action.workflow_id,
+          '--inspect',
+          'true',
+        ];
+        try {
+          await Promise.resolve(expect(run(args)).rejects.toBe(failure));
+          expect(snapshotFailureInjected).toBe(true);
+          expect(capturedSourcePaths).toEqual([sourcePaths]);
+          expect(closedOwnerLedgers).toHaveLength(1);
+          const after = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+          expect({
+            work: after.work,
+            ledger: after.ledger,
+            ledger_version: after.ledger_version,
+            journals: after.journals,
+          }).toEqual({
+            work: before.work,
+            ledger: before.ledger,
+            ledger_version: before.ledger_version,
+            journals: before.journals,
+          });
+        } finally {
+          snapshotSpy.mockRestore();
+          closeSpy.mockRestore();
+        }
+      }, 'normal');
     }, 30_000);
 
     const contextDenials = [

@@ -7,6 +7,7 @@ import {
   mutableFrontierFixture,
   useNormalConfigEndpointProof,
   normalConfigEndpointProof,
+  bindConfiguredFrontierCurrentRuntimeEndpoint,
   seedFrontierHostFixture,
   configuredFrontierRepairHostRoot,
   type MutableCoordinationClaim,
@@ -39,7 +40,6 @@ import type {
 import type { MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import type { SessionBridgeObservation, SessionBridgeSnapshot } from '../src/orchestration/mastra-session-bridge.ts';
 import type { SessionHandoffContext } from '../src/orchestration/session-handoff.ts';
-import type { DeliveredWorkContinuationRequest } from '../src/orchestration/delivered-work-continuation.ts';
 import {
   canonicalJson,
   canonicalJsonAtDepth,
@@ -53,14 +53,8 @@ import {
   coordinationLedgerJson,
 } from '../src/contracts/envelopes.ts';
 import { validateLifecycleAggregate } from '../src/lifecycle/lifecycle-state.ts';
-import {
-  runtimeConfigDigest,
-  runtimePackageAccess,
-  readRuntimePackageResourceBytes,
-  runtimePackageCodePaths,
-} from '../src/config/runtime-config.ts';
+import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import * as runtimeConfigModule from '../src/config/runtime-config.ts';
-import { loadProjectSetContext } from '../src/config/project-context.ts';
 import {
   parseSessionBridgeObservation,
   parseSessionBridgeRequest,
@@ -1124,10 +1118,7 @@ test('failed prewriter recovery basis preserves full resources and rejects unkno
     expect(() => invokeUnknownBoundary(validateFailedPrewriterRecoveryBasis, undefined, [invalid])).toThrow();
   }
 });
-import {
-  compareScopedSourceSnapshots,
-  snapshotRuntimePackageSources,
-} from '../src/orchestration/scoped-source-snapshot.ts';
+import { compareScopedSourceSnapshots } from '../src/orchestration/scoped-source-snapshot.ts';
 import type { ScopedSourceChange } from '../src/orchestration/scoped-source-snapshot.ts';
 import { assertAdmittedRuntimeCodeCurrent } from '../src/orchestration/admitted-session-execution.ts';
 import * as continuationProjection from '../src/orchestration/delivered-work-continuation.ts';
@@ -1430,85 +1421,11 @@ test('normal config endpoint proof is separate from delivery and binds only the 
 test('admitted runtime uses the Host stored normal continuation endpoint without rewriting the protected old inventory', async () => {
   const { root, config, workspaceId, input, intakePath } = configuredFrontierRepairHostRoot('normal');
   try {
-    const access = runtimePackageAccess();
-    const currentCode = snapshotRuntimePackageSources(
-      access,
-      config.runtime.bundle,
-      runtimePackageCodePaths(config.runtime.bundle),
-    );
-    const schemaDigest = createHash('sha256')
-      .update(readRuntimePackageResourceBytes(access, 'schemas/agent-runtime-config.v1.schema.json', 'fixture schema'))
-      .digest('hex');
-    const original = input.receipt;
-    const intakeRef = requireFixtureValue(
-      original.prior_work.artifacts.find((ref) => ref.artifact_id === 'local-session-intake'),
-      'original local-session intake artifact',
-    );
-    const originalProof = original.request.sourceTransition;
-    if (originalProof.status !== 'closed_config_rebind_proven')
-      throw new Error('Configured frontier fixture did not provide a closed config rebind proof');
-    const transition = {
-      ...originalProof.transition,
-      target_runtime_code_digest: currentCode.digest,
-      target_schema_digest: schemaDigest,
-      original_intake_ref: intakeRef.path,
-      original_intake_sha256: intakeRef.sha256,
-    };
-    const sourceTransition = {
-      ...originalProof,
-      transition,
-      transition_digest: canonicalJsonDigest(transition),
-    };
-    const project = loadProjectSetContext(
+    const { access, request, sourceTransition, transition } = bindConfiguredFrontierCurrentRuntimeEndpoint(input, {
       root,
       config,
-      config.repository.repository_id,
-      original.request.identity.project_ids,
-    );
-    const request: DeliveredWorkContinuationRequest = {
-      ...original.request,
-      targetRuntimeCodeDigest: currentCode.digest,
-      targetSchemaDigest: schemaDigest,
-      targetProjectContextDigest: project.project_context_digest,
-      sourceTransition,
-    };
-    const successorBinding = {
-      ...original.successor_binding,
-      runtime_source_revision: currentCode.digest,
-      runtime_code_digest: currentCode.digest,
-      schema_digest: schemaDigest,
-    };
-    const successorWork = {
-      ...original.successor_work,
-      binding: successorBinding,
-      lifecycle: {
-        ...original.successor_work.lifecycle,
-        config_binding: {
-          ...original.successor_work.lifecycle.config_binding,
-          schema_digest: schemaDigest,
-          runtime_code_digest: currentCode.digest,
-        },
-      },
-    };
-    input.receipt = {
-      ...original,
-      request,
-      request_digest: canonicalJsonDigest(request),
-      successor_binding: successorBinding,
-      successor_work: successorWork,
-      work_version: { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
-      authorization: {
-        ...original.authorization,
-        request_digest: canonicalJsonDigest(request),
-        transition_digest: sourceTransition.transition_digest,
-      },
-      continuation_id: canonicalJsonDigest({
-        identity: request.identity,
-        attempt: request.attempt,
-        action_id: request.action.request.action_id,
-        transition_digest: sourceTransition.transition_digest,
-      }),
-    };
+      intakePath,
+    });
     const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
     mkdirSync(path.dirname(databasePath), { recursive: true });
     const f = await continuationFixture({
