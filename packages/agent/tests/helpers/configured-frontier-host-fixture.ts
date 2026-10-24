@@ -9,6 +9,7 @@ import {
   runtimePackageCodePaths,
 } from '../../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../../src/config/project-context.ts';
+import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
@@ -26,7 +27,10 @@ import type {
   DeliveredWorkContinuationRequest,
   ClosedConfigRebindProof,
 } from '../../src/orchestration/delivered-work-continuation.ts';
-import { snapshotRuntimePackageSources } from '../../src/orchestration/scoped-source-snapshot.ts';
+import {
+  snapshotDeclaredSources,
+  snapshotRuntimePackageSources,
+} from '../../src/orchestration/scoped-source-snapshot.ts';
 import type * as continuationProjection from '../../src/orchestration/delivered-work-continuation.ts';
 import { configuredFrontierRepairFixture } from './configured-frontier-fixture.ts';
 import { hasUnresolvedFixtureOperations } from './unresolved-governance-fixture.ts';
@@ -39,6 +43,8 @@ import {
 } from './delivered-work-continuation-fixture.ts';
 
 /** One serial case owns setup, database closure and retained-root disposition within the default deadline. */
+type ConfiguredFrontierHostFixtureMode = 'default' | 'unmatched-prewriter-report';
+
 export async function withConfiguredFrontierHostFixture(
   action: (
     fixture: Awaited<ReturnType<typeof continuationFixture>>,
@@ -46,6 +52,7 @@ export async function withConfiguredFrontierHostFixture(
     deadline: number,
   ) => void | Promise<void>,
   proofKind: 'delivery' | 'normal' = 'delivery',
+  mode: ConfiguredFrontierHostFixtureMode = 'default',
 ): Promise<void> {
   const deadline = performance.now() + 5_000;
   let ownedRoot: string | undefined;
@@ -56,9 +63,14 @@ export async function withConfiguredFrontierHostFixture(
     if (ownedRoot) retainContinuationFixtureRoot(ownedRoot);
   };
   try {
-    const setup = configuredFrontierRepairHostRoot(proofKind, false, (created) => {
-      ownedRoot = created;
-    });
+    const setup = configuredFrontierRepairHostRoot(
+      proofKind,
+      false,
+      (created) => {
+        ownedRoot = created;
+      },
+      mode,
+    );
     const databasePath = path.join(setup.root, setup.config.control.work_root, 'session-handoff.v1.sqlite');
     mkdirSync(path.dirname(databasePath), { recursive: true });
     fixture = await continuationFixture({
@@ -440,6 +452,7 @@ export function configuredFrontierRepairHostRoot(
   proofKind: 'delivery' | 'normal' | 'normal-large' = 'delivery',
   changedSource = false,
   onRoot?: (root: string) => void,
+  mode: ConfiguredFrontierHostFixtureMode = 'default',
 ) {
   const root = mkdtempSync(path.join(tmpdir(), 'frontier-repair-host-'));
   trackContinuationFixtureRoot(root);
@@ -457,9 +470,25 @@ export function configuredFrontierRepairHostRoot(
   writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Fixture map\n');
   writeFileSync(path.join(root, 'docs', 'agent-instructions', 'documentation-policy.v1.json'), '{}');
   const config = loadRuntimeConfig(root),
-    workspaceId = deriveWorkspaceId('vida-agent', root);
+    workspaceId = deriveWorkspaceId('vida-agent', root),
+    sourcePath = 'packages/agent/src/work.ts';
+  let currentSourceScope: ReturnType<typeof snapshotDeclaredSources> | undefined;
+  if (mode === 'unmatched-prewriter-report') {
+    if (proofKind !== 'normal') throw new Error('Unmatched prewriter report fixtures require the normal endpoint.');
+    const sourceFile = path.join(root, sourcePath);
+    mkdirSync(path.dirname(sourceFile), { recursive: true });
+    writeFileSync(sourceFile, 'configured frontier current source\n');
+    currentSourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [sourcePath]);
+  }
   const input = mutableFrontierFixture(
-    configuredFrontierRepairFixture(true, changedSource, { root, config, workspaceId }, 'implementation'),
+    configuredFrontierRepairFixture(
+      true,
+      changedSource,
+      { root, config, workspaceId },
+      'implementation',
+      null,
+      currentSourceScope,
+    ),
   );
   const item = {
     schema: 'WorkItem/v1',
@@ -523,6 +552,14 @@ export function configuredFrontierRepairHostRoot(
     authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(request) },
   };
   input.current = { ...input.current, work: successor, work_version: successorVersion };
+  if (mode === 'unmatched-prewriter-report') {
+    bindFrontierContractArtifacts(root, input);
+    input.current = {
+      ...input.current,
+      work: input.receipt.successor_work,
+      work_version: input.receipt.work_version,
+    };
+  }
   if (proofKind === 'normal') useNormalConfigEndpointProof(input);
   return { root, config, workspaceId, input, intakePath };
 }
@@ -569,6 +606,92 @@ export function bindFrontierContractReferences(input: { receipt: ConfiguredFront
     request_digest: canonicalJsonDigest(originalRequest),
     authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(originalRequest) },
   };
+}
+
+function bindFrontierContractArtifacts(root: string, input: { receipt: ConfiguredFrontierReceipt }): void {
+  const receipt = input.receipt;
+  const priorWork = receipt.prior_work;
+  const allowedPaths = [...priorWork.lifecycle.scope.allowed_paths];
+  const acIds = [...priorWork.binding.ac_ids];
+  const sourceRevision = priorWork.binding.work_source_revision;
+  const scope = {
+    schema: 'ImplementationScope/v1',
+    scope_id: priorWork.binding.scope_id,
+    work_id: priorWork.binding.lifecycle_work_id,
+    source_revision: sourceRevision,
+    ac_ids: acIds,
+    allowed_paths: allowedPaths,
+    implementation_paths: [...priorWork.lifecycle.scope.implementation_paths],
+    documentation_paths: [...priorWork.lifecycle.scope.documentation_paths],
+    changed_symbols: [],
+    non_goals: ['Only inspect the isolated configured-frontier fixture.'],
+    acceptance_trace: acIds,
+    behavior_trace: ['Configured-frontier public report lookup.'],
+    test_trace: ['run-entrypoint configured-frontier report test.'],
+    diagnostic_trace: ['Fixture-only admission record.'],
+    attribution: {
+      thread_id: receipt.request.nativeSessionHandle,
+      pointer: receipt.request.originalRequestPointer,
+    },
+    owner: 'fixture',
+    created_at: new Date().toISOString(),
+  };
+  const acceptance = {
+    schema: 'AcceptanceManifest/v1',
+    id: `${scope.scope_id}-acceptance`,
+    version: 1,
+    ac_ids: acIds,
+    source: allowedPaths[0],
+    scope: scope.scope_id,
+    source_revision: sourceRevision,
+    contracts: acIds.map((id) => ({
+      id,
+      definition: 'Keep the configured-frontier Host report lookup bound to the issued action.',
+      sr: 'SR-CONFIGURED-FRONTIER-REPORT',
+      evidence: ['fixture-only'],
+    })),
+  };
+  if (!acceptance.source) throw new Error('Configured frontier has no scope path for its acceptance fixture');
+  const scopeBytes = Buffer.from(canonicalJson(scope));
+  const acceptanceBytes = Buffer.from(canonicalJson(acceptance));
+  const scopeDigest = createHash('sha256').update(scopeBytes).digest('hex');
+  const acceptanceDigest = createHash('sha256').update(acceptanceBytes).digest('hex');
+  const contracts: WorkState['contracts'] = {
+    ...priorWork.contracts,
+    scope: { ...priorWork.contracts.scope, sha256: scopeDigest },
+    acceptance: { ...priorWork.contracts.acceptance, sha256: acceptanceDigest },
+  };
+  const priorBinding = {
+    ...priorWork.binding,
+    scope_contract_digest: scopeDigest,
+    acceptance_manifest_digest: acceptanceDigest,
+  };
+  const successorBinding = {
+    ...receipt.successor_binding,
+    scope_contract_digest: scopeDigest,
+    acceptance_manifest_digest: acceptanceDigest,
+  };
+  const nextPriorWork = { ...priorWork, binding: priorBinding, contracts };
+  const nextSuccessorWork = { ...receipt.successor_work, binding: successorBinding, contracts };
+  const priorWorkVersion = { revision: nextPriorWork.revision, digest: canonicalJsonDigest(nextPriorWork) };
+  const workVersion = { revision: nextSuccessorWork.revision, digest: canonicalJsonDigest(nextSuccessorWork) };
+  const request = { ...receipt.request, expectedWork: priorWorkVersion };
+  input.receipt = {
+    ...receipt,
+    prior_work: nextPriorWork,
+    prior_work_version: priorWorkVersion,
+    successor_work: nextSuccessorWork,
+    successor_binding: successorBinding,
+    work_version: workVersion,
+    request,
+    request_digest: canonicalJsonDigest(request),
+    authorization: { ...receipt.authorization, request_digest: canonicalJsonDigest(request) },
+  };
+  mkdirSync(path.dirname(path.join(root, contracts.scope.path)), { recursive: true });
+  mkdirSync(path.dirname(path.join(root, contracts.acceptance.path)), { recursive: true });
+  writeFileSync(path.join(root, contracts.scope.path), scopeBytes, { flag: 'wx' });
+  writeFileSync(path.join(root, contracts.acceptance.path), acceptanceBytes, { flag: 'wx' });
+  bindFrontierContractReferences(input);
 }
 
 export function failedFrontierJournalFixture(

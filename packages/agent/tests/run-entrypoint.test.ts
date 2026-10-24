@@ -4439,6 +4439,41 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 30_000);
 
+    const configuredFrontierRunArgs = (root: string, request: DeliveredWorkContinuationRequest, inspect = true) => {
+      const sourcePaths = request.currentSourceScope.entries.map((entry) => entry.path);
+      const workPath = sourcePaths[0];
+      const projectId = request.identity.project_ids[0];
+      if (!workPath || !projectId) throw new Error('Configured frontier is missing its current Source or project path');
+      return {
+        sourcePaths,
+        args: [
+          '--project-root',
+          root,
+          '--repository',
+          request.identity.repository_id,
+          '--project',
+          projectId,
+          '--work-path',
+          workPath,
+          '--work-id',
+          request.identity.work_id,
+          '--attempt',
+          String(request.attempt),
+          '--scope-digest',
+          request.currentSourceScope.digest,
+          '--team',
+          'default-development',
+          '--kind',
+          'task',
+          '--intent',
+          'task_execution',
+          '--workflow',
+          request.action.workflow_id,
+          ...(inspect ? ['--inspect', 'true'] : []),
+        ],
+      };
+    };
+
     test('maps configured-frontier Source paths and closes the ledger when its snapshot fails', async () => {
       await withConfiguredFrontierHostFixture(async (fixture, setup) => {
         const { root, config, workspaceId, input, intakePath } = setup;
@@ -4448,9 +4483,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const workId = request.identity.work_id;
         const databasePath = path.resolve(sessionHandoffDatabasePath(root, config));
         const databaseRelativePath = path.relative(root, databasePath);
-        const sourcePaths = request.currentSourceScope.entries.map((entry) => entry.path);
-        const workPath = sourcePaths[0];
-        if (!workPath) throw new Error('Configured frontier has no current Source path');
+        const { args, sourcePaths } = configuredFrontierRunArgs(root, request);
         const before = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
         const failure = new Error('injected configured-frontier Source snapshot failure');
         const capturedSourcePaths: string[][] = [];
@@ -4488,32 +4521,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           Reflect.apply(originalClose, this, parameters);
           if (failedHostStates.has(this.hostState)) closedOwnerLedgers.push(this);
         });
-        const args = [
-          '--project-root',
-          root,
-          '--repository',
-          request.identity.repository_id,
-          '--project',
-          request.identity.project_ids[0] ?? '',
-          '--work-path',
-          workPath,
-          '--work-id',
-          workId,
-          '--attempt',
-          String(request.attempt),
-          '--scope-digest',
-          request.currentSourceScope.digest,
-          '--team',
-          'default-development',
-          '--kind',
-          'task',
-          '--intent',
-          'task_execution',
-          '--workflow',
-          request.action.workflow_id,
-          '--inspect',
-          'true',
-        ];
         try {
           await Promise.resolve(expect(run(args)).rejects.toBe(failure));
           expect(snapshotFailureInjected).toBe(true);
@@ -4536,6 +4543,68 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           closeSpy.mockRestore();
         }
       }, 'normal');
+    }, 30_000);
+
+    test('rejects a configured-frontier report whose action was not issued', async () => {
+      await withConfiguredFrontierHostFixture(
+        async (fixture, setup) => {
+          const { root, config, input, intakePath } = setup;
+          const { request } = bindConfiguredFrontierCurrentRuntimeEndpoint(input, { root, config, intakePath });
+          seedFrontierHostFixture(fixture, input);
+          await bindControlledRuntimeInitialization(root, config, fixture.store);
+          const { args } = configuredFrontierRunArgs(root, request, false);
+          const expected = (version: ReturnType<typeof requireStateVersion>) => [
+            '--expected-revision',
+            String(version.revision),
+            '--expected-digest',
+            version.digest,
+          ];
+          const issued = parseTestRunPayload(
+            await runSuccessfully([
+              ...args,
+              ...expected(requireStateVersion(input.receipt.journal_version)),
+              '--issue-wave',
+              'true',
+            ]),
+          );
+          expect(issued.status).toBe('issued');
+          const issuedActions = requireIssuedActions(issued);
+          expect(issuedActions.length).toBeGreaterThan(0);
+          const issuedAction = issuedActions[0];
+          if (!issuedAction || typeof issuedAction.issue_id !== 'string')
+            throw new Error('Configured-frontier issue is missing its retained ID');
+          const issuedActionIds = new Set(issuedActions.map((action) => action.request.action_id));
+          const unmatchedActionId = Array.from({ length: issuedActions.length + 1 }, (_, index) =>
+            index.toString(16).padStart(64, '0'),
+          ).find((actionId) => !issuedActionIds.has(actionId));
+          if (!unmatchedActionId)
+            throw new Error('Configured-frontier report action unexpectedly matched an issued ID');
+          const summary = 'Rejected the configured-frontier report because its action was not issued.';
+          const observation = {
+            schema: 'VidaSessionObservation/v1',
+            action_id: unmatchedActionId,
+            issue_id: issuedAction.issue_id,
+            agent_id: 'fixture:configured-frontier-rejection',
+            tool_call_ref: 'fixture:configured-frontier-rejection-call',
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: ['fixture:configured-frontier-rejection-evidence'],
+          } as const;
+          const reportPath = path.join(root, 'configured-frontier-report.json');
+          writeFileSync(reportPath, JSON.stringify(observation));
+          const readDatabase = nativeDatabaseSnapshotReader(fixture.db);
+          const beforeReport = readDatabase();
+          await Promise.resolve(
+            expect(
+              run([...args, ...expected(requireStateVersion(issued.state_version)), '--report', reportPath]),
+            ).rejects.toThrow('Prewriter report has no matching retained issuance.'),
+          );
+          expect(readDatabase()).toEqual(beforeReport);
+        },
+        'normal',
+        'unmatched-prewriter-report',
+      );
     }, 30_000);
 
     const contextDenials = [

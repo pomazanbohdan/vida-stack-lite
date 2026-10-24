@@ -3671,6 +3671,78 @@ diagnostic only; it does not close `bun-cli-run`, exact F/L/S/B, or any frozen
 complexity or mutation gate. Continue with the next zero from this new report
 using the same design-first, bounded-test, review, and one-stage sequence.
 
+### Bun-cli-run key405 report-guard packet — 2026-10-24
+
+The three-hour Git window ending 03:07 UTC contains 13 commits: eight test
+packets and five plan/result records. The latest key404 packet has one published
+diagnostic stage above; these commits and focused tests have not closed another
+contour or established a production defect. The active next zero was the
+configured-frontier report lookup in `bin/run.ts`; it rejects a report whose
+action ID is not among retained issuance items before `ledger.report`.
+
+This packet adds one public `run()` case in
+`tests/run-entrypoint.test.ts` and an opt-in
+`unmatched-prewriter-report` mode in the existing
+`configured-frontier-host-fixture.ts`. The mode snapshots a real file under its
+temporary repository root and materializes the already-authorized scope and
+acceptance artifacts there. The report uses a valid issued `issue_id` and a
+valid 64-hex `action_id` selected outside every ID returned by the issue wave.
+It asserts the public unmatched-issuance error and compares SQLite schema plus
+all table rows before and after rejection. The issue wave is the intentional
+baseline write. The key404 arguments were moved into the same local
+`configuredFrontierRunArgs` helper rather than copied again. Product Source is
+unchanged.
+
+The first registered target run found the fixture returns two issued actions,
+not the assumed one. The assertion now accepts the returned wave size and
+chooses a nonmatching valid ID from `N+1` deterministic candidates. This was a
+test-assumption failure, not a product failure. An earlier scoped typecheck also
+caught that the contract fixture replacement omitted the existing `decisions`
+collection; spreading the existing contract object preserves it. Both failed
+attempts and the formatting failure remain in uniquely named `DIAG` logs. The
+incomplete fixture root retained by the failed attempt is
+`/home/agent/.cache/vida-cloud-tooling/tmp/frontier-repair-host-JCdeRF`; it is
+not eligible for cleanup in this packet.
+
+Final scoped validation used Bun 1.4.4. Strict check passed with no diagnostics
+in 148 files (576.77 ms); formatting passed on the two changed files (12 ms);
+locked type-aware Oxlint passed on those same two files with zero warnings.
+The report-guard case passed alone: 1 pass, 101 filtered, 0 failures, 4
+expectation calls, 3.47 s invocation (2,030.62 ms case). The key404 source-close
+regression passed in a separate invocation: 1 pass, 101 filtered, 0 failures,
+5 expectation calls, 3.09 s invocation (1,812.87 ms case). Exact terminal logs
+are `DIAG/bun-cli-run-key405-static-20261024-04.log`,
+`DIAG/bun-cli-run-key405-target-final-20261024-02.log`, and
+`DIAG/bun-cli-run-key404-target-final-20261024-01.log`.
+
+Two blind native Luna design candidates independently preferred the existing
+Host fixture owner with one named opt-in mode over test-local artifact builders
+or a second helper. The separate read-only correctness review found no blocker:
+the call reaches the parser-valid prewriter report branch, rejects before
+`ledger.report`, and the full SQLite afterimage is appropriate. The Pstack
+comment review found zero comment or suppression changes and no `MUST KILL`
+symbols. Reports are retained in `DIAG/bun-cli-run-key405-design-a-20261024-01.md`,
+`DIAG/bun-cli-run-key405-design-b-20261024-01.md`,
+`DIAG/bun-cli-run-key405-final-review-20261024-01.md`, and
+`DIAG/bun-cli-run-key405-comments-review-20261024-01.md`.
+
+Measured order comparison: the earlier combined focus attempt ended with zero
+passes and two setup/selection failures, including a 6,053 ms fixture deadline
+overrun and an invalid `--inspect` plus `--report` combination. That run changes
+two variables and is not a parallel-speed comparison. The final sequence—
+scoped strict/format/lint, then one exact target per invocation—passed both
+cases within their 5 s fixture deadlines. Running the whole producer before
+the edits would bind stale inputs; its extra cost is plausible but unmeasured.
+Producer concurrency remains one. Read-only reviewers wrote separate reports;
+no tests or producer overlapped. Aggregate tool-call/token counts are not
+provided by retained receipts and remain unmeasured.
+
+The next authorized step is one pinned changed-input coverage stage from the
+clean committed Source, after ordinary hooks and push. Retain terminal/capture/
+group receipts and let the existing projection owner update metrics. Until
+that stage completes, this packet contributes no numeric qualification: the
+historical exact F/L/S/B count remains 17/46, and `bun-cli-run` remains BLOCKED.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
