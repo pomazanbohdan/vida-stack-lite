@@ -2547,6 +2547,98 @@ test('cutoff SQLite exclusion rejects a live owner and recovers after process te
       databaseRelativePath: path.relative(root, databasePath).replaceAll('\\', '/'),
       workspaceId: deriveWorkspaceId(config.repository.repository_id, root),
     };
+    unlinkSync(witnessPath);
+    await Promise.resolve(
+      expect(advanceCutoff(selector, values)).rejects.toMatchObject({
+        code: 'GAP-VIDA-RUN-CUTOFF-001',
+        message: 'Cutoff witness is missing.',
+      }),
+    );
+    expect(existsSync(witnessPath)).toBe(false);
+    expect(existsSync(cutoffLockPath)).toBe(false);
+    writeFileSync(witnessPath, witnessBeforeMarkerCheck);
+    expect(readFileSync(witnessPath)).toEqual(witnessBeforeMarkerCheck);
+
+    const otherSelectorWitnessBytes = Buffer.from(
+      JSON.stringify(
+        {
+          schema: 'VidaNewWorkCutoffWitness/v1',
+          generation: 'other-generation',
+          selector_sha256: selector.selectorSha,
+          first_admitted_work_attempt: null,
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+    writeFileSync(witnessPath, otherSelectorWitnessBytes);
+    await Promise.resolve(
+      expect(advanceCutoff(selector, values)).rejects.toMatchObject({
+        code: 'GAP-VIDA-RUN-CUTOFF-001',
+        message: 'Cutoff witness is bound to another selector.',
+      }),
+    );
+    expect(readFileSync(witnessPath)).toEqual(otherSelectorWitnessBytes);
+    expect(existsSync(cutoffLockPath)).toBe(false);
+    writeFileSync(witnessPath, witnessBeforeMarkerCheck);
+    expect(readFileSync(witnessPath)).toEqual(witnessBeforeMarkerCheck);
+
+    const existingAdmissionWitnessBytes = Buffer.from(
+      JSON.stringify(
+        {
+          schema: 'VidaNewWorkCutoffWitness/v1',
+          generation: selector.generation,
+          selector_sha256: selector.selectorSha,
+          first_admitted_work_attempt: `${values.repository}/${values.work_id}/${values.attempt}/${values.scope_digest}`,
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+    writeFileSync(witnessPath, existingAdmissionWitnessBytes);
+    await advanceCutoff(selector, values);
+    expect(readFileSync(witnessPath)).toEqual(existingAdmissionWitnessBytes);
+    expect(existsSync(cutoffLockPath)).toBe(false);
+    writeFileSync(witnessPath, witnessBeforeMarkerCheck);
+    expect(readFileSync(witnessPath)).toEqual(witnessBeforeMarkerCheck);
+
+    const invalidIdentityWitnessBytes = Buffer.from(
+      JSON.stringify(
+        {
+          schema: 'VidaNewWorkCutoffWitness/v1',
+          generation: selector.generation,
+          selector_sha256: selector.selectorSha,
+          first_admitted_work_attempt: '',
+        },
+        null,
+        2,
+      ) + '\n',
+    );
+    writeFileSync(witnessPath, invalidIdentityWitnessBytes);
+    await Promise.resolve(
+      expect(advanceCutoff(selector, values)).rejects.toMatchObject({
+        code: 'GAP-VIDA-RUN-CUTOFF-001',
+        message: 'Cutoff witness identity is invalid.',
+      }),
+    );
+    expect(readFileSync(witnessPath)).toEqual(invalidIdentityWitnessBytes);
+    expect(existsSync(cutoffLockPath)).toBe(false);
+    writeFileSync(witnessPath, witnessBeforeMarkerCheck);
+    expect(readFileSync(witnessPath)).toEqual(witnessBeforeMarkerCheck);
+
+    const staleSelector: ActiveSelectorState = {
+      ...selector,
+      selectorSha: `${selector.selectorSha[0] === '0' ? '1' : '0'}${selector.selectorSha.slice(1)}`,
+    };
+    await Promise.resolve(
+      expect(advanceCutoff(staleSelector, values)).rejects.toMatchObject({
+        code: 'GAP-VIDA-RUN-CUTOFF-001',
+        message: 'Cutoff selector changed while acquiring exclusion.',
+      }),
+    );
+    expect(readFileSync(witnessPath)).toEqual(witnessBeforeMarkerCheck);
+    expect(existsSync(cutoffLockPath)).toBe(false);
+
     const runningChild = spawn(
       process.execPath,
       [

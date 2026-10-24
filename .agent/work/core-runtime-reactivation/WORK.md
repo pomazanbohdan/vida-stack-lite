@@ -8104,6 +8104,104 @@ format failure logs remain retained, followed by the final logs:
 `DIAG/key466-id217-final-target-01.log`. Fresh blind Luna review found no
 must-fix and confirmed the early marker guard precedes the child/SQLite flow,
 marker ownership/release is safe, and the existing busy/termination/retry path
-remains intact. No full stage has run for Key466. The next step is normal
-commit/push, then exactly one changed-input stage; no objective skip, numeric
-parallelism, disk resurvey or cleanup is proposed.
+remains intact. One changed-input stage then ran after the normal commit and
+push.
+
+### Key466 changed-input stage terminal — 2026-10-24 19:32 UTC
+
+The sole producer ran once for commit
+`39d4d42024172f6f7f78acc60e4efb229f95cb` at
+`/workspace/contour-stage-DnMyrV`. Its native `execution.json` records
+202,710.171631 ms, exit 0, no timeout, signal or spawn error, complete
+non-truncated capture, observed process-group closure, and unchanged boot and
+image inputs. The image manifest SHA is
+`da8dc9d54bb202228d301a2075f9b0cef40c086e8feb9e075f45ec7c57ae0c8d`; native
+stdout/stderr receipts are 7,974/17,369 bytes with hashes in that receipt. The
+suite passed 127/127 tests and 2,699 expectations. The published report is
+`/workspace/.vida-quality-inputs/a4e756b0096b09c513dd265d6bb278408a552e77/repository/packages/agent/coverage/bun-unified/diagnostics/f1ff5749-bc5c-4358-8eb6-42304d020fcb.focused-coverage.json`.
+The root stage capture is
+`DIAG/bun-cli-run-key466-stage-20261024-01.log`. Projection accepted
+`focused-diagnostic` at attempt 1,476 and remains `BLOCKED`: F441/555,
+L2044/2860, S2197/3138, B2587/3660, max CC/entry CRAP 501. The exact
+`coverage[.../packages/agent/bin/run.ts]` map reports ID217 `[1,3]`, ID218
+`[0,2]`, ID220 `[1,0]`, IDs221/222/224 `[0,2]`, and IDs225/226 `[0,0]`.
+These are the pre-Key467 counts. No objective skip, mutation claim or
+qualification change resulted.
+
+### Receipt-based three-hour snapshot — 2026-10-24 19:34:45 UTC
+
+For 16:34:45–19:34:45 UTC, the explicitly referenced native stage receipts
+include 11 attempts: ten exit 0 and the first Key464 stage exit 1. They ran
+1,397 selected tests (1,396 pass, one fail) and 28,895 expectation calls in
+aggregate. Elapsed time totals 2,394,886.943 ms, mean 217,716.995 ms, and range
+198,681.286–253,196.590 ms. All 11 captures were complete, all process groups
+closed, all image inputs remained unchanged, and none timed out. The Key464
+failure is the already-recorded mock-alias leak; the corrected retry passed.
+Receipt modification times, not current filesystem size scans, select this
+window.
+
+Bootstrap used package-selected Bun 1.4.4 and locked Vex 1.27.4; enabled
+Pstack 1.17.5 was resolved through `.codex/README.md` and the installed plugin
+listing. `vida-agent` was unavailable on `PATH`, so the checked-in lifecycle
+and TESTING instructions were authoritative. The Vex index was stale; work used
+bounded Source reads without refreshing or reindexing it. The native Luna
+read-only worker contract was prompt-only, not physical isolation; Luna did no
+edits or Git operations. Root retained integration, numeric and Git ownership.
+
+| Check order / numeric parallelism | Measured evidence | Inference or limitation |
+| --- | --- | --- |
+| Reuse the latest accepted report, map exact branch arms, batch the existing fixture, run scoped checks and one target, obtain independent review, commit/push, then run one changed-input stage at 1x | Ten exit-0 stages in the window; the one failed Key464 attempt exposed the mock leak and the corrected run passed. Key466 also passed 127 tests with complete capture and group closure. | Keep this order. The first stage failure was diagnostic evidence, not a coverage update. |
+| Stage before review or once for each small test edit at 1x | Mean stage cost was 217.717 s. | Each unnecessary stage would cost about 3.63 minutes at this mean. This estimate is not a matched sequence trial. |
+| Two or four numeric stages in parallel | No qualified 2x/4x receipt exists. | Keep one producer. Higher numeric parallelism is unmeasured and conflicts with the single-owner policy. |
+
+This session did not expose reliable platform totals for model tokens or total
+tool calls. Two overly broad read-only `jq` outputs printed a retained report's
+entire function array and coverage object; the executor reported about 56,812
+and 561,276 output tokens and truncated both. Those values are tool-output
+counts, not model-token usage. A wrong first timestamp in the local aggregation
+returned three rows; the corrected UTC boundary used receipt modification
+times and yielded the 11 attempts above. None of these read errors changed
+Source or producer evidence. The previous one-time disk admission receipt is
+reused. It records 20,828,450,816 available checkout/retained-evidence bytes
+and 2,265,255,936 scratch bytes against a 2,147,483,648-byte floor plus the
+67,108,864-byte reserve. The corresponding margins were 18,613,858,304 and
+50,663,424 bytes. Key466's own admission receipt later recorded 12,566,986,752
+scratch bytes against the same 2,147,483,648-byte floor. These are producer-time
+observations, not a new filesystem survey. Prior cleanup remains deferred while
+the recorded Docker owners 117 and 168 have unresolved privileged-reference
+custody. No disk resurvey, Vex refresh, broad scan/hash, cache cleanup or second
+producer ran. The earlier process check found 13 defunct Bun processes adopted
+by PID 1, all older than this three-hour window; no live producer remained.
+Their PIDs are 49588, 189326, 275779, 307437, 307495, 404668, 404669, 404676,
+415870, 415871, 415878, 639263 and 639272. The Key466 process-group receipt
+confirms that its own group closed.
+
+### Key467 ID218 selector and witness checks — pre-stage record
+
+The current report's exact `bin/run.ts` branch map has ID218 `[0,2]` at line
+2066 and ID220 `[1,0]` at line 2076. The same existing cutoff fixture now
+checks the missing witness, wrong-generation witness, an already-admitted
+nonempty identity, an empty identity, and a selector digest changed by one hex
+digit before starting the SQLite child. Each refusal asserts the caller-visible
+error, its exact witness afterimage and absence of a cutoff lock. Each mutated
+witness is restored to the exact original bytes before the live-owner, observed
+SIGKILL and recovery assertions continue. This targets the missing arms in
+IDs218/220/221/222/224/225/226 without another fixture or production-code
+change. The accepted baseline also confirms that the positive existing-admission
+path is a byte-preserving no-op. No branch hit is claimed until the changed
+inputs run through the current producer.
+
+The final focused target passed 1/1 test, 29 expectations, and zero failures in
+4.37 s on Bun 1.4.4. An earlier version of the same fixture passed 1/1 with 26
+expectations; a third valid existing-admission state was then added to cover
+the false arm of ID225, so the target and scoped checks were rerun. Final
+`bun run typecheck` passed with 545 captured TypeScript files and 104 project
+files, zero diagnostics; direct Oxlint, formatter and `git diff --check` passed.
+The final blind Luna review found no must-fix in the refusal afterimages,
+byte restoration, lock absence, child ordering or test/document agreement.
+Logs are retained as `DIAG/key467-id218-final-typecheck-02.log`,
+`DIAG/key467-id218-final-oxlint-02.log`,
+`DIAG/key467-id218-final-format-02.log`, and
+`DIAG/key467-id218-final-target-02.log`. The next step is one ordinary
+commit/push followed by one changed-input stage. The producer projection stays
+with its owner. No objective skip or counter reduction is proposed.
