@@ -7135,16 +7135,30 @@ hook found a `TS2345` fixture annotation mismatch while checking 544 files. The
 wrapper now derives its manifest type from the existing fixture builder; a blind
 Luna follow-up confirmed this is annotation-only. Oxlint exited 0 and the
 one-file formatter check passed in 15 ms. The normal commit retry and one
-changed-input stage remain; no coverage counter change is claimed yet.
+changed-input stage completed. The successful command used commit
+`3c4ffaa845583f073b816fb7775aa18858ab116a` and stage
+`/workspace/contour-stage-JbBzoU`, run
+`fd48c4e9-73d5-4f9a-8bd4-8da266e2a77c`. It exited 0 in 196,979.462 ms with
+complete capture, observed process-group closure, unchanged boot/image inputs,
+and published coverage. The image source tree is
+`3011d3875386d5012ffe4dd0ac6c75e522ae2738`, fingerprint
+`d7d65c5f49e54f2479b9bf1081d6d1b22cdaeaac8c7f6317018d9ae87c40a950`, and
+manifest SHA-256
+`0d8f6a0315911ed901788e31c9fb815835c5970cb0b42b80987dd221583f284f`. The
+selected run passed 127 tests, 2,566 expectations, and 0 failures in 191.53
+seconds. ID163 moved `[0,2878]` to `[1,2896]`, ID167 `[0,1]` to `[1,3]`, ID169
+`[1,0]` to `[2,1]`, and ID170 `[0,1]` to `[1,1]`. Projection now reads
+F441/555, L2027/2860, S2177/3138, B2548/3660: denominators unchanged, maxima
+501, status still `BLOCKED`. No contour is closed or qualified.
 
-### Three-hour execution comparison, 2026-10-24 13:10–16:10 UTC
+### Three-hour execution comparison, 2026-10-24 13:26:44–16:26:44 UTC
 
-Eleven one-worker changed-input stages have terminal receipts in this window:
+Twelve one-worker changed-input stages have terminal receipts in this window:
 Key434 258,991.524 ms, Key436 208,820.746 ms, Key438 208,414.802 ms,
 Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms,
 Key445 202,793.193 ms, Key450 199,063.248 ms, Key451 228,950.409 ms, Key452
-228,520.523 ms, and Key453 221,695.987 ms. The
-observed range is 199,063.248–258,991.524 ms. Source commits, inputs, test counts, and host/cache
+228,520.523 ms, Key453 221,695.987 ms, and Key454 196,979.462 ms. The
+observed range is 196,979.462–258,991.524 ms. Source commits, inputs, test counts, and host/cache
 conditions differ, so these receipts give a one-worker cost range only; they do
 not establish a speedup, regression, limiter, or controlled check-order result.
 There is no profile or matched A/B/A/B run, so the benchmark verdict remains
@@ -7152,7 +7166,7 @@ inconclusive.
 
 | Check order and producer parallelism | Evidence and decision |
 | --- | --- |
-| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | All eleven terminal stages above use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. The final Key452 target took 1.96 seconds and the final Key453 target 2.10 seconds including harness startup; static checks were below one second where timed. |
+| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | All twelve terminal stages above use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. Final targets took 1.96 seconds (Key452), 2.10 seconds (Key453), and 2.09 seconds (Key454), including harness startup; scoped static checks took under one second where timed. |
 | Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 199–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
 | Run two or four full numeric stages concurrently | No qualified run measured this option. It conflicts with TESTING's single producer and has no comparable speed, resource or correctness evidence. Keep numeric parallelism at one. |
 
