@@ -7151,7 +7151,7 @@ seconds. ID163 moved `[0,2878]` to `[1,2896]`, ID167 `[0,1]` to `[1,3]`, ID169
 F441/555, L2027/2860, S2177/3138, B2548/3660: denominators unchanged, maxima
 501, status still `BLOCKED`. No contour is closed or qualified.
 
-### Key455 forward leaf drift and changed-path proof, stage pending
+### Key455 forward leaf drift and changed-path proof
 
 The latest Key454 report leaves ID174 `[0,1715]` (installed changed-file drift)
 and ID176 `[0,12]` (final changed-path proof mismatch). A blind native Luna
@@ -7163,8 +7163,19 @@ that omits exactly one installed successor path. Both assert exact refusals and
 unchanged bundle/`.agent` afterimages; the test contract now records these guard
 ordering requirements. The coverage-gated target passed 1 test/263 expectations/
 0 failures in 1.94 seconds; scoped strict passed 104 files in 326.66 ms,
-Oxlint exited 0, and one-file formatting passed in 16 ms. The stage is pending
-normal hooks and push.
+Oxlint exited 0, and one-file formatting passed in 16 ms. The ordinary commit
+and push completed as `41dcabf`. The sole changed-input stage then completed at
+`/workspace/contour-stage-2qRfkV`, run
+`f4f2d623-0320-4266-996a-4600acb07033`, with exit 0 in 216,899.338 ms, complete
+capture, observed group closure, unchanged boot/image inputs, and published
+coverage. It binds source tree `58a4a0721ac3948f8018eeec13f9e19bc6a0078f`,
+fingerprint `91842d2bce335c10035ca15d10efcb4d3d8c4e012a7ef31763d244f655436faf`,
+and manifest SHA-256
+`72f931e81bd36ed2df044f53f33f61f78d2f1810f09ff54e559d5806ec1f9b25`. The run
+passed 127 tests/2,582 expectations/0 failures in 211.12 seconds. ID174 moved
+`[0,1715]` to `[1,1717]`; ID176 `[0,12]` to `[1,12]`. Projection is F441/555,
+L2029/2860, S2179/3138, B2550/3660, maxima 501, still `BLOCKED`; no contour is
+closed or qualified.
 
 The pinned Vex 1.27.4 status showed 11,151 symbols and a call graph, with its
 clusters marked stale. A later `tests-for` query inherited repo `auto_update` and
@@ -7174,13 +7185,14 @@ occurred; no further Vex query will run in this packet, and the bounded source
 fallback remains the authority. This is an audit-tooling deviation, not test or
 coverage evidence.
 
-### Three-hour execution comparison, 2026-10-24 13:33:17–16:33:17 UTC
+### Three-hour execution comparison, 2026-10-24 13:38:18–16:38:18 UTC
 
-Eleven one-worker changed-input stages have terminal receipts in this window:
+Twelve one-worker changed-input stages have terminal receipts in this window:
 Key436 208,820.746 ms, Key438 208,414.802 ms,
 Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms,
 Key445 202,793.193 ms, Key450 199,063.248 ms, Key451 228,950.409 ms, Key452
-228,520.523 ms, Key453 221,695.987 ms, and Key454 196,979.462 ms. The
+228,520.523 ms, Key453 221,695.987 ms, Key454 196,979.462 ms, and Key455
+216,899.338 ms. The
 observed range is 196,979.462–236,747.830 ms. Source commits, inputs, test counts, and host/cache
 conditions differ, so these receipts give a one-worker cost range only; they do
 not establish a speedup, regression, limiter, or controlled check-order result.
@@ -7189,8 +7201,8 @@ inconclusive.
 
 | Check order and producer parallelism | Evidence and decision |
 | --- | --- |
-| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | All eleven terminal stages above use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. Final targets took 1.96 seconds (Key452), 2.10 seconds (Key453), 2.09 seconds (Key454), and 1.94 seconds (Key455), including harness startup; scoped static checks took under one second where timed. |
-| Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 199–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
+| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | All twelve terminal stages above use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. Final targets took 1.96 seconds (Key452), 2.10 seconds (Key453), 2.09 seconds (Key454), and 1.94 seconds (Key455), including harness startup; scoped static checks took under one second where timed. |
+| Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 197–237 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
 | Run two or four full numeric stages concurrently | No qualified run measured this option. It conflicts with TESTING's single producer and has no comparable speed, resource or correctness evidence. Keep numeric parallelism at one. |
 
 Platform totals for tool calls and model-token usage are unavailable. One
