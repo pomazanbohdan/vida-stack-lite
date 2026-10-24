@@ -5453,7 +5453,7 @@ also retained `/tmp/vida-run-uninitialized-LLSNwR` because that child outcome
 was unknown; preserve it and its raw evidence, and do not replay it. No test
 script defect or safe cleanup candidate was established in this packet.
 
-### Key428 early helper branches and corrected second stage pending
+### Key428 early helper branches and corrected second stage terminal
 
 The report-ordered branch cluster after Key427 was four missing arms in
 `bin/run.ts`: packet-only development-stage detection, unmatched delivery
@@ -5502,6 +5502,115 @@ recheck format and typecheck. Latest logs are
 `DIAG/bun-cli-run-key428-target-20261024-04.log`. `git diff --check` passed and
 will be rerun before commit.
 
-This corrected input needs one ordinary hook-backed commit/push and one
-replacement producer stage; that stage is justified by the report-confirmed
-missed arm, not replay or benchmarking. Producer concurrency remains one.
+The corrected source/test commit `31c1f46fe654fd9dbef4bf6ceedc220b8c8be5b9`
+was pushed to `main` before one replacement producer stage. It completed in
+191,508.660 ms, exit 0 within the 330,000 ms bound, with complete capture,
+closed process group, unchanged boot/image inputs, and a published diagnostic.
+All four selected branch arms now have both outcomes: `isPacketOnlyDevelopmentStage`
+`[10,2]`, `addObservationForAction` `[2,1]`, `markUncertainResearchStatus`
+`[7,1]`, and the non-research `describeIssuedAction` arm `[6,1]`.
+
+Run `d51e1e1e-07d0-4bb6-b5b8-33d031720229` used source tree
+`636d05d6c28fecd210a148b571493fddf7a8b2a2`, input fingerprint
+`1e0dc20221b879a9e4d1424bb7b29fc68a18b9e29a01e88c6ae265a2c281c461`, and
+manifest digest
+`3957005d4a2d90534dc9dfebd43427879580c750ed5dd20f393b58b9309c63f8`.
+Its 125 selected tests passed, 0 failed, with 2,293 expectations and 186.12 s
+test time. The immutable report is
+`/workspace/.vida-quality-inputs/b2f7bb6bb1093f7b1133cc2ad487cc30a3707046/repository/packages/agent/coverage/bun-unified/diagnostics/d51e1e1e-07d0-4bb6-b5b8-33d031720229.focused-coverage.json`;
+the native terminal receipt is
+`DIAG/bun-cli-run-key428-stage-20261024-02.log`, raw stage output is
+`/workspace/contour-stage-4oA2IY`, and producer-owned projection is current.
+Coverage remains `428/555`, `1935/2860`, `2073/3138`, `2393/3660`, max CC
+501, max entry CRAP 992; `BLOCKED`, with no objective disposition. The first
+remaining branch is `requireForwardUpdateAuthorization` at line 534 `[0,29]`;
+the next function-zero is `isStoppedSourceTerminalRecord` at line 3614.
+`/tmp/vida-run-uninitialized-buewy2` remains retained because its child
+outcome was unknown; do not remove or replay it.
+
+Execution order stays static-first, focused target, blind review, ordinary
+hook-backed commit/push, and one serial full stage. The three Key428 stage
+wall-times 202.85/197.03/191.51 s and selected-suite times 196.09/191.07/186.12
+s came from different commits/images; the downward sequence is not controlled
+evidence of speedup. One producer at a time remains the only measured
+parallelism. Model-token and total tool/API-call counts are unavailable.
+
+### Key429 forward-authority validation packet ready for producer
+
+The accepted report `d51e1e1e-07d0-4bb6-b5b8-33d031720229` ordered three
+predicate false arms at `run.ts:534`, `:550`, and `:556`, followed by reachable
+manifest and installed-bundle refusal branches. The focused test now exercises
+the reachable cluster in one fixture loop: bound-manifest digest drift, invalid
+manifest fields, duplicate payload path, installed symlink, unsupported Unix
+socket node, and installed-bundle inventory mismatch. Each forward refusal
+asserts the exact error and that bundle content/metadata did not change; the
+socket case closes its server and removes the socket on success and in `finally`.
+No production source or guard changed.
+
+The test was selected with
+`AGENT_RUNTIME_V8_COVERAGE=1 bun test --timeout 5000 --test-name-pattern='repair and forward authority reject malformed evidence without writes' tests/run-entrypoint.test.ts`.
+Final targeted result: 1 pass, 116 filtered, 90 expectations, 0 failures, 1.35 s
+wall time. Scoped formatter, `tests/tsconfig.json` typecheck, locked Oxlint and
+`git diff --check` all pass after the final edit. Their latest retained logs are
+`DIAG/bun-cli-run-key429-format-20261024-07.log`,
+`DIAG/bun-cli-run-key429-typecheck-20261024-07.log`,
+`DIAG/bun-cli-run-key429-lint-20261024-08.log`, and
+`DIAG/bun-cli-run-key429-target-20261024-07.log`.
+
+Independent read-only review by the native Luna reviewer found no must-fix:
+the socket reaches the unsafe-node inventory refusal; the test checks socket,
+bundle root, `bin`, and launcher metadata and cleans up both normal and failure
+paths. Review evidence is retained in
+`DIAG/bun-cli-run-key429-final-review-20261024.md`.
+
+Two intermediate target attempts remain recorded, not erased or replayed as
+product failures. `target-05` could not create a Unix socket because the test
+fixture path exceeded the platform limit and retained
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-repair-forward-installed-bundle-unsupported-node-qHkQEH`.
+`target-06` exposed that the new scenario had not opted into forward-fixture
+setup and retained `/home/agent/.cache/vida-cloud-tooling/tmp/vuns-WCPcU3`.
+The fixture prefix and scenario setup were corrected; target-07 then passed.
+Earlier `target-01`/`target-02` selector attempts ran zero cases because this
+test is registered only when `AGENT_RUNTIME_V8_COVERAGE=1`; the corrected
+selection avoids repeating that no-op.
+
+Measured execution comparison for this packet: three independent scoped static
+checks (format, strict tests TypeScript, Oxlint) ran concurrently and completed
+in about 14.5 s wall time, then one focused target completed in about 1.35 s.
+The prior accepted full contour stage took 191.51 s on a different commit/image;
+no controlled full-suite-first comparison exists. The two intermediate socket
+fixture failures each cost about 1.4 s and were repeated only after their
+specific setup defects were corrected. Static-first/focused-before-producer is
+measured as this packet's sequence; avoided full-stage work is an expected
+benefit, not a measured saving. Three read-only checks were parallel; tests and
+the numeric producer were serial. No evidence supports more than one producer.
+Model-token and aggregate tool/API-call counters are not exposed.
+
+One audit command accidentally requested the entire one-line
+`CONTOUR-STATUS.json` diff and the tool omitted 6,690,424 output bytes. No repeat
+was made; future inspection is limited to `git status`, `git diff --stat`, or
+specific parsed fields, never the full projection blob.
+
+The three predicate false arms are objective-skip candidates only, not yet
+dispositions. The independent source review traced their prerequisites:
+schema and required fields are enforced by `readControllerRecord` and exact
+field validation before `requireForwardUpdateAuthorization`; prepared relative
+paths are nonempty with nonempty components before the `.at(-1)` leaf reaches
+`requireForwardFileLeaf`; and the optional preserved-output entry is an exact
+record with required string fields before `requireSelectorRecord`. The current
+checkout's `packages/agent/TESTING.md` lines 2024–2045 require each disposition
+to bind the final report/run, Source/test/config identity, exact counter,
+causal guard, independent review, and remaining qualification. Add them only
+after the producer supplies that binding, preserving raw denominators and
+`BLOCKED`. Against Key428's report these are Istanbul branch IDs 55/58/59 with
+raw counts `[0,29]`, `[0,1706]`, and `[0,1]`; the independent review found no
+supported-flow counterexample. The separate review evidence is in
+`DIAG/bun-cli-run-key429-final-review-20261024.md`.
+
+The next action is one hook-backed commit/push for the reviewed test packet,
+then one serial `bun-cli-run` coverage stage on these exact inputs. No full suite
+was repeated. Static-first plus one selected test is measured here; full-suite
+first was not measured. The prior Key428 stage times (202.85/197.03/191.51 s)
+belong to different commits/images and do not prove speedup. One producer at
+concurrency one is the only measured parallelism; wider producer concurrency,
+model tokens, and total tool/API-call telemetry are unavailable.

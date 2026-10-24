@@ -47,6 +47,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -5169,17 +5170,30 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
-  test('repair authority rejects malformed evidence and forward leaf validation stays read-only', () => {
+  test('repair and forward authority reject malformed evidence without writes', async () => {
     for (const scenario of [
       'parent-evidence-mismatch',
       'malformed-source-path',
+      'malformed-payload-manifest',
+      'duplicate-payload-path',
       'forward-leaf',
+      'forward-payload-manifest-digest',
+      'forward-installed-bundle-inventory-mismatch',
+      'forward-installed-bundle-symlink',
+      ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-evidence-under-bound',
       'forward-documentation-evidence-over-bound',
     ] as const) {
-      const root = mkdtempSync(path.join(tmpdir(), `vida-repair-${scenario}-`));
+      const root = mkdtempSync(
+        path.join(
+          tmpdir(),
+          scenario === 'forward-installed-bundle-unsupported-node' ? 'vuns-' : `vida-repair-${scenario}-`,
+        ),
+      );
       let completed = false;
+      let unsupportedNodeServer: ReturnType<typeof createServer> | null = null;
+      let unsupportedNodePath: string | null = null;
       try {
         const digestRecord = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
         const parentGeneration = 'fixture-repair-parent';
@@ -5204,7 +5218,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-documentation-evidence-over-bound'
             ? { path: documentationPath, bytes: documentationNewBytes }
             : null;
-        const forwardScenario = scenario === 'forward-leaf' || documentationChange !== null;
+        const forwardScenario =
+          scenario === 'forward-leaf' ||
+          scenario === 'forward-payload-manifest-digest' ||
+          scenario === 'forward-installed-bundle-inventory-mismatch' ||
+          scenario === 'forward-installed-bundle-symlink' ||
+          scenario === 'forward-installed-bundle-unsupported-node' ||
+          documentationChange !== null;
         const configBytes = forwardScenario
           ? Buffer.from(
               readFileSync(
@@ -5267,16 +5287,18 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           ],
           unresolved_integration_paths: [],
         };
+        const successorPayloadEntry = {
+          path: 'fixture/payload.json',
+          sha256: sharedPayloadSha256,
+          size: 1,
+          source_path: forwardScenario || scenario === 'duplicate-payload-path' ? 'fixture/payload.json' : '../outside',
+          source_sha256: sharedPayloadSha256,
+        };
         const successorManifest = {
           schema: 'VidaAgentPreparedPayload/v1',
           files: [
-            {
-              path: 'fixture/payload.json',
-              sha256: sharedPayloadSha256,
-              size: 1,
-              source_path: forwardScenario ? 'fixture/payload.json' : '../outside',
-              source_sha256: sharedPayloadSha256,
-            },
+            successorPayloadEntry,
+            ...(scenario === 'duplicate-payload-path' ? [successorPayloadEntry] : []),
             ...(documentationChange
               ? [
                   {
@@ -5295,7 +5317,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               source_sha256: successorLauncherSha256,
             },
           ],
-          unresolved_integration_paths: [],
+          unresolved_integration_paths: scenario === 'malformed-payload-manifest' ? ['fixture unresolved path'] : [],
         };
         const parentPayloadManifestSha256 = digestRecord(parentManifest);
         const successorPayloadManifestSha256 = digestRecord(successorManifest);
@@ -5529,6 +5551,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               documentationChange ?? undefined,
             )
           : null;
+        if (scenario === 'forward-installed-bundle-inventory-mismatch')
+          writeFileSync(path.join(root, 'vida-agent', 'bin', 'unlisted.mjs'), 'unlisted installed bundle file\n');
+        if (scenario === 'forward-payload-manifest-digest') {
+          assert.ok(forwardFixture);
+          const manifestPath = path.join(forwardFixture.generationRoot, 'parent-payload.manifest.v1.json');
+          writeFileSync(manifestPath, Buffer.concat([readFileSync(manifestPath), Buffer.from(' \n')]));
+        }
         const forwardEvidencePath =
           scenario === 'forward-documentation-evidence-under-bound'
             ? 'forward-evidence-under-bound.json'
@@ -5573,6 +5602,16 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const before = snapshotAuthorityFixture(path.join(root, '.agent'));
         const hostDatabasePath = path.join(root, '.agent', 'work', 'session-handoff.v1.sqlite');
         expect(existsSync(hostDatabasePath)).toBe(false);
+        if (scenario === 'forward-installed-bundle-unsupported-node') {
+          const server = createServer();
+          const socketPath = path.join(bundleRoot, 'bin', 'unsupported-node.sock');
+          unsupportedNodeServer = server;
+          unsupportedNodePath = socketPath;
+          await new Promise<void>((resolve, reject) => {
+            server.once('error', reject);
+            server.listen(socketPath, resolve);
+          });
+        }
         if (scenario === 'parent-evidence-mismatch') {
           let caught: unknown;
           try {
@@ -5584,7 +5623,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             code: 'GAP-VIDA-RUN-SELECTOR-001',
             message: 'Repair parent evidence is invalid.',
           });
-        } else if (scenario === 'malformed-source-path') {
+        } else if (
+          scenario === 'malformed-source-path' ||
+          scenario === 'malformed-payload-manifest' ||
+          scenario === 'duplicate-payload-path'
+        ) {
           let caught: unknown;
           try {
             repairAuthority(root, childSelector, childSha, childRoot, true);
@@ -5593,8 +5636,90 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           }
           expect(caught).toMatchObject({
             code: 'GAP-VIDA-RUN-SELECTOR-001',
-            message: 'Repair payload entry is invalid.',
+            message:
+              scenario === 'malformed-payload-manifest'
+                ? 'Repair payload manifest is invalid.'
+                : 'Repair payload entry is invalid.',
           });
+        } else if (
+          scenario === 'forward-payload-manifest-digest' ||
+          scenario === 'forward-installed-bundle-inventory-mismatch'
+        ) {
+          assert.ok(forwardFixture);
+          assert.ok(beforeBundle);
+          assert.ok(beforeBundleMetadata);
+          let caught: unknown;
+          try {
+            forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot);
+          } catch (error) {
+            caught = error;
+          }
+          expect(caught).toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+            message:
+              scenario === 'forward-payload-manifest-digest'
+                ? 'Repair payload manifest drift.'
+                : 'Installed bundle inventory differs from forward manifest.',
+          });
+          expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
+          expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
+        } else if (scenario === 'forward-installed-bundle-symlink') {
+          assert.ok(forwardFixture);
+          assert.ok(beforeBundle);
+          assert.ok(beforeBundleMetadata);
+          const symlinkPath = path.join(bundleRoot, 'bin', 'unsafe-link.mjs');
+          symlinkSync('run.mjs', symlinkPath, 'file');
+          const symlinkTarget = readlinkSync(symlinkPath);
+          const symlinkMetadata = snapshotAuthorityMetadata(symlinkPath);
+          const binMetadata = snapshotAuthorityMetadata(path.dirname(symlinkPath));
+          let caught: unknown;
+          try {
+            forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot);
+          } catch (error) {
+            caught = error;
+          }
+          expect(caught).toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+            message: 'Installed bundle symlink is unsafe.',
+          });
+          expect(readlinkSync(symlinkPath)).toBe(symlinkTarget);
+          expect(snapshotAuthorityMetadata(symlinkPath)).toEqual(symlinkMetadata);
+          assert.ok(beforeBundleMetadata[0]);
+          expect(snapshotAuthorityMetadata(bundleRoot)).toEqual(beforeBundleMetadata[0]);
+          expect(snapshotAuthorityMetadata(path.dirname(symlinkPath))).toEqual(binMetadata);
+          assert.ok(beforeBundleMetadata[2]);
+          expect(snapshotAuthorityMetadata(path.join(bundleRoot, 'bin', 'run.mjs'))).toEqual(beforeBundleMetadata[2]);
+          unlinkSync(symlinkPath);
+          expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
+        } else if (scenario === 'forward-installed-bundle-unsupported-node') {
+          assert.ok(forwardFixture);
+          assert.ok(beforeBundle);
+          assert.ok(beforeBundleMetadata);
+          assert.ok(unsupportedNodePath);
+          const nodeMetadata = snapshotAuthorityMetadata(unsupportedNodePath);
+          const binMetadata = snapshotAuthorityMetadata(path.dirname(unsupportedNodePath));
+          let caught: unknown;
+          try {
+            forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot);
+          } catch (error) {
+            caught = error;
+          }
+          expect(caught).toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+            message: 'Installed bundle node is unsafe.',
+          });
+          expect(snapshotAuthorityMetadata(unsupportedNodePath)).toEqual(nodeMetadata);
+          assert.ok(beforeBundleMetadata[0]);
+          expect(snapshotAuthorityMetadata(bundleRoot)).toEqual(beforeBundleMetadata[0]);
+          expect(snapshotAuthorityMetadata(path.dirname(unsupportedNodePath))).toEqual(binMetadata);
+          assert.ok(beforeBundleMetadata[2]);
+          expect(snapshotAuthorityMetadata(path.join(bundleRoot, 'bin', 'run.mjs'))).toEqual(beforeBundleMetadata[2]);
+          await new Promise<void>((resolve, reject) => {
+            unsupportedNodeServer?.close((error) => (error ? reject(error) : resolve()));
+          });
+          unsupportedNodeServer = null;
+          if (existsSync(unsupportedNodePath)) unlinkSync(unsupportedNodePath);
+          expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
         } else if (
           scenario === 'forward-documentation-path-refusal' ||
           scenario === 'forward-documentation-evidence-under-bound' ||
@@ -5652,6 +5777,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(before);
         completed = true;
       } finally {
+        if (unsupportedNodeServer?.listening) {
+          await new Promise<void>((resolve) => unsupportedNodeServer?.close(() => resolve()));
+        }
+        if (unsupportedNodePath && existsSync(unsupportedNodePath)) unlinkSync(unsupportedNodePath);
         if (completed) rmSync(root, { recursive: true, force: true });
         else process.stderr.write(`Retained failed repair authority fixture (${scenario}): ${root}\n`);
       }
