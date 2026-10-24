@@ -3937,10 +3937,15 @@ filtered, 14 expectations; 3,954.89 ms for the test case and 5.28 s for the
 invocation. Formatter and scoped strict checks passed (one file / 144 files),
 and type-aware Oxlint passed. Native blind Luna reachability and final reviews
 found no correctness defect. They confirm the function is reached through the
-public route and the fixture satisfies the persisted-ledger parser, while
-explicitly limiting the claim: the `issue_id === null` operand is the true
-short-circuit arm; the true `observation` and `host_reservation` arms are not
-independently closed. No objective disposition is claimed. Reports are
+public route and the fixture satisfies the persisted-ledger parser. The review
+conservatively noted that truthy observation and reservation values were not
+separately asserted. The bound current run resolves the exact F/L/S/B question:
+its raw process receipt maps the line-331 `binary-expr` counters at columns
+17-39 (`issue_id === null`), 43-59 (`observation`), and 63-84
+(`host_reservation`) to hits `[2, 1, 1]`. Every mapped branch location
+executed; no additional branch fixture or objective disposition is required
+for these counters, though separate truthy-value assertions could strengthen
+regression semantics. Reports are
 `DIAG/bun-cli-run-key408-reachability-review-20261024-01.md`,
 `DIAG/bun-cli-run-key408-final-review-20261024-01.md`, and
 `DIAG/bun-cli-run-key408-fixture-failure-review-20261024-01.md`.
@@ -3961,8 +3966,8 @@ projection is 341/557 F, 1561/2863 L, 1661/3143 S and 1952/3663 B, with max
 CC 501, max entry CRAP 992, 1,373 attempts and `BLOCKED`. Versus the preceding
 distinct image this report adds +1 F, +7 L, +7 S and +9 B; do not merge maxima
 or interpret that delta as a matched performance comparison. The focused
-report marks the callable itself covered, but does not expose branch-location
-counters; exact F/L/S/B closure is not established and the contour remains
+report marks the callable and its three binary-expression locations covered;
+exact full-contour F/L/S/B closure is not established and the contour remains
 open. Historical exact contours remain 17/46.
 
 The target took 3.95 s and the full pinned stage 190.07 s. The prior stage was
@@ -3971,11 +3976,9 @@ causal runtime comparison. The small-target-first order rejected several
 invalid fixtures before spending another stage; no matched serial/parallel
 timing exists. The measured producer level remained one. Aggregate tool/API
 calls and token counts are unavailable from receipts. The next report-order
-zero is `addObservationForAction` at `bin/run.ts:352`; first resolve the
-remaining guard-operand reachability/evidence from the bound report and
-existing Source before changing focus. Do not replay any failed fixture, run
-another full stage for this image, or record an objective skip without the
-TESTING proof.
+zero is `addObservationForAction` at `bin/run.ts:352`. Do not replay any failed
+fixture, run another full stage for this image, or record an objective skip
+without the TESTING proof.
 
 ## Owners and acceptance boundaries
 
