@@ -2284,15 +2284,21 @@ function optionalCorrectiveExecution(
   return correctiveExecution ?? undefined;
 }
 
-/** @param {unknown} operation @param {string} workId @returns {boolean} */
-export function isCompletedReadonlyRelease(operation: unknown, workId: string): boolean {
-  return (
-    isRecord(operation) &&
-    operation.work_id === workId &&
-    operation.kind === 'release' &&
-    typeof operation.operation_id === 'string' &&
-    operation.operation_id.startsWith('completed-readonly-release-')
-  );
+export function requireNoCompletedReadonlyRelease(operations: readonly unknown[] | undefined, workId: string): void {
+  if (
+    operations?.some(
+      (operation) =>
+        isRecord(operation) &&
+        operation.work_id === workId &&
+        operation.kind === 'release' &&
+        typeof operation.operation_id === 'string' &&
+        operation.operation_id.startsWith('completed-readonly-release-'),
+    )
+  )
+    fail(
+      'GAP-VIDA-RUN-EXECUTION-001',
+      'Captured native completion remains normalization pending; ordinary execution cannot accept it.',
+    );
 }
 
 type TaskSourceOperation = 'prepare' | 'inspect' | 'issue' | 'report' | 'recover';
@@ -7986,11 +7992,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
         integrations_digest: capturedProject.integrations_digest,
         work_id: context.work_id,
       });
-      if (capturedOwner.ledger?.operations.some((operation) => isCompletedReadonlyRelease(operation, context.work_id)))
-        fail(
-          'GAP-VIDA-RUN-EXECUTION-001',
-          'Captured native completion remains normalization pending; ordinary execution cannot accept it.',
-        );
+      requireNoCompletedReadonlyRelease(capturedOwner.ledger?.operations, context.work_id);
       const { readAdmittedSessionExecutionContext } =
         await import('../src/orchestration/admitted-session-execution.ts');
       const { buildObservedResearchResult } = await import('../src/orchestration/observed-research-result.ts');

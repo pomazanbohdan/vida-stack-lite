@@ -52,8 +52,8 @@ import {
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
   forwardUpdateAuthority,
-  isCompletedReadonlyRelease,
   repairAuthority,
+  requireNoCompletedReadonlyRelease,
   run,
   writeDurable,
 } from '../bin/run.ts';
@@ -596,7 +596,7 @@ test('run CLI main forwards parsed arguments and preserves integer and JSON resu
   expect(errors).toEqual([]);
 });
 
-test('completed readonly release matching binds operation kind, work and identifier', () => {
+test('completed readonly release guard blocks only a matching current-work release', () => {
   const workId = 'work-current';
   const matching = {
     schema: 'CoordinationOperation/v1',
@@ -604,19 +604,30 @@ test('completed readonly release matching binds operation kind, work and identif
     work_id: workId,
     operation_id: 'completed-readonly-release-current',
   };
-  const cases: readonly [string, unknown, boolean][] = [
-    ['matching current-work release', matching, true],
-    ['missing operation', null, false],
-    ['non-record operation', [], false],
-    ['primitive operation', 'release', false],
-    ['foreign work', { ...matching, work_id: 'work-other' }, false],
-    ['other operation kind', { ...matching, kind: 'contour_assurance' }, false],
-    ['other release identity', { ...matching, operation_id: 'session-release-current' }, false],
-    ['non-string operation identity', { ...matching, operation_id: 42 }, false],
+  const allowed: readonly [string, readonly unknown[] | undefined][] = [
+    ['missing ledger', undefined],
+    ['empty ledger', []],
+    ['missing operation', [null]],
+    ['non-record operation', [[]]],
+    ['primitive operation', ['release']],
+    ['foreign work', [{ ...matching, work_id: 'work-other' }]],
+    ['other operation kind', [{ ...matching, kind: 'contour_assurance' }]],
+    ['other release identity', [{ ...matching, operation_id: 'session-release-current' }]],
+    ['non-string operation identity', [{ ...matching, operation_id: 42 }]],
   ];
 
-  for (const [label, operation, expected] of cases)
-    assert.equal(isCompletedReadonlyRelease(operation, workId), expected, label);
+  for (const [label, operations] of allowed)
+    assert.doesNotThrow(() => requireNoCompletedReadonlyRelease(operations, workId), label);
+  assert.throws(
+    () => requireNoCompletedReadonlyRelease([matching], workId),
+    (error: unknown) => {
+      expect(error).toMatchObject({
+        code: 'GAP-VIDA-RUN-EXECUTION-001',
+        message: 'Captured native completion remains normalization pending; ordinary execution cannot accept it.',
+      });
+      return true;
+    },
+  );
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {

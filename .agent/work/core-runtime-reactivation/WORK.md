@@ -4938,6 +4938,40 @@ the stage tail, and ordered next-zero names. Keep this as confirmed audit
 output waste. No full suite, scan/hash pass, cleanup, or disk rescan was run by
 this packet.
 
+#### Key421 completed-readonly normalization guard
+
+The Key420 image still had one uncovered outcome at the normalization caller:
+`run.ts:7989` reported the `if` counts `[0,2]`. Two independent blind Luna
+reviews traced a supported legacy path that can reach it: a reported-complete
+research journal without modern activation/normalization metadata can be
+released read-only, the same-work release operation is retained in Host ledger,
+and paused-work resume preserves that journal for ordinary normalization.
+Thus this is a reachable behavior and no objective skip is justified. Their
+bounded analysis and the fixture constraint are preserved in
+`DIAG/bun-cli-run-key421-guard-review-20261024-01.md`.
+
+To test the denial boundary without fabricating an invalid Host ledger or
+executing research consumers, Key421 extracts the existing ordered check and
+exact GAP into `requireNoCompletedReadonlyRelease(operations, workId)` and
+calls it at the same point after the owner snapshot. Its truth table requires
+the matching current-work release to throw the exact
+`GAP-VIDA-RUN-EXECUTION-001` code/message, while missing/empty ledgers,
+malformed values, foreign work, other kinds, other prefixes and non-string IDs
+continue. Blind native Luna review confirmed semantic equivalence, assertions
+and caller placement; the stale JSDoc was removed. No suppression, objective
+skip, runtime/DB cutover or consumer effect was introduced.
+
+The final scoped package-pinned checks passed: Bun 1.4.4 format check for the
+two changed files, strict `tests/tsconfig.json` check across 510 files, locked
+Oxlint, and the focused test (one pass, zero failures, exact error assertion).
+Receipts are `DIAG/bun-cli-run-key421-format-20261024-02.log`,
+`DIAG/bun-cli-run-key421-test-typecheck-20261024-02.log`,
+`DIAG/bun-cli-run-key421-lint-20261024-02.log`, and
+`DIAG/bun-cli-run-key421-target-20261024-01.log`. This packet used serial
+width one. Its full producer stage has not run yet; exact coverage metrics are
+pending and the contour remains `BLOCKED` until the current producer records
+them.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420 were 182,091.09 /
