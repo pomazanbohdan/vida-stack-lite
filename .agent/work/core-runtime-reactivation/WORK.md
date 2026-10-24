@@ -5587,30 +5587,68 @@ the numeric producer were serial. No evidence supports more than one producer.
 Model-token and aggregate tool/API-call counters are not exposed.
 
 One audit command accidentally requested the entire one-line
-`CONTOUR-STATUS.json` diff and the tool omitted 6,690,424 output bytes. No repeat
-was made; future inspection is limited to `git status`, `git diff --stat`, or
-specific parsed fields, never the full projection blob.
+`CONTOUR-STATUS.json` diff and the tool omitted 6,690,424 output bytes. Two
+subsequent `jq` selectors accidentally emitted the nested Istanbul map and all
+function metrics; tool metadata reported 1,191,779 output bytes omitted in each
+response (the latter reported 52,706 original tokens). No repeats were made.
+Future inspection is limited to `git status`, `git diff --stat`, and exact
+branch IDs/fields, never a full projection/report map.
 
-The three predicate false arms are objective-skip candidates only, not yet
-dispositions. The independent source review traced their prerequisites:
-schema and required fields are enforced by `readControllerRecord` and exact
-field validation before `requireForwardUpdateAuthorization`; prepared relative
-paths are nonempty with nonempty components before the `.at(-1)` leaf reaches
-`requireForwardFileLeaf`; and the optional preserved-output entry is an exact
-record with required string fields before `requireSelectorRecord`. The current
-checkout's `packages/agent/TESTING.md` lines 2024–2045 require each disposition
-to bind the final report/run, Source/test/config identity, exact counter,
-causal guard, independent review, and remaining qualification. Add them only
-after the producer supplies that binding, preserving raw denominators and
-`BLOCKED`. Against Key428's report these are Istanbul branch IDs 55/58/59 with
-raw counts `[0,29]`, `[0,1706]`, and `[0,1]`; the independent review found no
-supported-flow counterexample. The separate review evidence is in
-`DIAG/bun-cli-run-key429-final-review-20261024.md`.
+### Key429 post-commit coverage result and objective dispositions
 
-The next action is one hook-backed commit/push for the reviewed test packet,
-then one serial `bun-cli-run` coverage stage on these exact inputs. No full suite
-was repeated. Static-first plus one selected test is measured here; full-suite
-first was not measured. The prior Key428 stage times (202.85/197.03/191.51 s)
-belong to different commits/images and do not prove speedup. One producer at
-concurrency one is the only measured parallelism; wider producer concurrency,
-model tokens, and total tool/API-call telemetry are unavailable.
+The ordinary hook-backed source/test commit `c33425384c0a7593ef4f8302140b88ea7a49e16c`
+was pushed to `main` before exactly one serial current-producer coverage stage.
+Run `3221d342-355d-4b74-8690-0b1193d4fc09` exited 0 in 213,565.46 ms within
+the 330,000 ms bound; capture completed, the process group closed, boot and
+immutable image inputs were unchanged, and publication succeeded. Stage owner
+directory `/workspace/contour-stage-cPggJm` and its launch/request/execution/
+publication receipts, raw stdout/stderr, and scratch remain intact. The
+immutable execution image is under
+`/workspace/.vida-quality-inputs/4dfe9d81c3b8caa2943afa210203abad3336ed50/`,
+manifest SHA-256 `d787367d42e82f9e3ebce5cc3410ec2c053becb7a7e416f023f15169e254b5f5`.
+Its report is
+`/workspace/.vida-quality-inputs/4dfe9d81c3b8caa2943afa210203abad3336ed50/repository/packages/agent/coverage/bun-unified/diagnostics/3221d342-355d-4b74-8690-0b1193d4fc09.focused-coverage.json`.
+
+The report binds commit `c33425384c0a7593ef4f8302140b88ea7a49e16c`, source
+tree `961713ff2dc1dfea2671b40e0f922b8cccfb633e`, input fingerprint
+`f22e7b67ddba076ff76ff79dea33d742c787738cff0c3e66a1ff4f01a262a726`, source
+fingerprint `5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851`,
+test fingerprint `677682572530c224be2c7efab1734fffb9ad45b2c00471f125fac3ef3b8507ec`,
+tool fingerprint `07814f2a7cbbfa79ca0967b272bfb4e2c480b10c11999d8ea687e01765f22d64`,
+and report manifest digest
+`17df753d8d778b11e59c1dc3e4822b93e6e28e3fec8a54fbea71f8d4ec92d726`.
+The producer ran Bun 1.4.4, its TS-only gate captured 545 TypeScript files with
+0 diagnostics, and 125 selected tests passed with 0 failures, 2,332
+expectations, and 207.73 s suite time. A child process ended UNKNOWN; preserve
+`/tmp/vida-run-uninitialized-st5fUq` and do not replay it.
+
+Coverage is `428/555`, `1938/2860`, `2079/3138`, `2399/3660`, max CC 501, max
+entry CRAP 992; status remains `BLOCKED`. Six report-ordered reachable guard
+arms were exercised: branch IDs 68/69/71/75/77/78 at lines 626/634/646/664/
+666/671 now have respective counters `[1,76]`, `[1,75]`, `[1,22899]`, `[1,1769]`,
+`[1707,1]`, and `[1,4]`. The three independently reviewed objective skips are
+bound to this exact report and must not alter these denominators or status:
+
+| Branch | Exact source counter | Raw counts | Causal prerequisite | Independent review |
+| --- | --- | --- | --- | --- |
+| 55 | `run.ts:534`, false arm of `requireForwardUpdateAuthorization` | `[0,33]` | `readControllerRecord` requires the authorization schema, then exact keys/types at 1498–1502 entail the predicate at 514–524. | `DIAG/bun-cli-run-key429-final-review-20261024.md` |
+| 58 | `run.ts:550`, false arm of `requireForwardFileLeaf` | `[0,1709]` | Accepted manifest entries require `isPreparedRelativePath` at 236–244 / 561–613, so split’s final component at 1708–1714 is nonempty. | same |
+| 59 | `run.ts:556`, false arm of `requireSelectorRecord` | `[0,1]` | The same preserved-output element passes `exactStringFields`/`exactKeys` at 1630–1639 before return at 1726–1727, which entails record-ness. | same |
+
+The independent reviewer rebound each counter to this run and its exact
+Source/test fingerprints, confirmed the current `TESTING.md` rule, and found no
+supported-flow counterexample. Record the dispositions as objective skips only;
+do not change F/L/S/B, denominator, or `BLOCKED`. The projection in
+`CONTOUR-STATUS.*` was updated by its producer and is not hand-edited.
+
+The next report-ordered zero counters for the same contour are branch 80 at
+line 688 (default argument), branch 85 at line 814 (repair review entry), and
+branch 88 at line 859 (parent-selector exact fields); they need bounded source
+analysis before choosing the next packet. No second producer is running.
+
+Measured sequence: three scoped static checks parallel (~14.5 s wall), one
+focused target (1.35 s), blind review, hook-backed commit/push, then one serial
+stage (213.57 s). Full-suite-first and producer concurrency above one were not
+measured. The Key428 wall-times are across different inputs/images and are not
+a speed comparison. Model-token and aggregate tool/API-call telemetry are
+unavailable; avoid the three accidental oversized outputs recorded above.
