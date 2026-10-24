@@ -3372,10 +3372,10 @@ capture wrappers should use an absolute path or the repository-root-relative
 
 The next unhit entry in the same contour's exact report is key 402,
 `bin/run.ts#fn:run#0/closure:CallExpression:arguments[2]#4` (CC 1 / CRAP 2,
-body at line 6933 in this source image). It is the close callback in the catch
-for the later full-project-set context load. The bounded fixture and evidence
-for this key are recorded below; its numeric counter remains unqualified until
-the next producer report.
+body at line 6933 in the source image for the prior stage). It is the close
+callback in the catch for the later full-project-set context load. The bounded
+fixture and evidence for this key are recorded below; its local target pass did
+not itself qualify the numeric counter.
 
 ### Multi-project context failure close callback — 2026-10-24
 
@@ -3423,8 +3423,69 @@ project selection, team allowlist and secondary path target would likely have
 avoided the two short failures; this is a process hypothesis. The 1.82 s
 filtered result is not comparable with the prior 179.06 s producer stage, which
 used a different workload. No setup-only, token or aggregate tool-call meter is
-available. The next step is one current-producer coverage stage on this reviewed
-test, then follow only its exact remaining unhit entries.
+available.
+
+### Project-context cleanup callback coverage stage — 2026-10-24
+
+The single producer stage completed on commit
+`1e95edbe6c6d6a310e786be418854001266fb143` as run
+`1210a0c3-ee64-4a28-9d0d-9d6366642173` in
+`/workspace/contour-stage-bfyeH1`. Its native receipt reports 178,853.63 ms,
+producer exit 0, no signal or timeout, observed process-group termination,
+complete untruncated capture, unchanged immutable image inputs and successful
+publication. Producer stdout (7,978 bytes) and stderr (13,732 bytes), together
+with `launch.json`, `request.json`, `execution.json`, `publication.json` and
+scratch, remain at the exact stage path. The report is
+`1210a0c3-ee64-4a28-9d0d-9d6366642173.focused-coverage.json` under
+`/workspace/.vida-quality-inputs/2c9d2023e19a28b15f4e2d63b2441ce804169c83/repository`;
+its immutable image manifest SHA-256 is
+`064fcb02f2d4872e966c4e26350fb5a3df840db9ac0a6c26d9469fd9d5f5d5df`.
+The receipt binds this image to source tree
+`13bdc0495fe238787884f6cfdbddf488844182be` and input fingerprint
+`1348dcb57c4146a8b9a0ece18c0632ac7f3977a0e7e6fbb25b8d505f86fab01a`;
+captured stdout/stderr SHA-256 values are
+`c95ee65bd8a2a6243a422df62b43594fe176a502bbcfc83e6472c9e6c4726900` and
+`44194e4d011721c32e3cce9dbf50559d6d107bbc1453812405074cbaa89bf767`.
+
+The exact report maps keys 379–402 to coverage 1, including key 402's
+`bin/run.ts#fn:run#0/closure:CallExpression:arguments[2]#4`. Key 403 is the
+next zero: `bin/run.ts#fn:run#0/closure:CallExpression:arguments[2]#5`, the
+close callback passed when the admission HostState snapshot read throws at
+line 6950 in this committed source. Overall coverage is 313/557 functions,
+1444/2863 lines, 1537/3143 statements and 1829/3663 branches; operation status
+remains BLOCKED. This report is not contour closure, exact F/L/S/B completion,
+or a CRAP/mutation qualification. Maximum CC 501 and entry CRAP 992 remain
+diagnostic metadata. Do not turn key 403 or any other zero into a skip.
+
+The capture wrapper used the absolute path and exited successfully; unlike the
+prior packet there was no wrapper error. Continue with key 403 using one
+bounded public-run fault case, then repeat the design-first/test/review order
+before any later producer stage. Keep 1x producer concurrency and all current
+image, raw-log and terminal evidence intact.
+
+Read-only analysis of key 403 found that ordinary intake arguments bypass the
+earlier selection snapshot (which is only in the no-intake branch) and the
+recovery, renewal and reported-observation snapshots (each requires its own
+flag). A narrowly scoped `HostStateStore.prototype.readHostStateSnapshot` spy
+that calls through for unrelated work IDs, throws once for this temporary
+intake's work ID, and is restored in `finally` should therefore inject at the
+admission snapshot immediately before key 403's catch. The Luna review also
+confirmed this test file has no concurrent tests and the read-only empty-row
+inspection can run after restoring the spy. This is still a test hypothesis,
+not coverage or an objective disposition; its focused result and a later exact
+producer report remain required.
+
+One filesystem observation for this continuation used `df -Pk` on checkout
+`/workspace/vida-stack-lite`, scratch `/workspace/contour-stage-bfyeH1`, and
+retained evidence `/workspace/.vida-quality-inputs`. All three resolve to the
+same `overlay` filesystem: 18,519,708 KiB available. This is 16,357,020 KiB
+above the unchanged 2,162,688 KiB (2,214,592,512-byte) admission floor. No
+cleanup was needed or attempted; this observation does not qualify deletion of
+any execution image or evidence path. `vida-agent` is absent from this host's
+PATH, so its installed lifecycle-instruction resolver could not run; the
+checked-in `packages/agent/instructions/development-lifecycle.md` and current
+repository policy were used instead. This remains an execution-tool GAP, not
+evidence of runtime qualification.
 
 ## Owners and acceptance boundaries
 
