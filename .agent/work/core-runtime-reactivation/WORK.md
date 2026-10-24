@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date:2026-10-23. Root owns Source integration, Git and final numbers.
+Status date:2026-10-24. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
@@ -3113,10 +3113,36 @@ the changed inputs make those durations incomparable as a speed claim. One
 producer at `1x PARALLEL` is the only qualified numeric concurrency. Parallel
 stages/worktrees remain unmeasured and unauthorized. Receipts do not expose
 token totals or a comparable agent/tool-call count, and this packet does not
-invent them. Next: run the documentation check, commit the verified test and
-WORK update through normal hooks, push, then run exactly one stage on that new
-input. Let its existing owner update projection after terminal outcome; retain
-BLOCKED if reported, then select the next same-contour gap from that report.
+invent them. The documentation/plan contract check then passed 16 tests with
+149 expectations. Commit `b5f88daa2c69a25b4d251727173bbfb2f2b04369` passed its
+ordinary formatting hook (536 files) and strict hook (543 files), and ordinary
+push updated `work`.
+
+The one post-commit stage `contour-stage-ouuEJ3` completed against that commit
+in 186,366.5 ms with exit 0, timeout false, complete non-truncated stdout and
+stderr capture (7,979 and 13,484 bytes), observed process-group termination,
+unchanged boot and execution-image inputs, and successful publication. Its
+report is `1681f4f6-0648-45ec-90f1-856cbe309b79` under the immutable image
+`/workspace/.vida-quality-inputs/7f26b6ee954ba913642e3e29b7e2466a0c81ba50/`;
+the original launch, request, execution, publication, `stdout.log` and
+`stderr.log` are retained in `/workspace/contour-stage-ouuEJ3/`. The focused
+report now reads 300/557 functions, 1356/2863 lines, 1447/3143 statements and
+1734/3663 branches. Targeted report projection confirms key 391=3 hits, key
+394=1 hit, and key 379=0 hits. Max CC is still 501, entry CRAP 5402, and the
+operation remains BLOCKED/unqualified. The contour is still open; no denominator,
+fence or acceptance state was altered.
+
+The optional outer-shell `tee` destination for this stage was package-relative
+and could not be opened. No second stage was launched. The native producer's
+complete raw capture and terminal receipts above remain the primary evidence;
+the tool session also exposed the terminal completion. The producer updated
+`CONTOUR-STATUS`; its two projection files remain unstaged and untouched by
+Root. Next work stays on `bun-cli-run`, beginning with a bounded read-only
+reachability review of the remaining key379 recovery prerequisite. Do not enter
+CRAP or mutation lanes in this F/L/S/B phase. If no real supported producer can
+establish the needed lease/lineage/authority/CAS, retain an objective GAP for
+independent review rather than fabricate state or treat an unhit counter as
+closed.
 
 ## Owners and acceptance boundaries
 
