@@ -76,8 +76,7 @@ function regularFile(file: string): Buffer {
   return readFileSync(file);
 }
 
-/** @param {string} directory @returns {void} */
-function checkedDirectory(directory: string): void {
+export function checkedDirectory(directory: string): void {
   let stat;
   try {
     stat = lstatSync(directory);
@@ -88,8 +87,7 @@ function checkedDirectory(directory: string): void {
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority directory is unsafe.');
 }
 
-/** @param {string} file @returns {boolean} */
-function pathExists(file: string): boolean {
+export function pathExists(file: string): boolean {
   try {
     lstatSync(file);
     return true;
@@ -130,8 +128,7 @@ function assertControllerRecord(
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority has an invalid shape or encoding.');
 }
 
-/** @param {string} left @param {string} right @returns {number} */
-function compareStrings(left: string, right: string): number {
+export function compareStrings(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
@@ -179,8 +176,7 @@ type ActiveRuntimeSelectorRecord = Record<string, unknown> & {
   activation_decision_sha256?: string;
 };
 
-/** @param {unknown} value @returns {value is ActiveRuntimeSelectorRecord} */
-function isActiveRuntimeSelectorRecord(value: unknown): value is ActiveRuntimeSelectorRecord {
+export function isActiveRuntimeSelectorRecord(value: unknown): value is ActiveRuntimeSelectorRecord {
   if (!isRecord(value)) return false;
   const base = [
     'schema',
@@ -205,8 +201,7 @@ function requireActiveRuntimeSelectorRecord(
   if (!isActiveRuntimeSelectorRecord(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Active selector fields are invalid.');
 }
 
-/** @param {unknown} value @param {string} key @returns {unknown} */
-function recordField(value: unknown, key: string): unknown {
+export function recordField(value: unknown, key: string): unknown {
   if (!isRecord(value)) fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority is invalid.');
   return value[key];
 }
@@ -3053,8 +3048,7 @@ function readReadonlyReleaseSnapshotRows(
     .all(runId);
 }
 
-/** @param {unknown} value @returns {value is {schema: string, request_digest: string}} */
-function isReadonlyReleasePlan(value: unknown): value is { schema: string; request_digest: string } {
+export function isReadonlyReleasePlan(value: unknown): value is { schema: string; request_digest: string } {
   return isRecord(value) && isString(value.schema) && isString(value.request_digest);
 }
 
@@ -3081,8 +3075,7 @@ function requireFirstReadonlyReleaseValue<T>(values: readonly T[]): T {
   return value;
 }
 
-/** @template T @param {readonly T[]} values @returns {T} */
-function requireOneReadonlyReleaseMatch<T>(values: readonly T[]): T {
+export function requireOneReadonlyReleaseMatch<T>(values: readonly T[]): T {
   if (values.length !== 1 || values[0] === undefined) throw Error('Readonly release actual engine completion differs');
   return values[0];
 }
@@ -3114,8 +3107,7 @@ function isReadonlyReleaseSuccessfulWave(value: ReadonlyReleaseEngineWave): valu
   return isRecord(value.value) && value.value.status === 'success';
 }
 
-/** @template T @param {unknown} values @param {(value: unknown) => T} parse @returns {T[]} */
-function parseReadonlyReleaseArray<T>(values: unknown, parse: (value: unknown) => T): T[] {
+export function parseReadonlyReleaseArray<T>(values: unknown, parse: (value: unknown) => T): T[] {
   if (!isUnknownArray(values)) throw Error('Readonly release actual engine completion differs');
   return values.map((value) => parse(value));
 }

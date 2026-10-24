@@ -51,14 +51,22 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
+  checkedDirectory,
+  compareStrings,
   forwardUpdateAuthority,
   historicalConfiguredContexts,
   historicalReleaseInspection,
+  isActiveRuntimeSelectorRecord,
   isHistoricalRunHistory,
   isResearchSourceReference,
+  isReadonlyReleasePlan,
+  parseReadonlyReleaseArray,
+  pathExists,
+  recordField,
   repairAuthority,
   requireNoCompletedReadonlyRelease,
   requireHistoricalItem,
+  requireOneReadonlyReleaseMatch,
   requireRecoveryOperation,
   readonlyReleaseThreadId,
   run,
@@ -771,6 +779,85 @@ test('historical scoped snapshot guard validates ordered entries and readonly ow
   assert.equal(readonlyReleaseThreadId({}), undefined);
   assert.equal(readonlyReleaseThreadId(null), undefined);
   assert.equal(readonlyReleaseThreadId(Object.assign([], { thread_id: 'thread-1' })), undefined);
+});
+
+test('run filesystem and selector guards preserve caller-visible decisions', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-run-selector-guards-'));
+  try {
+    const file = path.join(root, 'regular-file'),
+      link = path.join(root, 'directory-link'),
+      missing = path.join(root, 'missing');
+    writeFileSync(file, 'fixture');
+    symlinkSync(root, link, process.platform === 'win32' ? 'junction' : 'dir');
+
+    expect(() => checkedDirectory(root)).not.toThrow();
+    expect(() => checkedDirectory(file)).toThrow('Cutover authority directory is unsafe.');
+    expect(() => checkedDirectory(link)).toThrow('Cutover authority directory is unsafe.');
+    expect(() => checkedDirectory(missing)).toThrow('Cutover authority directory is missing.');
+    expect(pathExists(file)).toBe(true);
+    expect(pathExists(missing)).toBe(false);
+    assert.throws(() => pathExists(path.join(file, 'child')), { code: 'ENOTDIR' });
+
+    expect(compareStrings('a', 'b')).toBe(-1);
+    expect(compareStrings('b', 'a')).toBe(1);
+    expect(compareStrings('a', 'a')).toBe(0);
+
+    const activeSelector = {
+      schema: 'VidaActiveRuntimeSelector/v1',
+      generation: 'generation-1',
+      runtime: 'bun',
+      bundle_root: '/bundle',
+      config_path: '/config',
+      archive_manifest_sha256: 'a'.repeat(64),
+      plan_sha256: 'b'.repeat(64),
+    };
+    expect(isActiveRuntimeSelectorRecord(activeSelector)).toBe(true);
+    expect(isActiveRuntimeSelectorRecord(null)).toBe(false);
+    expect(() => recordField(null, 'schema')).toThrow('Cutover authority is invalid.');
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('readonly release validators preserve plans, unique matches, arrays and CLI errors', async () => {
+  const plan = { schema: 'ReadonlyReleasePlan/v1', request_digest: 'c'.repeat(64) };
+  expect(isReadonlyReleasePlan(plan)).toBe(true);
+  expect(isReadonlyReleasePlan({ ...plan, schema: 1 })).toBe(false);
+  expect(isReadonlyReleasePlan(null)).toBe(false);
+
+  const match = { work_id: 'work-1' };
+  expect(requireOneReadonlyReleaseMatch([match])).toBe(match);
+  expect(() => requireOneReadonlyReleaseMatch([])).toThrow('Readonly release actual engine completion differs');
+  expect(() => requireOneReadonlyReleaseMatch([match, match])).toThrow(
+    'Readonly release actual engine completion differs',
+  );
+  expect(() => requireOneReadonlyReleaseMatch([undefined])).toThrow(
+    'Readonly release actual engine completion differs',
+  );
+
+  const visited: unknown[] = [];
+  expect(
+    parseReadonlyReleaseArray(['inspect', 'apply'], (value) => {
+      visited.push(value);
+      return typeof value === 'string' ? value.toUpperCase() : '';
+    }),
+  ).toEqual(['INSPECT', 'APPLY']);
+  expect(visited).toEqual(['inspect', 'apply']);
+  expect(() => parseReadonlyReleaseArray(null, (value) => value)).toThrow(
+    'Readonly release actual engine completion differs',
+  );
+
+  const args: string[] = [
+    '--release-completed-readonly',
+    'true',
+    '--mode',
+    undefined as unknown as string,
+    '--project-root',
+    '/unused',
+    '--request',
+    'request.json',
+  ];
+  await assert.rejects(run(args), { message: 'Readonly release requires mode, exact root and request' });
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
