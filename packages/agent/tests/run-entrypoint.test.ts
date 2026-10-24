@@ -4225,6 +4225,17 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             code: 'GAP-VIDA-RUN-SELECTOR-001',
           }),
         );
+        const selectorPath = path.join(root, '.agent', 'active-runtime-selector.v1.json');
+        const selectorBytes = Buffer.from(record({ schema: 'ActiveRuntimeSelector/v1' }));
+        writeFileSync(selectorPath, selectorBytes);
+        await Promise.resolve(
+          expect(run([...args, '--workflow', 'information_research_light'])).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+            message: 'Active selector fields are invalid.',
+          }),
+        );
+        expect(readFileSync(selectorPath)).toEqual(selectorBytes);
+        expect(readdirSync(path.join(root, '.agent', 'cutover'))).toEqual(['incomplete']);
         completed = true;
       } finally {
         if (completed) rmSync(root, { recursive: true, force: true });

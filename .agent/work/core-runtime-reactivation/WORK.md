@@ -3762,6 +3762,50 @@ exact-coverage closure, frozen CRAP, mutation result, or numeric qualification
 was added. Historical exact F/L/S/B remains 17/46. Do not repeat this stage or
 replay any archive; continue at the next zero from the newly projected report.
 
+### Bun-cli-run key406 incomplete-selector packet — 2026-10-24
+
+The key405 projection report run `9478829c-05f9-4d80-8e98-ec4ebd350ee5`
+listed `requireActiveRuntimeSelectorRecord` at `bin/run.ts:201-205` as the first
+uncovered callable in the current report ordering. The current Vex status has
+566 indexed files, 539 TypeScript files, zero missing files, 75 unsupported
+paths and `clusters_stale: true` (`clusters_new_since_build: 1006`). I did not
+rebuild or query stale semantic clusters; bounded Source inspection confirmed
+the sole call in `activeSelector()` and the public `run()` path at line 6099.
+
+The existing `rejects incomplete selector authority before project context`
+case now exercises both no-selector/nonempty-cutover refusal and a canonical
+schema-only `ActiveRuntimeSelector/v1` refusal. Reusing the existing `record()`
+helper keeps controller bytes valid so execution reaches
+`requireActiveRuntimeSelectorRecord` and returns the expected selector error.
+The test compares the selector bytes and cutover directory entries after the
+refusal. It does not load project context, open a database, activate a runtime,
+write a cutover record or reach a consumer effect. The first target attempt used
+compact JSON and stopped earlier at the controller encoding check; it is a
+fixture failure, not a product finding. Its retained failed fixture root is
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-selector-IQIqI1`.
+
+With package-selected Bun 1.4.4, scoped strict passed with no diagnostics in
+148 files (491.99 ms), formatting passed on `run-entrypoint.test.ts` (12 ms),
+and locked type-aware Oxlint passed on that file. The exact target then passed:
+1 pass, 101 filtered, 0 failures, 4 expectation calls, 1.89 s invocation and
+20.43 ms case time. The blind native Luna correctness review found no issue;
+the Pstack comment review found zero comment/suppression changes and no
+`MUST KILL` symbols. Evidence is retained in
+`DIAG/bun-cli-run-key406-static-20261024-02.log`,
+`DIAG/bun-cli-run-key406-target-20261024-02.log`,
+`DIAG/bun-cli-run-key406-final-review-20261024-01.md`, and
+`DIAG/bun-cli-run-key406-comments-review-20261024-01.md`. The first failed
+target log is `DIAG/bun-cli-run-key406-target-20261024-01.log`.
+
+The serial order remains scoped strict/format/lint, one exact filtered test,
+read-only review, ordinary commit/hooks/push, then one changed-input coverage
+stage. Bundled targets previously mixed parser and deadline failures, so this
+case ran alone; no same-input parallel speed comparison exists. Tokens and
+aggregate tool/API calls remain unavailable from the receipts. The next
+producer stage is pending this packet's clean Source commit and push. No
+objective disposition, exact coverage, frozen CRAP or mutation credit is
+claimed; bun-cli-run remains BLOCKED.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
