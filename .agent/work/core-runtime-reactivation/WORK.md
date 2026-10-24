@@ -4662,15 +4662,91 @@ substituted bytes, so same-byte writes during the call are visible. The
 candidate payload tree is not recursively snapshotted because this authority
 reader does not consume it; the persisted manifest and policy are included.
 The superseding final review is recorded in
-`DIAG/bun-cli-run-key417-final-review-20261024-02.md`. No Key417 coverage
-closure is claimed until the normal hook-backed commit/push and one bound
-coverage-stage terminal outcome.
+`DIAG/bun-cli-run-key417-final-review-20261024-02.md`.
+
+#### Key417 bound stage result
+
+After the ordinary hook-backed commit and push, the existing contour producer
+ran once against the immutable image for source commit
+`cb3a814c1160e139336ef2bb5d25b182ac014bf4`, tree
+`d334d4ca463b3bec27824e58741722ee6071564a`, input fingerprint
+`ea5f9b4e443f8abb42ab49d7a3ed35e1d7202819a95f813153fc53a2df45ea85`, and
+manifest digest
+`64ade3427a55ca033c1fd0640a31c7cc2655fe752bc085e4e200fc2d26a13dc8`.
+Run `8de20306-5893-408b-9515-8319d83be5db` ended exit 0 in 187,589.41 ms;
+capture was complete, the process group closed, the boot and image inputs were
+unchanged, and the report was published. The producer recorded 1,393 attempts.
+Its terminal receipt is
+`DIAG/bun-cli-run-key417-stage-20261024-01.log`; the focused report and sibling
+outcome are under the image's
+`packages/agent/coverage/bun-unified/diagnostics/` directory.
+
+The producer-owned projection reports F/L/S/B `406/555`, `1880/2859`,
+`2004/3138`, and `2284/3661`, max CC 501, max entry CRAP 992, and `BLOCKED`.
+Compared with Key416, the bound report adds zero functions, one line, seven
+statements and six branches. Exact coverage remains incomplete and no numeric
+qualification or contour closure is claimed. The raw-process receipt confirms
+both remaining zero statements at lines 1376/1378 and their false branch arms;
+the false branch arm at 1416 and non-`Error` arm at 1435 also remain zero.
+The independent review establishes the 1416 false arm as objective-only:
+the selected policy event and matched plan change both bind to `relative`,
+while a successful verifier return must equal the baseline policy path and
+the verifier requires that same policy event to bind to that path. Invalid
+candidates throw before comparison. See
+`DIAG/bun-cli-run-key417-line1416-reachability-review-20261024-02.md`.
+Together with the prior independent disposition for lines 1376, 1378 and 1435
+in `DIAG/bun-cli-run-key416-zero-arm-review-20261024-01.md`, these are
+objective-only dispositions, not hits, denominator reductions, or a change from
+`BLOCKED` to `PASS`.
+
+The next zero callable in report order is `hasPreparedMaintenanceBindings` at
+`bin/run.ts:1961`. Continue from that function with a bounded current test
+packet; do not replay the Key417 stage or merge its coverage with another
+image.
+
+#### Key418 released-maintenance proof test
+
+Key418 extends the existing owned-temp fixture for `blocks admission while the
+selected cutover still holds maintenance`. With a schema-valid, digest-bound
+released lock and receipt, it requires `assertNoActiveCutoverMaintenance` to
+accept and then mutates each binding consumed by
+`hasPreparedMaintenanceBindings`: quiescence attestation, activation path,
+prepared plan record/schema/digest, archive manifest record/digest, and the
+optional activation-decision digest. Every mutation retains the outer record
+shape and rebinds the release hash, so the helper itself must reject the bad
+binding. The fixture remains confined to its owned temporary directory and is
+removed in `finally`; it performs no runtime, loader, database or consumer
+effect.
+
+Package-pinned Bun 1.4.4 target run passed: 1 pass, 50 filtered, 11
+expectations, 1.19 s total. Scoped format write/check passed on one file in
+13/14 ms; strict passed 104 files in 326.87 ms; Oxlint exited 0 with no
+diagnostics. The target initially used a loose `authority` substring assertion;
+the independent reviewer caught it, and the test now requires the exact
+`Cutover authority is missing.` error. The focused execution receipt is retained in
+`DIAG/bun-cli-run-key418-target-20261024-01.log`; the static gate receipts are
+`DIAG/bun-cli-run-key418-format-20261024-01.log`,
+`DIAG/bun-cli-run-key418-format-check-20261024-01.log`,
+`DIAG/bun-cli-run-key418-strict-20261024-01.log`, and
+`DIAG/bun-cli-run-key418-lint-20261024-01.log`.
+
+The first independent-review attempt could not see the current test addition;
+its retained report explicitly does not verify the fixture:
+`DIAG/bun-cli-run-key418-final-review-20261024-01.md`. The independent review
+against the canonical changed file then confirmed that the acceptance case
+reaches `hasPreparedMaintenanceBindings`, each mutation preserves the outer
+record shape and recomputes the release digest, and cleanup remains scoped to
+the owned temporary root. It flagged the loose missing-authority assertion;
+the exact-error correction was independently confirmed in
+`DIAG/bun-cli-run-key418-final-review-20261024-03.md`. The intervening review
+report is retained at
+`DIAG/bun-cli-run-key418-final-review-20261024-02.md`.
 
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
-202,630.39 ms. Each stage used different immutable image and source/test
+202,630.39 / 187,589.41 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and

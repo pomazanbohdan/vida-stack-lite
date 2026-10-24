@@ -2430,10 +2430,14 @@ describe('vida-agent run entrypoint fast checks', () => {
       selectorSha: 'a'.repeat(64),
       planSha256: 'b'.repeat(64),
       archiveManifestSha256: 'c'.repeat(64),
+      payloadManifestSha256: 'd'.repeat(64),
+      activationDecisionSha256: 'e'.repeat(64),
       repaired: false,
       forward: false,
       currentMutableOutput: null,
     };
+    const record = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
+    const recordDigest = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
     try {
       writeFileSync(path.join(root, 'maintenance-lock.v1.json'), '{}\n');
       let blocked: unknown;
@@ -2447,7 +2451,61 @@ describe('vida-agent run entrypoint fast checks', () => {
         message: 'Cutover maintenance is still active.',
       });
       unlinkSync(path.join(root, 'maintenance-lock.v1.json'));
-      expect(() => assertNoActiveCutoverMaintenance(selectedGeneration)).toThrow('authority');
+      expect(() => assertNoActiveCutoverMaintenance(selectedGeneration)).toThrow('Cutover authority is missing.');
+
+      const releasedLock = {
+        schema: 'VidaCutoverMaintenanceLock/v1',
+        cutover_id: selectedGeneration.generation,
+        operator: 'fixture-owner',
+        attestation: 'old_runtime_quiesced',
+        archive_manifest_sha256: selectedGeneration.archiveManifestSha256,
+        plan_sha256: selectedGeneration.planSha256,
+        payload_manifest_sha256: selectedGeneration.payloadManifestSha256,
+        expected_file_count: 0,
+        archive_manifest: { manifest_sha256: selectedGeneration.archiveManifestSha256 },
+        plan: {
+          schema: 'VidaPreparedInstallPlan/v1',
+          plan_sha256: selectedGeneration.planSha256,
+        },
+        state_policy: 'clean_start_no_ticket_transfer',
+        activation_decision_path: `.agent/cutover/${selectedGeneration.generation}/activation-decision.v1.json`,
+        activation_decision_sha256: selectedGeneration.activationDecisionSha256,
+      };
+      const release = {
+        schema: 'VidaCutoverMaintenanceRelease/v1',
+        cutover_id: selectedGeneration.generation,
+        operator: releasedLock.operator,
+        lock_sha256: recordDigest(releasedLock),
+        status: 'released_by_explicit_operator_action',
+      };
+      const lockPath = path.join(root, 'maintenance-lock.released.v1.json');
+      const releasePath = path.join(root, 'maintenance-release.v1.json');
+      const writeProof = (lock: typeof releasedLock) => {
+        writeFileSync(lockPath, record(lock));
+        writeFileSync(releasePath, record({ ...release, lock_sha256: recordDigest(lock) }));
+      };
+      writeProof(releasedLock);
+      expect(() => assertNoActiveCutoverMaintenance(selectedGeneration)).not.toThrow();
+
+      const invalidBindings: readonly (typeof releasedLock)[] = [
+        { ...releasedLock, attestation: 'runtime_not_quiesced' },
+        { ...releasedLock, activation_decision_path: '.agent/other/decision.json' },
+        { ...releasedLock, plan: null as unknown as typeof releasedLock.plan },
+        { ...releasedLock, plan: { ...releasedLock.plan, schema: 'OtherPlan/v1' } },
+        { ...releasedLock, plan: { ...releasedLock.plan, plan_sha256: 'f'.repeat(64) } },
+        { ...releasedLock, archive_manifest: null as unknown as typeof releasedLock.archive_manifest },
+        { ...releasedLock, archive_manifest: { manifest_sha256: 'f'.repeat(64) } },
+      ];
+      for (const lock of invalidBindings) {
+        writeProof(lock);
+        expect(() => assertNoActiveCutoverMaintenance(selectedGeneration)).toThrow(
+          'Cutover maintenance release proof is invalid.',
+        );
+      }
+      writeProof({ ...releasedLock, activation_decision_sha256: 'f'.repeat(64) });
+      expect(() => assertNoActiveCutoverMaintenance(selectedGeneration)).toThrow(
+        'Cutover maintenance release proof is invalid.',
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
