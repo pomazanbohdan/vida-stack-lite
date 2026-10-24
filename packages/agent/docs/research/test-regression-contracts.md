@@ -421,6 +421,13 @@ lock and receipt and compare their bytes plus the selector, journal, cutoff and
 Host database afterimages. The admission shortcut does not cover that reader,
 and this inspection grants no mutation or Runtime authority.
 
+For that same legacy staged-selector fixture, keep the selector, released lock,
+receipt and cutoff valid while changing only `journal.status` from `staged` to
+`not-staged`. Public inspection must return `GAP-VIDA-RUN-SELECTOR-001` with
+`Cutover journal is incomplete.` Restore the original journal bytes in
+`finally`, then compare the full `.agent` and Host database afterimages and
+confirm the admission-attempt list remains empty.
+
 With no active selector and an existing empty `.agent/cutover` directory, call
 the exported public inspection path and require the session-absent diagnosis.
 Assert the selector remains absent, the cutover directory remains empty, and
@@ -437,6 +444,11 @@ Require the exact incomplete-forward refusal and unchanged `.agent`/Host
 afterimages and admission attempts; remove the fixture-owned marker and compare
 the original afterimage. This covers forward selection and its guard only; it
 does not grant forward-update authority.
+At the maintenance guard boundary, supply an otherwise valid internal selector
+state whose `forward` flag is true while a maintenance-lock marker exists.
+Require the guard's documented short-circuit and prove the marker bytes are
+unchanged. This unit case assumes forward authority was already validated by
+`activeSelector`; it does not replace the public selector-authority checks.
 In the released-selector fixture, exercise the prepared-selector refusal with an
 unsupported state policy, the prepared-journal refusal with a changed journal
 status, then recompute selector and commit digests for both a nested extra

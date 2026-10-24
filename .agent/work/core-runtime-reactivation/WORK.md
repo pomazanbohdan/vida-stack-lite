@@ -7735,8 +7735,9 @@ new block and formatter differences; both were fixed before the passing target.
 The release-proof rebind was added after independent review, then the target and
 all final scoped checks passed. The run log is
 `DIAG/key462-focused-runentrypoint-target-01.log`. The owner projection remains
-at Key460 until the next producer terminal result. Commit/push and exactly one
-changed-input stage for this corrected packet remain pending.
+at Key460 until the next producer terminal result. Commit
+`e6f94c931611aa8b44f0d0174dc8b00e1bc7d5ed` was then pushed, and its one
+changed-input stage completed; terminal details follow.
 
 Post-stage inspection accidentally expanded large outputs once: asking `jq
 keys` of the attempts array printed its index list, including 996 elements;
@@ -7748,3 +7749,112 @@ queries select `.attempts[-1]`, scalar bindings, and branch IDs 189–201 only.
 These wrapper output estimates are not platform model-token usage; aggregate
 tool-call and billed-token counts remain unavailable. Preserve the single
 producer and use narrow projections/diffs to avoid repeating this overhead.
+
+### Key462 changed-input coverage stage terminal — 18:35 UTC
+
+After normal hooks and ordinary push, the existing serial producer ran the
+corrected ID200 packet once at `/workspace/contour-stage-luFjgH` for commit
+`e6f94c931611aa8b44f0d0174dc8b00e1bc7d5ed`. It completed in 253,196.590 ms
+under the unchanged 330,000 ms bound: exit 0, no signal/spawn error/timeout,
+complete capture, closed process group, unchanged boot and image inputs, and
+published by the current owner. Raw root capture is
+`DIAG/bun-cli-run-key462-stage-20261024-01.log`; the stage tree retains request,
+launch, execution, publication and stdout/stderr receipts.
+
+The image binds tree `597ed74b253bdb053644ea97776df574ba1214ca`, input
+fingerprint `8e0c7ffd314f8e84fbdd659e0deefff10e2dff5db65cbc86b0272832786692f1`,
+and manifest SHA-256
+`970367b86ce303eba181247e1dc195975825d65bd6413663b2de05561b4e400c`. Run
+`1ff3fd00-b62e-4cac-80b5-7b426eb637a9` passed 127 tests and 2,672 expectations
+across the two selected files; Bun test time was 245.98 s. Report SHA-256 is
+`013594dbd4140096cda6e06f971035d83be9f60f4db5363c11dbc89cd62561e0`, and
+report-manifest SHA-256 is
+`1c05daa926aa77b8929118cc2270f7a3876c3eac7c0075b06dd4c75f4d9f7e25`.
+
+The owner projection now records accepted `focused-diagnostic`, 1,467 attempts,
+and `BLOCKED`: F441/555, L2041/2860, S2191/3138, B2581/3660, max CC/CRAP 501.
+ID200 moved from `[0,3]` to `[1,3]`; all arms/operands in IDs189–201 are now
+positive in this report. This closes that local released-selector guard group,
+not the `bun-cli-run` contour or numeric gate. Compared with Key460's 202.66 s
+test time, this same 127-test suite took 245.98 s while adding seven
+expectations. Hosts, cache and runtime conditions are not controlled, so the
+43.32 s difference is measured but has no supported causal explanation.
+
+The next bounded source/report candidates in this same contour are ID205 at
+`run.ts:1931` `[0,2]` and ID209 at `run.ts:1961` `[0,14]`; a blind Luna
+read-only reachability review confirmed both source paths and the ID209
+forward-selector precondition. For ID205, reuse the existing staged public
+inspection setup, change only the staged journal status, and require the exact
+incomplete-journal refusal plus unchanged `.agent` and Host database snapshots.
+For ID209, reuse the existing maintenance-guard unit fixture, set `forward:true`
+on the validated internal selector state, place a maintenance marker, and
+assert the documented short-circuit leaves its bytes unchanged. The first case
+reaches the selector reader through public inspection; the second tests the
+guard boundary after `activeSelector` validation. Neither grants mutation or
+consumer authority. These two cases are batched before the next contour stage;
+no objective skip is supported. No parallel full stage, additional suite, Vex
+refresh, disk survey, or cleanup was started.
+
+### Key463 ID205/ID209 packet — pre-stage record, 2026-10-24 18:44 UTC
+
+The current rolling three-hour window is 15:44:15–18:44:15 UTC. Existing
+terminal receipts in that interval cover Keys452–460 and Key462: ten serial
+one-worker stages, 1,270 selected tests and 25,958 expectations. Native elapsed
+time totals 2,171,923.326 ms, averages 217,192.333 ms per stage, and ranges
+196,979.462–253,196.590 ms. Receipt modification times place the first included
+terminal at 15:52:03; Key451 at 15:32:41 is outside the window. All ten
+receipts record exit 0, no timeout, complete capture and observed process-group
+closure. Inputs, test assertions, cache state and host conditions vary, so this
+is one-worker cost evidence, not a controlled speed comparison.
+
+| Check order / producer parallelism | Measured fact | Decision or hypothesis |
+| --- | --- | --- |
+| Reuse the latest report, map prerequisites, batch related reachable cases, run target/static/review, commit and push, then one changed-input coverage stage at 1x | Ten stages followed this serial producer model. The suite cost was 196.979–253.197 s; Key462 was the maximum at 253.197 s. | Retain this measured order. No matched A/B order trial exists. |
+| Stage before review or stage once per subfix at 1x | The ten-stage mean was 217.192 s. | Each avoidable repeated stage would cost about 3.62 minutes at the observed mean; this is an estimate, not a causal measurement. |
+| Run two or four numeric stages concurrently | No qualified 2x/4x receipt exists. | Keep one producer. Higher concurrency is unmeasured and conflicts with the serial contour owner. |
+
+The current report selected ID205 (`run.ts:1931`, `[0,2]`) and ID209
+(`run.ts:1961`, `[0,14]`). One fixture extension changes only the staged
+journal status and requires the exact `Cutover journal is incomplete.` public
+inspection refusal plus unchanged `.agent` and Host database snapshots. The
+other reuses the existing maintenance-guard unit test, passes `forward:true`
+with an active lock marker, and verifies the guard's short-circuit preserves
+the marker bytes. This tests the guard boundary after selector validation; it
+does not claim end-to-end forward-selector inspection or grant authority.
+Independent blind Luna review found no must-fix; receipt:
+`DIAG/key463-id205209-independent-review-20261024-01.md`.
+
+The first focused invocation passed both tests (101 expectations, 0 failures,
+21.10 s) but its raw output existed only in the tool result. To preserve an
+on-disk attempt log, the same two tests were invoked once more; the captured
+run passed 2/2, 101 expectations, 0 failures in 14.24 s at
+`DIAG/key463-focused-id205209-target-01.log`. This was a targeted evidence
+recapture, not a suite or contour stage. `bun run typecheck` passed the pinned
+strict checks (545 captured TypeScript files, 0 diagnostics; source project 104
+files, 0 diagnostics). Pinned Oxlint passed both the configured package gate
+and a direct changed-test-file run. The package format script checked 515 files
+despite receiving two paths; a direct pinned formatter check on the two changed
+files passed in 35 ms. The first attempted script name `typecheck:strict` does
+not exist; the package's `typecheck` script was used instead and passed. One
+instruction-path lookup was issued from `packages/agent` rather than the repo
+root and returned `No such file`; the relevant instructions had already been
+read at the repository root. These were workflow/tool-selection overhead, not
+product failures, compile failures, or mutation kills.
+
+Independent static checks ran alongside the first focused target; their
+combined wall time was not isolated from that target. No controlled serial
+comparison is available. Platform-wide tool-call and model-token totals remain
+unavailable; the two test invocations and shell-command counts must not be
+reported as those totals. The owner projection before this packet remains
+1,467 attempts, accepted `focused-diagnostic`, `BLOCKED`, F441/555, L2041/2860,
+S2191/3138, B2581/3660, with max CC/entry CRAP 501. Denominators and fences
+remain unchanged. The package has no objective skip for either candidate.
+
+This packet changes only the test and its research contract; it does not change
+production code, runtime/loader behavior, database state, or consumer effects.
+The tracked producer projection files remain unstaged and producer-owned. The
+prior one-time disk admission record still shows 13,309,501,440 scratch bytes
+against the 2,147,483,648-byte minimum; no second disk check or cleanup was
+performed. No Vex refresh was run because its index remains stale/unavailable.
+One normal commit/push and then one changed-input stage through the existing
+producer are next; no stage is active now.

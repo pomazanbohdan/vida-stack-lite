@@ -2831,6 +2831,13 @@ describe('vida-agent run entrypoint fast checks', () => {
       expect(() => assertNoActiveCutoverMaintenance(selectedGeneration)).toThrow(
         'Cutover maintenance release proof is invalid.',
       );
+
+      const activeMaintenancePath = path.join(root, 'maintenance-lock.v1.json');
+      const activeMaintenanceBytes = Buffer.from('{"fixture":"forward authority already validated"}\n');
+      writeFileSync(activeMaintenancePath, activeMaintenanceBytes);
+      const forwardSelector = { ...selectedGeneration, forward: true };
+      expect(() => assertNoActiveCutoverMaintenance(forwardSelector)).not.toThrow();
+      expect(readFileSync(activeMaintenancePath)).toEqual(activeMaintenanceBytes);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -8800,6 +8807,24 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const stagedJournalBytes = readFileSync(stagedJournalPath);
             const stagedLockBytes = readFileSync(stagedLockPath);
             const stagedReleaseBytes = readFileSync(stagedReleasePath);
+            const beforeIncompleteStagedJournal = snapshotAuthorityFixture(path.join(root, '.agent'));
+            try {
+              writeFileSync(stagedJournalPath, record({ ...stagedJournal, status: 'not-staged' }));
+              await runWithPackageIdentity(
+                {
+                  code: 'GAP-VIDA-RUN-SELECTOR-001',
+                  message: 'Cutover journal is incomplete.',
+                },
+                [...inspectArgs, '--inspect', 'true'],
+              );
+            } finally {
+              writeFileSync(stagedJournalPath, stagedJournalBytes);
+            }
+            expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeIncompleteStagedJournal);
+            expect(readFileSync(stagedJournalPath).equals(stagedJournalBytes)).toBe(true);
+            expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(
+              afterDatabaseInspection,
+            );
             const inconsistentLock = { ...stagedLock, payload_manifest_sha256: 'd'.repeat(64) };
             const inconsistentReceipt = {
               ...stagedReceipt,
