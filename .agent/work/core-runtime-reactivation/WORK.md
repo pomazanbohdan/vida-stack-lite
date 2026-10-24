@@ -5201,14 +5201,48 @@ are `DIAG/bun-cli-run-key425-format-20261024-02.log`,
 `DIAG/bun-cli-run-key425-typecheck-20261024-02.log`,
 `DIAG/bun-cli-run-key425-lint-20261024-02.log`, and
 `DIAG/bun-cli-run-key425-target-20261024-02.log`. Ordinary commit/push and one
-current-producer stage remain pending.
+current-producer stage followed. Commit `a28ea03926b0353c90556eaa915386ebb33cca3d`
+passed ordinary hooks and pushed to `work` before the stage.
+
+The current producer ran one `bun-cli-run` coverage stage against the pushed
+Key425 packet. Run `c12a2398-54b9-4e48-a36a-a68295ac1b05` used tree
+`145d126a77c1f8dd4d533c832a492316c31a87a2`, input fingerprint
+`be9332ab7faf41572ee8df97f321df9b8a928d926c55788ef645bc82473f04ec`, and
+manifest digest
+`364208ae35dd78de355b3a8bc85608a51e2790a9a3a3e5b7b33baf785d2f76ce`. It
+completed with exit 0 in 197,219.28 ms. Capture completed, the group closed,
+boot stayed unchanged, image inputs were unchanged, and the report was
+published. The terminal log is
+`DIAG/bun-cli-run-key425-stage-20261024-01.log`; retained stage directory:
+`/workspace/contour-stage-h4b0Dk`.
+
+The producer ran 121 tests across `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`: 121 passed, 0 failed, 2,262 Bun
+expectations, 191.85 s test duration. It added five functions (including the
+inline collector callback), seven lines, nine statements and 12 branches
+relative to Key424. `isHistoricalRunHistory` ran 5 times with binary operands
+`[5,3,2]`; `isHistoricalConfiguredContext` ran 6 times with `[6,3,2]`;
+`historicalConfiguredContexts` ran once and its callback 7 times; collector
+branch outcomes were `[6,1]` and `[7,6]`; `requireHistoricalItem` ran twice
+with outcomes `[1,1]`. Current F/L/S/B is `419/555`, `1914/2860`,
+`2042/3138`, `2344/3661`; max CC 501, max entry CRAP 992; status remains
+`BLOCKED`. The immutable report is
+`/workspace/.vida-quality-inputs/df63a650a1d34daf9a7f78a7f1dbefde4fe8d87a/repository/packages/agent/coverage/bun-unified/diagnostics/c12a2398-54b9-4e48-a36a-a68295ac1b05.focused-coverage.json`.
+Projection was updated by the producer owner. No objective disposition was
+applied. The next report-ordered zero callable in `bin/run.ts` is
+`isHistoricalScopedSnapshot` at line 2928.
+
+One scoped jq summary initially failed with an index-expression error and no
+file effects; the corrected query selected only the four target function
+counters, local branch counters, and next-zero names. Do not repeat whole-file
+coverage dumps.
 
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423/424 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423/424/425 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
 202,630.39 / 187,589.41 / 191,494.56 / 215,386.40 / 207,589.09 /
-208,864.42 / 182,574.22 / 188,314.45 / 181,773.73 ms. Each stage used different immutable image and source/test
+208,864.42 / 182,574.22 / 188,314.45 / 181,773.73 / 197,219.28 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and
@@ -5226,6 +5260,10 @@ test inputs and immutable producer image differ.
 Key424 kept static-first ordering; its focused target took 1,282 ms and the
 stage ran 120 tests in 177.10 s. These values are also not causally comparable
 with Key423 because the source/test/image inputs changed.
+Key425 used static-first ordering with five callables in one focused test; its
+1,189 ms target ran in a different producer image from the 197,219 ms stage
+which selected 121 tests. The change in aggregate stage/test times is not a
+controlled per-test setup cost or proof that packet size improved runtime.
 Producer concurrency stayed at one. Observed order was focused target,
 scoped formatting/strict/lint, independent review, ordinary hook-backed commit
 and push, then one contour stage. A static-first order could have caught a
