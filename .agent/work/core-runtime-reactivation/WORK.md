@@ -5271,12 +5271,45 @@ the compile issue without restoring the runtime branch. The final strict
 `DIAG/bun-cli-run-key426-target-20261024-02.log`. This is focused evidence;
 commit/push and one current-producer stage remain pending.
 
+Commit `af3224041280167d8ab70b4a8f47481b89444c54` passed ordinary hooks and
+pushed to `work` before the single current-producer stage. Run
+`09c832d4-59cd-4242-afce-df8c4385f206` used tree
+`193c01c01564e75e420d7991f8a6c1b1298dcc7a`, input fingerprint
+`13dab22944bced2f698b585da446a5bb40cb502b54916d4bae505ad1241bce6d`, and
+manifest digest
+`d6eff309ab621c39ccc2b8947f6f56bfc7ee89ed84f53886918128f7431b73da`. It
+completed with exit 0 in 225,461.82 ms. Capture completed, the group closed,
+boot stayed unchanged, image inputs were unchanged, and the report was
+published. The terminal log is
+`DIAG/bun-cli-run-key426-stage-20261024-01.log`; retained stage directory:
+`/workspace/contour-stage-oK0kF3`.
+
+The producer ran 122 tests across `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`: 122 passed, 0 failed, 2,262 Bun
+expectations, 219.45 s test duration. Five target functions were observed:
+`isHistoricalScopedSnapshot` 20 calls, `isHistoricalScopedEntry` 16,
+`isHistoricalScopedEntryPath` 16, `isHistoricalPresentScopedEntry` 7 and
+`readonlyReleaseThreadId` 4. Their tested decision counts are all nonzero;
+the present-entry predicate's redundant `typeof` operand was removed before
+this image. Current F/L/S/B is `424/555`, `1927/2860`, `2059/3138`,
+`2374/3660`; max CC 501, max entry CRAP 992; status remains `BLOCKED`. The
+immutable report is
+`/workspace/.vida-quality-inputs/70a1e299a19d8872aea03a525093ee5b7a653646/repository/packages/agent/coverage/bun-unified/diagnostics/09c832d4-59cd-4242-afce-df8c4385f206.focused-coverage.json`.
+Projection was updated by the producer owner. The next zero callable is
+`isReadonlyReleasePlan` at line 3057, but the first report-ordered uncovered
+branch is earlier: `checkedDirectory` at line 87 has `[0,4033]`, followed by
+`pathExists` line 97 `[231,0]`, `compareStrings` line 135 `[6264,0]`,
+`isActiveRuntimeSelectorRecord` line 184 `[0,32]`, and `recordField` line 210
+`[0,92]`. Exact F/L/S/B remains open; the next packet will close those earlier
+branch gaps instead of following the zero-function list alone.
+
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423/424/425 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423/424/425/426 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
 202,630.39 / 187,589.41 / 191,494.56 / 215,386.40 / 207,589.09 /
-208,864.42 / 182,574.22 / 188,314.45 / 181,773.73 / 197,219.28 ms. Each stage used different immutable image and source/test
+208,864.42 / 182,574.22 / 188,314.45 / 181,773.73 / 197,219.28 /
+225,461.82 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and
@@ -5298,6 +5331,10 @@ Key425 used static-first ordering with five callables in one focused test; its
 1,189 ms target ran in a different producer image from the 197,219 ms stage
 which selected 121 tests. The change in aggregate stage/test times is not a
 controlled per-test setup cost or proof that packet size improved runtime.
+Key426's target took 2,150 ms and the stage ran 122 tests in 219.45 s after
+removing one redundant branch. The inputs and image changed, so neither the
+longer aggregate test duration nor the one-branch denominator reduction is a
+causal comparison or a qualification bypass.
 Producer concurrency stayed at one. Observed order was focused target,
 scoped formatting/strict/lint, independent review, ordinary hook-backed commit
 and push, then one contour stage. A static-first order could have caught a
