@@ -8496,6 +8496,110 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 deriveWorkspaceId(config.repository.repository_id, root),
               ).admission_attempts,
             ).toEqual([]);
+            const databaseRelativePath = path.relative(root, databasePath).replaceAll('\\', '/');
+            const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+            const expectReadOnlyRefusal = async (expected: { code: string; message: string }) => {
+              const beforeAuthority = snapshotAuthorityFixture(path.join(root, '.agent'));
+              const beforeDatabase = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+              expect(beforeDatabase.admission_attempts).toEqual([]);
+              await runWithPackageIdentity(expected, [...inspectArgs, '--inspect', 'true']);
+              expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeAuthority);
+              expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeDatabase);
+            };
+            const preparedInstallPath = path.join(generationRoot, 'prepared-install.json');
+            const preparedInstallBytes = readFileSync(preparedInstallPath);
+            const activationDecisionPath = path.join(generationRoot, 'activation-decision.v1.json');
+            const activationDecisionBytes = readFileSync(activationDecisionPath);
+            const selectorCommitPath = path.join(generationRoot, 'selector-commit.json');
+            const selectorCommitBytes = readFileSync(selectorCommitPath);
+            try {
+              writeFileSync(selectorPath, record({ ...selector, state_policy: 'forward_only_preserve_work' }));
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Prepared selector is incomplete.',
+              });
+              writeFileSync(selectorPath, selectorBytes);
+
+              const incompleteJournal = { ...journal, status: 'not-installing' };
+              writeFileSync(preparedInstallPath, record(incompleteJournal));
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Prepared cutover journal is incomplete.',
+              });
+              writeFileSync(preparedInstallPath, preparedInstallBytes);
+
+              writeFileSync(selectorPath, record(invalidSelector));
+              writeFileSync(activationDecisionPath, record(invalidDecision));
+              writeFileSync(selectorCommitPath, record(invalidCommit));
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Prepared cutover decision or selector commit is invalid.',
+              });
+            } finally {
+              writeFileSync(selectorPath, selectorBytes);
+              writeFileSync(preparedInstallPath, preparedInstallBytes);
+              writeFileSync(activationDecisionPath, activationDecisionBytes);
+              writeFileSync(selectorCommitPath, selectorCommitBytes);
+            }
+            expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
+            expect(readFileSync(preparedInstallPath).equals(preparedInstallBytes)).toBe(true);
+            expect(readFileSync(activationDecisionPath).equals(activationDecisionBytes)).toBe(true);
+            expect(readFileSync(selectorCommitPath).equals(selectorCommitBytes)).toBe(true);
+
+            const forwardIntentPath = path.join(generationRoot, 'forward-intent.v1.json');
+            expect(existsSync(forwardIntentPath)).toBe(false);
+            const beforeForwardAuthority = snapshotAuthorityFixture(path.join(root, '.agent'));
+            try {
+              writeFileSync(forwardIntentPath, record({ schema: 'WrongForwardUpdateIntent/v1' }));
+              writeFileSync(selectorPath, record({ ...selector, state_policy: 'clean_start_no_ticket_transfer' }));
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Forward selector is incomplete.',
+              });
+              writeFileSync(selectorPath, record({ ...selector, state_policy: 'forward_only_preserve_work' }));
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Cutover authority has an invalid shape or encoding.',
+              });
+            } finally {
+              writeFileSync(selectorPath, selectorBytes);
+              rmSync(forwardIntentPath, { force: true });
+            }
+            expect(existsSync(forwardIntentPath)).toBe(false);
+            expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeForwardAuthority);
+
+            const repairRecords = [
+              ['repair-plan.v1.json', 'VidaActiveLauncherRepairPlan/v1'],
+              ['repair-authorization.v1.json', 'VidaActiveLauncherRepairAuthorization/v1'],
+              ['repair-decision.v1.json', 'VidaActiveLauncherRepairDecision/v1'],
+              ['repair-selector-commit.v1.json', 'VidaActiveLauncherRepairSelectorCommit/v1'],
+            ] as const;
+            const repairPaths = repairRecords.map(([name]) => path.join(generationRoot, name));
+            expect(repairPaths.every((file) => !existsSync(file))).toBe(true);
+            const beforeRepairAuthority = snapshotAuthorityFixture(path.join(root, '.agent'));
+            try {
+              for (const [name, schema] of repairRecords)
+                writeFileSync(path.join(generationRoot, name), record({ schema }));
+              const incompleteRepairSelector: Record<string, unknown> = { ...selector };
+              delete incompleteRepairSelector.payload_manifest_sha256;
+              delete incompleteRepairSelector.state_policy;
+              delete incompleteRepairSelector.activation_decision_sha256;
+              writeFileSync(selectorPath, record(incompleteRepairSelector));
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Repair selector is incomplete.',
+              });
+              writeFileSync(selectorPath, selectorBytes);
+              await expectReadOnlyRefusal({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message: 'Repair authority is invalid.',
+              });
+            } finally {
+              writeFileSync(selectorPath, selectorBytes);
+              for (const file of repairPaths) rmSync(file, { force: true });
+            }
+            expect(repairPaths.every((file) => !existsSync(file))).toBe(true);
+            expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeRepairAuthority);
             expect(fixture.invoke(admitted.admissionArgs, 0).runtime_selector_observed).toBe(true);
           }
           if (selectorPhase === 'released') {

@@ -7629,6 +7629,51 @@ controlled speed comparison.
 | Full stage before review or for every subfix at 1x | Mean stage cost was 212.827 s, with 196.979–228.950 s observed range. | One skipped repeat is an estimated 3.55 minutes saved, not a controlled measurement. |
 | Two or four concurrent numeric stages | No qualified parallel receipt exists. | Keep one producer; 2x/4x remains unmeasured and conflicts with the serial producer contract. |
 
+### Key460 refusal-regression packet — pre-stage record
+
+The current rolling window is 2026-10-24 15:13:20–18:13:20 UTC. Reusing the
+retained terminal ledger, Keys450–459 are the ten one-worker changed-input
+stages in this window. They ran 1,270 selected tests and 25,583 expectations;
+their aggregate elapsed time is 2,138,307.094 ms (mean 213,830.709 ms, range
+196,979.462–228,950.409 ms). This aggregate subtracts Key445's 202,793.193 ms,
+127 tests, and 2,468 expectations from the prior eleven-stage summary; its
+duration lies inside the prior min/max, so the extrema are unchanged. Key450's
+retained stage directory birth time is 15:13:28 UTC, placing the complete
+Keys450–459 sequence within this window. These are heterogeneous one-worker
+costs, not an A/B ordering comparison. No changed-input stage ran after Key459
+through the 18:13:20 cutoff.
+
+The current packet adds seven refusal cases to the existing released-selector
+fixture and documents their behavior. A blind Luna review found the forward
+marker fixture used the supported schema while expecting the schema-refusal
+message; the marker now uses a deliberately unsupported schema. The same review
+found the contract called this file a “plan”; it now names the forward-intent
+record written by the fixture. Public inspection checks preserve the `.agent`
+tree and Host workspace projection and restore fixture inputs in `finally`.
+No production code, runtime loader, cutover, consumer effect, or projection was
+changed. The review otherwise found the error paths and no-write checks sound.
+
+Scoped validation passed with package-selected Bun 1.4.4: pinned strict
+typecheck (545 captured TS files, 0 diagnostics), pinned Oxlint, and pinned
+formatter on the changed test and research document. `git diff --check` passed.
+The corrected focused target ran once and passed 1/1 test, 118 filtered, with
+169 expectations in 29.79 s. Two earlier target attempts are retained: the
+first lacked `AGENT_RUNTIME_NATIVE_COVERAGE_MAIN=1` and registered no matching
+test; the next exposed the fixture/schema mismatch and failed an expected-message
+assertion. Neither is a product failure or mutation kill. Three initial static
+commands were also misrouted from the repository root and failed before Bun
+loaded; rerunning from `packages/agent` passed. Platform-wide tool-call and
+model-token totals are unavailable; command/test-attempt counts above are not
+presented as token counts.
+
+This review/target sequence reused the exact report and source slice; Vex was
+not callable in this session, and the existing receipt already records the
+stale index, so no refresh or duplicate source index was started. No new disk
+survey or cleanup was performed. The prior stage admission receipt remains the
+available capacity evidence. The normal commit/push and one changed-input run
+by the existing serial producer are still pending; current report counters and
+the BLOCKED state must not be advanced by these local tests.
+
 Across Keys456–459, the retained ledger shows 14 focused invocations: four
 Key456 fixture/setup attempts failed and ten invocations passed. Key459 needed
 one package-selected target run (1/83) before stage. The earlier Key458 packet
