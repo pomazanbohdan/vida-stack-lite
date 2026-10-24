@@ -450,6 +450,13 @@ the selected-source provenance guard, and remain absent from the installed tree.
 For a forward predecessor that already introduced generated root `AGENTS.md`,
 build a second forward leaf and verify the recursive parent validation skips the
 installed-bundle check while preserving the generated entry and all afterimages.
+For installed leaf drift, keep the successor's changed bundle entry, source path,
+and digest valid, then alter only the installed file after fixture construction;
+require the exact per-file drift refusal and unchanged bundle/`.agent` afterimages.
+For changed-path-proof mismatch, retain a nonempty, fully rebound plan and a valid
+installed successor file, but omit exactly one changed path from `plan.changed`.
+Assert the final proof-comparison refusal and afterimages. Keep these cases
+separate because the per-file drift guard exits before the changed-list comparison.
 Public recovery-review negative exports vary exact outer keys, caller identity,
 owner/CAS bindings, source snapshot/entries, context and required observation.
 Every input remains malformed and must refuse before opening the recovery route,

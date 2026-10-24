@@ -5315,6 +5315,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'forward-generated-root-agents-installed-drift',
       'forward-generated-root-agents-parent-lineage',
       'forward-source-provenance-mismatch',
+      'forward-installed-bundle-leaf-drift',
+      'forward-changed-path-proof-mismatch',
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-baseline-path-non-string',
@@ -5373,6 +5375,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-generated-root-agents-installed-drift' ||
           scenario === 'forward-generated-root-agents-parent-lineage' ||
           scenario === 'forward-source-provenance-mismatch' ||
+          scenario === 'forward-installed-bundle-leaf-drift' ||
+          scenario === 'forward-changed-path-proof-mismatch' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
           scenario === 'repair-default-installed-bundle' ||
           scenario === 'repair-installed-payload-drift' ||
@@ -5782,6 +5786,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                   : [],
               additionalRetiredPaths: scenario === 'forward-partial-integration-retirement' ? ['AGENT.sidecar.md'] : [],
               additionalSuccessorFiles,
+              omitPlanChangedPaths:
+                scenario === 'forward-changed-path-proof-mismatch' ? ['vida-agent/bin/run.mjs'] : [],
             },
           );
         const forwardRoot = path.join(root, '.agent', 'cutover', 'fixture-forward-leaf');
@@ -5807,6 +5813,18 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                   bytes: Buffer.from('forward source provenance fixture\n'),
                   source_path: 'vida-agent/forward-source-provenance.txt',
                   source_sha256: digestBytes(Buffer.from('different source preimage\n')),
+                },
+              ]
+            : [];
+        const changedPathProofBytes = Buffer.from('forward selector proof fixture\n');
+        const changedPathProofSuccessorFile =
+          scenario === 'forward-changed-path-proof-mismatch'
+            ? [
+                {
+                  path: 'vida-agent/forward-selector-proof.txt',
+                  bytes: changedPathProofBytes,
+                  source_path: 'vida-agent/forward-selector-proof.txt',
+                  source_sha256: digestBytes(changedPathProofBytes),
                 },
               ]
             : [];
@@ -5844,11 +5862,15 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               scenario === 'repair-maintenance-lock-active'
               ? successorLauncherBytes
               : Buffer.from('y'),
-            [...generatedAgentsSuccessorFile, ...sourceProvenanceSuccessorFile],
+            [...generatedAgentsSuccessorFile, ...sourceProvenanceSuccessorFile, ...changedPathProofSuccessorFile],
           );
         }
         if (scenario === 'forward-generated-root-agents-installed-drift')
           writeFileSync(path.join(root, 'AGENTS.md'), 'installed generated AGENTS drift\n');
+        if (scenario === 'forward-installed-bundle-leaf-drift')
+          writeFileSync(path.join(root, 'vida-agent', 'bin', 'run.mjs'), 'installed forward bundle drift\n');
+        if (scenario === 'forward-changed-path-proof-mismatch')
+          writeFileSync(path.join(root, 'vida-agent', 'forward-selector-proof.txt'), changedPathProofBytes);
         if (scenario === 'forward-parent-cutoff-drift') {
           assert.ok(forwardFixture);
           writeFileSync(
@@ -6063,7 +6085,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-installed-bundle-inventory-mismatch' ||
           scenario === 'forward-source-provenance-mismatch' ||
           scenario === 'forward-generated-root-agents-provenance-mismatch' ||
-          scenario === 'forward-generated-root-agents-installed-drift'
+          scenario === 'forward-generated-root-agents-installed-drift' ||
+          scenario === 'forward-installed-bundle-leaf-drift' ||
+          scenario === 'forward-changed-path-proof-mismatch'
         ) {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);
@@ -6101,9 +6125,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                             ? 'Generated root AGENTS provenance differs.'
                             : scenario === 'forward-generated-root-agents-installed-drift'
                               ? 'Installed generated root AGENTS drift.'
-                              : scenario === 'forward-payload-manifest-digest'
-                                ? 'Repair payload manifest drift.'
-                                : 'Installed bundle inventory differs from forward manifest.',
+                              : scenario === 'forward-installed-bundle-leaf-drift'
+                                ? 'Installed forward bundle drift.'
+                                : scenario === 'forward-changed-path-proof-mismatch'
+                                  ? 'Forward changed-path proof differs.'
+                                  : scenario === 'forward-payload-manifest-digest'
+                                    ? 'Repair payload manifest drift.'
+                                    : 'Installed bundle inventory differs from forward manifest.',
           });
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);
