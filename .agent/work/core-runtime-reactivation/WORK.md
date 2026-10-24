@@ -3001,26 +3001,67 @@ I used the already-known Source location for this bounded fallback and did not
 reindex. The tool reported 1,579 original output tokens for that status result
 and truncated it; no Vex result was treated as proof of Source behavior.
 
-Added the bounded public-route test `lease renewal refuses source drift without
-issued writer authority and preserves state`. It verifies the exact context GAP
-and full Host/ledger/Journal afterimage equality. The scoped test-project check
-passes (509 files), package-pinned Oxlint passes, and the exact file format check
-passes. The targeted Bun 1.4.4 run passes 1 test / 8 expectations in 4,110 ms;
-it requires `AGENT_RUNTIME_NATIVE_COVERAGE_MAIN=1` to register the file's
-coverage-only cases, while `--test-name-pattern` runs only this case. The first
-no-env invocation matched zero tests and is retained at
-`DIAG/renewal-source-drift-targeted-test-20261024-4mMLxp.log`; it is not a test
-failure. The successful strict, lint, format and target logs are retained as
-separate files under `DIAG/renewal-source-drift-*20261024-*.log`. An initial
-Oxlint finding for `await-thenable` was corrected using the existing
-`Promise.resolve(expect(...).rejects...)` pattern before the passing checks.
-The bounded blind Luna review passed: it confirmed the real admitted producer,
-existing persisted lease/CAS, absence of issued actions, exact refusal and
-full no-write snapshot assertion, with no fabricated authority or weakened
-timeout/UNKNOWN handling. The reviewer did not inspect key 394 in the report or
-compare the diff against Git base; root verified the source guard and owns that
-integration check. After this packet is committed, run one changed-input
-coverage stage; do not repeat the stage for this test alone or change budgets.
+The first separate-case version verified the exact context GAP and full
+Host/ledger/Journal afterimage equality. Its isolated targeted run passed 1 test
+and 8 expectations in 4,110 ms with the native observer role enabled. The
+`AGENT_RUNTIME_NATIVE_COVERAGE_MAIN=1` gate is required to register the coverage
+cases; the first no-env call matched zero tests and remains at
+`DIAG/renewal-source-drift-targeted-test-20261024-4mMLxp.log`, not as a test
+failure. The scoped typecheck and Oxlint passed, and the exact file format check
+passed. An initial `await-thenable` finding was fixed with the existing
+`Promise.resolve(expect(...).rejects...)` pattern. A blind Luna review confirmed
+that the original candidate used a real admitted lease/CAS, no issued actions,
+the exact refusal and a full persisted-state assertion; that review did not
+check its one-per-file observer interaction or inspect report key 394.
+
+The first stage exposed that observer interaction. Removing the optional
+`run-admission-prepared` observer from the separate fixture avoided the
+duplicate arm, but the direct targeted retry hit the unchanged 5,000 ms child
+budget at 4,774 ms and retained an UNKNOWN fixture at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-renewal-source-drift-3hzxZU`.
+Its raw log remains at
+`DIAG/renewal-source-drift-correction-target-20261024-01.log`; the fixture and
+log are preserved and will not be replayed or cleaned up.
+
+To remove the second fixture setup and avoid observer reuse, the source-drift
+assertion now extends the existing `keeps CAS and report handling bound to one
+admitted attempt` case. That case already owns the admitted lease, source scope,
+and one `run-admission-prepared` observer. The added direct public `run()` call
+uses the post-renewal CAS, mutates only the temporary `AGENT.sidecar.md`, checks
+the exact refusal and unchanged database snapshot, then restores the file in a
+`finally` block before existing issue/report checks continue. The existing
+60,000 ms test budget and both observer roles stay unchanged. The revised test
+passed its focused public-case run: 1 test, 103 expectations, 31,620 ms. The
+package-pinned strict gate passed with no type errors in 543 files (544 captured
+TypeScript files); package-pinned Oxlint exited 0; exact formatting passed for
+the changed test file. A fresh blind Luna review passed the consolidated diff:
+it confirmed reuse of the existing admitted fixture and one-per-file observer
+slots, current post-renewal CAS/lease inputs, exact refusal and persisted-state
+equality, and restoration before later assertions. The review explicitly does
+not establish report-key qualification or exact contour coverage. Final check
+logs are retained at
+`DIAG/renewal-source-drift-final-{target,typecheck,oxlint}-20261024-01.log`; the
+format check completed directly in the terminal. After updating this record,
+run the documentation check, commit through normal hooks, push, and run one
+replacement changed-input stage on the new input fingerprint.
+
+### Changed-input stage failure — 2026-10-24
+
+The post-commit pinned stage `contour-stage-DWcEJ8` for `f4cef70` ended after
+174,599 ms with exit 1, complete capture, a closed process group, unchanged boot
+and image, and `publication: unknown-or-partial`. The selected suite failed at
+`run-entrypoint.test.ts:4823`: the new setup call attempted to arm the
+`run-admission-prepared` child observer a second time, after the existing case
+at line 4419 had already used that one-per-file observation slot. The targeted
+case passed alone because it did not include the earlier case. This is a
+test-observer collision, not a product behavior failure. Raw `stdout.log`,
+`stderr.log`, launch/execution receipts, and `publication-error.json` remain at
+`/workspace/contour-stage-DWcEJ8/`.
+
+The current revision reuses the existing fixture instead of adding a second
+child setup or observer arm. Do not repeat stage `DWcEJ8` or modify its retained
+evidence. After the focused checks, independent review and commit, run one
+replacement stage on the new input fingerprint.
 
 ## Owners and acceptance boundaries
 
