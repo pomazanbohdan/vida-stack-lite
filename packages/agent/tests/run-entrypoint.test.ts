@@ -5190,6 +5190,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'forward-installed-bundle-symlink',
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
+      'forward-documentation-baseline-path-non-string',
       'forward-documentation-evidence-under-bound',
       'forward-documentation-evidence-over-bound',
     ] as const) {
@@ -5223,6 +5224,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const documentationNewBytes = Buffer.from('forwarded documentation policy fixture\n');
         const documentationChange =
           scenario === 'forward-documentation-path-refusal' ||
+          scenario === 'forward-documentation-baseline-path-non-string' ||
           scenario === 'forward-documentation-evidence-under-bound' ||
           scenario === 'forward-documentation-evidence-over-bound'
             ? { path: documentationPath, bytes: documentationNewBytes }
@@ -5608,8 +5610,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             record({
               schema: 'VidaForwardLifecycleClearBinding/v1',
               baseline_path:
-                forwardEvidencePath ??
-                `.agent/work/${childGeneration}/documentation-baseline-0001.v1.json/../refused.json`,
+                scenario === 'forward-documentation-baseline-path-non-string'
+                  ? null
+                  : (forwardEvidencePath ??
+                    `.agent/work/${childGeneration}/documentation-baseline-0001.v1.json/../refused.json`),
             }),
           );
         const bundleRoot = path.join(root, 'vida-agent');
@@ -5816,6 +5820,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
         } else if (
           scenario === 'forward-documentation-path-refusal' ||
+          scenario === 'forward-documentation-baseline-path-non-string' ||
           scenario === 'forward-documentation-evidence-under-bound' ||
           scenario === 'forward-documentation-evidence-over-bound'
         ) {
@@ -5832,11 +5837,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(caught).toMatchObject({
             code: 'GAP-VIDA-RUN-SELECTOR-001',
             message:
-              scenario === 'forward-documentation-path-refusal'
-                ? 'Forward policy proof invalid: Forward documentation evidence path invalid.'
-                : scenario === 'forward-documentation-evidence-under-bound'
-                  ? 'Forward policy proof invalid: forward documentation proof: CLEAR checkpoint schema invalid'
-                  : 'Forward policy proof invalid: Forward documentation evidence exceeds bound.',
+              scenario === 'forward-documentation-baseline-path-non-string'
+                ? 'Forward policy proof invalid: leaf baseline path is invalid'
+                : scenario === 'forward-documentation-path-refusal'
+                  ? 'Forward policy proof invalid: Forward documentation evidence path invalid.'
+                  : scenario === 'forward-documentation-evidence-under-bound'
+                    ? 'Forward policy proof invalid: forward documentation proof: CLEAR checkpoint schema invalid'
+                    : 'Forward policy proof invalid: Forward documentation evidence exceeds bound.',
           });
           assert.ok(beforeDocumentationBytes);
           assert.ok(beforeDocumentationMetadata);

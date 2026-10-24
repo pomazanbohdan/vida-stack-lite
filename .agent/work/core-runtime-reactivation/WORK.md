@@ -6012,3 +6012,38 @@ failure. Model-token and aggregate tool/API-call totals remain unavailable.
 Pstack fresh independent review is still a tooling/access GAP. Keep
 `bun-cli-run` active and select the next reachable uncovered path from its
 current report; do not promote ID98, advance contour, or run CRAP/mutation.
+
+### bun-cli-run forward documentation binding packet — Key432 pre-stage, 2026-10-24
+
+The Key431 report left branch ID109 at `run.ts:1176` with `[0,1]`. Key432 adds
+one malformed-evidence case to the existing composite test: the forwarding
+binding record has `baseline_path: null`. The established forwarding fixture
+still supplies the valid surrounding plan, manifests and changed document;
+`readCurrentForwardDocumentationAuthority` therefore reaches its explicit
+non-string path guard before reading a baseline file. The test requires the
+exact wrapped `leaf baseline path is invalid` refusal and reuses the existing
+bundle, document and `.agent` no-write snapshots. It changes no product Source
+or runtime state.
+
+Root manually traced the fixture into the mapped guard and confirmed that the
+assertion would fail if the guard were removed or the wrong refusal returned.
+The current Pstack contract remains unavailable, so this is not represented as
+a fresh independent Luna review. Scoped Bun 1.4.4 format check, strict
+`tests/tsconfig.json` (510 files), Oxlint and `git diff --check` each passed
+once. The focused composite test passed once: 1 pass, 116 filtered, 139
+expectations, zero failures; case time 578.13 ms, command wall time 1.82 s.
+Receipts are `DIAG/bun-cli-run-key432-format-write-20261024-01.log`,
+`DIAG/bun-cli-run-key432-format-check-20261024-01.log`,
+`DIAG/bun-cli-run-key432-strict-20261024-01.log`,
+`DIAG/bun-cli-run-key432-oxlint-20261024-01.log`,
+`DIAG/bun-cli-run-key432-diff-check-20261024-01.log`, and
+`DIAG/bun-cli-run-key432-target-20261024-01.log`.
+
+This packet again used prerequisite-first review, parallel read-only static
+checks, and one serial target, with no failed fixture retries. It is another
+single observation, not a controlled speed comparison. No projection is
+updated from a focused test; the next producer must be one complete pinned
+`bun-cli-run` stage after ordinary commit/push and hook completion, and the
+resulting report will decide whether ID109 was hit. Keep ID98 undispositioned,
+retain all earlier receipts, and do not advance the contour or run
+CRAP/mutation.
