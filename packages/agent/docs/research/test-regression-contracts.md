@@ -431,6 +431,12 @@ For an otherwise schema-valid staged selector whose `runtime` is not
 Compare the selector and staged authority snapshots before and after the call,
 verify the Host projection and empty admission-attempt list are unchanged, then
 restore the original selector bytes.
+For a schema-valid staged selector without optional payload binding fields,
+place a forward-intent marker at the selected generation root and inspect.
+Require the exact incomplete-forward refusal and unchanged `.agent`/Host
+afterimages and admission attempts; remove the fixture-owned marker and compare
+the original afterimage. This covers forward selection and its guard only; it
+does not grant forward-update authority.
 For forward documentation authority, keep a CLEAR checkpoint schema- and digest-
 valid while pointing its receipt at a contained readable baseline path under a
 different work directory; assert the exact work/path mismatch refusal and

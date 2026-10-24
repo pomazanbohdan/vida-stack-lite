@@ -7546,3 +7546,36 @@ invocations passed. The nine Key456 attempts alone used 135.57 s; the two extra
 Key458 invocations before the final passing wrapper run consumed 26.28 s and
 were avoidable by choosing the wrapper and final fixture shape before the first
 target. Platform-wide tool-call and model-token totals remain unavailable.
+
+### Key459 next branch plan — forward-selector marker
+
+The latest accepted report `69b9ad4a-314c-4e83-ac37-f49529d6d9aa` makes ID189
+at `bin/run.ts:1831` the next missing arm, with hits `[0,4]`. The selected
+`forward-intent.v1.json` path controls this arm. A schema-valid legacy staged
+selector lacks optional payload binding fields; placing a generation-root
+forward-intent marker makes `activeSelector` enter the forward branch and refuse
+with the existing exact `Forward selector is incomplete.` guard before parsing
+forward authority. Independent blind Luna analysis confirms the public
+inspection route is reachable without runtime/loader/DB cutover or consumer
+effects; TESTING does not justify an objective skip. The analysis is
+`DIAG/bun-cli-run-key459-id189-blind-analysis-20261024-01.md`.
+
+The packet adds this marker case to the staged-selector fixture, verifies exact
+public refusal plus unchanged `.agent` and Host database snapshots/empty
+admission attempts, then removes its own marker and compares the original
+afterimage. It covers the branch selector and incomplete guard only, not forward
+update authority. One broad search by the blind analyst accidentally included
+coverage diagnostics and surfaced unrelated report snippets; the analyst
+stopped immediately and did not rely on those results. No files or evidence
+were changed by that search. Future bounded searches use source-file globs.
+The package-selected target passed 1/1 with 83 expectations. Scoped strict
+TypeScript passed 510 test files, pinned Oxlint passed, and one-file pinned Bun
+formatting passed after a scoped format write. The initial format check found
+style differences; the formatting write changed only the test file, so no
+semantic target rerun was needed. Independent blind review completed with no
+must-fix findings, confirming ID189 reachability, exact refusal, no-write
+assertions, and marker cleanup; its report is
+`DIAG/bun-cli-run-key459-blind-review-20261024-01.md`. Normal commit/push and
+one changed-input stage remain. The previous Key458 stage is terminal,
+committed and pushed; no producer is active. No Vex refresh, disk survey, or
+cleanup is planned.

@@ -8741,6 +8741,34 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               writeFileSync(selectorPath, selectorBytes);
             }
             expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
+            const forwardIntentPath = path.join(stagedRoot, 'forward-intent.v1.json');
+            expect(existsSync(forwardIntentPath)).toBe(false);
+            const beforeForwardMarker = snapshotAuthorityFixture(path.join(root, '.agent'));
+            let forwardMarkerOwned = false;
+            try {
+              forwardMarkerOwned = true;
+              writeFileSync(forwardIntentPath, record({ schema: 'VidaForwardUpdateMaintenance/v1' }));
+              const beforeForwardInspection = snapshotAuthorityFixture(path.join(root, '.agent'));
+              await runWithPackageIdentity(
+                {
+                  code: 'GAP-VIDA-RUN-SELECTOR-001',
+                  message: 'Forward selector is incomplete.',
+                },
+                [...inspectArgs, '--inspect', 'true'],
+              );
+              expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeForwardInspection);
+              expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
+              expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(
+                afterDatabaseInspection,
+              );
+              expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId).admission_attempts).toEqual(
+                [],
+              );
+            } finally {
+              if (forwardMarkerOwned) rmSync(forwardIntentPath, { force: true });
+            }
+            expect(existsSync(forwardIntentPath)).toBe(false);
+            expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(beforeForwardMarker);
             expect(fixture.invoke(stagedAdmitted.admissionArgs, 0).runtime_selector_observed).toBe(true);
             for (const changed of [
               { cutover_id: 'other-generation' },
