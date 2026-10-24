@@ -6713,3 +6713,35 @@ different commits/inputs. These observations are uncontrolled for host/cache and
 input-work differences; no speedup or higher concurrency is inferred. The next
 report candidate is ID116 at `bin/run.ts:1241`, with counts `[4,0]`; a blind
 read-only schema/caller review is pending before a test or skip is selected.
+
+### Key443 review and Key444 fixture for branch ID116
+
+The blind report-bound review found the conditional false arm at
+`bin/run.ts:1241` reachable. The transition schema permits `closeout:null`, the
+parser does not couple phase to closeout, and the producer uses that null in
+its valid `fenced` intermediate representation. The public current-leaf
+authority flow reads the transition and calls the path normalizer before its
+later applied-phase/reference gate, so null reaches the exact
+`leaf closeout work path differs` refusal. The reviewer traced the producer and
+preceding guards under the TESTING rule and rejected an objective skip. Evidence
+is retained in `DIAG/bun-cli-run-key443-id116-review-20261024-01.md`.
+
+Key444 reuses the existing admitted forward-documentation fixture and
+beforeimage helper. One temporary digest-bound transition sets `closeout:null`,
+`phase:'fenced'`, and `maintenance_released:false`, then invokes the existing
+public current-leaf authority route and asserts the exact path refusal. A shared
+rebind helper also removes duplicate operation-digest reconstruction from the
+existing source-admission negative case. The focused test passed: 1 pass, 118
+filtered, 0 failures, 52 expectations, 16.03 s command time. Checked-JS strict
+passed 227 files (1,000.42 ms), configured Oxlint exited 0, and the one-file
+formatter check passed. Independent blind review is pending; no full stage has
+run for Key444 yet.
+
+The Key444 independent test review is complete and found no must-fix. It
+confirmed the transition rebinder removes/recomputes `operation_digest`, keeps
+the earlier source-admission negative scenario intact, reaches the exact public
+refusal helper with an unchanged-state check, and restores the operation bytes
+in `finally`. The reviewer clarified the source branch's production location
+(`bin/run.ts:1241`) versus the test's current public-call location; no line
+mapping is overstated. The read-only result is
+`DIAG/bun-cli-run-key444-test-review-20261024-01.md`.

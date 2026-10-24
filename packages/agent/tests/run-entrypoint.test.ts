@@ -4671,13 +4671,18 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         });
         expectReadOnly(before);
       };
+      const rebindForwardTransition = (updates: Record<string, unknown>) => {
+        const { operation_digest: _operationDigest, ...operationBody } = transition;
+        const nextBody = { ...operationBody, ...updates };
+        return { ...nextBody, operation_digest: canonicalJsonDigest(nextBody) };
+      };
       const withoutForwardSourceAdmission = () => {
         const plan: Record<string, unknown> = { ...transitionPlan, source_admission: null };
         plan.fence_binding = documentationPolicyTransitionFence(plan);
-        const { operation_digest: _operationDigest, ...operationBody } = transition;
-        const nextBody = { ...operationBody, plan, plan_digest: canonicalJsonDigest(plan) };
-        return { ...nextBody, operation_digest: canonicalJsonDigest(nextBody) };
+        return rebindForwardTransition({ plan, plan_digest: canonicalJsonDigest(plan) });
       };
+      const withoutForwardCloseout = () =>
+        rebindForwardTransition({ closeout: null, phase: 'fenced', maintenance_released: false });
       const encodeEvents = (events: unknown[]) =>
         Buffer.from(events.map((event) => JSON.stringify(event)).join('\n') + '\n');
       writeFileSync(documentFile, newDocumentBytes);
@@ -4695,6 +4700,15 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
       expect(forwardUpdateAuthority(root, history.selector, history.selectorSha, history.generationRoot)).toBeNull();
       expectReadOnly(beforeHistory);
+
+      withRestoredBytes(transitionFile, record(withoutForwardCloseout()), () =>
+        expectAuthorityRefusal(
+          history.selector,
+          history.selectorSha,
+          history.generationRoot,
+          'leaf closeout work path differs',
+        ),
+      );
 
       withRestoredBytes(transitionFile, record(withoutForwardSourceAdmission()), () =>
         expectAuthorityRefusal(

@@ -411,7 +411,9 @@ For forward documentation authority, keep a CLEAR checkpoint schema- and digest-
 valid while pointing its receipt at a contained readable baseline path under a
 different work directory; assert the exact work/path mismatch refusal and
 unchanged fixture. Traversal and non-string baseline-path cases stop earlier and
-do not cover this later binding guard.
+do not cover this later binding guard. Also exercise a schema- and digest-valid
+intermediate transition with `closeout: null`; require the public current-leaf
+path check to refuse before later phase validation and preserve the fixture.
 Public recovery-review negative exports vary exact outer keys, caller identity,
 owner/CAS bindings, source snapshot/entries, context and required observation.
 Every input remains malformed and must refuse before opening the recovery route,
