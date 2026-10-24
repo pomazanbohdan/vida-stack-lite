@@ -6745,3 +6745,29 @@ in `finally`. The reviewer clarified the source branch's production location
 (`bin/run.ts:1241`) versus the test's current public-call location; no line
 mapping is overstated. The read-only result is
 `DIAG/bun-cli-run-key444-test-review-20261024-01.md`.
+
+### Key444 changed-input coverage stage terminal
+
+The Key444 packet commit `d10a841434393d3171360b80218be40a85980ab5` passed
+normal hooks and was pushed to `main`. The existing one-worker producer ran
+once at `/workspace/contour-stage-Z7JcSb`: run
+`49877575-bfbc-4053-9e3c-821c6438c6d4`, exit 0, no signal/spawn error/timeout,
+complete capture, closed group, unchanged boot and unchanged immutable image.
+The image binds source tree `813cde9d107ef481064c003dd9b2bcb8b2a64e0d`, input
+fingerprint `82f51c11e1cf70d60658a4f89d610e7e007d39311906ed079e06692bbd5557e1`,
+and manifest digest `898c3a9ebf8f763b605b7c168e9185cdc73216bdf843960f5f812b209f5e5456`.
+The root capture is `DIAG/bun-cli-run-key444-stage-20261024-01.log`; native
+terminal, stdout/stderr, launch, and image receipts remain in the stage directory.
+
+The stage ran 127 tests, 0 failures, 2,466 expectations; test time was 226.67
+seconds and total elapsed time 233,443.841 ms. The previous projection was
+F441/555, L2012/2860, S2161/3138, B2518/3660; it is now F441/555, L2013/2860,
+S2162/3138, B2520/3660. Branch ID116 at `bin/run.ts:1241` is `[4,1]`; ID117
+at line 1242 is `[1,4]`. Operation status remains BLOCKED; `max_cc` and
+`max_entry_crap` remain 501 and full/frozen qualification is pending.
+
+Key439, Key442 and Key444 stages measured 236,747.830 ms, 206,242.701 ms and
+233,443.841 ms at one worker. Test counts/inputs and host/cache state differ;
+these numbers do not prove a speedup or justify added numeric parallelism. The
+next report candidate is ID119 at `bin/run.ts:1258` (`[3,0]`); a blind
+read-only review of the journal cardinality guard is pending.

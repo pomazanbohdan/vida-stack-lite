@@ -42,7 +42,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-cli-public-entrypoints | 32/32 · 152/155 · 179/185 · 148/154 | 9 / 9 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-toolchain | 44/44 · 290/291 · 328/330 · 411/420 | 34 / 34 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-init | 84/84 · 326/326 · 349/353 · 196/211 | 12 / 12 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| bun-cli-run | 441/555 · 2012/2860 · 2161/3138 · 2518/3660 | 501 / 501 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-cli-run | 441/555 · 2013/2860 · 2162/3138 · 2520/3660 | 501 / 501 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-doc-clear | 44/46 · 207/230 · 241/281 · 183/229 | 44 / 44 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-observed-validation | 109/155 · 398/577 · 425/628 · 461/804 | 134 / 18090 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-observed-research | 158/419 · 586/2005 · 633/2225 · 433/1977 | 51 / 2652 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
@@ -1431,6 +1431,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 13c3c6fb-9644-4b06-b4ca-890e30c764cb | a096c9aca98604cf5de96eabca1543cc70b1cb2d | 2026-10-24T14:23:09.626Z | focused-diagnostic; owner accepted locally; selection bound | 441/555 · 2011/2860 · 2160/3138 · 2517/3660 | /workspace/.vida-quality-inputs/8be5f4231e4494932f94b1fa2d34191b2194c6de/repository/packages/agent/coverage/bun-unified/diagnostics/13c3c6fb-9644-4b06-b4ca-890e30c764cb.focused-coverage.json |
 | coverage-outcome | 5de93224-c058-468e-b159-f56b9a17522b | ba8214b1d4986c5fd4a239fdca3f49ea930dbcf9 | 2026-10-24T14:36:21.082Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/.vida-quality-inputs/2cf31aca848979f9aab5c26d6186ae39161845d3/repository/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/5de93224-c058-468e-b159-f56b9a17522b.json |
 | coverage | 5de93224-c058-468e-b159-f56b9a17522b | ba8214b1d4986c5fd4a239fdca3f49ea930dbcf9 | 2026-10-24T14:36:21.082Z | focused-diagnostic; owner accepted locally; selection bound | 441/555 · 2012/2860 · 2161/3138 · 2518/3660 | /workspace/.vida-quality-inputs/2cf31aca848979f9aab5c26d6186ae39161845d3/repository/packages/agent/coverage/bun-unified/diagnostics/5de93224-c058-468e-b159-f56b9a17522b.focused-coverage.json |
+| coverage-outcome | 49877575-bfbc-4053-9e3c-821c6438c6d4 | d10a841434393d3171360b80218be40a85980ab5 | 2026-10-24T14:45:03.489Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/.vida-quality-inputs/e06553acaae2fdce058fe32f1b92eb893379a3b3/repository/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/49877575-bfbc-4053-9e3c-821c6438c6d4.json |
+| coverage | 49877575-bfbc-4053-9e3c-821c6438c6d4 | d10a841434393d3171360b80218be40a85980ab5 | 2026-10-24T14:45:03.489Z | focused-diagnostic; owner accepted locally; selection bound | 441/555 · 2013/2860 · 2162/3138 · 2520/3660 | /workspace/.vida-quality-inputs/e06553acaae2fdce058fe32f1b92eb893379a3b3/repository/packages/agent/coverage/bun-unified/diagnostics/49877575-bfbc-4053-9e3c-821c6438c6d4.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
