@@ -4054,6 +4054,72 @@ token counts remain unavailable from receipts. Continue in `bun-cli-run` at
 the next report-order zero; do not repeat this completed stage or replay the
 overload compile error as a test kill.
 
+### Bun-cli-run key410 assurance next-actions filter — 2026-10-24
+
+The key409 report's next zero was `isUnissuedKind` at `bin/run.ts:380`, called
+when final assurance builds its `next_actions`. A blind native Luna confirmed
+that the existing passing `createFailedFinalCorrectionFixture` already creates
+the accepted writer/validator/tester/delivery history and can reuse its current
+preparation document. The key409 test is extended rather than creating another
+fixture: it asserts the persisted `prepare_delivery` observation, then calls
+the already imported public `run()` in-process with the same Work/Journal
+binding and `--prepare-assurance` absolute path. The ready response contains
+exactly three unissued review actions (`correctness`, `security`, `assurance`),
+no reverse actions and an empty `issued_actions`. This reaches the function in
+the current coverage process and performs only the intended fixture assurance
+preparation; it requests no review issuance or consumer effect.
+
+Using the default fixture preparation inputs is necessary for this second
+step and reuses them rather than running a separate workflow. The earlier
+`preparationInputs:false` option saved unrelated files for delivery-only
+coverage; it was superseded when the test combined final assurance coverage.
+No runtime improvement is claimed from those unpaired configurations.
+
+The first exact target invocation reached the fixture but passed a relative
+preparation path. CLI validation requires an absolute canonical path, so it
+returned `GAP-VIDA-RUN-CLI-001` before assurance preparation; its retained
+fixture is `/home/agent/.cache/vida-cloud-tooling/tmp/vida-absorption-SGTTHs`.
+This was an invocation failure, not a product bug or mutation kill. The path
+was corrected to `path.join(root, preparationPath)` and the exact target passed:
+1 pass, 8 filtered, 7 expectations; 11,461.65 ms case time / 12.85 s total.
+Scoped formatter (26 ms), strict (146 files, 942.48 ms) and type-aware Oxlint
+passed. The normal commit hook passed formatter on 536 files and strict on
+543 files. Independent blind review found no remaining issue. Its design/final
+reports and both target attempts are retained at
+`DIAG/bun-cli-run-key410-design-reuse-20261024-01.md`,
+`DIAG/bun-cli-run-key410-final-review-20261024-01.md`,
+`DIAG/bun-cli-run-key410-target-20261024-01.log`, and
+`DIAG/bun-cli-run-key410-target-20261024-02.log`.
+
+After commit `52d098a385ba830c3fa9279f36f785642cda42be` passed hooks and was
+pushed, exactly one pinned coverage stage ran at
+`/workspace/contour-stage-l4TJ14`. Run
+`03d429cb-dc97-44a0-bd02-bb915928beec` exited 0 in 182,091.09 ms under the
+unchanged 330,000 ms timeout. Receipts record complete untruncated
+stdout/stderr (7,976 / 15,888 bytes), observed process-group termination,
+unchanged boot/image inputs and successful publication. The image binds tree
+`c1a56ce63947d7867ae98b094074da7a8775f14d`, input fingerprint
+`bf4e3c77fe1742e29dfc0b1b963bccff1c0931718829200386c7ecf6a9415e72`, and
+manifest SHA-256
+`53fe24dabdb0b05f4481a59d60b4ac90448e7020189c9aeffff67f5040f1b50d`. Its
+projection is 368/557 F, 1699/2863 L, 1803/3143 S and 2044/3663 B, max CC 501,
+max entry CRAP 992, 1,377 attempts and `BLOCKED`. Compared with the preceding
+distinct image this is +7/+33/+33/+29, not a matched-input performance
+comparison or an aggregate maximum. The bound report marks
+`isUnissuedKind` covered, and its raw process map records both line-381
+`binary-expr` locations with hits `[6, 6]`. Its next report-order zero is
+`isCutoverEvidence` at `bin/run.ts:462`. Historical exact closures remain
+17/46; no objective skip, CRAP, mutation credit or contour closure is claimed.
+
+Target-first checks, three scoped static gates, review, ordinary commit/hooks
+and push, then one producer remained the sequence. One CLI target retry was
+justified by the canonical-path failure; no full suite was replayed. Producer
+parallelism stayed at one. The previous stage took 193,810.09 ms versus
+182,091.09 ms here, but these are different immutable images; do not infer a
+speedup. Tool/API call totals and token counts are unavailable. Continue from
+the current projection at `isCutoverEvidence` without replaying the failed
+relative-path attempt.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
