@@ -7375,34 +7375,78 @@ measured historical cost range, not a speedup comparison. The same
 check-before-stage order remains the measured choice; first-stage ordering and
 parallel full runs remain hypotheses or unqualified options as noted above.
 
-### Key457 next branch plan — selector absent with empty cutover root
+### Key457 terminal — selector absent with empty cutover root
 
-The accepted Key456 report makes ID185 the next confirmed uncovered arm in the
+The accepted Key456 report made ID185 the next confirmed uncovered arm in the
 same `bun-cli-run` contour: `bin/run.ts:1788`, hits `[1,0]`. Its false arm is
 reachable when `active-runtime-selector.v1.json` is absent while `.agent/cutover`
 exists and is empty; `activeSelector` then returns `null`. A blind Luna read-only
-analysis of the exact report and source confirmed the public-inspection route
-and distinguishes this from an absent cutover root or a nonempty cutover root.
+analysis confirmed the public-inspection route and distinguished this from an
+absent or nonempty cutover root. The packet reused the existing staged selector
+fixture and asserted the `session_absent` result, selector absence, empty
+cutover afterimage, unchanged Host projection, and exact selector/cutover
+restoration.
 
-The next packet reuses the staged selector fixture after its current assertions.
-It temporarily detaches the fixture-owned selector and cutover tree, creates
-only an empty `.agent/cutover`, invokes exported `run(args)` with read-only
-inspection, then restores the selector and cutover bytes under `finally`. The
-case must assert selector absence and an empty cutover directory before and
-after inspection, `session_absent`, an unchanged Host projection, and exact
-selector/cutover afterimages after restoration. The fixture owner has no
-consumer effects. This branch is reachable, so no objective skip is proposed.
+The target passed 1/1 with 67 expectations; scoped strict TypeScript passed for
+all 510 test files; pinned Oxlint, one-file format, and the focused
+documentation check passed. Independent blind review found no must-fix issue.
+The reviewer ran no tests. Analysis and review are retained at
+`DIAG/bun-cli-run-key457-id185-blind-analysis-20261024-01.md` and
+`DIAG/bun-cli-run-key457-blind-review-20261024-01.md`.
 
-The packet's checks are complete: the named target passed 1/1 with 67
-expectations; scoped strict TypeScript passed for all 510 test files; pinned
-Oxlint, one-file format, and the focused documentation check passed. The
-independent blind review found no must-fix issue. Its report is
-`DIAG/bun-cli-run-key457-blind-review-20261024-01.md`; the bounded branch
-analysis is `DIAG/bun-cli-run-key457-id185-blind-analysis-20261024-01.md`.
-The review confirms that the assertions bind the exact empty-cutover false arm,
-the selector and directory afterimages, and unchanged Host projection. No tests
-were run by the reviewer. The remaining sequence is ordinary commit and push,
-then one changed-input stage at one producer. The previous Key456 stage is
-terminal and committed; no second producer is active. Source/report reads stay
-bounded to ID185 and the existing fixture. No disk survey or cleanup is
-repeated.
+The packet was committed and ordinarily pushed as
+`62e3127bfdf1c9306c7c0867981c526c497ab29a`. One changed-input stage then ran
+at the sole producer in `/workspace/contour-stage-NA5MOJ`; its terminal native
+receipt is `execution.json`, with raw capture in `stdout.log` and `stderr.log`.
+The receipt records exit 0, no signal/spawn error/timeout, complete untruncated
+capture (7,977 stdout bytes and 17,380 stderr bytes), observed process and
+process-group termination, no termination attempts, unchanged boot and
+unchanged image inputs. It binds source tree
+`a72ed27f3bdd6373e864ea597e0cadb735527784`, input fingerprint
+`923e94e53a882f68b47cd578ff4b0c8d496f2a2aeea853bdd89c7a535e8aedd6`, and
+image manifest SHA-256
+`828cb0b753f1d7a9427b41d5d27c60e2bd4f15156ba8e40b9a479307860fb1dd`.
+
+The selected run `f2f65d16-c6f3-49c5-8a3a-7219cc9d8a12` passed 127 tests and
+2,604 expectations across the two selected files, with zero failures. Suite
+time was 193.72 s; native elapsed time was 198,681.286 ms. ID185 now has hits
+`[1,1]`. The producer projection is F441/555, L2031/2860, S2181/3138,
+B2565/3660, maximum CC/entry CRAP 501, status `BLOCKED`; denominator and
+fences are unchanged. This closes the tested branch arm only, not the contour.
+The report is retained at
+`/workspace/.vida-quality-inputs/b7f65b494f5be4bd61469694d79fd72d36bb582f/repository/packages/agent/coverage/bun-unified/diagnostics/f2f65d16-c6f3-49c5-8a3a-7219cc9d8a12.focused-coverage.json`.
+The stage receipt recorded 13,515,579,392 scratch bytes available against the
+existing 2,147,483,648-byte admission minimum; this is producer admission
+evidence, not a repeat filesystem survey.
+
+The captured test output also records fixture-owned retained roots for
+`deadline-expired`, `database-close-failed`, and `child-outcome-unknown`,
+including `/tmp/vida-run-uninitialized-3QxLag`. These are test-emitted custody
+evidence rather than Bun failures; this packet did not delete or relocate them.
+
+### Three-hour execution comparison — 2026-10-24 14:26:07–17:26:07 UTC
+
+Eleven serial one-worker terminal stages fall in this receipt-based window:
+Keys442, 444, 445, and 450–457. Their measured total is 2,339,883.849 ms,
+mean 212,716.714 ms, and range 196,979.462–233,443.841 ms. The prior Key439
+receipt at 14:24:58 is outside the window. Inputs, selected tests, caches, and
+host conditions differ, so these figures are a measured one-worker cost range,
+not a controlled speed comparison.
+
+| Check order / producer parallelism | Measured fact | Decision or hypothesis |
+| --- | --- | --- |
+| Reuse current report, map branch prerequisites, batch a reachable case, run target/static/review, commit/push, then one changed-input stage at 1x | All eleven stages in this window used one producer. Key457 passed 127 tests/2,604 expectations in 193.72 s; its exact target was 1/1 with 67 expectations. | Retain this measured order. Moving independent checks earlier may reduce repair reruns, but no matched A/B run proves that effect. |
+| Full stage before review or for each subfix at 1x | Mean stage time is 212.717 s, with observed range 196.979–233.444 s. | One avoided stage would save about 3.55 minutes by estimate; no controlled ordering trial was run. |
+| Two or four concurrent numeric stages | No qualified parallel receipt exists. | Keep producer parallelism at one; 2x/4x remain unmeasured and conflict with the single-producer contract. |
+
+Measured test-authoring activity in Key456 was nine focused-test invocations,
+four failed fixture attempts and five passing attempts, totaling 135.57 s of
+invocation wall time; Key457 required one passing focused target before its
+single stage. The failures were setup/assertion-sequence corrections, not
+mutation kills. Platform-wide tool-call and model-token totals remain
+unavailable. One broad `git diff` selection of the generated one-line
+`CONTOUR-STATUS.json` caused the executor to truncate an output reported as
+2,022,809 original tokens and 7,042,660 omitted bytes. No files were changed by
+that read. Future projection verification is limited to `git status --short`,
+`git diff --stat`, and selected JSON fields; do not print that line-oriented
+snapshot as a diff.
