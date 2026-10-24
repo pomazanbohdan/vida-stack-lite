@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { recoverFailedPrewriterOwner } from '../bin/recover-failed-prewriter-owner.ts';
-import { afterAll, describe, expect, test, spyOn } from 'bun:test';
+import { afterAll, describe, expect, setSystemTime, test, spyOn } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import {
   openAdmittedWorkspaceDatabase,
@@ -58,6 +58,15 @@ import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 import { initializeProject } from '../bin/init.ts';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.js';
+import {
+  admittedInput,
+  continuationState,
+  createInitialSourceWorkFixture,
+  expiredOwnerTime,
+  issueInitialSourceFixtureWriter,
+  prepareInitialSourceFrontier,
+  workLease,
+} from './helpers/initial-source-work-fixture.js';
 import type { RuntimeInitializationReceipt } from '../src/config/initialization-record.js';
 import { readRuntimeInitializationReceipt } from '../src/config/initialization-record.js';
 import { coordinationLedgerDigest, validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
@@ -4827,6 +4836,112 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(inspectClaimProjection()).toEqual(beforeExactRetry);
         } finally {
           writeFileSync(reportFile, originalReportBytes);
+        }
+        let sourceWriterRoot: string | undefined;
+        let sourceWriterFixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+        let sourceWriterCompleted = false;
+        let sourceWriterClosed = false;
+        let sourceWriterClockHeld = false;
+        let sourceWriterClockRestored = true;
+        try {
+          sourceWriterFixture = await createInitialSourceWorkFixture({ onRoot: (value) => (sourceWriterRoot = value) });
+          const clockFloor = expiredOwnerTime(sourceWriterFixture);
+          sourceWriterClockHeld = true;
+          sourceWriterClockRestored = false;
+          setSystemTime(new Date(clockFloor));
+          await prepareInitialSourceFrontier(sourceWriterFixture, 'writer');
+          const issuedWriter = await issueInitialSourceFixtureWriter(sourceWriterFixture);
+          const beforeWriterRenewal = continuationState(sourceWriterFixture);
+          const sourceWriterInput = admittedInput(sourceWriterFixture);
+          const sourceWriterItem = beforeWriterRenewal.journal.items[0];
+          const sourceScope = beforeWriterRenewal.journal.source_scope;
+          assert.ok(sourceWriterItem?.issue_id && sourceScope);
+          expect(sourceWriterItem.issue_id).toBe(issuedWriter.writer.issue_id);
+          const sourceAuthorizationReference = beforeWriterRenewal.work.lifecycle.references.find(
+            (reference) =>
+              reference.kind === 'execution_approval' &&
+              reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+              reference.disposition === 'current' &&
+              reference.decision === 'approved',
+          );
+          assert.ok(sourceAuthorizationReference);
+          const sourceAuthorizationBytes = readFileSync(
+            path.join(sourceWriterFixture.root, sourceAuthorizationReference.path),
+          );
+          expect(createHash('sha256').update(sourceAuthorizationBytes).digest('hex')).toBe(
+            sourceAuthorizationReference.sha256,
+          );
+          const sourceAuthorization = JSON.parse(sourceAuthorizationBytes.toString('utf8')) as {
+            scope_digest?: unknown;
+          };
+          expect(sourceAuthorization.scope_digest).not.toBe(beforeWriterRenewal.work.binding.work_source_revision);
+          const sourceWriterLease = workLease(beforeWriterRenewal.work);
+          const sourceWriterVersion = beforeWriterRenewal.journalVersion;
+          await assert.rejects(
+            run([
+              '--project-root',
+              sourceWriterFixture.root,
+              '--repository',
+              sourceWriterFixture.config.repository.repository_id,
+              '--project',
+              sourceWriterInput.selection.project,
+              '--work-path',
+              sourceWriterFixture.documents[0],
+              '--work-id',
+              sourceWriterFixture.identity.work_id,
+              '--attempt',
+              '1',
+              '--scope-digest',
+              sourceScope.digest,
+              '--team',
+              sourceWriterInput.selection.team,
+              '--kind',
+              sourceWriterInput.selection.kind,
+              '--intent',
+              sourceWriterInput.selection.intent,
+              '--workflow',
+              'task_execution',
+              '--renew-lease',
+              'true',
+              '--native-session-handle',
+              sourceWriterInput.nativeSessionHandle,
+              '--lease-generation',
+              String(sourceWriterLease.generation),
+              '--expected-revision',
+              String(sourceWriterVersion.revision),
+              '--expected-digest',
+              sourceWriterVersion.digest,
+            ]),
+            (error: unknown) => {
+              expect(error).toMatchObject({
+                code: 'GAP-VIDA-RUN-CONTEXT-001',
+                message: 'Writer heartbeat source authority changed.',
+              });
+              return true;
+            },
+          );
+          const afterWriterRenewal = continuationState(sourceWriterFixture);
+          expect(afterWriterRenewal).toEqual(beforeWriterRenewal);
+          sourceWriterCompleted = true;
+        } finally {
+          try {
+            if (sourceWriterFixture) {
+              await sourceWriterFixture.close();
+              sourceWriterClosed = true;
+            }
+          } finally {
+            try {
+              if (sourceWriterClockHeld) {
+                setSystemTime();
+                sourceWriterClockRestored = true;
+              }
+            } finally {
+              if (sourceWriterRoot && sourceWriterCompleted && sourceWriterClosed && sourceWriterClockRestored)
+                rmSync(sourceWriterRoot, { recursive: true, force: true });
+              else if (sourceWriterRoot)
+                process.stderr.write(`Retained source-writer renewal fixture: ${sourceWriterRoot}\n`);
+            }
+          }
         }
         completed = true;
       } finally {

@@ -3063,6 +3063,61 @@ child setup or observer arm. Do not repeat stage `DWcEJ8` or modify its retained
 evidence. After the focused checks, independent review and commit, run one
 replacement stage on the new input fingerprint.
 
+### Replacement stage and key391 writer-authority renewal packet — 2026-10-24
+
+The corrected source-drift packet was committed and pushed as
+`b15e05dbea990c9f23cd7416ddd6cae0ef246d4e`. Its single pinned producer stage,
+`contour-stage-H9uKAz`, completed on that immutable input in 164,751 ms with
+exit 0, complete capture, closed process group, unchanged boot/image and
+published projection. Focused coverage is now 299/557 functions, 1348/2863
+lines, 1439/3143 statements and 1713/3663 branches. The diagnostic confirms
+Istanbul key 394 is hit. Max CC remains 501, entry CRAP 5402 and the operation
+outcome remains BLOCKED/unqualified; this is not contour closure. The selected
+report is `43702909-1f0f-4bda-b222-d3e5c4dffcf2` under the immutable image
+`/workspace/.vida-quality-inputs/e412d8decf60b05fb322d9b025132b4212d8a3a5/`.
+Its stage receipts and raw terminal log remain at
+`/workspace/contour-stage-H9uKAz/` and
+`DIAG/renewal-source-drift-replacement-stage-20261024-01.log` respectively.
+Do not mutate or replay that image.
+
+The remaining smaller key391 path is now added inside the existing admitted
+`keeps CAS and report handling bound to one admitted attempt` test. It uses
+`createInitialSourceWorkFixture`, prepares and issues a real repository-source
+writer through the fixture's admission/lease/reservation helpers, and calls
+public `run()` with the persisted work identity, scope digest, lease generation
+and journal CAS. Before renewal, the test proves the current approved
+`LocalSourceWriteAuthorization/v1` reference hashes the on-disk bytes and that
+its `scope_digest` differs from the continued work binding. It then asserts the
+exact `GAP-VIDA-RUN-CONTEXT-001 / Writer heartbeat source authority changed.`
+refusal and byte-equivalent continuation state. No lease/authority is
+fabricated, no second observer role is armed, no timeout budget is changed and
+no objective skip is claimed. Fake time is restored before cleanup; a failed
+restore, close or assertion retains and logs the fixture path.
+
+For this final source version, scoped format passed on one changed file, Bun's
+strict check passed with zero errors across 141 dependency files, and
+type-aware Oxlint passed on the changed test. The targeted Bun 1.4.4 run passed
+1 test with 108 expectations in 38,605.57 ms. A fresh blind Luna review passed:
+it verified the persisted reference digest, explicit stale-scope precondition,
+exact refusal/state equality and cleanup custody. Earlier pre-correction
+target attempts remain at their original `DIAG` paths and retained scratch;
+none is replayed or deleted. This 38.6 s targeted run and the preceding
+49.4 s run differ in assertions/setup and are descriptive only, not a matched
+speedup measurement.
+
+Measured order for this packet is cheap scoped format/type/lint, one targeted
+regression, independent review, then one changed-input stage after normal
+commit/push. The preceding full stage before settling observer ownership failed
+after 174,599 ms; the replacement on `b15e05d` succeeded after 164,751 ms, but
+the changed inputs make those durations incomparable as a speed claim. One
+producer at `1x PARALLEL` is the only qualified numeric concurrency. Parallel
+stages/worktrees remain unmeasured and unauthorized. Receipts do not expose
+token totals or a comparable agent/tool-call count, and this packet does not
+invent them. Next: run the documentation check, commit the verified test and
+WORK update through normal hooks, push, then run exactly one stage on that new
+input. Let its existing owner update projection after terminal outcome; retain
+BLOCKED if reported, then select the next same-contour gap from that report.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
