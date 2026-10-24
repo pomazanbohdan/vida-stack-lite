@@ -6836,3 +6836,21 @@ conditions still do not establish a speedup against Key439/442/444; higher
 numeric parallelism remains unqualified. The next selected review groups the
 adjacent guard candidates ID129 and ID130 at lines 1361/1363; no skip or hit is
 claimed pending independent review.
+
+### Key446 objective dispositions: policy array and event work guards
+
+A blind report-bound review independently classified ID129 (`run.ts:1361`,
+`[0,5]`) and ID130 (`run.ts:1363`, `[0,5]`) as objectively unreachable.
+For ID129, the prior guard establishes exactly one `filter` result, and native
+`Array.prototype.filter` returns a dense array, so index 0 exists. The existing
+missing-event test hits the prior length refusal instead. For ID130, every
+journal line is validated by `parseForwardDocumentationEvent` before filtering;
+the event schema requires nonempty string `work_id`. The existing `'bad work id'`
+case is a string and exercises the later regex guard. The reviewer found no
+supported counterexample for either branch. Details are retained in
+`DIAG/bun-cli-run-key446-id129-id130-review-20261024-01.md`.
+
+Keep raw counters `[0,5]` for both IDs; these skips add no hits, do not change
+denominators or BLOCKED, and do not qualify frozen or exact coverage. The next
+report-selected candidate is ID136 at `bin/run.ts:1401` (`[2,0]`); no disposition
+is claimed until its preceding guards are checked.
