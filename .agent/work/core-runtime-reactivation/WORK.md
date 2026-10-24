@@ -3801,10 +3801,28 @@ The serial order remains scoped strict/format/lint, one exact filtered test,
 read-only review, ordinary commit/hooks/push, then one changed-input coverage
 stage. Bundled targets previously mixed parser and deadline failures, so this
 case ran alone; no same-input parallel speed comparison exists. Tokens and
-aggregate tool/API calls remain unavailable from the receipts. The next
-producer stage is pending this packet's clean Source commit and push. No
-objective disposition, exact coverage, frozen CRAP or mutation credit is
-claimed; bun-cli-run remains BLOCKED.
+aggregate tool/API calls remain unavailable from the receipts. After clean
+commit `5af7607ba9162cae315f740aad266e301ae6b102` was pushed, exactly one
+coverage stage ran at `/workspace/contour-stage-tFMq0z`. Run
+`9e131cc0-5cbf-4cd4-a805-368b3d9a53c2` exited 0 in 175,151.30 ms under the
+unchanged 330,000 ms timeout: complete capture, closed group, unchanged boot
+and image inputs, published report. The retained directory contains launch,
+request, execution and publication receipts plus stdout (7,976 bytes) and
+stderr (14,097 bytes). Its image binds source tree
+`998587e1b98af293823eb9b82b6207b13a5ed9d0`, input fingerprint
+`f32be702c11c716b2d5b7c70b3faac25ddc0ece829ea11e1d866cf76db005653`, and
+manifest SHA-256
+`3b05988ae728e6a0e35eaffebda378f518e2b5318893ef414047c5d0383ff3e2`; the
+focused report is
+`/workspace/.vida-quality-inputs/e5c0ef22ea29fac77be5859e6818b28e104f1324/repository/packages/agent/coverage/bun-unified/diagnostics/9e131cc0-5cbf-4cd4-a805-368b3d9a53c2.focused-coverage.json`.
+
+The projection owner reports 329/557 F, 1511/2863 L, 1610/3143 S and
+1879/3663 B, with 1,369 attempts and `BLOCKED`. The prior report's 328/557,
+1511/2863, 1605/3143 and 1876/3663 are a distinct image; the observed delta is
+only +1/+4/+5/+3, not a combined maximum. The report's next zero is
+`isPreparedRelativePath` at `bin/run.ts:240`. No objective disposition, exact
+coverage, frozen CRAP or mutation credit is claimed; bun-cli-run remains
+BLOCKED. Continue with that zero under the same one-contour sequence.
 
 ## Owners and acceptance boundaries
 
