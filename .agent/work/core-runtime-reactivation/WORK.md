@@ -2930,7 +2930,8 @@ checking reports no errors across 509 files; package-pinned Oxlint passes. Its
 first lint attempt found an `await-thenable` in the new test; the assertion now
 uses the established `Promise.resolve(...)` pattern. Blind Luna review had no
 remaining findings after narrowing the title to the asserted no-side-effect
-claim. The final packet stage still needs to update the coverage counters.
+claim. The post-commit packet stage terminated and its result is recorded
+below; it remains focused and BLOCKED rather than exact coverage.
 
 Blind gap review of `verifyCurrent` (`bin/run.ts` `run#0/property:verifyCurrent#0`,
 CC 73, zero hits in the retained diagnostic) found a plausible expired-lease
@@ -2942,9 +2943,84 @@ proposing that case. The report is
 
 Tool-call and token totals are absent from the retained receipts. Reuse the
 single existing disk/admission observation and inventories; this audit did not
-repeat broad disk scans or cleanup. Keep the stage as the sole numeric producer,
-run it only after this packet is committed, and let its terminal outcome update
-the projection.
+repeat broad disk scans or cleanup. Use one numeric producer at a time; its
+terminal outcome updates the existing projection.
+
+### Post-packet coverage stage — 2026-10-24 00:00 UTC
+
+After commit `f9e2d3ae270eee4fd05b6eca1e1954cedba06767` was pushed, the sole
+package-selected producer run `contour-stage-Hmv64o` completed in 152,065 ms
+(terminal projection timestamp `2026-10-24T00:00:46.368Z`). Its exit was 0,
+timeout was false, capture was complete, the process group was closed, boot and
+image inputs were unchanged, and publication succeeded. The immutable execution
+image is `/workspace/.vida-quality-inputs/994a75bbaf9f0487e7638f7b4120877df2fa4dd7/repository`
+with manifest digest `adb11254f1d145a1f979340a31bd8f850d0dc47ad0e893175b6baf28b814badf`;
+the matching source commit is `f9e2d3ae270eee4fd05b6eca1e1954cedba06767`,
+tree `d7907647554e007b421180cfe341bac602e782cf`, and input fingerprint
+`de205e85b88c1beb8de4f6c912118c8f5a73deabdfb729752dcc518fde5aab07`.
+Original stage launch/execution/publication receipts and `stdout.log` /
+`stderr.log` remain at `/workspace/contour-stage-Hmv64o/`.
+
+The accepted focused report is
+`/workspace/.vida-quality-inputs/994a75bbaf9f0487e7638f7b4120877df2fa4dd7/repository/packages/agent/coverage/bun-unified/diagnostics/9c6bb1af-89d9-442b-852f-fb57477494dc.focused-coverage.json`;
+its outcome receipt is the sibling `diagnostics/operation-outcomes/9c6bb1af-89d9-442b-852f-fb57477494dc.json`.
+F/L/S/B now reads 298/557 functions, 1346/2863 lines, 1437/3143 statements
+and 1711/3663 branches: gains of 2/8/8/14 over the preceding accepted focused
+report. Max CC remains 501 and entry CRAP 5402. The operation outcome remains
+`BLOCKED`, selection-unbound and unqualified; this packet neither closes the
+contour nor establishes numeric PASS. Do not start another contour, frozen
+CRAP or mutation lane. The new report is the sole basis for selecting the next
+same-contour gap; the prior `verifyCurrent` producer/custody limitation remains
+open unless a current supported path proves otherwise.
+
+The initial ordinary commit attempt was correctly rejected by the formatting
+hook for line wrapping in the new test. The package-selected formatter changed
+only that file; the retry's regular hooks passed format on 536 files and strict
+TypeScript on 543 files, and produced commit `f9e2d3a`, which was then pushed.
+No hook was bypassed. The current stage added 152.065s to the recorded sequence;
+the previous accepted stage took 148.300s, but source/test inputs differ, so this
+is a descriptive comparison rather than a matched speedup claim. Receipts do
+not record tool-call or token totals, and no alternate concurrency level was
+measured.
+
+### Same-contour renewal source-drift case — 2026-10-24
+
+The latest diagnostic exposes Istanbul key 394, the `verifyCurrent` closure
+predicate at `bin/run.ts` lines 6745–6747. Blind Luna confirmed it is reachable
+without fabricated lease or authority state: reuse the existing
+`prepareMutationIntake` producer for `AGENT.sidecar.md`, change only that
+temporary project file after admitted preparation, then call public `run()` to
+renew with the original lease generation and CAS. The scope allows this path,
+but no repository-source writer has been issued, so the changed-source guard
+must refuse. The larger key 379 recovery path remains unsupported by a current
+producer for its lease/lineage/authority/CAS prerequisites; key 391 also lacks
+an issued source-writer authority in this fixture. Both remain OPEN, not skipped.
+
+The current Vex status reports stale clusters and an index age of 6,241,000 ms.
+I used the already-known Source location for this bounded fallback and did not
+reindex. The tool reported 1,579 original output tokens for that status result
+and truncated it; no Vex result was treated as proof of Source behavior.
+
+Added the bounded public-route test `lease renewal refuses source drift without
+issued writer authority and preserves state`. It verifies the exact context GAP
+and full Host/ledger/Journal afterimage equality. The scoped test-project check
+passes (509 files), package-pinned Oxlint passes, and the exact file format check
+passes. The targeted Bun 1.4.4 run passes 1 test / 8 expectations in 4,110 ms;
+it requires `AGENT_RUNTIME_NATIVE_COVERAGE_MAIN=1` to register the file's
+coverage-only cases, while `--test-name-pattern` runs only this case. The first
+no-env invocation matched zero tests and is retained at
+`DIAG/renewal-source-drift-targeted-test-20261024-4mMLxp.log`; it is not a test
+failure. The successful strict, lint, format and target logs are retained as
+separate files under `DIAG/renewal-source-drift-*20261024-*.log`. An initial
+Oxlint finding for `await-thenable` was corrected using the existing
+`Promise.resolve(expect(...).rejects...)` pattern before the passing checks.
+The bounded blind Luna review passed: it confirmed the real admitted producer,
+existing persisted lease/CAS, absence of issued actions, exact refusal and
+full no-write snapshot assertion, with no fabricated authority or weakened
+timeout/UNKNOWN handling. The reviewer did not inspect key 394 in the report or
+compare the diff against Git base; root verified the source guard and owns that
+integration check. After this packet is committed, run one changed-input
+coverage stage; do not repeat the stage for this test alone or change budgets.
 
 ## Owners and acceptance boundaries
 

@@ -4813,6 +4813,53 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 60_000);
 
+    test('lease renewal refuses source drift without issued writer authority and preserves state', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-renewal-source-drift-'));
+      const fixture = ownedMutationFixture(root, 5_000);
+      let completed = false;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config, { sourcePath: 'AGENT.sidecar.md' });
+        const prepared = fixture.invoke(admitted.admissionArgs, 0, 'run-admission-prepared');
+        expect(prepared.status).toBe('prepared');
+        expect(requireIssuedActions(prepared)).toEqual([]);
+
+        const version = requireStateVersion(prepared.state_version);
+        const databaseRelativePath = path.relative(root, sessionHandoffDatabasePath(root, config));
+        const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+        const before = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        const work = before.work[0];
+        assert.ok(work?.state.lease && before.journals[0]);
+
+        writeFileSync(path.join(root, 'AGENT.sidecar.md'), '# Changed after lease admission\n');
+        await Promise.resolve(
+          expect(
+            run([
+              ...admitted.args,
+              '--expected-revision',
+              String(version.revision),
+              '--expected-digest',
+              version.digest,
+              '--renew-lease',
+              'true',
+              '--native-session-handle',
+              admitted.nativeSessionHandle,
+              '--lease-generation',
+              String(work.state.lease.generation),
+            ]),
+          ).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Lease renewal source changed outside issued writer authority.',
+          }),
+        );
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(before);
+        completed = true;
+      } finally {
+        if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed or uncertain source-drift fixture: ${root}\n`);
+      }
+    });
+
     for (const selectorPhase of ['released', 'staged'] as const) {
       test(`binds admission to the ${selectorPhase} journal and released maintenance proof`, async () => {
         const root = mkdtempSync(path.join(tmpdir(), 'vida-run-selected-'));
