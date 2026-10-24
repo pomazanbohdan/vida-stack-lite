@@ -7110,13 +7110,57 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           const reportPath = path.join(root, 'configured-frontier-report.json');
           writeFileSync(reportPath, JSON.stringify(observation));
           const readDatabase = nativeDatabaseSnapshotReader(fixture.db);
+          const reportBefore = readFileSync(reportPath);
           const beforeReport = readDatabase();
+          await Promise.resolve(
+            expect(run([...args, '--report', reportPath])).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-CONTEXT-001',
+              message: 'Delivered prewriter Journal version is stale.',
+            }),
+          );
+          expect(readDatabase()).toEqual(beforeReport);
+          expect(readFileSync(reportPath)).toEqual(reportBefore);
           await Promise.resolve(
             expect(
               run([...args, ...expected(requireStateVersion(issued.state_version)), '--report', reportPath]),
             ).rejects.toThrow('Prewriter report has no matching retained issuance.'),
           );
           expect(readDatabase()).toEqual(beforeReport);
+          expect(readFileSync(reportPath)).toEqual(reportBefore);
+
+          const originalSnapshot = Reflect.get(
+            HostStateStore.prototype,
+            'readHostStateSnapshot',
+          ) as HostStateStore['readHostStateSnapshot'];
+          let matchingSnapshotCount = 0;
+          const snapshotSpy = spyOn(HostStateStore.prototype, 'readHostStateSnapshot').mockImplementation(function (
+            this: HostStateStore,
+            identity: WorkIdentity,
+          ): ReturnType<HostStateStore['readHostStateSnapshot']> {
+            const snapshot = Reflect.apply(originalSnapshot, this, [identity]) as ReturnType<
+              HostStateStore['readHostStateSnapshot']
+            >;
+            if (identity.work_id === request.identity.work_id) {
+              matchingSnapshotCount += 1;
+              if (matchingSnapshotCount === 2) return { ...snapshot, work: null };
+            }
+            return snapshot;
+          });
+          try {
+            await Promise.resolve(
+              expect(
+                run([...args, ...expected(requireStateVersion(issued.state_version)), '--report', reportPath]),
+              ).rejects.toMatchObject({
+                code: 'GAP-VIDA-RUN-CONTEXT-001',
+                message: 'Delivered prewriter continuation has no current Host work.',
+              }),
+            );
+            expect(matchingSnapshotCount).toBe(2);
+            expect(readDatabase()).toEqual(beforeReport);
+            expect(readFileSync(reportPath)).toEqual(reportBefore);
+          } finally {
+            snapshotSpy.mockRestore();
+          }
         },
         'normal',
         'unmatched-prewriter-report',

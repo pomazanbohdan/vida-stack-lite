@@ -1340,6 +1340,12 @@ Resume the recovered wave through the actual persisted Mastra run and reopen it.
 Require the same run/attempt, the new reviewer cohort, one developer suffix and
 retained failed reports. Synthetic seeded reports isolate engine continuation;
 they do not prove public report admission or native endpoint qualification.
+For the public configured-frontier report path, require the expected Journal
+version before processing an observation; missing version and a continuation
+whose current Host snapshot has no Work both fail with their exact context
+error. Reuse one issued-wave fixture, preserve the native DB and report bytes
+after each refusal, and inject the absent Work only in the second bound snapshot
+read so the normal selection and persisted continuation remain intact.
 Check the shared accepted-contract revision resolver for ordinary admissions,
 configured continuations and failed-wave recovery. Preserve original Scope and
 Acceptance bytes while current Source changes. Deny a missing recovery view,

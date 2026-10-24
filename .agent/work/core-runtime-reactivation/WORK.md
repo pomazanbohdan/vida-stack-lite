@@ -8257,3 +8257,60 @@ exposed reliably; previous broad output counts remain executor output, not
 model tokens. The one-time disk inventory above is reused; this producer's
 admission receipt observed 12,464,807,936 scratch bytes against its
 2,147,483,648-byte floor. No disk resurvey or cleanup occurred.
+
+### Key468 configured-frontier refusal packet — pre-stage record — 2026-10-24 20:08 UTC
+
+The starting accepted baseline is report/run
+`ded030fb-a684-46a9-bcf6-b55052c0c6b0`, with source commit
+`0a6b0b2ccd3078ebcea93f4cbfc5ca9b7356dbdc`, bound `bin/run.ts` SHA
+`61886ac6dbc0b5eeaec5e96c897c9d8dc380396c40daeea3dbf526998efdf051`, source
+fingerprint `5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851`,
+test fingerprint `2ed07a25e7d0a5706000cc60d4c20849a5d0ed13352b698fae03abdba41d353e`,
+manifest SHA `d3581ad266d7a7b582a3f02948c8a8c048047fb229cc3e795ea6318cfd4eb70e`,
+and tool fingerprint `5a97206326a3776fcc723c6ee2b5b83e75bf9185f587506cb2ef37c5c7ad94f4`.
+It selects `tests/run-entrypoint.test.ts` and `tests/bun-cache-routing.test.ts`.
+The exact branch map at `coverage[.../packages/agent/bin/run.ts]` records IDs227
+`[0,9]`, 228 `[0]`, 230 `[0,165]`, 231 `[0,106]`, 232 `[106,106]`, 233
+`[0,2]`, 234 `[0,7]`, 235 `[7,7]`, and 236 `[0,3]`.
+
+The existing `rejects a configured-frontier report whose action was not issued`
+fixture now also requires the exact stale-Journal denial when expected version
+arguments are absent (ID230), with the native DB and report bytes unchanged. A
+second invocation injects `work:null` only on the second matching Host snapshot,
+after selection and while the persisted continuation remains available; it
+requires the exact missing-current-Work denial (ID227), unchanged DB/report
+bytes, and restores the spy in `finally`. The old unmatched-action refusal
+remains asserted in the same issued-wave fixture. This batches related errors
+without another setup fixture. The reference contract documents the public
+errors and afterimage checks.
+
+The first independent branch review mistakenly read numeric IDs from a function
+map and was discarded. A corrected blind Luna review used the report's exact
+`branchMap` and traced the call sites. Root independently verified two
+objective-disposition candidates against the bound Source and `TESTING.md`
+§Objective coverage skips: ID228 is the constructor's omitted-details default
+at `bin/run.ts:2141`; the sole local constructor call is at 2155 through `fail`,
+which always passes its own defaulted `details` argument. ID236 is the true arm
+of the owner check at `bin/run.ts:2186–2187`; `HostStateStore.renewActiveLocalLease`
+requires a present lease with the same `thread_id` before invoking the callback
+(`src/host-state.ts:16555–16572`) and passes a snapshot of that checked Work at
+16622–16629. The independent review confirms both causal prerequisites. These
+are candidate objective skips pending rebind to the next accepted report; do
+not count them as hits, remove denominator entries, or change `BLOCKED`.
+IDs231, 233 and 234 remain active pending bounded contract traces; no skip is
+inferred from missing fixtures.
+
+Scoped `bun run typecheck` passed (545 captured TypeScript files; 104 project
+files), `bun run lint:oxlint` passed, and Bun 1.4.4 formatting passed for the
+changed test and research note after the first check found the test file needed
+formatting. Logs are retained under `DIAG/key468-id227-230-{typecheck-01,
+oxlint-01,format-01,format-write-01,format-02}.log`. Eight direct or pinned
+`--test-name-pattern` attempts returned zero matching tests and executed none;
+the separate top-level filter control passed 1 test/18 expectations with 59
+filtered out. Those no-match captures are preserved as `DIAG/key468-id227-230-
+target-01.log` through `target-08.log`; no product test failure was reported.
+The full changed-input producer stage remains the authoritative execution of
+the modified nested fixture. Independent blind Luna review found no must-fix
+in the assertions, snapshot-count targeting, afterimages or documentation.
+Run `git diff --check`, then commit/push normally and stage the changed inputs
+once; projection remains producer-owned.
