@@ -6887,3 +6887,58 @@ Keep raw ID138 `[15,0]`; the skip adds no hits, does not alter the denominator,
 BLOCKED or frozen/full pending status. The next report-selected candidate is
 ID145 at `bin/run.ts:1597` (`[0,31]`); its input contract will be reviewed before
 adding a scenario or objective skip.
+
+### Key449 review and Key450 parent cutoff drift case
+
+The Key449 report-bound Luna review found ID145 at `bin/run.ts:1597` reachable
+through the current forward-authority route. The smallest supported input keeps
+the child plan and its parent cutoff digest unchanged, then changes the parent's
+schema-valid cutoff witness `first_admitted_work_attempt`. This reaches the
+parent selector/cutoff refusal before parent recursion or manifest work. The
+review is in `DIAG/bun-cli-run-key449-id145-review-20261024-01.md`.
+
+Key450 adds this input to the existing `repair and forward authority reject
+malformed evidence without writes` scenario loop. It reuses the existing repair
+and forward fixtures, changes one witness field, asserts the exact public error,
+and compares the complete `.agent` afterimage. It adds no helper and changes no
+product Source. The regression contract now records this parent cutoff case.
+
+The focused run passed 1 composite test with 155 expectations and 0 failures in
+2.04 seconds. The package-selected Bun reported `1.4.4`. Checked-JS strict passed
+227 files in 1,022.29 ms, configured Oxlint exited 0, and the one-file formatter
+check passed in 15 ms. The documentation checker selected one Markdown file,
+checked four local links, and reported no failures. Two separate blind native
+Luna reviews found no must-fix: the behavior review confirmed the exact guard,
+error and no-write afterimage; the comment review found no added or removed
+comments, suppressions or `MUST KILL` flags. Both workers received independently
+prepared native read-only prompt contracts; those contracts explicitly do not
+enforce tool isolation. Neither worker edited files or ran tests.
+
+The last completed numeric stage remains Key445, run
+`59af34f3-c546-40c0-925f-dd38866fdc11`. Until the next stage completes, the
+projection remains F441/555, L2014/2860, S2163/3138 and B2522/3660. ID145 stays
+`[0,31]`, operation status stays BLOCKED, and the maxima stay 501. No numeric
+change is claimed from the focused test. One changed-input stage remains after
+ordinary commit and push.
+
+### Three-hour execution comparison, 2026-10-24 12:06–15:06 UTC
+
+The current receipts show seven one-worker changed-input stages in this window:
+Key434 258,991.524 ms, Key436 208,820.746 ms, Key438 208,414.802 ms,
+Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms, and
+Key445 202,793.193 ms. Their raw elapsed range is 202,793.193–258,991.524 ms.
+The commits, input sets, test counts and host/cache conditions differ. These
+stages establish a single-worker cost range, not a speedup, regression, limiter,
+or controlled comparison of check ordering. No profile or matched A/B/A/B run
+exists, so the benchmark verdict is inconclusive.
+
+| Check order and producer parallelism | Evidence and decision |
+| --- | --- |
+| Reuse the current report, review causal prerequisites, make a focused case, run scoped strict/lint and independent review, then run one changed-input stage at 1x PARALLEL | This is the verified Key439/442/444/445 sequence. Key450 has completed the focused checks and reviews; its single full stage waits for push. It keeps one producer and reuses the current fixture. |
+| Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 203–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
+| Run two or four full numeric stages concurrently | No qualified run measured this option. It conflicts with TESTING's single producer and has no comparable speed, resource or correctness evidence. Keep numeric parallelism at one. |
+
+Platform totals for tool calls and token usage are unavailable. Do not infer them
+from chat messages or source-run operation counts. The prior single disk receipt
+and admission threshold remain current; this audit did not repeat disk checks or
+cleanup. The existing timer and its schedule remain unchanged.
