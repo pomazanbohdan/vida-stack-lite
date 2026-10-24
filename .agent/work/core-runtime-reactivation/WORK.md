@@ -5139,14 +5139,40 @@ test (1 pass, 54 filtered, 0 failed, 1.282 s). Receipts are
 `DIAG/bun-cli-run-key424-typecheck-20261024-01.log`,
 `DIAG/bun-cli-run-key424-lint-20261024-01.log`, and
 `DIAG/bun-cli-run-key424-target-20261024-01.log`. This is focused evidence;
-commit/push and the single current-producer stage remain pending.
+commit `81f31bcb8901512732e2d4c3fb9b97a647e07dba` passed ordinary hooks and
+pushed to `work` before the single current-producer stage.
+
+The current producer ran one `bun-cli-run` coverage stage against the pushed
+Key424 packet. Run `20f84c8a-1919-4d68-8b6f-bd6a2e6a51be` used tree
+`675fd2a1552a5119751e44bf1c7ec0056bf7d752`, input fingerprint
+`ce27eaab400b8a9782423467a6860cfb8306c638d828efc605970bf82c7187b0`, and
+manifest digest
+`b5212f2454ace316bf858e5ebc32965341d0af4ffbbecc7e65c07b251d2a4748`. It
+completed with exit 0 in 181,773.73 ms. Capture completed, the group closed,
+boot stayed unchanged, image inputs were unchanged, and the report was
+published. The terminal log is
+`DIAG/bun-cli-run-key424-stage-20261024-01.log`; retained stage directory:
+`/workspace/contour-stage-vXww5W`.
+
+The producer ran 120 tests across `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`: 120 passed, 0 failed, 2,262 Bun
+expectations, 177.10 s test duration. It added one function, two lines, three
+statements and four branches relative to Key423. `historicalReleaseInspection`
+was called three times; its `if` outcomes were `[1,2]` and short-circuit
+operand counts `[3,2]`. Current F/L/S/B is `414/555`, `1907/2860`,
+`2033/3138`, `2332/3661`; max CC 501, max entry CRAP 992; status remains
+`BLOCKED`. The immutable report is
+`/workspace/.vida-quality-inputs/973fed3d295655528858052fbb87c22e26728fff/repository/packages/agent/coverage/bun-unified/diagnostics/20f84c8a-1919-4d68-8b6f-bd6a2e6a51be.focused-coverage.json`.
+Projection was updated by the producer owner. No objective disposition was
+applied. The next report-ordered zero callable in `bin/run.ts` is
+`isHistoricalRunHistory` at line 2890.
 
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423/424 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
 202,630.39 / 187,589.41 / 191,494.56 / 215,386.40 / 207,589.09 /
-208,864.42 / 182,574.22 / 188,314.45 ms. Each stage used different immutable image and source/test
+208,864.42 / 182,574.22 / 188,314.45 / 181,773.73 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and
@@ -5161,6 +5187,9 @@ Key423 used static-first ordering (format, strict test typecheck, locked lint,
 then focused target); its 1,235 ms target and 188,314 ms stage are not a
 matched comparison to the earlier target-first packets because the source,
 test inputs and immutable producer image differ.
+Key424 kept static-first ordering; its focused target took 1,282 ms and the
+stage ran 120 tests in 177.10 s. These values are also not causally comparable
+with Key423 because the source/test/image inputs changed.
 Producer concurrency stayed at one. Observed order was focused target,
 scoped formatting/strict/lint, independent review, ordinary hook-backed commit
 and push, then one contour stage. A static-first order could have caught a
