@@ -8706,3 +8706,56 @@ The corrected root-relative selection passed at
 its independent reachability result is recorded above. Commit/push and one
 changed-input stage remain pending. Keep the numeric producer at one and do not
 run this stage until the normal hooks and push terminate successfully.
+
+### Key470 changed-input stage terminal and rolling three-hour record — 2026-10-24 21:32 UTC
+
+Commit `a3e753b63995d81332182ec18a058804367163d7` was pushed normally before
+the sole producer ran once in `/workspace/contour-stage-f1hcOJ`. The immutable
+image is
+`/workspace/.vida-quality-inputs/fc5050fb96094ebd320aeb35adcecafb71ae33d8/repository`,
+source tree `d22923684cdb21e33f1086a4b084d63b11aed7a4`, input fingerprint
+`ae2e6b02138826394da881a044ab6875274c09e6b071768e9ef033f0a3e6b7ca`, and image
+manifest SHA-256
+`1d49522b6f464bb12570ad11847a4a0db37bd09f21042e70079c8c06587c318c`. Its
+native execution receipt records 187,803.068216 ms, exit 0, no timeout/signal/
+spawn error, complete non-truncated capture, observed owned-process-group
+termination, unchanged boot and unchanged image inputs. Root capture is
+`DIAG/key470-stage-20261024-01.log`; all native request, launch, execution,
+publication and stdout/stderr receipts remain at the stage root.
+
+Report run `2177c0ac-14e7-41c4-a4b6-d549719bf338` completed 130 tests and 2,742
+expectations across the two selected files. It is a `focused-diagnostic`, not a
+full qualification; status stays `BLOCKED`. Raw coverage is F441/555,
+L2058/2860, S2218/3138, B2612/3660, max CC 501 and max entry CRAP 501. Relative
+to Key469, this adds two statements and two branches, with no function/line/
+denominator change. The exact map now records ID244 `[1,51]` and ID245 `[1,50]`,
+covering the invalid public `--kind` and `--intent` arms. Report path:
+`/workspace/.vida-quality-inputs/fc5050fb96094ebd320aeb35adcecafb71ae33d8/repository/packages/agent/coverage/bun-unified/diagnostics/2177c0ac-14e7-41c4-a4b6-d549719bf338.focused-coverage.json`.
+
+Update the rolling receipt window to 2026-10-24 18:32:20–21:32:20 UTC. Reuse
+the previously checked Key468/469 receipts, exclude Key460 at 18:20:47 (now
+outside the boundary), and add the Key470 terminal receipt. The window contains
+eleven serial producer attempts: eight exit 0 and three exit 1. Ten completed
+selected suites ran 1,274 tests (1,272 pass, two fail) and 26,847 expectations.
+The remaining attempt is the retained Key469 nested `SIGKILL`/`ETIMEDOUT`
+UNKNOWN; it has no completed suite denominator or report and is excluded from
+all coverage/test totals. Total outer-stage time is 2,484,145.781733 ms, mean
+225,831.434703 ms, and range 187,803.068–271,158.850 ms. Stage captures and
+producer groups terminated; the Key469 nested child still retains its own
+incomplete capture and ESRCH cleanup evidence.
+
+| Check order / numeric parallelism | Measured evidence | Limitation |
+| --- | --- | --- |
+| Exact focused target, scoped strict/lint/format, independent review, normal commit/push, then one changed-input stage at 1x | Key470's final target passed 2/2 cases in 2.33 s; its stage passed 130/130 in 187.803 s and published the diagnostic. | This is a successful measured sequence, not a controlled ordering benchmark. |
+| Full stage before a focused target and correction at 1x | Key469's initial attempt cost 271.159 s and produced UNKNOWN/no report; its later target exposed the internal/public API mismatch. | Target-first could have avoided this stage; counterfactual only. |
+| Two or four numeric stages concurrently | No qualified 2x/4x receipt exists. | Keep the one-producer contract; higher concurrency is unmeasured. |
+
+The current stage admission receipt records 11,981,213,696 available scratch
+bytes against the unchanged 2,147,483,648-byte floor (9,833,730,048 bytes
+above). Reuse the existing one-time filesystem survey; do not resurvey or clean
+while keeping all failed/UNKNOWN evidence. A post-stage sample found no live
+Bun/bwrap/tini process and no zombie younger than five minutes; the existing
+730 PID-1-owned zombies remain outside cleanup custody and were not signalled.
+The producer alone updated projection. IDs254, 257, and 261 are the next
+bounded frontier review; no additional skips or coverage claims are made until
+that source/report trace completes.
