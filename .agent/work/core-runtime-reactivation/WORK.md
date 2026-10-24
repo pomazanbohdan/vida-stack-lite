@@ -4996,6 +4996,37 @@ Projection was updated by the producer owner. The next zero callable in report
 order is `isResearchSourceReference` at `bin/run.ts:2506`; no objective
 disposition was applied.
 
+#### Key422 research source-reference predicate
+
+The next report-ordered zero callable was `isResearchSourceReference` in
+`bin/run.ts`. The nearby `observed-research-result.ts` validator is a stronger
+plain-record/artifact validation boundary, so it is not a duplicate predicate
+and remains separate. This packet exports the existing narrow record plus
+string-`source_id` type guard for a focused test in the already selected
+`tests/run-entrypoint.test.ts`; it does not claim the paused-replacement public
+flow, whose existing test file is outside this producer's fixed selection.
+The seven-case truth table covers a rich valid record, null, an array with an
+own string `source_id`, a primitive, a missing identifier, numeric identifier,
+and null identifier. The array case was added after independent review noted
+that an ordinary array would not kill a mutation dropping the record guard.
+Downstream source-ID syntax validation remains owned by the existing research
+validator. No objective skip, suppression, consumer effect or new helper was
+added.
+
+Blind native Luna review (`DIAG/bun-cli-run-key422-review-20261024-01.md`)
+confirmed that the export is internal to the test import, the assertion scope
+matches the predicate, no equivalent helper exists at this boundary, and the
+array-with-identifier control closes the identified mutation gap. Scoped
+validation passed: package-pinned Bun 1.4.4 format check for both changed
+files, strict `tests/tsconfig.json` typecheck across 510 files, locked Oxlint,
+and the focused target (1 pass, 52 filtered, 0 failed). Receipts are
+`DIAG/bun-cli-run-key422-format-20261024-02.log`,
+`DIAG/bun-cli-run-key422-typecheck-20261024-02.log`,
+`DIAG/bun-cli-run-key422-lint-20261024-02.log`, and
+`DIAG/bun-cli-run-key422-target-20261024-02.log`. The focused run used serial
+width one. The ordinary commit/push and single current-producer stage remain
+pending; no coverage disposition is claimed before that stage.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421 were 182,091.09 /

@@ -52,6 +52,7 @@ import {
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
   forwardUpdateAuthority,
+  isResearchSourceReference,
   repairAuthority,
   requireNoCompletedReadonlyRelease,
   run,
@@ -628,6 +629,21 @@ test('completed readonly release guard blocks only a matching current-work relea
       return true;
     },
   );
+});
+
+test('research source reference guards the JSON record and source_id string type', () => {
+  const arrayWithIdentifier: unknown = Object.assign([], { source_id: 'source-1' });
+  const cases: readonly [string, unknown, boolean][] = [
+    ['rich source reference', { source_id: 'source-1', claim: 'A bound source.' }, true],
+    ['missing source reference', null, false],
+    ['array with an identifier property', arrayWithIdentifier, false],
+    ['primitive instead of record', 'source-1', false],
+    ['missing identifier', { claim: 'No identifier.' }, false],
+    ['numeric identifier', { source_id: 1 }, false],
+    ['null identifier', { source_id: null }, false],
+  ];
+
+  for (const [label, value, expected] of cases) assert.equal(isResearchSourceReference(value), expected, label);
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {

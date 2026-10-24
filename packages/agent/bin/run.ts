@@ -2502,8 +2502,7 @@ function isLifecycleRisk(value: unknown): value is 'low' | 'medium' | 'high' {
   return value === 'low' || value === 'medium' || value === 'high';
 }
 
-/** @param {unknown} value @returns {value is {source_id: string}} */
-function isResearchSourceReference(value: unknown): value is { source_id: string } {
+export function isResearchSourceReference(value: unknown): value is { source_id: string } {
   return isRecord(value) && typeof value.source_id === 'string';
 }
 
