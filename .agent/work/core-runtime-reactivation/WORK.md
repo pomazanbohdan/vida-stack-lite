@@ -5024,15 +5024,48 @@ and the focused target (1 pass, 52 filtered, 0 failed). Receipts are
 `DIAG/bun-cli-run-key422-typecheck-20261024-02.log`,
 `DIAG/bun-cli-run-key422-lint-20261024-02.log`, and
 `DIAG/bun-cli-run-key422-target-20261024-02.log`. The focused run used serial
-width one. The ordinary commit/push and single current-producer stage remain
-pending; no coverage disposition is claimed before that stage.
+width one. Commit `329d488fb029470a46d5360e5e6ee42d0f95e86a` passed ordinary
+hooks and pushed to `work` before the single current-producer stage. No
+objective disposition was claimed.
+
+The current producer ran one `bun-cli-run` coverage stage against the pushed
+Key422 packet. Run `364426e1-74f0-44c6-b286-0aea845d5e4a` used tree
+`0457a607011399dd163fc9d21d39a8bb16ac1ccb`, input fingerprint
+`62a2207b7e3a80834954b4ce836bb8741f2e11c50fb5626816031f2a6ac947c4`, and
+manifest digest
+`9f8c83a68d21e78cd2c262a5efb734afeb789cc964cbc96a9dc404b8173c9a8d`. It
+completed with exit 0 in 182,574.22 ms. Capture completed, the group closed,
+boot stayed unchanged, image inputs were unchanged, and the report was
+published. The terminal log is
+`DIAG/bun-cli-run-key422-stage-20261024-01.log`; retained stage directory:
+`/workspace/contour-stage-sJXUel`.
+
+The producer ran 118 tests across `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`: 118 passed, 0 failed, 2,262 Bun
+expectations, 177.44 s test duration. It added one function, one line, one
+statement and two branches relative to Key421. `isResearchSourceReference`
+was called seven times; both binary-expression operands were observed `[7,4]`.
+Current F/L/S/B is `412/555`, `1903/2860`, `2027/3138`, `2326/3661`; max CC
+501, max entry CRAP 992; producer status remains `BLOCKED`. The immutable
+focused report is
+`/workspace/.vida-quality-inputs/58290f64391ef53ca32194e66df863e711eff344/repository/packages/agent/coverage/bun-unified/diagnostics/364426e1-74f0-44c6-b286-0aea845d5e4a.focused-coverage.json`.
+Projection was updated by the producer owner. No objective disposition was
+applied. The next report-ordered zero callable in `bin/run.ts` is
+`requireRecoveryOperation` at line 2611.
+
+One post-stage summary query accidentally selected the full file-level
+coverage payload and emitted a truncated 560,063-token-class tool response
+(1,191,676 bytes omitted). It changed no files. Follow-up reads were limited
+to the existing `bin/run.ts` function/branch counters and first zero-callable
+names. Record this as audit output waste; do not repeat a full coverage-map
+dump.
 
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
 202,630.39 / 187,589.41 / 191,494.56 / 215,386.40 / 207,589.09 /
-208,864.42 ms. Each stage used different immutable image and source/test
+208,864.42 / 182,574.22 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and
@@ -5041,6 +5074,8 @@ Key420's focused target took 1,211 ms standalone; the 207,589 ms stage ran 117
 tests with a different producer environment, so this is not an isolated
 before/after comparison. Key421's focused denial target took 1,840 ms; its
 208,864 ms stage also ran 117 tests, so these are not comparable timings.
+Key422's focused target took 1,273 ms; its 182,574 ms stage ran 118 tests in
+the producer image, so this is not a matched target-versus-stage comparison.
 Producer concurrency stayed at one. Observed order was focused target,
 scoped formatting/strict/lint, independent review, ordinary hook-backed commit
 and push, then one contour stage. A static-first order could have caught a
