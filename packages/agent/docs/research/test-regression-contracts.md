@@ -436,6 +436,12 @@ preserved-byte/metadata snapshot. For a wrong config pointer, retain otherwise
 valid preservation bindings and require the exact proof refusal; both cases
 must preserve the same `.agent`, installed-bundle, and protected root-file
 afterimages.
+For a new generated root `AGENTS.md`, keep the installed template in both
+manifests, leave `AGENTS.md` absent from the parent, and add it to the successor
+with the template source path/digest and substituted bytes. Require the authority
+reader to accept it, then compare the `.agent`, installed-bundle, config/changelog,
+and generated root-file afterimages. This exercises the null old-hash and old-size
+branches without weakening template-provenance checks.
 Public recovery-review negative exports vary exact outer keys, caller identity,
 owner/CAS bindings, source snapshot/entries, context and required observation.
 Every input remains malformed and must refuse before opening the recovery route,

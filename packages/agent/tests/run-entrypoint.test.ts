@@ -3952,6 +3952,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       launcher?: Uint8Array;
       additionalChanges?: { path: string; bytes: Uint8Array }[];
       additionalPreservedMutableOutputs?: Record<string, string>[];
+      additionalSuccessorFiles?: {
+        path: string;
+        bytes: Uint8Array;
+        source_path: string;
+        source_sha256: string;
+      }[];
       additionalRetiredPaths?: string[];
       omitPlanChangedPaths?: string[];
     } = {},
@@ -3979,19 +3985,28 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     const documentationChangeByPath = new Map(documentationChanges.map((change) => [change.path, change]));
     const successorManifest = {
       schema: parentManifest.schema,
-      files: parentManifest.files
-        .filter((entry) => !(options.additionalRetiredPaths ?? []).includes(entry.path))
-        .map((entry) => {
-          const change = documentationChangeByPath.get(entry.path);
-          if (entry.path === 'vida-agent/bin/run.mjs')
-            return {
-              path: entry.path,
-              sha256: launcherSha,
-              size: launcher.length,
-              ...(entry.source_sha256 === undefined ? {} : { source_sha256: launcherSha }),
-            };
-          return change ? { path: entry.path, sha256: digestBytes(change.bytes), size: change.bytes.length } : entry;
-        }),
+      files: [
+        ...parentManifest.files
+          .filter((entry) => !(options.additionalRetiredPaths ?? []).includes(entry.path))
+          .map((entry) => {
+            const change = documentationChangeByPath.get(entry.path);
+            if (entry.path === 'vida-agent/bin/run.mjs')
+              return {
+                path: entry.path,
+                sha256: launcherSha,
+                size: launcher.length,
+                ...(entry.source_sha256 === undefined ? {} : { source_sha256: launcherSha }),
+              };
+            return change ? { path: entry.path, sha256: digestBytes(change.bytes), size: change.bytes.length } : entry;
+          }),
+        ...(options.additionalSuccessorFiles ?? []).map(({ path, bytes, source_path, source_sha256 }) => ({
+          path,
+          sha256: digestBytes(bytes),
+          size: bytes.length,
+          source_path,
+          source_sha256,
+        })),
+      ],
       unresolved_integration_paths: parentManifest.unresolved_integration_paths,
     };
     const oldManifestSha = digestBytes(record(parentManifest));
@@ -4010,6 +4025,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         new_sha256: digestBytes(change.bytes),
         old_size: entry.size,
         new_size: change.bytes.length,
+      })),
+      ...(options.additionalSuccessorFiles ?? []).map(({ path, bytes }) => ({
+        path,
+        old_sha256: null,
+        new_sha256: digestBytes(bytes),
+        old_size: null,
+        new_size: bytes.length,
       })),
     ].sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
     const omittedPlanChanges = new Set(options.omitPlanChangedPaths ?? []);
@@ -5265,7 +5287,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
-  test('repair and forward authority reject malformed evidence without writes', async () => {
+  test('repair and forward authority validate evidence without mutating inputs', async () => {
     for (const scenario of [
       'parent-evidence-mismatch',
       'repair-review-entry-status',
@@ -5288,6 +5310,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'forward-preserved-output-overbound',
       'forward-partial-integration-retirement',
       'forward-preserved-output-pointer-mismatch',
+      'forward-generated-root-agents-added',
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-baseline-path-non-string',
@@ -5341,6 +5364,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-preserved-output-overbound' ||
           scenario === 'forward-partial-integration-retirement' ||
           scenario === 'forward-preserved-output-pointer-mismatch' ||
+          scenario === 'forward-generated-root-agents-added' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
           scenario === 'repair-default-installed-bundle' ||
           scenario === 'repair-installed-payload-drift' ||
@@ -5356,9 +5380,28 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           : null;
         const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
         const configSha256 = configBytes ? digestBytes(configBytes) : null;
+        const generatedRootAgentsScenario = scenario === 'forward-generated-root-agents-added';
+        const agentsTemplatePath = 'vida-agent/templates/AGENTS.template.md';
+        const agentsTemplateBytes = generatedRootAgentsScenario
+          ? readFileSync(path.join(packageRoot, 'templates/AGENTS.template.md'))
+          : null;
+        const agentsTemplateSha256 = agentsTemplateBytes ? digestBytes(agentsTemplateBytes) : null;
+        const generatedRootAgentsBytes = agentsTemplateBytes
+          ? Buffer.from(agentsTemplateBytes.toString('utf8').replaceAll('{{BUNDLE}}', 'vida-agent'))
+          : null;
+        const agentsTemplateEntry =
+          agentsTemplateBytes && agentsTemplateSha256
+            ? {
+                path: agentsTemplatePath,
+                sha256: agentsTemplateSha256,
+                size: agentsTemplateBytes.length,
+                source_path: agentsTemplatePath,
+                source_sha256: agentsTemplateSha256,
+              }
+            : null;
         const sidecarBytes =
           scenario === 'forward-partial-integration-retirement'
-            ? readFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'))
+            ? readFileSync(path.join(packageRoot, '..', '..', 'AGENT.sidecar.md'))
             : null;
         const sidecarManifestEntry = sidecarBytes
           ? {
@@ -5369,7 +5412,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           : null;
         const stagedChangelogSha256 = digestBytes(stagedChangelogBytes);
         const preservedMutableOutput =
-          configSha256 === null
+          configSha256 === null || generatedRootAgentsScenario
             ? null
             : {
                 path: changelogPath,
@@ -5396,6 +5439,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         }
         if (sidecarManifestEntry && sidecarBytes)
           writeFileSync(path.join(root, sidecarManifestEntry.path), sidecarBytes);
+        if (agentsTemplateEntry && agentsTemplateBytes && generatedRootAgentsBytes) {
+          mkdirSync(path.dirname(path.join(root, agentsTemplatePath)), { recursive: true });
+          writeFileSync(path.join(root, agentsTemplatePath), agentsTemplateBytes);
+          writeFileSync(path.join(root, 'AGENTS.md'), generatedRootAgentsBytes);
+        }
         if (documentationChange) {
           mkdirSync(path.dirname(path.join(root, documentationChange.path)), { recursive: true });
           writeFileSync(path.join(root, documentationChange.path), documentationChange.bytes);
@@ -5421,6 +5469,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 ]
               : []),
             ...preservedManifestEntries,
+            ...(agentsTemplateEntry ? [agentsTemplateEntry] : []),
             ...(sidecarManifestEntry ? [sidecarManifestEntry] : []),
           ],
           unresolved_integration_paths: [],
@@ -5455,6 +5504,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 ]
               : []),
             ...preservedManifestEntries,
+            ...(agentsTemplateEntry ? [agentsTemplateEntry] : []),
             ...(sidecarManifestEntry ? [sidecarManifestEntry] : []),
             {
               path: 'vida-agent/bin/run.mjs',
@@ -5712,6 +5762,17 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                     : [],
                 additionalRetiredPaths:
                   scenario === 'forward-partial-integration-retirement' ? ['AGENT.sidecar.md'] : [],
+                additionalSuccessorFiles:
+                  generatedRootAgentsScenario && generatedRootAgentsBytes && agentsTemplateSha256
+                    ? [
+                        {
+                          path: 'AGENTS.md',
+                          bytes: generatedRootAgentsBytes,
+                          source_path: agentsTemplatePath,
+                          source_sha256: agentsTemplateSha256,
+                        },
+                      ]
+                    : [],
               },
             )
           : null;
@@ -5799,8 +5860,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         if (scenario === 'repair-installed-payload-drift')
           writeFileSync(path.join(bundleRoot, 'bin', 'run.mjs'), Buffer.from('drifted launcher'));
         const preservedPaths = [
-          ...(preservedMutableOutput ? ['agent-runtime.config.v1.yaml', changelogPath] : []),
+          ...(configBytes ? ['agent-runtime.config.v1.yaml', changelogPath] : []),
           ...(scenario === 'forward-partial-integration-retirement' ? ['AGENT.sidecar.md'] : []),
+          ...(generatedRootAgentsBytes ? ['AGENTS.md'] : []),
         ].map((relative) => path.join(root, relative));
         const beforePreservedBytes = preservedPaths.map((file) => readFileSync(file));
         const beforePreservedMetadata = preservedPaths.map(snapshotAuthorityMetadata);
@@ -6081,6 +6143,23 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);
           assert.ok(beforeBundleMetadata);
+          if (generatedRootAgentsScenario) {
+            const parentPaths = new Set(successorManifest.files.map((entry) => entry.path));
+            const generatedAgentsEntry = forwardFixture.successorManifest.files.find(
+              (entry) => entry.path === 'AGENTS.md',
+            );
+            expect(parentPaths.has(agentsTemplatePath)).toBe(true);
+            expect(parentPaths.has('AGENTS.md')).toBe(false);
+            assert.ok(agentsTemplateSha256);
+            assert.ok(generatedRootAgentsBytes);
+            expect(generatedAgentsEntry).toMatchObject({
+              path: 'AGENTS.md',
+              sha256: digestBytes(generatedRootAgentsBytes),
+              size: generatedRootAgentsBytes.length,
+              source_path: agentsTemplatePath,
+              source_sha256: agentsTemplateSha256,
+            });
+          }
           expect(
             forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot),
           ).toEqual(preservedMutableOutput);

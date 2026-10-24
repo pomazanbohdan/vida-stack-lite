@@ -7054,6 +7054,41 @@ three did not validate the final afterimage/assertion placement; the last two
 validated the corrected fixture and explicit null guard. No full suite was
 repeated before the single producer stage.
 
+### Key453 forward addition of generated root AGENTS
+
+The newly published branch map selected ID161 at `run.ts:1670` and ID162 at
+`run.ts:1672`, both with the nullish old-value fallback unhit (`[16,0]`). Add a
+root `AGENTS.md` only in the forward successor while keeping
+`vida-agent/templates/AGENTS.template.md` in both manifests. The successor entry
+uses `source_path` and `source_sha256` from the installed template, and its bytes
+are exactly the template with `{{BUNDLE}}` replaced by `vida-agent`. This route
+skips historical documentation authority only for generated `AGENTS.md`, then
+passes the selected template/provenance and installed-bundle inventory checks.
+The fixture verifies the parent has no root AGENTS entry, the successor does,
+and the generated digest/size/source binding is exact. It runs the authority
+reader successfully and compares `.agent`, installed bundle, config/changelog,
+and generated root-file afterimages.
+
+The first focused attempt failed before authority validation because the test's
+`repositoryRoot` is an uninitialized temporary fixture, not Source. The helper
+now reads the template from `packageRoot` and the actual source sidecar from the
+package's repository root; the extra template read is restricted to this one
+scenario. The retained failed fixture is
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-repair-forward-generated-root-agents-added-li4yqQ`;
+the related uninitialized fixture
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-uninitialized-nY2PO3` also
+reported `child-outcome-unknown`. Both are preserved as failure evidence.
+
+The final gated Bun 1.4.4 target passed 1 composite test, 209 expectations, and
+0 failures in 2.10 seconds including harness startup. Checked-JS strict passed
+227 files in 838.33 ms, configured Oxlint exited 0, and the one-file formatter
+check passed in 27 ms. Blind read-only Luna confirmed the new path reaches both
+nullish arms and that template provenance, installed inventory and no-write
+snapshots are valid; its receipt is
+`DIAG/bun-cli-run-key453-review-20261024-01.md`. No product code or coverage
+denominator changed. One changed-input stage remains after ordinary commit
+hooks and push.
+
 ### Three-hour execution comparison, 2026-10-24 12:52–15:52 UTC
 
 Ten one-worker changed-input stages have terminal receipts in this window:
