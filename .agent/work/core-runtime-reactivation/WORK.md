@@ -8362,3 +8362,161 @@ reviewed the revised second-read injection/three-read assertion and found no
 must-fix issue. `git diff --check` remains the final precommit check. No
 objective skip or counter change is claimed until a normal producer publishes
 and rebinds a report.
+
+### Key468 corrected stage terminal, objective dispositions, and rolling three-hour evidence — 2026-10-24 20:26 UTC
+
+After commit and ordinary push of `ce81ae799a80e05cb4446083a1ebc068c9825fe1`,
+the first corrected stage command omitted the required `--output` and exited at
+argument validation with `Stage requires an explicit lane and absolute
+canonical output directory.` No stage directory, producer, or coverage report
+was created by that invocation; its console capture is
+`DIAG/key468-stage-20261024-02.log`. The corrected command reused the canonical
+output directory from the preceding WORK receipt and ran the sole producer
+once in `/workspace/contour-stage-Q60Rhc`.
+
+The terminal `execution.json` records 219,811.639195 ms against the unchanged
+330,000 ms bound, exit 0, no signal/spawn error/timeout, complete untruncated
+capture, observed process and process-group termination, no termination
+attempts, unchanged boot, and unchanged immutable image inputs. Native capture
+is retained in `/workspace/contour-stage-Q60Rhc/stdout.log` and
+`stderr.log` (7,973 / 17,366 bytes, hashes in `execution.json`); the root
+command capture is `DIAG/key468-stage-20261024-03.log`. The source commit/tree
+are `ce81ae799a80e05cb4446083a1ebc068c9825fe1` /
+`7ea273ad3d500027c963c15acbc10a09f1a5afed`; the image input fingerprint is
+`4ed357f852409942c05660ced2d0b4409a1cdfc432902c0b899995e0ae6a7917`, and image
+manifest SHA-256 is
+`068609c1498ece0ec613e18f8134665e83eed5bf1634ae4cc8e7ce7c92bb97a9`. The
+stage-created diagnostic report is run
+`3ba37db8-4e17-43f8-9705-28e5bdea1dee` in immutable image
+`36141c95c00386b24f4b518e9c6538d037b7b362`, at
+`/workspace/.vida-quality-inputs/36141c95c00386b24f4b518e9c6538d037b7b362/repository/packages/agent/coverage/bun-unified/diagnostics/3ba37db8-4e17-43f8-9705-28e5bdea1dee.focused-coverage.json`.
+The report and report-manifest SHA-256 values are respectively
+`d258288598e7ff1da6724133198ea5b5c55a2cce4ba22c074b17c719d8e6667e` and
+`75527cf7a6c90333eba70043a4bce83b55f0280dc8f58137ec84cd2ce05a1c40`. Its
+Source/test fingerprints are
+`5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851` /
+`261a9adc054d7cb0b05f239988bb85b072159e4d63f70f844963a832a18b3b27`.
+
+The selected suite passed 127/127 tests and 2,725 expectation calls across
+`tests/run-entrypoint.test.ts` and `tests/bun-cache-routing.test.ts`. Published
+`bin/run.ts` qualification remains F441/555, L2050/2860, S2205/3138, B2597/3660,
+max CC 501, max entry CRAP 501, operation `BLOCKED`. Relative to Key467 this
+adds one covered statement and one covered branch; functions and lines do not
+change. In the exact branch map, ID227 now has `[1,9]`. The still-zero true arms
+are ID230 `[0,166]`, ID231 `[0,106]`, ID233 `[0,2]`, and ID234 `[0,7]`; ID228
+is `[0]` and ID236 `[0,3]`.
+
+A fresh blind Luna review rebound the objective-disposition candidates to this
+accepted report, its immutable Source, and exact `TESTING.md#objective-coverage-skips`
+requirements. It independently verified Source `bin/run.ts` SHA-256
+`61886ac6dbc0b5eeaec5e96c897c9d8dc380396c40daeea3dbf526998efdf051` against
+the report's Source entry and found:
+
+- ID228 at `bin/run.ts:2141` defaults the private `RunCliError` constructor's
+  optional details only when its third argument is omitted. Its only
+  construction is through `fail()` at line 2155, which always passes its own
+  defaulted details argument. No supported public path omits that argument.
+- ID236 at `bin/run.ts:2186–2187` requires an absent lease or owner mismatch
+  inside the renewal callback. The supported `run()` path checks the lease,
+  then `HostState.renewActiveLocalLease` revalidates the same owner before
+  invoking that callback (`src/host-state.ts:16555–16573`, 16622–16630).
+  The true arm is unreachable through this public callback path.
+
+Record ID228 and ID236 as objective skips only. Do not add hits, reduce raw
+denominators, alter source/test inputs, or change the `BLOCKED` outcome. The
+CLI parser refusal is not coverage for ID230. IDs230/231/233/234 remain active
+until a safe public fixture or independently reviewed objective disposition is
+proved. The passing suite also emitted retained fixture evidence at
+`/tmp/vida-unprepared-state-F0waWj` with reason `database-close-failed`; keep
+that owner-retained root and do not clean it as an old cache.
+
+The exact current three-hour window at 20:26:50 UTC is 17:26:50–20:26:50. Its
+11 native receipt paths are Key458 (`vnkCnG`), Key459 (`UHrWEn`), Key460
+(`HD6KwY`), Key462 (`luFjgH`), Key464 initial and corrected (`0JZd94`,
+`Vef1O4`), Key465 (`dZZJ8Q`), Key466 (`DnMyrV`), Key467 (`1NCIGw`), and Key468
+initial and corrected (`yrjiPB`, `Q60Rhc`). The prior window's Key456 receipt
+at 17:14:29 and Key457 at 17:26:07 are outside this exact start boundary. Of
+the 11 in-window receipts, nine exited 0 and two exited 1; together they ran
+1,397 tests (1,395 pass, two fail) and 29,273 expectation calls. Total native
+elapsed time is 2,427,614.058224 ms, mean 220,692.187111 ms, range
+202,198.725575–253,196.589626 ms. Every capture was complete, every owned
+process group closed, no receipt timed out, and all image inputs remained
+unchanged. The Key464 initial attempt and Key468 initial attempt produced no
+accepted report; each corrected packet has its own successful accepted stage.
+
+The measured sequence remains reuse the latest receipt/report, trace public
+reachability, batch one fixture, run focused/static checks and independent
+review, commit/push normally, then run one serial changed-input stage. Here a
+bad CLI-error expectation cost an actual 202.199-second stage without a report;
+the corrected stage cost 219.812 seconds. Running a meaningful exact target
+before the producer could likely have avoided that first stage, but this is a
+counterfactual, not an A/B trial. An unnecessary stage costs about 3.68 minutes
+at the measured window mean. No comparable 2x/4x numeric run exists; retain one
+producer. Model-token and aggregate tool-call counts are unavailable from
+native receipts and remain unclaimed.
+
+For disk admission, reuse the prior one-time checkout/scratch/retained
+filesystem inventory. The current producer receipt observed 12,263,124,992
+scratch bytes available against the unchanged 2,147,483,648-byte floor, a
+10,115,641,344-byte margin. This is stage admission evidence, not a new disk
+survey. No cleanup, wide du/scan/hash, second producer, or projection edit was
+performed. Projection was updated only by the producer after terminal outcome.
+
+### Key469 run-guard coverage packet — pre-stage — 2026-10-24 20:52 UTC
+
+The accepted baseline remains Key468 report/run
+`3ba37db8-4e17-43f8-9705-28e5bdea1dee` on immutable image
+`36141c95c00386b24f4b518e9c6538d037b7b362`, source commit
+`ce81ae799a80e05cb4446083a1ebc068c9825fe1`, and bound `bin/run.ts` SHA-256
+`61886ac6dbc0b5eeaec5e96c897c9d8dc380396c40daeea3dbf526998efdf051`. Its
+report SHA-256 is `d258288598e7ff1da6724133198ea5b5c55a2cce4ba22c074b17c719d8e6667e`;
+the raw branch counters include ID230 `[0,166]`, ID231 `[0,106]`, ID233
+`[0,2]`, ID234 `[0,7]`, and ID243 `[0,40]` at `run.ts:2226`.
+
+The corrected fixture adds two public run cases while reusing the existing
+renewal/recovery setup. ID230 is reached with a fresh initialized project and
+no Host Work; the test asserts the exact refusal at workflow start and checks
+that no Work, Journal, or admission attempt was persisted. ID231 is reached by
+resealing the existing expired-recovery Journal with `source_scope: null`,
+passing its new revision/digest through the public CLI, and asserting the exact
+source-scope refusal with an unchanged Work/Ledger/Journal/admission
+afterimage. The existing Key469 malformed-intake test also proves the bytes are
+bounded, match the resealed artifact digest, parse to `[]`, and are refused by
+the earlier admitted-intake parser (ID243). All database writes are scoped to
+isolated `mkdtemp` roots and use the admission-aware close path.
+
+The initial ID233 renewal-race target was intentionally removed after its
+failure. `DIAG/key469-id233-target-05.log` records one failed test (0 pass, 40
+expectations, 5.135 s) and retained fixture
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-mutation-JwhLGb`. Its
+second-snapshot injection ran before the renewal's
+`assertAdmittedRuntimeCodeCurrent`; that earlier gate rejected the malformed
+root as `non-canonical JSON value at $`. A read-only source-order trace found
+the two `requireRunRecord` callers at `run.ts:6500` and `:6733`. Both public
+changing modes reject explicit `--intake` at `:3239` and first pass through
+the persisted-intake shape guard at `:6191–6198` / `parseAdmittedIntakeWorkItem`
+at `:2226`; replacing its artifact reference later conflicts with the captured
+Host CAS. Renewal adds the earlier runtime-intake validation at
+`admitted-session-execution.ts:43–79` before `:6733`. A blind Luna review
+independently confirmed that only ID233's true arm is objectively unreachable.
+Record ID233 as a narrow objective skip only; preserve raw `[0,2]`, its
+denominator and the `BLOCKED` outcome. ID234's true arm is independently
+reviewed as the same kind of narrow skip because all supported callers supply
+validated string arrays; preserve `[0,7]`. ID228 and ID236 retain their prior
+reviewed dispositions. None of these skips adds hits or converts status.
+
+Focused evidence is preserved without a suite replay. An initial filter command
+without `AGENT_RUNTIME_V8_COVERAGE=1` matched zero tests; its 200-byte capture
+is `DIAG/key469-id243-target-06-no-match.log`. The corrected Bun 1.4.4 target
+passed 1 test/129 expectations in 43.66 s (`DIAG/key469-id243-target-06.log`).
+After adding ID230/231, the combined scoped target passed 2 tests/141
+expectations in 45.45 s (`DIAG/key469-id230-231-243-target-01.log`). Formatting
+passed for the one changed file; scoped typecheck passed with 545 captured TS
+files/0 diagnostics and 104 project files; Oxlint exited successfully. Captures
+are `DIAG/key469-id230-231-format-write-01.log`,
+`DIAG/key469-id230-231-format-check-01.log`,
+`DIAG/key469-id230-231-typecheck-01.log`, and
+`DIAG/key469-id230-231-oxlint-01.log`. A fresh blind Luna fixture review found
+no must-fix in the afterimages, exact refusals, isolated writes, or failure
+retention. The next action is one producer stage after normal commit/push; no
+numeric report has yet been updated for this packet.

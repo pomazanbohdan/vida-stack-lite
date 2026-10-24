@@ -6599,6 +6599,35 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     });
 
+    test('requires current Host Work before starting a configured workflow', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-no-work-'));
+      let completed = false;
+      try {
+        const { args, config } = createFixture(root);
+        const databasePath = sessionHandoffDatabasePath(root, config);
+        expect(existsSync(databasePath)).toBe(false);
+        await Promise.resolve(
+          expect(run(args)).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Current admitted Work is unavailable for workflow execution.',
+          }),
+        );
+        expect(existsSync(databasePath)).toBe(true);
+        const after = inspectHostWorkspaceDatabase(
+          root,
+          path.relative(root, databasePath),
+          deriveWorkspaceId(config.repository.repository_id, root),
+        );
+        expect(after.work).toEqual([]);
+        expect(after.journals).toEqual([]);
+        expect(after.admission_attempts).toEqual([]);
+        completed = true;
+      } finally {
+        if (completed) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed run missing-Host fixture: ${root}\n`);
+      }
+    });
+
     test('CLI rejects a changed scope after component preparation without issuing its wave', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-persisted-'));
       const fixture = ownedMutationFixture(root, 30_000);
@@ -7541,6 +7570,100 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(preservedScope).toEqual(
           snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']),
         );
+        const intakeReference = afterWork.state.artifacts.find((entry) => entry.artifact_id === 'local-session-intake');
+        assert.ok(intakeReference);
+        const intakeFile = path.join(root, intakeReference.path);
+        const originalIntakeBytes = readFileSync(intakeFile);
+        const malformedIntakeBytes = Buffer.from('[]');
+        const malformedIntakeWork: WorkState = {
+          ...afterWork.state,
+          artifacts: afterWork.state.artifacts.map((entry) =>
+            entry.artifact_id === 'local-session-intake'
+              ? {
+                  ...entry,
+                  sha256: createHash('sha256').update(malformedIntakeBytes).digest('hex'),
+                }
+              : entry,
+          ),
+        };
+        const persistedWorkRowId = JSON.stringify([
+          afterWork.identity.repository_id,
+          afterWork.identity.project_ids,
+          afterWork.identity.integrations_digest,
+          afterWork.identity.work_id,
+        ]);
+        const updatePersistedWork = (expectedVersion: StateVersion, next: WorkState): void => {
+          const database = openAdmittedWorkspaceDatabase(root, databaseRelativePath, workspaceId, false);
+          let outcome: DatabaseWorkOutcome<number>;
+          try {
+            const result = database
+              .query(
+                "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+              )
+              .run(
+                canonicalJson(next),
+                canonicalJsonDigest(next),
+                workspaceId,
+                persistedWorkRowId,
+                expectedVersion.revision,
+                expectedVersion.digest,
+              );
+            outcome = { ok: true, value: result.changes };
+          } catch (error) {
+            outcome = { ok: false, error };
+          }
+          expect(
+            finishWorkspaceDatabaseClose(
+              database,
+              outcome,
+              closeWorkspaceDatabaseWithAdmission,
+              'Malformed intake Work reseal and database close failed',
+            ),
+          ).toBe(1);
+        };
+        let malformedIntakeRefusalVerified = false;
+        try {
+          writeFileSync(intakeFile, malformedIntakeBytes);
+          updatePersistedWork(afterWork.version, malformedIntakeWork);
+          const beforeMalformedIntake = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+          const persistedIntakeReference = beforeMalformedIntake.work[0]?.state.artifacts.find(
+            (entry) => entry.artifact_id === 'local-session-intake',
+          );
+          assert.ok(persistedIntakeReference);
+          const persistedIntakeBytes = readFileSync(intakeFile);
+          expect(persistedIntakeBytes).toEqual(malformedIntakeBytes);
+          expect(persistedIntakeBytes.length).toBeLessThanOrEqual(32768);
+          expect(createHash('sha256').update(persistedIntakeBytes).digest('hex')).toBe(persistedIntakeReference.sha256);
+          expect(JSON.parse(persistedIntakeBytes.toString('utf8'))).toEqual([]);
+          await Promise.resolve(
+            expect(
+              run([
+                ...admitted.args,
+                ...expected(renewedVersion),
+                '--renew-lease',
+                'true',
+                '--native-session-handle',
+                admitted.nativeSessionHandle,
+                '--lease-generation',
+                String(afterWork.state.lease.generation),
+              ]),
+            ).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-CONTEXT-001',
+              message: 'Current admitted intake changed.',
+            }),
+          );
+          expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeMalformedIntake);
+          malformedIntakeRefusalVerified = true;
+        } finally {
+          if (malformedIntakeRefusalVerified) {
+            writeFileSync(intakeFile, originalIntakeBytes);
+            updatePersistedWork(
+              { revision: afterWork.version.revision, digest: canonicalJsonDigest(malformedIntakeWork) },
+              afterWork.state,
+            );
+            expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(afterRenewal);
+          }
+        }
         const sourceFile = path.join(root, 'AGENT.sidecar.md');
         const originalSourceBytes = readFileSync(sourceFile);
         try {
@@ -7915,6 +8038,66 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             },
           );
           expect(inspectClaimProjection()).toEqual(beforeExpiredRecovery);
+
+          const nullSourceScopeJournal = { ...recoveryJournal.state, source_scope: null };
+          const journalDatabase = openAdmittedWorkspaceDatabase(root, databaseRelativePath, workspaceId, false);
+          let resealOutcome: DatabaseWorkOutcome<number>;
+          try {
+            const update = journalDatabase
+              .query(
+                'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+              )
+              .run(
+                recoveryJournal.version.revision + 1,
+                canonicalJson(nullSourceScopeJournal),
+                canonicalJsonDigest(nullSourceScopeJournal),
+                workspaceId,
+                recoveryWork.identity.work_id,
+                recoveryJournal.state.attempt,
+                recoveryJournal.version.revision,
+                recoveryJournal.version.digest,
+              );
+            resealOutcome = { ok: true, value: update.changes };
+          } catch (error) {
+            resealOutcome = { ok: false, error };
+          }
+          expect(
+            finishWorkspaceDatabaseClose(
+              journalDatabase,
+              resealOutcome,
+              closeWorkspaceDatabaseWithAdmission,
+              'Null source-scope Journal reseal and database close failed',
+            ),
+          ).toBe(1);
+          const nullSourceScopeVersion = {
+            revision: recoveryJournal.version.revision + 1,
+            digest: canonicalJsonDigest(nullSourceScopeJournal),
+          };
+          const beforeNullSourceScopeRecovery = inspectClaimProjection();
+          expect(beforeNullSourceScopeRecovery.journals[0]?.version).toEqual(nullSourceScopeVersion);
+          expect(beforeNullSourceScopeRecovery.journals[0]?.state.source_scope).toBeNull();
+          await assert.rejects(
+            run([
+              ...admitted.args,
+              ...expected(nullSourceScopeVersion),
+              '--recover-expired-lease',
+              'true',
+              '--rebind-current-bundle',
+              'true',
+              '--native-session-handle',
+              admitted.nativeSessionHandle,
+              '--lease-generation',
+              String(recoveryLease.generation),
+            ]),
+            (error: unknown) => {
+              expect(error).toMatchObject({
+                code: 'GAP-VIDA-RUN-CONTEXT-001',
+                message: 'Expired recovery source scope is unavailable.',
+              });
+              return true;
+            },
+          );
+          expect(inspectClaimProjection()).toEqual(beforeNullSourceScopeRecovery);
         } finally {
           setSystemTime();
         }
