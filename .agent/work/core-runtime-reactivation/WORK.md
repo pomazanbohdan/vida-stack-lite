@@ -4895,8 +4895,8 @@ changed files (`DIAG/bun-cli-run-key420-format-20261024-01.log`), strict
 Oxlint gate exited 0 (`DIAG/bun-cli-run-key420-lint-20261024-01.log`). The
 focused Bun 1.4.4 target passed one test over eight cases
 (`DIAG/bun-cli-run-key420-target-20261024-02.log`). This packet used serial
-width one. No full stage has run for Key420 yet; no new coverage numbers or
-contour qualification are claimed.
+width one. Commit `73c12781fd1648b91101b705cc094b36ca65178c` passed ordinary
+hooks and pushed to `work` before the current-producer stage.
 
 The verified public-release flow showed why direct entrypoint setup would
 require another valid ledger transition. This test remains narrowly about the
@@ -4904,15 +4904,52 @@ production predicate; the next producer report will determine remaining
 function/branch gaps. No objective skip, consumer effect, disk rescan or
 cleanup was performed.
 
+The current producer ran exactly one `bun-cli-run` coverage stage against that
+commit. Run `d2371349-a54f-492f-959a-2d3f38a45f88` used tree
+`18746f57546edbc02ecd91f8b14775097cf9f7ba`, input fingerprint
+`5b70c909a8686119990b944fa93381cb34c41639e97f7cdea8745fb3b06ab91e`, and
+manifest digest
+`36c7e79095a86745ea426b7b414be23fcd1f6a7a66d10e53ace507eeea977d14`. It
+completed with exit 0 in 207,589.09 ms. Capture completed, the group closed,
+boot remained unchanged, image inputs were unchanged, and the report was
+published. The native stage log is
+`DIAG/bun-cli-run-key420-stage-20261024-01.log`; its retained stage directory
+is `/workspace/contour-stage-40DY36`.
+
+The stage ran 117 tests across `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`: 117 passed, 0 failed, 2,261 expectations,
+201.54 s test duration. It added one function, one line, one statement and five
+branches relative to Key419. `isCompletedReadonlyRelease` is now 1.0 function
+coverage, CC 5 / CRAP 5; its five short-circuit operands each have nonzero
+execution counts. Current F/L/S/B is `410/555`, `1900/2859`, `2024/3138`,
+`2323/3661`; max CC 501, max entry CRAP 992; producer status remains
+`BLOCKED`. The immutable focused report is
+`/workspace/.vida-quality-inputs/6b22d287f3b779ad0fdcec83c0ee51de1304e5f3/repository/packages/agent/coverage/bun-unified/diagnostics/d2371349-a54f-492f-959a-2d3f38a45f88.focused-coverage.json`.
+Projection was updated by the producer owner. The true outcome of the caller's
+guard `if` at `bin/run.ts:7989` remains uncovered; no objective disposition is
+applied. Resolve that observed branch before advancing to the next zero
+function `isResearchSourceReference` at line 2500.
+
+One read-only summary query initially treated `.tests` as an array of objects
+and exited 5; a second selected the full `.metrics` function inventory and
+produced a truncated 31,225-token tool response. Neither query changed files.
+Subsequent reads used only the run summary, target function/branch counters,
+the stage tail, and ordered next-zero names. Keep this as confirmed audit
+output waste. No full suite, scan/hash pass, cleanup, or disk rescan was run by
+this packet.
+
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412/413/414/415/416/417/418/419 were 182,091.09 /
+Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420 were 182,091.09 /
 196,291.21 / 176,802.72 / 184,266.83 / 185,087.10 / 191,756.33 /
-202,630.39 / 187,589.41 / 191,494.56 / 215,386.40 ms. Each stage used different immutable image and source/test
+202,630.39 / 187,589.41 / 191,494.56 / 215,386.40 / 207,589.09 ms. Each stage used different immutable image and source/test
 inputs, so these figures do not compare ordering or parallelism causally.
 Key416's focused target took 5,118.82 ms standalone and 6,514.59 ms in the
 stage capture; those executions have different producer/test environments and
 are not a controlled speed comparison.
+Key420's focused target took 1,211 ms standalone; the 207,589 ms stage ran 117
+tests with a different producer environment, so this is not an isolated
+before/after comparison.
 Producer concurrency stayed at one. Observed order was focused target,
 scoped formatting/strict/lint, independent review, ordinary hook-backed commit
 and push, then one contour stage. A static-first order could have caught a
