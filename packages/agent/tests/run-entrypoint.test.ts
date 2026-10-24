@@ -6637,8 +6637,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         try {
           const { args, config } = createFixture(root);
           const admitted = prepareMutationIntake(args, config, { risk });
-          const coverageRole = risk === 'high' ? 'run-admission-prepared' : undefined;
-          expect(fixture.invoke(admitted.admissionArgs, 0, coverageRole).status).toBe('prepared');
+          expect(fixture.invoke(admitted.admissionArgs).status).toBe('prepared');
           completed = true;
         } finally {
           if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
@@ -7510,7 +7509,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       let completed = false;
       try {
         const { args, config } = createFixture(root);
-        const admitted = prepareMutationIntake(args, config, { sourcePath: 'AGENT.sidecar.md' });
+        const admitted = prepareMutationIntake(args, config, { sourcePath: 'AGENT.sidecar.md', risk: 'high' });
         const { sourceEntry } = admitted;
         const runtimePaths = runtimePackageCodePaths(config.runtime.bundle);
         const runtimeSnapshot = snapshotRuntimePackageSources(
@@ -7519,7 +7518,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           runtimePaths,
         );
         expect(runtimeSnapshot.entries.every((entry) => entry.exists)).toBe(true);
-        const prepared = fixture.invoke(admitted.admissionArgs);
+        const prepared = fixture.invoke(admitted.admissionArgs, 0, 'run-admission-prepared');
         expect(prepared.status).toBe('prepared');
         const preparedActions = requireNextActions(prepared);
         const preparedVersion = requireStateVersion(prepared.state_version);

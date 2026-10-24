@@ -8923,3 +8923,86 @@ no scan/hash/test ran. The follow-up query bounded results by receipt timestamp.
 This is output volume, not billed-token accounting. The next action is one corrected
 changed-input stage after the normal commit and push terminate; keep the failed
 stage and all retained UNKNOWN evidence intact.
+
+### Key471 prepared-to-issue binding failure — 2026-10-24 22:00 UTC
+
+The sole producer ran source commit `bd6ad8d223690912f51c5c0898c8813ffd5bdb48`
+once in `/workspace/contour-stage-KKDUVS`. The immutable image binds tree
+`73650e9f8cabb1823076137e3bb9d8b96c850f87`, fingerprint
+`65039f03b4c251d848ed6a0e77e19589488f00522ec0be02f2e8a27959358a49`, and
+manifest SHA-256
+`73895dc16dc073eaeac931cc3bdff38d21cee4e9aaaba3e2f0b4856a9c79a8cd`. Native
+execution ended after 156,242.032423 ms with exit 1, no timeout/signal/spawn
+error, complete capture, closed owned group, unchanged boot and unchanged image
+inputs. Publication is `unknown-or-partial`; report run
+`93f1c001-59d9-4788-976d-2eb0a8107f5a` did not publish a coverage report, so
+this attempt adds no F/L/S/B hits. Preserve
+`/workspace/contour-stage-KKDUVS/{request.json,launch.json,execution.json,publication-error.json,stdout.log,stderr.log}`
+and root capture `DIAG/key471-stage-20261024-03.log`. Both captures are
+complete and non-truncated (7,718 stdout bytes and 20,339 stderr bytes).
+
+The suite reached 133 tests and 2,660 expectations: 131 passed and two failed.
+The high-risk prepared observer from a separate Work passed, but the later
+CAS fixture's `run-issue-wave` child could not match the observer's
+`preparedBinding`; it failed at `run-entrypoint.test.ts:7757` with
+`Armed prepared CLI launch has a foreign command or argv.` The observer must
+prepare and issue against the same admitted Work. This is a test-observation
+binding failure, not a product defect, timeout, kill or objective skip. Retain
+`/tmp/vida-run-mutation-wmyK05` and
+`/tmp/vida-run-uninitialized-QBScZw`; the latter records an UNKNOWN child
+outcome. Do not delete or replay either root.
+
+The stage admission receipt observed 11,682,828,288 scratch bytes against the
+unchanged 2,147,483,648-byte floor, a 9,535,344,640-byte margin. This reuses the
+existing filesystem inventory. The owned process group terminated; no cleanup
+or signal was issued. The producer alone updated projection.
+
+### Key471 CAS-matched high-risk observer — pre-stage — 2026-10-24 22:03 UTC
+
+Blind Luna review traced `run-issue-wave` to the exact `preparedBinding.argv`
+from its preceding prepared invocation. The corrected fixture therefore puts
+`risk: 'high'` on the existing CAS test intake, keeps its sole
+`run-admission-prepared` observer and its paired issue observer on that same
+Work, and leaves the standalone medium/high acceptance tests unarmed. This
+high-risk intake evaluates all ID257 operands while preserving CAS subject
+identity. For the existing `information_research_light` workflow the reviewer
+found no risk-filtered assignments; the test issues local research requests,
+but executes no consumer.
+
+The package-selected Bun 1.4.4 target passed the two standalone risk cases and
+the CAS/report test (3 pass, 8 filtered, 144 expectations, 47.47 s) at
+`DIAG/key471-risk-observer-target-04.log`. Scoped strict passed with 545
+captured TypeScript files and zero diagnostics plus 104 project files; Oxlint
+and one-file format checks passed at
+`DIAG/key471-risk-observer-{typecheck,oxlint,format}-03.log`. Blind Luna found
+the same-work prepared/issue pairing is necessary and safe for this fixture.
+WORK link validation passed for one selected document and 11 local links at
+`DIAG/key471-risk-observer-docs-check-05.log`; `git diff --check` passed.
+
+For the receipt window 2026-10-24 19:03:28–22:03:28 UTC, the existing prior
+18:42–21:42 aggregate has no native stage terminal between those start bounds;
+the 18:51:39 projection row is a focused diagnostic, not a native stage. The
+current window has thirteen serial stage attempts: eight exit 0 and five exit
+1. Twelve completed test-suite commands ran 1,545 tests (1,538 pass, seven
+fail) and 32,205 expectations. One retained Key469 nested
+`SIGKILL`/`ETIMEDOUT` is still UNKNOWN and excluded from test and coverage
+denominators. Total stage elapsed time is 2,725,562.514393 ms, mean
+209,658.654953 ms, range 148,016.106–271,158.850 ms. Platform billed-token and
+aggregate tool-call totals are unavailable.
+
+| Check order / numeric parallelism | Measured evidence | Limitation |
+| --- | --- | --- |
+| Exact targets, scoped strict/lint/format, independent review, normal commit/push, then one changed-input stage at 1x | The prepared/issue-bound target passed 3 tests / 144 expectations in 47.47 s; recent integrated stages still exposed two fixture-observer binding failures. | The failed reports add no hits. The latest fix keeps both observer roles on one admitted Work. |
+| Stage before focused correction at 1x | Key469's initial attempt ended UNKNOWN after 271.159 s; Key471's observer mismatch stages used 148.016 s and 156.242 s. | Target-first could have prevented avoidable report failures; this is not a matched A/B benchmark. |
+| Two or four numeric stages concurrently | No qualified 2x/4x receipt exists. | Keep the one-producer contract; higher concurrency is unmeasured. |
+
+No new disk survey or cleanup was performed. The final stage's receipt still has
+9,535,344,640 bytes above the admission floor; Source, projection, immutable
+images, and retained FAIL/UNKNOWN roots remain unchanged outside producer
+ownership.
+
+### 24-hour projection view — 2026-10-24 22:03 UTC
+
+The bounded projection window 2026-10-23 22:03:28–2026-10-24 22:03:28 UTC contained 69 focused Bun coverage-diagnostic rows and 12 contour-stage publication-failure rows. Diagnostics are not qualification reports, and failed/unknown-or-partial stage publications add no coverage hits. The oldest and newest accepted diagnostic endpoints were 2026-10-23 23:37:17 (F296/557, L1338/2863, S1429/3143, B1697/3663) and 2026-10-24 21:42:03 (F441/555, L2058/2860, S2218/3138, B2613/3660; maximum CC/CRAP 501). Since source fingerprints and denominators differ, these endpoints are not a comparable coverage delta. The producer-owned cumulative status header reports 17/46 historical exact F/L/S/B closures; this is not a 24-hour increment, and the current bun-cli-run contour remains BLOCKED.
+
+One read-only projection query returned nested report payloads instead of aggregates and was truncated at 10,050 token-equivalent output; no repository or runtime files changed. The summary was then bounded to endpoints and counts. Token-equivalent tool output is not billed-token accounting. Combined with the earlier accidentally selected attempts array documented above, this exposed avoidable output volume; no suite, scan or hash ran for either query.
