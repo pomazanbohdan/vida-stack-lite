@@ -5888,3 +5888,60 @@ ID104 without manufacturing admitted history, and get a fresh independent
 objective-skip review for ID98 only if the Pstack contract becomes available.
 The Pstack final-diff review gap remains open. No CRAP or mutation run is
 permitted in this coverage phase.
+
+### bun-cli-run admitted-cutoff authority packet — Key431 pre-stage, 2026-10-24
+
+Key431 closes the positive nonempty `first_admitted_work_attempt` route at
+`run.ts:1108` through the supported `advanceCutoff` helper. The focused fixture
+copies the maintained runtime config and instruction files into its temporary
+project, writes the child selector, and calls `advanceCutoff` with a valid
+repository/work/attempt/scope tuple. It asserts the exact generated attempt
+identity, then calls `repairAuthority` against that bound child generation and
+checks the `.agent` fixture snapshot remains unchanged. The helper's local
+SQLite handoff file is created only inside the disposable test project before
+the refusal snapshot; this is fixture setup, not an operational DB cutover or
+consumer effect. The attempt string is not fabricated in the witness.
+
+Root's bounded final-diff review confirmed the selector digest is over the
+same canonical record written at `.agent/active-runtime-selector.v1.json`,
+the cutoff helper validates it under its host-state transaction, and
+`repairAuthority` reaches the positive nonempty-string validation arm with the
+generated witness. No production Source changed. The focused Bun 1.4.4 target
+passed once: 1 test, 116 filtered, 129 expectations, zero failures; the case
+body took 492.78 ms and command wall time was 1.79 s. The selected invocation
+was `AGENT_RUNTIME_V8_COVERAGE=1 bun test --timeout 5000
+--test-name-pattern='repair and forward authority reject malformed evidence
+without writes' tests/run-entrypoint.test.ts`. Its retained receipt is
+`DIAG/bun-cli-run-key431-target-20261024-01.log`. Format check, strict
+`tests/tsconfig.json` check (510 files), Oxlint, and `git diff --check` passed
+once before the target; their receipts are
+`DIAG/bun-cli-run-key431-format-check-20261024-01.log`,
+`DIAG/bun-cli-run-key431-strict-20261024-01.log`,
+`DIAG/bun-cli-run-key431-oxlint-20261024-01.log`, and
+`DIAG/bun-cli-run-key431-diff-check-20261024-01.log`. The formatter write
+receipt is `DIAG/bun-cli-run-key431-format-write-20261024-01.log`.
+
+Compared with Key430's six selected attempts (four fixture-precondition
+failures, one causally weak pass, then the final pass), Key431 preflighted the
+parser/guard prerequisites and completed the formatter, parallel static pair,
+and one target without a failed attempt. This is one observed packet, not a
+causal speedup estimate. The target remained serial. A full-contour-first
+ordering has no matched measurement; based on the latest Key430 stage's
+201.49 s runtime it would defer detection of a fixture problem by roughly two
+orders of magnitude relative to this focused target, but that is an estimate,
+not an observed comparison. Static strict and Oxlint ran concurrently; no
+serial-vs-parallel comparison exists. Numeric-producer concurrency remains
+one. Bun target output does not report worker parallelism for this single
+selected test. Aggregate tool/API calls and model-token telemetry are
+unavailable.
+
+Pstack resolution remains unavailable on this host under the recorded
+`.codex/README.md`/tooling-lock procedure, so no fresh blind Luna final-diff
+review is claimed. No objective skip is applied to ID98, and no denominator,
+projection, or contour status is changed by this pre-stage packet. Next: after
+normal commit/push and hook terminal completion, run exactly one pinned
+`bun-cli-run` stage, retain its full native receipts and raw streams, and bind
+the resulting report to the commit and fingerprints before recording counts.
+Do not start another contour or run CRAP/mutation. The prior one-time disk
+check remains the source; no new disk scan, cleanup, receipt deletion, or
+retained-fixture removal occurred.

@@ -5180,6 +5180,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'repair-installed-payload-drift',
       'repair-maintenance-lock-active',
       'repair-release-proof-extra-field',
+      'repair-cutoff-admitted-attempt',
       'malformed-source-path',
       'malformed-payload-manifest',
       'duplicate-payload-path',
@@ -5306,7 +5307,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             forwardScenario ||
             scenario === 'duplicate-payload-path' ||
             scenario === 'repair-payload-delta-mismatch' ||
-            scenario === 'repair-release-proof-extra-field'
+            scenario === 'repair-release-proof-extra-field' ||
+            scenario === 'repair-cutoff-admitted-attempt'
               ? 'fixture/payload.json'
               : '../outside',
           source_sha256: scenario === 'repair-payload-delta-mismatch' ? '2'.repeat(64) : sharedPayloadSha256,
@@ -5630,9 +5632,34 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const beforeForwardEvidenceMetadata = forwardEvidencePath
           ? snapshotAuthorityMetadata(path.join(root, forwardEvidencePath))
           : null;
-        const before = snapshotAuthorityFixture(path.join(root, '.agent'));
+        let before = snapshotAuthorityFixture(path.join(root, '.agent'));
         const hostDatabasePath = path.join(root, '.agent', 'work', 'session-handoff.v1.sqlite');
         expect(existsSync(hostDatabasePath)).toBe(false);
+        if (scenario === 'repair-cutoff-admitted-attempt') {
+          for (const file of ['agent-runtime.config.v1.yaml', 'AGENTS.md', 'AGENT.sidecar.md'])
+            writeFileSync(path.join(root, file), readFileSync(path.join(repositoryRoot, file)));
+          writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(childSelector));
+          await advanceCutoff(
+            {
+              generationRoot: childRoot,
+              generation: childGeneration,
+              selectorSha: childSha,
+              planSha256: childSelector.plan_sha256,
+              archiveManifestSha256,
+              repaired: true,
+              forward: false,
+              currentMutableOutput: null,
+            },
+            {
+              project_root: root,
+              repository: 'fixture-repository',
+              work_id: 'repair-authority-cutoff-work',
+              attempt: '1',
+              scope_digest: 'd'.repeat(64),
+            },
+          );
+          before = snapshotAuthorityFixture(path.join(root, '.agent'));
+        }
         if (scenario === 'forward-installed-bundle-unsupported-node') {
           const server = createServer();
           const socketPath = path.join(bundleRoot, 'bin', 'unsupported-node.sock');
@@ -5827,6 +5854,15 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               beforeForwardEvidenceMetadata,
             );
           }
+        } else if (scenario === 'repair-cutoff-admitted-attempt') {
+          const cutoff = requireRecord(
+            parseJsonUnknown(readFileSync(path.join(childRoot, 'cutoff-witness.json'), 'utf8')),
+            'cutoff witness',
+          );
+          expect(cutoff.first_admitted_work_attempt).toBe(
+            `fixture-repository/repair-authority-cutoff-work/1/${'d'.repeat(64)}`,
+          );
+          expect(repairAuthority(root, childSelector, childSha, childRoot, true)).toBeUndefined();
         } else {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);
@@ -5840,7 +5876,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(preservedPaths.map((file) => readFileSync(file))).toEqual(beforePreservedBytes);
           expect(preservedPaths.map(snapshotAuthorityMetadata)).toEqual(beforePreservedMetadata);
         }
-        expect(existsSync(hostDatabasePath)).toBe(false);
+        expect(existsSync(hostDatabasePath)).toBe(scenario === 'repair-cutoff-admitted-attempt');
         expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(before);
         completed = true;
       } finally {
