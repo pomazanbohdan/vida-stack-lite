@@ -4865,6 +4865,45 @@ with CRAP 3. The next zero function in report order is
 `isCompletedReadonlyRelease` at `bin/run.ts:2288`. Continue there; do not replay
 Key419 or combine its counters with another image.
 
+#### Key420 readonly-release classifier
+
+Key420 targets the next report-ordered zero callable,
+`isCompletedReadonlyRelease`. Its sole caller checks ledger history while a
+reported research result is normalized. Existing CLI inputs exercise the
+caller's no-matching-operation path, but do not execute the pure classifier
+because the validated ledger has no operations. A public-path true fixture is
+not small: the current readonly-release command rejects research items with
+activation/normalization metadata, while a valid release operation must match
+a released ticket, work, thread, resources, revisions and claims. The
+independent reviewer confirmed this fixture boundary.
+
+The production predicate is now exported from the existing `bin/run.ts`
+module, with no package export added. One focused truth-table test imports the
+actual predicate and covers matching current-work release, missing/non-record/
+primitive inputs, foreign work, other kind, other prefix and non-string
+operation ID. This verifies the classifier without synthesizing invalid Host
+ledger state or running research consumer effects. The test does not claim the
+caller's matching-operation arm; no objective disposition was applied.
+
+Blind native Luna review found no defect or `MUST KILL`; the final review also
+confirmed the primitive denial and labeled assertion messages. Evidence is in
+`DIAG/bun-cli-run-key420-independent-review-20261024-01.md`. No comments or
+suppressions were added. Package-pinned Bun 1.4.4 formatting passed for both
+changed files (`DIAG/bun-cli-run-key420-format-20261024-01.log`), strict
+`tests/tsconfig.json` checking passed for 510 files
+(`DIAG/bun-cli-run-key420-test-typecheck-20261024-01.log`), and the locked
+Oxlint gate exited 0 (`DIAG/bun-cli-run-key420-lint-20261024-01.log`). The
+focused Bun 1.4.4 target passed one test over eight cases
+(`DIAG/bun-cli-run-key420-target-20261024-02.log`). This packet used serial
+width one. No full stage has run for Key420 yet; no new coverage numbers or
+contour qualification are claimed.
+
+The verified public-release flow showed why direct entrypoint setup would
+require another valid ledger transition. This test remains narrowly about the
+production predicate; the next producer report will determine remaining
+function/branch gaps. No objective skip, consumer effect, disk rescan or
+cleanup was performed.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414/415/416/417/418/419 were 182,091.09 /

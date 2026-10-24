@@ -52,6 +52,7 @@ import {
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
   forwardUpdateAuthority,
+  isCompletedReadonlyRelease,
   repairAuthority,
   run,
   writeDurable,
@@ -593,6 +594,29 @@ test('run CLI main forwards parsed arguments and preserves integer and JSON resu
   expect(jsonExit.exitCode).toBeUndefined();
   expect(logged).toEqual(['{"status":"inspected","rights_granted":false}']);
   expect(errors).toEqual([]);
+});
+
+test('completed readonly release matching binds operation kind, work and identifier', () => {
+  const workId = 'work-current';
+  const matching = {
+    schema: 'CoordinationOperation/v1',
+    kind: 'release',
+    work_id: workId,
+    operation_id: 'completed-readonly-release-current',
+  };
+  const cases: readonly [string, unknown, boolean][] = [
+    ['matching current-work release', matching, true],
+    ['missing operation', null, false],
+    ['non-record operation', [], false],
+    ['primitive operation', 'release', false],
+    ['foreign work', { ...matching, work_id: 'work-other' }, false],
+    ['other operation kind', { ...matching, kind: 'contour_assurance' }, false],
+    ['other release identity', { ...matching, operation_id: 'session-release-current' }, false],
+    ['non-string operation identity', { ...matching, operation_id: 42 }, false],
+  ];
+
+  for (const [label, operation, expected] of cases)
+    assert.equal(isCompletedReadonlyRelease(operation, workId), expected, label);
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {

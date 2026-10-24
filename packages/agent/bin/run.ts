@@ -2285,7 +2285,7 @@ function optionalCorrectiveExecution(
 }
 
 /** @param {unknown} operation @param {string} workId @returns {boolean} */
-function isCompletedReadonlyRelease(operation: unknown, workId: string): boolean {
+export function isCompletedReadonlyRelease(operation: unknown, workId: string): boolean {
   return (
     isRecord(operation) &&
     operation.work_id === workId &&
