@@ -34,6 +34,17 @@ The producer's terminal receipt binds this report to source commit
 `961713ff2dc1dfea2671b40e0f922b8cccfb633e`, and execution-image manifest
 `d787367d42e82f9e3ebce5cc3410ec2c053becb7a7e416f023f15169e254b5f5`.
 
+The second terminal report `bfa14619-ddff-4978-89f7-3feb1e54bcc8` preserves
+the same source fingerprint and confirms branch IDs 55/58/59 at lines
+534/550/556 with raw counts `[0,33]`, `[0,1709]`, `[0,1]`. Its test fingerprint
+is `d9f5dae4385d24041d01a68b7a2c4f51258d42aee487bb03162acc6774284af8`, report
+manifest digest `aa32e981156c380d4661027a19577e851c713431e16f0d8ba17151e2179ae124`,
+commit `96709f69b44cc35b0273a1bb33d37d8c67937940`, source tree
+`01e113363f9cdf3c80c1545a7ba9009a397ee59d`, and execution-image manifest
+`5aa9617f5fcdeec6b9bf0819a654542f850854393298d28f730b2219b5901675`. The
+same preceding guards still entail each skipped false arm, with no supported
+flow counterexample. The raw counts and BLOCKED outcome remain unchanged.
+
 ## Key429 next-packet review
 
 The read-only source review confirmed all three next zero branches are

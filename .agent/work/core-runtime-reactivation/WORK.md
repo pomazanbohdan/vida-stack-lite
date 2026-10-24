@@ -5672,13 +5672,67 @@ The fixture now uses separate `x` repair-installed and `y` forward-successor
 bytes. Target-09 passed before the parent-hash review correction; target-10 is
 the final result after it.
 
-Coverage from the last committed report remains the only qualification until
-this second packet is committed/pushed and run once by the current producer.
-No second producer is running.
+### Key429 second coverage stage and refreshed objective dispositions
 
-Measured sequence: three scoped static checks parallel (~14.5 s wall), one
-focused target (1.35 s), blind review, hook-backed commit/push, then one serial
-stage (213.57 s). Full-suite-first and producer concurrency above one were not
-measured. The Key428 wall-times are across different inputs/images and are not
-a speed comparison. Model-token and aggregate tool/API-call telemetry are
-unavailable; avoid the three accidental oversized outputs recorded above.
+The second packet was committed and pushed as `96709f69b44cc35b0273a1bb33d37d8c67937940`,
+then run once by the serial current producer. Run
+`bfa14619-ddff-4978-89f7-3feb1e54bcc8` completed in 204,801.60 ms within the
+330,000 ms bound, exit 0, capture complete, group closed, boot and image inputs
+unchanged, publication successful. Exact stage custody is
+`/workspace/contour-stage-HQn2d1` with launch/request/execution/publication
+receipts, stdout/stderr, and scratch `scratch-HjIb01` retained. The immutable
+image resides at
+`/workspace/.vida-quality-inputs/30f5cc876a8c30a7cc568bb02723900f98f6a5cc/`,
+with manifest SHA-256
+`5aa9617f5fcdeec6b9bf0819a654542f850854393298d28f730b2219b5901675`.
+The exact report is
+`/workspace/.vida-quality-inputs/30f5cc876a8c30a7cc568bb02723900f98f6a5cc/repository/packages/agent/coverage/bun-unified/diagnostics/bfa14619-ddff-4978-89f7-3feb1e54bcc8.focused-coverage.json`.
+
+Report identity: commit `96709f69b44cc35b0273a1bb33d37d8c67937940`, source
+tree `01e113363f9cdf3c80c1545a7ba9009a397ee59d`, input fingerprint
+`65815a9cedf3020fcc5f3365ff90aa19a31f657e1e1326903a705b5a28307ef2`, source
+fingerprint `5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851`,
+test fingerprint `d9f5dae4385d24041d01a68b7a2c4f51258d42aee487bb03162acc6774284af8`,
+tool fingerprint `98d5f8b1c9f54ffd11474f85437935acd46991ec9fa569881570be83dcedf92e`,
+and report manifest digest
+`aa32e981156c380d4661027a19577e851c713431e16f0d8ba17151e2179ae124`.
+The producer's TS-only gate captured 545 TypeScript files with 0 diagnostics;
+125 selected tests passed, 0 failed, with 2,346 expectations and 199.00 s test
+time on Bun 1.4.4. A child process ended UNKNOWN; preserve
+`/tmp/vida-run-uninitialized-f273zz`, do not replay it.
+
+Coverage is now `428/555`, `1950/2860`, `2092/3138`, `2409/3660`, max CC 501,
+max entry CRAP 992; status remains `BLOCKED`. The new packet hit all three
+reachable report-ordered branches: ID 80 at line 688 now `[1]`, ID 85 at line
+814 `[1,69]`, and ID 88 at line 859 `[1,22]`. The prior independently reviewed
+objective skips are rebound, without counter or denominator changes, to this
+exact report:
+
+| Branch | Exact source counter | Raw counts | Causal prerequisite |
+| --- | --- | --- | --- |
+| 55 | `run.ts:534`, false arm of `requireForwardUpdateAuthorization` | `[0,33]` | `readControllerRecord` requires schema, then exact fields/types at 1498–1502 entail the predicate at 514–524. |
+| 58 | `run.ts:550`, false arm of `requireForwardFileLeaf` | `[0,1709]` | Prepared-relative-path validation at 236–244 / 561–613 guarantees a nonempty final component before `.at(-1)` reaches 1714. |
+| 59 | `run.ts:556`, false arm of `requireSelectorRecord` | `[0,1]` | The same optional preserved-output value passes exact record/field validation at 1630–1639 before return at 1726–1727. |
+
+The native blind reviewer independently rebound branch IDs, exact locations,
+raw counts, current TESTING policy, and this run's source/test fingerprints;
+no supported-flow counterexample was found. Review evidence is retained in
+`DIAG/bun-cli-run-key429-final-review-20261024.md`. These dispositions leave
+the F/L/S/B totals and `BLOCKED` status intact; they are not hits, PASS, exact
+100%, frozen-budget waivers, or mutation evidence. Producer projection was
+updated automatically; no hand edit or disk recheck/cleanup occurred.
+
+The next bounded zero-counter extraction from this report begins with branch
+93 at line 1060 `[0,18]`, 98 at 1085 `[0,1]`, 99 at 1087 `[0,1]`, 101 at 1091
+`[0,18]`, 102 at 1101 `[0,18]`, and 104 at 1108 `[18,0,0]`. Independent
+analysis of these repair-payload/release branches is pending; do not infer a
+disposition or add new denominator from this candidate list.
+
+Measured sequence is scoped static checks in parallel (~14–15 s wall), one
+focused target (~1.5 s), independent review, ordinary hook-backed commit/push,
+then one serial full contour stage (204.80 s). The previous stage was 213.57 s
+on a different test fingerprint/image; this is not controlled evidence of a
+speedup. Full-suite-first and producer concurrency above one remain unmeasured.
+The test log proves Bun used `1x PARALLEL`; model-token and aggregate tool/API
+call telemetry are unavailable. The accidental oversized-output incidents
+recorded above remain a corrective constraint on subsequent analysis.
