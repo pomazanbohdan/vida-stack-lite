@@ -8202,6 +8202,58 @@ byte restoration, lock absence, child ordering or test/document agreement.
 Logs are retained as `DIAG/key467-id218-final-typecheck-02.log`,
 `DIAG/key467-id218-final-oxlint-02.log`,
 `DIAG/key467-id218-final-format-02.log`, and
-`DIAG/key467-id218-final-target-02.log`. The next step is one ordinary
-commit/push followed by one changed-input stage. The producer projection stays
-with its owner. No objective skip or counter reduction is proposed.
+`DIAG/key467-id218-final-target-02.log`. This pre-stage record was completed
+by the terminal section below. The projection remains producer-owned. No
+objective skip or counter reduction was made.
+
+### Key467 changed-input stage terminal — 2026-10-24 19:54 UTC
+
+Commit `0a6b0b2ccd3078ebcea93f4cbfc5ca9b7356dbdc` was committed and pushed
+normally before the sole producer ran once in
+`/workspace/contour-stage-1NCIGw`. Its native execution receipt records
+232,911.234734 ms, exit 0, no signal/spawn error/timeout, complete non-truncated
+capture, observed process-group termination, unchanged boot/image inputs, and
+source tree `9645f3105233a69a4131a16610c4d4e0f7984726`. The image input
+fingerprint is `9f49e16701337d79fc4a61f037d38c282217b103d3d44d5bdc43876f49f42e73`,
+manifest SHA is `c0c0aebb21cc337363967f79613ae914dae335d1e83a69c5e920b1a92f48f634`,
+and native stdout/stderr were 7,980/17,371 bytes with hashes retained in
+`execution.json`. Root capture is `DIAG/bun-cli-run-key467-stage-20261024-01.log`.
+The selected suite passed 127/127 tests with 2,717 expectation calls. Producer
+publication accepted focused-diagnostic attempt 1,478 and remains `BLOCKED`:
+F441/555, L2050/2860, S2204/3138, B2596/3660, max CC/entry CRAP 501. In the
+exact `coverage[.../packages/agent/bin/run.ts]` map, IDs217–226 now each have
+nonzero branch counters: 217 `[1,8]`, 218 `[1,6]`, 219 `[7,7]`, 220 `[1,4]`,
+221 `[1,5]`, 222 `[1,4]`, 223 `[5,4]`, 224 `[2,2]`, 225 `[1,1]`, and 226
+`[2,2]`. This changed the published totals by +6 lines, +7 statements and +9
+branches; functions and complexity are unchanged. No objective skip, kill or
+qualification change resulted.
+
+The next report-adjacent zero branches are IDs227, 228, 230, 231, 233, 234,
+and 236 in the same file; IDs229 and 232 are already covered. The bounded
+read-only Luna trace mapped ID227 to missing Host work in
+`requireHostWork`, IDs230/231/233/234/236 to missing/falsy/non-record/invalid
+state guards, and ID228 to the constructor's omitted-details default. Its
+public reachability and safe fixture path are still under review. No objective
+disposition is recorded before independent proof; no denominator or hit count
+is altered.
+
+### Receipt-based three-hour snapshot — 2026-10-24 19:54:36 UTC
+
+The exact three-hour window 16:54:36–19:54:36 UTC contains 11 explicitly
+referenced native stage receipts: ten exit 0 and the Key464 first attempt exit
+1. Across them, 1,397 selected tests ran (1,396 pass, one fail) with 29,030
+expectation calls. Total elapsed time was 2,410,898.840 ms, mean 219,172.622 ms,
+range 198,681.286–253,196.590 ms. All captures were complete, all process
+groups closed, no attempt timed out, and every image input remained unchanged.
+The failed Key464 run produced no accepted report; its mock-isolation repair and
+successful retry are recorded above. This is receipt-based observation, not a
+matched benchmark. The current checked order (reuse report, trace and batch
+reachable gaps, scoped checks/target/review, normal commit/push, then one 1x
+producer stage) remains supported by the receipts. At the measured mean, each
+unnecessary full stage would cost about 3.65 minutes; that is an estimate, not
+an A/B trial. No comparable 2x/4x run exists, and single-owner policy retains
+one numeric producer. Tool-call totals and model-token consumption are not
+exposed reliably; previous broad output counts remain executor output, not
+model tokens. The one-time disk inventory above is reused; this producer's
+admission receipt observed 12,464,807,936 scratch bytes against its
+2,147,483,648-byte floor. No disk resurvey or cleanup occurred.
