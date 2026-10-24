@@ -19,7 +19,14 @@ export const policy = {
   relations: ['documents'],
 };
 
-function fixture() {
+type PreparedFixtureOptions = {
+  readonly extraMappedDocument?: {
+    readonly path: string;
+    readonly originalBytes: string;
+  };
+};
+
+function fixture(options: PreparedFixtureOptions = {}) {
   const bundle = process.env.VIDA_POLICY_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '../..');
   const scratch = process.env.VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT ?? process.env.TEMP ?? tmpdir();
   if (!scratch || !path.isAbsolute(scratch)) throw Error('absolute private fixture root required');
@@ -53,11 +60,15 @@ function fixture() {
     required: true,
     changelog_required: true,
     changelog_path: 'docs/agent-instructions/events.jsonl',
-    map_paths: ['vida-agent/instructions/development-lifecycle.md'],
+    map_paths: [
+      'vida-agent/instructions/development-lifecycle.md',
+      ...(options.extraMappedDocument ? [options.extraMappedDocument.path] : []),
+    ],
   };
   const json = (value: unknown) => JSON.stringify(value, null, 2) + '\n';
   put(policyPath, json(oldPolicy));
   put(oldPolicy.changelog_path, '');
+  if (options.extraMappedDocument) put(options.extraMappedDocument.path, options.extraMappedDocument.originalBytes);
   const config = loadRuntimeConfig(root),
     workspace = deriveWorkspaceId(config.repository.repository_id, root);
   mkdirSync(path.join(root, '.agent/work'), { recursive: true });
@@ -69,12 +80,17 @@ function fixture() {
     json({ schema: 'ActiveRuntimeSelector/v1', generation: 'fixture-parent', payload_manifest_sha256: '1'.repeat(64) }),
   );
   const work = 'fixture-policy-transition',
-    files = [policyPath, 'vida-agent/TESTING.md', 'vida-agent/instructions/development-lifecycle.md'];
-  return { root, put, config, workspace, policyPath, oldPolicy, json, work, files, bundle };
+    files = [
+      policyPath,
+      'vida-agent/TESTING.md',
+      'vida-agent/instructions/development-lifecycle.md',
+      ...(options.extraMappedDocument ? [options.extraMappedDocument.path] : []),
+    ];
+  return { root, put, config, workspace, policyPath, oldPolicy, json, work, files, bundle, ...options };
 }
 
-export async function preparedFixture() {
-  const f = fixture(),
+export async function preparedFixture(options: PreparedFixtureOptions = {}) {
+  const f = fixture(options),
     revision = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.files).digest;
   const scope = {
     schema: 'ImplementationScope/v1',

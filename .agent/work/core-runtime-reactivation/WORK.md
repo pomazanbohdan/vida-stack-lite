@@ -6147,3 +6147,66 @@ typecheck on 544 files. The pinned full stage was deliberately not started
 because the required independent blind review is still blocked by the missing
 Pstack worker contract; the previous producer-owned numeric projection remains
 the latest result and is not requalified by this targeted test.
+
+### bun-cli-run canonical mapped-document identity packet — Key434, 2026-10-24
+
+Continue the same contour at reachable ID109 (`run.ts:1176`). The existing
+admitted CLEAR fixture now has an optional, already-scoped and mapped external
+document. A second isolated prepared fixture changes that document between
+baseline and CLEAR apply/resume, records its old/new bytes in the parent and
+successor manifests and actual transition history, then supplies the matching
+new bytes in the candidate payload. The policy file sorts before
+`docs/agent-instructions/zz-forward-extra.md`, so its identity check succeeds
+before the latter reaches the canonical-identity mismatch. The refusal asserts
+the exact `leaf canonical identity differs` result and compares a read-only
+snapshot covering the repository document, staged payload document, relevant
+file metadata, bundle, candidate manifest/policy and `.agent` tree. No product
+Source or runtime behavior changed.
+
+Vex 1.27.4 readiness is preserved at
+`DIAG/vex-status-key434-20261024-01.json`; it reports `clusters_stale=true`
+and 76 discovered unsupported files. Per the repository contract, no Vex
+refresh or second index was started; bounded native Source reads supplied the
+current navigation.
+
+Independent blind native Luna review, dispatched under the freshly prepared
+Pstack native read-only legacy contract, found two issues before qualification:
+the refusal snapshot omitted the staged payload copy, and an interim
+`test.only` would have isolated this test if run with Bun's `--only` flag. Both
+were corrected; the final test uses ordinary `test` and captures staged-copy
+bytes plus identity metadata. Luna re-reviewed the exact correction and found
+no remaining must-fix. It confirmed the scenario derives a real CLEAR event,
+binds old/new manifests, and reaches `run.ts:1176`; the policy path sorts first.
+
+The gated block registers only when `AGENT_RUNTIME_V8_COVERAGE=1`. An ordinary
+single-file run therefore reported 60 passing tests but did not register this
+case. The exact and broad ordinary-mode name filters likewise matched zero;
+those outputs are retained but are not target evidence. The package wrapper
+also failed once when invoked from repository root because `bin/bun.ts` is
+package-relative; rerunning from `packages/agent` used the package-selected Bun
+1.4.4. With the coverage-mode gate set, the exact target passed: 1 test, 116
+filtered, 50 expectations, no failures, 13.78 s test body / 16.22 s command.
+Scoped formatting initially found one layout issue in the new snapshot; the
+formatter corrected it and final format-check passed on both changed files.
+Strict source typing passed for 104 files; Oxlint and `git diff --check`
+passed. Review, target and static receipts are the Key434 `DIAG` logs.
+
+The evidence favors preflight-first for this packet: cheap scoped format/type/
+lint before the 16.22 s mode-qualified target, then one changed-input producer
+stage after commit/push. Starting a full stage first would risk paying the
+recent 188.60–214.42 s stage cost before discovering a static/test defect; that
+is a counterfactual, not a controlled trial. Recent coverage stages all used
+`1x PARALLEL` and had different Source/cache states, so their elapsed times do
+not establish that width 1 is faster than wider execution. Keep the current
+single-worker stage policy; no parallel full suite or benchmark was run. Exact
+tool/API-call and model-token telemetry is unavailable and is not estimated.
+The existing retained disk-admission receipt remains authoritative; no second
+disk audit, cleanup, or evidence relocation occurred.
+
+The latest projection before Key434 remains F `428/555`, L `1953/2860`, S
+`2098/3138`, B `2417/3660`, max CC 501 and CRAP 992, still `BLOCKED`; it is not
+qualified by the focused test. Key434 source changes are not yet in a full
+producer run. Preserve the `ID98` gap, do not disposition it from this test, do
+not advance contours, and do not start CRAP/mutation. After normal commit and
+push, run exactly one pinned `bun-cli-run` coverage stage for these inputs;
+accept numeric counts and terminal evidence only from its producer projection.

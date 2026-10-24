@@ -4386,10 +4386,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     return { selector, selectorSha, cutoffSha: digestRecord(cutoff), repairRoot };
   };
 
-  test('forward authority parses the journal from an admitted applied CLEAR transition', async () => {
-    const prepared = await preparedFixture();
+  const runForwardAuthorityJournalFixture = async (extraMappedDocument?: {
+    readonly path: string;
+    readonly originalBytes: string;
+  }) => {
+    const prepared = await preparedFixture(extraMappedDocument ? { extraMappedDocument } : undefined);
     const { f, input, baseline, targetPolicy, args } = prepared;
     const root = f.root;
+    const extraDocumentBytes = Buffer.from('# Forward extra document after the admitted transition\n');
     let completed = false;
     try {
       const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -4424,6 +4428,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       const payloadRoot = path.join(root, 'forward-candidate-payload');
       const payloadBundle = path.join(payloadRoot, 'vida-agent');
       mkdirSync(payloadRoot);
+      if (extraMappedDocument) {
+        const extraPayloadPath = path.join(payloadRoot, extraMappedDocument.path);
+        mkdirSync(path.dirname(extraPayloadPath), { recursive: true });
+        writeFileSync(extraPayloadPath, extraMappedDocument.originalBytes);
+      }
       cpSync(bundleRoot, payloadBundle, { recursive: true, filter: includeBundleFile });
       writeFileSync(path.join(payloadBundle, 'bin', 'run.mjs'), historyLauncher);
       writeFileSync(path.join(payloadBundle, 'instructions', 'development-lifecycle.md'), newDocumentBytes);
@@ -4452,7 +4461,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         files: payloadFiles,
         unresolved_integration_paths: [],
       };
-      const candidateManifestBytes = Buffer.from(record(candidateManifest));
+      let candidateManifestBytes = Buffer.from(record(candidateManifest));
       const candidateManifestPath = path.join(payloadRoot, 'vida-agent-payload.manifest.v1.json');
       writeFileSync(candidateManifestPath, candidateManifestBytes);
       const oldPolicyBytes = readFileSync(path.join(root, ...f.policyPath.split('/')));
@@ -4483,9 +4492,21 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         {
           generation: 'fixture-forward-history',
           launcher: historyLauncher,
-          additionalChanges: [{ path: documentPath, bytes: newDocumentBytes }],
+          additionalChanges: [
+            { path: documentPath, bytes: newDocumentBytes },
+            ...(extraMappedDocument ? [{ path: extraMappedDocument.path, bytes: extraDocumentBytes }] : []),
+          ],
         },
       );
+      if (extraMappedDocument) {
+        const entry = payloadFiles.find((candidate) => candidate.path === extraMappedDocument.path);
+        if (!entry) throw new Error('forward extra mapped document preimage is missing');
+        entry.sha256 = digestBytes(extraDocumentBytes);
+        entry.size = extraDocumentBytes.length;
+        writeFileSync(path.join(payloadRoot, extraMappedDocument.path), extraDocumentBytes);
+        candidateManifestBytes = Buffer.from(record(candidateManifest));
+        writeFileSync(candidateManifestPath, candidateManifestBytes);
+      }
       const forwardRoot = path.join(root, '.agent', 'cutover', 'fixture-forward-leaf');
       const forward = buildForwardLeafFixture(
         root,
@@ -4536,6 +4557,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       );
       expect(applyResult.status).toBe('author_policy_required');
       f.put(f.policyPath, targetPolicy);
+      if (extraMappedDocument) f.put(extraMappedDocument.path, extraDocumentBytes);
       const resumeResult = requireRecord(
         await runTransition(transitionArgs('resume')),
         'forward documentation transition resume result',
@@ -4602,6 +4624,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         document: readFileSync(documentFile),
         candidateManifest: readFileSync(candidateManifestPath),
         candidatePolicy: readFileSync(payloadPolicyPath),
+        extraDocument: extraMappedDocument ? readFileSync(path.join(root, extraMappedDocument.path)) : null,
+        extraPayloadDocument: extraMappedDocument
+          ? readFileSync(path.join(payloadRoot, extraMappedDocument.path))
+          : null,
         evidenceMetadata: [
           snapshotAuthorityMetadata(databasePath),
           snapshotAuthorityMetadata(agentRoot),
@@ -4612,6 +4638,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           snapshotAuthorityMetadata(workRoot),
           snapshotAuthorityMetadata(candidateManifestPath),
           snapshotAuthorityMetadata(payloadPolicyPath),
+          ...(extraMappedDocument ? [snapshotAuthorityMetadata(path.join(root, extraMappedDocument.path))] : []),
+          ...(extraMappedDocument ? [snapshotAuthorityMetadata(path.join(payloadRoot, extraMappedDocument.path))] : []),
         ],
       });
       const expectReadOnly = (before: ReturnType<typeof snapshot>) => expect(snapshot()).toEqual(before);
@@ -4655,6 +4683,16 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       writeFileSync(documentFile, newDocumentBytes);
       writeFileSync(path.join(bundleRoot, 'bin', 'run.mjs'), historyLauncher);
       const beforeHistory = snapshot();
+      if (extraMappedDocument) {
+        expectAuthorityRefusal(
+          history.selector,
+          history.selectorSha,
+          history.generationRoot,
+          'leaf canonical identity differs',
+        );
+        completed = true;
+        return;
+      }
       expect(forwardUpdateAuthority(root, history.selector, history.selectorSha, history.generationRoot)).toBeNull();
       expectReadOnly(beforeHistory);
 
@@ -4823,6 +4861,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       if (completed) rmSync(root, { recursive: true, force: true });
       else process.stderr.write(`Retained failed admitted forward journal fixture: ${root}\n`);
     }
+  };
+
+  test('forward authority parses an admitted CLEAR journal and rejects a noncanonical mapped-document identity', async () => {
+    await runForwardAuthorityJournalFixture();
+    await runForwardAuthorityJournalFixture({
+      path: 'docs/agent-instructions/zz-forward-extra.md',
+      originalBytes: '# Forward extra document before the admitted transition\n',
+    });
   }, 120000);
 
   test('forward authority rejects a repeated generation and an eight-record parent chain before reading', () => {
