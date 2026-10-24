@@ -8396,6 +8396,42 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               first_admitted_work_attempt: null,
             }),
           );
+          const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+          const bundlePath = path.join(root, 'vida-agent');
+          const retainedBundlePath = path.join(root, '.vida-agent-fixture-original');
+          const withPackageIdentity = async <T>(action: () => T | Promise<T>): Promise<T> => {
+            renameSync(bundlePath, retainedBundlePath);
+            let bundleRestored = false;
+            try {
+              symlinkSync(packageRoot, bundlePath, process.platform === 'win32' ? 'junction' : 'dir');
+              return await action();
+            } finally {
+              const currentBundle = lstatSync(bundlePath, { throwIfNoEntry: false });
+              if (currentBundle?.isSymbolicLink()) unlinkSync(bundlePath);
+              if (!existsSync(bundlePath)) renameSync(retainedBundlePath, bundlePath);
+              bundleRestored =
+                existsSync(bundlePath) && !lstatSync(bundlePath).isSymbolicLink() && !existsSync(retainedBundlePath);
+              expect(bundleRestored).toBe(true);
+            }
+          };
+          const runWithPackageIdentity = async (expected: { code: string; message: string }, runArgs = admitted.args) =>
+            withPackageIdentity(async () => {
+              await Promise.resolve(expect(run(runArgs)).rejects.toMatchObject(expected));
+            });
+          const initializeHostDatabase = () => {
+            mkdirSync(path.dirname(databasePath), { recursive: true });
+            const database = new Database(databasePath, { strict: true });
+            new HostStateStore(
+              database,
+              deriveWorkspaceId(config.repository.repository_id, root),
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              root,
+            );
+            database.close();
+          };
           if (selectorPhase === 'released') {
             const invalidDecision = {
               ...activationDecision,
@@ -8412,24 +8448,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const invalidEvidenceSelectorPath = path.join(root, '.agent', 'active-runtime-selector.v1.json');
             const invalidEvidenceDecisionPath = path.join(generationRoot, 'activation-decision.v1.json');
             const invalidEvidenceCommitPath = path.join(generationRoot, 'selector-commit.json');
-            const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
-            const bundlePath = path.join(root, 'vida-agent');
-            const retainedBundlePath = path.join(root, '.vida-agent-fixture-original');
-            const runWithPackageIdentity = async (expected: { code: string; message: string }) => {
-              renameSync(bundlePath, retainedBundlePath);
-              let bundleRestored = false;
-              try {
-                symlinkSync(packageRoot, bundlePath, process.platform === 'win32' ? 'junction' : 'dir');
-                await Promise.resolve(expect(run(admitted.args)).rejects.toMatchObject(expected));
-              } finally {
-                const currentBundle = lstatSync(bundlePath, { throwIfNoEntry: false });
-                if (currentBundle?.isSymbolicLink()) unlinkSync(bundlePath);
-                if (!existsSync(bundlePath)) renameSync(retainedBundlePath, bundlePath);
-                bundleRestored =
-                  existsSync(bundlePath) && !lstatSync(bundlePath).isSymbolicLink() && !existsSync(retainedBundlePath);
-              }
-              expect(bundleRestored).toBe(true);
-            };
             writeFileSync(invalidEvidenceSelectorPath, record(invalidSelector));
             writeFileSync(invalidEvidenceDecisionPath, record(invalidDecision));
             writeFileSync(invalidEvidenceCommitPath, record(invalidCommit));
@@ -8456,18 +8474,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             expect(existsSync(databasePath)).toBe(false);
             unlinkSync(maintenanceLockPath);
 
-            mkdirSync(path.dirname(databasePath), { recursive: true });
-            const database = new Database(databasePath, { strict: true });
-            new HostStateStore(
-              database,
-              deriveWorkspaceId(config.repository.repository_id, root),
-              undefined,
-              undefined,
-              undefined,
-              undefined,
-              root,
-            );
-            database.close();
+            initializeHostDatabase();
 
             const inspectWorkId = `inspect-absent-${randomUUID()}`;
             const inspectArgs = admitted.args.map((value, index) =>
@@ -8489,8 +8496,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 deriveWorkspaceId(config.repository.repository_id, root),
               ).admission_attempts,
             ).toEqual([]);
+            expect(fixture.invoke(admitted.admissionArgs, 0).runtime_selector_observed).toBe(true);
           }
-          expect(fixture.invoke(admitted.admissionArgs, 0).runtime_selector_observed).toBe(true);
           if (selectorPhase === 'released') {
             for (const [name, value, changed] of records) {
               const file = path.join(generationRoot, name);
@@ -8601,10 +8608,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               lock_sha256: createHash('sha256').update(record(stagedLock)).digest('hex'),
             };
             const stagedJournalPath = path.join(stagedRoot, 'journal.json');
+            const stagedLockPath = path.join(stagedRoot, 'maintenance-lock.released.v1.json');
+            const stagedReleasePath = path.join(stagedRoot, 'maintenance-release.v1.json');
             writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(stagedSelector));
             writeFileSync(stagedJournalPath, record(stagedJournal));
-            writeFileSync(path.join(stagedRoot, 'maintenance-lock.released.v1.json'), record(stagedLock));
-            writeFileSync(path.join(stagedRoot, 'maintenance-release.v1.json'), record(stagedReceipt));
+            writeFileSync(stagedLockPath, record(stagedLock));
+            writeFileSync(stagedReleasePath, record(stagedReceipt));
             writeFileSync(
               path.join(stagedRoot, 'cutoff-witness.json'),
               record({
@@ -8618,6 +8627,60 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               args[index - 1] === '--work-id' ? `mutation-run-${randomUUID()}` : value,
             );
             const stagedAdmitted = prepareMutationIntake(stagedArgs, config);
+            initializeHostDatabase();
+            const inspectWorkId = `inspect-staged-${randomUUID()}`;
+            const inspectArgs = stagedAdmitted.args.map((value, index) =>
+              stagedAdmitted.args[index - 1] === '--work-id' ? inspectWorkId : value,
+            );
+            const selectorPath = path.join(root, '.agent', 'active-runtime-selector.v1.json');
+            const cutoffPath = path.join(stagedRoot, 'cutoff-witness.json');
+            const selectorBytes = readFileSync(selectorPath);
+            const cutoffBytes = readFileSync(cutoffPath);
+            const databaseRelativePath = path.relative(root, databasePath).replaceAll('\\', '/');
+            const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+            const beforeDatabaseInspection = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+            expect(beforeDatabaseInspection.admission_attempts).toEqual([]);
+            const inspected = requireRecord(
+              await withPackageIdentity(() => run([...inspectArgs, '--inspect', 'true'])),
+              'staged selector public inspection',
+            );
+            expect(inspected).toMatchObject({ schema: 'VidaLocalSessionInspection/v1', status: 'inspected' });
+            expect(inspected.diagnosis).toMatchObject({ reason: 'session_absent' });
+            expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
+            expect(readFileSync(cutoffPath).equals(cutoffBytes)).toBe(true);
+            const afterDatabaseInspection = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+            expect(afterDatabaseInspection).toEqual(beforeDatabaseInspection);
+            expect(afterDatabaseInspection.admission_attempts).toEqual([]);
+            const stagedJournalBytes = readFileSync(stagedJournalPath);
+            const stagedLockBytes = readFileSync(stagedLockPath);
+            const stagedReleaseBytes = readFileSync(stagedReleasePath);
+            const inconsistentLock = { ...stagedLock, payload_manifest_sha256: 'd'.repeat(64) };
+            const inconsistentReceipt = {
+              ...stagedReceipt,
+              lock_sha256: createHash('sha256').update(record(inconsistentLock)).digest('hex'),
+            };
+            try {
+              writeFileSync(stagedLockPath, record(inconsistentLock));
+              writeFileSync(stagedReleasePath, record(inconsistentReceipt));
+              await runWithPackageIdentity(
+                {
+                  code: 'GAP-VIDA-RUN-SELECTOR-001',
+                  message: 'Cutover maintenance release proof is invalid.',
+                },
+                [...inspectArgs, '--inspect', 'true'],
+              );
+            } finally {
+              writeFileSync(stagedLockPath, stagedLockBytes);
+              writeFileSync(stagedReleasePath, stagedReleaseBytes);
+            }
+            expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
+            expect(readFileSync(stagedJournalPath).equals(stagedJournalBytes)).toBe(true);
+            expect(readFileSync(stagedLockPath).equals(stagedLockBytes)).toBe(true);
+            expect(readFileSync(stagedReleasePath).equals(stagedReleaseBytes)).toBe(true);
+            expect(readFileSync(cutoffPath).equals(cutoffBytes)).toBe(true);
+            expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(
+              afterDatabaseInspection,
+            );
             expect(fixture.invoke(stagedAdmitted.admissionArgs, 0).runtime_selector_observed).toBe(true);
             for (const changed of [
               { cutover_id: 'other-generation' },

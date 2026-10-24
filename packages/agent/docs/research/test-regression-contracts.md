@@ -407,6 +407,19 @@ Forward negative DTOs keep their header digests coherent while varying required
 field types, plan collections, changed-file members, parent selector shape and
 review item shape. Each must refuse at its intended boundary before review receipt
 reads and preserve the complete bounded fixture tree.
+For legacy staged-selector inspection, remove the optional payload-manifest,
+state-policy and activation-decision fields from the active selector while
+retaining its matching staged journal, released maintenance proof and cutoff
+witness. Call the exported `run(args)` through the public read-only inspection
+path so the active selector reader observes that staged state. Require the
+session-absent diagnosis, unchanged selector and cutoff bytes, and an unchanged
+Host database projection with zero admission attempts before and after
+inspection. Then add a payload digest to the released lock, recompute its
+receipt digest, and require the
+public inspection path's exact release-proof refusal. Restore the original
+lock and receipt and compare their bytes plus the selector, journal, cutoff and
+Host database afterimages. The admission shortcut does not cover that reader,
+and this inspection grants no mutation or Runtime authority.
 For forward documentation authority, keep a CLEAR checkpoint schema- and digest-
 valid while pointing its receipt at a contained readable baseline path under a
 different work directory; assert the exact work/path mismatch refusal and

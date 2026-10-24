@@ -7229,3 +7229,112 @@ observed process-group closure. Host init/runtime reaping is an external
 resource GAP, not a coverage result. The prior single disk receipt and
 admission threshold remain current; this audit did not repeat disk checks or
 cleanup. The existing timer and its schedule remain unchanged.
+
+### Key456 iteration plan — legacy staged selector arms
+
+The contour exit condition is exact F/L/S/B100 on one bound input set, or a
+reviewed objective disposition for every remaining path under TESTING. Objective
+dispositions do not change counts or numeric status. The current contour remains
+`bun-cli-run`; CRAP and mutation stay deferred.
+
+This packet uses the Key455 report and targets only IDs181 and 182. The report
+binds both missing arms to optional spreads in `buildActiveSelectorState` at
+`run.ts:1767` and `run.ts:1770`. The existing staged-selector fixture deletes
+both fields, but its positive call uses `admissionArgs`; that path does not call
+`activeSelector`. Its normal calls mutate the staged journal and stop before the
+valid legacy state is observed.
+
+The regression shape is a base-fields-only `ActiveRuntimeSelector/v1`, a
+matching `VidaCutoverStageJournal/v1`, a released maintenance lock and receipt
+without a payload digest, and a matching cutoff witness. The generation has no
+forward intent or repair plan. The test will call the exported `run(args)` with
+read-only inspection, bind the package identity, and assert the inspection
+result plus unchanged selector/cutoff bytes and Host database projection,
+with no admission attempts before or after inspection. A rehashed release receipt over
+a lock with an unexpected payload digest must then refuse through the public
+inspection call, followed by exact lock/release/selector/journal/cutoff and Host
+projection restoration checks.
+
+The first blind review found the successful inspection assertions did not
+specifically prove the selector state was consumed. The packet now adds a
+public negative control that binds the release receipt to a rehashed lock but
+adds a payload digest absent from the legacy selector. It must fail at the
+released-proof guard before changing state. The reviewer artifact is retained
+in `DIAG/bun-cli-run-key456-blind-review-20261024-01.md`.
+
+The second blind review found that the original WORK wording implied a
+pre-existing admission attempt although the staged fixture initializes an empty
+Host database. The final test now asserts that the baseline and post-inspection
+attempt lists are empty and that the complete Host projection is unchanged.
+The reviewer artifact is retained in
+`DIAG/bun-cli-run-key456-blind-review-20261024-02.md`.
+
+The iteration predicate is one focused target pass, scoped strict/lint/format
+and documentation checks, a blind read-only review, a normal commit and push,
+and one terminal single-worker changed-input stage whose report records both
+arms without changing denominators or BLOCKED status. The contour stays open
+unless the complete contour predicate is met.
+
+Throughput checkpoint:
+
+- Blocking first steps: reuse the latest bound report, verify the exact mapped
+  expressions and existing staged fixture, then add the public inspection path.
+- Independent workstreams: n/a. The test, its contract entry, and the report
+  share selector state and one test file, so they have one Root writer.
+- Shared mutable state: Root alone edits the test, regression contract, WORK,
+  and decisions log. The changed-input producer runs serially at one worker.
+- Smallest safe decomposition: keep this as one fixture extension. A blind Luna
+  reads the completed patch and review trail; no worktree or second producer is
+  created.
+
+Pstack 1.17.5 is enabled at
+`/run/codex-environment/codex-home/.tmp/marketplaces/open-pstack/plugins/pstack`;
+the installed `poteto-mode` leaf and read-only worker contract were verified.
+The checked-in cloud tooling lock does not pin the marketplace plugin version.
+The host exposes no `update_plan` or Codex loop tool, so this WORK remains the
+only task record and the existing timer is left untouched. No disk check or
+cleanup is repeated; the prior disk receipt and thresholds remain the owners.
+
+### Key456 pre-stage checks and rolling three-hour evidence — 17:09 UTC
+
+The final staged-selector target passes 1/1 with 57 expectations under Bun
+1.4.4. The released and staged composition passed together earlier at 2/2 and
+171 expectations. Final static checks pass: formatting on the changed test,
+strict test TypeScript for 510 files, pinned Oxlint, and the changed Markdown
+check (1 document, 4 local links, 0 failures). The final blind Luna follow-up
+found no remaining must-fix. These checks are retained in the unique Key456
+DIAG logs and review artifacts.
+
+Development used nine serial focused-test invocations (four failed attempts,
+five passing invocations), with 135.57 seconds total measured process wall time
+including startup. Failures exposed three concrete fixture/assertion corrections
+(SQLite sidecars in broad snapshots, earlier fixture admissions, and the actual
+empty DB baseline); they were not coverage kills. One strict check caught the
+inspection union type, one lint check caught an unnecessary await, and the first
+format check caught formatting. Each was corrected before the final checks. The
+four failing fixture roots remain retained at:
+
+- `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-selected-Fx8ewL`
+- `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-selected-KfeZu4`
+- `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-selected-pOPna3`
+- `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-selected-PYIHqC`
+
+The two blind reviews found successive assertion/wording gaps; the final
+follow-up accepted the exact public positive/negative selector pair and the
+empty admission-attempt baseline. Their reports remain in `DIAG`. No platform
+receipt exposes aggregate tool-call or model-token usage, so those totals remain
+unmeasured; the counts above are package test invocations, not tool calls or
+tokens.
+
+For the actual rolling window 2026-10-24 14:09:10–17:09:10 UTC, the existing
+terminal ledger contains ten serial stages (Keys439, 442, 444, 445, 450, 451,
+452, 453, 454, 455). Their measured total is 2,171,336.532 ms, mean 217,133.653
+ms, range 196,979.462–236,747.830 ms. Source/input and host conditions differ;
+these are one-worker costs, not an A/B speed comparison. The Key456 changed-
+input stage is not yet run.
+
+| Order / parallelism | Measured fact | Decision or hypothesis |
+| --- | --- | --- |
+| Reuse the report, map branch preconditions, batch one fixture, then target/static/review, commit/push, one changed-input stage at 1x | Ten prior terminal stages in the rolling window used one numeric producer; this packet's final target used 11.80 s including startup. | Retain this order. Moving independent type/format checks and review before the first target is a reasonable hypothesis to reduce reruns; it has not been A/B measured. |
+| Run a full stage before reviewing each candidate or subfix at 1x | Historical one-worker stage costs here average 217.134 s and range 196.979–236.748 s. | Full-stage-first repeats are materially expensive by measured duration; one avoided run would save about 3.6 minutes, an estimate, not a controlled comparison. |
+| Run 2x or 4x numeric stages concurrently | No qualified parallel receipt exists. | Keep one producer. Parallel full runs remain unmeasured and violate the serial contour owner policy. |
