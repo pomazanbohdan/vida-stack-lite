@@ -5453,32 +5453,55 @@ also retained `/tmp/vida-run-uninitialized-LLSNwR` because that child outcome
 was unknown; preserve it and its raw evidence, and do not replay it. No test
 script defect or safe cleanup candidate was established in this packet.
 
-### Key428 remaining early helper branches (prepared, stage pending)
+### Key428 early helper branches and corrected second stage pending
 
-The report-ordered branch cluster after Key427 is four missing arms in
-`bin/run.ts`: packet-only development-stage detection (line 319), unmatched
-delivery observation identity (line 349), unchanged non-incomplete research
-status (line 356), and research-stage instruction aliases (line 412). One
-focused test now exercises those pure decisions with explicit result
-assertions. The four existing helper bodies are unchanged; only test seams
-were exported from the CLI module, which is absent from the package `exports`
-map. The `describeIssuedAction` fixture uses a complete `SessionBridgeRequest`
-shape rather than an unchecked cast. Redundant JSDoc type comments were removed
-as part of exposing these already TypeScript-typed functions.
+The report-ordered branch cluster after Key427 was four missing arms in
+`bin/run.ts`: packet-only development-stage detection, unmatched delivery
+observation identity, unchanged non-incomplete research status, and the
+non-research-stage result of `describeIssuedAction`. One focused helper test
+was added with explicit result assertions. The four helper bodies are
+unchanged; only test seams were exported from the CLI module, which is absent
+from the package `exports` map. Redundant JSDoc type comments were removed as
+part of exposing these already TypeScript-typed functions.
 
-Static-first checks passed with package-pinned Bun 1.4.4: format check on the
-two changed source/test files, strict `tests/tsconfig.json` check over 510
-files, and locked Oxlint. The focused target passed 1 test, 59 filtered, 0
-failures, 7 expectations in 1.407 s. Logs are
-`DIAG/bun-cli-run-key428-format-20261024-05.log`,
-`DIAG/bun-cli-run-key428-typecheck-20261024-03.log`,
-`DIAG/bun-cli-run-key428-lint-20261024-03.log`, and
-`DIAG/bun-cli-run-key428-target-20261024-02.log`.
+The first corrected-input attempt's static-first checks passed with
+package-pinned Bun 1.4.4: format check on the two source/test files, strict
+`tests/tsconfig.json` check over 510 files, and locked Oxlint. Its focused
+target passed 1 test, 59 filtered, 0 failures, 7 expectations in 1.358 s.
+Blind Luna initially found no must-fix but suggested replacing `as never` with a
+real request fixture; that fixture was strengthened and all three static gates
+plus the target were rerun. The independent review note is
+`DIAG/bun-cli-run-key428-review-20261024-01.md`.
 
-Blind native Luna review found no must-fix and confirmed no package API leak;
-the reviewer noted only that the unrelated no-activation branch remains
-outside this packet. The retained review note is
-`DIAG/bun-cli-run-key428-review-20261024-01.md`. `git diff --check` passed.
-No CRAP, mutation, objective disposition, or parallel producer was used. The
-single modified-input coverage stage, normal hooks, commit, and push are still
-pending; do not start the stage until the commit is terminal.
+The first Key428 producer stage completed against source commit
+`7699d5b31a88a2dbf3a00647781cfcfd722cdb61` in 197,030.821 ms, exit 0, within
+the 330,000 ms bound; capture completed, the process group closed, boot and
+immutable inputs were unchanged, and the diagnostic was published. Its 125
+selected tests passed with 0 failures, 2,291 expectations, and 191.07 s test
+time. It measured F/L/S/B `428/555`, `1935/2860`, `2073/3138`, `2392/3660`,
+max CC 501 and max entry CRAP 992; operation status remained `BLOCKED`. The
+report is
+`/workspace/.vida-quality-inputs/2c6a0429b5b0751f4241de6773d8da8f1b5ee167/repository/packages/agent/coverage/bun-unified/diagnostics/1b9ac54d-19d9-4397-8915-5ee3450d878c.focused-coverage.json`.
+The first three arms were covered; the producer showed the second arm of
+`describeIssuedAction`'s ternary at line 402 remained zero (`[7,0]`). The test
+had exercised the already-covered research arm. Preserve this valid
+nonqualifying measurement; no UNKNOWN was replayed and no disposition was
+recorded.
+
+The test now supplies an activation for a `develop` stage and asserts generic
+activation/binding aliases remain while both research-prefixed aliases are
+absent. The reviewer confirmed this reaches the outstanding false arm and
+recommended matching role/fixture labels; those labels now use `developer` and
+development IDs. The final focused target passed 1 test, 59 filtered, 0
+failures, 9 expectations. Format, strict typecheck (510 files), and locked
+Oxlint passed before the label-only cleanup; the normal commit hooks will
+recheck format and typecheck. Latest logs are
+`DIAG/bun-cli-run-key428-format-20261024-07.log`,
+`DIAG/bun-cli-run-key428-typecheck-20261024-04.log`,
+`DIAG/bun-cli-run-key428-lint-20261024-04.log`, and
+`DIAG/bun-cli-run-key428-target-20261024-04.log`. `git diff --check` passed and
+will be rerun before commit.
+
+This corrected input needs one ordinary hook-backed commit/push and one
+replacement producer stage; that stage is justified by the report-confirmed
+missed arm, not replay or benchmarking. Producer concurrency remains one.

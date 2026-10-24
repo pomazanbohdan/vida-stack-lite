@@ -865,7 +865,7 @@ test('readonly release validators preserve plans, unique matches, arrays and CLI
   await assert.rejects(run(args), { message: 'Readonly release requires mode, exact root and request' });
 });
 
-test('run action helpers preserve packet-only, observation, and research decisions', () => {
+test('run action helpers preserve packet-only, observation, and non-research decisions', () => {
   expect(isPacketOnlyDevelopmentStage({ consumes: ['DevelopmentTaskPacket/v1'] })).toBe(true);
   expect(isPacketOnlyDevelopmentStage({ consumes: ['DevelopmentTaskPacket/v1', 'ImplementationResult/v1'] })).toBe(
     false,
@@ -885,37 +885,36 @@ test('run action helpers preserve packet-only, observation, and research decisio
   });
 
   const activation = { schema: 'InstructionActivationUse/v1' };
-  const bindings = [{ instruction_id: 'research-instruction' }];
+  const bindings = [{ instruction_id: 'stage-instruction' }];
   const request: SessionBridgeRequest = {
     schema: 'VidaSessionRequest/v1',
-    run_id: 'research-run',
-    workflow_id: 'research-workflow',
+    run_id: 'development-run',
+    workflow_id: 'development-workflow',
     wave_index: 0,
     action_id: 'a'.repeat(64),
     assignment_index: 0,
-    stage_id: 'research-stage',
-    role: 'researcher',
+    stage_id: 'development-stage',
+    role: 'developer',
     config_digest: 'b'.repeat(64),
     scope_digest: 'c'.repeat(64),
     bindings_manifest_ref: 'd'.repeat(64),
   };
-  expect(
-    describeIssuedAction(
-      {
-        request,
-        issue_id: 'research-issue',
-        research_activation: { use: activation },
-      },
-      new Map([[request.action_id, bindings]]),
-      [{ id: 'research-stage', kind: 'research' }],
-    ),
-  ).toMatchObject({
-    issue_id: 'research-issue',
+  const described = describeIssuedAction(
+    {
+      request,
+      issue_id: 'development-issue',
+      research_activation: { use: activation },
+    },
+    new Map([[request.action_id, bindings]]),
+    [{ id: 'development-stage', kind: 'develop' }],
+  );
+  expect(described).toMatchObject({
+    issue_id: 'development-issue',
     instruction_activation: activation,
     instruction_bindings: bindings,
-    research_instruction_activation: activation,
-    research_instruction_bindings: bindings,
   });
+  expect(described).not.toHaveProperty('research_instruction_activation');
+  expect(described).not.toHaveProperty('research_instruction_bindings');
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
