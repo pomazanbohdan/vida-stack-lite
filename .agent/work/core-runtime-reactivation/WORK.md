@@ -8793,3 +8793,72 @@ passed. Preserve all failed captures alongside final ones:
 `-typecheck-03.log`, `-oxlint-03.log`, and `-format-03.log`. The normal commit
 and push plus one changed-input stage remain pending; do not start the producer
 before hooks and push terminate.
+
+### Key471 first changed-input stage terminal and coverage-capture correction — 2026-10-24 21:42 UTC
+
+The sole producer ran once in `/workspace/contour-stage-9wF6w0` against pushed
+source commit `0bd5e1cedb584c1c2e5ffbc306ab8049f5648709`. Its immutable image is
+`/workspace/.vida-quality-inputs/17a1eef553136fbc92107dcec676a0318b9cac00/repository`,
+tree `596b6ba18f13137926556eed2cee89a2f7101ad9`, input fingerprint
+`b77748c9cd61ac3ec3e36ce6c68c651f835d7246890c2afe5512b690342e5a67`, and
+manifest SHA-256
+`f989b036de31562b6a6006e118c2727d222af50551859e3a9ed6d68efb7c0db2`. Native
+execution records 190,355.184039 ms, exit 0, no timeout/signal/spawn error,
+complete non-truncated capture, observed process-group termination, unchanged
+boot and unchanged image inputs. Publication completed. Preserve the stage root
+receipts and output at `/workspace/contour-stage-9wF6w0/{request.json,launch.json,execution.json,publication.json,stdout.log,stderr.log}`
+and root capture `DIAG/key471-stage-20261024-01.log`.
+
+Report `eecee2dd-8e3d-46f3-bdb2-842e79201b04` ran the two selected files with
+132 tests and 2,753 expectations. It is `focused-diagnostic`; the contour stays
+`BLOCKED`. Counts are F441/555, L2058/2860, S2218/3138, B2613/3660, max CC
+501, max entry CRAP 501. ID254 remains `[0,55]`, ID257 remains `[15,0,0]`, and
+ID261 is `[2706,1]`. The single global branch increase came from the
+missing-mode case; the two admitted-risk cases passed but their child runs were
+not armed for coverage observation. A blind read-only trace verified that
+medium/high risk do reach `isLifecycleRisk` and persist through
+`workflowWork.lifecycle.risk`; the exact missing observer was the optional
+`run-admission-prepared` role on the existing fixture invocation. Its
+recommendation is to pass that existing role to both cases. No source/runtime
+behavior change or consumer effect is needed. The report path is
+`/workspace/.vida-quality-inputs/17a1eef553136fbc92107dcec676a0318b9cac00/repository/packages/agent/coverage/bun-unified/diagnostics/eecee2dd-8e3d-46f3-bdb2-842e79201b04.focused-coverage.json`.
+
+For the terminal-time three-hour window 2026-10-24 18:42:46–21:42:46 UTC,
+reuse the existing 18:32:20–21:32:20 aggregate, remove the Key462 stage at
+18:35 UTC and add Key471. This gives eleven serial producer attempts: eight exit
+0 and three exit 1. Ten completed suite runs cover 1,279 tests (1,277 pass,
+two fail) and 26,928 expectations. The one retained Key469 nested
+`SIGKILL`/`ETIMEDOUT` remains UNKNOWN and contributes no test or coverage
+denominator. Total outer-stage time is 2,421,304.376146 ms, mean
+220,118.579649 ms, range 187,803.068–271,158.850 ms. Model-token and aggregate
+tool-call counts remain unavailable in native receipts.
+
+| Check order / numeric parallelism | Measured evidence | Limitation |
+| --- | --- | --- |
+| Exact target, scoped strict/lint/format, independent review, normal commit/push, then one changed-input stage at 1x | Key471's 3-test target passed in 8.38 s and the stage completed 132 tests / 2,753 expectations in 190.355 s; the focused report exposed that the existing child-coverage role was omitted. | The stage was diagnostic and `BLOCKED`; these counters do not qualify the contour. |
+| Stage before focused correction at 1x | Key469's first stage cost 271.159 s and ended UNKNOWN/no report; the later focused target found the public/internal error mismatch. | A focused-first order could have avoided that stage; counterfactual only. |
+| Two or four numeric stages concurrently | No qualified 2x/4x receipt exists. | Keep the single-producer contract; higher concurrency is unmeasured. |
+
+The Key471 admission receipt observed 11,878,154,240 scratch bytes against the
+unchanged 2,147,483,648-byte floor (9,730,670,592 bytes above). This reuses the
+existing one-time filesystem inventory; no new disk survey or cleanup was run.
+A post-terminal process sample found no live Bun/bwrap/tini processes and 344
+PID-1-owned zombies; none were signalled. The producer alone updated projection.
+
+The minimal observer correction changes the two medium/high fixtures to call
+`fixture.invoke(admitted.admissionArgs, 0, 'run-admission-prepared')`, reusing
+the role already used by successful prepared-run coverage and preserving
+UNKNOWN-root retention. The first local filter invocation omitted the required
+`AGENT_RUNTIME_MUTATION_PART=bun` selector and executed zero tests; retain it at
+`DIAG/key471-risk-observer-target-01.log`. With the package's selected Bun
+1.4.4 and the required selector, the two focused risk cases passed (2 tests,
+10 expectations, 8.36 s) at `DIAG/key471-risk-observer-target-02.log`. Scoped
+strict passed with 545 captured TypeScript files and zero diagnostics plus 104
+project files; Oxlint and one-file format checks passed at the corresponding
+`DIAG/key471-risk-observer-{typecheck,oxlint,format}-01.log` files. Blind Luna
+review confirmed this observer is the existing coverage-only path and retains
+the same args, status and unknown cleanup guard. WORK link validation passed
+for one selected document and 11 local links at
+`DIAG/key471-risk-observer-docs-check-01.log`; `git diff --check` passed.
+Commit/push and one corrected changed-input stage remain pending; do not start
+the producer before normal hooks and push terminate.

@@ -6637,7 +6637,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         try {
           const { args, config } = createFixture(root);
           const admitted = prepareMutationIntake(args, config, { risk });
-          expect(fixture.invoke(admitted.admissionArgs).status).toBe('prepared');
+          expect(fixture.invoke(admitted.admissionArgs, 0, 'run-admission-prepared').status).toBe('prepared');
           completed = true;
         } finally {
           if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
