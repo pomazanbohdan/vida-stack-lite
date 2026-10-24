@@ -7476,7 +7476,7 @@ complete with no must-fix findings; it confirms ID187 reachability, exact
 refusal, no-write assertions, documentation accuracy and `finally`
 restoration. Its report is
 `DIAG/bun-cli-run-key458-blind-review-20261024-01.md`. Normal commit/push and
-one changed-input producer stage remain.
+one changed-input producer stage then completed; terminal results follow.
 
 The first focused invocation used direct `bun test`; it passed on Bun 1.4.4 but
 did not follow TESTING's package-selection wrapper. That command was retained,
@@ -7487,3 +7487,62 @@ the qualifying target receipt. This was one avoidable extra focused invocation
 start with the TESTING wrapper. An initial one-file format check also found
 style issues, fixed by the one-file formatter; no test or compile failure
 occurred. No Vex refresh, second producer, disk survey, or cleanup is planned.
+
+### Key458 terminal — invalid active-selector binding
+
+The packet was committed and ordinarily pushed as
+`3870e86a6f400ef5666fb421a525f4230c01938d`, then one stage ran at the sole
+producer in `/workspace/contour-stage-vnkCnG`. The native receipt records exit
+0, no signal/spawn error/timeout, full untruncated capture (7,977 stdout bytes
+and 17,380 stderr bytes), observed process and process-group termination, no
+termination attempts, unchanged boot and unchanged immutable image inputs. The
+receipt binds source tree `1d55ce93015bfb58a3ddcc767c5276bace74c6d9`, input
+fingerprint `5850966ebf2f41604e2337707aa6a2e4d83474f8ca6fd621606f81431090c4fc`,
+and image manifest SHA-256
+`86092ffbd5b3cd9098fe90a8c933642abea1025d9db2397343848ea954105e3d`.
+
+Run `69b9ad4a-314c-4e83-ac37-f49529d6d9aa` passed 127 tests and 2,611
+expectations across the two selected files, with zero failures. Suite time was
+212.76 s; native elapsed time was 218,249.294 ms. ID187 now has hits `[1,4]`.
+The producer projection is F441/555, L2032/2860, S2182/3138, B2566/3660,
+maximum CC/entry CRAP 501, status `BLOCKED`; denominators and fences are
+unchanged. The tested false-to-true refusal arm is covered; the contour remains
+open. The report is retained at
+`/workspace/.vida-quality-inputs/72f5c5b0c16f6bfc06e379a98c1ff410c5590fad/repository/packages/agent/coverage/bun-unified/diagnostics/69b9ad4a-314c-4e83-ac37-f49529d6d9aa.focused-coverage.json`.
+The receipt recorded 13,411,991,552 bytes available on the stage scratch
+filesystem against the unchanged 2,147,483,648-byte minimum. This is admission
+evidence, not another disk survey.
+
+Captured test output retained fixture roots for `/tmp/vida-run-uninitialized-0uES5n`
+(`child-outcome-unknown`), `/tmp/vida-unprepared-state-TduSf0`
+(`completion-not-marked`), `/tmp/vida-unprepared-state-MJAjoJ`
+(`deadline-expired`), and `/tmp/vida-unprepared-state-XZqyJS`
+(`database-close-failed`). These are test-owned retention cases, not suite
+failures; no path was deleted or moved.
+
+### Three-hour execution comparison — 2026-10-24 14:41:00–17:41:00 UTC
+
+Eleven serial one-worker terminal stages fall in this receipt-based window:
+Keys444, 445, and 450–458. They executed 1,397 test cases and 27,897
+expectations across their selected files. Measured producer time totals
+2,351,890.442 ms, averages 213,808.222 ms, and ranges
+196,979.462–233,443.841 ms. Key442 ended at 14:36:36 and is outside this
+window. Inputs, selected tests, cache state, and host conditions differ; these
+measure only one-worker stage cost, not a causal speedup or regression.
+
+| Check order / producer parallelism | Measured fact | Decision or hypothesis |
+| --- | --- | --- |
+| Reuse the latest report, map one reachable guard, batch fixture changes, target/static/review, commit/push, then one changed-input stage at 1x | All eleven stages in this window used one producer; each passed 127 selected tests. Key458 took 218.249 s and added ID187's missing arm. | Continue this order. Independent strict/lint/format checks safely ran together; no A/B evidence isolates their wall-time effect. |
+| Stage before review or for every subfix at 1x | Mean stage cost was 213.808 s; the observed range was 196.979–233.444 s. | Reviewing first may avoid a repeated 3.56-minute stage; this is a cost estimate, not a controlled sequence trial. |
+| Two or four concurrent numeric stages | No qualified parallel receipt exists. | Keep producer parallelism at one; larger concurrency remains unmeasured and conflicts with the single-producer contract. |
+
+For Key458, the final package-selected target was 1/1 with 74 expectations. A
+first direct `bun test` and an earlier package-selected run are retained; the
+first was redundant after discovering TESTING's `bun bin/bun.ts test` wrapper,
+and the intermediate wrapper run preceded a small `try/finally` safety edit.
+The final wrapper target followed that edit. Across Key456–458 there were 13
+focused invocations: four Key456 fixture/setup attempts failed and nine
+invocations passed. The nine Key456 attempts alone used 135.57 s; the two extra
+Key458 invocations before the final passing wrapper run consumed 26.28 s and
+were avoidable by choosing the wrapper and final fixture shape before the first
+target. Platform-wide tool-call and model-token totals remain unavailable.
