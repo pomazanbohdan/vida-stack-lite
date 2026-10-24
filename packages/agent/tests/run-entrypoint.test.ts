@@ -3951,6 +3951,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       generation?: string;
       launcher?: Uint8Array;
       additionalChanges?: { path: string; bytes: Uint8Array }[];
+      additionalPreservedMutableOutputs?: Record<string, string>[];
+      additionalRetiredPaths?: string[];
       omitPlanChangedPaths?: string[];
     } = {},
   ) => {
@@ -3977,17 +3979,19 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     const documentationChangeByPath = new Map(documentationChanges.map((change) => [change.path, change]));
     const successorManifest = {
       schema: parentManifest.schema,
-      files: parentManifest.files.map((entry) => {
-        const change = documentationChangeByPath.get(entry.path);
-        if (entry.path === 'vida-agent/bin/run.mjs')
-          return {
-            path: entry.path,
-            sha256: launcherSha,
-            size: launcher.length,
-            ...(entry.source_sha256 === undefined ? {} : { source_sha256: launcherSha }),
-          };
-        return change ? { path: entry.path, sha256: digestBytes(change.bytes), size: change.bytes.length } : entry;
-      }),
+      files: parentManifest.files
+        .filter((entry) => !(options.additionalRetiredPaths ?? []).includes(entry.path))
+        .map((entry) => {
+          const change = documentationChangeByPath.get(entry.path);
+          if (entry.path === 'vida-agent/bin/run.mjs')
+            return {
+              path: entry.path,
+              sha256: launcherSha,
+              size: launcher.length,
+              ...(entry.source_sha256 === undefined ? {} : { source_sha256: launcherSha }),
+            };
+          return change ? { path: entry.path, sha256: digestBytes(change.bytes), size: change.bytes.length } : entry;
+        }),
       unresolved_integration_paths: parentManifest.unresolved_integration_paths,
     };
     const oldManifestSha = digestBytes(record(parentManifest));
@@ -4022,7 +4026,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       old_payload_manifest_sha256: oldManifestSha,
       new_payload_manifest_sha256: newManifestSha,
       changed: changed.filter((entry) => !omittedPlanChanges.has(entry.path)),
-      preserved_mutable_outputs: preservedMutableOutput ? [preservedMutableOutput] : [],
+      preserved_mutable_outputs: [
+        ...(preservedMutableOutput ? [preservedMutableOutput] : []),
+        ...(options.additionalPreservedMutableOutputs ?? []),
+      ],
     };
     const planSha = digestBytes(record(plan));
     const evidence: Record<string, unknown>[] = [];
@@ -5278,6 +5285,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       'forward-installed-bundle-symlink',
       'forward-parent-cutoff-drift',
       'forward-parent-authority-ambiguous',
+      'forward-preserved-output-overbound',
+      'forward-partial-integration-retirement',
+      'forward-preserved-output-pointer-mismatch',
       ...(process.platform === 'win32' ? [] : (['forward-installed-bundle-unsupported-node'] as const)),
       'forward-documentation-path-refusal',
       'forward-documentation-baseline-path-non-string',
@@ -5328,6 +5338,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           scenario === 'forward-installed-bundle-symlink' ||
           scenario === 'forward-parent-cutoff-drift' ||
           scenario === 'forward-parent-authority-ambiguous' ||
+          scenario === 'forward-preserved-output-overbound' ||
+          scenario === 'forward-partial-integration-retirement' ||
+          scenario === 'forward-preserved-output-pointer-mismatch' ||
           scenario === 'forward-installed-bundle-unsupported-node' ||
           scenario === 'repair-default-installed-bundle' ||
           scenario === 'repair-installed-payload-drift' ||
@@ -5343,6 +5356,17 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           : null;
         const digestBytes = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
         const configSha256 = configBytes ? digestBytes(configBytes) : null;
+        const sidecarBytes =
+          scenario === 'forward-partial-integration-retirement'
+            ? readFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'))
+            : null;
+        const sidecarManifestEntry = sidecarBytes
+          ? {
+              path: 'AGENT.sidecar.md',
+              sha256: digestBytes(sidecarBytes),
+              size: sidecarBytes.length,
+            }
+          : null;
         const stagedChangelogSha256 = digestBytes(stagedChangelogBytes);
         const preservedMutableOutput =
           configSha256 === null
@@ -5350,7 +5374,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             : {
                 path: changelogPath,
                 config_path: 'agent-runtime.config.v1.yaml',
-                config_pointer: 'research_decision.paths.changelog',
+                config_pointer:
+                  scenario === 'forward-preserved-output-pointer-mismatch'
+                    ? 'research_decision.paths.wrong'
+                    : 'research_decision.paths.changelog',
                 config_sha256: configSha256,
                 staged_sha256: stagedChangelogSha256,
                 installed_sha256_at_inspection: digestBytes(changelogBytes),
@@ -5367,6 +5394,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
           writeFileSync(path.join(root, changelogPath), changelogBytes);
         }
+        if (sidecarManifestEntry && sidecarBytes)
+          writeFileSync(path.join(root, sidecarManifestEntry.path), sidecarBytes);
         if (documentationChange) {
           mkdirSync(path.dirname(path.join(root, documentationChange.path)), { recursive: true });
           writeFileSync(path.join(root, documentationChange.path), documentationChange.bytes);
@@ -5392,6 +5421,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 ]
               : []),
             ...preservedManifestEntries,
+            ...(sidecarManifestEntry ? [sidecarManifestEntry] : []),
           ],
           unresolved_integration_paths: [],
         };
@@ -5425,6 +5455,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 ]
               : []),
             ...preservedManifestEntries,
+            ...(sidecarManifestEntry ? [sidecarManifestEntry] : []),
             {
               path: 'vida-agent/bin/run.mjs',
               sha256: successorLauncherSha256,
@@ -5675,6 +5706,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                   scenario === 'repair-maintenance-lock-active'
                     ? successorLauncherBytes
                     : Buffer.from('y'),
+                additionalPreservedMutableOutputs:
+                  scenario === 'forward-preserved-output-overbound' && preservedMutableOutput
+                    ? [preservedMutableOutput]
+                    : [],
+                additionalRetiredPaths:
+                  scenario === 'forward-partial-integration-retirement' ? ['AGENT.sidecar.md'] : [],
               },
             )
           : null;
@@ -5761,9 +5798,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const bundlePaths = [bundleRoot, path.join(bundleRoot, 'bin'), path.join(bundleRoot, 'bin', 'run.mjs')];
         if (scenario === 'repair-installed-payload-drift')
           writeFileSync(path.join(bundleRoot, 'bin', 'run.mjs'), Buffer.from('drifted launcher'));
-        const preservedPaths = preservedMutableOutput
-          ? ['agent-runtime.config.v1.yaml', changelogPath].map((relative) => path.join(root, relative))
-          : [];
+        const preservedPaths = [
+          ...(preservedMutableOutput ? ['agent-runtime.config.v1.yaml', changelogPath] : []),
+          ...(scenario === 'forward-partial-integration-retirement' ? ['AGENT.sidecar.md'] : []),
+        ].map((relative) => path.join(root, relative));
         const beforePreservedBytes = preservedPaths.map((file) => readFileSync(file));
         const beforePreservedMetadata = preservedPaths.map(snapshotAuthorityMetadata);
         const beforeBundle = forwardFixture ? snapshotAuthorityFixture(bundleRoot) : null;
@@ -5883,12 +5921,23 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         } else if (
           scenario === 'forward-parent-cutoff-drift' ||
           scenario === 'forward-parent-authority-ambiguous' ||
+          scenario === 'forward-preserved-output-overbound' ||
+          scenario === 'forward-partial-integration-retirement' ||
+          scenario === 'forward-preserved-output-pointer-mismatch' ||
           scenario === 'forward-payload-manifest-digest' ||
           scenario === 'forward-installed-bundle-inventory-mismatch'
         ) {
           assert.ok(forwardFixture);
           assert.ok(beforeBundle);
           assert.ok(beforeBundleMetadata);
+          if (scenario === 'forward-partial-integration-retirement') {
+            const parentPaths = new Set(successorManifest.files.map((entry) => entry.path));
+            const childPaths = new Set(forwardFixture.successorManifest.files.map((entry) => entry.path));
+            expect(parentPaths.has('AGENT.sidecar.md')).toBe(true);
+            expect(parentPaths.has('agent-runtime.config.v1.yaml')).toBe(true);
+            expect(childPaths.has('AGENT.sidecar.md')).toBe(false);
+            expect(childPaths.has('agent-runtime.config.v1.yaml')).toBe(true);
+          }
           let caught: unknown;
           try {
             forwardUpdateAuthority(root, forwardFixture.selector, forwardFixture.selectorSha, forwardRoot);
@@ -5902,9 +5951,15 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 ? 'Forward parent selector or cutoff drift.'
                 : scenario === 'forward-parent-authority-ambiguous'
                   ? 'Forward parent authority type is ambiguous.'
-                  : scenario === 'forward-payload-manifest-digest'
-                    ? 'Repair payload manifest drift.'
-                    : 'Installed bundle inventory differs from forward manifest.',
+                  : scenario === 'forward-preserved-output-overbound'
+                    ? 'Forward manifest deletion or preservation proof invalid.'
+                    : scenario === 'forward-partial-integration-retirement'
+                      ? 'Only the complete project-owned integration pair may retire.'
+                      : scenario === 'forward-preserved-output-pointer-mismatch'
+                        ? 'Configured mutable-output preservation proof invalid.'
+                        : scenario === 'forward-payload-manifest-digest'
+                          ? 'Repair payload manifest drift.'
+                          : 'Installed bundle inventory differs from forward manifest.',
           });
           expect(snapshotAuthorityFixture(bundleRoot)).toEqual(beforeBundle);
           expect(bundlePaths.map(snapshotAuthorityMetadata)).toEqual(beforeBundleMetadata);

@@ -6943,15 +6943,15 @@ unchanged, `max_cc`/`max_entry_crap` remain 501, and the operation stays BLOCKED
 with frozen qualification pending. This is one newly observed line, statement
 and branch hit, not a contour closure or numeric PASS.
 
-### Key451 parent authority ambiguity case
+### Key451 parent authority ambiguity case and stage terminal
 
-The next adjacent gap is ID147 at `bin/run.ts:1607`, currently `[0,31]` in the
-Key450 report. Its true arm is reachable with the existing parent repair fixture:
-add the parent `forward-intent.v1.json` marker while retaining the existing
+The Key450 report selected ID147 at `bin/run.ts:1607`, `[0,31]`. Its true arm
+was reachable with the existing parent repair fixture: add the parent
+`forward-intent.v1.json` marker while retaining the existing
 `repair-plan.v1.json`. The guard compares both marker paths and refuses before
 either authority record is parsed. The case asserts the exact selector refusal,
 complete `.agent` and installed-bundle afterimages, and preserved root-level
-config/changelog bytes and metadata. A final blind native Luna review found no
+config/changelog bytes and metadata. A blind native Luna review found no
 must-fix; the reviewer confirmed each prerequisite and the afterimages. Its
 optional prose note was applied by clarifying that the presence of both markers
 is the conflict.
@@ -6965,16 +6965,85 @@ final run passed 1 test, 169 expectations, 0 failures in 1.73 seconds. This is a
 test-selection command constraint, not a product defect or coverage result.
 Checked-JS strict passed 227 files in 561.62 ms, configured Oxlint exited 0, and
 the one-file formatter check passed in 26 ms. The independent review was
-read-only and did not run tests or edit files. One serial changed-input stage
-remains after normal commit hooks and push.
+read-only and did not run tests or edit files. Commit `a304648f619eb8f41d0ac2ace9ebe9963e79b242`
+passed normal hooks and was pushed before the sole stage.
 
-### Three-hour execution comparison, 2026-10-24 12:24–15:24 UTC
+The single changed-input stage ran at `/workspace/contour-stage-fh8YWa`, run
+`e27b881c-aeb6-4b42-9434-ad49039d9937`, source commit
+`a304648f619eb8f41d0ac2ace9ebe9963e79b242`. It exited 0 in 228,950.408995 ms
+within its unchanged 330,000 ms bound, with complete capture, observed group
+closure, unchanged boot and unchanged image inputs. The two-file Bun 1.4.4 suite
+passed 127 tests, 0 failures and 2,488 expectations; test time was 223.42 s.
+Its image is
+`/workspace/.vida-quality-inputs/8bc8d428bc5cb027dd44013bac3b0b1acd53e560/repository`,
+tree `29100894fd215ea6d4700a7eff7cbe4c38ff37e8`, fingerprint
+`bbbee1bd33c708f2023a920a4de7c43fc06fdc440fb332270857467530e316c4`, manifest
+SHA-256 `67ca8a8cb000871cc51bdc04b22e652d729da570164804dd8ca70bb1bea21a7b`.
+The focused report is
+`/workspace/.vida-quality-inputs/8bc8d428bc5cb027dd44013bac3b0b1acd53e560/repository/packages/agent/coverage/bun-unified/diagnostics/e27b881c-aeb6-4b42-9434-ad49039d9937.focused-coverage.json`;
+native launch, execution, publication, and raw streams remain in the stage tree.
 
-Eight one-worker changed-input stages have terminal receipts in this window:
+The projection now reads F441/555, L2015/2860, S2165/3138, B2524/3660.
+ID147 is `[1,31]`, with one new branch hit and no denominator changes. The
+operation remains BLOCKED; frozen qualification remains pending and both maxima
+remain 501. This closes no contour and grants no numeric PASS.
+
+### Key452 forward preservation and integration-retirement boundaries
+
+The latest report selects ID149 at `bin/run.ts:1618`, `[0,24]`. The exact branch
+is the forward-manifest preservation guard. Its first two terms are entailed by
+`requireForwardUpdatePlan` → `hasForwardPlanCollections`, which requires the
+changed and preservation values to be arrays. The validator leaves preservation
+array length unconstrained, so two entries reach the true refusal arm.
+
+The latest report selects ID149 at `bin/run.ts:1618`, `[0,24]`. The first two
+terms are entailed by `requireForwardUpdatePlan` → `hasForwardPlanCollections`,
+which requires arrays; the reachable bound is `preserved_mutable_outputs.length
+> 1`. The leaf fixture duplicates a valid config/changelog binding before
+computing the plan digest and reseals authorization, reviews, decision, selector,
+release and cutoff evidence. The expected refusal is
+`GAP-VIDA-RUN-SELECTOR-001`: `Forward manifest deletion or preservation proof
+invalid.`
+
+The packet also covers the neighboring retirement and preservation-proof
+refusals at `run.ts:1625–1650` (latest report candidates ID151, ID152 and ID154).
+The partial-retirement case now carries both `AGENT.sidecar.md` and
+`agent-runtime.config.v1.yaml` in the leaf parent manifest, then removes only
+the sidecar from the successor. It asserts that exact one-path delta before
+requiring `Only the complete project-owned integration pair may retire.` The
+sidecar bytes come from the repository and are read only for this scenario. The
+pointer case retains valid config, staged and installed digests while changing
+only `config_pointer`; the exact result is `Configured mutable-output
+preservation proof invalid.` Each case checks the unchanged `.agent`, bundle,
+config/changelog and sidecar afterimages as applicable. The contract now names
+the exact files whose bytes and metadata are compared.
+
+The first blind review caught that an earlier partial-retirement fixture lacked
+the pair; it was corrected before stage. A second blind read-only Luna review
+confirmed the final fixture has both parent entries, removes only the sidecar,
+reaches the exact guard and preserves the afterimages; it also confirmed the
+duplicate and wrong-pointer cases. No product code changed and no objective
+skip was applied. The final review receipt is retained at
+`DIAG/bun-cli-run-key452-final-review-20261024-01.md`.
+
+The final focused Bun 1.4.4 target passed 1 composite test, 197 expectations,
+0 failures; the latest rerun took 1.96 seconds including harness startup.
+Checked-JS strict passed 227 files in 705.22 ms, configured Oxlint exited 0,
+and the one-file formatter check passed in 22 ms. An earlier formatter check
+found layout differences; the package formatter corrected them. The first
+ordinary commit hook then caught a nullable-buffer type error; the explicit
+null guard is now covered by the final target and scoped checks, and no hook was
+bypassed. Only one focused composite test was run; there was no redundant
+full-suite run. The modified inputs still need one changed-input stage after
+ordinary commit hooks and push.
+
+### Three-hour execution comparison, 2026-10-24 12:33–15:33 UTC
+
+Nine one-worker changed-input stages have terminal receipts in this window:
 Key434 258,991.524 ms, Key436 208,820.746 ms, Key438 208,414.802 ms,
 Key439 236,747.830 ms, Key442 206,242.701 ms, Key444 233,443.841 ms,
-Key445 202,793.193 ms, and Key450 199,063.248 ms. The observed range is
-199,063.248–258,991.524 ms. Source commits, inputs, test counts, and host/cache
+Key445 202,793.193 ms, Key450 199,063.248 ms, and Key451 228,950.409 ms. The
+observed range is 199,063.248–258,991.524 ms. Source commits, inputs, test counts, and host/cache
 conditions differ, so these receipts give a one-worker cost range only; they do
 not establish a speedup, regression, limiter, or controlled check-order result.
 There is no profile or matched A/B/A/B run, so the benchmark verdict remains
@@ -6982,7 +7051,7 @@ inconclusive.
 
 | Check order and producer parallelism | Evidence and decision |
 | --- | --- |
-| Reuse the current report, review causal prerequisites, make a focused case, run the gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | The eight terminal stages above and the current Key451 pre-stage packet follow this order. Key451 also exposed a coverage-mode registration gate; future focused commands must set the mode before filtering. |
+| Reuse the current report, review causal prerequisites, batch the reachable boundary cases, run the coverage-gated target plus scoped strict/lint/format and independent review, then commit/push before one changed-input stage at 1x PARALLEL | The nine prior terminal stages and current Key452 packet use this order. Key451 exposed a coverage-mode registration gate; focused commands set `AGENT_RUNTIME_V8_COVERAGE=1` before filtering. The final Key452 target took 2.50 seconds with harness startup; static checks were below one second where timed. |
 | Run a full stage before reviewing each gap or for each subfix, at 1x PARALLEL | No matched trial measured this ordering. The observed full-stage range is about 199–259 seconds per run, so premature runs would repeat that work; the avoided time is an estimate, not a measurement. Key446–448 objective skips correctly required no stage and changed no counters. |
 | Run two or four full numeric stages concurrently | No qualified run measured this option. It conflicts with TESTING's single producer and has no comparable speed, resource or correctness evidence. Keep numeric parallelism at one. |
 

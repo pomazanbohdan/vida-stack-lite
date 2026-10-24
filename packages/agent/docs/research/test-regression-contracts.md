@@ -424,6 +424,18 @@ For a parent with both repair and forward authority markers, require the exact
 ambiguous-authority refusal before either authority is followed, and compare the
 complete fixture afterimage. The presence of both marker paths is the conflict;
 the guard must reject the pair before parsing or applying either record.
+For forward preservation, duplicate a schema-valid preserved-output record so
+the bound plan carries two entries. The forward authority reader must refuse
+with the manifest deletion/preservation error before inspecting either entry,
+and the `.agent`, installed-bundle, and preserved config/changelog afterimages
+must remain unchanged. For partial retirement, put both project-owned paths
+(`AGENT.sidecar.md` and `agent-runtime.config.v1.yaml`) in the parent manifest,
+omit only the sidecar from the successor, and verify that only that one path is
+retired before requiring the exact refusal. Include the root sidecar in the
+preserved-byte/metadata snapshot. For a wrong config pointer, retain otherwise
+valid preservation bindings and require the exact proof refusal; both cases
+must preserve the same `.agent`, installed-bundle, and protected root-file
+afterimages.
 Public recovery-review negative exports vary exact outer keys, caller identity,
 owner/CAS bindings, source snapshot/entries, context and required observation.
 Every input remains malformed and must refuse before opening the recovery route,
