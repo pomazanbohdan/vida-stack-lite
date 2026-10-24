@@ -3864,227 +3864,290 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
-  test('repair authority refuses a mismatched parent evidence digest without writes', () => {
-    const root = mkdtempSync(path.join(tmpdir(), 'vida-repair-parent-evidence-'));
-    let completed = false;
-    try {
-      const digestRecord = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
-      const parentGeneration = 'fixture-repair-parent';
-      const childGeneration = 'fixture-repair-child';
-      const parentRoot = path.join(root, '.agent', 'cutover', parentGeneration);
-      const childRoot = path.join(root, '.agent', 'cutover', childGeneration);
-      mkdirSync(parentRoot, { recursive: true });
-      mkdirSync(childRoot, { recursive: true });
-      const archiveManifestSha256 = 'a'.repeat(64);
-      const parentPayloadManifestSha256 = 'b'.repeat(64);
-      const parentLauncherSha256 = 'c'.repeat(64);
-      const successorPayloadManifestSha256 = 'd'.repeat(64);
-      const successorLauncherSha256 = 'e'.repeat(64);
-      const parentIntent = {
-        schema: 'ActiveRuntimeSelector/v1',
-        generation: parentGeneration,
-        runtime: 'vida-agent',
-        bundle_root: 'vida-agent',
-        config_path: 'agent-runtime.config.v1.yaml',
-        archive_manifest_sha256: archiveManifestSha256,
-        plan_sha256: 'f'.repeat(64),
-        payload_manifest_sha256: parentPayloadManifestSha256,
-        state_policy: 'clean_start_no_ticket_transfer',
-      };
-      const parentEvidence = Object.fromEntries(
-        ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime'].map((kind, index) => {
-          const relativePath = `.agent/cutover/${parentGeneration}/${kind}-evidence.json`;
-          const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
-          writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
-          return [
-            kind,
+  test('repair authority rejects mismatched evidence and run refuses mapped payload traversal without writes', async () => {
+    for (const scenario of ['parent-evidence-mismatch', 'mapped-source-path'] as const) {
+      const root = mkdtempSync(path.join(tmpdir(), `vida-repair-${scenario}-`));
+      let completed = false;
+      try {
+        const digestRecord = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
+        const parentGeneration = 'fixture-repair-parent';
+        const childGeneration = 'fixture-repair-child';
+        const parentRoot = path.join(root, '.agent', 'cutover', parentGeneration);
+        const childRoot = path.join(root, '.agent', 'cutover', childGeneration);
+        mkdirSync(parentRoot, { recursive: true });
+        mkdirSync(childRoot, { recursive: true });
+        const archiveManifestSha256 = 'a'.repeat(64);
+        const parentLauncherSha256 = 'c'.repeat(64);
+        const successorLauncherSha256 = 'e'.repeat(64);
+        const sharedPayloadSha256 = '1'.repeat(64);
+        const parentManifest = {
+          schema: 'VidaAgentPreparedPayload/v1',
+          files: [
+            { path: 'fixture/payload.json', sha256: sharedPayloadSha256, size: 1, source_sha256: sharedPayloadSha256 },
             {
-              actor: 'untrusted fixture datum',
-              path: relativePath,
-              pointer: `fixture:untrusted-parent-${kind}`,
-              sha256: index === 0 ? '0'.repeat(64) : createHash('sha256').update(bytes).digest('hex'),
-              status: 'passed',
+              path: 'vida-agent/bin/run.mjs',
+              sha256: parentLauncherSha256,
+              size: 1,
+              source_sha256: parentLauncherSha256,
             },
-          ];
-        }),
-      );
-      const parentDecision = {
-        schema: 'VidaCutoverActivationDecision/v1',
-        actor: 'untrusted fixture datum',
-        cutover_id: parentGeneration,
-        evidence: parentEvidence,
-        outcome: 'approved',
-        payload_manifest_sha256: parentIntent.payload_manifest_sha256,
-        plan_sha256: parentIntent.plan_sha256,
-        pointer: 'fixture:untrusted-parent-decision',
-        selector_intent_sha256: digestRecord(parentIntent),
-      };
-      const parentSelector = {
-        ...parentIntent,
-        activation_decision_sha256: digestRecord(parentDecision),
-      };
-      const parentSha = digestRecord(parentSelector);
-      const parentCommit = {
-        schema: 'VidaPreparedSelectorCommit/v1',
-        cutover_id: parentGeneration,
-        plan_sha256: parentSelector.plan_sha256,
-        activation_decision_sha256: parentSelector.activation_decision_sha256,
-        selector_sha256: parentSha,
-      };
-      const parentJournal = {
-        schema: 'VidaPreparedInstallJournal/v1',
-        cutover_id: parentGeneration,
-        plan_sha256: parentSelector.plan_sha256,
-        archive_manifest_sha256: archiveManifestSha256,
-        payload_manifest_sha256: parentPayloadManifestSha256,
-        archive_scope: 'fixture-parent-scope',
-        state_policy: parentSelector.state_policy,
-        status: 'installing',
-      };
-      const parentReady = {
-        schema: 'VidaPreparedInstallReady/v1',
-        cutover_id: parentGeneration,
-        plan_sha256: parentSelector.plan_sha256,
-        archive_scope: parentJournal.archive_scope,
-        state_policy: parentSelector.state_policy,
-        status: 'ready_for_selector',
-      };
-      const parentLock = {
-        schema: 'VidaCutoverMaintenanceLock/v1',
-        cutover_id: parentGeneration,
-        operator: 'fixture-owner',
-        attestation: 'old_runtime_quiesced',
-        archive_manifest_sha256: archiveManifestSha256,
-        plan_sha256: parentSelector.plan_sha256,
-        payload_manifest_sha256: parentPayloadManifestSha256,
-        expected_file_count: 0,
-        archive_manifest: { manifest_sha256: archiveManifestSha256 },
-        plan: {
-          schema: 'VidaPreparedInstallPlan/v1',
+          ],
+          unresolved_integration_paths: [],
+        };
+        const successorManifest = {
+          schema: 'VidaAgentPreparedPayload/v1',
+          files: [
+            {
+              path: 'fixture/payload.json',
+              sha256: sharedPayloadSha256,
+              size: 1,
+              source_path: '../outside',
+              source_sha256: '2'.repeat(64),
+            },
+            {
+              path: 'vida-agent/bin/run.mjs',
+              sha256: successorLauncherSha256,
+              size: 1,
+              source_sha256: successorLauncherSha256,
+            },
+          ],
+          unresolved_integration_paths: [],
+        };
+        const parentPayloadManifestSha256 = digestRecord(parentManifest);
+        const successorPayloadManifestSha256 = digestRecord(successorManifest);
+        const parentIntent = {
+          schema: 'ActiveRuntimeSelector/v1',
+          generation: parentGeneration,
+          runtime: 'vida-agent',
+          bundle_root: 'vida-agent',
+          config_path: 'agent-runtime.config.v1.yaml',
+          archive_manifest_sha256: archiveManifestSha256,
+          plan_sha256: 'f'.repeat(64),
+          payload_manifest_sha256: parentPayloadManifestSha256,
+          state_policy: 'clean_start_no_ticket_transfer',
+        };
+        const parentEvidence = Object.fromEntries(
+          ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime'].map((kind, index) => {
+            const relativePath = `.agent/cutover/${parentGeneration}/${kind}-evidence.json`;
+            const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
+            writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
+            return [
+              kind,
+              {
+                actor: 'untrusted fixture datum',
+                path: relativePath,
+                pointer: `fixture:untrusted-parent-${kind}`,
+                sha256:
+                  scenario === 'parent-evidence-mismatch' && index === 0
+                    ? '0'.repeat(64)
+                    : createHash('sha256').update(bytes).digest('hex'),
+                status: 'passed',
+              },
+            ];
+          }),
+        );
+        const parentDecision = {
+          schema: 'VidaCutoverActivationDecision/v1',
+          actor: 'untrusted fixture datum',
+          cutover_id: parentGeneration,
+          evidence: parentEvidence,
+          outcome: 'approved',
+          payload_manifest_sha256: parentIntent.payload_manifest_sha256,
+          plan_sha256: parentIntent.plan_sha256,
+          pointer: 'fixture:untrusted-parent-decision',
+          selector_intent_sha256: digestRecord(parentIntent),
+        };
+        const parentSelector = {
+          ...parentIntent,
+          activation_decision_sha256: digestRecord(parentDecision),
+        };
+        const parentSha = digestRecord(parentSelector);
+        const parentCommit = {
+          schema: 'VidaPreparedSelectorCommit/v1',
+          cutover_id: parentGeneration,
+          plan_sha256: parentSelector.plan_sha256,
+          activation_decision_sha256: parentSelector.activation_decision_sha256,
+          selector_sha256: parentSha,
+        };
+        const parentJournal = {
+          schema: 'VidaPreparedInstallJournal/v1',
+          cutover_id: parentGeneration,
+          plan_sha256: parentSelector.plan_sha256,
+          archive_manifest_sha256: archiveManifestSha256,
+          payload_manifest_sha256: parentPayloadManifestSha256,
+          archive_scope: 'fixture-parent-scope',
+          state_policy: parentSelector.state_policy,
+          status: 'installing',
+        };
+        const parentReady = {
+          schema: 'VidaPreparedInstallReady/v1',
+          cutover_id: parentGeneration,
+          plan_sha256: parentSelector.plan_sha256,
+          archive_scope: parentJournal.archive_scope,
+          state_policy: parentSelector.state_policy,
+          status: 'ready_for_selector',
+        };
+        const parentLock = {
+          schema: 'VidaCutoverMaintenanceLock/v1',
+          cutover_id: parentGeneration,
+          operator: 'fixture-owner',
+          attestation: 'old_runtime_quiesced',
+          archive_manifest_sha256: archiveManifestSha256,
           plan_sha256: parentSelector.plan_sha256,
           payload_manifest_sha256: parentPayloadManifestSha256,
-          archive_manifest_sha256: archiveManifestSha256,
-        },
-        state_policy: parentSelector.state_policy,
-        activation_decision_path: `.agent/cutover/${parentGeneration}/activation-decision.v1.json`,
-        activation_decision_sha256: parentSelector.activation_decision_sha256,
-      };
-      const parentRelease = {
-        schema: 'VidaCutoverMaintenanceRelease/v1',
-        cutover_id: parentGeneration,
-        operator: parentLock.operator,
-        lock_sha256: digestRecord(parentLock),
-        status: 'released_by_explicit_operator_action',
-      };
-      const parentCutoff = {
-        schema: 'VidaNewWorkCutoffWitness/v1',
-        generation: parentGeneration,
-        selector_sha256: parentSha,
-        first_admitted_work_attempt: null,
-      };
-      writeFileSync(path.join(root, '.agent', 'cutover', 'active-runtime-selector.v1.json'), record(parentSelector));
-      for (const [name, value] of [
-        ['selector-commit.json', parentCommit],
-        ['activation-decision.v1.json', parentDecision],
-        ['prepared-install.json', parentJournal],
-        ['install-ready.json', parentReady],
-        ['maintenance-lock.released.v1.json', parentLock],
-        ['maintenance-release.v1.json', parentRelease],
-        ['cutoff-witness.json', parentCutoff],
-      ] as const)
-        writeFileSync(path.join(parentRoot, name), record(value));
-
-      const childEvidence = ['assurance', 'correctness', 'security'].map((kind) => {
-        const relativePath = `.agent/cutover/${childGeneration}/${kind}-evidence.json`;
-        const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
-        writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
-        return {
-          kind,
-          path: relativePath,
-          sha256: createHash('sha256').update(bytes).digest('hex'),
-          status: 'passed',
+          expected_file_count: 0,
+          archive_manifest: { manifest_sha256: archiveManifestSha256 },
+          plan: {
+            schema: 'VidaPreparedInstallPlan/v1',
+            plan_sha256: parentSelector.plan_sha256,
+            payload_manifest_sha256: parentPayloadManifestSha256,
+            archive_manifest_sha256: archiveManifestSha256,
+          },
+          state_policy: parentSelector.state_policy,
+          activation_decision_path: `.agent/cutover/${parentGeneration}/activation-decision.v1.json`,
+          activation_decision_sha256: parentSelector.activation_decision_sha256,
         };
-      });
-      const repairAuthorization = {
-        schema: 'VidaActiveLauncherRepairAuthorization/v1',
-        repair_id: childGeneration,
-        operator: 'fixture-owner',
-        outcome: 'approved',
-        pointer: 'fixture:untrusted-child-parser-input',
-        old_generation: parentGeneration,
-        old_selector_sha256: parentSha,
-        old_payload_manifest_sha256: parentPayloadManifestSha256,
-        old_launcher_sha256: parentLauncherSha256,
-        new_payload_manifest_sha256: successorPayloadManifestSha256,
-        new_launcher_sha256: successorLauncherSha256,
-        evidence: childEvidence,
-      };
-      const repairPlan = {
-        schema: 'VidaActiveLauncherRepairPlan/v1',
-        repair_id: childGeneration,
-        operator: 'fixture-owner',
-        parent_cutover_id: parentGeneration,
-        parent_selector_sha256: parentSha,
-        parent_payload_manifest_sha256: parentPayloadManifestSha256,
-        parent_launcher_sha256: parentLauncherSha256,
-        successor_payload_manifest_sha256: successorPayloadManifestSha256,
-        successor_launcher_sha256: successorLauncherSha256,
-        archive_manifest_sha256: archiveManifestSha256,
-        authorization_sha256: digestRecord(repairAuthorization),
-      };
-      const childIntent: Parameters<typeof repairAuthority>[1] = {
-        schema: 'ActiveRuntimeSelector/v1',
-        generation: childGeneration,
-        runtime: 'vida-agent',
-        bundle_root: 'vida-agent',
-        config_path: 'agent-runtime.config.v1.yaml',
-        archive_manifest_sha256: archiveManifestSha256,
-        plan_sha256: digestRecord(repairPlan),
-        payload_manifest_sha256: successorPayloadManifestSha256,
-        state_policy: 'clean_start_no_ticket_transfer',
-      };
-      const repairDecision = {
-        schema: 'VidaActiveLauncherRepairDecision/v1',
-        repair_id: childGeneration,
-        operator: 'fixture-owner',
-        plan_sha256: childIntent.plan_sha256,
-        authorization_sha256: repairPlan.authorization_sha256,
-        selector_intent_sha256: digestRecord(childIntent),
-        outcome: 'approved',
-      };
-      const childSelector = {
-        ...childIntent,
-        activation_decision_sha256: digestRecord(repairDecision),
-      };
-      const childSha = digestRecord(childSelector);
-      const childCommit = {
-        schema: 'VidaActiveLauncherRepairSelectorCommit/v1',
-        repair_id: childGeneration,
-        plan_sha256: childSelector.plan_sha256,
-        decision_sha256: childSelector.activation_decision_sha256,
-        selector_sha256: childSha,
-      };
-      writeFileSync(path.join(childRoot, 'repair-plan.v1.json'), record(repairPlan));
-      writeFileSync(path.join(childRoot, 'repair-authorization.v1.json'), record(repairAuthorization));
-      writeFileSync(path.join(childRoot, 'repair-decision.v1.json'), record(repairDecision));
-      writeFileSync(path.join(childRoot, 'repair-selector-commit.v1.json'), record(childCommit));
-      writeFileSync(path.join(childRoot, 'parent-selector.v1.json'), record(parentSelector));
-      const before = snapshotAuthorityFixture(root);
-      let caught: unknown;
-      try {
-        repairAuthority(root, childSelector, childSha, childRoot, true);
-      } catch (error) {
-        caught = error;
+        const parentRelease = {
+          schema: 'VidaCutoverMaintenanceRelease/v1',
+          cutover_id: parentGeneration,
+          operator: parentLock.operator,
+          lock_sha256: digestRecord(parentLock),
+          status: 'released_by_explicit_operator_action',
+        };
+        const parentCutoff = {
+          schema: 'VidaNewWorkCutoffWitness/v1',
+          generation: parentGeneration,
+          selector_sha256: parentSha,
+          first_admitted_work_attempt: null,
+        };
+        writeFileSync(path.join(root, '.agent', 'cutover', 'active-runtime-selector.v1.json'), record(parentSelector));
+        for (const [name, value] of [
+          ['selector-commit.json', parentCommit],
+          ['activation-decision.v1.json', parentDecision],
+          ['prepared-install.json', parentJournal],
+          ['install-ready.json', parentReady],
+          ['maintenance-lock.released.v1.json', parentLock],
+          ['maintenance-release.v1.json', parentRelease],
+          ['cutoff-witness.json', parentCutoff],
+        ] as const)
+          writeFileSync(path.join(parentRoot, name), record(value));
+
+        const childEvidence = ['assurance', 'correctness', 'security'].map((kind) => {
+          const relativePath = `.agent/cutover/${childGeneration}/${kind}-evidence.json`;
+          const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
+          writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
+          return {
+            kind,
+            path: relativePath,
+            sha256: createHash('sha256').update(bytes).digest('hex'),
+            status: 'passed',
+          };
+        });
+        const repairAuthorization = {
+          schema: 'VidaActiveLauncherRepairAuthorization/v1',
+          repair_id: childGeneration,
+          operator: 'fixture-owner',
+          outcome: 'approved',
+          pointer: 'fixture:untrusted-child-parser-input',
+          old_generation: parentGeneration,
+          old_selector_sha256: parentSha,
+          old_payload_manifest_sha256: parentPayloadManifestSha256,
+          old_launcher_sha256: parentLauncherSha256,
+          new_payload_manifest_sha256: successorPayloadManifestSha256,
+          new_launcher_sha256: successorLauncherSha256,
+          evidence: childEvidence,
+        };
+        const repairPlan = {
+          schema: 'VidaActiveLauncherRepairPlan/v1',
+          repair_id: childGeneration,
+          operator: 'fixture-owner',
+          parent_cutover_id: parentGeneration,
+          parent_selector_sha256: parentSha,
+          parent_payload_manifest_sha256: parentPayloadManifestSha256,
+          parent_launcher_sha256: parentLauncherSha256,
+          successor_payload_manifest_sha256: successorPayloadManifestSha256,
+          successor_launcher_sha256: successorLauncherSha256,
+          archive_manifest_sha256: archiveManifestSha256,
+          authorization_sha256: digestRecord(repairAuthorization),
+        };
+        const childIntent: Parameters<typeof repairAuthority>[1] = {
+          schema: 'ActiveRuntimeSelector/v1',
+          generation: childGeneration,
+          runtime: 'vida-agent',
+          bundle_root: 'vida-agent',
+          config_path: 'agent-runtime.config.v1.yaml',
+          archive_manifest_sha256: archiveManifestSha256,
+          plan_sha256: digestRecord(repairPlan),
+          payload_manifest_sha256: successorPayloadManifestSha256,
+          state_policy: 'clean_start_no_ticket_transfer',
+        };
+        const repairDecision = {
+          schema: 'VidaActiveLauncherRepairDecision/v1',
+          repair_id: childGeneration,
+          operator: 'fixture-owner',
+          plan_sha256: childIntent.plan_sha256,
+          authorization_sha256: repairPlan.authorization_sha256,
+          selector_intent_sha256: digestRecord(childIntent),
+          outcome: 'approved',
+        };
+        const childSelector = {
+          ...childIntent,
+          activation_decision_sha256: digestRecord(repairDecision),
+        };
+        const childSha = digestRecord(childSelector);
+        const childCommit = {
+          schema: 'VidaActiveLauncherRepairSelectorCommit/v1',
+          repair_id: childGeneration,
+          plan_sha256: childSelector.plan_sha256,
+          decision_sha256: childSelector.activation_decision_sha256,
+          selector_sha256: childSha,
+        };
+        writeFileSync(path.join(childRoot, 'repair-plan.v1.json'), record(repairPlan));
+        writeFileSync(path.join(childRoot, 'repair-authorization.v1.json'), record(repairAuthorization));
+        writeFileSync(path.join(childRoot, 'repair-decision.v1.json'), record(repairDecision));
+        writeFileSync(path.join(childRoot, 'repair-selector-commit.v1.json'), record(childCommit));
+        writeFileSync(path.join(childRoot, 'parent-selector.v1.json'), record(parentSelector));
+        writeFileSync(path.join(childRoot, 'parent-payload.manifest.v1.json'), record(parentManifest));
+        writeFileSync(path.join(childRoot, 'successor-payload.manifest.v1.json'), record(successorManifest));
+        if (scenario === 'mapped-source-path') {
+          symlinkSync(packageRoot, path.join(root, 'vida-agent'), process.platform === 'win32' ? 'junction' : 'dir');
+          writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(childSelector));
+        }
+        const before = snapshotAuthorityFixture(path.join(root, '.agent'));
+        const hostDatabasePath = path.join(root, '.agent', 'work', 'session-handoff.v1.sqlite');
+        expect(existsSync(hostDatabasePath)).toBe(false);
+        if (scenario === 'parent-evidence-mismatch') {
+          let caught: unknown;
+          try {
+            repairAuthority(root, childSelector, childSha, childRoot, true);
+          } catch (error) {
+            caught = error;
+          }
+          expect(caught).toMatchObject({
+            code: 'GAP-VIDA-RUN-SELECTOR-001',
+            message: 'Repair parent evidence is invalid.',
+          });
+        } else {
+          const args = common.map((value, index) =>
+            common[index - 1] === '--project-root'
+              ? root
+              : common[index - 1] === '--work-id'
+                ? `mutation-run-${randomUUID()}`
+                : value,
+          );
+          await Promise.resolve(
+            expect(run([...args, '--workflow', 'information_research_light'])).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-SELECTOR-001',
+              message: 'Repair payload entry is invalid.',
+            }),
+          );
+        }
+        expect(existsSync(hostDatabasePath)).toBe(false);
+        expect(snapshotAuthorityFixture(path.join(root, '.agent'))).toEqual(before);
+        completed = true;
+      } finally {
+        if (completed) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed repair authority fixture (${scenario}): ${root}\n`);
       }
-      expect(caught).toMatchObject({
-        code: 'GAP-VIDA-RUN-SELECTOR-001',
-        message: 'Repair parent evidence is invalid.',
-      });
-      expect(snapshotAuthorityFixture(root)).toEqual(before);
-      completed = true;
-    } finally {
-      if (completed) rmSync(root, { recursive: true, force: true });
-      else process.stderr.write(`Retained failed repair parent evidence fixture: ${root}\n`);
     }
   });
 
