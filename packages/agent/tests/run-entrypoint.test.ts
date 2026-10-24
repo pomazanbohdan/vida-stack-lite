@@ -58,6 +58,7 @@ import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 import { initializeProject } from '../bin/init.ts';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.js';
+import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.js';
 import {
   admittedInput,
   continuationState,
@@ -4871,6 +4872,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               ),
           ),
         ).toBe(true);
+        expect(recoveryJournal.state.items.length).toBeGreaterThan(0);
         expect(
           recoveryJournal.state.items.every(
             (item) => item.issue_id === null && item.observation === null && item.host_reservation === undefined,
@@ -5028,6 +5030,313 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           process.stderr.write(
             `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture: ${root}\n`,
           );
+      }
+    }, 60_000);
+
+    test('recovers an authorized source lease after accepted research through public run', async () => {
+      let root: string | undefined;
+      let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+      let completed = false;
+      try {
+        fixture = await createInitialSourceWorkFixture({
+          researchSynthesis: true,
+          onRoot: (value) => (root = value),
+        });
+        const sourceFixture = fixture;
+        const input = admittedInput(sourceFixture);
+        const initial = continuationState(sourceFixture);
+        const initialSourceScope = initial.journal.source_scope;
+        assert.ok(initialSourceScope && sourceFixture.store && sourceFixture.bridge && sourceFixture.ledger);
+        expect(initial.work.lifecycle.phase).toBe('INTAKE');
+        expect(initial.work.execution.assignment_attempts).toEqual([]);
+        const initialAuthority = initial.work.lifecycle.references.find(
+          (reference) =>
+            reference.kind === 'execution_approval' &&
+            reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+            reference.disposition === 'current' &&
+            reference.decision === 'approved',
+        );
+        assert.ok(initialAuthority);
+        const initialAuthorityBytes = readFileSync(path.join(sourceFixture.root, initialAuthority.path));
+        expect(createHash('sha256').update(initialAuthorityBytes).digest('hex')).toBe(initialAuthority.sha256);
+        const projectId = sourceFixture.identity.project_ids[0];
+        assert.ok(projectId);
+        const args = [
+          '--project-root',
+          sourceFixture.root,
+          '--repository',
+          sourceFixture.config.repository.repository_id,
+          '--project',
+          projectId,
+          '--work-path',
+          sourceFixture.documents[0],
+          '--work-id',
+          sourceFixture.identity.work_id,
+          '--attempt',
+          '1',
+          '--scope-digest',
+          initialSourceScope.digest,
+          '--team',
+          input.selection.team,
+          '--kind',
+          input.selection.kind,
+          '--intent',
+          input.selection.intent,
+          '--workflow',
+          'task_execution',
+        ];
+        await bindControlledRuntimeInitialization(sourceFixture.root, sourceFixture.config, sourceFixture.store);
+        await sourceFixture.bridge.close();
+        sourceFixture.bridge = null;
+        sourceFixture.ledger.close();
+        sourceFixture.ledger = null;
+        sourceFixture.database?.close(true);
+        sourceFixture.database = null;
+        sourceFixture.store = null;
+
+        const expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ];
+        const prepared = parseTestRunPayload(await run(args));
+        const preparedVersion = requireStateVersion(prepared.state_version);
+        const issued = parseTestRunPayload(await run([...args, ...expected(preparedVersion), '--issue-wave', 'true']));
+        const issuedActions = requireIssuedActions(issued);
+        expect(issuedActions).toHaveLength(1);
+        const issuedAction = issuedActions[0];
+        assert.ok(issuedAction?.issue_id);
+        expect(issuedAction.action.stage_id).toBe('research_parallel');
+        const issuedVersion = requireStateVersion(issued.state_version);
+        const sourceEntry = initialSourceScope.entries[0];
+        assert.ok(sourceEntry);
+        const sourceId = 'accepted-initial-source';
+        const summary = JSON.stringify({
+          schema: 'VidaResearchObservationOutput/v1',
+          topic: 'Initial source recovery prerequisite',
+          objective: 'Accept the read-only research prerequisite.',
+          question: 'What does the admitted fixture document support?',
+          source_refs: [
+            {
+              source_id: sourceId,
+              source_kind: 'internal',
+              locator: sourceEntry.path,
+              title: 'Admitted fixture document',
+              claim: 'AC-INITIAL-SOURCE SR-INITIAL-SOURCE: the accepted source supports the initial work item.',
+              retrieved_at: '2026-10-07T00:00:00Z',
+              version_or_date: '2026-10-07',
+              independence_group: 'fixture',
+              digest: sourceEntry.sha256,
+            },
+          ],
+          findings: [
+            {
+              finding_id: 'accepted-initial-source',
+              statement: 'The admitted fixture document is present.',
+              source_ids: [sourceId],
+              evidence_class: 'Code',
+              status: 'confirmed',
+            },
+          ],
+          uncertainties: [],
+          conflicts: [],
+          evidence_classes: ['Code'],
+          br_ids: [],
+          sr_ids: ['SR-INITIAL-SOURCE'],
+          ac_ids: ['AC-INITIAL-SOURCE'],
+          gap_ids: [],
+          options: [
+            {
+              option_id: 'retain',
+              label: 'Retain accepted evidence',
+              description: 'Use the bounded read-only result.',
+              evidence_refs: [sourceId],
+            },
+          ],
+          recommendation: {
+            option_id: 'retain',
+            rationale: 'The admitted fixture document supports the result.',
+            evidence_refs: [sourceId],
+          },
+          completeness: {
+            status: 'pass',
+            required_questions: ['What does the admitted fixture document support?'],
+            answered_questions: ['What does the admitted fixture document support?'],
+            missing_questions: [],
+            material_gaps: [],
+            external_validation: {
+              required: false,
+              source_count: 0,
+              minimum_sources: 0,
+              status: 'not_required',
+              live_check: null,
+            },
+          },
+          readiness: 'informational',
+        });
+        const reportPath = path.join(
+          sourceFixture.root,
+          '.agent',
+          'work',
+          sourceFixture.identity.work_id,
+          'initial-research-report.json',
+        );
+        writeFileSync(
+          reportPath,
+          JSON.stringify({
+            schema: 'VidaSessionObservation/v1',
+            action_id: issuedAction.action.action_id,
+            issue_id: issuedAction.issue_id,
+            agent_id: 'fixture:accepted-researcher',
+            tool_call_ref: 'fixture:accepted-initial-source-research',
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: [sourceId],
+          }),
+        );
+        const reported = requireRecord(
+          await run([...args, ...expected(issuedVersion), '--report', reportPath]),
+          'accepted initial research report',
+        );
+        expect(reported.resume_status).toBe('ready');
+
+        const workspaceId = deriveWorkspaceId(sourceFixture.config.repository.repository_id, sourceFixture.root);
+        const databaseRelativePath = path.relative(
+          sourceFixture.root,
+          sessionHandoffDatabasePath(sourceFixture.root, sourceFixture.config),
+        );
+        const inspectRecoveryState = () =>
+          inspectHostWorkspaceDatabase(sourceFixture.root, databaseRelativePath, workspaceId);
+        const beforeRecovery = inspectRecoveryState();
+        const recoveryWork = beforeRecovery.work[0];
+        const recoveryJournal = beforeRecovery.journals[0];
+        assert.ok(recoveryWork?.state.lease && beforeRecovery.ledger && recoveryJournal);
+        const recoveryLease = recoveryWork.state.lease;
+        const recoveryTicket = beforeRecovery.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === recoveryLease.ticket_id,
+        );
+        assert.ok(recoveryTicket?.expires_at);
+        const recoveryClaims = beforeRecovery.ledger.claims.filter(
+          (claim) => claim.ticket_id === recoveryLease.ticket_id && claim.status === 'active',
+        );
+        expect(recoveryClaims).toHaveLength(1);
+        expect(recoveryClaims[0]).toMatchObject({
+          work_id: recoveryWork.identity.work_id,
+          thread_id: recoveryLease.thread_id,
+          generation: recoveryLease.generation,
+          lease_expires_at: recoveryTicket.expires_at,
+        });
+        expect(recoveryWork.state.lifecycle.phase).toBe('INTAKE');
+        expect(recoveryWork.state.execution.assignment_attempts).toEqual([]);
+        expect(recoveryJournal.state.completed.length).toBeGreaterThan(0);
+        expect(
+          recoveryJournal.state.completed.every(
+            (wave) =>
+              wave.items.length > 0 &&
+              wave.items.every(
+                (item) =>
+                  item.issue_id !== null &&
+                  item.observation?.status === 'reported_complete' &&
+                  item.host_reservation === undefined &&
+                  item.research_normalization !== undefined,
+              ),
+          ),
+        ).toBe(true);
+        expect(
+          recoveryJournal.state.items.every(
+            (item) => item.issue_id === null && item.observation === null && item.host_reservation === undefined,
+          ),
+        ).toBe(true);
+        const approvedAuthority = recoveryWork.state.lifecycle.references.find(
+          (reference) =>
+            reference.kind === 'execution_approval' &&
+            reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+            reference.disposition === 'current' &&
+            reference.decision === 'approved',
+        );
+        assert.ok(approvedAuthority);
+        expect(approvedAuthority.sha256).toBe(initialAuthority.sha256);
+        const recoveryVersion = recoveryJournal.version;
+        const recoveryExpiresAt = expiredOwnerTime(sourceFixture, {
+          work: recoveryWork.state,
+          ledger: beforeRecovery.ledger,
+        });
+        try {
+          setSystemTime(new Date(recoveryExpiresAt));
+          const recovered = requireRecord(
+            await run([
+              ...args,
+              ...expected(recoveryVersion),
+              '--recover-expired-lease',
+              'true',
+              '--rebind-current-bundle',
+              'true',
+              '--native-session-handle',
+              input.nativeSessionHandle,
+              '--lease-generation',
+              String(recoveryLease.generation),
+            ]),
+            'authorized expired initial-source recovery',
+          );
+          expect(recovered.status).toBe('inspected');
+          expect(recovered.work_id).toBe(sourceFixture.identity.work_id);
+          const afterRecovery = inspectRecoveryState();
+          const recoveredWork = afterRecovery.work[0];
+          assert.ok(recoveredWork?.state.lease && afterRecovery.journals[0] && afterRecovery.ledger);
+          expect(recoveredWork.state.lease.thread_id).toBe(recoveryLease.thread_id);
+          expect(recoveredWork.state.lease.generation).toBe(recoveryLease.generation);
+          expect(recoveredWork.state.lease.ticket_id).not.toBe(recoveryLease.ticket_id);
+          const retiredTicket = afterRecovery.ledger.tickets.find(
+            (ticket) => ticket.ticket_id === recoveryLease.ticket_id,
+          );
+          const retiredClaim = afterRecovery.ledger.claims.find((claim) => claim.ticket_id === recoveryLease.ticket_id);
+          const successorTicket = afterRecovery.ledger.tickets.find(
+            (ticket) => ticket.ticket_id === recoveredWork.state.lease!.ticket_id,
+          );
+          const successorClaims = afterRecovery.ledger.claims.filter(
+            (claim) => claim.ticket_id === recoveredWork.state.lease!.ticket_id && claim.status === 'active',
+          );
+          const rebind = afterRecovery.ledger.rebinds.find(
+            (entry) => entry.previous_ticket_id === recoveryLease.ticket_id,
+          );
+          expect({ retiredTicket: retiredTicket?.status, retiredClaim: retiredClaim?.status }).toEqual({
+            retiredTicket: 'read_only',
+            retiredClaim: 'recovered',
+          });
+          expect(successorTicket).toMatchObject({
+            status: 'active',
+            thread_id: recoveryLease.thread_id,
+            generation: beforeRecovery.ledger.open_generation,
+          });
+          expect(successorClaims).toHaveLength(1);
+          expect(successorClaims[0]).toMatchObject({
+            work_id: recoveredWork.identity.work_id,
+            thread_id: recoveryLease.thread_id,
+            generation: beforeRecovery.ledger.open_generation,
+            lease_expires_at: successorTicket!.expires_at,
+          });
+          expect(rebind).toMatchObject({
+            previous_ticket_id: recoveryLease.ticket_id,
+            ticket_id: recoveredWork.state.lease.ticket_id,
+            thread_id: recoveryLease.thread_id,
+            decided_by: recoveryLease.thread_id,
+            reason: 'expired same-owner quiescent lease recovery',
+          });
+          expect(afterRecovery.journals[0]!.state).toEqual(recoveryJournal.state);
+          expect(afterRecovery.admission_attempts).toEqual(beforeRecovery.admission_attempts);
+          completed = true;
+        } finally {
+          setSystemTime();
+        }
+      } finally {
+        try {
+          await fixture?.close();
+        } finally {
+          if (root && completed) rmSync(root, { recursive: true, force: true });
+          else if (root) process.stderr.write(`Retained authorized recovery fixture: ${root}\n`);
+        }
       }
     }, 60_000);
 

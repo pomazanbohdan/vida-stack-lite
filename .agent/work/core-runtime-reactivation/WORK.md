@@ -3235,6 +3235,114 @@ the committed Source. Keep bun-cli-run open unless that report and exact
 counter/projection prove closure or an independently reviewed objective
 disposition.
 
+### Post-commit coverage result — 2026-10-24
+
+The pinned producer was first invoked without its required lane/output and
+exited at argument validation before creating a stage. The corrected explicit
+command ran once: `bun bin/bun.ts run test:contour:stage:pinned --contour
+bun-cli-run --lane coverage --output
+/workspace/vida-stack-lite/.agent/work/core-runtime-reactivation`. The producer
+created `/workspace/contour-stage-u8bYE4` and completed run
+`a2f69bfa-5355-4eac-a290-c7d817a5ff8a` on commit `569c8ebc4376213980fd3ee04482bd122fddfe80`.
+Elapsed time was 161,869.5 ms; exit 0, not timed out, capture complete, process
+group closed, boot and immutable image inputs unchanged, publication succeeded.
+The stage's `launch.json`, `request.json`, `execution.json`, `publication.json`,
+`stdout.log` (7,976 bytes), `stderr.log` (13,482 bytes) and scratch directory
+remain intact at that exact path. Its immutable image manifest is
+`d9ec8ecc6e8204681ad16a3d7e09e3d9f9bca2ecb7c08499fdbcaa4d3e559c9` in
+`/workspace/.vida-quality-inputs/8fa153f977c247736520bd7e3bc0ae533ddbc614/`;
+do not mutate or replay it. The report is
+`a2f69bfa-5355-4eac-a290-c7d817a5ff8a.focused-coverage.json` under that image.
+
+The producer-owned projection now reports 303/557 functions, 1392/2863 lines,
+1483/3143 statements and 1754/3663 branches, with operation status BLOCKED. The
+exact report maps key 379 to `bin/run.ts#fn:run#0/property:verifyCurrent#0` and
+reports coverage 1 (previous report: 0); key 380 is also 1. Keys 381–387 remain
+zero, and 254 function entries are still unhit overall. The measurement moves
+this target forward but does not close `bun-cli-run`, establish exact F/L/S/B,
+or qualify frozen CC/CRAP or mutation. The projected max CC 501 and entry CRAP
+992 are metadata from this coverage run, not results from a CRAP lane.
+
+The stage data also confirms the focused-test-to-stage sequence is working for
+key 379; the single producer remained at 1x concurrency. The earlier successful
+186,366.5 ms stage had different inputs and key 379 at zero, so it is not a
+matched runtime comparison. A next focused packet must address the specific
+remaining 381–387 authority/current-bundle checks and their supported lineage
+before another full stage. The focused accepted-research recovery packet below
+now exercises that supported public-run lineage locally; only a new
+changed-input stage can establish its numeric counters. Keep the contour open
+and do not convert the remaining zeroes to skips.
+
+The current tool-efficiency issue was invocation/selection, not a product bug:
+one Bun command omitted the coverage environment required to register the
+focused case (zero tests matched), and the first stage command omitted the
+mandatory lane/output. The follow-up exact commands avoided new suites. A prior
+broad `rg` over the minified 3.6 MB projection emitted more than 6 MB of output;
+subsequent reads used exact stage/run IDs and bounded `jq` selections. A stale
+Vex query incrementally refreshed six changed symbols; no full reindex was run,
+and further index queries are deferred in favor of this report and bounded
+Source reads. These counts/bytes are measured; no token meter or total agent
+tool-call ledger is available.
+
+### Focused accepted-research lease recovery — 2026-10-24
+
+The added public-run case starts from the supported initial-source fixture and
+keeps lifecycle at `INTAKE` with an approved `LocalSourceWriteAuthorization`.
+It prepares, issues and reports a read-only research wave through `run()`, then
+checks accepted normalized history and a nonempty, entirely unissued current
+wave before recovering the expired same-owner lease through `run()` with the
+current journal CAS and explicit bundle rebind. It verifies the old ticket and
+claim retire as `read_only`/`recovered`, a distinct successor ticket and one
+active claim use the existing ledger `open_generation`, thread ownership is
+preserved, the rebind lineage is recorded, and journal contents/admission
+attempts do not change. This is an authorization/continuation test; it does not
+perform consumer effects or a runtime cutover.
+
+The first focused attempt exposed a fixture-format issue, not a product
+failure: the research source claim omitted the accepted `AC-INITIAL-SOURCE`
+identifier (`bun-cli-run-key381-target-20261024-01.log`, test body 3,656.96 ms,
+5 expectations; failing fixture root retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-u1S1ih`). After
+adding the source-backed AC identifier, the second attempt reached recovery
+successfully but the test incorrectly expected `generation + 1`
+(`...-02.log`, body 5,690.78 ms, 18 expectations; root retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-qNjDk`). Host
+recovery instead keeps the ledger's open generation while rotating the ticket;
+the implementation and existing HostState test agree. The corrected focused
+case passed twice: first with 23 expectations (`...-03.log`, body 5,535.86 ms),
+then after strengthening successor ticket/claim assertions with 26 expectations
+(`...-04.log`, body 5,668.12 ms). Both invocations selected exactly one test
+(`1 pass`, `97 filtered out`); the final command took 6.88 s overall. These
+failed expectations are not mutation kills or objective skips.
+
+Scoped strict checking found no errors in 141 files (527.14 ms), Oxlint passed,
+and the pinned formatter check passed the changed test file. A final blind
+read-only review compared the successor assertions with the HostState
+transition and existing test and found no contract blocker. No product source,
+budgets, projection, denominator or fences were changed by this packet.
+
+The measured sequence used the filtered target first to discover the bad
+source-ID fixture, then another filtered target to expose the wrong generation
+expectation. Source and prior recovery tests were inspected before correcting
+that contract; strict/lint/format ran before the final two target invocations,
+and a blind read-only review checked the final assertions. The two early target
+failures cost 5.00 s and 6.88 s command wall time, followed by successful 6.70 s
+and 6.88 s focused runs. A design-first validation of accepted source IDs plus
+the recovery generation contract would likely have avoided the two failures;
+that saving is a process hypothesis, not an observed counterfactual. Running
+the three static checks in parallel completed in under a second together, but
+no serial-vs-parallel wall-time comparison exists. Multiple numeric producers
+remain unsupported by this evidence; keep stage concurrency at 1x. Tool-call,
+setup-only and token counts are not exposed by the retained receipts and remain
+unmeasured.
+
+The next authorized numeric action is one current-producer coverage stage on
+the reviewed commit. Reuse the current immutable image through its owner; keep
+all launch, request, execution, publication, stdout, stderr and scratch
+artifacts. Reconcile only the producer-owned projection after its terminal
+receipt. Keys 381–387 remain unqualified until that report is checked; exact
+F/L/S/B and the wider contour remain open.
+
 ## Owners and acceptance boundaries
 
 ### Bun-host-state focused shard resource review
