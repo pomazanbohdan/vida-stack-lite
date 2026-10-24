@@ -80,6 +80,10 @@ import type { LocalWorkAdmissionInput } from '../src/orchestration/local-work-ad
 import { Console } from 'node:console';
 import { Writable } from 'node:stream';
 import { createAutomaticWorkAdmissionFixture } from './helpers/automatic-work-admission-fixture.ts';
+import {
+  createFailedFinalCorrectionFixture,
+  type FailedFinalCorrectionFixture,
+} from './helpers/failed-final-correction-fixture.ts';
 import { configuredTestContext } from './configured-context.ts';
 import {
   isTerminalUtf8SpawnResult,
@@ -5569,6 +5573,30 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         }
       }
     }, 60_000);
+
+    test('validates an accepted delivery proposal through public run', async () => {
+      let fixture: Omit<FailedFinalCorrectionFixture, 'preparationPath'> | undefined;
+      let completed = false;
+      try {
+        fixture = await createFailedFinalCorrectionFixture('passing', { preparationInputs: false });
+        const delivery = fixture.journal.state.completed
+          .flatMap((wave) => wave.items)
+          .find((item) => item.request.stage_id === 'prepare_delivery');
+        assert.ok(delivery?.issue_id && delivery.observation);
+        expect(delivery.observation).toMatchObject({
+          action_id: delivery.request.action_id,
+          issue_id: delivery.issue_id,
+          status: 'reported_complete',
+        });
+        expect(parseJsonUnknown(delivery.observation.summary)).toMatchObject({
+          schema: 'VidaDeliveryProposal/v1',
+          destination: 'isolated-fixture',
+        });
+        completed = true;
+      } finally {
+        fixture?.close(completed);
+      }
+    }, 90_000);
 
     test('recovers an authorized source lease after accepted research through public run', async () => {
       let root: string | undefined;
