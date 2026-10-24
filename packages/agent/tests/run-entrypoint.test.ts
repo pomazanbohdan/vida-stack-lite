@@ -60,7 +60,9 @@ import {
   requireNoCompletedReadonlyRelease,
   requireHistoricalItem,
   requireRecoveryOperation,
+  readonlyReleaseThreadId,
   run,
+  isHistoricalScopedSnapshot,
   writeDurable,
 } from '../bin/run.ts';
 import { runOptionDetails, runSpecialModeOptions } from '../bin/run-cli-options.ts';
@@ -715,6 +717,60 @@ test('historical context guards preserve only configured action context records'
     name: 'Error',
     message: 'Historical context history action differs',
   });
+});
+
+test('historical scoped snapshot guard validates ordered entries and readonly owner records', () => {
+  const digest = 'a'.repeat(64);
+  const present = (entryPath: string, bytes: unknown = 0, sha256: unknown = digest) => ({
+    path: entryPath,
+    exists: true,
+    bytes,
+    sha256,
+  });
+  const absent = (entryPath: string, bytes: unknown = null, sha256: unknown = null) => ({
+    path: entryPath,
+    exists: false,
+    bytes,
+    sha256,
+  });
+  const makeSnapshot = (entries: unknown[], snapshotDigest: unknown = 'snapshot-digest') => ({
+    schema: 'ScopedSourceSnapshot/v1',
+    entries,
+    digest: snapshotDigest,
+  });
+  const relative = (value: unknown): value is string =>
+    typeof value === 'string' && value.startsWith('src/') && !value.includes('\\');
+  const valid = makeSnapshot([present('src/a.ts'), absent('src/b.ts')]);
+  const arraySnapshot: unknown = Object.assign([], valid);
+  const invalidSnapshots: readonly [string, unknown][] = [
+    ['non-record snapshot', null],
+    ['array with snapshot fields', arraySnapshot],
+    ['snapshot extra key', { ...valid, extra: true }],
+    ['wrong snapshot schema', { ...valid, schema: 'ScopedSourceSnapshot/v0' }],
+    ['empty entries', makeSnapshot([])],
+    ['entries over limit', makeSnapshot(Array(513).fill(null))],
+    ['non-string snapshot digest', makeSnapshot([present('src/a.ts')], 1)],
+    ['non-record entry', makeSnapshot([null])],
+    ['entry extra key', makeSnapshot([{ ...present('src/a.ts'), extra: true }])],
+    ['relative path refusal', makeSnapshot([present('/outside/file.ts')])],
+    ['path over limit', makeSnapshot([present(`src/${'x'.repeat(509)}`)])],
+    ['descending entry paths', makeSnapshot([present('src/b.ts'), absent('src/a.ts')])],
+    ['entry existence type', makeSnapshot([{ ...present('src/a.ts'), exists: 1 }])],
+    ['absent entry bytes must be null', makeSnapshot([absent('src/a.ts', 0)])],
+    ['absent entry digest must be null', makeSnapshot([absent('src/a.ts', null, digest)])],
+    ['present entry bytes must be a safe integer', makeSnapshot([present('src/a.ts', 1.5)])],
+    ['present entry bytes must be nonnegative', makeSnapshot([present('src/a.ts', -1)])],
+    ['present entry digest must be a string', makeSnapshot([present('src/a.ts', 0, 1)])],
+    ['present entry digest must be lowercase hex', makeSnapshot([present('src/a.ts', 0, 'A'.repeat(64))])],
+  ];
+
+  assert.equal(isHistoricalScopedSnapshot(valid, relative), true);
+  for (const [label, value] of invalidSnapshots)
+    assert.equal(isHistoricalScopedSnapshot(value, relative), false, label);
+  assert.equal(readonlyReleaseThreadId({ thread_id: 'thread-1' }), 'thread-1');
+  assert.equal(readonlyReleaseThreadId({}), undefined);
+  assert.equal(readonlyReleaseThreadId(null), undefined);
+  assert.equal(readonlyReleaseThreadId(Object.assign([], { thread_id: 'thread-1' })), undefined);
 });
 
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {

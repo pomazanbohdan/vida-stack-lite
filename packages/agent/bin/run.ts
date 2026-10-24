@@ -2922,7 +2922,7 @@ export function requireHistoricalItem<T>(value: T | undefined): T {
 }
 
 /** @param {unknown} value @param {(candidate: unknown) => candidate is string} relative @returns {value is ScopedSourceSnapshot} */
-function isHistoricalScopedSnapshot(
+export function isHistoricalScopedSnapshot(
   value: unknown,
   relative: (candidate: unknown) => candidate is string,
 ): value is ScopedSourceSnapshot {
@@ -2972,8 +2972,7 @@ function isHistoricalScopedEntryPath(
 function isHistoricalPresentScopedEntry(value: Record<string, unknown>): boolean {
   return (
     Number.isSafeInteger(value.bytes) &&
-    typeof value.bytes === 'number' &&
-    value.bytes >= 0 &&
+    (value.bytes as number) >= 0 &&
     isString(value.sha256) &&
     /^[a-f0-9]{64}$/.test(value.sha256)
   );
@@ -2987,7 +2986,7 @@ function requireReadonlyReleaseArg(args: readonly string[], index: number): stri
 }
 
 /** @param {unknown} value @returns {unknown} */
-function readonlyReleaseThreadId(value: unknown): unknown {
+export function readonlyReleaseThreadId(value: unknown): unknown {
   return isRecord(value) ? value.thread_id : undefined;
 }
 

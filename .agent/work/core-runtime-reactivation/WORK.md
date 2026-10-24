@@ -5237,6 +5237,40 @@ file effects; the corrected query selected only the four target function
 counters, local branch counters, and next-zero names. Do not repeat whole-file
 coverage dumps.
 
+#### Key426 historical scoped snapshot and owner identity
+
+To take another larger packet before a full stage, Key426 covers the next
+report-ordered cluster: snapshot, entry, path and present-entry validators
+plus `readonlyReleaseThreadId`. The test exports only the outer snapshot guard
+and thread-id accessor; the three nested validators remain private and are
+reached through the snapshot. One sorted snapshot includes both a present and
+an absent entry. A bounded invalid-input table covers non-record/array
+headers, schema/keys, empty/oversized entries, digest type, entry shape,
+relative and overlong paths, descending order, existence type, null encoding,
+safe/nonnegative byte counts, and lowercase SHA shape. The thread accessor is
+asserted for records, absent fields, null, and an array with a named property.
+No new predicate or callback abstraction was added.
+
+Blind native Luna review
+(`DIAG/bun-cli-run-key426-review-20261024-01.md`) confirmed `Number.isSafeInteger`
+already rejects all non-numbers and the type assertion only narrows TypeScript;
+the removed `typeof value.bytes === 'number'` check was runtime-redundant.
+Review confirmed the private nested validators are exercised through the
+outer guard, no duplicate logic was added, and no must-fix was found.
+
+Static-first validation used package-pinned Bun 1.4.4: format check passed for
+both changed files; locked Oxlint passed; the focused target passed 1 test, 56
+filtered, 0 failed (2.15 s). The first strict typecheck after removing the
+redundant `typeof` failed because TypeScript does not narrow `unknown` from
+`Number.isSafeInteger`; adding an assertion after that runtime guard corrected
+the compile issue without restoring the runtime branch. The final strict
+`tests/tsconfig.json` check passed across 510 files. Receipts are
+`DIAG/bun-cli-run-key426-format-20261024-02.log`,
+`DIAG/bun-cli-run-key426-typecheck-20261024-02.log`,
+`DIAG/bun-cli-run-key426-lint-20261024-02.log`, and
+`DIAG/bun-cli-run-key426-target-20261024-02.log`. This is focused evidence;
+commit/push and one current-producer stage remain pending.
+
 ### Recent execution cost and order comparison
 
 Measured producer times for keys410/411/412/413/414/415/416/417/418/419/420/421/422/423/424/425 were 182,091.09 /
