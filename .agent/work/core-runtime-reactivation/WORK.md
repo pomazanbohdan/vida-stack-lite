@@ -6140,3 +6140,10 @@ serial targeted test, without retries or a full suite. Full pinned producer
 stage remains pending; no new numeric coverage result is claimed. Continue
 `bun-cli-run`, preserve ID98 as undispositioned, and do not run CRAP/mutation or
 advance the contour.
+
+The tested source and this packet note were committed as `4478baf` and pushed
+normally to `origin/main`. Commit hooks passed formatter on 537 files and
+typecheck on 544 files. The pinned full stage was deliberately not started
+because the required independent blind review is still blocked by the missing
+Pstack worker contract; the previous producer-owned numeric projection remains
+the latest result and is not requalified by this targeted test.
