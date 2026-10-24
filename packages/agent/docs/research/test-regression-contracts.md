@@ -1367,7 +1367,7 @@ prewriter through the normal journal and bridge before reserving a Source
 writer. Use the fixture's actual scope and acceptance evidence. Do not insert
 lifecycle references directly or relax production approval to make setup pass.
 
-Stopped-source capture uses a physically contained, qualified immutable controller and separate consumer fixtures. Fresh pinned processes call the copied public route for their own target. Do not use controller execution for a foreign target. Recheck package binding before and after each case. Preserve the mutable-package drift control, the original missing/null completion denial and unchanged Host. Fixture review manifests are setup data, not real independent review or Runtime proof.
+Stopped-source capture uses a physically contained, qualified immutable controller and separate consumer fixtures. Fresh pinned processes call the copied public route for their own target. Do not use controller execution for a foreign target. Recheck package binding before and after each case. Preserve the mutable-package drift control, the original missing/null completion denial and unchanged Host. Exercise an `owner_decision_ref` that resolves outside the project root, require the public refusal before authorization or review receipts are read, and compare the protected files and Host workspace with their beforeimages. Fixture review manifests are setup data, not real independent review or Runtime proof.
 
 Its constructor registers each opened ledger/bridge handle before the next
 setup operation. A setup failure drains acquired handles in reverse order,

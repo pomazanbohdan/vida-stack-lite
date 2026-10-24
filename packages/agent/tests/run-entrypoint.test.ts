@@ -9521,7 +9521,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
-  test('run stopped-source apply validates authorization and review receipts before rejecting a frozen plan', async () => {
+  test('run stopped-source apply rejects an escaping authorization path before validating review receipts', async () => {
     const fixture = createAutomaticWorkAdmissionFixture(false, true);
     let complete = false;
     try {
@@ -9633,6 +9633,21 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         source_turn_id: terminal.source_turn_id,
         status: 'approved_exact_manifest',
       };
+      writeFileSync(
+        requestPath,
+        record({
+          ...request,
+          terminalEvidence: { ...request.terminalEvidence, owner_decision_ref: '../outside-authorization.json' },
+        }),
+      );
+      const escapingAuthorizationBefore = captureInput();
+      await assert.rejects(
+        run(args),
+        (error: unknown) => error instanceof Error && error.message === 'Capture authorization path differs',
+        'an authorization reference outside the project root is refused',
+      );
+      assertRefusalPreservedFixture(escapingAuthorizationBefore);
+      writeFileSync(requestPath, record(request));
       const malformedAuthorizations = [
         { label: 'top-level schema', value: { ...authorizationPrefix, schema: 7, reviews: [] } },
         {

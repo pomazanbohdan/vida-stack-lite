@@ -6446,11 +6446,22 @@ receipts are the Key438 typecheck, Oxlint, formatter, and target logs.
 
 This packet remains within `bun-cli-run` and changes no selection or test
 budget. It uses one setup fixture and multiple related pre-write gates rather
-than creating a new standalone suite or rebuilding per case. The final current
-producer stage remains pending; after normal hooks and push, run one stage for
-this committed input, then read only selected report fields. Keep ID98's
-report-bound objective skip unchanged and keep CRAP/mutation/contour advance
-closed.
+than creating a new standalone suite or rebuilding per case. One current-
+producer stage then ran after the normal hook and push for
+`8641c98b2b64a797d861ed6ef8901dbcebc00647`. Run
+`deeb11c1-1c01-4191-a5db-0f4259d32429` completed in 208,414.802 ms of its
+330,000 ms bound with exit 0, closed group, complete capture, no signal or
+spawn error, and unchanged immutable image inputs. Pinned Bun 1.4.4 ran one
+serial worker (`1x PARALLEL`): 127 passed, 0 failed, 2,442 expectations, and
+202.54 s of test time. The image is
+`/workspace/.vida-quality-inputs/bb8d69edf8c5cc8bafef437cd6c513966710b10a/repository`;
+its input fingerprint is `d942bbbb46f0ea7a64f697beada3f9b8f578f43d861bae2cefbacf084f282025`,
+and its manifest digest is
+`4a60f632879228c5bbf284242e6e79c3402e6ac765125ad61cd57b8527fa91a6`. The
+projection records F441/555, L2010/2860, S2159/3138, B2516/3660, `BLOCKED`,
+full qualification false, and frozen qualification pending. Keep ID98's
+report-bound objective skip unchanged. Do not run CRAP, mutation, or advance
+the contour.
 
 The first ordinary commit hook stopped the Key438 commit on two test-file type
 errors: default `Buffer` generic was narrower than `readFileSync` output, and a
@@ -6495,3 +6506,80 @@ filtered, 36 expectations, 2.727 s body / 4.49 s command in
 `DIAG/bun-cli-run-key438-target-20261024-04.log`; checked-JS typecheck passed
 227 files and scoped format-check passed in the `-04` logs. This is a fixture
 assertion typing correction; no product behavior or counter policy changed.
+
+### bun-cli-run authorization-path traversal refusal — Key439, 2026-10-24
+
+The Key438 current report at
+`/workspace/.vida-quality-inputs/bb8d69edf8c5cc8bafef437cd6c513966710b10a/repository/packages/agent/coverage/bun-unified/diagnostics/deeb11c1-1c01-4191-a5db-0f4259d32429.focused-coverage.json`
+showed the exact `run.ts` refusal branch at `bin/run.ts:3785` still at
+`[0,3]`. The current expression rejects an
+authorization reference whose resolved path escapes the project root before
+reading the authorization file. The request validator accepts a nonempty path
+string, so this refusal is reachable through the maintained apply CLI fixture.
+This check adds one escaping `terminalEvidence.owner_decision_ref` to the
+existing stopped-source authorization case rather than creating another
+fixture.
+
+The test writes `../outside-authorization.json`, invokes the public `run`
+entrypoint, expects `Capture authorization path differs`, and compares every
+existing protected fixture file and the Host workspace snapshot. It restores
+the valid request before the existing malformed-authorization, review-receipt,
+and frozen-plan cases. The Pstack-prepared blind read-only review found no
+must-fix and confirmed that the refusal occurs before authorization decoding,
+review checks, and frozen-plan validation. It did not run tests or claim a
+coverage change. The report is
+`DIAG/bun-cli-run-key439-review-20261024-01.md` and the preparation receipt is
+`DIAG/pstack-worker-key439-review-20261024-01.json`.
+
+The package-selected Bun target passed on 1.4.4: 1 passed, 118 filtered, 48
+expectations, 4,151.40 ms test body, and 5.79 s command time. The checked-JS
+strict check passed for 227 files in 932.13 ms. The configured Oxlint owner
+passed, and the changed test formatted cleanly. Receipts are
+`DIAG/bun-cli-run-key439-target-20261024-01.log`,
+`DIAG/bun-cli-run-key439-typecheck-20261024-01.log`,
+`DIAG/bun-cli-run-key439-oxlint-20261024-01.log`, and
+`DIAG/bun-cli-run-key439-format-write-20261024-01.log`. The documentation
+check passed for 4 documents and 27 local links in
+`DIAG/bun-cli-run-key439-docs-20261024-01.log`. The next ordinary commit and
+hooks must finish before one producer stage can qualify the changed input.
+
+The three-hour comparison includes three complete contour stages: Key434 took
+258,991.524 ms, Key436 took 208,820.746 ms, and Key438 took 208,414.802 ms.
+All used `1x PARALLEL` with different commits and test counts. The runs do not
+control host or cache state, so the elapsed differences establish neither a
+speedup nor a concurrency limit. Each stage had a 330,000 ms bound. No profile
+identified a tighter resource limiter. The observed order for Key439 is
+format, checked-JS strict, configured Oxlint, exact gated test,
+independent review, then normal commit/hooks/push and one selected-contour
+producer stage. A test-first order may expose a behavior failure sooner, but
+static failures found afterward can require a rerun; this packet did not
+measure that alternative. Running the target concurrently with typecheck or
+lint could shorten wall time, but it risks resource contention and has no
+controlled measurement here. The numeric producer remains serial; no 2x or
+4x run was authorized or measured. Model/API token billing and a platform-wide
+tool-call counter are unavailable, so no token or total-call estimate is
+claimed.
+
+Three inspection commands in this continuation returned more history or report
+data than the selection required. A broad `rg` over WORK returned a truncated
+11,808-token, 401-line result because it matched generic `next` wording. The
+recursive search caused the wrapper to report 990,566 original output tokens
+and 2,913,686 omitted bytes. A later broad `.coverage` selection caused it to
+report 560,706 original output tokens and 1,192,480 omitted bytes. Their correction is
+recorded in
+`DIAG/bun-cli-run-key439-output-selection-correction-20261024-01.md`; these
+wrapper figures are not model token billing. The next coverage read uses only
+the selected `run.ts` branch-map rows. The pinned Vex 1.27.4 index remains
+stale per the existing WORK record, so no refresh or reindex was run.
+`vida-agent instructions` is unavailable; this turn used the checked-in
+lifecycle instruction. The installed Pstack `no-comments` Codex adapter points
+to `skills/no-comments/agents/comment-sicko.md`, which is absent. No comments
+were added, but that dedicated comment-sicko check remains a GAP rather than a
+simulated review.
+
+The final pre-commit whitespace check after the last WORK and decision append
+passed with exit 0 (`DIAG/bun-cli-run-key439-diff-check-20261024-04.log`).
+There were no staged user changes to disturb. The Key439 packet is limited to
+the existing test, its two documentation owners, WORK and append-only decisions;
+the current contour projection remains producer-owned and excluded from this
+commit.
