@@ -4263,16 +4263,51 @@ test and type-aware Oxlint both passed. Independent review found no concrete
 issue: `DIAG/bun-cli-run-key413-final-review-20261024-01.md`. The first static
 logs were written under `packages/agent/.agent/work/core-runtime-reactivation/DIAG/`
 because the shell ran from that package with a relative path; they remain
-intact. Subsequent target logs use the canonical root WORK path. `git diff
---check` is clean. The pending coverage stage is the only numeric measure for
-this packet; until it terminates, do not claim new coverage or disposition the
-`requireSelectorRecord` non-record arm.
+intact. Subsequent target logs use the canonical root WORK path. `git diff --check`
+was clean before commit. The stage completed normally after the
+hook-backed commit and push; its terminal receipt is retained at
+`DIAG/bun-cli-run-key413-stage-20261024-01.log`.
+
+#### Key413 stage result and objective disposition
+
+The ordinary `bun-cli-run` coverage producer ran once from
+`/workspace/contour-stage-6T66QF` against source commit
+`d97edf1ffac7dd0eee481c12dd73ce9397802efa`. Native outcome: run
+`ca407a11-1cee-4766-b89a-2d77ab3ab7fd`, exit 0, elapsed 184,266.826998 ms,
+`timed_out=false`, complete capture, closed process group, unchanged boot and
+image inputs, published execution image. The bound source tree is
+`00230bbbdc485de169def28ba3bab014761daaf0`, input fingerprint
+`1c70efca16d175547a358d8998b2261584bb3efad8af73628569b24a4e6f1172`, and
+image manifest SHA-256
+`545edb9ec4d7383659fb6859207ac3cb1c07c503332d9bb9856ff57a67350226`. The
+terminal receipt binds focused report
+`/workspace/.vida-quality-inputs/6251e0c9bed1908d255d8ab2aa77fbc86ce1284b/repository/packages/agent/coverage/bun-unified/diagnostics/ca407a11-1cee-4766-b89a-2d77ab3ab7fd.focused-coverage.json`.
+
+The report records `requireSelectorRecord` functionMap key 55 at line 569,
+hit 1, and branchMap key 59 at line 570 with hits `[0,1]`. Independent Luna
+review at
+`DIAG/bun-cli-run-key413-objective-review-20261024-01.md`, checked against the
+current Source guard/caller chain, establishes only the `!isRecord(value)`
+refusal arm as objectively unreachable through supported inputs: the sole
+caller receives a record already validated by `exactStringFields`/`exactKeys`,
+and the helper is private. The valid record route is exercised. Record this as
+a branch-arm queue disposition only; do not change raw hits, denominator,
+function totals, frozen CRAP/mutation evidence, or `BLOCKED`. Reopen if the
+validator/caller/schema changes so an unvalidated value can reach this helper.
+
+The projection now reads F/L/S/B `380/557 · 1785/2863 · 1895/3143 ·
+2202/3663`, max CC/entry-CRAP `501/992`, attempts `1385`, status `BLOCKED`.
+Those totals are the producer's original report; the objective disposition
+does not add hits. The next zero in report order is
+`readForwardDocumentationEvidence` at `bin/run.ts:1140` (with its nested
+closure counter at line 1145); continue this same contour there.
 
 ### Recent execution cost and order comparison
 
-Measured producer times for keys410/411/412 were 182,091.09 / 196,291.21 /
-176,802.72 ms. Each stage used a different immutable image and source/test
-inputs, so these figures do not compare ordering or parallelism causally.
+Measured producer times for keys410/411/412/413 were 182,091.09 / 196,291.21 /
+176,802.72 / 184,266.83 ms. Each stage used a different immutable image and
+source/test inputs, so these figures do not compare ordering or parallelism
+causally.
 Producer concurrency stayed at one. Observed order was focused target,
 scoped static gates, independent review, ordinary hook-backed commit and push,
 then one contour stage. Static-first might have caught the key412 nullability
