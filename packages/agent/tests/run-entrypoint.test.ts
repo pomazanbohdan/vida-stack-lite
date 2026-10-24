@@ -2318,7 +2318,8 @@ const v8CoverageMode = process.env.AGENT_RUNTIME_V8_COVERAGE === '1';
 const nativeCoverageMode = process.env.AGENT_RUNTIME_NATIVE_COVERAGE_MAIN === '1';
 const ordinaryDescribe = mutationMode ? describe.skip : describe;
 
-test('durable controller publication cleans only its own pending file when publication fails', async () => {
+// `mock.module` changes Bun's process-wide module registry; keep fault injection isolated from sibling tests.
+test.serial('durable controller publication cleans only its own pending file when publication fails', async () => {
   const root = originalFs.mkdtempSync(path.join(tmpdir(), 'vida-durable-fault-'));
   let assertionsPassed = false;
   try {
@@ -2399,7 +2400,7 @@ test('durable controller publication cleans only its own pending file when publi
           expect((outcome as AggregateError).errors).toEqual([bodyError, cleanupError]);
         } else expect(outcome).toBe(bodyError);
       } finally {
-        mock.restore();
+        await mock.module('node:fs', () => originalFs);
       }
 
       if (pendingPath && originalFs.existsSync(pendingPath)) originalFs.unlinkSync(pendingPath);

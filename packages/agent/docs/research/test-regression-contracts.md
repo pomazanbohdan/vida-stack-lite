@@ -451,12 +451,15 @@ unchanged. This unit case assumes forward authority was already validated by
 `activeSelector`; it does not replace the public selector-authority checks.
 For `writeDurable` cleanup, extend the existing publication-failure test with
 an injected `fsyncSync` error followed by a pending-file `unlinkSync` error.
-Use a locked Bun `node:fs` mock and retain original filesystem exports for the
-fixture. A non-`ENOENT` cleanup error must preserve both causes in the
-`AggregateError` and leave the owned pending bytes until the mock is restored;
+Use a serial test with a locked Bun `node:fs` mock because the module registry
+is process-wide, and retain original filesystem exports for the fixture. A
+non-`ENOENT` cleanup error must preserve both causes in the
+`AggregateError` and leave the owned pending bytes until Bun's live `node:fs`
+aliases are rebound to the original exports;
 an `ENOENT` cleanup result must preserve the original fsync error after the
 pending path is gone. Assert call order and restore the module mock in
-`finally`, then clean only the owned fixture through the original exports.
+`finally` by remocking the original exports, then clean only the owned fixture
+through those exports.
 In the released-selector fixture, exercise the prepared-selector refusal with an
 unsupported state policy, the prepared-journal refusal with a changed journal
 status, then recompute selector and commit digests for both a nested extra

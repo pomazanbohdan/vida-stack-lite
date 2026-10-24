@@ -7882,13 +7882,10 @@ covered behavior, not an objective skip or platform waiver. The regression
 contract records the two outcomes.
 
 Static checks first caught a trailing-comma syntax error (TS1013), which was
-fixed before the final pass; the failed attempt logs were retained. The first
-review also identified that `await mock.module('node:fs', () => originalFs)`
-would install another mock rather than restore the registry. The test now calls
-`mock.restore()` in `finally`; the independent blind Luna follow-up confirmed
-this is safe because this file has no concurrent tests or other module-mock
-usage. The frozen original fs namespace is still used for cleanup. No must-fix
-remains.
+fixed before the final pass; the failed attempt logs were retained. The initial
+blind review advised against `await mock.module('node:fs', () => originalFs)`
+and accepted `mock.restore()`. The full producer result below disproved that
+pre-stage conclusion: `mock.restore()` did not rebind Bun's live imports.
 
 Final scoped `bun run typecheck` passed (545 captured source files and the
 104-file TS project, zero diagnostics), direct Oxlint on the changed test
@@ -7917,3 +7914,87 @@ are limited to the existing durable-publication regression and its research
 contract. The producer-owned projection files remain unstaged. The next step
 is one normal commit/push, then one changed-input stage through the existing
 producer; no producer is active.
+
+### Key464 first changed-input stage terminal and correction — 2026-10-24 19:05 UTC
+
+The sole producer ran once after commit `d012e577ef7a31e33dfed60b5a052f93b01fed9a`
+and push. Its native terminal `execution.json` is at
+`/workspace/contour-stage-0JZd94/execution.json`; root command capture is
+`DIAG/bun-cli-run-key464-stage-20261024-01.log`. The stage took 236,372.786 ms
+of its 330,000 ms bound. It exited 1 with no signal, spawn error or timeout;
+capture was complete and non-truncated, the process group closed, boot remained
+unchanged, and image inputs remained unchanged. Native stdout/stderr contain
+7,719/18,930 bytes (their hashes are retained in `execution.json`); raw stage
+logs and the `publication-error.json` remain intact.
+
+The selected suite ran 127 tests: 126 passed, one failed, with 2,465 recorded
+expectations. The failure was the new durable-publication fault-injection case
+interacting with `repair and forward authority validate evidence without
+mutating inputs`: the `node:fs` mock's EIO escaped into the sibling test.
+Consequently the coverage child exited before emitting its one required
+`VidaBunFocusedCoverageDiagnosticLocation/v1` line. The stage wrapper then
+recorded zero report locations and correctly refused publication; its
+exact-count error is downstream of the suite failure, not a parser defect. The
+stage publication receipt records `unknown-or-partial`, and producer progress
+advanced to attempt 1,470; no accepted report, hits, denominator change,
+objective skip, or qualification result came from this failed stage. These
+statuses are not mutation kills.
+
+An initial isolated target had passed, but it did not test mock isolation. The
+first repair marked the fault-injection test `test.serial`, based on the fact
+that Bun's module registry is process-wide. Its scoped check still reproduced
+the leak (1 pass, 1 fail, 276 expectations, 2.43 s): `mock.restore()` did not
+rebind the production module's live `node:fs` aliases. The existing
+`controller-durable-write.test.ts` explicitly restores those aliases with
+`await mock.module('node:fs', () => originalFs)` before afterimage checks and
+cleanup. The current contour test now follows that established pattern, stays
+serial, uses `originalFs` for fixture reads and cleanup, and retains the root
+when assertions fail. Research documentation states both the serial requirement
+and alias rebind.
+
+After this correction, scoped `bun run typecheck` passed with 545 captured
+TypeScript files and 104 project files at zero diagnostics; direct changed-file
+Oxlint, pinned formatter, and `git diff --check` passed. The focused pair of the
+fault-injection test and its previously affected sibling passed 2/2 tests, 276
+expectations, zero failures in 2.43 s on Bun 1.4.4. A fresh blind Luna review
+found no must-fix: it confirmed alias rebinding in `finally` precedes fixture
+cleanup and sibling progression. Logs are retained as
+`DIAG/key464-stagefailure-serialfix-target-01.log` (failed diagnostic attempt),
+`DIAG/key464-stagefailure-fsrestore-typecheck-01.log`,
+`DIAG/key464-stagefailure-fsrestore-oxlint-01.log`,
+`DIAG/key464-stagefailure-fsrestore-format-01.log`, and
+`DIAG/key464-stagefailure-fsrestore-target-01.log`; earlier attempts remain
+unmodified. The first static pass after the serial change is also retained.
+Test-created retained fixture paths and the failed stage tree were not deleted.
+
+For the receipt-based rolling window 2026-10-24 16:08:32–19:08:32 UTC, exact
+`execution.json` modification times put Keys454, 455, 456, 457, 458, 459, 460,
+462, 463 and 464 inside it. Keys452 and 453 ended before the window (15:52:03
+and 16:07:31). The ten current-window stages ran 1,270 selected tests and
+26,058 expectations in aggregate. Their elapsed time totals 2,171,698.023 ms,
+mean 217,169.802 ms, and range 196,979.462–253,196.590 ms. Nine stages exited
+0; Key464 is the one test failure described above. These receipts measure
+serial 1x producer cost across differing inputs, caches, and host conditions,
+not a controlled performance comparison.
+
+| Check order / numeric parallelism | Measured evidence | Inference or limitation |
+| --- | --- | --- |
+| Reuse the accepted report, trace and batch reachable gaps, run target/static/review, commit and push, then one changed-input stage at 1x | Nine successful stages in the window used this pattern; one stage exposed the module-mock isolation defect before publishing. | Keep this order. The failed stage produced actionable regression evidence rather than a valid coverage update. |
+| Stage before review or once per subfix at 1x | Current-window mean is 217.170 s; the failed stage alone cost 236.373 s. | Avoidable early stages would cost about 3.62 minutes at the observed mean. This is an estimate, not a matched sequence trial. |
+| Two or four numeric stages in parallel | No qualified 2x/4x receipt exists. | Keep one producer; higher numeric parallelism is unmeasured and conflicts with the current single-owner policy. |
+
+Observable local work for this packet: one prior isolated target (1 pass), one
+paired target exposing the leak (1 pass/1 fail), one paired target passing after
+alias rebinding (2 pass), three scoped typecheck/lint/format rounds across the
+iterations, one normal commit/push, and one failed full producer stage. This is
+not a platform-wide tool-call count. Platform model-token and tool-call
+aggregates remain unavailable; the earlier oversized projection output was
+executor-reported output volume, not model-token consumption. A bounded file
+listing of the failed stage also truncated; subsequent reads were narrowed to
+its four native JSON receipts and exact stderr lines. No broad source scan, Vex
+refresh, second disk check, cleanup, or parallel producer was run.
+
+The corrected source/docs/WORK packet is ready for the normal hooks, commit,
+push, and exactly one justified changed-input producer stage. That rerun is
+required because the first stage exposed the interaction; do not publish or
+attribute the failed-run metrics as current coverage.
