@@ -8520,3 +8520,68 @@ are `DIAG/key469-id230-231-format-write-01.log`,
 no must-fix in the afterimages, exact refusals, isolated writes, or failure
 retention. The next action is one producer stage after normal commit/push; no
 numeric report has yet been updated for this packet.
+
+### Key469 first changed-input stage terminal — 2026-10-24 20:58 UTC
+
+The sole producer ran once for `bd270473a9d0568c153da4936620920bfe3622bb`
+in `/workspace/contour-stage-PeGExZ`. Its publication diagnostic records
+271,158.849822 ms, process exit 1 without a stage timeout or spawn error,
+complete outer capture, a closed outer group and unchanged image inputs. The
+image fingerprint is `601e6634cd07ab34ca36c91f46731612d1ea858000aa517c20f4437a9f98eaf7`;
+its manifest SHA-256 is
+`94630d2e08cbdf67a7d6808d47e54a2713b34be41218c920f0f3509e55011535`.
+The image binds source commit
+`bd270473a9d0568c153da4936620920bfe3622bb` and tree
+`b965268a7c61b968ceb337ff6d91e6044b63b640`.
+
+The selected coverage run ended UNKNOWN. In the existing test
+`rejects stale project identity without creating Work`, the owned child receipt
+at `/workspace/contour-stage-PeGExZ/scratch-3jTkX9/scratch/vida-run-unknown-child-FOwcwX/terminal.json`
+records null status, `SIGKILL`, `ETIMEDOUT`, a 3,138 ms supervisor timeout,
+incomplete child capture and failed cleanup with `ESRCH`. The suite reported
+the failure after 4,850.43 ms. The stage publication error says exactly one
+attributable report location was not produced. The producer advanced the local
+projection to attempt 1,482 as `coverage/failed/unknown-or-partial` with no
+metric evidence or bound selection. No report was published, so this outcome
+adds no coverage. Preserve the stage root, both run roots
+`/workspace/contour-stage-PeGExZ/scratch-3jTkX9/scratch/vida-run-uninitialized-taADhW`
+and `/workspace/contour-stage-PeGExZ/scratch-3jTkX9/scratch/vida-run-negative-context-McbuQj`,
+and the native and root captures. Do not replay this report or treat its timeout
+as a kill or an objective skip. Key468 remains the last accepted numeric report.
+
+The first response to the timeout replaced the child with direct `run(candidate)`
+calls. Its focused diagnostic disproved that change: all nine cases failed
+with 18 expectations in 3.40 s because `run()` exposes internal errors while
+the test expected the public normalized CLI payload. The exact capture is
+`DIAG/key469-no-work-context-matrix-target-01.log`; it names all nine retained
+roots under `/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-negative-context-`.
+Keep those roots and this failed experiment as evidence.
+
+The corrected test calls the existing exported `main()` in-process with
+`execute: run` and local output and exit collectors. It asserts no stdout, exit
+code 1 and an exact four-field `VidaAgentRunResult/v1` denial envelope, then
+checks the no-Work and no-Journal afterimage. This keeps the public error mapping
+and removes the unnecessary child process. The focused Bun 1.4.4 target passed
+9/9 cases with 47 expectations in 2.32 s at
+`DIAG/key469-main-inline-target-02.log`. Scoped typecheck passed with 545
+captured TypeScript files and zero diagnostics plus 104 package-project files;
+Oxlint and formatting passed. Final captures are
+`DIAG/key469-main-inline-typecheck-03.log`,
+`DIAG/key469-main-inline-oxlint-03.log`, and
+`DIAG/key469-main-inline-format-03.log`. The earlier Oxlint `no-unsafe-argument`
+finding on untyped Console callbacks is retained in `oxlint-01.log`; the fixed
+typed callbacks pass in `oxlint-02.log` and the final exact-envelope version
+passes in `oxlint-03.log`.
+
+Blind Luna reviewed the in-process boundary and found no must-fix issue. Its
+suggestion to compare the public envelope exactly is included in the final
+assertion. The separate comment review found no changed comments or
+suppressions. `vex status --path /workspace/vida-stack-lite --coverage --format
+json` reports `clusters_stale: true`; bounded Source reads were used and no
+index refresh or second inventory was started. The installed Pstack plugin is
+enabled at version 1.17.5. Native read-only delegation used the prepared legacy
+prompt contract because the strict native route reports unsupported isolation.
+
+The next action is normal commit and push, followed by one changed-input stage
+through the existing producer. Do not start another producer or edit the
+generated projection. The prior UNKNOWN remains retained and fenced.

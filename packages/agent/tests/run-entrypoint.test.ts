@@ -77,6 +77,7 @@ import {
   requireOneReadonlyReleaseMatch,
   requireRecoveryOperation,
   readonlyReleaseThreadId,
+  main,
   run,
   isHistoricalScopedSnapshot,
   writeDurable,
@@ -7411,15 +7412,34 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       },
     ] as const;
     for (const denial of contextDenials) {
-      test(`rejects ${denial.name} without creating Work`, () => {
+      test(`rejects ${denial.name} without creating Work`, async () => {
         const root = mkdtempSync(path.join(tmpdir(), 'vida-run-negative-context-'));
-        const fixture = ownedMutationFixture(root, 5_000);
         let completed = false;
         try {
           const { args, initialization, initializationPath, config } = createFixture(root);
           if ('changed' in denial) writeFileSync(initializationPath, record({ ...initialization, ...denial.changed }));
           const candidate = 'candidate' in denial ? denial.candidate(args) : args;
-          expect(fixture.invoke(candidate, 1)).toMatchObject(denial.expected);
+          const logged: string[] = [];
+          const errors: string[] = [];
+          const exit: { exitCode?: number } = {};
+          await main({
+            isMain: true,
+            args: candidate,
+            execute: run,
+            io: {
+              log: (value: string) => logged.push(value),
+              error: (value: string) => errors.push(value),
+            },
+            exit,
+          });
+          expect(logged).toEqual([]);
+          expect(exit.exitCode).toBe(1);
+          expect(errors).toHaveLength(1);
+          expect(JSON.parse(errors[0] ?? 'null')).toEqual({
+            schema: 'VidaAgentRunResult/v1',
+            status: 'blocked',
+            ...denial.expected,
+          });
           const databasePath = sessionHandoffDatabasePath(root, config);
           if (existsSync(databasePath)) {
             const observed = inspectHostWorkspaceDatabase(
@@ -7432,11 +7452,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           }
           completed = true;
         } finally {
-          if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
-          else
-            process.stderr.write(
-              `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture: ${root}\n`,
-            );
+          if (completed) rmSync(root, { recursive: true, force: true });
+          else process.stderr.write(`Retained failed public run fixture: ${root}\n`);
         }
       }, 5_000);
     }
