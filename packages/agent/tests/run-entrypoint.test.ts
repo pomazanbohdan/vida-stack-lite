@@ -9464,6 +9464,58 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     },
   );
+
+  test('run stopped-source capture rejects an unrecognized terminal record before workspace access', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-run-stopped-terminal-'));
+    let complete = false;
+    try {
+      const { config, initialization, initializationPath } = createFixture(root),
+        configPath = path.join(root, 'agent-runtime.config.v1.yaml'),
+        requestPath = path.join(root, 'request.json'),
+        terminalPath = path.join(root, 'terminal-record.json'),
+        baseRequest = stoppedSourceDecoderRequest(initialization),
+        request = {
+          ...baseRequest,
+          terminalEvidence: {
+            ...baseRequest.terminalEvidence,
+            observation_ref: 'terminal-record.json',
+          },
+        },
+        requestBytes = Buffer.from(JSON.stringify(request)),
+        terminalBytes = Buffer.from('{}\n'),
+        configBefore = readFileSync(configPath),
+        initializationBefore = readFileSync(initializationPath);
+      writeFileSync(requestPath, requestBytes);
+      writeFileSync(terminalPath, terminalBytes);
+
+      await assert.rejects(
+        run([
+          '--capture-stopped-source',
+          'true',
+          '--mode',
+          'inspect',
+          '--project-root',
+          root,
+          '--request',
+          'request.json',
+        ]),
+        (error: unknown) => error instanceof Error && error.message === 'actual terminal fixture evidence differs',
+      );
+
+      expect(readFileSync(configPath)).toEqual(configBefore);
+      expect(readFileSync(initializationPath)).toEqual(initializationBefore);
+      expect(readFileSync(requestPath)).toEqual(requestBytes);
+      expect(readFileSync(terminalPath)).toEqual(terminalBytes);
+      expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+      expect(existsSync(path.join(root, 'fixture.sqlite'))).toBe(false);
+      expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+      complete = true;
+    } finally {
+      if (complete) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed stopped-source terminal root: ${root}\n`);
+    }
+  });
+
   type RetiredSourceNativeCase = {
     name: string;
     artifact: unknown;

@@ -6203,10 +6203,114 @@ tool/API-call and model-token telemetry is unavailable and is not estimated.
 The existing retained disk-admission receipt remains authoritative; no second
 disk audit, cleanup, or evidence relocation occurred.
 
-The latest projection before Key434 remains F `428/555`, L `1953/2860`, S
-`2098/3138`, B `2417/3660`, max CC 501 and CRAP 992, still `BLOCKED`; it is not
-qualified by the focused test. Key434 source changes are not yet in a full
-producer run. Preserve the `ID98` gap, do not disposition it from this test, do
-not advance contours, and do not start CRAP/mutation. After normal commit and
-push, run exactly one pinned `bun-cli-run` coverage stage for these inputs;
-accept numeric counts and terminal evidence only from its producer projection.
+One pinned `bun-cli-run` coverage stage ran after Key434 commit/push. Stage
+`/workspace/contour-stage-C4jLdw`, scratch `scratch-yW4hRq`, and run
+`ac1df513-6ae5-4419-9596-62c02d5d6123` are retained. Elapsed time was
+258,991.524 ms of 330,000 ms. Exit was 0, signal/spawn error null, no timeout,
+capture complete, owned process group closed, boot and image inputs unchanged,
+and publication `published`. The immutable image is
+`/workspace/.vida-quality-inputs/9868416bc5225c375dc84332e1a9d885c474ba8b/`;
+source tree `7f0dfd02f2a565b4d722185d043c64b89bbc6a83`, input fingerprint
+`a749171d3c2756fe989ff63efbf9cdde8da6504ec6557fea2495d2597173f607`, and
+image manifest SHA-256
+`26007e4f6bcd073cae26350c5b6d2934e1c1c5883368481eba939d897ca1e275` bind
+commit `41674dba7bd5a8694d8222aeff4624d216ec51d6`. Raw stdout is 7,977 bytes,
+SHA-256 `c5afd8cd8c7f96c466064fe4432f60bd282eae4fc5d1f6381ae08a27cde861ec`;
+stderr is 17,160 bytes, SHA-256
+`ca945793d19144d554510ff84dd090c5d06458b3b8541bda276be6736d23bd5e`; both
+are complete, untruncated, and retained with launch/request/execution/
+publication receipts. The focused report is
+`/workspace/.vida-quality-inputs/9868416bc5225c375dc84332e1a9d885c474ba8b/repository/packages/agent/coverage/bun-unified/diagnostics/ac1df513-6ae5-4419-9596-62c02d5d6123.focused-coverage.json`.
+
+The producer ran package Bun 1.4.4 with `1x PARALLEL`: 125 tests passed, zero
+failed, 2,398 expectations, 252.19 s test time. The raw stderr explicitly
+records the Key434 test passing in 14.67 s. TS-only source gate captured 545
+files with zero diagnostics. Producer projection now records F `428/555`, L
+`1953/2860`, S `2099/3138`, B `2418/3660`, max CC 501 and CRAP 992. Only S
+and B increased by one; denominators and status remain `BLOCKED` and the
+operation outcome remains `BLOCKED; unqualified; selection unbound`. This is a
+focused diagnostic, not exact coverage qualification or frozen-budget proof.
+The ID109 scenario executed in both the targeted check and full stage; retain
+the bound report/capture instead of inferring a full counter vector from the
+aggregate projection. ID98 at `run.ts:1085` remains a separate undispositioned
+gap. No CRAP/mutation or contour advance occurred.
+
+The producer's scratch admission receipt observed 15,098,646,528 available
+bytes against the unchanged 2,147,483,648-byte minimum. This is the producer
+receipt, not a second filesystem audit. Raw stderr retains intentional test
+fixtures `/tmp/vida-unprepared-state-VN0arP` (`deadline-expired`),
+`/tmp/vida-unprepared-state-kc7ZeJ` (`database-close-failed`),
+`/tmp/vida-unprepared-state-uFc1aM` (`completion-not-marked`), and
+`/tmp/vida-run-uninitialized-vmGEhO` (`child-outcome-unknown`). These remain
+protected test evidence, not producer failures or timeouts; no cleanup or
+relocation was done.
+
+An accidental unbounded `cat` of the generated Markdown/JSON projection
+produced an oversized tool response (reported 1,125,683 original tokens and
+3,454,155 bytes omitted). No quantitative conclusion relies on that output;
+stage receipts and bounded report reads supply the numbers above. Use selected
+JSON fields only. Across recent serial stages, measured elapsed times range
+188.60–258.99 s, all at width 1 but with different inputs and cache state; this
+does not establish a speed comparison against wider parallelism. The mode-
+qualified focused check took 16.22 s. Keep serial execution for the next
+packet, prefer static gate → exact mode-qualified case → independent review →
+one full stage, and do not replay the completed stage unchanged.
+
+The changed test/projection/work packet is pushed as `41674db`; this stage is
+its one producer run. A fresh blind Luna review now closes the prior
+ID98-evidence concern: the reviewer read the current report's source/test/tool
+fingerprints and `execution_scope.consumer_configuration.source_digest`, and
+bound them to the immutable execution-image manifest and input fingerprint.
+The accepted-path validator establishes nonempty relative paths with no empty
+slash components, so `parts.at(-1)` cannot be falsy at `run.ts:1085`. Record
+ID98 `[0,3]` as an objective coverage skip under TESTING, with the full bound
+review in `DIAG/bun-cli-run-key435-id98-review-20261024-01.md`. The skip adds
+no hits, leaves denominators unchanged, and does not change `BLOCKED`,
+`full_qualification=false` or frozen-budget pending; reopen it if the accepted
+path validator changes.
+
+The next report-selected zero-function cluster includes stopped-source capture
+validators (`isStoppedSourceTerminalRecord` and authorization/review
+predicates). A read-only Luna design pass found a viable native positive route
+in `tests/stopped-source-capture.test.ts`, but the current `bun-cli-run` stage
+selects only `tests/run-entrypoint.test.ts` and `tests/bun-cache-routing.test.ts`;
+the suggested file is outside this contour's current test selection. Do not
+claim its coverage or silently broaden selection. The next bounded work is to
+find a scenario in the selected `run-entrypoint.test.ts` fixture, or establish
+the existing selection owner's approved inclusion path. Continue within
+`bun-cli-run`; do not start another contour or CRAP/mutation.
+
+### bun-cli-run stopped-source terminal guard packet — Key436, 2026-10-24
+
+The current report-selected files include `tests/run-entrypoint.test.ts` and
+`tests/bun-cache-routing.test.ts`; the stopped-source helper fixtures in the
+first file are registered only under the V8/mutation/native coverage gate. The
+bounded scenario now uses the existing `createFixture` and request builder to
+write a bounded terminal-observation path containing `{}`. The request itself
+passes decoding, then `requireStoppedSourceTerminalRecord` rejects the terminal
+record with `actual terminal fixture evidence differs`. Assertions preserve
+config, initialization, request, and terminal bytes and confirm no session
+handoff DB, fixture DB, or `.agent/work` was created. This covers the false arm
+of `isStoppedSourceTerminalRecord` and its required throwing guard before
+workspace inspection. Authorization and review predicates remain outside this
+scenario; no broader claim is made.
+
+A fresh Pstack native read-only Luna review found no must-fix. The reviewer
+confirmed the request passes decoding, the terminal path is bounded and
+present, `{}` reaches the intended guard before DB inspection, and the
+preservation/no-DB assertions are sound. Root captured the reviewer response
+in `DIAG/bun-cli-run-key436-blind-review-20261024-01.md`; the reviewer did not
+write a file or run tests. The exact mode-qualified target passed once after
+that review: package-selected Bun 1.4.4, 1 pass, 117 filtered, 8 expectations,
+zero failures, 1.70 s command / 390.32 ms test body. The durable target output
+is `DIAG/bun-cli-run-key436-target-20261024-01.log`. Scoped formatting passed
+on the changed test file. No production source changed.
+
+This remains the same `bun-cli-run` contour. ID98's independently reviewed
+objective skip remains `[0,3]`; this change itself does not disposition it or
+change any counters. No full producer stage has yet run for Key436. The next
+step is scoped strict/lint and documentation validation, commit/push with
+ordinary hooks, then exactly one current producer stage for the changed
+inputs. Preserve all previous projection values and the blocked qualification
+until that producer publishes a new terminal projection; no CRAP/mutation or
+contour advance is authorized.
