@@ -9313,7 +9313,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
-  const stoppedSourceDecoderRequest = (initialization: RuntimeInitializationReceipt) => ({
+  const stoppedSourceDecoderRequest = (
+    initialization: Pick<
+      RuntimeInitializationReceipt,
+      'workspace_id' | 'repository_id' | 'project_ids' | 'integrations_digest'
+    >,
+  ) => ({
     workspace_id: initialization.workspace_id,
     identity: {
       repository_id: initialization.repository_id,
@@ -9513,6 +9518,191 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     } finally {
       if (complete) rmSync(root, { recursive: true, force: true });
       else process.stderr.write(`Retained failed stopped-source terminal root: ${root}\n`);
+    }
+  });
+
+  test('run stopped-source apply validates authorization and review receipts before rejecting a frozen plan', async () => {
+    const fixture = createAutomaticWorkAdmissionFixture(false, true);
+    let complete = false;
+    try {
+      const workId = `stopped-source-${randomUUID()}`,
+        ownerHandle = `fixture-owner-${randomUUID()}`,
+        nativeActor = `fixture-source-${randomUUID()}`,
+        actionId = `fixture-action-${randomUUID()}`,
+        issueId = `fixture-issue-${randomUUID()}`,
+        hostAttemptId = `fixture-attempt-${randomUUID()}`,
+        admitted = fixture.admit(fixture.prepare(workId, `user:${workId}`, ownerHandle)),
+        admittedWork = admitted.host.work,
+        workVersion = admitted.host.workVersion,
+        ledgerVersion = admitted.host.ledgerVersion;
+      if (!admittedWork || !workVersion || !ledgerVersion)
+        throw Error('Stopped-source authorization fixture did not admit complete Host state');
+
+      const initialization = {
+          workspace_id: deriveWorkspaceId(fixture.config.repository.repository_id, fixture.root),
+          repository_id: admittedWork.binding.repository_id,
+          project_ids: [...admittedWork.binding.project_ids],
+          integrations_digest: admittedWork.binding.integrations_digest,
+        },
+        baseRequest = stoppedSourceDecoderRequest(initialization),
+        request = {
+          ...baseRequest,
+          workspace_id: fixture.store.workspaceId,
+          identity: { ...baseRequest.identity, work_id: workId },
+          expectedWork: workVersion,
+          expectedLedger: ledgerVersion,
+          nativeSessionHandle: ownerHandle,
+          observation: {
+            ...baseRequest.observation,
+            action_id: actionId,
+            issue_id: issueId,
+            host_attempt_id: hostAttemptId,
+            agent_id: nativeActor,
+          },
+          terminalEvidence: {
+            ...baseRequest.terminalEvidence,
+            native_actor: nativeActor,
+            observation_ref: 'terminal-record.json',
+            owner_decision_ref: 'authorization.json',
+          },
+        },
+        operation = (({ workspace_id: _workspaceId, ...value }) => value)(request),
+        requestDigest = canonicalJsonDigest(operation),
+        configPath = path.join(fixture.root, 'agent-runtime.config.v1.yaml'),
+        requestPath = path.join(fixture.root, 'request.json'),
+        terminalPath = path.join(fixture.root, 'terminal-record.json'),
+        authorizationPath = path.join(fixture.root, 'authorization.json'),
+        planPath = path.join(fixture.root, `capture-plan-${workId}.json`),
+        reviewPaths = [1, 2, 3].map((index) => path.join(fixture.root, `review-${index}.json`)),
+        protectedPaths = [
+          configPath,
+          path.join(fixture.root, 'AGENTS.md'),
+          path.join(fixture.root, 'AGENT.sidecar.md'),
+          path.join(fixture.root, 'docs/agent-instructions/documentation-policy.v1.json'),
+          requestPath,
+          terminalPath,
+          authorizationPath,
+          planPath,
+          ...reviewPaths,
+        ],
+        databaseRelativePath = path.relative(fixture.root, sessionHandoffDatabasePath(fixture.root, fixture.config)),
+        workspaceBefore = inspectHostWorkspaceDatabase(fixture.root, databaseRelativePath, fixture.store.workspaceId);
+
+      const terminal = {
+        schema: 'RootObservedStoppedSource/v1',
+        status: 'partial_stopped',
+        actor: nativeActor,
+        action_id: actionId,
+        issue_id: issueId,
+        host_attempt_id: hostAttemptId,
+        observation_ref: 'terminal-record.json',
+        native_status: 'completed',
+        source_turn_id: `source-turn-${workId}`,
+        final_message_id: `final-message-${workId}`,
+        current_tmp_only_turn_id: `temporary-turn-${workId}`,
+        owner_thread_id: ownerHandle,
+      };
+      writeFileSync(requestPath, record(request));
+      writeFileSync(terminalPath, record(terminal));
+      writeFileSync(planPath, record({ schema: 'StoppedSourceCapturePlan/v1', request_digest: 'wrong-digest' }));
+      writeFileSync(authorizationPath, record({}));
+      for (const reviewPath of reviewPaths) writeFileSync(reviewPath, record({}));
+
+      const args = [
+        '--capture-stopped-source',
+        'true',
+        '--mode',
+        'apply',
+        '--project-root',
+        fixture.root,
+        '--request',
+        'request.json',
+      ];
+      const assertRefusalPreservedFixture = (before: ReadonlyMap<string, Buffer<ArrayBufferLike>>) => {
+        for (const [file, bytes] of before) expect(readFileSync(file).equals(bytes)).toBe(true);
+        expect(inspectHostWorkspaceDatabase(fixture.root, databaseRelativePath, fixture.store.workspaceId)).toEqual(
+          workspaceBefore,
+        );
+      };
+      const captureInput = () => new Map(protectedPaths.map((file) => [file, readFileSync(file)] as const));
+      const authorizationPrefix = {
+        action: 'source.capture-failed-and-release',
+        owner_thread_id: ownerHandle,
+        request_digest: requestDigest,
+        candidate_binding: 'candidate-binding',
+        source_turn_id: terminal.source_turn_id,
+        status: 'approved_exact_manifest',
+      };
+      const malformedAuthorizations = [
+        { label: 'top-level schema', value: { ...authorizationPrefix, schema: 7, reviews: [] } },
+        {
+          label: 'candidate review fields',
+          value: {
+            ...authorizationPrefix,
+            schema: 'StoppedSourceCaptureAuthorization/v1',
+            reviews: [{}],
+          },
+        },
+      ];
+      for (const entry of malformedAuthorizations) {
+        writeFileSync(authorizationPath, record(entry.value));
+        const before = captureInput();
+        await assert.rejects(
+          run(args),
+          (error: unknown) =>
+            error instanceof Error && error.message === 'Capture exact manifest/owner authorization differs',
+          entry.label,
+        );
+        assertRefusalPreservedFixture(before);
+      }
+
+      const { developmentControllerBinding } = await import('../bin/development-controller.ts'),
+        candidateBinding = developmentControllerBinding(packageRoot),
+        reviews = [1, 2, 3].map((index) => {
+          const review = {
+            actor_id: `fixture-reviewer-${index}`,
+            history_ref: `history-${index}`,
+            tool_call_ref: `tool-call-${index}`,
+            verdict: 'pass',
+            candidate_binding: candidateBinding,
+            receipt_ref: `review-${index}.json`,
+          };
+          writeFileSync(
+            reviewPaths[index - 1]!,
+            record({
+              schema: 'StoppedSourceCandidateReview/v1',
+              verdict: review.verdict,
+              candidate_binding: review.candidate_binding,
+              actor_id: review.actor_id,
+              history_ref: review.history_ref,
+              tool_call_ref: review.tool_call_ref,
+              request_digest: requestDigest,
+            }),
+          );
+          return review;
+        });
+      const authorization = {
+        schema: 'StoppedSourceCaptureAuthorization/v1',
+        action: 'source.capture-failed-and-release',
+        owner_thread_id: ownerHandle,
+        request_digest: requestDigest,
+        candidate_binding: candidateBinding,
+        source_turn_id: terminal.source_turn_id,
+        status: 'approved_exact_manifest',
+        reviews,
+      };
+      writeFileSync(authorizationPath, record(authorization));
+
+      const before = captureInput();
+      await assert.rejects(
+        run(args),
+        (error: unknown) => error instanceof Error && error.message === 'frozen capture plan differs',
+        'shape-valid plan with a different request digest is rejected',
+      );
+      assertRefusalPreservedFixture(before);
+      complete = true;
+    } finally {
+      fixture.close({ retainRoot: !complete });
     }
   });
 

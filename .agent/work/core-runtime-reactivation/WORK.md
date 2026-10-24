@@ -6314,3 +6314,184 @@ ordinary hooks, then exactly one current producer stage for the changed
 inputs. Preserve all previous projection values and the blocked qualification
 until that producer publishes a new terminal projection; no CRAP/mutation or
 contour advance is authorized.
+
+### Key436 post-commit producer result — 2026-10-24
+
+After commit `dddd891b3c0140cf007754a399bbac18dabdeb49` was pushed, the current
+producer ran once for `bun-cli-run`, lane `coverage`, with the canonical output
+`.agent/work/core-runtime-reactivation`. It created
+`/workspace/contour-stage-yftfaS`, run
+`42476296-32ea-429c-ab13-f2519fe84f77`, and exited 0 after 208,820.746 ms of
+the 330,000 ms timeout. The terminal result records no signal or spawn error,
+`timed_out=false`, complete capture, closed process group, unchanged boot and
+image inputs, and successful publication. The immutable image is
+`/workspace/.vida-quality-inputs/ee8ab8685e425129ca1d4433b1bd9b6ea4f86ac9/`;
+source tree `1c4616a5926a8b8aae1b12f5e01b34c95cc04192`, input fingerprint
+`efe086b4423e3a6e4ea196a032c60539e635b824eaea512e9e7799f3ee44467f`, and image
+manifest SHA-256
+`9e62942df10b45f2f186bd426edc6f1b2f3255437b23679abad5bd4a029a9d29` bind
+that commit. The focused report is
+`/workspace/.vida-quality-inputs/ee8ab8685e425129ca1d4433b1bd9b6ea4f86ac9/repository/packages/agent/coverage/bun-unified/diagnostics/42476296-32ea-429c-ab13-f2519fe84f77.focused-coverage.json`.
+Its manifest SHA-256 is
+`706bc041b30d025f84068ecc4a9975b29d96315a3a18ad73954252627c8cfdcb`; source,
+test, and tool fingerprints are respectively
+`5bbb206bc29554d3a5daaf2ea8fd429ec5d2ded020daf869ee8527e8352d2851`,
+`e5b6964d6a4888227b8708da27a2b3e1bad87c945c19df204b2a2bc245c2ac69`, and
+`c7bbedf2e76263b889ea8193521ecc3d0838b1b1ee79a7def6c3f15020d4df3b`. The
+configuration binding remains the expected digest
+`agent-runtime.config.v1.yaml:d4d7c762c07dbb40bf89432548f9f117ebd99170bd756102c43e2a0af8decb97`; this
+report has root identity
+`aa46b5bbeef818e505ed6a85ce25787a3547ababd8c00dc85a7fddd119042a56`.
+
+Package Bun 1.4.4 ran the same two selected test files at `1x PARALLEL`: 126
+passed, 0 failed, 2,406 expectations, 203.00 s test time. The new test passed
+in 122.38 ms. Projection advanced to F `430/555`, L `1959/2860`, S `2106/3138`,
+B `2423/3660`, max CC 501, CRAP 992; operation status remains `BLOCKED`,
+`full_qualification=false`, and frozen-budget qualification pending. Relative
+to the previous producer projection this is +2 functions, +6 lines, +7
+statements, and +5 branches, but it is not exact 100% and does not close the
+contour. Focused branch mapping confirms functions `isStoppedSourceTerminalRecord`
+and `requireStoppedSourceTerminalRecord` now each have one hit; the adjacent
+authorization/review/plan functions remain zero-hit and need their own
+reachability analysis.
+
+Raw producer stdout is 7,978 bytes, SHA-256
+`1d84fc13c4b65efe9cdb9f1aa8e9ae527233947b30026ac539c036d1b810e4e5`; stderr is
+17,265 bytes, SHA-256
+`948be610966c08401299dfa22a67c087646e1869f6af5d7e357e74507dfded02`. Both
+remain complete with `launch.json`, `request.json`, `execution.json`, and
+`publication.json` under `/workspace/contour-stage-yftfaS`. The package stage
+admission receipt observed 14,996,672,512 available bytes against the unchanged
+2,147,483,648-byte minimum; this is producer evidence, not a second filesystem
+space audit. No cleanup or relocation occurred. Preserve retained fixture roots
+reported in stderr, including `/tmp/vida-unprepared-state-4l7PPA`
+(`completion-not-marked`), `/tmp/vida-unprepared-state-MOXu7b`
+(`database-close-failed`), `/tmp/vida-unprepared-state-Std9rP`
+(`deadline-expired`), and `/tmp/vida-run-uninitialized-fSLsP5`
+(`child-outcome-unknown`). The same uninitialized fixture path is reported
+twice; retain it without treating it as two independent failures.
+
+A fresh Pstack-prepared native read-only Luna review rebound ID98 at
+`run.ts:1085` to this report and immutable image. It confirms exact raw counter
+`[0,3]` is objectively unreachable: accepted relative paths have no empty slash
+component, so their last component cannot be falsy. Keep that raw counter and
+all denominators unchanged; the skip adds no hits and leaves `BLOCKED`,
+`full_qualification=false`, and frozen pending. Evidence is in
+`DIAG/bun-cli-run-key436-id98-review-20261024-01.md` and the associated prepared
+contract in `DIAG/pstack-worker-key436-id98-review-20261024-01.json`. Reopen if
+path validation changes.
+
+Measured order for this packet was scoped static checks (formatter on one test
+file, typecheck 104 files, Oxlint and documentation links) → exact gated target
+(1.70 s) → independent read-only review → commit/hooks/push → one producer stage
+(208.82 s). The previous 258.99 s stage and earlier 188.60–214.42 s stages also
+ran at width 1, but source/cache state differed; the shorter current elapsed
+time is not evidence that one order or width is faster. A full stage before
+preflight would have risked spending roughly 209 s before detecting a local
+defect; that is a counterfactual. No width-2/4 trial or benchmark was run. API
+calls and model-token telemetry are unavailable and not estimated.
+
+One projection query accidentally selected the entire `.attempts` payload,
+including digest entries; the tool reported 2,084,081 original tokens and
+7,287,746 bytes omitted. A following branch-map query was also broader than
+needed and truncated. No conclusion used either partial output. The correction
+and bounded follow-up selection are recorded in
+`DIAG/bun-cli-run-key436-output-selection-correction-20261024-01.md`; use
+contour-filtered scalar fields and hit arrays only. No new scan, hash pass,
+full suite replay, disk audit, or cleanup followed those reads.
+
+### bun-cli-run stopped-source authorization packet — Key438, 2026-10-24
+
+The Key436 report bound to commit `dddd891` showed the selected-file test had
+reached the terminal-record guard, while authorization/review/plan functions
+`isStoppedSourceCaptureAuthorization`, `requireStoppedSourceCaptureAuthorization`,
+`isStoppedSourceCandidateReview`, `isStoppedSourceReviewArray`,
+`isStoppedSourceCapturePlan`, and `verifyAuthorization` remained zero-hit.
+A report-guided test was added only to the selected
+`tests/run-entrypoint.test.ts`. It reuses the existing admitted-work fixture to
+create one inspectable Host DB and a matching request, terminal record, plan,
+authorization, and review receipts. It first rejects malformed top-level and
+review data before candidate binding; then validates three distinct
+report-bound review receipts and rejects a shape-valid plan with the wrong
+request digest. After each rejection it compares protected fixture bytes and
+the persisted Work/Ledger/Journal workspace snapshot. The fixture is closed and
+removed only on success; failures retain its root. No product Source changed,
+no capture write is performed, and no operational DB/consumer effect or runtime
+cutover is invoked.
+
+An initial version also repeated the fully verified authorization path for a
+null-plan case and took 5.541 s in the focused test body. That repeated
+`developmentControllerBinding` work did not add needed evidence for this
+packet, so the null-plan invocation was removed while retaining the
+shape-valid-digest-mismatch path. The final exact gated target passed with Bun
+1.4.4: 1 pass, 118 filtered, 36 expectations, no failures, 2.905 s test body /
+4.23 s command. The initial and optimized target logs are retained as
+`DIAG/bun-cli-run-key438-target-20261024-01.log` and
+`DIAG/bun-cli-run-key438-target-20261024-02.log`; the first format check found
+layout differences and the corrected scoped check passed, with outputs in
+`DIAG/bun-cli-run-key438-format-20261024-01.log` and
+`DIAG/bun-cli-run-key438-format-20261024-02.log`.
+
+Fresh Pstack-prepared native read-only Luna review found no must-fix. It
+confirmed the admitted work reaches authorization, malformed authorization
+reaches review validation, valid frozen receipts pass, the plan mismatch is
+rejected before capture writes, and byte/workspace snapshots plus retained-on-
+failure cleanup are sound. Root captured the response in
+`DIAG/bun-cli-run-key438-blind-review-20261024-01.md`; the reviewer made no
+edits and ran no tests. Scoped strict source typecheck passed for 104 files;
+Oxlint, docs/link check (2 documents, 11 local links), scoped formatter, and
+`git diff --check` passed. The final docs receipt is
+`DIAG/bun-cli-run-key438-docs-final-20261024-01.log`; the other static
+receipts are the Key438 typecheck, Oxlint, formatter, and target logs.
+
+This packet remains within `bun-cli-run` and changes no selection or test
+budget. It uses one setup fixture and multiple related pre-write gates rather
+than creating a new standalone suite or rebuilding per case. The final current
+producer stage remains pending; after normal hooks and push, run one stage for
+this committed input, then read only selected report fields. Keep ID98's
+report-bound objective skip unchanged and keep CRAP/mutation/contour advance
+closed.
+
+The first ordinary commit hook stopped the Key438 commit on two test-file type
+errors: default `Buffer` generic was narrower than `readFileSync` output, and a
+malformed authorization object duplicated the `schema` property. Both were
+corrected without bypassing hooks; the final fixture map uses
+`Buffer<ArrayBufferLike>` and constructs each malformed value without duplicate
+keys. The exact gated target was rerun afterward and passed; the hook itself is
+still the final typecheck owner.
+
+The scoped check `typecheck:checked-js:pinned` then exposed a separate confirmed
+package-script defect: `tsconfig.checked-js.json` set `rootDir` to the package
+while its included contour tooling imports the maintained workspace module
+`tooling/agent/sdk-coverage-readiness.ts`, causing TS6059. The config now sets
+`rootDir` to `../..`, the workspace root; the same pinned script passes with
+zero errors across 227 files. The initial failure remains in
+`DIAG/bun-cli-run-key438-typecheck-20261024-02.log`, and the corrected check is
+in `DIAG/bun-cli-run-key438-typecheck-20261024-03.log`. This changes the
+project boundary only to include the existing declared workspace dependency;
+it does not add tests, widen runtime budgets, or alter coverage selection.
+
+After those hook corrections, the optimized exact target ran again on the final
+test code and passed: 1 pass, 118 filtered, 36 expectations, 3.179 s test body
+(5.67 s command) in `DIAG/bun-cli-run-key438-target-20261024-03.log`. The
+final format check is `DIAG/bun-cli-run-key438-format-20261024-03.log`; the
+corrected checked-JS strict check is the 227-file pass above. Oxlint was
+rerun after the fixture/config fixes and passed in
+`DIAG/bun-cli-run-key438-oxlint-final-20261024-01.log`; docs validation was
+rerun after the WORK update and passed in
+`DIAG/bun-cli-run-key438-docs-revised-20261024-01.log`. Independent final
+read-only review found no must-fix: type-only edits preserve the prior test,
+and `rootDir: "../.."` includes the workspace dependency without broadening
+the configured include list. Root captured that response in
+`DIAG/bun-cli-run-key438-final-review-20261024-01.md`; Luna made no edits or
+test runs. The review contract receipt is
+`DIAG/pstack-worker-key438-final-review-20261024-01.json`.
+
+The next ordinary-hook retry found that Bun's `expect().toEqual` overload still
+rejected the widened Buffer generic. The assertion now uses Node's bytewise
+`Buffer.equals` and asserts the boolean, preserving the same exact-byte oracle.
+After this final test-only adjustment, the target passed again: 1 pass, 118
+filtered, 36 expectations, 2.727 s body / 4.49 s command in
+`DIAG/bun-cli-run-key438-target-20261024-04.log`; checked-JS typecheck passed
+227 files and scoped format-check passed in the `-04` logs. This is a fixture
+assertion typing correction; no product behavior or counter policy changed.
