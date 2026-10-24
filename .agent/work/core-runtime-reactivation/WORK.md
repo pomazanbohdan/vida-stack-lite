@@ -6686,3 +6686,30 @@ available runtime, so command and expectation counts are not presented as API
 usage or token estimates. Key441 used one targeted Bun test (149 expectations),
 one format write/check pair, one strict process, one Oxlint process, two
 read-only native Luna reviews, and will require one producer stage after push.
+
+### Key442 changed-input coverage stage terminal
+
+The Key442 packet commit `ba8214b1d4986c5fd4a239fdca3f49ea930dbcf9` passed
+ordinary hooks and was pushed to `main`. The existing serial coverage producer
+ran once at `/workspace/contour-stage-t9fWtW`: run
+`5de93224-c058-468e-b159-f56b9a17522b`, exit 0, no signal/spawn error/timeout,
+complete capture, closed group, unchanged boot and unchanged immutable image.
+The image binds source tree `eb1b5c7517dd574f8cdedc0c43e688ae8c18bb7f` and input
+fingerprint `ada425d933824ccc3cfa8a1e3a562aa3065b5a0755efc32307cdf7a1b9b2dd89`.
+The root receipt is `DIAG/bun-cli-run-key442-stage-20261024-01.log`; native
+terminal, stdout, stderr, launch and image receipts remain in the stage directory.
+
+This one-worker stage ran 127 tests with 0 failures and 2,464 expectations;
+test time was 201.27 seconds and total stage elapsed 206,242.701 ms. The input
+projection moved from F441/555, L2011/2860, S2160/3138, B2517/3660 to F441/555,
+L2012/2860, S2161/3138, B2518/3660. ID114 at `bin/run.ts:1232` now has
+`[1,4]`. ID113 remains `[0,10]` under its independent objective skip; it adds
+no hits. The operation is still BLOCKED, `max_cc` and `max_entry_crap` remain
+501, and frozen/full qualification remain pending.
+
+Key438, Key439 and Key442 complete stages measured 208,414.802 ms,
+236,747.830 ms and 206,242.701 ms respectively, each at 1x PARALLEL and with
+different commits/inputs. These observations are uncontrolled for host/cache and
+input-work differences; no speedup or higher concurrency is inferred. The next
+report candidate is ID116 at `bin/run.ts:1241`, with counts `[4,0]`; a blind
+read-only schema/caller review is pending before a test or skip is selected.
