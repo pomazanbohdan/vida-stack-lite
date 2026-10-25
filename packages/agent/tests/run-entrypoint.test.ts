@@ -3113,6 +3113,7 @@ describe('vida-agent run entrypoint fast checks', () => {
       ['--rebind-current-bundle', 'true'],
       ['--export-staged-witness', 'unsafe/id', '--payload-manifest-sha256', 'a'.repeat(64)],
       ['--export-staged-witness', 'fixture-witness', '--payload-manifest-sha256', 'not-a-digest'],
+      ['--export-staged-witness', 'fixture-witness'],
       ['--payload-manifest-sha256', 'a'.repeat(64)],
       ['--intake', 'relative.json'],
       ['--intake', intakePath, '--continuation', 'relative.json'],
@@ -3689,6 +3690,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   test('task-source routing rejects mixed, invalid and incomplete options before project side effects', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-task-source-cli-'));
     const before = readdirSync(root).sort();
+    let completed = false;
     const cases = [
       {
         args: [
@@ -3708,6 +3710,18 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       {
         args: ['--project-root', root, '--task-source-operation', 'report', '--task-source-request', 'request.json'],
       },
+      {
+        args: [
+          '--project-root',
+          root,
+          '--task-source-operation',
+          'inspect',
+          '--task-source-request',
+          'request.json',
+          '--task-source-report',
+          'report.json',
+        ],
+      },
     ];
     try {
       for (const scenario of cases) {
@@ -3720,8 +3734,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         );
         expect(readdirSync(root).sort()).toEqual(before);
       }
+      completed = true;
     } finally {
-      rmSync(root, { recursive: true, force: true });
+      if (completed) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed task-source CLI fixture: ${root}\n`);
     }
   });
 
@@ -6653,10 +6669,36 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const { args, initialization, initializationPath } = createFixture(root);
         writeFileSync(initializationPath, record({ ...initialization, workspace_binding_status: 'unknown' }));
         const deniedReceipt = readFileSync(initializationPath);
+        for (const candidate of [
+          args,
+          ['--project-root', root, '--task-source-operation', 'inspect', '--task-source-request', 'request.json'],
+          [
+            '--project-root',
+            root,
+            '--task-source-operation',
+            'report',
+            '--task-source-request',
+            'request.json',
+            '--task-source-report',
+            'report.json',
+          ],
+        ]) {
+          await Promise.resolve(
+            expect(run(candidate)).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-CONTEXT-001',
+              message: 'Runtime initialization authority is unavailable.',
+            }),
+          );
+          expect(readFileSync(initializationPath)).toEqual(deniedReceipt);
+          expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+        }
+        const fileRoot = args.map((entry, index) =>
+          args[index - 1] === '--project-root' ? initializationPath : entry,
+        );
         await Promise.resolve(
-          expect(run(args)).rejects.toMatchObject({
-            code: 'GAP-VIDA-RUN-CONTEXT-001',
-            message: 'Runtime initialization authority is unavailable.',
+          expect(run(fileRoot)).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CLI-004',
+            message: 'The project root must be an existing canonical directory.',
           }),
         );
         expect(readFileSync(initializationPath)).toEqual(deniedReceipt);

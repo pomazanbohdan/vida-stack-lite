@@ -69,8 +69,79 @@ confirmed both the malformed prerequisites and the valid-control gate order.
 Root reviewed the exact diff and preserved all prior CAS cases. Subtract Before
 You Add keeps the existing case, and Guard the Context Window reuses the latest
 report and bounded Source sections. No inventory, hash, SDK build or filesystem
-survey is repeated. One changed-input stage follows normal commit/hooks and push
-termination. The existing projection files stay unstaged and producer-owned.
+survey is repeated. After commit/hooks and push terminated for
+`1f8f043c2e634e137ace1f819a2908bd7f34d3e2`, the sole producer completed
+`/workspace/contour-stage-voMuy1` in 198,922.835538 ms, exit 0, no timeout,
+complete capture, closed group, unchanged boot/image inputs and published report.
+Run `5f71a7fd-2a89-4f5a-93e5-96e7598db8b9` records F441/555, L2059/2860,
+S2220/3138, B2641/3660, max CC/entry CRAP501 and BLOCKED status. Native stderr
+records 133 pass, zero fail and 2,786 expectations. This adds 14 branch arms
+without closing the contour or establishing frozen/mutation qualification.
+Preserve `DIAG/operation-options-stage-20261025-01.log` in this WORK's directory
+and the native stage root. The image is
+`/workspace/.vida-quality-inputs/7b1fc1502e906cfcc5aeaa61032cdb1eef7aa7e3/repository`,
+Source tree `5d5f0cd7ad41809e04874a7620370550aeadd937`, input fingerprint
+`12149901ca99e2a140416cb2ed22a17b5c28a2e7e36ddc0e9df2e6b76e03c391`, manifest
+SHA-256 `379bf6d20e18d0c5f55ef71e9c28ccd9f7735bfcca4f047e81d2cdbdf91bc7b7`.
+The existing projection files stay unstaged and producer-owned.
+
+### Remaining parser boundary packet, 2026-10-25
+
+The latest report's retained branch maps identify ten zero arms in parseArgs,
+with three in the operation-guard interval. Root's owned
+`DIAG/report-branch-window-20261025.ts` reads only the existing report, validates
+its schema/map/count structure and prints selected zero-arm geometry, without
+Source AST/inventory/hash work. Its first diagnostic rejected an unrelated sparse
+implicit-if location; the native error remained in tool output and the stdout log
+is empty. Native stderr was not persisted for that diagnostic, a capture GAP.
+The shell also returned the later summary reader's exit instead of the diagnostic
+failure. The corrected invocation uses fail-fast shell handling, retains both
+streams, filters by declared branch range first and labels sparse implicit-if
+locations explicitly. Preserve the first empty stdout log and tool transcript;
+this was no suite failure, timeout or kill. Corrected selected results are in
+`DIAG/operation-options-remaining-20261025-02.log` and
+`DIAG/parser-remaining-20261025-01.log` under this WORK's directory.
+
+Root groups the supported remaining paths before another full stage: missing
+export manifest digest, forbidden report input on task-source inspect, valid
+task-source inspect/report still requiring trusted initialization, and an existing
+file refused as project root. The two latter controls reuse the existing denied
+initialization fixture and exact receipt/no-work afterimages, with no new bundle
+copy, DB admission, child observer or accepted operation. The file-root control
+also observes the original CLI-004 escaping its native catch unchanged.
+Scoped strict for 510 files and typed lint passed before the grouped target.
+Oxfmt formatted the one changed test file. The one target invocation passed three
+tests and 57 expectations with eight filtered cases in 2.08 s; preserve
+`DIAG/parser-boundaries-{static,format,target}-20261025-01.log` here.
+Independent Luna review confirmed the task-source inspect/report cases pass
+parser validation and stop at denied initialization authority before request/DB
+operations. A separate exact-counter review confirmed the retention correction:
+the touched task-source refusal case previously deleted its root unconditionally
+in finally, including failed assertions. Its completed flag now becomes true
+only after all four cases and unchanged-root assertions; failure retains the root
+and emits its locator. Scoped strict, typed lint and one-file format check passed
+again after that executable cleanup change, followed by the single affected
+target (one pass, eight expectations, 1.358 s). Preserve
+`DIAG/parser-boundaries-static-20261025-02.log` and
+`DIAG/parser-boundaries-retention-target-20261025-01.log` here. The earlier grouped
+target is reused for unchanged cases; there is no second grouped suite.
+
+Root accepts these narrow objective dispositions under TESTING, bound to report
+`5f71a7fd-2a89-4f5a-93e5-96e7598db8b9`, Source commit `1f8f043` and the execution
+image/tree/fingerprint/manifest recorded in the terminal section above. The test
+selection remains run-entrypoint and bun-cache-routing; production run.ts and its
+option declarations have not changed. New tests do not reattest the older counts.
+
+| Counter in parseArgs | Exact mapped expression and causal prerequisite | Independent review / remaining qualification |
+| --- | --- | --- |
+| ID346 arm0, `[0,1522]`, run.ts:3142:6-92 | `if (field === undefined) fail('GAP-VIDA-RUN-CLI-001', 'Unsupported launcher option.');` The earlier allowed-key guard permits only declared scalar keys or the two repeated keys. Repeated keys have already returned into their own branches; every remaining scalar maps to a defined field. The map and repeated declarations are recursively frozen. Only the fail arm is unreachable; the guard itself is observed. | Fresh exact-counter Luna review confirmed the Source and declaration invariant. An earlier review incorrectly quoted the neighboring allowed-key guard; Root rejected that ID346 conclusion before accepting this corrected independent trace. Reopen on changes to allowed keys, scalar/repeated declarations or parser ordering. |
+| ID364 arm1, `[43,0]`, run.ts:3227:57-59 | `values.expected_revision ?? ''`. The enclosing `changing` path requires the preceding `changing !== Boolean(values.expected_revision && values.expected_digest)` test to pass. Both strings must therefore exist and be nonempty; argv validation already rejects empty values. | Independent parser-boundary Luna review confirmed the fallback is unreachable for supported argv. Reopen on changes to nonempty validation, state-pair guard, expression or transitive parser contract. |
+| ID365 arm1, `[41,0]`, run.ts:3229:57-59 | `values.expected_digest ?? ''`, under the same nonempty pair and enclosing changing guards. | Same independent review and reopening conditions. |
+
+These skips leave raw counts, denominators and BLOCKED unchanged, add no hits,
+and grant neither exact100, queue advancement, frozen waiver nor mutation result.
+Supported export/task-source/file-root arms remain test obligations for the next
+single changed-input stage. Repeated audit instructions continue in this same cycle.
 
 ### Three-hour audit and scope-path packet, 2026-10-25
 
@@ -169,9 +240,9 @@ prerequisite. This permits queue progression, not numeric exact100.
 The retained investigation below records the native issue counter prerequisite.
 It grants no new CLI role, numeric result or objective skip. Root retains the
 existing CAS child and every help/prepared/issue/report/UNKNOWN control.
-The latest accepted focused diagnostic is scope-path run
-`08e61a34-5b39-4a21-b344-69d8d98a7a44`, with F441/555, L2059/2860,
-S2220/3138 and B2627/3660. Its status remains BLOCKED and full qualification is
+The latest accepted focused diagnostic is operation-option run
+`5f71a7fd-2a89-4f5a-93e5-96e7598db8b9`, with F441/555, L2059/2860,
+S2220/3138 and B2641/3660. Its status remains BLOCKED and full qualification is
 false. The earlier reference to 2820 as the latest measurement was stale.
 
 2824/2825 independently compare native SQLite interception with update hooks or
