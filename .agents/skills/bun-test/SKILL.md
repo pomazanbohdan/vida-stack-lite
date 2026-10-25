@@ -50,6 +50,14 @@ Journal and issued IDs instead of manufacturing rows. Compare the history's exac
 committed prefix and decoded uses after recovery, then exact bytes after denied
 reissue. An ImplementationResult consumer at issue time is checked in the returned
 issued packet; it does not require completing an unrelated validator wave.
+For an initial-Source continuation, keep its controlled expiry clock through
+writer preparation, report and owned close, then restore it. Restoring real time
+between continuation and writer acquisition can correctly fail lease regression.
+For paused read-only replacement, reuse the maintained pause helper and public
+repair ingress. Its request-only issued payload differs from ordinary run actions;
+validate those actual fields. Preserve the original UNKNOWN and use separate
+exclusive files for foreign and accepted reports. Check normalization bytes at
+the returned record path, with no additional scan or whole-tree hash.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual
 normalization and artifact admission. Use distinct action-bound tool-call refs

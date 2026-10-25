@@ -89,6 +89,8 @@ import { initializeProject } from '../bin/init.ts';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.js';
 import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.js';
+import { pauseReadonlyDispatchHostFixture } from './helpers/readonly-dispatch-host-fixture.js';
+import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import {
   admittedInput,
   continuationState,
@@ -1027,7 +1029,11 @@ import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../sr
 import type { WorkItemSelection } from '../src/config/runtime-config.ts';
 import { runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
-import { snapshotDeclaredSources, snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
+import {
+  snapshotDeclaredSources,
+  snapshotRuntimePackageSources,
+  compareScopedSourceSnapshots,
+} from '../src/orchestration/scoped-source-snapshot.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import {
   buildSessionBridgeRequest,
@@ -9689,6 +9695,305 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       else if (root) rmSync(root, { recursive: true, force: true });
     }, 60_000);
 
+    test('reports a fresh paused read-only replacement through public run', async () => {
+      let root: string | undefined;
+      let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+      let observerLedger: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
+      let completed = false;
+      const failures: unknown[] = [];
+      try {
+        fixture = await createInitialSourceWorkFixture({
+          cooperativeSynthesis: true,
+          researchSynthesis: true,
+          researchAssignments: 1,
+          onRoot: (value) => (root = value),
+        });
+        const sourceFixture = fixture;
+        const input = admittedInput(sourceFixture);
+        const initial = continuationState(sourceFixture);
+        const sourceScope = initial.journal.source_scope;
+        assert.ok(sourceScope && sourceFixture.store && sourceFixture.bridge && sourceFixture.ledger);
+        const projectId = sourceFixture.identity.project_ids[0];
+        const sourceEntry = sourceScope.entries[0];
+        const acceptedAcIds = initial.work.binding.ac_ids;
+        assert.ok(projectId && sourceEntry && acceptedAcIds.length > 0);
+        await bindControlledRuntimeInitialization(sourceFixture.root, sourceFixture.config, sourceFixture.store);
+        const pausedFixture = pauseReadonlyDispatchHostFixture(sourceFixture);
+        const oldItem = pausedFixture.item;
+        const oldActionId = oldItem.request.action_id;
+        const oldIssueId = pausedFixture.issueId;
+        const repair = [
+          '--kind',
+          'readonly-dispatch',
+          '--project-root',
+          sourceFixture.root,
+          '--repair-id',
+          pausedFixture.plan.repair_id,
+          '--actor',
+          pausedFixture.plan.actor,
+          '--timestamp',
+          pausedFixture.plan.timestamp,
+          '--projects',
+          sourceFixture.identity.project_ids.join(','),
+          '--work-id',
+          sourceFixture.identity.work_id,
+          '--attempt',
+          '1',
+          '--action-id',
+          oldActionId,
+          '--issue-id',
+          oldIssueId,
+          '--native-handle',
+          pausedFixture.plan.prior_native_handle,
+        ];
+        const planned = requireRecord(
+          await runReconcileArtifacts(['--mode', 'plan', ...repair]),
+          'readonly repair plan',
+        );
+        expect(planned.status).toBe('planned');
+        const applied = requireRecord(
+          await runReconcileArtifacts(['--mode', 'apply', ...repair.slice(0, 6)]),
+          'readonly repair apply',
+        );
+        expect(applied.status).toBe('prepared');
+        expect(applied.old_issue_outcome).toBe('unknown');
+
+        await sourceFixture.close();
+        const args = [
+          '--project-root',
+          sourceFixture.root,
+          '--repository',
+          sourceFixture.config.repository.repository_id,
+          '--project',
+          projectId,
+          '--work-path',
+          sourceFixture.documents[0],
+          '--work-id',
+          sourceFixture.identity.work_id,
+          '--attempt',
+          '1',
+          '--scope-digest',
+          sourceScope.digest,
+          '--team',
+          input.selection.team,
+          '--kind',
+          input.selection.kind,
+          '--intent',
+          input.selection.intent,
+          '--workflow',
+          initial.work.binding.workflow_id,
+        ];
+        const expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ];
+        const issuedRaw = requireRecord(
+          await run([...args, ...expected(pausedFixture.journal.version), '--issue-wave', 'true']),
+          'issued readonly replacement',
+        );
+        const issued = parseTestRunPayload({
+          schema: issuedRaw.schema,
+          status: issuedRaw.status,
+          state_version: issuedRaw.state_version,
+        });
+        assert.ok(Array.isArray(issuedRaw.issued_actions));
+        expect(issuedRaw.issued_actions).toHaveLength(1);
+        const replacement = requireRecord(issuedRaw.issued_actions[0], 'readonly replacement action');
+        const replacementRequest = requireRecord(replacement.request, 'readonly replacement request');
+        assert.ok(typeof replacement.issue_id === 'string' && typeof replacementRequest.action_id === 'string');
+        const replacementActionId = replacementRequest.action_id;
+        const replacementIssueId = replacement.issue_id;
+        expect(replacementRequest.action_id).not.toBe(oldActionId);
+        expect(replacement.issue_id).not.toBe(oldIssueId);
+        expect(replacementRequest.stage_id).toBe('research_parallel');
+        expect(replacement.instruction_activation).toBeDefined();
+        const sourceId = 'replacement-admitted-source';
+        const output = {
+          schema: 'VidaResearchObservationOutput/v1',
+          topic: 'Replacement read-only research',
+          objective: 'Report the admitted fixture source after replacement activation.',
+          question: 'What does the admitted fixture document support?',
+          source_refs: [
+            {
+              source_id: sourceId,
+              source_kind: 'internal',
+              locator: sourceEntry.path,
+              title: 'Admitted fixture document',
+              claim: `${acceptedAcIds.join(' ')}: the admitted source supports this read-only finding.`,
+              retrieved_at: '2026-10-25T00:00:00Z',
+              version_or_date: '2026-10-25',
+              independence_group: 'fixture',
+              digest: sourceEntry.sha256,
+            },
+          ],
+          findings: [
+            {
+              finding_id: 'replacement-admitted-source',
+              statement: 'The admitted fixture document is present.',
+              source_ids: [sourceId],
+              evidence_class: 'Code',
+              status: 'confirmed',
+            },
+          ],
+          uncertainties: [],
+          conflicts: [],
+          evidence_classes: ['Code'],
+          br_ids: [],
+          sr_ids: [],
+          ac_ids: [...acceptedAcIds],
+          gap_ids: [],
+          options: [
+            {
+              option_id: 'retain',
+              label: 'Retain evidence',
+              description: 'Preserve the bounded result.',
+              evidence_refs: [sourceId],
+            },
+          ],
+          recommendation: {
+            option_id: 'retain',
+            rationale: 'The admitted source supports the finding.',
+            evidence_refs: [sourceId],
+          },
+          completeness: {
+            status: 'pass',
+            required_questions: ['What does the admitted fixture document support?'],
+            answered_questions: ['What does the admitted fixture document support?'],
+            missing_questions: [],
+            material_gaps: [],
+            external_validation: {
+              required: false,
+              source_count: 0,
+              minimum_sources: 0,
+              status: 'not_required',
+              live_check: null,
+            },
+          },
+          readiness: 'informational',
+        };
+        const summary = JSON.stringify(output);
+        const reportPath = path.join(
+          sourceFixture.root,
+          '.agent',
+          'work',
+          sourceFixture.identity.work_id,
+          'replacement-report.json',
+        );
+        const observation = (reportSummary: string): SessionBridgeObservation => ({
+          schema: 'VidaSessionObservation/v1',
+          action_id: replacementActionId,
+          issue_id: replacementIssueId,
+          agent_id: 'fixture:replacement-researcher',
+          tool_call_ref: `fixture:replacement:${replacementActionId}`,
+          status: 'reported_complete',
+          summary: reportSummary,
+          output_digest: canonicalJsonDigest(reportSummary),
+          evidence_refs: [sourceId],
+        });
+        const foreignReportPath = path.join(path.dirname(reportPath), 'replacement-foreign-report.json');
+        writeFileSync(
+          foreignReportPath,
+          JSON.stringify(observation(JSON.stringify({ ...output, ac_ids: ['AC-FOREIGN'] }))),
+          { flag: 'wx' },
+        );
+        const workspaceId = deriveWorkspaceId(sourceFixture.config.repository.repository_id, sourceFixture.root);
+        const databaseRelativePath = path.relative(
+          sourceFixture.root,
+          sessionHandoffDatabasePath(sourceFixture.root, sourceFixture.config),
+        );
+        const inspectReplacementState = () =>
+          inspectHostWorkspaceDatabase(sourceFixture.root, databaseRelativePath, workspaceId);
+        const beforeDenied = inspectReplacementState();
+        const issuedJournal = beforeDenied.journals[0];
+        const activation = issuedJournal?.state.items[0]?.research_activation;
+        assert.ok(activation);
+        expect(issuedJournal?.state.items[0]?.research_normalization).toBeUndefined();
+        const activationHistoryFile = path.join(sourceFixture.root, activation.plan.history_path);
+        const activationHistory = readFileSync(activationHistoryFile);
+        const retrieved = requireRecord(
+          await run([...args, ...expected(requireStateVersion(issued.state_version)), '--issue-wave', 'true']),
+          'retrieved readonly replacement',
+        );
+        expect(retrieved.status).toBe('wave_retrieved');
+        expect(retrieved.issued_actions).toEqual(issuedRaw.issued_actions);
+        expect(retrieved.state_version).toEqual(issued.state_version);
+        expect(inspectReplacementState()).toEqual(beforeDenied);
+        expect(readFileSync(activationHistoryFile).equals(activationHistory)).toBe(true);
+        await assert.rejects(
+          run([...args, ...expected(requireStateVersion(issued.state_version)), '--report', foreignReportPath]),
+          { code: 'GAP-VIDA-RUN-REPORT-001', message: 'Replacement research output differs from required scope.' },
+        );
+        const afterDenied = inspectReplacementState();
+        expect(afterDenied).toEqual(beforeDenied);
+        writeFileSync(reportPath, JSON.stringify(observation(summary)), { flag: 'wx' });
+        const reported = requireRecord(
+          await run([...args, ...expected(requireStateVersion(issued.state_version)), '--report', reportPath]),
+          'replacement public report',
+        );
+        expect(reported.status).toBe('replacement_observed');
+        expect(reported.prior_issue_outcome).toBe('unknown');
+        expect(reported.issued_actions).toEqual([]);
+        expect(reported.next_actions).toEqual([]);
+        expect(reported.resume_status).toBe('ready_to_resume');
+        const afterReport = inspectReplacementState();
+        const resultingJournal = afterReport.journals[0];
+        assert.ok(resultingJournal);
+        const replacementResult = resultingJournal.state.items.find((item) => item.request.action_id === oldActionId);
+        expect(replacementResult?.issue_id).toBe(replacement.issue_id);
+        expect(replacementResult?.observation?.status).toBe('reported_complete');
+        expect(replacementResult?.observation).toEqual({ ...observation(summary), action_id: oldActionId });
+        const normalization = replacementResult?.research_normalization;
+        assert.ok(normalization);
+        const normalizedRecord = requireRecord(
+          parseJsonUnknown(readFileSync(path.join(sourceFixture.root, normalization.record_path), 'utf8')),
+          'normalized replacement research',
+        );
+        expect(normalizedRecord).toMatchObject({
+          schema: 'ResearchResult/v1',
+          work_item_id: sourceFixture.identity.work_id,
+          source_refs: output.source_refs,
+          ac_ids: acceptedAcIds,
+          digest: normalization.result_digest,
+        });
+        observerLedger = openConfiguredMastraSessionLedger(sourceFixture.root);
+        expect(observerLedger.replacementDispatch(sourceFixture.identity.work_id, 1, oldActionId)?.prior_issue_id).toBe(
+          oldIssueId,
+        );
+        completed = true;
+      } catch (error) {
+        failures.push(error);
+      } finally {
+        try {
+          observerLedger?.close();
+        } catch (error) {
+          failures.push(error);
+        }
+        try {
+          await fixture?.close();
+        } catch (error) {
+          failures.push(error);
+        }
+      }
+      if (failures.length > 0 || !completed) {
+        if (root) process.stderr.write(`Retained failed readonly replacement report fixture: ${root}\n`);
+        if (failures.length === 1) throw failures[0];
+        if (failures.length > 1)
+          throw new AggregateError(failures, 'Readonly replacement report or resource close failed');
+        throw new Error('Readonly replacement public report fixture did not complete');
+      }
+      if (root)
+        process.stderr.write(
+          JSON.stringify({
+            operation: 'readonly-replacement-public-report',
+            root,
+            cleanup: 'retained',
+            reason: 'original-readonly-issue-unknown',
+          }) + '\n',
+        );
+    }, 60_000);
+
     test('recovers an unexposed research wave after activation preparation fails', async () => {
       let root: string | undefined;
       let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
@@ -10415,6 +10720,178 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         fixture?.close(() => completed && !pendingAssuranceIssue);
       }
     }, 90_000);
+
+    test('accepts a changed initial Source writer report through public run', async () => {
+      let root: string | undefined;
+      let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+      let completed = false;
+      let clockHeld = false;
+      const failures: unknown[] = [];
+      try {
+        fixture = await createInitialSourceWorkFixture({ onRoot: (value) => (root = value) });
+        const sourceFixture = fixture;
+        const input = admittedInput(sourceFixture);
+        const clockFloor = expiredOwnerTime(sourceFixture);
+        setSystemTime(new Date(clockFloor));
+        clockHeld = true;
+        await prepareInitialSourceFrontier(sourceFixture, 'writer');
+        const originalReceipt = sourceFixture.store?.readInitialSourceContinuationReceipt(sourceFixture.identity, 1);
+        assert.ok(originalReceipt);
+        const issued = await issueInitialSourceFixtureWriter(sourceFixture);
+        const before = continuationState(sourceFixture);
+        const item = before.journal.items[0];
+        const sourceScope = before.journal.source_scope;
+        assert.ok(item?.issue_id && sourceScope && sourceFixture.store);
+        expect(item.issue_id).toBe(issued.writer.issue_id);
+        expect(item.host_reservation?.approvalAction).toBe('source.write');
+        expect(item.host_reservation?.receipt.attempt.attempt_id).toBe(issued.hostAttemptId);
+        expect(item.request.scope_digest).toBe(originalReceipt.request.currentSourceScope.digest);
+        expect(sourceScope.digest).toBe(originalReceipt.request.currentSourceScope.digest);
+        const projectId = sourceFixture.identity.project_ids[0];
+        assert.ok(projectId);
+        const args = [
+          '--project-root',
+          sourceFixture.root,
+          '--repository',
+          sourceFixture.config.repository.repository_id,
+          '--project',
+          projectId,
+          '--work-path',
+          sourceFixture.documents[0],
+          '--work-id',
+          sourceFixture.identity.work_id,
+          '--attempt',
+          '1',
+          '--scope-digest',
+          originalReceipt.request.currentSourceScope.digest,
+          '--team',
+          input.selection.team,
+          '--kind',
+          input.selection.kind,
+          '--intent',
+          input.selection.intent,
+          '--workflow',
+          'task_execution',
+        ];
+        const expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ];
+        const changedPath = sourceFixture.documents[0];
+        writeFileSync(
+          path.join(sourceFixture.root, changedPath),
+          readFileSync(path.join(sourceFixture.root, changedPath), 'utf8') + 'public initial-source writer report\n',
+        );
+        const sourceAfter = snapshotDeclaredSources(
+          requireSafeRepositoryAccess(sourceFixture.root),
+          sourceFixture.documents,
+        );
+        const changedPaths = compareScopedSourceSnapshots(sourceScope, sourceAfter)
+          .map((change) => change.path)
+          .sort();
+        expect(changedPaths).toEqual([changedPath]);
+        const reportPath = path.join(
+          sourceFixture.root,
+          '.agent',
+          'work',
+          sourceFixture.identity.work_id,
+          'initial-source-writer-report.json',
+        );
+        const summary = 'The issued initial Source writer changed one implementation path.';
+        const observation: SessionBridgeObservation = {
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          host_attempt_id: issued.hostAttemptId,
+          agent_id: 'fixture:initial-source-public-writer',
+          tool_call_ref: 'fixture:initial-source-public-writer-call',
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          changed_paths: changedPaths,
+          evidence_refs: ['fixture://initial-source-public-writer'],
+        };
+        await assert.rejects(
+          run([...args, ...expected(before.journalVersion), '--issue-wave', 'true']),
+          /Initial Source continuation does not match the current scoped Source snapshot/,
+        );
+        expect(continuationState(sourceFixture)).toEqual(before);
+        const foreignReportPath = path.join(path.dirname(reportPath), 'initial-source-writer-foreign-report.json');
+        writeFileSync(
+          foreignReportPath,
+          JSON.stringify({ ...observation, action_id: canonicalJsonDigest('foreign initial-source action') }),
+          { flag: 'wx' },
+        );
+        await assert.rejects(
+          run([...args, ...expected(before.journalVersion), '--report', foreignReportPath]),
+          /Initial Source continuation does not match the current scoped Source snapshot/,
+        );
+        expect(continuationState(sourceFixture)).toEqual(before);
+        writeFileSync(reportPath, JSON.stringify(observation), { flag: 'wx' });
+        const raw = requireRecord(
+          await runSuccessfully([...args, ...expected(before.journalVersion), '--report', reportPath]),
+          'accepted public initial Source writer report',
+        );
+        const result = parseTestRunPayload(raw);
+        expect(raw.mastra_run_id).toBe(before.work.execution.run_id);
+        const after = continuationState(sourceFixture);
+        expect(result.state_version).toEqual(after.journalVersion);
+        expect(sourceFixture.store.readInitialSourceContinuationReceipt(sourceFixture.identity, 1)).toEqual(
+          originalReceipt,
+        );
+        const observedItem = [...after.journal.completed.flatMap((wave) => wave.items), ...after.journal.items].find(
+          (candidate) => candidate.request.action_id === item.request.action_id,
+        );
+        expect(observedItem?.observation).toEqual(observation);
+        const completedAttempt = after.work.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === issued.hostAttemptId,
+        );
+        expect(completedAttempt).toMatchObject({
+          status: 'completed',
+          result: observation,
+          result_digest: canonicalJsonDigest(observation),
+        });
+        expect(after.journal.source_scope).toEqual(sourceAfter);
+        expect(after.work.execution.run_id).toBe(before.work.execution.run_id);
+        expect(
+          after.ledger.claims.some(
+            (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+          ),
+        ).toBe(false);
+        const reportBytes = readFileSync(reportPath);
+        const retried = requireRecord(
+          await runSuccessfully([...args, ...expected(after.journalVersion), '--report', reportPath]),
+          'retried public initial Source writer report',
+        );
+        expect(retried.mastra_run_id).toBe(before.work.execution.run_id);
+        expect(continuationState(sourceFixture)).toEqual(after);
+        expect(readFileSync(reportPath).equals(reportBytes)).toBe(true);
+        completed = true;
+      } catch (error) {
+        failures.push(error);
+      } finally {
+        try {
+          await fixture?.close();
+        } catch (error) {
+          failures.push(error);
+        }
+        try {
+          if (clockHeld) setSystemTime();
+        } catch (error) {
+          failures.push(error);
+        }
+      }
+      if (failures.length > 0 || !completed) {
+        if (root) process.stderr.write(`Retained failed initial Source public report fixture: ${root}\n`);
+        if (failures.length === 1) throw failures[0];
+        if (failures.length > 1)
+          throw new AggregateError(failures, 'Initial Source public report assertions or resource close failed');
+        throw new Error('Initial Source public report fixture did not complete');
+      }
+      if (root) rmSync(root, { recursive: true, force: true });
+    }, 60_000);
 
     test('recovers an authorized source lease after accepted research through public run', async () => {
       let root: string | undefined;

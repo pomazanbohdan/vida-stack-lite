@@ -135,6 +135,21 @@ the completed developer's current ImplementationResult, exposes its exact packet
 fingerprint and changed paths, and acquires no new Host writer attempt or file right.
 Neither controlled report nor local issue establishes native consumer execution.
 
+Public initial-Source report coverage reuses the real continuation and issued
+writer helpers. A scoped one-file change denies another issue and a foreign
+report without changing the continuation snapshot. The matching report commits
+the actual observation, current Source scope and completed Host attempt on the
+original run, releases file claims and supports exact current-version retry.
+Keep the controlled expiry clock until resources close, and preserve failed roots.
+
+Fresh read-only replacement coverage uses the maintained suspension helper and
+public repair plan/apply. Require a new dispatch and issue while retaining the
+old issue as UNKNOWN. Retrieval preserves the same IDs, inspected state and
+activation-history bytes. A foreign-AC report refuses unchanged state; the valid
+report binds the projected logical action and actual replacement issue, and its
+normalized record contains the admitted Source and accepted ACs. Retain the root
+and all original unknown evidence. These are controlled unit observations.
+
 Once the actual initial or delivered continuation creates its receipt table,
 reuse its successful request with current Host/Ledger/Journal versions and an
 absent attempt. Require the owning public refusal, exact unchanged state and

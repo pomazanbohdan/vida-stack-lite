@@ -38,6 +38,93 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Public initial and replacement reports packet, 2026-10-25
+
+Root resumes6903264e74e1ff0956ed4213d86050d53b2e57f7, same bun-cli-run/F/L/S/B.
+Only the producer-owned projection files are dirty, index empty; the bounded
+process view finds no live Bun/build/Git/producer. No second cycle, worktree or
+writer is started. Runtime CLI remains absent and Vex stale; reuse the checked-in
+lifecycle and bounded Source fallback. Pstack's installed cache and freshly
+prepared prompt-only native Luna contracts remain available. Root owns checks,
+Git, numeric production and integration of private proposals.
+
+The fixed audit window16:34:33–19:34:33UTC contains one distinct run27f66ef4,
+not two runs from its paired projection rows. Literal
+DIAG/audit-20261025-window-06.log reuses Rrq0WT execution/stderr through the existing
+reader:152pass,0fail,3784expectations,253804.725953ms stage elapsed, complete capture
+and closed group. Window gain is+5F,+27L,+28S,+12B with unchanged denominators.
+Those existing results do not qualify the new packet. Platform-wide tool-call
+and billed-token totals remain unavailable.
+
+| Order and parallelism | Evidence and decision |
+| --- | --- |
+| Disjoint designs/private proposals, scoped strict/configured lint, paired targets, independent review, one changed-input stage | Selected. Final pair03 passes2cases/52expectations in25.30s, bodies5260.73/18575.22ms. Both existing60s family bounds remain. |
+| Full stage per helper/oracle correction | Rejected. The observed stage above costs253804.725953ms. Static/caller/clock corrections use focused checks and retained failures; SDK readiness stays with its existing owner. |
+| Numeric2x/4x, concurrent compiler/index/cleanup | No qualified matched receipt exists. Native readers and proposal paths are disjoint; numeric1x and sequential Git/hooks/push remain. Timing differences between changed inputs are not speedup measurements. |
+
+Subtract Before You Add reuses the initial-source frontier/writer and read-only
+pause helpers rather than porting the1104-line installed replacement fixture.
+The first replacement author returned an empty proposal over an assumed absent
+report builder. Root rejected that premise: the current selected test already
+contains a compatible accepted-initial-research report shape. A fresh author
+adapted those actual Source/scope fields in PATCH/replacement-public-20261025-02.
+No unavailable API or objective skip follows from that rejected fixture gap.
+Both complete diffs were checked with git apply --check before integration;
+Root preserves unrelated changes and does not accept whole-file replacement.
+
+The initial public report starts from a real continuation receipt, suspended
+engine and issued source.write reservation. One owned Source change denies
+another issue and a foreign report without Host/Journal/ledger mutation. Exact
+matching report commits the actual observation and current Source scope on the
+same run, releases file claims and accepts current-version retry unchanged.
+Target01 correctly failed claim renewal time regressed after the helper's expiry
+clock had been restored too early;8w9mGM remains retained. Root now holds the
+existing controlled clock through owned close, restores it on every path and
+preserves the lease guard. Target02 passes16expectations; target03 passes19 with
+retry. Missing compare import and a DTO-only type assumption were corrected
+before their affected runtime invocations. No product guard or budget changed.
+
+Replacement uses fresh cooperative research, the existing pause helper's actual
+suspendHistoricalOwnerWork and public repair plan/apply. Issue/retrieval preserves
+the new dispatch/issue and history bytes while retaining the original UNKNOWN.
+Foreign ACs refuse unchanged state; a matching controlled report yields the
+actual projected observation and normalized ResearchResult record. Raw replacement
+payload has request but no ordinary action DTO; Root validates its actual fields
+instead of forcing the generic action parser. Root also removes duplicate closes,
+post-report wrong-phase oracles and the proposal's unsafe original-UNKNOWN deletion.
+The private02 proposal remains unvalidated history. Canonical PASS retains its
+fixture root and never reports or retries the old issue as success.
+
+Literal DIAG/replacement-public-static-20261025-01.log passes strict510 then
+stops at configured template-expression lint; the corrected target01 passes
+26expectations in6.39s. Pair01 stops on widened observation literals; explicit
+SessionBridgeObservation preserves typing without casts. Pair02 passes52expectations
+in21.23s. Final literal DIAG/public-reports-target-20261025-03.log includes
+strict510, configured zero-warning lint and formatting PASS,2pass/0fail/52expectations,
+25.30s. It checks normalized artifact contents as well as journal metadata.
+Literal DIAG/public-reports-independent-review-20261025-01.md independently reads
+the exact Source/receipts and passes. All failed logs and original roots remain.
+Reports use distinct exclusive files, so a later accepted request cannot overwrite
+the foreign refusal input. Controlled observations establish no consumer dispatch,
+operational DB cutover or Runtime acceptance.
+
+Candidate480–484 and488–490 hits await one complete stage. The false ownership
+arm for490 is not established by a fixture whose declared paths are all owned;
+do not add a foreign Source file or manufacture history for that arm. Keep445
+and all other unvisited/undispositioned paths OPEN. Current published numbers
+remain Source78413d9b/run27f66ef4 until the new terminal outcome.
+
+Literal DIAG/audit-filesystems-20261025-06.json samples each filesystem once:
+checkout, Rrq0WT scratch and quality inputs share dev27,9761161216available bytes
+against2147483648, headroom7613677568. .vida-retained is absent/no-op. No measured
+capacity GAP. Prior reference/dependency custody still defers exact cleanup
+targets and completed proposal directories. No deletion, relocation, retirement,
+tmpfs evidence move, automation or timer/schedule change.
+
+- [x] Frame, bounded designs and private proposals, Root integration.
+- [x] Scoped static checks, exact paired targets and independent review.
+- [ ] Normal commit/hooks/push, one changed-input stage, terminal documentation.
+
 ### Research preparation recovery packet, 2026-10-25
 
 Root resumes6f39488bc3563ead6bec49243e3e2bc3c0814ab5 with only the two
