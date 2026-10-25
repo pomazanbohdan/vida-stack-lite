@@ -8536,15 +8536,37 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 60_000);
 
-    test('persists maintained synthesis through public report before the unissued developer frontier', async () => {
+    test('persists maintained synthesis and issues the configured developer frontier without dispatch', async () => {
       let root: string | undefined;
       let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
       let sessionLedger: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
       let completed = false;
+      let developerIssueRetained = false;
       const failures: unknown[] = [];
       try {
         fixture = await createInitialSourceWorkFixture({
           researchSynthesis: true,
+          configure: (config) => {
+            const contextSource = config.knowledge.sources.find((source) => source.id === 'project-context');
+            if (!contextSource || contextSource.kind !== 'local' || contextSource.location !== 'AGENT.sidecar.md')
+              throw new Error('Configured context fixture source must be its owned AGENT.sidecar.md file');
+            const taskWorkflow = config.workflows.task_execution;
+            if (!taskWorkflow) throw new Error('Configured context fixture task workflow is unavailable');
+            let developerStages = 0;
+            const stages = taskWorkflow.stages.map((stage) => {
+              if (stage.id !== 'develop_task') return stage;
+              developerStages += 1;
+              return { ...stage, context_source_ids: [contextSource.id] };
+            });
+            if (developerStages !== 1) throw new Error('Configured context fixture developer stage is ambiguous');
+            return {
+              ...config,
+              workflows: {
+                ...config.workflows,
+                task_execution: { ...taskWorkflow, stages },
+              },
+            };
+          },
           onRoot: (value) => (root = value),
         });
         const sourceFixture = fixture;
@@ -8667,7 +8689,24 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const persistedJournal = inspected.journals.find(
           (entry) => entry.work_id === sourceFixture.identity.work_id && entry.attempt === 1,
         )?.state;
-        assert.ok(persistedWork && persistedJournal);
+        const persistedLedger = inspected.ledger;
+        assert.ok(persistedWork && persistedJournal && persistedLedger);
+        const priorWriterLease = persistedWork.lease;
+        assert.ok(priorWriterLease);
+        const priorWriterTicket = persistedLedger.tickets.find(
+          (ticket) => ticket.ticket_id === priorWriterLease.ticket_id,
+        );
+        assert.ok(priorWriterTicket);
+        expect(priorWriterTicket.status).toBe('active');
+        expect(priorWriterTicket.thread_id).toBe(priorWriterLease.thread_id);
+        expect(priorWriterTicket.generation).toBe(priorWriterLease.generation);
+        expect(priorWriterTicket.source_revision).toBe(persistedWork.binding.work_source_revision);
+        expect(persistedWork.binding.work_source_revision).toBe(sourceFixture.originalSource.digest);
+        const writerResources = [
+          ...persistedWork.binding.implementation_paths.map((implementationPath) => 'file:' + implementationPath),
+          ...priorWriterTicket.exclusive_resources.filter((resource) => !resource.startsWith('file:')),
+        ].sort();
+        expect(priorWriterTicket.exclusive_resources.some((resource) => resource.startsWith('file:'))).toBe(false);
         const completedSynthesis = persistedJournal.completed
           .flatMap((wave) => wave.items)
           .find((item) => item.request.action_id === produced.originalItem.request.action_id);
@@ -8711,6 +8750,195 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             .some((item) => item.request.stage_id === 'develop_task' && item.issue_id !== null),
         ).toBe(false);
         expect(readFileSync(reportPath)).toEqual(reportBytes);
+
+        const developerItem = persistedJournal.items.find((item) => item.request.stage_id === 'develop_task');
+        assert.ok(developerItem);
+        const implementationPaths = reportedWork.lifecycle.scope.implementation_paths;
+        expect(implementationPaths.length).toBeGreaterThan(0);
+        const implementationBytes = implementationPaths.map(
+          (implementationPath) =>
+            [implementationPath, readFileSync(path.join(sourceFixture.root, implementationPath))] as const,
+        );
+        const contextSourceBytes = readFileSync(path.join(sourceFixture.root, 'AGENT.sidecar.md'));
+        const contextSourceSha256 = createHash('sha256').update(contextSourceBytes).digest('hex');
+        const issueArgs = [...args, ...expected(current.version), '--issue-wave', 'true'];
+        const issuedValue = await runSuccessfully(issueArgs);
+        const issueResponsePath = path.join(
+          sourceFixture.root,
+          '.agent/work',
+          sourceFixture.identity.work_id,
+          'developer-issue-return.json',
+        );
+        const issueResponseBytes = `${JSON.stringify(issuedValue, null, 2)}\n`;
+        if (Buffer.byteLength(issueResponseBytes) > 32 * 1024)
+          throw new Error('Public developer issue response exceeds the bounded retained evidence size');
+        writeDurable(issueResponsePath, issuedValue);
+        const issuedRaw = requireRecord(issuedValue, 'Public developer issue result');
+        const issued = parseTestRunPayload(issuedRaw);
+        expect(issued.status).toBe('wave_issued');
+        const issuedActions = requireIssuedActions(issued);
+        expect(issuedActions).toHaveLength(1);
+        const issuedDeveloper = issuedActions[0];
+        assert.ok(issuedDeveloper);
+        const developerIssueId = issuedDeveloper.issue_id;
+        assert.ok(typeof developerIssueId === 'string');
+        const developerHostAttemptId = issuedDeveloper.host_attempt_id;
+        assert.ok(typeof developerHostAttemptId === 'string');
+        expect(issuedDeveloper.request).toEqual(developerItem.request);
+        expect(issuedDeveloper.request.schema).toBe('VidaSessionRequest/v1');
+        expect(issuedDeveloper.request.run_id).toBe(current.state.run_id);
+        expect(issuedDeveloper.request.action_id).toBe(developerItem.request.action_id);
+        expect(issuedDeveloper.request.workflow_id).toBe('task_execution');
+        expect(issuedDeveloper.request.stage_id).toBe('develop_task');
+        expect(issuedDeveloper.request.scope_digest).toBe(sourceFixture.originalSource.digest);
+        expect(issuedDeveloper.request.assignment_index).toBe(0);
+        expect(issuedDeveloper.action.stage_kind).toBe('develop');
+        expect(issuedDeveloper.action.role).toBe('developer-orchestrator');
+        expect(issuedDeveloper.action.mutation_scope).toBe('repository_source');
+        expect(issuedDeveloper.action.resolved_profile.profile_id).toBe('executor');
+        expect(issuedDeveloper.action.resolved_profile.mutation_scope).toBe('repository_source');
+        expect(issuedDeveloper.action.consumes).toEqual(['DevelopmentTaskPacket/v1']);
+        expect(issuedDeveloper.action.produces).toEqual(['ImplementationResult/v1']);
+        const developerContext = issuedDeveloper.configured_context;
+        assert.ok(developerContext);
+        expect(developerContext.schema).toBe('ConfiguredContext/v1');
+        expect(developerContext.work_id).toBe(sourceFixture.identity.work_id);
+        expect(developerContext.attempt).toBe(1);
+        expect(developerContext.entries).toEqual([
+          {
+            id: 'project-context',
+            kind: 'local',
+            location: 'AGENT.sidecar.md',
+            title: 'Project-owned requirements and source map',
+            status: 'local_excerpt',
+            sha256: contextSourceSha256,
+            bytes: contextSourceBytes.length,
+            content: contextSourceBytes.toString('utf8'),
+            truncated: false,
+          },
+        ]);
+        expect(developerContext.digest).toMatch(/^[a-f0-9]{64}$/u);
+        expect(issuedDeveloper.request.configured_context_digest).toBe(developerContext.digest);
+        expect(issuedDeveloper.request.configured_context_files).toEqual([
+          {
+            path: 'AGENT.sidecar.md',
+            sha256: contextSourceSha256,
+          },
+        ]);
+        const developerPacket = requireRecord(issuedDeveloper.development_packet, 'Issued DevelopmentTaskPacket');
+        const packetId = developerPacket.packet_id;
+        assert.ok(typeof packetId === 'string');
+        const packetDigest = developerPacket.digest;
+        assert.ok(typeof packetDigest === 'string');
+        expect(developerPacket.schema).toBe('DevelopmentTaskPacket/v1');
+        expect(developerPacket.work_item_id).toBe(sourceFixture.identity.work_id);
+        expect(developerPacket.attempt).toBe(1);
+        expect(developerPacket.team_id).toBe(input.selection.team);
+        expect(developerPacket.workflow_id).toBe('task_execution');
+        expect(developerPacket.source_revision).toBe(sourceFixture.originalSource.digest);
+        expect(packetId).toMatch(/^[A-Za-z0-9._:-]+$/u);
+        expect(packetDigest).toMatch(/^[a-f0-9]{64}$/u);
+        expect(developerPacket.owned_paths).toEqual(reportedWork.lifecycle.scope.implementation_paths);
+        expect(developerPacket.documentation_refs).toEqual([...sourceFixture.documents, 'AGENT.sidecar.md'].sort());
+
+        sessionLedger = openConfiguredMastraSessionLedger(sourceFixture.root);
+        const issuedJournal = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(issuedJournal);
+        expect(issued.state_version).toEqual(issuedJournal.version);
+        const pendingDeveloper = issuedJournal.state.items.find(
+          (item) => item.request.action_id === developerItem.request.action_id,
+        );
+        assert.ok(pendingDeveloper);
+        const hostReservation = pendingDeveloper.host_reservation;
+        assert.ok(hostReservation);
+        expect(hostReservation.schema).toBe('WorkflowSessionReservation/v1');
+        expect(hostReservation.request.workItemId).toBe(sourceFixture.identity.work_id);
+        expect(hostReservation.request.workflowId).toBe('task_execution');
+        expect(hostReservation.request.stageId).toBe('develop_task');
+        expect(hostReservation.request.assignmentIndex).toBe(0);
+        expect(hostReservation.receipt.identity).toEqual(sourceFixture.identity);
+        expect(pendingDeveloper.issue_id).toBe(developerIssueId);
+        expect(hostReservation.receipt.attempt.attempt_id).toBe(developerHostAttemptId);
+        expect(hostReservation.approvalAction).toBe('source.write');
+        expect(hostReservation.receipt.attempt.status).toBe('started');
+        expect(pendingDeveloper.observation).toBeNull();
+        expect(
+          issuedJournal.state.items.every(
+            (item) => item.request.stage_id !== 'develop_task' || item.observation === null,
+          ),
+        ).toBe(true);
+        const issuedHost = sessionLedger.hostState.readHostStateSnapshot(sourceFixture.identity);
+        const issuedWork = issuedHost.work;
+        const issuedLedger = issuedHost.ledger;
+        assert.ok(issuedWork);
+        assert.ok(issuedLedger);
+        assert.ok(issuedHost.workVersion);
+        expect(hostReservation.receipt.workVersion).toEqual(issuedHost.workVersion);
+        const issuedLease = hostReservation.receipt.attempt.lease;
+        assert.ok(issuedLease);
+        expect(issuedLease.thread_id).toBe(priorWriterLease.thread_id);
+        expect(issuedLease.generation).toBe(persistedLedger.open_generation);
+        expect(issuedLease.ticket_id).not.toBe(priorWriterLease.ticket_id);
+        expect(hostReservation.authorization?.approval?.status).toBe('commit_unknown');
+        const activeWriterTicket = issuedLedger.tickets.find((ticket) => ticket.ticket_id === issuedLease.ticket_id);
+        assert.ok(activeWriterTicket);
+        expect(activeWriterTicket.ticket_id).toBeTruthy();
+        expect(activeWriterTicket.ticket_id).not.toBe(priorWriterTicket.ticket_id);
+        expect(activeWriterTicket.work_id).toBe(sourceFixture.identity.work_id);
+        expect(activeWriterTicket.thread_id).toBe(issuedLease.thread_id);
+        expect(activeWriterTicket.generation).toBe(issuedLease.generation);
+        expect(activeWriterTicket.source_revision).toBe(persistedWork.binding.work_source_revision);
+        expect(activeWriterTicket.status).toBe('active');
+        expect(activeWriterTicket.exclusive_resources).toEqual(writerResources);
+        expect(activeWriterTicket.active_resources).toEqual(writerResources);
+        expect(activeWriterTicket.blocked_resources).toEqual([]);
+        expect(activeWriterTicket.claim_ids).toHaveLength(1);
+        const activeClaimId = activeWriterTicket.claim_ids[0];
+        assert.ok(activeClaimId);
+        expect(activeClaimId).not.toBe(priorWriterTicket.claim_ids[0]);
+        const activeWriterClaim = issuedLedger.claims.find((claim) => claim.claim_id === activeClaimId);
+        assert.ok(activeWriterClaim);
+        expect(activeWriterClaim.ticket_id).toBe(activeWriterTicket.ticket_id);
+        expect(activeWriterClaim.work_id).toBe(activeWriterTicket.work_id);
+        expect(activeWriterClaim.thread_id).toBe(issuedLease.thread_id);
+        expect(activeWriterClaim.generation).toBe(issuedLease.generation);
+        expect(activeWriterClaim.resources).toEqual(writerResources);
+        expect(activeWriterClaim.status).toBe('active');
+        expect(issuedLedger.claims.filter((claim) => claim.ticket_id === activeWriterTicket.ticket_id)).toEqual([
+          activeWriterClaim,
+        ]);
+        const releasedPriorTicket = issuedLedger.tickets.find(
+          (ticket) => ticket.ticket_id === priorWriterTicket.ticket_id,
+        );
+        assert.ok(releasedPriorTicket);
+        expect(releasedPriorTicket.status).toBe('released');
+        expect(releasedPriorTicket.active_resources).toEqual([]);
+        expect(issuedWork.lease).toEqual(issuedLease);
+        const startedAttempt = issuedWork.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === developerHostAttemptId,
+        );
+        assert.ok(startedAttempt);
+        expect(startedAttempt).toEqual(hostReservation.receipt.attempt);
+        expect(startedAttempt.status).toBe('started');
+        expect(startedAttempt.stage_id).toBe('develop_task');
+        expect(startedAttempt.assignment_index).toBe(0);
+        const expectedWorkRevision = persistedWork.revision + 2;
+        expect(issuedWork).toEqual({
+          ...persistedWork,
+          revision: expectedWorkRevision,
+          lease: issuedLease,
+          execution: {
+            ...persistedWork.execution,
+            assignment_attempts: [...persistedWork.execution.assignment_attempts, hostReservation.receipt.attempt],
+          },
+          lifecycle: {
+            ...persistedWork.lifecycle,
+            revision: expectedWorkRevision,
+          },
+        });
+        for (const [implementationPath, bytes] of implementationBytes)
+          expect(readFileSync(path.join(sourceFixture.root, implementationPath))).toEqual(bytes);
+        developerIssueRetained = true;
         completed = true;
       } catch (error) {
         failures.push(error);
@@ -8741,7 +8969,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           throw new AggregateError(failures, 'Native synthesis CLI operation or resource close failed');
         throw new Error('Native synthesis CLI fixture did not complete');
       }
-      if (root) rmSync(root, { recursive: true, force: true });
+      if (root && developerIssueRetained) process.stderr.write(`Retained pending developer issue fixture: ${root}\n`);
+      else if (root) rmSync(root, { recursive: true, force: true });
     }, 60_000);
 
     test('refuses partially issued research preparation before context admission through public run', async () => {

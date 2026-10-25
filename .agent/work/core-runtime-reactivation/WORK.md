@@ -83,6 +83,73 @@ tests passed 194 expectations in 39.64 s. Preserve this WORK's
 new numeric run yet. Root waits for the related author lane before the next
 full stage.
 
+### Fresh configured developer issue packet — checked, 2026-10-25
+
+Root reuses the current report's missing-function geometry in the same
+bun-cli-run/F/L/S/B cycle. Native Luna extended the existing genuine maintained
+synthesis/prewriter case rather than constructing another fixture or accepted
+history. The fixture's existing configure callback selects the template-declared
+project-context local AGENT.sidecar.md source only for develop_task before
+admission, config digest or persistence. Research/prewriter retain their normal
+empty context. Actual context bytes/SHA, identity/digest, request context files
+and packet documentation refs are checked; the context hash is computed once.
+
+Independent Source review corrected an earlier partial reader's false premise:
+executor is repository_source. Public issue acquires the local fixture writer
+lease and reserves a Host assignment; it does not dispatch it. The admitted
+session's dispatch capability rejects unavailable caller-session tools; this
+CLI branch reserves and returns the action without entering executable-stage
+dispatch or Runtime/loader/DB cutover. This is a temporary unit Host/Journal
+state transition, not an operational consumer action. Returned actions are never
+executed, reported, retried, canceled or settled. started/commit_unknown remains
+retained even after the test passes.
+
+The final test checks actual request/run/work/attempt/role/profile/packet
+bindings, active ticket/claim resources and owner, release of the prior ticket,
+and exact Work afterimage. Lease acquisition changes Work lease/revision; claim
+appends one attempt and advances Work/lifecycle once more. These two declared
+changes explain +2 revisions. It does not reconstruct allocator ID formulas,
+conflict selection, ledger operation payloads or TTL timing ranges. The existing
+outer sessionLedger/failures owner preserves assertion and close failures.
+Implementation bytes stay unchanged; public raw return is saved durably within
+32KiB under the fresh unit work directory before result assertions.
+
+Scoped strict510, actual configured typed lint with zero warnings and format
+passed in literal DIAG/fresh-developer-issue-static-20261025-04.log. Target03
+passed1 test/0 fail/124 expectations in17.93s, body16692.40ms under unchanged60s.
+Pending PASS root `/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-Eb3lwL`
+remains retained with its exact return and Host/Journal/lease/attempt state.
+This is behavior evidence, not new F/L/S/B or Runtime qualification yet.
+
+All earlier failed attempts remain separate. Static01 caught unsupported
+request.work_id/attempt accesses; the actual VidaSessionRequest binds run_id,
+while context/packet/reservation bind work and attempt. Target01 expected context
+from a default stage with no selected sources; that null followed the contract,
+not a parser defect. Its pending failed root AG4rqj is preserved. Target02 then
+passed context/packet/reservation checks but assumed no new writer ticket; Source
+and the afterimage showed the legitimate lease transition and extra revision.
+Its failed pending root KY5bRP is preserved. Both roots share the disk-backed
+prefix `/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-`.
+Neither is replayed, read as new authority, modified or deleted.
+
+Source-only independent reviews are literal
+DIAG/fresh-developer-issue-review-20261025-01.md,
+DIAG/developer-return-shape-trace-20261025-01.md and
+DIAG/developer-context-configuration-review-20261025-01.md. Root reviewed the
+final simplified lease delta against the two actual producers and executed its
+checks. A fresh finalizer replaced the terminal initial author for simplification.
+The initial author briefly edited/restored one canonical import contrary to its
+private-only contract; no producer was active. Root reconstructed retained
+base+diff and proved all561687 canonical bytes match. Preserve
+DIAG/fresh-developer-canonical-restoration-20261025-02.json; its earlier stdin
+formatter method returned only65536bytes and is explicitly incomplete evidence,
+not proof of a Source difference. No immutable measured image was modified.
+
+The whole related packet is stable before another full run: normal commit/hooks
+terminal, ordinary push terminal, then the sole changed-input producer. No
+additional numeric suites, install, inventory/hash pass, budget change, cleanup,
+queue advance or second automation. Existing retirement/custody deferrals remain.
+
 ### Deadline and stage-context packet — terminal, 2026-10-25
 
 Commit `897ebfbdb72f922150248533ee7f6a505e9b0e35` passed normal hooks and
