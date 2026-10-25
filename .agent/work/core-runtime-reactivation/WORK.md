@@ -107,7 +107,48 @@ All original5s/90s case bounds and the330s contour bound stay unchanged.
 - [x] Frame: existing7190–7600 function query and complete related branch.
 - [x] Collect/reproduce: two maintained cases; exact public frontier defect and refusal.
 - [x] Integrate: one-input product fix, strict/lint/targets and independent review.
-- [ ] Normal terminal hooks/push, then one changed-input producer and terminal publication.
+- [x] Normal75c78586 hooks/push, one changed-input producer hNBezx, terminal publication.
+
+Terminal: commit75c7858615b1dfa428be81217649a19114299b7d passed normal hooks and
+ordinary main push before the sole changed-input stage. /workspace/contour-stage-hNBezx
+completed in217827.412892ms, exit0, no signal, timeout or spawn error;
+capture complete, group closed, boot/image inputs unchanged, publication published.
+Native145pass,0fail,3672expectations and212.27s suite. Accepted-delivery public
+case passed15066.76ms and delivered-review case2230.93ms. No matched-input
+benchmark attributes the elapsed change to an optimization.
+
+Run05129b47-f838-483f-98c6-a915c05b121a records F490/555, L2260/2873,
+S2445/3157, B2905/3686: delta from4018ffc3 is+4F,+27L,+28S,+31B. Both packets
+from49e24556 together add+10F,+35L,+36S,+31B with unchanged denominators.
+maxCC/entryCRAP501 and BLOCKED remain, with no new exact contour closure,
+frozen/CRAP/mutation or Runtime qualification. Historical exact17/46 does not rise.
+Literal DIAG/delivered-assurance-stage-20261025-01.log owns the terminal summaries.
+Image/workspace/.vida-quality-inputs/f1468022bb5238d579b0748bc92cfae72cbc9fd9/repository,
+Source treec8990c308b577ab1eac7bf2fe90d118e65181ec1,
+fingerprintdbc44eb1924524c098740ce867ec587d08e0fa77312a3509d5a4bab1ff8dbdfe,
+manifest SHA2560405f7eedf7ad478f224b9bbcb357bc46db4bea154e2bb149c5997356466f857.
+The bound report is its packages/agent/coverage/bun-unified/diagnostics/
+05129b47-f838-483f-98c6-a915c05b121a.focused-coverage.json.
+
+Root reused the existing report reader once for7190–8200 functions. All ten
+selected review/assurance zero functions416,417,419,420,421,422,425,426,431,433
+are absent from that zero set. Literal DIAG/delivered-assurance-terminal-gap-20261025-01.json
+retains the remaining admission/prewriter callbacks439,440,441,442,443,445,446,448,449,450,451,452 and476. Branch and
+statement arrays were intentionally not queried. Next inspect that complete public
+branch and its maintained producer before grouping another same-contour packet;
+no queue advance or objective disposition is established by this query.
+
+Launch scratch admission records10166468608 available bytes against2147483648,
+headroom8018984960; no manual filesystem repeat or cleanup. The native pending
+root /tmp/vida-initial-source-f5qouM maps to
+/workspace/contour-stage-hNBezx/scratch-a5b35J/scratch/vida-initial-source-f5qouM.
+That exact disk-backed directory exists; literal
+DIAG/delivered-assurance-native-root-locator-20261025-01.json preserves its mapping.
+Started/commit_unknown remains protected after process/group closure. Root performed
+no DB inspection, replay, reconciliation, dispatch, cancellation or cleanup.
+Prior custody/retirement deferrals remain, including the completed private proposal.
+Projection remains producer-owned and unstaged. Schedule, timers, fences and budgets
+stay unchanged. This terminal documentation follow-up needs no repeated stage.
 
 ### Delivered-review context packet, 2026-10-25
 

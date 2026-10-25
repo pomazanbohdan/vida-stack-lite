@@ -12,17 +12,17 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The configured delivered-review packet is measured by run4018ffc3-8c81-4e3e-ac33-0546802bcad6:
-six more functions and eight more lines/statements, unchanged branch hits and
-BLOCKED. Reuse its bound report and the existing7190–7600 function query.
-Next group the remaining reconciliation refusal and supported final-assurance
-paths around their maintained fixtures before another complete stage. Trace
-actual preceding guards; missing fixtures alone do not permit a skip. The public
-review case passes in the actual coverage profile and the focused mutation-part
-registration; ordinaryDescribe does not enclose it.
-[WORK](WORK.md#delivered-review-context-packet-2026-10-25) owns terminal counts,
-custody and the next packet. Historical2822 navigation below does not replace
-that report or authorize a replay.
+The latest measured packet is Source75c78586/run05129b47-f838-483f-98c6-a915c05b121a:
+F490/555, L2260/2873, S2445/3157 and B2905/3686, still BLOCKED. It fixes the stale
+public final-assurance reverse frontier and groups its real public issue/report,
+retry, refusal and controlled-manifest obligations. Reuse the existing7190–8200
+function query; the ten selected review/assurance functions are now exercised.
+Next group the remaining public admission/prewriter callbacks439,440,441,442,443,445,446,448,449,450,451,452 and476 around
+their maintained producer. Trace actual preceding guards; missing fixtures alone
+do not permit a skip. Do not replay pending developer issues or claim Source
+qualification as Runtime delivery. [WORK](WORK.md#delivered-assurance-packet-2026-10-25)
+owns current terminal counts, custody and the next packet. Historical2822 navigation
+below does not replace that report or authorize a replay.
 
 The active contour is **bun-cli-run**, the next partition in
 packages/agent/tooling/mutation-partitions.ts. Init's2589 stage completes all
