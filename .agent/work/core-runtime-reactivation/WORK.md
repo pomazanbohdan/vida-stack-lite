@@ -38,6 +38,65 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Untrusted decoder mapping and attribution packet, 2026-10-25
+
+The evidence-preflight Source `55689665f09bfb710f9fd04de9d0dfbe3656bb2f`
+was pushed after normal hooks and measured once. Stage
+`/workspace/contour-stage-B7LHRx`, run `5af868aa-1c5b-472c-816b-976aa220a36d`,
+published F455/555, L2094/2861, S2259/3140, B2719/3662. It passed 134 tests /
+2,965 expectations in native stage 218,980.534083 ms, exit 0, complete capture,
+closed group, unchanged boot/image, no timeout/signal/spawn error. Its Source
+tree is `893b63c7fa1d72780953525db861b28d84f5b60d`, fingerprint
+`f2e402ffa1d90fd33735b7cbc2c7e9486037cc79d48f628f282d0cdf48f7858d`, manifest
+SHA-256 `df51cea60708c68631ba1cf70bd99a97ffa11127582fa27b22d25db87f811986`.
+Preserve that root and this WORK's `DIAG/evidence-preflight-stage-20261025-01.log`.
+The changed Source adds its own guard/denominators; this is not a same-map delta
+from the preceding Source. BLOCKED, maximum CC/entry CRAP 501, no contour closure.
+
+Root then extended the same decoder owner with 34 negative cases in six groups:
+four issue/wave cardinalities, six packet bindings, eight malformed file-change
+descriptors, two out-of-scope paths, ten command-attribution forms and four edit
+reports. One shared artifact builder reuses the existing command/turn/envelope
+builders. Each group runs its control once, every candidate keeps an isolated
+root, exact error and unchanged-byte/no-DB/no-Work assertions, with failure
+retention unchanged. The complete family now has 63 candidate fixtures and 16
+controls (79 CLI calls); its original 29 candidates used 58 calls because each
+repeated the same control. This is a structural operation count, not a speedup.
+
+Matching action/issue/attempt strings in arbitrary `RetiredSourceTurnRead/v1`
+JSON remain explicitly untrusted, with `unaccepted-fixture-work`. They do not
+assert native custody, success, acceptance or persisted history. Packet and
+file-change negatives stop before attribution. The later negatives only parse
+command strings and metadata, then fail the empty-scope/shape/outcome guards
+before a nativeReadResult or Host open. No command text is executed, no Source
+or patch file is created/read/written for these strings, and no consumer runs.
+The patch strings either have zero/multiple refs, a failed exit, or --check,
+so none reaches a patch-file read. No successful capture fixture was fabricated.
+
+Independent read-only Luna traced that negative-only route and reviewed the
+integrated bytes. A separate reviewer initially compared builder defaults to
+the bound action and reported an ID mismatch. Root rejected that finding by
+reading the actual serialized request: the driver overrides a*/UUID/b* identity
+fields after spreading the builder. The reviewer reread it and corrected the
+finding to PASS. The Cloud reference now requires final-argument/request tracing
+after overrides; no new workflow or skill owner was created.
+
+Scoped strict (510 files) and typed lint passed. The expanded table initially
+failed formatting only; the formatter and subsequent check passed without a
+semantic change. Preserve `DIAG/untrusted-packet-static-20261025-{01,02}.log`
+and `DIAG/untrusted-packet-format-20261025-03.log` under this WORK. The first
+three groups passed three tests / 144 expectations in 2.91 s; the remaining
+three passed three tests / 130 expectations in 2.93 s. Reuse both disjoint
+target receipts, `DIAG/untrusted-packet-target-20261025-{01,02}.log`, instead of
+rerunning their union. Root reviewed the complete packet before its sole next
+changed-input stage, following normal commit and push termination.
+
+Existing B7LHRx admission observed 10,917,998,592 available bytes against the
+unchanged 2,147,483,648 floor. No new survey, broad scan/hash, install, index or
+cleanup. Producer-owned projection and immutable images stay untouched. Phase
+remains F/L/S/B, contour bun-cli-run. Remaining positive native custody paths
+are OPEN; these negative controls grant no objective skip or queue advancement.
+
 ### Evidence-size preflight and unadmitted witness refusal, 2026-10-25
 
 The decoder-control packet `9c37e783a7257509cc39f9832d91fb12446ae79c` was

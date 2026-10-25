@@ -11355,8 +11355,246 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   const retiredDecoderBaselineBytes = Buffer.from(
     JSON.stringify(retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand(noIssuedActionOutput)])])),
   );
+  // These matching strings are untrusted decoder inputs, never an admitted issue or native witness.
+  const untrustedBoundAction = {
+    ...untrustedIssuedAction,
+    request: unmatchedRequest,
+    action: unmatchedAction,
+    issue_id: '00000000-0000-4000-8000-000000000001',
+    host_attempt_id: 'b'.repeat(64),
+    development_packet: { ...untrustedIssuedAction.development_packet, work_item_id: 'unaccepted-fixture-work' },
+  };
+  const untrustedBoundWave = {
+    status: 'wave_issued',
+    issue_id: untrustedBoundAction.issue_id,
+    host_attempt_id: untrustedBoundAction.host_attempt_id,
+    packet_id: untrustedBoundAction.development_packet.packet_id,
+  };
+  const retiredDecoderIssuedArtifact = (actions: unknown[], waves: unknown[], extraItems: unknown[] = []) =>
+    retiredDecoderArtifact([
+      retiredDecoderTurn([
+        retiredDecoderCommand(JSON.stringify([{ schema: 'VidaAgentRunResult/v1', issued_actions: actions }, ...waves])),
+        ...extraItems,
+      ]),
+    ]);
+  const untrustedEditCommand =
+    'def edit(file,transform):\n p=root/file\n p.write_bytes(transform(p.read_bytes()))\nedit("docs/untrusted.ts", transform)';
 
   const retiredSourceNativeGroups: readonly RetiredSourceNativeGroup[] = [
+    {
+      name: 'untrusted source path guards',
+      cases: ['docs/untrusted.ts', '/untrusted-source.ts'].map((sourcePath) => ({
+        name: `file change outside the empty decoder scope: ${sourcePath}`,
+        artifact: retiredDecoderIssuedArtifact(
+          [untrustedBoundAction],
+          [untrustedBoundWave],
+          [
+            {
+              id: 'untrusted-source-path',
+              type: 'fileChange',
+              status: 'completed',
+              changes: [{ path: sourcePath, diff: { text: 'untrusted diff text', truncated: false } }],
+            },
+          ],
+        ),
+        message: 'Retired-source mutation path is outside the original scope',
+      })),
+    },
+    {
+      name: 'untrusted command attribution guards',
+      cases: [
+        {
+          name: 'write syntax without resolved paths',
+          command: 'writeFileSync("docs/untrusted.ts", "untrusted")',
+          message: 'Retired-source command mutation paths are unresolved: untrusted-command-attribution',
+        },
+        {
+          name: 'direct Path write is outside scope',
+          command: 'Path("docs/untrusted.ts").write_text("untrusted")',
+        },
+        {
+          name: 'bound Path variable write is outside scope',
+          command: 'p = Path("docs/untrusted.ts")\np.write_text("untrusted")',
+        },
+        {
+          name: 'Path writable context is outside scope',
+          command: 'with Path("docs/untrusted.ts").open("w") as stream: pass',
+        },
+        {
+          name: 'root-relative writable context is outside scope',
+          command: 'with (root/"docs/untrusted.ts").open("w") as stream: pass',
+        },
+        {
+          name: 'failed command is unresolved',
+          command: 'Path("docs/untrusted.ts").write_text("untrusted")',
+          exitCode: 1,
+          message: 'Retired-source command effect is unresolved',
+        },
+        {
+          name: 'patch command has no retained reference',
+          command: 'git apply',
+          message: 'Retired-source patch outcome is unresolved',
+        },
+        {
+          name: 'patch command has ambiguous retained references',
+          command: 'git apply .tmp/first.patch .tmp/second.patch',
+          message: 'Retired-source patch outcome is unresolved',
+        },
+        {
+          name: 'failed patch command is unresolved',
+          command: 'git apply .tmp/untrusted.patch',
+          exitCode: 1,
+          message: 'Retired-source patch outcome is unresolved',
+        },
+        {
+          name: 'patch check cannot conceal an out-of-scope write',
+          command: 'git apply --check .tmp/untrusted.patch; Path("docs/untrusted.ts").write_text("untrusted")',
+        },
+      ].map(
+        ({ name, command, exitCode = 0, message = 'Retired-source mutation path is outside the original scope' }) => ({
+          name,
+          artifact: retiredDecoderIssuedArtifact(
+            [untrustedBoundAction],
+            [untrustedBoundWave],
+            [{ ...retiredDecoderCommand(), id: 'untrusted-command-attribution', command, exitCode }],
+          ),
+          message,
+        }),
+      ),
+    },
+    {
+      name: 'untrusted edit report guards',
+      cases: [
+        {
+          name: 'edit report is not JSON',
+          output: 'untrusted non-JSON output',
+          message: 'Retired-source document edit result is unresolved',
+        },
+        {
+          name: 'edit report is not an object',
+          output: 'null',
+          message: 'Retired-source document edit paths differ from the recorded command',
+        },
+        {
+          name: 'edit report claims an undeclared path',
+          output: JSON.stringify({ updated: ['docs/foreign.ts'] }),
+          message: 'Retired-source document edit paths differ from the recorded command',
+        },
+        {
+          name: 'declared edit path remains outside the original scope',
+          output: JSON.stringify({ updated: ['docs/untrusted.ts'] }),
+          message: 'Retired-source mutation path is outside the original scope',
+        },
+      ].map(({ name, output, message }) => ({
+        name,
+        artifact: retiredDecoderIssuedArtifact(
+          [untrustedBoundAction],
+          [untrustedBoundWave],
+          [{ ...retiredDecoderCommand(output), id: 'untrusted-edit-report', command: untrustedEditCommand }],
+        ),
+        message,
+      })),
+    },
+    {
+      name: 'untrusted issue mapping cardinality guards',
+      cases: [
+        { name: 'matching action without matching wave', actions: [untrustedBoundAction], waves: [] },
+        { name: 'matching wave without matching action', actions: [], waves: [untrustedBoundWave] },
+        {
+          name: 'ambiguous matching actions',
+          actions: [untrustedBoundAction, untrustedBoundAction],
+          waves: [untrustedBoundWave],
+        },
+        {
+          name: 'ambiguous matching waves',
+          actions: [untrustedBoundAction],
+          waves: [untrustedBoundWave, untrustedBoundWave],
+        },
+      ].map(({ name, actions, waves }) => ({
+        name,
+        artifact: retiredDecoderIssuedArtifact(actions, waves),
+        message: 'Retired-source original issue mapping differs',
+      })),
+    },
+    {
+      name: 'untrusted packet binding guards',
+      cases: [
+        {
+          name: 'packet belongs to another work',
+          candidate: {
+            ...untrustedBoundAction,
+            development_packet: { ...untrustedBoundAction.development_packet, work_item_id: 'foreign-work' },
+          },
+        },
+        {
+          name: 'packet belongs to another attempt',
+          candidate: {
+            ...untrustedBoundAction,
+            development_packet: { ...untrustedBoundAction.development_packet, attempt: 2 },
+          },
+        },
+        {
+          name: 'packet differs from the issued wave',
+          candidate: {
+            ...untrustedBoundAction,
+            development_packet: { ...untrustedBoundAction.development_packet, packet_id: 'foreign-packet-id' },
+          },
+        },
+        {
+          name: 'packet digest is not a SHA-256 value',
+          candidate: {
+            ...untrustedBoundAction,
+            development_packet: { ...untrustedBoundAction.development_packet, digest: 'untrusted-digest' },
+          },
+        },
+        {
+          name: 'action stage differs from its request',
+          candidate: { ...untrustedBoundAction, action: { ...untrustedBoundAction.action, stage_id: 'other-stage' } },
+        },
+        {
+          name: 'action scope differs from its request',
+          candidate: {
+            ...untrustedBoundAction,
+            action: { ...untrustedBoundAction.action, scope_digest: 'f'.repeat(64) },
+          },
+        },
+      ].map(({ name, candidate }) => ({
+        name,
+        artifact: retiredDecoderIssuedArtifact([candidate], [untrustedBoundWave]),
+        message: 'Retired-source original issued packet binding differs',
+      })),
+    },
+    {
+      name: 'untrusted file change guards',
+      cases: [
+        { name: 'file change status is unresolved', status: 'unknown', changes: [] },
+        { name: 'file change collection is absent', changes: null },
+        { name: 'file change entry is not an object', changes: [null] },
+        { name: 'file change path is not a string', changes: [{ path: null, diff: { text: '', truncated: false } }] },
+        { name: 'file change diff is not an object', changes: [{ path: 'src/probe.ts', diff: null }] },
+        {
+          name: 'file change diff text is not a string',
+          changes: [{ path: 'src/probe.ts', diff: { text: null, truncated: false } }],
+        },
+        {
+          name: 'file change truncation is not a boolean',
+          changes: [{ path: 'src/probe.ts', diff: { text: '', truncated: null } }],
+        },
+        {
+          name: 'file change diff is truncated',
+          changes: [{ path: 'src/probe.ts', diff: { text: 'untrusted partial diff', truncated: true } }],
+          message: 'Retired-source file-change evidence is incomplete',
+        },
+      ].map(({ name, status = 'completed', changes, message = 'Retired-source file-change event is unresolved' }) => ({
+        name,
+        artifact: retiredDecoderIssuedArtifact(
+          [untrustedBoundAction],
+          [untrustedBoundWave],
+          [{ id: 'untrusted-file-change', type: 'fileChange', status, changes }],
+        ),
+        message,
+      })),
+    },
     {
       name: 'artifact and item shape guards',
       cases: [

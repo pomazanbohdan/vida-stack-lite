@@ -111,6 +111,9 @@ against current canonical bytes. Require every assigned hunk to be present in
 the resulting diff before checks/publication. A partial application or a generic
 patch dry run does not establish complete integration. Preserve the rejected
 proposal and use a separate corrected artifact.
+Trace the final invocation or serialized request after option replacements and
+object spreads. Fixture-builder defaults alone do not establish the caller's
+identity or the guard a candidate reaches.
 
 If a command returns a live session ID, wait for its terminal exit before any
 dependent Git operation. Printed formatting/typecheck PASS rows are not commit
