@@ -97,6 +97,7 @@ import {
   prepareInitialSourceFrontier,
   workLease,
 } from './helpers/initial-source-work-fixture.js';
+import { prepareNativeUnnormalizedSynthesis } from './helpers/native-synthesis-correction-fixture.ts';
 import type { RuntimeInitializationReceipt } from '../src/config/initialization-record.js';
 import { readRuntimeInitializationReceipt } from '../src/config/initialization-record.js';
 import { parseForwardJournal } from '../src/documentation/forward-journal.ts';
@@ -624,6 +625,48 @@ test('run CLI main forwards parsed arguments and preserves integer and JSON resu
   expect(errors).toEqual([]);
 });
 
+test('run CLI main sanitizes non-Error failures into one blocked diagnostic', async () => {
+  const { main } = await import('../bin/run.ts');
+  const failures: readonly unknown[] = [
+    null,
+    undefined,
+    false,
+    0,
+    'fixture-private-marker',
+    Symbol('fixture-private-marker'),
+    12n,
+    [],
+    {},
+    { message: undefined },
+    { message: null },
+    { message: 7, code: 17 },
+    { message: 'fixture-private-marker', code: 'UNRECOGNIZED-FIXTURE-CODE' },
+  ];
+  for (const failure of failures) {
+    const logged: string[] = [];
+    const errors: string[] = [];
+    const exit: { exitCode?: number } = {};
+    await main({
+      isMain: true,
+      args: [],
+      execute: () => Promise.reject(failure),
+      io: { log: (value: string) => logged.push(value), error: (value: string) => errors.push(value) },
+      exit,
+    });
+    expect(exit.exitCode).toBe(1);
+    expect(logged).toEqual([]);
+    expect(errors).toHaveLength(1);
+    const payload: unknown = JSON.parse(errors[0]!);
+    expect(payload).toEqual({
+      schema: 'VidaAgentRunResult/v1',
+      status: 'blocked',
+      code: 'GAP-VIDA-RUN-EXECUTION-001',
+      message:
+        'The requested run was blocked by runtime validation. Next action: inspect the exact work and check its issued contract before retrying.',
+    });
+  }
+});
+
 test('completed readonly release guard blocks only a matching current-work release', () => {
   const workId = 'work-current';
   const matching = {
@@ -995,7 +1038,10 @@ import {
   seedFrontierHostFixture,
   withConfiguredFrontierHostFixture,
 } from './helpers/configured-frontier-host-fixture.ts';
-import { createPrewriterPreparationObservation } from './helpers/public-prewriter-fixture.ts';
+import {
+  createPrewriterPreparationObservation,
+  runSourcePrewriterPublicActions,
+} from './helpers/public-prewriter-fixture.ts';
 import { applyDeliveredWorkContinuationPlan } from '../bin/runtime-code-rebind.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -7725,6 +7771,20 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         });
         expect(readFileSync(retirementRequestPath)).toEqual(retirementRequestBytes);
         expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeRenewal);
+        const incompleteWitnessDirectory = path.join(root, '.agent', 'cutover', 'uncompleted-witness');
+        expect(existsSync(incompleteWitnessDirectory)).toBe(false);
+        await assert.rejects(
+          run([
+            ...admitted.args,
+            '--export-staged-witness',
+            'uncompleted-witness',
+            '--payload-manifest-sha256',
+            'a'.repeat(64),
+          ]),
+          { message: 'staged runtime witness: journal identity or checksum differs' },
+        );
+        expect(existsSync(incompleteWitnessDirectory)).toBe(false);
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeRenewal);
         const inspectedPrepared = requireRecord(
           await runSuccessfully([...admitted.args, '--inspect', 'true']),
           'prepared attempt public inspection',
@@ -8471,6 +8531,214 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture: ${root}\n`,
           );
       }
+    }, 60_000);
+
+    test('persists maintained synthesis through public report before the unissued developer frontier', async () => {
+      let root: string | undefined;
+      let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+      let sessionLedger: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
+      let completed = false;
+      const failures: unknown[] = [];
+      try {
+        fixture = await createInitialSourceWorkFixture({
+          researchSynthesis: true,
+          onRoot: (value) => (root = value),
+        });
+        const sourceFixture = fixture;
+        const input = admittedInput(sourceFixture);
+        assert.ok(sourceFixture.store && sourceFixture.bridge && sourceFixture.ledger);
+        const configuredSynthesis = sourceFixture.config.workflows.task_execution?.stages.find(
+          (stage) => stage.id === 'synthesize_task',
+        );
+        assert.ok(configuredSynthesis);
+        expect(configuredSynthesis.produces).toContain('ResearchSynthesis/v1');
+        await bindControlledRuntimeInitialization(sourceFixture.root, sourceFixture.config, sourceFixture.store);
+        const produced = await prepareNativeUnnormalizedSynthesis(sourceFixture, {
+          stopBeforeSynthesisReport: true,
+        });
+        expect(produced.originalItem.request.stage_id).toBe('synthesize_task');
+        expect(produced.originalItem.observation).toBeNull();
+        const synthesisActivation = produced.originalItem.research_activation;
+        assert.ok(synthesisActivation);
+        expect(produced.validatedSynthesis.schema).toBe('ResearchSynthesis/v1');
+        expect(produced.validatedSynthesis.bundle_id).toBe(
+          `synthesis-${produced.originalItem.request.action_id.slice(0, 40)}`,
+        );
+        expect(produced.validatedSynthesis.created_at).toBe(synthesisActivation.use.timestamp);
+        expect(produced.validatedSynthesis.updated_at).toBe(synthesisActivation.use.timestamp);
+
+        const projectId = sourceFixture.identity.project_ids[0];
+        assert.ok(projectId);
+        const args = [
+          '--project-root',
+          sourceFixture.root,
+          '--repository',
+          sourceFixture.config.repository.repository_id,
+          '--project',
+          projectId,
+          '--work-path',
+          sourceFixture.documents[0],
+          '--work-id',
+          sourceFixture.identity.work_id,
+          '--attempt',
+          '1',
+          '--scope-digest',
+          sourceFixture.originalSource.digest,
+          '--team',
+          input.selection.team,
+          '--kind',
+          input.selection.kind,
+          '--intent',
+          input.selection.intent,
+          '--workflow',
+          'task_execution',
+        ];
+        const expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ];
+        const reportPath = path.join(
+          sourceFixture.root,
+          '.agent/work',
+          sourceFixture.identity.work_id,
+          'synthesis-report.json',
+        );
+        writeFileSync(reportPath, JSON.stringify(produced.synthesisReport));
+        const reportBytes = readFileSync(reportPath);
+        expect(reportBytes.length).toBeLessThanOrEqual(32 * 1024);
+        const reportArguments = [...args, ...expected(produced.journal.version), '--report', reportPath];
+        const ownerToClose = fixture;
+        fixture = undefined;
+        await ownerToClose.close();
+        const reportedRaw = requireRecord(await runSuccessfully(reportArguments), 'Public synthesis report result');
+        const reported = parseTestRunPayload(reportedRaw);
+        expect(reported.status).toBe('resumed');
+        expect(requireIssuedActions(reported)).toHaveLength(0);
+        assert.ok(Array.isArray(reportedRaw.completed_observations));
+        expect(reportedRaw.completed_observations).toContainEqual(produced.synthesisReport);
+
+        sessionLedger = openConfiguredMastraSessionLedger(sourceFixture.root);
+        const reportedWork = sessionLedger.hostState.readHostStateSnapshot(sourceFixture.identity).work;
+        assert.ok(reportedWork);
+        const publicInput = {
+          args,
+          publicRun: runSuccessfully,
+          sync: () => sessionLedger?.resume(sourceFixture.identity.work_id, 1) ?? null,
+          repositoryRoot: sourceFixture.root,
+          workId: sourceFixture.identity.work_id,
+          attempt: 1,
+          work: reportedWork,
+        };
+        const beforePrewriter = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(beforePrewriter);
+        expect(beforePrewriter.state.items.length).toBeGreaterThan(0);
+        expect(
+          beforePrewriter.state.items.every(
+            (item) =>
+              item.request.stage_id === 'review_source_prewrite' &&
+              item.request.workflow_id === 'task_execution' &&
+              item.issue_id === null &&
+              item.host_reservation === undefined,
+          ),
+        ).toBe(true);
+        const prepared = await runSourcePrewriterPublicActions(publicInput);
+        expect(prepared.state.items.some((item) => item.request.stage_id === 'develop_task')).toBe(true);
+        expect(
+          prepared.state.items.every((item) => item.issue_id === null && item.host_reservation === undefined),
+        ).toBe(true);
+        const current = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(current);
+        expect(current.state.items).toEqual(prepared.state.items);
+        const ledgerToClose = sessionLedger;
+        sessionLedger = undefined;
+        ledgerToClose.close();
+
+        const databaseRelativePath = sessionHandoffDatabaseRelativePath(sourceFixture.config);
+        const workspaceId = deriveWorkspaceId(sourceFixture.config.repository.repository_id, sourceFixture.root);
+        const inspected = inspectHostWorkspaceDatabase(sourceFixture.root, databaseRelativePath, workspaceId);
+        const persistedWork = inspected.work.find(
+          (entry) => entry.identity.work_id === sourceFixture.identity.work_id,
+        )?.state;
+        const persistedJournal = inspected.journals.find(
+          (entry) => entry.work_id === sourceFixture.identity.work_id && entry.attempt === 1,
+        )?.state;
+        assert.ok(persistedWork && persistedJournal);
+        const completedSynthesis = persistedJournal.completed
+          .flatMap((wave) => wave.items)
+          .find((item) => item.request.action_id === produced.originalItem.request.action_id);
+        assert.ok(completedSynthesis);
+        expect(completedSynthesis.observation).toEqual(produced.synthesisReport);
+        const plan = completedSynthesis.research_normalization;
+        assert.ok(plan);
+        expect(plan.schema).toBe('ObservedSynthesisRecordPlan/v1');
+        expect(plan.observation_digest).toBe(canonicalJsonDigest(produced.synthesisReport));
+        expect(plan.result_digest).toBe(produced.validatedSynthesis.digest);
+        expect(typeof plan.record_path).toBe('string');
+        expect(plan.record_path.length).toBeGreaterThan(0);
+        expect(typeof plan.record_sha256).toBe('string');
+        expect(plan.record_sha256).toMatch(/^[a-f0-9]{64}$/u);
+        expect(plan.record_path.startsWith(sourceFixture.config.research_decision.paths.research_records + '/')).toBe(
+          true,
+        );
+        expect(plan.record_path.endsWith('.synthesis.json')).toBe(true);
+        const synthesisArtifacts = persistedWork.artifacts.filter(
+          (artifact) =>
+            artifact.schema === produced.validatedSynthesis.schema &&
+            artifact.stage_id === 'synthesize_task' &&
+            artifact.path === plan.record_path &&
+            artifact.sha256 === plan.record_sha256,
+        );
+        expect(synthesisArtifacts).toHaveLength(1);
+        const synthesisArtifact = synthesisArtifacts[0];
+        assert.ok(synthesisArtifact);
+        expect(synthesisArtifact.artifact_id).toBe(produced.validatedSynthesis.bundle_id);
+        const synthesisBytes = readFileSync(path.join(sourceFixture.root, synthesisArtifact.path));
+        expect(synthesisBytes.length).toBeLessThanOrEqual(64 * 1024);
+        expect(createHash('sha256').update(synthesisBytes).digest('hex')).toBe(plan.record_sha256);
+        expect(JSON.parse(synthesisBytes.toString('utf8'))).toEqual(produced.validatedSynthesis);
+        expect(persistedJournal.items.some((item) => item.request.stage_id === 'develop_task')).toBe(true);
+        expect(
+          persistedJournal.items.every((item) => item.issue_id === null && item.host_reservation === undefined),
+        ).toBe(true);
+        expect(
+          persistedJournal.completed
+            .flatMap((wave) => wave.items)
+            .some((item) => item.request.stage_id === 'develop_task' && item.issue_id !== null),
+        ).toBe(false);
+        expect(readFileSync(reportPath)).toEqual(reportBytes);
+        completed = true;
+      } catch (error) {
+        failures.push(error);
+      } finally {
+        if (sessionLedger) {
+          const ledgerToClose = sessionLedger;
+          sessionLedger = undefined;
+          try {
+            ledgerToClose.close();
+          } catch (error) {
+            failures.push(error);
+          }
+        }
+        if (fixture) {
+          const ownerToClose = fixture;
+          fixture = undefined;
+          try {
+            await ownerToClose.close();
+          } catch (error) {
+            failures.push(error);
+          }
+        }
+      }
+      if (failures.length > 0 || !completed) {
+        if (root) process.stderr.write(`Retained failed native synthesis CLI fixture: ${root}\n`);
+        if (failures.length === 1) throw failures[0];
+        if (failures.length > 1)
+          throw new AggregateError(failures, 'Native synthesis CLI operation or resource close failed');
+        throw new Error('Native synthesis CLI fixture did not complete');
+      }
+      if (root) rmSync(root, { recursive: true, force: true });
     }, 60_000);
 
     test('refuses partially issued research preparation before context admission through public run', async () => {

@@ -831,9 +831,11 @@ does not qualify a later semantic predicate.
 Lifecycle discovery treats strict JSON imports as data, even when their strings
 mention hook names. Malformed JSON and executable-module parse failures still
 fail closed; never skip an executable dependency to obtain a Killed result.
-On Bun1.4.3, avoid asymmetric matchers inside `toMatchObject` when the value is
-read afterward: the matcher can replace actual fields (verified upstream issue
-https://github.com/oven-sh/bun/issues/24551). Assert object discriminants, then
+On Bun1.4.3 and package-selected Bun1.4.4, avoid asymmetric matchers inside
+`toMatchObject` when the value is read afterward: the matcher can replace actual
+fields (verified upstream issue https://github.com/oven-sh/bun/issues/24551).
+The retained 2026-10-25 synthesis probe confirms string fields become matcher
+objects on 1.4.4; WORK owns its exact evidence. Assert object discriminants, then
 `Array.isArray`, scalar types and exact values separately; preserve fixture bytes.
 
 For an existing awaited try-body with synchronous owned cleanup, the package

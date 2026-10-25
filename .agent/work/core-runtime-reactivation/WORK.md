@@ -38,6 +38,162 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Orchestrated synthesis handoff packet, 2026-10-25
+
+The owner's current instruction selects Root as orchestrator. Root retains
+canonical integration, checks, the sole numeric producer, Git and final numbers.
+Native Luna now authors one bounded test proposal in the ordinary preparation
+directory `PATCH/native-synthesis-cli-20261025-01` under this WORK; its base
+includes Root's two already-checked pending tests. Only its proposal copy is
+writable. A separate Luna reviews exact redundant-counter invariants. A third
+independent review follows the author's terminal handoff. No worktree, second
+writer in canonical Source, external provider, operation ledger or automation.
+The prepared isolated-write contract is legacy prompt guidance, not hard
+filesystem confinement. The user's ordinary-directory/no-parallel-ledger rules
+override the plugin's generic writer-worktree and operation-ledger defaults.
+
+- [x] Frame: keep bun-cli-run/F/L/S/B; bind Source a286fd13 and report 838e5d52 below.
+- [x] Fan out: one isolated proposal author and one disjoint read-only counter review; Root alone integrates.
+- [x] Aggregate: apply-checked V6 preserves local tests; independent Core/guard and matcher-state reviews complete.
+- [x] Scoped verification: strict510, typed lint/format and affected targets passed; preserve every earlier attempt.
+- [ ] Publish and measure: normal commit/hooks terminal, ordinary push terminal, then one collected changed-input stage.
+
+The maintained producer is `prepareNativeUnnormalizedSynthesis` with
+`stopBeforeSynthesisReport:true`: actual local research activation, normalization,
+artifact admission and SDK state, followed by an issued but unreported synthesis
+observation. Its report contents are controlled unit inputs, not claimed external
+research. The proposed test submits that observation through normal CLI report
+handling, allowing canonical typed artifact persistence through the existing
+owner instead of hand-inserting accepted history. Existing fixture close owns
+the serial handoff before CLI reopens it. Stop with unissued next items; no
+Source writer, consumer or runtime/loader/DB cutover. This route is a proposal
+until Root's checks; native runtime qualification is not implied.
+
+Root's pending public-failure test drives documented main.execute injection for
+13 non-Error rejection values. Each must emit exactly one generic blocked
+envelope, no stdout and exit 1. The pending prepared-witness control uses a real
+prepared Work and refuses at its existing non-complete Journal gate, before
+export artifacts; it asserts directory absence and unchanged native Host
+projection. It does not assert that no DB transaction/lock occurred. Scoped
+strict (510 files), lint/format and independent review passed; the two affected
+tests passed 194 expectations in 39.64 s. Preserve this WORK's
+`DIAG/public-failure-witness-{static,target}-20261025-01.log`; they establish no
+new numeric run yet. Root waits for the related author lane before the next
+full stage.
+
+### Synthesis handoff checks and Bun matcher correction, 2026-10-25
+
+Luna's reviewed V6 is integrated. The public CLI normalizes and admits the actual
+issued synthesis report, resumes into the configured prewriter, and the maintained
+public prewriter owner completes that read-only wave. The test stops at unissued
+develop_task. It verifies exact observation/plan/artifact identity, path, SHA,
+bytes and typed content; config/output/bundle/timestamp prerequisites are explicit.
+Fixture owners close serially before reopening; operation and close failures are
+collected without losing thrown undefined. Error dispatch follows finally, and
+only known-success roots are removed. Existing60s case and stage budgets remain.
+
+The first target failed after15 expectations because asymmetric `expect.any`
+matchers inside plan.toMatchObject replaced its path/SHA fields in memory. Root's
+minimal Bun1.4.4 probe reproduced replacement of strings by matcher objects; the
+existing protected fixture's read-only canonical inspection confirmed the actual
+persisted artifact and plan were correct. No production artifact-loss fix is
+claimed. Scalar assertions preserve these fields for later exact comparisons.
+The retained failed root is
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-initial-source-gwMYa9`; no replay,
+mutation or deletion. Preserve literal `DIAG/native-synthesis-target-20261025-01.log`,
+`DIAG/native-synthesis-readonly-inspection-20261025-01.log` and
+`DIAG/native-synthesis-matcher-premise-20261025-01.log` under this WORK.
+
+Scoped strict510, typed lint and format passed in static04; earlier lint-finally
+and optional-timestamp compiler attempts remain retained. The fresh target02
+passed one test,35 expectations,0 failures in10.11s (case8602.75ms). Root reuses
+the two prior unchanged public-failure/witness targets instead of rerunning them.
+Luna reviews `DIAG/native-synthesis-review-v3-20261025-01.md` and
+`DIAG/bun-matcher-state-review-20261025-01.md` are source-only; Root verified V4
+cleanup and V6 activation narrowing plus executed checks. The bounded matcher
+review found no other asymmetric matcher reuse chain in the two contour files.
+The existing bun-test skill's conditional1.4.3 warning is reconciled to1.4.4,
+without a duplicate rule or blanket matcher ban.
+
+Subtract Before You Add selected the existing native fixture, public prewriter,
+readiness owner and warning. Test Behavior, Not Implementation selected public
+report effects and the persisted typed artifact instead of fabricated history.
+One author, disjoint readers and Root checks avoid competing writers/producers.
+No matched-input performance experiment or billed-token/tool-call total exists;
+target elapsed times and structural call counts are separate evidence.
+
+Preparation retirement is deferred, not silently treated as safe. The exact
+owned slot's seven entries are preserved; no live reference was found in readable
+process metadata, but732 process checks were unreadable and no qualified inbound
+symlink-dependency inventory exists. The custody manifest is literal
+`DIAG/native-synthesis-preparation-custody-20261025-01.json`. It records identities,
+zero mounted descendants, no regular-file hardlinks and no unknown entry types.
+The terminal author proposal and final canonical patch are retained outside the
+slot for restoration. No deletion or new broad traversal. The narrow retirement
+check observed10,627,964,928 available bytes; unchanged2,147,483,648 admission
+floor leaves8,480,481,280 bytes of headroom, so cleanup is not needed to bypass
+admission. The existing timer and schedule stay untouched.
+
+### Independently reviewed decoder counter dispositions, 2026-10-25
+
+Root accepts the bounded source proof in literal
+`DIAG/retired-patch-counter-review-20261025-01.md`, after checking the private
+call chain and exact expressions. These dispositions bind only to Source
+`a286fd1332c044c105dc20f0181452f3b0ad5062`, run
+`838e5d52-c9af-475c-9bd5-ef85586bea4f` and its immutable test/config inputs in
+image `5d723763dc241936ae48f3b772547130fb1e9825`; the preceding terminal record
+owns the input fingerprint, manifest and raw counts. They are objective skips,
+not executed hits or current qualification for pending test edits.
+
+| Function / exact mapped expression in bin/run.ts | Counter / location | Causal prerequisite |
+| --- | --- | --- |
+| addRetiredSourceFileEffects: `!Array.isArray(event.changes) || !event.changes.every(isRetiredSourceChange)` | branch520 arm0 [0,2], statement1065;4454:2–4455:63 | Same plain-JSON values already passed readRetiredSourceFileChange's array/every validation. |
+| addRetiredSourceFileEffects: `if (isRetiredSourceChange(change))` implicit else | branch522 arm1 [2,0];4457:4–107 | Every unchanged member passed the same predicate. |
+| addRetiredSourcePatchEffects: `match[1] ?? ''` fallback | branch523 arm1 [7,0];4476:41–43 | Successful git-apply match always supplies its required capture, including empty string. |
+| addRetiredSourcePatchEffects: `value[0] ? [value[0]] : []` false arm | branch525 arm1 [6,0];4479:30–32 | Patch regex full match is nonempty. |
+| addRetiredSourcePatchEffects: `if (!patchRef)` | branch528 arm0 [0,3], statement1079;4483:4–76 | Prior length===1 guard and dense nonempty full-match producer guarantee index0. |
+| addRetiredSourcePatchEffects: `value[1] ? [value[1]] : []` false arm | branch529 arm1 [1,0];4488:30–32 | Exclude regex requires a nonempty capture. |
+| retiredSourcePatchPaths: `value[1] ? [value[1]] : []` false arm | branch533 arm1 [3,0];4513:108–110 | Diff header regex requires nonempty `\S+` capture. |
+
+No reviver/accessor, await or intervening mutation exists between JSON validation
+and the file-change effects collector; the private collector has one supported
+caller. Reopen on changed callers, parsing, mutation, predicate, regex/capture or
+patch-reference construction. Keep all guards and raw denominators. The unsafe
+referenced-patch arm and `retained.push` are reachable and remain OPEN, as do
+other undispositioned paths. bun-cli-run stays BLOCKED and active; no queue,
+frozen CC/CRAP, mutation or Runtime acceptance follows from these dispositions.
+
+### Raw-read and genuine inspection packet — terminal, 2026-10-25
+
+Commit `a286fd1332c044c105dc20f0181452f3b0ad5062` passed normal hooks and push.
+The sole changed-input stage at `/workspace/contour-stage-hfmlih` published run
+`838e5d52-c9af-475c-9bd5-ef85586bea4f`: F480/555, L2214/2873, S2398/3157,
+B2859/3686. It passed 143 tests / 3,375 expectations in 215,809.20091 ms, exit 0,
+no timeout/signal/spawn error, complete capture, closed group, unchanged boot and
+immutable image. Tree `9b70ae27ac5f4e04e29973496ca1a21f3b974bb6`, fingerprint
+`854927f78961b6e25c6b1ce64ba567e1ad34b662c9a57d919c1bba80003f4589`, manifest
+SHA-256 `144386aec789f43fb28629f0d1eac964b1938de1861166528227513d0370cf72`.
+Preserve original stage receipts/logs and this WORK's
+`DIAG/raw-read-bounds-stage-20261025-01.log`. The large forward-authority test
+ran once in that producer, including its existing bound cases. Source changed
+its own denominators; no earlier counts were promoted to it. BLOCKED, maximum
+CC/entry CRAP 501; no contour closure or frozen/mutation qualification.
+
+The earlier independently reviewed parser dispositions can be rebound by their
+unchanged callable bytes and relative geometry: Root's complete zero-context Git
+diff from Source449711c to a286 has only file-reader/resource/hash hunks, none in
+parseArgs or its scalar-key contracts. In run838e5 the same guard is branch348
+arm0 [0,1588] / statement734 at run.ts:3146:31-92; expected revision fallback is
+branch366 arm1 [44,0] at3231:57-59; digest fallback branch367 arm1 [42,0] at
+3233:57-59. Retain their prior exact-expression/invariant/independent review;
+reopen on key-map, ordering, pair or nonempty-value contract changes. This is
+navigation/disposition rebinding only, never extra hits, changed denominators,
+numeric PASS or queue advancement. Other remaining counters stay OPEN.
+
+Reused admission observed 10,711,392,256 available bytes against 2,147,483,648.
+No fresh filesystem survey, cleanup, install, AST/index or audit hash pass.
+Projection stays producer-owned. Existing evidence and UNKNOWN fences remain.
+
 ### Collected raw-read bounds and genuine inspection packet, 2026-10-25
 
 The bounded follow-up found five more raw reads with their size check after
