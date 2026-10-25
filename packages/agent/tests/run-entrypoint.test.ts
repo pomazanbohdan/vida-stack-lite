@@ -11263,9 +11263,41 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     exitCode: 0,
     output: { text: outputText, truncated: false },
   });
+  const untrustedIssuedAction = {
+    request: { action_id: 'foreign-action', stage_id: 'foreign-stage', scope_digest: 'd'.repeat(64) },
+    action: { action_id: 'foreign-action', stage_id: 'foreign-stage', scope_digest: 'd'.repeat(64) },
+    issue_id: 'foreign-issue',
+    host_attempt_id: 'foreign-attempt',
+    development_packet: {
+      schema: 'DevelopmentTaskPacket/v1',
+      work_item_id: 'foreign-work',
+      attempt: 1,
+      packet_id: 'foreign-packet',
+      digest: 'e'.repeat(64),
+    },
+  };
+  const unmatchedRequest = { ...untrustedIssuedAction.request, action_id: 'a'.repeat(64) };
+  const unmatchedAction = { ...untrustedIssuedAction.action, action_id: 'a'.repeat(64) };
   const noIssuedActionOutput = JSON.stringify([
     null,
-    { schema: 'VidaAgentRunResult/v1', issued_actions: [null], stdout: '{invalid-json' },
+    {
+      schema: 'VidaAgentRunResult/v1',
+      issued_actions: [
+        null,
+        {},
+        { ...untrustedIssuedAction, development_packet: null },
+        untrustedIssuedAction,
+        { ...untrustedIssuedAction, request: unmatchedRequest },
+        { ...untrustedIssuedAction, request: unmatchedRequest, action: unmatchedAction },
+        {
+          ...untrustedIssuedAction,
+          request: unmatchedRequest,
+          action: unmatchedAction,
+          issue_id: '00000000-0000-4000-8000-000000000001',
+        },
+      ],
+      stdout: '{invalid-json',
+    },
     0,
   ]);
 

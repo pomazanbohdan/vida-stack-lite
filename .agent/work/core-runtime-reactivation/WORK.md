@@ -73,7 +73,53 @@ cases, in 3.11 s. Preserve this WORK's
 confirmed exact refusal order and no ledger/retirement execution. Root verified
 the actual matrix includes the non-string writer member `[1]`, despite a reader
 suggesting that variant was absent. No new measured coverage or speedup is
-claimed until the one changed-input stage after normal commit/hooks/push.
+claimed by the target alone. After normal commit/hooks and push terminated for
+`704dd39e44fc8d2c1a4db67157b2d238d0481170`, the sole changed-input stage ran
+once in `/workspace/contour-stage-wCQymm`, 221,940.249012 ms, exit 0, no timeout,
+complete capture, closed group, unchanged boot/image and published report.
+Native stderr records 134 pass, zero fail and 3,065 expectations. Run
+`f03c5bd2-b1c1-4dec-81fb-b9c07127508b` records F445/555, L2067/2860,
+S2229/3138, B2682/3660, max CC/entry CRAP501 and BLOCKED. The packet adds
+four functions, six lines, six statements and 33 branch arms, without exact100,
+frozen or mutation qualification. Preserve this WORK's
+`DIAG/interrupted-decoder-stage-20261025-01.log` and the native stage root.
+Image `/workspace/.vida-quality-inputs/1da1eca6840ec9863fec18e3b53322ed533d5298/repository`
+binds Source tree `c745a1d3ccf7df132bebf133b16060494ee2062f`, input fingerprint
+`f781be9d317bf6a6984b4becfe6e65ed46348119c77f59074b72bf709650e4aa`, manifest
+SHA-256 `b4d42b5f771cac3b850e0d6490013ea56a7463759c587d21ec20aa32f73505ae`.
+Its native scratch admission observed 11,180,920,832 bytes against the unchanged
+2,147,483,648-byte floor; no extra disk survey or cleanup was run.
+
+### Untrusted issued-action decoder packet, 2026-10-25
+
+An independent bounded trace identified missing original native turn/action/issue
+custody for downstream retired-source attribution/effects. That prerequisite stays
+OPEN; there is no synthetic successful capture or objective skip based on missing
+fixtures. Root rejected the broader inference that all preceding action validators
+therefore require accepted history. Source readRetiredSourceNativeTurn filters
+untrusted candidate records before requiring exactly one matching action and wave.
+
+Root extends the existing noIssuedActionOutput JSON fixture, not a new fixture
+or collector. It now includes malformed records and four well-shaped candidates
+that fail respectively the expected request action, action action, issue or host
+attempt. Each has typed packet fields to exercise action/packet guards, but none
+matches all four mapping fields and no issued wave is supplied. The existing exact
+mapping refusal and byte/no-DB/no-work checks remain. These are untrusted negative
+decoder inputs, not original native evidence, accepted history or a qualification
+claim. Original read artifacts and Source effects remain behind their unchanged
+guards. Fresh native Luna independently confirmed the filter trace and bounded
+test claim. Root does not broaden the afterimages into absence of every possible
+effect outside those observed paths.
+
+Oxfmt, scoped strict for 510 files and typed lint passed. The first target filter
+omitted the literal `run` prefix and ran zero cases; native exit0 is not test PASS
+and adds no evidence. Retain `DIAG/issued-candidates-target-20261025-01.log` here.
+The corrected exact declaration filter requires a positive pass summary and ran
+all ten affected groups in one invocation: ten pass, eight filtered, zero fail,
+384 expectations, 4.30 s. Preserve `DIAG/issued-candidates-static-20261025-01.log`
+and `DIAG/issued-candidates-target-20261025-02.log`. No unchanged full stage,
+AST/index/hash inventory or benchmark was repeated. The next action is one
+changed-input stage after normal commit/hooks and push finish.
 
 ### Operation-option packet, 2026-10-25
 
@@ -300,9 +346,9 @@ prerequisite. This permits queue progression, not numeric exact100.
 The retained investigation below records the native issue counter prerequisite.
 It grants no new CLI role, numeric result or objective skip. Root retains the
 existing CAS child and every help/prepared/issue/report/UNKNOWN control.
-The latest accepted focused diagnostic is parser-boundary run
-`e267e8be-0e1e-4477-b217-f8dca7a110c3`, with F441/555, L2061/2860,
-S2223/3138 and B2649/3660. Its status remains BLOCKED and full qualification is
+The latest accepted focused diagnostic is interrupted-decoder run
+`f03c5bd2-b1c1-4dec-81fb-b9c07127508b`, with F445/555, L2067/2860,
+S2229/3138 and B2682/3660. Its status remains BLOCKED and full qualification is
 false. The earlier reference to 2820 as the latest measurement was stale.
 
 2824/2825 independently compare native SQLite interception with update hooks or
