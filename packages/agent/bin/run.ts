@@ -4872,7 +4872,7 @@ function readRetiredSourceNativeTurn(
   const nativeReadResult: import('../src/host-state.ts').RetiredSourceNativeReadResult = {
     schema: 'RetiredSourceNativeTurnEvidence/v1',
     artifact_ref: reference,
-    artifact_sha256: digest(Buffer.from(bytes)),
+    artifact_sha256: digest(bytes),
     thread_id: threadId,
     thread_status: threadStatus,
     turn_id: turnId,
@@ -4883,7 +4883,7 @@ function readRetiredSourceNativeTurn(
     source_effects: sourceEffects.effects,
   };
   return {
-    artifact_sha256: digest(Buffer.from(bytes)),
+    artifact_sha256: nativeReadResult.artifact_sha256,
     nativeReadResult,
     observed_commands: commands,
     file_changes: fileChanges,

@@ -111,6 +111,19 @@ one changed-input stage after push; no intermediate full suite ran. The complete
 packet adds 37 negatives in seven groups. The family has 66 candidate fixtures
 and 17 controls, 83 CLI calls, instead of reintroducing per-candidate controls.
 
+The final related two-line Source simplification reuses the artifact digest in
+the outer result instead of hashing copied bytes again. `digest` already accepts
+Uint8Array, including the read Buffer; no mutation, async boundary or external
+exposure intervenes. Both fields keep the identical SHA-256 value. This removes
+one redundant hash and two Buffer copies on the successful read path, with no
+guard/branch-order or budget change. Scoped strict/lint/format and independent
+read-only Luna review passed; retain
+`DIAG/retained-artifact-hash-static-20261025-01.log`. The seven disjoint new
+target groups total seven passes / 305 expectations. They throw before this
+successful return, so they provide no coverage/timing evidence for that path;
+static equivalence is the basis, not a fabricated native success. All related
+commits now share one final changed-input stage after normal hooks and push.
+
 Existing B7LHRx admission observed 10,917,998,592 available bytes against the
 unchanged 2,147,483,648 floor. No new survey, broad scan/hash, install, index or
 cleanup. Producer-owned projection and immutable images stay untouched. Phase
