@@ -12,24 +12,22 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The collected research recovery packet uses a fresh two-action preparation fault
-and the existing developer fixture's validation issue. Paired focused checks pass;
-candidate503–507 hits await one full stage after independent review and ordinary
-commit/push. WORK owns current receipts and explicit remaining producer gaps.
-
-The latest measured packet is Sourcea3d3247a/run0a96d24d-1883-4d9f-a810-bc6e5c54dc41:
-F502/555, L2292/2873, S2480/3157 and B2920/3686, still BLOCKED. The collected
-admitted freshness, configured-context output and fresh no-effect prerequisite
-cases pass in one151-case stage. Existing fixtures own the controlled reports;
-none establishes consumer dispatch or Runtime acceptance. The7600–8200 function
-query confirms446,448–452,476 now hit and only445 still zero. Keep its historical
-completed-ownership prerequisite OPEN. The adjacent8201–9000 query binds480–484
-replacement research,488–490 initial Source report/engine selection,503
-implementation-result consumers and504–507 research-wave recovery. Investigate
-their supported fresh producer chains in this same contour, collect related
-changes and verify before the next single stage. These bounded windows do not
-replace the complete remaining inventory or establish objective skips.
-[WORK](WORK.md#admitted-freshness-and-context-output-packet-2026-10-25) owns terminal
+The latest measured packet is Source78413d9b/run27f66ef4-9aeb-4958-a9ac-92af774d2218:
+F507/555, L2319/2873, S2508/3157 and B2932/3686, still BLOCKED. The fresh
+unexposed research-wave fault/recovery and developer-to-validation issue pass in
+one152-case stage. Exact activation-history and exposure-denial checks preserve
+idempotency; unobserved read-only issues remain retained. Existing fixtures own
+the controlled reports; none establishes consumer dispatch or Runtime acceptance.
+The8201–9000 function query confirms503–507 hit and retains480–484 replacement
+research and488–490 initial Source report/engine selection. The replacement path
+needs a supported public pause/repair/activation fixture, beyond the component
+producer. The initial-source continuation fixture already reaches Host recovery,
+but its public pending-report path must be bound in this contour's selected tests.
+Keep historical completed-ownership445 OPEN. Investigate these fresh producer
+chains in the same contour, collect related changes and verify before the next
+single stage. These bounded windows do not replace the complete remaining
+inventory or establish objective skips.
+[WORK](WORK.md#research-preparation-recovery-packet-2026-10-25) owns terminal
 counts, custody and remaining qualification. Reuse its current report and scalar
 readers. Do not replay pending issues, rewrite accepted history, repeat unchanged
 suites or claim Source qualification as Runtime delivery. Historical2822 navigation

@@ -116,8 +116,46 @@ relocation, tmpfs move, retirement, second automation or timer/schedule change.
 - [x] Frame, disjoint traces, private author proposal and Root integration.
 - [x] Scoped static checks and paired targeted tests; retain all attempts.
 - [x] Final independent review and documentation checks5documents/75local links.
-- [ ] Normal commit/hooks/push.
-- [ ] One changed-input stage and terminal documentation closeout.
+- [x] Normal78413d9b hooks/main push, then one changed-input stage.
+- [x] Terminal outcome and producer-owned projection publication.
+
+Terminal: Source78413d9b6326070efd4ef33963432d0c87052339 passed normal537-file
+format/strict544 hooks and ordinary main push before the sole coverage producer.
+/workspace/contour-stage-Rrq0WT completed253804.725953ms, exit0, no timeout,
+signal or spawn error; capture complete, group closed, boot/image inputs unchanged
+and publication published. Native152pass,0fail,3784expectations in248.01s.
+The two changed case bodies3954.95/18846.74ms retain their unchanged60s limits.
+Timings have different inputs from previous runs and establish no matched speedup.
+Literal DIAG/research-recovery-stage-20261025-01.log owns the terminal capture.
+
+Run27f66ef4-9aeb-4958-a9ac-92af774d2218 records F507/555, L2319/2873,
+S2508/3157, B2932/3686, a+5F/+27L/+28S/+12B change from0a96d24d. All denominators
+remain unchanged; maxCC/entryCRAP501 and BLOCKED remain. No exact closure,
+objective skip, frozen/CRAP/mutation or Runtime qualification. Historical exact17/46
+does not rise. Image /workspace/.vida-quality-inputs/5d2c37f8dff1f853ff870a406d05303eed2fceb7/repository,
+Source tree3156f076a09ed508e995a2b20bd7da665ca353ce,
+fingerprint32521a294d5cd02e8d60260c3cb9e09631f0719141038312a7e2375df9277f26,
+manifest SHA256974adbe67ff25967bd73097b1a0a398ded30f2a0d8aaedf9269936a9cd6ec4e7.
+The report is its packages/agent/coverage/bun-unified/diagnostics/
+27f66ef4-9aeb-4958-a9ac-92af774d2218.focused-coverage.json.
+
+The existing8201–9000 reader, with explicit module and queried function kind,
+confirms503–507 are hit. Literal DIAG/research-recovery-terminal-gap-20261025-01.json
+retains480–484 and488–490. Keep their actual public producer prerequisites from
+the reader artifacts above OPEN, together with445; no absence-based disposition.
+Overall48functions,554lines,649statements,754branches remain unhit. This bounded
+window is not the complete remaining inventory. Continue the same contour/phase.
+
+Launch admission observes9842864128available bytes against2147483648,
+headroom7695380480, through the existing producer owner without another manual
+survey. Six unique retained native roots have recorded disk-backed locators in
+literal DIAG/research-recovery-native-root-locators-20261025-01.json. These include
+fresh unobserved researchRLfPwc and validatori2naM8 issues plus original unknown/
+cleanup controls. Existence and group closure do not settle them or permit
+deletion. Prior historical pending issues remain untouched. No cleanup, DB read,
+replay, reconciliation, cancellation, dispatch, schedule change or second timer.
+Producer-owned projection remains unstaged. This documentation-only terminal
+update requires no repeated numeric stage.
 
 ### Admitted freshness and context-output packet, 2026-10-25
 
