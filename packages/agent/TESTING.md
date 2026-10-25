@@ -1933,6 +1933,10 @@ Choose each correction packet from the latest attributable report and its existi
 inventory. Group related success, refusal, retry and restoration obligations around
 one maintained fixture when its state transitions genuinely reach them. Prefer a
 reachable causal path over isolated helpers ranked only by missing-function count.
+Bind each zero function to its exact mapped expression before choosing a fixture.
+An uncalled refusal callback does not imply that the successful parent path is
+untested. Check the existing native pass row and launch profile before changing
+selection; a mutation-only skip does not describe another coverage profile.
 After TypeScript edits, run the scoped strict check and configured lint before
 starting the affected runtime cases. Use the declared test/tooling tsconfig for
 the changed entrypoints; chain checks with fail-fast shell behavior so a later

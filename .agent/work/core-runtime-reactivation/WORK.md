@@ -38,6 +38,88 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Delivered-review context packet, 2026-10-25
+
+Root continues bun-cli-run in F/L/S/B from Source048ad0af. The bound report
+49e24556-8cf3-4627-9211-35b8e360a278 retains F480/555, L2225/2873,
+S2409/3157 and B2874/3686, BLOCKED. No additional contour is closed.
+
+The audit window is2026-10-25T07:38:00Z–10:38:00Z. Root selected the two
+unique runs by projection timestamps before using the existing receipt reader.
+bXe06l and zd4A0w retain native exit0, complete capture and closed groups.
+Together they record290pass,0fail,7019expectations and472872.929859ms of
+stage execution. Different Source/test inputs prevent attributing their elapsed
+change to an optimization. The literal DIAG/audit-window-20261025-04.log
+retains exact inputs and totals. Platform billed tokens and complete tool-call
+counts are unavailable, so this audit makes no cost claim for them.
+
+The existing scoped-checks, affected-cases, one-stage order remains selected.
+Stage-first diagnosis would spend a232–241second stage before exposing a scoped
+failure. Overlapping numeric stages have no measured resource or elapsed-time
+advantage here and conflict with the sole producer. These comparisons are
+planning hypotheses, not matched benchmarks. Independent read-only native Luna
+lanes inspect Source and receipt costs while one private proposal author extends
+the existing delivered-review case. Root alone integrates, verifies and publishes.
+No worktree, secondary ledger, suite, image or automation is created for the audit.
+
+- [x] Frame: bind the current report and exact7190–7252 missing-function window.
+- [x] Inspect: existing public delivered-review case passes in the native coverage log.
+- [x] Collect: configure local context before capture; verify stale-file and binding refusals with restoration.
+- [x] Review and verify: strict510, configured lint/format, focused public case and independent review02/03.
+- [ ] Publish and measure: normal terminal hooks/push, then one changed-input producer.
+
+The prior assumption that the positive delivered-review case is absent from this
+coverage profile is rejected by zd4A0w stderr line65. The mutation-only selection
+is a different profile. Functions419/420 are the configured-file filter/map at
+run.ts7231/7232, not the candidates filter at7221. The current case's null context
+skips those callbacks. Functions416/417 and421/422 are refusal/close callbacks,
+not evidence that the success branch was never entered. The maintained fixture
+now also rejects a distinct valid scope digest and the alternate valid
+task_execution selection through the same public first-binding guard. Each denial
+keeps the full Host/Journal inspection unchanged and leaves the old engine unopened.
+These are request-only variations, not rewritten stored bindings. Its controlled historical prerequisite
+remains component evidence, not a genuine public producer-chain qualification.
+No captured Journal, accepted history or pending UNKNOWN is rewritten.
+
+One filesystem survey observed10315747328 available bytes on device27 for
+checkout, scratch and quality inputs, above the2147483648-byte admission floor
+by8168263680bytes. /workspace/.vida-retained is absent, a no-op. Literal
+DIAG/audit-filesystems-20261025-04.json records the paths. Its mistakenly
+future-dated timestamp is corrected by the adjacent time-correction receipt;
+the measurement occurred10:40:10–10:41:21Z. No new traversal or cleanup follows.
+Active pending roots and prior unknown-custody deferrals remain protected.
+Pstack1.17.5 resolves to the installed cache; remote catalog451 does not block
+local skills. Cloud runtime reports connected/current with enforced unrestricted
+HTTP policy. Timers, budgets, fences and producer-owned projection stay unchanged.
+
+The private proposal removes the duplicate policy mkdir/copy already owned by
+createFixture. A config-text callback runs before its first write/load and
+initialization receipt. The selected review stage receives the existing local
+project-context source; expected SHA, bytes, entries, digest and request files
+are bound to exact fixture bytes. The stale-file control restores those bytes
+and preserves body plus restoration errors without throwing inside finally.
+
+Root's target01 exposed a setup-selector error: task_execution was not the next
+workflow, and the slice also included bug_fix. Its native0pass/1fail,144.34ms case
+and failed root vida-run-continuation-ZeNVna remain protected. Initial review01's
+PASS is refuted by that evidence. Static02 then passed strict510files but stopped
+at configured lint's no-unsafe-finally; no target ran for that version. The final
+selector stops at the next top-level workflow. Errors are collected and thrown
+after restoration. All old proposals and failed logs remain retained.
+
+Literal DIAG/delivered-review-context-static-20261025-05.log records strict510,
+configured typed lint and format PASS for the final packet. Root accepted review03's
+cleanup: use the existing args.map pattern for the two variants, removing manual
+index guards; the changed digest's shape remains an explicit precondition assertion.
+Target03 records1pass,0fail,49expectations,3844.86ms body and5.27s invocation.
+The body stays within its unchanged5s bound; invocation includes module setup.
+Target02's earlier48expectations/2727.50ms remain preserved. The final8skips belong
+to the ordinaryDescribe profile; this target itself executed under mutation-part
+bun and lies outside that wrapper. This targeted behavioral check is not a
+mutation campaign or numeric qualification. The first Source trace's contrary
+nesting claim is superseded. Complete contour coverage still requires its sole
+producer after terminal review, hooks and ordinary push.
+
 ### Orchestrated synthesis handoff packet, 2026-10-25
 
 The owner's current instruction selects Root as orchestrator. Root retains

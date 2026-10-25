@@ -3453,7 +3453,12 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
 
 if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   const record = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
-  const createFixture = (root: string, bundleName = 'agent-runtime-new', multiProject = false) => {
+  const createFixture = (
+    root: string,
+    bundleName = 'agent-runtime-new',
+    multiProject = false,
+    configureConfigText: (configText: string) => string = (configText) => configText,
+  ) => {
     const fixtureBundle = path.join(root, bundleName);
     if (bundleName === 'vida-agent') {
       mkdirSync(fixtureBundle);
@@ -3520,6 +3525,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         '\n    - id: local-alpha-project\n      provider: local\n      project_id: "alpha-project"\n      tenant_id: local\n      namespace: "alpha-project"\nruntime:',
       );
     }
+    configText = configureConfigText(configText);
     writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configText);
     const config = loadRuntimeConfig(root);
     const schema = readFileSync(path.join(fixtureBundle, 'schemas', 'runtime-initialization.v1.schema.json'));
@@ -3794,14 +3800,35 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-continuation-'));
     let completed = false;
     try {
-      const fixtureSetup = createFixture(root, 'vida-agent');
-      mkdirSync(path.join(root, 'docs/agent-instructions'), { recursive: true });
-      cpSync(
-        path.resolve(packageRoot, '../../docs/agent-instructions/documentation-policy.v1.json'),
-        path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'),
-      );
-      const { config } = fixtureSetup,
-        workId = 'work-' + randomUUID(),
+      const fixtureSetup = createFixture(root, 'vida-agent', false, (configText) => {
+        const workflowMarker = '  implementation_change:\n';
+        const workflowStart = configText.indexOf(workflowMarker);
+        const nextWorkflowHeader = /\n  [A-Za-z0-9_-]+:\n/g;
+        nextWorkflowHeader.lastIndex = workflowStart + workflowMarker.length;
+        const nextWorkflowMatch = nextWorkflowHeader.exec(configText);
+        if (workflowStart < 0 || !nextWorkflowMatch)
+          throw new Error('Implementation-change workflow boundaries are unavailable');
+        const nextWorkflowStart = nextWorkflowMatch.index;
+        const workflowText = configText.slice(workflowStart, nextWorkflowStart),
+          validateStageMarker = '      - id: validate_parallel\n';
+        if (workflowText.split(validateStageMarker).length !== 2)
+          throw new Error('Implementation-change validation stage is unavailable or ambiguous');
+        return (
+          configText.slice(0, workflowStart) +
+          workflowText.replace(
+            validateStageMarker,
+            '      - id: validate_parallel\n        context_source_ids:\n          - project-context\n',
+          ) +
+          configText.slice(nextWorkflowStart)
+        );
+      });
+      const contextSourceBytes = Buffer.from(
+          '# Project-owned continuation context\nRetained review instructions for this fixture.\n',
+        ),
+        contextSourcePath = path.join(root, 'AGENT.sidecar.md');
+      writeFileSync(contextSourcePath, contextSourceBytes);
+      const { config } = fixtureSetup;
+      const workId = 'work-' + randomUUID(),
         nativeSessionHandle = 'fixture-continuation-thread',
         project = config.projects[0],
         sourcePath = path.join(root, 'src', 'task.ts');
@@ -3905,6 +3932,23 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             configuredContext,
             priorResults: [],
           }),
+          expectedContextEntry = {
+            id: 'project-context',
+            kind: 'local' as const,
+            location: 'AGENT.sidecar.md',
+            title: 'Project-owned requirements and source map',
+            status: 'local_excerpt' as const,
+            sha256: createHash('sha256').update(contextSourceBytes).digest('hex'),
+            bytes: contextSourceBytes.length,
+            content: contextSourceBytes.toString('utf8'),
+            truncated: false,
+          },
+          expectedContextDigest = canonicalJsonDigest({
+            schema: 'ConfiguredContext/v1',
+            work_id: workId,
+            attempt: 1,
+            entries: [expectedContextEntry],
+          }),
           request: DeliveredWorkContinuationRequest = continuationRequestFor(fixture, {
             currentSourceScope,
             targetConfigDigest: runtimeConfigDigest(config),
@@ -3920,6 +3964,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             request,
           },
           plan = { ...planBody, digest: canonicalJsonDigest(planBody) };
+        expect(configuredContext?.entries).toEqual([expectedContextEntry]);
+        expect(configuredContext?.digest).toBe(expectedContextDigest);
+        expect(actionRequest.configured_context_digest).toBe(expectedContextDigest);
+        expect(actionRequest.configured_context_files).toEqual([
+          { path: 'AGENT.sidecar.md', sha256: expectedContextEntry.sha256 },
+        ]);
+        expect(configuredContext?.entries[0]?.bytes).toBe(contextSourceBytes.length);
         await applyDeliveredWorkContinuationPlan({
           database: fixture.db,
           root,
@@ -3964,6 +4015,63 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         if (!initial) throw Error('fixture continuation state is missing');
         expect(initial.action_status).toBe('unissued');
         fixture.closeDatabase();
+        const contextHostBefore = inspectHostWorkspaceDatabase(
+          root,
+          sessionHandoffDatabaseRelativePath(config),
+          workspaceId,
+        );
+        const mismatchedScopeDigest =
+          (currentSourceScope.digest[0] === '0' ? '1' : '0') + currentSourceScope.digest.slice(1);
+        expect(mismatchedScopeDigest).toMatch(/^[a-f0-9]{64}$/u);
+        const mismatchedScopeArgs = args.map((value, index) =>
+          args[index - 1] === '--scope-digest' ? mismatchedScopeDigest : value,
+        );
+        const mismatchedWorkflowArgs = args.map((value, index) =>
+          args[index - 1] === '--intent' || args[index - 1] === '--workflow' ? 'task_execution' : value,
+        );
+        for (const refusalArgs of [mismatchedScopeArgs, mismatchedWorkflowArgs]) {
+          await Promise.resolve(
+            expect(run([...refusalArgs, '--inspect', 'true'])).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-CONTEXT-001',
+              message: 'Delivered-work review differs from the current Work, Journal or workflow.',
+            }),
+          );
+          expect(inspectHostWorkspaceDatabase(root, sessionHandoffDatabaseRelativePath(config), workspaceId)).toEqual(
+            contextHostBefore,
+          );
+          expect(snapshotSpy).not.toHaveBeenCalled();
+          expect(bridgeSpy).not.toHaveBeenCalled();
+        }
+        const staleContextErrors: unknown[] = [];
+        try {
+          writeFileSync(
+            contextSourcePath,
+            Buffer.from(contextSourceBytes.toString('utf8') + 'Changed after capture.\n'),
+          );
+          await Promise.resolve(
+            expect(run([...args, '--inspect', 'true'])).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-CONTEXT-001',
+              message: 'Delivered-work review action or configured context is stale.',
+            }),
+          );
+          expect(inspectHostWorkspaceDatabase(root, sessionHandoffDatabaseRelativePath(config), workspaceId)).toEqual(
+            contextHostBefore,
+          );
+          expect(snapshotSpy).not.toHaveBeenCalled();
+          expect(bridgeSpy).not.toHaveBeenCalled();
+        } catch (error) {
+          staleContextErrors.push(error);
+        } finally {
+          try {
+            writeFileSync(contextSourcePath, contextSourceBytes);
+          } catch (restoreError) {
+            staleContextErrors.push(restoreError);
+          }
+        }
+        if (staleContextErrors.length === 1) throw staleContextErrors[0];
+        if (staleContextErrors.length > 1)
+          throw new AggregateError(staleContextErrors, 'Stale-context assertion and restoration both failed');
+        expect(readFileSync(contextSourcePath)).toEqual(contextSourceBytes);
         const inspected = parseTestRunPayload(await runSuccessfully([...args, '--inspect', 'true']));
         expect(inspected.status).toBe('continuation_review_ready');
         const inspectedActions = requireNextActions(inspected);

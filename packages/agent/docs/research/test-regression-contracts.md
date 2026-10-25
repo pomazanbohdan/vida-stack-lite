@@ -79,6 +79,15 @@ Host/Journal after stale CAS denial, exact history retention after continuation,
 persisted lookup and an idempotent retry with one receipt and no reissued action.
 This is fresh fixture evidence, not replay or Runtime acceptance.
 
+The public delivered-review entrypoint case configures its existing local context
+source before fixture initialization and capture. Derive its expected SHA, byte
+length, digest and request-file binding from the owned bytes. Reject another
+valid scope digest and workflow selection without changing stored bindings.
+Change only the context file for the stale-context refusal, compare the complete
+Host/Journal inspection, and restore exact bytes before healthy inspect, issue,
+report and retries. Retain both assertion and restoration failures. This seeded
+component prerequisite does not qualify the public capture/planner producer chain.
+
 Once the actual initial or delivered continuation creates its receipt table,
 reuse its successful request with current Host/Ledger/Journal versions and an
 absent attempt. Require the owning public refusal, exact unchanged state and

@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date:2026-10-23. This document owns execution order.
+Status date:2026-10-25. This document owns execution order.
 [WORK](WORK.md) owns decisions and evidence locators; the existing
 [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable IDs.
 
@@ -11,6 +11,14 @@ bound Source and evidence. Keep archived operational state isolated.
 No consumer effect, native loader activation or DB cutover is part of this cycle.
 
 ## Current state
+
+Current packet: extend the maintained delivered-work review case with configured
+local context, stale-context refusal and exact restoration before one changed-input
+stage. Reuse report49e24556-8cf3-4627-9211-35b8e360a278 and its exact missing-function
+window. The public review case already passes in that coverage profile; mutation
+profile selection is a separate fact. [WORK](WORK.md#delivered-review-context-packet-2026-10-25)
+owns the packet checkpoint, audit evidence and remaining qualification. Historical
+2822 navigation below does not replace that current report or authorize a replay.
 
 The active contour is **bun-cli-run**, the next partition in
 packages/agent/tooling/mutation-partitions.ts. Init's2589 stage completes all
