@@ -4016,10 +4016,30 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(initial.action_status).toBe('unissued');
         fixture.closeDatabase();
         const contextHostBefore = inspectHostWorkspaceDatabase(
-          root,
-          sessionHandoffDatabaseRelativePath(config),
-          workspaceId,
+            root,
+            sessionHandoffDatabaseRelativePath(config),
+            workspaceId,
+          ),
+          reconciliationProofPath = path.join(root, '.agent', 'work', workId, 'unwritten-reconciliation-proof.json');
+        await Promise.resolve(
+          expect(
+            run([
+              ...args,
+              ...expected(requireStateVersion(initial.journal.version)),
+              '--reconcile',
+              reconciliationProofPath,
+            ]),
+          ).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-EXECUTION-001',
+            message: 'Delivered-work review does not permit native-attempt reconciliation.',
+          }),
         );
+        expect(inspectHostWorkspaceDatabase(root, sessionHandoffDatabaseRelativePath(config), workspaceId)).toEqual(
+          contextHostBefore,
+        );
+        expect(existsSync(reconciliationProofPath)).toBe(false);
+        expect(snapshotSpy).not.toHaveBeenCalled();
+        expect(bridgeSpy).not.toHaveBeenCalled();
         const mismatchedScopeDigest =
           (currentSourceScope.digest[0] === '0' ? '1' : '0') + currentSourceScope.digest.slice(1);
         expect(mismatchedScopeDigest).toMatch(/^[a-f0-9]{64}$/u);
@@ -9236,9 +9256,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
 
     test('validates an accepted delivery proposal through public run', async () => {
       let fixture: FailedFinalCorrectionFixture | undefined;
-      let completed = false;
+      let completed = false,
+        pendingAssuranceIssue = false;
       try {
         fixture = await createFailedFinalCorrectionFixture('passing');
+        const assuranceFixture = fixture;
         const delivery = fixture.journal.state.completed
           .flatMap((wave) => wave.items)
           .find((item) => item.request.stage_id === 'prepare_delivery');
@@ -9248,18 +9270,46 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           issue_id: delivery.issue_id,
           status: 'reported_complete',
         });
-        expect(parseJsonUnknown(delivery.observation.summary)).toMatchObject({
+        const deliveryProposal = requireRecord(
+          parseJsonUnknown(delivery.observation.summary),
+          'accepted delivery proposal summary',
+        );
+        expect(deliveryProposal).toMatchObject({
           schema: 'VidaDeliveryProposal/v1',
           destination: 'isolated-fixture',
         });
 
         const work = fixture.store.readHostStateSnapshot(fixture.identity).work;
         assert.ok(work);
+        const sourceScope = fixture.journal.state.source_scope;
+        assert.ok(sourceScope);
+        const preparation = requireRecord(
+          parseJsonUnknown(readFileSync(path.join(fixture.root, fixture.preparationPath), 'utf8')),
+          'fixture final assurance preparation',
+        );
+        if (typeof preparation.delivery_manifest_path !== 'string')
+          throw new Error('Fixture preparation has no declared delivery manifest path.');
+        const deliveryManifestPath = preparation.delivery_manifest_path;
+        expect(deliveryManifestPath).toBe(`.agent/work/${fixture.identity.work_id}/delivery.json`);
+        expect(sourceScope.entries.some((entry) => entry.path === deliveryManifestPath)).toBe(false);
+        writeFileSync(
+          path.join(fixture.root, ...deliveryManifestPath.split('/')),
+          JSON.stringify({
+            schema: 'FinalAssuranceDelivery/v1',
+            work_id: fixture.identity.work_id,
+            implementation_fingerprint: sourceScope.digest,
+            destination: deliveryProposal.destination,
+            order: deliveryProposal.order,
+            post_deployment_checks: deliveryProposal.post_deployment_checks,
+            created_files: deliveryProposal.created,
+            modified_files: deliveryProposal.modified,
+            repository_only_files: deliveryProposal.do_not_deploy,
+          }),
+        );
         const projectId = fixture.identity.project_ids[0];
         assert.ok(projectId);
         const version = fixture.journal.version;
-        const assurance = requireRecord(
-          await run([
+        const runArgs = [
             '--project-root',
             fixture.root,
             '--repository',
@@ -9282,29 +9332,294 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             fixture.producerInput.selection.intent,
             '--workflow',
             fixture.producerInput.workflowId,
+          ],
+          expected = (stateVersion: { revision: number; digest: string }) => [
             '--expected-revision',
-            String(version.revision),
+            String(stateVersion.revision),
             '--expected-digest',
-            version.digest,
+            stateVersion.digest,
+          ],
+          publicRun = async (args: string[]): Promise<Record<string, unknown> & { state_version: StateVersion }> => {
+            const result = requireRecord(await run([...runArgs, ...args]), 'public final assurance operation result');
+            const typedResult = parseTestRunPayload({
+              schema: result.schema,
+              status: result.status,
+              state_version: result.state_version,
+            });
+            return { ...result, state_version: requireStateVersion(typedResult.state_version) };
+          },
+          assurance = await publicRun([
+            ...expected(version),
             '--prepare-assurance',
             path.join(fixture.root, fixture.preparationPath),
-          ]),
-          'public final assurance preparation result',
-        );
+          ]);
         expect(assurance.status).toBe('assurance_resumed');
         expect(assurance.assurance_status).toBe('ready');
         expect(assurance.issued_actions).toEqual([]);
         assert.ok(Array.isArray(assurance.next_actions));
         const nextActions = assurance.next_actions.map((action) => requireRecord(action, 'final assurance action'));
+        expect(
+          nextActions.map(
+            (action) => requireRecord(action.packet, 'current assurance packet').implementation_fingerprint,
+          ),
+        ).toEqual([sourceScope.digest, sourceScope.digest, sourceScope.digest]);
         expect(nextActions.map((action) => [action.kind, action.perspective, action.issue_id])).toEqual([
           ['review', 'correctness', null],
           ['review', 'security', null],
           ['review', 'assurance', null],
         ]);
         expect(nextActions.every((action) => action.tool === 'spawn_agent')).toBe(true);
+        pendingAssuranceIssue = true;
+        const issueReviews = await publicRun([
+          ...expected(requireStateVersion(assurance.state_version)),
+          '--issue-wave',
+          'true',
+        ]);
+        expect(issueReviews.status).toBe('assurance_wave_issued');
+        expect(issueReviews.assurance_status).toBe('issued_outcome_uncertain');
+        expect(issueReviews.next_actions).toEqual([]);
+        assert.ok(Array.isArray(issueReviews.issued_actions));
+        const issuedReviews = issueReviews.issued_actions.map((action) =>
+          requireRecord(action, 'issued final assurance review'),
+        );
+        expect(issuedReviews.map((action) => [action.kind, action.perspective])).toEqual([
+          ['review', 'correctness'],
+          ['review', 'security'],
+          ['review', 'assurance'],
+        ]);
+        expect(issuedReviews.every((action) => typeof action.issue_id === 'string')).toBe(true);
+        const reportBody = (
+          action: Record<string, unknown>,
+          kind: 'review' | 'reverse',
+          review?: Record<string, unknown>,
+        ) => {
+          const packet = requireRecord(action.packet, 'issued assurance packet');
+          const actionId = action.action_id,
+            issueId = action.issue_id;
+          if (typeof actionId !== 'string' || typeof issueId !== 'string')
+            throw new Error('Issued assurance action lacks its returned IDs.');
+          let reviewActionId: string | undefined,
+            reviewIssueId: string | undefined,
+            agentId = `fixture:reviewer-${String(action.perspective)}`,
+            historyId = `fixture:review-history-${String(action.perspective)}`;
+          if (kind === 'reverse') {
+            const acceptedReview = requireRecord(review, 'accepted review observation');
+            if (
+              typeof acceptedReview.action_id !== 'string' ||
+              typeof acceptedReview.issue_id !== 'string' ||
+              typeof acceptedReview.agent_id !== 'string' ||
+              typeof acceptedReview.history_id !== 'string'
+            )
+              throw new Error('Accepted review observation lacks its returned bindings.');
+            reviewActionId = acceptedReview.action_id;
+            reviewIssueId = acceptedReview.issue_id;
+            agentId = acceptedReview.agent_id;
+            historyId = acceptedReview.history_id;
+          }
+          return {
+            schema: kind === 'review' ? 'FinalAssuranceReview/v1' : 'FinalAssuranceReverse/v1',
+            work_id: packet.work_id,
+            attempt: packet.attempt,
+            packet_id: packet.packet_id,
+            action_id: actionId,
+            issue_id: issueId,
+            generation: packet.generation,
+            implementation_fingerprint: packet.implementation_fingerprint,
+            scope_id: packet.scope_id,
+            ...(kind === 'review' ? { perspective: action.perspective } : {}),
+            ...(kind === 'reverse' ? { review_action_id: reviewActionId, review_issue_id: reviewIssueId } : {}),
+            agent_id: agentId,
+            history_id: historyId,
+            tool_call_ref: `fixture:${kind}-${String(action.perspective)}`,
+            verdict: 'pass',
+            evidence_refs: [`local://fixture/${kind}-${String(action.perspective)}`],
+            checks: {
+              scope_and_trace: 'pass',
+              tests_security_rollback: 'pass',
+              evidence_invalidation_binding: 'pass',
+            },
+            ...(kind === 'review' ? { findings: [] } : {}),
+          };
+        };
+        const reportPathFor = (kind: string, action: Record<string, unknown>) => {
+          const perspective = String(action.perspective);
+          return path.join(
+            assuranceFixture.root,
+            '.agent',
+            'work',
+            assuranceFixture.identity.work_id,
+            `${kind}-${perspective}.json`,
+          );
+        };
+        const firstReview = issuedReviews[0];
+        assert.ok(firstReview);
+        const firstReviewPath = reportPathFor('final-review', firstReview);
+        writeFileSync(firstReviewPath, JSON.stringify(reportBody(firstReview, 'review')));
+        const hostBeforeStaleReport = fixture.store.readHostStateSnapshot(fixture.identity),
+          finalBeforeStaleReport = fixture.store.readFinalAssurance(fixture.identity, 1);
+        assert.ok(finalBeforeStaleReport);
+        await Promise.resolve(
+          expect(
+            publicRun([...expected(requireStateVersion(assurance.state_version)), '--report', firstReviewPath]),
+          ).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Final assurance journal version is stale.',
+          }),
+        );
+        expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(hostBeforeStaleReport);
+        expect(fixture.store.readFinalAssurance(fixture.identity, 1)).toEqual(finalBeforeStaleReport);
+
+        let currentVersion = requireStateVersion(issueReviews.state_version),
+          finalReviewResult: Record<string, unknown> | undefined;
+        for (const [index, review] of issuedReviews.entries()) {
+          const reportPath = reportPathFor('final-review', review);
+          writeFileSync(reportPath, JSON.stringify(reportBody(review, 'review')));
+          const expectedBeforeReport = currentVersion;
+          const reported = await publicRun([...expected(currentVersion), '--report', reportPath]);
+          expect(reported.status).toBe('assurance_reported');
+          currentVersion = requireStateVersion(reported.state_version);
+          finalReviewResult = reported;
+          if (review === firstReview) {
+            const retry = await publicRun([...expected(currentVersion), '--report', reportPath]);
+            expect(retry.status).toBe('assurance_report_retrieved');
+            expect(retry.state_version).toEqual(reported.state_version);
+            const hostBeforeConflict = fixture.store.readHostStateSnapshot(fixture.identity),
+              finalBeforeConflict = fixture.store.readFinalAssurance(fixture.identity, 1),
+              conflictingReportPath = reportPathFor('conflicting-final-review', review);
+            writeFileSync(
+              conflictingReportPath,
+              JSON.stringify({ ...reportBody(review, 'review'), findings: ['conflicting retry'] }),
+            );
+            await Promise.resolve(
+              expect(publicRun([...expected(currentVersion), '--report', conflictingReportPath])).rejects.toThrow(
+                /changed report retry conflicts/u,
+              ),
+            );
+            expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(hostBeforeConflict);
+            expect(fixture.store.readFinalAssurance(fixture.identity, 1)).toEqual(finalBeforeConflict);
+          }
+          if (index < issuedReviews.length - 1) {
+            expect(reported.assurance_status).toBe('issued_outcome_uncertain');
+            expect(reported.next_actions).toEqual([]);
+          } else {
+            assert.ok(Array.isArray(reported.next_actions));
+            const reportedReverseActions = reported.next_actions.map((action) =>
+              requireRecord(action, 'third-review response reverse action'),
+            );
+            expect(reportedReverseActions.map((action) => [action.kind, action.perspective])).toEqual([
+              ['reverse', 'correctness'],
+              ['reverse', 'security'],
+              ['reverse', 'assurance'],
+            ]);
+            const hostBeforeRetry = fixture.store.readHostStateSnapshot(fixture.identity),
+              finalBeforeRetry = fixture.store.readFinalAssurance(fixture.identity, 1),
+              retry = await publicRun([...expected(expectedBeforeReport), '--report', reportPath]);
+            assert.ok(finalBeforeRetry);
+            expect(finalBeforeRetry.version).toEqual(reported.state_version);
+            expect(retry.status).toBe('assurance_report_retrieved');
+            expect(retry.state_version).toEqual(finalBeforeRetry.version);
+            expect(retry.assurance_status).toBe('ready');
+            expect(retry.next_actions).toEqual(reported.next_actions);
+            expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(hostBeforeRetry);
+            expect(fixture.store.readFinalAssurance(fixture.identity, 1)).toEqual(finalBeforeRetry);
+            finalReviewResult = retry;
+          }
+        }
+        assert.ok(finalReviewResult);
+        expect(finalReviewResult.assurance_status).toBe('ready');
+        assert.ok(Array.isArray(finalReviewResult.next_actions));
+        const reverseActions = finalReviewResult.next_actions.map((action) =>
+          requireRecord(action, 'public next final assurance reverse action'),
+        );
+        expect(reverseActions.map((action) => [action.kind, action.perspective])).toEqual([
+          ['reverse', 'correctness'],
+          ['reverse', 'security'],
+          ['reverse', 'assurance'],
+        ]);
+        for (const reverse of reverseActions) {
+          expect(reverse.issue_id).toBeNull();
+          expect(reverse.target_agent_id).toBeNull();
+          expect(reverse.tool).toBe('followup_task');
+          const review = requireRecord(reverse.review, 'perspective-bound accepted review');
+          expect(review.schema).toBe('FinalAssuranceReview/v1');
+          expect(review.perspective).toBe(reverse.perspective);
+          expect(review.verdict).toBe('pass');
+          expect(review.action_id).toBe(
+            issuedReviews.find((candidate) => candidate.perspective === reverse.perspective)?.action_id,
+          );
+          expect(review.issue_id).toBe(
+            issuedReviews.find((candidate) => candidate.perspective === reverse.perspective)?.issue_id,
+          );
+        }
+        const issueReverses = await publicRun([...expected(currentVersion), '--issue-wave', 'true']);
+        expect(issueReverses.status).toBe('assurance_wave_issued');
+        assert.ok(Array.isArray(issueReverses.issued_actions));
+        const issuedReverses = issueReverses.issued_actions.map((action) =>
+          requireRecord(action, 'issued final assurance reverse'),
+        );
+        expect(issuedReverses.map((action) => [action.kind, action.perspective])).toEqual([
+          ['reverse', 'correctness'],
+          ['reverse', 'security'],
+          ['reverse', 'assurance'],
+        ]);
+        currentVersion = requireStateVersion(issueReverses.state_version);
+        let reverseResult: Record<string, unknown> | undefined;
+        for (const [index, reverse] of issuedReverses.entries()) {
+          const acceptedReview = requireRecord(
+            fixture.store
+              .readFinalAssurance(fixture.identity, 1)
+              ?.state.actions.find((action) => action.kind === 'review' && action.perspective === reverse.perspective)
+              ?.observation,
+            'persisted perspective review observation',
+          );
+          expect(reverse.target_agent_id).toBe(acceptedReview.agent_id);
+          const reportPath = reportPathFor('final-reverse', reverse);
+          writeFileSync(reportPath, JSON.stringify(reportBody(reverse, 'reverse', acceptedReview)));
+          const reported = await publicRun([...expected(currentVersion), '--report', reportPath]);
+          expect(reported.delivery_gap).toBeNull();
+          expect(reported.status).toBe(index === issuedReverses.length - 1 ? 'delivery' : 'assurance_reported');
+          currentVersion = requireStateVersion(reported.state_version);
+          reverseResult = reported;
+        }
+        assert.ok(reverseResult);
+        expect(reverseResult.assurance_status).toBe('reviewed');
+        const finalAssurance = fixture.store.readFinalAssurance(fixture.identity, 1);
+        assert.ok(finalAssurance);
+        expect(finalAssurance.version).toEqual(currentVersion);
+        expect(finalAssurance.state.actions.every((action) => action.issue_id && action.observation)).toBe(true);
+        for (const action of finalAssurance.state.actions) {
+          const observation = action.observation;
+          assert.ok(observation);
+          if (typeof action.issue_id !== 'string') throw new Error('Persisted assurance issue ID is absent.');
+          expect(observation.action_id).toBe(action.action_id);
+          expect(observation.issue_id).toBe(action.issue_id);
+          if (action.kind === 'reverse') {
+            if (observation.schema !== 'FinalAssuranceReverse/v1')
+              throw new Error('Persisted reverse action has a non-reverse observation.');
+            const pairedReview = finalAssurance.state.actions.find(
+              (candidate) => candidate.kind === 'review' && candidate.perspective === action.perspective,
+            );
+            if (!pairedReview || typeof pairedReview.issue_id !== 'string' || !pairedReview.observation)
+              throw new Error('Persisted reverse action lacks its accepted review binding.');
+            expect(observation.schema).toBe('FinalAssuranceReverse/v1');
+            expect(observation.review_action_id).toBe(pairedReview.action_id);
+            expect(observation.review_issue_id).toBe(pairedReview.issue_id);
+          }
+        }
+        const completedHost = fixture.store.readHostStateSnapshot(fixture.identity);
+        assert.ok(completedHost.work);
+        expect(completedHost.work.lifecycle.phase).toBe('DELIVERY');
+        const deliveryManifest = requireRecord(reverseResult.delivery_manifest, 'public delivery manifest');
+        const deliveryReference = completedHost.work.lifecycle.references.find(
+          (reference) => reference.kind === 'delivery_manifest' && reference.disposition === 'current',
+        );
+        assert.ok(deliveryReference);
+        assert.ok(typeof deliveryManifest.path === 'string');
+        expect(deliveryReference.path).toBe(deliveryManifest.path);
+        pendingAssuranceIssue = false;
         completed = true;
       } finally {
-        fixture?.close(completed);
+        fixture?.close(() => completed && !pendingAssuranceIssue);
       }
     }, 90_000);
 

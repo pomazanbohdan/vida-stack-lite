@@ -88,6 +88,18 @@ Host/Journal inspection, and restore exact bytes before healthy inspect, issue,
 report and retries. Retain both assertion and restoration failures. This seeded
 component prerequisite does not qualify the public capture/planner producer chain.
 
+The public final-assurance regression drives three review reports and their
+reverse reports through actual public issue IDs and returned CAS versions. Require
+three unissued reverse actions in the third review report response, before any
+resume, and the same frontier on an exact retry with the pre-report version.
+Unresolved waves expose no next actions. Preserve stale/conflicting report denials
+and their complete unchanged Host/assurance snapshots. A successful local delivery
+needs its declared controlled manifest before preparation; derive its fields from
+the accepted proposal and its fingerprint from captured implementation Source,
+then check the actual packet binding. Work source-record revision is a distinct
+identity. Keep all pending/failing fixture evidence and do not claim real reviews,
+deployment or Runtime acceptance from controlled observations.
+
 Once the actual initial or delivered continuation creates its receipt table,
 reuse its successful request with current Host/Ledger/Journal versions and an
 absent attempt. Require the owning public refusal, exact unchanged state and

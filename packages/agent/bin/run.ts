@@ -7564,7 +7564,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
               ? 'Fresh isolated blind review. Observe correctness, security and assurance checks explicitly; report only actual findings.'
               : 'Same reviewer performs a separate reverse validation of its accepted review, scope/trace, tests/security/rollback and evidence/invalidation/bindings.',
         });
-        const nextKind = finalJournal.state.actions
+        const nextKind = assurance.state.actions
           .filter((entry) => entry.kind === 'review')
           .every((entry) => entry.observation?.verdict === 'pass')
           ? 'reverse'

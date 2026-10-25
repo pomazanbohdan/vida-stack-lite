@@ -38,6 +38,77 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Delivered assurance packet, 2026-10-25
+
+Root continues bun-cli-run/F/L/S/B from f6cee9f3. Latest numeric qualification
+remains Source43d8c0a0/run4018ffc3 below until the changed-input stage completes.
+Native Luna authored two maintained public cases in the ordinary private directory
+PATCH/delivered-assurance-20261025-01. Independent Source, test and manifest
+reviews remain in literal DIAG/assurance-frontier-contract-review-20261025-01.md,
+delivered-assurance-test-review-20261025-01.md,
+delivered-assurance-final-review-20261025-01.md and
+delivered-assurance-manifest-final-review-20261025-01.md. Root owns integration,
+checks, the sole producer and Git; no worktree or parallel ledger.
+
+A real public regression reproduced the stale frontier. Target01 completed with
+1pass/1fail,82expectations,16.40s: after the third passing review report the public
+response returned no reverse actions. The accepted-delivery case failed12804.41ms;
+the reconciliation refusal passed2326.56ms. The red test patch and original log
+are literal DIAG/delivered-assurance-red-test-20261025-01.patch and
+delivered-assurance-target-20261025-01.log. Its KO9iPa root remains protected.
+
+The product correction changes one selection input in bin/run.ts: nextKind reads
+post-operation assurance.state instead of pre-operation finalJournal.state.
+Returned status, version and frontier now refer to the same committed snapshot.
+No CAS, observation validation, delivery prerequisite, budget or admission changes.
+The test checks the immediate third-report frontier and exact report retry using
+the pre-report version; neither relies on an extra resume to reveal reverse actions.
+All actual issued IDs, perspectives, reviewer targets and persisted observations
+are bound through public issue/report calls. Reports are controlled unit inputs,
+not external review, operational consumer delivery or Runtime qualification.
+
+The collected packet also refuses a delivered-review reconcile request at its
+own execution guard. It uses a canonical absolute absent proof path and the
+current Journal version, without inspect. Full Host/Journal stays unchanged,
+proof remains absent and old-engine readers remain unopened. The initial trace's
+boolean-reconcile suggestion was rejected by the actual parser contract.
+
+Initial strict failures10 and37 exposed unknown result-field types and a dropped
+Record index signature, before any target run. Root preserves both logs and uses
+the existing typed result parser for state_version with an explicit checked return
+intersection; no any, assertion cast or lint suppression. Target02 then passed
+frontier/retry/reverse processing but refused expected delivery. Target03 captured
+the exact missing delivery.json ENOENT. The fixture named FinalAssuranceDelivery/v1
+in preparation but did not create it. The earlier independent claim that this
+fixture already supported full delivery is explicitly corrected in literal
+DIAG/delivered-assurance-delivery-gap-review-20261025-01.md. This was a fixture
+precondition gap, not a reason to relax receipt or file checks.
+
+The final setup writes the controlled manifest before assurance preparation,
+outside the captured Source entries. Destination, order, checks and file lists
+come from the already accepted proposal; its implementation fingerprint reuses the
+captured Journal Source snapshot, with no new Source scan/hash. Target04 refuted
+an added oracle equating that fingerprint to Work source-record revision. Those
+are distinct domains. The final test checks all three actual assurance packet
+fingerprints against the captured snapshot instead, without rewriting Work or
+Journal. Failed roots7o0unj,CmqKLI,OIdAyf and all original logs remain protected;
+none was read as a database, replayed, reconciled or cleaned up.
+
+Literal DIAG/delivered-assurance-static-20261025-07.log records strict510files,
+configured type-aware lint and format PASS for bin/run.ts and the test owner.
+Target05 accepted-delivery case passed101expectations,15752.95ms body/17.14s
+invocation. It covers the immediate reverse frontier, exact old-version retry,
+stale/conflicting report denials, six real issue/report bindings and local DELIVERY
+with a current manifest reference. Target04 separately passed the unchanged
+reconciliation case2157.01ms; its overall attempt remains FAIL from the rejected
+fingerprint oracle. Do not promote that partial pass to a complete attempt PASS.
+All original5s/90s case bounds and the330s contour bound stay unchanged.
+
+- [x] Frame: existing7190–7600 function query and complete related branch.
+- [x] Collect/reproduce: two maintained cases; exact public frontier defect and refusal.
+- [x] Integrate: one-input product fix, strict/lint/targets and independent review.
+- [ ] Normal terminal hooks/push, then one changed-input producer and terminal publication.
+
 ### Delivered-review context packet, 2026-10-25
 
 Root continues bun-cli-run in F/L/S/B from Source048ad0af. The bound report

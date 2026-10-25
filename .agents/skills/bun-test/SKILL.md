@@ -39,6 +39,11 @@ preserves the completed prefix and installs one unissued review. Include foreign
 issue, activation and sibling refusals plus exact retry and restored receipt
 corruption. A trusted Host component fixture is not public CLI qualification;
 trace whether a cited CLI case is positive or denial-only before reusing it.
+For public final-assurance checks, reuse the accepted-delivery fixture and create
+its declared controlled manifest before preparation. Reuse captured implementation
+Source for its fingerprint; Work source-record revision has another meaning.
+Check the third review report's reverse frontier before any extra resume, then
+exercise exact old-version retry through the public owner.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual
 normalization and artifact admission. Use distinct action-bound tool-call refs
