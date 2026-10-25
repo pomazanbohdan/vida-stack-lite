@@ -38,6 +38,74 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Next shared run-path packet, parallel read-only trace
+
+The sole issued-candidate stage has terminated before this analysis. Pstack Swarm
+uses three disjoint read-only slices within bun-cli-run, with native Luna selected
+by the repository override. No external provider, worktree, writer, additional
+producer or parallel ledger is started. Root integrates one checked packet only
+after the terminal reader results. The done predicate is one bounded supported
+case set or exact unresolved prerequisite per slice, with Source/test pointers,
+not numeric qualification or a worker-issued disposition.
+
+- [x] Frame. Bound Source `089d5c93` and report `30e72888-af53-4578-90fd-58d8da030c0e`; keep F/L/S/B phase and immutable image custody.
+- [x] Fan out. Three read-only lanes dispatched for scope/context at run.ts:6051-6300, workflow callbacks at :7100-7280 and late callbacks at :7281-9540. Terminal aggregation remains below.
+- [x] Aggregate. Root verified supported scope derivation and the unreported-review assurance refusal, combining them with existing fixtures. Other proposed callbacks remain OPEN until their actual caller prerequisites are established.
+- [ ] Report. Record measured results only after scoped checks, independent review and one changed-input stage.
+
+All completed readers used native Codex Luna; this is one provider/model route,
+not a diverse panel. Scope reader A reported inability to resolve leaf skills;
+its result is Source trace evidence only. Root supplied the resolved absolute
+entry/Swarm paths to the other active readers and adds those locators to the
+Cloud reference's existing brief requirements, without installation or new policy
+owners. Reader C falsely reported the assigned Source range absent. Root rejected
+that result after observing the unchanged full HEAD
+`089d5c93c5aef75db3be128aad2067dbec11264a`, 9,533 run.ts lines and exact content
+at 7281. That reader also emitted a truncated source_maps object; it yields no
+evidence. One fresh bounded text-only retry correctly bound Source and identified
+the local requireConfiguredContext closure, but did not establish its supported
+admittedEvidence caller. That route stays an OPEN prerequisite, not a skip or
+repository/environment blocker. The Cloud reference now includes source_maps
+in its existing large-tree warning. No Source drift, new index or broad scan.
+
+The selected packet adds a valid --scope-path AGENTS.md call without an explicit
+digest to the existing denied-initialization fixture. It must pass scope derivation
+before the exact initialization refusal, leaving instruction/init bytes unchanged
+and no Work/DB created. The continuation fixture now refuses --prepare-assurance
+while its review remains unissued, before assurance output, and compares the same
+native Host projection before/after. This is that projection's scope, not a
+whole-database row/schema no-write claim. The original issue/retry/report checks
+remain; the existing fixtures perform setup once for the additional controls.
+
+The first grouped target passed the unchanged scope case but failed before the
+continuation action because Root passed an absolute DB path to a relative-path
+observer. The next continuation attempt used the engine-relative path and failed
+its existing-file guard. Root then verified both project-path owners and the
+existing observer call pattern rather than guessing: the native Host DB uses
+sessionHandoffDatabaseRelativePath, while sessionBridgeDatabaseRelativePath is
+the engine DB. Its existence is now an explicit precondition. A third attempt
+reached the expected assurance refusal but failed Root's newly introduced global
+close count of one. Source 6177-6211 closes its selection ledger, then 6832 opens
+the operation ledger that closes on refusal; the global proxy conflated phases.
+Test Behavior, Not Implementation removes that new proxy and retains exact
+diagnostic, artifact absence and native Host afterimage assertions. No prior
+required assertion, resource contract, budget or closure owner was weakened.
+
+Preserve the three failed roots untouched:
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-continuation-oszFWh`,
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-continuation-Tf0XhF`, and
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-run-continuation-PfPqwO`.
+Keep this WORK's `DIAG/shared-run-paths-target-20261025-01.log`,
+`DIAG/shared-run-paths-continuation-target-20261025-{01,02,03}.log` and
+`DIAG/shared-run-paths-static-20261025-{01,02,03,04,05}.log`. These are ordinary
+assertion/observer failures, no timeout/kill and no numeric publication. The final
+continuation target passed one test and 25 expectations in 4.00 s; the unchanged
+scope target's earlier native PASS is reused. Final scoped strict, typed lint
+and one-file format check passed. A fresh independent read-only Luna review
+confirmed both final controls, correct DB owner and unchanged original flow.
+Root reviewed the complete diff. One changed-input stage follows normal hooks,
+commit and push termination, with no second audit cycle or filesystem survey.
+
 ### Interrupted-retirement decoder packet, 2026-10-25
 
 After the parser milestone, the retained missing-function map selects the
@@ -118,8 +186,26 @@ The corrected exact declaration filter requires a positive pass summary and ran
 all ten affected groups in one invocation: ten pass, eight filtered, zero fail,
 384 expectations, 4.30 s. Preserve `DIAG/issued-candidates-static-20261025-01.log`
 and `DIAG/issued-candidates-target-20261025-02.log`. No unchanged full stage,
-AST/index/hash inventory or benchmark was repeated. The next action is one
-changed-input stage after normal commit/hooks and push finish.
+AST/index/hash inventory or benchmark was repeated. After normal commit/hooks
+and push terminated for `089d5c93c5aef75db3be128aad2067dbec11264a`, the sole
+stage completed once in `/workspace/contour-stage-yWEmXP`, 228,148.517096 ms,
+exit 0, no timeout, complete capture, closed group, unchanged boot/image inputs
+and published report. Native stderr records 134 pass, zero fail and 3,065
+expectations. Run `30e72888-af53-4578-90fd-58d8da030c0e` records F448/555,
+L2070/2860, S2232/3138, B2705/3660, max CC/entry CRAP501 and BLOCKED. The
+packet adds three functions, three lines, three statements and 23 branch arms.
+No exact100, frozen waiver, mutation kill or native custody is claimed.
+Preserve `DIAG/issued-candidates-stage-20261025-01.log` here and its native root.
+The image is
+`/workspace/.vida-quality-inputs/0633d7a0771d59272337c9f0e9e35217c09b9ec6/repository`,
+Source tree `4c6908ba4664befc0a0cb37c750f4a3af636b70b`, input fingerprint
+`d761a9f23bd9a59e61b5750644d6356152020f36a730cedbb511e335aaf3c704`, manifest
+SHA-256 `3dcc4f416c680f8c90bee71231cd1eefa22d5fa20e1fcd02a2d0851a3683a297`.
+
+The commit's ordinary automatic packing ran in the foreground and terminated.
+Before the next producer, Root observed both local maintenance/gc autoDetach
+settings false and no live Git/Bun/bwrap/tini process. No history, hooks or
+automatic maintenance policy was changed.
 
 ### Operation-option packet, 2026-10-25
 
@@ -346,9 +432,9 @@ prerequisite. This permits queue progression, not numeric exact100.
 The retained investigation below records the native issue counter prerequisite.
 It grants no new CLI role, numeric result or objective skip. Root retains the
 existing CAS child and every help/prepared/issue/report/UNKNOWN control.
-The latest accepted focused diagnostic is interrupted-decoder run
-`f03c5bd2-b1c1-4dec-81fb-b9c07127508b`, with F445/555, L2067/2860,
-S2229/3138 and B2682/3660. Its status remains BLOCKED and full qualification is
+The latest accepted focused diagnostic is issued-candidate run
+`30e72888-af53-4578-90fd-58d8da030c0e`, with F448/555, L2070/2860,
+S2232/3138 and B2705/3660. Its status remains BLOCKED and full qualification is
 false. The earlier reference to 2820 as the latest measurement was stale.
 
 2824/2825 independently compare native SQLite interception with update hooks or

@@ -89,7 +89,7 @@ a status question.
 For a necessary JSON read, inspect its schema and selected key types before
 extracting values with the existing TypeScript owner or an owned diagnostic.
 Emit an explicit list of scalar fields or bounded counter arrays. Fields named
-`coverage`, `metrics`, `execution_scope` and `attempts` can contain large trees;
+`coverage`, `metrics`, `source_maps`, `execution_scope` and `attempts` can contain large trees;
 their names do not establish a summary shape. Do not print them wholesale.
 A tool output limit truncates delivery after generation; it does not bound the
 query. After truncation, narrow the local selector before another read. Preserve
@@ -260,7 +260,9 @@ do not skip the kind/instructions checks or omit the contract from the brief.
 Bounded direct reads and textual rg searches on assigned files are not full
 repository/AST/index/hash scans. State that distinction in restricted reader
 briefs; use the declared checked-in lifecycle fallback when the CLI is absent.
-Give readers the exact current WORK and plan paths. Do not search the complete
+Give readers the exact current WORK and plan paths and the resolved absolute
+Pstack entry/leaf paths. Readers reuse that resolution without plugin rediscovery.
+Do not search the complete
 `.agent/work` history to rediscover those two files.
 
 cloud-pstack-setup.ts --install installs/enables pstack@open-pstack and

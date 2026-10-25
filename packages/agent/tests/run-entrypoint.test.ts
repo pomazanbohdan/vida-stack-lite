@@ -7,7 +7,7 @@ import {
   closeWorkspaceDatabaseWithAdmission,
 } from '../src/config/storage-read-admission.ts';
 import { documentationPolicyTransitionFence } from '../src/documentation/policy-transition.ts';
-import { sessionBridgeDatabaseRelativePath } from '../src/config/project-paths.ts';
+import { sessionBridgeDatabaseRelativePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { nativeDatabaseSnapshotReader } from './helpers/native-database-snapshot.ts';
 import { observeWorkStateSchemaCompiles } from './helpers/ajv-compile-observer.ts';
 import {
@@ -3921,6 +3921,25 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(inspectedActions).toHaveLength(1);
         expect(inspectedActions[0]?.historical_review_input?.body_sha256).toBe(fixture.capture.body_sha256);
         expect(inspected.accepted_result).toBe(false);
+        const assurancePath = path.join(root, '.agent', 'work', workId, 'unissued-assurance.json');
+        const hostRelativePath = sessionHandoffDatabaseRelativePath(config);
+        expect(existsSync(path.join(root, hostRelativePath))).toBe(true);
+        const hostBeforeAssurance = inspectHostWorkspaceDatabase(root, hostRelativePath, workspaceId);
+        await Promise.resolve(
+          expect(
+            run([
+              ...args,
+              ...expected(requireStateVersion(inspected.state_version)),
+              '--prepare-assurance',
+              assurancePath,
+            ]),
+          ).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'The retained-source review must be reported before final assurance or correction.',
+          }),
+        );
+        expect(existsSync(assurancePath)).toBe(false);
+        expect(inspectHostWorkspaceDatabase(root, hostRelativePath, workspaceId)).toEqual(hostBeforeAssurance);
         const issued = parseTestRunPayload(
           await runSuccessfully([
             ...args,
@@ -6666,11 +6685,17 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-context-'));
       let completed = false;
       try {
-        const { args, initialization, initializationPath } = createFixture(root);
+        const { args, config, initialization, initializationPath } = createFixture(root);
         writeFileSync(initializationPath, record({ ...initialization, workspace_binding_status: 'unknown' }));
         const deniedReceipt = readFileSync(initializationPath);
+        const scopePath = path.join(root, 'AGENTS.md'),
+          scopeBefore = readFileSync(scopePath);
+        const derivedScopeArgs = [...args];
+        derivedScopeArgs.splice(derivedScopeArgs.indexOf('--scope-digest'), 2);
+        derivedScopeArgs.push('--scope-path', 'AGENTS.md');
         for (const candidate of [
           args,
+          derivedScopeArgs,
           ['--project-root', root, '--task-source-operation', 'inspect', '--task-source-request', 'request.json'],
           [
             '--project-root',
@@ -6692,6 +6717,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(readFileSync(initializationPath)).toEqual(deniedReceipt);
           expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
         }
+        expect(readFileSync(scopePath)).toEqual(scopeBefore);
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
         const fileRoot = args.map((entry, index) =>
           args[index - 1] === '--project-root' ? initializationPath : entry,
         );
