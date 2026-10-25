@@ -12,24 +12,23 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The admitted freshness/context-output packet reuses the existing developer and
-accepted-delivery fixtures, plus one independent5s admitted-read lifetime case.
-Root collects all supported changes before one full stage. WORK owns scoped
-results and the still-open completed-ownership callback445 prerequisite; proposed
-hits do not change the latest numeric qualification below.
-
-The latest measured packet is Source36493c28/run6002ebad-5cbd-4f64-85ac-273ac0248925:
-F495/555, L2279/2873, S2464/3157 and B2910/3686, still BLOCKED. Intake/correction
-refusal cases now verify actual real-resource lifetime at both qualified database
-openers. The preceding packet fixes the stale public final-assurance reverse
-frontier. Reuse the existing7600–8200 function query, with explicit module/kinds;
-439–443 are exercised. Next bind completed-ownership, configured-context output
-and fresh retry producers for445,446,448,449,450,451,452,476. Trace preceding guards
-and supported transitions; missing fixtures alone do not permit a skip. Do not
-replay pending developer issues or claim Source qualification as Runtime delivery.
-[WORK](WORK.md#intakecorrection-boundaries-packet-2026-10-25) owns terminal counts,
-custody and remaining qualification. Historical2822 navigation below does not
-replace that report or authorize a replay.
+The latest measured packet is Sourcea3d3247a/run0a96d24d-1883-4d9f-a810-bc6e5c54dc41:
+F502/555, L2292/2873, S2480/3157 and B2920/3686, still BLOCKED. The collected
+admitted freshness, configured-context output and fresh no-effect prerequisite
+cases pass in one151-case stage. Existing fixtures own the controlled reports;
+none establishes consumer dispatch or Runtime acceptance. The7600–8200 function
+query confirms446,448–452,476 now hit and only445 still zero. Keep its historical
+completed-ownership prerequisite OPEN. The adjacent8201–9000 query binds480–484
+replacement research,488–490 initial Source report/engine selection,503
+implementation-result consumers and504–507 research-wave recovery. Investigate
+their supported fresh producer chains in this same contour, collect related
+changes and verify before the next single stage. These bounded windows do not
+replace the complete remaining inventory or establish objective skips.
+[WORK](WORK.md#admitted-freshness-and-context-output-packet-2026-10-25) owns terminal
+counts, custody and remaining qualification. Reuse its current report and scalar
+readers. Do not replay pending issues, rewrite accepted history, repeat unchanged
+suites or claim Source qualification as Runtime delivery. Historical2822 navigation
+below does not replace this report or authorize replay.
 
 The active contour is **bun-cli-run**, the next partition in
 packages/agent/tooling/mutation-partitions.ts. Init's2589 stage completes all

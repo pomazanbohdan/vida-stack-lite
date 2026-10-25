@@ -141,8 +141,63 @@ retirement, tmpfs evidence move, schedule/timer change or second automation.
 - [x] Frame and fan out bounded reader/private proposal lanes in the current contour.
 - [x] Aggregate supported changes and preserve rejected assumptions/failures.
 - [x] Finish final focused checks and independent Source review.
-- [ ] Normal commit/hooks/push, followed by one changed-input stage.
-- [ ] One changed-input stage, terminal projection and owned documentation closeout.
+- [x] Normala3d3247a hooks/main push, followed by one changed-input stage.
+- [x] One changed-input stage and producer-owned terminal projection.
+
+Terminal: Sourcea3d3247a0ac037aa5a44b6d97b7e5795d4726ad1 passed normal537-file
+format/strict544 hooks and ordinary main push before the sole producer.
+/workspace/contour-stage-GzHOAn completed243767.433613ms, exit0, no timeout,
+signal or spawn error; capture complete, process group closed, boot/image inputs
+unchanged and publication published. Native151pass,0fail,3740expectations,
+237.09s suite. The three changed bodies are2269.45,14255.29 and20216.41ms under
+their unchanged5s/60s/90s bounds. Different inputs and instrumentation do not
+establish a matched speedup against earlier timings. Literal
+DIAG/retry-context-stage-20261025-01.log owns the terminal capture.
+
+Run0a96d24d-1883-4d9f-a810-bc6e5c54dc41 records F502/555, L2292/2873,
+S2480/3157 and B2920/3686. Delta from6002ebad is+7F,+13L,+16S,+10B,
+all denominators unchanged; maxCC/entryCRAP501 and BLOCKED remain. No new
+exact closure, objective skip, frozen/CRAP/mutation or Runtime qualification.
+Historical exact17/46 remains historical. Image
+/workspace/.vida-quality-inputs/a8acc779df08c77c288fcf8bc1aab00e1c4f8899/repository,
+Source tree9d6df60171840bff33c5a74300d6cf7ccf8d1c63,
+fingerprintc90ccf71d4430158d6aaef9e65eabc120d159bbeef42d0bfeae6bf692077bdca,
+manifest SHA256f822ce326d79683b257b5c85769c6f73afb1f7c7335455a9b0d5e92035ffb469.
+The bound report is its packages/agent/coverage/bun-unified/diagnostics/
+0a96d24d-1883-4d9f-a810-bc6e5c54dc41.focused-coverage.json.
+
+The existing bounded reader confirms only445 remains zero in7600–8200;
+446,448–452 and476 are now hit. Literal
+DIAG/retry-context-terminal-gap-20261025-01.json carries actual module and queried
+function kind, with no inferred branch/statement result. The adjacent8201–9000
+query in DIAG/retry-context-next-window-20261025-01.json retains13callbacks:
+480–484 replacement research,488–490 initial Source report/engine selection,
+503 implementation-result consumers and504–507 research-wave recovery. These
+are next supported-producer investigations in the same contour, not dispositions
+or the complete remaining inventory. Overall53functions,581lines,677statements
+and766branches remain unhit. Keep callback445's prerequisite explicit.
+
+Independent receipt review at literal DIAG/retry-context-receipt-review-20261025-01.md
+observes target05 and06 at their actual paths, correcting review02's false missing
+log statement. Its snapshot preceded the target06 WORK insertion; the current
+record above and a3d3247a include that result. No rerun repaired a missing locator.
+The existing literal-plan/ignored-inventory rule already covers this failure;
+do not duplicate it with another tool or instruction owner.
+
+New launch admission observes9951629312available bytes against2147483648,
+headroom7804145664. It is the producer's own observation, not another manual
+survey. No resource GAP is measured at launch; deletion custody remains deferred.
+Four original retained control roots exist under the recorded disk-backed bind
+/workspace/contour-stage-GzHOAn/scratch-CypPDQ/scratch. Literal
+DIAG/retry-context-native-root-locators-20261025-01.json records the exact native
+and durable paths, including child-outcome-unknown and failed-close controls.
+Group closure does not relabel them. The new controlled developer report reached
+terminal locally; earlier pending developer issues remain untouched. No DB
+inspection, replay, cancellation, reconciliation, dispatch or cleanup follows.
+One filename listing intended to stay at the stage root returned scratch paths;
+it is not a dependency inventory and was not repeated. Exact known receipts
+remain the input for retention decisions. Projection stays unstaged; this terminal
+documentation update requires no repeated numeric stage. Schedule unchanged.
 
 ### Intake/correction boundaries packet, 2026-10-25
 
