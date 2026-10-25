@@ -125,6 +125,16 @@ coordination. These synthetic observations establish no consumer execution or
 Runtime acceptance. A reconciled no-effect action from another stage must not
 block the later writer or become that writer's previous-attempt link.
 
+Research-wave recovery uses a fresh two-action public issue. A one-shot failure
+before the second real activation leaves one committed activation and an actual
+`preparing` Journal. Public recovery preserves both issue IDs and the original
+history bytes, adds only the missing activation and publishes the exposure fence.
+Reissue after that fence refuses without Host/Journal or history mutation. Keep
+all unobserved read-only issues retained. A subsequent validation issue consumes
+the completed developer's current ImplementationResult, exposes its exact packet,
+fingerprint and changed paths, and acquires no new Host writer attempt or file right.
+Neither controlled report nor local issue establishes native consumer execution.
+
 Once the actual initial or delivered continuation creates its receipt table,
 reuse its successful request with current Host/Ledger/Journal versions and an
 absent attempt. Require the owning public refusal, exact unchanged state and

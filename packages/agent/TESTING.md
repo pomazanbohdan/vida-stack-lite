@@ -624,6 +624,12 @@ denials on fresh fixtures with the5s default, preserving exact CLI envelopes.
 Inspect existing Work and journal rows through the read-only workspace API:
 an empty bootstrap directory or database does not establish admitted Work.
 Keep a positive attempt's preparation, issuance, CAS and reports together.
+For unexposed research preparation recovery, fail a fresh activation after one
+real activation has committed. Resume only the actual `preparing` wave with its
+current Journal version. Require the same issue IDs, exact committed history
+prefix and one history entry per activation. Once exposure becomes possible,
+deny reissue without changing Host/Journal or activation-history bytes. Retain
+newly issued unobserved read-only roots; do not settle them merely for cleanup.
 Released and staged selector cases use separate fresh roots and shared setup;
 retain their existing integration deadline and every denial/custody assertion.
 Splitting cases alone does not establish an aggregate speed improvement.

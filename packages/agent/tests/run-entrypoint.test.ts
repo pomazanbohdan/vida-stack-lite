@@ -83,6 +83,7 @@ import {
   writeDurable,
 } from '../bin/run.ts';
 import { runOptionDetails, runSpecialModeOptions } from '../bin/run-cli-options.ts';
+import * as observedResearchActivation from '../src/orchestration/observed-research-activation.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 import { initializeProject } from '../bin/init.ts';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
@@ -9100,7 +9101,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
       let sessionLedger: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
       let completed = false;
-      let developerIssueRetained = false;
+      let pendingNativeIssue = false;
       const failures: unknown[] = [];
       try {
         fixture = await createInitialSourceWorkFixture({
@@ -9332,7 +9333,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const contextSourceSha256 = createHash('sha256').update(contextSourceBytes).digest('hex');
         const productContextSha256 = createHash('sha256').update(productContextBytes).digest('hex');
         const issueArgs = [...args, ...expected(current.version), '--issue-wave', 'true'];
-        developerIssueRetained = true;
+        pendingNativeIssue = true;
         const issuedValue = await runSuccessfully(issueArgs);
         const issueResponsePath = path.join(
           sourceFixture.root,
@@ -9606,7 +9607,46 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(releasedWriterTicket.status).toBe('released');
         expect(releasedWriterTicket.active_resources).toEqual([]);
         expect(acceptedJournal.state.items.some((item) => item.request.stage_id === 'develop_task')).toBe(false);
-        developerIssueRetained = false;
+        pendingNativeIssue = false;
+        const validationVersion = acceptedJournal.version;
+        pendingNativeIssue = true;
+        const validationRaw = requireRecord(
+          await runSuccessfully([...args, ...expected(validationVersion), '--issue-wave', 'true']),
+          'Issued validation wave',
+        );
+        const validationIssued = parseTestRunPayload(validationRaw);
+        expect(validationIssued.status).toBe('wave_issued');
+        const validationActions = requireIssuedActions(validationIssued);
+        expect(validationActions).toHaveLength(2);
+        expect(validationActions.every((item) => item.request.stage_id === 'validate_focused')).toBe(true);
+        assert.ok(Array.isArray(validationRaw.issued_actions));
+        for (const rawAction of validationRaw.issued_actions) {
+          const issuedAction = requireRecord(rawAction, 'Issued validation action');
+          const implementation = requireRecord(issuedAction.implementation_result, 'Issued implementation result');
+          const packet = requireRecord(issuedAction.development_packet, 'Issued validation packet');
+          expect(implementation).toMatchObject({
+            schema: 'ImplementationResult/v1',
+            packet_id: packet.packet_id,
+            implementation_fingerprint: acceptedJournal.state.source_scope?.digest,
+            changed_paths: ['docs/PRODUCT.md'],
+          });
+        }
+        const validationJournal = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(validationJournal);
+        expect(validationIssued.state_version).toEqual(validationJournal.version);
+        expect(validationJournal.state.items.every((item) => item.issue_id !== null && item.observation === null)).toBe(
+          true,
+        );
+        const afterValidationIssue = sessionLedger.hostState.readHostStateSnapshot(sourceFixture.identity);
+        assert.ok(afterValidationIssue.work?.lease && afterValidationIssue.ledger);
+        expect(afterValidationIssue.work.execution.assignment_attempts).toEqual(
+          acceptedHost.work.execution.assignment_attempts,
+        );
+        const validationTicket = afterValidationIssue.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === afterValidationIssue.work?.lease?.ticket_id,
+        );
+        assert.ok(validationTicket);
+        expect(validationTicket.exclusive_resources).toEqual(['execution:' + sourceFixture.identity.work_id]);
         completed = true;
       } catch (error) {
         failures.push(error);
@@ -9637,8 +9677,215 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           throw new AggregateError(failures, 'Native synthesis CLI operation or resource close failed');
         throw new Error('Native synthesis CLI fixture did not complete');
       }
-      if (root && developerIssueRetained) process.stderr.write(`Retained pending developer issue fixture: ${root}\n`);
+      if (root && pendingNativeIssue)
+        process.stderr.write(
+          JSON.stringify({
+            operation: 'native-synthesis-cli',
+            root,
+            cleanup: 'retained',
+            reason: 'issued-readonly-outcome-unobserved',
+          }) + '\n',
+        );
       else if (root) rmSync(root, { recursive: true, force: true });
+    }, 60_000);
+
+    test('recovers an unexposed research wave after activation preparation fails', async () => {
+      let root: string | undefined;
+      let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+      let activationSpy: { mockRestore(): void } | undefined;
+      let completed = false;
+      const failures: unknown[] = [];
+      const marker = new Error('second research activation preparation failed');
+      try {
+        fixture = await createInitialSourceWorkFixture({
+          researchSynthesis: true,
+          researchAssignments: 2,
+          onRoot: (value) => (root = value),
+        });
+        const sourceFixture = fixture;
+        const input = admittedInput(sourceFixture);
+        const initial = continuationState(sourceFixture);
+        const sourceScope = initial.journal.source_scope;
+        assert.ok(sourceScope && sourceFixture.store && sourceFixture.bridge && sourceFixture.ledger);
+        const projectId = sourceFixture.identity.project_ids[0];
+        assert.ok(projectId);
+        const args = [
+          '--project-root',
+          sourceFixture.root,
+          '--repository',
+          sourceFixture.config.repository.repository_id,
+          '--project',
+          projectId,
+          '--work-path',
+          sourceFixture.documents[0],
+          '--work-id',
+          sourceFixture.identity.work_id,
+          '--attempt',
+          '1',
+          '--scope-digest',
+          sourceScope.digest,
+          '--team',
+          input.selection.team,
+          '--kind',
+          input.selection.kind,
+          '--intent',
+          input.selection.intent,
+          '--workflow',
+          'task_execution',
+        ];
+        await bindControlledRuntimeInitialization(sourceFixture.root, sourceFixture.config, sourceFixture.store);
+        const ownerToClose = fixture;
+        fixture = undefined;
+        await ownerToClose.close();
+
+        const expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ];
+        const prepared = parseTestRunPayload(await run(args));
+        const preparedVersion = requireStateVersion(prepared.state_version);
+        const databaseRelativePath = sessionHandoffDatabaseRelativePath(sourceFixture.config);
+        const workspaceId = deriveWorkspaceId(sourceFixture.config.repository.repository_id, sourceFixture.root);
+        const readSnapshot = () => inspectHostWorkspaceDatabase(sourceFixture.root, databaseRelativePath, workspaceId);
+        let activationCalls = 0;
+        const activate = observedResearchActivation.issueObservedResearchActivation;
+        activationSpy = spyOn(observedResearchActivation, 'issueObservedResearchActivation').mockImplementation(
+          async (activationInput) => {
+            activationCalls += 1;
+            if (activationCalls === 2) throw marker;
+            return await activate(activationInput);
+          },
+        );
+        let issueFailure: unknown;
+        try {
+          await run([...args, ...expected(preparedVersion), '--issue-wave', 'true']);
+        } catch (error) {
+          issueFailure = error;
+        } finally {
+          activationSpy.mockRestore();
+          activationSpy = undefined;
+        }
+        expect(issueFailure).toBe(marker);
+        expect(activationCalls).toBe(2);
+
+        const beforeRecovery = readSnapshot();
+        const beforeJournal = beforeRecovery.journals.find(
+          (entry) => entry.work_id === sourceFixture.identity.work_id && entry.attempt === 1,
+        );
+        assert.ok(beforeJournal);
+        expect(beforeJournal.state.research_wave_exposure).toBe('preparing');
+        expect(beforeJournal.state.items).toHaveLength(2);
+        const originalIssueIds = beforeJournal.state.items.map((item) => item.issue_id);
+        expect(originalIssueIds.every((issueId) => typeof issueId === 'string')).toBe(true);
+        expect(new Set(originalIssueIds).size).toBe(2);
+        const firstActivation = beforeJournal.state.items[0]?.research_activation;
+        assert.ok(firstActivation);
+        expect(firstActivation.plan.history_path).toBe(
+          path.posix.join(
+            sourceFixture.config.research_decision.paths.activation_history,
+            sourceFixture.identity.work_id,
+            'instruction-activation-history.jsonl',
+          ),
+        );
+        const historyFile = path.join(sourceFixture.root, firstActivation.plan.history_path);
+        const beforeHistory = readFileSync(historyFile);
+        expect(beforeHistory.toString('utf8').endsWith('\n')).toBe(true);
+        expect(beforeHistory.toString('utf8').trimEnd().split('\n').map(parseJsonUnknown)).toEqual([
+          firstActivation.use,
+        ]);
+        expect(beforeJournal.state.items[1]?.research_activation).toBeUndefined();
+        expect(beforeJournal.state.items.every((item) => item.observation === null)).toBe(true);
+        expect(beforeJournal.state.items.every((item) => item.host_reservation === undefined)).toBe(true);
+        const beforeWork = beforeRecovery.work.find(
+          (entry) => entry.identity.work_id === sourceFixture.identity.work_id,
+        );
+        assert.ok(beforeWork);
+        expect(beforeWork.state.execution.assignment_attempts).toEqual([]);
+
+        const recoveredRaw = requireRecord(
+          await run([...args, ...expected(beforeJournal.version), '--issue-wave', 'true']),
+          'Recovered public research wave result',
+        );
+        const recovered = parseTestRunPayload(recoveredRaw);
+        expect(recovered.status).toBe('wave_recovered');
+        expect(recovered.research_preparation_status).toBe('exposure_possible');
+        const recoveredActions = requireIssuedActions(recovered);
+        expect(recoveredActions).toHaveLength(2);
+        expect(recoveredActions.map((action) => action.issue_id)).toEqual(originalIssueIds);
+        const afterRecovery = readSnapshot();
+        const recoveredJournal = afterRecovery.journals.find(
+          (entry) => entry.work_id === sourceFixture.identity.work_id && entry.attempt === 1,
+        );
+        assert.ok(recoveredJournal);
+        expect(recovered.state_version).toEqual(recoveredJournal.version);
+        expect(recoveredJournal.state.research_wave_exposure).toBe('possible');
+        expect(recoveredJournal.state.items.map((item) => item.issue_id)).toEqual(originalIssueIds);
+        expect(recoveredJournal.state.items[0]?.research_activation).toEqual(firstActivation);
+        assert.ok(recoveredJournal.state.items[1]?.research_activation);
+        const recoveredHistory = readFileSync(historyFile);
+        expect(recoveredHistory.subarray(0, beforeHistory.length).equals(beforeHistory)).toBe(true);
+        expect(recoveredHistory.toString('utf8').endsWith('\n')).toBe(true);
+        expect(recoveredHistory.toString('utf8').trimEnd().split('\n').map(parseJsonUnknown)).toEqual(
+          recoveredJournal.state.items.map((item) => item.research_activation?.use),
+        );
+        expect(recoveredActions.map((action) => action.instruction_activation)).toEqual(
+          recoveredJournal.state.items.map((item) => item.research_activation?.use),
+        );
+        expect(recoveredJournal.state.items.every((item) => item.observation === null)).toBe(true);
+        expect(recoveredJournal.state.items.every((item) => item.host_reservation === undefined)).toBe(true);
+        expect(afterRecovery.work).toEqual(beforeRecovery.work);
+        expect(afterRecovery.ledger).toEqual(beforeRecovery.ledger);
+
+        let repeatedIssueFailure: unknown;
+        try {
+          await run([...args, ...expected(requireStateVersion(recovered.state_version)), '--issue-wave', 'true']);
+        } catch (error) {
+          repeatedIssueFailure = error;
+        }
+        expect(repeatedIssueFailure).toMatchObject({
+          code: 'GAP-VIDA-RUN-EXECUTION-001',
+          message:
+            'Research batch exposure may already have occurred; report or reconcile the existing issue before any retry.',
+        });
+        const afterDeniedRetry = readSnapshot();
+        expect(afterDeniedRetry.work).toEqual(afterRecovery.work);
+        expect(afterDeniedRetry.ledger).toEqual(afterRecovery.ledger);
+        expect(afterDeniedRetry.journals).toEqual(afterRecovery.journals);
+        expect(afterDeniedRetry.admission_attempts).toEqual(afterRecovery.admission_attempts);
+        expect(readFileSync(historyFile).equals(recoveredHistory)).toBe(true);
+        completed = true;
+      } catch (error) {
+        failures.push(error);
+      } finally {
+        try {
+          activationSpy?.mockRestore();
+        } catch (error) {
+          failures.push(error);
+        }
+        try {
+          await fixture?.close();
+        } catch (error) {
+          failures.push(error);
+        }
+      }
+      if (failures.length > 0 || !completed) {
+        if (root) process.stderr.write(`Retained failed research preparation recovery fixture: ${root}\n`);
+        if (failures.length === 1) throw failures[0];
+        if (failures.length > 1)
+          throw new AggregateError(failures, 'Research preparation recovery assertions or resource close failed');
+        throw new Error('Research preparation recovery fixture did not complete');
+      }
+      if (root)
+        process.stderr.write(
+          JSON.stringify({
+            operation: 'research-preparation-recovery',
+            root,
+            cleanup: 'retained',
+            reason: 'issued-readonly-outcome-unobserved',
+          }) + '\n',
+        );
     }, 60_000);
 
     test('refuses partially issued research preparation before context admission through public run', async () => {

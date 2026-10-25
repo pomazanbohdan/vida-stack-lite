@@ -38,6 +38,87 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Research preparation recovery packet, 2026-10-25
+
+Root resumes6f39488bc3563ead6bec49243e3e2bc3c0814ab5 with only the two
+producer-owned projection files dirty, no staged files and no live Bun/build/Git
+or producer. Environment startup initially refused the first read; it became
+usable before any action. Old PID1 zombies are not live execution owners and
+are not evidence that historical custody has closed. Runtime CLI remains absent;
+the checked-in lifecycle fallback and stale-Vex bounded Source fallback apply.
+Package-selected Bun remains1.4.4. Pstack's prepared native contracts remain
+prompt-only, with Root integration/checks/Git and blind Luna preparation/review.
+
+The fixed audit window13:40:59–16:40:59UTC contains one distinct published run,
+0a96d24d, with two paired projection rows. Existing DIAG/audit-20261025-window.ts
+reuses its GzHOAn execution/stderr receipts. Literal DIAG/audit-20261025-window-05.log
+records151pass,0fail,3740expectations,243767.433613ms stage elapsed, complete
+capture and closed process group. Window gain is+7F,+13L,+16S,+10B with unchanged
+denominators. Those previously published numbers are not another current run.
+Billed tokens and complete platform tool-call totals remain unavailable.
+
+| Order and parallelism | Evidence and decision |
+| --- | --- |
+| Disjoint bounded Luna traces/private proposal; Root strict/configured lint, paired targets, independent review, one changed-input stage | Selected. Target02 passes2cases/182expectations in19.47s, bodies4395.75/13734.87ms. All60s case bounds and aggregate budgets stay unchanged. |
+| Complete stage per assertion or missing counter | Rejected. The one observed stage costs243767.433613ms; current checks reuse the existing SDK readiness owner and no per-test build. Different inputs prevent a matched speedup claim. |
+| Numeric2x/4x, competing compiler/index/cleanup | No qualified matched receipts. Readers have disjoint outputs; keep numeric1x, one writer and sequential Git/hooks/push. |
+
+Subtract Before You Add reuses the current initial-source fixture and extends
+the existing synthesis/developer case instead of another full setup. Test Behavior,
+Not Implementation binds real public state transitions, history and ownership.
+The new research case injects a fresh failure immediately before activation two,
+after the real first owner commits. Its actual `preparing` wave recovers with
+unchanged issue IDs and first activation. History checks retain the exact prefix,
+exactly two decoded uses and unchanged bytes after the exposure-fenced denial.
+No SQL rewrite, accepted-history mutation or archived UNKNOWN replay is added.
+
+The existing developer case now issues its two readonly validate_focused actions
+after the controlled Source report. Both returned ImplementationResult packets
+bind actual packet IDs, current Source fingerprint and docs/PRODUCT.md output.
+Host assignment attempts remain unchanged and rights remain execution-only.
+This exercises the issue-time consumer, not validator completion or native
+execution. Newly exposed research and validator roots remain retained. No reports
+are invented to settle them for cleanup, and no consumer is dispatched.
+
+Private proposal PATCH/research-prepare-recovery-20261025-01 was completely
+checked with git apply --check before Root integration. Root removed a dead
+cleanup branch and moved error propagation outside finally. Target01 passes
+2cases/173expectations; literal DIAG/research-recovery-static-20261025-01.log
+passes strict510/configured lint/format. Independent review01's history gap is
+accepted and addressed. Its requested validator completion is rejected as beyond
+the issue-time claim: bin/run.ts8811–8823 builds the ImplementationResult before
+issuing actions. Added raw response assertions verify that actual output.
+Target02 includes strict510/configured lint/format and2pass/0fail/182expectations.
+Its literal DIAG/research-recovery-target-20261025-02.log is the current focused
+receipt. Initial01 roots1HRMnd/G0NB6j and current02 roots remain protected.
+Final independent review at literal
+DIAG/research-recovery-independent-review-20261025-02.md passes the exact current
+Source and reads target02 directly. Current02 roots arekW2hnM/wu3cyy. Neither
+review nor the focused receipts grants numeric closure or Runtime acceptance.
+
+Reader artifacts DIAG/replacement-report-supported-trace-20261025-01.md and
+DIAG/initial-report-supported-trace-20261025-01.md describe prerequisites, not
+qualification. The replacement reader's delivered-review case is not a proven
+replacement fixture. The actual component replacement producer still needs public
+pause/repair/activation ingress. Initial-source-continuation.test.ts has a real
+changed-source/recovery producer, but its success calls Host directly and that
+file is outside this contour selection; it does not cover the public pending-report
+predicate. These remain OPEN, as does445. No objective skip follows. Candidate
+503–507 hits await one complete producer and cannot alter current numbers yet.
+
+Literal DIAG/audit-filesystems-20261025-05.json samples checkout/scratch/evidence
+once per filesystem. All existing targets share dev27,9871855616available bytes
+against2147483648, headroom7724371968; .vida-retained is absent/no-op. No capacity
+GAP is measured. Prior unreadable reference/inbound dependency custody still
+defers exact cleanup targets and completed private preparations. No deletion,
+relocation, tmpfs move, retirement, second automation or timer/schedule change.
+
+- [x] Frame, disjoint traces, private author proposal and Root integration.
+- [x] Scoped static checks and paired targeted tests; retain all attempts.
+- [x] Final independent review and documentation checks5documents/75local links.
+- [ ] Normal commit/hooks/push.
+- [ ] One changed-input stage and terminal documentation closeout.
+
 ### Admitted freshness and context-output packet, 2026-10-25
 
 Root resumes at cb9592538698df9154fe5ab9c33469a58f383af2. Only the two producer-owned

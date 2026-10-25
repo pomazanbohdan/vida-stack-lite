@@ -44,6 +44,12 @@ its declared controlled manifest before preparation. Reuse captured implementati
 Source for its fingerprint; Work source-record revision has another meaning.
 Check the third review report's reverse frontier before any extra resume, then
 exercise exact old-version retry through the public owner.
+For research preparation recovery, delegate to the real activation owner before
+injecting a one-shot failure at the next activation. Keep the actual `preparing`
+Journal and issued IDs instead of manufacturing rows. Compare the history's exact
+committed prefix and decoded uses after recovery, then exact bytes after denied
+reissue. An ImplementationResult consumer at issue time is checked in the returned
+issued packet; it does not require completing an unrelated validator wave.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual
 normalization and artifact admission. Use distinct action-bound tool-call refs
