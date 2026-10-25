@@ -6551,6 +6551,32 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   });
 
   describe('vida-agent run mutation path', () => {
+    test('rejects missing scope and duplicate or excessive derived scope paths', async () => {
+      const args = [...common, '--workflow', 'information_research_light'];
+      args.splice(args.indexOf('--scope-digest'), 2);
+      const cases: readonly (readonly [string[], string, string])[] = [
+        [[], 'GAP-VIDA-RUN-CLI-001', 'All launcher arguments are required.'],
+        [
+          ['--scope-path', 'source.ts', '--inspect', 'true'],
+          'GAP-VIDA-RUN-CLI-001',
+          'All launcher arguments are required.',
+        ],
+        [
+          ['--scope-path', 'source.ts', '--scope-path', 'source.ts'],
+          'GAP-VIDA-RUN-CLI-003',
+          'Scope paths must be unique and bounded.',
+        ],
+        [
+          Array.from({ length: 513 }, (_, index) => ['--scope-path', `source-${index}.ts`]).flat(),
+          'GAP-VIDA-RUN-CLI-003',
+          'Scope paths must be unique and bounded.',
+        ],
+      ];
+      for (const [options, code, message] of cases) {
+        await Promise.resolve(expect(run([...args, ...options])).rejects.toMatchObject({ code, message }));
+      }
+    });
+
     test('rejects unsafe roots and identifiers before reading project authority', async () => {
       const args = [...common, '--workflow', 'information_research_light'];
       const withValue = (key: string, value: string): string[] =>

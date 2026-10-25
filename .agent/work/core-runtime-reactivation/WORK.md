@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date:2026-10-24. Root owns Source integration, Git and final numbers.
+Status date:2026-10-25. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
@@ -38,6 +38,60 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Three-hour audit and scope-path packet, 2026-10-25
+
+The audit window is fixed at 2026-10-24 21:38:55 through 2026-10-25 00:38:55 UTC.
+The four retained Key471 execution receipts and native stderr summaries establish
+four serial stages, two exit 0 and two exit 1, complete captures and closed owned
+process groups. They ran 530 tests, with 525 pass, five fail and 10,783 expectations.
+Total native stage elapsed time is 702,478.859055 ms. The two failed observer
+binding stages consumed 304,258.138247 ms and add no hits. The audit reads eight
+known files with no AST, hash, inventory or suite pass. Its owned diagnostic and
+output are `DIAG/audit-20261025-window.ts` and `DIAG/audit-20261025-window-01.log`
+under this WORK's directory. Billed tokens and complete platform tool-call totals
+are unavailable. Tool-output volume is not billed tokens.
+
+| Sequence and numeric concurrency | Evidence | Decision |
+| --- | --- | --- |
+| Collect related parser cases, scoped strict/lint, focused cases and independent review, then one changed-input stage at 1x | New direct target passed four assertions in 2.90 s. It allocates no fixture or CLI child. | Selected for this packet. Target time is not a matched end-to-end speedup. |
+| Full stage after each observer adjustment at 1x | The two retained failures used 148.016 s and 156.242 s before the final same-Work pairing succeeded. | Review the complete binding and group related cases before the stage. Different inputs prevent an A/B comparison. |
+| Two or four numeric stages concurrently | No qualified 2x/4x receipt in this audit. | Keep one producer and unchanged budgets. |
+
+At bootstrap there were no live native workers or Bun/bwrap/tini processes.
+Only the pre-existing producer-owned projection files were dirty, with no staged
+changes. Local Pstack 1.17.5 and its previously read leaves remain available.
+Native Luna received fresh prepared prompt-only read-only contracts, not a claim
+of enforced isolation. Vex's stale qualification is reused as a GAP; bounded
+Source fallback performs no reindex. Subtract Before You Add selects the existing
+fixture/test owner, Guard the Context Window keeps numeric reads scalar, and
+Attack the Premise rejects another unqualified child-observer adjustment.
+
+The selected Bun is 1.4.4. The new direct run case tests absent/unsupported scope
+derivation, duplicate paths and 513 unique paths using exact native code/message
+assertions. It exercises parseArgs before later authority/DB/consumer work without
+claiming a valid 512-path boundary, individual path validation or full derivation.
+Root replaced the reader's unobserved public-child proposal with direct run calls
+inside the existing coverage-selected block, avoiding another child-role change.
+Scoped strict passed for 510 test-closure files. The first typed lint warned about
+awaiting a non-Thenable; the existing Promise.resolve assertion pattern removed
+that warning. The corrected scoped strict and typed lint passed before the focused
+test, which passed one case and four assertions with eight filtered cases. Native
+Luna independently confirmed parser order and exact refusal assertions. The title
+was then narrowed without changing executable assertions. Retain all
+`DIAG/scope-path-{static,lint,target}-20261025-*.log` files in this WORK's directory.
+One changed-input stage follows ordinary commit/hooks and push termination.
+
+The one filesystem survey observed 11,509,272,576 available bytes on overlay for
+checkout and retained execution images, 9,361,788,928 above the unchanged
+2,147,483,648-byte floor. The latest scratch root is
+`/workspace/contour-stage-jvbhfj/scratch-qeA3RR` on the same /workspace filesystem.
+The older canonical campaign-scratch and `/workspace/.vida-retained` paths are
+absent, hence no-op. No resource shortfall is observed. No deletion or dependency
+deduplication occurred and no second free-space survey was made. Existing image
+and contour roots retain dependencies and original FAIL/UNKNOWN evidence; custody,
+donor and reference checks are not complete, so those paths are deferred rather
+than deleted. The limited owner cleanup authorization, fences and timer remain.
+
 The active contour is **bun-cli-run only**, the next declared partition
 after init's reviewed dispositions below. Reuse its
 retained receipts and inventory before deciding on affected checks or a new
@@ -57,10 +111,13 @@ prerequisite. This permits queue progression, not numeric exact100.
 
 ### Native SQLite observation prerequisite
 
-The current packet investigates native issue counter admission; it grants no new
-CLI role, numeric result or objective skip. Root retains the existing successful
-CAS child and every help/prepared/issue/report/UNKNOWN control. F/L/S/B is still
-the only phase;2820 below remains the latest numeric measurement.
+The retained investigation below records the native issue counter prerequisite.
+It grants no new CLI role, numeric result or objective skip. Root retains the
+existing CAS child and every help/prepared/issue/report/UNKNOWN control.
+The latest accepted focused diagnostic is Key471 run
+`32bbcc12-b80b-445b-9125-55d6e75192ee`, with F441/555, L2058/2860,
+S2218/3138 and B2615/3660. Its status remains BLOCKED and full qualification is
+false. The earlier reference to 2820 as the latest measurement was stale.
 
 2824/2825 independently compare native SQLite interception with update hooks or
 typed Host snapshots.2826 favors the existing child preload boundary, conditional
