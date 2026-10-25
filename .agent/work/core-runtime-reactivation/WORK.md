@@ -66,7 +66,7 @@ No worktree, secondary ledger, suite, image or automation is created for the aud
 - [x] Inspect: existing public delivered-review case passes in the native coverage log.
 - [x] Collect: configure local context before capture; verify stale-file and binding refusals with restoration.
 - [x] Review and verify: strict510, configured lint/format, focused public case and independent review02/03.
-- [ ] Publish and measure: normal terminal hooks/push, then one changed-input producer.
+- [x] Publish and measure:43d8c0a0 normal terminal hooks/push; one changed-input producer SUz51n published.
 
 The prior assumption that the positive delivered-review case is absent from this
 coverage profile is rejected by zd4A0w stderr line65. The mutation-only selection
@@ -119,6 +119,46 @@ bun and lies outside that wrapper. This targeted behavioral check is not a
 mutation campaign or numeric qualification. The first Source trace's contrary
 nesting claim is superseded. Complete contour coverage still requires its sole
 producer after terminal review, hooks and ordinary push.
+
+Terminal measurement for this packet: commit43d8c0a05ad07abc2e8ea2dcb859ab1b8f4f7629
+passed normal hooks and ordinary main push before the sole producer ran. Stage
+/workspace/contour-stage-SUz51n completed in245420.76264ms, exit0, no
+signal, timeout or spawn error. Capture/group are complete/closed, boot and image
+inputs unchanged, publication published. Native145pass,0fail,3573expectations,
+237.90s suite; the expanded public case passes2081.90ms under its unchanged5s bound.
+
+Run4018ffc3-8c81-4e3e-ac33-0546802bcad6 records F486/555, L2233/2873,
+S2417/3157 and B2874/3686. Delta from49e24556 is+6F,+8L,+8S,+0B with unchanged
+denominators. maxCC/entryCRAP501 and BLOCKED remain; there is no new contour
+closure, frozen, mutation or Runtime qualification. Historical exact17/46 does
+not rise. Literal DIAG/delivered-review-context-stage-20261025-01.log owns the
+terminal summaries. Image is/workspace/.vida-quality-inputs/48c1614cc03b04aa8a894829e60aa24c085829d6/repository,
+Source treebc4589232fa270d48b60db4a71773243aabb8e3f,
+fingerprintf962a58dd79f0397e123d37b171f962257e8ced56dfb120a517dddfb0bb1b000,
+manifest SHA2569421862f98f5bb40282c3d34d69eaedb5bc59c8a32d92656bd1a9d0ff0e18281.
+The report is the image's packages/agent/coverage/bun-unified/diagnostics/
+4018ffc3-8c81-4e3e-ac33-0546802bcad6.focused-coverage.json.
+
+The existing report reader queried only7190–7600 function locations. All six
+selected zero functions416,417,419,420,421,422 are now absent from that zero set.
+Literal DIAG/delivered-review-terminal-gap-20261025-01.json retains the remaining
+425/426 reconciliation refusal callbacks and431/433 final-assurance callbacks.
+Its empty branch/statement arrays were intentionally omitted by functions-only,
+not proof that those counters have no gaps. Next inspect the complete related
+review/assurance branch and its supported fixture transitions before collecting
+another packet. Do not advance contours or infer untestability from absent fixtures.
+
+The launched scratch admission observes10278068224 available bytes against2147483648,
+headroom8130584576; no manual repeat survey or cleanup. Its /tmp locator
+vida-initial-source-nMd5KE maps through the recorded disk-backed bind to
+/workspace/contour-stage-SUz51n/scratch-u0nh4q/scratch/vida-initial-source-nMd5KE.
+That exact root exists. Literal DIAG/delivered-review-native-root-locator-20261025-01.json
+preserves the mapping. Its started/commit_unknown remains protected after native
+process/group termination. No dispatch, replay, cancellation, settlement, DB read
+or cleanup followed. Prior custody/retirement deferrals stay in force, including
+this completed private preparation. Root leaves projection files producer-owned
+and unstaged. Timers and the cleanup schedule stay unchanged. This terminal
+record changes documentation only and requires no repeated coverage stage.
 
 ### Orchestrated synthesis handoff packet, 2026-10-25
 
