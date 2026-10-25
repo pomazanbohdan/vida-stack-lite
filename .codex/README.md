@@ -88,6 +88,9 @@ a status question.
 
 For a necessary JSON read, inspect its schema and selected key types before
 extracting values with the existing TypeScript owner or an owned diagnostic.
+Join counters to the report's module path, not a nearby test file. `fnMap.loc`
+identifies the callable body. Carry the queried counter kinds; omitted kinds do
+not establish empty gap sets.
 Emit an explicit list of scalar fields or bounded counter arrays. Fields named
 `coverage`, `metrics`, `source_maps`, `execution_scope` and `attempts` can contain large trees;
 their names do not establish a summary shape. Do not print them wholesale.

@@ -3639,6 +3639,52 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     };
   };
 
+  const observeOwnedDatabaseLifetime = async (databasePath: string) => {
+    const openedHandles = new Set<Database>();
+    const closedHandles = new Set<Database>();
+    const rawDatabase = await import('../src/config/workspace-database-raw.ts');
+    const hostDatabase = await import('../src/host-state.ts');
+    const track = (database: Database) => {
+      if (path.resolve(database.filename) === databasePath) openedHandles.add(database);
+      return database;
+    };
+    const originalOpen = rawDatabase.openUnadmittedWorkspaceDatabase;
+    const openSpy = spyOn(rawDatabase, 'openUnadmittedWorkspaceDatabase').mockImplementation(
+      (...parameters: Parameters<typeof originalOpen>) => track(originalOpen(...parameters)),
+    );
+    const originalHostOpen = hostDatabase.openHostStateDatabase;
+    const hostOpenSpy = spyOn(hostDatabase, 'openHostStateDatabase').mockImplementation(
+      (...parameters: Parameters<typeof originalHostOpen>) => track(originalHostOpen(...parameters)),
+    );
+    const originalClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+    const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      ...parameters: Parameters<Database['close']>
+    ) {
+      Reflect.apply(originalClose, this, parameters);
+      if (openedHandles.has(this)) closedHandles.add(this);
+    });
+    return {
+      assertAllClosed(): void {
+        expect(openedHandles.size).toBeGreaterThan(0);
+        expect(closedHandles.size).toBe(openedHandles.size);
+        expect([...openedHandles].every((database) => closedHandles.has(database))).toBe(true);
+      },
+      restore: (): void => {
+        const errors: unknown[] = [];
+        for (const spy of [closeSpy, openSpy, hostOpenSpy]) {
+          try {
+            spy.mockRestore();
+          } catch (error) {
+            errors.push(error);
+          }
+        }
+        if (errors.length === 1) throw errors[0];
+        if (errors.length > 1) throw new AggregateError(errors, 'Database lifetime observers could not both restore');
+      },
+    };
+  };
+
   const prepareMutationIntake = (
     args: readonly string[],
     config: AgentRuntimeConfig,
@@ -7235,6 +7281,304 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           );
       }
     }, 30_000);
+
+    test('rejects unreadable and malformed caller intake before Host database creation', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-intake-before-db-'));
+      const deadline = performance.now() + 5_000;
+      let completed = false;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config);
+        const originalIntakePath = admitted.admissionArgs[admitted.admissionArgs.indexOf('--intake') + 1];
+        assert.ok(originalIntakePath);
+        const originalIntake = requireRecord(
+          JSON.parse(readFileSync(originalIntakePath, 'utf8')),
+          'valid intake fixture',
+        );
+        const intakeDir = path.dirname(originalIntakePath);
+        const cases: readonly { readonly name: string; readonly bytes?: Buffer }[] = [
+          { name: 'missing' },
+          { name: 'unreadable-json', bytes: Buffer.from('{') },
+          { name: 'schema-invalid', bytes: Buffer.from(record({ ...originalIntake, schema: 'Wrong/v1' })) },
+        ];
+        for (const [index, entry] of cases.entries()) {
+          const intakePath = path.join(intakeDir, `caller-${index}-${entry.name}.json`);
+          if (entry.bytes) writeFileSync(intakePath, entry.bytes);
+          else expect(existsSync(intakePath)).toBe(false);
+          await Promise.resolve(
+            expect(run([...admitted.args, '--intake', intakePath])).rejects.toMatchObject({
+              code: 'GAP-VIDA-RUN-CONTEXT-001',
+              message: 'The local session intake is invalid.',
+            }),
+          );
+          expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        }
+        completed = true;
+      } finally {
+        if (completed && performance.now() < deadline - 250) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed or over-budget early intake fixture: ${root}\n`);
+      }
+    }, 5_000);
+
+    test('closes an empty admission ledger for a valid intake with foreign Work identity', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-intake-identity-'));
+      const deadline = performance.now() + 5_000;
+      let completed = false;
+      let restoreDatabaseCloseSpy: (() => void) | undefined;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config);
+        const originalIntakePath = admitted.admissionArgs[admitted.admissionArgs.indexOf('--intake') + 1];
+        assert.ok(originalIntakePath);
+        const originalIntake = requireRecord(
+          JSON.parse(readFileSync(originalIntakePath, 'utf8')),
+          'valid intake fixture',
+        );
+        const workItem = requireRecord(originalIntake.work_item, 'valid intake work item');
+        const mismatchedPath = path.join(path.dirname(originalIntakePath), 'caller-identity-mismatch.json');
+        writeFileSync(
+          mismatchedPath,
+          record({ ...originalIntake, work_item: { ...workItem, id: 'other-admitted-work' } }),
+        );
+        const databasePath = path.resolve(sessionHandoffDatabasePath(root, config));
+        const databaseLifetime = await observeOwnedDatabaseLifetime(databasePath);
+        restoreDatabaseCloseSpy = databaseLifetime.restore;
+        await Promise.resolve(
+          expect(run([...admitted.args, '--intake', mismatchedPath])).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Intake identity differs from current configured work.',
+          }),
+        );
+        restoreDatabaseCloseSpy();
+        restoreDatabaseCloseSpy = undefined;
+        databaseLifetime.assertAllClosed();
+        const after = inspectHostWorkspaceDatabase(
+          root,
+          path.relative(root, databasePath),
+          deriveWorkspaceId(config.repository.repository_id, root),
+        );
+        expect({
+          work: after.work,
+          journals: after.journals,
+          attempts: after.admission_attempts,
+        }).toEqual({ work: [], journals: [], attempts: [] });
+        completed = true;
+      } finally {
+        restoreDatabaseCloseSpy?.();
+        if (completed && performance.now() < deadline - 250) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed or over-budget intake identity fixture: ${root}\n`);
+      }
+    }, 5_000);
+
+    test('closes admission after the caller intake changes between public reads', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-intake-toctou-'));
+      const deadline = performance.now() + 5_000;
+      let completed = false;
+      let primaryFailed = false;
+      let primaryError: unknown;
+      let restoreDatabaseCloseSpy: (() => void) | undefined;
+      let restoreHandoffSpy: (() => void) | undefined;
+      let originalIntakeBytes: Buffer | undefined;
+      let callerPath: string | undefined;
+      let intakeRestored = false;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config);
+        const candidatePath = admitted.admissionArgs[admitted.admissionArgs.indexOf('--intake') + 1];
+        assert.ok(candidatePath);
+        const callerIntakePath: string = candidatePath;
+        callerPath = callerIntakePath;
+        const savedIntakeBytes = readFileSync(callerIntakePath);
+        originalIntakeBytes = savedIntakeBytes;
+        const databasePath = path.resolve(sessionHandoffDatabasePath(root, config));
+        const databaseLifetime = await observeOwnedDatabaseLifetime(databasePath);
+        restoreDatabaseCloseSpy = databaseLifetime.restore;
+
+        const handoff = await import('../src/orchestration/persistent-session-handoff.ts');
+        const originalOpen = handoff.openConfiguredMastraSessionLedger;
+        let changedCallerIntake = false;
+        const openSpy = spyOn(handoff, 'openConfiguredMastraSessionLedger').mockImplementation(
+          (...parameters: Parameters<typeof originalOpen>) => {
+            const ledger = originalOpen(...parameters);
+            if (!changedCallerIntake && parameters[0] === root) {
+              changedCallerIntake = true;
+              writeFileSync(callerIntakePath, Buffer.from('{'));
+            }
+            return ledger;
+          },
+        );
+        restoreHandoffSpy = () => openSpy.mockRestore();
+
+        await Promise.resolve(
+          expect(run(admitted.admissionArgs)).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'The local session intake is invalid.',
+          }),
+        );
+        expect(changedCallerIntake).toBe(true);
+        databaseLifetime.assertAllClosed();
+        writeFileSync(callerIntakePath, savedIntakeBytes);
+        expect(readFileSync(callerIntakePath).equals(savedIntakeBytes)).toBe(true);
+        intakeRestored = true;
+        restoreDatabaseCloseSpy?.();
+        restoreDatabaseCloseSpy = undefined;
+        restoreHandoffSpy?.();
+        restoreHandoffSpy = undefined;
+        const after = inspectHostWorkspaceDatabase(
+          root,
+          path.relative(root, databasePath),
+          deriveWorkspaceId(config.repository.repository_id, root),
+        );
+        expect({
+          work: after.work,
+          journals: after.journals,
+          attempts: after.admission_attempts,
+        }).toEqual({ work: [], journals: [], attempts: [] });
+        completed = true;
+      } catch (error) {
+        primaryFailed = true;
+        primaryError = error;
+      }
+      const flatErrors: unknown[] = [];
+      if (primaryFailed) flatErrors.push(primaryError);
+      try {
+        if (!intakeRestored && callerPath && originalIntakeBytes) {
+          writeFileSync(callerPath, originalIntakeBytes);
+          expect(readFileSync(callerPath).equals(originalIntakeBytes)).toBe(true);
+          intakeRestored = true;
+        }
+      } catch (error) {
+        flatErrors.push(error);
+      }
+      try {
+        restoreDatabaseCloseSpy?.();
+      } catch (error) {
+        flatErrors.push(error);
+      }
+      try {
+        restoreHandoffSpy?.();
+      } catch (error) {
+        flatErrors.push(error);
+      }
+      if (completed && flatErrors.length === 0 && performance.now() < deadline - 250) {
+        try {
+          rmSync(root, { recursive: true, force: true });
+        } catch (error) {
+          flatErrors.push(error);
+        }
+      } else process.stderr.write(`Retained failed or over-budget intake TOCTOU fixture: ${root}\n`);
+      if (flatErrors.length === 1) throw flatErrors[0];
+      if (flatErrors.length > 1) throw new AggregateError(flatErrors, 'Intake TOCTOU case and cleanup failed');
+    }, 5_000);
+
+    test('closes admission when recording a valid intake attempt fails', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-intake-attempt-close-'));
+      const deadline = performance.now() + 5_000;
+      let completed = false;
+      let restoreAdmissionSpy: (() => void) | undefined;
+      let restoreDatabaseCloseSpy: (() => void) | undefined;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config);
+        const workId = args[args.indexOf('--work-id') + 1];
+        assert.ok(workId);
+        const databasePath = path.resolve(sessionHandoffDatabasePath(root, config));
+        const failure = new Error('injected valid admission-attempt write failure');
+        let failureInjected = false;
+        const originalRecord = Reflect.get(
+          HostStateStore.prototype,
+          'recordAdmissionAttempt',
+        ) as HostStateStore['recordAdmissionAttempt'];
+        const admissionSpy = spyOn(HostStateStore.prototype, 'recordAdmissionAttempt').mockImplementation(function (
+          this: HostStateStore,
+          ...parameters: Parameters<HostStateStore['recordAdmissionAttempt']>
+        ) {
+          if (!failureInjected && parameters[0] === workId) {
+            failureInjected = true;
+            throw failure;
+          }
+          return Reflect.apply(originalRecord, this, parameters);
+        });
+        restoreAdmissionSpy = () => admissionSpy.mockRestore();
+        const databaseLifetime = await observeOwnedDatabaseLifetime(databasePath);
+        restoreDatabaseCloseSpy = databaseLifetime.restore;
+
+        await Promise.resolve(expect(run(admitted.admissionArgs)).rejects.toBe(failure));
+        expect(failureInjected).toBe(true);
+        restoreAdmissionSpy();
+        restoreAdmissionSpy = undefined;
+        restoreDatabaseCloseSpy();
+        restoreDatabaseCloseSpy = undefined;
+        databaseLifetime.assertAllClosed();
+        const after = inspectHostWorkspaceDatabase(
+          root,
+          path.relative(root, databasePath),
+          deriveWorkspaceId(config.repository.repository_id, root),
+        );
+        expect({
+          work: after.work,
+          journals: after.journals,
+          attempts: after.admission_attempts,
+        }).toEqual({ work: [], journals: [], attempts: [] });
+        completed = true;
+      } finally {
+        restoreAdmissionSpy?.();
+        restoreDatabaseCloseSpy?.();
+        if (completed && performance.now() < deadline - 250) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed or over-budget admission-attempt fixture: ${root}\n`);
+      }
+    }, 5_000);
+
+    test('closes both owned ledgers when a shape-valid correction plan belongs to other work', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-correction-refusal-'));
+      const deadline = performance.now() + 5_000;
+      let completed = false;
+      let restoreDatabaseCloseSpy: (() => void) | undefined;
+      try {
+        const { args, config } = createFixture(root);
+        const planPath = path.join(root, 'caller-correction-plan.json');
+        writeFileSync(
+          planPath,
+          record({
+            schema: 'CorrectiveExecutionPlan/v1',
+            work_id: 'other-admitted-work',
+            attempt: 1,
+            stage_ids: ['develop_task'],
+            user_instruction_ref: 'fixture:caller-correction-plan',
+            preparation_path: '.agent/work/other-admitted-work/preparation.json',
+          }),
+        );
+        const databasePath = path.resolve(sessionHandoffDatabasePath(root, config));
+        const databaseLifetime = await observeOwnedDatabaseLifetime(databasePath);
+        restoreDatabaseCloseSpy = databaseLifetime.restore;
+        await Promise.resolve(
+          expect(
+            run([...args, '--correct', planPath, '--expected-revision', '1', '--expected-digest', 'a'.repeat(64)]),
+          ).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Correction plan belongs to another work or attempt.',
+          }),
+        );
+        restoreDatabaseCloseSpy();
+        restoreDatabaseCloseSpy = undefined;
+        databaseLifetime.assertAllClosed();
+        const after = inspectHostWorkspaceDatabase(
+          root,
+          path.relative(root, databasePath),
+          deriveWorkspaceId(config.repository.repository_id, root),
+        );
+        expect({
+          work: after.work,
+          journals: after.journals,
+          attempts: after.admission_attempts,
+        }).toEqual({ work: [], journals: [], attempts: [] });
+        completed = true;
+      } finally {
+        restoreDatabaseCloseSpy?.();
+        if (completed && performance.now() < deadline - 250) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained failed or over-budget correction refusal fixture: ${root}\n`);
+      }
+    }, 5_000);
 
     test('closes the intake ledger when the admission Host snapshot read fails', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-admission-snapshot-close-'));

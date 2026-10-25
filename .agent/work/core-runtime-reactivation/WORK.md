@@ -38,6 +38,65 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Intake/correction boundaries packet, 2026-10-25
+
+Continue bun-cli-run/F/L/S/B from d24368d4 with Source75c78586/run05129b47 as
+latest numeric qualification. Native Luna owns the private test proposal in
+PATCH/intake-correction-20261025-01; Root integrates and owns checks/Git/producer.
+Group early caller-read refusals, foreign intake identity, caller-file drift after
+ledger open, admission-attempt failure and shape-valid foreign correction plan.
+Use fresh unadmitted caller inputs and actual owners; no accepted history, SQL,
+lease or Journal is rewritten. Positive correction authorization and previous
+writer-attempt predicate476 remain open, not objectively skipped.
+
+Source reads caller intake at6184 before opening the admission ledger and again
+at7605 after it opens. Simple malformed inputs exercise only the first read.
+The second-read refusal is tested by changing the fresh caller file at the real
+ledger opener boundary, then restoring exact bytes. It preserves the current
+freshness behavior rather than deleting a guard to improve a counter.
+
+The first admission trace used test-file lines for bin/run.ts counters and is
+rejected. Correct product body locations remain bound to the existing report;
+fnMap.loc is a callable body span, not necessarily its declaration. Root's local
+DIAG/report-branch-window-20261025.ts now carries source_module and queried_kinds,
+and omits unqueried arm/statement arrays. Its original reader and old outputs
+remain retained. Metadata-only validation in literal
+DIAG/report-query-metadata-20261025-01.json reads the existing report without
+requalification, an AST/index/hash pass or a suite.
+
+Static01 stopped on a Buffer generic mismatch; exact Buffer.equals assertions
+retain byte equality without casts. Static02 passed strict510, configured lint
+and format. Target01 recorded4pass/1fail,26expectations in3.04s: all public refusals
+matched, but the correction test assumed two closed DBs while the route closed
+three. Its YQik1h failed fixture and log remain protected. Static03 stopped at
+unbound-method lint before another target. The independent review also found that
+the raw-opener observer missed the main ledger's direct Host opener. Root now
+observes returned real handles from both qualified owners and real native closes,
+with identity equality instead of a fixed count. No fake DB or global mock.module
+registry replacement. Both namespace spies restore through the same owner.
+
+- [x] Frame and collect: five independent default5s cases, one shared real-resource observer.
+- [x] Strict510/configured lint/format, five focused cases and final independent review03.
+- [ ] Normal terminal hooks/push and one changed-input producer.
+
+Final independent review03 accepts the observer at both actual boundaries:
+openHostStateDatabase constructs the ledger database directly, while the raw
+opener covers existing-database readers. The first raw-only observer did not
+prove main-ledger closure and was rejected before runtime; configured lint also
+stopped unbound restorer methods. Both failure logs/reviews remain preserved.
+The final observer records returned real Database identities and each real native
+close, checks a nonempty exact identity set, and restores all three scoped spies.
+It tolerates legitimate changes in the count of internal reads while detecting a
+missing observed close. No global module registry replacement or fabricated DB.
+
+Literal DIAG/intake-correction-static-20261025-04.log records strict510files,
+configured type-aware lint and formatting PASS. Target02 passed5cases/0fail,
+35expectations in2.72s. Bodies511.34,330.36,206.41,205.25 and123.74ms remain well
+inside unchanged5s bounds with250ms reserved for cleanup. Physical close, exact
+input restoration and unchanged empty Work/Journal/admission-attempt collections
+are checked through supported owners. Literal DIAG/intake-correction-review-20261025-03.md
+owns the final independent verdict. No numeric gain is claimed before the producer.
+
 ### Delivered assurance packet, 2026-10-25
 
 Root continues bun-cli-run/F/L/S/B from f6cee9f3. Latest numeric qualification

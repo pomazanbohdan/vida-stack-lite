@@ -100,6 +100,15 @@ then check the actual packet binding. Work source-record revision is a distinct
 identity. Keep all pending/failing fixture evidence and do not claim real reviews,
 deployment or Runtime acceptance from controlled observations.
 
+Caller-intake refusals distinguish the first parse before database creation from
+the second read after ledger acquisition. Change only a fresh unadmitted caller
+file at the real opener boundary to test drift, then restore exact bytes. Check
+foreign identity, owner admission-attempt failure and foreign correction-plan
+refusals against unchanged Work/Journal/attempt state. Observe actual handles from
+both Host and raw database openers and their real native closes; fixed counts of
+internal connections are not the resource contract. Restore scoped spies and
+preserve body plus cleanup errors and any failed or deadline-sensitive roots.
+
 Once the actual initial or delivered continuation creates its receipt table,
 reuse its successful request with current Host/Ledger/Journal versions and an
 absent attempt. Require the owning public refusal, exact unchanged state and
