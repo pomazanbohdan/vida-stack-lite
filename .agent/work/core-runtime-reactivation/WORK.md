@@ -38,6 +38,102 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Collected raw-read bounds and genuine inspection packet, 2026-10-25
+
+The bounded follow-up found five more raw reads with their size check after
+allocation: stopped capture request, terminal, authorization and review receipt,
+plus retired capture request. Each now checks lstat size after the same existing
+path/realpath guard, only for a regular file, before reading. Directory/non-file
+behavior and every post-read bound/diagnostic remain. Existing regularFile now
+accepts one optional size/error descriptor: forward documentation supplies its
+unchanged 16 MiB limit, reusing the already-read stat after its type/link guard.
+All other callers are unchanged. The separate safe-repository fd owner already
+caps reads at 8 MiB and remains intact. No new reader, full scan/hash or budget.
+
+These preflights avoid allocating a stat-known oversized file; they add a metadata
+read at each raw call site and do not cap race-time growth between stat and read.
+The old post-read checks still reject that growth. This is a static resource
+tradeoff, not a measured general speedup or a new hard bounded-reader claim.
+
+The existing request/terminal/apply and retired-decoder owners now check exact
+1 MiB or 64 KiB limits and one byte above, with final serialized bytes padded by
+JSON whitespace. Exact limits reach their original shape/binding refusals; +1
+uses the unchanged size diagnostic. Ten boundary controls were added without
+additional fixture owners. Bytes, no-DB/no-Work or native Host afterimages and
+failure retention remain. The apply fixture already had authorization/reviewer-
+shaped inputs in Source 30077. The new receipt controls add only malformed padded
+`{}` bytes and restore its original review file before the original frozen-plan
+refusal. A reader raised a conditional wording concern about synthetic approvals;
+Root verified the complete diff: no new approval, accepted history or runtime
+authorization proof is constructed or claimed. Every new call refuses before
+writable capture. Later review controls necessarily reuse the handler's binding
+validation; no independent audit hash or index pass was added.
+
+The stopped-request family keeps all ten original fresh candidate roots, adds
+two boundary candidates, and runs its shared missing-terminal control once per
+group. Controls fall from ten to four; total CLI calls fall from 20 to 16 while
+candidate checks rise from ten to twelve. Seven duplicate old control calls were
+removed, with one new group control. This is structural operation accounting.
+Retired-request boundary cases reuse the existing encoded baseline object and
+isolated-root driver, with exact request bytes checked after each refusal.
+
+Two genuine native points in the existing CAS/report fixture also inspect an
+unissued Source-retirement request: before any issue, then after actual public
+research reports complete. The same exact request/owner is used; both refuse for
+absence of one pending Source issue. First compares the native Host projection;
+second reuses the existing Host+engine table snapshots and checks attempt and
+request bytes. No release/apply or new Source writer is executed. Completed
+research exercises flattening but short-circuits the later Source-reservation
+predicates; those remain OPEN, not assumed hits. Existing known-success cleanup
+and uncertain-child retention remain unchanged.
+
+Scoped strict passed for 510 files, typed lint and two-file formatting passed.
+Two independent blind native Luna readers reviewed disjoint final Source/test
+scopes; Root checked the full diff and resolved the fixture-prefix wording above.
+The grouped target passed eight tests, zero failures and 365 expectations in
+51.62 s; its existing CAS test took 43,952.59 ms under the unchanged 60,000 ms
+budget. Preserve this WORK's `DIAG/raw-read-bounds-{static,target}-20261025-01.log`.
+The existing forward-documentation over-bound row is inside the large literal
+test `repair and forward authority validate evidence without mutating inputs`.
+It is not individually selectable; keep it for the one final producer run rather
+than repeat that whole loop as an extra targeted check. No per-scenario PASS is
+claimed yet. Next: documentation check, normal commit/hooks terminal, ordinary
+push terminal, then one collected changed-input stage. Phase/contour stay F/L/S/B
+and bun-cli-run. The previous Source 30077 numbers are historical to that image.
+
+### Collected retired-source packet — terminal, 2026-10-25
+
+All related commits through `30077c07c89b93bf97cb8ec81f71b5d65ed05ef0` were
+pushed after their normal hooks. The sole producer measured the collected
+37-negative-case packet plus digest reuse once, at
+`/workspace/contour-stage-p0KN2Y`. Run
+`0700c615-b867-440d-ad2a-80de4706b092` published F477/555, L2178/2861,
+S2356/3140 and B2816/3662. Native stage elapsed 202,130.298858 ms; 141 tests,
+zero failures and 3,270 expectations. Exit 0, no signal/timeout/spawn error,
+complete capture, owned group closed, unchanged boot and immutable image inputs.
+Source tree `a9bef58a22656a8cd5539a4669fae40101eee381`, input fingerprint
+`7ca8c59277b0809138343ba70d237776b97de1aa2cd077dab5a15c13e5ec5d17`, manifest
+SHA-256 `d2a604162fe831eb07e711e3ce6a551efff7b338190b73d8fc97873f8e711e85`.
+Preserve the stage root, original raw logs/receipts and this WORK's
+`DIAG/untrusted-retired-batch-stage-20261025-01.log`. Producer alone updated
+projection. Raw denominators stay intact; operation status BLOCKED and maximum
+CC/entry CRAP 501. No exact contour closure, frozen qualification or kill claim.
+
+The remaining function map in this reader cluster begins at successful native
+result callbacks run.ts:4881-4882 and later capture/persistence callbacks. None
+is covered by the intentionally refusing decoder fixtures. They remain OPEN;
+untrusted string inputs are never original native receipts or accepted history.
+Next resource review is bounded to raw file reads whose explicit size checks
+follow allocation. The safe-repository fd reader already has its own 8 MiB cap;
+do not misclassify it as an unbounded raw read or replace its custody owner.
+Independent readers may trace those exact scopes; Root remains the sole writer,
+producer and Git owner. No new contour, inventory or duplicate suite is started.
+
+Latest admission reused the existing filesystem survey: 10,814,136,320 available
+bytes versus the unchanged 2,147,483,648 floor. No cleanup, broad scan/hash,
+install, indexing, timer change or second automation. Historical targets remain
+deferred until their custody/dependency checks; there is no resource shortfall.
+
 ### Untrusted decoder mapping and attribution packet, 2026-10-25
 
 The evidence-preflight Source `55689665f09bfb710f9fd04de9d0dfbe3656bb2f`

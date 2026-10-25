@@ -63,8 +63,8 @@ const digest = (bytes: Uint8Array): string => createHash('sha256').update(bytes)
 /** @param {unknown} value @returns {string} */
 const controllerJson = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 
-/** @param {string} file @returns {Buffer} */
-function regularFile(file: string): Buffer {
+/** @param {string} file @param {{maximumBytes: number, message: string}} [limit] @returns {Buffer} */
+function regularFile(file: string, limit?: { maximumBytes: number; message: string }): Buffer {
   let stat;
   try {
     stat = lstatSync(file);
@@ -73,6 +73,7 @@ function regularFile(file: string): Buffer {
   }
   if (!stat.isFile() || stat.isSymbolicLink())
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Cutover authority is not a regular file.');
+  if (limit && stat.size > limit.maximumBytes) fail('GAP-VIDA-RUN-SELECTOR-001', limit.message);
   return readFileSync(file);
 }
 
@@ -1136,7 +1137,10 @@ function readForwardDocumentationEvidence(projectRoot: string, relative: string)
     at = path.join(at, part);
     checkedDirectory(at);
   }
-  const bytes = regularFile(path.join(at, path.basename(relative)));
+  const bytes = regularFile(path.join(at, path.basename(relative)), {
+    maximumBytes: 16 * 1024 * 1024,
+    message: 'Forward documentation evidence exceeds bound.',
+  });
   if (bytes.length > 16 * 1024 * 1024)
     fail('GAP-VIDA-RUN-SELECTOR-001', 'Forward documentation evidence exceeds bound.');
   return bytes;
@@ -3717,6 +3721,8 @@ async function captureStoppedSource(args: string[]) {
     requestRelative = path.relative(root, file);
   if (requestRelative.startsWith('..') || path.isAbsolute(requestRelative) || realpathSync(file) !== file)
     throw Error('Bounded capture request path differs');
+  const requestStat = lstatSync(file);
+  if (requestStat.isFile() && requestStat.size > 1048576) throw Error('Capture request exceeds bound');
   const bytes = readFileSync(file);
   if (bytes.length > 1048576) throw Error('Capture request exceeds bound');
   /** @type {unknown} */
@@ -3735,6 +3741,8 @@ async function captureStoppedSource(args: string[]) {
       realpathSync(terminalPath) !== terminalPath
     )
       throw Error('Terminal observation path differs');
+    const terminalStat = lstatSync(terminalPath);
+    if (terminalStat.isFile() && terminalStat.size > 65536) throw Error('Terminal evidence exceeds bound');
     const terminalBytes = readFileSync(terminalPath);
     if (terminalBytes.length > 65536) throw Error('Terminal evidence exceeds bound');
     /** @type {unknown} */
@@ -3784,6 +3792,9 @@ async function captureStoppedSource(args: string[]) {
       relative = path.relative(root, authorizationPath);
     if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(authorizationPath) !== authorizationPath)
       throw Error('Capture authorization path differs');
+    const authorizationStat = lstatSync(authorizationPath);
+    if (authorizationStat.isFile() && authorizationStat.size > 65536)
+      throw Error('Capture authorization exceeds bound');
     const bytes = readFileSync(authorizationPath);
     if (bytes.length > 65536) throw Error('Capture authorization exceeds bound');
     /** @type {unknown} */
@@ -3831,6 +3842,8 @@ async function captureStoppedSource(args: string[]) {
         realpathSync(receiptPath) !== receiptPath
       )
         throw Error('Capture review receipt path differs');
+      const receiptStat = lstatSync(receiptPath);
+      if (receiptStat.isFile() && receiptStat.size > 65536) throw Error('Capture review receipt exceeds bound');
       const receiptBytes = readFileSync(receiptPath);
       if (receiptBytes.length > 65536) throw Error('Capture review receipt exceeds bound');
       /** @type {unknown} */
@@ -4916,6 +4929,8 @@ async function captureRetiredSource(args: string[]) {
     requestRelative = path.relative(root, requestPath);
   if (requestRelative.startsWith('..') || path.isAbsolute(requestRelative) || realpathSync(requestPath) !== requestPath)
     throw Error('Retired-source request path differs');
+  const requestStat = lstatSync(requestPath);
+  if (requestStat.isFile() && requestStat.size > 1048576) throw Error('Retired-source request exceeds bound');
   const requestBytes = readFileSync(requestPath);
   if (requestBytes.length > 1048576) throw Error('Retired-source request exceeds bound');
   /** @type {unknown} */

@@ -7702,6 +7702,29 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         assert.ok(beforeWork?.state.lease && beforeJournal);
         const preparedWorkId = beforeWork.identity.work_id;
         expect(beforeJournal.version).toEqual(preparedVersion);
+        const retirementRequestRef = 'unissued-retirement-inspect.json';
+        const retirementRequestPath = path.join(root, retirementRequestRef);
+        const retirementRequestBytes = Buffer.from(
+          JSON.stringify({ identity: beforeWork.identity, attempt: beforeJournal.attempt }),
+        );
+        const retirementInspectArgs = [
+          '--retire-interrupted-source-owner',
+          'true',
+          '--mode',
+          'inspect',
+          '--project-root',
+          root,
+          '--native-session-handle',
+          admitted.nativeSessionHandle,
+          '--request',
+          retirementRequestRef,
+        ];
+        writeFileSync(retirementRequestPath, retirementRequestBytes);
+        await assert.rejects(run(retirementInspectArgs), {
+          message: 'Interrupted Source retirement requires one exact pending Source issue',
+        });
+        expect(readFileSync(retirementRequestPath)).toEqual(retirementRequestBytes);
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeRenewal);
         const inspectedPrepared = requireRecord(
           await runSuccessfully([...admitted.args, '--inspect', 'true']),
           'prepared attempt public inspection',
@@ -8123,6 +8146,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             expect(completedResearch.every((item) => item.research_activation && item.research_normalization)).toBe(
               true,
             );
+            expect(journal.attempt).toBe(beforeJournal.attempt);
+            await assert.rejects(run(retirementInspectArgs), {
+              message: 'Interrupted Source retirement requires one exact pending Source issue',
+            });
+            expect(readFileSync(retirementRequestPath)).toEqual(retirementRequestBytes);
+            expect(inspectDatabases()).toEqual(databasesBefore);
             const staleJournal = { ...request.expectedJournal, revision: request.expectedJournal.revision - 1 };
             for (const [mode, changed, message] of [
               ['inspect', request, 'Readonly release actual accepted readonly action differs'],
@@ -10911,6 +10940,22 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   type StoppedDecoderPrefix = ReturnType<typeof stoppedSourceDecoderRequest>;
   const stoppedSourceDecoderMalformedCases = [
     [
+      'request byte bounds',
+      [
+        {
+          label: 'exact request limit still validates the decoded binding',
+          byteLength: 1048576,
+          change: (r: StoppedDecoderPrefix) => ({ ...r, identity: { ...r.identity, repository_id: 7 } }),
+        },
+        {
+          label: 'request beyond one MiB',
+          byteLength: 1048577,
+          change: (r: StoppedDecoderPrefix) => ({ ...r, identity: { ...r.identity, repository_id: 7 } }),
+          message: 'Capture request exceeds bound',
+        },
+      ],
+    ],
+    [
       'context',
       [
         {
@@ -10973,7 +11018,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   test.each(stoppedSourceDecoderMalformedCases)(
     'run stopped-source request %s rejects malformed nested predicates before workspace access',
     async (_group, cases) => {
-      for (const entry of cases) {
+      for (const [index, entry] of cases.entries()) {
         const root = mkdtempSync(path.join(tmpdir(), 'vida-run-stopped-decoder-'));
         let complete = false;
         try {
@@ -10993,22 +11038,27 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             '--request',
             'request.json',
           ];
-          writeFileSync(requestPath, JSON.stringify(request));
-          await assert.rejects(
-            run(args),
-            (error: unknown) =>
-              error instanceof Error &&
-              'code' in error &&
-              error.code === 'ENOENT' &&
-              'path' in error &&
-              error.path === path.join(root, 'missing-terminal-record.json'),
-          );
-          const requestBytes = Buffer.from(JSON.stringify(entry.change(request)));
+          if (index === 0) {
+            writeFileSync(requestPath, JSON.stringify(request));
+            await assert.rejects(
+              run(args),
+              (error: unknown) =>
+                error instanceof Error &&
+                'code' in error &&
+                error.code === 'ENOENT' &&
+                'path' in error &&
+                error.path === path.join(root, 'missing-terminal-record.json'),
+            );
+          }
+          const payload = Buffer.from(JSON.stringify(entry.change(request)));
+          const requestBytes = 'byteLength' in entry ? Buffer.alloc(entry.byteLength, 0x20) : payload;
+          if ('byteLength' in entry) {
+            expect(payload.length).toBeLessThanOrEqual(entry.byteLength);
+            payload.copy(requestBytes);
+          }
           writeFileSync(requestPath, requestBytes);
-          await assert.rejects(
-            run(args),
-            (error: unknown) => error instanceof Error && error.message === 'Capture workspace/root binding differs',
-          );
+          const message = 'message' in entry ? entry.message : 'Capture workspace/root binding differs';
+          await assert.rejects(run(args), (error: unknown) => error instanceof Error && error.message === message);
           expect(readFileSync(configPath)).toEqual(configBefore);
           expect(readFileSync(initializationPath)).toEqual(initializationBefore);
           expect(readFileSync(requestPath)).toEqual(requestBytes);
@@ -11045,29 +11095,36 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         configBefore = readFileSync(configPath),
         initializationBefore = readFileSync(initializationPath);
       writeFileSync(requestPath, requestBytes);
-      writeFileSync(terminalPath, terminalBytes);
+      for (const [byteLength, message] of [
+        [terminalBytes.length, 'actual terminal fixture evidence differs'],
+        [65536, 'actual terminal fixture evidence differs'],
+        [65537, 'Terminal evidence exceeds bound'],
+      ] as const) {
+        const candidateBytes = Buffer.alloc(byteLength, 0x20);
+        terminalBytes.copy(candidateBytes);
+        writeFileSync(terminalPath, candidateBytes);
+        await assert.rejects(
+          run([
+            '--capture-stopped-source',
+            'true',
+            '--mode',
+            'inspect',
+            '--project-root',
+            root,
+            '--request',
+            'request.json',
+          ]),
+          (error: unknown) => error instanceof Error && error.message === message,
+        );
 
-      await assert.rejects(
-        run([
-          '--capture-stopped-source',
-          'true',
-          '--mode',
-          'inspect',
-          '--project-root',
-          root,
-          '--request',
-          'request.json',
-        ]),
-        (error: unknown) => error instanceof Error && error.message === 'actual terminal fixture evidence differs',
-      );
-
-      expect(readFileSync(configPath)).toEqual(configBefore);
-      expect(readFileSync(initializationPath)).toEqual(initializationBefore);
-      expect(readFileSync(requestPath)).toEqual(requestBytes);
-      expect(readFileSync(terminalPath)).toEqual(terminalBytes);
-      expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
-      expect(existsSync(path.join(root, 'fixture.sqlite'))).toBe(false);
-      expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+        expect(readFileSync(configPath)).toEqual(configBefore);
+        expect(readFileSync(initializationPath)).toEqual(initializationBefore);
+        expect(readFileSync(requestPath)).toEqual(requestBytes);
+        expect(readFileSync(terminalPath)).toEqual(candidateBytes);
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        expect(existsSync(path.join(root, 'fixture.sqlite'))).toBe(false);
+        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+      }
       complete = true;
     } finally {
       if (complete) rmSync(root, { recursive: true, force: true });
@@ -11202,6 +11259,17 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       );
       assertRefusalPreservedFixture(escapingAuthorizationBefore);
       writeFileSync(requestPath, record(request));
+      for (const [byteLength, message] of [
+        [65536, 'Capture exact manifest/owner authorization differs'],
+        [65537, 'Capture authorization exceeds bound'],
+      ] as const) {
+        const bytes = Buffer.alloc(byteLength, 0x20);
+        Buffer.from(record({})).copy(bytes);
+        writeFileSync(authorizationPath, bytes);
+        const before = captureInput();
+        await assert.rejects(run(args), (error: unknown) => error instanceof Error && error.message === message);
+        assertRefusalPreservedFixture(before);
+      }
       const malformedAuthorizations = [
         { label: 'top-level schema', value: { ...authorizationPrefix, schema: 7, reviews: [] } },
         {
@@ -11262,6 +11330,22 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       };
       writeFileSync(authorizationPath, record(authorization));
 
+      const reviewPath = reviewPaths[0];
+      assert.ok(reviewPath);
+      const originalReviewBytes = readFileSync(reviewPath);
+      for (const [byteLength, message] of [
+        [65536, 'Capture frozen review receipt differs'],
+        [65537, 'Capture review receipt exceeds bound'],
+      ] as const) {
+        const bytes = Buffer.alloc(byteLength, 0x20);
+        Buffer.from(record({})).copy(bytes);
+        writeFileSync(reviewPath, bytes);
+        const before = captureInput();
+        await assert.rejects(run(args), (error: unknown) => error instanceof Error && error.message === message);
+        assertRefusalPreservedFixture(before);
+      }
+      writeFileSync(reviewPath, originalReviewBytes);
+
       const before = captureInput();
       await assert.rejects(
         run(args),
@@ -11280,6 +11364,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     artifact: unknown;
     message: string;
     patch?: string;
+    requestByteLength?: number;
     reference?: string;
     fileKind?: 'symlink' | 'hardlink' | 'directory' | 'oversized';
   };
@@ -11353,9 +11438,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     },
     0,
   ]);
-  const retiredDecoderBaselineBytes = Buffer.from(
-    JSON.stringify(retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand(noIssuedActionOutput)])])),
-  );
+  const retiredDecoderBaselineArtifact = retiredDecoderArtifact([
+    retiredDecoderTurn([retiredDecoderCommand(noIssuedActionOutput)]),
+  ]);
+  const retiredDecoderBaselineBytes = Buffer.from(JSON.stringify(retiredDecoderBaselineArtifact));
   // These matching strings are untrusted decoder inputs, never an admitted issue or native witness.
   const untrustedBoundAction = {
     ...untrustedIssuedAction,
@@ -11382,6 +11468,23 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     'def edit(file,transform):\n p=root/file\n p.write_bytes(transform(p.read_bytes()))\nedit("docs/untrusted.ts", transform)';
 
   const retiredSourceNativeGroups: readonly RetiredSourceNativeGroup[] = [
+    {
+      name: 'raw request byte bounds',
+      cases: [
+        {
+          name: 'request at one MiB still reaches issue mapping',
+          requestByteLength: 1048576,
+          artifact: retiredDecoderBaselineArtifact,
+          message: 'Retired-source original issue mapping differs',
+        },
+        {
+          name: 'request beyond one MiB is rejected before decoding',
+          requestByteLength: 1048577,
+          artifact: retiredDecoderBaselineArtifact,
+          message: 'Retired-source request exceeds bound',
+        },
+      ],
+    },
     {
       name: 'untrusted patch descriptor guards',
       cases: [
@@ -11972,6 +12075,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           let candidateBytes = artifactBytes;
           if (entry.reference !== undefined) {
             expectedRequestBytes = Buffer.from(JSON.stringify({ ...request, nativeTurnEvidenceRef: entry.reference }));
+            writeFileSync(requestPath, expectedRequestBytes);
+          }
+          if (entry.requestByteLength !== undefined) {
+            expect(requestBytes.length).toBeLessThanOrEqual(entry.requestByteLength);
+            expectedRequestBytes = Buffer.alloc(entry.requestByteLength, 0x20);
+            requestBytes.copy(expectedRequestBytes);
             writeFileSync(requestPath, expectedRequestBytes);
           }
           if (entry.fileKind !== undefined && index === 0) unlinkSync(artifactPath);
