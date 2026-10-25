@@ -11279,6 +11279,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     name: string;
     artifact: unknown;
     message: string;
+    patch?: string;
     reference?: string;
     fileKind?: 'symlink' | 'hardlink' | 'directory' | 'oversized';
   };
@@ -11381,6 +11382,36 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     'def edit(file,transform):\n p=root/file\n p.write_bytes(transform(p.read_bytes()))\nedit("docs/untrusted.ts", transform)';
 
   const retiredSourceNativeGroups: readonly RetiredSourceNativeGroup[] = [
+    {
+      name: 'untrusted patch descriptor guards',
+      cases: [
+        {
+          name: 'retained patch has no path headers',
+          patch: 'untrusted non-patch text\n',
+          message: 'Retired-source patch paths are missing',
+        },
+        {
+          name: 'retained patch path is outside scope',
+          patch: 'diff --git a/docs/untrusted.ts b/docs/untrusted.ts\n',
+          message: 'Retired-source mutation path is outside the original scope',
+        },
+        {
+          name: 'excluded patch path cannot hide a remaining out-of-scope path',
+          patch: 'diff --git a/docs/skipped.ts b/docs/skipped.ts\ndiff --git a/docs/untrusted.ts b/docs/untrusted.ts\n',
+          command: 'git apply --exclude="docs/skipped.ts" .tmp/untrusted.patch',
+          message: 'Retired-source mutation path is outside the original scope',
+        },
+      ].map(({ name, patch, command = 'git apply .tmp/untrusted.patch', message }) => ({
+        name,
+        patch,
+        artifact: retiredDecoderIssuedArtifact(
+          [untrustedBoundAction],
+          [untrustedBoundWave],
+          [{ ...retiredDecoderCommand(), id: 'untrusted-patch-descriptor', command }],
+        ),
+        message,
+      })),
+    },
     {
       name: 'untrusted source path guards',
       cases: ['docs/untrusted.ts', '/untrusted-source.ts'].map((sourcePath) => ({
@@ -11854,6 +11885,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             requestPath = path.join(root, 'request.json'),
             artifactPath = path.join(root, '.tmp', 'untrusted-turn.json'),
             targetPath = path.join(root, '.tmp', 'private-target.json'),
+            patchPath = path.join(root, '.tmp', 'untrusted.patch'),
+            patchBytes = entry.patch === undefined ? undefined : Buffer.from(entry.patch),
             ownerHandle = `fixture-owner-${randomUUID()}`,
             actionId = 'a'.repeat(64),
             hostAttemptId = 'b'.repeat(64),
@@ -11919,11 +11952,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             }
             if (fileKind === 'symlink' || fileKind === 'hardlink')
               expect(readFileSync(targetPath)).toEqual(artifactBytes);
+            if (patchBytes !== undefined) expect(readFileSync(patchPath)).toEqual(patchBytes);
             expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
             expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
           };
           mkdirSync(path.dirname(artifactPath), { recursive: true });
           writeFileSync(requestPath, requestBytes);
+          if (patchBytes !== undefined) writeFileSync(patchPath, patchBytes);
           if (index === 0) {
             // Each group checks the shared control once; candidate fixtures stay isolated.
             writeFileSync(artifactPath, retiredDecoderBaselineBytes);

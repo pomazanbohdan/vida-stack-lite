@@ -53,13 +53,13 @@ Preserve that root and this WORK's `DIAG/evidence-preflight-stage-20261025-01.lo
 The changed Source adds its own guard/denominators; this is not a same-map delta
 from the preceding Source. BLOCKED, maximum CC/entry CRAP 501, no contour closure.
 
-Root then extended the same decoder owner with 34 negative cases in six groups:
+Root first extended the same decoder owner with 34 negative cases in six groups:
 four issue/wave cardinalities, six packet bindings, eight malformed file-change
 descriptors, two out-of-scope paths, ten command-attribution forms and four edit
 reports. One shared artifact builder reuses the existing command/turn/envelope
 builders. Each group runs its control once, every candidate keeps an isolated
 root, exact error and unchanged-byte/no-DB/no-Work assertions, with failure
-retention unchanged. The complete family now has 63 candidate fixtures and 16
+retention unchanged. That checkpoint has 63 candidate fixtures and 16
 controls (79 CLI calls); its original 29 candidates used 58 calls because each
 repeated the same control. This is a structural operation count, not a speedup.
 
@@ -90,6 +90,26 @@ three passed three tests / 130 expectations in 2.93 s. Reuse both disjoint
 target receipts, `DIAG/untrusted-packet-target-20261025-{01,02}.log`, instead of
 rerunning their union. Root reviewed the complete packet before its sole next
 changed-input stage, following normal commit and push termination.
+
+Before starting that stage, Root held the completed `f7cf58c6` commit and added
+three related patch-descriptor refusals in the same packet. Each owns a short,
+fresh `.tmp/untrusted.patch` inside its existing isolated fixture: absent path
+headers, an out-of-scope path, and an excluded first path with a remaining
+out-of-scope path. These three intentionally read their own patch bytes; the
+preceding 34 do not. No `git apply` string is executed or patch applied. The
+same driver now optionally writes those bytes and checks exact preservation
+after its control and candidate, before successful-root cleanup. Failure roots
+remain retained. No native read result or Host capture is returned.
+
+Scoped strict/lint passed; a formatting-only failure was fixed mechanically and
+the format check passed. The exact new group passed one test / 31 expectations
+in 2.10 s, with independent final read-only Luna PASS. Preserve this WORK's
+`DIAG/untrusted-patch-static-20261025-01.log`,
+`DIAG/untrusted-patch-format-20261025-02.log` and
+`DIAG/untrusted-patch-target-20261025-01.log`. Both related commits will share
+one changed-input stage after push; no intermediate full suite ran. The complete
+packet adds 37 negatives in seven groups. The family has 66 candidate fixtures
+and 17 controls, 83 CLI calls, instead of reintroducing per-candidate controls.
 
 Existing B7LHRx admission observed 10,917,998,592 available bytes against the
 unchanged 2,147,483,648 floor. No new survey, broad scan/hash, install, index or
