@@ -12,17 +12,18 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The latest measured packet is Source75c78586/run05129b47-f838-483f-98c6-a915c05b121a:
-F490/555, L2260/2873, S2445/3157 and B2905/3686, still BLOCKED. It fixes the stale
-public final-assurance reverse frontier and groups its real public issue/report,
-retry, refusal and controlled-manifest obligations. Reuse the existing7190–8200
-function query; the ten selected review/assurance functions are now exercised.
-Next group the remaining public admission/prewriter callbacks439,440,441,442,443,445,446,448,449,450,451,452 and476 around
-their maintained producer. Trace actual preceding guards; missing fixtures alone
-do not permit a skip. Do not replay pending developer issues or claim Source
-qualification as Runtime delivery. [WORK](WORK.md#delivered-assurance-packet-2026-10-25)
-owns current terminal counts, custody and the next packet. Historical2822 navigation
-below does not replace that report or authorize a replay.
+The latest measured packet is Source36493c28/run6002ebad-5cbd-4f64-85ac-273ac0248925:
+F495/555, L2279/2873, S2464/3157 and B2910/3686, still BLOCKED. Intake/correction
+refusal cases now verify actual real-resource lifetime at both qualified database
+openers. The preceding packet fixes the stale public final-assurance reverse
+frontier. Reuse the existing7600–8200 function query, with explicit module/kinds;
+439–443 are exercised. Next bind completed-ownership, configured-context output
+and fresh retry producers for445,446,448,449,450,451,452,476. Trace preceding guards
+and supported transitions; missing fixtures alone do not permit a skip. Do not
+replay pending developer issues or claim Source qualification as Runtime delivery.
+[WORK](WORK.md#intakecorrection-boundaries-packet-2026-10-25) owns terminal counts,
+custody and remaining qualification. Historical2822 navigation below does not
+replace that report or authorize a replay.
 
 The active contour is **bun-cli-run**, the next partition in
 packages/agent/tooling/mutation-partitions.ts. Init's2589 stage completes all

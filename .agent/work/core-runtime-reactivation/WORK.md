@@ -77,7 +77,7 @@ registry replacement. Both namespace spies restore through the same owner.
 
 - [x] Frame and collect: five independent default5s cases, one shared real-resource observer.
 - [x] Strict510/configured lint/format, five focused cases and final independent review03.
-- [ ] Normal terminal hooks/push and one changed-input producer.
+- [x] Normal36493c28 hooks/push and one changed-input producer a5Pfdv published.
 
 Final independent review03 accepts the observer at both actual boundaries:
 openHostStateDatabase constructs the ledger database directly, while the raw
@@ -96,6 +96,49 @@ inside unchanged5s bounds with250ms reserved for cleanup. Physical close, exact
 input restoration and unchanged empty Work/Journal/admission-attempt collections
 are checked through supported owners. Literal DIAG/intake-correction-review-20261025-03.md
 owns the final independent verdict. No numeric gain is claimed before the producer.
+
+Terminal: commit36493c28cc3171d692c7ebbcf65a83173ae8e9ba passed normal hooks and
+ordinary main push before one changed-input producer. /workspace/contour-stage-a5Pfdv
+completed in265200.36588299996ms, exit0, no signal/timeout/spawn error;
+capture complete, group closed, boot/image inputs unchanged, publication published.
+Native150pass,0fail,3707expectations,259.03s suite. New bodies362.11,335.17,
+166.28,162.75 and206.33ms retain their unchanged5s bounds. Different Source/test
+inputs and case counts do not establish an elapsed-time speedup or regression.
+
+Run6002ebad-5cbd-4f64-85ac-273ac0248925 records F495/555, L2279/2873,
+S2464/3157, B2910/3686: delta from05129b47 is+5F,+19L,+19S,+5B. Across the three
+collected packets from49e24556 the measured change is+15F,+54L,+55S,+36B, with
+unchanged denominators. maxCC/entryCRAP501 and BLOCKED remain. No new exact contour
+closure, objective skip, frozen/CRAP/mutation or Runtime qualification. Historical
+exact17/46 does not rise. Literal DIAG/intake-correction-stage-20261025-01.log owns
+the terminal records. Image/workspace/.vida-quality-inputs/2d44b2a7e7f3bc8fd626df125049970f867ce823/repository,
+Source treedec77a08ab72d389664f0a7bbdd09c04edd9cf27,
+fingerprintdf8ef266539207077a0c649ae406b881521fbc58772bf5fdbd868e314afbfdda,
+manifest SHA25657a7df7e4c107297bfb93002f6443c16fa510f13af8fdbe6d45b37085784002e.
+The bound report is its packages/agent/coverage/bun-unified/diagnostics/
+6002ebad-5cbd-4f64-85ac-273ac0248925.focused-coverage.json.
+
+Root queried only7600–8200 functions with the updated existing reader. It emits
+its actual bin/run.ts source_module and queried_kinds:[functions]; unqueried
+branches/statements are absent. Literal DIAG/intake-correction-terminal-gap-20261025-01.json
+confirms439–443 are no longer zero and retains445,446,448,449,450,451,452,476.
+Next bind supported completed-ownership/context-output/fresh-retry producers for
+that remaining branch. No archived UNKNOWN replay or fabricated accepted history;
+missing fixtures alone do not justify an objective skip. Overall60functions,
+594lines,693statements and776branches remain unhit; this bounded window is not
+the complete remaining inventory. Keep the same contour and F/L/S/B phase.
+
+Launch scratch admission observes10060906496 bytes against2147483648, headroom7913422848;
+no manual survey repeat, floor change, tmpfs relocation or cleanup. The pending
+native /tmp/vida-initial-source-l15CsF maps through the recorded disk-backed bind
+to /workspace/contour-stage-a5Pfdv/scratch-GTyXu9/scratch/vida-initial-source-l15CsF.
+That directory exists; literal DIAG/intake-correction-native-root-locator-20261025-01.json
+retains its mapping. Process/group completion leaves started/commit_unknown
+unsettled and protected. No DB inspection, dispatch, replay, reconciliation,
+cancellation or cleanup followed. Prior custody/retirement deferrals still cover
+old targets and completed private preparations. Timers and cleanup schedule stay
+unchanged. Producer-owned projection stays unstaged; this documentation-only
+terminal record requires no repeated coverage stage.
 
 ### Delivered assurance packet, 2026-10-25
 
