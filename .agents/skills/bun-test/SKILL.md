@@ -62,6 +62,9 @@ Group initial-Source heartbeat and report controls in that same fresh writer
 fixture. A denied heartbeat does not complete its already-issued writer, so it
 cannot authorize root removal. Close failure, pending outcome or failed assertion
 retains the fixture. Budget and resource-custody gates stay with TESTING.
+For native image-mount controls, reuse the maintained capture/group observer and
+mark the fixture complete only after terminal and filesystem assertions pass.
+Keep raw failed streams and receipts. An afterEach hook alone grants no cleanup.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual
 normalization and artifact admission. Use distinct action-bound tool-call refs

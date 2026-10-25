@@ -1873,6 +1873,12 @@ runtime Source, full maintained TypeScript compiler files and module configurati
 are extra tool inputs, not extra numeric
 coverage. The image has no `.git`, worktree registration or dependency copy.
 
+The native mount control uses the shared command capture and owned process-group
+observer. Retain its fixture, raw streams and launch/execution records on any
+failed assertion or incomplete outcome. Cleanup requires a successful case,
+complete untruncated capture and observed group closure. Keep its3s deadline and
+1MiB per-stream bound. Reuse captured byte counts instead of rereading empty logs.
+
 The first stage accepts `--image-store <absolute directory>`; its retained request
 and launch contain `execution_image`. Pass its `manifest_file` and caller-held
 `manifest_sha256` as `--image-manifest` and `--image-sha256` to subsequent lanes.

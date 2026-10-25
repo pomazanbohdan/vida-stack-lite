@@ -25,10 +25,9 @@ const config = {
       project: ['tooling/agent/' + codeFiles, 'tests/agent/' + codeFiles],
     },
     'packages/agent': {
-      // POSIX FIFO utility and Bun's built-in check subcommand are not npm binaries.
+      // POSIX FIFO utility and Bun's built-in subcommands are not npm binaries.
       // These exact exceptions do not suppress files, exports or dependencies.
-      // Native Linux image isolation is a host capability, not an npm binary.
-      ignoreBinaries: ['mkfifo', 'check', 'fmt', 'bwrap'],
+      ignoreBinaries: ['mkfifo', 'check', 'fmt'],
       entry: [
         'bin/scope.ts',
         'bin/development-controller.ts',

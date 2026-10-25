@@ -1,16 +1,17 @@
 import { afterEach, expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { qualityImageMountArguments } from '../tooling/quality-image-mounts.ts';
 import type { QualityExecutionImage } from '../tooling/quality-execution-image.ts';
+import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
 
-const roots: string[] = [];
+const roots: { path: string; completed: boolean }[] = [];
 
 function fixture() {
   const base = mkdtempSync(path.join(os.tmpdir(), 'quality-image-mounts-'));
-  roots.push(base);
+  const owner = { path: base, completed: false };
+  roots.push(owner);
   const source = path.join(base, 'source');
   const repository = path.join(base, 'store', 'image', 'repository');
   const packageRoot = path.join(repository, 'packages', 'agent');
@@ -37,15 +38,32 @@ function fixture() {
     manifest_sha256: 'd'.repeat(64),
     dependency_root: dependency,
   };
-  return { base, source, repository, packageRoot, dependency, stage, image };
+  return {
+    base,
+    source,
+    repository,
+    packageRoot,
+    dependency,
+    stage,
+    image,
+    complete: () => {
+      owner.completed = true;
+    },
+  };
 }
 
 afterEach(() => {
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  for (const owner of roots.splice(0)) {
+    if (owner.completed) rmSync(owner.path, { recursive: true, force: true });
+    else
+      process.stderr.write(
+        JSON.stringify({ fixture: 'quality-image-mounts', root: owner.path, cleanup: 'retained' }) + '\n',
+      );
+  }
 });
 
 test('mounts immutable image and dependencies before hiding Source, with only bounded writable roots', () => {
-  const { image, repository, dependency, source, packageRoot, stage } = fixture();
+  const { image, repository, dependency, source, packageRoot, stage, complete } = fixture();
   const args = qualityImageMountArguments(image, stage);
   const coverage = path.join(packageRoot, 'coverage');
   const temporary = path.join(packageRoot, '.tmp');
@@ -79,10 +97,11 @@ test('mounts immutable image and dependencies before hiding Source, with only bo
   expect(writableSources).not.toContain(repository);
   expect(writableSources).not.toContain(source);
   expect(writableSources).not.toContain(dependency);
+  complete();
 });
 
-test('native mount hides live Source, denies input writes and retains output writes', () => {
-  const { image, source, repository, dependency, packageRoot, stage } = fixture();
+test('native mount hides live Source, denies input writes and retains output writes', async () => {
+  const { base, image, source, repository, dependency, packageRoot, stage, complete } = fixture();
   writeFileSync(path.join(source, 'live-secret'), 'live Source');
   writeFileSync(path.join(repository, 'input'), 'sealed');
   writeFileSync(path.join(dependency, 'qualified'), 'dependency');
@@ -99,37 +118,57 @@ test('native mount hides live Source, denies input writes and retains output wri
     fs.writeFileSync(packageRoot + '/coverage/result', 'coverage');
     fs.writeFileSync(packageRoot + '/.tmp/result', 'temporary');
   `;
-  const result = spawnSync(
+  const command = [
     'bwrap',
-    [
-      '--die-with-parent',
-      '--ro-bind',
-      '/',
-      '/',
-      ...qualityImageMountArguments(image, stage),
-      '--chdir',
-      packageRoot,
-      process.execPath,
-      '--no-env-file',
-      '--no-install',
-      '-e',
-      probe,
-      source,
-      repository,
-      packageRoot,
-    ],
-    { encoding: 'utf8', timeout: 3000 },
+    '--die-with-parent',
+    '--ro-bind',
+    '/',
+    '/',
+    ...qualityImageMountArguments(image, stage),
+    '--chdir',
+    packageRoot,
+    process.execPath,
+    '--no-env-file',
+    '--no-install',
+    '-e',
+    probe,
+    source,
+    repository,
+    packageRoot,
+  ];
+  const timeoutMs = 3000;
+  writeFileSync(
+    path.join(base, 'launch.json'),
+    JSON.stringify({ command, cwd: packageRoot, timeout_ms: timeoutMs }) + '\n',
+    {
+      flag: 'wx',
+    },
   );
-  expect(result.error).toBeUndefined();
-  expect(result.status).toBe(0);
-  expect(result.stderr).toBe('');
+  const result = await executeMutationCommand(command, packageRoot, timeoutMs, {
+    ownedProcessGroup: true,
+    outputByteLimit: 1024 * 1024,
+    stdoutFile: path.join(base, 'stdout.log'),
+    stderrFile: path.join(base, 'stderr.log'),
+  });
+  writeFileSync(path.join(base, 'execution.json'), JSON.stringify(result) + '\n', { flag: 'wx' });
+  expect(result.spawnError).toBeNull();
+  expect(result.exitCode).toBe(0);
+  expect(result.signal).toBeNull();
+  expect(result.timedOut).toBe(false);
+  expect(result.output_capture).toMatchObject({
+    complete: true,
+    stdout: { truncated: false },
+    stderr: { bytes: 0, truncated: false },
+  });
+  expect(result.processCustody?.processGroupTerminationObserved).toBe(true);
   expect(readFileSync(path.join(repository, 'input'), 'utf8')).toBe('sealed');
   expect(readFileSync(path.join(packageRoot, 'coverage/result'), 'utf8')).toBe('coverage');
   expect(readFileSync(path.join(packageRoot, '.tmp/result'), 'utf8')).toBe('temporary');
+  complete();
 });
 
 test('rejects noncanonical roots, stage paths inside inputs, and writable aliases', () => {
-  const { image, source, repository, stage, packageRoot, base } = fixture();
+  const { image, source, repository, stage, packageRoot, base, complete } = fixture();
   mkdirSync(path.join(source, 'stage'));
   mkdirSync(path.join(repository, 'stage'));
   expect(() => qualityImageMountArguments(image, 'relative-stage')).toThrow(/canonical absolute/u);
@@ -151,10 +190,11 @@ test('rejects noncanonical roots, stage paths inside inputs, and writable aliase
   rmSync(coverage, { recursive: true });
   symlinkSync(stage, coverage, 'dir');
   expect(() => qualityImageMountArguments(image, stage)).toThrow(/existing real directory|path alias/u);
+  complete();
 });
 
 test('rejects dependency roots inside the image and nonempty dependency mountpoints', () => {
-  const { image, repository, stage, packageRoot } = fixture();
+  const { image, repository, stage, packageRoot, complete } = fixture();
   const inImageDependency = path.join(repository, 'dependency');
   mkdirSync(inImageDependency);
   expect(() => qualityImageMountArguments({ ...image, dependency_root: inImageDependency }, stage)).toThrow(
@@ -164,4 +204,5 @@ test('rejects dependency roots inside the image and nonempty dependency mountpoi
   const nodeModules = path.join(packageRoot, 'node_modules');
   mkdirSync(path.join(nodeModules, 'sentinel'));
   expect(() => qualityImageMountArguments(image, stage)).toThrow(/mountpoint must be empty/u);
+  complete();
 });

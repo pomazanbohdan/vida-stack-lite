@@ -38,6 +38,74 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Mount-control evidence retention, 2026-10-25
+
+Root resumes15acaaa3 with only the producer-owned projection dirty and no live
+Bun/build/Git producer. The active phase and contour remain F/L/S/B, bun-cli-run.
+This supporting harness repair neither opens a second contour nor admits runtime.
+The same managed instance is running/connected at observed spec3763. Executing
+and package-selected Bun both report1.4.4. vida-agent remains absent; the checked-in
+lifecycle and bounded Source fallback for the stale Vex index remain in use.
+
+Literal DIAG/audit-20261025-window-07.log selects the projection's recorded_at
+window19:35:18–22:35:18UTC. It contains one distinct tSHoBS outcome imported20:07:46,
+not a complete execution-time or platform usage inventory. Existing execution and
+native outcome receipts retain271160.44543ms, outer exit1/full capture/group closure
+and inner UNKNOWN with resource_safe_to_advancefalse. No complete suite summary
+or new accepted numeric report exists. Reuse the earlier partial-row diagnosis;
+do not scan stderr again or run the full-summary-only historical audit reader on
+an incomplete suite. Platform tool-call and billed-token totals remain GAP.
+
+| Check order and parallelism | Bound evidence and decision |
+| --- | --- |
+| Scoped strict/configured lint, focused callers, independent review, one full stage | Retain this order after custody qualification. The previous public pair passed52 assertions in25.30s before its one271160.44543ms failed stage. These are different scopes, not a measured speedup. |
+| Full stage after each fixture/oracle change | Reject. This repeats an expensive producer without resolving the narrow static or custody prerequisite. No audit-only rerun is launched. |
+| Two disjoint read-only design lanes, one Root writer, numeric1x | Used for distinct isolation designs. Numeric2x/4x has no qualified effect boundary or comparable receipt. No parallel compiler, indexing, cleanup or producer is added. |
+
+The confirmed defect is in quality-image-mounts.test.ts: unconditional afterEach
+removed its native fixture after spawn errors, timeout or failed assertions.
+Root replaces the local spawnSync capture with executeMutationCommand, the current
+stage's shared owner. Each fixture starts incomplete. Only successful original
+assertions can mark it complete; native success also requires exit0, no signal,
+no spawn error/timeout, complete nontruncated capture and observed group closure.
+Otherwise afterEach reports the retained exact root. Launch/execution JSON and
+raw stdout/stderr stay there. No historical deleted bytes are recovered or attested.
+The native3s and1MiB per-stream bounds remain. The empty-stderr assertion uses
+captured byte counts without another file read. Existing filesystem assertions remain.
+
+Literal DIAG/mount-control-retention-static-20261025-03.log passes strict510,
+configured zero-warning lint and format after that final byte-count change.
+Earlier01/02 checks remain preserved. Independent review01 maps all retained
+assertions and cleanup paths; review02 confirms the final byte-count equivalence.
+Their literal DIAG/mount-control-retention-review-20261025-01.md and02.md verdicts
+are static PASS only. No runtime/control or selected suite runs after the HOLD.
+Qualify the changed mount control after independent effect custody, then resume
+the pending public-report callers through the existing sequential plan.
+The four-document check passes74 local links, and final diff whitespace checks pass.
+Commit attempt01 stops at Knip's unused bwrap ignoreBinaries hint, before later
+hook gates. The shared capture call no longer needs that exception. Root removes
+only bwrap and its obsolete comment, preserving all other Knip gates. Literal
+DIAG/mount-control-retention-commit-20261025-01.log retains the failed attempt;
+the retry uses normal hooks without a bypass.
+
+Pstack's two sketches compare an empty root with manifest-bound runtime files
+against a readonly host-root view with an enforced socket/FD policy. Literal
+DIAG/isolated-root-design-20261025-01.md needs a currently absent host runtime-file
+closure and native boundary controls. DIAG/isolated-effect-alternative-20261025-01.md
+finds no existing provider for the proposed socket/FD rule. Neither is implemented
+or qualified. The first worker's missing-plan claim is rejected: the canonical
+CLEAN-START-STRATEGY-20261009.md was present and read by Root. Later blind review
+briefs pass that ignored file's literal path rather than filename discovery.
+No new backend, provider, automation or historical flag rewrite follows.
+
+Literal DIAG/audit-filesystems-20261025-07.json observes one filesystem, dev27:
+checkout, scratch and quality inputs have9649725440available bytes against2147483648,
+headroom7502241792. .vida-retained is absent/no-op. Capacity passes admission;
+unresolved custody still defers the exact cleanup targets. No deletion, relocation,
+wide du/scan/hash or tmpfs evidence move. Source, SDK artifacts, old UNKNOWN roots,
+logs, receipts and the producer-owned projection remain protected. Last qualified
+coverage and BLOCKED status remain unchanged. Timer and schedule are untouched.
+
 ### Coverage resume custody check, 2026-10-25
 
 Root resumes published9ceb7438 with only the producer-owned projection dirty.

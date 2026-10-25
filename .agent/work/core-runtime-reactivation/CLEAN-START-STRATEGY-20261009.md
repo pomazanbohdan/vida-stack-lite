@@ -26,6 +26,11 @@ Docker has no qualified image or existing contour route. Availability alone does
 not reopen production. [WORK](WORK.md#coverage-resume-custody-check-2026-10-25)
 owns the corrected independent review and the checks to run after qualification.
 
+A supporting native mount-control retention repair now reuses the shared capture
+and group owner. Static checks and independent review pass, but its runtime
+qualification remains HOLD. [WORK](WORK.md#mount-control-evidence-retention-2026-10-25)
+owns the changed fixture and the current audit. This does not change contours.
+
 The public initial/replacement cases passed the paired52-expectation target and
 individual immutable-image rows, but the incomplete suite yields no new counters.
 Root subsequently removed the duplicate nested writer setup and moved all heartbeat
