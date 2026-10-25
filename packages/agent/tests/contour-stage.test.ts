@@ -4,6 +4,7 @@ import {
   contourStagePublicationAdmitted,
   contourStageReportArguments,
   contourStageDiagnostic,
+  contourStagePublicationFailure,
   retainContourStageResourceRefusal,
 } from '../tooling/contour-stage.ts';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
@@ -323,6 +324,48 @@ function terminal(): MutationProcessResult {
   };
 }
 
+test('failed process attribution retains publication errors and native observations', () => {
+  const publicationError = new Error('Stage must produce exactly one attributable report location.');
+  const stderrFile = '/retained/stage/stderr.log';
+  const failed = { ...terminal(), exitCode: 1 };
+  const attributed = contourStagePublicationFailure(failed, stderrFile, publicationError);
+  expect(attributed).toBeInstanceOf(Error);
+  if (!(attributed instanceof Error)) throw new Error('Expected an attributed Error.');
+  expect(attributed.message).toContain('Campaign process failed');
+  expect(attributed.message).toContain('exit_code=1');
+  expect(attributed.message).toContain('signal=null');
+  expect(attributed.message).toContain('timed_out=false');
+  expect(attributed.message).toContain('spawn_error=null');
+  expect(attributed.message).toContain(stderrFile);
+  expect(attributed.message).toContain(publicationError.message);
+  expect(attributed.cause).toBe(publicationError);
+
+  const completedError = new Error('Completed producer report failure.');
+  expect(contourStagePublicationFailure(terminal(), stderrFile, completedError)).toBe(completedError);
+  expect(contourStagePublicationFailure(terminal(), stderrFile, 'completed report failure')).toBe(
+    'completed report failure',
+  );
+
+  const unknown = { ...failed, processCustody: null, timedOut: true, signal: 'SIGKILL' as const };
+  const unknownAttributed = contourStagePublicationFailure(unknown, stderrFile, publicationError);
+  expect(unknownAttributed).toBeInstanceOf(Error);
+  if (!(unknownAttributed instanceof Error)) throw new Error('Expected an attributed Error.');
+  expect(unknownAttributed.message).toContain('Campaign process unknown');
+  expect(unknownAttributed.message).toContain('exit_code=1');
+  expect(unknownAttributed.message).toContain('signal="SIGKILL"');
+  expect(unknownAttributed.message).toContain('timed_out=true');
+  expect(unknownAttributed.cause).toBe(publicationError);
+
+  const hostileError = {
+    toString() {
+      throw new Error('Publication error formatting failed.');
+    },
+  };
+  expect(() => contourStagePublicationFailure(failed, stderrFile, hostileError)).toThrow(
+    'Publication error formatting failed.',
+  );
+});
+
 test('one terminal structured location routes through the existing report owner', () => {
   expect(
     contourStageReportArguments(
@@ -567,6 +610,12 @@ test('failed-stage outcome import binds retained custody and cannot promote diag
   const output = path.join(root, 'published');
   mkdirSync(stage);
   const result = { ...terminal(), exitCode: 1 };
+  const stderrFile = path.join(stage, 'stderr.log');
+  writeFileSync(stderrFile, 'native producer failure\n');
+  const publicationCause = new Error('report publication failed');
+  const attributedError = contourStagePublicationFailure(result, stderrFile, publicationCause);
+  expect(attributedError).toBeInstanceOf(Error);
+  if (!(attributedError instanceof Error)) throw new Error('Expected an attributed Error.');
   const launch = {
     commit: 'fixture-commit',
     boot: 'boot-id',
@@ -605,7 +654,7 @@ test('failed-stage outcome import binds retained custody and cannot promote diag
       totals: { generated: 5, attempted: 4, killed: 2, survived: 1, unknown: 1, unattempted: 1 },
     },
     publication: 'unknown-or-partial',
-    error: 'report publication failed',
+    error: attributedError.message,
   };
   const failure = {
     schema: 'VidaContourStagePublicationError/v1',
@@ -620,6 +669,12 @@ test('failed-stage outcome import binds retained custody and cannot promote diag
   writeFileSync(path.join(stage, 'publication-error.json'), JSON.stringify(failure));
   let passed = false;
   try {
+    const retainedFailure: unknown = JSON.parse(readFileSync(path.join(stage, 'publication-error.json'), 'utf8'));
+    expect(retainedFailure).toEqual(failure);
+    expect(failure.error).toContain('Campaign process failed');
+    expect(failure.error).toContain('exit_code=1');
+    expect(failure.error).toContain(stderrFile);
+    expect(failure.error).toContain(publicationCause.message);
     await runContourProgressWithNative(
       ['--output', output, '--commit', 'fixture-commit', '--stage-outcome', path.join(stage, 'publication-error.json')],
       root,

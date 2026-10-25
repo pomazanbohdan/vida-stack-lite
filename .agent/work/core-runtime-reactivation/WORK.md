@@ -56,7 +56,9 @@ override the plugin's generic writer-worktree and operation-ledger defaults.
 - [x] Fan out: one isolated proposal author and one disjoint read-only counter review; Root alone integrates.
 - [x] Aggregate: apply-checked V6 preserves local tests; independent Core/guard and matcher-state reviews complete.
 - [x] Scoped verification: strict510, typed lint/format and affected targets passed; preserve every earlier attempt.
-- [ ] Publish and measure: normal commit/hooks terminal, ordinary push terminal, then one collected changed-input stage.
+- [x] Publish and attempt measurement: commit7699d6d0/hooks and ordinary push terminated; one collected stage failed the unchanged5s authorization test. No coverage report or numeric qualification.
+- [x] Repair and review deadline-aware retention, fixture preparation separation and native failure attribution; affected checks passed.
+- [ ] Publish the collected repair and run one changed-input producer; retain the prior failed stage.
 
 The maintained producer is `prepareNativeUnnormalizedSynthesis` with
 `stopBeforeSynthesisReport:true`: actual local research activation, normalization,
@@ -80,6 +82,149 @@ tests passed 194 expectations in 39.64 s. Preserve this WORK's
 `DIAG/public-failure-witness-{static,target}-20261025-01.log`; they establish no
 new numeric run yet. Root waits for the related author lane before the next
 full stage.
+
+### Hook-caught scoped-lint mismatch, 2026-10-25
+
+The normal commit hook correctly rejected the new receipt-test JSON.parse/any
+assignment and unsafe property reads. That commit did not complete and no push
+followed it. Earlier direct scoped oxlint commands omitted the package's custom
+config filename, so their PASS was a default-rule check, not the repository lint
+gate. The maintained knip-precommit owner supplies type-aware,max-warnings0 and
+explicit oxlint.config.json. Root now uses those exact flags for selected files;
+the existing skill records them without a new wrapper or changed rule/budget.
+Luna corrected parsing to unknown and exact whole-receipt equality against its
+typed fixture; native-context checks use typed fields. The receipt proof is
+stronger, not suppressed. Strict510 and configured scoped lint/format pass in
+`DIAG/deadline-stage-strict-lint-20261025-01.log` and
+`DIAG/deadline-stage-configured-lint-20261025-01.log`. Preserve failed normal
+hook capture `DIAG/deadline-stage-commit-20261025-01.log`; retry normal hooks
+only after the corrected affected check and documentation check.
+
+### Authorization preparation and stage context packet — checked, 2026-10-25
+
+The expected candidate binding is now formed once by a single-case bounded
+beforeAll. The unlabelled describe follows TESTING's existing exact-filter rule;
+no Source-only or unrelated focused case inherits this formation. A minimal
+selected-Bun probe confirmed filtered-out scoped hooks do not run. Three actual
+production verification snapshots remain fresh inside the same SUT case. This
+moves fixture formation to its declared phase; it removes no operation or guard,
+changes no timeout threshold, introduces no cached production authority and
+creates no SDK build or contained-controller execution. The hook keeps Bun's
+existing default5s, the body keeps5s and the native stage keeps330s. All refusal
+and protected file/native Host assertions remain. If Source changes after the
+expected snapshot, the live production checks must reject the stale binding.
+
+The final exact anchored old title selected one case after the unlabelled scope
+change. It passed96 expectations/0 failures,3203.49ms body and6.09s file launcher,
+including setup/loading. These are changed-input/phase measurements, not a total
+speedup over the prior5.89s launcher or instrumented5.85176s failure. Preserve
+`DIAG/stopped-auth-preparation-{static,target}-20261025-01.log` and static02;
+strict510, typed lint and formatting passed. Independent review is literal
+`DIAG/auth-preparation-scope-review-20261025-01.md`; its labelled-scope caveat is
+removed by the reviewed TESTING unlabelled form and exact-selector execution.
+No ordinary timeout is dispositioned, hidden or accepted as a kill.
+
+Stage attribution's final native-import fixture passed as part of its21-case,
+239-expectation owner. All changes are collected before the next full stage.
+The original failed stage and diagnostics remain immutable. All completed
+preparation slots stay retained pending the earlier unreadable-process and
+symlink-dependency custody gap; Root reuses that check instead of another broad
+traversal. No cache/image/contour cleanup, second automation or schedule change.
+The existing admission owner will check resources for the next producer.
+
+### Three-hour receipt audit and collected timeout repairs, 2026-10-25
+
+The frozen audit window is04:40:18–07:40:18UTC on2026-10-25. Root selected
+nine distinct bun-cli-run runs by the existing projection's recorded_at and
+run_id, then reused the existing audit reader on those nine named native
+execution/stderr pairs. The reader aggregates explicit roots; the projection
+owns window selection. Paired BLOCKED/focused rows are one run, not two.
+These are whole runs whose terminal publication falls within the window, not
+elapsed time clipped to its edges. Preserve literal
+`DIAG/audit-20261025-window-03.log`: eight native exit0 diagnostic stages and
+one exit1 stage,1,231 passed test executions,1 failure,28,037 expectations,
+1,946,900.78012ms summed native stage elapsed. Counts are executions across
+changed inputs, not distinct tests or a single current Source qualification.
+No new suite, Source inventory, AST or audit hash pass was run for these totals.
+Billed tokens and complete platform tool-call counts remain unavailable.
+
+| Order / concurrency | Evidence | Choice |
+| --- | --- | --- |
+| Group related fixes; cheap shape/mechanics checks, strict/lint, affected targets and review; one numeric producer | strict510 takes about1–2s in retained captures; V5 compiler failure stopped before another target. Final synthesis target passed35 assertions. | Keep fail-fast checks before expensive native work and collect the whole related packet. |
+| Keep expected fixture formation inside a5s case; full stage after each small change at1x | Nine stage receipts above; latest body timed out5851.76ms while its fresh ordinary target later passed4524.11ms. Different instrumentation/inputs prevent a matched performance claim. | Separate supported fixture formation from the case deadline through its owner; preserve native5s and aggregate330s. Do not infer speedup from moving setup. |
+| Disjoint private authors/readers with Root integration; numeric2x/4x | Independent Source work is bounded; no qualified2x/4x numeric receipts exist. Current case already has a narrow5s margin. | Keep numeric1x and sequential Git/hooks/push; do not add competing suites or scan/hash workers. Parallel author work is not measured throughput improvement. |
+
+The binding cost is a Source inference: the authorization fixture forms one
+expected package binding, while three distinct valid-authorization calls verify
+fresh bindings in the SUT. Cross-invocation production caching would weaken that
+contract and is not proposed. No profile attributes the timeout to specific
+milliseconds of hashing. The existing readiness artifact is reused; no new build.
+
+The test's manual complete/finally cleanup has been replaced by the maintained
+withAutomaticWorkAdmissionCase owner, preserving every refusal and file/Host
+afterimage. It closes through completeOwnedCleanup and retains on failure,
+explicit pending custody or its unchanged5000ms monotonic deadline. The proposed
+onTestFinished-only alternative was rejected: a minimal Bun1.4.4 probe proves
+sync finally may run before the runner reports TIMEOUT. Its two deliberate
+mechanics failures are separate from the product-stage failure counts above.
+Preserve `DIAG/bun-finish-retention-mechanics-20261025-02.log`; no fake kills.
+The first probe's unprefixed hidden filename matched zero tests and unnecessarily
+discovered33,087 files in196ms; its01 log is not verification. The corrected
+explicit ./ path ran two intended cases. Existing skill guidance is reconciled
+for hidden diagnostics rather than duplicated.
+
+The deadline-owner target passed1 case/96 expectations/0 failures,4524.11ms
+case time and5.89s launcher time; scoped strict510/lint passed. This verifies
+cleanup/refusal checks, not a latency correction for the instrumented stage.
+The existing five-second case and outer budgets are unchanged. Keep risk OPEN
+until the collected native run; no ordinary timeout becomes an objective skip.
+
+Luna's separate stage error proposal preserves all report routing, exact location
+cardinality, native admission and UNKNOWN rules. Non-completed producer failures
+now carry observed process/exit/signal/timeout/spawn fields and stderr locator,
+with the original publication error as cause and secondary text; completed errors
+are unchanged. Formatting stays inside the existing receipt fallback, including
+hostile unknown rejections. The existing failed-stage native-import fixture now
+consumes that attributed receipt without accepting forged counters. All21 tests
+in its owner passed239 expectations/0 failures in1.71s; scoped strict510/lint/
+format passed. Source-only independent review is literal
+`DIAG/deadline-stage-packet-review-20261025-01.md`; Root reviewed the final
+receipt-fixture delta. Preserve both authors' diffs and all captures.
+
+### Collected synthesis stage — failed, 2026-10-25
+
+Commit `7699d6d028ee4cb256ec77d091410b79bcac2e32` passed normal hooks
+(format537/typecheck544) and ordinary push to main before the sole producer.
+Stage `/workspace/contour-stage-jPluz9` ended after231,486.767707ms, exit1,
+no process timeout/signal/spawn error, complete capture, closed group, unchanged
+boot and immutable inputs. Native Bun ran145 tests:144 pass,1 fail,3,465
+expectations in226.32s. New synthesis passed in8152.39ms and the existing CAS
+case in49745.58ms. The escaping stopped-source authorization test timed out at
+its unchanged5000ms budget, reported5851.76ms. It is a test timeout even though
+the outer native process itself did not time out. Never count it as a kill.
+
+The coverage owner rejected the failed suite and emitted no attributable report
+location. The stage publisher then recorded publication unknown-or-partial and
+`Stage must produce exactly one attributable report location.` Retain both
+primary native failure and publication error. No new F/L/S/B totals, PASS,
+closure or qualified report; the earlier a286/run838e5 counts remain historical
+and are not promoted to these changed tests. No unchanged full rerun.
+
+Image `c1fd814beb05ce4b39aebe3fe323b8329d447ff7`, Source tree
+`92d77ee0752466976ef023bbcdbe715b75511d2d`, fingerprint
+`65c1db45d177ef8738b92b68de8c06ce08742ad9cb04eb1a4aae6526b9ba65b4`,
+manifest SHA256 `18971e407fe0bc0925f5dd605bd66f3c147f74e3d5b0d36080fa3999af0c1b3d`.
+Preserve image, scratch and all original stage launch/request/execution/stdout/
+stderr/publication-error receipts, plus this WORK's literal
+`DIAG/native-synthesis-stage-20261025-01.log`. The timed-out case logged no
+retained fixture locator. Its late complete flag is not native terminal PASS;
+original fixture retention is unproven, and no retained-root claim is made.
+
+Root keeps this bun-cli-run cycle and delegates one isolated test/setup proposal
+in `PATCH/stopped-auth-setup-20261025-01`, plus a disjoint read-only stage error
+attribution review. No second numeric producer, archived fixture replay, new
+budget or consumer effect. The prior proposal retirement remains deferred on
+its recorded unknown custody, not bypassed through deletion.
 
 ### Synthesis handoff checks and Bun matcher correction, 2026-10-25
 

@@ -190,6 +190,19 @@ export function contourStageOutput(repository: string, output: string): string {
 
 export { contourStagePublicationAdmitted };
 
+export function contourStagePublicationFailure(
+  result: Parameters<typeof campaignProcessState>[0],
+  stderrFile: string,
+  publicationError: unknown,
+): unknown {
+  const process = campaignProcessState(result);
+  if (process === 'completed') return publicationError;
+  return new Error(
+    `Campaign process ${process} (exit_code=${JSON.stringify(result.exitCode)}, signal=${JSON.stringify(result.signal)}, timed_out=${JSON.stringify(result.timedOut)}, spawn_error=${JSON.stringify(result.spawnError)}); see ${stderrFile}. Publication error: ${String(publicationError)}`,
+    { cause: publicationError },
+  );
+}
+
 type StageRequest = { commit: string; boot: string; contour: string; lane: Lane; output: string; timeout_ms: number };
 
 export async function retainContourStageResourceRefusal(
@@ -492,16 +505,18 @@ async function main(): Promise<void> {
     });
     process.stdout.write(JSON.stringify(diagnostic({ publication: 'published', reports: reportArgs })) + '\n');
   } catch (error) {
+    let primaryError = error;
     let projectionFailure: { error: unknown } | undefined;
     try {
+      primaryError = contourStagePublicationFailure(result, path.join(directory, 'stderr.log'), error);
       const detail = diagnostic({
         publication: published ? 'published-receipt-failed' : 'unknown-or-partial',
-        error: String(error),
+        error: String(primaryError),
       });
       record('publication-error', {
         schema: 'VidaContourStagePublicationError/v1',
         run_id: path.basename(directory),
-        error: String(error),
+        error: String(primaryError),
         status: published ? 'published-receipt-failed' : 'unknown-or-partial',
         source_commit: commit,
         diagnostic: detail,
@@ -525,13 +540,17 @@ async function main(): Promise<void> {
         projectionFailure = { error: projectionError };
       }
     } catch (receiptError) {
-      return throwAfterCampaignReceiptFailure(error, receiptError, { source_commit: commit, boot });
+      return throwAfterCampaignReceiptFailure(primaryError, receiptError, { source_commit: commit, boot });
     }
     if (projectionFailure)
-      throw new AggregateError([error, projectionFailure.error], 'Stage failure and outcome projection failure', {
-        cause: error,
-      });
-    throw error;
+      throw new AggregateError(
+        [primaryError, projectionFailure.error],
+        'Stage failure and outcome projection failure',
+        {
+          cause: primaryError,
+        },
+      );
+    throw primaryError;
   }
   if (campaignProcessState(result) !== 'completed') process.exitCode = 1;
 }

@@ -1059,7 +1059,11 @@ one row per nested read. Keep nested intervals separate and bounded; diagnostic
 limits must not be mistaken for product failures or numeric qualification.
 
 Use explicit test paths and an anchored `--test-name-pattern` for a focused
-development check. Inspect the exit code and assertions. A name filter is not
+development check. Inspect the exit code and assertions. For scoped lint, retain
+`--type-aware --max-warnings 0 --config oxlint.config.json` from the maintained
+`tooling/knip-precommit.ts` owner, with selected paths from the executing package
+root. Bare `--type-aware` does not load that custom config filename and cannot
+substitute for the repository rule check. A name filter is not
 complete-selection evidence. For a shell batch of checks, use fail-fast execution
 or inspect every individual exit status and log. A later lint PASS must not mask
 an earlier typecheck failure through the shell's last-command status. Keep failed
@@ -1189,8 +1193,8 @@ persisted fixture facts. Avoid invoking the production request builder again
 as its own oracle. Keep versions and maintenance state explicit and never
 reuse a test snapshot as production authority.
 
-In copied snapshot fixtures, pass explicit `./` test paths so Bun does not
-rediscover copied tests. Assert exact child file and case counts when fixture
+In copied snapshot fixtures and hidden diagnostic directories, pass explicit
+`./` test paths so Bun treats them as paths instead of rediscovering files. Assert exact child file and case counts when fixture
 cardinality matters. Keep fixture preparation separate from the case deadline.
 Do not delete fixture state until assertions and owned checks succeed.
 
