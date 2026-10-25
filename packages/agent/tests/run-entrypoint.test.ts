@@ -9775,6 +9775,191 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     }
   });
 
+  test('interrupted source retirement decoders reject malformed requests before database access', async () => {
+    type Mode = 'inspect' | 'apply';
+    type DecoderCase = { mode: Mode; change: (input: Record<string, unknown>) => void };
+    const cases: DecoderCase[] = [];
+    for (const mode of ['inspect', 'apply'] as const) {
+      cases.push(
+        {
+          mode,
+          change: (input) => {
+            input.extra = true;
+          },
+        },
+        {
+          mode,
+          change: (input) => {
+            delete input.identity;
+          },
+        },
+        {
+          mode,
+          change: (input) => {
+            input.identity = null;
+          },
+        },
+        {
+          mode,
+          change: (input) => {
+            requireRecord(input.identity, 'identity').extra = true;
+          },
+        },
+        {
+          mode,
+          change: (input) => {
+            requireRecord(input.identity, 'identity').project_ids = [1];
+          },
+        },
+      );
+      for (const attempt of ['1', 0, 1.5, 9007199254740992])
+        cases.push({
+          mode,
+          change: (input) => {
+            input.attempt = attempt;
+          },
+        });
+    }
+    for (const field of ['actionId', 'issueId', 'decisionPointer']) {
+      cases.push(
+        {
+          mode: 'apply',
+          change: (input) => {
+            delete input[field];
+          },
+        },
+        {
+          mode: 'apply',
+          change: (input) => {
+            input[field] = 1;
+          },
+        },
+      );
+    }
+    for (const field of ['expectedWork', 'expectedLedger', 'expectedJournal']) {
+      for (const malformed of [
+        null,
+        { revision: 1 },
+        { revision: 1, digest: 'fixture', extra: true },
+        { revision: '1', digest: 'fixture' },
+        { revision: 1, digest: 1 },
+      ])
+        cases.push({
+          mode: 'apply',
+          change: (input) => {
+            input[field] = malformed;
+          },
+        });
+    }
+    for (const generation of ['0', -1, 0.5, 9007199254740992])
+      cases.push({
+        mode: 'apply',
+        change: (input) => {
+          input.expectedMaintenanceGeneration = generation;
+        },
+      });
+    for (const [field, value] of [
+      ['extra', true],
+      ['schema', 'wrong-schema'],
+      ['source_thread_id', 1],
+      ['source_thread_status', 'running'],
+      ['read_thread_ref', 1],
+      ['list_agents_ref', 1],
+      ['active_source_writer_ids', null],
+      ['active_source_writer_ids', [1]],
+    ] as const)
+      cases.push({
+        mode: 'apply',
+        change: (input) => {
+          requireRecord(input.evidence, 'evidence')[field] = value;
+        },
+      });
+
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-run-interrupted-decoder-'));
+    let complete = false;
+    try {
+      const { config, initializationPath } = createFixture(root);
+      const configPath = path.join(root, 'agent-runtime.config.v1.yaml'),
+        requestPath = path.join(root, 'request.json');
+      const configBefore = readFileSync(configPath),
+        initializationBefore = readFileSync(initializationPath);
+      writeFileSync(requestPath, '');
+      const fixtureBefore = snapshotAuthorityFixture(root);
+      const makeInput = (mode: Mode): Record<string, unknown> => ({
+        identity: {
+          repository_id: `${config.repository.repository_id}-foreign`,
+          project_ids: config.projects.map((project) => project.project_id),
+          integrations_digest: canonicalJsonDigest(config.integrations),
+          work_id: 'unaccepted-retirement-fixture',
+        },
+        attempt: 1,
+        ...(mode === 'apply'
+          ? {
+              actionId: 'unaccepted-action',
+              issueId: 'unaccepted-issue',
+              expectedWork: { revision: 1, digest: 'fixture-work' },
+              expectedLedger: { revision: 1, digest: 'fixture-ledger' },
+              expectedJournal: { revision: 1, digest: 'fixture-journal' },
+              expectedMaintenanceGeneration: 0,
+              decisionPointer: 'fixture:decision',
+              evidence: {
+                schema: 'InterruptedSourceRetirementEvidence/v1',
+                source_thread_id: 'fixture-thread',
+                source_thread_status: 'interrupted',
+                read_thread_ref: 'fixture:read',
+                list_agents_ref: 'fixture:list',
+                active_source_writer_ids: [],
+              },
+            }
+          : {}),
+      });
+      let finalBytes = '';
+      for (const entry of [
+        ...cases,
+        { mode: 'inspect' as const, change: null },
+        { mode: 'apply' as const, change: null },
+      ]) {
+        const input = makeInput(entry.mode);
+        entry.change?.(input);
+        finalBytes = record(input);
+        writeFileSync(requestPath, finalBytes);
+        await assert.rejects(
+          run([
+            '--retire-interrupted-source-owner',
+            'true',
+            '--mode',
+            entry.mode,
+            '--project-root',
+            root,
+            '--native-session-handle',
+            'fixture-owner',
+            '--request',
+            'request.json',
+          ]),
+          {
+            message: entry.change
+              ? 'Interrupted Source retirement request shape differs'
+              : 'Interrupted Source retirement identity differs',
+          },
+        );
+        expect(readFileSync(requestPath, 'utf8')).toBe(finalBytes);
+        expect(readFileSync(configPath)).toEqual(configBefore);
+        expect(readFileSync(initializationPath)).toEqual(initializationBefore);
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
+      }
+      expect(snapshotAuthorityFixture(root)).toEqual(
+        fixtureBefore.map((entry) =>
+          entry.path === 'request.json' ? { ...entry, bytes: Buffer.from(finalBytes).toString('base64') } : entry,
+        ),
+      );
+      complete = true;
+    } finally {
+      if (complete) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained failed interrupted-retirement decoder root: ${root}\n`);
+    }
+  });
+
   test('run special helper request decoders refuse empty records before opening a workspace database', async () => {
     const cases = [
       {

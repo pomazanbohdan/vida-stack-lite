@@ -38,6 +38,43 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Interrupted-retirement decoder packet, 2026-10-25
+
+After the parser milestone, the retained missing-function map selects the
+supported interrupted Source retirement request decoder within bun-cli-run.
+There are no missing function entries before run.ts:3126; that bounded result
+is navigation, not qualification. Root selected four unvisited decoder function
+entries at run.ts:4298-4383 from retained native map keys, not a new AST/index or
+function inventory. Native Luna independently designed the prefix and another
+fresh read-only Luna reviewed the completed test and the handler's guard order.
+Both used freshly prepared prompt-only contracts; Root retains all Source/Git
+and numeric ownership.
+
+The new literal test uses one existing createFixture, 51 malformed inspect/apply
+requests and two valid-shaped foreign-repository controls. It covers exact root
+and nested keys, identity, attempt, action/issue/decision fields, three CAS
+versions, maintenance generation, and interrupted-thread evidence/array types.
+Malformed requests assert the exact shape error; the controls assert the exact
+identity error before ProjectContext or ledger opening. These are unaccepted
+fixture inputs, not fabricated accepted history, proof of a native retired
+thread, retirement execution or consumer effects. The state-version decoder
+currently checks a numeric revision and string digest only; no integer/range
+requirement is invented for it. Empty string acceptance is not redefined here.
+
+Every scenario checks exact config/init/request bytes, absent session DB and
+absent Work. Two whole-fixture snapshots bracket the complete batch, with the
+known request input update accounted for; they do not establish a whole-fixture
+per-case claim. This reuses the existing snapshot owner without 53 repeated tree
+walks or fixture builds. Success-only cleanup retains failed fixture state.
+One-file Oxfmt, scoped strict for 510 files and typed lint passed before the
+single target. The target passed one case and 267 expectations, eight filtered
+cases, in 3.11 s. Preserve this WORK's
+`DIAG/interrupted-decoder-{static,target}-20261025-01.log`. Independent review
+confirmed exact refusal order and no ledger/retirement execution. Root verified
+the actual matrix includes the non-string writer member `[1]`, despite a reader
+suggesting that variant was absent. No new measured coverage or speedup is
+claimed until the one changed-input stage after normal commit/hooks/push.
+
 ### Operation-option packet, 2026-10-25
 
 The owner's autonomous closeout goal retains the one-contour F/L/S/B order.
@@ -140,8 +177,31 @@ option declarations have not changed. New tests do not reattest the older counts
 
 These skips leave raw counts, denominators and BLOCKED unchanged, add no hits,
 and grant neither exact100, queue advancement, frozen waiver nor mutation result.
-Supported export/task-source/file-root arms remain test obligations for the next
-single changed-input stage. Repeated audit instructions continue in this same cycle.
+After commit/hooks and push terminated for `449711c933a021e208d73747642137157e2b6edf`,
+the sole changed-input stage completed in `/workspace/contour-stage-TY9XuS`,
+207,901.345598 ms, exit 0, no timeout, complete capture, closed group, unchanged
+boot/image inputs and published report. Native stderr records 133 pass, zero fail
+and 2,798 expectations. Run `e267e8be-0e1e-4477-b217-f8dca7a110c3` records
+F441/555, L2061/2860, S2223/3138 and B2649/3660, max CC/entry CRAP501, BLOCKED.
+This adds eight branch arms, three statements and two lines, not a contour closure.
+Preserve `DIAG/parser-boundaries-stage-20261025-01.log` here and the native stage
+root. Its image is
+`/workspace/.vida-quality-inputs/8fb85f0eb91e4e71fb8a24e848faa1373bbbb36c/repository`,
+Source tree `291658918d4248166f25a79d7806c4e8688e92a7`, input fingerprint
+`f1143694e96480803f2fc58bbc787350d2da550f7725c74f3022ff0e32ce11ce`, manifest
+SHA-256 `3008261afa2967964e1be10e4e578834555829ebba9e48cdf394c26baf923e42`.
+
+The retained maps in `DIAG/parser-terminal-20261025-01.log` now show no missing
+function entries in the selected parseArgs range and only the reviewed ID346,
+ID364 and ID365 branch arms. ID346 is now `[0,1554]`; the other two are still
+`[43,0]` and `[41,0]`. The sole zero statement, ID732 at run.ts:3142:31-92,
+is exactly the `fail(...)` expression within the independently reviewed ID346
+unreachable true arm. Root binds that statement to the same Source expression,
+causal prerequisite and reopening conditions; it remains zero and no denominator
+changes. The production parser/declarations are unchanged between the reports.
+All other mapped parser obligations in that selected range are visited. This is
+a local covered-or-dispositioned parser milestone, never exact100 or permission
+to advance from bun-cli-run. Repeated audit instructions stay in this same cycle.
 
 ### Three-hour audit and scope-path packet, 2026-10-25
 
@@ -240,9 +300,9 @@ prerequisite. This permits queue progression, not numeric exact100.
 The retained investigation below records the native issue counter prerequisite.
 It grants no new CLI role, numeric result or objective skip. Root retains the
 existing CAS child and every help/prepared/issue/report/UNKNOWN control.
-The latest accepted focused diagnostic is operation-option run
-`5f71a7fd-2a89-4f5a-93e5-96e7598db8b9`, with F441/555, L2059/2860,
-S2220/3138 and B2641/3660. Its status remains BLOCKED and full qualification is
+The latest accepted focused diagnostic is parser-boundary run
+`e267e8be-0e1e-4477-b217-f8dca7a110c3`, with F441/555, L2061/2860,
+S2223/3138 and B2649/3660. Its status remains BLOCKED and full qualification is
 false. The earlier reference to 2820 as the latest measurement was stale.
 
 2824/2825 independently compare native SQLite interception with update hooks or
