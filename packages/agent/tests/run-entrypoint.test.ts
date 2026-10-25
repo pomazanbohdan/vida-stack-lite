@@ -3940,6 +3940,25 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         );
         expect(existsSync(assurancePath)).toBe(false);
         expect(inspectHostWorkspaceDatabase(root, hostRelativePath, workspaceId)).toEqual(hostBeforeAssurance);
+        const witnessDirectory = path.join(root, '.agent', 'cutover', 'unadmitted-witness');
+        expect(existsSync(witnessDirectory)).toBe(false);
+        expect(hostBeforeAssurance.work.some((entry) => entry.identity.work_id === workId)).toBe(true);
+        await Promise.resolve(
+          expect(
+            run([
+              ...args.map((value, index) => (args[index - 1] === '--work-id' ? 'unadmitted-witness-work' : value)),
+              '--export-staged-witness',
+              'unadmitted-witness',
+              '--payload-manifest-sha256',
+              'a'.repeat(64),
+            ]),
+          ).rejects.toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Current admitted Work lifecycle risk is unavailable.',
+          }),
+        );
+        expect(existsSync(witnessDirectory)).toBe(false);
+        expect(inspectHostWorkspaceDatabase(root, hostRelativePath, workspaceId)).toEqual(hostBeforeAssurance);
         const issued = parseTestRunPayload(
           await runSuccessfully([
             ...args,

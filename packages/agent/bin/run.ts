@@ -4793,6 +4793,7 @@ function readRetiredSourceNativeTurn(
     before.nlink !== 1
   )
     throw Error('Retired-source native evidence path differs');
+  if (before.size > 5 * 1024 * 1024) throw Error('Retired-source native evidence changed or exceeds its bound');
   const bytes = readFileSync(file),
     after = lstatSync(file);
   if (

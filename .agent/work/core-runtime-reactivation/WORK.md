@@ -38,6 +38,58 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Evidence-size preflight and unadmitted witness refusal, 2026-10-25
+
+The decoder-control packet `9c37e783a7257509cc39f9832d91fb12446ae79c` was
+committed with normal hooks, pushed, then measured once by the sole producer.
+Stage `/workspace/contour-stage-L4L6gC`, run
+`a5bfd6cd-1680-4fd0-8520-67daf95583e9`, published F454/555, L2079/2860,
+S2243/3138, B2714/3660. It passed 134 tests / 2,960 expectations; native stage
+elapsed 221,982.293534 ms, exit 0, complete capture, closed group, no
+timeout/signal/spawn error, unchanged boot/image. Source tree
+`65d5c368276256b9930bbc91f9abb2fcf8253a97`, fingerprint
+`b6d0f68cfc53342fafde489b5aa97db67dce0de2ef295328c0aa2ce394158c6c`, manifest
+SHA-256 `85e19af07790351c683a002edaee879d564267d030b89a468c8a36da020f02a2`.
+Preserve that root and this WORK's `DIAG/decoder-control-stage-20261025-01.log`.
+The two foreign wave controls added two visited functions and seven branch hits
+with unchanged Source counters. The longer stage does not establish a speedup
+from removing duplicate calls; setup, SDK/runtime and host conditions differ.
+No contour closed; numeric status remains BLOCKED, maximum CC/entry CRAP 501.
+
+Bounded Source review then found a concrete resource defect in
+`readRetiredSourceNativeTurn`: the 5 MiB test happened only after `readFileSync`
+loaded the entire artifact. The fix rejects a stat-known oversized file after
+the existing path/type/link guard and before loading its bytes, using the same
+diagnostic. The full post-read byte-length, device/inode/type/link/size stability
+guard stays intact. This preflight avoids reading already oversized files; it
+does not cap bytes read if a file grows between stat and read. No new helper,
+scan, hash pass, budget increase or measured-image edit is involved. Source
+changed, so the next stage must bind its own map and raw denominators; no old
+numeric result is promoted to these bytes.
+
+The same packet extends the maintained continuation fixture with a valid-shaped
+witness-export request for an unadmitted Work ID. Its original admitted Work is
+present; explicit workflow selectors stay valid. The export must fail at the
+exact missing lifecycle-risk guard, before witness creation. The test checks no
+witness directory and unchanged native Host projection, then continues all
+original issue/report/retry/conflict checks. It executes no cutover, model,
+tool or consumer. It does not claim a whole-DB/schema no-write proof.
+
+Scoped strict (510 files), typed lint and two-file formatting passed. The grouped
+oversized-evidence and continuation target passed two tests, zero failures and
+43 expectations in 3.72 s. Both the size preflight plan and final code/test bytes
+received independent read-only Luna review. Root verified the complete diff.
+Preserve this WORK's `DIAG/evidence-preflight-{static,target}-20261025-01.log`.
+The existing oversized case proves rejection and unchanged evidence, not a
+spied read-call count; bounded Source order establishes the early preflight.
+
+Reuse the completed admission observation: 11,020,218,368 available bytes versus
+2,147,483,648, with no fresh filesystem survey or cleanup. All retained roots,
+original logs and producer-owned projection stay with their owners. Next is
+normal commit/push termination, then one changed-input coverage stage. The
+authentic configured-frontier release prerequisite below remains OPEN; no skip,
+UNKNOWN replay, frozen-budget change or queue advancement is authorized here.
+
 ### Shared run-path terminal and decoder-control packet, 2026-10-25
 
 The sole changed-input stage for `275a6f95034a7a20a904c46ecfb4f550e0c703ac`
