@@ -58,7 +58,7 @@ override the plugin's generic writer-worktree and operation-ledger defaults.
 - [x] Scoped verification: strict510, typed lint/format and affected targets passed; preserve every earlier attempt.
 - [x] Publish and attempt measurement: commit7699d6d0/hooks and ordinary push terminated; one collected stage failed the unchanged5s authorization test. No coverage report or numeric qualification.
 - [x] Repair and review deadline-aware retention, fixture preparation separation and native failure attribution; affected checks passed.
-- [ ] Publish the collected repair and run one changed-input producer; retain the prior failed stage.
+- [x] Publish897ebfbd/hooks/push and run one changed-input producer; bXe06l completed/published. Prior jPluz9 failure remains immutable.
 
 The maintained producer is `prepareNativeUnnormalizedSynthesis` with
 `stopBeforeSynthesisReport:true`: actual local research activation, normalization,
@@ -82,6 +82,47 @@ tests passed 194 expectations in 39.64 s. Preserve this WORK's
 `DIAG/public-failure-witness-{static,target}-20261025-01.log`; they establish no
 new numeric run yet. Root waits for the related author lane before the next
 full stage.
+
+### Deadline and stage-context packet — terminal, 2026-10-25
+
+Commit `897ebfbdb72f922150248533ee7f6a505e9b0e35` passed normal hooks and
+ordinary main push after the hook-caught lint correction. The sole changed-input
+stage `/workspace/contour-stage-bXe06l` completed in240,626.406036ms, exit0,
+no timeout/signal/spawn error, complete capture, closed group, unchanged boot
+and image inputs; publication succeeded. Native suite:145 pass/0 fail/3,465
+expectations in235.07s. The authorization body passed2937.66ms within the same
+5s; synthesis passed8801.47ms within its existing60s. Hook setup remains part
+of total native elapsed; these changed inputs do not establish total speedup.
+
+Run `1dc8ae1f-0804-4f68-8f02-d4c6e048b9d0` reports F480/555,L2225/2873,
+S2409/3157,B2874/3686, maximum CC/entry CRAP501, BLOCKED. Against the previous
+valid a286/run838e5 report's same bin/run.ts bytes and denominators, measured
+hits add11 lines,11 statements and15 branch arms; function coverage is unchanged.
+New successful behavior tests do not imply new function hits or a contour closure.
+No queue advancement, frozen qualification, mutation run or Killed claim.
+
+Image `f1db41acd76536306d9320067013910bdda5e83f`, Source tree
+`fb7497642cf2e2bdb04aacb739e603a0ed9a8b0a`, fingerprint
+`4470a67a6b78849406d8136699baf77774bfc4a444727cc6de7d348d037d834a`,
+manifest SHA256 `806a49d5775847374698c0dfa52f85341091efd7cda1498a24fc3439ec1b781e`.
+Preserve native receipts/stderr/stdout and literal
+`DIAG/deadline-stage-measurement-20261025-01.log`; prior FAIL/TIMEOUT/publication
+error evidence remains retained and is not repaired retroactively. Projection
+was updated by its existing producer owner and remains outside Root's staged set.
+
+The final receipt-test correction passed its affected native-import case:
+1 pass/0 fail/22 expectations,36.20ms body/285ms launcher. Earlier unchanged
+owner cases retain their21-case capture. Scoped lint now includes the exact
+maintained config and zero-warning flags; normal hooks passed format537 and
+strict544. This terminal documentation follow-up needs no numeric rerun.
+
+A bounded next-boundary reader stopped on an exec-server transport disconnect
+before writing its advisory. Its developer-issue message is unverified Source
+analysis, not an approved transition or counter disposition. Parent observation
+of this existing producer remained available; no denied read was retried through
+another route. Reuse the current report's exact missing-function locations for
+the next same-contour proposal, and prove the issuance/dispatch boundary before
+any fresh unit operation. Do not replay pending or archived UNKNOWN fixtures.
 
 ### Hook-caught scoped-lint mismatch, 2026-10-25
 
