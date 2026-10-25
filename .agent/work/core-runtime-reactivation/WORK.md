@@ -38,6 +38,36 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Coverage resume custody check, 2026-10-25
+
+Root resumes published9ceb7438 with only the producer-owned projection dirty.
+The same managed instance runs at observed spec3761. The explicit local Docker
+socket answers28.4.0 with the vfs driver and no cached images. No qualified
+independent environment or existing Docker contour route is established.
+
+The retained launch and current isolatedCommand use PID isolation and a read-only
+host-root bind, without network or IPC isolation. Host socket paths remain visible.
+The host does support both namespace options: help lists them and a no-product
+control with unshare-pid, unshare-net, unshare-ipc, read-only root and true returns
+tool-observed exit0 with no output. This is not producer or full-effect qualification.
+Independent literal DIAG/resume-effect-namespace-route-20261025-02.md corrects
+report01's unsupported option-availability claim. Both reviews remain preserved.
+Before a successor, its owner must qualify inputs, writable paths, host sockets,
+network and IPC namespaces, descendants, shared dependencies and durable evidence.
+
+Callback445 remains OPEN. The existing host-state component test near8420 creates
+a fixture-only LEGACY journal split through SQL after atomic rollback. That does
+not establish a supported public CLI preimage or justify a skip. No history is
+ported solely for a hit. The retained gap map remains the numeric source.
+
+After independent effect qualification, check9ceb7438's initial-report and former
+nested-writer callers with the replacement case in one focused invocation. Reuse
+unchanged static receipts and SDK readiness, review the terminal outcome, then
+admit one changed-input full stage. No deduplication saving or deadline fit is
+measured. Until then runtime and numeric qualification remain HOLD. No producer,
+image pull, container launch, install, new disk survey, cleanup, image retirement,
+projection edit or timer change occurs. Original UNKNOWN and counters stay unchanged.
+
 ### Public initial and replacement reports packet, 2026-10-25
 
 Root resumes6903264e74e1ff0956ed4213d86050d53b2e57f7, same bun-cli-run/F/L/S/B.

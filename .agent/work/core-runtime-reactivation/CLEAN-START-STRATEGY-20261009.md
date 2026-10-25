@@ -20,6 +20,12 @@ or contour change is admitted until an independently qualified full-effect
 namespace or genuinely independent environment exists. Preserve the old image,
 scratch, locks, logs, operation outcome and UNKNOWN flags; never replay that run.
 
+The resume check confirms host network and IPC namespace options are available,
+but the current launcher does not use them or establish full effect isolation.
+Docker has no qualified image or existing contour route. Availability alone does
+not reopen production. [WORK](WORK.md#coverage-resume-custody-check-2026-10-25)
+owns the corrected independent review and the checks to run after qualification.
+
 The public initial/replacement cases passed the paired52-expectation target and
 individual immutable-image rows, but the incomplete suite yields no new counters.
 Root subsequently removed the duplicate nested writer setup and moved all heartbeat
