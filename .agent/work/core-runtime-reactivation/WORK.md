@@ -38,6 +38,40 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Operation-option packet, 2026-10-25
+
+The owner's autonomous closeout goal retains the one-contour F/L/S/B order.
+bun-cli-run stays active until exact counters or independently reviewed objective
+dispositions. Frozen CRAP and mutation remain deferred. Two fresh prepared
+read-only native Luna assignments traced the latest retained report and reviewed
+the completed parser packet. Contracts are prompt-only, not enforced isolation.
+Vex's recorded stale state selects bounded Source fallback without indexing.
+
+Root found the existing fast check for incomplete/malformed CAS versions already
+executes in the selected stage. Extend that literal case instead of adding a
+second suite or fixture. It retains the four existing invalid inputs and grows
+to 27 malformed lease/CAS/export/intake/inspect combinations, each asserting the
+exact CLI-001 code and mode-validation message. Six valid option combinations
+reach the exact CLI-002 canonical-root refusal. The deliberate relative root
+stops before authority, file or DB use while the option cases isolate the earlier
+guard. The absolute intake path is a syntax sentinel and is never opened. This
+tests owner/generation constraints, safe integers, handle length/control bytes,
+orphan authority fields, export identifiers/digests and canonical request paths.
+It does not claim successful execution of any of those operations.
+
+Scoped strict passed for 510 test-closure files and typed lint passed without
+warnings in this WORK's `DIAG/operation-options-static-20261025-01.log`.
+The one focused Bun 1.4.4 invocation passed one test and 33 expectations with
+eight filtered cases in 1,476 ms, recorded in
+`DIAG/operation-options-target-20261025-01.log`. The case body took 18.36 ms.
+These are native observations, not a matched speedup. Independent Luna review
+confirmed both the malformed prerequisites and the valid-control gate order.
+Root reviewed the exact diff and preserved all prior CAS cases. Subtract Before
+You Add keeps the existing case, and Guard the Context Window reuses the latest
+report and bounded Source sections. No inventory, hash, SDK build or filesystem
+survey is repeated. One changed-input stage follows normal commit/hooks and push
+termination. The existing projection files stay unstaged and producer-owned.
+
 ### Three-hour audit and scope-path packet, 2026-10-25
 
 The audit window is fixed at 2026-10-24 21:38:55 through 2026-10-25 00:38:55 UTC.

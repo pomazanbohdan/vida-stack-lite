@@ -3082,15 +3082,66 @@ describe('vida-agent run entrypoint fast checks', () => {
     }
   });
 
-  test('rejects incomplete or malformed CAS versions before opening a report', async () => {
-    const args = [...common, '--workflow', 'information_research_light'];
+  test('validates operation and lease options before accepting a project root', async () => {
+    const args = [...common, '--workflow', 'information_research_light'].map((value, index) =>
+      common[index - 1] === '--project-root' ? 'relative-root' : value,
+    );
+    const state = ['--expected-revision', '2', '--expected-digest', 'a'.repeat(64)];
+    const recovery = ['--recover-expired-lease', 'true', '--rebind-current-bundle', 'true'];
+    const renewal = ['--renew-lease', 'true'];
+    const intakePath = path.join(repositoryRoot, 'unused-intake.json');
+    const owner = ['--native-session-handle', 'fixture-owner', '--lease-generation', '1'];
     for (const extra of [
       ['--issue-wave', 'true'],
       ['--issue-wave', 'true', '--expected-revision', '0', '--expected-digest', 'a'.repeat(64)],
       ['--issue-wave', 'true', '--expected-revision', '2', '--expected-digest', 'not-a-digest'],
       ['--report', 'relative.json', '--expected-revision', '2', '--expected-digest', 'a'.repeat(64)],
+      ['--issue-wave', 'false', ...state],
+      ['--issue-wave', 'true', '--expected-revision', '9007199254740992', '--expected-digest', 'a'.repeat(64)],
+      ['--expected-revision', '2'],
+      ['--expected-digest', 'a'.repeat(64)],
+      [...recovery, ...state, '--native-session-handle', 'fixture-owner'],
+      [...recovery, ...state, '--native-session-handle', 'fixture-owner', '--lease-generation', '9007199254740992'],
+      [...recovery, ...state, '--native-session-handle', 'owner\n', '--lease-generation', '1'],
+      [...recovery, ...state, '--native-session-handle', 'a'.repeat(257), '--lease-generation', '1'],
+      [...renewal, ...state, '--native-session-handle', 'fixture-owner'],
+      [...renewal, ...state, '--native-session-handle', 'fixture-owner', '--lease-generation', '9007199254740992'],
+      [...renewal, ...state, '--native-session-handle', 'owner\n', '--lease-generation', '1'],
+      [...renewal, ...state, '--native-session-handle', 'a'.repeat(257), '--lease-generation', '1'],
+      ['--native-session-handle', 'fixture-owner'],
+      ['--lease-generation', '1'],
+      ['--rebind-current-bundle', 'true'],
+      ['--export-staged-witness', 'unsafe/id', '--payload-manifest-sha256', 'a'.repeat(64)],
+      ['--export-staged-witness', 'fixture-witness', '--payload-manifest-sha256', 'not-a-digest'],
+      ['--payload-manifest-sha256', 'a'.repeat(64)],
+      ['--intake', 'relative.json'],
+      ['--intake', intakePath, '--continuation', 'relative.json'],
+      ['--continuation', intakePath],
+      ['--inspect', 'false'],
+      ['--inspect', 'true', '--scope-path', 'source.ts'],
     ]) {
-      await Promise.resolve(expect(run([...args, ...extra])).rejects.toMatchObject({ code: 'GAP-VIDA-RUN-CLI-001' }));
+      await Promise.resolve(
+        expect(run([...args, ...extra])).rejects.toMatchObject({
+          code: 'GAP-VIDA-RUN-CLI-001',
+          message:
+            'Mutation modes require one mode and an exact expected state version; renewal also requires the current owner and lease generation.',
+        }),
+      );
+    }
+    for (const valid of [
+      [],
+      ['--issue-wave', 'true', ...state],
+      [...recovery, ...state, ...owner],
+      [...renewal, ...state, ...owner],
+      ['--export-staged-witness', 'fixture-witness', '--payload-manifest-sha256', 'a'.repeat(64)],
+      ['--intake', intakePath, '--continuation', intakePath],
+    ]) {
+      await Promise.resolve(
+        expect(run([...args, ...valid])).rejects.toMatchObject({
+          code: 'GAP-VIDA-RUN-CLI-002',
+          message: 'The project root must be one canonical absolute path.',
+        }),
+      );
     }
   });
 
