@@ -79,7 +79,28 @@ test, which passed one case and four assertions with eight filtered cases. Nativ
 Luna independently confirmed parser order and exact refusal assertions. The title
 was then narrowed without changing executable assertions. Retain all
 `DIAG/scope-path-{static,lint,target}-20261025-*.log` files in this WORK's directory.
-One changed-input stage follows ordinary commit/hooks and push termination.
+After ordinary commit/hooks and push terminated for `03220ce409b5b17a308c80e2f6d90efd09a280f9`,
+the sole producer ran one changed-input stage in `/workspace/contour-stage-GVDI87`.
+It completed in 226,695.718570 ms with exit 0, no timeout, complete capture,
+closed group, unchanged boot and unchanged image inputs. Publication succeeded
+for run `08e61a34-5b39-4a21-b344-69d8d98a7a44`. Native stderr records 133 pass,
+zero fail and 2,757 expectations across two files. The new diagnostic is
+F441/555, L2059/2860, S2220/3138, B2627/3660, with max CC/entry CRAP501.
+The prior matching-denominator diagnostic was F441/555, L2058/2860, S2218/3138,
+B2615/3660. This packet adds one covered line, two statements and twelve branch
+arms; it grants no full qualification, objective skip, frozen result or mutation
+claim. Operation status remains BLOCKED. The elapsed observations have different
+test inputs and do not establish a wall-time speedup.
+
+Preserve the native stage root and this WORK's
+`DIAG/scope-path-stage-20261025-01.log`. The execution image is
+`/workspace/.vida-quality-inputs/029946ae0d6eb3df8f6079afda8d9b7e771bcd11/repository`,
+Source tree `22a5580f6580107ca29cdf4dc5b57ced28d4f583`, input fingerprint
+`baa4eebd0d9fd74778da15e22d10ca52927e1a96af13827f1cf8f39513d8b471`, manifest
+SHA-256 `7ce83d26d14c0db6df4aaac2dd7ef4246468094401b183658ce4ee97d89c97f2`.
+The native admission receipt observed 11,486,748,672 free scratch bytes against
+the same 2,147,483,648-byte floor. This reuses the producer receipt and does not
+repeat the filesystem survey. Projection was updated only by the producer.
 
 The one filesystem survey observed 11,509,272,576 available bytes on overlay for
 checkout and retained execution images, 9,361,788,928 above the unchanged
@@ -114,9 +135,9 @@ prerequisite. This permits queue progression, not numeric exact100.
 The retained investigation below records the native issue counter prerequisite.
 It grants no new CLI role, numeric result or objective skip. Root retains the
 existing CAS child and every help/prepared/issue/report/UNKNOWN control.
-The latest accepted focused diagnostic is Key471 run
-`32bbcc12-b80b-445b-9125-55d6e75192ee`, with F441/555, L2058/2860,
-S2218/3138 and B2615/3660. Its status remains BLOCKED and full qualification is
+The latest accepted focused diagnostic is scope-path run
+`08e61a34-5b39-4a21-b344-69d8d98a7a44`, with F441/555, L2059/2860,
+S2220/3138 and B2627/3660. Its status remains BLOCKED and full qualification is
 false. The earlier reference to 2820 as the latest measurement was stale.
 
 2824/2825 independently compare native SQLite interception with update hooks or
