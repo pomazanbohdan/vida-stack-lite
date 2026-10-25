@@ -38,6 +38,112 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Admitted freshness and context-output packet, 2026-10-25
+
+Root resumes at cb9592538698df9154fe5ab9c33469a58f383af2. Only the two producer-owned
+projection files were dirty; the index was empty and no native worker or numeric,
+compiler, build or Git process was active. They remain outside this packet.
+The active contour and phase stay bun-cli-run/F/L/S/B. Latest numeric evidence
+is still Source36493c28/run6002ebad until the one changed-input stage terminates.
+
+The audit window is2026-10-25T10:38:53Z through13:38:53Z. Existing projection
+recorded_at selects three distinct runs, each with paired outcome/diagnostic rows.
+The existing reader reuses SUz51n, hNBezx and a5Pfdv execution/stderr receipts.
+Literal DIAG/audit-20261025-window-04.log records three exit0, complete capture
+and closed process groups,440 passed test executions,0fail,10952expectations and
+728448.541415ms summed stage elapsed. These are whole runs published in the window,
+not time clipped to its edges or distinct tests. The measured coverage change
+is+15F,+54L,+55S,+36B with unchanged denominators and no new exact closure.
+Complete platform tool-call and billed-token totals are unavailable.
+
+| Check order and parallelism | Evidence and decision |
+| --- | --- |
+| Bounded independent Luna traces, collect related tests, strict/configured lint, affected targets and review, one Root stage | Selected. Target02 passes two cases with120expectations in20.55s; target05 passes the expanded developer case with138expectations in14.74s. These different cases/profiles are not an end-to-end speedup. |
+| Full stage after each assertion or fixture correction | Rejected. This window's three changed-input stages cost728448.541415ms. Current compile/oracle errors were resolved with scoped checks and no full stage per adjustment. |
+| Parallel independent readers/private author, numeric2x/4x or competing build/cleanup | Preparation outputs are disjoint; Root alone integrates and runs checks. No qualified2x/4x numeric receipt exists. Keep one producer, all bounds and sequential Git/hooks/push. |
+
+Pstack1.17.5 resolves through the enabled installed cache; remote catalog discovery
+again returns451 while local skills and native Luna work. Runtime CLI is absent,
+so the declared checked-in lifecycle fallback is used. Vex's existing stale GAP
+selects bounded Source reads without indexing. Subtract Before You Add extends
+two existing real fixtures instead of repeating synthesis/assurance setup. Test
+Behavior, Not Implementation binds public refusal, restored resume, exact report
+and persistent ownership outcomes. Guard the Context Window selects scalar
+receipts. Initial oversized instruction reads were truncated and narrowed; that
+tool-output volume is not billed-token accounting. Sequence Work into Verifiable
+Units keeps cheap checks before runtime and one full stage after the packet.
+
+Native blind Luna traces are literal DIAG/context-output-supported-trace-20261025-01.md
+and DIAG/ownership-resume-supported-trace-20261025-01.md. Root rejects the latter's
+simple upfront intake mutation proposal because run.ts already checks selection
+intake earlier. The new case injects drift at the actual admitted reader, calls
+the real reader, verifies physical closure of all observed real DB handles and
+unchanged state, restores exact bytes and the spy, and proves healthy same-wave
+resume. No admission history, DB row or lease is rewritten. The unchanged5s bound
+has250ms reserved for cleanup; failed/restoration-sensitive roots are retained.
+
+The existing accepted-delivery fixture now uses its supported next-writer
+no-effect prerequisite. Assertions distinguish that reconciled earlier-stage
+attempt from the later completed writer and its null previous-attempt link.
+The developer-frontier case configures a second local context source before
+initialization. It retains all issue/lease/packet assertions, then uses a fresh
+controlled unit report for actual returned IDs. External context drift refuses
+without Host/Journal changes; exact restoration with the admitted document still
+changed permits completion and execution-only ownership handoff. No developer
+is dispatched. Archived pending issues are never inputs or replayed.
+
+The private proposal is retained at literal context-output-20261025-01, outside
+the requested PATCH subdirectory; Root did not create a worktree or another
+canonical owner. It carries cb959253 and the copied file identity, not a claim
+that the working copy equals that commit. Root checked every proposed hunk with
+git apply --check and integrated the complete diff. Root corrected duplicate/late
+pending flags, nonexistent response fields, execution-only ownership and typed
+observation literals. The worker's suggested command names are unqualified;
+Root uses the current package strict/configured lint and direct named cases.
+
+Static02 caught cleanup callback return types; static04 caught widened observation
+literals. Both failures stopped before runtime and remain preserved. Target01
+matched zero cases due to a leading anchor and is not verification. Corrected
+target02 passed2cases/0fail/120expectations; body2330.10ms and16949.67ms.
+Target03 reached the real context denial but the positive-only wrapper replaced
+its error; qTYSMN remains protected. Target04 accepted the controlled report but
+failed an incorrect reported-status oracle after the bridge resumed;1ktCkZ remains
+protected. Root corrected both against the actual public path. Target05 passes
+1case/0fail/138expectations, body13393.41ms; its strict510, configured lint and
+format checks also pass. Static review01 missed those two oracle defects and is
+superseded by final review02, not treated as runtime proof. Every original log
+and failed fixture remains intact.
+
+Final target06 groups all three changed cases under the selected package profile:
+3pass,0fail,258expectations,35.68s invocation. Bodies2472.20,15278.19 and16552.93ms
+remain within unchanged5s/60s/90s bounds. Strict510, configured zero-warning lint
+and format pass in that same retained log. No scoped observer leaks into the
+following developer/assurance cases. Independent review02 accepts current Source
+but initially missed ignored log/plan paths through filename discovery; its
+runtime evidence limitation stays explicit. Receipt review uses the literal
+absolute paths rather than treating an ignored inventory as absence.
+
+Callback445 still needs a supported historical completed-ownership preimage;
+ordinary atomic completion releases file rights before that callback. A missing
+fresh fixture alone does not justify objective skip. Positive correction paths
+and all other current gaps remain OPEN. Proposed hits for446,448–452,476 await
+the sole complete producer; no denominator, frozen/CRAP/mutation gate or budget
+changes. No new numeric result is claimed here.
+
+Disk uses the existing corrected survey and a5Pfdv admission, not another du,
+scan/hash or survey. All observed paths share dev27; the last producer admitted
+10060906496available bytes against2147483648, headroom7913422848. The missing
+.vida-retained path remains the recorded no-op. Earlier unreadable process and
+inbound dependency custody gaps defer cleanup, including completed private
+proposals and the exact owner-exception targets. No deletion, image relocation,
+retirement, tmpfs evidence move, schedule/timer change or second automation.
+
+- [x] Frame and fan out bounded reader/private proposal lanes in the current contour.
+- [x] Aggregate supported changes and preserve rejected assumptions/failures.
+- [x] Finish final focused checks and independent Source review.
+- [ ] Normal commit/hooks/push, followed by one changed-input stage.
+- [ ] One changed-input stage, terminal projection and owned documentation closeout.
+
 ### Intake/correction boundaries packet, 2026-10-25
 
 Continue bun-cli-run/F/L/S/B from d24368d4 with Source75c78586/run05129b47 as

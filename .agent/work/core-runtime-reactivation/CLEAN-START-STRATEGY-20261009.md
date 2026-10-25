@@ -12,6 +12,12 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The admitted freshness/context-output packet reuses the existing developer and
+accepted-delivery fixtures, plus one independent5s admitted-read lifetime case.
+Root collects all supported changes before one full stage. WORK owns scoped
+results and the still-open completed-ownership callback445 prerequisite; proposed
+hits do not change the latest numeric qualification below.
+
 The latest measured packet is Source36493c28/run6002ebad-5cbd-4f64-85ac-273ac0248925:
 F495/555, L2279/2873, S2464/3157 and B2910/3686, still BLOCKED. Intake/correction
 refusal cases now verify actual real-resource lifetime at both qualified database

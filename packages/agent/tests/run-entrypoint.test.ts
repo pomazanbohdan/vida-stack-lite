@@ -107,6 +107,7 @@ import { coordinationLedgerDigest, validateCoordinationLedgerV1 } from '../src/c
 import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import type { SessionAgentAction } from '../src/orchestration/session-handoff.ts';
 import type { SessionHandoffContext } from '../src/orchestration/session-handoff.ts';
+import type { SessionBridgeObservation } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import type { DeliveredWorkContinuationRequest } from '../src/orchestration/delivered-work-continuation.ts';
 import type { LocalWorkAdmissionInput } from '../src/orchestration/local-work-admission.ts';
 import { Console } from 'node:console';
@@ -120,6 +121,7 @@ import {
   type FailedFinalCorrectionFixture,
 } from './helpers/failed-final-correction-fixture.ts';
 import { configuredTestContext } from './configured-context.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import {
   isTerminalUtf8SpawnResult,
   parseJsonUnknown,
@@ -7370,6 +7372,91 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 5_000);
 
+    test('closes admitted ownership validation after intake changes between public reads', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-owned-intake-drift-'));
+      const deadline = performance.now() + 5_000;
+      let completed = false;
+      let primaryFailure: { error: unknown } | undefined;
+      let restoreRead: (() => void) | undefined;
+      let restoreLifetime: (() => void) | undefined;
+      let restoreIntake: (() => void) | undefined;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config);
+        const prepared = parseTestRunPayload(await run(admitted.admissionArgs));
+        expect(prepared.status).toBe('prepared');
+        const databasePath = sessionHandoffDatabasePath(root, config);
+        const databaseRelativePath = path.relative(root, databasePath);
+        const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+        const before = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        const work = before.work[0];
+        assert.ok(work?.state.lease);
+        const intake = work.state.artifacts.find((entry) => entry.artifact_id === 'local-session-intake');
+        assert.ok(intake);
+        const intakeFile = path.join(root, intake.path);
+        const intakeBytes = readFileSync(intakeFile);
+        restoreIntake = () => writeFileSync(intakeFile, intakeBytes);
+        const lifetime = await observeOwnedDatabaseLifetime(databasePath);
+        restoreLifetime = lifetime.restore;
+        const execution = await import('../src/orchestration/admitted-session-execution.ts');
+        const originalRead = execution.readAdmittedSessionIntake;
+        let driftObserved = false;
+        const readSpy = spyOn(execution, 'readAdmittedSessionIntake').mockImplementation(
+          (...parameters: Parameters<typeof originalRead>) => {
+            if (parameters[0] === root) {
+              driftObserved = true;
+              writeFileSync(intakeFile, Buffer.concat([intakeBytes, Buffer.from('\n')]));
+            }
+            return originalRead(...parameters);
+          },
+        );
+        restoreRead = () => readSpy.mockRestore();
+        await assert.rejects(run(admitted.args), { message: 'admitted local session intake changed' });
+        expect(driftObserved).toBe(true);
+        lifetime.assertAllClosed();
+        restoreRead();
+        restoreRead = undefined;
+        restoreIntake();
+        restoreIntake = undefined;
+        expect(readFileSync(intakeFile).equals(intakeBytes)).toBe(true);
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(before);
+        const resumed = parseTestRunPayload(await run(admitted.args));
+        expect(resumed.status).toBe('resumed');
+        expect(resumed.state_version).toEqual(prepared.state_version);
+        expect(requireNextActions(resumed)).toEqual(requireNextActions(prepared));
+        lifetime.assertAllClosed();
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(before);
+        expect(performance.now()).toBeLessThan(deadline - 250);
+        completed = true;
+      } catch (error) {
+        primaryFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              restoreRead?.();
+              restoreRead = undefined;
+            },
+            () => {
+              restoreIntake?.();
+              restoreIntake = undefined;
+            },
+            () => {
+              restoreLifetime?.();
+              restoreLifetime = undefined;
+            },
+            () => {
+              if (completed && !restoreRead && !restoreIntake && !restoreLifetime && performance.now() < deadline - 250)
+                rmSync(root, { recursive: true, force: true });
+              else process.stderr.write(`Retained failed or over-budget owned intake drift fixture: ${root}\n`);
+            },
+          ],
+          primaryFailure,
+        );
+      }
+    }, 5_000);
+
     test('closes admission after the caller intake changes between public reads', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-intake-toctou-'));
       const deadline = performance.now() + 5_000;
@@ -9022,17 +9109,26 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const contextSource = config.knowledge.sources.find((source) => source.id === 'project-context');
             if (!contextSource || contextSource.kind !== 'local' || contextSource.location !== 'AGENT.sidecar.md')
               throw new Error('Configured context fixture source must be its owned AGENT.sidecar.md file');
+            const productContextSource = {
+              ...contextSource,
+              id: 'project-product-context',
+              location: 'docs/PRODUCT.md',
+            };
             const taskWorkflow = config.workflows.task_execution;
             if (!taskWorkflow) throw new Error('Configured context fixture task workflow is unavailable');
             let developerStages = 0;
             const stages = taskWorkflow.stages.map((stage) => {
               if (stage.id !== 'develop_task') return stage;
               developerStages += 1;
-              return { ...stage, context_source_ids: [contextSource.id] };
+              return { ...stage, context_source_ids: [contextSource.id, productContextSource.id] };
             });
             if (developerStages !== 1) throw new Error('Configured context fixture developer stage is ambiguous');
             return {
               ...config,
+              knowledge: {
+                ...config.knowledge,
+                sources: [...config.knowledge.sources, productContextSource],
+              },
               workflows: {
                 ...config.workflows,
                 task_execution: { ...taskWorkflow, stages },
@@ -9232,8 +9328,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             [implementationPath, readFileSync(path.join(sourceFixture.root, implementationPath))] as const,
         );
         const contextSourceBytes = readFileSync(path.join(sourceFixture.root, 'AGENT.sidecar.md'));
+        const productContextBytes = readFileSync(path.join(sourceFixture.root, 'docs/PRODUCT.md'));
         const contextSourceSha256 = createHash('sha256').update(contextSourceBytes).digest('hex');
+        const productContextSha256 = createHash('sha256').update(productContextBytes).digest('hex');
         const issueArgs = [...args, ...expected(current.version), '--issue-wave', 'true'];
+        developerIssueRetained = true;
         const issuedValue = await runSuccessfully(issueArgs);
         const issueResponsePath = path.join(
           sourceFixture.root,
@@ -9288,6 +9387,17 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             content: contextSourceBytes.toString('utf8'),
             truncated: false,
           },
+          {
+            id: 'project-product-context',
+            kind: 'local',
+            location: 'docs/PRODUCT.md',
+            title: 'Project-owned requirements and source map',
+            status: 'local_excerpt',
+            sha256: productContextSha256,
+            bytes: productContextBytes.length,
+            content: productContextBytes.toString('utf8'),
+            truncated: false,
+          },
         ]);
         expect(developerContext.digest).toMatch(/^[a-f0-9]{64}$/u);
         expect(issuedDeveloper.request.configured_context_digest).toBe(developerContext.digest);
@@ -9295,6 +9405,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           {
             path: 'AGENT.sidecar.md',
             sha256: contextSourceSha256,
+          },
+          {
+            path: 'docs/PRODUCT.md',
+            sha256: productContextSha256,
           },
         ]);
         const developerPacket = requireRecord(issuedDeveloper.development_packet, 'Issued DevelopmentTaskPacket');
@@ -9410,7 +9524,89 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         });
         for (const [implementationPath, bytes] of implementationBytes)
           expect(readFileSync(path.join(sourceFixture.root, implementationPath))).toEqual(bytes);
-        developerIssueRetained = true;
+
+        const syntheticSummary = 'Controlled unit-test observation; no developer was dispatched.';
+        const syntheticObservation = {
+          schema: 'VidaSessionObservation/v1',
+          action_id: issuedDeveloper.request.action_id,
+          host_attempt_id: developerHostAttemptId,
+          changed_paths: ['docs/PRODUCT.md'],
+          issue_id: developerIssueId,
+          agent_id: 'fixture:controlled-report',
+          tool_call_ref: `fixture:controlled-report:${developerIssueId}`,
+          status: 'reported_complete',
+          summary: syntheticSummary,
+          output_digest: canonicalJsonDigest(syntheticSummary),
+          evidence_refs: ['fixture:synthetic-unit-observation'],
+        } satisfies SessionBridgeObservation;
+        const syntheticReportPath = path.join(
+          sourceFixture.root,
+          '.agent/work',
+          sourceFixture.identity.work_id,
+          'controlled-developer-report.json',
+        );
+        writeDurable(syntheticReportPath, syntheticObservation);
+        const reportExpected = expected(issuedJournal.version);
+        const reportArgs = [...args, ...reportExpected, '--report', syntheticReportPath];
+        const beforeRefusalHost = sessionLedger.hostState.readHostStateSnapshot(sourceFixture.identity);
+        const beforeRefusalJournal = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(beforeRefusalJournal);
+        const changedProductBytes = Buffer.concat([productContextBytes, Buffer.from('\nControlled fixture output.\n')]);
+        const changedSidecarBytes = Buffer.concat([contextSourceBytes, Buffer.from('\nTemporary context drift.\n')]);
+        writeFileSync(path.join(sourceFixture.root, 'docs/PRODUCT.md'), changedProductBytes);
+        writeFileSync(path.join(sourceFixture.root, 'AGENT.sidecar.md'), changedSidecarBytes);
+        const driftedDatabase = inspectHostWorkspaceDatabase(sourceFixture.root, databaseRelativePath, workspaceId);
+        await assert.rejects(run(reportArgs), (error: unknown) => {
+          expect(error).toMatchObject({
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Configured context changed outside the admitted native output.',
+          });
+          return true;
+        });
+        expect(sessionLedger.hostState.readHostStateSnapshot(sourceFixture.identity)).toEqual(beforeRefusalHost);
+        const afterRefusalJournal = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(afterRefusalJournal);
+        expect(afterRefusalJournal).toEqual(beforeRefusalJournal);
+        const afterRefusalDatabase = inspectHostWorkspaceDatabase(
+          sourceFixture.root,
+          databaseRelativePath,
+          workspaceId,
+        );
+        expect(afterRefusalDatabase).toEqual(driftedDatabase);
+        writeFileSync(path.join(sourceFixture.root, 'AGENT.sidecar.md'), contextSourceBytes);
+        expect(readFileSync(path.join(sourceFixture.root, 'docs/PRODUCT.md'))).toEqual(changedProductBytes);
+        const acceptedRaw = requireRecord(await runSuccessfully(reportArgs), 'Controlled synthetic developer report');
+        expect(acceptedRaw.status).toBe('resumed');
+        expect(acceptedRaw.completed_observations).toContainEqual(syntheticObservation);
+        const acceptedJournal = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(acceptedJournal);
+        const completedDeveloper = acceptedJournal.state.completed
+          .flatMap((wave) => wave.items)
+          .find((item) => item.request.action_id === issuedDeveloper.request.action_id);
+        assert.ok(completedDeveloper);
+        expect(completedDeveloper.issue_id).toBe(developerIssueId);
+        expect(completedDeveloper.observation).toEqual(syntheticObservation);
+        const acceptedHost = sessionLedger.hostState.readHostStateSnapshot(sourceFixture.identity);
+        assert.ok(acceptedHost.work && acceptedHost.ledger);
+        const completedAttempt = acceptedHost.work.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === developerHostAttemptId,
+        );
+        assert.ok(completedAttempt);
+        expect(completedAttempt.status).toBe('completed');
+        assert.ok(acceptedHost.work.lease);
+        const executionTicket = acceptedHost.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === acceptedHost.work?.lease?.ticket_id,
+        );
+        assert.ok(executionTicket);
+        expect(executionTicket.exclusive_resources).toEqual(['execution:' + sourceFixture.identity.work_id]);
+        const releasedWriterTicket = acceptedHost.ledger.tickets.find(
+          (ticket) => ticket.ticket_id === issuedLease.ticket_id,
+        );
+        assert.ok(releasedWriterTicket);
+        expect(releasedWriterTicket.status).toBe('released');
+        expect(releasedWriterTicket.active_resources).toEqual([]);
+        expect(acceptedJournal.state.items.some((item) => item.request.stage_id === 'develop_task')).toBe(false);
+        developerIssueRetained = false;
         completed = true;
       } catch (error) {
         failures.push(error);
@@ -9603,7 +9799,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       let completed = false,
         pendingAssuranceIssue = false;
       try {
-        fixture = await createFailedFinalCorrectionFixture('passing');
+        fixture = await createFailedFinalCorrectionFixture('passing', { noEffectRetry: 'next-writer' });
         const assuranceFixture = fixture;
         const delivery = fixture.journal.state.completed
           .flatMap((wave) => wave.items)
@@ -9625,6 +9821,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
 
         const work = fixture.store.readHostStateSnapshot(fixture.identity).work;
         assert.ok(work);
+        const noEffectAttempt = work.execution.assignment_attempts.find((attempt) => attempt.status === 'no_effect');
+        const writerAttempt = work.execution.assignment_attempts.find((attempt) => attempt.stage_id === 'develop_task');
+        assert.ok(noEffectAttempt?.reconciliation && writerAttempt);
+        expect(noEffectAttempt.stage_id).not.toBe(writerAttempt.stage_id);
+        expect(writerAttempt.status).toBe('completed');
+        expect(writerAttempt.previous_attempt_id).toBeNull();
         const sourceScope = fixture.journal.state.source_scope;
         assert.ok(sourceScope);
         const preparation = requireRecord(

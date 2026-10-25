@@ -763,6 +763,10 @@ still remains unproven. The timing contour separately qualifies its async calls
 through actual injected mutants; a passing original alone is not mutation proof.
 Check value shape/type before a property access or regex matcher can throw its
 own argument error. Preserve unproven results without padding assertion counts.
+Pass the original operation to an expected-denial assertion. A positive-only
+`doesNotReject` wrapper replaces the product error with an AssertionError.
+After an accepted report completes a wave, bind the response to the bridge's
+resulting phase; it can be `resumed` rather than the intermediate `reported`.
 For expected rejection identity, await `rejectionReason` from the same helper
 and then assert the returned error. Do not await a Bun matcher typed as returning
 void; removing that await alone does not establish operation completion before

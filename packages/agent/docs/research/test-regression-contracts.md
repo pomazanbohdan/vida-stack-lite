@@ -109,6 +109,22 @@ both Host and raw database openers and their real native closes; fixed counts of
 internal connections are not the resource contract. Restore scoped spies and
 preserve body plus cleanup errors and any failed or deadline-sensitive roots.
 
+Admitted intake freshness also has an earlier selection read. To reach the
+later owned-ledger refusal, change the fresh fixture's intake only at the real
+admitted reader boundary and delegate to that reader. Restore exact bytes and
+the observer, then require the same prepared wave/version and unchanged persisted
+state on a healthy resume. Observe actual opened handles and their closes.
+
+The public developer-report fixture configures both an admitted implementation
+document and an external context file before initialization. Its controlled local
+report uses the actual issued action, issue, Host attempt and Journal version.
+Drift in both files refuses unchanged state when only the implementation document
+is reported as output. Exact external-file restoration permits the same report,
+completes the Host attempt and releases file rights while retaining execution-only
+coordination. These synthetic observations establish no consumer execution or
+Runtime acceptance. A reconciled no-effect action from another stage must not
+block the later writer or become that writer's previous-attempt link.
+
 Once the actual initial or delivered continuation creates its receipt table,
 reuse its successful request with current Host/Ledger/Journal versions and an
 absent attempt. Require the owning public refusal, exact unchanged state and
