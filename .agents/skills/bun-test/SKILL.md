@@ -58,6 +58,10 @@ repair ingress. Its request-only issued payload differs from ordinary run action
 validate those actual fields. Preserve the original UNKNOWN and use separate
 exclusive files for foreign and accepted reports. Check normalization bytes at
 the returned record path, with no additional scan or whole-tree hash.
+Group initial-Source heartbeat and report controls in that same fresh writer
+fixture. A denied heartbeat does not complete its already-issued writer, so it
+cannot authorize root removal. Close failure, pending outcome or failed assertion
+retains the fixture. Budget and resource-custody gates stay with TESTING.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual
 normalization and artifact admission. Use distinct action-bound tool-call refs

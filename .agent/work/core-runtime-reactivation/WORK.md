@@ -123,7 +123,95 @@ tmpfs evidence move, automation or timer/schedule change.
 
 - [x] Frame, bounded designs and private proposals, Root integration.
 - [x] Scoped static checks, exact paired targets and independent review.
-- [ ] Normal commit/hooks/push, one changed-input stage, terminal documentation.
+- [x] Normalfb31f66d hooks/main push and one changed-input stage.
+- [x] Terminal UNKNOWN diagnosis and independent custody review; retain all evidence.
+- [x] Bounded duplicate-setup/retention Source correction, strict/lint and static review.
+- [ ] Runtime and numeric qualification HOLD until independent full-effect custody.
+
+Terminal failure: Sourcefb31f66de5feff8cfbc8a3b930811bd33a9b5f0e passed normal
+537-file formatting/strict544 hooks and ordinary main push before the one producer.
+/workspace/contour-stage-tSHoBS exits1 after271160.44543ms. Outer capture/group
+closed, boot/image inputs unchanged, no outer signal/spawn error/330s timeout.
+Publication isunknown-or-partial: no attributable coverage report exists. The
+secondary report-location error is not the primary test outcome.
+
+The actual native run isec0b969d-db9f-4ecf-b075-5d0133b845ee. Its operation outcome
+has UNKNOWN, one launched/directly accounted PID39, SIGKILL and timeout_observedtrue,
+producerTerminalKnowntrue, reservation_safe_to_releasetrue, resource_safe_to_advancefalse,
+execution_completefalse and report_completefalse. Typecheck has a separate exit0
+producer observation. Budget owner is executionBudget(300000,30000), with an
+execution ceiling at most270000ms; preparation and any inherited deadline consume
+that allowance before Bun launches. The receipts do not record the exact child
+launch allowance. Thus review01's shorthand "270-second producer allowance" must
+be read as the shared execution ceiling, not a measured270s test-only duration.
+The observed native timeout flag/SIGKILL establish the failure independently of
+outer elapsed time. No budget or reserve is raised.
+
+The image is /workspace/.vida-quality-inputs/d80ffa77d998f909e5e43bee9973ca4eec080809/repository,
+Source treec10b230f2d11172f79dc37d22beb3da90b925b8f,
+fingerprint84e81484912ae6b4e7e0a006a945455e50f10473bbbd43f0a558b8589c4544c7,
+manifest SHA256f4b6e91722aef738f50f559c438323fc5da18a1f9b2abaa30b85af6469d85e29.
+Its exact native outcome is packages/agent/coverage/bun-unified/diagnostics/
+operation-outcomes/ec0b969d-db9f-4ecf-b075-5d0133b845ee.json; supervisor observation
+is diagnostics/runs/ec0b969d-db9f-4ecf-b075-5d0133b845ee/processes/observations/supervisor.json
+under that same coverage root. Literal DIAG/public-reports-stage-20261025-01.log
+retains the outer terminal records. Neither image nor outcome is repaired in place.
+
+Only148 partial PASS rows exist; six expected selected cases lack terminal rows,
+which does not prove they were unattempted. No native FAIL summary or complete
+suite summary exists. New replacement/initial cases passed4612.94/13587.55ms
+inside the image, but those rows add no admissible F/L/S/B hit or contour closure.
+Last qualified counts remain Source78413d9b/run27f66ef4: F507/555,L2319/2873,
+S2508/3157,B2932/3686. All555/2873/3157/3686 denominators, CC/CRAP501, BLOCKED,
+historical exact17/46 and deferred mutation/frozen status remain unchanged.
+
+Literal DIAG/public-reports-timeout-custody-review-20261025-01.md independently
+confirms the native timeout and blocks a successor producer. Fresh image/scratch
+pathnames are only partial isolation; the retained evidence does not qualify the
+complete writable/external effect set or shared dependency/consumer boundary.
+Process closure and reservation release do not override resource_safe_to_advancefalse.
+No runtime, focused test or producer is run after that HOLD. Tool discovery offers
+only environment status/network diagnostics, no independent-environment provisioner.
+Required action is an independently qualified full-effect namespace or a genuinely
+independent environment; neither exists in current evidence. Do not replay UNKNOWN,
+switch contour, mark old flags safe, retire its locators or reduce a fence.
+
+Source remediation removes the106-line nested writer setup from the existing
+keeps-CAS case and moves its authorization-reference/SHA/scope, exact heartbeat
+denial and complete unchanged-snapshot controls into the current initial-report
+fixture before Source changes. One frontier/writer issue and clock/close owner
+replace two. Net reduction75test lines; no material assertion is removed.
+The old nested native case took47750.57ms, but its isolated setup share and the
+new runtime saving are unmeasured. No speedup or successful deadline fit is claimed.
+Literal DIAG/public-reports-duplicate-writer-setup-20261025-01.txt preserves the
+removed block; fb31f66d and the untouched measured image preserve original Source.
+
+Independent DIAG/public-reports-dedup-review-20261025-01.md maps every moved
+assertion and passes the bounded Source refactor. Literal
+DIAG/public-reports-dedup-static-20261025-01.log passes strict510, configured
+zero-warning lint and format. Runtime remains unqualified; the earlier52-expectation
+pair qualified fb31f66d, not this later refactor. Static checks do not advance
+test effects or count as numeric acceptance.
+
+The review confirms a retention defect in the removed block: after an expected
+heartbeat refusal it deleted the fixture despite a started/commit_unknown writer;
+close only closed handles. The revised flow removes its sole fresh fixture only
+after the controlled terminal report, retry checks and successful closes/clock
+restoration. This does not settle any old run. The old block emitted no exact
+sourceWriterRoot locator on success; previously deleted bytes cannot be recovered
+or reconstructed from current receipts. That historical retention gap is explicit.
+
+Literal DIAG/public-reports-unknown-custody-20261025-01.json records the actual
+inner outcome and seven retained native roots; all seven recorded durable paths
+exist under /workspace/contour-stage-tSHoBS/scratch-tzUaEE/scratch. It also records
+the unlocated old writer-fixture gap. Original UNKNOWN roots/locks/SDK artifacts,
+attempts and logs remain protected, without DB inspection or reconciliation.
+Launch admission observed9727049728available bytes against2147483648,
+headroom7579566080, without another filesystem survey. Capacity is not the measured
+blocker; effect custody is. No cleanup, tmpfs move, backup, automation or timer
+change follows. Projection stays producer-owned and unstaged. This terminal and
+static-remediation record requires no repeated full stage. The four-document
+check passes39 local links; final diff whitespace validation passes.
 
 ### Research preparation recovery packet, 2026-10-25
 

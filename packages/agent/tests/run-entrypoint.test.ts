@@ -8986,112 +8986,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         } finally {
           setSystemTime();
         }
-        let sourceWriterRoot: string | undefined;
-        let sourceWriterFixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
-        let sourceWriterCompleted = false;
-        let sourceWriterClosed = false;
-        let sourceWriterClockHeld = false;
-        let sourceWriterClockRestored = true;
-        try {
-          sourceWriterFixture = await createInitialSourceWorkFixture({ onRoot: (value) => (sourceWriterRoot = value) });
-          const clockFloor = expiredOwnerTime(sourceWriterFixture);
-          sourceWriterClockHeld = true;
-          sourceWriterClockRestored = false;
-          setSystemTime(new Date(clockFloor));
-          await prepareInitialSourceFrontier(sourceWriterFixture, 'writer');
-          const sourceWriterInput = admittedInput(sourceWriterFixture);
-          const issuedWriter = await issueInitialSourceFixtureWriter(sourceWriterFixture);
-          const beforeWriterRenewal = continuationState(sourceWriterFixture);
-          const sourceWriterItem = beforeWriterRenewal.journal.items[0];
-          const sourceScope = beforeWriterRenewal.journal.source_scope;
-          assert.ok(sourceWriterItem?.issue_id && sourceScope);
-          expect(sourceWriterItem.issue_id).toBe(issuedWriter.writer.issue_id);
-          const sourceAuthorizationReference = beforeWriterRenewal.work.lifecycle.references.find(
-            (reference) =>
-              reference.kind === 'execution_approval' &&
-              reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
-              reference.disposition === 'current' &&
-              reference.decision === 'approved',
-          );
-          assert.ok(sourceAuthorizationReference);
-          const sourceAuthorizationBytes = readFileSync(
-            path.join(sourceWriterFixture.root, sourceAuthorizationReference.path),
-          );
-          expect(createHash('sha256').update(sourceAuthorizationBytes).digest('hex')).toBe(
-            sourceAuthorizationReference.sha256,
-          );
-          const sourceAuthorization = JSON.parse(sourceAuthorizationBytes.toString('utf8')) as {
-            scope_digest?: unknown;
-          };
-          expect(sourceAuthorization.scope_digest).not.toBe(beforeWriterRenewal.work.binding.work_source_revision);
-          const sourceWriterLease = workLease(beforeWriterRenewal.work);
-          const sourceWriterVersion = beforeWriterRenewal.journalVersion;
-          await assert.rejects(
-            run([
-              '--project-root',
-              sourceWriterFixture.root,
-              '--repository',
-              sourceWriterFixture.config.repository.repository_id,
-              '--project',
-              sourceWriterInput.selection.project,
-              '--work-path',
-              sourceWriterFixture.documents[0],
-              '--work-id',
-              sourceWriterFixture.identity.work_id,
-              '--attempt',
-              '1',
-              '--scope-digest',
-              sourceScope.digest,
-              '--team',
-              sourceWriterInput.selection.team,
-              '--kind',
-              sourceWriterInput.selection.kind,
-              '--intent',
-              sourceWriterInput.selection.intent,
-              '--workflow',
-              'task_execution',
-              '--renew-lease',
-              'true',
-              '--native-session-handle',
-              sourceWriterInput.nativeSessionHandle,
-              '--lease-generation',
-              String(sourceWriterLease.generation),
-              '--expected-revision',
-              String(sourceWriterVersion.revision),
-              '--expected-digest',
-              sourceWriterVersion.digest,
-            ]),
-            (error: unknown) => {
-              expect(error).toMatchObject({
-                code: 'GAP-VIDA-RUN-CONTEXT-001',
-                message: 'Writer heartbeat source authority changed.',
-              });
-              return true;
-            },
-          );
-          const afterWriterRenewal = continuationState(sourceWriterFixture);
-          expect(afterWriterRenewal).toEqual(beforeWriterRenewal);
-          sourceWriterCompleted = true;
-        } finally {
-          try {
-            if (sourceWriterFixture) {
-              await sourceWriterFixture.close();
-              sourceWriterClosed = true;
-            }
-          } finally {
-            try {
-              if (sourceWriterClockHeld) {
-                setSystemTime();
-                sourceWriterClockRestored = true;
-              }
-            } finally {
-              if (sourceWriterRoot && sourceWriterCompleted && sourceWriterClosed && sourceWriterClockRestored)
-                rmSync(sourceWriterRoot, { recursive: true, force: true });
-              else if (sourceWriterRoot)
-                process.stderr.write(`Retained source-writer renewal fixture: ${sourceWriterRoot}\n`);
-            }
-          }
-        }
         completed = true;
       } finally {
         if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
@@ -10780,6 +10674,37 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           version.digest,
         ];
         const changedPath = sourceFixture.documents[0];
+        const sourceAuthorizationReference = before.work.lifecycle.references.find(
+          (reference) =>
+            reference.kind === 'execution_approval' &&
+            reference.artifact_schema === 'LocalSourceWriteAuthorization/v1' &&
+            reference.disposition === 'current' &&
+            reference.decision === 'approved',
+        );
+        assert.ok(sourceAuthorizationReference);
+        const sourceAuthorizationBytes = readFileSync(path.join(sourceFixture.root, sourceAuthorizationReference.path));
+        expect(createHash('sha256').update(sourceAuthorizationBytes).digest('hex')).toBe(
+          sourceAuthorizationReference.sha256,
+        );
+        const sourceAuthorization = requireRecord(
+          parseJsonUnknown(sourceAuthorizationBytes.toString('utf8')),
+          'initial Source writer authorization',
+        );
+        expect(sourceAuthorization.scope_digest).not.toBe(before.work.binding.work_source_revision);
+        await assert.rejects(
+          run([
+            ...args,
+            ...expected(before.journalVersion),
+            '--renew-lease',
+            'true',
+            '--native-session-handle',
+            input.nativeSessionHandle,
+            '--lease-generation',
+            String(workLease(before.work).generation),
+          ]),
+          { code: 'GAP-VIDA-RUN-CONTEXT-001', message: 'Writer heartbeat source authority changed.' },
+        );
+        expect(continuationState(sourceFixture)).toEqual(before);
         writeFileSync(
           path.join(sourceFixture.root, changedPath),
           readFileSync(path.join(sourceFixture.root, changedPath), 'utf8') + 'public initial-source writer report\n',

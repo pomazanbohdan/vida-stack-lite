@@ -141,6 +141,10 @@ report without changing the continuation snapshot. The matching report commits
 the actual observation, current Source scope and completed Host attempt on the
 original run, releases file claims and supports exact current-version retry.
 Keep the controlled expiry clock until resources close, and preserve failed roots.
+The same fixture owns the authorization SHA/scope and heartbeat-denial controls;
+do not prepare another writer solely for renewal. Heartbeat refusal leaves an
+issued attempt unresolved. Cleanup requires its observed controlled terminal
+report and successful owned close, rather than a generic case-completed flag.
 
 Fresh read-only replacement coverage uses the maintained suspension helper and
 public repair plan/apply. Require a new dispatch and issue while retaining the

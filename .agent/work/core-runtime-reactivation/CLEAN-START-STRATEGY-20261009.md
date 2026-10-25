@@ -12,11 +12,24 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The collected public-report packet reuses maintained initial-source and paused
-read-only fixtures. Final paired checks pass2cases/52expectations and independent
-review passes; candidate480–484/488–490 hits await the sole changed-input stage
-after ordinary commit/push. WORK owns the corrected clock/payload/retention
-assumptions and exact receipts; no current number or disposition changes yet.
+Numeric HOLD. Sourcefb31f66d's tSHoBS stage has native UNKNOWN/SIGKILL with
+timeout_observedtrue and resource_safe_to_advancefalse. The shared300000ms budget
+reserves30000ms, so preparation and execution share at most270000ms. Outer process
+closure does not establish effect custody. No successor producer, runtime target
+or contour change is admitted until an independently qualified full-effect
+namespace or genuinely independent environment exists. Preserve the old image,
+scratch, locks, logs, operation outcome and UNKNOWN flags; never replay that run.
+
+The public initial/replacement cases passed the paired52-expectation target and
+individual immutable-image rows, but the incomplete suite yields no new counters.
+Root subsequently removed the duplicate nested writer setup and moved all heartbeat
+controls into the initial-report fixture. Static510/configured lint/format and
+independent Source review pass; runtime remains unqualified after the custody HOLD.
+Do not repeat a full stage to test the proposed saving or reuse the old image.
+The prior cleanup could delete a pending writer after heartbeat denial; the Source
+correction removes that path, and the unlocated historical evidence loss remains
+explicit. [WORK](WORK.md#public-initial-and-replacement-reports-packet-2026-10-25)
+owns exact outcomes, assertion correspondence, retention locators and reopen needs.
 
 The latest measured packet is Source78413d9b/run27f66ef4-9aeb-4958-a9ac-92af774d2218:
 F507/555, L2319/2873, S2508/3157 and B2932/3686, still BLOCKED. The fresh
