@@ -1,6 +1,6 @@
 ---
 type: Task Plan
-title: 'Vida Powers — task-level plan for Step H: bounded engineering/UX guidance and typed reference resources'
+title: 'Vida Powers — task-level plan for Step H: selected guidance and typed reference resources'
 description: 'Phased, evidence-gated implementation of the owner-accepted D14 and D15 scope.'
 status: draft
 stale_after: '2026-11-22T00:00:00Z'
@@ -50,7 +50,7 @@ sources:
   resource: /../.tmp/panel/csv-framework-decision-validate-m31-r2-20261022-64/REVIEW.md
   title: Independent M3.1 R2 review of the amendment
 generated: { by: codex/gpt-6-luna, at: '2026-10-22T13:17:32Z' }
-revision: '5'
+revision: '7'
 ---
 
 # Goal and boundaries
@@ -87,7 +87,7 @@ H3 cannot run in parallel with H2. No phase inherits a PASS from E4 or another p
 
 **Plan-review record:** The independent M3.1 review at `.tmp/panel/accepted-scope-step-h-review-m31-r1-20261022-68/REVIEW.md` (26,835 bytes, SHA-256 `da9decc01fa3cea51c3c0539fab788db750add9ae7ab3c0bfa72ace7ab96fea8`) marked the pre-correction Step H plan READY. It found two Important and six Minor findings. Task `.69` corrected both Important and the five accepted Minor findings; M6's root README spelling change was rejected under the owner's explicit `VidaPowers` brand instruction. The `.68` verdict covers its reviewed plan bytes, not the later documents or H0 closure. Review `.71` found no B/S or phase-order regression and raised N1-N4; this `.73` packet records their dispositions.
 
-**Current H0 status:** Review `.70` marks the `.67` numeric evidence baseline READY; `.67` still records `overall: NOT_CLOSED` and `packagePass: false`. The `.72` fixture receipt at `.tmp/panel/native-fixture-refresh-luna-max-20261022-72/receipt-summary.json` records 5,239 outputs, 2,617 package files plus one fixture-only input (2,618 common mirror files), 17 writes on build 1, 0 on build 2, a passing read-only check and 0 CAS issues. Its Source freeze was 2,628 files at SHA-256 `5b21618b7987e5efa8153dd6703a1a4d9d1b156a749d59e6f595d4d15c798d31`; it covers the `.69` documentation, not these `.73` bytes. H0 remains open until the parent closes the current hash-bound gates and reconciles their evidence. No source admission, feature implementation or Runtime acceptance follows.
+**Current H0 status:** CLOSED for the accepted baseline at Source commit fafb40158d20a2a10155d6ef984dfd55c36be23d. The accepted .89 review at .tmp/panel/h0-followup-publication-review-luna-max-r1-20261022-89/REVIEW.md (SHA-256 3d5cb04bc3299f45927248d32c9ca62c6996f05c42d399cd42b91a60f68072e6) marks exact Source publication and current Source-quality closeout READY. The .91 receipt at .tmp/panel/h0-work-closeout-luna-max-20261022-91/receipt.json (SHA-256 4f217726c4de535a9480c1df1cb2d8e1c184d84c79444fb3867afc94837d37b9) binds the WORK closeout to that unchanged HEAD with no Source payload edits. Historical .67 remains overall NOT_CLOSED and packagePass=false; it is not rewritten by this later closeout. H0 closure does not admit a donor, clear rights, close H1, authorize H2 or H3, or establish package, product, release, host, legal, public-metadata or Runtime acceptance.
 
 ## H1 — Wondelai general-method subset
 
@@ -97,11 +97,27 @@ H3 cannot run in parallel with H2. No phase inherits a PASS from E4 or another p
 
 1. Before writing a corpus record, obtain evidence of rights for the exact proposed text and owner admission for the source subset. The existing MIT license does not clear book-derived or embedded third-party material. If any item lacks clearance, reject it with a reason and do not convert it.
 2. Recheck the pinned source, exact carrier, all 14 journey-directory locations, 30-file exclusion, zero journey files outside the carrier, and byte-identical mirror receipt. Keep unrelated repository/root copies outside the carrier set.
-3. Inventory and disposition every carrier file. Select general methods only; exclude orchestration state, book-derived passages without clearance, framework/version recipes, assets, and unrelated content. Reuse existing converter, catalog and processing-map behavior. Preserve the donor's original language and current fidelity rules.
+3. Inventory and disposition every carrier file. Select general methods, including D14's selected product/business methods; exclude orchestration state, book-derived passages without clearance, framework/version recipes requiring H2 applicability, assets, and unrelated content. Keep exact per-source selection decisions and historical exclusion reasons. Reuse existing converter, catalog and processing-map behavior. Preserve the donor's original language and current fidelity rules.
 4. Deduplicate against the existing corpus. Preserve all source locators for a true merge; do not merge merely similar ideas. Reuse existing tag vocabulary where it fits; propose only genuinely new tags under the existing tag policy. Record every rejection in the map.
 5. Run a pilot of 10 candidate files with complete independent fidelity review. Record source units attempted, accepted, rejected, merged, review defects and elapsed time. Re-estimate each next batch from observed throughput; use batches no larger than 25 files until a separate review authorizes a different size. Any rights or semantic-fidelity defect pauses expansion.
 
 **H1 acceptance:** all 421 Markdown carrier paths are accounted for; the 30 journey files are explicitly excluded; the 391 candidates each have a disposition; all 14 journey directories are within the carrier and specified mirrors are byte-identical; no unreviewed or uncleared content is admitted; corpus, map and digests agree; duplicate and fidelity reviews have receipts. H1 does not authorize H2 CSV sources.
+
+### Source-packet and publication qualification
+
+The owner requested implementation on 2026-10-25 after Beam Free and Root reviewed the architecture as READY_FOR_SCOPE_RECONCILIATION. D14/BR-22/SR-81/AC-47 now include selected product/business methods. SR-88–SR-91 and AC-56–AC-59 own the Markdown packet, evidence reuse, prepared publication/recovery and measurement contracts. CSV-only AC-50/51/53 and H3 resource gates retain their scope.
+
+Order: reconcile scope and per-file selection; retain the old-route baseline before treatment; qualify source packets; qualify prepared publication and interrupted-operation recovery; then perform the separately admitted ten-distinct-source-file H1 pilot and compare matched throughput before scaling. General product/business methods do not depend on unrelated H3 resources. H2 and H3 dependencies remain binding for applicability and typed resources. A synthetic converter benchmark qualifies only that component, not the donor pilot or an end-to-end speed claim.
+
+Development-only source-packets.ts owns source/evidence identity, and convert.ts remains the only instruction publication owner. Reuse existing schemas and parsers. The Root workflow reconciles attributable human gates; a matching hash or worker verdict cannot grant admission. Preparation may retain HOLD content without publishing it. Unknown writes and retained backups remain fenced until explicit reconciliation.
+
+Execution evidence and remaining gaps are recorded in the existing packages/powers/.tmp/panel/donor-migration-architecture-20261025/WORK.md. The reviewed architecture remains an immutable design input; this Step H section owns the execution order.
+
+The development API is exported from scripts/source-packets.ts and scripts/convert.ts. Seal artifacts once with sealArtifact; do not edit a frozen packet. capturePacket produces strict raw/locator evidence; checkDecomposition reports PASS_MECHANICAL_ONLY. verifyPreparedPacket validates the exact per-file selection and transitive references. evaluateAdmission only assesses bound gate records; reconcileAdmissionAtRoot requires Root's observer of the actual human decisions. No CLI flag grants that authority.
+
+prepareBatch accepts live eligibility handles, stages the instruction/catalog/map outputs and before-images, and returns a hash-bound plan. applyPreparedBatch requires an independently reviewed exact plan and Root's native ownership/review observation. Existing conversion entry points share its publication lock and internal instruction compiler; legacy sequential partial success remains visible. Observers are trusted Root adapters to actual session/controller evidence, not worker-generated JSON verdicts. The cooperative local boundary is the same distinction as the lifecycle owner's source authorization.
+
+After a partial or unknown result, retain the entire staging directory and original receipt. reconcilePreparedBatch observes old/intended/mixed/unexpected targets without retry. Root may call releasePreparedOwnership only after observing the former writer and descendants quiescent; it binds that observation to the unchanged ownership record and refuses an unknown/conflicting target state. Completion uses a newly prepared, independently reviewed plan; the old apply handle cannot be replayed. No automatic rollback or elapsed-time lock deletion occurs.
 
 ## H2 — engineering/UX instructions and applicability
 

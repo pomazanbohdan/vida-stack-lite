@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import * as filesystem from 'node:fs';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkCorpus, corpusCli, runCorpusCli } from '../scripts/check-corpus.ts';
+import { checkCorpus, corpusCli, runCorpusCli, startCorpusCli } from '../scripts/check-corpus.ts';
 
 type Instruction = {
   instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[];
@@ -523,4 +524,100 @@ describe('CLI helpers', () => {
     await writeFile(join(corpus.root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: .tmp/donors\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    content_path: not-a-directory/child\n    head_sha: '${revision}'\n    license: MIT\n`);
     expect(checkCorpus(corpus.root).some((item) => ['CORPUS_CLONE_MISSING', 'CORPUS_FILESYSTEM_ERROR'].includes(item.code) && item.details?.path === resolve(corpus.root, cloneRoot, 'not-a-directory/child'))).toBe(true);
   });
+});
+
+test('non-object corpus JSON and malformed profile JSON remain explicit validation failures', async () => {
+  const corpus = await fixture();
+  await writeFile(join(corpus.root, 'catalog.json'), '[]');
+  expect(checkCorpus(corpus.root).some(issue => issue.message === 'catalog.json must contain an object')).toBe(true);
+  await corpus.save();
+  await mkdir(join(corpus.root, 'config'), { recursive: true });
+  await writeFile(join(corpus.root, 'config/methodology-profile.json'), '{');
+  expect(checkCorpus(corpus.root).some(issue => issue.code === 'CORPUS_PROFILE_INVALID' && issue.message.includes('cannot read'))).toBe(true);
+});
+
+test('filesystem faults are reported at the manifest, provenance and enumeration boundaries', async () => {
+  const corpus = await fixture();
+  const before = snapshot(corpus.root);
+  const realStat = filesystem.statSync;
+  const realReaddir = filesystem.readdirSync;
+  const manifestPath = join(corpus.root, 'instructions/alpha-instruction.md');
+  const donorPath = join(corpus.root, cloneRoot, donorFile);
+  for (const target of [manifestPath, donorPath]) {
+    let calls = 0;
+    const fault = spyOn(filesystem, 'statSync').mockImplementation(new Proxy(realStat, { apply(stat, receiver: unknown, args: unknown[]) {
+      if (String(args[0]) === target && ++calls === (target === manifestPath ? 2 : 1)) throw Object.assign(new Error('fixture denied stat'), { code: 'EACCES' });
+      return Reflect.apply(stat, receiver, args);
+    } }));
+    try {
+      const issues = checkCorpus(corpus.root);
+      expect(calls).toBeGreaterThan(0);
+      expect(issues.filter(issue => issue.code === 'CORPUS_FILESYSTEM_ERROR').map(issue => issue.details?.path)).toContain(target === manifestPath ? 'instructions/alpha-instruction.md' : donorFile);
+    } finally { fault.mockRestore(); }
+  }
+  let enumerations = 0;
+  const readFault = spyOn(filesystem, 'readdirSync').mockImplementation(new Proxy(realReaddir, { apply(read, receiver: unknown, args: unknown[]) {
+    if (String(args[0]) === join(corpus.root, cloneRoot)) { enumerations++; throw Object.assign(new Error('fixture denied enumeration'), { code: 'EACCES' }); }
+    return Reflect.apply(read, receiver, args);
+  } }));
+  try {
+    expect(checkCorpus(corpus.root).some(issue => issue.message.includes('cannot enumerate donor clone'))).toBe(true);
+    expect(enumerations).toBe(1);
+  } finally { readFault.mockRestore(); }
+  expect(snapshot(corpus.root)).toEqual(before);
+});
+
+test.each(['clone', 'content'])('coverage traversal reports a later %s stat failure', async boundary => {
+  const corpus = await fixture();
+  const content = join(corpus.root, cloneRoot, 'content');
+  await mkdir(content);
+  await writeFile(join(content, donorFile), 'synthetic donor source\n');
+  await writeFile(join(corpus.root, 'donors.yaml'), JSON.stringify({ local_root: '.tmp/donors', donors: [{ id: donorId, local_path: 'synthetic', content_path: 'content', license: 'MIT', head_sha: revision }] }));
+  const target = boundary === 'clone' ? join(corpus.root, cloneRoot) : content;
+  const realStat = filesystem.statSync;
+  let calls = 0;
+  const failAt = 2;
+  const fault = spyOn(filesystem, 'statSync').mockImplementation(new Proxy(realStat, { apply(stat, receiver: unknown, args: unknown[]) {
+    if (String(args[0]) === target && ++calls === failAt) throw Object.assign(new Error('fixture later stat failure'), { code: 'EACCES' });
+    return Reflect.apply(stat, receiver, args);
+  } }));
+  try {
+    const issues = checkCorpus(corpus.root);
+    expect(calls).toBe(failAt);
+    expect(issues.some(issue => issue.code === 'CORPUS_FILESYSTEM_ERROR' && issue.message.startsWith(`cannot inspect donor ${boundary === 'clone' ? 'clone' : 'content root'}`))).toBe(true);
+  } finally { fault.mockRestore(); }
+});
+
+test('an unavailable schema becomes a corpus failure and an absent directory produces zero instructions', async () => {
+  const corpus = await fixture();
+  const realRead = filesystem.readFileSync;
+  const schema = join(packageRoot, 'config/vpcatalog.v1.schema.json');
+  const fault = spyOn(filesystem, 'readFileSync').mockImplementation(new Proxy(realRead, { apply(read, receiver: unknown, args: unknown[]) {
+    if (String(args[0]) === schema) throw Object.assign(new Error('fixture unavailable schema'), { code: 'EACCES' });
+    return Reflect.apply(read, receiver, args);
+  } }));
+  try { expect(checkCorpus(corpus.root).some(issue => issue.message.includes('corpus validation could not complete'))).toBe(true); }
+  finally { fault.mockRestore(); }
+  await rm(join(corpus.root, 'instructions'), { recursive: true });
+  expect(corpusCli(['--root', corpus.root])).toMatchObject({ instructions: 0, exitCode: 1 });
+});
+
+test('the corpus entry adapter preserves import isolation, printed output and native exit status', async () => {
+  const corpus = await fixture();
+  const script = fileURLToPath(new URL('../scripts/check-corpus.ts', import.meta.url));
+  const output: string[] = [];
+  const exits: number[] = [];
+  expect(startCorpusCli([process.execPath], text => output.push(text), code => exits.push(code))).toBeUndefined();
+  expect(startCorpusCli([process.execPath, join(corpus.root, 'other.ts')], text => output.push(text), code => exits.push(code))).toBeUndefined();
+  expect(exits).toEqual([]);
+  expect(startCorpusCli([process.execPath, script, '--wrong'], text => output.push(text), code => exits.push(code))).toBe(1);
+  expect(exits).toEqual([1]);
+  expect(JSON.parse(output[0] ?? '').issues[0].code).toBe('CORPUS_ARGUMENT_INVALID');
+  const previous = process.exitCode;
+  const print = spyOn(console, 'log').mockImplementation(() => {});
+  try {
+    expect(startCorpusCli([process.execPath, script, '--root', corpus.root])).toBe(0);
+    expect(process.exitCode).toBe(0);
+    expect(JSON.parse(String(print.mock.calls[0]?.[0]))).toMatchObject({ instructions: 1, issues: [] });
+  } finally { print.mockRestore(); process.exitCode = previous ?? 0; }
 });

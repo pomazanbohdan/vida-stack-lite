@@ -2,12 +2,14 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   buildReport,
   parseAuditArgs,
   reportJson,
   renderReport,
   runAuditCli,
+  startAuditCli,
   selectRows,
   specFiles,
   type AuditOptions,
@@ -864,4 +866,41 @@ describe('the CLI', () => {
   test('names the tokens of a line', () => {
     expect(tokenize('Write the Tests, first!')).toEqual(['write', 'the', 'tests', 'first']);
   });
+});
+
+test('the audit native entry adapter isolates imports and forwards real command outcomes', async () => {
+  const corpus = await fixture([instruction({ id: 'entry-rule', body: 'A body.' })]);
+  const script = fileURLToPath(new URL('../scripts/audit.ts', import.meta.url));
+  const stdout: string[] = [];
+  const stderr: string[] = [];
+  const exits: number[] = [];
+  const output = { stdout: (text: string) => stdout.push(text), stderr: (text: string) => stderr.push(text) };
+  expect(startAuditCli([process.execPath], output, code => exits.push(code))).toBeUndefined();
+  expect(startAuditCli([process.execPath, join(corpus.root, 'unrelated.ts')], output, code => exits.push(code))).toBeUndefined();
+  expect(exits).toEqual([]);
+  expect(startAuditCli([process.execPath, script, 'map', '--root', corpus.root, '--json'], output, code => exits.push(code))).toBe(0);
+  expect(exits).toEqual([0]);
+  expect(JSON.parse(stdout.join('')).command).toBe('map');
+  expect(stderr).toEqual([]);
+  const previous = process.exitCode;
+  try {
+    expect(startAuditCli([process.execPath, script, 'map', '--unsupported', 'value'], output)).toBe(1);
+    expect(process.exitCode).toBe(1);
+    expect(stderr.join('')).toContain('unknown flag --unsupported');
+  } finally { process.exitCode = previous ?? 0; }
+});
+
+test('donor manifests resolve repository-relative carrier roots exactly', async () => {
+  const corpus = await fixture([]);
+  const packageRoot = join(corpus.root, 'packages', 'powers');
+  const content = join(packageRoot, 'donors', 'fixture', 'guides');
+  await mkdir(content, { recursive: true });
+  await writeFile(join(content, 'rule.md'), 'Pinned source.\n');
+  await writeFile(join(packageRoot, 'donors.yaml'), JSON.stringify({ local_root: 'packages/powers/donors', donors: [{ id: 'fixture', local_path: 'fixture', content_path: 'guides' }] }));
+  const result = loadDonorClones(packageRoot);
+  expect(result.available).toBe(true);
+  const clone = result.donors.get('fixture');
+  if (clone === undefined) throw new Error('Fixture clone was not resolved');
+  expect(clone.contentRoot).toBe(content);
+  expect([...clone.relativePaths]).toEqual(['rule.md']);
 });

@@ -215,8 +215,18 @@ export function runAuditCli(argv: string[], output: CliOutput): number {
   }
 }
 
-process.argv[1] !== undefined && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url)) &&
-  (process.exitCode = runAuditCli(process.argv.slice(2), {
-    stdout: process.stdout.write.bind(process.stdout),
-    stderr: process.stderr.write.bind(process.stderr),
-  }));
+export function startAuditCli(
+  argv: string[],
+  output: Parameters<typeof runAuditCli>[1],
+  setExitCode: (code: number) => void = code => { process.exitCode = code; },
+): number | undefined {
+  if (argv[1] === undefined || resolve(argv[1]) !== resolve(fileURLToPath(import.meta.url))) return undefined;
+  const code = runAuditCli(argv.slice(2), output);
+  setExitCode(code);
+  return code;
+}
+
+startAuditCli(process.argv, {
+  stdout: process.stdout.write.bind(process.stdout),
+  stderr: process.stderr.write.bind(process.stderr),
+});

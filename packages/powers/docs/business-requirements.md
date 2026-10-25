@@ -16,7 +16,7 @@ sources:
   resource: /decisions/index.md
   title: Accepted decisions D1–D15 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '5'
+revision: '6'
 ---
 
 # 1. Purpose
@@ -143,11 +143,12 @@ rules, instructions and boundaries.
 
 # 9. Boundaries (out of scope)
 
-- **BR-22.** The accepted scope includes only the bounded engineering/UX pack and selected
-  typed reference families recorded in D14 and D15. Business, marketing, other unresearched
-  domains, a general-purpose knowledge platform, the future UI over the VIDA API (§9.3),
-  external issue-tracker synchronization (§8.3), and unselected reference data remain out of
-  scope.
+- **BR-22.** The accepted scope includes the bounded engineering/UX, product and business
+  instruction pack in D14 and the selected typed reference families in D15. Product/business
+  source families require individual research, fidelity, rights and owner-admission decisions;
+  inclusion of a domain never promotes historical exclusions automatically. A general-purpose
+  knowledge platform, unselected domains, the future UI over the VIDA API (§9.3), external
+  issue-tracker synchronization (§8.3), and unselected reference data remain out of scope.
 - **BR-23.** VP Runtime mode requires registration of the product in the repository and
   a runtime request; until they are performed, the Standalone part is proven.
 

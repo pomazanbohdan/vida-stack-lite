@@ -16,10 +16,10 @@ vida:
   product: vida-powers
   parent_project: vida-agent-system
   kind: product-research
-  revision: 4
+  revision: 6
   research_status: finalized
   implementation_status: not-started
-  updated_at: '2026-10-22T12:45:00Z'
+  updated_at: '2026-10-25'
   runtime_source_commit: bb4345e107f9aee30db1c856075ac9556a7aa8a1
   validation_scope: conversation-consistency
   verification_scope: reconciliation of the research statements with the current Source during two independent review rounds; this is not runtime acceptance
@@ -92,7 +92,9 @@ verified:
 
 **Vida Powers (VP)** is a portable agent plugin with one canonical catalog of atomic methodological instructions, bounded engineering/UX guidance, and selected typed reference records. It selects relevant knowledge, specializes agents, and defines how they materialize results. The plugin must work standalone in compatible AI hosts and, when the VIDA Agent Runtime is present, integrate with its existing execution management.
 
-The initial methodology covers the full work lifecycle. D14 accepts one bounded engineering/UX pack covering framework, runtime, platform, accessibility, and targeted standards guidance. D15 accepts selected typed reference data in a later phase. General methodology remains in the same catalog. Business, marketing, and other unresearched domain packs remain out of scope. D14 and D15 set product scope; they do not admit a donor or approve rights, schemas, implementation, or Runtime acceptance.
+The initial methodology covers the full work lifecycle. D14 accepts one bounded engineering/UX pack and, under the owner's 2026-10-25 extension, product and business guidance. Selected domains include discovery, strategy, pricing, positioning, marketing, sales, growth, analytics and product organization. Each candidate still requires per-source research, fidelity, rights and owner admission; historical exclusions are not automatically promoted. D15 accepts selected typed reference data in a later phase. General methodology remains in the same catalog. Other unselected domains remain outside scope. D14 and D15 set product scope; they do not admit a donor or approve rights, schemas or Runtime acceptance. The owner separately requested implementation of the reviewed migration tooling.
+
+**Current H1 preparation evidence (2026-10-25):** the ten existing held captures cover product discovery, business strategy, marketing, growth, UX and organization methods. Root compared every selected raw file, README and LICENSE with Git blobs at the pinned Wondelai revision `c172996495bed0fcd26896a9416b2093fd7073f0`; all selected bytes match. The MIT declarations and named-work attributions are carrier facts, not item-specific third-party permission. Exact passages/editions, overlap, human fidelity, rights and owner admission remain open. The prior eight-file rights cohort has no path/hash overlap with these ten; only its identical LICENSE carrier evidence is reusable. Complete `VPSourcePacket/v1` packets for this cohort: zero; current decomposition, per-unit selection, check, review and spec bindings still need preparation. These ten raw captures do not satisfy the ten-admitted-source-file H1 pilot. The retained local evidence is `packages/powers/.tmp/panel/donor-migration-architecture-20261025/continuation/` (`h1-rights.*`, `h1-pinned-evidence.json`, `h1-rights-addendum.json` and `h1-readiness.*`); it is not shipped content or a rights/admission decision.
 
 Work starts from any state: a vague idea, a question, a research request, an accepted decision, a document, a defect, a ready task, a fragment of an implementation or a request for verification. **Finishing research does not mean starting implementation.** No automatic transition to a new scope of work happens without the corresponding authority.
 
@@ -490,7 +492,7 @@ Artifacts keep the ID, source/scope/work binding, revision or digest and referen
 
 ## 11. Domains and instruction packages
 
-D14 accepts a bounded software engineering and UX guidance pack. It covers framework, runtime, platform, accessibility, and targeted standards rules. D15 adds only selected typed reference families. Business, marketing, and other unresearched domains remain outside the accepted scope. The broader domain-pack model below describes possible future work and does not approve those domains.
+D14 accepts a bounded software engineering, UX, product and business guidance pack. Its selected product/business domains follow the owner's 2026-10-25 extension; each source still requires research, fidelity, rights and owner admission. Engineering/UX coverage retains framework, runtime, platform, accessibility and targeted standards rules. D15 adds only selected typed reference families. Other unselected domains remain outside the accepted scope. The broader domain-pack model below describes possible future work and does not approve additional domains.
 
 Universal operations — Research, Decision, Define, Execute, Verify — receive domain specializations. For example, software QA → unit/API/E2E/manual; marketing QA → fact-checking, compliance with the brief and analytical labels; business QA → process scenarios and KPIs. The necessary evidence is determined by the properties of the final result.
 

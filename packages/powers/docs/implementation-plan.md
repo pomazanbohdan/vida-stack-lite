@@ -29,7 +29,7 @@ generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:01:10Z' 
 verified:
 - { by: deepseek/deepseek-flash, at: '2026-10-19T13:36:34Z' }
 - { by: opencode/glm-5.3-flash-free, at: '2026-10-19T13:59:31Z' }
-revision: '10'
+revision: '11'
 ---
 
 # Vida Powers — implementation plan
@@ -678,7 +678,7 @@ Dependencies: Stage 5, 6, D4.
 ---
 
 ### Stage 9 — deferred scope after D14/D15
-The bounded engineering/UX pack and selected typed reference families are accepted for phased work in Step H, but are not yet admitted or implemented. Business, marketing and other unresearched domains, the future UI on top of the VIDA API (§9.3), and external synchronization of issue trackers (§8.3) remain outside scope and require separate decisions. The marketplace channel remains in scope (D4, Stage 5).
+The bounded engineering/UX, product and business instruction pack and selected typed reference families are accepted for phased work in Step H. Domain selection does not admit source content or close implementation gates. Other unselected domains, the future UI on top of the VIDA API (§9.3), and external synchronization of issue trackers (§8.3) remain outside scope. The marketplace channel remains in scope (D4, Stage 5).
 
 ### Stage 10 — D14/D15 bounded content extension
 **Role:** product owner, source integrator, schema/catalog implementer, and independent reviewers. **Estimate:** L overall; H0 S, H1 L, H2 L, H3 M. **Work item:** Step H task plan. **Requires:** H0 closeout in [Step H](task-plan-step-h.md), Stage 2 and Stage 3; source admission and rights clearance for each donor remain separate prerequisites.

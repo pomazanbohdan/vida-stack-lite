@@ -28,7 +28,7 @@ sources:
   title: Cloud Pstack setup — installing plugins through a Git marketplace
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '3'
+revision: '4'
 ---
 
 # Decision
@@ -97,10 +97,10 @@ marketplace.
    scripts, per-host VP plugin manifests and the marketplace definition.
 2. **Stage 9** no longer contains the marketplace as "out of scope": channel 3 moves into the
    working scope (together with it — the marketplace infrastructure that the repo lacks).
-   D14 and D15 (2026-10-22) supersede the blanket domain-pack exclusion only for bounded
-   engineering/UX guidance and selected typed reference records. Business, marketing and other
-   unresearched domains remain out of scope, as do the UI on the VIDA API and external
-   synchronization of issue trackers.
+   D14 and D15 supersede the blanket domain-pack exclusion for the selected instruction
+   domains and typed reference records. D14's 2026-10-25 extension includes product and
+   business guidance under individual source gates. Other unselected domains remain outside
+   scope, as do the UI on the VIDA API and external synchronization of issue trackers.
 3. **Channel 1 needs no Runtime**; channels 2 and 3 have different readiness evidence:
    channel 2 — a build with provenance into the native package, channel 3 — an installed
    marketplace channel with its own host matrix.

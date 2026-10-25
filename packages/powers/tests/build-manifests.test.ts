@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import * as fsPromises from 'node:fs/promises';
 import { cp, lstat, mkdir, mkdtemp, readFile, readlink, readdir, rm, rmdir, symlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,6 +34,17 @@ const ownershipLedgerPath = '.tmp/vp-manifest-ownership.json';
 const transactionPath = '.tmp/vp-manifest-build.transaction';
 const skillDirectories = ['./skills/vp-mode/', './skills/vp-setup/'];
 const temporaryRoots: string[] = [];
+
+function forwardNative<T extends (...args: never[]) => unknown>(
+  native: T,
+  intercept: (args: unknown[], forward: () => Promise<unknown>) => Promise<unknown>,
+): T {
+  return new Proxy(native, {
+    apply(fn, receiver: unknown, args: unknown[]) {
+      return intercept(args, async () => Reflect.apply(fn, receiver, args));
+    },
+  });
+}
 
 async function makeTemporaryRoot(prefix: string): Promise<string> {
   await mkdir(testScratchRoot, { recursive: true });
@@ -242,6 +254,576 @@ describe('manifest input and output boundaries', () => {
     await cp(schemaPath, join(root, 'config', 'vppluginmanifest.v1.schema.json'));
     await expect(buildManifestPlan(root)).rejects.toMatchObject({ code: 'MANIFEST_INPUT_MISSING' });
     expect(await readdir(root)).toEqual(['config', 'package.json']);
+  });
+
+  test('input read errors remain structured and write nothing', async () => {
+    const root = await makeProject(['portable']);
+    const inputPath = join(root, 'config', 'plugin-manifest-inputs.json');
+    const before = await readTreeBytes(root);
+    const originalReadFile = fsPromises.readFile;
+    const readFileSpy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+      if (String(args[0]) === inputPath) throw Object.assign(new Error('injected input read error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(buildManifestPlan(root)).rejects.toMatchObject({
+        code: 'MANIFEST_INPUT_READ_FAILED',
+        details: ['injected input read error'],
+      });
+    } finally {
+      readFileSpy.mockRestore();
+    }
+    expect(fsPromises.readFile).toBe(originalReadFile);
+    expect(await readTreeBytes(root)).toEqual(before);
+  });
+
+  test('malformed inputs, invalid schemas, and package identities fail before writes', async () => {
+    const malformedRoot = await makeProject(['portable']);
+    await writeFile(join(malformedRoot, 'config', 'plugin-manifest-inputs.json'), '{\n', 'utf8');
+    await expect(buildManifestPlan(malformedRoot)).rejects.toMatchObject({ code: 'MANIFEST_JSON_INVALID' });
+    expect(await lstat(join(malformedRoot, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+
+    const missingOutputSchemaRoot = await makeProject(['portable']);
+    const missingOutputSchemaPath = join(missingOutputSchemaRoot, 'config', 'vppluginmanifest.v1.schema.json');
+    const missingOutputSchema = await readSchema();
+    delete record(missingOutputSchema.definitions).portablePlugin;
+    await writeFile(missingOutputSchemaPath, `${JSON.stringify(missingOutputSchema, null, 2)}\n`, 'utf8');
+    await expect(buildManifestPlan(missingOutputSchemaRoot)).rejects.toMatchObject({ code: 'MANIFEST_SCHEMA_INVALID' });
+
+    const invalidOutputSchemaRoot = await makeProject(['portable']);
+    const invalidOutputSchemaPath = join(invalidOutputSchemaRoot, 'config', 'vppluginmanifest.v1.schema.json');
+    const invalidOutputSchema = await readSchema();
+    const portableSchema = record(record(invalidOutputSchema.definitions).portablePlugin);
+    record(portableSchema.properties).name = { const: 'different-plugin' };
+    await writeFile(invalidOutputSchemaPath, `${JSON.stringify(invalidOutputSchema, null, 2)}\n`, 'utf8');
+    await expect(buildManifestPlan(invalidOutputSchemaRoot)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_INVALID' });
+
+    const missingIdentityRoot = await makeProject(['portable']);
+    const missingIdentity = parseJson(await readFile(join(missingIdentityRoot, 'package.json'), 'utf8'));
+    missingIdentity.name = '';
+    await writeFile(join(missingIdentityRoot, 'package.json'), `${JSON.stringify(missingIdentity, null, 2)}\n`, 'utf8');
+    await expect(buildManifestPlan(missingIdentityRoot)).rejects.toMatchObject({ code: 'MANIFEST_INPUT_INVALID' });
+
+    const unsafeIdentityRoot = await makeProject(['portable']);
+    const unsafeIdentity = parseJson(await readFile(join(unsafeIdentityRoot, 'package.json'), 'utf8'));
+    unsafeIdentity.name = '../fixture';
+    await writeFile(join(unsafeIdentityRoot, 'package.json'), `${JSON.stringify(unsafeIdentity, null, 2)}\n`, 'utf8');
+    await expect(buildManifestPlan(unsafeIdentityRoot)).rejects.toMatchObject({ code: 'MANIFEST_PACKAGE_INVALID' });
+  });
+
+  test('validated inputs still enforce target shape, uniqueness, and host owner rules', async () => {
+    const duplicateRoot = await makeProject(['portable']);
+    const duplicateInputs = await readInputs(duplicateRoot);
+    duplicateInputs.targets = ['portable', 'portable'];
+    await writeInputs(duplicateRoot, duplicateInputs);
+    await expect(buildManifestPlan(duplicateRoot)).rejects.toMatchObject({ code: 'MANIFEST_INPUT_INVALID' });
+
+    const nonStringRoot = await makeProject(['portable']);
+    const nonStringSchemaPath = join(nonStringRoot, 'config', 'vppluginmanifest.v1.schema.json');
+    const nonStringSchema = await readSchema();
+    const targetSchema = record(record(nonStringSchema.properties).targets);
+    const targetItemSchema = record(targetSchema.items);
+    delete targetItemSchema.type;
+    delete targetItemSchema.enum;
+    await writeFile(nonStringSchemaPath, `${JSON.stringify(nonStringSchema, null, 2)}\n`, 'utf8');
+    const nonStringInputs = await readInputs(nonStringRoot);
+    nonStringInputs.targets = [42];
+    await writeInputs(nonStringRoot, nonStringInputs);
+    await expect(buildManifestPlan(nonStringRoot)).rejects.toMatchObject({ code: 'MANIFEST_INPUT_INVALID' });
+
+    const ownerRoot = await makeProject(['codex']);
+    const ownerInputs = await readInputs(ownerRoot);
+    delete record(ownerInputs.metadata).contact;
+    await writeInputs(ownerRoot, ownerInputs);
+    await expect(buildManifestPlan(ownerRoot)).rejects.toMatchObject({
+      code: 'MANIFEST_INPUT_INVALID',
+      details: ['metadata.contact.name'],
+    });
+  });
+
+  test('input symlinks, output parents, and output target types fail before writes', async () => {
+    const inputRoot = await makeProject(['portable']);
+    const outside = await makeTemporaryRoot('manifest-input-outside-');
+    await mkdir(join(outside, 'config'), { recursive: true });
+    await cp(schemaPath, join(outside, 'config', 'vppluginmanifest.v1.schema.json'));
+    await rm(join(inputRoot, 'config'), { recursive: true });
+    await symlink(join(outside, 'config'), join(inputRoot, 'config'), 'junction');
+    await expect(buildManifestPlan(inputRoot)).rejects.toMatchObject({ code: 'MANIFEST_INPUT_UNSAFE' });
+    expect(await lstat(join(inputRoot, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+    expect(await readdir(outside)).toEqual(['config']);
+
+    const parentRoot = await makeProject(['claude']);
+    await writeFile(join(parentRoot, '.claude-plugin'), 'parent is a file\n', 'utf8');
+    await expect(writeManifestPlan(parentRoot, await buildManifestPlan(parentRoot)))
+      .rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_UNSAFE' });
+    expect(await readFile(join(parentRoot, '.claude-plugin'), 'utf8')).toBe('parent is a file\n');
+
+    const targetRoot = await makeProject(['portable']);
+    await mkdir(join(targetRoot, 'plugin.json'));
+    await expect(writeManifestPlan(targetRoot, await buildManifestPlan(targetRoot)))
+      .rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_UNSAFE' });
+    expect(await readdir(join(targetRoot, 'plugin.json'))).toEqual([]);
+  });
+
+  test('ownership and transaction paths reject malformed types and relative escapes', async () => {
+    const scratchFileRoot = await makeProject(['portable']);
+    await writeFile(join(scratchFileRoot, '.tmp'), 'not a directory\n', 'utf8');
+    await expect(writeManifestPlan(scratchFileRoot, await buildManifestPlan(scratchFileRoot)))
+      .rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_UNSAFE' });
+
+    const transactionFileRoot = await makeProject(['portable']);
+    await mkdir(join(transactionFileRoot, '.tmp'), { recursive: true });
+    await writeFile(join(transactionFileRoot, ...transactionPath.split('/')), 'not a directory\n', 'utf8');
+    await expect(writeManifestPlan(transactionFileRoot, await buildManifestPlan(transactionFileRoot)))
+      .rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_UNSAFE' });
+
+    for (const path of [
+      `${formationRelativeRoot}/../escape.json`,
+      `${formationRelativeRoot}/safe/../../escape.json`,
+    ]) {
+      const root = await makeProject(['portable']);
+      const ledgerPath = join(root, ...ownershipLedgerPath.split('/'));
+      await mkdir(dirname(ledgerPath), { recursive: true });
+      await writeFile(ledgerPath, `${JSON.stringify({ schema: 'VPManifestOwnership/v1', files: { [path]: '0'.repeat(64) } }, null, 2)}\n`, 'utf8');
+      await expect(writeManifestPlan(root, await buildManifestPlan(root)))
+        .rejects.toMatchObject({ code: 'MANIFEST_OWNERSHIP_INVALID' });
+      expect(await lstat(join(root, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+    }
+  });
+
+  test('project root resolution errors are wrapped by operational, output, and skill boundaries', async () => {
+    const cases = [
+      { target: 'portable', failingCall: 4, code: 'MANIFEST_OUTPUT_UNSAFE' },
+      { target: 'portable', failingCall: 6, code: 'MANIFEST_OUTPUT_UNSAFE' },
+      { target: 'codex', failingCall: 7, code: 'MANIFEST_SKILL_RESOURCE_INVALID' },
+    ] as const;
+    for (const scenario of cases) {
+      const root = await makeProject([scenario.target]);
+      const plan = await buildManifestPlan(root);
+      const originalRealpath = fsPromises.realpath;
+      let rootCalls = 0;
+      const realpathSpy = spyOn(fsPromises, 'realpath').mockImplementation(forwardNative(originalRealpath, async (args, forward) => {
+        if (String(args[0]) === root) {
+          rootCalls += 1;
+          if (rootCalls === scenario.failingCall) throw Object.assign(new Error('injected package root resolution error'), { code: 'EIO' });
+        }
+        return forward();
+      }));
+      try {
+        await expect(writeManifestPlan(root, plan)).rejects.toMatchObject({ code: scenario.code });
+      } finally {
+        realpathSpy.mockRestore();
+      }
+      expect(rootCalls).toBe(scenario.failingCall);
+      expect(await lstat(join(root, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+    }
+  });
+
+  test('manifest path inspection failures return structured errors without writes', async () => {
+    const outputRoot = await makeProject(['portable']);
+    const outputPlan = await buildManifestPlan(outputRoot);
+    const outputPath = join(outputRoot, 'plugin.json');
+    const originalLstat = fsPromises.lstat;
+    const outputStatSpy = spyOn(fsPromises, 'lstat').mockImplementation(forwardNative(originalLstat, async (args, forward) => {
+      if (String(args[0]) === outputPath) throw Object.assign(new Error('injected output stat error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(writeManifestPlan(outputRoot, outputPlan)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_READ_FAILED' });
+    } finally {
+      outputStatSpy.mockRestore();
+    }
+    expect(await lstat(outputPath).catch(() => undefined)).toBeUndefined();
+
+    const scratchRoot = await makeProject(['portable']);
+    const scratchPlan = await buildManifestPlan(scratchRoot);
+    const scratchPath = join(scratchRoot, '.tmp');
+    await mkdir(scratchPath);
+    const scratchStatSpy = spyOn(fsPromises, 'lstat').mockImplementation(forwardNative(originalLstat, async (args, forward) => {
+      if (String(args[0]) === scratchPath) throw Object.assign(new Error('injected scratch stat error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(writeManifestPlan(scratchRoot, scratchPlan)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_READ_FAILED' });
+    } finally {
+      scratchStatSpy.mockRestore();
+    }
+    expect(await lstat(join(scratchRoot, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+
+    const transactionRoot = await makeProject(['portable']);
+    const transactionPlan = await buildManifestPlan(transactionRoot);
+    const transactionDirectory = join(transactionRoot, ...transactionPath.split('/'));
+    await mkdir(transactionDirectory, { recursive: true });
+    const transactionStatSpy = spyOn(fsPromises, 'lstat').mockImplementation(forwardNative(originalLstat, async (args, forward) => {
+      if (String(args[0]) === transactionDirectory) throw Object.assign(new Error('injected transaction stat error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(writeManifestPlan(transactionRoot, transactionPlan)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_READ_FAILED' });
+    } finally {
+      transactionStatSpy.mockRestore();
+    }
+    expect(await lstat(join(transactionRoot, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+
+    const ledgerRoot = await makeProject(['portable']);
+    const ledgerPlan = await buildManifestPlan(ledgerRoot);
+    const ledgerPath = join(ledgerRoot, ...ownershipLedgerPath.split('/'));
+    await mkdir(dirname(ledgerPath), { recursive: true });
+    await writeFile(ledgerPath, '{"schema":"VPManifestOwnership/v1","files":{}}\n', 'utf8');
+    const originalReadFile = fsPromises.readFile;
+    const ledgerReadSpy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+      if (String(args[0]) === ledgerPath) throw Object.assign(new Error('injected ledger read error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(writeManifestPlan(ledgerRoot, ledgerPlan)).rejects.toMatchObject({ code: 'MANIFEST_OWNERSHIP_READ_FAILED' });
+    } finally {
+      ledgerReadSpy.mockRestore();
+    }
+    expect(await lstat(join(ledgerRoot, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+
+    const optionalRoot = await makeProject(['portable']);
+    const optionalPlan = await buildManifestPlan(optionalRoot);
+    const optionalPath = join(optionalRoot, 'plugin.json');
+    await writeFile(optionalPath, 'foreign fixture\n', 'utf8');
+    const optionalReadSpy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+      if (String(args[0]) === optionalPath) throw Object.assign(new Error('injected generated output read error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(writeManifestPlan(optionalRoot, optionalPlan)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_READ_FAILED' });
+    } finally {
+      optionalReadSpy.mockRestore();
+    }
+    expect(await readFile(optionalPath, 'utf8')).toBe('foreign fixture\n');
+  });
+
+  test('actual ownership ledger inspection failure is rejected before output writes', async () => {
+    const root = await makeProject(['portable']);
+    const plan = await buildManifestPlan(root);
+    const ledger = join(root, ...ownershipLedgerPath.split('/'));
+    await mkdir(dirname(ledger), { recursive: true });
+    await writeFile(ledger, '{"schema":"VPManifestOwnership/v1","files":{}}\n', 'utf8');
+    const before = await readTreeBytes(root);
+    let inspections = 0;
+    const nativeLstat = fsPromises.lstat;
+    const intercepted = spyOn(fsPromises, 'lstat').mockImplementation(forwardNative(nativeLstat, async (args, forward) => {
+      const metadata = await forward();
+      if (args[0] === ledger) {
+        inspections += 1;
+        throw Object.assign(new Error('injected ownership ledger inspection error'), { code: 'EIO' });
+      }
+      return metadata;
+    }));
+    try {
+      await expect(writeManifestPlan(root, plan)).rejects.toMatchObject({
+        code: 'MANIFEST_OUTPUT_READ_FAILED', message: 'Cannot inspect manifest ownership ledger.',
+      });
+    } finally {
+      intercepted.mockRestore();
+    }
+    expect(inspections).toBe(1);
+    expect(await readTreeBytes(root)).toEqual(before);
+  });
+
+  test('native formation reader wraps root, directory, entry, and file read failures', async () => {
+    for (const scenario of ['root-stat', 'directory-read', 'entry-stat', 'file-read'] as const) {
+      const root = await makeNativeProject(['antigravity']);
+      const outputRoot = join(root, '.tmp', 'vp-manifest-formations');
+      const outputDirectory = join(outputRoot, 'antigravity');
+      const outputFile = join(outputDirectory, 'foreign.txt');
+      if (scenario !== 'root-stat') await mkdir(outputDirectory, { recursive: true });
+      if (scenario === 'entry-stat' || scenario === 'file-read') await writeFile(outputFile, 'fixture\n', 'utf8');
+      const before = await readTreeBytes(root);
+      const failure = Object.assign(new Error(`injected ${scenario} failure`), { code: 'EIO' });
+      let injected = false;
+      let restore = () => {};
+      if (scenario === 'root-stat') {
+        const originalLstat = fsPromises.lstat;
+        const spy = spyOn(fsPromises, 'lstat').mockImplementation(forwardNative(originalLstat, async (args, forward) => {
+          if (String(args[0]) === outputRoot) { injected = true; throw failure; }
+          return forward();
+        }));
+        restore = () => spy.mockRestore();
+      } else if (scenario === 'directory-read') {
+        const originalReaddir = fsPromises.readdir;
+        const spy = spyOn(fsPromises, 'readdir').mockImplementation(forwardNative(originalReaddir, async (args, forward) => {
+          if (String(args[0]) === outputRoot) { injected = true; throw failure; }
+          return forward();
+        }));
+        restore = () => spy.mockRestore();
+      } else if (scenario === 'entry-stat') {
+        const originalLstat = fsPromises.lstat;
+        const spy = spyOn(fsPromises, 'lstat').mockImplementation(forwardNative(originalLstat, async (args, forward) => {
+          if (String(args[0]) === outputFile) { injected = true; throw failure; }
+          return forward();
+        }));
+        restore = () => spy.mockRestore();
+      } else {
+        const originalReadFile = fsPromises.readFile;
+        const spy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+          if (String(args[0]) === outputFile) { injected = true; throw failure; }
+          return forward();
+        }));
+        restore = () => spy.mockRestore();
+      }
+      try {
+        await expect(buildManifestPlan(root)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_READ_FAILED' });
+      } finally {
+        restore();
+      }
+      expect(injected).toBe(true);
+      expect(await readTreeBytes(root)).toEqual(before);
+    }
+  });
+
+  test('transaction creation distinguishes concurrent state from filesystem failure', async () => {
+    for (const code of ['EEXIST', 'EIO'] as const) {
+      const root = await makeProject(['portable']);
+      const plan = await buildManifestPlan(root);
+      const scratchRoot = join(root, '.tmp');
+      const transactionRoot = join(root, ...transactionPath.split('/'));
+      await mkdir(scratchRoot, { recursive: true });
+      const originalMkdir = fsPromises.mkdir;
+      let injected = false;
+      const mkdirSpy = spyOn(fsPromises, 'mkdir').mockImplementation(forwardNative(originalMkdir, async (args, forward) => {
+        if (String(args[0]) === transactionRoot && !injected) {
+          injected = true;
+          if (code === 'EEXIST') await forward();
+          throw Object.assign(new Error(`injected transaction mkdir ${code}`), { code });
+        }
+        return forward();
+      }));
+      try {
+        await expect(writeManifestPlan(root, plan)).rejects.toMatchObject({
+          code: code === 'EEXIST' ? 'MANIFEST_OUTPUT_RECOVERY_REQUIRED' : 'MANIFEST_OUTPUT_STAGE_FAILED',
+        });
+      } finally {
+        mkdirSpy.mockRestore();
+      }
+      expect(injected).toBe(true);
+      expect(await lstat(join(root, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+      if (code === 'EEXIST') {
+        expect((await lstat(transactionRoot)).isDirectory()).toBe(true);
+        await rm(transactionRoot, { recursive: true, force: true });
+      } else {
+        expect(await lstat(transactionRoot).catch(() => undefined)).toBeUndefined();
+      }
+    }
+  });
+
+  test('staging failure cleans its transaction and cleanup failure retains recovery state', async () => {
+    for (const failCleanup of [false, true]) {
+      const root = await makeProject(['portable']);
+      const plan = await buildManifestPlan(root);
+      const transactionRoot = join(root, ...transactionPath.split('/'));
+      const originalWriteFile = fsPromises.writeFile;
+      const originalRm = fsPromises.rm;
+      let stageFailed = false;
+      const writeSpy = spyOn(fsPromises, 'writeFile').mockImplementation(async (...args) => {
+        if (String(args[0]).startsWith(transactionRoot) && String(args[0]).includes('staged-') && !stageFailed) {
+          stageFailed = true;
+          throw Object.assign(new Error('injected transaction stage failure'), { code: 'EIO' });
+        }
+        return originalWriteFile(...args);
+      });
+      const rmSpy = failCleanup ? spyOn(fsPromises, 'rm').mockImplementation(async (...args) => {
+        if (String(args[0]) === transactionRoot) throw Object.assign(new Error('injected transaction cleanup failure'), { code: 'EIO' });
+        return originalRm(...args);
+      }) : undefined;
+      try {
+        await expect(writeManifestPlan(root, plan)).rejects.toMatchObject({
+          code: failCleanup ? 'MANIFEST_OUTPUT_RECOVERY_REQUIRED' : 'MANIFEST_OUTPUT_STAGE_FAILED',
+        });
+      } finally {
+        rmSpy?.mockRestore();
+        writeSpy.mockRestore();
+      }
+      expect(stageFailed).toBe(true);
+      expect(await lstat(join(root, 'plugin.json')).catch(() => undefined)).toBeUndefined();
+      if (failCleanup) {
+        expect((await lstat(transactionRoot)).isDirectory()).toBe(true);
+        expect(await lstat(join(transactionRoot, 'journal.json')).catch(() => undefined)).toBeUndefined();
+        await rm(transactionRoot, { recursive: true, force: true });
+      } else {
+        expect(await lstat(transactionRoot).catch(() => undefined)).toBeUndefined();
+      }
+    }
+  });
+
+  test('an uncertain rename effect is detected and rolled back after a transient read error', async () => {
+    const root = await makeProject(['portable']);
+    const plan = await buildManifestPlan(root);
+    const outputPath = join(root, 'plugin.json');
+    const transactionRoot = join(root, ...transactionPath.split('/'));
+    const originalRename = fsPromises.rename;
+    const originalReadFile = fsPromises.readFile;
+    let renamed = false;
+    let readFailed = false;
+    const renameSpy = spyOn(fsPromises, 'rename').mockImplementation(async (...args) => {
+      const result = await originalRename(...args);
+      if (String(args[1]) === outputPath && !renamed) {
+        renamed = true;
+        throw Object.assign(new Error('injected post-rename error'), { code: 'EIO' });
+      }
+      return result;
+    });
+    const readSpy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+      if (renamed && !readFailed && String(args[0]) === outputPath) {
+        readFailed = true;
+        throw Object.assign(new Error('injected post-rename read error'), { code: 'EIO' });
+      }
+      return forward();
+    }));
+    try {
+      await expect(writeManifestPlan(root, plan)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_WRITE_FAILED' });
+    } finally {
+      readSpy.mockRestore();
+      renameSpy.mockRestore();
+    }
+    expect(renamed).toBe(true);
+    expect(readFailed).toBe(true);
+    expect(await lstat(outputPath).catch(() => undefined)).toBeUndefined();
+    expect(await lstat(transactionRoot).catch(() => undefined)).toBeUndefined();
+  });
+
+  test('foreign mutation after an uncertain rename remains fenced for recovery', async () => {
+    for (const failRecoveryJournal of [false, true]) {
+      const root = await makeProject(['portable']);
+      const plan = await buildManifestPlan(root);
+      const outputPath = join(root, 'plugin.json');
+      const transactionRoot = join(root, ...transactionPath.split('/'));
+      const journalPath = join(transactionRoot, 'journal.json');
+      const originalRename = fsPromises.rename;
+      const originalWriteFile = fsPromises.writeFile;
+      let drifted = false;
+      const renameSpy = spyOn(fsPromises, 'rename').mockImplementation(async (...args) => {
+        const result = await originalRename(...args);
+        if (String(args[1]) === outputPath && !drifted) {
+          drifted = true;
+          await originalWriteFile(outputPath, 'foreign concurrent content\n', 'utf8');
+          throw Object.assign(new Error('injected post-rename uncertainty'), { code: 'EIO' });
+        }
+        return result;
+      });
+      const writeSpy = failRecoveryJournal ? spyOn(fsPromises, 'writeFile').mockImplementation(async (...args) => {
+        if (String(args[0]) === journalPath && String(args[1]).includes('"state": "recovery-required"')) {
+          throw Object.assign(new Error('injected recovery journal write error'), { code: 'EIO' });
+        }
+        return originalWriteFile(...args);
+      }) : undefined;
+      let error: unknown;
+      try {
+        await writeManifestPlan(root, plan);
+      } catch (caught) {
+        error = caught;
+      } finally {
+        writeSpy?.mockRestore();
+        renameSpy.mockRestore();
+      }
+      expect(error).toMatchObject({
+        code: 'MANIFEST_OUTPUT_RECOVERY_REQUIRED',
+        ...(failRecoveryJournal ? { details: expect.arrayContaining([expect.stringContaining('journal:')]) } : {}),
+      });
+      expect(drifted).toBe(true);
+      expect(await readFile(outputPath, 'utf8')).toBe('foreign concurrent content\n');
+      const journal = parseJson(await readFile(journalPath, 'utf8'));
+      expect(journal.state).toBe(failRecoveryJournal ? 'staged' : 'recovery-required');
+      await rm(transactionRoot, { recursive: true, force: true });
+    }
+  });
+
+  test('apply-time compare-and-swap preserves a concurrent staged output for recovery', async () => {
+    const root = await makeProject(['portable']);
+    const plan = await buildManifestPlan(root);
+    const outputPath = join(root, 'plugin.json');
+    const transactionRoot = join(root, ...transactionPath.split('/'));
+    const originalWriteFile = fsPromises.writeFile;
+    let injected = false;
+    const writeSpy = spyOn(fsPromises, 'writeFile').mockImplementation(async (...args) => {
+      const path = String(args[0]);
+      const result = await originalWriteFile(...args);
+      if (path.startsWith(transactionRoot) && path.includes('staged-') && !injected) {
+        injected = true;
+        await originalWriteFile(outputPath, 'foreign staged race\n', 'utf8');
+      }
+      return result;
+    });
+    let error: unknown;
+    try {
+      await writeManifestPlan(root, plan);
+    } catch (caught) {
+      error = caught;
+    } finally {
+      writeSpy.mockRestore();
+    }
+    expect(error).toMatchObject({ code: 'MANIFEST_OUTPUT_RECOVERY_REQUIRED' });
+    expect(injected).toBe(true);
+    expect(await readFile(outputPath, 'utf8')).toBe('foreign staged race\n');
+    expect(parseJson(await readFile(join(transactionRoot, 'journal.json'), 'utf8')).state).toBe('recovery-required');
+    await rm(transactionRoot, { recursive: true, force: true });
+  });
+
+  test('rollback accepts an output restored to its prior bytes during failure handling', async () => {
+    const root = await makeProject(['portable']);
+    const originalPlan = await buildManifestPlan(root);
+    await writeManifestPlan(root, originalPlan);
+    const outputPath = join(root, 'plugin.json');
+    const previous = await readFile(outputPath);
+    const metadata = parseJson(await readFile(join(root, 'package.json'), 'utf8'));
+    metadata.description = 'Changed before manifest rollback fixture.';
+    await writeFile(join(root, 'package.json'), `${JSON.stringify(metadata, null, 2)}\n`, 'utf8');
+    const nextPlan = await buildManifestPlan(root);
+    const journalPath = join(root, ...transactionPath.split('/'), 'journal.json');
+    const originalWriteFile = fsPromises.writeFile;
+    let reverted = false;
+    const writeSpy = spyOn(fsPromises, 'writeFile').mockImplementation(async (...args) => {
+      if (String(args[0]) === journalPath && String(args[1]).includes('"state": "applying"') && !reverted) {
+        reverted = true;
+        await originalWriteFile(outputPath, previous);
+        throw Object.assign(new Error('injected journal failure after external restore'), { code: 'EIO' });
+      }
+      return originalWriteFile(...args);
+    });
+    try {
+      await expect(writeManifestPlan(root, nextPlan)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_WRITE_FAILED' });
+    } finally {
+      writeSpy.mockRestore();
+    }
+    expect(reverted).toBe(true);
+    expect(await readFile(outputPath)).toEqual(previous);
+    expect(await lstat(join(root, ...transactionPath.split('/'))).catch(() => undefined)).toBeUndefined();
+  });
+
+  test('final output verification failure rolls back newly written files', async () => {
+    const root = await makeProject(['portable']);
+    const plan = await buildManifestPlan(root);
+    const outputPath = join(root, 'plugin.json');
+    const originalRename = fsPromises.rename;
+    const originalReadFile = fsPromises.readFile;
+    let applied = false;
+    let injected = false;
+    const renameSpy = spyOn(fsPromises, 'rename').mockImplementation(async (...args) => {
+      const result = await originalRename(...args);
+      if (String(args[1]) === outputPath) applied = true;
+      return result;
+    });
+    const readSpy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+      if (applied && !injected && String(args[0]) === outputPath) {
+        injected = true;
+        return Buffer.from('drift visible during final verification\n');
+      }
+      return forward();
+    }));
+    try {
+      await expect(writeManifestPlan(root, plan)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_WRITE_FAILED' });
+    } finally {
+      readSpy.mockRestore();
+      renameSpy.mockRestore();
+    }
+    expect(injected).toBe(true);
+    expect(await lstat(outputPath).catch(() => undefined)).toBeUndefined();
+    expect(await lstat(join(root, ...transactionPath.split('/'))).catch(() => undefined)).toBeUndefined();
   });
 
   test('invalid metadata and deferred or unknown targets fail closed', async () => {
@@ -552,7 +1134,13 @@ describe('manifest input and output boundaries', () => {
     const root = await makeProject(['portable']);
     const plan = await buildManifestPlan(root);
     const malformed = { targets: plan.targets, files: new Map(plan.files).set('plugin.json', '{"invalid":true}\n') };
+    const malformedShape = {} as typeof plan;
+    const malformedContent = { targets: plan.targets, files: new Map([['plugin.json', { invalid: true }]]) } as unknown as typeof plan;
+    const wrongTargets = { ...plan, targets: [] } as unknown as typeof plan;
     await expect(writeManifestPlan(root, malformed)).rejects.toMatchObject({ code: 'MANIFEST_PLAN_INVALID' });
+    await expect(writeManifestPlan(root, malformedShape)).rejects.toMatchObject({ code: 'MANIFEST_PLAN_INVALID' });
+    await expect(writeManifestPlan(root, malformedContent)).rejects.toMatchObject({ code: 'MANIFEST_PLAN_INVALID' });
+    await expect(writeManifestPlan(root, wrongTargets)).rejects.toMatchObject({ code: 'MANIFEST_PLAN_INVALID' });
     expect(await lstat(join(root, 'plugin.json')).catch(() => undefined)).toBeUndefined();
     expect(await lstat(join(root, '.tmp')).catch(() => undefined)).toBeUndefined();
   });
@@ -579,6 +1167,7 @@ describe('manifest input and output boundaries', () => {
 
   test('--check rejects malformed or forged ownership and retained transactions without writes', async () => {
     const ledgers = [
+      '{\n',
       '{"schema":"VPManifestOwnership/v1","files":{},"unexpected":true}\n',
       `${JSON.stringify({ schema: 'VPManifestOwnership/v1', files: { '../outside.json': '0'.repeat(64) } }, null, 2)}\n`,
     ];
@@ -913,6 +1502,119 @@ describe('manifest input and output boundaries', () => {
     expect(await readTreeBytes(root)).toEqual(before);
   });
 
+  test('native payload planner rejects missing, non-directory, and linked roots', async () => {
+    const missingRoot = join(testScratchRoot, 'missing-native-payload-root');
+    await expect(planFormationPayload(missingRoot, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_READ_FAILED' });
+
+    const fileParent = await makeTemporaryRoot('manifest-payload-file-root-');
+    const fileRoot = join(fileParent, 'package.json');
+    await writeFile(fileRoot, '{}\n', 'utf8');
+    await expect(planFormationPayload(fileRoot, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_UNSAFE' });
+
+    const linkedParent = await makeTemporaryRoot('manifest-payload-link-parent-');
+    const linkedTarget = await makeTemporaryRoot('manifest-payload-link-target-');
+    const linkedRoot = join(linkedParent, 'linked-package');
+    await symlink(linkedTarget, linkedRoot, 'junction');
+    await expect(planFormationPayload(linkedRoot, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_UNSAFE' });
+  });
+
+  test('native payload planner maps directory, stat, and file read errors', async () => {
+    const directoryRoot = await makeProject(['portable']);
+    const sourceDirectory = join(directoryRoot, 'instructions');
+    await mkdir(sourceDirectory, { recursive: true });
+    await writeFile(join(sourceDirectory, 'runtime.md'), 'fixture\n', 'utf8');
+    const originalReaddir = fsPromises.readdir;
+    const readdirSpy = spyOn(fsPromises, 'readdir').mockImplementation(forwardNative(originalReaddir, async (args, forward) => {
+      if (String(args[0]) === sourceDirectory) throw Object.assign(new Error('injected directory read error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(planFormationPayload(directoryRoot, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_READ_FAILED' });
+    } finally {
+      readdirSpy.mockRestore();
+    }
+
+    const statRoot = await makeProject(['portable']);
+    const statPath = join(statRoot, 'instructions', 'runtime.md');
+    await mkdir(dirname(statPath), { recursive: true });
+    await writeFile(statPath, 'fixture\n', 'utf8');
+    const originalLstat = fsPromises.lstat;
+    const lstatSpy = spyOn(fsPromises, 'lstat').mockImplementation(forwardNative(originalLstat, async (args, forward) => {
+      if (String(args[0]) === statPath) throw Object.assign(new Error('injected source stat error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(planFormationPayload(statRoot, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_READ_FAILED' });
+    } finally {
+      lstatSpy.mockRestore();
+    }
+
+    const resolveRoot = await makeProject(['portable']);
+    const resolvePath = join(resolveRoot, 'instructions');
+    await mkdir(resolvePath, { recursive: true });
+    const originalRealpath = fsPromises.realpath;
+    const realpathSpy = spyOn(fsPromises, 'realpath').mockImplementation(forwardNative(originalRealpath, async (args, forward) => {
+      if (String(args[0]) === resolvePath) throw Object.assign(new Error('injected directory resolve error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(planFormationPayload(resolveRoot, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_READ_FAILED' });
+    } finally {
+      realpathSpy.mockRestore();
+    }
+
+    const readRoot = await makeProject(['portable']);
+    const readPath = join(readRoot, 'instructions', 'runtime.md');
+    await mkdir(dirname(readPath), { recursive: true });
+    await writeFile(readPath, 'fixture\n', 'utf8');
+    const originalReadFile = fsPromises.readFile;
+    const readFileSpy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+      if (String(args[0]) === readPath) throw Object.assign(new Error('injected source file read error'), { code: 'EIO' });
+      return forward();
+    }));
+    try {
+      await expect(planFormationPayload(readRoot, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_READ_FAILED' });
+    } finally {
+      readFileSpy.mockRestore();
+    }
+  });
+
+  test('native payload planner rejects a source file changed during its read', async () => {
+    const root = await makeNativeProject(['muse-package']);
+    const sourcePath = join(root, 'assets', 'raw.bin');
+    const originalBytes = await readFile(sourcePath);
+    let changed = false;
+    const originalReadFile = fsPromises.readFile;
+    const readFileSpy = spyOn(fsPromises, 'readFile').mockImplementation(forwardNative(originalReadFile, async (args, forward) => {
+      if (String(args[0]) === sourcePath && !changed) {
+        changed = true;
+        await writeFile(sourcePath, Buffer.from([0x01]));
+      }
+      return forward();
+    }));
+    try {
+      await expect(planFormationPayload(root, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_UNSAFE' });
+    } finally {
+      readFileSpy.mockRestore();
+      await writeFile(sourcePath, originalBytes);
+    }
+    expect(changed).toBe(true);
+    expect(await readFile(sourcePath)).toEqual(originalBytes);
+  });
+
+  test('native payload planner rejects distinct source names with the same normalized identity', async () => {
+    const root = await makeNativeProject(['muse-package']);
+    const assetsRoot = join(root, 'assets');
+    const composed = 'caf\u00e9.txt';
+    const decomposed = 'cafe\u0301.txt';
+    await writeFile(join(assetsRoot, composed), 'composed\n', 'utf8');
+    await writeFile(join(assetsRoot, decomposed), 'decomposed\n', 'utf8');
+    const entries = await readdir(assetsRoot);
+    expect(entries).toContain(composed);
+    expect(entries).toContain(decomposed);
+    await expect(planFormationPayload(root, [])).rejects.toMatchObject({ code: 'MANIFEST_INPUT_UNSAFE' });
+  });
+
   test('owned legacy manifest markers stay out of native payloads and are pruned by the same ledger', async () => {
     const root = await makeNativeProject(['portable']);
     await writeManifestPlan(root, await buildManifestPlan(root));
@@ -1046,6 +1748,54 @@ describe('manifest input and output boundaries', () => {
     expect(await lstat(join(packageRoot, ...ownershipLedgerPath.split('/'))).catch(() => undefined)).toBeUndefined();
   });
 
+  test('CLI reports missing root values and formats check output sink failures', async () => {
+    const missingStdout: string[] = [];
+    const missingStderr: string[] = [];
+    const missingExit = await runManifestCli(['--root'], {
+      stdout: (text) => { missingStdout.push(text); },
+      stderr: (text) => { missingStderr.push(text); },
+    });
+    expect(missingExit).toBe(2);
+    expect(missingStdout).toEqual([]);
+    expect(record(parseJson(missingStderr[0] ?? '').error)).toMatchObject({ code: 'MANIFEST_ARGUMENT_INVALID' });
+
+    const relativeStderr: string[] = [];
+    const relativeExit = await runManifestCli(['--root', 'relative-root'], {
+      stdout: () => {},
+      stderr: (text) => { relativeStderr.push(text); },
+    });
+    expect(relativeExit).toBe(2);
+    expect(record(parseJson(relativeStderr[0] ?? '').error)).toMatchObject({ code: 'MANIFEST_ARGUMENT_INVALID' });
+
+    const root = await makeNativeProject(['muse-package']);
+    await writeManifestPlan(root, await buildManifestPlan(root));
+    const before = await readTreeBytes(root);
+    const stderr: string[] = [];
+    const exitCode = await runManifestCli(['--check', '--root', root], {
+      stdout: () => { throw new Error('fixture stdout unavailable'); },
+      stderr: (text) => { stderr.push(text); },
+    });
+    expect(exitCode).toBe(1);
+    expect(record(parseJson(stderr[0] ?? '').error)).toMatchObject({
+      code: 'MANIFEST_BUILD_FAILED',
+      details: ['fixture stdout unavailable'],
+    });
+    expect(await readTreeBytes(root)).toEqual(before);
+
+    const portableRoot = await makeProject(['portable']);
+    await writeManifestPlan(portableRoot, await buildManifestPlan(portableRoot));
+    const portableBefore = await readTreeBytes(portableRoot);
+    const portableStdout: string[] = [];
+    const portableExit = await runManifestCli(['--check', '--root', portableRoot], {
+      stdout: (text) => { portableStdout.push(text); },
+      stderr: () => {},
+    });
+    expect(portableExit).toBe(0);
+    expect(record(parseJson(portableStdout[0] ?? ''))).toMatchObject({ ok: true, mode: 'check' });
+    expect(record(parseJson(portableStdout[0] ?? ''))).not.toHaveProperty('museCatalog');
+    expect(await readTreeBytes(portableRoot)).toEqual(portableBefore);
+  });
+
   test('foreign and changed files under native output roots block formation before writes', async () => {
     const foreignRoot = await makeNativeProject(['muse-package']);
     const foreignPath = join(foreignRoot, ...`${formationRelativeRoot}/muse/plugins/vida-powers/foreign.txt`.split('/'));
@@ -1109,6 +1859,19 @@ describe('manifest input and output boundaries', () => {
     const before = await readTreeBytes(root);
     await expect(buildManifestPlan(root)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_UNSAFE' });
     expect(await readTreeBytes(root)).toEqual(before);
+  });
+
+  test('nested native payload output symlinks are rejected while scanning', async () => {
+    const root = await makeNativeProject(['antigravity']);
+    const outside = await makeTemporaryRoot('manifest-output-nested-outside-');
+    await writeFile(join(outside, 'foreign.txt'), 'foreign\n', 'utf8');
+    const nestedRoot = join(root, ...`${formationRelativeRoot}/antigravity`.split('/'));
+    await mkdir(nestedRoot, { recursive: true });
+    await symlink(outside, join(nestedRoot, 'assets'), 'junction');
+    const before = await readTreeBytes(root);
+    await expect(buildManifestPlan(root)).rejects.toMatchObject({ code: 'MANIFEST_OUTPUT_UNSAFE' });
+    expect(await readTreeBytes(root)).toEqual(before);
+    expect(await readFile(join(outside, 'foreign.txt'), 'utf8')).toBe('foreign\n');
   });
 
   test('stale native roots prune only unchanged ledger-owned files', async () => {

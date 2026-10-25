@@ -379,5 +379,15 @@ export function runCorpusCli(args: string[], print: (text: string) => void = con
   }
 }
 
-process.argv[1] !== undefined && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url)) &&
-  (process.exitCode = runCorpusCli(process.argv.slice(2)));
+export function startCorpusCli(
+  argv: string[],
+  print?: (text: string) => void,
+  setExitCode: (code: number) => void = code => { process.exitCode = code; },
+): number | undefined {
+  if (argv[1] === undefined || resolve(argv[1]) !== resolve(fileURLToPath(import.meta.url))) return undefined;
+  const code = runCorpusCli(argv.slice(2), print);
+  setExitCode(code);
+  return code;
+}
+
+startCorpusCli(process.argv);

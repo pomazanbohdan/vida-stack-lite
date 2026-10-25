@@ -16,7 +16,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '11'
+revision: '13'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
@@ -79,7 +79,7 @@ the current scope (recorded as a GAP, not as passed).
 | AC-26 | Bootstrap does not load the whole corpus: the current E4 bundle contains at most 20 instructions and 64,000 UTF-8 bytes summed over selected `content` only after profile filtering, active-alternative replacement, and full required/transitive dependency closure; 1 KB is 1,000 bytes; the tag dictionary, JSON/envelope, instruction metadata, and execution context are excluded; overflow rejects the whole result. Future selected resource payload bytes share this cap under AC-55; the 20 limit still counts instructions only | SR-58, SR-87 | .38: 54 focused tests, Bun 1.4.3 and Node 24.16 setup/compose smoke checks, 2,510 payload hash matches, and 28-file typecheck; Deno unavailable; full Step E gates remain pending; AC-55 resource tests not run | auto | open |
 | AC-27 | The absence of a host capability is marked as a limitation, not as a completed check | SR-59 | host matrix | manual | open |
 | AC-28 | The same script shipped in the skills runs without a build under `node`, `bun` and `deno`; it contains no Bun-specific APIs | SR-63 | run under three runtimes + static check | auto | open |
-| AC-29 | `compose` with an effective profile discards instructions with an inactive group alternative; without a profile — an error on a direct `compatibility_excludes` pair | SR-26, SR-28, SR-14 | compose test with and without a profile | auto | open |
+| AC-29 | `compose` with an effective profile discards inactive group alternatives; without a profile, direct exclusions fail. Its canonical profile/schema cache revalidates changed bytes and refuses unreadable, malformed or contradictory replacements | SR-25, SR-26, SR-28, SR-14 | Compose cases with/without a profile, warmed-cache replacement failures, duplicate groups/alternatives and ambiguous dependency replacement | auto | open |
 | AC-30 | Structural part: the corpus contains no two instructions with the same `instruction_id`, and an instruction with two sources has them in `provenance` | SR-07 | corpus validation test | auto | open |
 | AC-30b | Semantic part: each norm is present in the corpus exactly once — duplicates merged, terms reduced to the vocabulary, a change of a merge raises `revision` | SR-07 | merge phase report (step D) + human review sampling | manual | open |
 | AC-31 | The processing map `corpus-map.json` matches the `VPCorpusMap/v1` contract: statuses `converted`/`split`/`merged`/`rejected`, `rejected` always with a reason, `merged` leads to an existing instruction | SR-66 | map schema test | auto | open |
@@ -110,7 +110,7 @@ The criteria below are future gates. They do not change the current E4 acceptanc
 
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-47 | The engineering/UX pack admits only reviewed, rights-cleared candidates within D14; general methodology remains in the same catalog and excluded domains stay out | SR-81 | Candidate disposition map, source review, and rights evidence | manual | open |
+| AC-47 | The engineering/UX, product and business pack admits only individually reviewed, rights-cleared and owner-admitted subsets within D14; general methodology remains in the same catalog; journey exclusions persist and former domain exclusions are not automatically promoted | SR-81 | Exact per-source selection/disposition, fidelity, rights and owner-admission records | manual | open |
 | AC-48 | Each framework-, platform-, accessibility-, or standards-dependent instruction has structured applicability facts and retains the source applicability label; unparsed version labels do not match | SR-82 | Schema validation and applicability fixtures | auto | open |
 | AC-49 | Missing, unknown, malformed, or conflicting required applicability context produces no selected rule, returns applicability-unresolved, and records the unresolved context; the code is absent from current E4 behavior | SR-16, SR-20, SR-82 | Applicability refusal table and materialization test | auto | open |
 | AC-50 | Each accepted CSV-derived instruction binds its meaning review to exact source rows and cells; identical duplicates retain every locator or are rejected with a reason | SR-84, SR-85 | Cell-level map and human semantic-fidelity review | manual | open |
@@ -119,6 +119,15 @@ The criteria below are future gates. They do not change the current E4 acceptanc
 | AC-53 | The processing map covers every selected CSV row; row identity survives reorder, changes when a cell changes, keeps a separate raw-file digest, and never uses a line number | SR-84 | Map consistency and identity tests | auto | open |
 | AC-54 | Resource reads reject traversal, symlinks, digest mismatch, invalid schema/type, unsupported encoding and excess size, and return only selected IDs as untrusted source data | SR-86 | Reader boundary and negative tests | auto | open |
 | AC-55 | Resource content counts toward the shared 64,000-byte cap as canonical UTF-8 JSON; the 20 limit counts instructions only; overflow returns no partial result | SR-58, SR-87 | Mixed instruction/resource size-boundary tests | auto | open |
+
+## Donor migration qualification
+
+| ID | Condition | SR | Evidence | Type | State |
+|---|---|---|---|---|---|
+| AC-56 | Markdown capture rejects invalid UTF-8, retains BOM, handles CRLF/LF/CR and astral/combining codepoints with exact raw bytes and bounded line/codepoint/byte locators; changed source or capture policy invalidates capture | SR-88 | Source-packet positive, malformed-byte, locator-boundary and stale-binding fixtures | auto | open |
+| AC-57 | Missing, stale or contradictory transitive evidence blocks eligibility; scoped reviews stay scoped; only Root reconciliation of attributable human fidelity, rights and admission produces an eligible exact subset | SR-81, SR-89 | Source-packet negative/reuse fixtures and attributable admission dossier; models and fixture approvals do not close the manual gate | manual | open |
+| AC-58 | Prepared conversion preflights the entire batch and both directions of source/spec provenance before writes, stages reviewed bytes, preserves unrelated files and merge contribution locators, detects stale preimages and changed donor revisions, and classifies interrupted changed/no-op/absent targets without automatic retry; existing callers retain sequential results | SR-90 | Converter fixtures for conflict, missing source contribution, retained merged/split locators, interruption after each target, all-old/all-intended/mixed/unexpected states, readback and legacy compatibility | auto | open |
+| AC-59 | Comparable pre-treatment and treatment receipts account for ten distinct admitted source files, quality, failures, rework and elapsed time before scaling or claiming donor speedup | SR-91 | Bound baseline, qualified pilot and matched treatment receipts; component-only fixture timing is insufficient | manual | open |
 
 ## What we do not prove
 

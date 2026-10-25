@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { readFile, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { CatalogError, readSchema, type Catalog, type Provenance } from '../skills/vp-mode/scripts/catalog.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
+import { readEligibleSource, sealArtifact, verifyArtifact, resolveArtifactPath, type ArtifactRef, type EligibleSource } from './source-packets.ts';
+import { checkCorpus } from './check-corpus.ts';
 
 export type InstructionSpec = {
   instruction_id: string; title: string; summary: string;
@@ -240,13 +242,45 @@ function sha256(value: string): string {
   return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
-async function readJson(path: string, label: string): Promise<unknown> {
+type ConversionIO = { read: (path: string) => Promise<string | undefined>; write: (path: string, text: string) => Promise<void> };
+type OwnedConversionIO = ConversionIO & { remove: (path: string) => Promise<void> };
+async function readJson(path: string, label: string, io?: ConversionIO): Promise<unknown> {
   try {
-    return JSON.parse(await readFile(path, 'utf8')) as unknown;
+    const text = io === undefined ? await readFile(path, 'utf8') : await io.read(path);
+    return text === undefined ? undefined : JSON.parse(text) as unknown;
   } catch (error) {
     if (error instanceof SyntaxError) throw new CatalogError('CATALOG_INVALID', `${label} JSON is malformed`, { path, error: error.message });
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') return undefined;
     throw new CatalogError('CATALOG_INVALID', `cannot read ${label}`, { path, error: error instanceof Error ? error.message : String(error) });
+  }
+}
+
+async function withConverterOwnership<T>(root: string, run: (io: OwnedConversionIO, fence: () => void) => Promise<T>, operation: ArtifactRef | null = null): Promise<T> {
+  const lock = join(resolve(root), '.vp-convert-publication.lock');
+  await mkdir(resolve(root), { recursive: true });
+  try { await mkdir(lock); } catch (error) {
+    throw new CatalogError('CATALOG_INVALID', 'converter ownership unavailable; reconcile any retained writer before retry', { lock, error: error instanceof Error ? error.message : String(error) });
+  }
+  const token = randomUUID();
+  let writeUnknown = false;
+  let fenced = false;
+  let completed = false;
+  const io: OwnedConversionIO = {
+    read: async path => { try { return await readFile(path, 'utf8'); } catch (error) { if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') return undefined; throw error; } },
+    write: async (path, text) => { await mkdir(dirname(path), { recursive: true }); writeUnknown = true; await writeFile(path, text, 'utf8'); writeUnknown = false; },
+    remove: async path => { writeUnknown = true; await rm(path, { force: true }); writeUnknown = false; },
+  };
+  try {
+    await writeFile(join(lock, 'owner.json'), json({ token, pid: process.pid, root: resolve(root), operation }), { flag: 'wx' });
+    const result = await run(io, () => { fenced = true; });
+    completed = true;
+    return result;
+  } finally {
+    if (!fenced && (completed || !writeUnknown)) {
+      const bytes = await optionalBytes(join(lock, 'owner.json'));
+      const owner: unknown = bytes === undefined ? undefined : JSON.parse(bytes.toString('utf8'));
+      if (record(owner) && owner.token === token) await rm(lock, { recursive: true });
+    }
   }
 }
 
@@ -264,22 +298,31 @@ function validateRenderedSpec(spec: InstructionSpec, schema: Schema): void {
 }
 
 export async function convert(specPath: string, options: ConvertOptions): Promise<ConversionResult> {
+  return withConverterOwnership(options.root, io => compileInstruction(specPath, options, io));
+}
+
+async function compileInstruction(specPath: string, options: ConvertOptions, io: ConversionIO, schemas = new Map<string, Schema>()): Promise<ConversionResult> {
+  const schema = async (name: string): Promise<Schema> => {
+    const previous = schemas.get(name);
+    if (previous !== undefined) return previous;
+    const value = await readSchema(packageRoot, name); schemas.set(name, value); return value;
+  };
   const root = resolve(options.root);
-  const raw = await readJson(specPath, 'instruction spec');
+  const raw = await readJson(specPath, 'instruction spec', io);
   if (raw === undefined) throw new CatalogError('CATALOG_INVALID', 'instruction spec file is missing', { source: specPath });
   const spec = parseInstructionSpec(raw, specPath);
-  const instructionSchema = await readSchema(packageRoot, 'vpinstruction.v1.schema.json');
+  const instructionSchema = await schema('vpinstruction.v1.schema.json');
 
   const catalogPath = target(root, options.catalogPath, join(root, 'catalog.json'));
   const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
   const instructionsDir = target(root, options.instructionsDir, join(root, 'instructions'));
   const instructionPath = join(instructionsDir, `${spec.instruction_id}.md`);
   const relativePath = manifestInstructionPath(catalogPath, instructionPath);
-  const manifestValue = await readJson(catalogPath, 'catalog manifest');
+  const manifestValue = await readJson(catalogPath, 'catalog manifest', io);
   let manifest: Catalog;
   const manifestExists = manifestValue !== undefined;
   if (manifestExists) {
-    const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
+    const catalogSchema = await schema('vpcatalog.v1.schema.json');
     if (!record(manifestValue)) throw new CatalogError('CATALOG_INVALID', 'catalog manifest must be an object', { path: catalogPath });
     const errors = validateAgainstSchema(manifestValue, catalogSchema);
     if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'catalog schema validation failed', { schemaErrors: errors });
@@ -303,7 +346,7 @@ export async function convert(specPath: string, options: ConvertOptions): Promis
   validateRenderedSpec(spec, instructionSchema);
 
   let oldMarkdown: string | undefined;
-  try { oldMarkdown = await readFile(instructionPath, 'utf8'); } catch (error) {
+  try { oldMarkdown = await io.read(instructionPath); } catch (error) {
     if (!(typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT')) throw error;
   }
   const written = oldMarkdown !== rendered;
@@ -317,16 +360,16 @@ export async function convert(specPath: string, options: ConvertOptions): Promis
   if (manifestUpdated && manifestExists) manifest.revision += 1;
   manifest.instructions = nextEntries;
   if (written && manifestExists) manifest.updated_at = (options.now ?? (() => new Date().toISOString()))();
-  const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
+  const catalogSchema = await schema('vpcatalog.v1.schema.json');
   const catalogErrors = validateAgainstSchema(manifest, catalogSchema);
   if (catalogErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'catalog schema validation failed', { schemaErrors: catalogErrors });
 
-  const mapValue = await readJson(mapPath, 'corpus map');
+  const mapValue = await readJson(mapPath, 'corpus map', io);
   let map: Record<string, unknown>;
   if (mapValue === undefined) map = { schema: 'VPCorpusMap/v1', revision: 1, updated_at: '', donors: {} };
   else {
     if (!record(mapValue)) throw new CatalogError('CATALOG_INVALID', 'corpus map must be an object', { path: mapPath });
-    const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+    const mapSchema = await schema('vpcorpusmap.v1.schema.json');
     const errors = validateAgainstSchema(mapValue, mapSchema);
     if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
     map = mapValue;
@@ -343,17 +386,18 @@ export async function convert(specPath: string, options: ConvertOptions): Promis
     const fileRecord = files[source.path];
     const existing: Record<string, unknown> = record(fileRecord) ? fileRecord : {};
     const ids = Array.isArray(existing.instruction_ids) ? existing.instruction_ids.filter((id): id is string => typeof id === 'string') : [];
-    if (!ids.includes(spec.instruction_id)) ids.push(spec.instruction_id);
+    const alreadyMapped = ids.includes(spec.instruction_id);
+    if (!alreadyMapped) ids.push(spec.instruction_id);
     delete existing.reason;
-    files[source.path] = { status: ids.length > 1 ? 'split' : 'converted', instruction_ids: ids };
+    files[source.path] = { ...existing, status: existing.status === 'merged' && alreadyMapped ? 'merged' : ids.length > 1 ? 'split' : 'converted', instruction_ids: ids };
     donors[source.donor] = donor;
   }
-  const mapWasMissing = (await readJson(mapPath, 'corpus map')) === undefined;
+  const mapWasMissing = (await readJson(mapPath, 'corpus map', io)) === undefined;
   if (mapWasMissing) map.updated_at = (options.now ?? (() => new Date().toISOString()))();
-  const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+  const mapSchema = await schema('vpcorpusmap.v1.schema.json');
   const mapErrors = validateAgainstSchema(map, mapSchema);
   if (mapErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: mapErrors });
-  const oldMapValue = mapWasMissing ? undefined : await readJson(mapPath, 'corpus map');
+  const oldMapValue = mapWasMissing ? undefined : await readJson(mapPath, 'corpus map', io);
   const mapComparable = { ...map } as Record<string, unknown>;
   const oldComparable = record(oldMapValue) ? { ...oldMapValue } : undefined;
   delete mapComparable.updated_at;
@@ -366,21 +410,22 @@ export async function convert(specPath: string, options: ConvertOptions): Promis
 
   const finalMapErrors = validateAgainstSchema(map, mapSchema);
   if (finalMapErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: finalMapErrors });
-  await mkdir(dirname(instructionPath), { recursive: true });
-  await mkdir(dirname(catalogPath), { recursive: true });
-  await mkdir(dirname(mapPath), { recursive: true });
-  if (written) await writeFile(instructionPath, rendered, 'utf8');
-  if (!manifestExists || manifestUpdated || written) await writeFile(catalogPath, json(manifest), 'utf8');
-  if (mapUpdated) await writeFile(mapPath, json(map), 'utf8');
+  if (written) await io.write(instructionPath, rendered);
+  if (!manifestExists || manifestUpdated || written) await io.write(catalogPath, json(manifest));
+  if (mapUpdated) await io.write(mapPath, json(map));
 
   return { kind: 'instruction', instructionId: spec.instruction_id, path: relativePath, sha256: digest, written, manifestUpdated, mapUpdated, manifestRevision: manifest.revision };
 }
 
 export async function convertMapRecord(recordPath: string, options: ConvertOptions): Promise<ConversionResult> {
-  const root = resolve(options.root); const raw = await readJson(recordPath, 'map record');
+  return withConverterOwnership(options.root, io => compileMapRecord(recordPath, options, io));
+}
+
+async function compileMapRecord(recordPath: string, options: ConvertOptions, io: ConversionIO): Promise<ConversionResult> {
+  const root = resolve(options.root); const raw = await readJson(recordPath, 'map record', io);
   if (raw === undefined) throw new CatalogError('CATALOG_INVALID', 'map record file is missing', { source: recordPath });
   const spec = parseMapRecord(raw, recordPath); const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
-  const mapValue = await readJson(mapPath, 'corpus map'); let map: Record<string, unknown>;
+  const mapValue = await readJson(mapPath, 'corpus map', io); let map: Record<string, unknown>;
   if (mapValue === undefined) map = { schema: 'VPCorpusMap/v1', revision: 1, updated_at: (options.now ?? (() => new Date().toISOString()))(), donors: {} };
   else {
     if (!record(mapValue)) throw new CatalogError('CATALOG_INVALID', 'corpus map must be an object', { path: mapPath });
@@ -408,15 +453,19 @@ export async function convertMapRecord(recordPath: string, options: ConvertOptio
   else if (mapUpdated) { map.revision = Number(map.revision) + 1; map.updated_at = (options.now ?? (() => new Date().toISOString()))(); }
   const errors = validateAgainstSchema(map, mapSchema);
   if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
-  if (mapUpdated) { await mkdir(dirname(mapPath), { recursive: true }); await writeFile(mapPath, json(map), 'utf8'); }
+  if (mapUpdated) await io.write(mapPath, json(map));
   return { kind: 'map-record', instructionId: '', path: spec.path, sha256: '', written: false, manifestUpdated: false, mapUpdated, manifestRevision: 0 };
 }
 
 export async function removeInstruction(instructionId: string, options: ConvertOptions): Promise<RemovalResult> {
+  return withConverterOwnership(options.root, io => compileRemoval(instructionId, options, io));
+}
+
+async function compileRemoval(instructionId: string, options: ConvertOptions, io: OwnedConversionIO): Promise<RemovalResult> {
   const root = resolve(options.root);
   const catalogPath = target(root, options.catalogPath, join(root, 'catalog.json'));
   const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
-  const manifestValue = await readJson(catalogPath, 'catalog manifest');
+  const manifestValue = await readJson(catalogPath, 'catalog manifest', io);
   const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
   if (!record(manifestValue)) throw new CatalogError('CATALOG_INVALID', 'catalog manifest must be an object', { path: catalogPath });
   const catalogErrors = validateAgainstSchema(manifestValue, catalogSchema);
@@ -425,7 +474,7 @@ export async function removeInstruction(instructionId: string, options: ConvertO
   const entry = manifest.instructions.find((item) => item.instruction_id === instructionId);
   if (entry === undefined) throw new CatalogError('CATALOG_INVALID', `instruction ${instructionId} is not in the catalog manifest`, { instruction_id: instructionId });
   const instructionPath = resolve(dirname(catalogPath), entry.path);
-  const mapValue = await readJson(mapPath, 'corpus map');
+  const mapValue = await readJson(mapPath, 'corpus map', io);
   let map: Record<string, unknown> | undefined;
   let mapUpdated = false;
   if (mapValue !== undefined) {
@@ -464,9 +513,9 @@ export async function removeInstruction(instructionId: string, options: ConvertO
     const errors = validateAgainstSchema(map, mapSchema);
     if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
   }
-  await rm(instructionPath, { force: true });
-  await writeFile(catalogPath, json(manifest), 'utf8');
-  if (map !== undefined && mapUpdated) await writeFile(mapPath, json(map), 'utf8');
+  await io.remove(instructionPath);
+  await io.write(catalogPath, json(manifest));
+  if (map !== undefined && mapUpdated) await io.write(mapPath, json(map));
   return { kind: 'removal', instructionId, removed: true, manifestUpdated: true, mapUpdated, manifestRevision: manifest.revision };
 }
 
@@ -480,9 +529,214 @@ export async function convertMany(specPaths: string[], options: ConvertOptions):
     if (previous !== undefined && resolve(previous) !== resolve(path)) throw new CatalogError('CATALOG_INVALID', `duplicate instruction id ${raw.instruction_id}`, { instruction_id: raw.instruction_id, paths: [previous, path] });
     seen.set(raw.instruction_id, path);
   }
-  const results: ConversionResult[] = [];
-  for (const specPath of specPaths) results.push(await convert(specPath, options));
-  return results;
+  return withConverterOwnership(options.root, async io => {
+    const results: ConversionResult[] = [];
+    for (const specPath of specPaths) results.push(await compileInstruction(specPath, options, io));
+    return results;
+  });
+}
+
+export async function releasePreparedOwnership(plan: PreparedBatch, observe: (request: Readonly<{ owner: ArtifactRef; pid: number; token: string; plan: ArtifactRef }>) => Promise<{ kind: 'observed-quiescent'; ownerSha256: string; pointer: string } | { kind: 'unconfirmed' }>): Promise<{ released: boolean; receipt: ArtifactRef }> {
+  const manifest = await readBatchManifest(plan);
+  const lockRelative = '.vp-convert-publication.lock/owner.json';
+  const ownerPath = await resolveArtifactPath(manifest.root, lockRelative);
+  const ownerBytes = await readFile(ownerPath);
+  const owner: unknown = JSON.parse(ownerBytes.toString('utf8'));
+  if (!record(owner) || typeof owner.pid !== 'number' || !Number.isSafeInteger(owner.pid) || typeof owner.token !== 'string' || owner.root !== manifest.root || !record(owner.operation) || owner.operation.path !== plan.manifest.path || owner.operation.sha256 !== plan.manifest.sha256) throw new Error('retained ownership does not bind this exact prepared plan');
+  const ref = { path: lockRelative, sha256: fingerprint(ownerBytes) };
+  const observation = await observe({ owner: ref, pid: owner.pid, token: owner.token, plan: plan.manifest });
+  const reconciliation = await reconcilePreparedBatch(plan);
+  const released = observation.kind === 'observed-quiescent' && observation.ownerSha256 === ref.sha256 && observation.pointer.trim() !== '' && reconciliation.state !== 'CONFLICT_OR_UNKNOWN';
+  if (fingerprint(await readFile(ownerPath)) !== ref.sha256) throw new Error('ownership changed during reconciliation');
+  const receipt = await sealArtifact(plan.directory, `${dirname(plan.manifest.path)}/reconcile-${randomUUID()}.json`, { schema: 'VPPreparedOwnershipReconciliation/v1', plan: plan.manifest, owner: ref, observation, reconciliation, released, recordedAt: new Date().toISOString() });
+  if (released) {
+    const lock = dirname(ownerPath);
+    if (resolve(lock) !== join(resolve(manifest.root), '.vp-convert-publication.lock')) throw new Error('ownership cleanup path changed');
+    await rm(lock, { recursive: true });
+  }
+  return { released, receipt };
+}
+
+type PreparedTarget = { path: string; before: string | null; after: string; staged: ArtifactRef; backup: ArtifactRef | null };
+type BatchManifest = { schema: 'VPPreparedBatch/v1'; root: string; targets: PreparedTarget[]; specs: ArtifactRef[]; tools: ArtifactRef[]; context: { path: string; sha256: string | null }[]; runtime: ArtifactRef; sources: { source: Awaited<ReturnType<typeof readEligibleSource>>['source']; packet: ArtifactRef; unitIds: string[]; specs: ArtifactRef[] }[] };
+export type PreparedBatch = Readonly<{ directory: string; manifest: ArtifactRef }>;
+export type BatchApproval = Readonly<{ review: ArtifactRef; observe: (request: Readonly<{ plan: ArtifactRef; review: ArtifactRef; targets: readonly string[] }>) => Promise<{ kind: 'observed'; writer: string; reviewPointer: string } | { kind: 'unconfirmed' }> }>;
+export type ApplyOutcome = { kind: 'applied' | 'no-change' | 'no-write-conflict' | 'partial-or-unknown'; receipt: ArtifactRef };
+type BatchState = { manifest: BatchManifest; sources: readonly EligibleSource[] };
+const preparedBatches = new WeakMap<PreparedBatch, BatchState>();
+const attemptedBatches = new WeakSet<PreparedBatch>();
+const fingerprint = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
+async function optionalBytes(path: string): Promise<Buffer | undefined> {
+  try { return await readFile(path); } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') return undefined;
+    throw error;
+  }
+}
+function targetRelative(root: string, path: string): string {
+  const value = relative(root, path).split(sep).join('/');
+  if (!value || value.startsWith('../') || value === '..' || isAbsolute(value)) throw new Error('prepared target escapes publication root');
+  return value;
+}
+async function preparedTargetBytes(root: string, path: string): Promise<Buffer | undefined> {
+  return optionalBytes(await resolveArtifactPath(root, path));
+}
+async function assertFileBinding(ref: ArtifactRef): Promise<void> {
+  if (fingerprint(await readFile(ref.path)) !== ref.sha256) throw new Error(`stale publication input: ${ref.path}`);
+}
+export async function prepareBatch(sources: readonly EligibleSource[], options: ConvertOptions & { stagingRoot: string }): Promise<PreparedBatch> {
+  if (sources.length < 1 || sources.length > 25) throw new Error('prepared batches require 1–25 separately admitted source files');
+  const root = resolve(options.root);
+  const directory = resolve(options.stagingRoot);
+  const prefix = randomUUID();
+  const sourceData = [];
+  const sourceKeys = new Set<string>();
+  const specs = new Map<string, ArtifactRef>();
+  for (const source of sources) {
+    const data = await readEligibleSource(source);
+    const key = JSON.stringify([data.source.donor, data.source.pinnedRevision, data.source.canonicalCarrierPath]);
+    if (sourceKeys.has(key)) throw new Error('duplicate source in prepared batch');
+    sourceKeys.add(key); sourceData.push(data);
+    for (const spec of data.specs) {
+      const previous = specs.get(spec.path);
+      if (previous !== undefined && previous.sha256 !== spec.ref.sha256) throw new Error('conflicting prepared spec binding');
+      specs.set(spec.path, { path: spec.path, sha256: spec.ref.sha256 });
+    }
+  }
+  const before = new Map<string, Buffer | undefined>();
+  const outputs = new Map<string, Buffer>();
+  const read = async (path: string): Promise<Buffer | undefined> => {
+    if (!before.has(path)) before.set(path, await optionalBytes(path));
+    return outputs.get(path) ?? before.get(path);
+  };
+  const io: ConversionIO = {
+    read: async path => (await read(path))?.toString('utf8'),
+    write: async (path, text) => { await resolveArtifactPath(root, targetRelative(root, path)); await read(path); outputs.set(path, Buffer.from(text)); },
+  };
+  const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
+  const catalogPath = target(root, options.catalogPath, join(root, 'catalog.json'));
+  const instructionsDir = target(root, options.instructionsDir, join(root, 'instructions'));
+  targetRelative(root, mapPath); targetRelative(root, catalogPath);
+  const map = await readJson(mapPath, 'corpus map', io);
+  const donors = record(map) && record(map.donors) ? map.donors : {};
+  for (const data of sourceData) {
+    const donor = donors[data.source.donor];
+    if (record(donor) && donor.source_revision !== data.source.pinnedRevision) throw new Error(`prepared donor revision conflict: ${data.source.donor}; a separately reviewed complete remap is required`);
+  }
+  const ids = new Set<string>();
+  const schemas = new Map<string, Schema>();
+  const intendedInstructions: string[] = [];
+  for (const ref of specs.values()) {
+    await assertFileBinding(ref);
+    const spec = parseInstructionSpec(await readJson(ref.path, 'prepared instruction spec', io), ref.path);
+    if (ids.has(spec.instruction_id)) throw new Error(`duplicate instruction id ${spec.instruction_id}`);
+    ids.add(spec.instruction_id);
+    for (const provenance of spec.provenance) if (!sourceData.some(data => data.source.donor === provenance.donor && data.source.pinnedRevision === provenance.revision && data.source.canonicalCarrierPath === provenance.path && data.specs.some(item => item.path === ref.path))) throw new Error('spec provenance lacks exact source eligibility');
+    for (const data of sourceData) if (data.specs.some(item => item.path === ref.path) && !spec.provenance.some(source => source.donor === data.source.donor && source.revision === data.source.pinnedRevision && source.path === data.source.canonicalCarrierPath)) throw new Error('selected source contribution missing from spec provenance');
+    intendedInstructions.push(join(instructionsDir, `${spec.instruction_id}.md`));
+    await compileInstruction(ref.path, options, io, schemas);
+  }
+  const targets: PreparedTarget[] = [];
+  for (const [index, path] of [...new Set([...intendedInstructions, catalogPath, mapPath])].entries()) {
+    const name = targetRelative(root, path);
+    const old = before.get(path);
+    const next = outputs.get(path) ?? old;
+    if (next === undefined) throw new Error(`missing prepared output: ${name}`);
+    const stagedPath = `${prefix}/outputs/${index}.txt`;
+    const stagedAbsolute = await resolveArtifactPath(directory, stagedPath, true);
+    await writeFile(stagedAbsolute, next, { flag: 'wx' });
+    const staged = { path: stagedPath, sha256: fingerprint(next) };
+    let backup: ArtifactRef | null = null;
+    if (old !== undefined) {
+      const backupPath = `${prefix}/before/${index}.txt`;
+      await writeFile(await resolveArtifactPath(directory, backupPath, true), old, { flag: 'wx' });
+      backup = { path: backupPath, sha256: fingerprint(old) };
+    }
+    targets.push({ path: name, before: old === undefined ? null : fingerprint(old), after: fingerprint(next), staged, backup });
+  }
+  const toolPaths = ['scripts/convert.ts', 'scripts/source-packets.ts', 'scripts/check-corpus.ts', 'skills/vp-mode/scripts/catalog.ts', 'skills/vp-mode/scripts/frontmatter.ts', 'skills/vp-mode/scripts/schema.ts', 'config/vpinstruction.v1.schema.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json'];
+  const tools: ArtifactRef[] = [];
+  for (const path of toolPaths) { const absolute = join(packageRoot, path); tools.push({ path: absolute, sha256: fingerprint(await readFile(absolute)) }); }
+  const context: BatchManifest['context'] = [];
+  for (const path of [join(root, 'donors.yaml'), join(root, 'config', 'methodology-profile.json')]) { const bytes = await optionalBytes(path); context.push({ path, sha256: bytes === undefined ? null : fingerprint(bytes) }); }
+  const manifest: BatchManifest = { schema: 'VPPreparedBatch/v1', root, targets, specs: [...specs.values()], tools, context, runtime: { path: process.execPath, sha256: fingerprint(await readFile(process.execPath)) }, sources: sourceData.map(data => ({ source: data.source, packet: data.evidence, unitIds: [...new Set(data.specs.flatMap(spec => [...spec.unitIds]))], specs: data.specs.map(spec => ({ ...spec.ref })) })) };
+  const plan: PreparedBatch = Object.freeze({ directory, manifest: await sealArtifact(directory, `${prefix}/plan.json`, manifest) });
+  preparedBatches.set(plan, { manifest, sources: [...sources] });
+  return plan;
+}
+const batchText: Schema = { type: 'string', minLength: 1 };
+const batchSha: Schema = { type: 'string', pattern: '^[0-9a-f]{64}$' };
+const batchRef: Schema = { type: 'object', required: ['path', 'sha256'], properties: { path: batchText, sha256: batchSha }, additionalProperties: false };
+const nullableRef: Schema = { ...batchRef, type: ['object', 'null'] };
+const manifestSchema: Schema = { type: 'object', required: ['schema', 'root', 'targets', 'specs', 'tools', 'context', 'runtime', 'sources'], additionalProperties: false, properties: {
+  schema: { const: 'VPPreparedBatch/v1' }, root: batchText, specs: { type: 'array', items: batchRef }, tools: { type: 'array', items: batchRef }, runtime: batchRef, sources: { type: 'array', items: { type: 'object' } },
+  context: { type: 'array', items: { type: 'object', required: ['path', 'sha256'], properties: { path: batchText, sha256: { type: ['string', 'null'] } }, additionalProperties: false } },
+  targets: { type: 'array', items: { type: 'object', required: ['path', 'before', 'after', 'staged', 'backup'], additionalProperties: false, properties: { path: batchText, before: { type: ['string', 'null'] }, after: batchSha, staged: batchRef, backup: nullableRef } } },
+} };
+async function readBatchManifest(plan: PreparedBatch): Promise<BatchManifest> {
+  const value: unknown = JSON.parse((await verifyArtifact(plan.directory, plan.manifest)).toString('utf8'));
+  const errors = validateAgainstSchema(value, manifestSchema);
+  if (errors.length) throw new Error(`invalid prepared plan: ${errors.join('; ')}`);
+  return value as BatchManifest;
+}
+export async function reconcilePreparedBatch(plan: PreparedBatch): Promise<{ state: 'NO_CHANGE' | 'NO_EFFECT_OBSERVED' | 'TARGET_STATE_MATCHES' | 'KNOWN_PARTIAL' | 'CONFLICT_OR_UNKNOWN'; targets: { path: string; state: 'old' | 'intended' | 'noop' | 'unexpected' }[]; retry: 'fenced' }> {
+  const targets: { path: string; state: 'old' | 'intended' | 'noop' | 'unexpected' }[] = [];
+  try {
+    const manifest = await readBatchManifest(plan);
+    for (const target of manifest.targets) {
+      const staged = await verifyArtifact(plan.directory, target.staged);
+      if (fingerprint(staged) !== target.after) throw new Error('staged output binding mismatch');
+      if (target.backup !== null && fingerprint(await verifyArtifact(plan.directory, target.backup)) !== target.before) throw new Error('backup binding mismatch');
+      if ((target.before === null) !== (target.backup === null)) throw new Error('missing preimage proof');
+      const bytes = await preparedTargetBytes(manifest.root, target.path);
+      const digest = bytes === undefined ? null : fingerprint(bytes);
+      targets.push({ path: target.path, state: digest === target.after ? target.before === target.after ? 'noop' : 'intended' : digest === target.before ? 'old' : 'unexpected' });
+    }
+    const changed = targets.filter(target => target.state !== 'noop');
+    const state = changed.some(target => target.state === 'unexpected') ? 'CONFLICT_OR_UNKNOWN' : changed.length === 0 ? 'NO_CHANGE' : changed.every(target => target.state === 'old') ? 'NO_EFFECT_OBSERVED' : changed.every(target => target.state === 'intended') ? 'TARGET_STATE_MATCHES' : 'KNOWN_PARTIAL';
+    return { state, targets, retry: 'fenced' };
+  } catch {
+    return { state: 'CONFLICT_OR_UNKNOWN', targets, retry: 'fenced' };
+  }
+}
+export async function applyPreparedBatch(plan: PreparedBatch, approval: BatchApproval): Promise<ApplyOutcome> {
+  const state = preparedBatches.get(plan);
+  if (state === undefined || attemptedBatches.has(plan)) throw new Error('prepared apply requires a fresh live Root-owned plan; retry is fenced');
+  const manifest = await readBatchManifest(plan);
+  if (JSON.stringify(manifest) !== JSON.stringify(state.manifest)) throw new Error('live plan differs from its reviewed manifest');
+  const review: unknown = JSON.parse((await verifyArtifact(plan.directory, approval.review)).toString('utf8'));
+  const reviewErrors = validateAgainstSchema(review, { type: 'object', required: ['schema', 'planSha256', 'verdict', 'reviewer', 'pointer'], additionalProperties: false, properties: { schema: { const: 'VPPreparedBatchReview/v1' }, planSha256: { const: plan.manifest.sha256 }, verdict: { const: 'READY' }, reviewer: batchText, pointer: batchText } });
+  if (reviewErrors.length || !record(review)) throw new Error('independent review does not bind this exact plan');
+  const observed = await approval.observe({ plan: plan.manifest, review: approval.review, targets: manifest.targets.map(target => target.path) });
+  if (observed.kind !== 'observed' || !observed.writer || observed.writer === review.reviewer || observed.reviewPointer !== review.pointer) throw new Error('Root has not observed independent review and publication ownership');
+  attemptedBatches.add(plan);
+  const receipt = async (kind: ApplyOutcome['kind'], details: unknown): Promise<ApplyOutcome> => ({ kind, receipt: await sealArtifact(plan.directory, `${dirname(plan.manifest.path)}/apply-${randomUUID()}.json`, { schema: 'VPPreparedBatchReceipt/v1', kind, plan: plan.manifest, review: approval.review, writer: observed.writer, pid: process.pid, recordedAt: new Date().toISOString(), details }) });
+  return withConverterOwnership(manifest.root, async (io, fence) => {
+    try {
+      for (const source of state.sources) await readEligibleSource(source);
+      for (const ref of [...manifest.specs, ...manifest.tools, manifest.runtime]) await assertFileBinding(ref);
+      for (const item of manifest.context) { const bytes = await optionalBytes(item.path); if ((bytes === undefined ? null : fingerprint(bytes)) !== item.sha256) throw new Error(`stale corpus context: ${item.path}`); }
+      await verifyArtifact(plan.directory, approval.review);
+      const observation = await reconcilePreparedBatch(plan);
+      if (observation.state !== 'NO_EFFECT_OBSERVED' && observation.state !== 'NO_CHANGE') return receipt('no-write-conflict', observation);
+      if (observation.state === 'NO_CHANGE') return receipt('no-change', observation);
+    } catch (error) { return receipt('no-write-conflict', { error: error instanceof Error ? error.message : String(error) }); }
+    try {
+      for (const target of manifest.targets) {
+        if (target.before === target.after) continue;
+        const path = await resolveArtifactPath(manifest.root, target.path, true);
+        const bytes = await verifyArtifact(plan.directory, target.staged);
+        await io.write(path, bytes.toString('utf8'));
+      }
+      const observation = await reconcilePreparedBatch(plan);
+      if (observation.state !== 'TARGET_STATE_MATCHES') throw new Error(`publication readback: ${observation.state}`);
+      const issues = checkCorpus(manifest.root);
+      if (issues.length) throw new Error(`published corpus validation: ${JSON.stringify(issues)}`);
+      return receipt('applied', { observation, corpusIssues: issues });
+    } catch (error) {
+      fence();
+      return receipt('partial-or-unknown', { error: error instanceof Error ? error.message : String(error), observation: await reconcilePreparedBatch(plan), retry: 'fenced' });
+    }
+  }, plan.manifest);
 }
 
 function cliError(error: unknown): { code: string; message: string; details: Record<string, unknown> } {

@@ -54,7 +54,7 @@ const instructionSchemaName = 'vpinstruction.v1.schema.json';
 const catalogSchemaName = 'vpcatalog.v1.schema.json';
 type CanonicalMethodologyGroup = { id: string; alternatives: string[]; user_decision: boolean };
 type CanonicalMethodologyProfile = { schema: 'VPMethodologyProfile/v1'; groups: { id: string; user_decision: boolean; alternatives: { id: string }[] }[] };
-let canonicalMethodologyGroups: CanonicalMethodologyGroup[] | undefined;
+let canonicalMethodologyCache: { fingerprint: string; groups: CanonicalMethodologyGroup[] } | undefined;
 
 function compareNames(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
@@ -79,15 +79,19 @@ export async function readSchema(directory: string, name: string): Promise<Schem
 }
 
 function loadCanonicalMethodologyGroups(): CanonicalMethodologyGroup[] {
-  if (canonicalMethodologyGroups !== undefined) return canonicalMethodologyGroups;
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
   const profilePath = join(packageRoot, 'config', 'methodology-profile.json');
   const schemaPath = join(packageRoot, 'config', 'vpmethodologyprofile.v1.schema.json');
+  let profileBytes: Buffer;
+  let schemaBytes: Buffer;
   let profileText: string;
   let schemaText: string;
   try {
-    profileText = readFileSync(profilePath, 'utf8');
-    schemaText = readFileSync(schemaPath, 'utf8');
+    profileBytes = readFileSync(profilePath);
+    schemaBytes = readFileSync(schemaPath);
+    const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+    profileText = decoder.decode(profileBytes);
+    schemaText = decoder.decode(schemaBytes);
   } catch (error) {
     throw invalid('cannot read canonical methodology profile or schema', {
       profile_path: profilePath,
@@ -95,6 +99,10 @@ function loadCanonicalMethodologyGroups(): CanonicalMethodologyGroup[] {
       error: error instanceof Error ? error.message : String(error),
     });
   }
+  const fingerprint = createHash('sha256')
+    .update(String(profileBytes.length)).update(':').update(profileBytes)
+    .update(String(schemaBytes.length)).update(':').update(schemaBytes).digest('hex');
+  if (canonicalMethodologyCache?.fingerprint === fingerprint) return canonicalMethodologyCache.groups;
   let profileValue: unknown;
   let schema: Schema;
   try {
@@ -132,7 +140,7 @@ function loadCanonicalMethodologyGroups(): CanonicalMethodologyGroup[] {
     }
     return { id: group.id, alternatives, user_decision: group.user_decision };
   });
-  canonicalMethodologyGroups = groups;
+  canonicalMethodologyCache = { fingerprint, groups };
   return groups;
 }
 

@@ -1,5 +1,7 @@
+import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
-import { appendFile, lstat, readFile, stat } from 'node:fs/promises';
+import { lstat, open, readFile, stat, unlink } from 'node:fs/promises';
+import type { FileHandle } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
 
 type JsonPrimitive = null | boolean | number | string;
@@ -32,6 +34,26 @@ type StoredEvent = {
   candidate_fingerprint: string | null;
   event: FindingEvent;
 };
+type AppendResult = {
+  operation: 'append';
+  outcome: 'appended' | 'replayed';
+  event_id: string;
+  candidate_fingerprint: string | null;
+};
+type CandidateReason = 'event_id' | 'finding_id' | 'candidate_fingerprint' | 'context' | 'provenance';
+type CandidateMatch = {
+  event_id: string;
+  candidate_fingerprint: string;
+  event: ObservationEvent;
+  reasons: CandidateReason[];
+};
+type CandidateQueryResult = {
+  event_id: string;
+  finding_id: string;
+  candidate_fingerprint: string;
+  candidates: CandidateMatch[];
+};
+type AppendTarget = { handle: FileHandle; created: boolean; originalSize: number };
 
 function fail(code: string): never {
   throw new Error(code);
@@ -227,7 +249,10 @@ async function readStore(storePath: string): Promise<StoredEvent[]> {
     const row = storedEvent(value);
     if (eventIds.has(row.event_id)) return fail('FINDING_STORE_INVALID');
     eventIds.add(row.event_id);
-    if (row.event.kind === 'observation') observationIds.add(row.event.finding_id);
+    if (row.event.kind === 'observation') {
+      if (observationIds.has(row.event.finding_id)) return fail('FINDING_STORE_INVALID');
+      observationIds.add(row.event.finding_id);
+    }
     if (row.event.kind === 'merge'
       && (!observationIds.has(row.event.canonical_finding_id) || !observationIds.has(row.event.duplicate_finding_id))) {
       return fail('FINDING_STORE_INVALID');
@@ -237,13 +262,16 @@ async function readStore(storePath: string): Promise<StoredEvent[]> {
   return rows;
 }
 
-export async function appendFindingEvent(storePath: string, input: unknown): Promise<void> {
+export async function appendFindingEvent(storePath: string, input: unknown): Promise<AppendResult> {
   const validated = validateEvent(input);
   const event = validateEvent(JSON.parse(JSON.stringify(validated)) as unknown);
   const path = await validateStorePath(storePath);
   const rows = await readStore(path);
   const id = eventId(event);
-  if (rows.some((row) => row.event_id === id)) return;
+  const fingerprint = candidateFingerprint(event);
+  if (rows.some((row) => row.event_id === id)) {
+    return { operation: 'append', outcome: 'replayed', event_id: id, candidate_fingerprint: fingerprint };
+  }
 
   if (event.kind === 'observation') {
     const prior = rows.find((row) => row.event.kind === 'observation' && row.event.finding_id === event.finding_id);
@@ -256,5 +284,110 @@ export async function appendFindingEvent(storePath: string, input: unknown): Pro
   }
 
   const row: StoredEvent = { event_id: id, candidate_fingerprint: candidateFingerprint(event), event };
-  await appendFile(path, `${JSON.stringify(row)}\n`, 'utf8');
+  const data = Buffer.from(`${JSON.stringify(row)}\n`, 'utf8');
+  const target = await openAppendTarget(path);
+  try {
+    let offset = 0;
+    while (offset < data.length) {
+      const result = await target.handle.write(data, offset, data.length - offset, target.originalSize + offset);
+      if (result.bytesWritten <= 0) return fail('FINDING_OPERATION_FAILED');
+      offset += result.bytesWritten;
+    }
+    await target.handle.close();
+  } catch {
+    if (!await rollbackAppend(path, target)) return fail('FINDING_STORE_RECOVERY_REQUIRED');
+    return fail('FINDING_OPERATION_FAILED');
+  }
+  return { operation: 'append', outcome: 'appended', event_id: id, candidate_fingerprint: fingerprint };
+}
+
+async function openAppendTarget(path: string): Promise<AppendTarget> {
+  let handle: FileHandle;
+  let created = false;
+  try {
+    handle = await open(path, 'r+');
+  } catch (error) {
+    if (!errnoIs(error, 'ENOENT')) return fail('FINDING_OPERATION_FAILED');
+    try {
+      handle = await open(path, 'wx');
+      created = true;
+    } catch {
+      return fail('FINDING_OPERATION_FAILED');
+    }
+  }
+  if (created) return { handle, created, originalSize: 0 };
+
+  const metadata = await handle.stat().catch(() => undefined);
+  if (metadata === undefined || !metadata.isFile()) {
+    await handle.close().catch(() => undefined);
+    return fail('FINDING_OPERATION_FAILED');
+  }
+  return { handle, created, originalSize: metadata.size };
+}
+
+async function rollbackAppend(path: string, target: AppendTarget): Promise<boolean> {
+  let recovered = true;
+  let createdIdentity: { dev: number; ino: number } | undefined;
+  if (target.created) {
+    const metadata = await target.handle.stat().catch(() => undefined);
+    if (metadata === undefined) recovered = false;
+    else createdIdentity = { dev: metadata.dev, ino: metadata.ino };
+  }
+  try {
+    await target.handle.truncate(target.originalSize);
+  } catch {
+    recovered = false;
+  }
+  try {
+    await target.handle.close();
+  } catch {
+    recovered = false;
+  }
+  if (!target.created) return recovered;
+  if (!recovered || createdIdentity === undefined) return false;
+
+  try {
+    const pathMetadata = await lstat(path);
+    if (!pathMetadata.isFile() || pathMetadata.isSymbolicLink()
+      || pathMetadata.dev !== createdIdentity.dev || pathMetadata.ino !== createdIdentity.ino) return false;
+    await unlink(path);
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+export async function findFindingCandidates(storePath: string, input: unknown): Promise<CandidateQueryResult> {
+  const validated = validateEvent(input);
+  if (validated.kind !== 'observation') return fail('FINDING_CANDIDATE_QUERY_INVALID');
+  const event = validateEvent(JSON.parse(JSON.stringify(validated)) as unknown);
+  if (event.kind !== 'observation') return fail('FINDING_CANDIDATE_QUERY_INVALID');
+  const path = await validateStorePath(storePath);
+  const rows = await readStore(path);
+  const id = eventId(event);
+  const fingerprint = candidateFingerprint(event);
+  if (fingerprint === null) return fail('FINDING_CANDIDATE_QUERY_INVALID');
+  const context = canonicalJson(event.context);
+  const provenance = canonicalJson(event.provenance);
+  const candidates: CandidateMatch[] = [];
+
+  for (const row of rows) {
+    if (row.event.kind !== 'observation') continue;
+    const reasons: CandidateReason[] = [];
+    if (row.event_id === id) reasons.push('event_id');
+    if (row.event.finding_id === event.finding_id) reasons.push('finding_id');
+    if (row.candidate_fingerprint === fingerprint) reasons.push('candidate_fingerprint');
+    if (canonicalJson(row.event.context) === context) reasons.push('context');
+    if (canonicalJson(row.event.provenance) === provenance) reasons.push('provenance');
+    if (reasons.length > 0 && row.candidate_fingerprint !== null) {
+      candidates.push({
+        event_id: row.event_id,
+        candidate_fingerprint: row.candidate_fingerprint,
+        event: row.event,
+        reasons,
+      });
+    }
+  }
+
+  return { event_id: id, finding_id: event.finding_id, candidate_fingerprint: fingerprint, candidates };
 }

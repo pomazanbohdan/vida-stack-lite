@@ -1,4 +1,5 @@
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, spyOn, test } from 'bun:test';
+import * as nativeFiles from 'node:fs';
 import { createHash } from 'node:crypto';
 import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -12,6 +13,7 @@ import {
   catalogTags,
   loadCatalog,
   loadInstructions,
+  readSchema,
 } from '../skills/vp-mode/scripts/catalog.ts';
 import type { Catalog, ComposeQuery, Instruction, SearchQuery } from '../skills/vp-mode/scripts/catalog.ts';
 import { validateAgainstSchema } from '../skills/vp-mode/scripts/schema.ts';
@@ -1020,4 +1022,103 @@ describe('catalogCompose', () => {
       capability_tags: ['test-design', 'alternate-workflow'], profile: { ...profile, groups: {} },
     })).toThrow(expect.objectContaining({ code: 'CATALOG_REQUIRED_CONFLICT' }));
   });
+});
+
+test.each(['profile-read', 'profile-json', 'schema-json', 'profile-shape', 'duplicate-groups', 'duplicate-alternatives', 'shared-alternative'])('a warmed canonical policy cache rejects changed invalid %s inputs', async kind => {
+  const { catalog, instructions } = await fixture();
+  expect(catalogCompose(catalog, instructions, { instruction_ids: ['alpha'] }).instructions.some(item => item.instruction_id === 'alpha')).toBe(true);
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const profilePath = join(packageRoot, 'config/methodology-profile.json');
+  const schemaPath = join(packageRoot, 'config/vpmethodologyprofile.v1.schema.json');
+  const realRead = nativeFiles.readFileSync;
+  const profile = await readCanonicalMethodologyProfile();
+  const first = profile.groups[0];
+  const second = profile.groups[1];
+  const alternative = first?.alternatives[0];
+  if (!first || !second || !alternative) throw new Error('Canonical fixture lacks distinct groups/alternatives');
+  let replacement = '{';
+  if (kind === 'profile-shape') replacement = '{}';
+  if (kind === 'duplicate-groups') { profile.groups.push(structuredClone(first)); replacement = JSON.stringify(profile); }
+  if (kind === 'duplicate-alternatives') { first.alternatives.push(structuredClone(alternative)); replacement = JSON.stringify(profile); }
+  if (kind === 'shared-alternative') { second.alternatives.push(structuredClone(alternative)); replacement = JSON.stringify(profile); }
+  const expected: Record<string, string> = { 'profile-read': 'cannot read canonical', 'profile-json': 'canonical methodology profile is malformed', 'schema-json': 'canonical methodology profile schema is malformed', 'profile-shape': 'canonical methodology profile schema validation failed', 'duplicate-groups': 'duplicate groups', 'duplicate-alternatives': 'duplicate alternatives', 'shared-alternative': 'belongs to multiple groups' };
+  const target = kind === 'schema-json' ? schemaPath : profilePath;
+  let reads = 0;
+  const io = spyOn(nativeFiles, 'readFileSync').mockImplementation(new Proxy(realRead, { apply(read, receiver: unknown, args: unknown[]) {
+    if (String(args[0]) === target) {
+      reads++;
+      if (kind === 'profile-read') throw Object.assign(new Error('fixture policy read denied'), { code: 'EACCES' });
+      return args[1] === 'utf8' ? replacement : Buffer.from(replacement);
+    }
+    return Reflect.apply(read, receiver, args);
+  } }));
+  try {
+    expect(() => catalogCompose(catalog, instructions, { instruction_ids: ['alpha'] })).toThrow(expected[kind]);
+    expect(reads).toBeGreaterThan(0);
+  } finally { io.mockRestore(); }
+  expect(catalogCompose(catalog, instructions, { instruction_ids: ['alpha'] }).instructions.some(item => item.instruction_id === 'alpha')).toBe(true);
+});
+
+test('schema and payload intake distinguish unreadable files from invalid data', async () => {
+  const copy = await copyFixture();
+  await expect(readSchema(copy.dir, 'missing.json')).rejects.toMatchObject({ code: 'CATALOG_INVALID', message: 'cannot read missing.json' });
+  await writeFile(join(copy.dir, 'config/broken.json'), '{');
+  await expect(readSchema(copy.dir, 'broken.json')).rejects.toMatchObject({ code: 'CATALOG_INVALID', message: 'broken.json is malformed JSON' });
+  await expect(loadCatalog(join(copy.dir, 'missing.json'))).rejects.toMatchObject({ code: 'CATALOG_INVALID', message: 'cannot read catalog manifest' });
+  const catalog = await loadCatalog(copy.catalogPath);
+  const entry = catalog.instructions[0];
+  if (entry === undefined) throw new Error('Missing fixture entry');
+  await rm(join(copy.dir, entry.path));
+  await expect(loadInstructions(catalog, copy.dir)).rejects.toMatchObject({ code: 'CATALOG_INVALID', details: { instruction_id: entry.instruction_id, path: entry.path } });
+});
+
+test.each(['resolved', 'missing-default-choice'])('canonical conflicting required alternatives fail closed with %s profile state', async mode => {
+  const { catalog, instructions } = await fixture();
+  const canonical = await readCanonicalMethodologyProfile();
+  const group = canonical.groups.find(item => item.alternatives.length >= 2);
+  const first = group?.alternatives[0]?.id;
+  const second = group?.alternatives[1]?.id;
+  const alpha = instructions.get('alpha');
+  const beta = instructions.get('beta');
+  if (!group || !first || !second || !alpha || !beta) throw new Error('Missing canonical conflict fixture');
+  const alternatives = group.alternatives.map(item => item.id);
+  const records = new Map(instructions);
+  records.set('alpha', { ...alpha, pattern_tags: [first], compatibility: { requires: [], excludes: [] } });
+  records.set('beta', { ...beta, pattern_tags: [second], compatibility: { requires: [], excludes: [] } });
+  for (const tag of alternatives) catalog.tag_dictionary.pattern[tag] = 'Synthetic policy conflict fixture.';
+  if (mode === 'resolved') {
+    const gamma = instructions.get('gamma');
+    if (gamma === undefined) throw new Error('Missing active replacement fixture');
+    catalog.tag_dictionary.pattern['synthetic-root-policy'] = 'Synthetic root outside the conflicting group.';
+    records.set('alpha', { ...alpha, pattern_tags: ['synthetic-root-policy'], compatibility: { requires: ['beta'], excludes: [] } });
+    records.set('gamma', { ...gamma, status: 'active', pattern_tags: [first, second], compatibility: { requires: [], excludes: [] } });
+  }
+  const profile = { schema: 'VPEffectiveProfile/v1' as const, groups: mode === 'resolved' ? { [group.id]: { active: first, alternatives } } : {}, unresolved_groups: {} };
+  const realRead = nativeFiles.readFileSync;
+  const profilePath = resolve(dirname(fileURLToPath(import.meta.url)), '../config/methodology-profile.json');
+  const fixturePolicy = { ...canonical, groups: canonical.groups.map(item => item.id === group.id ? { ...item, user_decision: false, default: first } : item) };
+  const io = spyOn(nativeFiles, 'readFileSync').mockImplementation(new Proxy(realRead, { apply(read, receiver: unknown, args: unknown[]) {
+    if (mode === 'missing-default-choice' && String(args[0]) === profilePath) return args[1] === 'utf8' ? JSON.stringify(fixturePolicy) : Buffer.from(JSON.stringify(fixturePolicy));
+    return Reflect.apply(read, receiver, args);
+  } }));
+  try {
+    expect(() => catalogCompose(catalog, records, { required_ids: mode === 'resolved' ? ['alpha'] : ['alpha', 'beta'], profile })).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining(mode === 'resolved' ? { selected_alternatives: expect.arrayContaining(alternatives) } : { profile_refresh_required: true }),
+    }));
+  } finally { io.mockRestore(); }
+});
+
+test.each(['methodology-profile.json', 'vpmethodologyprofile.v1.schema.json'])('ill-formed UTF-8 canonical %s bytes fail before policy reuse', async name => {
+  const { catalog, instructions } = await fixture();
+  expect(catalogCompose(catalog, instructions, { instruction_ids: ['alpha'] }).instructions).not.toHaveLength(0);
+  const path = resolve(dirname(fileURLToPath(import.meta.url)), '../config', name);
+  const realRead = nativeFiles.readFileSync;
+  const malformed = Buffer.concat([Buffer.from([0xff]), realRead(path)]);
+  const io = spyOn(nativeFiles, 'readFileSync').mockImplementation(new Proxy(realRead, { apply(read, receiver: unknown, args: unknown[]) {
+    if (String(args[0]) === path) return args[1] === 'utf8' ? malformed.toString('utf8') : malformed;
+    return Reflect.apply(read, receiver, args);
+  } }));
+  try { expect(() => catalogCompose(catalog, instructions, { instruction_ids: ['alpha'] })).toThrow('cannot read canonical methodology profile or schema'); }
+  finally { io.mockRestore(); }
 });

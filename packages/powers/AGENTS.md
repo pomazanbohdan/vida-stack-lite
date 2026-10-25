@@ -45,7 +45,7 @@ Repository rules (ownership, delegation, documentation policy, Git) are in
 
 ## 3. Tool chain
 
-- **Bun 1.4.3 — the project runtime.** `node`/`npm`/`npx` are not used.
+- **Bun 1.4.4 — the product runtime.** `node`/`npm`/`npx` are not used.
   On this machine Bun is **not on PATH**; full path:
   `C:\Users\pomaz\AppData\Local\Microsoft\WinGet\Packages\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\bun-windows-x64\bun.exe`
 - **No own infrastructure in the plugin.** There is no own runtime,
@@ -69,8 +69,9 @@ Repository rules (ownership, delegation, documentation policy, Git) are in
   parsed.
 - **Tests — under the project runtime** (`bun test`); this is the repository test runner,
   not the plugin's own infrastructure.
-- **Bun version pin** — `packages/powers/.bun-version` (the value `1.4.3`, as in
-  `packages/agent/.bun-version`).
+- **Bun version pin** — `packages/powers/.bun-version` (the value `1.4.4`).
+  The Agent package retains its independently selected pin. Historical receipts
+  retain their recorded runtime; active frozen producers keep their exact executable.
 - **Package conventions** mirror `packages/agent`: `tsconfig.json` with
   `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
   `verbatimModuleSyntax`, `types: ["node", "bun"]`; `bunfig.toml` with
@@ -94,6 +95,9 @@ bun run --cwd packages/powers test
 # Product type checking (bun check; tsconfig with erasableSyntaxOnly)
 bun run --cwd packages/powers typecheck
 
+# Read-only formatting check for development metadata (Bun 1.4.4 built-in)
+bun run --cwd packages/powers format:check
+
 # Repository lint gate that also covers the VP code
 bun run --cwd packages/agent lint:knip:pinned
 
@@ -106,6 +110,14 @@ bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fideli
 
 > Invocation form: `bun run --cwd <dir> <script>`. The variant `bun --cwd <dir> run <script>`
 > prints usage and does not execute the script.
+
+`typecheck` uses `bun check --no-script` so the built-in checker cannot be
+shadowed by a package `check` script. `format:check` uses the built-in formatter
+on `package.json` and `bunfig.toml` only. Do not run automatic formatting on
+`instructions/`, `catalog.json`, `corpus-map.json`, pinned donors, or retained
+evidence: their exact bytes and digests belong to the corpus and receipt owners.
+The 1.4.4 coverage fixes can change counters relative to 1.4.3. Keep the configured
+1.0 thresholds and report actual new counters; do not relabel historical receipts.
 
 **Installing dependencies.** VP has its own install directory (`packages/powers/bun.lock`,
 `packages/powers/node_modules`) — like `packages/agent`; in VP there are only dev types
@@ -218,7 +230,7 @@ for a resolved session bundle.
 | D11 | Product language: documentation in English, instructions from the donor originals |
 | D12 | Opposing instructions are declared, not narrowed away |
 | D13 | One canonical severity scale: Critical / Important / Minor |
-| D14 | One bounded engineering/UX instruction pack; unresearched domains stay out of scope |
+| D14 | One bounded engineering/UX, product and business instruction pack; individual source gates remain mandatory |
 | D15 | Selected typed resources use exact-ID retrieval through the same catalog in a later phase |
 
 ## 8. Known risks and GAPs

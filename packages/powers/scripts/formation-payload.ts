@@ -45,6 +45,18 @@ function pathIdentity(path: string): string {
   return path.normalize('NFC').toUpperCase().toLowerCase();
 }
 
+export function encodeFormationPathLength(byteLength: number, path: string): Buffer {
+  if (!Number.isInteger(byteLength) || byteLength < 0) {
+    throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Native formation source path byte length is invalid: ${path}.`);
+  }
+  if (byteLength > 0xffff_ffff) {
+    throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Native formation source path is too long: ${path}.`);
+  }
+  const length = Buffer.alloc(4);
+  length.writeUInt32BE(byteLength);
+  return length;
+}
+
 export async function planFormationPayload(
   projectRoot: string,
   excludedOutputPaths: readonly string[],
@@ -144,11 +156,7 @@ export async function planFormationPayload(
   const receiptFiles: { path: string; bytes: number; sha256: string }[] = [];
   for (const [path, bytes] of sortedEntries) {
     const pathBytes = Buffer.from(path, 'utf8');
-    if (pathBytes.length > 0xffff_ffff) {
-      throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Native formation source path is too long: ${path}.`);
-    }
-    const pathLength = Buffer.alloc(4);
-    pathLength.writeUInt32BE(pathBytes.length);
+    const pathLength = encodeFormationPathLength(pathBytes.length, path);
     const contentLength = Buffer.alloc(8);
     contentLength.writeBigUInt64BE(BigInt(bytes.length));
     hash.update(pathLength).update(pathBytes).update(contentLength).update(bytes);

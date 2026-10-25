@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { loadCatalog, loadInstructions } from '../skills/vp-mode/scripts/catalog.ts';
 import { CatalogError } from '../skills/vp-mode/scripts/catalog.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
+import * as frontmatterModule from '../skills/vp-mode/scripts/frontmatter.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 import { convert, convertMany, convertMapRecord, parseInstructionSpec, renderInstruction, runConvertCli, type InstructionSpec } from '../scripts/convert.ts';
 
@@ -70,15 +71,10 @@ async function writeSpec(root: string, value: unknown): Promise<string> {
 }
 
 async function runCliInProcess(args: string[], cliPath: string): Promise<{ stdout: string; stderr: string; exitCode: number | undefined }> {
-  const originalCode = process.exitCode;
   let stdout = '';
   let stderr = '';
-  try {
-    const code = await runConvertCli([process.execPath, cliPath, ...args], { stdout: (text) => { stdout += text; }, stderr: (text) => { stderr += text; } });
-    return { stdout, stderr, exitCode: code };
-  } finally {
-    process.exitCode = originalCode;
-  }
+  const code = await runConvertCli([process.execPath, cliPath, ...args], { stdout: (text) => { stdout += text; }, stderr: (text) => { stderr += text; } }, () => {});
+  return { stdout, stderr, exitCode: code };
 }
 
 describe('parseInstructionSpec', () => {
@@ -538,4 +534,31 @@ describe('convertMany and CLI', () => {
     expect(ioError.exitCode).toBe(1);
     expect(JSON.parse(ioError.stderr)).toMatchObject({ code: 'CATALOG_INVALID', details: {} });
   });
+});
+
+test('render parsing failures are structured and leave all canonical preimages intact', async () => {
+  const root = await makeRoot();
+  const specPath = await writeSpec(root, validSpec());
+  const before = await readFile(join(root, 'catalog.json'), 'utf8');
+  const failure = Object.assign(new Error('fixture renderer failure'), { line: 17 });
+  const parser = spyOn(frontmatterModule, 'parseFrontmatter').mockImplementation(() => { throw failure; });
+  try {
+    await expect(convert(specPath, { root })).rejects.toMatchObject({ code: 'CATALOG_INVALID', details: { field: 'frontmatter', line: 17, error: 'fixture renderer failure' } });
+    expect(parser).toHaveBeenCalledWith(renderInstruction(validSpec()));
+  } finally { parser.mockRestore(); }
+  expect(await readFile(join(root, 'catalog.json'), 'utf8')).toBe(before);
+  expect((await readdir(root)).sort()).toEqual(['catalog.json', 'config', 'spec.json']);
+});
+
+test('the default native CLI exit sink records successful execution', async () => {
+  const root = await makeRoot();
+  const path = await writeSpec(root, validSpec());
+  const previous = process.exitCode;
+  let stdout = '';
+  try {
+    const code = await runConvertCli([process.execPath, join(packageRoot, 'scripts/convert.ts'), '--spec', path, '--root', root], { stdout: text => { stdout += text; }, stderr: text => { throw new Error(text); } });
+    expect(code).toBe(0);
+    expect(process.exitCode).toBe(0);
+    expect(JSON.parse(stdout)).toHaveLength(1);
+  } finally { process.exitCode = previous ?? 0; }
 });

@@ -1,7 +1,9 @@
 import { readFile } from 'node:fs/promises';
+import { lstat } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { appendFindingEvent, findFindingCandidates } from './findings.ts';
 import {
   CatalogError,
   catalogCompose,
@@ -17,15 +19,45 @@ import type { ComposeQuery, SearchQuery } from './catalog.ts';
 import { validateAgainstSchema } from './schema.ts';
 
 type Command = 'tags' | 'search' | 'get' | 'compose' | 'evaluate';
-type ParsedArgs = { command: string; flags: Map<string, string[]> };
+type FindingsOperation = 'append' | 'candidates';
+type ParsedArgs = { command: Command; subcommand?: never; flags: Map<string, string[]> }
+  | { command: 'findings'; subcommand: FindingsOperation; flags: Map<string, string[]> };
 type CliOutput = { stdout: (text: string) => void; stderr: (text: string) => void };
+type FindingsErrorCode =
+  | 'FINDING_INPUT_JSON_INVALID'
+  | 'FINDING_INPUT_PATH_INVALID'
+  | 'FINDING_INPUT_READ_FAILED'
+  | 'FINDING_INVALID'
+  | 'FINDING_CANDIDATE_QUERY_INVALID'
+  | 'FINDING_STORE_PATH_INVALID'
+  | 'FINDING_STORE_INVALID'
+  | 'FINDING_ID_CONFLICT'
+  | 'FINDING_MERGE_TARGET_MISSING'
+  | 'FINDING_STORE_RECOVERY_REQUIRED'
+  | 'FINDING_OPERATION_FAILED';
+
+class FindingsCliError extends Error {
+  readonly code: FindingsErrorCode;
+
+  constructor(code: FindingsErrorCode) {
+    super(code === 'FINDING_OPERATION_FAILED' ? 'findings operation failed' : code);
+    this.name = 'FindingsCliError';
+    this.code = code;
+  }
+}
+
+const findingsErrorCodes = new Set<FindingsErrorCode>([
+  'FINDING_INPUT_JSON_INVALID', 'FINDING_INPUT_PATH_INVALID', 'FINDING_INPUT_READ_FAILED',
+  'FINDING_INVALID', 'FINDING_CANDIDATE_QUERY_INVALID', 'FINDING_STORE_PATH_INVALID',
+  'FINDING_STORE_INVALID', 'FINDING_ID_CONFLICT', 'FINDING_MERGE_TARGET_MISSING', 'FINDING_STORE_RECOVERY_REQUIRED',
+]);
 
 const knownFlags = new Set([
   '--catalog', '--capability', '--pattern', '--id', '--required', '--role', '--roles', '--product',
-  '--condition', '--profile', '--operation', '--context', '--tag', '--candidate', '--json',
+  '--condition', '--profile', '--operation', '--context', '--tag', '--candidate', '--store', '--event-file', '--json',
 ]);
 const repeatedFlags = new Set(['--tag', '--candidate']);
-const usage = 'usage: bun catalog-cli.ts <tags|search|get|compose|evaluate> [flags]; --roles <r1,r2> filters search/compose; --role <r> sets compose execution context';
+const usage = 'usage: bun catalog-cli.ts <tags|search|get|compose|evaluate> [flags]; --roles <r1,r2> filters search/compose; --role <r> sets compose execution context; findings <append|candidates> --store <absolute-path> --event-file <absolute-path>';
 
 function invalid(message: string, details: Record<string, unknown> = {}): CatalogError {
   return new CatalogError('CATALOG_INVALID', message, details);
@@ -52,11 +84,21 @@ export function defaultCatalogPath(scriptUrl: string): string {
 function parseArgs(argv: string[]): ParsedArgs {
   const command = argv[0] ?? '';
   if (command === '') throw invalid('command is required');
+  const findingsCommand = command === 'findings';
+  const hasFindingsSubcommand = command === 'findings' && argv[1] !== undefined && !argv[1].startsWith('--');
+  const subcommand = hasFindingsSubcommand ? argv[1] : undefined;
+  const firstFlagIndex = hasFindingsSubcommand ? 2 : 1;
   const flags = new Map<string, string[]>();
-  for (let index = 1; index < argv.length; index += 1) {
+  for (let index = firstFlagIndex; index < argv.length; index += 1) {
     const flag = argv[index];
-    if (flag === undefined || !flag.startsWith('--')) throw invalid(`unexpected argument ${flag ?? ''}`, { argument: flag });
-    if (!knownFlags.has(flag)) throw invalid(`unknown flag ${flag}`, { flag });
+    if (flag === undefined || !flag.startsWith('--')) {
+      if (findingsCommand) throw invalid('unexpected findings argument');
+      throw invalid(`unexpected argument ${flag ?? ''}`, { argument: flag });
+    }
+    if (!knownFlags.has(flag)) {
+      if (findingsCommand) throw invalid('unknown findings flag');
+      throw invalid(`unknown flag ${flag}`, { flag });
+    }
     const values = flags.get(flag) ?? [];
     if (!repeatedFlags.has(flag) && flags.has(flag)) throw invalid(`flag ${flag} may only be supplied once`, { flag });
     if (flag === '--json') {
@@ -69,12 +111,20 @@ function parseArgs(argv: string[]): ParsedArgs {
     values.push(value);
     flags.set(flag, values);
   }
-  return { command, flags };
+  if (command === 'findings') {
+    if (subcommand !== 'append' && subcommand !== 'candidates') throw invalid('unknown findings operation', { command, usage });
+    return { command, subcommand, flags };
+  }
+  if (command === 'tags' || command === 'search' || command === 'get' || command === 'compose' || command === 'evaluate') return { command, flags };
+  throw invalid(`unknown command ${command}`, { command, usage });
 }
 
-function allowedFlags(command: string): Set<string> {
+function allowedFlags(command: ParsedArgs['command']): Set<string> {
   const common = ['--catalog', '--json'];
-  const commandFlags: Record<string, string[]> = {
+  if (command === 'findings') {
+    return new Set(['--store', '--event-file']);
+  }
+  const commandFlags: Record<Command, string[]> = {
     tags: [],
     search: ['--capability', '--pattern', '--id', '--roles', '--product', '--condition'],
     get: ['--id'],
@@ -82,13 +132,61 @@ function allowedFlags(command: string): Set<string> {
     evaluate: ['--operation', '--context', '--product', '--tag', '--candidate'],
   };
   const specific = commandFlags[command];
-  if (specific === undefined) throw invalid(`unknown command ${command}`, { command, usage });
   return new Set([...common, ...specific]);
 }
 
-function validateFlags(command: string, flags: Map<string, string[]>): void {
+function validateFlags(command: ParsedArgs['command'], flags: Map<string, string[]>): void {
   const allowed = allowedFlags(command);
   for (const flag of flags.keys()) if (!allowed.has(flag)) throw invalid(`flag ${flag} is not valid for ${command}`, { command, flag });
+}
+
+function errnoIs(error: unknown, code: string): boolean {
+  return error !== null && typeof error === 'object' && 'code' in error && error.code === code;
+}
+
+async function eventFromFile(path: string): Promise<unknown> {
+  const separators = process.platform === 'win32' ? /[\\/]+/ : /\/+/;
+  if (!isAbsolute(path) || path.split(separators).some((part) => part === '.' || part === '..')) {
+    throw new FindingsCliError('FINDING_INPUT_PATH_INVALID');
+  }
+  let metadata: Awaited<ReturnType<typeof lstat>>;
+  try {
+    metadata = await lstat(path);
+  } catch (error) {
+    if (errnoIs(error, 'ENOTDIR')) throw new FindingsCliError('FINDING_INPUT_PATH_INVALID');
+    throw new FindingsCliError('FINDING_INPUT_READ_FAILED');
+  }
+  if (!metadata.isFile() || metadata.isSymbolicLink()) throw new FindingsCliError('FINDING_INPUT_PATH_INVALID');
+
+  let text: string;
+  try {
+    text = await readFile(path, 'utf8');
+  } catch {
+    throw new FindingsCliError('FINDING_INPUT_READ_FAILED');
+  }
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new FindingsCliError('FINDING_INPUT_JSON_INVALID');
+  }
+}
+
+async function dispatchFindings(
+  subcommand: FindingsOperation,
+  flags: Map<string, string[]>,
+): Promise<unknown> {
+  try {
+    const storePath = required(flags, '--store');
+    const input = await eventFromFile(required(flags, '--event-file'));
+    if (subcommand === 'append') return await appendFindingEvent(storePath, input);
+    return await findFindingCandidates(storePath, input);
+  } catch (error) {
+    if (error instanceof CatalogError || error instanceof FindingsCliError) throw error;
+    if (error instanceof Error && findingsErrorCodes.has(error.message as FindingsErrorCode)) {
+      throw new FindingsCliError(error.message as FindingsErrorCode);
+    }
+    throw new FindingsCliError('FINDING_OPERATION_FAILED');
+  }
 }
 
 function one(flags: Map<string, string[]>, name: string): string | undefined {
@@ -190,13 +288,20 @@ async function main(argv: string[], output: CliOutput): Promise<number> {
   try {
     const parsed = parseArgs(argv);
     validateFlags(parsed.command, parsed.flags);
-    const command = parsed.command as Command;
+    if (parsed.command === 'findings') {
+      const result = await dispatchFindings(parsed.subcommand, parsed.flags);
+      output.stdout(`${JSON.stringify(result)}\n`);
+      return 0;
+    }
+    const command = parsed.command;
     const catalogPath = one(parsed.flags, '--catalog') ?? defaultCatalogPath(import.meta.url);
     const result = await dispatch(command, parsed.flags, catalogPath);
     output.stdout(`${JSON.stringify(result)}\n`);
     return 0;
   } catch (error) {
-    const payload = error instanceof CatalogError
+    const payload = error instanceof FindingsCliError
+      ? { code: error.code, message: error.message, details: {} }
+      : error instanceof CatalogError
       ? { code: error.code, message: error.message, details: error.details }
       : { code: 'CATALOG_INVALID', message: error instanceof Error ? error.message : String(error), details: {} };
     output.stderr(`${JSON.stringify(payload)}\n`);

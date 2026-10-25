@@ -1,7 +1,9 @@
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, mock, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { cp, copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { cp, copyFile, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
+import * as fsPromises from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -18,6 +20,7 @@ const fixtureDir = join(here, 'fixtures/catalog');
 const cliPath = resolve(here, '../skills/vp-mode/scripts/catalog-cli.ts');
 const bunPath = process.execPath;
 const profileDirs: string[] = [];
+const originalFsPromises = { ...fsPromises };
 
 afterAll(async () => {
   await Promise.all(profileDirs.map((directory) => rm(directory, { recursive: true, force: true })));
@@ -88,11 +91,61 @@ async function catalogWithPolicyAlternatives(): Promise<{ catalogPath: string; g
   return { catalogPath, group: group.id, alternatives: [first.id, second.id] };
 }
 
-function runCli(args: string[]): ReturnType<typeof spawnSync> {
-  return spawnSync(bunPath, [cliPath, ...args], {
-    cwd: process.env.TMP ?? process.env.TEMP ?? '.',
+function runCli(
+  args: string[],
+  cwd = process.env.TMP ?? process.env.TEMP ?? '.',
+  scriptPath = cliPath,
+): ReturnType<typeof spawnSync> {
+  return spawnSync(bunPath, [scriptPath, ...args], {
+    cwd,
     encoding: 'utf8',
   });
+}
+
+function observationEvent(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    kind: 'observation',
+    finding_id: 'cli-finding-1',
+    problem: 'CLI findings test input',
+    evidence: ['test-only evidence'],
+    source: { origin: 'observed', actor: 'cli-test', reference: 'process-test' },
+    product: 'vida-powers',
+    work_scope: 'VP-6 findings caller',
+    blocking_impact: 'non-blocking test input',
+    context: {},
+    provenance: ['tests/catalog-cli.test.ts'],
+    ...overrides,
+  };
+}
+
+async function findingsFiles(event: unknown): Promise<{ directory: string; storePath: string; eventPath: string }> {
+  const directory = await mkdtemp(join(tmpdir(), 'vp-findings-cli-'));
+  profileDirs.push(directory);
+  const storePath = join(directory, 'findings.jsonl');
+  const eventPath = join(directory, 'event.json');
+  await writeFile(eventPath, JSON.stringify(event), 'utf8');
+  return { directory, storePath, eventPath };
+}
+
+async function cliWithoutCatalog(): Promise<{ directory: string; scriptPath: string }> {
+  const directory = await mkdtemp(join(tmpdir(), 'vp-cli-no-catalog-'));
+  profileDirs.push(directory);
+  const sourceScripts = join(here, '../skills/vp-mode/scripts');
+  const destinationScripts = join(directory, 'skills/vp-mode/scripts');
+  await mkdir(destinationScripts, { recursive: true });
+  for (const entry of await readdir(sourceScripts, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith('.ts')) {
+      await copyFile(join(sourceScripts, entry.name), join(destinationScripts, entry.name));
+    }
+  }
+  return { directory, scriptPath: join(destinationScripts, 'catalog-cli.ts') };
+}
+
+function oneJsonLine(value: string | Uint8Array): unknown {
+  const text = typeof value === 'string' ? value : new TextDecoder().decode(value);
+  expect(text.endsWith('\n')).toBe(true);
+  expect(text.slice(0, -1).includes('\n')).toBe(false);
+  return JSON.parse(text) as unknown;
 }
 
 function fixtureArgs(args: string[]): string[] {
@@ -120,6 +173,167 @@ async function runInProcess(args: string[]): Promise<{ status: number; stdout: s
 }
 
 describe('catalog CLI', () => {
+  test('findings queries before append, uses explicit paths across CWDs, and dispatches without catalog loading', async () => {
+    const event = observationEvent();
+    const { directory, storePath, eventPath } = await findingsFiles(event);
+    const otherCwd = await mkdtemp(join(tmpdir(), 'vp-findings-cwd-'));
+    profileDirs.push(otherCwd);
+    const isolatedCli = await cliWithoutCatalog();
+
+    const beforeAppend = runCli([
+      'findings', 'candidates', '--store', storePath, '--event-file', eventPath,
+    ], otherCwd, isolatedCli.scriptPath);
+    expect(beforeAppend.status).toBe(0);
+    expect(beforeAppend.stderr).toBe('');
+    expect(oneJsonLine(beforeAppend.stdout)).toMatchObject({ candidates: [] });
+    expect(await readFile(eventPath, 'utf8')).toBe(JSON.stringify(event));
+
+    const appended = runCli([
+      'findings', 'append', '--store', storePath, '--event-file', eventPath,
+    ], otherCwd, isolatedCli.scriptPath);
+    expect(appended.status).toBe(0);
+    expect(appended.stderr).toBe('');
+    expect(oneJsonLine(appended.stdout)).toMatchObject({ operation: 'append', outcome: 'appended' });
+    const originalBytes = await readFile(storePath, 'utf8');
+
+    const afterAppend = runCli([
+      'findings', 'candidates', '--store', storePath, '--event-file', eventPath,
+    ], '.', isolatedCli.scriptPath);
+    expect(afterAppend.status).toBe(0);
+    expect(afterAppend.stderr).toBe('');
+    expect(oneJsonLine(afterAppend.stdout)).toMatchObject({ candidates: [expect.objectContaining({ event })] });
+
+    const replay = runCli(['findings', 'append', '--store', storePath, '--event-file', eventPath], otherCwd);
+    expect(replay.status).toBe(0);
+    expect(oneJsonLine(replay.stdout)).toMatchObject({ operation: 'append', outcome: 'replayed' });
+    expect(await readFile(storePath, 'utf8')).toBe(originalBytes);
+
+    await writeFile(eventPath, JSON.stringify(observationEvent({ evidence: ['changed evidence'] })), 'utf8');
+    const reusedId = runCli(['findings', 'append', '--store', storePath, '--event-file', eventPath], otherCwd);
+    expect(reusedId.status).toBe(1);
+    expect(reusedId.stdout).toBe('');
+    expect(oneJsonLine(reusedId.stderr)).toMatchObject({ code: 'FINDING_ID_CONFLICT' });
+    expect(await readFile(storePath, 'utf8')).toBe(originalBytes);
+  });
+
+  test('findings validates event files and serializes stable errors without leaking sentinels', async () => {
+    const sentinel = 'PRIVATE_FINDING_EVENT_SENTINEL_9F23';
+    const event = observationEvent({ problem: sentinel });
+    const { directory, storePath, eventPath } = await findingsFiles(event);
+    const malformedPath = join(directory, 'malformed.json');
+    const missingPath = join(directory, 'missing.json');
+    await writeFile(malformedPath, '{', 'utf8');
+
+    const malformed = runCli(['findings', 'append', '--store', storePath, '--event-file', malformedPath]);
+    expect(malformed.status).toBe(1);
+    expect(malformed.stdout).toBe('');
+    expect(oneJsonLine(malformed.stderr)).toMatchObject({ code: 'FINDING_INPUT_JSON_INVALID' });
+
+    const missing = runCli(['findings', 'append', '--store', storePath, '--event-file', missingPath]);
+    expect(missing.status).toBe(1);
+    expect(missing.stdout).toBe('');
+    expect(oneJsonLine(missing.stderr)).toMatchObject({ code: 'FINDING_INPUT_READ_FAILED' });
+    expect(missing.stderr).not.toContain(missingPath);
+    expect(missing.stderr).not.toMatch(/ENOENT|Error:|stack/iu);
+
+    const parentFile = join(directory, 'not-a-directory');
+    await writeFile(parentFile, 'test-only', 'utf8');
+    const invalidStore = join(parentFile, 'findings.jsonl');
+    const filesystemFailure = runCli([
+      'findings', 'append', '--store', invalidStore, '--event-file', eventPath,
+    ], undefined, (await cliWithoutCatalog()).scriptPath);
+    expect(filesystemFailure.status).toBe(1);
+    expect(filesystemFailure.stdout).toBe('');
+    expect(oneJsonLine(filesystemFailure.stderr)).toMatchObject({ code: 'FINDING_STORE_PATH_INVALID' });
+    expect(filesystemFailure.stderr).not.toContain(sentinel);
+    expect(filesystemFailure.stderr).not.toMatch(/ENOTDIR|Error:|stack/iu);
+  });
+
+  test('findings rejects malformed event shapes and merge-event candidate queries', async () => {
+    const { storePath, eventPath } = await findingsFiles({ ...observationEvent(), provenance: [] });
+    const invalidShape = runCli(['findings', 'append', '--store', storePath, '--event-file', eventPath]);
+    expect(invalidShape.status).toBe(1);
+    expect(invalidShape.stdout).toBe('');
+    expect(oneJsonLine(invalidShape.stderr)).toMatchObject({ code: 'FINDING_INVALID' });
+
+    await writeFile(eventPath, JSON.stringify({
+      kind: 'merge', canonical_finding_id: 'a', duplicate_finding_id: 'b',
+      source: { origin: 'reported', actor: 'cli-test', reference: 'merge-query' },
+      evidence: ['test-only'], context: {}, provenance: ['tests/catalog-cli.test.ts'],
+    }), 'utf8');
+    const query = runCli(['findings', 'candidates', '--store', storePath, '--event-file', eventPath]);
+    expect(query.status).toBe(1);
+    expect(query.stdout).toBe('');
+    expect(oneJsonLine(query.stderr)).toMatchObject({ code: 'FINDING_CANDIDATE_QUERY_INVALID' });
+
+    const missingMergeTargets = runCli(['findings', 'append', '--store', storePath, '--event-file', eventPath]);
+    expect(missingMergeTargets.status).toBe(1);
+    expect(missingMergeTargets.stdout).toBe('');
+    expect(oneJsonLine(missingMergeTargets.stderr)).toMatchObject({ code: 'FINDING_MERGE_TARGET_MISSING' });
+  });
+
+  test('findings parser errors never echo positional values, operations, or unknown flags', async () => {
+    const sentinel = 'private-event-sentinel-17d4a9';
+    const { storePath, eventPath } = await findingsFiles(observationEvent({ problem: sentinel }));
+    const invalidArguments = [
+      ['findings', 'append', '--store', storePath, '--event-file', eventPath, sentinel],
+      ['findings', 'append', '--store', storePath, '--event-file', eventPath, `--${sentinel}`],
+      ['findings', sentinel],
+    ];
+
+    for (const args of invalidArguments) {
+      const result = runCli(args);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'CATALOG_INVALID' });
+      expect(result.stderr).not.toContain(sentinel);
+    }
+    expect(existsSync(storePath)).toBe(false);
+  });
+
+  test('findings rejects catalog-only and JSON-mode flags', async () => {
+    const { storePath, eventPath } = await findingsFiles(observationEvent());
+    const missingCatalog = join(tmpdir(), 'not-a-findings-catalog.json');
+
+    for (const extra of [['--catalog', missingCatalog], ['--json']]) {
+      const result = runCli(['findings', 'candidates', '--store', storePath, '--event-file', eventPath, ...extra]);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'CATALOG_INVALID' });
+      expect(existsSync(storePath)).toBe(false);
+    }
+  });
+
+  test('findings rejects raw dot components in event paths before reading or writing', async () => {
+    const { directory, storePath } = await findingsFiles(observationEvent());
+    const separators = process.platform === 'win32' ? ['\\', '/'] : ['/'];
+
+    for (const separator of separators) {
+      for (const component of ['.', '..']) {
+        const middle = component === '.' ? `.${separator}` : `child${separator}..${separator}`;
+        const eventPath = `${directory}${separator}${middle}missing-event.json`;
+        const result = runCli(['findings', 'candidates', '--store', storePath, '--event-file', eventPath]);
+        expect(result.status).toBe(1);
+        expect(result.stdout).toBe('');
+        expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'FINDING_INPUT_PATH_INVALID' });
+        expect(existsSync(storePath)).toBe(false);
+      }
+    }
+  });
+
+  test('findings rejects a final event-file junction before reading it', async () => {
+    const { directory, storePath } = await findingsFiles(observationEvent());
+    const eventDirectory = join(directory, 'event-directory');
+    await mkdir(eventDirectory);
+    const eventPath = join(directory, 'event-link.json');
+    await symlink(eventDirectory, eventPath, 'junction');
+
+    const result = runCli(['findings', 'candidates', '--store', storePath, '--event-file', eventPath]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'FINDING_INPUT_PATH_INVALID' });
+  });
+
   test('tags prints JSON dimensions', () => {
     const result = runCli(fixtureArgs(['tags', '--json']));
     expect(result.status).toBe(0);
@@ -324,6 +538,240 @@ describe('catalog CLI', () => {
       expect(result.status).toBe(0);
       expect(JSON.parse(result.stdout)).toBeTruthy();
       expect(result.stderr).toBe('');
+    }
+  });
+
+  test('in-process findings appends and queries through the JSON CLI protocol', async () => {
+    const event = observationEvent();
+    const { storePath, eventPath } = await findingsFiles(event);
+    const args = ['--store', storePath, '--event-file', eventPath];
+
+    const beforeAppend = await runInProcess(['findings', 'candidates', ...args]);
+    expect(beforeAppend.status).toBe(0);
+    expect(beforeAppend.stderr).toBe('');
+    expect(oneJsonLine(beforeAppend.stdout)).toMatchObject({ candidates: [] });
+
+    const appended = await runInProcess(['findings', 'append', ...args]);
+    expect(appended.status).toBe(0);
+    expect(appended.stderr).toBe('');
+    expect(oneJsonLine(appended.stdout)).toMatchObject({ operation: 'append', outcome: 'appended' });
+
+    const afterAppend = await runInProcess(['findings', 'candidates', ...args]);
+    expect(afterAppend.status).toBe(0);
+    expect(afterAppend.stderr).toBe('');
+    expect(oneJsonLine(afterAppend.stdout)).toMatchObject({
+      candidates: [expect.objectContaining({ event })],
+    });
+  });
+
+  test('in-process findings reports parser and required-flag failures as JSON', async () => {
+    const { storePath, eventPath } = await findingsFiles(observationEvent());
+    const base = ['findings', 'append', '--store', storePath, '--event-file', eventPath];
+    const invalidCalls = [
+      { args: [...base, 'unexpected-value'], message: 'unexpected findings argument' },
+      { args: [...base, '--private-flag'], message: 'unknown findings flag' },
+      { args: ['tags', '--private-flag'], message: 'unknown flag --private-flag' },
+      { args: ['archive'], message: 'unknown command archive' },
+      { args: ['findings', 'archive'], message: 'unknown findings operation' },
+      { args: ['findings', 'append', '--event-file', eventPath], message: 'missing required flag --store' },
+      { args: ['findings', 'append', '--store', storePath], message: 'missing required flag --event-file' },
+      { args: [...base, '--catalog', join(tmpdir(), 'not-a-findings-catalog.json')], message: 'flag --catalog is not valid for findings' },
+    ];
+
+    for (const call of invalidCalls) {
+      const result = await runInProcess(call.args);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'CATALOG_INVALID', message: call.message });
+    }
+    expect(existsSync(storePath)).toBe(false);
+  });
+
+  test('in-process findings rejects unsafe, missing, non-file and malformed event inputs', async () => {
+    const { directory, storePath } = await findingsFiles(observationEvent());
+    const separator = process.platform === 'win32' ? '\\' : '/';
+    const parentFile = join(directory, 'not-a-directory');
+    const eventDirectory = join(directory, 'event-directory');
+    const junctionPath = join(directory, 'event-junction');
+    const malformedPath = join(directory, 'malformed.json');
+    const notDirectoryPath = join(parentFile, 'event.json');
+    const relativePath = 'relative-event.json';
+    const dotPath = `${directory}${separator}.${separator}missing-event.json`;
+    const missingPath = join(directory, 'missing-event.json');
+    await writeFile(parentFile, 'test-only', 'utf8');
+    await mkdir(eventDirectory);
+    await symlink(eventDirectory, junctionPath, 'junction');
+    await writeFile(malformedPath, '{', 'utf8');
+
+    const invalidPaths = [
+      { path: relativePath, code: 'FINDING_INPUT_PATH_INVALID' },
+      { path: dotPath, code: 'FINDING_INPUT_PATH_INVALID' },
+      { path: notDirectoryPath, code: process.platform === 'win32' ? 'FINDING_INPUT_READ_FAILED' : 'FINDING_INPUT_PATH_INVALID' },
+      { path: eventDirectory, code: 'FINDING_INPUT_PATH_INVALID' },
+      { path: junctionPath, code: 'FINDING_INPUT_PATH_INVALID' },
+      { path: missingPath, code: 'FINDING_INPUT_READ_FAILED' },
+      { path: malformedPath, code: 'FINDING_INPUT_JSON_INVALID' },
+    ];
+
+    for (const input of invalidPaths) {
+      const result = await runInProcess(['findings', 'candidates', '--store', storePath, '--event-file', input.path]);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(oneJsonLine(result.stderr)).toMatchObject({ code: input.code });
+    }
+    expect(existsSync(storePath)).toBe(false);
+  });
+
+  test('in-process findings serializes actual input-read and failed-store-recovery errors', async () => {
+    const { storePath, eventPath } = await findingsFiles(observationEvent());
+    const args = ['findings', 'append', '--store', storePath, '--event-file', eventPath];
+    let observedEventReads = 0;
+    let observedEventStats = 0;
+    let observedStoreOpens = 0;
+    const observingReadFile = async (...readArgs: Parameters<typeof fsPromises.readFile>): ReturnType<typeof fsPromises.readFile> => {
+      if (readArgs[0] === eventPath) observedEventReads += 1;
+      return originalFsPromises.readFile(...readArgs);
+    };
+    const observingOpen = async (...openArgs: Parameters<typeof fsPromises.open>): ReturnType<typeof fsPromises.open> => {
+      if (openArgs[0] === storePath) observedStoreOpens += 1;
+      return originalFsPromises.open(...openArgs);
+    };
+    const observingLstat = async (...statArgs: Parameters<typeof fsPromises.lstat>): ReturnType<typeof fsPromises.lstat> => {
+      if (statArgs[0] === eventPath) observedEventStats += 1;
+      return originalFsPromises.lstat(...statArgs);
+    };
+
+    await mock.module('node:fs/promises', () => ({
+      ...originalFsPromises,
+      readFile: observingReadFile,
+      open: observingOpen,
+      lstat: observingLstat,
+    }));
+    try {
+      const successful = await runInProcess(args);
+      expect(successful.status).toBe(0);
+      expect(oneJsonLine(successful.stdout)).toMatchObject({ operation: 'append', outcome: 'appended' });
+      expect({ observedEventReads, observedEventStats, observedStoreOpens }).toEqual({
+        observedEventReads: 1,
+        observedEventStats: 1,
+        observedStoreOpens: 2,
+      });
+    } finally {
+      await mock.module('node:fs/promises', () => originalFsPromises);
+    }
+
+    let injectedStatCalls = 0;
+    const notDirectoryError = Object.assign(new Error('injected not-a-directory error'), { code: 'ENOTDIR' });
+    const failingLstat = async (...statArgs: Parameters<typeof fsPromises.lstat>): ReturnType<typeof fsPromises.lstat> => {
+      if (statArgs[0] === eventPath) {
+        injectedStatCalls += 1;
+        throw notDirectoryError;
+      }
+      return originalFsPromises.lstat(...statArgs);
+    };
+    await mock.module('node:fs/promises', () => ({ ...originalFsPromises, lstat: failingLstat }));
+    try {
+      const failedStat = await runInProcess(['findings', 'candidates', '--store', storePath, '--event-file', eventPath]);
+      expect(failedStat.status).toBe(1);
+      expect(failedStat.stdout).toBe('');
+      expect(oneJsonLine(failedStat.stderr)).toMatchObject({ code: 'FINDING_INPUT_PATH_INVALID' });
+    } finally {
+      await mock.module('node:fs/promises', () => originalFsPromises);
+    }
+    expect(injectedStatCalls).toBe(1);
+
+    const originalBytes = await readFile(storePath, 'utf8');
+    let injectedReadCalls = 0;
+    const failingReadFile = async (...readArgs: Parameters<typeof fsPromises.readFile>): ReturnType<typeof fsPromises.readFile> => {
+      if (readArgs[0] === eventPath) {
+        injectedReadCalls += 1;
+        throw new Error('injected event-file read failure');
+      }
+      return originalFsPromises.readFile(...readArgs);
+    };
+    await mock.module('node:fs/promises', () => ({ ...originalFsPromises, readFile: failingReadFile }));
+    try {
+      const failedRead = await runInProcess(args);
+      expect(failedRead.status).toBe(1);
+      expect(oneJsonLine(failedRead.stderr)).toMatchObject({ code: 'FINDING_INPUT_READ_FAILED' });
+      expect(failedRead.stderr).not.toContain('injected event-file read failure');
+    } finally {
+      await mock.module('node:fs/promises', () => originalFsPromises);
+    }
+    expect(injectedReadCalls).toBe(1);
+    expect(await readFile(storePath, 'utf8')).toBe(originalBytes);
+
+    await writeFile(eventPath, JSON.stringify(observationEvent({ finding_id: 'cli-recovery-event' })), 'utf8');
+    const originalRecoveryBytes = await readFile(storePath, 'utf8');
+    let injectedWrites = 0;
+    const failingOpen = async (...openArgs: Parameters<typeof fsPromises.open>): ReturnType<typeof fsPromises.open> => {
+      const handle = await originalFsPromises.open(...openArgs);
+      if (openArgs[0] !== storePath || openArgs[1] !== 'r+') return handle;
+      Object.defineProperty(handle, 'write', {
+        configurable: true,
+        value: async (...writeArgs: unknown[]) => {
+          const data = writeArgs[0];
+          const text = typeof data === 'string'
+            ? data
+            : data instanceof Uint8Array
+            ? new TextDecoder().decode(data)
+            : 'partial write';
+          await originalFsPromises.appendFile(storePath, text.slice(0, 12), 'utf8');
+          injectedWrites += 1;
+          throw new Error('injected partial store write');
+        },
+      });
+      Object.defineProperty(handle, 'truncate', {
+        configurable: true,
+        value: async () => { throw new Error('injected rollback failure'); },
+      });
+      return handle;
+    };
+    await mock.module('node:fs/promises', () => ({ ...originalFsPromises, open: failingOpen }));
+    try {
+      const failedRecovery = await runInProcess(args);
+      expect(failedRecovery.status).toBe(1);
+      expect(oneJsonLine(failedRecovery.stderr)).toMatchObject({
+        code: 'FINDING_STORE_RECOVERY_REQUIRED',
+        message: 'FINDING_STORE_RECOVERY_REQUIRED',
+        details: {},
+      });
+    } finally {
+      await mock.module('node:fs/promises', () => originalFsPromises);
+    }
+    expect(injectedWrites).toBe(1);
+    expect(await readFile(storePath, 'utf8')).not.toBe(originalRecoveryBytes);
+  });
+
+  test('in-process findings wraps deep-input errors and reports output-sink failures', async () => {
+    const { storePath, eventPath } = await findingsFiles(observationEvent());
+    const depth = 16_000;
+    const nestedContext = `${'{"nested":'.repeat(depth)}null${'}'.repeat(depth)}`;
+    const shallowEvent = JSON.stringify(observationEvent());
+    const deepEvent = shallowEvent.replace('"context":{}', `"context":${nestedContext}`);
+    expect(deepEvent).not.toBe(shallowEvent);
+    await writeFile(eventPath, deepEvent, 'utf8');
+    const deepResult = await runInProcess(['findings', 'append', '--store', storePath, '--event-file', eventPath]);
+    expect(deepResult.status).toBe(1);
+    expect(oneJsonLine(deepResult.stderr)).toEqual({
+      code: 'FINDING_OPERATION_FAILED', message: 'findings operation failed', details: {},
+    });
+    expect(existsSync(storePath)).toBe(false);
+
+    for (const failure of [new Error('stdout is unavailable'), undefined]) {
+      let stderr = '';
+      let exitCode: number | undefined;
+      const status = await runCatalogCli([bunPath, cliPath, 'tags', '--catalog', join(fixtureDir, 'catalog.json')], {
+        stdout: () => { throw failure; },
+        stderr: (text) => { stderr += text; },
+      }, (code) => { exitCode = code; });
+      expect(status).toBe(1);
+      expect(exitCode).toBe(1);
+      expect(oneJsonLine(stderr)).toEqual({
+        code: 'CATALOG_INVALID',
+        message: failure instanceof Error ? 'stdout is unavailable' : 'undefined',
+        details: {},
+      });
     }
   });
 

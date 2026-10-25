@@ -64,6 +64,8 @@ const supportedTargetOutputs = {
   claude: MANIFEST_TARGET_STATUS.claude.outputs,
   cursor: MANIFEST_TARGET_STATUS.cursor.outputs,
 } as const satisfies Record<'portable' | 'codex' | 'claude' | 'cursor', readonly string[]>;
+
+type ValidatedManifestTarget = keyof typeof supportedTargetOutputs | 'muse-package' | 'antigravity';
 const nativeFixedOutputPaths = [musePluginManifestPath, museMarketplacePath, antigravityManifestPath, formationReceiptPath] as const;
 const allOutputPaths: readonly string[] = [...new Set<string>([...Object.values(supportedTargetOutputs).flat(), ...nativeFixedOutputPaths])].sort();
 const outputSchemaKeys: Readonly<Record<string, string>> = {
@@ -242,10 +244,9 @@ export async function buildManifestPlan(projectRoot: string): Promise<ManifestPl
   if (!Array.isArray(targetsValue) || !targetsValue.every((target) => typeof target === 'string')) {
     throw new ManifestBuildError('MANIFEST_INPUT_INVALID', 'Manifest targets must be strings.');
   }
-  const targets = [...new Set(targetsValue)].sort();
-  if (targets.length !== targetsValue.length) throw new ManifestBuildError('MANIFEST_INPUT_INVALID', 'Manifest targets must be unique.');
-  for (const target of targets) {
-    const status = MANIFEST_TARGET_STATUS[target as keyof typeof MANIFEST_TARGET_STATUS];
+  const requestedTargets = [...new Set(targetsValue)].sort();
+  if (requestedTargets.length !== targetsValue.length) throw new ManifestBuildError('MANIFEST_INPUT_INVALID', 'Manifest targets must be unique.');
+  const targets = requestedTargets.map((target): ValidatedManifestTarget => {
     if (target === 'muse-catalog') {
       throw new ManifestBuildError(
         'MANIFEST_MUSE_CATALOG_NOT_READY',
@@ -253,8 +254,10 @@ export async function buildManifestPlan(projectRoot: string): Promise<ManifestPl
         ['integrity.digest'],
       );
     }
-    if (status === undefined || status.status === 'deferred') throw deferredTarget(target);
-  }
+    if (target === 'portable' || target === 'codex' || target === 'claude' || target === 'cursor'
+      || target === 'muse-package' || target === 'antigravity') return target;
+    throw deferredTarget(target);
+  });
 
   const metadata = requireRecord(input.metadata, 'manifest inputs.metadata');
   const needsOwnerName = targets.some((target) => target === 'codex' || target === 'claude' || target === 'cursor');
@@ -290,29 +293,16 @@ export async function buildManifestPlan(projectRoot: string): Promise<ManifestPl
     ...(privacyPolicyUrl === undefined ? {} : { privacyPolicyURL: privacyPolicyUrl }),
     ...(termsOfServiceUrl === undefined ? {} : { termsOfServiceURL: termsOfServiceUrl }),
   };
-  const files = new Map<string, ManifestContent>();
+  const entries: [string, ManifestContent][] = [];
   const add = (path: string, value: Record<string, unknown>): void => {
-    const content = validateOutput(schema, path, value);
-    const previous = files.get(path);
-    if (previous !== undefined && previous !== content) {
-      throw new ManifestBuildError('MANIFEST_OUTPUT_CONFLICT', `Targets produced different content for ${path}.`);
-    }
-    files.set(path, content);
+    entries.push([path, validateOutput(schema, path, value)]);
   };
   const addRaw = (path: string, content: Buffer): void => {
-    const previous = files.get(path);
-    if (previous !== undefined && !manifestContentBytes(previous).equals(content)) {
-      throw new ManifestBuildError('MANIFEST_OUTPUT_CONFLICT', `Targets produced different content for ${path}.`);
-    }
-    files.set(path, Buffer.from(content));
+    entries.push([path, content]);
   };
 
   for (const target of targets) {
-    const configuredOutputs = supportedTargetOutputs[target as keyof typeof supportedTargetOutputs];
-    if (configuredOutputs === undefined) {
-      if (target === 'muse-package' || target === 'antigravity') continue;
-      throw deferredTarget(target);
-    }
+    if (target === 'muse-package' || target === 'antigravity') continue;
     if (target === 'portable' || target === 'codex') {
       add('plugin.json', {
         ...plugin,
@@ -420,7 +410,8 @@ export async function buildManifestPlan(projectRoot: string): Promise<ManifestPl
     addRaw(formationReceiptPath, nativePayload.receipt);
   }
 
-  const expectedOutputs = new Set<string>(targets.flatMap((target) => [...(supportedTargetOutputs[target as keyof typeof supportedTargetOutputs] ?? [])]));
+  const expectedOutputs = new Set<string>(targets.flatMap((target) =>
+    target === 'muse-package' || target === 'antigravity' ? [] : [...supportedTargetOutputs[target]]));
   if (nativePayload !== undefined) {
     if (targets.includes('muse-package')) {
       expectedOutputs.add(musePluginManifestPath);
@@ -432,11 +423,25 @@ export async function buildManifestPlan(projectRoot: string): Promise<ManifestPl
     }
     expectedOutputs.add(formationReceiptPath);
   }
-  if ([...files.keys()].some((path) => !expectedOutputs.has(path)) || [...expectedOutputs].some((path) => !files.has(path))) {
+  return { targets, files: collectManifestOutputs(entries, expectedOutputs) };
+}
+
+export function collectManifestOutputs(
+  entries: Iterable<readonly [string, ManifestContent]>,
+  expectedPaths: ReadonlySet<string>,
+): ReadonlyMap<string, ManifestContent> {
+  const files = new Map<string, ManifestContent>();
+  for (const [path, content] of entries) {
+    const previous = files.get(path);
+    if (previous !== undefined && !manifestContentBytes(previous).equals(manifestContentBytes(content))) {
+      throw new ManifestBuildError('MANIFEST_OUTPUT_CONFLICT', `Targets produced different content for ${path}.`);
+    }
+    files.set(path, typeof content === 'string' ? content : Buffer.from(content));
+  }
+  if ([...files.keys()].some(path => !expectedPaths.has(path)) || [...expectedPaths].some(path => !files.has(path))) {
     throw new ManifestBuildError('MANIFEST_OUTPUT_INVALID', 'Generated output paths do not match the selected target map.');
   }
-  const sortedFiles = new Map([...files.entries()].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0));
-  return { targets, files: sortedFiles };
+  return new Map([...files.entries()].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0));
 }
 
 function validateRelativeOutputPath(path: string): string[] {
@@ -575,7 +580,7 @@ async function assertSafeOperationalPaths(projectRoot: string, allowPendingTrans
     throw new ManifestBuildError('MANIFEST_OUTPUT_UNSAFE', 'Manifest ownership state escapes the project root.');
   }
 
-  const ledgerPath = resolve(scratchReal, ...validateRelativeOutputPath(ownershipLedgerRelativePath));
+  const ledgerPath = resolve(rootReal, ...validateRelativeOutputPath(ownershipLedgerRelativePath));
   try {
     const ledgerStat = await lstat(ledgerPath);
     if (ledgerStat.isSymbolicLink() || !ledgerStat.isFile()) {

@@ -2,7 +2,7 @@
 type: Work Item
 id: VP-6
 title: 'VP-6 — materialization, Work Items, and findings'
-description: 'Stage 6 work item for artifact contracts, shallow Work Item records, and the bounded Standalone findings writer.'
+description: 'Stage 6 work item for artifact contracts, shallow Work Item records, and the bounded Standalone findings caller and writer.'
 status: draft
 stale_after: '2026-11-21T00:00:00Z'
 tags:
@@ -31,8 +31,8 @@ sources:
 - id: runtime-workitem-contract
   resource: /../../../agent-runtime.config.v1.yaml
   title: Current WorkItem/v1 required fields
-generated: { by: vida-agent/gpt-6-luna, at: '2026-10-22T08:01:00Z' }
-revision: '4'
+generated: { by: vida-agent/gpt-6-luna, at: '2026-10-23T00:33:38Z' }
+revision: '7'
 ---
 
 # VP-6 — Materialization, Work Items, and Findings
@@ -52,13 +52,13 @@ Materialize content through existing artifact contracts and create the smallest 
 - Reuse the existing Research, Decision, Acceptance, Implementation Scope, Work Item, Work State, and artifact-reference owners. VP adds only missing product-owned representations; it does not define parallel runtime schemas or storage.
 - Each Work Item has a stable ID, goal, frozen Work Scope, acceptance references, typed relations, and evidence. Its human-readable `artifact_contract` states output kind, required data, materialization location, and verification method.
 - Standalone Findings use one writer and append-only JSONL per product. A finding records problem, evidence, source, product, Work Scope link, and blocking impact. Recording one does not authorize a fix.
-- Deterministic identity/fingerprint/context/provenance checks can discover candidates. Re-delivery of the same event is idempotent; confirmed equivalence is a separate evidence-backed merge event; ambiguity remains separate. No semantic model or automatic fuzzy merge is in scope.
-- Runtime findings and transactional Work state remain with the Agent's existing SQLite/HostState owner. Standalone has no new database, lease, reservation service, scheduler, or lock owner.
+- The main Standalone caller queries before append. Deterministic OR matches return stored observations, exact reasons, and original append order; they do not rank or prove equivalence. Every new primary observation uses a distinct caller-supplied `finding_id`. After explicit semantic confirmation, preserve the new observation and evidence, then append a separate merge event; ambiguity remains separate.
+- One main Standalone host caller invokes findings commands sequentially; subagents return structured findings and never write. The read/check/append path has no cross-process lock or race-safety claim. Runtime findings and transactional Work state remain with the Agent's existing SQLite/HostState owner. Standalone adds no database, lease, reservation service, scheduler, or lock owner.
 - The derived search index remains recoverable and non-authoritative. Scope violations are recorded with a permission request, not silently expanded.
 
 ## Acceptance references
 
-Relevant canonical criteria include AC-20 through AC-24, AC-38, and AC-39. Only portions proven against their complete contracts may close; AC-22 remains open for semantic candidate generation and equivalence wherever attributable evidence is absent. The trace includes BR-03, BR-04, BR-07, BR-10, BR-11, BR-16, BR-17, SR-37 through SR-54, SR-72, and sections 8 through 10 of [product research](../research/vida-powers-product-research.md).
+Relevant canonical criteria include AC-20 through AC-24, AC-38, and AC-39. Only portions proven against their complete contracts may close; AC-22 remains open for semantic candidate generation and equivalence wherever attributable evidence is absent. The trace includes BR-03, BR-04, BR-07, BR-10, BR-11, BR-16, BR-17, SR-37 through SR-54, SR-55, SR-72, and sections 8 through 10 of [product research](../research/vida-powers-product-research.md).
 
 ## Current implementation evidence
 
@@ -79,6 +79,8 @@ test name is `preserves an out-of-scope blocker and its permission request witho
 fix`; this verifies the no-fix boundary, while caller-supplied blocker text does not prove
 out-of-scope detection or permission-policy enforcement.
 
+Candidate evidence from `.104` on 2026-10-23: `findings.ts` returns append/replay results and read-only candidate rows; `catalog-cli.ts` provides nested `findings append|candidates` commands with explicit absolute paths and redacted one-line JSON errors; `vp-mode/SKILL.md` specifies query-before-append and caller judgment. The CLI branch runs before catalog/profile loading. No real event or production JSONL exists.
+
 ## Relations
 
 - `implements` → Stage 6 in the [implementation plan](../implementation-plan.md).
@@ -89,6 +91,7 @@ out-of-scope detection or permission-policy enforcement.
 ## Expected evidence
 
 - Focused tests for event identity, deterministic fingerprints, key-order normalization, replay, distinct evidence, explicit merge events, conflicts, ambiguity, out-of-scope blockers, and no-fix authority.
+- Focused process tests for nested command parsing, explicit store/event paths, CWD independence, catalog-independent dispatch, JSON framing, stable errors, and sentinel/error redaction.
 - Test-only events remain in the test process or fixture tree. `docs/work/findings.jsonl` is created only for an actual attributable finding; it stays absent when no such event exists.
 - A real event, if one occurs, distinguishes observed from reported input and retains actor, source, evidence, scope, product, and impact without inferred provenance.
 - Presence/format/digest receipts are bound separately from semantic judgments. Static tests do not prove external semantic equivalence or Runtime acceptance.
@@ -96,9 +99,9 @@ out-of-scope detection or permission-policy enforcement.
 ## Artifact contract
 
 - **Output kind:** Human Markdown Work Items plus the Standalone findings writer and append-only JSONL events when real events exist.
-- **Required data:** Work Item identity, goal, Work Scope, acceptance, typed relations, evidence and artifact contract; findings carry the required problem/evidence/source/product/scope/impact data and deterministic replay identity.
-- **Materialization location:** `packages/powers/docs/work/VP-5.md`, `VP-6.md`, `VP-7.md`, `packages/powers/skills/vp-mode/scripts/findings.ts`, its focused tests, and conditionally `packages/powers/docs/work/findings.jsonl`.
-- **Presence/format/digest verification:** OKF and focused document checks for the Markdown records; JSONL line parsing, event identity, and exact append-byte checks for test stores and any actual event.
+- **Required data:** Work Item identity, goal, Work Scope, acceptance, typed relations, evidence and artifact contract; findings carry problem/evidence/source/product/scope/impact data, replay identity, candidate-query identity (`event_id`, `finding_id`, and fingerprint), and an explicit caller decision before merge. A failed rollback reports `FINDING_STORE_RECOVERY_REQUIRED` for owner recovery.
+- **Materialization location:** `packages/powers/docs/work/VP-5.md`, `VP-6.md`, `VP-7.md`, `packages/powers/skills/vp-mode/scripts/findings.ts`, `catalog-cli.ts`, `skills/vp-mode/SKILL.md`, focused tests, and conditionally `packages/powers/docs/work/findings.jsonl`. The caller derives the explicit absolute store path from this contract; it is never derived from CWD.
+- **Presence/format/digest verification:** OKF and focused document checks for the Markdown records; CLI JSON lines and stable exit/error framing; JSONL line parsing, event identity, exact append-byte checks, partial-write rollback checks, and query read-only checks for test stores and any actual event.
 - **Semantic verification:** separate acceptance review establishes scope/classification and any claimed equivalence from reproduction, context, and evidence. Deterministic equality alone does not prove semantic equivalence.
 
 ## Implementation status addendum — 2026-10-22
@@ -111,6 +114,18 @@ evidence is not semantically validated; AC-24 verifies the no-fix boundary. Scop
 not enforce caller/orchestrator boundaries. No real finding event exists, so
 `docs/work/findings.jsonl` remains absent. WorkItem/v1 still requires its 11 Agent-owned fields;
 these Markdown items are not Runtime-admitted records. Full Step F gates remain pending.
+
+## Implementation status addendum — 2026-10-23
+
+The `.104` owned candidate records a process-boundary RED before code edits: `findings append` exited 1 with `CATALOG_INVALID` on Bun 1.4.3. After implementation, the focused `findings.test.ts` and `catalog-cli.test.ts` run reports 55 pass / 0 fail / 301 assertions; candidate `bun check --project tsconfig.json` reports no type errors in 29 files. The CLI scratch smoke confirms query-before-append, one appended row, full-row query, and exact replay with unchanged bytes. The final-store symlink test uses a Windows junction because the host denied file-symlink creation with `EPERM`; the event-file junction rejection also passes.
+
+This is component evidence only. It does not prove host artifact materialization, scope classification, semantic candidate generation, equivalence, Runtime admission, or user acceptance. AC-20/21/23 remain open; AC-22 remains partial; AC-24 remains component-only. No real event exists, and `docs/work/findings.jsonl` remains absent. Full package tests, coverage threshold 1.0, canonical typecheck, Agent Knip, independent output review, G rebind, and root reconciliation remain pending.
+
+## Implementation status addendum — 2026-10-23
+
+The `.113` isolated candidate addresses the three Important and five Minor findings from `.110`. The final regression tests were run against unchanged `.104` production hashes and produced seven behavior failures in 61 tests. After the fixes, Bun 1.4.3 reports 61 pass, 0 fail, and 367 assertions; `bun check --project tsconfig.json` reports no type errors in 29 files. The injected partial-write tests cover rollback for an existing store, removal of a newly created store, and `FINDING_STORE_RECOVERY_REQUIRED` when rollback itself fails.
+
+The receipt-only CLI smoke passes query-before-append, append, query with `finding_id` and all exact reasons, replay with unchanged bytes, raw-argv redaction, inapplicable-flag rejection, and event-path dot-component rejection. The changed-script API scan finds no Bun API use. These checks are bound to the candidate files and do not prove full F acceptance. AC-20/21/23 remain open, AC-22 remains partial, and AC-24 remains component-only. No real finding event, host acceptance, or Runtime acceptance exists. Independent follow-up review, full package tests, coverage, root typecheck and Knip, G rebind before handoff/admission, and root reconciliation remain pending.
 
 ## Links and handoff
 
