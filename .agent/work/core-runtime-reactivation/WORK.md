@@ -83,6 +83,56 @@ tests passed 194 expectations in 39.64 s. Preserve this WORK's
 new numeric run yet. Root waits for the related author lane before the next
 full stage.
 
+### Configured developer issue packet — terminal, 2026-10-25
+
+Commit `9a5bc28a5d44d748fb53b02a2ec2df9d5d95bfe5` passed normal hooks and
+ordinary main push. One collected changed-input producer completed at
+`/workspace/contour-stage-zd4A0w`,232246.523823ms, exit0, no timeout/signal/
+spawn error, complete capture, closed group, unchanged boot/image inputs and
+published report. Native suite145 pass/0 fail/3554 expectations in225.22s.
+The configured issue body passed12223.72ms within its unchanged60s budget.
+Preserve literal `DIAG/fresh-developer-issue-stage-20261025-01.log` and all native
+launch/request/execution/stdout/stderr/image receipts.
+
+Run `49e24556-8cf3-4627-9211-35b8e360a278` remains F480/555,L2225/2873,
+S2409/3157,B2874/3686, maximum CC/entry CRAP501, BLOCKED. Aggregates are
+unchanged from run1dc8ae. The new issue/context/pending-state checks strengthen
+behavioral evidence but add no net measured coverage. Do not claim another
+contour closed, a frozen/mutation result or Runtime qualification. No unchanged
+suite rerun is justified by this result.
+
+Image `4ddbb02b140a8740f0d73a61e1ef2106bed1e71a`, Source tree
+`bdc01fd4390b84fe0fa1df23267ede725a53575d`, fingerprint
+`2eb877a5702c1d30f42142e0aeca313d989faf73da1a0d69265ba7d4c3025a3e`,
+manifest SHA256 `defe77b60cdc20167fbefb5b2a4c622b4dad88e64bbf69472469f63091766676`.
+The unit's logical started/commit_unknown remains pending while its test process
+and group have terminated. Native locator `/tmp/vida-initial-source-xrO9yL`
+maps by the recorded disk-backed bind to
+`/workspace/contour-stage-zd4A0w/scratch-1WCPW0/scratch/vida-initial-source-xrO9yL`.
+That exact directory exists and remains protected with its raw return, DB,
+lease/attempt and Journal. Its locator manifest is literal
+DIAG/fresh-developer-native-root-locator-20261025-01.json. No volatile tmpfs
+relocation, completion, cancellation, retry, cleanup or consumer dispatch.
+
+The existing launch receipt observed10396377088 available bytes on overlayfs
+against2147483648, headroom8248893440 bytes. This reuses admission evidence;
+no new filesystem survey, scan/hash traversal or cleanup. All prior custody
+and retirement deferrals remain, with no resource admission bypass or timer change.
+
+Root then queried only the existing report's7190–7252 function window. Exact
+zero functions416,417,419,420,421,422 remain, preserved in literal
+DIAG/fresh-developer-terminal-gap-20261025-01.json. Current Source places them
+inside delivered-work review validation/context and ledger-close callbacks;
+ordinary developer issue does not enter that branch. The premise that another
+normal issue variant would close these selected functions is rejected. Next
+coverage work must bind the supported delivered-review producer and its genuine
+terminal/engine prerequisites, or independently disposition each exact counter
+under TESTING. Do not infer untestability from missing fixtures, fabricate
+accepted history, replay prior UNKNOWN or add more overlapping issue variants.
+Phase and sole active contour remain F/L/S/B and bun-cli-run. Projection remains
+producer-owned and unstaged by Root. This documentation-only follow-up needs
+no numeric rerun; verified code and all original evidence remain preserved.
+
 ### Fresh configured developer issue packet — checked, 2026-10-25
 
 Root reuses the current report's missing-function geometry in the same
