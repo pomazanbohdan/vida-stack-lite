@@ -38,6 +38,87 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Shared run-path terminal and decoder-control packet, 2026-10-25
+
+The sole changed-input stage for `275a6f95034a7a20a904c46ecfb4f550e0c703ac`
+finished at `/workspace/contour-stage-TNmzZT`. Native run
+`7c5c5e30-e893-4a1b-b0a5-f0da353b3f72` published F452/555, L2078/2860,
+S2240/3138 and B2707/3660. It passed 134 tests and 3,074 expectations in
+198,521.573322 ms, exit 0, no timeout/signal/spawn error, complete capture,
+closed owned group, unchanged boot and unchanged immutable image inputs.
+Image tree `31aa7bfbe982f4107b17f58d8e907bdcb75f1043`, input fingerprint
+`15f74288f39fd5543bbcf9b83694b8ec9ca682d2a14d69b50a27c4b0df317382` and
+manifest SHA-256 `b5e375a5d95cf96869c6ac166df942fddee174efd43f04aeb31ba2e60894e4b8`
+remain bound to that Source, not subsequent changes. Preserve the stage root and
+`.agent/work/core-runtime-reactivation/DIAG/shared-run-paths-stage-20261025-01.log`.
+Maximum CC/entry CRAP remain 501 and operation status BLOCKED. No contour closed.
+
+The positive resume proposal failed its actual engine-existence prerequisite.
+Retrying the complete prewriter report first returned `report_retrieved` with
+`ready_to_resume`; the normal configured-frontier run then refused
+`Session engine: configured continuation engine unavailable`. Root preserved
+both failed fixtures and reversed the unvalidated extension, restoring the test
+to the committed bytes before the next packet. Preserve exact roots
+`/home/agent/.cache/vida-cloud-tooling/tmp/frontier-repair-host-h43fjw` and
+`/home/agent/.cache/vida-cloud-tooling/tmp/frontier-repair-host-BiigWm`, plus this
+WORK's `DIAG/real-resume-{static-20261025-01,static-20261025-02,static-20261025-03,target-20261025-01,target-20261025-02}.log`
+and `DIAG/real-resume-{misapplied-20261025-01,unvalidated-20261025-02}.patch`.
+The first static failure caught a misanchored patch before execution; later
+checks passed but the runtime prerequisite remained unavailable. These probes
+are neither native stage publications nor coverage hits.
+
+Independent blind Luna traced the precise remaining prerequisite: native
+Mastra start can persist a first unissued suspension with no completed prefix,
+and the continuation validator permits an empty completed prefix. However,
+`planConfiguredFrontierContinuation` requires authentic admitted intake,
+approved Source authorization, a closed endpoint transition and suspended Work
+with no lease. Start synchronizes the Journal but does not release that owner;
+`releaseUnpreparedWork` requires no Journal or engine, so cannot release it after
+start. No supported no-consumer-effect release/transition fixture is established.
+Source owners are `mastra-session-bridge.ts:370,774,799`,
+`runtime-code-rebind.ts:1505`, `host-state.ts:6456,12696` and
+`delivered-work-continuation-repair.ts:180`. This is an OPEN producer/custody GAP
+for run.ts:7108-7119, not an objective skip or a blanket contour blocker.
+No accepted history, engine rows or observations were fabricated or replayed.
+
+The next verified packet removes repeated identical decoder baseline runs while
+keeping every candidate's fresh root and exact diagnostic, config/init/request/
+artifact bytes, link identity, no-DB/no-Work checks and failure retention. Ten
+groups still run their shared mapping-refusal control once each. The 29 candidate
+fixtures therefore use 39 CLI calls instead of 58: 19 duplicate control calls
+removed. Serialize the identical baseline Buffer once instead of per fixture.
+Two foreign issue-wave records now exercise wave collection and matching while
+all candidate mappings remain foreign; neither wave admits an original issue.
+Scoped strict passed for 510 files; typed lint and one-file format passed.
+The grouped target passed 10 tests, zero failures and 270 expectations in 5.04 s.
+Independent read-only Luna review passed the final bytes; Root checked the diff.
+Receipts are this WORK's `DIAG/decoder-control-{static,target}-20261025-01.log`.
+
+For 02:38:13-05:38:13 UTC, the existing projection has five distinct native
+diagnostic runs with paired BLOCKED outcomes, not ten independent runs. Their
+existing terminal receipts total 668 passing tests, zero failures, 14,788
+expectations and 1,055,434.520566 ms. Exact stage roots are voMuy1, TY9XuS,
+wCQymm, yWEmXP and TNmzZT. The existing owned audit reader now accepts explicit
+window/root arguments; retain `DIAG/audit-20261025-window-02.log`. This counts
+only those native stages; focused failed probes above remain separate.
+Platform billed tokens and complete session tool-call totals are unavailable.
+
+| Order and concurrency | Evidence | Limit |
+| --- | --- | --- |
+| Scoped strict/lint, grouped targets, independent review, one changed-input stage; numeric 1x | The new target passed 10 tests / 270 expectations. The five published stages took 198.5-228.1 s each. | Previous and current targets differ; 4.30 s versus 5.04 s does not demonstrate a speedup. The reduction of 19 duplicate calls is structural. |
+| Full stage before prerequisite tracing; numeric 1x | Both resume probes failed at a missing engine prerequisite; Root reversed the proposal before any full stage. | Such a stage would waste another full run. No counterfactual benchmark was run. |
+| Independent bounded readers alongside preparation; numeric 1x | Two native Luna readers independently checked the release prerequisite and decoder patch; neither ran tests or wrote files. | Two/four numeric producers lack qualified receipts and violate sole-producer ownership. Sharing candidate roots is deferred because link/path identity isolation matters. |
+
+The existing filesystem observation is reused: latest native admission recorded
+11,123,740,672 available scratch bytes against the unchanged 2,147,483,648 floor,
+a margin of 8,976,257,024 bytes. Checkout and execution images share that surveyed
+filesystem; retained-directory absence remains a no-op. No new disk scan, cleanup,
+deduplication, index or build ran. Historical image/evidence targets stay deferred
+until their full custody/dependency checks; no resource shortfall is established.
+Producer-owned projection remains untouched by Root. Keep bun-cli-run active,
+F/L/S/B phase, and all undispositioned paths OPEN. Next: normal commit/push after
+checks, then one changed-input stage from the sole current producer.
+
 ### Next shared run-path packet, parallel read-only trace
 
 The sole issued-candidate stage has terminated before this analysis. Pstack Swarm
@@ -51,7 +132,7 @@ not numeric qualification or a worker-issued disposition.
 - [x] Frame. Bound Source `089d5c93` and report `30e72888-af53-4578-90fd-58d8da030c0e`; keep F/L/S/B phase and immutable image custody.
 - [x] Fan out. Three read-only lanes dispatched for scope/context at run.ts:6051-6300, workflow callbacks at :7100-7280 and late callbacks at :7281-9540. Terminal aggregation remains below.
 - [x] Aggregate. Root verified supported scope derivation and the unreported-review assurance refusal, combining them with existing fixtures. Other proposed callbacks remain OPEN until their actual caller prerequisites are established.
-- [ ] Report. Record measured results only after scoped checks, independent review and one changed-input stage.
+- [x] Report. Native run 7c5c5e30 and its exact Source/image binding are recorded in the terminal section above; numeric outcome remains BLOCKED.
 
 All completed readers used native Codex Luna; this is one provider/model route,
 not a diverse panel. Scope reader A reported inability to resolve leaf skills;

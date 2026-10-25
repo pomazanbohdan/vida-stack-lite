@@ -11307,6 +11307,12 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   const unmatchedAction = { ...untrustedIssuedAction.action, action_id: 'a'.repeat(64) };
   const noIssuedActionOutput = JSON.stringify([
     null,
+    { status: 'wave_issued', issue_id: 'foreign-issue', host_attempt_id: 'foreign-attempt' },
+    {
+      status: 'wave_issued',
+      issue_id: '00000000-0000-4000-8000-000000000001',
+      host_attempt_id: 'foreign-attempt',
+    },
     {
       schema: 'VidaAgentRunResult/v1',
       issued_actions: [
@@ -11327,6 +11333,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     },
     0,
   ]);
+  const retiredDecoderBaselineBytes = Buffer.from(
+    JSON.stringify(retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand(noIssuedActionOutput)])])),
+  );
 
   const retiredSourceNativeGroups: readonly RetiredSourceNativeGroup[] = [
     {
@@ -11579,7 +11588,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   test.each(retiredSourceNativeGroups.map(({ name, cases }) => [name, cases] as const))(
     'run retired-source native decoder rejects %s before persistence',
     async (_name, cases) => {
-      for (const entry of cases) {
+      for (const [index, entry] of cases.entries()) {
         const root = mkdtempSync(path.join(tmpdir(), 'vida-run-retired-native-'));
         let complete = false;
         try {
@@ -11618,11 +11627,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               },
             },
             requestBytes = Buffer.from(JSON.stringify(request)),
-            baselineBytes = Buffer.from(
-              JSON.stringify(
-                retiredDecoderArtifact([retiredDecoderTurn([retiredDecoderCommand(noIssuedActionOutput)])]),
-              ),
-            ),
             artifactBytes = Buffer.from(JSON.stringify(entry.artifact)),
             configBefore = readFileSync(configPath),
             initializationBefore = readFileSync(initializationPath),
@@ -11663,19 +11667,22 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           };
           mkdirSync(path.dirname(artifactPath), { recursive: true });
           writeFileSync(requestPath, requestBytes);
-          writeFileSync(artifactPath, baselineBytes);
-          await assert.rejects(
-            run(args),
-            (error: unknown) =>
-              error instanceof Error && error.message === 'Retired-source original issue mapping differs',
-          );
-          assertUnchanged(baselineBytes);
+          if (index === 0) {
+            // Each group checks the shared control once; candidate fixtures stay isolated.
+            writeFileSync(artifactPath, retiredDecoderBaselineBytes);
+            await assert.rejects(
+              run(args),
+              (error: unknown) =>
+                error instanceof Error && error.message === 'Retired-source original issue mapping differs',
+            );
+            assertUnchanged(retiredDecoderBaselineBytes);
+          }
           let candidateBytes = artifactBytes;
           if (entry.reference !== undefined) {
             expectedRequestBytes = Buffer.from(JSON.stringify({ ...request, nativeTurnEvidenceRef: entry.reference }));
             writeFileSync(requestPath, expectedRequestBytes);
           }
-          if (entry.fileKind !== undefined) unlinkSync(artifactPath);
+          if (entry.fileKind !== undefined && index === 0) unlinkSync(artifactPath);
           if (entry.fileKind === 'symlink' || entry.fileKind === 'hardlink') {
             writeFileSync(targetPath, artifactBytes);
             if (entry.fileKind === 'symlink') symlinkSync(targetPath, artifactPath);
