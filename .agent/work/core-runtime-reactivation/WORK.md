@@ -40,7 +40,23 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
-Latest terminal packet: Source15e29abae2bb3d3b34afab40287aed9179204f8b,
+Latest terminal packet: Source62797e97e9434f65f3bec03769255f415c12f8e1,
+runadc93f40-43b2-4a1b-ac6f-b018f44cbb59, stage /workspace/contour-stage-GTvs9v
+completes exit0 in257606.757184ms with156pass/0fail/3891assertions in250.83s.
+Capture/group and namespace termination are complete; native PID1007240 exit0
+has controller receipt SHA2560ada5aebb50d0a3fc448d7f29a83c8a9b44fd5923cbb3da32a491e5b5dfa8a8f.
+Imageec20b72f09a21a9080cdf075a0606aa6baff4dc4 manifest SHA256
+d9cf148b60edec03ca505109170b05ba646f6006485737ed0d1837fd6f402aab and profile02
+remain unchanged. The existing producer publishes local contour counters
+F533/559,L2453/2879,S2649/3165,B3104/3702, still BLOCKED. This adds10/28/32/16
+hits to the prior compatible Source inventory; no denominators or gates change.
+Focused4tzDSM precedes it:1pass/8skip/0fail,11expect calls in2.46s, complete
+native/capture/group exit0. The adversarial turn remains untrusted and no Host
+database/capture is accepted. Actual retirement's native-custody prerequisite
+remains GAP, with no objective skip or UNKNOWN reconciliation. Continue this
+same contour from its26remaining unhit function bodies; do not replay old runs.
+
+Preceding terminal packet: Source15e29abae2bb3d3b34afab40287aed9179204f8b,
 run73125c06-925a-44f9-b25e-a46475127232, stage /workspace/contour-stage-WZKR1q
 completes exit0 in248422.893646ms with155pass/0fail/3880assertions in242.25s.
 Capture/group and namespace termination are complete; native PID1005141 exit0

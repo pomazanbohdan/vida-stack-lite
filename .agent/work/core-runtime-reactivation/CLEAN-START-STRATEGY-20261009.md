@@ -12,17 +12,18 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-Latest accepted local contour report is Source15e29aba/run73125c06, stageWZKR1q:
-155tests pass, exit0 with full capture/group/native namespace closure and unchanged
-image/profile. F523/559,L2425/2879,S2617/3165,B3088/3702 remain BLOCKED.
+Latest accepted local contour report is Source62797e97/runadc93f40, stageGTvs9v:
+156tests pass, exit0 with full capture/group/native namespace closure and unchanged
+image/profile. F533/559,L2453/2879,S2649/3165,B3104/3702 remain BLOCKED.
 Use this report's remaining gaps to continue bun-cli-run only. The terminal
 synthesis response repair and six-call CAS subtraction are verified; no further
 run is needed for that packet. Changed Source denominators invalidate numeric
 mixing with prior ratios. Preserve both recent UNKNOWN stages and all old fences.
-Next take the bounded untrusted retired-source decoder/controller case: candidate
-byte refusal, verifier reread and missing-workspace denial with no accepted
-capture. Review/static/focus precede one changed-input stage. Accepted retirement
-itself remains a separate trusted-native-custody prerequisite, not an objective skip.
+The untrusted retired-source decoder/controller packet now passes candidate-byte
+refusal, verifier reread and missing-workspace denial with no accepted capture,
+then one full changed-input stage. Next inspect the remaining26unhit bodies for
+fresh supported fixtures/refusals in this contour. Accepted retirement itself
+remains a trusted-native-custody prerequisite, not an objective skip.
 
 The independent runtime-root provider is published at d05842aa. Profile02 adds
 the readonly libsql loader closure; native controls and focused callers pass.
