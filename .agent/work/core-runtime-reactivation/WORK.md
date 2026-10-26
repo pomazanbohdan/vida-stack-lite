@@ -40,6 +40,62 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Engine/assurance attribution packet: no production change or full stage. Installed
+Bun advertises CPU-profile flags, but test focusLoftUM passes151assertions without
+creating the requested artifact. A tiny disposable control confirms bun test
+ignores the profiling artifact request while plain Bun script creates it. This
+is a test-mode profiling GAP, not fabricated CPU evidence. Retain attempts and
+DIAG/cpu-profile-capability-20261026-01.json; no test repeats to chase flags.
+
+A supported standalone diagnostic calls the actual maintained constructor
+createFailedFinalCorrectionFixture(passing,next-writer), preserving real DB,
+engine, issue/report and fault controls. It runs in the same pinned closed
+profile02/image9433f8e/Source0c8fb73f at focused stageA2o0Yc, verifies completed
+nonnull observations/no current items/null step and closes through existing owner.
+Native command exit0 with complete capture/group and unchanged inputs; it is not
+a test replacement, coverage report, qualification or old-state replay. Profile
+vida-engine.cpuprofile is retained there (15865882bytes); compact summary/ref
+DIAG/engine-cpu-summary-20261026-01.json avoids raw payload output. One specific
+profile was parsed for nodes, then aggregated by frame identity/ancestry; no
+Source AST scan, inventory/hash pass or benchmark was run.
+
+CPU-profile sample weights total18642.90ms; aggregated self fsyncSync4250.11ms,
+lstat781.15ms,readdir772.99ms,open660.52ms. Inclusive config snapshot5858.45ms,
+selected-source load5871.87ms,CASlocks5669.51ms overlap and must not be added.
+These are sample-weighted attribution (including native/blocking stack samples),
+not function-call counts, pure CPU use, exact wall latency, a controlled speedup,
+or the cause of earlier whole-stage timeout. Independent bounded review confirms
+facts/limitations using the compact summary and exact selected Source bodies.
+
+Source explains the constraint: runtime-config already caches parsed config by
+exact source_digest. Each load still safely reads/digests bytes, checks upgrade/
+activation/output absence and rechecks selection; project-context revalidates
+before/after construction. Safe reads use durable per-target Linux CAS locks.
+No evidence supports deleting fsync/locks, substituting observational identity,
+cache-by-mtime, or sharing a stale proof across public calls/capability boundaries.
+No expensive duplicate independent assurance actor/setup was demonstrated.
+
+Decision options, with unchanged native controls/gates/budgets:
+A preferred design investigation: an existing-owner CAS read-snapshot that safely
+batches only identical inputs inside one defined atomic scope. It could reduce
+repeated durable locks, but must prove complete config/activation/history/upgrade
+input closure, before/after identity, concurrent-writer refusal and no proof reuse
+across await/commit/capability boundaries. This changes shared core coordination
+and needs independent invariant review plus targeted race/refusal tests; no saving
+or implementation is claimed yet.
+B alternative: qualified within-contour owned process shards under the ONE total
+budget, separate fixture/capture/effect roots and eligibility receipts, retaining
+all native calls and exact merged denominator. It avoids changing durable read
+semantics, but needs proof for shared clocks/spies/input selection/SDK and complete
+custody; there is no qualified shard plan today. No second producer/automation.
+Reject cross-call cache/lock suppression because it would weaken current authority.
+
+No proved scoped optimization or runtime headroom is available from this packet.
+Keep full-stage HOLD; next work is an explicit invariant/design decision on A/B,
+not a blind suite rerun. Baseline Source60cb6e77 F546/562 and16unhit bodies,
+BLOCKED/maxCC/CRAP504 stays; old UNKNOWNs/resources/fences and timer unchanged.
+
+
 Native target Source0c8fb73faa9567b7cea42d2a51b469399782863b/image9433f8e3,
 focused HN3SXM passes1test/169assertions36.70s with fullcapture/group closure,
 native child1019033exit0 and unchanged image/profile. Captured intervals:

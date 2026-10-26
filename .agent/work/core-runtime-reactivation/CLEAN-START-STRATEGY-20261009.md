@@ -12,6 +12,17 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Latest attribution identifies durable config/safe-access reads as a sampled hot
+path; parsed config caching already exists and does not replace source/upgrade
+revalidation. No safe performance fix/headroom is proved. Before another full
+stage, choose and independently establish invariants for an existing-owner atomic
+CAS read-snapshot (preferred investigation) or qualified owned within-contour
+shards under one unchanged total budget. Keep source-change/race/refusal/native
+proof and exact coverage; no cache-by-mtime, omitted fsync/lock or broad test skip.
+Bun test profiling produced no artifact; supported standalone constructor profile
+is diagnostic only and cannot qualify tests/coverage. See current WORK receipts.
+
+
 Bounded timing work has now measured DB/setup, native invocation and actual
 engine/assurance phases with passing focused diagnostics. The same-source paired
 delivery observations show~38–40ms DB versus~14.79–15.29s engine and~4.52–5.91s
