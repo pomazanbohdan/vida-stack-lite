@@ -50,7 +50,7 @@ sources:
   resource: /../.tmp/panel/csv-framework-decision-validate-m31-r2-20261022-64/REVIEW.md
   title: Independent M3.1 R2 review of the amendment
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T06:10:47Z' }
-revision: '8'
+revision: '9'
 ---
 
 # Goal and boundaries
@@ -187,3 +187,7 @@ The independent M3.1 R2 review §4/F4 links the earlier .61 F8 estimate finding 
 3. H2 passes versioned applicability, CSV row/cell coverage and fidelity, preserves the current four refusal codes, and proves the future fifth reason without mislabeling it as current E4.
 4. H3 retrieves only requested typed resource IDs from the same catalog, passes provenance, rights, safety and shared-budget checks, and keeps all v1 fixtures valid.
 5. Every phase has independent implementation review, actual verification receipts, updated B/S/AC traceability, and a dated log entry. No donor, implementation, or Runtime-acceptance claim exceeds its evidence.
+
+## D16 compatibility boundary
+
+[D16](decisions/D16-faceted-instruction-browse.md) classifies existing canonical instructions; it does not admit a donor or close the ten-file H1 pilot. Its VPInstruction/v1.1 facet contract is specified in [SR-92](system-specification.md#15-faceted-instruction-metadata-d16). Future H2 VPInstruction/v2 migration preserves then-supported v1.1 facets. H1/H2/H3 order, carrier 421/30/391 accounting, the 60 excluded out-of-carrier copies, rights, fidelity and owner admission retain their existing gates.

@@ -4,7 +4,7 @@ export type Schema = {
 
 export const SUPPORTED_KEYWORDS: readonly string[] = [
   'type', 'required', 'properties', 'additionalProperties', 'enum', 'const', 'pattern',
-  'minLength', 'maxLength', 'minimum', 'maximum', 'minItems', 'maxItems', 'items',
+  'minLength', 'maxLength', 'minimum', 'maximum', 'minItems', 'maxItems', 'uniqueItems', 'items',
   '$ref', 'allOf', 'if', 'then', 'not', 'definitions', 'title', 'description',
 ];
 
@@ -46,6 +46,7 @@ function invalidKeywordValues(schema: Record<string, unknown>): string[] {
   for (const keyword of ['minLength', 'maxLength', 'minimum', 'maximum', 'minItems', 'maxItems']) {
     if (hasOwn(schema, keyword) && (typeof schema[keyword] !== 'number' || !Number.isFinite(schema[keyword]))) invalid(keyword);
   }
+  if (hasOwn(schema, 'uniqueItems') && typeof schema.uniqueItems !== 'boolean') invalid('uniqueItems');
   if (hasOwn(schema, 'items') && !isRecord(schema.items)) invalid('items');
   if (hasOwn(schema, '$ref') && typeof schema.$ref !== 'string') invalid('$ref');
   if (hasOwn(schema, 'allOf') && (!Array.isArray(schema.allOf) || !schema.allOf.every(isRecord))) invalid('allOf');
@@ -169,6 +170,15 @@ function validate(
   if (Array.isArray(value)) {
     if (typeof schema.minItems === 'number' && value.length < schema.minItems) errors.push(`${path || '$'}: must contain at least ${schema.minItems} items`);
     if (typeof schema.maxItems === 'number' && value.length > schema.maxItems) errors.push(`${path || '$'}: must contain at most ${schema.maxItems} items`);
+    if (schema.uniqueItems === true) {
+      for (let index = 0; index < value.length; index += 1) {
+        const item = value[index];
+        if (value.slice(0, index).some((previous) => jsonEqual(previous, item))) {
+          errors.push(`${path || '$'}: must not contain duplicate items`);
+          break;
+        }
+      }
+    }
     if (isRecord(schema.items)) value.forEach((item, index) => errors.push(...validate(item, schema.items as Schema, `${path}[${index}]`, root, refStack)));
   }
   if (isRecord(value)) {

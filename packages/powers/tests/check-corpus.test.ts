@@ -88,6 +88,19 @@ async function rewriteInstruction(corpus: Corpus, item: Instruction): Promise<vo
   await corpus.save();
 }
 
+async function addFacetFields(corpus: Corpus, id: string, fields: string): Promise<void> {
+  const entry = corpus.catalog.instructions.find((candidate: any) => candidate.instruction_id === id);
+  if (entry === undefined) throw new Error(`fixture instruction ${id} is missing`);
+  const path = join(corpus.root, entry.path);
+  const source = readFileSync(path, 'utf8');
+  const firstLine = source.indexOf('\n');
+  if (firstLine < 0) throw new Error(`fixture instruction ${id} has no frontmatter delimiter`);
+  const updated = `${source.slice(0, firstLine + 1)}${fields}\n${source.slice(firstLine + 1)}`;
+  await writeFile(path, updated);
+  entry.sha256 = digest(updated);
+  await corpus.save();
+}
+
 function codes(root: string): string[] { return checkCorpus(root).map((issue) => issue.code).sort(); }
 
 async function expectCodes(corpus: Corpus, expected: string[]): Promise<void> {
@@ -115,6 +128,57 @@ describe('checkCorpus synthetic fixtures', () => {
   test('accepts a fully synthetic corpus without external clones', async () => {
     const corpus = await fixture();
     expect(codes(corpus.root)).toEqual([]);
+  });
+
+  test('requireFacets is opt-in and accepts one explicit valid disposition per catalog id', async () => {
+    const corpus = await fixture({ twoInstructions: true });
+    expect(checkCorpus(corpus.root)).toEqual([]);
+    expect(checkCorpus(corpus.root, { requireFacets: true }).filter((item) => item.code === 'CORPUS_FACETS_REQUIRED')
+      .map((item) => item.details?.instruction_id).sort()).toEqual(['alpha-instruction', 'beta-instruction']);
+    await addFacetFields(corpus, 'alpha-instruction', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: procedure\ndomains:\n  - engineering');
+    await addFacetFields(corpus, 'beta-instruction', 'schema: VPInstruction/v1.1\nclassification_status: unclassified\nclassification_reason: The instruction needs owner review.');
+    expect(checkCorpus(corpus.root, { requireFacets: true })).toEqual([]);
+    expect(corpusCli(['--root', corpus.root, '--require-facets'])).toMatchObject({ instructions: 2, exitCode: 0, issues: [] });
+    corpus.catalog.instructions[0].sha256 = '0'.repeat(64);
+    await corpus.save();
+    const stale = checkCorpus(corpus.root, { requireFacets: true });
+    expect(stale.map(item => item.code)).toContain('CORPUS_DIGEST_MISMATCH');
+    expect(stale.filter(item => item.code === 'CORPUS_FACETS_REQUIRED').map(item => item.details?.instruction_id))
+      .toEqual(['alpha-instruction']);
+  });
+
+  test('rejects unknown schema markers and malformed v1.1 classification states', async () => {
+    const unknown = await fixture();
+    await addFacetFields(unknown, 'alpha-instruction', 'schema: VPInstruction/v2');
+    expect(checkCorpus(unknown.root).map((item) => item.code)).toContain('CORPUS_INSTRUCTION_VERSION_UNSUPPORTED');
+
+    const invalid = await fixture();
+    await addFacetFields(invalid, 'alpha-instruction', 'schema: VPInstruction/v1.1\nclassification_status: unclassified\nclassification_reason: "   "\ndomains:\n  - engineering');
+    const codesFound = checkCorpus(invalid.root).map((item) => item.code);
+    expect(codesFound).toContain('CORPUS_INSTRUCTION_SCHEMA_INVALID');
+    expect(codesFound).toContain('CORPUS_INSTRUCTION_CLASSIFICATION_INVALID');
+  });
+
+  test('an unreadable facet schema fails closed for every strict disposition', async () => {
+    const corpus = await fixture({ twoInstructions: true });
+    for (const id of ['alpha-instruction', 'beta-instruction']) {
+      await addFacetFields(corpus, id, 'schema: VPInstruction/v1.1\nclassification_status: unclassified\nclassification_reason: Explicitly undecided.');
+    }
+    const schemaPath = join(packageRoot, 'config/vpinstruction.v1.1.schema.json');
+    const realRead = filesystem.readFileSync;
+    const fault = spyOn(filesystem, 'readFileSync').mockImplementation(new Proxy(realRead, { apply(read, receiver: unknown, args: unknown[]) {
+      if (args[0] === schemaPath) throw new Error('facet schema read denied');
+      return Reflect.apply(read, receiver, args);
+    } }));
+    try {
+      const issues = checkCorpus(corpus.root, { requireFacets: true });
+      expect(issues.filter(item => item.code === 'CORPUS_INSTRUCTION_SCHEMA_UNAVAILABLE')).toHaveLength(1);
+      expect(issues.filter(item => item.code === 'CORPUS_FACETS_REQUIRED').map(item => item.details?.instruction_id).sort())
+        .toEqual(['alpha-instruction', 'beta-instruction']);
+    } finally {
+      fault.mockRestore();
+    }
+    expect(checkCorpus(corpus.root, { requireFacets: true })).toEqual([]);
   });
 
   test('validates source methodology profiles against schema, corpus, pattern tags, decisions, and unique ownership', async () => {
@@ -616,6 +680,12 @@ test('the corpus entry adapter preserves import isolation, printed output and na
   const previous = process.exitCode;
   const print = spyOn(console, 'log').mockImplementation(() => {});
   try {
+    expect(startCorpusCli([process.execPath, script, '--root', corpus.root, '--require-facets'], text => output.push(text), code => exits.push(code))).toBe(1);
+    expect(exits).toEqual([1, 1]);
+    expect(JSON.parse(output[1] ?? '').issues.map((item: { code: string }) => item.code)).toContain('CORPUS_FACETS_REQUIRED');
+    const nativeStrict = spawnSync(bun, [script, '--root', corpus.root, '--require-facets'], { encoding: 'utf8' });
+    expect(nativeStrict.status).toBe(1);
+    expect(JSON.parse(nativeStrict.stdout).issues.map((item: { code: string }) => item.code)).toContain('CORPUS_FACETS_REQUIRED');
     expect(startCorpusCli([process.execPath, script, '--root', corpus.root])).toBe(0);
     expect(process.exitCode).toBe(0);
     expect(JSON.parse(String(print.mock.calls[0]?.[0]))).toMatchObject({ instructions: 1, issues: [] });

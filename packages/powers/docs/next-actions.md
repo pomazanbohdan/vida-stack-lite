@@ -24,7 +24,7 @@ sources:
   title: Vida Agent package — Bun package conventions
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T06:10:47Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '16'
+revision: '18'
 ---
 
 # Goal and boundaries
@@ -155,3 +155,13 @@ Work Item has AC and evidence; (5) the D3+D8 request has been issued; (6) `check
 and repository documentation checks pass; and (7) `docs/log.md` records the changes.
 Step H is a separate accepted scope extension. It is complete only under the H0-H3 definition
 in `task-plan-step-h.md`; accepting D14/D15 does not close those implementation gates.
+
+## D16 instruction organization
+
+The owner authorized stable canonical files with independent form/domain facets. [D16](decisions/D16-faceted-instruction-browse.md), BR-24 and [SR-92](system-specification.md#15-faceted-instruction-metadata-d16) own the contract; AC-60–AC-64 remain open.
+
+1. Frozen 40-ID sample, 24 selectors and relevance judgments: captured. Old-code baseline: 30 fresh-process runs and 2,400 warm queries; same-input three-structure prototype: captured. Beam accepted the exact evidence as READY_AS_OLD_CODE_BASELINE_AND_STRUCTURE_PROTOTYPE. Retained evidence: packages/powers/.tmp/panel/donor-migration-architecture-20261025/instruction-organization-20261026/implementation-r1/baseline-prototype-root-r3/. These results establish no speedup or full-corpus recall.
+2. The strict v1.1 schema/reader, optional filters, generated browse and opt-in strict corpus check are implemented, Root-qualified and independently reviewed by Beam. The reader milestone passes 547 tests with one expected Windows skip and zero failures, with 100% functions/lines; all 24 old no-facet queries retain exact output. The separate 40-item model-classification ledger is reviewed. Current: prepare and qualify converter-owned metadata staging, including the new helper/schema tool bindings. Root integrates and executes checks; Luna prepares code; Beam validates independently.
+3. Review the exact prepared 40-ID treatment, then execute it in isolation and compare matched results under the frozen protocol.
+4. After trial acceptance, classify every frozen rollout ID or retain an explicit source-bound unclassified reason, apply reviewed converter batches and run strict corpus/package gates.
+5. Root publishes only the qualified reviewed Source. Formation, installation and attributable Runtime acceptance remain separate. H1 rights, fidelity, admission and pilot gates remain unchanged.

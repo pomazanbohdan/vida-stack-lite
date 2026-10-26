@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { appendFindingEvent, findFindingCandidates } from './findings.ts';
 import {
   CatalogError,
+  catalogBrowse,
   catalogCompose,
   catalogGet,
   catalogSearch,
@@ -17,8 +18,10 @@ import {
 } from './catalog.ts';
 import type { ComposeQuery, SearchQuery } from './catalog.ts';
 import { validateAgainstSchema } from './schema.ts';
+import { isClassificationStatus, isInstructionDomain, isInstructionForm } from './instruction-facets.ts';
+import type { ClassificationStatus, InstructionDomain, InstructionForm } from './instruction-facets.ts';
 
-type Command = 'tags' | 'search' | 'get' | 'compose' | 'evaluate';
+type Command = 'tags' | 'search' | 'get' | 'compose' | 'evaluate' | 'browse';
 type FindingsOperation = 'append' | 'candidates';
 type ParsedArgs = { command: Command; subcommand?: never; flags: Map<string, string[]> }
   | { command: 'findings'; subcommand: FindingsOperation; flags: Map<string, string[]> };
@@ -54,10 +57,11 @@ const findingsErrorCodes = new Set<FindingsErrorCode>([
 
 const knownFlags = new Set([
   '--catalog', '--capability', '--pattern', '--id', '--required', '--role', '--roles', '--product',
-  '--condition', '--profile', '--operation', '--context', '--tag', '--candidate', '--store', '--event-file', '--json',
+  '--condition', '--profile', '--operation', '--context', '--tag', '--candidate', '--store', '--event-file',
+  '--form', '--domain', '--classification-status', '--json',
 ]);
-const repeatedFlags = new Set(['--tag', '--candidate']);
-const usage = 'usage: bun catalog-cli.ts <tags|search|get|compose|evaluate> [flags]; --roles <r1,r2> filters search/compose; --role <r> sets compose execution context; findings <append|candidates> --store <absolute-path> --event-file <absolute-path>';
+const repeatedFlags = new Set(['--tag', '--candidate', '--form', '--domain', '--classification-status']);
+const usage = 'usage: bun catalog-cli.ts <tags|search|get|compose|evaluate|browse> [flags]; --roles <r1,r2> filters search/compose; repeat --form, --domain, --classification-status to filter search; --role <r> sets compose execution context; findings <append|candidates> --store <absolute-path> --event-file <absolute-path>';
 
 function invalid(message: string, details: Record<string, unknown> = {}): CatalogError {
   return new CatalogError('CATALOG_INVALID', message, details);
@@ -115,7 +119,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     if (subcommand !== 'append' && subcommand !== 'candidates') throw invalid('unknown findings operation', { command, usage });
     return { command, subcommand, flags };
   }
-  if (command === 'tags' || command === 'search' || command === 'get' || command === 'compose' || command === 'evaluate') return { command, flags };
+  if (command === 'tags' || command === 'search' || command === 'get' || command === 'compose' || command === 'evaluate' || command === 'browse') return { command, flags };
   throw invalid(`unknown command ${command}`, { command, usage });
 }
 
@@ -126,10 +130,11 @@ function allowedFlags(command: ParsedArgs['command']): Set<string> {
   }
   const commandFlags: Record<Command, string[]> = {
     tags: [],
-    search: ['--capability', '--pattern', '--id', '--roles', '--product', '--condition'],
+    search: ['--capability', '--pattern', '--id', '--roles', '--product', '--condition', '--form', '--domain', '--classification-status'],
     get: ['--id'],
     compose: ['--capability', '--pattern', '--id', '--required', '--role', '--roles', '--product', '--condition', '--profile'],
     evaluate: ['--operation', '--context', '--product', '--tag', '--candidate'],
+    browse: [],
   };
   const specific = commandFlags[command];
   return new Set([...common, ...specific]);
@@ -207,6 +212,22 @@ function commaList(flags: Map<string, string[]>, name: string): string[] | undef
   return values;
 }
 
+function repeatedFacetValues<T extends string>(
+  flags: Map<string, string[]>,
+  name: string,
+  isAllowed: (value: unknown) => value is T,
+): T[] | undefined {
+  const values = flags.get(name);
+  if (values === undefined) return undefined;
+  const parsed: T[] = [];
+  for (const value of values) {
+    if (!isAllowed(value)) throw invalid(`flag ${name} contains an unsupported value`, { flag: name, value });
+    if (parsed.includes(value)) throw invalid(`flag ${name} contains a duplicate value`, { flag: name, value });
+    parsed.push(value);
+  }
+  return parsed;
+}
+
 async function profileAt(path: string | undefined): Promise<ComposeQuery['profile']> {
   if (path === undefined) return undefined;
   let text: string;
@@ -233,6 +254,8 @@ async function dispatch(command: Command, flags: Map<string, string[]>, catalogP
   switch (command) {
     case 'tags':
       return catalogTags(catalog);
+    case 'browse':
+      return catalogBrowse(catalog, instructions);
     case 'search': {
       const query: SearchQuery = {};
       const capabilityTags = commaList(flags, '--capability');
@@ -241,12 +264,18 @@ async function dispatch(command: Command, flags: Map<string, string[]>, catalogP
       const instructionIds = commaList(flags, '--id');
       const products = commaList(flags, '--product');
       const conditions = commaList(flags, '--condition');
+      const instructionForms = repeatedFacetValues<InstructionForm>(flags, '--form', isInstructionForm);
+      const domains = repeatedFacetValues<InstructionDomain>(flags, '--domain', isInstructionDomain);
+      const classificationStatuses = repeatedFacetValues<ClassificationStatus>(flags, '--classification-status', isClassificationStatus);
       if (capabilityTags !== undefined) query.capability_tags = capabilityTags;
       if (patternTags !== undefined) query.pattern_tags = patternTags;
       if (instructionIds !== undefined) query.instruction_ids = instructionIds;
       if (roles !== undefined) query.roles = roles;
       if (products !== undefined) query.products = products;
       if (conditions !== undefined) query.conditions = conditions;
+      if (instructionForms !== undefined) query.instruction_forms = instructionForms;
+      if (domains !== undefined) query.domains = domains;
+      if (classificationStatuses !== undefined) query.classification_statuses = classificationStatuses;
       return { results: catalogSearch(catalog, instructions, query) };
     }
     case 'get':

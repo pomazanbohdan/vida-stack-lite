@@ -21,12 +21,12 @@ sources:
   title: Vida Powers — business requirements
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D15 (and D4b)
+  title: Accepted decisions D1–D16 (and D4b)
 - id: next-actions
   resource: /next-actions.md
   title: Vida Powers — next actions within packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '17'
+revision: '19'
 ---
 
 # 1. Why and for whom
@@ -172,6 +172,8 @@ alternative.
   The second pattern was added at step C — together with the appearance of the first skill script
   (without it knip does not see `skills/` and gives a config hint).
 # 5. Instruction format
+
+D16 extends this legacy format with strict VPInstruction/v1.1 dispatch; the normative fields, states and legacy compatibility are in [SR-92](system-specification.md#15-faceted-instruction-metadata-d16). The legacy example below remains valid.
 
 A `.md` file with frontmatter. Values are **flat scalars** and **YAML blocks** for
 lists; there are no nested maps (a parser without dependencies). The field names are canonical from
@@ -413,6 +415,8 @@ profile (the profile owns the groups; the vocabulary owns the tag values).
 
 # 7. Operations
 
+D16 adds explicit form/domain/status filtering and generated browse to this catalog owner. Existing no-facet metadata output remains unchanged; see [SR-92](system-specification.md#15-faceted-instruction-metadata-d16).
+
 Pure functions over the catalog + a CLI wrapper. Output — **JSON on stdout**; an error —
 JSON on stderr (`{code, message, details}`) and a non-zero exit code. The script knows nothing about
 the LLM, hosts and the repository; it finds the catalog **from its own file** (`import.meta.url`),
@@ -563,6 +567,8 @@ The same set of instructions serves both modes; the difference is in the way
 the instructions are delivered to the executor.
 
 # 9. Validation and integrity
+
+D16 metadata-only preparation reuses the existing converter publication and recovery owner; no second writer or donor-eligibility bypass is introduced. See [SR-92](system-specification.md#15-faceted-instruction-metadata-d16).
 
 - `check-corpus.ts` (a dev tool in `scripts/`): checks all rules of §5, the vocabulary
   and aliases, ID uniqueness, `requires`/`excludes` against unknown IDs, the consistency of
@@ -744,7 +750,9 @@ the digest.
 
 # 16. What is left to build
 
-The design is implemented: the corpus holds 2510 instructions from 8 donors, the
+D16's v1.1 reader/schema, optional form/domain/status filters, generated browse and opt-in strict checker are implemented and independently reviewed. The current reader passes its package gates and exact 24-query no-facet regression comparison. Converter metadata publication, the 40-ID treatment, full rollout and final combined qualification remain open. The old-code baseline, structure prototype and 40-item model-classification ledger are reviewed; the current corpus remains legacy v1. H2 VPInstruction/v2 remains reserved and must preserve supported v1.1 facets.
+
+The legacy v1 design is implemented: the corpus holds 2510 instructions from 8 donors, the
 operations, the converter, the validator and the audit CLI exist and are covered by
 the test suite. What is left is not inside this design any more — it is the next
 steps of the product.

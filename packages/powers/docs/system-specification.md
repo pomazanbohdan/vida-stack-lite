@@ -19,7 +19,7 @@ sources:
   resource: /decisions/index.md
   title: Accepted decisions D1–D13 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '11'
+revision: '12'
 ---
 
 S-level: **what VP does, observably**. The B-level — `business-requirements.md`,
@@ -34,7 +34,7 @@ normative behavior.
 - **SR-03.** A tag is kebab-case with at least two meaningful components; abbreviations — aliases, the canonical tag dominates.
 - **SR-04.** An active instruction has ≥1 capability tag and ≥1 pattern tag; an absence is closed by an **explicit exception entry with a reason**.
 - **SR-05.** Each tag has a description in the catalog vocabulary; a tag without a description — a validation error.
-- **SR-06.** Mandatory fields: `conditions`, `artifact_contract`, `compatibility` (`excludes`, `requires`), `provenance` — a **list of sources** (donor, license, revision, path); an instruction may have several sources after merging duplicates. The other composite fields are encoded by flat prefixed keys (`conditions_applies_when`, `artifact_contract_output_type`, `compatibility_excludes` and so on) — without nested maps; the source list — as lines `donor=…; license=…; revision=…; path=…`. Additionally permitted are the **optional** fields `roles[]` and `products[]` — carriers of the search dimensions by role and by product (SR-10, SR-70); an absence or an empty list means "applicable to any role/product".
+- **SR-06.** Mandatory fields: `conditions`, `artifact_contract`, `compatibility` (`excludes`, `requires`), `provenance` — a **list of sources** (donor, license, revision, path); an instruction may have several sources after merging duplicates. The other composite fields are encoded by flat prefixed keys (`conditions_applies_when`, `artifact_contract_output_type`, `compatibility_excludes` and so on) — without nested maps; the source list — as lines `donor=…; license=…; revision=…; path=…`. Additionally permitted are the **optional** fields `roles[]` and `products[]` — carriers of the search dimensions by role and by product (SR-10, SR-70); an absence or an empty list means "applicable to any role/product". Unmarked instruction frontmatter retains the strict legacy v1 schema. A schema marker equal to VPInstruction/v1.1 selects the closed facet schema described by SR-92. Unknown markers are rejected. Future VPInstruction/v2 remains reserved for the separately implemented H2 applicability contract. Roles/products and all current fields keep their meanings.
 - **SR-07.** `provenance` is mandatory and has at least one source. Each source — a line `donor=…; license=…; revision=…; path=…`; the license and the revision come from the donors manifest, and `revision` **must equal** `donors.yaml[donor].head_sha`. Without provenance an instruction is not accepted. Merging duplicates preserves all sources in one instruction, selects the better terminology and raises `revision`.
 - **SR-77.** The body of a corpus instruction is the normative text of its donor in the original language, reduced to an atomic norm. Only these edits are permitted: cutting the parts that are not relevant to the norm, merging duplicated sentences, replacing donor names with neutral ones, moving the binding to the norm, and adding an explicit step that states what is considered done. A translation, an invented rule, a weakened strictness, an added requirement the donor does not have and a dropped constraint are defects. The fidelity of a body to its donor is checked by the corpus audit (`scripts/audit.ts fidelity`): a body line whose token run is not found in a declared donor file is reported for review, and the review — not the count — decides. (D11)
 - **SR-08.** `artifact_contract` is mandatory. For instructions that produce a result, `artifact_contract_output_type` and `artifact_contract_verified_by` are non-empty, `artifact_contract_required_data` may be empty. For guidance instructions, `artifact_contract_output_type` = `none`, `artifact_contract_required_data` is empty.
@@ -42,7 +42,7 @@ normative behavior.
 ## 2. Catalog operations
 
 - **SR-09.** `catalog.tags` → the available capability/pattern tags with descriptions, in a stable order; without instruction texts.
-- **SR-10.** `catalog.search` by a set of capability tags, pattern tags, identifiers, role, product and/or application conditions (SR-70) returns **only metadata** (ID, title, short description, tags, revision) — no full texts. The filters combine: tags within one dimension — "at least one", between dimensions — "and"; role, product and conditions — a conjunction.
+- **SR-10.** `catalog.search` by a set of capability tags, pattern tags, identifiers, role, product and/or application conditions (SR-70) returns **only metadata** (ID, title, short description, tags, revision) — no full texts. The filters combine: tags within one dimension — "at least one", between dimensions — "and"; role, product and conditions — a conjunction. catalog.search also accepts optional instruction_forms, domains and classification_statuses arrays under SR-92. Existing calls without these dimensions preserve their exact IDs, deterministic ID order and metadata output shape. This addition provides explicit metadata filtering, not a natural-language or ranked full-text query.
 - **SR-11.** `catalog.get` → the full text of the **exactly specified** instruction; an unknown ID — an error, not an empty result.
 - **SR-12.** `catalog.compose` → the found + mandatory + transitive dependencies, after a compatibility check and removal of duplicates.
 - **SR-13.** Mandatory and dependent instructions are not discarded because of a relevance score; the registry limits of the research contour do not extend to VP.
@@ -161,7 +161,7 @@ the existing numbering.
   methodological variability the user's choice is obtained **once** and
   recorded; under an existing recorded policy it is not requested again.
 - **SR-70.** `catalog.search` supports filters: capability tags, pattern tags,
-  identifiers, role, product and application conditions. In the result — only metadata.
+  identifiers, role, product and application conditions. In the result — only metadata. Optional instruction_forms, domains and classification_statuses follow SR-92; calls without these filters preserve existing output.
 - **SR-71.** Executing a scenario by a UI agent **is not** human acceptance: without the required
   human answer the result remains `awaiting-human-verification`, not PASS.
 - **SR-72.** In Standalone the last entry is determined by the agent transparently, without a system
@@ -237,3 +237,25 @@ Reconversion under SR-90 preserves a previously merged disposition when its outp
 - **Interpretation of SR-73.** Resource bodies are not copied into the generic derived full-text index; typed resources are selected by exact ID and only metadata may appear in search.
 - **Interpretation of SR-76.** catalog.json remains the single canonical listing. A versioned schema migration adds typed resource entries to that manifest before resource code; no second catalog is allowed.
 - **Interpretation of SR-77.** CSV-derived instructions bind fidelity evidence to exact source rows and cells under SR-85. A token match elsewhere in a file cannot stand in for source-cell proof.
+
+## 15. Faceted instruction metadata (D16)
+
+- **SR-92.** The existing catalog, converter and corpus checker own instruction classification, optional facet filters, generated browse and metadata-only migration as follows.
+
+The supported forms are principle, decision-rule, procedure and checklist. A principle guides judgment; a decision-rule expresses a conditional choice or obligation; a procedure requires an ordered action sequence; a checklist enumerates checks without a required order. Domains are engineering, design-ux, product, business, research and operations. Domains are multi-valued and have no implicit primary order.
+
+VPInstruction/v1.1 uses flat frontmatter fields schema, classification_status, instruction_form, domains and classification_reason. A classified record requires exactly one supported form and one or more unique supported domains; classification_reason is absent. An unclassified record requires a nonblank reason and forbids instruction_form and domains. Unsupported values, duplicates and invalid state combinations are rejected. Legacy v1 normalizes internally to unclassified with reason legacy-v1-no-facet-fields; its original bytes and no-facet public behavior are preserved.
+
+The instruction_forms, domains and classification_statuses filters accept nonempty arrays of distinct supported values. Status values are classified and unclassified. Values within one dimension combine with OR; supplied dimensions and existing filters combine with AND. A no-facet query includes every otherwise matching active unclassified instruction. A form/domain filter excludes unclassified records. An explicit unclassified status filter selects them. Filters never infer applicability or create compatibility edges.
+
+The generated browse result contains form groups, domain groups and an unclassified group. Each group carries its value where applicable, count and canonical instruction IDs. Only verified active catalog entries contribute. Groups and IDs use deterministic ordering; each ID appears once within a group. Domain counts are non-exclusive across groups. Browse is derived from the existing catalog and verified instruction metadata; no second editable catalog, file copy or persistent text index is introduced.
+
+Search returns its existing metadata fields. Exact get behavior, required/dependency closure, exclusions, profile policy and the 20-instruction/64,000-UTF-8-byte compose limits remain governed by their existing contracts. A facet selector cannot remove a required dependency from compose closure. Disabled, malformed and digest-mismatched inputs retain current errors and cannot produce accepted partial output.
+
+The metadata preparation entry in scripts/convert.ts accepts only existing catalog IDs, their exact current file hashes and valid classification assignments. Each batch contains 1–25 unique IDs. Paths derive from the catalog. The entry returns the existing prepared-publication handle and reuses applyPreparedBatch, reconcilePreparedBatch, ownership, Root-observed independent review, CAS, immutable stages/backups and unknown-effect fencing. It does not create or weaken EligibleSource; existing donor-source preparation and rechecks remain unchanged.
+
+A changed classification advances the instruction revision once and updates the actual file digest and catalog revision under the converter owner. IDs, paths, Markdown body suffix bytes, provenance, source contributions, all other metadata values and corpus-map bytes remain unchanged. Inputs, classification evidence, current policy/configuration, target preimages and intended outputs are bound to the exact prepared plan. A no-op does not fabricate a revision or write. Partial or unknown effects remain fenced until Root reconciles observed state; several file replacements are not one atomic transaction.
+
+Before rollout, the 40-ID trial freezes raw/body hashes, classifications, 24 explicit query selectors, relevance judgments, split, targets and measurement protocol. Six queries are calibration and 18 are heldout; each language has 12 descriptions. Query descriptions are labels for explicit metadata queries, not input to a language-understanding engine. Baseline precedes measured Source changes. The same content cohort is compared under bound old/new representations; changed frontmatter digests are expected. Unknown judgments stay explicit. Full-corpus recall, a speedup or a bottleneck is not inferred from fixture timings or the small trial.
+
+After the reviewed trial, every catalog ID in the frozen 2,510-entry rollout cohort has exactly one source-bound classified or unclassified disposition. Each label cites actual body/conditions evidence; uncertain content is not paraphrased or forced into a class. Model-derived classification and Beam/Root technical review do not constitute human fidelity, donor admission or Runtime acceptance. The final strict corpus check verifies complete coverage and unchanged invariants; package quality thresholds remain unchanged.

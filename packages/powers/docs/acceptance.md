@@ -16,7 +16,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '13'
+revision: '14'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
@@ -128,6 +128,18 @@ The criteria below are future gates. They do not change the current E4 acceptanc
 | AC-57 | Missing, stale or contradictory transitive evidence blocks eligibility; scoped reviews stay scoped; only Root reconciliation of attributable human fidelity, rights and admission produces an eligible exact subset | SR-81, SR-89 | Source-packet negative/reuse fixtures and attributable admission dossier; models and fixture approvals do not close the manual gate | manual | open |
 | AC-58 | Prepared conversion preflights the entire batch and both directions of source/spec provenance before writes, stages reviewed bytes, preserves unrelated files and merge contribution locators, detects stale preimages and changed donor revisions, and classifies interrupted changed/no-op/absent targets without automatic retry; existing callers retain sequential results | SR-90 | Converter fixtures for conflict, missing source contribution, retained merged/split locators, interruption after each target, all-old/all-intended/mixed/unexpected states, readback and legacy compatibility | auto | open |
 | AC-59 | Comparable pre-treatment and treatment receipts account for ten distinct admitted source files, quality, failures, rework and elapsed time before scaling or claiming donor speedup | SR-91 | Bound baseline, qualified pilot and matched treatment receipts; component-only fixture timing is insufficient | manual | open |
+
+## Instruction organization (D16)
+
+| ID | Condition | SR | Evidence | Type | State |
+|---|---|---|---|---|---|
+| AC-60 | Exact v1/v1.1 dispatch preserves legacy inputs and rejects unknown markers, unsupported labels and illegal classified/unclassified states | SR-06, SR-92 | Schema/parser/reader boundary and round-trip fixtures; explicit legacy regression results | auto | open |
+| AC-61 | Optional facet filters obey OR/AND rules; no-facet results/metadata order stay unchanged; active unclassified inclusion and disabled/digest/dependency/profile/compose-limit rules are preserved | SR-10, SR-58, SR-70, SR-92 | Public catalog/CLI/compose positive, negative, no-facet and limit checks | auto | open |
+| AC-62 | Browse derives deterministic groups/counts from one verified listing; multi-domain membership does not duplicate canonical IDs; strict final checking accounts for every frozen rollout ID with evidence or an unclassified reason | SR-76, SR-92 | Browse fixtures, exact cohort manifest, classification evidence and strict corpus/invariant receipt | auto | open |
+| AC-63 | Metadata batches use converter-owned prepared publication over existing IDs only, preserve body/provenance/map invariants and exact donor eligibility guards, and fence stale, partial or unknown writes | SR-90, SR-92 | Prepared converter ownership/CAS/review-binding/no-op/interruption/reconcile fixtures and per-batch readback receipts | auto | open |
+| AC-64 | Frozen baseline/prototype/40-item treatment retain query/label/judgment bindings and matched outputs, errors and timing scope; semantic metrics and uncertainty are reported under the frozen protocol without claims of human, full-corpus, NL-search or donor-throughput acceptance | SR-92 | Bound old-code baseline, same-input structure prototype, isolated treatment and model-evaluation reports, exact code review and unchanged package gates | auto | open |
+
+These criteria do not close AC-57/AC-59, legal clearance or Runtime acceptance.
 
 ## What we do not prove
 

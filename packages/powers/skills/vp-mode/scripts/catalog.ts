@@ -8,6 +8,19 @@ import { parseFrontmatter } from './frontmatter.ts';
 import { FrontmatterError } from './frontmatter.ts';
 import { validateAgainstSchema } from './schema.ts';
 import type { Schema } from './schema.ts';
+import {
+  FACETED_INSTRUCTION_SCHEMA_NAME,
+  INSTRUCTION_DOMAINS,
+  INSTRUCTION_FORMS,
+  LEGACY_CLASSIFICATION,
+  instructionSchemaVersion,
+  isClassificationStatus,
+  isInstructionClassification,
+  isInstructionDomain,
+  isInstructionForm,
+  parseFacetClassification,
+} from './instruction-facets.ts';
+import type { ClassificationStatus, InstructionClassification, InstructionDomain, InstructionForm } from './instruction-facets.ts';
 
 export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED';
 
@@ -32,6 +45,7 @@ export type Instruction = {
   compatibility: { excludes: string[]; requires: string[] };
   provenance: Provenance[]; status: 'active' | 'disabled'; revision: number; content: string;
 };
+export type LoadedInstruction = Instruction & { classification: InstructionClassification };
 export type Catalog = {
   schema: 'VPCatalog/v1'; catalog_id: string; revision: number; source_revision: string; updated_at: string;
   tag_dictionary: { capability: Record<string, string>; pattern: Record<string, string> };
@@ -41,7 +55,16 @@ export type Catalog = {
 };
 export type TagEntry = { tag: string; description: string; aliases: string[] };
 export type InstructionMetadata = { instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[]; revision: number };
-export type SearchQuery = { capability_tags?: string[]; pattern_tags?: string[]; instruction_ids?: string[]; roles?: string[]; products?: string[]; conditions?: string[] };
+export type SearchQuery = {
+  capability_tags?: string[]; pattern_tags?: string[]; instruction_ids?: string[]; roles?: string[]; products?: string[]; conditions?: string[];
+  instruction_forms?: InstructionForm[]; domains?: InstructionDomain[]; classification_statuses?: ClassificationStatus[];
+};
+export type CatalogBrowseGroup<T extends string> = { value: T; count: number; instruction_ids: string[] };
+export type CatalogBrowseResult = {
+  forms: CatalogBrowseGroup<InstructionForm>[];
+  domains: CatalogBrowseGroup<InstructionDomain>[];
+  unclassified: { count: number; instruction_ids: string[] };
+};
 export type DecisionRequest = { operation: string; product?: string; context?: string; tags?: string[]; candidates: string[] };
 export type DecisionFallbackReason = 'no-candidates' | 'unknown-candidate' | 'candidate-not-allowed' | 'invalid-format';
 export type DecisionResult = { selected: string[]; score: number; rationale: string; provider: 'catalog' | 'agent'; fallback: boolean; fallbackReason: DecisionFallbackReason | null };
@@ -211,9 +234,10 @@ function validateTags(catalog: Catalog, instruction: Instruction): void {
   for (const tag of instruction.pattern_tags) allowedTag(catalog, instruction.instruction_id, 'pattern', tag);
 }
 
-export async function loadInstructions(catalog: Catalog, directory: string): Promise<Map<string, Instruction>> {
-  const schema = await readSchema(directory, instructionSchemaName);
-  const instructions = new Map<string, Instruction>();
+export async function loadInstructions(catalog: Catalog, directory: string): Promise<Map<string, LoadedInstruction>> {
+  const legacySchema = await readSchema(directory, instructionSchemaName);
+  let facetedSchema: Schema | undefined;
+  const instructions = new Map<string, LoadedInstruction>();
   for (const entry of catalog.instructions) {
     let bytes: Buffer;
     try {
@@ -234,11 +258,20 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
         line: frontmatterError?.line ?? 0,
       });
     }
+    const version = instructionSchemaVersion(parsed.data.schema);
+    if (version === undefined) throw invalid(`unsupported instruction schema marker for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schema: parsed.data.schema });
+    if (version === 'faceted-v1.1' && facetedSchema === undefined) {
+      facetedSchema = await readSchema(directory, FACETED_INSTRUCTION_SCHEMA_NAME);
+    }
+    const schema = version === 'legacy-v1' ? legacySchema : facetedSchema;
+    if (schema === undefined) throw invalid(`cannot load instruction schema for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, version });
     const schemaErrors = validateAgainstSchema(parsed.data, schema);
     if (schemaErrors.length > 0) throw invalid(`instruction schema validation failed for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schemaErrors });
     if (parsed.data.instruction_id !== entry.instruction_id) throw invalid(`instruction id mismatch for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, actual_id: parsed.data.instruction_id });
     const data = parsed.data;
-    const instruction: Instruction = {
+    const classification = version === 'legacy-v1' ? { ...LEGACY_CLASSIFICATION } : parseFacetClassification(data);
+    if (classification === undefined) throw invalid(`instruction classification is invalid for ${entry.instruction_id}`, { instruction_id: entry.instruction_id });
+    const instruction: LoadedInstruction = {
       instruction_id: entry.instruction_id,
       title: data.title as string,
       summary: data.summary as string,
@@ -253,6 +286,7 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
       status: data.status as 'active' | 'disabled',
       revision: data.revision as number,
       content: parsed.body,
+      classification,
     };
     validateTags(catalog, instruction);
     instructions.set(instruction.instruction_id, instruction);
@@ -275,12 +309,36 @@ function hasAny(values: string[], selected: string[]): boolean {
   return selected.length === 0 || values.some((value) => selected.includes(value));
 }
 
-function validateQueryDimensions(query: SearchQuery): void {
+type FacetQuery = { instructionForms: InstructionForm[]; domains: InstructionDomain[]; classificationStatuses: ClassificationStatus[] };
+
+function facetValues<T extends string>(
+  dimension: string,
+  value: unknown,
+  isAllowed: (candidate: unknown) => candidate is T,
+): T[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) throw invalid(`query dimension ${dimension} must be an array`, { dimension, value });
+  if (value.length === 0) throw invalid(`query dimension ${dimension} must not be empty`, { dimension, value });
+  const values: T[] = [];
+  for (const candidate of value) {
+    if (!isAllowed(candidate)) throw invalid(`query dimension ${dimension} contains an unsupported value`, { dimension, value: candidate });
+    if (values.includes(candidate)) throw invalid(`query dimension ${dimension} contains a duplicate value`, { dimension, value: candidate });
+    values.push(candidate);
+  }
+  return values;
+}
+
+function validateQueryDimensions(query: SearchQuery): FacetQuery {
   const dimensions = ['capability_tags', 'pattern_tags', 'instruction_ids', 'roles', 'products', 'conditions'] as const;
   for (const dimension of dimensions) {
     const value = query[dimension];
     if (value !== undefined && !Array.isArray(value)) throw invalid(`query dimension ${dimension} must be an array`, { dimension, value });
   }
+  return {
+    instructionForms: facetValues('instruction_forms', query.instruction_forms, isInstructionForm),
+    domains: facetValues('domains', query.domains, isInstructionDomain),
+    classificationStatuses: facetValues('classification_statuses', query.classification_statuses, isClassificationStatus),
+  };
 }
 
 function canonicalTags(catalog: Catalog, dimension: 'capability' | 'pattern', values: string[] | undefined): string[] {
@@ -304,8 +362,8 @@ function matchesConditions(instruction: Instruction, conditions: string[] | unde
     && !containsWord(instruction.conditions.does_not_apply_when, token));
 }
 
-export function catalogSearch(catalog: Catalog, instructions: Map<string, Instruction>, query: SearchQuery): InstructionMetadata[] {
-  validateQueryDimensions(query);
+export function catalogSearch(catalog: Catalog, instructions: Map<string, LoadedInstruction>, query: SearchQuery): InstructionMetadata[] {
+  const facets = validateQueryDimensions(query);
   const capabilities = canonicalTags(catalog, 'capability', query.capability_tags);
   const patterns = canonicalTags(catalog, 'pattern', query.pattern_tags);
   for (const token of query.conditions ?? []) {
@@ -320,15 +378,69 @@ export function catalogSearch(catalog: Catalog, instructions: Map<string, Instru
     .filter((instruction) => instruction.roles.length === 0 || hasAny(instruction.roles, query.roles ?? []))
     .filter((instruction) => instruction.products.length === 0 || hasAny(instruction.products, query.products ?? []))
     .filter((instruction) => matchesConditions(instruction, query.conditions))
+    .filter((instruction) => facets.instructionForms.length === 0 || (instruction.classification.classification_status === 'classified' && facets.instructionForms.includes(instruction.classification.instruction_form)))
+    .filter((instruction) => {
+      if (facets.domains.length === 0) return true;
+      const classification = instruction.classification;
+      return classification.classification_status === 'classified' && facets.domains.some((domain) => classification.domains.includes(domain));
+    })
+    .filter((instruction) => facets.classificationStatuses.length === 0 || facets.classificationStatuses.includes(instruction.classification.classification_status))
     .sort((left, right) => compareNames(left.instruction_id, right.instruction_id))
     .map(({ instruction_id, title, summary, capability_tags, pattern_tags, revision }) => ({ instruction_id, title, summary, capability_tags, pattern_tags, revision }));
+}
+
+export function catalogBrowse(catalog: Catalog, instructions: Map<string, LoadedInstruction>): CatalogBrowseResult {
+  const formIds = new Map<InstructionForm, Set<string>>();
+  const domainIds = new Map<InstructionDomain, Set<string>>();
+  for (const form of INSTRUCTION_FORMS) formIds.set(form, new Set<string>());
+  for (const domain of INSTRUCTION_DOMAINS) domainIds.set(domain, new Set<string>());
+  const unclassifiedIds = new Set<string>();
+  const listedIds = new Set<string>();
+  for (const entry of catalog.instructions) {
+    const id = entry.instruction_id;
+    if (typeof id !== 'string' || id.trim() === '' || listedIds.has(id)) throw invalid('catalog browse requires unique listed instruction ids', { instruction_id: id });
+    listedIds.add(id);
+    const instruction = instructions.get(id);
+    if (instruction === undefined || instruction.instruction_id !== id) throw invalid('catalog browse requires a loaded instruction for every listed id', { instruction_id: id });
+    if (instruction.status !== 'active' && instruction.status !== 'disabled') throw invalid('catalog browse found an invalid instruction status', { instruction_id: id, status: instruction.status });
+    if (!isInstructionClassification(instruction.classification)) throw invalid('catalog browse found invalid instruction classification', { instruction_id: id });
+    if (instruction.status === 'disabled') continue;
+    switch (instruction.classification.classification_status) {
+      case 'classified': {
+        const formGroup = formIds.get(instruction.classification.instruction_form);
+        if (formGroup === undefined) throw invalid('catalog browse found an unsupported instruction form', { instruction_id: id });
+        formGroup.add(id);
+        for (const domain of instruction.classification.domains) {
+          const domainGroup = domainIds.get(domain);
+          if (domainGroup === undefined) throw invalid('catalog browse found an unsupported instruction domain', { instruction_id: id, domain });
+          domainGroup.add(id);
+        }
+        break;
+      }
+      case 'unclassified':
+        unclassifiedIds.add(id);
+        break;
+    }
+  }
+  const groups = <T extends string>(source: Map<T, Set<string>>): CatalogBrowseGroup<T>[] => [...source.entries()]
+    .sort(([left], [right]) => compareNames(left, right))
+    .map(([value, ids]) => {
+      const instruction_ids = [...ids].sort(compareNames);
+      return { value, count: instruction_ids.length, instruction_ids };
+    });
+  const unclassifiedInstructionIds = [...unclassifiedIds].sort(compareNames);
+  return {
+    forms: groups(formIds),
+    domains: groups(domainIds),
+    unclassified: { count: unclassifiedInstructionIds.length, instruction_ids: unclassifiedInstructionIds },
+  };
 }
 
 function decisionFallback(fallbackReason: DecisionFallbackReason, rationale: string): DecisionResult {
   return { selected: [], score: 0, rationale, provider: 'agent', fallback: true, fallbackReason };
 }
 
-export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Instruction>, request: DecisionRequest): DecisionResult {
+export function decisionEvaluate(catalog: Catalog, instructions: Map<string, LoadedInstruction>, request: DecisionRequest): DecisionResult {
   if (typeof request !== 'object' || request === null) {
     return decisionFallback('invalid-format', 'Request is malformed: request must be an object.');
   }
@@ -366,7 +478,7 @@ export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Ins
   const uniqueTags = [...new Set(requestedTags)];
   const ranked = [...new Set(candidates)]
     .map((id) => instructions.get(id))
-    .filter((instruction): instruction is Instruction => instruction !== undefined)
+    .filter((instruction): instruction is LoadedInstruction => instruction !== undefined)
     .map((instruction) => ({
       instruction,
       matchedTags: uniqueTags.filter((tag) => instruction.capability_tags.includes(tag) || instruction.pattern_tags.includes(tag)),
@@ -388,23 +500,43 @@ export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Ins
   };
 }
 
-export function catalogGet(_catalog: Catalog, instructions: Map<string, Instruction>, id: string): Instruction {
+function activeInstruction(instructions: Map<string, LoadedInstruction>, id: string): LoadedInstruction {
   const instruction = instructions.get(id);
   if (instruction === undefined) throw new CatalogError('CATALOG_ID_UNKNOWN', `unknown instruction id: ${id}`, { instruction_id: id });
   if (instruction.status === 'disabled') throw new CatalogError('CATALOG_INSTRUCTION_DISABLED', `instruction is disabled: ${id}`, { instruction_id: id });
   return instruction;
 }
 
-function addSelected(selected: Map<string, { instruction: Instruction; reason: ComposedInstruction['selection_reason'] }>, instruction: Instruction, reason: ComposedInstruction['selection_reason']): void {
+export function catalogGet(_catalog: Catalog, instructions: Map<string, LoadedInstruction>, id: string): Instruction {
+  const instruction = activeInstruction(instructions, id);
+  return {
+    instruction_id: instruction.instruction_id,
+    title: instruction.title,
+    summary: instruction.summary,
+    capability_tags: instruction.capability_tags,
+    pattern_tags: instruction.pattern_tags,
+    roles: instruction.roles,
+    products: instruction.products,
+    conditions: instruction.conditions,
+    artifact_contract: instruction.artifact_contract,
+    compatibility: instruction.compatibility,
+    provenance: instruction.provenance,
+    status: instruction.status,
+    revision: instruction.revision,
+    content: instruction.content,
+  };
+}
+
+function addSelected(selected: Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>, instruction: LoadedInstruction, reason: ComposedInstruction['selection_reason']): void {
   const existing = selected.get(instruction.instruction_id);
   if (existing === undefined || reason === 'required') selected.set(instruction.instruction_id, { instruction, reason });
 }
 
-function profileDrops(instruction: Instruction, query: ComposeQuery): boolean {
+function profileDrops(instruction: LoadedInstruction, query: ComposeQuery): boolean {
   return profileConflictFor(instruction, query.profile) !== undefined;
 }
 
-function profileConflictFor(instruction: Instruction, profile: EffectiveProfile | undefined): { group: string; active: string } | undefined {
+function profileConflictFor(instruction: LoadedInstruction, profile: EffectiveProfile | undefined): { group: string; active: string } | undefined {
   if (profile === undefined) return undefined;
   for (const [group, choice] of Object.entries(profile.groups)) {
     if (instruction.pattern_tags.some((tag) => choice.alternatives.includes(tag) && tag !== choice.active)) return { group, active: choice.active };
@@ -412,7 +544,7 @@ function profileConflictFor(instruction: Instruction, profile: EffectiveProfile 
   return undefined;
 }
 
-function unresolvedProfileConflictFor(instruction: Instruction, profile: EffectiveProfile | undefined): { group: string; alternatives: string[] } | undefined {
+function unresolvedProfileConflictFor(instruction: LoadedInstruction, profile: EffectiveProfile | undefined): { group: string; alternatives: string[] } | undefined {
   if (profile === undefined) return undefined;
   for (const [group, alternatives] of Object.entries(profile.unresolved_groups ?? {})) {
     if (instruction.pattern_tags.some((tag) => alternatives.includes(tag))) return { group, alternatives };
@@ -493,7 +625,7 @@ function validateProfile(profile: EffectiveProfile | undefined): void {
 }
 
 function validateCanonicalPolicySelection(
-  selected: Map<string, { instruction: Instruction; reason: ComposedInstruction['selection_reason'] }>,
+  selected: Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>,
   profile: EffectiveProfile | undefined,
 ): void {
   const canonicalGroups = loadCanonicalMethodologyGroups();
@@ -561,7 +693,7 @@ function validateCanonicalPolicySelection(
   }
 }
 
-function checkExcludes(selected: Map<string, { instruction: Instruction; reason: ComposedInstruction['selection_reason'] }>): void {
+function checkExcludes(selected: Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>): void {
   const values = [...selected.values()].map((item) => item.instruction).sort((left, right) => compareNames(left.instruction_id, right.instruction_id));
   for (let index = 0; index < values.length; index += 1) {
     const left = values[index];
@@ -577,14 +709,15 @@ function checkExcludes(selected: Map<string, { instruction: Instruction; reason:
   }
 }
 
-export function catalogCompose(catalog: Catalog, instructions: Map<string, Instruction>, query: ComposeQuery): ComposedBundle {
-  validateQueryDimensions(query);
+export function catalogCompose(catalog: Catalog, instructions: Map<string, LoadedInstruction>, query: ComposeQuery): ComposedBundle {
+  const facets = validateQueryDimensions(query);
   validateProfile(query.profile);
-  const selected = new Map<string, { instruction: Instruction; reason: ComposedInstruction['selection_reason'] }>();
-  for (const id of query.required_ids ?? []) addSelected(selected, catalogGet(catalog, instructions, id), 'required');
+  const selected = new Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>();
+  for (const id of query.required_ids ?? []) addSelected(selected, activeInstruction(instructions, id), 'required');
   const supplied = (value: string[] | undefined): boolean => Array.isArray(value) && value.length > 0;
   const hasSelectionDimension = supplied(query.capability_tags) || supplied(query.pattern_tags) || supplied(query.instruction_ids)
-    || supplied(query.roles) || supplied(query.products) || supplied(query.conditions);
+    || supplied(query.roles) || supplied(query.products) || supplied(query.conditions)
+    || facets.instructionForms.length > 0 || facets.domains.length > 0 || facets.classificationStatuses.length > 0;
   if (hasSelectionDimension) {
     for (const metadata of catalogSearch(catalog, instructions, query)) {
       const instruction = instructions.get(metadata.instruction_id);

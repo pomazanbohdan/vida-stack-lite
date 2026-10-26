@@ -9,6 +9,7 @@ function readSchema(name: string): Schema {
 
 const catalogSchema = readSchema('vpcatalog.v1.schema.json');
 const instructionSchema = readSchema('vpinstruction.v1.schema.json');
+const instructionV11Schema = readSchema('vpinstruction.v1.1.schema.json');
 const profileSchema = readSchema('vpeffectiveprofile.v1.schema.json');
 const sourceProfileSchema = readSchema('vpmethodologyprofile.v1.schema.json');
 const corpusMapSchema = readSchema('vpcorpusmap.v1.schema.json');
@@ -204,6 +205,44 @@ describe('production VP schemas', () => {
     }
   });
 
+  test('accepts only closed classified or explicitly unclassified v1.1 records', () => {
+    const classified = {
+      ...instruction,
+      schema: 'VPInstruction/v1.1',
+      classification_status: 'classified',
+      instruction_form: 'procedure',
+      domains: ['engineering', 'design-ux'],
+    };
+    const unclassified = {
+      ...instruction,
+      schema: 'VPInstruction/v1.1',
+      classification_status: 'unclassified',
+      classification_reason: 'The source needs owner review.',
+    };
+    expect(validateAgainstSchema(classified, instructionV11Schema)).toEqual([]);
+    expect(validateAgainstSchema(unclassified, instructionV11Schema)).toEqual([]);
+    expect(validateAgainstSchema({ ...instruction, classification_status: 'unclassified' }, instructionSchema)).toEqual([
+      'classification_status: additional property',
+    ]);
+
+    const invalidRecords: unknown[] = [
+      { ...classified, instruction_form: 'narrative' },
+      { ...classified, domains: [] },
+      { ...classified, domains: ['engineering', 'engineering'] },
+      { ...classified, domains: ['engineering', 'unknown'] },
+      { ...classified, classification_reason: 'not allowed here' },
+      { ...classified, classification_status: 'unknown' },
+      { ...classified, schema: 'VPInstruction/v2' },
+      { ...classified, schema: null },
+      { ...unclassified, classification_reason: ' \t ' },
+      { ...unclassified, instruction_form: 'procedure' },
+      { ...unclassified, domains: ['engineering'] },
+      { ...unclassified, classification_reason: undefined },
+      { ...classified, extra: true },
+    ];
+    for (const record of invalidRecords) expect(validateAgainstSchema(record, instructionV11Schema).length).toBeGreaterThan(0);
+  });
+
   test('checks profile group fields and tag patterns', () => {
     expect(validateAgainstSchema({ ...profile, groups: { x: { active: 'Bad', alternatives: ['also_bad'] } } }, profileSchema)).toEqual([
       'groups.x.active: must match pattern',
@@ -287,6 +326,13 @@ describe('JSON Schema subset validator', () => {
     expect(validateAgainstSchema({ count: 0 }, schema)).toEqual(['count: must be >= 1']);
   });
 
+  test('enforces uniqueItems using JSON value equality', () => {
+    const schema: Schema = { type: 'array', uniqueItems: true };
+    expect(validateAgainstSchema(['engineering', 'design-ux'], schema)).toEqual([]);
+    expect(validateAgainstSchema(['engineering', 'engineering'], schema)).toEqual(['$: must not contain duplicate items']);
+    expect(validateAgainstSchema([{ domain: 'engineering' }, { domain: 'engineering' }], schema)).toEqual(['$: must not contain duplicate items']);
+  });
+
   test('supports annotations and not semantics, including schema validation under not', () => {
     const schema: Schema = { title: 'not example', description: 'excluded names', not: { type: 'string', pattern: '^blocked$' } };
     expect(validateAgainstSchema('allowed', schema)).toEqual([]);
@@ -304,7 +350,7 @@ describe('JSON Schema subset validator', () => {
   test('reports invalid values for every supported keyword shape', () => {
     const schema = {
       type: 'wat', required: 'x', properties: [], additionalProperties: 4, enum: {}, pattern: 1,
-      minLength: '1', maxLength: null, minimum: '2', maximum: {}, minItems: '0', maxItems: false,
+      minLength: '1', maxLength: null, minimum: '2', maximum: {}, minItems: '0', maxItems: false, uniqueItems: 'yes',
       items: [], $ref: 1, allOf: {}, if: [], then: null, definitions: [],
     } as unknown as Schema;
     expect(validateAgainstSchema({}, schema)).toEqual([
@@ -312,6 +358,7 @@ describe('JSON Schema subset validator', () => {
       'invalid schema keyword value: additionalProperties', 'invalid schema keyword value: enum', 'invalid schema keyword value: pattern',
       'invalid schema keyword value: minLength', 'invalid schema keyword value: maxLength', 'invalid schema keyword value: minimum',
       'invalid schema keyword value: maximum', 'invalid schema keyword value: minItems', 'invalid schema keyword value: maxItems',
+      'invalid schema keyword value: uniqueItems',
       'invalid schema keyword value: items', 'invalid schema keyword value: $ref', 'invalid schema keyword value: allOf',
       'invalid schema keyword value: if', 'invalid schema keyword value: then', 'invalid schema keyword value: definitions',
     ]);

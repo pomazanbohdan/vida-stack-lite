@@ -25,7 +25,7 @@ sources:
   resource: /catalog-design.md
   title: Vida Powers — instruction catalog design
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '12'
+revision: '13'
 ---
 
 ## Research → BR → SR → AC
@@ -60,6 +60,7 @@ revision: '12'
 | §11 domains, packs | BR-22 | SR-81, SR-82, SR-88–SR-91 | AC-47–AC-49, AC-56–AC-59; selected engineering/UX, product and business methods with per-source gates |
 | §12 boundaries of autonomy, security | BR-08, BR-09, BR-10, BR-11, BR-12 | SR-18, SR-19, SR-53, SR-55, SR-63, SR-64 | AC-10, AC-23, AC-28 |
 | §13 research boundaries, next work | BR-23 | — | gap |
+| Owner request 2026-10-26; D16 instruction organization | BR-24 | SR-06, SR-10, SR-70, SR-92 | AC-60–AC-64 |
 | §13 phased scope and implementation boundary | BR-22 | SR-81 to SR-87 | AC-47 to AC-55; execution remains future Step H |
 | §14 sources | BR-02 | SR-07 | AC-01 |
 
@@ -87,6 +88,7 @@ the list of technically open questions (closed by stages, not by the specificati
 | D13 one canonical finding-severity scale | SR-78; AC-44 |
 | D14 bounded engineering/UX, product and business guidance | BR-22; SR-81, SR-82, SR-84, SR-85, SR-88–SR-91; AC-47 to AC-51, AC-53, AC-56–AC-59; Step H |
 | D15 selected typed reference resources | BR-22; SR-83, SR-86, SR-87; AC-52, AC-54, AC-55; Step H |
+| D16 stable files with form/domain facets | BR-24; SR-06, SR-10, SR-70, SR-92; AC-60–AC-64 |
 
 ## Deferred decisions (CAT-D) → SR/AC
 

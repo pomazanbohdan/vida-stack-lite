@@ -21,3 +21,4 @@ log `../log.md`.
 * [D13 — One canonical severity scale: Critical / Important / Minor](D13-canonical-severity-scale.md) - The severity of a finding is expressed on one scale across the corpus; the domain scales of the donors and the earlier groups of the corpus are rewritten to it, the criteria of every level kept verbatim.
 * [D14 — Bounded engineering, UX, product and business guidance](D14-bounded-engineering-ux-guidance.md) - One instruction pack with per-source research, fidelity, rights and admission gates; historical exclusions are not automatically promoted.
 * [D15 — Selected typed reference resources](D15-selected-typed-reference-resources.md) - Selected typed reference families use exact-ID retrieval through the existing catalog in a separate phase.
+* [D16 — Instruction form and domain facets](D16-faceted-instruction-browse.md) - Stable canonical files support optional form/domain filters and generated browse views.

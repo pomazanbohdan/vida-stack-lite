@@ -7,6 +7,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   CatalogError,
+  catalogBrowse,
   catalogCompose,
   catalogGet,
   catalogSearch,
@@ -15,7 +16,7 @@ import {
   loadInstructions,
   readSchema,
 } from '../skills/vp-mode/scripts/catalog.ts';
-import type { Catalog, ComposeQuery, Instruction, SearchQuery } from '../skills/vp-mode/scripts/catalog.ts';
+import type { Catalog, CatalogBrowseResult, ComposeQuery, LoadedInstruction, SearchQuery } from '../skills/vp-mode/scripts/catalog.ts';
 import { validateAgainstSchema } from '../skills/vp-mode/scripts/schema.ts';
 import type { Schema } from '../skills/vp-mode/scripts/schema.ts';
 
@@ -44,7 +45,38 @@ async function updateInstructionDigest(dir: string, catalog: Catalog, id: string
   entry.sha256 = createHash('sha256').update(bytes).digest('hex');
 }
 
-async function fixture(): Promise<{ catalog: Catalog; instructions: Map<string, Instruction> }> {
+async function installFacetedSchema(directory: string): Promise<void> {
+  const source = fileURLToPath(new URL('../config/vpinstruction.v1.1.schema.json', import.meta.url));
+  await writeFile(join(directory, 'config/vpinstruction.v1.1.schema.json'), await readFile(source));
+}
+
+async function addFacetFields(copy: { dir: string; catalogPath: string }, id: string, fields: string): Promise<void> {
+  const catalog = await readManifest(copy.catalogPath);
+  const entry = catalog.instructions.find((item) => item.instruction_id === id);
+  if (entry === undefined) throw new Error(`missing fixture entry: ${id}`);
+  const path = join(copy.dir, entry.path);
+  const source = await readFile(path, 'utf8');
+  const firstLine = source.indexOf('\n');
+  if (firstLine < 0) throw new Error(`fixture instruction has no frontmatter delimiter: ${id}`);
+  const updated = `${source.slice(0, firstLine + 1)}${fields}\n${source.slice(firstLine + 1)}`;
+  await writeFile(path, updated);
+  await updateInstructionDigest(copy.dir, catalog, id);
+  await writeManifest(copy.catalogPath, catalog);
+}
+
+async function facetedFixture(): Promise<{ catalog: Catalog; instructions: Map<string, LoadedInstruction> }> {
+  const copy = await copyFixture();
+  await installFacetedSchema(copy.dir);
+  await addFacetFields(copy, 'alpha', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: procedure\ndomains:\n  - engineering\n  - design-ux');
+  await addFacetFields(copy, 'gamma', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: principle\ndomains:\n  - engineering\n  - operations');
+  await addFacetFields(copy, 'conflict-mode', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: checklist\ndomains:\n  - product');
+  await addFacetFields(copy, 'beta', 'schema: VPInstruction/v1.1\nclassification_status: unclassified\nclassification_reason: Needs owner review.');
+  await addFacetFields(copy, 'disabled-mode', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: checklist\ndomains:\n  - operations');
+  const catalog = await loadCatalog(copy.catalogPath);
+  return { catalog, instructions: await loadInstructions(catalog, copy.dir) };
+}
+
+async function fixture(): Promise<{ catalog: Catalog; instructions: Map<string, LoadedInstruction> }> {
   const catalogPath = join(fixtureDir, 'catalog.json');
   const catalog = await loadCatalog(catalogPath);
   return { catalog, instructions: await loadInstructions(catalog, dirname(resolve(catalogPath))) };
@@ -63,11 +95,11 @@ async function readEffectiveProfileSchema(): Promise<Schema> {
 }
 
 function syntheticInstructions(
-  seed: Instruction,
+  seed: LoadedInstruction,
   count: number,
   content: string,
   requiresFor: (index: number, ids: string[]) => string[] = () => [],
-): { instructions: Map<string, Instruction>; ids: string[] } {
+): { instructions: Map<string, LoadedInstruction>; ids: string[] } {
   const ids = Array.from({ length: count }, (_, index) => `budget-${index + 1}`);
   const instructions = new Map(ids.map((id, index) => [id, {
     ...seed,
@@ -167,6 +199,44 @@ describe('loadInstructions', () => {
     expect(instructions.get('beta')?.products).toEqual(['agent-runtime']);
     expect(instructions.get('disabled-mode')?.status).toBe('disabled');
     expect(guidance).toMatchObject({ capability_tags: [], pattern_tags: [], artifact_contract: { output_type: 'none', required_data: [], verified_by: '' } });
+    expect(guidance?.classification).toEqual({ classification_status: 'unclassified', classification_reason: 'legacy-v1-no-facet-fields' });
+  });
+
+  test('dispatches exact v1.1 states and rejects unknown markers, v1 facet smuggling, and closed-field additions', async () => {
+    const mixed = await facetedFixture();
+    expect(mixed.instructions.get('alpha')?.classification).toEqual({
+      classification_status: 'classified', instruction_form: 'procedure', domains: ['engineering', 'design-ux'],
+    });
+    expect(mixed.instructions.get('beta')?.classification).toEqual({
+      classification_status: 'unclassified', classification_reason: 'Needs owner review.',
+    });
+    expect(mixed.instructions.get('guidance')?.classification).toEqual({
+      classification_status: 'unclassified', classification_reason: 'legacy-v1-no-facet-fields',
+    });
+
+    for (const marker of ['VPInstruction/v2', 'null']) {
+      const copy = await copyFixture();
+      await addFacetFields(copy, 'alpha', `schema: ${marker}`);
+      await expect(loadInstructions(await loadCatalog(copy.catalogPath), copy.dir)).rejects.toMatchObject({ code: 'CATALOG_INVALID' });
+    }
+
+    const smuggled = await copyFixture();
+    await addFacetFields(smuggled, 'alpha', 'classification_status: unclassified\nclassification_reason: Explicit classification required.');
+    await expect(loadInstructions(await loadCatalog(smuggled.catalogPath), smuggled.dir)).rejects.toMatchObject({ code: 'CATALOG_INVALID' });
+
+    const extra = await copyFixture();
+    await installFacetedSchema(extra.dir);
+    await addFacetFields(extra, 'alpha', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: procedure\ndomains:\n  - engineering\nextra_facet: true');
+    await expect(loadInstructions(await loadCatalog(extra.catalogPath), extra.dir)).rejects.toMatchObject({ code: 'CATALOG_INVALID' });
+  });
+
+  test('legacy classification changes remain local to one loaded instruction', async () => {
+    const { instructions } = await fixture();
+    const alpha = instructions.get('alpha');
+    const beta = instructions.get('beta');
+    if (alpha?.classification.classification_status !== 'unclassified' || beta === undefined) throw new Error('legacy fixture missing');
+    alpha.classification.classification_reason = 'Local caller annotation';
+    expect(beta.classification).toEqual({ classification_status: 'unclassified', classification_reason: 'legacy-v1-no-facet-fields' });
   });
 
   test('loads a catalog object with the caller-supplied directory', async () => {
@@ -289,7 +359,78 @@ describe('catalogSearch', () => {
     const results = catalogSearch(catalog, instructions, {});
     expect(results.map((item) => item.instruction_id)).toEqual(['alpha', 'beta', 'conflict-mode', 'gamma', 'guidance']);
     expect(Object.keys(results[0] ?? {}).sort()).toEqual(['capability_tags', 'instruction_id', 'pattern_tags', 'revision', 'summary', 'title']);
+    expect(JSON.stringify(results[0])).toBe('{"instruction_id":"alpha","title":"Alpha instruction","summary":"Applies to implementation tasks.","capability_tags":["test-design"],"pattern_tags":["test-first-development"],"revision":1}');
     expect(results.some((item) => 'content' in item)).toBe(false);
+  });
+
+  test('filters explicit facets with OR within dimensions and AND across dimensions', async () => {
+    const { catalog, instructions } = await facetedFixture();
+    expect(catalogSearch(catalog, instructions, {}).map((item) => item.instruction_id)).toEqual(['alpha', 'beta', 'conflict-mode', 'gamma', 'guidance']);
+    expect(catalogSearch(catalog, instructions, { instruction_forms: ['principle', 'procedure'] }).map((item) => item.instruction_id)).toEqual(['alpha', 'gamma']);
+    expect(catalogSearch(catalog, instructions, { domains: ['design-ux', 'operations'] }).map((item) => item.instruction_id)).toEqual(['alpha', 'gamma']);
+    expect(catalogSearch(catalog, instructions, {
+      instruction_forms: ['procedure'], domains: ['engineering'], classification_statuses: ['classified'], roles: ['engineer'],
+    }).map((item) => item.instruction_id)).toEqual(['alpha']);
+    expect(catalogSearch(catalog, instructions, { instruction_forms: ['procedure'], domains: ['operations'] })).toEqual([]);
+    expect(catalogSearch(catalog, instructions, { classification_statuses: ['unclassified'] }).map((item) => item.instruction_id)).toEqual(['beta', 'guidance']);
+    expect(catalogSearch(catalog, instructions, { classification_statuses: ['classified', 'unclassified'] }).map((item) => item.instruction_id)).toEqual(['alpha', 'beta', 'conflict-mode', 'gamma', 'guidance']);
+  });
+
+  test('rejects empty, duplicate, unknown, non-string, and non-array facet dimensions', async () => {
+    const { catalog, instructions } = await facetedFixture();
+    const malformedQueries: unknown[] = [
+      { instruction_forms: [] },
+      { instruction_forms: ['procedure', 'procedure'] },
+      { instruction_forms: ['unknown-form'] },
+      { instruction_forms: ['procedure', 7] },
+      { domains: 'engineering' },
+      { domains: [] },
+      { domains: ['engineering', 'engineering'] },
+      { domains: ['unknown-domain'] },
+      { classification_statuses: [] },
+      { classification_statuses: ['unclassified', 'unclassified'] },
+      { classification_statuses: ['unknown-status'] },
+    ];
+    for (const query of malformedQueries) {
+      expect(() => Reflect.apply(catalogSearch, undefined, [catalog, instructions, query])).toThrow(expect.objectContaining({ code: 'CATALOG_INVALID' }));
+    }
+  });
+
+  test('browse returns stable complete groups from listed active instructions only', async () => {
+    const { catalog, instructions } = await facetedFixture();
+    const expected: CatalogBrowseResult = {
+      forms: [
+        { value: 'checklist', count: 1, instruction_ids: ['conflict-mode'] },
+        { value: 'decision-rule', count: 0, instruction_ids: [] },
+        { value: 'principle', count: 1, instruction_ids: ['gamma'] },
+        { value: 'procedure', count: 1, instruction_ids: ['alpha'] },
+      ],
+      domains: [
+        { value: 'business', count: 0, instruction_ids: [] },
+        { value: 'design-ux', count: 1, instruction_ids: ['alpha'] },
+        { value: 'engineering', count: 2, instruction_ids: ['alpha', 'gamma'] },
+        { value: 'operations', count: 1, instruction_ids: ['gamma'] },
+        { value: 'product', count: 1, instruction_ids: ['conflict-mode'] },
+        { value: 'research', count: 0, instruction_ids: [] },
+      ],
+      unclassified: { count: 2, instruction_ids: ['beta', 'guidance'] },
+    };
+    expect(catalogBrowse(catalog, instructions)).toEqual(expected);
+    const alpha = instructions.get('alpha');
+    if (alpha === undefined) throw new Error('fixture alpha missing');
+    const withExtra = new Map(instructions);
+    withExtra.set('outside-catalog', { ...alpha, instruction_id: 'outside-catalog' });
+    expect(catalogBrowse(catalog, withExtra)).toEqual(expected);
+    const missing = new Map(instructions);
+    missing.delete('alpha');
+    expect(() => catalogBrowse(catalog, missing)).toThrow(expect.objectContaining({ code: 'CATALOG_INVALID' }));
+    const malformed = new Map(instructions);
+    const malformedAlpha = { ...alpha };
+    Reflect.set(malformedAlpha, 'classification', { classification_status: 'unclassified', classification_reason: 'invalid', domains: ['engineering'] });
+    malformed.set('alpha', malformedAlpha);
+    expect(() => catalogBrowse(catalog, malformed)).toThrow(expect.objectContaining({ code: 'CATALOG_INVALID' }));
+    Reflect.set(malformedAlpha, 'classification', { classification_status: 'unknown' });
+    expect(() => catalogBrowse(catalog, malformed)).toThrow(expect.objectContaining({ code: 'CATALOG_INVALID' }));
   });
 
   test('filters by capability, pattern alias, and instruction ids with AND across dimensions', async () => {
@@ -384,7 +525,9 @@ describe('fixture integrity', () => {
 describe('catalogGet', () => {
   test('returns active instructions and reports unknown or disabled ids', async () => {
     const { catalog, instructions } = await fixture();
-    expect(catalogGet(catalog, instructions, 'alpha').content).toBe('Alpha body.\n');
+    const alpha = catalogGet(catalog, instructions, 'alpha');
+    expect(alpha.content).toBe('Alpha body.\n');
+    expect(Object.hasOwn(alpha, 'classification')).toBe(false);
     expect(() => catalogGet(catalog, instructions, 'missing')).toThrow(expect.objectContaining({ code: 'CATALOG_ID_UNKNOWN' }));
     expect(() => catalogGet(catalog, instructions, 'disabled-mode')).toThrow(expect.objectContaining({ code: 'CATALOG_INSTRUCTION_DISABLED' }));
   });
@@ -420,6 +563,15 @@ describe('catalogCompose', () => {
       ['alpha', 'matched'], ['beta', 'dependency'], ['gamma', 'dependency'], ['guidance', 'required'],
     ]);
     expect(result.role).toBe('engineer');
+  });
+
+  test('facet matches add required dependencies without filtering the closure', async () => {
+    const { catalog, instructions } = await facetedFixture();
+    const result = catalogCompose(catalog, instructions, { instruction_forms: ['procedure'] });
+    expect(result.instructions.map((item) => [item.instruction_id, item.selection_reason])).toEqual([
+      ['alpha', 'matched'], ['beta', 'dependency'], ['gamma', 'dependency'],
+    ]);
+    expect(result.instructions.every((item) => !Object.hasOwn(item, 'classification'))).toBe(true);
   });
 
   test('keeps required reason when an instruction also matches query tags', async () => {
@@ -530,7 +682,7 @@ describe('catalogCompose', () => {
     const beta = instructions.get('beta');
     const gamma = instructions.get('gamma');
     if (alpha === undefined || beta === undefined || gamma === undefined) throw new Error('replacement fixture instructions missing');
-    const candidates = new Map<string, Instruction>([...instructions].map(([id, instruction]) => [id, { ...instruction, pattern_tags: [] }]));
+    const candidates = new Map<string, LoadedInstruction>([...instructions].map(([id, instruction]) => [id, { ...instruction, pattern_tags: [] }]));
     candidates.set('alpha', { ...alpha, pattern_tags: [], compatibility: { excludes: [], requires: ['beta'] } });
     candidates.set('beta', { ...beta, pattern_tags: ['test-after-development'] });
     candidates.set('gamma', { ...gamma, pattern_tags: ['test-first-development', 'approval-policy-proceed'] });
@@ -865,6 +1017,20 @@ describe('catalogCompose', () => {
     const selected = syntheticInstructions(seed, 21, 'x');
     expect(() => catalogCompose(catalog, selected.instructions, { required_ids: selected.ids })).toThrow(expect.objectContaining({
       code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED', details: expect.objectContaining({ instruction_count: 21, max_instructions: 20 }),
+    }));
+  });
+
+  test('facet selectors do not bypass the required-instruction count limit', async () => {
+    const { catalog, instructions } = await fixture();
+    const seed = instructions.get('alpha');
+    if (seed === undefined) throw new Error('fixture alpha missing');
+    const selected = syntheticInstructions(seed, 21, 'x');
+    expect(() => catalogCompose(catalog, selected.instructions, {
+      required_ids: selected.ids,
+      instruction_forms: ['procedure'],
+    })).toThrow(expect.objectContaining({
+      code: 'CATALOG_BUNDLE_LIMIT_EXCEEDED',
+      details: expect.objectContaining({ instruction_count: 21, max_instructions: 20 }),
     }));
   });
 

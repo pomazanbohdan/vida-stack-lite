@@ -14,9 +14,9 @@ sources:
   title: Vida Powers — product concept and architectural baseline
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D15 (and D4b)
+  title: Accepted decisions D1–D16 (and D4b)
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '6'
+revision: '7'
 ---
 
 # 1. Purpose
@@ -56,6 +56,8 @@ rules, instructions and boundaries.
 - **BR-06.** Methodology is a product policy, not a situational choice of the agent;
   genuine variability of choice is resolved with the user once and
   recorded.
+
+- **BR-24.** Users can organize and find canonical instructions by their form and topic domain without duplicate instruction files or changes to stable IDs. Existing capability, methodology, role and product selection remains available. A cross-domain instruction can appear in several generated views with one canonical record. Classification uncertainty is explicit. Metadata organization grants no source admission, applicability or execution authority; D14/D15 and existing owner gates remain unchanged.
 
 # 3. Boundaries of responsibility
 

@@ -45,6 +45,35 @@ async function catalogWithProfileSchema(): Promise<string> {
   return join(directory, 'catalog.json');
 }
 
+async function catalogWithFacets(): Promise<string> {
+  const catalogPath = await catalogWithProfileSchema();
+  const directory = dirname(catalogPath);
+  await copyFile(
+    join(here, '../config/vpinstruction.v1.1.schema.json'),
+    join(directory, 'config/vpinstruction.v1.1.schema.json'),
+  );
+  const catalog = await loadCatalog(catalogPath);
+  const assignments: Array<[string, string]> = [
+    ['alpha', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: procedure\ndomains:\n  - engineering\n  - design-ux'],
+    ['gamma', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: principle\ndomains:\n  - engineering\n  - operations'],
+    ['conflict-mode', 'schema: VPInstruction/v1.1\nclassification_status: classified\ninstruction_form: checklist\ndomains:\n  - product'],
+    ['beta', 'schema: VPInstruction/v1.1\nclassification_status: unclassified\nclassification_reason: Needs owner review.'],
+  ];
+  for (const [id, fields] of assignments) {
+    const entry = catalog.instructions.find((item) => item.instruction_id === id);
+    if (entry === undefined) throw new Error(`fixture instruction ${id} is missing`);
+    const path = join(directory, entry.path);
+    const source = await readFile(path, 'utf8');
+    const firstLine = source.indexOf('\n');
+    if (firstLine < 0) throw new Error(`fixture instruction ${id} has no frontmatter delimiter`);
+    const updated = `${source.slice(0, firstLine + 1)}${fields}\n${source.slice(firstLine + 1)}`;
+    await writeFile(path, updated, 'utf8');
+    entry.sha256 = createHash('sha256').update(updated).digest('hex');
+  }
+  await writeFile(catalogPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8');
+  return catalogPath;
+}
+
 async function catalogWithOversizedInstruction(): Promise<string> {
   const catalogPath = await catalogWithProfileSchema();
   const catalog = await loadCatalog(catalogPath);
@@ -352,6 +381,43 @@ describe('catalog CLI', () => {
     expect((value as Record<string, unknown>[]).every((item) => !Object.hasOwn(item, 'content'))).toBe(true);
   });
 
+  test('search accepts repeated facet flags and browse emits stable metadata groups', async () => {
+    const catalogPath = await catalogWithFacets();
+    const prefix = ['--catalog', catalogPath];
+    const browse = runCli(['browse', ...prefix]);
+    expect(browse.status).toBe(0);
+    expect(browse.stderr).toBe('');
+    expect(stdoutJson(browse)).toMatchObject({
+      forms: expect.arrayContaining([expect.objectContaining({ value: 'procedure', count: 1, instruction_ids: ['alpha'] })]),
+      domains: expect.arrayContaining([expect.objectContaining({ value: 'engineering', count: 2, instruction_ids: ['alpha', 'gamma'] })]),
+      unclassified: { count: 2, instruction_ids: ['beta', 'guidance'] },
+    });
+    const search = runCli([
+      'search', ...prefix, '--form', 'procedure', '--form', 'principle', '--domain', 'engineering',
+      '--domain', 'design-ux', '--classification-status', 'classified',
+    ]);
+    expect(search.status).toBe(0);
+    expect((stdoutJson(search) as { results: { instruction_id: string }[] }).results.map((item) => item.instruction_id)).toEqual(['alpha', 'gamma']);
+  });
+
+  test('search facet flags reject duplicate, unknown, and empty values with native failure status', async () => {
+    const catalogPath = await catalogWithFacets();
+    for (const args of [
+      ['--form', 'procedure', '--form', 'procedure'],
+      ['--domain', 'unknown-domain'],
+      ['--form', ''],
+    ]) {
+      const result = runCli(['search', '--catalog', catalogPath, ...args]);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(stderrJson(result).code).toBe('CATALOG_INVALID');
+      const inProcess = await runInProcess(['search', '--catalog', catalogPath, ...args]);
+      expect(inProcess.status).toBe(1);
+      expect(inProcess.stdout).toBe('');
+      expect(JSON.parse(inProcess.stderr)).toEqual(stderrJson(result));
+    }
+  });
+
   test('search accepts comma-separated instruction ids', () => {
     const result = runCli(fixtureArgs(['search', '--id', 'alpha,beta']));
     expect(result.status).toBe(0);
@@ -530,6 +596,8 @@ describe('catalog CLI', () => {
     for (const command of [
       ['tags'],
       ['search', '--capability', 'test-design'],
+      ['search', '--form', 'principle', '--domain', 'engineering', '--domain', 'business', '--classification-status', 'unclassified'],
+      ['browse'],
       ['get', '--id', 'alpha'],
       ['compose', '--required', 'alpha'],
       ['evaluate', '--operation', 'plan', '--candidate', 'alpha', '--tag', 'tdd'],
