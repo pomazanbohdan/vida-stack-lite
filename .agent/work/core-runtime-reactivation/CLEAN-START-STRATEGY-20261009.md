@@ -12,6 +12,13 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+One current-session Source-project target refused changed declared Source before
+expired-lease recovery and preserved the inspected state. The positive recovery
+control also passed. Its one-off overlays bind the current controller attribution;
+they do not authorize a future run or add numeric qualification. The existing
+consumer test remains unchanged. See WORK for custody and the missing reusable
+producer-to-controller context binding. Full-proof HOLD remains.
+
 The current bun-cli-run test now exercises read-only inspection of an actual
 fixture-issued pending Source owner, including foreign-owner refusal, exact
 projection and unchanged state. Targeted composite stage

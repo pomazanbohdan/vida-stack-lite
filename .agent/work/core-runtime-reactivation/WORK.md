@@ -38,6 +38,38 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Source drift before expired recovery, one-off target — 2026-10-26
+
+The current Root controller used this conversation's user authorization and
+native thread and message identifiers to bind an isolated Source-project fixture.
+The existing initializer reconciled its copied package and bound the initialization
+receipt. Admission bound the fixture's exact Work, scope, configuration, paths,
+writer stage and local Source authorization. This was a scoped test declaration,
+not proof of historical or external authority. The research observation was
+controlled fixture data and no consumer was dispatched.
+
+The existing capture owner ran the recovery case with two read-only diagnostic
+overlays at `/workspace/contour-focused-runtime-i45nD3`. It passed one test and
+31 expectations in 8.84s. The changed declared Source was refused before lease
+recovery; Host, Ledger, Journal, engine and authorization observations were
+unchanged. The fixture restored the Source bytes and the existing same-owner
+recovery control then passed. Native child 1032221 exited 0, captures were
+complete and untruncated, the owned group closed, and image, profile and overlay
+custody checks passed. Retain the stage, its sibling namespace status, and
+`DIAG/source-auth-refusal-launch-20261026-01.log` and overlay inputs. The launch
+receipt records their exact hashes and composite input binding. The base image
+manifest does not attest the overlays; the live dependency mount is not a byte
+snapshot. Independent blind Luna reviewed provenance and scope before the run.
+
+This proof is specific to the current session and cannot be replayed as current
+human authorization. The canonical consumer test remains unchanged. A durable
+always-running Source-project test needs a maintained producer-to-controller
+context binding for each run; the current producer does not pass it. No test was
+skipped to close this gap. The target has no coverage counters, adds no qualified
+hits and leaves the historical baseline, full-proof HOLD and UNKNOWN fences intact.
+Its admission receipt records 7,018,409,984 available bytes against the unchanged
+2,147,483,648-byte floor. No cleanup or full suite ran.
+
 ### Interrupted Source owner inspect — targeted terminal, 2026-10-26
 
 The existing initial-Source writer-report test now inspects the pending owner
