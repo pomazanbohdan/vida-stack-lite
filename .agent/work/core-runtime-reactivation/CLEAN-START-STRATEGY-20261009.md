@@ -12,6 +12,14 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Both historical-owner cases passed one paired focused capture at
+/workspace/contour-focused-runtime-q9jNu6 with 103 expectations and native
+terminal, capture and group records. For compatible future changes, run these
+two cases in one target when both require verification. The observed timing
+comparison is not a controlled speedup or full-stage headroom proof. See WORK
+for source and live-dependency bindings and retained evidence. Full-proof HOLD
+and numeric status are unchanged.
+
 The retained report 8d7391ed maps historical-owner callbacks 351–354 and
 357–358 to the public history/Journal and pending-item path, and 355–356 to
 apply-only frozen comparators. The newer targeted Source inspection exercises

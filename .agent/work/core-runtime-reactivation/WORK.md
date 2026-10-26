@@ -38,6 +38,34 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Paired historical-owner target — 2026-10-26
+
+The existing isolated capture owner ran both historical-owner cases in one
+Bun invocation at /workspace/contour-focused-runtime-q9jNu6. Both passed:
+2 pass, 8 skipped, 0 fail and 103 expectations, preserving the 57 and 46
+expectations observed in the two separate targets. The same image254f5f3c,
+profile02, test overlays and composite
+cb5e7fe013018c25275f1a7be6ae56eaf8b3f2d52161e30d2bc786b865aa119e
+were used. The original manifest does not attest those overlays; launch.json
+records their separate identities and the live node_modules dependency mount.
+Native child1027536 exited0; both captures were complete and untruncated,
+the owned group closed, and input, image and profile custody checks passed.
+Preserve launch.json, execution.json, stdout.log, stderr.log, custody-check.json,
+load-before.json, load-after.json, sibling namespace status and owned scratch.
+The exact launcher is DIAG/source-fixture-overlay-20261026-03.ts.
+
+Bun reported 13.83s for the paired command versus 8.96s and 6.09s for the
+separate commands, a 1.22s difference between these observations. The case
+bodies were 8.09s and 4.14s in the pair versus 7.50s and 4.77s separately.
+The previous captures have no matching load snapshots and execution.json does
+not record external wall time. This is not a controlled speedup, a verified
+full-stage saving or a claim that the live dependency tree was byte-identical.
+When both cases need rechecking on compatible inputs, use one paired target to
+avoid a second Bun startup and collection; keep the two independent fixtures,
+all assertions and native evidence. Do not rerun either case solely for this
+comparison. An independent blind native Luna reviewed the inputs, capture and
+limits. Full-proof HOLD and all existing numeric statuses remain unchanged.
+
 ### Current body bindings and full-proof decision, 2026-10-26
 
 The accepted report 8d7391ed-a405-4b06-8147-0a3c73714909 binds function keys
