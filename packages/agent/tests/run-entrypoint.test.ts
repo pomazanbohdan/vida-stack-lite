@@ -11792,7 +11792,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const fixture = ownedMutationFixture(root, 90_000, path.join(root, 'vida-agent'));
         let completed = false;
         try {
+          markInitialSourceTimingPhase('selected.fixture.started');
           const { args, config } = createFixture(root, 'vida-agent');
+          markInitialSourceTimingPhase('selected.fixture.ready');
           const admitted = prepareMutationIntake(args, config);
           const generation = `selected-${randomUUID()}`;
           const generationRoot = path.join(root, '.agent', 'cutover', generation);
@@ -11926,6 +11928,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               await Promise.resolve(expect(run(runArgs)).rejects.toMatchObject(expected));
             });
           const initializeHostDatabase = () => {
+            markInitialSourceTimingPhase('selected.database.started');
             mkdirSync(path.dirname(databasePath), { recursive: true });
             const database = new Database(databasePath, { strict: true });
             new HostStateStore(
@@ -11938,7 +11941,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               root,
             );
             database.close();
+            markInitialSourceTimingPhase('selected.database.ready');
           };
+          markInitialSourceTimingPhase('selected.authority.ready');
           if (selectorPhase === 'released') {
             const invalidDecision = {
               ...activationDecision,
@@ -11991,7 +11996,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const cutoffPath = path.join(generationRoot, 'cutoff-witness.json');
             const selectorBytes = readFileSync(selectorPath);
             const cutoffBytes = readFileSync(cutoffPath);
+            markInitialSourceTimingPhase('selected.child.started');
             const inspected = fixture.invokeInspection([...inspectArgs, '--inspect', 'true']);
+            markInitialSourceTimingPhase('selected.child.complete');
             expect(inspected).toMatchObject({ schema: 'VidaLocalSessionInspection/v1', status: 'inspected' });
             expect(inspected.diagnosis).toMatchObject({ reason: 'session_absent' });
             expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);

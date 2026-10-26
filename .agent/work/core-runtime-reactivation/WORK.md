@@ -40,6 +40,26 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Two same-source9bbce7ca/image4f108017 targeted delivery phase captures pass151
+assertions each in25.88/26.08s. Actual file/config284.86/304.35ms, DB/Host/DDL
+37.97/40.29ms, admission/lease380.63/526.34ms, engine14794.49/15290.83ms,
+assurance5913.71/4522.38ms, export813.27/464.22ms. Three recorded in-process
+public calls are writerissue5267.58/3152.18ms and reports1809.17/2144.72,
+2334.35/2745.87ms. They are not native child startup measurements. CPU quota4,
+window cgroup CPU25.87/27.44s, throttled0.036/0.349s, loadavg0.58→0.80 and
+0.68→0.96, MemAvailable~9.4–9.5GB. These observed windows do not prove the cause
+of historical full-stage slowdown. Instrumented diagnostics are not benchmarks
+or grounds for a full-run headroom claim. Summary/refs in
+DIAG/phase-timing-summary-20261026-01.json.
+
+Next narrow diagnostic marks the existing released-selector bundle copy/setup,
+actual database initialization and one existing native inspection child. No new
+child/call, changed spawn, timeout, exit/envelope assertion or fixture sharing.
+This separate target will use a new compatible source snapshot; do not compare
+its wall duration as if it were the same delivery test above. Full stage remains
+prohibited absent an evidenced optimization/headroom. Numeric baseline unchanged.
+
+
 Current diagnostic packet reuses initial-source-run-timing-diagnostic owner:
 opt-in output accepts existing package .tmp as well as legacy repository .tmp,
 requiring an ordinary non-symlink root and canonically confined parent. The
