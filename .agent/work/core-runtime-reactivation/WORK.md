@@ -63,6 +63,19 @@ fenced. No timer, budget, quality gate, consumer effect or cutover changes.
 Next: use this accepted report's remaining gaps in the same bun-cli-run contour;
 do not rerun completed suites, inventory, AST or hashes solely for status.
 
+Next parser-only packet reuses the retired-source native decoder builders in
+run-entrypoint.test.ts, explicitly untrusted data rather than native testimony.
+A fresh scoped file and matching structural turn traverse mapping, attribution
+and verifier reread. Same-length changed candidate bytes must be refused; exact
+restoration then reaches ENOENT at the deliberately absent workspace parent,
+before DB open. Request/native/candidate/config/init bytes stay unchanged, with
+no Work root, database or capture accepted. Independent review finds no blocker;
+scoped strict511/lint pass. Publication precedes its isolated focused validation.
+Actual accepted retirement still requires fresh suspended Work/uncertain original
+writer, retirement records and trusted native interrupted-thread custody. The
+inspected initial-source fixture does not supply that chain; no historical UNKNOWN
+is replayed and no objective disposition is claimed for this end-to-end GAP.
+
 Current terminal checkpoint: provider packet d05842aa is committed and pushed to
 origin/main after normal hooks (format538/strict545). Readiness probes confirm
 package-selected Bun1.4.4, rg15.2.0, ast-grep0.50.0 and configured lean-ctx3.11.4;

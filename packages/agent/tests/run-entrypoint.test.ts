@@ -13931,6 +13931,122 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   const untrustedEditCommand =
     'def edit(file,transform):\n p=root/file\n p.write_bytes(transform(p.read_bytes()))\nedit("docs/untrusted.ts", transform)';
 
+  test('untrusted retired-source decoder reaches missing workspace refusal without accepting a capture', async () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-retired-decoder-scope-'));
+    let complete = false;
+    try {
+      const { config, initializationPath } = createFixture(root);
+      const sourcePath = 'docs/untrusted.ts';
+      const candidatePath = path.join(root, sourcePath);
+      const candidateBytes = Buffer.from('export const untrustedFixture = true;\n');
+      writeFileSync(candidatePath, candidateBytes);
+      const ownerHandle = `fixture-owner-${randomUUID()}`;
+      const base = retiredSourceDecoderRequest(config, root, ownerHandle);
+      const summary = 'Untrusted parser input, never an admitted native outcome';
+      const request = {
+        ...base,
+        nativeTurnEvidenceRef: '.tmp/untrusted-turn.json',
+        actionId: untrustedBoundAction.request.action_id,
+        issueId: untrustedBoundAction.issue_id,
+        expectedWork: { revision: 1, digest: 'c'.repeat(64) },
+        expectedLedger: { revision: 1, digest: 'd'.repeat(64) },
+        expectedJournal: { revision: 1, digest: 'e'.repeat(64) },
+        observation: {
+          schema: 'VidaSessionObservation/v1',
+          action_id: untrustedBoundAction.request.action_id,
+          issue_id: untrustedBoundAction.issue_id,
+          host_attempt_id: untrustedBoundAction.host_attempt_id,
+          agent_id: base.terminalEvidence.original_actor_id,
+          tool_call_ref: 'fixture:untrusted-decoder',
+          status: 'reported_failed',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          changed_paths: [sourcePath],
+          evidence_refs: ['local://fixture/untrusted-decoder'],
+        },
+        terminalEvidence: {
+          ...base.terminalEvidence,
+          operator_thread_id: ownerHandle,
+          action_id: untrustedBoundAction.request.action_id,
+          issue_id: untrustedBoundAction.issue_id,
+          host_attempt_id: untrustedBoundAction.host_attempt_id,
+        },
+        candidateSnapshot: {
+          ...base.candidateSnapshot,
+          entries: [
+            {
+              path: sourcePath,
+              exists: true,
+              size: candidateBytes.length,
+              sha256: createHash('sha256').update(candidateBytes).digest('hex'),
+            },
+          ],
+        },
+      };
+      const artifact = retiredDecoderIssuedArtifact(
+        [untrustedBoundAction],
+        [untrustedBoundWave],
+        [
+          {
+            id: 'untrusted-source-path',
+            type: 'fileChange',
+            status: 'completed',
+            changes: [{ path: candidatePath, diff: { text: 'untrusted fixture diff', truncated: false } }],
+          },
+        ],
+      );
+      const artifactPath = path.join(root, '.tmp/untrusted-turn.json');
+      const requestPath = path.join(root, 'request.json');
+      const requestBytes = Buffer.from(JSON.stringify(request));
+      const artifactBytes = Buffer.from(JSON.stringify(artifact));
+      const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
+      const configBytes = readFileSync(configPath);
+      const initializationBytes = readFileSync(initializationPath);
+      mkdirSync(path.dirname(artifactPath), { recursive: true });
+      writeFileSync(artifactPath, artifactBytes);
+      writeFileSync(requestPath, requestBytes);
+      expect(existsSync(path.join(root, config.control.work_root))).toBe(false);
+      const args = [
+        '--capture-retired-source',
+        'true',
+        '--project-root',
+        root,
+        '--native-session-handle',
+        ownerHandle,
+        '--request',
+        'request.json',
+      ];
+      const alteredCandidate = Buffer.from(candidateBytes);
+      alteredCandidate[0] = alteredCandidate[0]! ^ 1;
+      try {
+        writeFileSync(candidatePath, alteredCandidate);
+        await assert.rejects(run(args), { message: 'Retired-source candidate changed after attribution' });
+        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+        expect(existsSync(path.join(root, config.control.work_root))).toBe(false);
+      } finally {
+        writeFileSync(candidatePath, candidateBytes);
+      }
+      await assert.rejects(run(args), (error: unknown) => {
+        assert.ok(error && typeof error === 'object' && 'code' in error && 'path' in error);
+        assert.equal(error.code, 'ENOENT');
+        assert.ok(typeof error.path === 'string');
+        assert.equal(path.basename(error.path), path.basename(config.control.work_root));
+        return true;
+      });
+      expect(readFileSync(requestPath)).toEqual(requestBytes);
+      expect(readFileSync(artifactPath)).toEqual(artifactBytes);
+      expect(readFileSync(candidatePath)).toEqual(candidateBytes);
+      expect(readFileSync(configPath)).toEqual(configBytes);
+      expect(readFileSync(initializationPath)).toEqual(initializationBytes);
+      expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
+      expect(existsSync(path.join(root, config.control.work_root))).toBe(false);
+      complete = true;
+    } finally {
+      if (complete) rmSync(root, { recursive: true, force: true });
+      else process.stderr.write(`Retained untrusted retired-source decoder fixture: ${root}\n`);
+    }
+  });
+
   const retiredSourceNativeGroups: readonly RetiredSourceNativeGroup[] = [
     {
       name: 'raw request byte bounds',

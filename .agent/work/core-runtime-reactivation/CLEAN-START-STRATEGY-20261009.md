@@ -19,6 +19,10 @@ Use this report's remaining gaps to continue bun-cli-run only. The terminal
 synthesis response repair and six-call CAS subtraction are verified; no further
 run is needed for that packet. Changed Source denominators invalidate numeric
 mixing with prior ratios. Preserve both recent UNKNOWN stages and all old fences.
+Next take the bounded untrusted retired-source decoder/controller case: candidate
+byte refusal, verifier reread and missing-workspace denial with no accepted
+capture. Review/static/focus precede one changed-input stage. Accepted retirement
+itself remains a separate trusted-native-custody prerequisite, not an objective skip.
 
 The independent runtime-root provider is published at d05842aa. Profile02 adds
 the readonly libsql loader closure; native controls and focused callers pass.
