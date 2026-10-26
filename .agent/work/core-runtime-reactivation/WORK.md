@@ -40,8 +40,18 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+First staged export focusBoRpX7/Source7bd86c7e records0pass/1fail/54assertions:
+witness export/hash/observation/exclusive-retry checks passed, but the following
+normal assurance call correctly refused cutover records without an active
+selector. This is a test sequence defect, not authority to weaken activeSelector.
+Move only the export block after all existing assurance actions; its Host baseline
+is captured there, while original completed Journal remains unchanged. Retain
+failed root/log/native receipts; no full stage was launched. Corrected focus must
+pass before review and the single changed-input full stage.
+
+
 Current packet targets remaining staged-witness callbacks by reusing the same
-completed native delivery fixture before assurance creation. Export writes only
+completed native delivery fixture after assurance completes. Export writes only
 that fixture's new .agent/cutover/fixture-completed-delivery directory; it does
 not invoke activation, loader or database cutover. The caller-declared payload
 is an actual owned FixtureEvidencePayload/v1 file with runtime_acceptance=false,
