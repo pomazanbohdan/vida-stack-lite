@@ -1,5 +1,9 @@
 # Directory Update Log
 
+## 2026-10-26
+
+* **Owner-selected H1 carrier boundary:** Step H now accounts for 60 out-of-carrier journey files as excluded copies: 30 under the declared mirror root and 30 at donor clone root. Migration uses only the existing carrier; its 421 Markdown files, 30 journey exclusions and 391 candidates remain unchanged. Bounded metadata and independent byte-identity reviews account for the three 30-path location sets. Additional or changed locations require explicit disposition. The queue now distinguishes published Source tooling and ten-source held preparation from the still-open admitted pilot. This resolves the conflicting zero-outside wording without deleting files, selecting source text, clearing rights or admitting content. Frozen receipts retain their original policy bindings; current source-packet eligibility still requires reconciliation, human fidelity, rights and owner admission. No H2/H3, matched donor speedup or Runtime acceptance is claimed.
+
 ## 2026-10-25
 
 * **Source publication preparation and H1 research reconciliation:** The reviewed publication closure contains 40 Powers paths: 29 migration/coverage files and 11 necessary Bun/Step-F prerequisites. The G queue now labels its existing `fafb401` binding as historical and unsent; changed reader/CLI bytes require rebinding before any handoff. H1 research records ten source-bound raw captures and exact pinned README/LICENSE identity, with zero complete source packets and all rights/fidelity/admission gates open. The prior eight-file rights cohort is distinct; only byte-identical LICENSE evidence is reused. No donor content, canonical ID, legal clearance, request send or Runtime acceptance is introduced by this reconciliation.

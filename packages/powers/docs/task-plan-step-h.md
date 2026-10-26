@@ -49,8 +49,8 @@ sources:
 - id: independent-review
   resource: /../.tmp/panel/csv-framework-decision-validate-m31-r2-20261022-64/REVIEW.md
   title: Independent M3.1 R2 review of the amendment
-generated: { by: codex/gpt-6-luna, at: '2026-10-22T13:17:32Z' }
-revision: '7'
+generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T06:10:47Z' }
+revision: '8'
 ---
 
 # Goal and boundaries
@@ -93,15 +93,17 @@ H3 cannot run in parallel with H2. No phase inherits a PASS from E4 or another p
 
 - **Owner:** one content integrator with independent source/fidelity reviewer; repository owner decides admission.
 - **Canonical donor carrier:** plugins/wondelai-skills/skills/ at the pinned revision recorded in donors.yaml.
-- **Current inventory evidence:** 421 Markdown files in plugins/wondelai-skills; all 14 guided-journey directories are inside the declared carrier; their specified copies under plugins/metaskills/skills must be byte-identical. The 30 journey Markdown files are all inside the carrier and excluded, leaving 391 candidate Markdown files. The 391 count is candidate files, not norms or instructions.
+- **Current inventory evidence:** the carrier contains 421 Markdown files, including 30 journey files in 14 journey directories. Excluding those 30 files leaves 391 candidate files, not 391 norms or admitted instructions. The donor clone also contains 60 byte-identical journey copies outside the carrier: 30 under plugins/metaskills/skills and 30 under the 14 matching directories at clone root. On 2026-10-26 the owner chose to account for these 60 files as excluded copies and migrate only from the carrier. They do not increase the 421/30/391 intake counts or become separate conversion inputs.
 
 1. Before writing a corpus record, obtain evidence of rights for the exact proposed text and owner admission for the source subset. The existing MIT license does not clear book-derived or embedded third-party material. If any item lacks clearance, reject it with a reason and do not convert it.
-2. Recheck the pinned source, exact carrier, all 14 journey-directory locations, 30-file exclusion, zero journey files outside the carrier, and byte-identical mirror receipt. Keep unrelated repository/root copies outside the carrier set.
+2. Recheck the pinned source, exact carrier, its 14 journey-directory locations and 30-file exclusion. Explicitly enumerate the 60 excluded out-of-carrier copies (30 declared-mirror paths and 30 clone-root paths) and retain byte-identity evidence for each against its carrier counterpart. Only the existing carrier is an intake source. Any additional matching journey location or missing, changed or unmatched copy remains a finding requiring owner disposition; do not silently treat it as another excluded copy. Keep unrelated repository/root material outside the carrier set.
 3. Inventory and disposition every carrier file. Select general methods, including D14's selected product/business methods; exclude orchestration state, book-derived passages without clearance, framework/version recipes requiring H2 applicability, assets, and unrelated content. Keep exact per-source selection decisions and historical exclusion reasons. Reuse existing converter, catalog and processing-map behavior. Preserve the donor's original language and current fidelity rules.
 4. Deduplicate against the existing corpus. Preserve all source locators for a true merge; do not merge merely similar ideas. Reuse existing tag vocabulary where it fits; propose only genuinely new tags under the existing tag policy. Record every rejection in the map.
 5. Run a pilot of 10 candidate files with complete independent fidelity review. Record source units attempted, accepted, rejected, merged, review defects and elapsed time. Re-estimate each next batch from observed throughput; use batches no larger than 25 files until a separate review authorizes a different size. Any rights or semantic-fidelity defect pauses expansion.
 
-**H1 acceptance:** all 421 Markdown carrier paths are accounted for; the 30 journey files are explicitly excluded; the 391 candidates each have a disposition; all 14 journey directories are within the carrier and specified mirrors are byte-identical; no unreviewed or uncleared content is admitted; corpus, map and digests agree; duplicate and fidelity reviews have receipts. H1 does not authorize H2 CSV sources.
+**H1 acceptance:** all 421 Markdown carrier paths are accounted for; the 30 journey files are explicitly excluded; the 391 candidates each have a disposition; the 14 carrier journey directories and 60 excluded out-of-carrier copies are explicitly accounted for, with byte-identity receipts for all 60 copies and no unresolved additional-location finding; no unreviewed or uncleared content is admitted; corpus, map and digests agree; duplicate and fidelity reviews have receipts. Copy accounting grants no rights, source selection or admission. H1 does not authorize H2 CSV sources.
+
+The owner-selected boundary resolves the former literal zero-outside-carrier wording; it does not delete donor files or admit their content. The bounded path inventory and both copy-identity reviews are retained in the existing donor-migration WORK/evidence directory. Their original policy bindings remain historical: this clarification does not rewrite frozen receipts or make old transitive checks fresh under the amended plan. Reconcile current policy bindings before constructing any source packet or publication eligibility.
 
 ### Source-packet and publication qualification
 
@@ -181,7 +183,7 @@ The independent M3.1 R2 review §4/F4 links the earlier .61 F8 estimate finding 
 ## Definition of done
 
 1. H0 has terminal, hash-bound current gates and an independent plan-review receipt with no material objection.
-2. H1 accepts only rights-cleared and owner-admitted general methods, with the full 421-file cover, 30 journey-file exclusion, 391 candidate dispositions, mirror verification and human fidelity review.
+2. H1 accepts only rights-cleared and owner-admitted general methods, with the full 421-file cover, 30 journey-file exclusion, 391 candidate dispositions, explicit exclusion and byte verification of all 60 out-of-carrier copies, and human fidelity review.
 3. H2 passes versioned applicability, CSV row/cell coverage and fidelity, preserves the current four refusal codes, and proves the future fifth reason without mislabeling it as current E4.
 4. H3 retrieves only requested typed resource IDs from the same catalog, passes provenance, rights, safety and shared-budget checks, and keeps all v1 fixtures valid.
 5. Every phase has independent implementation review, actual verification receipts, updated B/S/AC traceability, and a dated log entry. No donor, implementation, or Runtime-acceptance claim exceeds its evidence.
