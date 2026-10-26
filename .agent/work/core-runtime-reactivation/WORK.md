@@ -40,6 +40,35 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Latest accepted local terminal packet: Source d539a5acff111948c12ad6af42b99223eaf41e0c,
+run c8e61c66-3b18-4510-8e78-39b0fefd2671, stage /workspace/contour-stage-lAwiYJ.
+The sole changed-input stage exits0 in245277.302713ms:157pass/0fail/3918assertions,
+238.12s Bun time. Capture/group/namespace termination are complete, boot and
+image143871bdf307d87b364e65565d02c1b7acb00894/profile02 unchanged. Manifest SHA256
+41ae9e16d7ec40ce8445850b1d22d3b97d5ef38a617a2c0d7b20f27edd69fb36.
+Native child1012473 exit0, controller receipt SHA256
+01fcd4515901e4e8ae203b5998f311cedbf4cccaa9983f35e2545090099dc9db.
+Existing producer published F540/559,L2510/2879,S2708/3165,B3176/3702;
+maxCC/entryCRAP501, focused-diagnostic/full_qualification=false/frozen pending,
+still BLOCKED. This accepts the readonly-inspect packet's seven new function
+hits; old UNKNOWNs remain retained with original resource flags and no replay.
+Focus oenhB5 first passed1test/169assertions in32.88s with native child1012048
+exit0 and complete capture/group; independent patch review found no removed
+contract assertion or native boundary. Normal hooks and main push preceded image.
+
+Measured saving is not established: one focus32.88s and full245.28s have different
+contexts from earlier39.13s partial-test/257.61s full receipts. Seven setup cycles
+and28 filesystem mutations removed is static count evidence, not a causal time
+claim. No benchmark, parallel suite, extra inventory/hash or budget increase ran.
+Current report's existing fnMap/f counters leave19unhit bodies: retirement2
+(325/329), historical owner release8(351–358), staged witness3(379–381), configured
+continuation2(412/413), completed Source ownership1(449), terminal delivery3
+(530–532). Completed-readonly release7 is covered locally. Continue the same
+contour from these prerequisites, without declaring missing fixtures objective
+skips or opening CRAP/mutation lanes. Trusted retirement custody remains GAP.
+Raw capture: DIAG/selector-setup-full-stage-20261026-01.log and retained stage/image.
+
+
 Current cost packet batches only package-identity setup around eight sequential
 in-process readonly authority refusals in the released-selector case. Each call
 still performs real public run I/O, exact error matching, empty admissions and

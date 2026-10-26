@@ -12,22 +12,23 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-Latest accepted local contour report is Source62797e97/runadc93f40, stageGTvs9v:
-156tests pass, exit0 with full capture/group/native namespace closure and unchanged
-image/profile. F533/559,L2453/2879,S2649/3165,B3104/3702 remain BLOCKED.
-Use this report's remaining gaps to continue bun-cli-run only. The terminal
-synthesis response repair and six-call CAS subtraction are verified; no further
-run is needed for that packet. Changed Source denominators invalidate numeric
-mixing with prior ratios. Preserve both recent UNKNOWN stages and all old fences.
-The untrusted retired-source decoder/controller packet now passes candidate-byte
-refusal, verifier reread and missing-workspace denial with no accepted capture,
-then one full changed-input stage. Next inspect the remaining26unhit bodies for
-fresh supported fixtures/refusals in this contour. Accepted retirement itself
-remains a trusted-native-custody prerequisite, not an objective skip.
-The next feasible group is completed-readonly release: use the maintained default
-task_execution fixture's readonly synthesis and suspended frontier, then inspect
-with actual current versions and assert unchanged Host/journal/engine. Do not use
-terminal research_light or manufacture interrupted-writer proof for this group.
+Latest accepted local contour report is Source d539a5ac/run c8e61c66, stage lAwiYJ:
+157tests pass,3918assertions, exit0 with complete capture/group/native namespace
+closure and unchanged image/profile02. F540/559,L2510/2879,S2708/3165,B3176/3702
+remain BLOCKED; full_qualification=false and frozen qualification pending.
+Readonly release inspect and stale Work/Ledger CAS refusals are now covered;
+seven function bodies gained hits. Eight sequential in-process authority refusals
+share package-identity setup without removing native controls or assertions.
+No causal timing saving is established;28filesystem mutations removed is static
+count evidence. Preserve all UNKNOWN attempts and original resource flags.
+
+Continue bun-cli-run only from the existing report's19unhit bodies: interrupted
+retirement2, historical owner release8, staged witness3, configured-frontier
+continuation2, completed Source ownership1 and terminal delivery3. Evaluate the
+historical-owner release prerequisites next within inspect-only authority; no
+plan/apply/cutover or manufactured native retirement proof. Missing fixtures are
+not objective skips. Actual retirement remains a trusted-native-custody GAP.
+No CRAP or mutation lane opens before the current F/L/S/B phase permits it.
 
 The independent runtime-root provider is published at d05842aa. Profile02 adds
 the readonly libsql loader closure; native controls and focused callers pass.
