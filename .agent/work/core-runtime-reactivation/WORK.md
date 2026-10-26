@@ -38,6 +38,47 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Current body bindings and full-proof decision, 2026-10-26
+
+The accepted report 8d7391ed-a405-4b06-8147-0a3c73714909 binds function keys
+351–358 to bin/run.ts in image 88a5a56236dbbf0643ac7263a9b3eff2b3cb711e.
+Its native counters for those keys are all zero. In that report, 351 and 352
+are the history Journal filter and completed-items projection at lines
+5763 and 5769; 353 and 354 are the context mapping and matching callbacks at
+5772–5784; 355 and 356 are the apply-only frozen-inspection comparators at
+5829–5831; 357 and 358 are the pending-item callbacks at 5847–5848. The
+corresponding selected Source regions in image4dbf and the current checkout
+match the retained report image. The older statement that keys351/352 are
+apply-only referred to a different report's geometry and is not a valid mapping
+for 8d7391ed. The Source historical-inspection test reaches that public path
+with real context and Journal; control flow indicates those callbacks run, but
+the targeted receipt has no counters.
+No newly covered function or numeric qualification is claimed.
+
+Independent read-only review found that the staged-witness positive scenario
+already has a passing targeted receipt, while retirement's remaining callbacks
+require actual interrupted-reader custody and apply. The continuation pair
+still needs authentic closed-rebind evidence, and completed Source ownership
+needs the historical split-ownership preimage. These are prerequisites, not
+skips or denominator changes. A proposal to omit three completed-readonly
+calls from the Source scenario was rejected: independent review found that it
+would remove Source-specific frontier and stale Work/Ledger CAS assertions.
+The proposed test diff was reverted exactly; no producer or test ran for it.
+
+The latest Source target takes 8.96s including a 7.50s test body. The separately
+retained consumer target takes 6.09s; an older consumer target took 5.85s with
+different inputs and assertions. These are individual target observations,
+not a controlled marginal full-stage cost or a proven speedup. The held stage
+8vfRgV reached an inner timeout and SIGKILL after 271449.867ms; partial passes
+remain UNKNOWN and resource_safe_to_advance=false. Before a new full producer,
+use the existing timing owner to attribute the already-measured writer issue or
+native validation cost, establish any atomic read consolidation's complete
+identity, race, invalidation and durable-lock guarantees, and demonstrate
+headroom on changed inputs with focused native proof and independent review.
+Separately establish disjoint effects and resource custody. The original
+300000ms shared budget, 30000ms terminal reserve, selected cases and exact
+denominators remain unchanged. The old UNKNOWN and all its evidence stay fenced.
+
 ### Source historical-owner inspection — targeted terminal, 2026-10-26
 
 The existing initial-source fixture now supports a physical Source project.

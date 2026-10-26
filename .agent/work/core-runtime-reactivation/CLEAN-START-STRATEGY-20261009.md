@@ -12,6 +12,15 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The retained report 8d7391ed maps historical-owner callbacks 351–354 and
+357–358 to the public history/Journal and pending-item path, and 355–356 to
+apply-only frozen comparators. The newer targeted Source inspection exercises
+the public path but has no numeric counters. See WORK for exact report binding
+and the independent prerequisite review. Staged-witness positive behavior was
+already focused; the remaining retirement, closed-rebind and legacy ownership
+paths need their documented custody or preimage. Do not replace those gaps with
+synthetic authority or objective skips.
+
 The Source-project historical-owner inspection now passes its targeted
 composite-input diagnostic at /workspace/contour-focused-runtime-eUyZHJ.
 It joins a real initialized Source fixture to admitted Work, Journal, engine
