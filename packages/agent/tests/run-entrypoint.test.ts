@@ -9366,7 +9366,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const input = admittedInput(f);
             await bindControlledRuntimeInitialization(f.root, f.config, f.store);
             const args = initialSourceRunArguments(f);
-            const originalHistory = parseTestRunPayload(await runSuccessfully([...args, '--inspect', 'true']));
+            const originalHistory = parseTestRunPayload(await runSuccessfully(args));
             expect(historicalConfiguredContexts(originalHistory.next_actions as unknown[])).toHaveLength(1);
             const beforeIssue = f.ledger.resume(f.identity.work_id, 1);
             assert.ok(beforeIssue);
