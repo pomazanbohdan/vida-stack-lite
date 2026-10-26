@@ -9366,6 +9366,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const input = admittedInput(f);
             await bindControlledRuntimeInitialization(f.root, f.config, f.store);
             const args = initialSourceRunArguments(f);
+            const originalHistory = parseTestRunPayload(await runSuccessfully([...args, '--inspect', 'true']));
+            expect(historicalConfiguredContexts(originalHistory.next_actions as unknown[])).toHaveLength(1);
             const beforeIssue = f.ledger.resume(f.identity.work_id, 1);
             assert.ok(beforeIssue);
             expect(beforeIssue.state.items.map((item) => item.request.stage_id)).toEqual(['synthesize_task']);
@@ -9471,6 +9473,64 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             expect(readFileSync(requestPath)).toEqual(requestBytes);
             expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
             expect(await f.bridge.snapshot()).toEqual(engineBefore);
+            const historicalRequestPath = path.join(f.root, 'historical-readonly-request.json');
+            const historyPath = path.join(f.root, 'original-readonly-history.json');
+            const baselinePath = path.join(f.root, 'original-readonly-config.yaml');
+            writeFileSync(
+              historicalRequestPath,
+              JSON.stringify({
+                schema: 'HistoricalOwnerReleaseRequest/v1',
+                identity: selected.identity,
+                attempt: journal.attempt,
+                userRequestPointer: 'fixture:historical-readonly-context-binding',
+                requestIntent: 'next_work',
+                predicate: 'completed_readonly',
+              }),
+              { flag: 'wx' },
+            );
+            const historyBytes = Buffer.from(JSON.stringify(originalHistory));
+            writeFileSync(historyPath, historyBytes, { flag: 'wx' });
+            writeFileSync(baselinePath, readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml')), {
+              flag: 'wx',
+            });
+            const historicalArgs = [
+              '--release-historical-owner',
+              'true',
+              '--mode',
+              'inspect',
+              '--project-root',
+              f.root,
+              '--native-session-handle',
+              input.nativeSessionHandle,
+              '--baseline-config',
+              'original-readonly-config.yaml',
+              '--request',
+              'historical-readonly-request.json',
+              '--context-history',
+              'original-readonly-history.json',
+            ];
+            await assert.rejects(run(historicalArgs), {
+              message: 'historical baseline is not the local accepted Source configuration',
+            });
+            expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
+            expect(await f.bridge.snapshot()).toEqual(engineBefore);
+            const foreignHistory = structuredClone(originalHistory);
+            const foreignContexts = historicalConfiguredContexts(foreignHistory.next_actions as unknown[]);
+            assert.ok(foreignContexts[0]);
+            foreignContexts[0].digest = 'f'.repeat(64);
+            expect(foreignContexts[0].digest).not.toBe(
+              historicalConfiguredContexts(originalHistory.next_actions as unknown[])[0]?.digest,
+            );
+            try {
+              writeFileSync(historyPath, JSON.stringify(foreignHistory));
+              await assert.rejects(run(historicalArgs), { message: 'Historical context history action differs' });
+              expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
+              expect(await f.bridge.snapshot()).toEqual(engineBefore);
+            } finally {
+              writeFileSync(historyPath, historyBytes);
+            }
+            expect(readFileSync(historyPath)).toEqual(historyBytes);
+            expect(existsSync(path.join(f.root, result.plan_ref))).toBe(false);
             try {
               for (const field of ['expectedWork', 'expectedLedger'] as const) {
                 writeFileSync(
