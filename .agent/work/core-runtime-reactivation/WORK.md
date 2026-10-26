@@ -89,6 +89,15 @@ The next packet remains in this contour, targeting supported terminal synthesis
 under information_research_light. task_execution's deliver-only terminal invariant
 does not justify an objective skip across that supported non-code workflow.
 
+The terminal-research packet reuses the existing public mutation fixture owners
+and extracts their unchanged research summary before adding a new fresh case.
+It follows research_light's actual three research reports and terminal synthesis,
+uses its returned source catalog, checks the admitted artifact bytes/digest,
+refuses changed bytes without database changes, restores exact bytes and retries.
+Pending issues or any failure retain the fresh fixture. No historical UNKNOWN
+is read or replayed. Scoped strict/lint and independent review precede normal
+publication; native focus remains pending until its published image is admitted.
+
 The first focused native attempt retains a libsql loader failure before CLI
 tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
 local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.

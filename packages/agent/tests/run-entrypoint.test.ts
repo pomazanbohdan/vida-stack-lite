@@ -3694,6 +3694,74 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     };
   };
 
+  const researchFixtureSummary = (actionOrder: number, sourceDigest: string | null) => {
+    assert.ok(sourceDigest);
+    const sourceId = `fixture-source-${actionOrder}`;
+    return JSON.stringify({
+      schema: 'VidaResearchObservationOutput/v1',
+      topic: `Public CLI research action ${actionOrder}`,
+      objective: 'Inspect the fixture without changing code.',
+      question: 'What does the fixture show?',
+      source_refs: [
+        {
+          source_id: sourceId,
+          source_kind: 'internal',
+          locator: `AGENT.sidecar.md#fixture-${actionOrder}`,
+          title: 'Fixture sidecar',
+          claim: 'AC-CLI-1 SR-CLI-1: the fixture supports read-only research.',
+          retrieved_at: '2026-10-07T00:00:00Z',
+          version_or_date: '2026-10-07',
+          independence_group: 'fixture',
+          digest: sourceDigest,
+        },
+      ],
+      findings: [
+        {
+          finding_id: `fixture-${actionOrder}`,
+          statement: 'The fixture source is present.',
+          source_ids: [sourceId],
+          evidence_class: 'Code',
+          status: 'confirmed',
+        },
+      ],
+      uncertainties: [],
+      conflicts: [],
+      evidence_classes: ['Code'],
+      br_ids: [],
+      sr_ids: ['SR-CLI-1'],
+      ac_ids: ['AC-CLI-1'],
+      gap_ids: [],
+      options: [
+        {
+          option_id: 'retain',
+          label: 'Retain evidence',
+          description: 'Preserve the read-only finding.',
+          evidence_refs: [sourceId],
+        },
+      ],
+      recommendation: {
+        option_id: 'retain',
+        rationale: 'The fixture source supports the finding.',
+        evidence_refs: [sourceId],
+      },
+      completeness: {
+        status: 'pass',
+        required_questions: ['What does the fixture show?'],
+        answered_questions: ['What does the fixture show?'],
+        missing_questions: [],
+        material_gaps: [],
+        external_validation: {
+          required: false,
+          source_count: 0,
+          minimum_sources: 0,
+          status: 'not_required',
+          live_check: null,
+        },
+      },
+      readiness: 'informational',
+    });
+  };
+
   const prepareMutationIntake = (
     args: readonly string[],
     config: AgentRuntimeConfig,
@@ -8283,6 +8351,165 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }, 5_000);
     }
 
+    test('returns terminal research synthesis bound to its admitted artifact and rejects changed bytes', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-terminal-research-'));
+      let completed = false;
+      let pendingIssue = false;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config, { sourcePath: 'AGENT.sidecar.md' });
+        const expected = (version: StateVersion) => [
+          '--expected-revision',
+          String(version.revision),
+          '--expected-digest',
+          version.digest,
+        ];
+        const prepared = parseTestRunPayload(await runSuccessfully(admitted.admissionArgs));
+        let version = requireStateVersion(prepared.state_version);
+        const issue = async () => {
+          pendingIssue = true;
+          const raw = requireRecord(
+            await runSuccessfully([...admitted.args, ...expected(version), '--issue-wave', 'true']),
+            'Issued terminal research wave',
+          );
+          expect(raw.status).toBe('wave_issued');
+          version = requireStateVersion(parseTestRunPayload(raw).state_version);
+          return raw;
+        };
+        const report = async (
+          item: ReturnType<typeof requireIssuedActions>[number],
+          summary: string,
+          evidenceRefs: string[],
+        ) => {
+          const observation = {
+            schema: 'VidaSessionObservation/v1',
+            action_id: item.request.action_id,
+            issue_id: item.issue_id,
+            agent_id: 'fixture:terminal-research',
+            tool_call_ref: `fixture:${item.request.action_id}`,
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: evidenceRefs,
+          };
+          const file = path.join(root, `report-${item.request.stage_id}-${item.request.assignment_index}.json`);
+          writeFileSync(file, JSON.stringify(observation), { flag: 'wx' });
+          const raw = requireRecord(
+            await runSuccessfully([...admitted.args, ...expected(version), '--report', file]),
+            'Terminal research report result',
+          );
+          version = requireStateVersion(parseTestRunPayload(raw).state_version);
+          return raw;
+        };
+        const researchRaw = await issue();
+        const researchActions = requireIssuedActions(parseTestRunPayload(researchRaw));
+        expect(researchActions).toHaveLength(3);
+        for (const item of researchActions) {
+          expect(item.request.stage_id).toBe('research_parallel');
+          await report(item, researchFixtureSummary(item.action.action_order, admitted.sourceEntry.sha256), [
+            `fixture-source-${item.action.action_order}`,
+          ]);
+        }
+        pendingIssue = false;
+        const synthesisRaw = await issue();
+        const synthesisActions = requireIssuedActions(parseTestRunPayload(synthesisRaw));
+        expect(synthesisActions).toHaveLength(1);
+        const synthesisAction = synthesisActions[0]!;
+        assert.ok(typeof synthesisAction.issue_id === 'string');
+        expect(synthesisAction.request.stage_id).toBe('synthesize_research');
+        const catalog = requireRecord(
+          requireRecord((synthesisRaw.issued_actions as unknown[])[0], 'Issued synthesis').synthesis_source_catalog,
+          'Admitted synthesis source catalog',
+        );
+        assert.ok(Array.isArray(catalog.sources) && catalog.sources.length > 0);
+        const key = requireRecord(catalog.sources[0], 'Admitted synthesis source').key;
+        assert.equal(typeof key, 'string');
+        const researchOutput = JSON.parse(researchFixtureSummary(0, admitted.sourceEntry.sha256)) as {
+          completeness: unknown;
+        };
+        const summary = JSON.stringify({
+          schema: 'VidaSynthesisObservationOutput/v1',
+          topic: 'Public terminal research',
+          findings: [
+            {
+              finding_id: 'terminal-finding',
+              statement: 'AC-CLI-1 SR-CLI-1: the fixture supports read-only research.',
+              source_refs: [key],
+              evidence_class: 'Code',
+              status: 'confirmed',
+            },
+          ],
+          uncertainties: [],
+          conflicts: [],
+          br_ids: [],
+          sr_ids: ['SR-CLI-1'],
+          ac_ids: ['AC-CLI-1'],
+          gap_ids: [],
+          options: [
+            {
+              option_id: 'retain',
+              label: 'Retain evidence',
+              description: 'Preserve the admitted finding.',
+              evidence_refs: [key],
+            },
+          ],
+          recommendation: { option_id: 'retain', rationale: 'Use admitted research.', evidence_refs: [key] },
+          completeness: researchOutput.completeness,
+          readiness: 'informational',
+        });
+        const result = await report(synthesisAction, summary, [String(key)]);
+        pendingIssue = false;
+        expect(result.resume_status).toBe('complete');
+        expect(result.next_actions).toEqual([]);
+        expect(result.issued_actions).toEqual([]);
+        expect(result.delivery_instruction).toBeNull();
+        const synthesis = requireRecord(result.research_synthesis, 'Terminal synthesis');
+        expect(synthesis.schema).toBe('ResearchSynthesis/v1');
+        assert.ok(typeof synthesis.digest === 'string');
+        const relativeDatabase = path.relative(root, sessionHandoffDatabasePath(root, config));
+        const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+        const before = inspectHostWorkspaceDatabase(root, relativeDatabase, workspaceId);
+        const artifact = before.work[0]?.state.artifacts.find(
+          (item) => item.schema === 'ResearchSynthesis/v1' && item.artifact_id === synthesis.bundle_id,
+        );
+        assert.ok(artifact);
+        expect(before.journals).toHaveLength(1);
+        const synthesisItem = before.journals[0]!.state.completed.flatMap((wave) => wave.items).find(
+          (item) => item.request.action_id === synthesisAction.request.action_id,
+        );
+        assert.ok(synthesisItem?.research_normalization && synthesisItem.observation);
+        expect(synthesisItem.issue_id).toBe(synthesisAction.issue_id);
+        expect(synthesisItem.observation.summary).toBe(summary);
+        const plan = synthesisItem.research_normalization;
+        expect(plan.binding.action_id).toBe(synthesisAction.request.action_id);
+        expect(plan.binding.issue_id).toBe(synthesisAction.issue_id);
+        expect(plan.observation_digest).toBe(canonicalJsonDigest(synthesisItem.observation));
+        expect(plan.record_path).toBe(artifact.path);
+        expect(plan.record_sha256).toBe(artifact.sha256);
+        expect(plan.result_digest).toBe(synthesis.digest);
+        expect(artifact.stage_id).toBe(synthesisAction.request.stage_id);
+        const artifactPath = path.join(root, artifact.path);
+        const original = readFileSync(artifactPath);
+        expect(JSON.parse(original.toString())).toEqual(synthesis);
+        expect(createHash('sha256').update(original).digest('hex')).toBe(artifact.sha256);
+        try {
+          writeFileSync(artifactPath, Buffer.concat([original, Buffer.from(' ')]));
+          await assert.rejects(run(admitted.args), { message: 'Terminal synthesis bytes changed.' });
+          expect(inspectHostWorkspaceDatabase(root, relativeDatabase, workspaceId)).toEqual(before);
+        } finally {
+          writeFileSync(artifactPath, original);
+        }
+        const retried = requireRecord(await runSuccessfully(admitted.args), 'Restored terminal synthesis');
+        expect(retried.research_synthesis).toEqual(synthesis);
+        expect(retried.state_version).toEqual(version);
+        expect(inspectHostWorkspaceDatabase(root, relativeDatabase, workspaceId)).toEqual(before);
+        completed = true;
+      } finally {
+        if (completed && !pendingIssue) rmSync(root, { recursive: true, force: true });
+        else process.stderr.write(`Retained terminal research fixture: ${root}\n`);
+      }
+    }, 60_000);
+
     test('keeps CAS and report handling bound to one admitted attempt', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-mutation-'));
       const fixture = ownedMutationFixture(root, 60_000);
@@ -8610,69 +8837,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           const action = item.action;
           if (typeof item.issue_id !== 'string') throw Error('issued action lacks its issue identity');
           const sourceId = `fixture-source-${action.action_order}`;
-          const summary = JSON.stringify({
-            schema: 'VidaResearchObservationOutput/v1',
-            topic: `Public CLI research action ${action.action_order}`,
-            objective: 'Inspect the fixture without changing code.',
-            question: 'What does the fixture show?',
-            source_refs: [
-              {
-                source_id: sourceId,
-                source_kind: 'internal',
-                locator: `AGENT.sidecar.md#fixture-${action.action_order}`,
-                title: 'Fixture sidecar',
-                claim: 'AC-CLI-1 SR-CLI-1: the fixture supports read-only research.',
-                retrieved_at: '2026-10-07T00:00:00Z',
-                version_or_date: '2026-10-07',
-                independence_group: 'fixture',
-                digest: sourceEntry.sha256,
-              },
-            ],
-            findings: [
-              {
-                finding_id: `fixture-${action.action_order}`,
-                statement: 'The fixture source is present.',
-                source_ids: [sourceId],
-                evidence_class: 'Code',
-                status: 'confirmed',
-              },
-            ],
-            uncertainties: [],
-            conflicts: [],
-            evidence_classes: ['Code'],
-            br_ids: [],
-            sr_ids: ['SR-CLI-1'],
-            ac_ids: ['AC-CLI-1'],
-            gap_ids: [],
-            options: [
-              {
-                option_id: 'retain',
-                label: 'Retain evidence',
-                description: 'Preserve the read-only finding.',
-                evidence_refs: [sourceId],
-              },
-            ],
-            recommendation: {
-              option_id: 'retain',
-              rationale: 'The fixture source supports the finding.',
-              evidence_refs: [sourceId],
-            },
-            completeness: {
-              status: 'pass',
-              required_questions: ['What does the fixture show?'],
-              answered_questions: ['What does the fixture show?'],
-              missing_questions: [],
-              material_gaps: [],
-              external_validation: {
-                required: false,
-                source_count: 0,
-                minimum_sources: 0,
-                status: 'not_required',
-                live_check: null,
-              },
-            },
-            readiness: 'informational',
-          });
+          const summary = researchFixtureSummary(action.action_order, sourceEntry.sha256);
           writeFileSync(
             reportFile,
             JSON.stringify({
