@@ -40,6 +40,39 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Staged witness packet Source0c9c8303b3e077e2f9f7ca88fe0429ddce211fcc has passing
+scoped strict511/lint/hooks, isolated focus EhgxJh1pass/0fail/151assertions22.88s,
+complete capture/group and native child1016806exit0, unchanged image/profile.
+Independent review confirms byte/hash/reference binding to actual completed
+Journal, non-acceptance fixture payload, post-assurance ordering, repeat-export
+EEXIST and unchanged Host/Journal. No production code or authority guard changed.
+
+The sole changed-input full stage /workspace/contour-stage-8vfRgV ends UNKNOWN,
+not accepted coverage:271449.866597ms, outerexit1/nooutertimeout, complete capture/
+group/namespace closure, unchanged image34d773be5d839d3433016ff750d579c58d1286b5
+(manifest43dea67d9d757486da5afc119ee2386b4b7a323a3060dd002549e9977ddcc56e)
+and profile02. Native child1016913exit1, controller SHA256
+088075f7bd85e80e0020e33ce841f924b9c24201d618621d295bcb31dd76464a.
+Inner run48afffa0-6a9b-481b-b859-8b92f82330ca records timeout_observed/SIGKILL,
+direct producer46accounted, reservation_safe_to_release=true but
+resource_safe_to_advance=false, execution/report incomplete. Publication is
+unknown-or-partial;109completed pass rows, including staged export scenario,
+are partial evidence only. Preserve entire stage/image, raw logs and operation
+outcome. No replay, new numeric hits, UNKNOWN reconciliation or full qualification.
+Capture DIAG/staged-witness-full-stage-20261026-01.log. Existing storage admission
+records7594954752free bytes versus2147483648floor; no new disk walk/cleanup.
+
+Concrete blocker: current serial contour exceeds its inner execution budget in
+this observed attempt; no OOM or causal saving is established. Next runtime
+producer requires independently reviewed disjoint effects/resource custody and
+a justified changed-input cost-reduction packet with focused proof. Do not repeat
+this UNKNOWN or raise budgets. Static prerequisite/cost analysis can continue.
+Last accepted remains Source60cb6e77/run8d7391ed,F546/562,L2521/2886,S2720/3172,
+B3198/3718,16unhit bodies,maxCC/CRAP504,BLOCKED. The preceding coverage change
+closed3old terminal-delivery functions; +6covered includes3new Core functions,
+not6old closures. Staged-witness group3is only focused-tested, not numeric-closed.
+
+
 First staged export focusBoRpX7/Source7bd86c7e records0pass/1fail/54assertions:
 witness export/hash/observation/exclusive-retry checks passed, but the following
 normal assurance call correctly refused cutover records without an active

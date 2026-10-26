@@ -12,6 +12,14 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Current staged-witness packet Source0c9c8303 has focus/review PASS but its single
+full stage8vfRgV is UNKNOWN from inner timeout/SIGKILL. Keep all retained evidence
+and resource_safe_to_advance=false. Do not replay or count staged-witness callbacks
+as numeric closure. No producer until new disjoint effects/resource custody and
+a justified cost-reduction input change are independently reviewed and focused.
+Existing storage admission is above floor; no resource budget was increased.
+
+
 Latest accepted local contour report is Source60cb6e77/run8d7391ed, stageCYKSkG:
 157tests pass,3937assertions, exit0 with complete capture/group/native namespace
 closure and unchanged image/profile02. F546/562,L2521/2886,S2720/3172,B3198/3718
