@@ -20,9 +20,15 @@ at the accepted report locations7160/7162: establish a supported completed
 prewriter frontier, then exercise returned requests and configured contexts
 through the existing public continuation fixture. Preserve exact request/stage
 bindings and negative controls; do not fabricate completed Journal rows.
-First inspect that fixture's supported producer before any edit or runtime.
-If unavailable, record the precise prerequisite instead of adding denial-only
-cases. Necessary targeted proof and independent review precede one full proof
+The bounded independent review is complete. The existing engine helper can
+produce real Mastra state, but the CLI fixture still seeds synthetic Host receipt
+and closed-rebind authority. Do not present a controlled callback test as public
+custody proof. Before this batch can count, establish the old suspended run and
+retained bindings, authentic closed-rebind proof, and continuation receipt through
+HostStateStore.continueDeliveredWork, followed by public CAS issue/report calls.
+The current fixture lacks that producer chain; no targeted test or new hit is
+claimed. Preserve its5s wrapper and helper budgets. See WORK's exact prerequisite
+review; missing authority is not an objective skip. Necessary targeted proof and independent review precede one full proof
 only after the existing isolation/resource and runtime-margin HOLD is resolved.
 Targeted results alone close no numeric criterion. Blocker work stays bounded
 and subordinate to this coverage batch and marketplace resource priority.

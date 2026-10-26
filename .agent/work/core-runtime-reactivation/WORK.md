@@ -38,6 +38,38 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Configured-frontier batch prerequisite review, 2026-10-26
+
+Root and independent blind native Luna reviewed the proposed two-callback batch
+against current Sourcec5e20637. No test/runtime/producer was launched. Existing
+run-entrypoint.test.ts8168 stops at a mocked MastraSessionBridge.open sentinel;
+it proves routing, not continuation_resumed or its next_actions map/find.
+Configured-frontier-host-fixture.ts407/483 seeds synthetic Host/receipt state;
+normalConfigEndpointProof uses controlled attestation placeholders. These are
+component inputs, not authentic public custody or authority.
+
+The existing original-frontier-engine-fixture.ts21/89 is reusable and does use
+real Mastra createRun/start/resume. Static review found no hard engine preflight
+mismatch for a controlled callback test, but adding that engine does not replace
+the synthetic authority chain. No new denial-only or synthetic-positive test was
+added solely for hits. The fixture's5s wrapper stays unchanged; its compatibility
+with the helper's60s child bound is unmeasured, not a proved timeout or reason
+to raise either limit.
+
+Exact prerequisite for this batch: a supported old suspended run with retained
+Work/Journal/source/config/project identity, followed by an authentic closed-rebind
+proof and HostStateStore.continueDeliveredWork producing the configured receipt,
+then actual public issuance and complete prewriter reports at exact CAS versions.
+MastraSessionBridge.open274–341 and session-engine-snapshot.ts785–850 join that
+receipt's immutable beforeimage to the real persisted engine. The current CLI
+fixture lacks this producer chain. A controlled callback test would remain
+nonqualifying; it cannot settle this prerequisite or full-proof HOLD. This is a
+fixture/authority prerequisite, not an objective skip or a request for production
+cutover. Any supported test-only extension must preserve no-consumer-effects
+scope and existing deadlines. F546/562 and all16remaining bodies stay unchanged.
+Independent review completed read-only with no engine mismatch claimed and no
+assertion that future supported fixture development is impossible.
+
 ### Owner clarification — contour closure, 2026-10-26
 
 The owner reiterates that contour closure is the goal; attribution and performance
