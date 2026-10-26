@@ -38,6 +38,32 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Completed readonly next-work inspection — 2026-10-26
+
+The existing public completed-readonly fixture now inspects both request intents.
+After its linked-correction control, it checks `next_work` without applying a
+release. The result grants no rights or plan file; the request, Host, Ledger,
+Journal and engine remain unchanged, and the original request bytes are restored.
+This uses the same consumer fixture and does not claim human authorization.
+
+The targeted composite run at `/workspace/contour-focused-runtime-orhotB`
+passed one test with 53 `expect()` calls in 6.74s. Native child 1034128 exited 0;
+capture was complete and untruncated, the owned group closed, and image, profile
+and overlay custody checks passed. Retain the stage, sibling namespace status,
+`DIAG/next-work-readonly-launch-20261026-01.log` and launcher. The composite
+input digest is `a8e07fae57da756a75ff5d917f6720a0ae3dbb7b08870d422b665be78941f023`.
+Its launch record binds the two overlays separately; the base manifest does not
+attest them and the live dependency mount is not a byte snapshot. Scoped strict
+passed for 511 files, type-aware Oxlint and single-file format passed; the distinct
+logs use the `DIAG/next-work-readonly-` prefix. Independent blind Luna reviewed
+the public path, existing control, state preservation and effect boundary.
+
+The historical report `8d7391ed-a405-4b06-8147-0a3c73714909` maps branch 327's
+`next_work` operand to zero, but this target contains no counters and adds no
+qualified hits. Full-proof HOLD, the historical baseline and UNKNOWN fences stay
+unchanged. The capture owner's admission observed 6,994,440,192 bytes available
+against the unchanged 2,147,483,648-byte floor. No full suite or cleanup ran.
+
 ### Source drift before expired recovery, one-off target — 2026-10-26
 
 The current Root controller used this conversation's user authorization and
@@ -69,6 +95,15 @@ skipped to close this gap. The target has no coverage counters, adds no qualifie
 hits and leaves the historical baseline, full-proof HOLD and UNKNOWN fences intact.
 Its admission receipt records 7,018,409,984 available bytes against the unchanged
 2,147,483,648-byte floor. No cleanup or full suite ran.
+
+Independent read-only review confirmed that neither inherited environment nor the
+closed runtime environment allowlist attests an active controller or human
+instruction. The lifecycle assigns that check to the trusted local controller.
+A reusable path would need an owner-approved per-run controller provenance input,
+bound to the producer's exact selection and terminal receipts, with missing,
+foreign, stale and changed-context refusal controls. That is a new trust-boundary
+contract, not an existing environment option. No such input or acceptance change
+is implemented here; the owner must first choose its authority and lifecycle.
 
 ### Interrupted Source owner inspect — targeted terminal, 2026-10-26
 

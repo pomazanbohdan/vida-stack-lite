@@ -9494,6 +9494,23 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             expect(readFileSync(requestPath)).toEqual(requestBytes);
             expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
             expect(await f.bridge.snapshot()).toEqual(engineBefore);
+            if (!sourceProject) {
+              const nextWorkBytes = Buffer.from(JSON.stringify({ ...request, requestIntent: 'next_work' }));
+              try {
+                writeFileSync(requestPath, nextWorkBytes);
+                const nextWork = requireRecord(await runSuccessfully(inspectArgs), 'Next-work readonly inspection');
+                expect(nextWork.status).toBe('readonly_release_inspected');
+                expect(nextWork.rights_granted).toBe(false);
+                assert.ok(typeof nextWork.plan_ref === 'string');
+                expect(existsSync(path.join(f.root, nextWork.plan_ref))).toBe(false);
+                expect(readFileSync(requestPath)).toEqual(nextWorkBytes);
+                expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
+                expect(await f.bridge.snapshot()).toEqual(engineBefore);
+              } finally {
+                writeFileSync(requestPath, requestBytes);
+              }
+              expect(readFileSync(requestPath)).toEqual(requestBytes);
+            }
             const historicalRequestPath = path.join(f.root, 'historical-readonly-request.json');
             const historyPath = path.join(f.root, 'original-readonly-history.json');
             const baselinePath = path.join(f.root, 'original-readonly-config.yaml');

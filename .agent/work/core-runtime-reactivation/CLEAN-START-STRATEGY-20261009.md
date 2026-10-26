@@ -12,6 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The existing completed-readonly inspection now checks both `linked_correction`
+and `next_work` without granting rights. Its focused target passed; it adds no
+numeric qualification. WORK owns the input, terminal and review evidence.
+The current full-proof HOLD remains.
+
 One current-session Source-project target refused changed declared Source before
 expired-lease recovery and preserved the inspected state. The positive recovery
 control also passed. Its one-off overlays bind the current controller attribution;
