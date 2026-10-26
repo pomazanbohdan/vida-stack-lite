@@ -48,6 +48,22 @@ The shared checkout/scratch/evidence filesystem survey records9514086400availabl
 bytes and1585252free inodes against the2147483648byte admission floor.
 Retained evidence directory is absent; no cleanup or timer change occurs.
 
+Observer repair is now published at5a235837 after independent blind review,
+normal hooks (format538/strict545) and ordinary push; origin/main matches.
+The changed-input image1ffc6ce14ceca7d8c5466a8ff8a5d375b79186b5 has manifest
+SHA25642b0548c8398d2cddcf52c7ecf57f539bc4fedafebb60ac59bc3ad7f3bb99d7c.
+One full stage TZLfHB completes exit0, no timeout, complete capture/group and
+native namespace terminal exit0; image/profile inputs remain unchanged.
+Elapsed237888.655556ms;154tests pass,0fail,3834assertions in231.58s.
+Run1e0cff0e-423a-4dde-a51f-d9e1b2e37009 publishes F515/555,L2390/2873,
+S2580/3157,B3035/3686, still BLOCKED; no CRAP/mutation closure is claimed.
+Compared with the prior qualified78413d9b baseline, hits increase8/71/72/103.
+Different inputs and assertion counts do not establish a measured speedup.
+The producer updates its existing projection after this terminal outcome.
+Exact counter lookup leaves40unhit functions; the next bounded packet examines
+terminal research/result output paths and existing fixtures in this same contour.
+All prior FAIL/UNKNOWN receipts and effect fences remain unchanged.
+
 The first focused native attempt retains a libsql loader failure before CLI
 tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
 local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.

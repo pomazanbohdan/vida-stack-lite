@@ -16,11 +16,13 @@ The independent runtime-root provider is published at d05842aa. Profile02 adds
 the readonly libsql loader closure; native controls and focused callers pass.
 The subsequent full bun-cli-run stage Pau349 fails with153pass/2fail because an
 unrelated missing readFileSync path invalidates the prepared-input observer.
-Repair that observer with paired required/unrelated input controls, review and
-publish after focused/static checks. Form one new immutable image for changed
-tool/test inputs, then admit one justified instrumented contour stage using the
-unchanged qualified profile02. WORK owns exact pins and terminal receipts.
-No current numeric qualification follows from the failed stage.
+Observer repair5a235837 passes paired controls, independent review and hooks,
+then the one changed-input stage TZLfHB passes154/154 under profile02.
+Its accepted run1e0cff0e records F515/555,L2390/2873,S2580/3157,B3035/3686.
+Keep bun-cli-run active: inspect its remaining terminal research/result output
+paths against existing fixtures, collect related assertions, then follow the
+same focused/static/review/one-stage order. WORK owns pins and terminal receipts.
+The failed predecessor contributes no accepted counters.
 The old tSHoBS UNKNOWN, writable resources and safety flags remain fenced.
 
 Old-resource HOLD. Sourcefb31f66d's tSHoBS stage has native UNKNOWN/SIGKILL with
@@ -53,7 +55,7 @@ correction removes that path, and the unlocated historical evidence loss remains
 explicit. [WORK](WORK.md#public-initial-and-replacement-reports-packet-2026-10-25)
 owns exact outcomes, assertion correspondence, retention locators and reopen needs.
 
-The latest measured packet is Source78413d9b/run27f66ef4-9aeb-4958-a9ac-92af774d2218:
+The preceding measured packet is Source78413d9b/run27f66ef4-9aeb-4958-a9ac-92af774d2218:
 F507/555, L2319/2873, S2508/3157 and B2932/3686, still BLOCKED. The fresh
 unexposed research-wave fault/recovery and developer-to-validation issue pass in
 one152-case stage. Exact activation-history and exposure-denial checks preserve
