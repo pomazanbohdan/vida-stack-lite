@@ -98,6 +98,25 @@ Pending issues or any failure retain the fresh fixture. No historical UNKNOWN
 is read or replayed. Scoped strict/lint and independent review precede normal
 publication; native focus remains pending until its published image is admitted.
 
+The published test packet84efabf1's first focused attempt AyvepX retains a real
+failure: terminal research returns blocked, while the existing CAS case passes.
+Native exit1, no timeout, full capture/group and namespace terminal exit1 remain
+retained, including /tmp/vida-terminal-research-Zo6Ek4 in its private scratch.
+The bounded readonly engine lookup finds persisted status success/error null.
+Root traces ledger-only terminal status to blocked: bridge sync's ephemeral
+complete projection is lost when CLI reloads the journal. Generic null-step
+blocking remains intentional and must not be relaxed.
+
+The repair derives completion only for the terminal-synthesis response from
+the exact successful engine run, empty current terminal shapes, nonempty fully
+observed history and deep ordered observation equality, with no host effect.
+It reuses deep equality without another hash, leaves journal/delivery/issue gates
+unchanged, and retains downstream artifact validation. Negative controls cover
+non-success/foreign/pending/reconciliation/mismatched history and same-length
+altered/reordered observations. Independent review finds no publication blocker;
+scoped static and normal hooks precede a new image/focused qualification.
+No full stage follows the failed focus, and no old UNKNOWN is replayed.
+
 The first focused native attempt retains a libsql loader failure before CLI
 tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
 local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.

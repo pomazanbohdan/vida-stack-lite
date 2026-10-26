@@ -73,6 +73,7 @@ import {
   recordField,
   repairAuthority,
   requireNoCompletedReadonlyRelease,
+  hasCompletedTerminalSynthesis,
   requireHistoricalItem,
   requireOneReadonlyReleaseMatch,
   requireRecoveryOperation,
@@ -8474,10 +8475,89 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         );
         assert.ok(artifact);
         expect(before.journals).toHaveLength(1);
+        const terminalJournal = { ...before.journals[0]!, resume_status: 'blocked' as const };
+        const observations = terminalJournal.state.completed.flatMap((wave) =>
+          wave.items.map((item) => {
+            assert.ok(item.observation);
+            return item.observation;
+          }),
+        );
+        const engine = {
+          run_id: terminalJournal.state.run_id,
+          status: 'success' as const,
+          step_id: null,
+          requests: [],
+          observations,
+        };
+        const terminalStage = config.workflows.information_research_light?.stages.find(
+          (stage) => stage.id === 'synthesize_research',
+        );
+        const qualifies = (
+          snapshot: import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeSnapshot,
+          journal = terminalJournal,
+        ) => hasCompletedTerminalSynthesis(journal, snapshot, terminalStage, engine.run_id, false);
+        expect(qualifies(engine)).toBe(true);
+        for (const status of ['failed', 'canceled', 'unknown', 'suspended'] as const)
+          expect(qualifies({ ...engine, status })).toBe(false);
+        expect(qualifies({ ...engine, run_id: 'foreign-run' })).toBe(false);
+        expect(qualifies({ ...engine, step_id: 'wave-0' })).toBe(false);
+        expect(qualifies({ ...engine, requests: [synthesisAction.request] })).toBe(false);
+        expect(qualifies({ ...engine, observations: observations.slice(1) })).toBe(false);
+        expect(
+          qualifies({
+            ...engine,
+            observations: observations.map((observation, index) =>
+              index === 0 ? { ...observation, summary: 'altered retained observation' } : observation,
+            ),
+          }),
+        ).toBe(false);
+        expect(qualifies({ ...engine, observations: [...observations].reverse() })).toBe(false);
+        expect(qualifies(engine, { ...terminalJournal, state: { ...terminalJournal.state, step_id: 'wave-0' } })).toBe(
+          false,
+        );
+        expect(qualifies(engine, { ...terminalJournal, state: { ...terminalJournal.state, completed: [] } })).toBe(
+          false,
+        );
+        expect(hasCompletedTerminalSynthesis(terminalJournal, engine, terminalStage, 'foreign-run', false)).toBe(false);
+        expect(hasCompletedTerminalSynthesis(terminalJournal, engine, terminalStage, engine.run_id, true)).toBe(false);
+        expect(hasCompletedTerminalSynthesis(terminalJournal, engine, undefined, engine.run_id, false)).toBe(false);
+        expect(
+          hasCompletedTerminalSynthesis(
+            terminalJournal,
+            engine,
+            { kind: 'deliver', produces: [] },
+            engine.run_id,
+            false,
+          ),
+        ).toBe(false);
+        expect(
+          hasCompletedTerminalSynthesis(
+            terminalJournal,
+            engine,
+            { kind: 'synthesize', produces: [] },
+            engine.run_id,
+            false,
+          ),
+        ).toBe(false);
         const synthesisItem = before.journals[0]!.state.completed.flatMap((wave) => wave.items).find(
           (item) => item.request.action_id === synthesisAction.request.action_id,
         );
         assert.ok(synthesisItem?.research_normalization && synthesisItem.observation);
+        expect(
+          qualifies(engine, { ...terminalJournal, state: { ...terminalJournal.state, run_id: 'foreign-run' } }),
+        ).toBe(false);
+        expect(
+          qualifies(engine, { ...terminalJournal, state: { ...terminalJournal.state, items: [synthesisItem] } }),
+        ).toBe(false);
+        expect(
+          qualifies(engine, {
+            ...terminalJournal,
+            state: {
+              ...terminalJournal.state,
+              completed: [{ step_id: 'wave-0', items: [{ ...synthesisItem, observation: null }] }],
+            },
+          }),
+        ).toBe(false);
         expect(synthesisItem.issue_id).toBe(synthesisAction.issue_id);
         expect(synthesisItem.observation.summary).toBe(summary);
         const plan = synthesisItem.research_normalization;

@@ -69,6 +69,12 @@ For a qualified closed runtime root, keep bwrap namespace status on its dedicate
 controller-owned FD3 channel. FD1 consumes the child's stdout and cannot serve
 both contracts. Root verifies namespace-init terminal proof and unchanged inputs;
 this never settles an older UNKNOWN or permits reuse of its writable resources.
+For terminal synthesis, use the supported research_light DAG and actual public
+reports with its returned source catalog. Join the completed journal plan to the
+artifact path/hash and observation/issue IDs, refuse changed bytes, restore them
+exactly and verify same-version retry. A null journal step alone is not success;
+exercise non-success engine states and mismatched observations as refusal controls.
+Keep failed fixtures and native receipts without replaying their reports.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual
 normalization and artifact admission. Use distinct action-bound tool-call refs

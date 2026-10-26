@@ -5988,6 +5988,30 @@ function hasRunSpecialSelector(args: readonly string[], selectorIndex: number): 
   return typeof selector === 'string' && args.includes(selector);
 }
 
+export function hasCompletedTerminalSynthesis(
+  journal: import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot,
+  snapshot: import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeSnapshot,
+  stage: Readonly<{ kind: string; produces: readonly string[] }> | undefined,
+  expectedRunId: string,
+  reconciliationRequired: boolean,
+): boolean {
+  if (reconciliationRequired || stage?.kind !== 'synthesize' || !stage.produces.includes('ResearchSynthesis/v1'))
+    return false;
+  const observations = journal.state.completed.flatMap((wave) => wave.items.map((item) => item.observation));
+  return (
+    snapshot.status === 'success' &&
+    snapshot.run_id === expectedRunId &&
+    snapshot.run_id === journal.state.run_id &&
+    snapshot.step_id === null &&
+    snapshot.requests.length === 0 &&
+    journal.state.step_id === null &&
+    journal.state.items.length === 0 &&
+    observations.length > 0 &&
+    observations.every((observation) => observation !== null) &&
+    isDeepStrictEqual(observations, snapshot.observations)
+  );
+}
+
 export async function run(args: string[] = process.argv.slice(2)) {
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
   const { assertAdmittedRuntimeCodeCurrent } = await import('../src/orchestration/admitted-session-execution.ts');
@@ -9250,11 +9274,14 @@ export async function run(args: string[] = process.argv.slice(2)) {
       if (terminalSynthesisStages.length > 1)
         fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal research synthesis must have one declared output stage.');
       const terminalStage = terminalSynthesisStages[0];
-      if (
-        journal.resume_status === 'complete' &&
-        terminalStage?.kind === 'synthesize' &&
-        terminalStage.produces.includes('ResearchSynthesis/v1')
-      ) {
+      const terminalSynthesisComplete = hasCompletedTerminalSynthesis(
+        journal,
+        workflowSnapshot,
+        terminalStage,
+        expectedRunId,
+        Boolean(reconciliationRequired),
+      );
+      if (terminalSynthesisComplete && terminalStage) {
         const items = journal.state.completed
           .flatMap((entry) => entry.items)
           .filter((item) => item.request.stage_id === terminalStage.id && item.request.workflow_id === values.workflow);
@@ -9365,7 +9392,11 @@ export async function run(args: string[] = process.argv.slice(2)) {
         mastra_run_id: requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').run_id,
         mastra_step_id: requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').step_id,
         execution_status: requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').status,
-        resume_status: reconciliationRequired ? 'reconciliation_required' : journal.resume_status,
+        resume_status: reconciliationRequired
+          ? 'reconciliation_required'
+          : terminalSynthesisComplete
+            ? 'complete'
+            : journal.resume_status,
         reconciliation_required: reconciliationRequired,
         research_preparation_status:
           journal.state.research_wave_exposure === 'preparing'

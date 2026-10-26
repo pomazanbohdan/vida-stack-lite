@@ -3616,6 +3616,14 @@ See the [scenario contracts](docs/research/test-regression-contracts.md#required
 
 See the [scenario contracts](docs/research/test-regression-contracts.md#public-cli-and-diagnostics) for the maintained cases in this section.
 
+Terminal research output uses a fresh supported research_light fixture with
+actual public reports and the issued synthesis catalog. Match the completed
+normalization plan, action/issue and artifact bytes, refuse tampering without
+database changes, restore exact bytes and check same-version retry. Engine
+success must join the same terminal journal and ordered complete observations;
+non-success, foreign runs, pending requests and mismatched observations stay
+blocked. Keep the generic ledger status and delivery gates unchanged.
+
 ### Configuration and configured context
 
 See the [scenario contracts](docs/research/test-regression-contracts.md#configuration-and-configured-context) for the maintained cases in this section.
