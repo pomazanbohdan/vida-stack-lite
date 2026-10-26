@@ -40,6 +40,21 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Current cost packet batches only package-identity setup around eight sequential
+in-process readonly authority refusals in the released-selector case. Each call
+still performs real public run I/O, exact error matching, empty admissions and
+complete before/after authority/Host snapshots. All native CLI calls, fault cases,
+per-case budgets and final byte-restoration assertions remain. One outer finally
+restores the original bundle before the following native admission. The exact
+call-site count is eight (the initial verbal estimate of ten was corrected).
+Setup count falls8to1: seven redundant rename/symlink/unlink/rename cycles,
+28 filesystem mutations removed. This is a static operation count, not measured
+elapsed saving. The prior39.13s test duration does not attribute cost to this
+setup; no speedup is claimed. Scoped strict511 and lint pass; independent review
+and fresh focused behavior precede the one justified changed-input full stage.
+The original UNKNOWN roots/outcomes and resource flags remain untouched.
+
+
 Boundary investigation after 4TIJNP: operation430ff705-96b3-42b3-8572-ae41eecc6375
 records timeout_observed=true and SIGKILL for direct Bun PID46; typecheck PID17
 exited0. This is the existing300000ms budget with30000ms reserve, not an outer
