@@ -133,6 +133,35 @@ remain comparator refusals. Root uses public-ingress's exact re-exported primiti
 directly from canonical-json-core to preserve the lazy-help import boundary and
 avoid eager AJV/schema initialization. No budget or input validator is relaxed.
 
+Canonical comparator fix a94bcf02 is published after normal hooks. Focus vBkb7a
+passes1/skips8/fails0 with53assertions in14.45s, native/capture/group exit0 and
+unchanged inputs. Image3d037bc239449026ef9f201d089c79c4faab53e7 manifest SHA256
+6ddcbb508bb5321ff1a34f062178587b6496017808a9a431bb9d618992432cd0 binds this Source.
+The one subsequent full stage eIoo7b ends outer exit1 in271808.808572ms with
+complete capture/group, namespace terminal exit1 and unchanged image/profile02.
+Inner run b306f556-89a9-4a6f-8ba2-bb02f28472e0 records timeout/SIGKILL UNKNOWN:
+direct producer accounted, reservation releasable, resource_safe_to_advancefalse,
+execution/report incomplete. No new counters are accepted. Preserve its image,
+scratch, raw streams and receipts, including uninitialized-child UNKNOWN root.
+Only fresh independent namespace resources may host changed-input successors;
+none reuses or reconciles these issued effects. Last qualified run remains
+45dd5721/4ed7033f with F516/555,L2396/2873,S2586/3157,B3041/3686.
+
+Receipt-only timing comparison finds154completed body rows in each run: the
+accepted baseline sums232020.60ms; the incomplete run sums259326.23ms. These
+are body times, not complete producer time or billed-token totals. The new
+terminal case uses13061.36ms. Unchanged matched bodies also vary: CLEAR mapped
+document authority12002.96→17660.54ms, accepted delivery14635.73→17052.06ms,
+and CAS32749.00→34534.19ms. Different Source and incomplete conditions prevent
+a speedup/regression attribution. No benchmark or extra suite is run for this audit.
+
+The next narrow repair removes three redundant native subprocess launches for
+malformed report JSON from the existing CAS fixture. Direct public-owner calls
+retain real file parsing/refusal and add exact unchanged database snapshots.
+Native admission/issue bindings, hardlink/error JSON/exit proof and positive
+reports remain unchanged. This reduces operation count by3; elapsed saving is
+unmeasured until required checks. Budgets and all UNKNOWN flags remain intact.
+
 The first focused native attempt retains a libsql loader failure before CLI
 tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
 local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.

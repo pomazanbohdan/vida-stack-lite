@@ -8904,15 +8904,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         );
         fixture.invoke([...admitted.args, ...expected(preparedVersion), '--issue-wave', 'true'], 1);
         const reportFile = path.join(root, 'report.json');
+        const beforeInvalidReports = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
         for (const invalid of ['', '{', 'x'.repeat(32769)]) {
           writeFileSync(reportFile, invalid);
-          expect(
-            fixture.invoke([...admitted.args, ...expected(issuedVersion), '--report', reportFile], 1),
-          ).toMatchObject({
+          await assert.rejects(run([...admitted.args, ...expected(issuedVersion), '--report', reportFile]), {
             code: 'GAP-VIDA-RUN-REPORT-001',
-            message:
-              'The session report is missing, unsafe, oversized, or invalid JSON. Next action: inspect the exact work and check its issued contract before retrying.',
+            message: 'Report file is unavailable or invalid.',
           });
+          expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeInvalidReports);
         }
         writeFileSync(reportFile, '{}');
         const secondLink = path.join(root, 'report-hardlink.json');

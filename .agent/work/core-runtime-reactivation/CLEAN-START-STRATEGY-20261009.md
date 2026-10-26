@@ -21,9 +21,12 @@ then the one changed-input stage TZLfHB passes154/154 under profile02.
 Its accepted run1e0cff0e records F515/555,L2390/2873,S2580/3157,B3035/3686.
 The same-fixture validator-status packet45dd5721 then passes isolated focus and
 one full stage6QAlkr, recording F516/555,L2396/2873,S2586/3157,B3041/3686.
-Keep bun-cli-run active: cover terminal synthesis under the supported non-code
-information_research_light workflow. Reuse existing research fixtures, group
-related assertions, then follow the same static/review/focus/one-stage order.
+Terminal synthesis now has focused proof at a94bcf02, but its single full stage
+eIoo7b times out internally with UNKNOWN and accepts no new counters. Preserve
+that run's resources and flags. Keep bun-cli-run active: remove three redundant
+malformed-report subprocess calls from the existing CAS fixture, retain native
+protocol/exit proof, review and focus-check, then use one changed-input stage in
+fresh independent namespace resources. No budget increase or UNKNOWN replay.
 WORK owns pins and terminal receipts.
 The failed predecessor contributes no accepted counters.
 The old tSHoBS UNKNOWN, writable resources and safety flags remain fenced.
