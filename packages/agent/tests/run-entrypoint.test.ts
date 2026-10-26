@@ -9352,13 +9352,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 60_000);
 
-    test('inspects completed task_execution readonly owner against the suspended configured frontier', async () => {
+    const inspectCompletedReadonlyOwner = async (sourceProject: boolean) => {
       let root: string | undefined;
       let completed = false;
       let pendingIssue = false;
       try {
         const fixture = await createInitialSourceWorkFixture({
           onRoot: (value) => (root = value),
+          sourceProject,
           configure: (config) => {
             const task = config.workflows.task_execution;
             assert.ok(task);
@@ -9384,7 +9385,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           async () => {
             assert.ok(f.store && f.ledger && f.bridge);
             const input = admittedInput(f);
-            await bindControlledRuntimeInitialization(f.root, f.config, f.store);
+            if (!sourceProject) await bindControlledRuntimeInitialization(f.root, f.config, f.store);
             const args = initialSourceRunArguments(f);
             const originalHistory = parseTestRunPayload(await runSuccessfully(args));
             expect(historicalConfiguredContexts(originalHistory.next_actions as unknown[])).toHaveLength(1);
@@ -9529,11 +9530,45 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               '--context-history',
               'original-readonly-history.json',
             ];
-            await assert.rejects(run(historicalArgs), {
-              message: 'vida runtime-config rebind: historical baseline is not the local accepted Source configuration',
-            });
+            const preservedPaths = [
+              historicalRequestPath,
+              baselinePath,
+              path.join(f.root, 'agent-runtime.config.v1.yaml'),
+              path.join(f.root, '.agent/runtime-initialization.v1.json'),
+            ];
+            const preservedBytes = preservedPaths.map((file) => readFileSync(file));
+            const assertHistoricalInputsUnchanged = () => {
+              expect(preservedPaths.map((file) => readFileSync(file))).toEqual(preservedBytes);
+              assert.deepEqual(
+                snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents),
+                f.originalSource,
+              );
+            };
+            if (sourceProject) {
+              const historical = requireRecord(await runSuccessfully(historicalArgs), 'Historical owner inspection');
+              expect(historical.status).toBe('historical_owner_release_inspected');
+              expect(historical.rights_granted).toBe(false);
+              expect(historical.runtime_acceptance).toBe(false);
+              expect(historical.caller_identity_authenticated).toBe(false);
+              expect(historical.caller_authorization_required).toBe(true);
+              const historicalRequest = requireRecord(historical.request, 'Historical owner request');
+              expect(historicalRequest.identity).toEqual(selected.identity);
+              const inspection = requireRecord(historicalRequest.inspection, 'Historical owner binding');
+              expect(inspection.expectedWork).toEqual(selected.version);
+              expect(inspection.expectedLedger).toEqual(before.ledger_version);
+              expect(inspection.expectedJournal).toEqual(journal.version);
+              expect(inspection.nativeSessionHandle).toBe(input.nativeSessionHandle);
+              expect(inspection.current_config_binding).toBe(runtimeConfigDigest(f.config));
+            } else {
+              await assert.rejects(run(historicalArgs), {
+                message:
+                  'vida runtime-config rebind: historical baseline is not the local accepted Source configuration',
+              });
+            }
             expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
             expect(await f.bridge.snapshot()).toEqual(engineBefore);
+            assertHistoricalInputsUnchanged();
+            expect(readFileSync(historyPath)).toEqual(historyBytes);
             const foreignHistory = structuredClone(originalHistory);
             const foreignContexts = historicalConfiguredContexts(foreignHistory.next_actions as unknown[]);
             assert.ok(foreignContexts[0]);
@@ -9542,10 +9577,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               historicalConfiguredContexts(originalHistory.next_actions as unknown[])[0]?.digest,
             );
             try {
-              writeFileSync(historyPath, JSON.stringify(foreignHistory));
+              const foreignHistoryBytes = Buffer.from(JSON.stringify(foreignHistory));
+              writeFileSync(historyPath, foreignHistoryBytes);
               await assert.rejects(run(historicalArgs), { message: 'Historical context history action differs' });
               expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
               expect(await f.bridge.snapshot()).toEqual(engineBefore);
+              assertHistoricalInputsUnchanged();
+              expect(readFileSync(historyPath)).toEqual(foreignHistoryBytes);
             } finally {
               writeFileSync(historyPath, historyBytes);
             }
@@ -9555,7 +9593,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               for (const field of ['expectedWork', 'expectedLedger'] as const) {
                 writeFileSync(
                   requestPath,
-                  JSON.stringify({ ...request, [field]: { ...request[field], revision: request[field].revision + 1 } }),
+                  JSON.stringify({
+                    ...request,
+                    [field]: { ...request[field], revision: request[field].revision + 1 },
+                  }),
                 );
                 await assert.rejects(run(inspectArgs), { message: 'Readonly release work/ledger CAS differs' });
                 expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
@@ -9575,7 +9616,18 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         if (root && completed && !pendingIssue) rmSync(root, { recursive: true, force: true });
         else if (root) process.stderr.write(`Retained readonly release inspection fixture: ${root}\n`);
       }
-    }, 60_000);
+    };
+
+    test(
+      'inspects completed task_execution readonly owner against the suspended configured frontier',
+      () => inspectCompletedReadonlyOwner(false),
+      60_000,
+    );
+    test(
+      'inspects completed task_execution readonly owner in the Source project',
+      () => inspectCompletedReadonlyOwner(true),
+      60_000,
+    );
 
     test('persists maintained synthesis and issues the configured developer frontier without dispatch', async () => {
       let root: string | undefined;

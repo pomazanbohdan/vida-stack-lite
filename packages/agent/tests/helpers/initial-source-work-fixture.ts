@@ -1,10 +1,10 @@
 import type { Database as BunDatabase } from 'bun:sqlite';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, lstatSync, realpathSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, lstatSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { stringify as stringifyYaml } from 'yaml';
-import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -42,6 +42,12 @@ import {
   runPrewriterFixtureInProcess,
 } from './public-prewriter-fixture.ts';
 import { bindControlledRuntimeInitialization } from './controlled-runtime-initialization-fixture.ts';
+import { initializeProjectFromBundle } from '../../bin/init-core.ts';
+import { bindRuntimeInitialization } from '../../src/runtime-initialization.ts';
+import {
+  runtimeExecutableInventory,
+  runtimeManifestExecutableInventory,
+} from '../../tooling/maintained-source-inventory.ts';
 import type {
   InitialSourceFrontierCodeRebindRequest,
   InitialSourceFrontierCodeRebindVerifiedCurrent,
@@ -74,7 +80,6 @@ const initialSourceFixtureDocuments: readonly [string, string, string] = [
   'docs/SYSTEM.md',
   'docs/OPERATIONS.md',
 ];
-const documents = initialSourceFixtureDocuments;
 const sha256 = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const record = (value: unknown) => JSON.stringify(value) + '\n';
 export interface InitialWorkFixture {
@@ -151,6 +156,7 @@ export async function createInitialSourceWorkFixture({
   legacyTaskFrontier = false,
   researchSynthesis = false,
   researchAssignments = 1,
+  sourceProject = false,
 }: {
   readonly parentRoot?: string;
   readonly onRoot?: (root: string) => void;
@@ -165,6 +171,7 @@ export async function createInitialSourceWorkFixture({
   readonly legacyTaskFrontier?: boolean;
   readonly researchSynthesis?: boolean;
   readonly researchAssignments?: 1 | 2;
+  readonly sourceProject?: boolean;
 } = {}): Promise<InitialWorkFixture> {
   const fixtureBase = parentRoot === undefined ? tmpdir() : assertOwnedFixtureParent(parentRoot);
   const root = mkdtempSync(path.join(fixtureBase, parentRoot === undefined ? 'vida-initial-source-' : 'case-'));
@@ -172,21 +179,49 @@ export async function createInitialSourceWorkFixture({
   let database: BunDatabase | null = null;
   let ledger: MastraSessionLedgerType | null = null;
   let bridge: MastraSessionBridgeType | null = null;
+  const projectId = sourceProject ? 'agent' : 'sample';
+  const documents: readonly [string, string, string] = sourceProject
+    ? ['packages/agent/docs/PRODUCT.md', 'packages/agent/docs/SYSTEM.md', 'packages/agent/docs/OPERATIONS.md']
+    : initialSourceFixtureDocuments;
   mkdirSync(path.join(root, 'docs'), { recursive: true });
   writeFileSync(path.join(root, 'AGENTS.md'), '# Test instructions\n');
   writeFileSync(path.join(root, 'AGENT.sidecar.md'), '# Test source map\n');
   try {
-    for (const [index, relative] of documents.entries())
+    if (sourceProject) {
+      const target = path.join(root, 'packages/agent');
+      mkdirSync(target, { recursive: true });
+      const manifestFile = process.env.VIDA_QUALITY_IMAGE_MANIFEST;
+      const manifest: unknown = manifestFile ? JSON.parse(readFileSync(manifestFile, 'utf8')) : null;
+      if (manifestFile && !isPlainRecord(manifest)) throw new Error('Source fixture image manifest is malformed');
+      const files = isPlainRecord(manifest)
+        ? runtimeManifestExecutableInventory(manifest.files)
+        : runtimeExecutableInventory(bundle);
+      for (const file of files) {
+        const output = path.join(target, file);
+        mkdirSync(path.dirname(output), { recursive: true });
+        cpSync(path.join(bundle, file), output);
+      }
+      for (const name of ['templates', 'instructions'])
+        cpSync(path.join(bundle, name), path.join(target, name), { recursive: true });
+      writeFileSync(path.join(root, 'package.json'), record({ private: true, workspaces: ['packages/agent'] }));
+    }
+    for (const [index, relative] of documents.entries()) {
+      mkdirSync(path.dirname(path.join(root, relative)), { recursive: true });
       writeFileSync(path.join(root, relative), 'accepted document ' + index + '\n');
+    }
     mkdirSync(path.join(root, 'docs/agent-instructions'), { recursive: true });
     writeFileSync(
       path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'),
-      readFileSync(path.resolve(bundle, '../../docs/agent-instructions/documentation-policy.v1.json')),
+      sourceProject
+        ? readFileSync(path.join(bundle, 'templates/documentation-policy.template.v1.json'), 'utf8')
+            .replaceAll('{{REPOSITORY}}', 'initial-source-repository')
+            .replaceAll('{{CREATED_AT}}', new Date().toISOString())
+        : readFileSync(path.resolve(bundle, '../../docs/agent-instructions/documentation-policy.v1.json')),
     );
     let configBytes = readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'initial-source-repository')
-      .replaceAll('{{PROJECT}}', 'sample')
-      .replaceAll('{{BUNDLE}}', 'vida-agent');
+      .replaceAll('{{PROJECT}}', projectId)
+      .replaceAll('{{BUNDLE}}', sourceProject ? 'packages/agent' : 'vida-agent');
     if (cooperativeSynthesis) {
       const profile = configBytes.match(/^    researcher:\n(?:      [^\n]*\n)+/mu)?.[0];
       if (!profile || !profile.includes('      egress_policy: official_docs\n'))
@@ -197,6 +232,25 @@ export async function createInitialSourceWorkFixture({
       );
     }
     writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
+    if (sourceProject) {
+      const initial = loadRuntimeConfig(root);
+      const configured: AgentRuntimeConfig = {
+        ...initial,
+        repository: { ...initial.repository, code_selectors: ['packages/agent/src/**'] },
+        projects: initial.projects.map((project) => ({
+          ...project,
+          project_root: 'packages/agent',
+          wiki_root: 'packages/agent/docs',
+          wiki_path: 'packages/agent/AGENT.sidecar.md',
+          wiki_output_root: 'packages/agent/.planning/agent-flow/wiki-output',
+          internal_root: 'packages/agent/docs/internal',
+          ledger_root: 'packages/agent/backlogs',
+          code_selectors: ['packages/agent/src/**'],
+        })),
+      };
+      configBytes = stringifyYaml(configured, { aliasDuplicateObjects: false });
+      writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
+    }
     if (legacyTaskFrontier) {
       const currentConfig = loadRuntimeConfig(root);
       const task = currentConfig.workflows.task_execution;
@@ -275,6 +329,19 @@ export async function createInitialSourceWorkFixture({
       writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
     }
     const config = loadRuntimeConfig(root);
+    if (sourceProject) {
+      const initialized = await initializeProjectFromBundle(
+        {
+          projectRoot: root,
+          repository: 'initial-source-repository',
+          projectMappings: ['agent=packages/agent'],
+          reconcileExisting: true,
+        },
+        path.join(root, 'packages/agent'),
+      );
+      if (initialized.status !== 'reconciled_existing')
+        throw new Error('Source fixture initialization was not adopted');
+    }
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
     ledger = openConfiguredMastraSessionLedger(root);
@@ -286,6 +353,7 @@ export async function createInitialSourceWorkFixture({
       database = ledger.sessionProducerBinding().database;
     }
     const store = ledger.hostState;
+    if (sourceProject) await bindRuntimeInitialization(root, store);
     const id = 'initial-' + randomUUID();
     const nativeSessionHandle = 'initial-thread-' + randomUUID();
     const scopePath = '.agent/work/' + id + '/scope.json';
@@ -299,7 +367,7 @@ export async function createInitialSourceWorkFixture({
       team: 'default-development',
       kind: 'task',
       intent: 'task_execution',
-      project: 'sample',
+      project: projectId,
       risk_flags: [...riskFlags],
       labels: [],
     };
@@ -407,7 +475,7 @@ export async function createInitialSourceWorkFixture({
       repositoryRoot: root,
       config,
       ledger,
-      projectIds: ['sample'],
+      projectIds: [projectId],
       selection,
       context,
       workflowId: 'task_execution',

@@ -12,6 +12,16 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The Source-project historical-owner inspection now passes its targeted
+composite-input diagnostic at /workspace/contour-focused-runtime-eUyZHJ.
+It joins a real initialized Source fixture to admitted Work, Journal, engine
+and context history, checks returned authority and CAS fields, and refuses a
+foreign context digest without changing the checked state. The original
+consumer refusal also passed at /workspace/contour-focused-runtime-Ly6bnL.
+Both have native terminal, capture and group records. They add no current
+numeric qualification and do not clear the full-proof HOLD. See WORK for
+the exact input bindings, review limits and retained evidence.
+
 An isolated native proof at /workspace/contour-focused-runtime-5eSfV5 used
 Source254f5f3c and the existing owners to initialize a physical
 packages/agent Source project and bind its generated initialization receipt.

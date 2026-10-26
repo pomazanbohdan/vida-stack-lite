@@ -38,6 +38,47 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Source historical-owner inspection — targeted terminal, 2026-10-26
+
+The existing initial-source fixture now supports a physical Source project.
+It copies the executable inputs selected by the existing image manifest, uses
+the public initializer's existing-project reconciliation, and binds the actual
+receipt before admission. The original consumer fixture keeps its test name.
+The Source case obtains real admitted Work, Journal, suspended engine and
+configured context history, then inspects the historical owner through the
+public run entrypoint. It asserts the returned CAS bindings, caller and runtime
+authority flags, unchanged Host, Journal, engine, request, configuration,
+receipt and scoped documents. A changed context digest is refused and its
+bytes and the same state remain unchanged. The test performs no apply,
+native installation, release or consumer dispatch.
+
+One targeted composite-input diagnostic passed the Source case at
+/workspace/contour-focused-runtime-eUyZHJ: 1 pass, 8 skipped, 0 fail,
+57 expectations, 8.96s. A separately justified target checked the original
+consumer refusal after the shared fixture change at
+/workspace/contour-focused-runtime-Ly6bnL: 1 pass, 8 skipped, 0 fail,
+46 expectations, 6.09s. Each used the same base image Source254f5f3c, profile02
+and composite cb5e7fe013018c25275f1a7be6ae56eaf8b3f2d52161e30d2bc786b865aa119e.
+The read-only overlays bind tests/helpers/initial-source-work-fixture.ts SHA-256
+ffbe530484b957aeac7458abb6c4a5aae426ace50f5294a5e28b76b38654a1de and
+tests/run-entrypoint.test.ts SHA-256
+779ffe873b248c12575b471fae37a5d78eef6842b60d495075da500c64c894c2.
+Each stage retains exclusive input copies, launch, native namespace status,
+execution, stdout, stderr and custody-check records. Native children1025972 and
+1026036 exited0; captures were complete and untruncated, groups closed, and
+image, runtime profile and overlay identity remained unchanged. The composite
+is a diagnostic binding, not a claim that the base image manifest attests the
+overlays or a numeric qualification.
+
+Scoped strict passed for 511 files and type-aware Oxlint passed for both changed
+files. The existing format owner and diff check passed. Independent blind native
+Terra review checked the fixture, assertions, unchanged history bytes, retained
+original test name and composite custody. Its finding that the scoped Source
+snapshot covers the three fixture documents, not every copied runtime file,
+remains a limit on any wider no-effect claim. Full-proof HOLD, F546/562 and
+all16remaining numeric bodies are unchanged until a qualifying full report.
+The closed-rebind authority prerequisite is not resolved by this test.
+
 ### Source initialization prerequisite — isolated terminal proof, 2026-10-26
 
 The existing image and runtime-root owner ran a bounded Source-project
