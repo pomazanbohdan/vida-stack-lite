@@ -26,7 +26,7 @@ sources:
   resource: /next-actions.md
   title: Vida Powers — next actions within packages/powers
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '19'
+revision: '20'
 ---
 
 # 1. Why and for whom
@@ -750,7 +750,7 @@ the digest.
 
 # 16. What is left to build
 
-D16's v1.1 reader/schema, optional form/domain/status filters, generated browse and opt-in strict checker are implemented and independently reviewed. The current reader passes its package gates and exact 24-query no-facet regression comparison. Converter metadata publication, the 40-ID treatment, full rollout and final combined qualification remain open. The old-code baseline, structure prototype and 40-item model-classification ledger are reviewed; the current corpus remains legacy v1. H2 VPInstruction/v2 remains reserved and must preserve supported v1.1 facets.
+D16's v1.1 reader/schema, optional form/domain/status filters, generated browse, opt-in strict checker and converter-owned metadata preparation are implemented and independently reviewed. The converter milestone passes 564 tests, one expected Windows skip, zero failures and unchanged package coverage thresholds. The reader retains its exact 24-query no-facet regression comparison. Actual metadata publication, the 40-ID treatment, full rollout and final combined qualification remain open. The old-code baseline, structure prototype and 40-item model-classification ledger are reviewed; the current corpus remains legacy v1. H2 VPInstruction/v2 remains reserved and must preserve supported v1.1 facets.
 
 The legacy v1 design is implemented: the corpus holds 2510 instructions from 8 donors, the
 operations, the converter, the validator and the audit CLI exist and are covered by

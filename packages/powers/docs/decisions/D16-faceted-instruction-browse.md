@@ -15,7 +15,7 @@ sources:
   resource: /system-specification.md
   title: Vida Powers system specification
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T12:02:01.380Z' }
-revision: '2'
+revision: '3'
 ---
 
 # Decision
@@ -28,10 +28,12 @@ Boundaries: capability and pattern tags keep their existing meanings. Products i
 
 Version allocation: VPInstruction/v1.1 carries the facet contract. Unmarked v1 stays supported; future H2 VPInstruction/v2 remains reserved. New readers support the selected old/new formats. Old installed readers are not claimed to read v1.1; formation, delivery, installation and observed acceptance retain their owners.
 
-Implementation status: the v1.1 reader/schema, explicit facet filters, browse and opt-in strict corpus checking are implemented and independently reviewed. Converter-owned metadata publication, the 40-ID treatment and full-corpus rollout remain open. AC-60 through AC-64 retain their open state until their complete evidence is reconciled; this reader milestone does not close the migration criteria.
+Implementation status: the v1.1 reader/schema, explicit facet filters, browse, opt-in strict corpus checking and converter-owned metadata preparation are implemented and independently reviewed. Actual metadata publication, the 40-ID treatment and full-corpus rollout remain open. AC-60 through AC-64 retain their open state until their complete evidence is reconciled; implementation checks do not close the migration criteria.
 
 ## Current evidence
 
 The old-code baseline and same-input structure prototype are captured and independently reviewed. Stable files need zero projected path changes; form folders need 40; topic folders have 24 definite changes and 16 unresolved primary placements in the 40-ID fixture. These are structure projections, not a speed or retrieval-quality claim.
 
 The reader milestone passes 547 tests with one expected Windows skip, zero failures and unchanged coverage thresholds; retained LCOV records 557/557 functions and 4,438/4,438 lines. Typecheck, knip, formatting and current-corpus checks pass. All 24 frozen no-facet queries retain exact metadata output. Beam accepts the reader delta and the separate 40-item model-classification ledger. The corpus still contains 2,510 legacy instructions; no facet migration or treatment is claimed. Exact evidence is retained in packages/powers/.tmp/panel/donor-migration-architecture-20261025/instruction-organization-20261026/implementation-r1/READER-ROOT-CLOSEOUT-r1.md.
+
+The converter milestone passes 564 tests with one expected Windows skip, zero failures and 2,577 assertions. Retained LCOV records 577/577 functions and 4,635/4,635 lines under unchanged thresholds; typecheck and knip pass. Beam accepts the converter delta. Its tests verify body/provenance/map preservation, true no-ops, stale-input rejection and partial-effect recovery through the existing writer. The actual 40-ID fixture still requires independent review of its exact prepared plans before execution. Evidence is retained in the same work directory's CONVERTER-ROOT-CLOSEOUT-r1.md and converter-beam-review-r1.md.

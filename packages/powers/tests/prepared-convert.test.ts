@@ -1,11 +1,13 @@
 import { afterEach, expect, spyOn, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import * as files from 'node:fs/promises';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prepareBatch, applyPreparedBatch, reconcilePreparedBatch, releasePreparedOwnership, convertMany, convertMapRecord } from '../scripts/convert.ts';
+import { prepareBatch, prepareInstructionFacetBatch, applyPreparedBatch, reconcilePreparedBatch, releasePreparedOwnership, convertMany, convertMapRecord } from '../scripts/convert.ts';
+import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 import { sealArtifact } from '../scripts/source-packets.ts';
 import { fixtureCatalog, fixtureEligibility, fixtureSpec } from './source-packet-fixture.ts';
 
@@ -27,6 +29,48 @@ async function approval(plan: Awaited<ReturnType<typeof prepareBatch>>, staging:
   const review = await sealArtifact(staging, `review-${plan.manifest.sha256}.json`, { schema: 'VPPreparedBatchReview/v1', planSha256: plan.manifest.sha256, verdict: 'READY', reviewer: 'model:fixture-reviewer', pointer: 'fixture:review' });
   return { review, observe: async () => ({ kind: 'observed' as const, writer: 'root:fixture', reviewPointer: 'fixture:review' }) };
 }
+const digest = (value: Uint8Array | string): string => createHash('sha256').update(value).digest('hex');
+async function facetOptions(f: Awaited<ReturnType<typeof fixture>>) {
+  const evidence = await sealArtifact(f.evidence, 'facet/evidence.json', { source: 'test fixture', decision: 'classification reviewed' });
+  const policy = await sealArtifact(f.evidence, 'facet/policy.json', { policy: 'current fixture policy' });
+  return {
+    ...f.options,
+    classificationEvidence: { path: join(f.evidence, evidence.path), sha256: evidence.sha256 },
+    policyConfig: { path: join(f.evidence, policy.path), sha256: policy.sha256 },
+  };
+}
+async function seedFacetInstruction(f: Awaited<ReturnType<typeof fixture>>, index: number, options: { body?: string; status?: 'active' | 'disabled' } = {}) {
+  const original = fixtureSpec(index);
+  const spec = { ...original, body: options.body ?? original.body, status: options.status ?? original.status };
+  const specPath = join(f.evidence, `facet-spec-${index}.json`);
+  await writeFile(specPath, JSON.stringify(spec));
+  await convertMany([specPath], { root: f.root, now: () => '2026-01-02T00:00:00Z' });
+  const catalog = JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8'));
+  const entry = catalog.instructions.find((item: { instruction_id: string }) => item.instruction_id === spec.instruction_id);
+  if (entry === undefined) throw new Error(`fixture instruction was not created: ${spec.instruction_id}`);
+  const path = join(f.root, entry.path);
+  return { entry, path, bytes: await readFile(path) };
+}
+function suffixAfterFrontmatter(bytes: Buffer): Buffer {
+  const markdown = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  const source = markdown.startsWith('\uFEFF') ? markdown.slice(1) : markdown;
+  const firstEnd = source.indexOf('\n');
+  if (firstEnd < 0) throw new Error('fixture frontmatter opening line is missing');
+  let start = firstEnd + 1;
+  while (start < source.length) {
+    const newline = source.indexOf('\n', start);
+    const lineEnd = newline < 0 ? source.length : newline;
+    const end = newline < 0 ? lineEnd : newline + 1;
+    const line = source.slice(start, lineEnd).replace(/\r$/u, '');
+    if (line.trimEnd() === '---') return Buffer.from(source.slice(end), 'utf8');
+    start = end;
+  }
+  throw new Error('fixture frontmatter closing line is missing');
+}
+const facetFields = new Set(['schema', 'revision', 'classification_status', 'instruction_form', 'domains', 'classification_reason']);
+function nonFacetMetadata(data: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(data).filter(([key]) => !facetFields.has(key)));
+}
 test('prepared batch stages all outputs without writing, then applies once and preserves unrelated bytes', async () => {
   const f = await fixture();
   const old = await readFile(join(f.root, 'catalog.json'), 'utf8');
@@ -39,6 +83,333 @@ test('prepared batch stages all outputs without writing, then applies once and p
   expect(JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8')).instructions).toHaveLength(2);
   expect(await readFile(join(f.root, 'unrelated.txt'), 'utf8')).toBe('Keep unrelated bytes.');
   await expect(applyPreparedBatch(plan, { review: { path: 'review.json', sha256: '0'.repeat(64) }, observe: async () => ({ kind: 'unconfirmed' }) })).rejects.toThrow();
+});
+test('metadata-only batches stage strict v1.1 classifications, preserve raw body and map bytes, then apply through the shared owner', async () => {
+  const f = await fixture(2);
+  const first = await seedFacetInstruction(f, 0, { body: 'Alpha Ω\r\n\r\nSecond line.\n\n😀\r\n' });
+  const second = await seedFacetInstruction(f, 1, { status: 'disabled' });
+  const options = await facetOptions(f);
+  const catalogBefore = JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8'));
+  const catalogBytesBefore = await readFile(join(f.root, 'catalog.json'));
+  const mapBytesBefore = await readFile(join(f.root, 'corpus-map.json'));
+  const firstBefore = first.bytes;
+  const secondBefore = second.bytes;
+  const assignments = [
+    { instruction_id: first.entry.instruction_id, expected_sha256: digest(firstBefore), classification: { classification_status: 'classified' as const, instruction_form: 'procedure' as const, domains: ['engineering' as const, 'design-ux' as const] } },
+    { instruction_id: second.entry.instruction_id, expected_sha256: digest(secondBefore), classification: { classification_status: 'unclassified' as const, classification_reason: 'Evidence is not sufficient yet.' } },
+  ];
+  const plan = await prepareInstructionFacetBatch(assignments, options);
+  const manifest = JSON.parse(await readFile(join(plan.directory, plan.manifest.path), 'utf8'));
+  expect(manifest.sources).toEqual([]);
+  expect(manifest.specs).toEqual([options.classificationEvidence, options.policyConfig]);
+  expect(await readFile(first.path)).toEqual(firstBefore);
+  expect(await readFile(second.path)).toEqual(secondBefore);
+  expect(await readFile(join(f.root, 'catalog.json'))).toEqual(catalogBytesBefore);
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(mapBytesBefore);
+  expect((await reconcilePreparedBatch(plan)).state).toBe('NO_EFFECT_OBSERVED');
+
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('applied');
+  expect((await reconcilePreparedBatch(plan)).state).toBe('TARGET_STATE_MATCHES');
+  const firstAfter = await readFile(first.path);
+  const secondAfter = await readFile(second.path);
+  const firstData = parseFrontmatter(firstAfter.toString('utf8')).data;
+  const secondData = parseFrontmatter(secondAfter.toString('utf8')).data;
+  expect(firstData).toMatchObject({ schema: 'VPInstruction/v1.1', classification_status: 'classified', instruction_form: 'procedure', domains: ['engineering', 'design-ux'], revision: 2, status: 'active' });
+  expect(firstData).not.toHaveProperty('classification_reason');
+  expect(secondData).toMatchObject({ schema: 'VPInstruction/v1.1', classification_status: 'unclassified', classification_reason: 'Evidence is not sufficient yet.', revision: 2, status: 'disabled' });
+  expect(secondData).not.toHaveProperty('instruction_form');
+  expect(secondData).not.toHaveProperty('domains');
+  expect(nonFacetMetadata(firstData)).toEqual(nonFacetMetadata(parseFrontmatter(firstBefore.toString('utf8')).data));
+  expect(nonFacetMetadata(secondData)).toEqual(nonFacetMetadata(parseFrontmatter(secondBefore.toString('utf8')).data));
+  expect(suffixAfterFrontmatter(firstAfter)).toEqual(suffixAfterFrontmatter(firstBefore));
+  expect(suffixAfterFrontmatter(secondAfter)).toEqual(suffixAfterFrontmatter(secondBefore));
+  const catalogAfter = JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8'));
+  expect(catalogAfter.revision).toBe(catalogBefore.revision + 2);
+  expect(catalogAfter.instructions.find((item: { instruction_id: string }) => item.instruction_id === first.entry.instruction_id)).toMatchObject({ path: first.entry.path, sha256: digest(firstAfter) });
+  expect(catalogAfter.instructions.find((item: { instruction_id: string }) => item.instruction_id === second.entry.instruction_id)).toMatchObject({ path: second.entry.path, sha256: digest(secondAfter) });
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(mapBytesBefore);
+  expect(await readFile(join(f.root, 'unrelated.txt'), 'utf8')).toBe('Keep unrelated bytes.');
+});
+
+test('v1.1 domain order is a set and an identical assignment remains a true no-op', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const options = await facetOptions(f);
+  const classification = { classification_status: 'classified' as const, instruction_form: 'principle' as const, domains: ['engineering' as const, 'design-ux' as const] };
+  const firstPlan = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification }], options);
+  expect((await applyPreparedBatch(firstPlan, await approval(firstPlan, f.staging))).kind).toBe('applied');
+  const pathBytes = await readFile(seeded.path);
+  const catalogBytes = await readFile(join(f.root, 'catalog.json'));
+  const mapBytes = await readFile(join(f.root, 'corpus-map.json'));
+  const reversed = { ...classification, domains: ['design-ux' as const, 'engineering' as const] };
+  const noOp = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(pathBytes), classification: reversed }], options);
+  expect((await reconcilePreparedBatch(noOp)).state).toBe('NO_CHANGE');
+  expect((await applyPreparedBatch(noOp, await approval(noOp, f.staging))).kind).toBe('no-change');
+  expect(await readFile(seeded.path)).toEqual(pathBytes);
+  expect(await readFile(join(f.root, 'catalog.json'))).toEqual(catalogBytes);
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(mapBytes);
+});
+
+test('legacy conversion refuses to erase an existing v1.1 classification', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const plan = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'classified', instruction_form: 'decision-rule', domains: ['operations'] } }], await facetOptions(f));
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('applied');
+  const beforeInstruction = await readFile(seeded.path);
+  const beforeCatalog = await readFile(join(f.root, 'catalog.json'));
+  const beforeMap = await readFile(join(f.root, 'corpus-map.json'));
+  await expect(convertMany([join(f.evidence, 'facet-spec-0.json')], { root: f.root })).rejects.toThrow('prepareInstructionFacetBatch');
+  await expect(prepareBatch(f.sources, f.options)).rejects.toThrow('prepareInstructionFacetBatch');
+  expect(await readFile(seeded.path)).toEqual(beforeInstruction);
+  expect(await readFile(join(f.root, 'catalog.json'))).toEqual(beforeCatalog);
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(beforeMap);
+});
+
+test('reclassification preserves BOM, CRLF, body bytes and non-facet fields while removing an old domain block', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0, { body: 'Original Unicode guidance: Україна 🌍.\n\nKeep this body.' });
+  const original = Buffer.from('\uFEFF' + seeded.bytes.toString('utf8').replace(/\r?\n/g, '\r\n'));
+  await writeFile(seeded.path, original);
+  const catalog = JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8'));
+  catalog.instructions[0].sha256 = digest(original);
+  await writeFile(join(f.root, 'catalog.json'), JSON.stringify(catalog));
+  const mapBefore = await readFile(join(f.root, 'corpus-map.json'));
+  const options = await facetOptions(f);
+  const classified = await prepareInstructionFacetBatch([{
+    instruction_id: seeded.entry.instruction_id, expected_sha256: digest(original),
+    classification: { classification_status: 'classified', instruction_form: 'principle', domains: ['engineering', 'research'] },
+  }], options);
+  expect((await applyPreparedBatch(classified, await approval(classified, f.staging))).kind).toBe('applied');
+  const classifiedBytes = await readFile(seeded.path);
+  const decorated = classifiedBytes.toString('utf8').replace('domains:\r\n', 'domains:\r\n# domain annotation\r\n\r\n')
+    .replace('revision: 2\r\n', '').replace('\r\n---\r\n', '\r\nrevision: 2\r\n---\r\n');
+  expect(decorated).not.toBe(classifiedBytes.toString('utf8'));
+  const decoratedBytes = Buffer.from(decorated);
+  await writeFile(seeded.path, decoratedBytes);
+  const updatedCatalog = JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8'));
+  updatedCatalog.instructions[0].sha256 = digest(decoratedBytes);
+  await writeFile(join(f.root, 'catalog.json'), JSON.stringify(updatedCatalog));
+  const second = await prepareInstructionFacetBatch([{
+    instruction_id: seeded.entry.instruction_id, expected_sha256: digest(decoratedBytes),
+    classification: { classification_status: 'unclassified', classification_reason: 'Further source review is needed.' },
+  }], options);
+  expect((await applyPreparedBatch(second, await approval(second, f.staging))).kind).toBe('applied');
+  const after = await readFile(seeded.path);
+  const parsed = parseFrontmatter(after.toString('utf8')).data;
+  expect(parsed).toMatchObject({ schema: 'VPInstruction/v1.1', revision: 3, classification_status: 'unclassified' });
+  expect(parsed).not.toHaveProperty('instruction_form');
+  expect(parsed).not.toHaveProperty('domains');
+  expect(after.subarray(0, 3)).toEqual(Buffer.from([0xef, 0xbb, 0xbf]));
+  expect(after.toString('utf8')).toContain('# domain annotation\r\n');
+  expect(suffixAfterFrontmatter(after)).toEqual(suffixAfterFrontmatter(original));
+  expect(nonFacetMetadata(parsed)).toEqual(nonFacetMetadata(parseFrontmatter(original.toString('utf8')).data));
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(mapBefore);
+});
+
+test('metadata plans require the live WeakMap handle and a distinct Root-observed writer, then stay one-attempt', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const inputs = await facetOptions(f);
+  const options = { root: inputs.root, stagingRoot: inputs.stagingRoot, classificationEvidence: inputs.classificationEvidence, policyConfig: inputs.policyConfig };
+  const plan = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'classified', instruction_form: 'checklist', domains: ['operations'] } }], options);
+  const approved = await approval(plan, f.staging);
+  const forged = { directory: plan.directory, manifest: plan.manifest };
+  await expect(applyPreparedBatch(forged, approved)).rejects.toThrow('fresh live Root-owned plan');
+  await expect(applyPreparedBatch(plan, { ...approved, observe: async () => ({ kind: 'observed' as const, writer: 'model:fixture-reviewer', reviewPointer: 'fixture:review' }) })).rejects.toThrow('independent review');
+  expect((await reconcilePreparedBatch(plan)).state).toBe('NO_EFFECT_OBSERVED');
+  expect((await applyPreparedBatch(plan, approved)).kind).toBe('applied');
+  expect(Number.isFinite(Date.parse(JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8')).updated_at))).toBe(true);
+  await expect(applyPreparedBatch(plan, approved)).rejects.toThrow('retry is fenced');
+});
+test('invalid metadata assignments and ArtifactRefs fail before publication', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const options = await facetOptions(f);
+  const valid = { instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'classified' as const, instruction_form: 'principle' as const, domains: ['engineering' as const] } };
+  const beforeFile = await readFile(seeded.path);
+  const beforeCatalog = await readFile(join(f.root, 'catalog.json'));
+  const beforeMap = await readFile(join(f.root, 'corpus-map.json'));
+  const tooMany = Array.from({ length: 26 }, (_, index) => ({ ...valid, instruction_id: `fixture-method-${index}` }));
+  const invalidAssignments: unknown[] = [
+    [],
+    tooMany,
+    [valid, valid],
+    [{ ...valid, instruction_id: 'unknown-fixture-id' }],
+    [{ ...valid, expected_sha256: '0'.repeat(64) }],
+    [{ ...valid, output_path: 'instructions/arbitrary.md' }],
+    [{ ...valid, classification: { ...valid.classification, domains: ['engineering', 'engineering'] } }],
+    [{ ...valid, classification: { ...valid.classification, extra: true } }],
+    [{ ...valid, classification: { classification_status: 'unclassified', classification_reason: 'First line.\nSecond line.' } }],
+  ];
+  for (const assignments of invalidAssignments) await expect(prepareInstructionFacetBatch(assignments as never, options)).rejects.toThrow();
+  await expect(Reflect.apply(prepareInstructionFacetBatch, undefined, [[valid], { ...options, classificationEvidence: { ...options.classificationEvidence, extra: true } }])).rejects.toThrow('strict ArtifactRef');
+  await expect(prepareInstructionFacetBatch([valid], { ...options, policyConfig: { path: options.policyConfig.path, sha256: 'BAD' } })).rejects.toThrow('strict ArtifactRef');
+  expect(await readFile(seeded.path)).toEqual(beforeFile);
+  expect(await readFile(join(f.root, 'catalog.json'))).toEqual(beforeCatalog);
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(beforeMap);
+});
+
+test('metadata preparation requires existing schema-valid catalog and map and rejects duplicate catalog IDs or invalid v1.1 state', async () => {
+  const noMap = await fixture(1);
+  await expect(prepareInstructionFacetBatch([{ instruction_id: 'fixture-method-0', expected_sha256: '0'.repeat(64), classification: { classification_status: 'unclassified', classification_reason: 'Unknown.' } }], await facetOptions(noMap))).rejects.toThrow('existing corpus map');
+
+  const noCatalog = await fixture(1);
+  const noCatalogSeed = await seedFacetInstruction(noCatalog, 0);
+  await rm(join(noCatalog.root, 'catalog.json'));
+  await expect(prepareInstructionFacetBatch([{ instruction_id: noCatalogSeed.entry.instruction_id, expected_sha256: digest(noCatalogSeed.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Unknown.' } }], await facetOptions(noCatalog))).rejects.toThrow('existing catalog manifest');
+
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const options = await facetOptions(f);
+  const originalCatalog = await readFile(join(f.root, 'catalog.json'));
+  const duplicateCatalog = JSON.parse(originalCatalog.toString('utf8'));
+  duplicateCatalog.instructions.push({ ...duplicateCatalog.instructions[0] });
+  await writeFile(join(f.root, 'catalog.json'), JSON.stringify(duplicateCatalog));
+  const duplicateBytes = await readFile(join(f.root, 'catalog.json'));
+  await expect(prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], options)).rejects.toThrow('duplicate instruction id');
+  expect(await readFile(join(f.root, 'catalog.json'))).toEqual(duplicateBytes);
+
+  const badCatalog = await fixture(1);
+  const badCatalogSeed = await seedFacetInstruction(badCatalog, 0);
+  const catalogPath = join(badCatalog.root, 'catalog.json');
+  const wrongCatalog = JSON.parse(await readFile(catalogPath, 'utf8'));
+  delete wrongCatalog.catalog_id;
+  await writeFile(catalogPath, JSON.stringify(wrongCatalog));
+  const wrongCatalogBytes = await readFile(catalogPath);
+  await expect(prepareInstructionFacetBatch([{ instruction_id: badCatalogSeed.entry.instruction_id, expected_sha256: digest(badCatalogSeed.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], await facetOptions(badCatalog))).rejects.toThrow('catalog schema validation');
+  expect(await readFile(catalogPath)).toEqual(wrongCatalogBytes);
+  await writeFile(catalogPath, '{ malformed JSON');
+  await expect(prepareInstructionFacetBatch([{ instruction_id: badCatalogSeed.entry.instruction_id, expected_sha256: digest(badCatalogSeed.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], { ...options, root: badCatalog.root, stagingRoot: badCatalog.staging })).rejects.toThrow('catalog manifest is malformed');
+  expect(await readFile(catalogPath, 'utf8')).toBe('{ malformed JSON');
+
+  const badMap = await fixture(1);
+  const badMapSeed = await seedFacetInstruction(badMap, 0);
+  const mapPath = join(badMap.root, 'corpus-map.json');
+  const wrongMap = JSON.parse(await readFile(mapPath, 'utf8'));
+  wrongMap.schema = 'VPCorpusMap/v2';
+  await writeFile(mapPath, JSON.stringify(wrongMap));
+  const wrongMapBytes = await readFile(mapPath);
+  await expect(prepareInstructionFacetBatch([{ instruction_id: badMapSeed.entry.instruction_id, expected_sha256: digest(badMapSeed.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], await facetOptions(badMap))).rejects.toThrow('corpus map schema');
+  expect(await readFile(mapPath)).toEqual(wrongMapBytes);
+
+  const g = await fixture(1);
+  const malformed = await seedFacetInstruction(g, 0);
+  const invalidMarkdown = (await readFile(malformed.path, 'utf8')).replace('\n---\n', '\nschema: VPInstruction/v1.1\nclassification_status: classified\n---\n');
+  await writeFile(malformed.path, invalidMarkdown);
+  const invalidBytes = await readFile(malformed.path);
+  const catalog = JSON.parse(await readFile(join(g.root, 'catalog.json'), 'utf8'));
+  catalog.instructions[0].sha256 = digest(invalidBytes);
+  await writeFile(join(g.root, 'catalog.json'), JSON.stringify(catalog));
+  const catalogBytes = await readFile(join(g.root, 'catalog.json'));
+  await expect(prepareInstructionFacetBatch([{ instruction_id: malformed.entry.instruction_id, expected_sha256: digest(invalidBytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], await facetOptions(g))).rejects.toThrow();
+  expect(await readFile(malformed.path)).toEqual(invalidBytes);
+  expect(await readFile(join(g.root, 'catalog.json'))).toEqual(catalogBytes);
+});
+
+test.each(['instruction', 'catalog', 'map'] as const)('metadata preimage drift in %s is observed and fenced before writes', async target => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const plan = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'classified', instruction_form: 'decision-rule', domains: ['business'] } }], await facetOptions(f));
+  const targetPath = target === 'instruction' ? seeded.path : join(f.root, target === 'catalog' ? 'catalog.json' : 'corpus-map.json');
+  await writeFile(targetPath, 'external preimage drift');
+  expect((await reconcilePreparedBatch(plan)).state).toBe('CONFLICT_OR_UNKNOWN');
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('no-write-conflict');
+  expect(await readFile(targetPath, 'utf8')).toBe('external preimage drift');
+});
+
+test.each(['classificationEvidence', 'policyConfig'] as const)('stale %s binding prevents metadata publication', async input => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const options = await facetOptions(f);
+  const plan = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'classified', instruction_form: 'procedure', domains: ['research'] } }], options);
+  const inputPath = options[input].path;
+  await writeFile(inputPath, 'changed bound input');
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('no-write-conflict');
+  expect(await readFile(seeded.path)).toEqual(seeded.bytes);
+});
+
+test('stale v1.1 schema tool binding and changed current configuration fence metadata writes', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  await mkdir(join(f.root, 'config'));
+  const profilePath = join(f.root, 'config', 'methodology-profile.json');
+  await writeFile(profilePath, 'bound profile');
+  const options = await facetOptions(f);
+  const plan = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'classified', instruction_form: 'checklist', domains: ['operations'] } }], options);
+  const schemaPath = fileURLToPath(new URL('../config/vpinstruction.v1.1.schema.json', import.meta.url));
+  const realRead = files.readFile;
+  const readSpy = spyOn(files, 'readFile').mockImplementation(new Proxy(realRead, { async apply(read, receiver: unknown, args: unknown[]) {
+    const bytes = await Reflect.apply(read, receiver, args);
+    return String(args[0]) === schemaPath ? Buffer.from('changed tool bytes') : bytes;
+  } }));
+  try {
+    expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('no-write-conflict');
+  } finally { readSpy.mockRestore(); }
+  expect(await readFile(seeded.path)).toEqual(seeded.bytes);
+
+  const second = await prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], options);
+  await writeFile(profilePath, 'changed bound profile');
+  expect((await applyPreparedBatch(second, await approval(second, f.staging))).kind).toBe('no-write-conflict');
+  expect(await readFile(seeded.path)).toEqual(seeded.bytes);
+});
+
+test('catalog traversal paths and junction targets are rejected without following them', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0);
+  const options = await facetOptions(f);
+  const catalogPath = join(f.root, 'catalog.json');
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
+  const outside = join(f.evidence, 'outside.md');
+  await writeFile(outside, 'outside sentinel');
+  catalog.instructions[0].path = '../outside.md';
+  await writeFile(catalogPath, JSON.stringify(catalog));
+  const traversalBytes = await readFile(catalogPath);
+  await expect(prepareInstructionFacetBatch([{ instruction_id: seeded.entry.instruction_id, expected_sha256: digest(seeded.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], options)).rejects.toThrow('not canonical');
+  expect(await readFile(outside, 'utf8')).toBe('outside sentinel');
+  expect(await readFile(catalogPath)).toEqual(traversalBytes);
+
+  const g = await fixture(1);
+  const junctionSeed = await seedFacetInstruction(g, 0);
+  const junctionOptions = await facetOptions(g);
+  const junctionRoot = join(g.evidence, 'junction-target');
+  await mkdir(junctionRoot);
+  await writeFile(join(junctionRoot, 'fixture-method-0.md'), junctionSeed.bytes);
+  const junctionPath = join(g.root, 'instructions', 'hostile');
+  await files.symlink(junctionRoot, junctionPath, process.platform === 'win32' ? 'junction' : 'dir');
+  const linkedCatalog = JSON.parse(await readFile(join(g.root, 'catalog.json'), 'utf8'));
+  linkedCatalog.instructions[0].path = 'instructions/hostile/fixture-method-0.md';
+  await writeFile(join(g.root, 'catalog.json'), JSON.stringify(linkedCatalog));
+  const linkedCatalogBytes = await readFile(join(g.root, 'catalog.json'));
+  await expect(prepareInstructionFacetBatch([{ instruction_id: junctionSeed.entry.instruction_id, expected_sha256: digest(junctionSeed.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], junctionOptions)).rejects.toThrow('symlink traversal');
+  expect(await readFile(join(g.root, 'catalog.json'))).toEqual(linkedCatalogBytes);
+  expect(await readFile(junctionSeed.path)).toEqual(junctionSeed.bytes);
+});
+
+test.each([1, 2, 3])('metadata interruption after target %i remains fenced with terminal readback', async stoppedAfter => {
+  const f = await fixture(2);
+  const first = await seedFacetInstruction(f, 0);
+  const second = await seedFacetInstruction(f, 1);
+  const plan = await prepareInstructionFacetBatch([
+    { instruction_id: first.entry.instruction_id, expected_sha256: digest(first.bytes), classification: { classification_status: 'classified', instruction_form: 'principle', domains: ['engineering'] } },
+    { instruction_id: second.entry.instruction_id, expected_sha256: digest(second.bytes), classification: { classification_status: 'classified', instruction_form: 'procedure', domains: ['product'] } },
+  ], await facetOptions(f));
+  const approved = await approval(plan, f.staging);
+  const realWrite = files.writeFile;
+  let targetWrites = 0;
+  const writeSpy = spyOn(files, 'writeFile').mockImplementation(async (...args: Parameters<typeof files.writeFile>) => {
+    await realWrite(...args);
+    const path = String(args[0]);
+    if (path === join(f.root, 'catalog.json') || path === join(f.root, 'corpus-map.json') || path.startsWith(join(f.root, 'instructions') + '\\') || path.startsWith(join(f.root, 'instructions') + '/')) {
+      targetWrites += 1;
+      if (targetWrites === stoppedAfter) throw new Error('Injected failure after a completed metadata write.');
+    }
+  });
+  try {
+    expect((await applyPreparedBatch(plan, approved)).kind).toBe('partial-or-unknown');
+    expect(targetWrites).toBe(stoppedAfter);
+  } finally { writeSpy.mockRestore(); }
+  expect((await reconcilePreparedBatch(plan)).state).toBe(stoppedAfter === 3 ? 'TARGET_STATE_MATCHES' : 'KNOWN_PARTIAL');
+  await expect(applyPreparedBatch(plan, approved)).rejects.toThrow('fenced');
 });
 test('stale preimage and donor revision conflict write nothing', async () => {
   const f = await fixture(1);

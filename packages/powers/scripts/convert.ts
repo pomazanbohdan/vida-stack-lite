@@ -5,6 +5,7 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { CatalogError, readSchema, type Catalog, type Provenance } from '../skills/vp-mode/scripts/catalog.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
+import { instructionSchemaVersion, isInstructionClassification, LEGACY_CLASSIFICATION, parseFacetClassification, type InstructionClassification } from '../skills/vp-mode/scripts/instruction-facets.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 import { readEligibleSource, sealArtifact, verifyArtifact, resolveArtifactPath, type ArtifactRef, type EligibleSource } from './source-packets.ts';
 import { checkCorpus } from './check-corpus.ts';
@@ -20,6 +21,16 @@ export type InstructionSpec = {
 export type ConvertOptions = {
   root: string; catalogPath?: string; mapPath?: string; instructionsDir?: string;
   now?: () => string;
+};
+export type InstructionFacetAssignment = Readonly<{
+  instruction_id: string;
+  expected_sha256: string;
+  classification: InstructionClassification;
+}>;
+export type PrepareInstructionFacetBatchOptions = Omit<ConvertOptions, 'instructionsDir'> & {
+  stagingRoot: string;
+  classificationEvidence: ArtifactRef;
+  policyConfig: ArtifactRef;
 };
 export type ConversionResult = {
   kind: 'instruction';
@@ -349,6 +360,9 @@ async function compileInstruction(specPath: string, options: ConvertOptions, io:
   try { oldMarkdown = await io.read(instructionPath); } catch (error) {
     if (!(typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT')) throw error;
   }
+  if (oldMarkdown !== undefined && instructionSchemaVersion(parseFrontmatter(oldMarkdown).data.schema) !== 'legacy-v1') {
+    throw new CatalogError('CATALOG_INVALID', `instruction ${spec.instruction_id} has faceted or unsupported metadata; use prepareInstructionFacetBatch for a reviewed metadata update`, { instruction_id: spec.instruction_id });
+  }
   const written = oldMarkdown !== rendered;
   const digest = sha256(rendered);
   const nextEntries = manifest.instructions.filter((entry) => entry.instruction_id !== spec.instruction_id);
@@ -583,6 +597,267 @@ async function preparedTargetBytes(root: string, path: string): Promise<Buffer |
 async function assertFileBinding(ref: ArtifactRef): Promise<void> {
   if (fingerprint(await readFile(ref.path)) !== ref.sha256) throw new Error(`stale publication input: ${ref.path}`);
 }
+
+const facetArtifactText: Schema = { type: 'string', minLength: 1 };
+const facetArtifactSha: Schema = { type: 'string', pattern: '^[0-9a-f]{64}$' };
+const facetArtifactRefSchema: Schema = { type: 'object', required: ['path', 'sha256'], properties: { path: facetArtifactText, sha256: facetArtifactSha }, additionalProperties: false };
+
+function checkedFacetArtifactRef(value: unknown, label: string): ArtifactRef {
+  if (!record(value) || validateAgainstSchema(value, facetArtifactRefSchema).length > 0 || typeof value.path !== 'string' || !isAbsolute(value.path) || typeof value.sha256 !== 'string') throw new Error(`${label} must be an absolute strict ArtifactRef`);
+  return Object.freeze({ path: value.path, sha256: value.sha256 });
+}
+
+function parseFacetAssignments(value: unknown): InstructionFacetAssignment[] {
+  if (!Array.isArray(value) || value.length < 1 || value.length > 25) throw new Error('instruction facet batches require 1–25 unique assignments');
+  const items: unknown[] = value;
+  const ids = new Set<string>();
+  return items.map((item, index) => {
+    if (!record(item) || Object.keys(item).length !== 3 || typeof item.instruction_id !== 'string' || !kebab.test(item.instruction_id)
+      || typeof item.expected_sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(item.expected_sha256)
+      || !isInstructionClassification(item.classification)) throw new Error(`invalid instruction facet assignment at index ${index}`);
+    if (ids.has(item.instruction_id)) throw new Error(`duplicate instruction facet assignment: ${item.instruction_id}`);
+    ids.add(item.instruction_id);
+    const classification: InstructionClassification = item.classification.classification_status === 'classified'
+      ? { classification_status: 'classified', instruction_form: item.classification.instruction_form, domains: [...item.classification.domains] }
+      : { classification_status: 'unclassified', classification_reason: item.classification.classification_reason };
+    return { instruction_id: item.instruction_id, expected_sha256: item.expected_sha256, classification };
+  });
+}
+
+type PreservedLine = { value: string; ending: string; start: number };
+
+function preservedLines(source: string): PreservedLine[] {
+  const result: PreservedLine[] = [];
+  let start = 0;
+  while (start < source.length) {
+    const newline = source.indexOf('\n', start);
+    const end = newline === -1 ? source.length : newline + 1;
+    let value = source.slice(start, newline === -1 ? end : newline);
+    let ending = '';
+    if (newline !== -1) {
+      if (value.endsWith('\r')) { value = value.slice(0, -1); ending = '\r\n'; }
+      else ending = '\n';
+    }
+    result.push({ value, ending, start });
+    start = end;
+  }
+  return result;
+}
+
+function frontmatterEnvelope(markdown: string): { bom: string; source: string; lines: PreservedLine[]; closingIndex: number; bodySuffix: string } {
+  const bom = markdown.startsWith('\uFEFF') ? '\uFEFF' : '';
+  const source = bom === '' ? markdown : markdown.slice(1);
+  const lines = preservedLines(source);
+  if (lines[0]?.value.trimEnd() !== '---') throw new Error('instruction frontmatter opening delimiter is missing');
+  const closingIndex = lines.findIndex((line, index) => index > 0 && line.value.trimEnd() === '---');
+  if (closingIndex === -1) throw new Error('instruction frontmatter closing delimiter is missing');
+  const closing = lines[closingIndex];
+  if (closing === undefined) throw new Error('instruction frontmatter closing delimiter is missing');
+  const bodyStart = closing.start + closing.value.length + closing.ending.length;
+  return { bom, source, lines, closingIndex, bodySuffix: source.slice(bodyStart) };
+}
+
+function sameClassification(left: InstructionClassification, right: InstructionClassification): boolean {
+  if (left.classification_status === 'unclassified') return right.classification_status === 'unclassified' && left.classification_reason === right.classification_reason;
+  return right.classification_status === 'classified' && left.instruction_form === right.instruction_form
+    && left.domains.length === right.domains.length && left.domains.every(domain => right.domains.includes(domain));
+}
+
+function classificationFrontmatterLines(classification: InstructionClassification): string[] {
+  if (classification.classification_status === 'classified') return [
+    'classification_status: classified',
+    yamlString('instruction_form', classification.instruction_form),
+    ...yamlList('domains', classification.domains),
+  ];
+  if (/[\u0000-\u001f\u007f-\u009f]/u.test(classification.classification_reason)) throw new Error('classification reason cannot be represented by flat frontmatter');
+  return ['classification_status: unclassified', yamlString('classification_reason', classification.classification_reason)];
+}
+
+function updateInstructionFacets(markdown: string, instructionId: string, classification: InstructionClassification, legacySchema: Schema, facetedSchema: Schema): Buffer {
+  const parsed = parseFrontmatter(markdown);
+  const version = instructionSchemaVersion(parsed.data.schema);
+  if (version === undefined) throw new Error(`unsupported instruction schema marker for ${instructionId}`);
+  const sourceSchema = version === 'legacy-v1' ? legacySchema : facetedSchema;
+  const sourceErrors = validateAgainstSchema(parsed.data, sourceSchema);
+  if (sourceErrors.length > 0) throw new Error(`invalid current instruction ${instructionId}: ${sourceErrors.join('; ')}`);
+  if (parsed.data.instruction_id !== instructionId) throw new Error(`catalog ID does not match instruction frontmatter: ${instructionId}`);
+  const previous = version === 'legacy-v1' ? LEGACY_CLASSIFICATION : parseFacetClassification(parsed.data);
+  if (previous === undefined) throw new Error(`invalid current facet classification: ${instructionId}`);
+  if (version === 'faceted-v1.1' && sameClassification(previous, classification)) return Buffer.from(markdown, 'utf8');
+  const revision = parsed.data.revision;
+  if (typeof revision !== 'number' || !Number.isSafeInteger(revision)) throw new Error(`invalid current revision: ${instructionId}`);
+
+  const envelope = frontmatterEnvelope(markdown);
+  const removals = new Set<number>();
+  let schemaIndex = -1;
+  let revisionIndex = -1;
+  for (let index = 1; index < envelope.closingIndex; index += 1) {
+    const line = envelope.lines[index];
+    if (line === undefined) continue;
+    const match = /^([A-Za-z0-9_.-]+):(?:[ \t]+(.*))?$/.exec(line.value);
+    if (match === null) continue;
+    const key = match[1] ?? '';
+    if (key === 'schema') schemaIndex = index;
+    if (key === 'revision') revisionIndex = index;
+    if (['classification_status', 'instruction_form', 'domains', 'classification_reason'].includes(key)) {
+      removals.add(index);
+      if (key === 'domains' && (match[2] ?? '').trim() === '') {
+        for (let item = index + 1; item < envelope.closingIndex; item += 1) {
+          const candidate = envelope.lines[item]?.value;
+          if (candidate === undefined) break;
+          if (candidate.trim() === '' || candidate.trimStart().startsWith('#')) continue;
+          if (/^  -(?:\s|$)/u.test(candidate)) { removals.add(item); continue; }
+          break;
+        }
+      }
+    }
+  }
+  if (revisionIndex === -1) throw new Error(`missing revision field: ${instructionId}`);
+  const insertionEnding = envelope.lines[envelope.closingIndex - 1]?.ending || envelope.lines[0]?.ending || '\n';
+  const header = envelope.lines.slice(0, envelope.closingIndex).flatMap((line, index) => {
+    if (removals.has(index)) return [];
+    if (index === schemaIndex) return [{ ...line, value: 'schema: VPInstruction/v1.1' }];
+    if (index === revisionIndex) return [{ ...line, value: `revision: ${revision + 1}` }];
+    return [line];
+  });
+  if (schemaIndex === -1) header.push({ value: 'schema: VPInstruction/v1.1', ending: insertionEnding, start: 0 });
+  const classificationLines = classificationFrontmatterLines(classification).map(value => ({ value, ending: insertionEnding, start: 0 }));
+  const output = envelope.bom + [...header, ...classificationLines, ...envelope.lines.slice(envelope.closingIndex)].map(line => line.value + line.ending).join('');
+  const next = parseFrontmatter(output);
+  const errors = validateAgainstSchema(next.data, facetedSchema);
+  const nextClassification = parseFacetClassification(next.data);
+  if (errors.length > 0 || nextClassification === undefined) throw new Error(`staged instruction is invalid: ${instructionId}${errors.length ? `; ${errors.join('; ')}` : ''}`);
+  if (!sameClassification(nextClassification, classification) || next.data.revision !== revision + 1) throw new Error(`staged instruction did not preserve the requested classification: ${instructionId}`);
+  const changedFields = new Set(['schema', 'revision', 'classification_status', 'instruction_form', 'domains', 'classification_reason']);
+  for (const [key, value] of Object.entries(parsed.data)) {
+    if (!changedFields.has(key) && (!Object.prototype.hasOwnProperty.call(next.data, key) || !same(value, next.data[key]))) throw new Error(`frontmatter surgery changed unrelated metadata: ${instructionId}.${key}`);
+  }
+  const nextEnvelope = frontmatterEnvelope(output);
+  if (nextEnvelope.bodySuffix !== envelope.bodySuffix) throw new Error(`frontmatter surgery changed Markdown body suffix: ${instructionId}`);
+  return Buffer.from(output, 'utf8');
+}
+
+type PreparedBatchInputs = {
+  root: string; directory: string; prefix: string; targetPaths: readonly string[];
+  before: Map<string, Buffer | undefined>; outputs: Map<string, Buffer>; specs: readonly ArtifactRef[];
+  context: BatchManifest['context']; sources: readonly EligibleSource[];
+  sourceData: readonly Awaited<ReturnType<typeof readEligibleSource>>[];
+};
+async function createPreparedBatch({ root, directory, prefix, targetPaths, before, outputs, specs, context, sources, sourceData }: PreparedBatchInputs): Promise<PreparedBatch> {
+  const targets: PreparedTarget[] = [];
+  for (const [index, path] of [...new Set(targetPaths)].entries()) {
+    const name = targetRelative(root, path);
+    const old = before.get(path);
+    const next = outputs.get(path) ?? old;
+    if (next === undefined) throw new Error(`missing prepared output: ${name}`);
+    const stagedPath = `${prefix}/outputs/${index}.txt`;
+    const stagedAbsolute = await resolveArtifactPath(directory, stagedPath, true);
+    await writeFile(stagedAbsolute, next, { flag: 'wx' });
+    const staged = { path: stagedPath, sha256: fingerprint(next) };
+    let backup: ArtifactRef | null = null;
+    if (old !== undefined) {
+      const backupPath = `${prefix}/before/${index}.txt`;
+      await writeFile(await resolveArtifactPath(directory, backupPath, true), old, { flag: 'wx' });
+      backup = { path: backupPath, sha256: fingerprint(old) };
+    }
+    targets.push({ path: name, before: old === undefined ? null : fingerprint(old), after: fingerprint(next), staged, backup });
+  }
+  const toolPaths = ['scripts/convert.ts', 'scripts/source-packets.ts', 'scripts/check-corpus.ts', 'skills/vp-mode/scripts/catalog.ts', 'skills/vp-mode/scripts/frontmatter.ts', 'skills/vp-mode/scripts/schema.ts', 'skills/vp-mode/scripts/instruction-facets.ts', 'config/vpinstruction.v1.schema.json', 'config/vpinstruction.v1.1.schema.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json'];
+  const tools: ArtifactRef[] = [];
+  for (const path of toolPaths) { const absolute = join(packageRoot, path); tools.push({ path: absolute, sha256: fingerprint(await readFile(absolute)) }); }
+  const manifest: BatchManifest = { schema: 'VPPreparedBatch/v1', root, targets, specs: [...specs], tools, context, runtime: { path: process.execPath, sha256: fingerprint(await readFile(process.execPath)) }, sources: sourceData.map(source => ({ source: source.source, packet: source.evidence, unitIds: [...new Set(source.specs.flatMap(spec => [...spec.unitIds]))], specs: source.specs.map(spec => ({ ...spec.ref })) })) };
+  const plan: PreparedBatch = Object.freeze({ directory, manifest: await sealArtifact(directory, `${prefix}/plan.json`, manifest) });
+  preparedBatches.set(plan, { manifest, sources: [...sources] });
+  return plan;
+}
+
+export async function prepareInstructionFacetBatch(assignments: readonly InstructionFacetAssignment[], options: PrepareInstructionFacetBatchOptions): Promise<PreparedBatch> {
+  const parsedAssignments = parseFacetAssignments(assignments);
+  const classificationEvidence = checkedFacetArtifactRef(options.classificationEvidence, 'classificationEvidence');
+  const policyConfig = checkedFacetArtifactRef(options.policyConfig, 'policyConfig');
+  await assertFileBinding(classificationEvidence);
+  await assertFileBinding(policyConfig);
+  const root = resolve(options.root);
+  const directory = resolve(options.stagingRoot);
+  const prefix = randomUUID();
+  const catalogPath = target(root, options.catalogPath, join(root, 'catalog.json'));
+  const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
+  const catalogName = targetRelative(root, catalogPath);
+  const mapName = targetRelative(root, mapPath);
+  const catalogTarget = await resolveArtifactPath(root, catalogName);
+  const mapTarget = await resolveArtifactPath(root, mapName);
+  const catalogBefore = await optionalBytes(catalogTarget);
+  const mapBefore = await optionalBytes(mapTarget);
+  if (catalogBefore === undefined) throw new Error('metadata-only preparation requires an existing catalog manifest');
+  if (mapBefore === undefined) throw new Error('metadata-only preparation requires an existing corpus map');
+  const parseJsonBytes = (bytes: Buffer, label: string): unknown => {
+    try { return JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)) as unknown; }
+    catch (error) { throw new Error(`${label} is malformed: ${error instanceof Error ? error.message : String(error)}`); }
+  };
+  const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
+  const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+  const legacySchema = await readSchema(packageRoot, 'vpinstruction.v1.schema.json');
+  const facetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.1.schema.json');
+  const catalogValue = parseJsonBytes(catalogBefore, 'catalog manifest');
+  if (!record(catalogValue)) throw new Error('catalog manifest must be an object');
+  const catalogErrors = validateAgainstSchema(catalogValue, catalogSchema);
+  if (catalogErrors.length > 0) throw new Error(`catalog schema validation failed: ${catalogErrors.join('; ')}`);
+  const catalog = catalogValue as unknown as Catalog;
+  const catalogIds = new Set<string>();
+  const catalogPaths = new Set<string>();
+  for (const entry of catalog.instructions) {
+    if (catalogIds.has(entry.instruction_id)) throw new Error(`duplicate instruction id in catalog: ${entry.instruction_id}`);
+    if (catalogPaths.has(entry.path)) throw new Error(`duplicate instruction path in catalog: ${entry.path}`);
+    catalogIds.add(entry.instruction_id);
+    catalogPaths.add(entry.path);
+  }
+  const mapValue = parseJsonBytes(mapBefore, 'corpus map');
+  if (!record(mapValue)) throw new Error('corpus map must be an object');
+  const mapErrors = validateAgainstSchema(mapValue, mapSchema);
+  if (mapErrors.length > 0) throw new Error(`corpus map schema validation failed: ${mapErrors.join('; ')}`);
+
+  const before = new Map<string, Buffer | undefined>([[catalogTarget, catalogBefore], [mapTarget, mapBefore]]);
+  const outputs = new Map<string, Buffer>();
+  const instructionTargets: string[] = [];
+  const now = options.now ?? (() => new Date().toISOString());
+  for (const assignment of parsedAssignments) {
+    const entry = catalog.instructions.find(item => item.instruction_id === assignment.instruction_id);
+    if (entry === undefined) throw new Error(`instruction ID is not in the catalog: ${assignment.instruction_id}`);
+    if (/[\\:\u0000]/u.test(entry.path) || entry.path.startsWith('/') || entry.path.split('/').some(part => part === '' || part === '.' || part === '..')) throw new Error(`catalog instruction path is not canonical: ${entry.path}`);
+    const instructionAbsolute = resolve(dirname(catalogPath), entry.path);
+    const instructionName = targetRelative(root, instructionAbsolute);
+    const instructionPath = await resolveArtifactPath(root, instructionName);
+    const original = await optionalBytes(instructionPath);
+    if (original === undefined) throw new Error(`catalog instruction file is missing: ${assignment.instruction_id}`);
+    const originalDigest = fingerprint(original);
+    if (originalDigest !== assignment.expected_sha256) throw new Error(`stale expected instruction digest: ${assignment.instruction_id}`);
+    if (originalDigest !== entry.sha256) throw new Error(`catalog instruction digest mismatch: ${assignment.instruction_id}`);
+    const markdown = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(original);
+    const next = updateInstructionFacets(markdown, assignment.instruction_id, assignment.classification, legacySchema, facetedSchema);
+    before.set(instructionPath, original);
+    instructionTargets.push(instructionPath);
+    if (!next.equals(original)) {
+      outputs.set(instructionPath, next);
+      entry.sha256 = fingerprint(next);
+      catalog.revision += 1;
+      catalog.updated_at = now();
+    }
+  }
+  const publicationTargets = new Set([...instructionTargets, catalogTarget, mapTarget].map(path => resolve(path)));
+  for (const ref of [classificationEvidence, policyConfig]) if (publicationTargets.has(resolve(ref.path))) throw new Error(`prepared input cannot also be a publication target: ${ref.path}`);
+  if (outputs.size > 0) {
+    const finalCatalogErrors = validateAgainstSchema(catalog, catalogSchema);
+    if (finalCatalogErrors.length > 0) throw new Error(`staged catalog validation failed: ${finalCatalogErrors.join('; ')}`);
+    outputs.set(catalogTarget, Buffer.from(json(catalog), 'utf8'));
+  }
+  const context: BatchManifest['context'] = [];
+  for (const path of [join(root, 'donors.yaml'), join(root, 'config', 'methodology-profile.json')]) {
+    const bytes = await optionalBytes(path);
+    context.push({ path, sha256: bytes === undefined ? null : fingerprint(bytes) });
+  }
+  return createPreparedBatch({ root, directory, prefix, targetPaths: [...instructionTargets, catalogTarget, mapTarget], before, outputs, specs: [classificationEvidence, policyConfig], context, sources: [], sourceData: [] });
+}
+
 export async function prepareBatch(sources: readonly EligibleSource[], options: ConvertOptions & { stagingRoot: string }): Promise<PreparedBatch> {
   if (sources.length < 1 || sources.length > 25) throw new Error('prepared batches require 1–25 separately admitted source files');
   const root = resolve(options.root);
@@ -635,33 +910,9 @@ export async function prepareBatch(sources: readonly EligibleSource[], options: 
     intendedInstructions.push(join(instructionsDir, `${spec.instruction_id}.md`));
     await compileInstruction(ref.path, options, io, schemas);
   }
-  const targets: PreparedTarget[] = [];
-  for (const [index, path] of [...new Set([...intendedInstructions, catalogPath, mapPath])].entries()) {
-    const name = targetRelative(root, path);
-    const old = before.get(path);
-    const next = outputs.get(path) ?? old;
-    if (next === undefined) throw new Error(`missing prepared output: ${name}`);
-    const stagedPath = `${prefix}/outputs/${index}.txt`;
-    const stagedAbsolute = await resolveArtifactPath(directory, stagedPath, true);
-    await writeFile(stagedAbsolute, next, { flag: 'wx' });
-    const staged = { path: stagedPath, sha256: fingerprint(next) };
-    let backup: ArtifactRef | null = null;
-    if (old !== undefined) {
-      const backupPath = `${prefix}/before/${index}.txt`;
-      await writeFile(await resolveArtifactPath(directory, backupPath, true), old, { flag: 'wx' });
-      backup = { path: backupPath, sha256: fingerprint(old) };
-    }
-    targets.push({ path: name, before: old === undefined ? null : fingerprint(old), after: fingerprint(next), staged, backup });
-  }
-  const toolPaths = ['scripts/convert.ts', 'scripts/source-packets.ts', 'scripts/check-corpus.ts', 'skills/vp-mode/scripts/catalog.ts', 'skills/vp-mode/scripts/frontmatter.ts', 'skills/vp-mode/scripts/schema.ts', 'config/vpinstruction.v1.schema.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json'];
-  const tools: ArtifactRef[] = [];
-  for (const path of toolPaths) { const absolute = join(packageRoot, path); tools.push({ path: absolute, sha256: fingerprint(await readFile(absolute)) }); }
   const context: BatchManifest['context'] = [];
   for (const path of [join(root, 'donors.yaml'), join(root, 'config', 'methodology-profile.json')]) { const bytes = await optionalBytes(path); context.push({ path, sha256: bytes === undefined ? null : fingerprint(bytes) }); }
-  const manifest: BatchManifest = { schema: 'VPPreparedBatch/v1', root, targets, specs: [...specs.values()], tools, context, runtime: { path: process.execPath, sha256: fingerprint(await readFile(process.execPath)) }, sources: sourceData.map(data => ({ source: data.source, packet: data.evidence, unitIds: [...new Set(data.specs.flatMap(spec => [...spec.unitIds]))], specs: data.specs.map(spec => ({ ...spec.ref })) })) };
-  const plan: PreparedBatch = Object.freeze({ directory, manifest: await sealArtifact(directory, `${prefix}/plan.json`, manifest) });
-  preparedBatches.set(plan, { manifest, sources: [...sources] });
-  return plan;
+  return createPreparedBatch({ root, directory, prefix, targetPaths: [...intendedInstructions, catalogPath, mapPath], before, outputs, specs: [...specs.values()], context, sources, sourceData });
 }
 const batchText: Schema = { type: 'string', minLength: 1 };
 const batchSha: Schema = { type: 'string', pattern: '^[0-9a-f]{64}$' };
