@@ -40,6 +40,32 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Boundary investigation after 4TIJNP: operation430ff705-96b3-42b3-8572-ae41eecc6375
+records timeout_observed=true and SIGKILL for direct Bun PID46; typecheck PID17
+exited0. This is the existing300000ms budget with30000ms reserve, not an outer
+330000ms timeout or demonstrated OOM.146 completed test rows are partial evidence,
+not coverage totals. Native PID1009799 is now ENOENT. Original UNKNOWN and
+resource_safe_to_advance=false remain unchanged. Storage admission receipt had
+8122986496available bytes against2147483648floor; no new disk survey or cleanup.
+
+Read-only mount inspection identifies four writable bindings: old stage4TIJNP,
+its scratch-Cb5RoV/scratch, and image3007bd's coverage/.tmp. Their realpaths match
+the declared paths on device27; no DB was opened or changed. Initial independent
+review01 refused a successor pending positive isolation evidence. The bounded
+non-numeric control06 reuses reviewed control05 with all four exact old paths
+added to inaccessible-path assertions. It passes at
+/workspace/contour-namespace-control-XN4Jdu/stage: exit0/no timeout, complete
+capture/group closure, native child1011260 exit0, fresh-only writes, readonly
+runtime/image/deps, denied host network and private IPC positive control.
+Old roots remain retained; namespace numbers may be recycled and are not identity
+proof by themselves. Independent review02 confirms the four-path visibility proof but does not admit
+a numeric successor: the prior contract still requires terminal passing focused
+callers and fresh resource custody. Next prepare a justified static cost-reduction
+packet, then its scoped checks and isolated focus before any full producer.
+This control does not reconcile old state or add coverage hits.
+No coverage producer was launched during this investigation.
+
+
 Readonly inspect CAS packet Source `f4b43bfd2484153424e8fe8e0807dcba52e521e0`
 is committed and pushed to origin/main after normal hooks. Independent review,
 scoped strict/lint and isolated focus passed: stage VTRw9Y, 1pass/8skip/0fail,
