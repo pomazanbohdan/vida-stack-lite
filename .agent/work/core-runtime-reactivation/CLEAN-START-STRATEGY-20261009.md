@@ -24,6 +24,10 @@ refusal, verifier reread and missing-workspace denial with no accepted capture,
 then one full changed-input stage. Next inspect the remaining26unhit bodies for
 fresh supported fixtures/refusals in this contour. Accepted retirement itself
 remains a trusted-native-custody prerequisite, not an objective skip.
+The next feasible group is completed-readonly release: use the maintained default
+task_execution fixture's readonly synthesis and suspended frontier, then inspect
+with actual current versions and assert unchanged Host/journal/engine. Do not use
+terminal research_light or manufacture interrupted-writer proof for this group.
 
 The independent runtime-root provider is published at d05842aa. Profile02 adds
 the readonly libsql loader closure; native controls and focused callers pass.

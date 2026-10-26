@@ -56,6 +56,42 @@ database/capture is accepted. Actual retirement's native-custody prerequisite
 remains GAP, with no objective skip or UNKNOWN reconciliation. Continue this
 same contour from its26remaining unhit function bodies; do not replay old runs.
 
+The26remaining bodies group as: interrupted Source retirement2(325/329),
+completed-readonly release7(331/342–347), historical-owner release8(351–358),
+staged witness3(379–381), configured-frontier continuation2(412/413), completed
+Source ownership1(449), terminal delivery3(530–532). These are report inventory
+groups and prerequisites, not objective skips or accepted native proof.
+
+Current feasible packet addresses completed-readonly release. The maintained
+default InitialSourceWork fixture supplies a non-research readonly synthesize_task,
+then an unissued suspended frontier. One controlled public issue/report pair and
+inspect-only release check the actual CAS, no Source host attempts/activation,
+exact engine/journal frontier and unchanged Host/engine/request bytes. No plan,
+apply, cutover or granted rights. A shared local CLI-argument owner replaces the
+old inline array and is reused by this new caller. The existing async close owner
+retains primary/close failures; pending issued outcomes retain the root.
+Independent review passes, strict511/configured lint pass; native focus is pending.
+
+Accepted retirement's fresh native-custody chain remains unqualified. Tool
+discovery exposes codex_app.read_thread, but a bounded readonly probe of this task
+returned no usable response and was stopped. No native writer was started.
+The supported retirement lifecycle still needs fresh suspended Work, uncertain
+original writer/issue, released retirement ticket/claim/operation, protected
+reservation/approval, current CAS versions and an attributable complete interrupted
+thread/turn read bound to that same action/issue/host attempt. Existing untrusted
+decoder builders supply none of that authority. Qualify the reader/host binding
+and produce that fresh chain through the existing lifecycle before accepted capture;
+do not replay archival UNKNOWN or add a substitute authority/harness.
+
+Storage admission is reused from GTvs9v:8330518528available bytes against
+2147483648minimum, with no new df/du/hash pass. The single earlier inode survey
+remains1585252free. Literal DIAG/cleanup-custody-preflight-20261026-01.json records
+208exact top-level cleanup paths/identities; .vida-retained is absent/no-op.
+Representative proc maps/fd metadata is readable, so there is no demonstrated
+permission denial. Full live-reference/mount/inbound symlink/hardlink custody is
+not yet established and current profile/latest-report dependencies remain.
+Nothing is deleted or relabeled retired; no post-deletion free-space claim exists.
+
 Preceding terminal packet: Source15e29abae2bb3d3b34afab40287aed9179204f8b,
 run73125c06-925a-44f9-b25e-a46475127232, stage /workspace/contour-stage-WZKR1q
 completes exit0 in248422.893646ms with155pass/0fail/3880assertions in242.25s.

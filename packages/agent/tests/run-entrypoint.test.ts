@@ -24,7 +24,11 @@ import {
   sessionHandoffDatabasePath,
 } from '../src/orchestration/persistent-session-handoff.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
-import { finishWorkspaceDatabaseClose, type DatabaseWorkOutcome } from '../src/config/workspace-database-raw.ts';
+import {
+  finishWorkspaceDatabaseClose,
+  withWorkspaceDatabaseCloseAsync,
+  type DatabaseWorkOutcome,
+} from '../src/config/workspace-database-raw.ts';
 import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.ts';
 import type { SessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import { boundedSpawnSync, commandOutcomeUnknown, executionBudget, pinnedEnvironment } from '../bin/bun.ts';
@@ -3694,6 +3698,38 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         if (errors.length > 1) throw new AggregateError(errors, 'Database lifetime observers could not both restore');
       },
     };
+  };
+
+  const initialSourceRunArguments = (
+    sourceFixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>>,
+  ): string[] => {
+    const input = admittedInput(sourceFixture);
+    const projectId = sourceFixture.identity.project_ids[0];
+    assert.ok(projectId);
+    return [
+      '--project-root',
+      sourceFixture.root,
+      '--repository',
+      sourceFixture.config.repository.repository_id,
+      '--project',
+      projectId,
+      '--work-path',
+      sourceFixture.documents[0],
+      '--work-id',
+      sourceFixture.identity.work_id,
+      '--attempt',
+      '1',
+      '--scope-digest',
+      sourceFixture.originalSource.digest,
+      '--team',
+      input.selection.team,
+      '--kind',
+      input.selection.kind,
+      '--intent',
+      input.selection.intent,
+      '--workflow',
+      'task_execution',
+    ];
   };
 
   const researchFixtureSummary = (actionOrder: number, sourceDigest: string | null) => {
@@ -9260,6 +9296,138 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 60_000);
 
+    test('inspects completed task_execution readonly owner against the suspended configured frontier', async () => {
+      let root: string | undefined;
+      let completed = false;
+      let pendingIssue = false;
+      try {
+        const fixture = await createInitialSourceWorkFixture({ onRoot: (value) => (root = value) });
+        const f = fixture;
+        await withWorkspaceDatabaseCloseAsync(
+          f,
+          async () => {
+            assert.ok(f.store && f.ledger && f.bridge);
+            const input = admittedInput(f);
+            await bindControlledRuntimeInitialization(f.root, f.config, f.store);
+            const args = initialSourceRunArguments(f);
+            const beforeIssue = f.ledger.resume(f.identity.work_id, 1);
+            assert.ok(beforeIssue);
+            expect(beforeIssue.state.items.map((item) => item.request.stage_id)).toEqual(['synthesize_task']);
+            const expected = (version: StateVersion) => [
+              '--expected-revision',
+              String(version.revision),
+              '--expected-digest',
+              version.digest,
+            ];
+            pendingIssue = true;
+            const issued = parseTestRunPayload(
+              await runSuccessfully([...args, ...expected(beforeIssue.version), '--issue-wave', 'true']),
+            );
+            expect(issued.status).toBe('wave_issued');
+            const actions = requireIssuedActions(issued);
+            expect(actions).toHaveLength(1);
+            const action = actions[0]!;
+            assert.ok(typeof action.issue_id === 'string');
+            expect(action.request.stage_id).toBe('synthesize_task');
+            const stage = f.config.workflows.task_execution?.stages.find(
+              (entry) => entry.id === action.request.stage_id,
+            );
+            assert.ok(stage);
+            expect(stage.produces).not.toContain('ResearchResult/v1');
+            expect(stage.produces).not.toContain('ResearchSynthesis/v1');
+            const summary = 'Controlled readonly task synthesis; no external dispatch';
+            const report: SessionBridgeObservation = {
+              schema: 'VidaSessionObservation/v1',
+              action_id: action.request.action_id,
+              issue_id: action.issue_id,
+              agent_id: 'fixture:readonly-synthesizer',
+              tool_call_ref: 'fixture:readonly-synthesis',
+              status: 'reported_complete',
+              summary,
+              output_digest: canonicalJsonDigest(summary),
+              evidence_refs: ['local://fixture/readonly-synthesis'],
+            };
+            const reportPath = path.join(f.root, 'readonly-synthesis-report.json');
+            writeFileSync(reportPath, JSON.stringify(report), { flag: 'wx' });
+            const reported = parseTestRunPayload(
+              await runSuccessfully([
+                ...args,
+                ...expected(requireStateVersion(issued.state_version)),
+                '--report',
+                reportPath,
+              ]),
+            );
+            expect(reported.resume_status).toBe('ready');
+            pendingIssue = false;
+            const databaseRelative = path.relative(f.root, sessionHandoffDatabasePath(f.root, f.config));
+            const workspaceId = deriveWorkspaceId(f.config.repository.repository_id, f.root);
+            const before = inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId);
+            expect(before.work).toHaveLength(1);
+            expect(before.journals).toHaveLength(1);
+            const selected = before.work[0]!;
+            const journal = before.journals[0]!;
+            const observed = journal.state.completed.flatMap((wave) => wave.items);
+            expect(observed).toHaveLength(1);
+            expect(observed[0]!.issue_id).toBe(action.issue_id);
+            expect(observed[0]!.observation).toEqual(report);
+            expect(observed[0]!.host_reservation).toBeUndefined();
+            expect(observed[0]!.research_activation).toBeUndefined();
+            expect(observed[0]!.research_normalization).toBeUndefined();
+            expect(selected.state.execution.assignment_attempts).toEqual([]);
+            expect(journal.state.items.length).toBeGreaterThan(0);
+            expect(journal.state.items.every((item) => item.issue_id === null && item.observation === null)).toBe(true);
+            const engineBefore = await f.bridge.snapshot();
+            assert.ok(engineBefore);
+            expect(engineBefore.status).toBe('suspended');
+            expect(engineBefore.step_id).toBe(journal.state.step_id);
+            expect(engineBefore.requests).toEqual(journal.state.items.map((item) => item.request));
+            assert.ok(before.ledger_version);
+            const request = {
+              schema: 'CompletedReadonlyReleaseRequest/v1',
+              workspace_id: workspaceId,
+              identity: selected.identity,
+              attempt: journal.attempt,
+              expectedWork: selected.version,
+              expectedLedger: before.ledger_version,
+              expectedJournal: journal.version,
+              nativeSessionHandle: input.nativeSessionHandle,
+              userRequestPointer: 'fixture:completed-readonly-inspect',
+              requestIntent: 'linked_correction',
+            };
+            const requestPath = path.join(f.root, 'readonly-release-request.json');
+            const requestBytes = Buffer.from(JSON.stringify(request));
+            writeFileSync(requestPath, requestBytes, { flag: 'wx' });
+            const result = requireRecord(
+              await runSuccessfully([
+                '--release-completed-readonly',
+                'true',
+                '--mode',
+                'inspect',
+                '--project-root',
+                f.root,
+                '--request',
+                'readonly-release-request.json',
+              ]),
+              'Readonly release inspection',
+            );
+            expect(result.status).toBe('readonly_release_inspected');
+            expect(result.rights_granted).toBe(false);
+            assert.ok(typeof result.plan_ref === 'string');
+            expect(existsSync(path.join(f.root, result.plan_ref))).toBe(false);
+            expect(readFileSync(requestPath)).toEqual(requestBytes);
+            expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
+            expect(await f.bridge.snapshot()).toEqual(engineBefore);
+          },
+          (owner) => owner.close(),
+          'Readonly inspection operation and fixture close failed',
+        );
+        completed = true;
+      } finally {
+        if (root && completed && !pendingIssue) rmSync(root, { recursive: true, force: true });
+        else if (root) process.stderr.write(`Retained readonly release inspection fixture: ${root}\n`);
+      }
+    }, 60_000);
+
     test('persists maintained synthesis and issues the configured developer frontier without dispatch', async () => {
       let root: string | undefined;
       let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
@@ -9327,30 +9495,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
 
         const projectId = sourceFixture.identity.project_ids[0];
         assert.ok(projectId);
-        const args = [
-          '--project-root',
-          sourceFixture.root,
-          '--repository',
-          sourceFixture.config.repository.repository_id,
-          '--project',
-          projectId,
-          '--work-path',
-          sourceFixture.documents[0],
-          '--work-id',
-          sourceFixture.identity.work_id,
-          '--attempt',
-          '1',
-          '--scope-digest',
-          sourceFixture.originalSource.digest,
-          '--team',
-          input.selection.team,
-          '--kind',
-          input.selection.kind,
-          '--intent',
-          input.selection.intent,
-          '--workflow',
-          'task_execution',
-        ];
+        const args = initialSourceRunArguments(sourceFixture);
         const expected = (version: StateVersion) => [
           '--expected-revision',
           String(version.revision),
