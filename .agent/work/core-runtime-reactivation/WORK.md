@@ -38,6 +38,54 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Historical context binding packet — targeted terminal, 2026-10-26
+
+Closed-rebind producer inspection found a concrete forbidden dependency under this
+scope: runtime-code-rebind.ts1390–1428 requires actual native installation bytes,
+self-attestation, old/current manifests, CURRENT_SYSTEM_REPAIR_CHECKPOINT_UPDATED
+and a matching release-owner operation. No authentic such retained input is bound
+to this fixture; producing it through real install/update or inventing its proof
+is not allowed. The continuation pair remains blocked. Independent review also
+confirmed current atomic completed Source reporting cannot naturally produce the
+split legacy state needed by the remaining ownership callback; its component test
+explicitly inserts the captured legacy Journal. Neither prerequisite is a skip.
+
+A different available batch in the same contour is now implemented. The maintained
+public readonly-owner case configures runtime-development-lifecycle context on
+synthesize_task through the existing configure hook BEFORE admission. It captures
+an actual ordinary CLI result before issue, then uses the same native issued and
+reported Journal/engine. Historical inspect joins exported contexts to that actual
+Journal before correctly refusing the consumer fixture's unaccepted Source bundle.
+A changed context digest refuses earlier at action binding. Both paths assert exact
+Host/Journal and engine preservation, restore original history bytes and create no
+release plan. There is no apply, installation, consumer dispatch or authority claim.
+
+Final Source254f5f3c3a2f56381141a4868186f33bb29e2747 passed one focused target at
+/workspace/contour-focused-runtime-GiCNAP:1pass/8filtered/0fail/42assertions,5.85s.
+Image4dbf6d9943894655c71e349142201d3a6460d976 manifest SHA
+253c8161960de27f54162924d170383a61526a7d8f3afc82488479a4ca49f5cd;
+profile02 unchanged. Native namespace child1023329 exit0, outer exit0 without
+timeout/spawn error, complete nontruncated capture and closed owned group;
+image/profile verification passed. Retain controller-owned sibling namespace
+status, launch/execution/stdout/stderr and DIAG/historical-context-focused-20261026-04.log.
+Compact source/run/capture bindings for all four attempts are retained in
+DIAG/historical-context-summary-20261026-01.json. No coverage report or full stage
+was produced, so none of the16remaining bodies or numeric hits is promoted.
+
+Earlier attempts remain intact:1nq3pW failed because inspect returns an inspection
+envelope rather than a run result;CLe1Ic failed because no context source was
+configured;HiPa5s reached the intended Source refusal but expected text omitted
+the existing diagnostic prefix. Each was terminal exit1, no timeout, closed group
+and complete capture. Each next target followed its specific test-input correction;
+no UNKNOWN was replayed. Independent blind native Luna reviewed the prerequisite
+selection, history/negative controls and final pre-admission configuration. The last
+literal correction asserts the exact observed prefixed error without weakening it.
+Scoped strict511/type-aware lint/format passed, normal hooks strict545/format538
+passed before sequential ordinary pushes. Original producer-owned projection edits
+remain unstaged. Full-proof HOLD, F546/562, budgets, timer and Odoo priority unchanged.
+Next safe coverage work is the remaining historical Source-context prerequisite;
+full proof still requires independently accepted isolation and runtime headroom.
+
 ### Configured-frontier batch prerequisite review, 2026-10-26
 
 Root and independent blind native Luna reviewed the proposed two-callback batch

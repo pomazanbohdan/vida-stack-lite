@@ -12,6 +12,18 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Latest bounded closure packet completed targeted historical context binding on
+Source254f5f3c, stageGiCNAP:1pass/42assertions/5.85s, native exit0 with complete
+capture/group and unchanged image/profile. Actual CLI history joins the actual
+Journal; foreign digest denies without Host/Journal/engine changes. No synthetic
+authority, apply or cutover. This is targeted-only; F546/562 and16remaining numeric
+bodies remain unchanged until a qualified complete report. Three corrected fixture
+failures are retained. Continue the historical Source-context prerequisite next;
+closed-rebind callbacks need real native installation/release-owner proof absent
+from the fixture, and current atomic reports do not create legacy split ownership.
+Do not manufacture either or count them as skips. Full-proof HOLD stays in force.
+
+
 Owner clarification2026-10-26: closing contours is the execution goal.
 Diagnostics and optimization serve that goal and must not become a separate
 open-ended lane. Keep bun-cli-run active and preserve the16-body prerequisite
