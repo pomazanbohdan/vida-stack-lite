@@ -11433,6 +11433,76 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(item.host_reservation?.receipt.attempt.attempt_id).toBe(issued.hostAttemptId);
         expect(item.request.scope_digest).toBe(originalReceipt.request.currentSourceScope.digest);
         expect(sourceScope.digest).toBe(originalReceipt.request.currentSourceScope.digest);
+        expect(item.observation).toBeNull();
+        expect(item.host_reservation?.authorization).toMatchObject({
+          receipt: { attempt: { status: 'started' } },
+          approval: { status: 'commit_unknown' },
+        });
+        assert.ok(sourceFixture.bridge);
+        const engineBeforeRetirement = await sourceFixture.bridge.snapshot();
+        const sourceBeforeRetirement = snapshotDeclaredSources(
+          requireSafeRepositoryAccess(sourceFixture.root),
+          sourceFixture.documents,
+        );
+        expect(compareScopedSourceSnapshots(sourceScope, sourceBeforeRetirement)).toEqual([]);
+        const retirementPath = path.join(
+          sourceFixture.root,
+          '.agent',
+          'work',
+          sourceFixture.identity.work_id,
+          'interrupted-source-inspect.json',
+        );
+        const retirementBytes = Buffer.from(JSON.stringify({ identity: sourceFixture.identity, attempt: 1 }));
+        writeFileSync(retirementPath, retirementBytes, { flag: 'wx' });
+        const retirementArgs = [
+          '--retire-interrupted-source-owner',
+          'true',
+          '--mode',
+          'inspect',
+          '--project-root',
+          sourceFixture.root,
+          '--native-session-handle',
+          input.nativeSessionHandle,
+          '--request',
+          path.relative(sourceFixture.root, retirementPath),
+        ];
+        const foreignOwnerArgs = [...retirementArgs];
+        foreignOwnerArgs[foreignOwnerArgs.indexOf('--native-session-handle') + 1] =
+          input.nativeSessionHandle + '-foreign';
+        await assert.rejects(run(foreignOwnerArgs), {
+          message: 'Interrupted Source retirement current owner or project binding differs',
+        });
+        expect(continuationState(sourceFixture)).toEqual(before);
+        expect(await sourceFixture.bridge.snapshot()).toEqual(engineBeforeRetirement);
+        expect(readFileSync(retirementPath)).toEqual(retirementBytes);
+        assert.deepEqual(
+          snapshotDeclaredSources(requireSafeRepositoryAccess(sourceFixture.root), sourceFixture.documents),
+          sourceBeforeRetirement,
+        );
+        const retirement = requireRecord(await runSuccessfully(retirementArgs), 'Interrupted Source inspection');
+        expect(retirement).toEqual({
+          status: 'interrupted_source_retirement_inspected',
+          request: {
+            identity: sourceFixture.identity,
+            attempt: 1,
+            actionId: item.request.action_id,
+            issueId: item.issue_id,
+            expectedWork: before.workVersion,
+            expectedLedger: before.ledgerVersion,
+            expectedJournal: before.journalVersion,
+            expectedMaintenanceGeneration: before.maintenanceGeneration,
+          },
+          owner_thread_id: input.nativeSessionHandle,
+          rights_granted: false,
+          attempt_outcome_resolved: false,
+        });
+        expect(continuationState(sourceFixture)).toEqual(before);
+        expect(await sourceFixture.bridge.snapshot()).toEqual(engineBeforeRetirement);
+        expect(readFileSync(retirementPath)).toEqual(retirementBytes);
+        assert.deepEqual(
+          snapshotDeclaredSources(requireSafeRepositoryAccess(sourceFixture.root), sourceFixture.documents),
+          sourceBeforeRetirement,
+        );
         const projectId = sourceFixture.identity.project_ids[0];
         assert.ok(projectId);
         const args = [

@@ -12,6 +12,14 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The current bun-cli-run test now exercises read-only inspection of an actual
+fixture-issued pending Source owner, including foreign-owner refusal, exact
+projection and unchanged state. Targeted composite stage
+/workspace/contour-focused-runtime-2pjvdw passed with 32 expectations.
+Its prior failed attempt is retained. This is not interrupted-reader custody,
+retirement apply or numeric coverage proof; full-proof HOLD remains. WORK owns
+the exact source bindings, native receipts, review and remaining prerequisites.
+
 Both historical-owner cases passed one paired focused capture at
 /workspace/contour-focused-runtime-q9jNu6 with 103 expectations and native
 terminal, capture and group records. For compatible future changes, run these

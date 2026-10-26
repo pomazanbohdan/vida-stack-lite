@@ -38,6 +38,45 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Interrupted Source owner inspect — targeted terminal, 2026-10-26
+
+The existing initial-Source writer-report test now inspects the pending owner
+before its existing report. Its existing producer acquires the real fixture
+lease and persists the issued writer reservation without executing writer
+argv. The test verifies the started attempt, commit-unknown approval and
+unreported Journal item; a foreign owner is refused and the matching owner
+gets the exact Work, Ledger and Journal projection with rights ungranted and
+the attempt outcome unresolved. Host, Journal, engine, declared Source and
+request bytes remain unchanged around both calls. No retirement apply,
+interrupted-thread proof, consumer dispatch or cutover is performed.
+
+Focused composite diagnostic /workspace/contour-focused-runtime-2pjvdw passed
+1 test with 32 expectations in 17.59s. Native child1029108 exited0; capture
+was complete and untruncated, the owned group closed, and the retained
+custody-check confirms unchanged image, profile and overlays. The diagnostic
+uses existing image254f5f3c, profile02 and composite
+c99597beaca7aded6a097c921d282422701ab46316159256db5d8a254ce6c852.
+The run-entrypoint test overlay is SHA-256
+3c6a86e2be0b8c85ba88c18eb783ededcaa2d8629e9875a6600015082116bdf3;
+the helper overlay is SHA-256
+ffbe530484b957aeac7458abb6c4a5aae426ace50f5294a5e28b76b38654a1de.
+The base image manifest does not attest the overlays. Retain the stage's
+launch, execution, stdout, stderr, custody-check, owned scratch and sibling
+namespace status; the live dependency mount is not a byte-snapshot proof.
+
+The first targeted attempt, /workspace/contour-focused-runtime-RSOzW2,
+ended exit1 without timeout, with complete capture and closed group. Its
+strict object comparison rejected a Journal snapshot with null prototypes
+despite equal values. The subsequent input uses the existing
+compareScopedSourceSnapshots owner to validate canonical digests, ordered
+paths, existence, byte lengths and content hashes without equating object
+prototypes. The failed scratch and raw logs remain retained. Scoped strict
+passed for 511 files, type-aware Oxlint and format passed, and independent
+blind native Luna reviewed the behavior, comparator and terminal evidence.
+The historical report's unhit inspect branches647/648 are the target, but
+this focused receipt has no counters and establishes no numeric hits.
+Full-proof HOLD and trusted interrupted-reader custody remain open.
+
 ### Paired historical-owner target — 2026-10-26
 
 The existing isolated capture owner ran both historical-owner cases in one
