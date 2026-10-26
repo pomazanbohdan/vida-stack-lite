@@ -64,6 +64,17 @@ Exact counter lookup leaves40unhit functions; the next bounded packet examines
 terminal research/result output paths and existing fixtures in this same contour.
 All prior FAIL/UNKNOWN receipts and effect fences remain unchanged.
 
+Next validation-status packet extends the same maintained synthesis/developer
+fixture instead of duplicating setup. It reports the two actually issued
+validators with current CAS, checks persisted observation/issue bindings, then
+issues the declared consuming tester and checks role/verdict/fingerprint status.
+The tester's unobserved issue keeps the fixture retained. Static511/lint pass;
+native validation is pending. The one image preparation attempt refuses dirty
+Source at publishedGitTree before materialization; its exact diagnostic is
+DIAG/validator-status-image-prepare-20261026-01.log. Thus Source review and normal
+publication must precede isolated focused qualification for this test packet.
+No unisolated CLI fallback or full stage is admitted by static checks.
+
 The first focused native attempt retains a libsql loader failure before CLI
 tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
 local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.

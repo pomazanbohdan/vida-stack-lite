@@ -9547,6 +9547,85 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         );
         assert.ok(validationTicket);
         expect(validationTicket.exclusive_resources).toEqual(['execution:' + sourceFixture.identity.work_id]);
+        expect(validationRaw.validation_receipt_statuses).toEqual([]);
+        let validatorVersion = validationJournal.version;
+        for (const item of validationActions) {
+          const summary = JSON.stringify({
+            schema: 'VidaValidatorVerdict/v1',
+            verdict: 'pass',
+            findings: [],
+            evidence_refs: ['local://fixture/controlled-validator-result'],
+          });
+          const observation = {
+            schema: 'VidaSessionObservation/v1',
+            action_id: item.request.action_id,
+            issue_id: item.issue_id,
+            agent_id: `fixture:validator-${item.request.role}`,
+            tool_call_ref: `fixture:validator-${item.request.action_id}`,
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: ['local://fixture/controlled-validator-result'],
+          };
+          const reportFile = path.join(sourceFixture.root, `validator-${item.request.assignment_index}.json`);
+          writeFileSync(reportFile, JSON.stringify(observation), { flag: 'wx' });
+          const reported = parseTestRunPayload(
+            await runSuccessfully([...args, ...expected(validatorVersion), '--report', reportFile]),
+          );
+          validatorVersion = requireStateVersion(reported.state_version);
+          const observedJournal = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+          assert.ok(observedJournal);
+          const observedItems: readonly unknown[] = [
+            ...observedJournal.state.items,
+            ...observedJournal.state.completed.flatMap((wave) => wave.items),
+          ];
+          const observedItem = requireRecord(
+            observedItems.find((candidate) => {
+              const entry = requireRecord(candidate, 'Observed validator journal item');
+              return requireRecord(entry.request, 'Observed validator request').action_id === item.request.action_id;
+            }),
+            'Matching observed validator journal item',
+          );
+          expect(observedItem.issue_id).toBe(item.issue_id);
+          expect(observedItem.observation).toEqual(observation);
+        }
+        pendingNativeIssue = false;
+        const nextJournal = sessionLedger.resume(sourceFixture.identity.work_id, 1);
+        assert.ok(nextJournal);
+        expect(nextJournal.state.items.every((item) => item.issue_id === null)).toBe(true);
+        expect(
+          nextJournal.state.items.every((item) => {
+            const stage = sourceFixture.config.workflows.task_execution?.stages.find(
+              (entry) => entry.id === item.request.stage_id,
+            );
+            return stage?.kind === 'test' && stage.consumes.includes('ValidationReceipt/v1');
+          }),
+        ).toBe(true);
+        pendingNativeIssue = true;
+        const testerRaw = requireRecord(
+          await runSuccessfully([...args, ...expected(validatorVersion), '--issue-wave', 'true']),
+          'Issued tester with observed validation receipts',
+        );
+        expect(testerRaw.status).toBe('wave_issued');
+        const testerActions = requireIssuedActions(parseTestRunPayload(testerRaw));
+        expect(testerActions).toHaveLength(nextJournal.state.items.length);
+        expect(testerActions.map((item) => item.request.action_id)).toEqual(
+          nextJournal.state.items.map((item) => item.request.action_id),
+        );
+        assert.ok(Array.isArray(testerRaw.validation_receipt_statuses));
+        expect(testerRaw.validation_receipt_statuses).toHaveLength(validationActions.length);
+        expect(
+          testerRaw.validation_receipt_statuses
+            .map((value) => {
+              const receipt = requireRecord(value, 'Observed validation receipt status');
+              expect(receipt.receipt_id).toMatch(/^validation-[a-f0-9]{40}$/);
+              expect(receipt.verdict).toBe('pass');
+              expect(receipt.implementation_fingerprint).toBe(acceptedJournal.state.source_scope?.digest);
+              assert.equal(typeof receipt.validator_role, 'string');
+              return receipt.validator_role;
+            })
+            .sort((left, right) => String(left).localeCompare(String(right))),
+        ).toEqual(validationActions.map((item) => item.request.role).sort((left, right) => left.localeCompare(right)));
         completed = true;
       } catch (error) {
         failures.push(error);
