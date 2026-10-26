@@ -7,7 +7,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import { createAutomaticWorkAdmissionFixture } from './automatic-work-admission-fixture.js';
 import { fixtureInitializationTemplates } from './runtime-initialization-fixture.js';
 import { runPrewriterFixtureInProcess } from './public-prewriter-fixture.js';
-import { runWithInitialSourceTiming } from './initial-source-run-timing-diagnostic.js';
+import { markInitialSourceTimingPhase, runWithInitialSourceTiming } from './initial-source-run-timing-diagnostic.js';
 import {
   admitLocalSessionWork,
   acquireLocalSourceWriterLease,
@@ -296,6 +296,7 @@ export async function createFailedFinalCorrectionFixture(
         change_kind: input.changeKind,
       }),
     );
+    markInitialSourceTimingPhase('fixture.admission.started');
     const admitted = admitLocalSessionWork(input),
       work = requireWork(admitted.host),
       identity: WorkIdentity = {
@@ -388,6 +389,7 @@ export async function createFailedFinalCorrectionFixture(
       context: input.context,
       workflowId: 'task_execution',
     };
+    markInitialSourceTimingPhase('fixture.engine.started');
     bridge = await MastraSessionBridge.open({
       ...producerInput,
       ledger,
@@ -849,8 +851,10 @@ export async function createFailedFinalCorrectionFixture(
       plannedHost,
       close,
     };
+    markInitialSourceTimingPhase('fixture.engine.complete');
     if (options?.preparationInputs === false) return result;
     const { preparationPath } = await writeFailedFinalPreparationInputs({ root: fixture.root, work, attempt: 1 });
+    markInitialSourceTimingPhase('fixture.ready');
     return { ...result, preparationPath };
   } catch (error) {
     const cleanupErrors: unknown[] = [];

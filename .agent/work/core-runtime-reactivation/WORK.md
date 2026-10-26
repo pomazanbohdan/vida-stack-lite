@@ -40,6 +40,23 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Current diagnostic packet reuses initial-source-run-timing-diagnostic owner:
+opt-in output accepts existing package .tmp as well as legacy repository .tmp,
+requiring an ordinary non-symlink root and canonically confined parent. The
+review-found root-link escape is fixed; disposable copied-helper control02PASS
+covers outside/child/root links before action, original exception/result, phase
+bound and retained output. No actual .tmp root or UNKNOWN image is changed.
+Existing32call/16KiB limits remain; phase markers have16row limit. No raw arguments
+or stdout is captured by this helper. Without opt-in env, marker calls emit nothing.
+Four test/helper files add truthful boundaries for file/config, DB/Host/DDL,
+admission, engine, preparation ready, assurance and export. Strict511/lint and
+independent final review PASS. Two SAME-source/image isolated diagnostic focuses
+will record load/CPU quota/throttling/memory snapshots, phase intervals and existing
+public-run timings; no full suite, numeric report or benchmark/speedup claim.
+Only necessary fresh child outputs under already-qualified mounts are writable.
+No budget increase, native/mock substitution, assertion or contour reduction.
+
+
 Budget investigation after latest UNKNOWN: no coverage producer or replay ran.
 Existing receipts compare GTvs9v257606.76ms/156rows, lAwiYJ245277.30ms/157rows,
 CYKSkG255665.38ms/157rows and8vfRgV271449.87ms/109completed rows. For108common

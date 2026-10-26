@@ -120,6 +120,7 @@ import { parseSessionBridgeObservation } from '../src/orchestration/mastra-sessi
 import type { DeliveredWorkContinuationRequest } from '../src/orchestration/delivered-work-continuation.ts';
 import type { LocalWorkAdmissionInput } from '../src/orchestration/local-work-admission.ts';
 import { Console } from 'node:console';
+import { markInitialSourceTimingPhase } from './helpers/initial-source-run-timing-diagnostic.ts';
 import { Writable } from 'node:stream';
 import {
   createAutomaticWorkAdmissionFixture,
@@ -10932,6 +10933,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(terminalRetry.state_version).toEqual(terminalJournal.version);
         expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
         expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        markInitialSourceTimingPhase('case.assurance.started');
         const assurance = await publicRun([
           ...expected(version),
           '--prepare-assurance',
@@ -11200,6 +11202,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         assert.ok(deliveryReference);
         assert.ok(typeof deliveryManifest.path === 'string');
         expect(deliveryReference.path).toBe(deliveryManifest.path);
+        markInitialSourceTimingPhase('case.assurance.complete');
         const witnessHost = fixture.store.readHostStateSnapshot(fixture.identity);
         const witnessGeneration = 'fixture-completed-delivery';
         const payloadManifest = Buffer.from(
@@ -11264,6 +11267,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(readFileSync(payloadManifestPath)).toEqual(payloadManifest);
         expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(witnessHost);
         expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        markInitialSourceTimingPhase('case.export.complete');
         pendingAssuranceIssue = false;
         completed = true;
       } finally {

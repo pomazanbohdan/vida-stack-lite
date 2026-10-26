@@ -1,3 +1,4 @@
+import { markInitialSourceTimingPhase } from './initial-source-run-timing-diagnostic.js';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -16,6 +17,7 @@ type MutableAdmissionInput = { -readonly [Key in keyof LocalWorkAdmissionInput]:
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
 export function createAutomaticWorkAdmissionFixture(sourceWriter = false, publicStore = false) {
+  markInitialSourceTimingPhase('fixture.files.started');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-absorption-'));
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),
@@ -31,6 +33,7 @@ export function createAutomaticWorkAdmissionFixture(sourceWriter = false, public
   const config = loadRuntimeConfig(root);
   if (publicStore) mkdirSync(path.join(root, config.control.work_root), { recursive: true });
   const workspaceId = publicStore ? deriveWorkspaceId(config.repository.repository_id, root) : 'a'.repeat(64);
+  markInitialSourceTimingPhase('fixture.database.started');
   const database = openHostStateDatabase(
       root,
       publicStore ? config.control.work_root + '/session-handoff.v1.sqlite' : 'fixture.sqlite',
@@ -49,6 +52,8 @@ export function createAutomaticWorkAdmissionFixture(sourceWriter = false, public
   database.exec(
     'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
   );
+
+  markInitialSourceTimingPhase('fixture.database.ready');
   const selection: LocalWorkAdmissionInput['selection'] = {
     team: 'default-development',
     kind: sourceWriter ? 'feature' : 'research',
