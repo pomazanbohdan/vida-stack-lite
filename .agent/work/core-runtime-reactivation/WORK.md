@@ -38,6 +38,36 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Source initialization prerequisite — isolated terminal proof, 2026-10-26
+
+The existing image and runtime-root owner ran a bounded Source-project
+initialization proof at /workspace/contour-focused-runtime-5eSfV5. Source
+254f5f3c3a2f56381141a4868186f33bb29e2747, image manifest SHA-256
+253c8161960de27f54162924d170383a61526a7d8f3afc82488479a4ca49f5cd and
+runtime-root manifest SHA-256
+114e6ed4358b161858a0f52f7b7894e037e6d9c139bf10eca9cab19ea316ebee
+bind the execution. The existing public initializeProjectFromBundle API
+created a generated initialization receipt for an isolated physical
+packages/agent project without a selector. The real Host binding owner moved
+its receipt from pending to bound. The owner process returned exit 0 without
+timeout or spawn error; native namespace child1024905 exited0, capture and
+owned process-group closure were complete. The outer invocation was observed
+to exit0 after image and runtime-root verification, but no separate durable
+post-verification receipt was written. Preserve launch.json, execution.json,
+stdout.log, stderr.log, sibling namespace status and the entire owned scratch.
+The probe script and locator are DIAG/source-init-proof-20261026-01.ts and
+DIAG/source-init-proof-location-20261026-01.json.
+
+Independent blind native Terra review confirms that this proof invokes the
+bundle-selecting API from the immutable image, not the init CLI or copied
+bundle, and grants no installation, native acceptance, release, historical
+inspection or coverage qualification. It does not independently assert the
+persisted Host binding. The next fixture must use the supported initialized
+Source project with real admitted Work, Journal, engine and context history;
+only its separate historical inspection and foreign-digest refusal can prove
+those behaviors. The closed-rebind authority prerequisite remains unresolved.
+Full-proof HOLD, F546/562 and all16remaining bodies stay unchanged.
+
 ### Historical context binding packet — targeted terminal, 2026-10-26
 
 Closed-rebind producer inspection found a concrete forbidden dependency under this

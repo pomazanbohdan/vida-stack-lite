@@ -12,6 +12,16 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+An isolated native proof at /workspace/contour-focused-runtime-5eSfV5 used
+Source254f5f3c and the existing owners to initialize a physical
+packages/agent Source project and bind its generated initialization receipt.
+Native exit0, capture and group closure were observed. This proves the
+initialization prerequisite only; it does not establish Host persisted binding,
+historical inspection, installation, Runtime acceptance or coverage. Integrate
+the genuine initializer into the existing public historical fixture next and
+verify actual Work/Journal/engine/context preservation and foreign-digest
+refusal. See WORK for bindings, retention and independent-review limits.
+
 Latest bounded closure packet completed targeted historical context binding on
 Source254f5f3c, stageGiCNAP:1pass/42assertions/5.85s, native exit0 with complete
 capture/group and unchanged image/profile. Actual CLI history joins the actual
