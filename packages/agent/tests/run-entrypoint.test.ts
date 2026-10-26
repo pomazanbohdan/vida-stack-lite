@@ -9530,7 +9530,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               'original-readonly-history.json',
             ];
             await assert.rejects(run(historicalArgs), {
-              message: 'historical baseline is not the local accepted Source configuration',
+              message: 'vida runtime-config rebind: historical baseline is not the local accepted Source configuration',
             });
             expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
             expect(await f.bridge.snapshot()).toEqual(engineBefore);
