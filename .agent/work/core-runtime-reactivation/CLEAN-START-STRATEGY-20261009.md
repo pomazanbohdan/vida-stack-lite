@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date:2026-10-25. This document owns execution order.
+Status date:2026-10-26. This document owns execution order.
 [WORK](WORK.md) owns decisions and evidence locators; the existing
 [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable IDs.
 
@@ -11,6 +11,14 @@ bound Source and evidence. Keep archived operational state isolated.
 No consumer effect, native loader activation or DB cutover is part of this cycle.
 
 ## Current state
+
+Latest accepted local contour report is Source15e29aba/run73125c06, stageWZKR1q:
+155tests pass, exit0 with full capture/group/native namespace closure and unchanged
+image/profile. F523/559,L2425/2879,S2617/3165,B3088/3702 remain BLOCKED.
+Use this report's remaining gaps to continue bun-cli-run only. The terminal
+synthesis response repair and six-call CAS subtraction are verified; no further
+run is needed for that packet. Changed Source denominators invalidate numeric
+mixing with prior ratios. Preserve both recent UNKNOWN stages and all old fences.
 
 The independent runtime-root provider is published at d05842aa. Profile02 adds
 the readonly libsql loader closure; native controls and focused callers pass.
@@ -49,8 +57,9 @@ owns current admission and retained failures. A different profile, code or effec
 boundary requires its own qualification, not a reused approval label.
 
 A supporting native mount-control retention repair now reuses the shared capture
-and group owner. Static checks and independent review pass, but its runtime
-qualification remains HOLD. [WORK](WORK.md#mount-control-evidence-retention-2026-10-25)
+and group owner. Static/review and closed-root focused qualification pass; this
+does not qualify the historical launcher or settle its HOLD.
+[WORK](WORK.md#mount-control-evidence-retention-2026-10-25)
 owns the changed fixture and the current audit. This does not change contours.
 
 The public initial/replacement cases passed the paired52-expectation target and

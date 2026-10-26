@@ -1,6 +1,6 @@
 # Core runtime reactivation work
 
-Status date:2026-10-25. Root owns Source integration, Git and final numbers.
+Status date:2026-10-26. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
@@ -39,6 +39,29 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 ## Current sequential F/L/S/B cycle
 
 ### Independent runtime-root preparation, 2026-10-26
+
+Latest terminal packet: Source15e29abae2bb3d3b34afab40287aed9179204f8b,
+run73125c06-925a-44f9-b25e-a46475127232, stage /workspace/contour-stage-WZKR1q
+completes exit0 in248422.893646ms with155pass/0fail/3880assertions in242.25s.
+Capture/group and namespace termination are complete; native PID1005141 exit0
+has controller receipt SHA256b52bcff5ff677233f1346ca6249769f71096095fcc6c769cdfd1cfa89ffb8683.
+Image8f578f24cd40da2ac7c17c024aa16bedcb65c09a manifest SHA256
+3fa4e36ed595a3f6a60d59a695ab18fe56b449fc76b8e7c926f287217b705ccb and profile02
+remain unchanged. The existing producer publishes its scoped contour report and
+updates projection: F523/559,L2425/2879,S2617/3165,B3088/3702, still BLOCKED.
+This is local Source-bound coverage, not full qualification, frozen acceptance
+or mutation closure. New Core guard/callbacks change denominators legitimately;
+do not combine these counters with the preceding Source45dd5721 ratios.
+
+Focused AHMxGA precedes that one changed-input full stage:2pass/8skip/0fail,
+165assertions in32.46s; CAS body18756.92ms and terminal research12178.24ms.
+Six redundant subprocess launches are removed versus the initial CAS fixture,
+with native protocol/error/accepted-report proof and stronger refusal-state
+assertions retained. Different inputs and variable prior runs preclude an A/B
+speedup claim. All prior FAIL/UNKNOWN resources, flags and original logs remain
+fenced. No timer, budget, quality gate, consumer effect or cutover changes.
+Next: use this accepted report's remaining gaps in the same bun-cli-run contour;
+do not rerun completed suites, inventory, AST or hashes solely for status.
 
 Current terminal checkpoint: provider packet d05842aa is committed and pushed to
 origin/main after normal hooks (format538/strict545). Readiness probes confirm
