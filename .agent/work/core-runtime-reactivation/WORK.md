@@ -40,6 +40,29 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Readonly inspect CAS packet Source `f4b43bfd2484153424e8fe8e0807dcba52e521e0`
+is committed and pushed to origin/main after normal hooks. Independent review,
+scoped strict/lint and isolated focus passed: stage VTRw9Y, 1pass/8skip/0fail,
+34 assertions in5.25s. The prior unchanged shared-argument caller already passed
+in SdYolG; it was not repeated for this CAS-only delta.
+
+The single changed-input full stage `/workspace/contour-stage-4TIJNP` ended
+UNKNOWN, not coverage acceptance: outer exit1 after271137.96236ms, no outer
+timeout/signal/spawn error, capture complete, group closed, boot unchanged.
+Native namespace child1009799 exited1; controller receipt SHA256
+`aa6018f896f23884d706ee0ade9dbfbb7780f3aa79b6b596224406e86c96af09`.
+Image3007bd1c8bfda288f4f439ea794f67a75d7c2087 (manifest SHA256
+93a34692b9a121e0ac2e57fca1a802994a769fb0b20455baccbbb89d8cf8640e)
+and profile02 remained unchanged. Inner coverage reports direct producer
+termination with UNKNOWN; publication is unknown-or-partial. No hits, closure,
+or current numeric qualification are credited. Preserve stage/image/raw logs and
+`DIAG/readonly-inspect-full-stage-20261026-01.log`; do not replay this attempt.
+Latest accepted local diagnostic remains Source62797e97, F533/559,
+L2453/2879,S2649/3165,B3104/3702, BLOCKED. Before a runtime successor,
+inspect the existing operation outcome and qualify its effects/resource boundary;
+closed capture alone does not clear UNKNOWN. Static analysis can continue.
+
+
 Latest terminal packet: Source62797e97e9434f65f3bec03769255f415c12f8e1,
 runadc93f40-43b2-4a1b-ac6f-b018f44cbb59, stage /workspace/contour-stage-GTvs9v
 completes exit0 in257606.757184ms with156pass/0fail/3891assertions in250.83s.
