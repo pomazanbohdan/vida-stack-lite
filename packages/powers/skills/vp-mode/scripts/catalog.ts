@@ -54,6 +54,7 @@ export type Catalog = {
   instructions: { instruction_id: string; path: string; sha256: string }[];
 };
 export type TagEntry = { tag: string; description: string; aliases: string[] };
+export type CatalogTagMatch = { dimension: 'capability' | 'pattern'; tag: string; description: string };
 export type InstructionMetadata = { instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[]; revision: number };
 export type SearchQuery = {
   capability_tags?: string[]; pattern_tags?: string[]; instruction_ids?: string[]; roles?: string[]; products?: string[]; conditions?: string[];
@@ -305,6 +306,46 @@ export function catalogTags(catalog: Catalog): { capability: TagEntry[]; pattern
   return { capability: collect('capability'), pattern: collect('pattern') };
 }
 
+function normalizedTagText(value: string): string {
+  return value.normalize('NFKC').trim().toLowerCase().replace(/\s+/gu, ' ');
+}
+
+function tagTokens(value: string): string[] {
+  return value.normalize('NFKC').toLowerCase().match(/[\p{L}\p{M}\p{N}]+/gu) ?? [];
+}
+
+export function catalogFindTags(
+  catalog: Catalog,
+  terms: readonly string[],
+  match: 'any' | 'all' = 'any',
+): CatalogTagMatch[] {
+  if (match !== 'any' && match !== 'all') throw invalid('tag match must be any or all', { match });
+  const phrases = [...new Set(terms.map(normalizedTagText).filter((term) => term !== ''))];
+  const tokens = [...new Set(terms.flatMap(tagTokens))];
+  if (tokens.length === 0) return [];
+  const matches: Array<{ rank: number; entry: CatalogTagMatch }> = [];
+  for (const dimension of ['capability', 'pattern'] as const) {
+    for (const [tag, description] of Object.entries(catalog.tag_dictionary[dimension])) {
+      const aliases = Object.entries(catalog.tag_aliases)
+        .filter(([, canonical]) => canonical === tag)
+        .map(([alias]) => alias);
+      const names = [tag, ...aliases];
+      const searchable = [...names, description];
+      const availableTokens = new Set(searchable.flatMap(tagTokens));
+      const matchedTokenCount = tokens.filter((token) => availableTokens.has(token)).length;
+      const selected = match === 'all' ? matchedTokenCount === tokens.length : matchedTokenCount > 0;
+      if (!selected) continue;
+      const exact = phrases.some((phrase) => names.some((name) => normalizedTagText(name) === phrase));
+      matches.push({ rank: exact ? 0 : 1, entry: { dimension, tag, description } });
+    }
+  }
+  return matches
+    .sort((left, right) => left.rank - right.rank
+      || compareNames(left.entry.dimension, right.entry.dimension)
+      || compareNames(left.entry.tag, right.entry.tag))
+    .map(({ entry }) => entry);
+}
+
 function hasAny(values: string[], selected: string[]): boolean {
   return selected.length === 0 || values.some((value) => selected.includes(value));
 }
@@ -387,6 +428,28 @@ export function catalogSearch(catalog: Catalog, instructions: Map<string, Loaded
     .filter((instruction) => facets.classificationStatuses.length === 0 || facets.classificationStatuses.includes(instruction.classification.classification_status))
     .sort((left, right) => compareNames(left.instruction_id, right.instruction_id))
     .map(({ instruction_id, title, summary, capability_tags, pattern_tags, revision }) => ({ instruction_id, title, summary, capability_tags, pattern_tags, revision }));
+}
+
+export function catalogSearchWithProfile(
+  catalog: Catalog,
+  instructions: Map<string, LoadedInstruction>,
+  query: SearchQuery,
+  profile: EffectiveProfile,
+): InstructionMetadata[] {
+  validateProfile(profile);
+  const matches = catalogSearch(catalog, instructions, query);
+  const selected = new Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>();
+  const results: InstructionMetadata[] = [];
+  for (const metadata of matches) {
+    const instruction = activeInstruction(instructions, metadata.instruction_id);
+    const unresolved = unresolvedProfileConflictFor(instruction, profile);
+    if (unresolved !== undefined) requireProfileResolution(unresolved, { instruction_id: instruction.instruction_id });
+    if (profileConflictFor(instruction, profile) !== undefined) continue;
+    selected.set(instruction.instruction_id, { instruction, reason: 'matched' });
+    results.push(metadata);
+  }
+  validateCanonicalPolicySelection(selected, profile);
+  return results;
 }
 
 export function catalogBrowse(catalog: Catalog, instructions: Map<string, LoadedInstruction>): CatalogBrowseResult {

@@ -15,8 +15,8 @@ sources:
 - id: decisions
   resource: /decisions/index.md
   title: Accepted decisions D1–D16 (and D4b)
-generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '7'
+generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
+revision: '8'
 ---
 
 # 1. Purpose
@@ -58,6 +58,8 @@ rules, instructions and boundaries.
   recorded.
 
 - **BR-24.** Users can organize and find canonical instructions by their form and topic domain without duplicate instruction files or changes to stable IDs. Existing capability, methodology, role and product selection remains available. A cross-domain instruction can appear in several generated views with one canonical record. Classification uncertainty is explicit. Metadata organization grants no source admission, applicability or execution authority; D14/D15 and existing owner gates remain unchanged.
+
+The agent's instruction-discovery workflow is explicit and economical: derive task intents from the request, established authority, relevant requirements and observed artifacts; discover matching vocabulary; return unique ID-and-description candidates; obtain all selected instructions in one checked text response. A PR reference alone grants no fixing, commit, push or merge authority. Opposite rules remain declared alternatives/conflicts and cannot be hidden as duplicates or chosen by a relevance score. Direction, capability, pattern, form and applicability context stay distinct. Source snapshots are selected explicitly; normal CLI discovery does not require caller-authored JSON. This refinement does not require completing domain classification before basic retrieval can work.
 
 # 3. Boundaries of responsibility
 

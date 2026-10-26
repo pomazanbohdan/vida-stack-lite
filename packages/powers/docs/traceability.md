@@ -24,8 +24,8 @@ sources:
 - id: catalog-design
   resource: /catalog-design.md
   title: Vida Powers — instruction catalog design
-generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '13'
+generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
+revision: '17'
 ---
 
 ## Research → BR → SR → AC
@@ -128,3 +128,5 @@ These evidence routes do not add AC definitions or imply Runtime acceptance.
 **Open coverage gaps:** runtime acceptance (AC gap), qualification on
 hosts other than Codex (AC-27, gap), marketplace installation (gap), a legal opinion
 on licenses (gap).
+
+Compact task-to-instruction refinement: BR-24 -> SR-93 together with existing SR-10/11/12/13/14/25/26/58/70/92 -> AC-65–AC-69. The existing catalog/CLI/profile/compose owners and vp-mode/README carry Source implementation; catalog/CLI/skill-contract tests, fresh 24-query parity and real-corpus CLI exercises supply current evidence. Task 2, the combined delta and the four subsequent Minor corrections have independent READY reviews; Root reconciled all five acceptance rows as verified for Source. Exact evidence is retained under the existing instruction-organization work directory with retrieval-batch and retrieval-review-minor receipt prefixes. The existing dependency-substitution Minor stays deferred in next-actions. D12 declared conflicts, D14/D15 source gates, installation/Runtime acceptance and the separately frozen SR-92 classification trial are not closed by this trace.

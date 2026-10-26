@@ -7,6 +7,13 @@ export type InstructionDomain = typeof INSTRUCTION_DOMAINS[number];
 export type ClassificationStatus = 'classified' | 'unclassified';
 export type InstructionSchemaVersion = 'legacy-v1' | 'faceted-v1.1';
 
+export const INSTRUCTION_FORM_DESCRIPTIONS: Record<InstructionForm, string> = {
+  principle: 'Guides judgment.',
+  'decision-rule': 'Expresses a conditional choice or obligation.',
+  procedure: 'Requires an ordered action sequence.',
+  checklist: 'Enumerates checks without a required order.',
+};
+
 export type InstructionClassification =
   | { classification_status: 'classified'; instruction_form: InstructionForm; domains: InstructionDomain[] }
   | { classification_status: 'unclassified'; classification_reason: string };

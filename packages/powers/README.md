@@ -17,7 +17,7 @@ donor rights review and Runtime acceptance remain separate gates.
 | [Implementation plan](docs/implementation-plan.md) | Roadmap of stages 0–10, gates, risks |
 | [Step H plan](docs/task-plan-step-h.md) | H0–H3 gates for the accepted D14/D15 scope; implementation has not started |
 | [Next actions](docs/next-actions.md) | Current scope within the catalog: A0 → A → B → C → D → E → F → G → H |
-| [Decisions D1–D15 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
+| [Decisions D1–D16 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
 | [AGENTS.md](AGENTS.md) | Instructions for the agents developing VP |
 | [Donor manifest](donors.yaml) | Eight processed donors plus Wondelai registered-not-processed; rights review remains open |
 
@@ -119,8 +119,9 @@ is set by the host config. VP is not tied to a vendor and does not name the prov
 in advance. **Agent Fallback is mandatory:** unavailability, timeout, API error,
 incorrect format, unknown candidate ID or insufficient confidence → the choice
 passes to the main agent, and the source of the decision, the selected IDs and the reason for the fallback
-are materialized. The relevance threshold is calibrated **per operation**; the example
-value from the research is not a universal constant.
+are materialized. The current lexical/tag-count score is uncalibrated supplementary
+evidence; it does not establish semantic confidence. Any future relevance threshold
+requires operation-specific calibration; a research example is not a universal constant.
 
 ## 5. Methodology policy
 
@@ -256,8 +257,27 @@ packages/powers/
 
 ## 10. How to work with VP
 
-**Find an instruction** — `catalog.search` by capability/pattern tags; the full
-text — only through `catalog.get`.
+**Find and retrieve instructions** — Bind the task evidence to outcome, target,
+permitted actions, exclusions, and required proof; state every intent and keep
+distinct intents represented. Extract literal terms, map them with
+`catalog-cli.ts tags --query`, and add `--domain` or `--form` only when
+evidence justifies that axis. `search` returns candidate IDs and descriptions;
+without `--profile` it is discovery only. Select unique IDs for all intents,
+then make one `get --id <id...> --profile <effective-profile.json>` call.
+The CLI delegates to `catalog.compose`, requires every requested ID, includes
+dependencies, and rejects conflicts atomically. Read the source bodies and
+nonempty applicability/artifact obligations in compose order; verify them
+against the requested target and proof. Do not infer confidence, exclusivity,
+hidden synonyms, or authority from tag counts or shared themes.
+A matching instruction or pull request does not establish real authorization;
+resolve it from the named owner and current authoritative source.
+Pass the same exact `--catalog <path>` to `tags`, `search`, and `get`.
+Never union explicit root `.tmp` snapshots with the package corpus. Catalog,
+instruction and effective-profile schemas must exist in the selected snapshot.
+Profile-aware search and composition use the package's canonical
+`config/methodology-profile.json` and `config/vpmethodologyprofile.v1.schema.json`
+as policy authority, including snapshot queries; snapshot policy cannot override
+them. Bind both snapshot files and canonical policy for reproducible work.
 
 **Add an instruction** — a new atomic norm in the corpus with tags, conditions,
 `artifact_contract`, provenance (donor + license + revision) and `revision`; then
@@ -267,9 +287,11 @@ update the coverage report.
 `.tmp/donors`, run inventory → instructions → tags → dedup → conflicts →
 provenance; record a decision on every dedup match.
 
-**Compose a bundle** — `catalog.compose` by tags, role and effective
-methodology: mandatory instructions and dependencies enter the bundle
-regardless of relevance.
+**Compose a structured bundle** — `catalog.compose` remains the structured
+composition API for callers supplying selectors, role and effective
+methodology. Mandatory instructions and dependencies enter the bundle
+regardless of relevance. The single-record `catalog.get` library operation
+remains an inspection API, not a bundle assembler.
 
 **Create a Work Item** — a concept in `docs/work/`: stable ID, goal, scope, AC,
 relations to other Work Items; evidence — as separate records.
@@ -309,8 +331,8 @@ In detail — in [docs/next-actions.md](docs/next-actions.md).
 
 ## 12. Status and deferred items
 
-**Done:** product concept (research), roadmap, catalog design, sixteen decision
-records (D1–D9, D4b and D10–D15), an OKF bundle with a validator, and a donor manifest
+**Done:** product concept (research), roadmap, catalog design, seventeen decision
+records (D1–D9, D4b and D10–D16), an OKF bundle with a validator, and a donor manifest
 with eight processed snapshots (seven methodological donors and Open Knowledge Format)
 plus Wondelai registered-not-processed.
 

@@ -15,13 +15,14 @@ sources:
 - id: research
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
-generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
-revision: '14'
+generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
+revision: '16'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
 Types: `auto` — executed by a command; `manual` — requires observation by a human or
-an attached agent; `external` — evidence outside VP (host qualification, marketplace,
+an attached agent; `mixed` — executed checks together with source/agent review;
+`external` — evidence outside VP (host qualification, marketplace,
 runtime acceptance).
 
 **States:** `open` — not verified; `verified` — evidence exists; `gap` — evidence is impossible in
@@ -140,6 +141,18 @@ The criteria below are future gates. They do not change the current E4 acceptanc
 | AC-64 | Frozen baseline/prototype/40-item treatment retain query/label/judgment bindings and matched outputs, errors and timing scope; semantic metrics and uncertainty are reported under the frozen protocol without claims of human, full-corpus, NL-search or donor-throughput acceptance | SR-92 | Bound old-code baseline, same-input structure prototype, isolated treatment and model-evaluation reports, exact code review and unchanged package gates | auto | open |
 
 These criteria do not close AC-57/AC-59, legal clearance or Runtime acceptance.
+
+## Compact retrieval workflow
+
+| ID | Criterion | System trace | Evidence | Kind | State |
+|---|---|---|---|---|---|
+| AC-65 | One multi-value query/filter flag works; tag and candidate identities are unique before pagination; ordinary lists contain only ID and description; help matches grammar and explicit source selection | BR-24, SR-10, SR-70, SR-92, SR-93 | CLI positive/negative/alias/duplicate/pagination/source-snapshot fixtures and exact stdout checks | auto | verified |
+| AC-66 | One multi-ID get uses compose, includes each required/dependency rule once, preserves body/applicability/output obligations, enforces limits and emits no partial text on any failure | SR-11, SR-12, SR-13, SR-58, SR-93 | Public process tests with duplicate IDs, bad later ID, dependencies, source/digest/schema/status errors and exact text/limit checks | auto | verified |
+| AC-67 | Current resolved profiles, stale alternatives, unresolved choices and declared exclusions take their existing distinct paths; opposite IDs are not deduplicated or chosen by rank, and shared themes do not falsely exclude complementary rules | SR-14, SR-25, SR-26, SR-93, D12 | Profile/closure/conflicting-pair and same-theme-complementary fixtures, including atomic empty stdout | auto | verified |
+| AC-68 | vp-mode explains evidence-based task-to-tag routing and uncertainty; PR handling does not infer write authority; maintained skill/help/README examples execute the implemented compact workflow | BR-24, SR-22, SR-25, SR-93 | Routing examples for code/documentation/ambiguous PRs and authorized sequential roles, source review and actual CLI exercises | mixed | verified |
+| AC-69 | Dictionary-only discovery reads no instruction bodies; library metadata/get contracts and frozen no-facet outputs remain compatible, and legacy records remain discoverable without a full-classification prerequisite | SR-10, SR-11, SR-92, SR-93 | Catalog-only fixture, unchanged public library tests, fresh 24-query parity and matched read/output accounting | auto | verified |
+
+All five criteria are verified for current Source and the CLI/library/skill contract. Root executed the canonical coverage gate (598 pass, one expected Windows skip, zero failures; 613/613 functions and 4,917/4,917 lines), typecheck, Knip, corpus/documentation checks, the 24-query parity check and real-corpus CLI exercises. Independent combined and repair reviews are READY; exact bindings and native receipts are retained under the existing instruction-organization work directory (retrieval-batch and retrieval-review-minor prefixes). The preexisting first-carrier dependency substitution remains a deferred Minor in next-actions; this qualification does not claim it fixed. These criteria do not establish full-corpus classification, rights, donor admission, installation or Runtime acceptance.
 
 ## What we do not prove
 

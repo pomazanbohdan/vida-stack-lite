@@ -16,7 +16,7 @@ materialization of results in two modes (Standalone / Runtime).
 |---|---|---|
 | 1 | `docs/next-actions.md` | Current scope, order and gates of work |
 | 2 | `docs/research/vida-powers-product-research.md` | B-level: product concept (source of truth) |
-| 3 | `docs/decisions/index.md` | Accepted decisions D1–D15 (and D4b) with grounds |
+| 3 | `docs/decisions/index.md` | Accepted decisions D1–D16 (and D4b) with grounds |
 | 4 | `docs/implementation-plan.md` | Roadmap of stages 0–10 and quality gates |
 | 5 | `docs/system-specification.md` (after step B) | S-level: observable behavior |
 | 6 | repository `AGENT.sidecar.md` | Placement, owners, policy, verification gates |
@@ -134,7 +134,7 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | Path | Responsibility | Step |
 |---|---|---|
 | `docs/` | The product OKF bundle: research, canonical documents, decision records, next-actions, Work Items, runtime requests | B, F, G |
-| `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D15 (and D4b) |
+| `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D16 (and D4b) |
 | `docs/work/` | VP Work Items: stable ID, AC, evidence, relations | F |
 | `docs/requests/` | Runtime requests to the agent maintainer | G |
 | `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map), `VPPluginManifestInputs/v1` (`vppluginmanifest.v1.schema.json`, E5); plus the source profile instance `config/methodology-profile.json` (`VPMethodologyProfile/v1`, D8/D10) | C, E |
@@ -232,6 +232,7 @@ for a resolved session bundle.
 | D13 | One canonical severity scale: Critical / Important / Minor |
 | D14 | One bounded engineering/UX, product and business instruction pack; individual source gates remain mandatory |
 | D15 | Selected typed resources use exact-ID retrieval through the same catalog in a later phase |
+| D16 | Stable canonical IDs/files with independent form/domain metadata, generated browse and a separately verified rollout |
 
 ## 8. Known risks and GAPs
 

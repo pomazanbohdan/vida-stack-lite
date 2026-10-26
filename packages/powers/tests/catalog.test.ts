@@ -9,14 +9,16 @@ import {
   CatalogError,
   catalogBrowse,
   catalogCompose,
+  catalogFindTags,
   catalogGet,
   catalogSearch,
+  catalogSearchWithProfile,
   catalogTags,
   loadCatalog,
   loadInstructions,
   readSchema,
 } from '../skills/vp-mode/scripts/catalog.ts';
-import type { Catalog, CatalogBrowseResult, ComposeQuery, LoadedInstruction, SearchQuery } from '../skills/vp-mode/scripts/catalog.ts';
+import type { Catalog, CatalogBrowseResult, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from '../skills/vp-mode/scripts/catalog.ts';
 import { validateAgainstSchema } from '../skills/vp-mode/scripts/schema.ts';
 import type { Schema } from '../skills/vp-mode/scripts/schema.ts';
 
@@ -92,6 +94,31 @@ async function readCanonicalMethodologyProfile(): Promise<CanonicalMethodologyPr
 async function readEffectiveProfileSchema(): Promise<Schema> {
   const path = join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'config', 'vpeffectiveprofile.v1.schema.json');
   return JSON.parse(await readFile(path, 'utf8')) as Schema;
+}
+
+async function policyFixture(): Promise<{
+  catalog: Catalog;
+  instructions: Map<string, LoadedInstruction>;
+  group: string;
+  alternatives: string[];
+}> {
+  const loaded = await fixture();
+  const methodology = await readCanonicalMethodologyProfile();
+  const group = methodology.groups.find((item) => item.id === 'approval-policy');
+  const first = group?.alternatives[0];
+  const second = group?.alternatives[1];
+  if (group === undefined || first === undefined || second === undefined) throw new Error('canonical approval-policy alternatives are missing');
+
+  const catalog = structuredClone(loaded.catalog);
+  catalog.tag_dictionary.pattern[first.id] = 'Fixture policy alternative ' + first.id + '.';
+  catalog.tag_dictionary.pattern[second.id] = 'Fixture policy alternative ' + second.id + '.';
+  const instructions = new Map(loaded.instructions);
+  const alpha = instructions.get('alpha');
+  const beta = instructions.get('beta');
+  if (alpha === undefined || beta === undefined) throw new Error('fixture policy instructions are missing');
+  instructions.set('alpha', { ...alpha, pattern_tags: [first.id] });
+  instructions.set('beta', { ...beta, pattern_tags: [second.id] });
+  return { catalog, instructions, group: group.id, alternatives: [first.id, second.id] };
 }
 
 function syntheticInstructions(
@@ -335,6 +362,11 @@ describe('loadInstructions', () => {
 });
 
 describe('catalogTags', () => {
+  test('tag lookup rejects invalid matching from a JavaScript caller', async () => {
+    const { catalog } = await fixture();
+    expect(() => Reflect.apply(catalogFindTags, undefined, [catalog, ['test'], 'bogus'])).toThrow('tag match must be any or all');
+  });
+
   test('returns sorted canonical tags with sorted aliases', async () => {
     const { catalog } = await fixture();
     expect(catalogTags(catalog)).toEqual({
@@ -350,6 +382,60 @@ describe('catalogTags', () => {
         { tag: 'test-first-development', description: 'Write tests first.', aliases: ['tdd', 'test-first'] },
       ],
     });
+  });
+});
+
+describe('catalogFindTags', () => {
+  test('matches Unicode-normalized multi-word queries with ANY and ALL token modes', async () => {
+    const { catalog } = await fixture();
+    const any = catalogFindTags(catalog, ['test first', 'TEST']);
+    const all = catalogFindTags(catalog, ['test first'], 'all');
+    expect(any.map(({ dimension, tag }) => `${dimension}:${tag}`)).toEqual([
+      'capability:test-design',
+      'pattern:test-after-development',
+      'pattern:test-first-development',
+    ]);
+    expect(all.map(({ dimension, tag }) => `${dimension}:${tag}`)).toEqual(['pattern:test-first-development']);
+  });
+
+  test('puts exact canonical and declared alias hits first and emits one canonical identity', async () => {
+    const { catalog } = await fixture();
+    const matches = catalogFindTags(catalog, ['ＴＤＤ', 'tdd', 'test-first', 'implementation']);
+    expect(matches.map(({ dimension, tag }) => `${dimension}:${tag}`)).toEqual([
+      'pattern:test-first-development',
+      'capability:test-design',
+      'pattern:test-after-development',
+    ]);
+    expect(matches.filter(({ dimension, tag }) => dimension === 'pattern' && tag === 'test-first-development')).toHaveLength(1);
+    expect(catalogFindTags(catalog, ['test-after-development'])[0]).toEqual({
+      dimension: 'pattern', tag: 'test-after-development', description: 'Test after implementation.',
+    });
+  });
+
+  test('uses literal tokens and deterministic dimension/tag ties without matching pr inside product', async () => {
+    const { catalog } = await fixture();
+    const expanded: Catalog = {
+      ...catalog,
+      tag_dictionary: {
+        ...catalog.tag_dictionary,
+        capability: {
+          ...catalog.tag_dictionary.capability,
+          'product-review': 'Review product work.',
+          'review-code': 'Review code changes.',
+        },
+        pattern: {
+          ...catalog.tag_dictionary.pattern,
+          'test-review': 'Review tests.',
+        },
+      },
+    };
+    expect(catalogFindTags(expanded, ['pr'])).toEqual([]);
+    expect(catalogFindTags(expanded, ['product-review', 'review']).map(({ dimension, tag }) => `${dimension}:${tag}`)).toEqual([
+      'capability:product-review',
+      'capability:evidence-review',
+      'capability:review-code',
+      'pattern:test-review',
+    ]);
   });
 });
 
@@ -508,6 +594,50 @@ describe('catalogSearch', () => {
   test('never returns disabled instructions', async () => {
     const { catalog, instructions } = await fixture();
     expect(catalogSearch(catalog, instructions, { instruction_ids: ['disabled-mode'] })).toEqual([]);
+  });
+
+  test('profile-aware search filters resolved inactive alternatives without changing metadata', async () => {
+    const { catalog, instructions, group, alternatives } = await policyFixture();
+    const active = alternatives[0];
+    if (active === undefined) throw new Error('active policy alternative missing');
+    const profile: EffectiveProfile = {
+      schema: 'VPEffectiveProfile/v1',
+      groups: { [group]: { active, alternatives } },
+      unresolved_groups: {},
+    };
+    const query = { instruction_ids: ['alpha', 'beta'] };
+    const expected = catalogSearch(catalog, instructions, query).filter((item) => item.instruction_id === 'alpha');
+    const actual = catalogSearchWithProfile(catalog, instructions, query, profile);
+    expect(actual).toEqual(expected);
+    expect(Object.keys(actual[0] ?? {}).sort()).toEqual(['capability_tags', 'instruction_id', 'pattern_tags', 'revision', 'summary', 'title']);
+  });
+
+  test('profile-aware search requires refresh for stale canonical alternatives', async () => {
+    const { catalog, instructions, group, alternatives } = await policyFixture();
+    const active = alternatives[0];
+    if (active === undefined) throw new Error('active policy alternative missing');
+    const profile: EffectiveProfile = {
+      schema: 'VPEffectiveProfile/v1',
+      groups: { [group]: { active, alternatives: [...alternatives, 'stale-alternative'] } },
+      unresolved_groups: {},
+    };
+    expect(() => catalogSearchWithProfile(catalog, instructions, { instruction_ids: ['alpha'] }, profile)).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({ group, profile_refresh_required: true }),
+    }));
+  });
+
+  test('profile-aware search requires a choice for a matched unresolved alternative', async () => {
+    const { catalog, instructions, group, alternatives } = await policyFixture();
+    const profile: EffectiveProfile = {
+      schema: 'VPEffectiveProfile/v1',
+      groups: {},
+      unresolved_groups: { [group]: alternatives },
+    };
+    expect(() => catalogSearchWithProfile(catalog, instructions, { instruction_ids: ['beta'] }, profile)).toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({ group, resolution_required: true, alternatives }),
+    }));
   });
 });
 

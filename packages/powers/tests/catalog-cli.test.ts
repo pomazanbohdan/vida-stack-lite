@@ -1,6 +1,7 @@
 import { afterAll, describe, expect, mock, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import type { SpawnSyncReturns } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { cp, copyFile, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises';
 import * as fsPromises from 'node:fs/promises';
@@ -42,6 +43,17 @@ async function catalogWithProfileSchema(): Promise<string> {
     join(here, '../config/vpeffectiveprofile.v1.schema.json'),
     join(directory, 'config/vpeffectiveprofile.v1.schema.json'),
   );
+  return join(directory, 'catalog.json');
+}
+
+async function catalogOnlySnapshot(includeSchema = true): Promise<string> {
+  const directory = await mkdtemp(join(tmpdir(), 'vp-catalog-only-'));
+  profileDirs.push(directory);
+  await mkdir(join(directory, 'config'), { recursive: true });
+  await copyFile(join(fixtureDir, 'catalog.json'), join(directory, 'catalog.json'));
+  if (includeSchema) {
+    await copyFile(join(fixtureDir, 'config/vpcatalog.v1.schema.json'), join(directory, 'config/vpcatalog.v1.schema.json'));
+  }
   return join(directory, 'catalog.json');
 }
 
@@ -90,6 +102,37 @@ async function catalogWithOversizedInstruction(): Promise<string> {
   return catalogPath;
 }
 
+async function rewriteFixtureInstruction(
+  catalogPath: string,
+  id: string,
+  update: (source: string) => string,
+  refreshDigest = true,
+): Promise<void> {
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8')) as {
+    instructions: { instruction_id: string; path: string; sha256: string }[];
+  };
+  const entry = catalog.instructions.find((item) => item.instruction_id === id);
+  if (entry === undefined) throw new Error('fixture instruction entry missing: ' + id);
+  const instructionPath = join(dirname(catalogPath), entry.path);
+  const source = await readFile(instructionPath, 'utf8');
+  const updated = update(source);
+  if (updated === source) throw new Error('fixture instruction was not changed: ' + id);
+  await writeFile(instructionPath, updated, 'utf8');
+  if (!refreshDigest) return;
+  entry.sha256 = createHash('sha256').update(updated).digest('hex');
+  await writeFile(catalogPath, JSON.stringify(catalog, null, 2) + '\n', 'utf8');
+}
+
+async function catalogWithLargeProjection(): Promise<string> {
+  const catalogPath = await catalogWithProfileSchema();
+  const marker = 'Guidance body.\n';
+  await rewriteFixtureInstruction(catalogPath, 'guidance', (source) => {
+    if (!source.endsWith(marker)) throw new Error('fixture guidance body marker is missing');
+    return source.slice(0, -marker.length) + 'x'.repeat(63_980);
+  });
+  return catalogPath;
+}
+
 async function catalogWithPolicyAlternatives(): Promise<{ catalogPath: string; group: string; alternatives: string[] }> {
   const catalogPath = await catalogWithProfileSchema();
   const catalog = JSON.parse(await readFile(catalogPath, 'utf8')) as {
@@ -124,7 +167,7 @@ function runCli(
   args: string[],
   cwd = process.env.TMP ?? process.env.TEMP ?? '.',
   scriptPath = cliPath,
-): ReturnType<typeof spawnSync> {
+): SpawnSyncReturns<string> {
   return spawnSync(bunPath, [scriptPath, ...args], {
     cwd,
     encoding: 'utf8',
@@ -363,97 +406,404 @@ describe('catalog CLI', () => {
     expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'FINDING_INPUT_PATH_INVALID' });
   });
 
-  test('tags prints JSON dimensions', () => {
-    const result = runCli(fixtureArgs(['tags', '--json']));
+  test('tags emits compact rows and places exact declared aliases before token matches', () => {
+    const result = runCli(fixtureArgs(['tags', '--query', 'tdd', 'test']));
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
-    expect(stdoutJson(result)).toMatchObject({
-      capability: expect.arrayContaining([expect.objectContaining({ tag: 'test-design' })]),
-      pattern: expect.arrayContaining([expect.objectContaining({ tag: 'test-first-development' })]),
-    });
+    expect(result.stdout.split('\n').filter(Boolean)).toEqual([
+      'pattern:test-first-development\tWrite tests first.',
+      'capability:test-design\tDesign behavior tests.',
+      'pattern:test-after-development\tTest after implementation.',
+    ]);
+    expect(result.stdout).not.toContain('{');
   });
 
-  test('search prints metadata without instruction content', () => {
-    const result = runCli(fixtureArgs(['search', '--capability', 'test-design']));
+  test('tags accepts one multi-word query occurrence and applies ANY or ALL literally', () => {
+    const any = runCli(fixtureArgs(['tags', '--query', 'pr', 'review']));
+    expect(any.status).toBe(0);
+    expect(any.stdout).toBe('capability:evidence-review\tReview evidence.\n');
+
+    const all = runCli(fixtureArgs(['tags', '--query', 'tdd', 'test-first', 'TDD', '--match', 'all']));
+    expect(all.status).toBe(0);
+    expect(all.stdout).toBe('pattern:test-first-development\tWrite tests first.\n');
+  });
+
+  test('tags deduplicates repeated query aliases before offset and limit', () => {
+    const result = runCli(fixtureArgs(['tags', '--query', 'tdd', 'test-first', 'TDD', '--match', 'all', '--limit', '1', '--offset', '1']));
     expect(result.status).toBe(0);
-    const value = (stdoutJson(result) as { results: Record<string, unknown>[] }).results;
-    expect(value).toEqual(expect.arrayContaining([expect.objectContaining({ instruction_id: 'alpha' })]));
-    expect((value as Record<string, unknown>[]).every((item) => !Object.hasOwn(item, 'content'))).toBe(true);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('pagination: returned 0/1; 0 remaining after offset 1.\n');
   });
 
-  test('search accepts repeated facet flags and browse emits stable metadata groups', async () => {
+  test('tags reads a catalog-only snapshot without instruction bodies', async () => {
+    const catalogPath = await catalogOnlySnapshot();
+    const directory = dirname(catalogPath);
+    const entries = await readdir(directory);
+    expect(entries).toHaveLength(2);
+    expect(entries).toEqual(expect.arrayContaining(['catalog.json', 'config']));
+    expect(await readdir(join(directory, 'config'))).toEqual(['vpcatalog.v1.schema.json']);
+    const result = await runInProcess(['tags', '--catalog', catalogPath]);
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toContain('capability:test-design\tDesign behavior tests.');
+    expect(result.stdout).not.toContain('Alpha instruction');
+  });
+
+  test('tags does not borrow the production schema for an explicit incomplete snapshot', async () => {
+    const catalogPath = await catalogOnlySnapshot(false);
+    const result = await runInProcess(['tags', '--catalog', catalogPath]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('cannot read vpcatalog.v1.schema.json');
+  });
+
+  test('search emits ID and summary once across tags with no JSON metadata columns', () => {
+    const result = runCli(fixtureArgs(['search', '--capability', 'test-design', 'acceptance-design', '--pattern', 'test-first-development']));
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('alpha\tApplies to implementation tasks.\nbeta\tDefines acceptance checks.\n');
+    expect(result.stdout).not.toContain('Alpha instruction');
+    expect(result.stdout).not.toContain('revision');
+  });
+
+  test('search pagination follows candidate dedup and no-facet search keeps legacy records', () => {
+    const paged = runCli(fixtureArgs([
+      'search', '--capability', 'test-design', 'acceptance-design', '--pattern', 'test-first-development', '--limit', '1', '--offset', '1',
+    ]));
+    expect(paged.status).toBe(0);
+    expect(paged.stdout).toBe('beta\tDefines acceptance checks.\n');
+    expect(paged.stderr).toBe('pagination: returned 1/2; 0 remaining after offset 1.\n');
+
+    const broad = runCli(fixtureArgs(['search']));
+    expect(broad.status).toBe(0);
+    expect(broad.stdout).toContain('guidance\tA guidance instruction with no artifact output.');
+    expect(broad.stdout).toContain('beta\tDefines acceptance checks.');
+  });
+
+  test('search preserves distinct instruction IDs from opposing tag matches', () => {
+    const result = runCli(fixtureArgs(['search', '--pattern', 'test-first-development', 'test-after-development']));
+    expect(result.status).toBe(0);
+    expect(result.stdout.split('\n').filter(Boolean).map((line) => line.split('\t')[0])).toEqual([
+      'alpha', 'beta', 'conflict-mode', 'gamma',
+    ]);
+  });
+
+  test('search accepts multi-value facet lists and normalizes duplicate values before validation', async () => {
     const catalogPath = await catalogWithFacets();
-    const prefix = ['--catalog', catalogPath];
-    const browse = runCli(['browse', ...prefix]);
-    expect(browse.status).toBe(0);
-    expect(browse.stderr).toBe('');
-    expect(stdoutJson(browse)).toMatchObject({
-      forms: expect.arrayContaining([expect.objectContaining({ value: 'procedure', count: 1, instruction_ids: ['alpha'] })]),
-      domains: expect.arrayContaining([expect.objectContaining({ value: 'engineering', count: 2, instruction_ids: ['alpha', 'gamma'] })]),
-      unclassified: { count: 2, instruction_ids: ['beta', 'guidance'] },
-    });
     const search = runCli([
-      'search', ...prefix, '--form', 'procedure', '--form', 'principle', '--domain', 'engineering',
-      '--domain', 'design-ux', '--classification-status', 'classified',
+      'search', '--catalog', catalogPath,
+      '--form', 'procedure', 'procedure', 'principle',
+      '--domain', 'engineering', 'engineering', 'design-ux',
+      '--classification-status', 'classified', 'classified',
     ]);
     expect(search.status).toBe(0);
-    expect((stdoutJson(search) as { results: { instruction_id: string }[] }).results.map((item) => item.instruction_id)).toEqual(['alpha', 'gamma']);
+    expect(search.stderr).toBe('');
+    expect(search.stdout).toBe('alpha\tApplies to implementation tasks.\ngamma\tSupplies a transitive dependency.\n');
   });
 
-  test('search facet flags reject duplicate, unknown, and empty values with native failure status', async () => {
+  test('browse emits dimension-qualified domain/form groups, including known zero and unclassified groups', async () => {
+    const catalogPath = await catalogWithFacets();
+    const domain = runCli(['browse', '--catalog', catalogPath, '--axis', 'domain']);
+    expect(domain.status).toBe(0);
+    expect(domain.stderr).toBe('');
+    expect(domain.stdout.split('\n').filter(Boolean).map((line) => line.split('\t')[0])).toEqual([
+      'domain:business', 'domain:design-ux', 'domain:engineering', 'domain:operations', 'domain:product', 'domain:research',
+      'classification_status:unclassified',
+    ]);
+    expect(domain.stdout).toContain('domain:business\tDomain business; 0 active instructions.');
+    expect(domain.stdout).toContain('classification_status:unclassified\t2 active instructions are unclassified.');
+
+    const form = runCli(['browse', '--catalog', catalogPath, '--axis', 'form']);
+    expect(form.status).toBe(0);
+    expect(form.stdout.split('\n').filter(Boolean).map((line) => line.split('\t')[0])).toEqual([
+      'form:checklist', 'form:decision-rule', 'form:principle', 'form:procedure', 'classification_status:unclassified',
+    ]);
+    expect(form.stdout).toContain('form:decision-rule\tExpresses a conditional choice or obligation. 0 active instructions.');
+
+    const all = runCli(['browse', '--catalog', catalogPath]);
+    expect(all.status).toBe(0);
+    expect(all.stdout.split('\n').filter(Boolean)).toHaveLength(11);
+    expect(all.stdout).toContain('domain:engineering\tDomain engineering; 2 active instructions.');
+    expect(all.stdout).toContain('form:procedure\tRequires an ordered action sequence. 1 active instructions.');
+    expect(all.stdout).not.toContain('instruction_ids');
+  });
+
+  test('browse paginates unique groups and rejects unsupported policy axes', async () => {
+    const catalogPath = await catalogWithFacets();
+    const paged = runCli(['browse', '--catalog', catalogPath, '--axis', 'domain', '--limit', '1', '--offset', '1']);
+    expect(paged.status).toBe(0);
+    expect(paged.stdout).toBe('domain:design-ux\tDomain design-ux; 1 active instructions.\n');
+    expect(paged.stderr).toBe('pagination: returned 1/7; 5 remaining after offset 1.\n');
+
+    const unsupported = await runInProcess(['browse', '--catalog', catalogPath, '--axis', 'policy']);
+    expect(unsupported.status).toBe(1);
+    expect(unsupported.stdout).toBe('');
+    expect(unsupported.stderr).toContain('flag --axis must be domain or form');
+  });
+
+  test('search rejects duplicate option occurrences, unsupported values and compact JSON mode', async () => {
     const catalogPath = await catalogWithFacets();
     for (const args of [
-      ['--form', 'procedure', '--form', 'procedure'],
+      ['--form', 'procedure', '--form', 'principle'],
       ['--domain', 'unknown-domain'],
       ['--form', ''],
+      ['--limit', '1', '--limit', '2'],
+      ['--json'],
+      ['--query', 'BM25'],
     ]) {
-      const result = runCli(['search', '--catalog', catalogPath, ...args]);
+      const result = await runInProcess(['search', '--catalog', catalogPath, ...args]);
       expect(result.status).toBe(1);
       expect(result.stdout).toBe('');
-      expect(stderrJson(result).code).toBe('CATALOG_INVALID');
-      const inProcess = await runInProcess(['search', '--catalog', catalogPath, ...args]);
-      expect(inProcess.status).toBe(1);
-      expect(inProcess.stdout).toBe('');
-      expect(JSON.parse(inProcess.stderr)).toEqual(stderrJson(result));
+      expect(result.stderr.trim()).not.toBe('');
+      expect(result.stderr).not.toMatch(/^\{/u);
     }
+    for (const command of ['tags', 'search', 'browse']) {
+      const jsonMode = await runInProcess([command, '--catalog', catalogPath, '--json']);
+      expect(jsonMode.status).toBe(1);
+      expect(jsonMode.stdout).toBe('');
+      expect(jsonMode.stderr).not.toMatch(/^\{/u);
+    }
+    const missingQuery = await runInProcess(['tags', '--query', '--match', 'any']);
+    expect(missingQuery.status).toBe(1);
+    expect(missingQuery.stdout).toBe('');
+    expect(missingQuery.stderr).toContain('missing value for --query');
   });
 
   test('search accepts comma-separated instruction ids', () => {
     const result = runCli(fixtureArgs(['search', '--id', 'alpha,beta']));
     expect(result.status).toBe(0);
-    expect((stdoutJson(result) as { results: { instruction_id: string }[] }).results.map((item) => item.instruction_id)).toEqual(['alpha', 'beta']);
+    expect(result.stdout).toBe('alpha\tApplies to implementation tasks.\nbeta\tDefines acceptance checks.\n');
   });
 
   test('search product comma list returns the union of both product matches', () => {
     const idsFor = (product: string): string[] => {
       const result = runCli(fixtureArgs(['search', '--product', product]));
       expect(result.status).toBe(0);
-      return (stdoutJson(result) as { results: { instruction_id: string }[] }).results.map((item) => item.instruction_id).sort();
+      return result.stdout.split('\n').filter(Boolean).map((line) => line.split('\t')[0] ?? '').sort();
     };
     const expected = [...new Set([...idsFor('vida-powers'), ...idsFor('agent-runtime')])].sort();
     const result = runCli(fixtureArgs(['search', '--product', 'vida-powers,agent-runtime']));
     expect(result.status).toBe(0);
-    expect((stdoutJson(result) as { results: { instruction_id: string }[] }).results.map((item) => item.instruction_id).sort()).toEqual(expected);
+    expect(result.stdout.split('\n').filter(Boolean).map((line) => line.split('\t')[0] ?? '').sort()).toEqual(expected);
   });
 
-  test('search unknown tag emits a JSON error on stderr', () => {
+  test('search unknown tag emits concise stderr and no partial stdout', () => {
     const result = runCli(fixtureArgs(['search', '--capability', 'unknown-tag']));
     expect(result.status).toBe(1);
     expect(result.stdout).toBe('');
-    expect(stderrJson(result)).toMatchObject({ code: 'CATALOG_INVALID', details: { tag: 'unknown-tag', dimension: 'capability' } });
+    expect(result.stderr).toContain('unknown capability query tag unknown-tag');
+    expect(result.stderr).not.toMatch(/^\{/u);
   });
 
-  test('get prints the full instruction', () => {
-    const result = runCli(fixtureArgs(['get', '--id', 'alpha']));
+  test('search with a resolved profile filters inactive alternatives', async () => {
+    const { catalogPath, group, alternatives } = await catalogWithPolicyAlternatives();
+    const active = alternatives[0];
+    if (active === undefined) throw new Error('fixture active alternative is missing');
+    const profilePath = await profileFile({
+      schema: 'VPEffectiveProfile/v1',
+      groups: { [group]: { active, alternatives } },
+      unresolved_groups: {},
+    });
+    const result = await runInProcess(['search', '--catalog', catalogPath, '--id', 'alpha', 'beta', '--profile', profilePath]);
     expect(result.status).toBe(0);
-    expect(stdoutJson(result)).toMatchObject({ instruction: { instruction_id: 'alpha', content: 'Alpha body.\n' } });
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('alpha\tApplies to implementation tasks.\n');
   });
 
-  test('get unknown id emits the catalog error', () => {
-    const result = runCli(fixtureArgs(['get', '--id', 'unknown']));
+  test('profile-aware search reports stale data before needed unresolved choices', async () => {
+    const { catalogPath, group, alternatives } = await catalogWithPolicyAlternatives();
+    const active = alternatives[0];
+    if (active === undefined) throw new Error('fixture active alternative is missing');
+    const staleProfile = await profileFile({
+      schema: 'VPEffectiveProfile/v1',
+      groups: { [group]: { active, alternatives: [active] } },
+      unresolved_groups: {},
+    });
+    const stale = runCli(['search', '--catalog', catalogPath, '--id', 'alpha', '--profile', staleProfile]);
+    expect(stale.status).toBe(1);
+    expect(stale.stdout).toBe('');
+    expect(stale.stderr).toContain('refresh it with vp-setup');
+    expect(stale.stderr).not.toMatch(/^\{/u);
+
+    const unresolvedProfile = await profileFile({
+      schema: 'VPEffectiveProfile/v1',
+      groups: {},
+      unresolved_groups: { [group]: alternatives },
+    });
+    const unresolved = runCli(['search', '--catalog', catalogPath, '--id', 'alpha', '--profile', unresolvedProfile]);
+    expect(unresolved.status).toBe(1);
+    expect(unresolved.stdout).toBe('');
+    expect(unresolved.stderr).toContain('policy group ' + group + ' is unresolved');
+    expect(unresolved.stderr).not.toMatch(/^\{/u);
+  });
+
+  test('get emits unique required IDs and transitive dependencies as one plain-text batch', async () => {
+    const catalogPath = await catalogWithProfileSchema();
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = runCli(['get', '--catalog', catalogPath, '--id', 'alpha', 'beta', 'alpha', '--profile', profilePath]);
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).not.toContain('{');
+    expect((result.stdout.match(/Alpha body\./gu) ?? []).length).toBe(1);
+    expect((result.stdout.match(/Beta body\./gu) ?? []).length).toBe(1);
+    expect((result.stdout.match(/Gamma body\./gu) ?? []).length).toBe(1);
+    expect(result.stdout.indexOf('Alpha body.')).toBeLessThan(result.stdout.indexOf('Beta body.'));
+    expect(result.stdout.indexOf('Beta body.')).toBeLessThan(result.stdout.indexOf('Gamma body.'));
+  });
+
+  test('get rejects a later missing ID without partial stdout', async () => {
+    const catalogPath = await catalogWithProfileSchema();
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = runCli(['get', '--catalog', catalogPath, '--id', 'alpha', 'missing', '--profile', profilePath]);
     expect(result.status).toBe(1);
     expect(result.stdout).toBe('');
-    expect(stderrJson(result)).toMatchObject({ code: 'CATALOG_ID_UNKNOWN', message: 'unknown instruction id: unknown', details: { instruction_id: 'unknown' } });
+    expect(result.stderr).toContain('unknown instruction id: missing');
+    expect(result.stderr).not.toMatch(/^\{/u);
+  });
+
+  test('get preserves literal Unicode body, source conditions, and artifact obligations', async () => {
+    const catalogPath = await catalogWithProfileSchema();
+    await rewriteFixtureInstruction(catalogPath, 'alpha', (source) => source.replace(
+      'Alpha body.\n',
+      'Alpha body keeps caf\u00e9, \u03a9, and --query literally.\nApplies when: implementation code changes, code. changes\nRequired data: cases\n',
+    ));
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = runCli(['get', '--catalog', catalogPath, '--id', 'alpha', '--profile', profilePath]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Alpha body keeps caf\u00e9, \u03a9, and --query literally.');
+    expect(result.stdout.split('implementation code changes, code. changes').length - 1).toBe(1);
+    expect(result.stdout).toContain('Does not apply when: documentation only');
+    expect(result.stdout).toContain('Output type: test-suite');
+    expect(result.stdout).toContain('Required data: cases');
+    expect(result.stdout.split('Required data: cases').length - 1).toBe(1);
+    expect(result.stdout).toContain('Verified by: bun test');
+  });
+
+  test('snapshot policy files cannot override canonical approval-policy requirements', async () => {
+    const { catalogPath } = await catalogWithPolicyAlternatives();
+    const config = join(dirname(catalogPath), 'config');
+    await writeFile(join(config, 'methodology-profile.json'), JSON.stringify({ schema: 'VPMethodologyProfile/v1', groups: [] }), 'utf8');
+    await writeFile(join(config, 'vpmethodologyprofile.v1.schema.json'), JSON.stringify({ type: 'object' }), 'utf8');
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = await runInProcess(['get', '--catalog', catalogPath, '--id', 'alpha', '--profile', profilePath]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('refresh it with vp-setup');
+  });
+
+  test('get preserves short obligations embedded incidentally in a larger word', async () => {
+    const catalogPath = await catalogWithProfileSchema();
+    await rewriteFixtureInstruction(catalogPath, 'alpha', source => source
+      .replace('conditions_applies_when: implementation code changes, code. changes', 'conditions_applies_when: code')
+      .replace('Alpha body.\n', 'Unicode keeps the word encoded literal.\n'));
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = await runInProcess(['get', '--catalog', catalogPath, '--id', 'alpha', '--profile', profilePath]);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('Unicode keeps the word encoded literal.');
+    expect(result.stdout).toContain('\nApplies when: code\n');
+  });
+
+  test('findings help includes its required operation in flag examples', async () => {
+    const result = await runInProcess(['findings', '--help']);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('findings <append|candidates> --store');
+    expect(result.stdout).not.toContain('  findings --store');
+  });
+
+  test('get keeps complementary same-theme instructions and rejects the declared hard opposite pair', async () => {
+    const fixtureCatalog = await catalogWithProfileSchema();
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const complementary = runCli(['get', '--catalog', fixtureCatalog, '--id', 'alpha', 'beta', '--profile', profilePath]);
+    expect(complementary.status).toBe(0);
+    expect(complementary.stdout).toContain('Alpha body.');
+    expect(complementary.stdout).toContain('Beta body.');
+
+    const productionCatalog = join(here, '../catalog.json');
+    const hardOpposites = runCli([
+      'get', '--catalog', productionCatalog, '--id',
+      'keep-review-read-only', 'run-the-lenses-and-fix-what-they-find', '--profile', profilePath,
+    ]);
+    expect(hardOpposites.status).toBe(1);
+    expect(hardOpposites.stdout).toBe('');
+    expect(hardOpposites.stderr).toContain('keep-review-read-only');
+    expect(hardOpposites.stderr).toContain('run-the-lenses-and-fix-what-they-find');
+    expect(hardOpposites.stderr).not.toMatch(/^\{/u);
+  });
+
+  test('get rejects a required ID that is inactive under the current profile', async () => {
+    const { catalogPath, group, alternatives } = await catalogWithPolicyAlternatives();
+    const active = alternatives[0];
+    const inactive = alternatives[1];
+    if (active === undefined || inactive === undefined) throw new Error('fixture alternatives are missing');
+    const profilePath = await profileFile({
+      schema: 'VPEffectiveProfile/v1',
+      groups: { [group]: { active, alternatives } },
+      unresolved_groups: {},
+    });
+    const result = runCli(['get', '--catalog', catalogPath, '--id', 'beta', '--profile', profilePath]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('required instruction beta conflicts with profile ' + group);
+    expect(result.stderr).not.toMatch(/^\{/u);
+  });
+
+  test('get rejects source digest, schema, status, and selected-snapshot failures atomically', async () => {
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+
+    const digestCatalog = await catalogWithProfileSchema();
+    await rewriteFixtureInstruction(digestCatalog, 'alpha', (source) => source.replace('Alpha body.', 'Changed body.'), false);
+    const digest = runCli(['get', '--catalog', digestCatalog, '--id', 'alpha', '--profile', profilePath]);
+    expect(digest.status).toBe(1);
+    expect(digest.stdout).toBe('');
+    expect(digest.stderr).toContain('digest mismatch for alpha');
+
+    const schemaCatalog = await catalogWithProfileSchema();
+    await rewriteFixtureInstruction(schemaCatalog, 'alpha', (source) => source.replace('status: active', 'status: invalid'));
+    const schema = runCli(['get', '--catalog', schemaCatalog, '--id', 'alpha', '--profile', profilePath]);
+    expect(schema.status).toBe(1);
+    expect(schema.stdout).toBe('');
+    expect(schema.stderr).toContain('instruction schema validation failed for alpha');
+
+    const disabledCatalog = await catalogWithProfileSchema();
+    await rewriteFixtureInstruction(disabledCatalog, 'alpha', (source) => source.replace('status: active', 'status: disabled'));
+    const disabled = runCli(['get', '--catalog', disabledCatalog, '--id', 'alpha', '--profile', profilePath]);
+    expect(disabled.status).toBe(1);
+    expect(disabled.stdout).toBe('');
+    expect(disabled.stderr).toContain('instruction is disabled: alpha');
+
+    const snapshotCatalog = await catalogOnlySnapshot();
+    await copyFile(
+      join(here, '../config/vpeffectiveprofile.v1.schema.json'),
+      join(dirname(snapshotCatalog), 'config/vpeffectiveprofile.v1.schema.json'),
+    );
+    const snapshot = runCli(['get', '--catalog', snapshotCatalog, '--id', 'alpha', '--profile', profilePath]);
+    expect(snapshot.status).toBe(1);
+    expect(snapshot.stdout).toBe('');
+    expect(snapshot.stderr).toContain('cannot read vpinstruction.v1.schema.json');
+  });
+
+  test('get enforces the compose body limit and adds no output-byte limit', async () => {
+    const oversizedCatalog = await catalogWithOversizedInstruction();
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const oversized = runCli(['get', '--catalog', oversizedCatalog, '--id', 'alpha', '--profile', profilePath]);
+    expect(oversized.status).toBe(1);
+    expect(oversized.stdout).toBe('');
+    expect(oversized.stderr).toContain('composed bundle exceeds the session instruction limit');
+
+    const largeProjectionCatalog = await catalogWithLargeProjection();
+    const largeProjection = runCli(['get', '--catalog', largeProjectionCatalog, '--id', 'guidance', '--profile', profilePath]);
+    expect(largeProjection.status).toBe(0);
+    expect(new TextEncoder().encode(largeProjection.stdout).length).toBeGreaterThan(64_000);
+  });
+
+  test('get unknown id emits concise plain-text diagnostics', async () => {
+    const catalogPath = await catalogWithProfileSchema();
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const result = runCli(['get', '--catalog', catalogPath, '--id', 'unknown', '--profile', profilePath]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain('unknown instruction id: unknown');
+    expect(result.stderr).not.toMatch(/^\{/u);
   });
 
   test('compose returns required instructions with execution context', () => {
@@ -541,25 +891,172 @@ describe('catalog CLI', () => {
     expect(isEntryPoint(pathToFileURL(missingPath).href, missingPath)).toBe(true);
   });
 
-  test('unknown command and unknown flag emit CATALOG_INVALID', () => {
+  test('unknown command retains JSON diagnostics and compact commands reject unknown flags', () => {
     const unknownCommand = runCli(fixtureArgs(['unknown']));
     expect(unknownCommand.status).toBe(1);
-    expect(stderrJson(unknownCommand)).toMatchObject({ code: 'CATALOG_INVALID', details: { usage: expect.stringContaining('--roles <r1,r2>') } });
+    expect(stderrJson(unknownCommand)).toMatchObject({ code: 'CATALOG_INVALID', details: { usage: expect.stringContaining('usage:') } });
     const unknownFlag = runCli(fixtureArgs(['tags', '--bogus']));
     expect(unknownFlag.status).toBe(1);
-    expect(stderrJson(unknownFlag).code).toBe('CATALOG_INVALID');
+    expect(unknownFlag.stdout).toBe('');
+    expect(unknownFlag.stderr).toContain('unknown flag --bogus');
+    expect(unknownFlag.stderr).not.toMatch(/^\{/u);
   });
 
-  test('missing required flags emit CATALOG_INVALID', () => {
-    const missingGetId = runCli(fixtureArgs(['get']));
+  test('global and command help work without catalog or body files', async () => {
+    const isolated = await cliWithoutCatalog();
+    const global = runCli(['--help'], undefined, isolated.scriptPath);
+    expect(global.status).toBe(0);
+    expect(global.stderr).toBe('');
+    expect(global.stdout).toContain('tags --query <TERM...>');
+    expect(global.stdout).toContain('browse --axis <domain|form>');
+    expect(global.stdout).toContain('axes: domain (engineering, design-ux, product, business, research, operations)');
+    expect(global.stdout).toContain('form (principle, decision-rule, procedure, checklist)');
+    expect(global.stdout).toContain('tags --query pr review');
+    expect(global.stdout).toContain('search --profile <PATH>');
+    expect(global.stdout).toContain('get --id <ID...>');
+    expect(global.stdout).toContain('--role <ROLE>');
+    expect(global.stdout).toContain('--roles <ROLE...>');
+    expect(global.stdout).not.toContain('browse --axis policy');
+    expect(global.stdout).not.toContain('search --query');
+
+    const getHelp = runCli(['get', '--help'], undefined, isolated.scriptPath);
+    expect(getHelp.status).toBe(0);
+    expect(getHelp.stdout).toContain('get --id <ID...>');
+    expect(getHelp.stdout).toContain('get --profile <PATH>');
+    expect(getHelp.stdout).not.toContain('get --json');
+  });
+
+  test('help rejects unsupported options instead of hiding an invalid request', async () => {
+    for (const args of [
+      ['tags', '--help', '--private-flag'],
+      ['tags', '--profile', 'unused.json', '--help'],
+      ['findings', '--help', '--private-flag'],
+      ['tags', '--help', '--help'],
+    ]) {
+      const result = await runInProcess(args);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).not.toBe('');
+    }
+  });
+
+  test('help validates supplied argument forms and documents compact output contracts', async () => {
+    for (const args of [
+      ['tags', '--help', 'junk'], ['tags', '--help', '-x'],
+      ['tags', '--limit', 'nope', '--help'], ['findings', 'bogus', '--help'],
+      ['search', '--domain', 'unknown', '--help'], ['browse', '--axis', 'policy', '--help'],
+      ['tags', '--match', 'all', '--help'],
+    ]) {
+      const result = await runInProcess(args);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr.length).toBeGreaterThan(0);
+    }
+    for (const command of ['tags', 'search', 'browse', 'get']) {
+      const result = await runInProcess([command, '--help']);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain('empty stdout');
+      if (command === 'get') expect(result.stdout).toContain('instruction text');
+      else expect(result.stdout).toContain('ID<TAB>description');
+      expect(result.stdout).toContain('dedup');
+    }
+    expect((await runInProcess(['findings', '--help'])).status).toBe(0);
+  });
+
+  test('static selector errors precede any catalog or instruction file access', async () => {
+    const missing = join(tmpdir(), 'vp-intentionally-missing-catalog', 'catalog.json');
+    for (const [command, ...flags] of [
+      ['browse', '--axis', 'policy'], ['search', '--domain', 'unknown'],
+      ['search', '--form', 'unknown'], ['search', '--classification-status', 'unknown'],
+      ['search', '--id', 'alpha,,beta'], ['tags', '--query', 'test', '--match', 'bogus'],
+      ['tags', '--limit', 'nope'], ['search', '--offset', '-1'],
+    ]) {
+      const result = await runInProcess([command ?? '', '--catalog', missing, ...flags]);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('flag --');
+      expect(result.stderr).not.toContain('cannot read');
+    }
+  });
+
+  test('compact fields escape tabs newlines carriage returns and backslashes once', async () => {
+    const catalogPath = await catalogWithProfileSchema();
+    const catalog = await loadCatalog(catalogPath);
+    catalog.tag_dictionary.capability['test-design'] = 'A\tB\nC\rD\\E';
+    await writeFile(catalogPath, JSON.stringify(catalog), 'utf8');
+    const result = await runInProcess(['tags', '--catalog', catalogPath, '--query', 'test-design', 'test-design']);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain('capability:test-design\tA\\tB\\nC\\rD\\\\E\n');
+    expect(result.stdout.split('\n').filter(Boolean).every(line => line.split('\t').length === 2)).toBe(true);
+    expect(result.stdout.split('\n').filter(line => line.startsWith('capability:test-design\t'))).toHaveLength(1);
+  });
+
+  test('in-process help documents the same scalar and list-valued command grammar', async () => {
+    for (const args of [['--help'], ['tags', '--help'], ['search', '--help'], ['get', '--help']]) {
+      const result = await runInProcess(args);
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe('');
+      if (args[0] === '--help' || args[0] === 'tags') expect(result.stdout).toContain('tags --query <TERM...>');
+      if (args[0] === 'search') expect(result.stdout).toContain('search --profile <PATH>');
+      if (args[0] === 'get') {
+        expect(result.stdout).toContain('get --id <ID...>');
+        expect(result.stdout).toContain('get --profile <PATH>');
+      }
+      if (args[0] === 'tags') expect(result.stdout).toContain('tags --match <any|all>');
+    }
+  });
+
+  test('in-process vocabulary queries preserve literal ANY and ALL results', async () => {
+    const any = await runInProcess(fixtureArgs(['tags', '--query', 'tdd', 'test']));
+    expect(any.status).toBe(0);
+    expect(any.stderr).toBe('');
+    expect(any.stdout.split('\n').filter(Boolean)).toEqual([
+      'pattern:test-first-development\tWrite tests first.',
+      'capability:test-design\tDesign behavior tests.',
+      'pattern:test-after-development\tTest after implementation.',
+    ]);
+    const all = await runInProcess(fixtureArgs(['tags', '--query', 'tdd', 'test-first', '--match', 'all']));
+    expect(all.status).toBe(0);
+    expect(all.stdout).toBe('pattern:test-first-development\tWrite tests first.\n');
+  });
+
+  test('vocabulary rejects invalid matching and pagination without partial rows', async () => {
+    for (const flags of [
+      ['--match', 'all'],
+      ['--query', 'test', '--match', 'neither'],
+      ['--query', ''],
+      ['--limit', '-1'],
+      ['--offset', '1.5'],
+      ['--limit', '9007199254740992'],
+    ]) {
+      const result = await runInProcess(fixtureArgs(['tags', ...flags]));
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr.trim()).not.toBe('');
+    }
+    const emptyPage = await runInProcess(fixtureArgs(['tags', '--limit', '0']));
+    expect(emptyPage.status).toBe(0);
+    expect(emptyPage.stdout).toBe('');
+    expect(emptyPage.stderr).toContain('pagination: returned 0/');
+  });
+
+  test('get requires IDs and a profile while evaluate keeps its JSON error contract', () => {
+    const missingGetId = runCli(fixtureArgs(['get', '--profile', 'profile.json']));
     expect(missingGetId.status).toBe(1);
-    expect(stderrJson(missingGetId).code).toBe('CATALOG_INVALID');
+    expect(missingGetId.stdout).toBe('');
+    expect(missingGetId.stderr).toContain('missing required flag --id');
+    expect(missingGetId.stderr).not.toMatch(/^\{/u);
+    const missingGetProfile = runCli(fixtureArgs(['get', '--id', 'alpha']));
+    expect(missingGetProfile.status).toBe(1);
+    expect(missingGetProfile.stdout).toBe('');
+    expect(missingGetProfile.stderr).toContain('missing required flag --profile');
+    expect(missingGetProfile.stderr).not.toMatch(/^\{/u);
     const missingOperation = runCli(fixtureArgs(['evaluate']));
     expect(missingOperation.status).toBe(1);
     expect(stderrJson(missingOperation).code).toBe('CATALOG_INVALID');
   });
 
-  test('in-process entry reports malformed argument forms as JSON', async () => {
+  test('in-process entry reports malformed argument forms without partial output', async () => {
     for (const args of [
       [],
       ['tags', 'extra'],
@@ -570,7 +1067,8 @@ describe('catalog CLI', () => {
       const result = await runInProcess(args);
       expect(result.status).toBe(1);
       expect(result.stdout).toBe('');
-      expect(JSON.parse(result.stderr).code).toBe('CATALOG_INVALID');
+      if (args[0] === 'tags') expect(result.stderr).not.toMatch(/^\{/u);
+      else expect(JSON.parse(result.stderr).code).toBe('CATALOG_INVALID');
     }
     const skipped = await runCatalogCli([bunPath], { stdout: () => undefined, stderr: () => undefined });
     expect(skipped).toBeUndefined();
@@ -581,30 +1079,39 @@ describe('catalog CLI', () => {
     expect(direct).toBe(0);
   });
 
-  test('repeated json flag is rejected with the exact error payload', async () => {
-    const result = await runInProcess(['tags', '--json', '--json']);
-    expect(result.status).toBe(1);
-    expect(JSON.parse(result.stderr)).toEqual({
-      code: 'CATALOG_INVALID',
-      message: 'flag --json may only be supplied once',
-      details: { flag: '--json' },
-    });
+  test('get rejects JSON mode and duplicate scalar profile options', async () => {
+    const jsonMode = await runInProcess(['get', '--id', 'alpha', '--profile', 'profile.json', '--json']);
+    expect(jsonMode.status).toBe(1);
+    expect(jsonMode.stdout).toBe('');
+    expect(jsonMode.stderr).toContain('flag --json is not valid for get');
+    expect(jsonMode.stderr).not.toMatch(/^\{/u);
+
+    const duplicateProfile = await runInProcess(['get', '--id', 'alpha', '--profile', 'one.json', '--profile', 'two.json']);
+    expect(duplicateProfile.status).toBe(1);
+    expect(duplicateProfile.stdout).toBe('');
+    expect(duplicateProfile.stderr).toContain('flag --profile may only be supplied once');
+    expect(duplicateProfile.stderr).not.toMatch(/^\{/u);
   });
 
   test('in-process entry exercises successful dispatch for every operation', async () => {
-    const prefix = ['--catalog', join(fixtureDir, 'catalog.json')];
+    const prefix = ['--catalog', await catalogWithProfileSchema()];
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
     for (const command of [
       ['tags'],
       ['search', '--capability', 'test-design'],
-      ['search', '--form', 'principle', '--domain', 'engineering', '--domain', 'business', '--classification-status', 'unclassified'],
+      ['search', '--form', 'principle', '--domain', 'engineering', 'business', '--classification-status', 'unclassified'],
       ['browse'],
-      ['get', '--id', 'alpha'],
-      ['compose', '--required', 'alpha'],
-      ['evaluate', '--operation', 'plan', '--candidate', 'alpha', '--tag', 'tdd'],
+      ['get', '--id', 'alpha', '--profile', profilePath],
+      ['compose', '--required', 'alpha', '--json'],
+      ['evaluate', '--operation', 'plan', '--candidate', 'alpha', '--tag', 'tdd', '--json'],
     ]) {
       const result = await runInProcess([command[0] ?? '', ...prefix, ...command.slice(1)]);
       expect(result.status).toBe(0);
-      expect(JSON.parse(result.stdout)).toBeTruthy();
+      if (['tags', 'search', 'browse'].includes(command[0] ?? '')) {
+        expect(result.stdout.split('\n').filter(Boolean).every((line) => line.split('\t').length === 2)).toBe(true);
+      } else if (command[0] === 'get') {
+        expect(result.stdout).toContain('Alpha body.');
+      } else expect(JSON.parse(result.stdout)).toBeTruthy();
       expect(result.stderr).toBe('');
     }
   });
@@ -650,7 +1157,8 @@ describe('catalog CLI', () => {
       const result = await runInProcess(call.args);
       expect(result.status).toBe(1);
       expect(result.stdout).toBe('');
-      expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'CATALOG_INVALID', message: call.message });
+      if (call.args[0] === 'tags') expect(result.stderr).toBe(`${call.message}\n`);
+      else expect(oneJsonLine(result.stderr)).toMatchObject({ code: 'CATALOG_INVALID', message: call.message });
     }
     expect(existsSync(storePath)).toBe(false);
   });
@@ -826,20 +1334,19 @@ describe('catalog CLI', () => {
     });
     expect(existsSync(storePath)).toBe(false);
 
-    for (const failure of [new Error('stdout is unavailable'), undefined]) {
+    for (const command of ['tags', 'compose']) for (const failure of [new Error('stdout is unavailable'), undefined]) {
       let stderr = '';
       let exitCode: number | undefined;
-      const status = await runCatalogCli([bunPath, cliPath, 'tags', '--catalog', join(fixtureDir, 'catalog.json')], {
+      const args = command === 'compose' ? ['compose', '--required', 'alpha'] : ['tags'];
+      const status = await runCatalogCli([bunPath, cliPath, ...args, '--catalog', join(fixtureDir, 'catalog.json')], {
         stdout: () => { throw failure; },
         stderr: (text) => { stderr += text; },
       }, (code) => { exitCode = code; });
       expect(status).toBe(1);
       expect(exitCode).toBe(1);
-      expect(oneJsonLine(stderr)).toEqual({
-        code: 'CATALOG_INVALID',
-        message: failure instanceof Error ? 'stdout is unavailable' : 'undefined',
-        details: {},
-      });
+      const message = failure instanceof Error ? 'stdout is unavailable' : 'undefined';
+      if (command === 'tags') expect(stderr).toBe(`${message}\n`);
+      else expect(oneJsonLine(stderr)).toEqual({ code: 'CATALOG_INVALID', message, details: {} });
     }
   });
 
@@ -874,28 +1381,24 @@ describe('catalog CLI', () => {
     );
   });
 
-  test('custom catalogs without an effective profile schema use the package schema', async () => {
+  test('custom catalogs without an effective profile schema fail instead of borrowing the package schema', async () => {
     const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
     const result = await runInProcess(['compose', '--catalog', join(fixtureDir, 'catalog.json'), '--required', 'alpha', '--profile', profilePath]);
-    expect(result.status).toBe(0);
-    expect(result.stderr).toBe('');
-    expect((JSON.parse(result.stdout) as { instructions: { instruction_id: string }[] }).instructions).toEqual(
-      expect.arrayContaining([expect.objectContaining({ instruction_id: 'alpha' })]),
-    );
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(JSON.parse(result.stderr)).toMatchObject({ code: 'CATALOG_INVALID', message: 'cannot read vpeffectiveprofile.v1.schema.json' });
   });
 
-  test('compose uses the package-owned effective profile schema with a custom catalog', async () => {
+  test('compose validates profiles against the selected catalog snapshot schema', async () => {
     const catalogPath = await catalogWithProfileSchema();
     const callerSchemaPath = join(dirname(catalogPath), 'config', 'vpeffectiveprofile.v1.schema.json');
     await writeFile(callerSchemaPath, JSON.stringify({ type: 'object', required: ['caller_owned_marker'] }), 'utf8');
     const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
     const result = await runInProcess(['compose', '--catalog', catalogPath, '--required', 'alpha', '--profile', profilePath]);
 
-    expect(result.status).toBe(0);
-    expect(result.stderr).toBe('');
-    expect((JSON.parse(result.stdout) as { instructions: { instruction_id: string }[] }).instructions).toEqual(
-      expect.arrayContaining([expect.objectContaining({ instruction_id: 'alpha' })]),
-    );
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(JSON.parse(result.stderr)).toMatchObject({ code: 'CATALOG_INVALID', message: 'profile schema validation failed' });
   });
 });
 

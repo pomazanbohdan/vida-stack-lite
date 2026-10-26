@@ -14,8 +14,8 @@ sources:
 - id: system-specification
   resource: /system-specification.md
   title: Vida Powers system specification
-generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T12:02:01.380Z' }
-revision: '3'
+generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
+revision: '4'
 ---
 
 # Decision
@@ -31,6 +31,8 @@ Version allocation: VPInstruction/v1.1 carries the facet contract. Unmarked v1 s
 Implementation status: the v1.1 reader/schema, explicit facet filters, browse, opt-in strict corpus checking and converter-owned metadata preparation are implemented and independently reviewed. Actual metadata publication, the 40-ID treatment and full-corpus rollout remain open. AC-60 through AC-64 retain their open state until their complete evidence is reconciled; implementation checks do not close the migration criteria.
 
 ## Current evidence
+
+The owner subsequently authorized the compact retrieval refinement: explicit task-to-tag routing in vp-mode, multi-value CLI options, unique ID-and-description lists, one checked multi-ID instruction response and preserved opposite-rule handling. SR-93 and AC-65–AC-69 own this CLI projection; structured library APIs, SR-92 metadata migration and D12 conflict authority stay unchanged. The CLI/skill work precedes further donor processing. Optional BM25 comparison is not a prerequisite for the reference route. This records intended behavior, not an implementation or acceptance claim.
 
 The old-code baseline and same-input structure prototype are captured and independently reviewed. Stable files need zero projected path changes; form folders need 40; topic folders have 24 definite changes and 16 unresolved primary placements in the 40-ID fixture. These are structure projections, not a speed or retrieval-quality claim.
 
