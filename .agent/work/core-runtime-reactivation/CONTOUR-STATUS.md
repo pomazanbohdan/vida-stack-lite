@@ -1526,6 +1526,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 4ed7033f-1806-4237-b3f9-e7a3bc4c3a6e | 45dd5721bde0e9e40d32803435c65d6bf5b224fc | 2026-10-26T09:21:22.104Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/.vida-quality-inputs/a5b75b2572d24a95c5d3807d1f0e4bff6e699b91/repository/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/4ed7033f-1806-4237-b3f9-e7a3bc4c3a6e.json |
 | coverage | 4ed7033f-1806-4237-b3f9-e7a3bc4c3a6e | 45dd5721bde0e9e40d32803435c65d6bf5b224fc | 2026-10-26T09:21:22.104Z | focused-diagnostic; owner accepted locally; selection bound | 516/555 · 2396/2873 · 2586/3157 · 3041/3686 | /workspace/.vida-quality-inputs/a5b75b2572d24a95c5d3807d1f0e4bff6e699b91/repository/packages/agent/coverage/bun-unified/diagnostics/4ed7033f-1806-4237-b3f9-e7a3bc4c3a6e.focused-coverage.json |
 | stage-outcome | contour-stage-eIoo7b | a94bcf02db23908fab9401003f0ec5e6fb39dd17 | 2026-10-26T09:59:32.290Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-eIoo7b/publication-error.json |
+| stage-outcome | contour-stage-4jd8yV | 374d5afa855002484bbfd1d0415c50746f6c771b | 2026-10-26T10:17:42.833Z | coverage/failed/unknown-or-partial; unqualified; selection unbound | no metric evidence | /workspace/contour-stage-4jd8yV/publication-error.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

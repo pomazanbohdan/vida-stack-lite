@@ -23,10 +23,13 @@ The same-fixture validator-status packet45dd5721 then passes isolated focus and
 one full stage6QAlkr, recording F516/555,L2396/2873,S2586/3157,B3041/3686.
 Terminal synthesis now has focused proof at a94bcf02, but its single full stage
 eIoo7b times out internally with UNKNOWN and accepts no new counters. Preserve
-that run's resources and flags. Keep bun-cli-run active: remove three redundant
-malformed-report subprocess calls from the existing CAS fixture, retain native
-protocol/exit proof, review and focus-check, then use one changed-input stage in
-fresh independent namespace resources. No budget increase or UNKNOWN replay.
+that run's resources and flags. Removing three malformed-report subprocesses
+passes focus but stage4jd8yV also reaches inner UNKNOWN. Subtract three further
+redundant subprocesses from the same CAS fixture, retaining real native
+admission/issue, accepted-report and error-envelope/exit proof. Review and focus
+both changed cases, then use one changed-input stage only in fresh independent
+namespace resources under the accepted closed-root contract. No budget increase
+or UNKNOWN replay; neither incomplete attempt qualifies current Source numerically.
 WORK owns pins and terminal receipts.
 The failed predecessor contributes no accepted counters.
 The old tSHoBS UNKNOWN, writable resources and safety flags remain fenced.

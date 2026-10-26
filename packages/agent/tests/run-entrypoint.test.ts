@@ -8902,9 +8902,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(issuedActions.map((item) => item.action.action_id)).toEqual(
           preparedActions.map((item) => item.request.action_id),
         );
-        fixture.invoke([...admitted.args, ...expected(preparedVersion), '--issue-wave', 'true'], 1);
-        const reportFile = path.join(root, 'report.json');
         const beforeInvalidReports = inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId);
+        await assert.rejects(run([...admitted.args, ...expected(preparedVersion), '--issue-wave', 'true']), {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message: 'The Mastra session ledger version is stale.',
+        });
+        expect(inspectHostWorkspaceDatabase(root, databaseRelativePath, workspaceId)).toEqual(beforeInvalidReports);
+        const reportFile = path.join(root, 'report.json');
         for (const invalid of ['', '{', 'x'.repeat(32769)]) {
           writeFileSync(reportFile, invalid);
           await assert.rejects(run([...admitted.args, ...expected(issuedVersion), '--report', reportFile]), {
@@ -8924,7 +8928,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           },
         );
         unlinkSync(secondLink);
-        expect(requireStateVersion(fixture.invoke(admitted.args).state_version)).toEqual(issuedVersion);
+        expect(requireStateVersion(parseTestRunPayload(await runSuccessfully(admitted.args)).state_version)).toEqual(
+          issuedVersion,
+        );
         let version = issuedVersion;
         for (const item of issuedActions) {
           const action = item.action;
@@ -8947,9 +8953,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           );
           const reportArgs = [...admitted.args, ...expected(version), '--report', reportFile];
           const result =
-            item === issuedActions.at(-1)
-              ? parseTestRunPayload(await runSuccessfully(reportArgs))
-              : fixture.invoke(reportArgs);
+            item === issuedActions[0]
+              ? fixture.invoke(reportArgs)
+              : parseTestRunPayload(await runSuccessfully(reportArgs));
           version = requireStateVersion(result.state_version);
           if (item === issuedActions.at(-1)) {
             expect(result.resume_status).toBe('ready');

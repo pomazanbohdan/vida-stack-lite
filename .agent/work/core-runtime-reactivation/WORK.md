@@ -162,6 +162,39 @@ Native admission/issue bindings, hardlink/error JSON/exit proof and positive
 reports remain unchanged. This reduces operation count by3; elapsed saving is
 unmeasured until required checks. Budgets and all UNKNOWN flags remain intact.
 
+Packet374d5afa passes native focused Q9Gt1T:2pass,8skip,0fail,175assertions,
+40.16s, native PID1003488 exit0, complete capture/group and unchanged inputs.
+Its single full stage4jd8yV also ends inner UNKNOWN at271127.636721ms, outer
+exit1, complete capture/group/native namespace exit1 and unchanged inputs.
+No current numeric qualification exists for a94bcf02 or374d5afa. The accepted
+45dd5721/4ed7033f counters are scoped historical observations only:
+qualification_scope focused-diagnostic, full_qualificationfalse. Their stage
+6QAlkr has native PID997895 exit0 and terminal receipt SHA256
+dc7a3d68893d8587957bb376ea587dd6e8a6e54911bcddb7c2f257031161e6a5.
+
+Fresh-runtime eligibility does not change either UNKNOWN's resource flags.
+eIoo7b's controller-owned FD3 receipt binds native namespace PID1001800 exit1,
+SHA2566ba15344466287eb2b5b89e2d1b1c21dcfa95b570f77467894fc120a43cc8c9e.
+Both stages observe namespace termination and complete capture/group with the
+unchanged qualified profile02. Native review02's PID1 proof and readonly/shared
+dependency/effects controls therefore permit only fresh independent images and
+writable roots, never reuse or reconciliation of the old DBs/leases/scratch.
+No replay, synthetic success or resource_safe_to_advance update is performed.
+The post-terminal bounded process sample shows no competing live Bun/build;
+MemAvailable9552420kB and CPU quota400000/100000 remain observations, not proof
+of the run's bottleneck. Cgroup throttle counters are cumulative, not window data.
+
+Root subtracts three further redundant subprocesses in the same CAS fixture:
+stale issue denial, repeated issued-version read and second positive report.
+The stale denial now checks the exact error and unchanged full database written
+by the completed native issue child; the first positive report remains native.
+Prepared admission/issue, hardlink/native JSON/nonzero exit and all ordered CAS,
+persistence/retry and final journal checks remain. Independent review passes;
+strict511/configured lint pass. Total launches removed versus the original case
+is6, with no measured elapsed saving claimed. Focus both changed cases in fresh
+independent resources before any further changed-input stage; do not rerun the
+UNKNOWN attempt or increase its budget.
+
 The first focused native attempt retains a libsql loader failure before CLI
 tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
 local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.
