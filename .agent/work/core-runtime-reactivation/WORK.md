@@ -40,6 +40,38 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Latest accepted local packet Source60cb6e779553c791cd5ae4ab643afd3d829f7c67,
+run8d7391ed-a405-4b06-8147-0a3c73714909, stage /workspace/contour-stage-CYKSkG
+exits0 after255665.384388ms,157pass/0fail/3937assertions in249.13s. Complete
+capture/group/namespace termination; image88a5a56236dbbf0643ac7263a9b3eff2b3cb711e
+(manifest SHA2560b11955b4fbf3586b06e90afc08e821cd8466cae59139928524592c6a8d3c9c4)
+and profile02 unchanged. Native child1014908 exit0, controller receipt SHA256
+793eb45fe12c00a02f54e7dc50909ed2e289b5997d6250e500c58308bb0f8233.
+Producer publishes F546/562,L2521/2886,S2720/3172,B3198/3718, focused-diagnostic,
+full_qualification=false/frozen pending, still BLOCKED. Core edits change
+counter denominators; do not mix old/new ratios or call this full qualification.
+Measured maxCC/entryCRAP504 versus prior501 is explicit, not a budget increase
+or frozen pass. Existing frozen criteria remain unchanged and unqualified.
+
+Paired QGZZQv focus passes2tests/176assertions in37.20s, native1014829exit0,
+complete capture/group and unchanged inputs. Final independent review resolves
+stage-ID and isolated duplicate controls; unsupported or ambiguous terminal stage,
+non-success/run/frontier/observation/reconciliation mismatches remain blocked.
+Exactly one changed-input full stage follows it. Preserve initial7IApg9 FAIL,
+all UNKNOWN roots, attempt logs, originals and native receipts. No benchmark,
+measured speedup, new disk survey/cleanup or additional suite is claimed.
+Raw full capture DIAG/terminal-delivery-full-stage-20261026-01.log.
+
+Existing report fnMap/f now leaves16unhit bodies: retirement2(325/329), historical
+owner release8(351–358), staged witness3(381–383), configured continuation2
+(414/415), completed Source ownership1(451). Terminal delivery's former3body
+group is covered locally. Remaining prerequisites above remain active GAPS,
+not objective skips. Next evaluate a supported Source-project historical inspect
+fixture with retained inventory custody, or the actual configured continuation
+engine producer; do not relabel consumer fixtures, seed trusted engine/native
+proof, replay UNKNOWN, or enter apply/cutover to reach a branch.
+
+
 Terminal delivery first focus7IApg9/Source95c98a7a failed0pass/1fail because the
 durable null-step journal reads blocked after actual engine completion. The
 fixture and complete native failure evidence remain retained; no full stage ran.

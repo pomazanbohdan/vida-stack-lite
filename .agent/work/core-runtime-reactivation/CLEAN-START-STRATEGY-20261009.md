@@ -12,23 +12,27 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-Latest accepted local contour report is Source d539a5ac/run c8e61c66, stage lAwiYJ:
-157tests pass,3918assertions, exit0 with complete capture/group/native namespace
-closure and unchanged image/profile02. F540/559,L2510/2879,S2708/3165,B3176/3702
+Latest accepted local contour report is Source60cb6e77/run8d7391ed, stageCYKSkG:
+157tests pass,3937assertions, exit0 with complete capture/group/native namespace
+closure and unchanged image/profile02. F546/562,L2521/2886,S2720/3172,B3198/3718
 remain BLOCKED; full_qualification=false and frozen qualification pending.
-Readonly release inspect and stale Work/Ledger CAS refusals are now covered;
-seven function bodies gained hits. Eight sequential in-process authority refusals
-share package-identity setup without removing native controls or assertions.
-No causal timing saving is established;28filesystem mutations removed is static
-count evidence. Preserve all UNKNOWN attempts and original resource flags.
+Terminal delivery now joins exact successful engine/Journal proof and unique
+configured terminal stage; current Source/implementation/validators/tester/proposal
+checks still gate instruction reconstruction. Source changes explain new
+denominators. MaxCC/entryCRAP504 is explicit; frozen budgets are unchanged and
+no frozen or mutation qualification is claimed. Paired focus and independent
+review preceded exactly one full stage. Preserve all FAIL/UNKNOWN evidence.
 
-Continue bun-cli-run only from the existing report's19unhit bodies: interrupted
+Continue bun-cli-run only from the existing report's16unhit bodies: interrupted
 retirement2, historical owner release8, staged witness3, configured-frontier
-continuation2, completed Source ownership1 and terminal delivery3. Evaluate the
-historical-owner release prerequisites next within inspect-only authority; no
-plan/apply/cutover or manufactured native retirement proof. Missing fixtures are
-not objective skips. Actual retirement remains a trusted-native-custody GAP.
-No CRAP or mutation lane opens before the current F/L/S/B phase permits it.
+continuation2, completed Source ownership1. Historical inspect requires accepted
+Source-project packages/agent config, initialization and actual runtime inventory/
+engine/original-context custody, not the consumer fixture. Configured continuation
+requires a real completed prewriter engine frontier, not seeded refusal state.
+Evaluate those supported fixture producers next without repeating broad inventory
+or inventing trusted evidence. No apply/cutover, consumer effect or objective skip
+is authorized by missing fixtures. Retirement's trusted native custody remains GAP.
+No CRAP or mutation lane opens before current F/L/S/B phase permits it.
 
 The independent runtime-root provider is published at d05842aa. Profile02 adds
 the readonly libsql loader closure; native controls and focused callers pass.
