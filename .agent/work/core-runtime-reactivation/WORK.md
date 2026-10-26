@@ -71,6 +71,14 @@ apply, cutover or granted rights. A shared local CLI-argument owner replaces the
 old inline array and is reused by this new caller. The existing async close owner
 retains primary/close failures; pending issued outcomes retain the root.
 Independent review passes, strict511/configured lint pass; native focus is pending.
+Initial readonly focus SdYolG passes2/8skip/0fail with192assertions in22.86s,
+including the existing caller of the extracted argument owner and the new
+inspect case(3048.44ms). Source9e11974b has complete native/capture/group exit0
+with unchanged image/profile. Before the packet's full stage, Root groups two
+valid-shape stale Work/Ledger CAS controls into this same fixture: independent
+revision changes, exact refusal, unchanged Host/journal/engine and no plan,
+with request bytes restored in finally. Delta review and strict511/lint pass;
+publish and focus only this changed case before one full changed-input stage.
 
 Accepted retirement's fresh native-custody chain remains unqualified. Tool
 discovery exposes codex_app.read_thread, but a bounded readonly probe of this task

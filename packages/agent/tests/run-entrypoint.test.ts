@@ -9397,19 +9397,17 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const requestPath = path.join(f.root, 'readonly-release-request.json');
             const requestBytes = Buffer.from(JSON.stringify(request));
             writeFileSync(requestPath, requestBytes, { flag: 'wx' });
-            const result = requireRecord(
-              await runSuccessfully([
-                '--release-completed-readonly',
-                'true',
-                '--mode',
-                'inspect',
-                '--project-root',
-                f.root,
-                '--request',
-                'readonly-release-request.json',
-              ]),
-              'Readonly release inspection',
-            );
+            const inspectArgs = [
+              '--release-completed-readonly',
+              'true',
+              '--mode',
+              'inspect',
+              '--project-root',
+              f.root,
+              '--request',
+              'readonly-release-request.json',
+            ];
+            const result = requireRecord(await runSuccessfully(inspectArgs), 'Readonly release inspection');
             expect(result.status).toBe('readonly_release_inspected');
             expect(result.rights_granted).toBe(false);
             assert.ok(typeof result.plan_ref === 'string');
@@ -9417,6 +9415,21 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             expect(readFileSync(requestPath)).toEqual(requestBytes);
             expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
             expect(await f.bridge.snapshot()).toEqual(engineBefore);
+            try {
+              for (const field of ['expectedWork', 'expectedLedger'] as const) {
+                writeFileSync(
+                  requestPath,
+                  JSON.stringify({ ...request, [field]: { ...request[field], revision: request[field].revision + 1 } }),
+                );
+                await assert.rejects(run(inspectArgs), { message: 'Readonly release work/ledger CAS differs' });
+                expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
+                expect(await f.bridge.snapshot()).toEqual(engineBefore);
+                expect(existsSync(path.join(f.root, result.plan_ref))).toBe(false);
+              }
+            } finally {
+              writeFileSync(requestPath, requestBytes);
+            }
+            expect(readFileSync(requestPath)).toEqual(requestBytes);
           },
           (owner) => owner.close(),
           'Readonly inspection operation and fixture close failed',
