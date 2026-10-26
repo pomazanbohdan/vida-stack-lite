@@ -40,6 +40,20 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Current packet targets remaining staged-witness callbacks by reusing the same
+completed native delivery fixture before assurance creation. Export writes only
+that fixture's new .agent/cutover/fixture-completed-delivery directory; it does
+not invoke activation, loader or database cutover. The caller-declared payload
+is an actual owned FixtureEvidencePayload/v1 file with runtime_acceptance=false,
+not a release/SDK qualification claim. Hash/reference checks bind every exported
+observation, witness and evidence body to the real completed journal/engine.
+Repeated export must refuse exclusive writes and leave all evidence bytes and
+Host/Journal unchanged. No new fixture build or inventory is introduced.
+Scoped strict511/lint pass; isolated focused behavior and independent review
+must precede one changed-input full stage. Counter baseline remains Source60cb,
+F546/562 with16unhit bodies; old UNKNOWN state and all budgets remain unchanged.
+
+
 Latest accepted local packet Source60cb6e779553c791cd5ae4ab643afd3d829f7c67,
 run8d7391ed-a405-4b06-8147-0a3c73714909, stage /workspace/contour-stage-CYKSkG
 exits0 after255665.384388ms,157pass/0fail/3937assertions in249.13s. Complete

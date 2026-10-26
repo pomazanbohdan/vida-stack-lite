@@ -10932,6 +10932,69 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(terminalRetry.state_version).toEqual(terminalJournal.version);
         expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
         expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        const witnessGeneration = 'fixture-completed-delivery';
+        const payloadManifest = Buffer.from(
+          JSON.stringify({
+            schema: 'FixtureEvidencePayload/v1',
+            journal: terminalJournal.version,
+            runtime_acceptance: false,
+          }),
+        );
+        const payloadManifestPath = path.join(fixture.root, 'fixture-evidence-payload.json');
+        writeFileSync(payloadManifestPath, payloadManifest, { flag: 'wx' });
+        const payloadManifestSha256 = createHash('sha256').update(payloadManifest).digest('hex');
+        const witnessArgs = [
+          ...runArgs,
+          '--export-staged-witness',
+          witnessGeneration,
+          '--payload-manifest-sha256',
+          payloadManifestSha256,
+        ];
+        const exported = requireRecord(await runSuccessfully(witnessArgs), 'completed staged witness export');
+        expect(exported.status).toBe('staged_witness_exported');
+        const exportDirectory = path.join(fixture.root, '.agent', 'cutover', witnessGeneration);
+        const witnessBytes = readFileSync(path.join(exportDirectory, 'witness.json'));
+        const witness = requireRecord(parseJsonUnknown(witnessBytes.toString('utf8')), 'native staged witness');
+        expect(witness).toMatchObject({
+          schema: 'VidaStagedRuntimeWitness/v1',
+          payload_manifest_sha256: payloadManifestSha256,
+          work_id: fixture.identity.work_id,
+          attempt: 1,
+          run_id: terminalJournal.state.run_id,
+          ledger_revision: terminalJournal.version.revision,
+          ledger_digest: terminalJournal.version.digest,
+          mastra_status: 'success',
+        });
+        expect(witness.ledger_state).toEqual(terminalJournal.state);
+        const witnessEvidenceBytes = readFileSync(path.join(exportDirectory, 'staged_runtime.json'));
+        expect(exported.path).toBe(`.agent/cutover/${witnessGeneration}/staged_runtime.json`);
+        expect(exported.sha256).toBe(createHash('sha256').update(witnessEvidenceBytes).digest('hex'));
+        const witnessEvidence = requireRecord(
+          parseJsonUnknown(witnessEvidenceBytes.toString('utf8')),
+          'staged witness evidence',
+        );
+        expect(witnessEvidence.witness).toEqual({
+          path: `.agent/cutover/${witnessGeneration}/witness.json`,
+          sha256: createHash('sha256').update(witnessBytes).digest('hex'),
+        });
+        const expectedObservations = terminalJournal.state.completed.flatMap((wave) =>
+          wave.items.map((item) => item.observation),
+        );
+        assert.ok(Array.isArray(witnessEvidence.observations));
+        expect(witnessEvidence.observations).toHaveLength(expectedObservations.length);
+        for (const [index, reference] of witnessEvidence.observations.entries()) {
+          const ref = requireRecord(reference, 'staged observation reference');
+          expect(ref.path).toBe(`.agent/cutover/${witnessGeneration}/observation-${index}.json`);
+          const bytes = readFileSync(path.join(exportDirectory, `observation-${index}.json`));
+          expect(ref.sha256).toBe(createHash('sha256').update(bytes).digest('hex'));
+          expect(parseJsonUnknown(bytes.toString('utf8'))).toEqual(expectedObservations[index]);
+        }
+        const exportBeforeRetry = snapshotAuthorityFixture(exportDirectory);
+        await assert.rejects(run(witnessArgs), { code: 'EEXIST' });
+        expect(snapshotAuthorityFixture(exportDirectory)).toEqual(exportBeforeRetry);
+        expect(readFileSync(payloadManifestPath)).toEqual(payloadManifest);
+        expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
+        expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
         const assurance = await publicRun([
           ...expected(version),
           '--prepare-assurance',
