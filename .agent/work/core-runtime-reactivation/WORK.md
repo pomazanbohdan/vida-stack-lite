@@ -40,6 +40,43 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Current terminal checkpoint: provider packet d05842aa is committed and pushed to
+origin/main after normal hooks (format538/strict545). Readiness probes confirm
+package-selected Bun1.4.4, rg15.2.0, ast-grep0.50.0 and configured lean-ctx3.11.4;
+Vex1.27.4 responds but its index is stale, so bounded Source fallback applies.
+The shared checkout/scratch/evidence filesystem survey records9514086400available
+bytes and1585252free inodes against the2147483648byte admission floor.
+Retained evidence directory is absent; no cleanup or timer change occurs.
+
+The first focused native attempt retains a libsql loader failure before CLI
+tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
+local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.
+Its manifest is /workspace/.vida-quality-inputs/runtime-root-20261026-02/root.manifest.json,
+SHA256114e6ed4358b161858a0f52f7b7894e037e6d9c139bf10eca9cab19ea316ebee.
+Native positive controls and independent profile-delta review pass. Focused02
+at /workspace/contour-focused-runtime-awrOaR passes7, skips8, fails0 with214
+assertions in51.16s. Capture/group/native exit0 and unchanged image/profile bind
+Source d05842aa and image bdf60f64fd35f93349ffc2a2a11e042cf96c3320.
+
+The one subsequent full stage /workspace/contour-stage-Pau349 fails normally:
+153pass,2fail,3743assertions,227.38s test time; outer233246.189419ms, no timeout,
+complete capture/group/native exit1 and unchanged inputs. Run
+270abd84-5864-44d5-b7c9-f1bcf7f8d070 accepts no numeric report. Prepared CLI
+receipt c54a4f87-9fe5-4043-9287-00836b2da369 reports incomplete consumed_inputs;
+the collector's2-of-3 observation failure is secondary. Raw receipts/logs and
+the failed fixture remain retained. No old UNKNOWN fence or counter changes.
+
+Root traces a confirmed observer defect: realpath failure on an unrelated
+optional readFileSync path incorrectly invalidates every prepared input.
+The narrow correction records identity failure only for a declared input.
+The existing fixture checks original ENOENT propagation, successful required
+input capture after unrelated failure, and rejection of a missing declared
+input; existing alias/options/descriptor controls remain. Focused observer test
+passes; scoped strict511 and zero-warning lint pass. Independent review and
+normal publication precede one new image and the justified changed-input stage.
+Normal uninstrumented CLI focus alone cannot prove this observer path.
+
+The earlier model-switch checkpoint below is historical, superseded above.
 Safe handoff for the owner's requested model switch: no live Bun/bwrap/Git/check
 process remains, no current capture is abandoned, and no new operation is started.
 HEAD remains e5dc275c. The provider packet below is local and unstaged, including

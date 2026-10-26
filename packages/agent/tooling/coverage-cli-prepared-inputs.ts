@@ -472,7 +472,7 @@ export function createPreparedReadCapture(
         }
         witnessFd = undefined;
       }
-      issues.push('Prepared readFileSync input identity could not be observed.');
+      if (role !== undefined) issues.push('Prepared readFileSync input identity could not be observed.');
     }
     const capturedStream = stream && supportedOptions ? stream : undefined;
     if (stream && !supportedOptions) {

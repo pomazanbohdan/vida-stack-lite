@@ -228,6 +228,21 @@ test('prepared input capture binds complete readFileSync bytes and rejects unsup
     unrelatedCapture.apis.closeSync(transientFd);
     assert.deepEqual(unrelatedCapture.finish().issues, []);
 
+    const missingUnrelatedCapture = createPreparedReadCapture(
+      root,
+      intake,
+      [],
+      undefined,
+      ['intake'],
+      preparedCliInputRoles,
+    );
+    assert.throws(() => missingUnrelatedCapture.apis.readFileSync(transient, 'utf8'), { code: 'ENOENT' });
+    assert.equal(missingUnrelatedCapture.apis.readFileSync(intake, 'utf8'), expected);
+    const missingUnrelatedEvidence = missingUnrelatedCapture.finish();
+    assert.equal(missingUnrelatedEvidence.complete, true);
+    assert.deepEqual(missingUnrelatedEvidence.issues, []);
+    assert.equal(missingUnrelatedEvidence.streams.length, 1);
+
     const acceptance = path.join(root, 'acceptance.json');
     writeFileSync(acceptance, Buffer.from([0xff]));
     const byteCapture = createPreparedReadCapture(
@@ -277,6 +292,20 @@ test('prepared input capture binds complete readFileSync bytes and rejects unsup
     const aliasOpenEvidence = aliasOpenCapture.finish();
     assert.equal(aliasOpenEvidence.complete, false);
     assert.ok(aliasOpenEvidence.issues.includes('Prepared input open path is not canonical.'));
+
+    const missingRequiredCapture = createPreparedReadCapture(
+      root,
+      intake,
+      [],
+      undefined,
+      ['intake'],
+      preparedCliInputRoles,
+    );
+    unlinkSync(intake);
+    assert.throws(() => missingRequiredCapture.apis.readFileSync(intake, 'utf8'), { code: 'ENOENT' });
+    const missingRequiredEvidence = missingRequiredCapture.finish();
+    assert.equal(missingRequiredEvidence.complete, false);
+    assert.ok(missingRequiredEvidence.issues.includes('Prepared readFileSync input identity could not be observed.'));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -12,12 +12,15 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-The pinned independent runtime-root boundary has passed native review02 for
-bounded focused callers in bun-cli-run. Publish the verified provider packet,
-then run the changed mount-control/public-report callers with fresh exclusive
-image/output/scratch and that exact allowlisted profile. After complete focused
-terminal evidence, admit one changed-input full contour stage. WORK owns the
-profile pin, native proof and Source binding. This is not numeric qualification.
+The independent runtime-root provider is published at d05842aa. Profile02 adds
+the readonly libsql loader closure; native controls and focused callers pass.
+The subsequent full bun-cli-run stage Pau349 fails with153pass/2fail because an
+unrelated missing readFileSync path invalidates the prepared-input observer.
+Repair that observer with paired required/unrelated input controls, review and
+publish after focused/static checks. Form one new immutable image for changed
+tool/test inputs, then admit one justified instrumented contour stage using the
+unchanged qualified profile02. WORK owns exact pins and terminal receipts.
+No current numeric qualification follows from the failed stage.
 The old tSHoBS UNKNOWN, writable resources and safety flags remain fenced.
 
 Old-resource HOLD. Sourcefb31f66d's tSHoBS stage has native UNKNOWN/SIGKILL with
