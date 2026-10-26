@@ -38,6 +38,20 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Owner clarification — contour closure, 2026-10-26
+
+The owner reiterates that contour closure is the goal; attribution and performance
+work are supporting steps. The existing plan now selects the two remaining
+configured-frontier continuation callbacks as the next bounded contract batch.
+The accepted16-body grouping and F546/562 baseline are unchanged. Root's bounded
+Source read locates both callbacks in the continuation response's request mapping
+and action lookup. They require an actual resumed prewriter engine frontier,
+not another refusal-only fixture. Inspect the maintained producer next; no new
+coverage hit, objective disposition, runtime eligibility or completed contour is
+claimed. Marketplace publication retains first resource priority. Existing
+UNKNOWN roots, budget, timer, model and producer ownership remain unchanged.
+
+
 ### Owner priority — marketplace publication first, 2026-10-26
 
 The owner makes Odoo Mobile marketplace publication priority1. VIDA Agent

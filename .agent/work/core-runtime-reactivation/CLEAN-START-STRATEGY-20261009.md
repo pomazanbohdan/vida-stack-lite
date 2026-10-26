@@ -12,6 +12,22 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Owner clarification2026-10-26: closing contours is the execution goal.
+Diagnostics and optimization serve that goal and must not become a separate
+open-ended lane. Keep bun-cli-run active and preserve the16-body prerequisite
+map below. Next coverage batch is the configured-frontier continuation pair
+at the accepted report locations7160/7162: establish a supported completed
+prewriter frontier, then exercise returned requests and configured contexts
+through the existing public continuation fixture. Preserve exact request/stage
+bindings and negative controls; do not fabricate completed Journal rows.
+First inspect that fixture's supported producer before any edit or runtime.
+If unavailable, record the precise prerequisite instead of adding denial-only
+cases. Necessary targeted proof and independent review precede one full proof
+only after the existing isolation/resource and runtime-margin HOLD is resolved.
+Targeted results alone close no numeric criterion. Blocker work stays bounded
+and subordinate to this coverage batch and marketplace resource priority.
+
+
 Owner priority2026-10-26: Odoo Mobile marketplace publication is priority1.
 VIDA blocker/refactor is background work on available resources, yielding CPU,
 memory, disk I/O and exclusive execution resources to publication. Keep this
