@@ -19,9 +19,12 @@ unrelated missing readFileSync path invalidates the prepared-input observer.
 Observer repair5a235837 passes paired controls, independent review and hooks,
 then the one changed-input stage TZLfHB passes154/154 under profile02.
 Its accepted run1e0cff0e records F515/555,L2390/2873,S2580/3157,B3035/3686.
-Keep bun-cli-run active: inspect its remaining terminal research/result output
-paths against existing fixtures, collect related assertions, then follow the
-same focused/static/review/one-stage order. WORK owns pins and terminal receipts.
+The same-fixture validator-status packet45dd5721 then passes isolated focus and
+one full stage6QAlkr, recording F516/555,L2396/2873,S2586/3157,B3041/3686.
+Keep bun-cli-run active: cover terminal synthesis under the supported non-code
+information_research_light workflow. Reuse existing research fixtures, group
+related assertions, then follow the same static/review/focus/one-stage order.
+WORK owns pins and terminal receipts.
 The failed predecessor contributes no accepted counters.
 The old tSHoBS UNKNOWN, writable resources and safety flags remain fenced.
 
