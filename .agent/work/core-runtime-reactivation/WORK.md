@@ -40,6 +40,41 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Native target Source0c8fb73faa9567b7cea42d2a51b469399782863b/image9433f8e3,
+focused HN3SXM passes1test/169assertions36.70s with fullcapture/group closure,
+native child1019033exit0 and unchanged image/profile. Captured intervals:
+selected file/config380.93ms, authority setup16.06ms, preceding calls18.45ms,
+DBinit4.54ms, native inspection including parent decode2282.14ms. This is one
+observed invocation, not pure startup, a benchmark, or a comparison against the
+different delivery target. Source9bb's paired delivery measurements remain their
+own compatible-source dataset. All budgets/assertions/nativecalls are unchanged;
+summary/refs DIAG/phase-native-timing-summary-20261026-01.json.
+Native window load0.70→1.27, quota4, CPUdelta58.89s over~36.7swall and throttle
+delta309microseconds/1period; memory9424068→9437680KiB. These current windows
+neither establish a past environment slowdown nor a production regression.
+
+Decision: no full run. DB/setup is small in both observed targets, while required
+writer issue/report and engine/assurance/native validations dominate. No redundant
+expensive common preparation or measured removal with robust full-stage headroom
+has been proved. Removing whole native calls or replacing I/O would violate the
+contract; the prior28filesystem-mutation subtraction alone cannot justify it.
+Concrete next diagnostic is bounded attribution INSIDE one measured writer-issue
+or native CLI invocation through existing capture owner before changing core
+validation/caching. A separate possible design is qualified independent within-
+contour execution, but shared clocks/spies/custody and total budget must first be
+proved; no runner/parallelism change is made or automatically authorized here.
+
+Independent final review confirms marker placement, native/assertion preservation
+and the limits of timing conclusions; no blocker in this diagnostic packet.
+The requested measurement stage is complete with passing targeted diagnostics,
+not numeric qualification. Only timing instrumentation and root-symlink output
+confinement were repaired. Old48afffa0 and all prior UNKNOWN flags/evidence stay
+unchanged. Latest accepted local numeric baseline remains Source60cb6e77,
+F546/562,L2521/2886,S2720/3172,B3198/3718,16gaps,maxCC/CRAP504,BLOCKED.
+No full suite, producer replay, fixture pruning, benchmark speedup, new free-space
+survey, cleanup, mutation or frozen qualification was performed in this packet.
+
+
 Two same-source9bbce7ca/image4f108017 targeted delivery phase captures pass151
 assertions each in25.88/26.08s. Actual file/config284.86/304.35ms, DB/Host/DDL
 37.97/40.29ms, admission/lease380.63/526.34ms, engine14794.49/15290.83ms,
@@ -47,7 +82,7 @@ assurance5913.71/4522.38ms, export813.27/464.22ms. Three recorded in-process
 public calls are writerissue5267.58/3152.18ms and reports1809.17/2144.72,
 2334.35/2745.87ms. They are not native child startup measurements. CPU quota4,
 window cgroup CPU25.87/27.44s, throttled0.036/0.349s, loadavg0.58→0.80 and
-0.68→0.96, MemAvailable~9.4–9.5GB. These observed windows do not prove the cause
+0.68→0.96, MemAvailable~9.4–9.5millionKiB. These observed windows do not prove the cause
 of historical full-stage slowdown. Instrumented diagnostics are not benchmarks
 or grounds for a full-run headroom claim. Summary/refs in
 DIAG/phase-timing-summary-20261026-01.json.

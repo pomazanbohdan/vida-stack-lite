@@ -12,6 +12,17 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Bounded timing work has now measured DB/setup, native invocation and actual
+engine/assurance phases with passing focused diagnostics. The same-source paired
+delivery observations show~38–40ms DB versus~14.79–15.29s engine and~4.52–5.91s
+assurance; a separate native target shows~381ms setup/~4.54ms DB/~2.28s existing
+inspection invocation. No expensive redundant setup or verified full-stage margin
+is established. Do not launch a full stage from these timings alone. Continue
+bounded attribution of the already-measured writer issue/native validation cost,
+or independently design/qualify within-contour isolation/concurrency under the
+same total budget; preserve all real I/O, native controls and exact gates.
+
+
 Current staged-witness packet Source0c9c8303 has focus/review PASS but its single
 full stage8vfRgV is UNKNOWN from inner timeout/SIGKILL. Keep all retained evidence
 and resource_safe_to_advance=false. Do not replay or count staged-witness callbacks
