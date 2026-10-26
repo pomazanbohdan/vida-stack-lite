@@ -10840,12 +10840,48 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               state_version: result.state_version,
             });
             return { ...result, state_version: requireStateVersion(typedResult.state_version) };
-          },
-          assurance = await publicRun([
-            ...expected(version),
-            '--prepare-assurance',
-            path.join(fixture.root, fixture.preparationPath),
-          ]);
+          };
+        const terminalHost = fixture.store.readHostStateSnapshot(fixture.identity);
+        const terminalJournal = fixture.ledger.resume(fixture.identity.work_id, 1);
+        assert.ok(terminalJournal);
+        expect(terminalJournal.resume_status).toBe('complete');
+        const terminal = await publicRun([]);
+        expect(terminal.resume_status).toBe('complete');
+        expect(terminal.state_version).toEqual(terminalJournal.version);
+        expect(terminal.next_actions).toEqual([]);
+        expect(terminal.issued_actions).toEqual([]);
+        const instruction = requireRecord(terminal.delivery_instruction, 'terminal delivery instruction');
+        expect(instruction).toMatchObject({
+          implementation_fingerprint: sourceScope.digest,
+          destination: deliveryProposal.destination,
+          order: deliveryProposal.order,
+        });
+        expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
+        expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        const currentSourcePath = path.join(fixture.root, 'AGENT.sidecar.md');
+        const currentSourceBytes = readFileSync(currentSourcePath);
+        try {
+          writeFileSync(
+            currentSourcePath,
+            Buffer.concat([currentSourceBytes, Buffer.from('\nchanged terminal Source\n')]),
+          );
+          await assert.rejects(run(runArgs), { code: 'GAP-VIDA-RUN-CONTEXT-001' });
+          expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
+          expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        } finally {
+          writeFileSync(currentSourcePath, currentSourceBytes);
+        }
+        expect(readFileSync(currentSourcePath)).toEqual(currentSourceBytes);
+        const terminalRetry = await publicRun([]);
+        expect(terminalRetry.delivery_instruction).toEqual(instruction);
+        expect(terminalRetry.state_version).toEqual(terminalJournal.version);
+        expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
+        expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        const assurance = await publicRun([
+          ...expected(version),
+          '--prepare-assurance',
+          path.join(fixture.root, fixture.preparationPath),
+        ]);
         expect(assurance.status).toBe('assurance_resumed');
         expect(assurance.assurance_status).toBe('ready');
         expect(assurance.issued_actions).toEqual([]);
