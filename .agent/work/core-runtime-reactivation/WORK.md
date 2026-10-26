@@ -40,6 +40,79 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Read-only design review of budget options, no source/runtime/runner change:
+DIAG/budget-options-design-review-20261026-01.md is independent blind Luna review.
+Root refines its general shard wording using actual focused-route guards below;
+retain the original review rather than rewriting its evidence.
+
+A — atomic existing-owner CAS read-snapshot. This is not an accepted cache or
+implementation. Required proof: complete config/activation/history/upgrade and
+absence-marker closure; canonical physical root/input identity; unchanged-byte
+and selection checks; concurrent writer/source substitution refusal; orphan/lock
+reclamation and durable release; sealed lifetime bounded to the same atomic
+scope; no stale proof across public calls, await, mutation or capability issuance.
+Every required authority observation remains, though equivalent duplicate physical
+reads could only be consolidated under proved ownership. Minimal prototype scope
+is safe-repository-access/runtime-config owners and focused config/CAS race,
+mutation-during-read, activation/history, invalidation, failure/cleanup tests.
+Project-context consumers need compatibility review too. Shared input changes
+invalidate affected proof; no numeric/frozen result may be carried as current.
+The sampled~5.86s config/~5.67s CAS/~4.25s fsync figures overlap and do not establish
+removable work or expected elapsed saving. No design invariant or safe fix yet.
+
+B — shards. Canonical infrastructure supports at most2whole-file assignments in
+one complete nonexclusive reviewed wave, serial Bun children, exact scope digests,
+separate outputs/TMPDIR, full custody and one merged report with the shared300s
+budget/330sstage, unchanged memory/worker caps and2GiBfloor. It does NOT currently
+permit this contour's focused route: focusedCoverageShardReview160–189 recognizes
+only pinned main-runtime-core/bun-host-state;1096–1099reject external callbacks
+for focused diagnostics;1492–1508do not prepare shards without that built-in review.
+The current package eligibility artifact is absent. An artifact alone cannot
+activate bun-cli-run. New pilot admission requires runtime/TESTING/plan-owner
+agreement and complete current resource/merge/capture/UNKNOWN controls.
+
+Existing two-file partition is bin/run.ts with run-entrypoint.test.ts and
+bun-cache-routing.test.ts. Existing accepted stderr receipts give main149cases
+229874.45/240958.81ms, cache8cases4250.23/4294.41ms(lAwiYJ/CYKSkG). Under an
+ideal unchanged-cost overlap model, current file-level parallelism hides only
+about4.3s; this is a planning bound, not measured savings or sufficient margin.
+Balancing the149case file requires test-layout extraction or a new case-selection
+protocol, helper/observer/capture bindings and a new complete resource review;
+it is not a flag change or existing authorization. All current cases and native
+contracts must remain exactly once. Shared clocks/spies/process effects need
+independence proof; no empty resource rows or narrower denominator are allowed.
+Minimal meaningful B scope is therefore larger than a review JSON: focused pilot
+owner + eligible test layout/selection + binding/merge/refusal/custody tests.
+
+For unchanged Source, a permitted mechanism must keep identical F/L/S/B inventory
+and selected case union and one total deadline; no per-shard budget reset. If a
+future Source implementation adds functions, the existing inventory owner must
+account for them normally, never exclude them to preserve a favorable ratio.
+No new review, inventory, hash pass or numeric stage ran for this design analysis.
+
+Canonical alternative C already exists in TESTING397–438 and isolatedCommand's
+VIDA_QUALITY_RETAINED_SCRATCH_ROOT: fresh retained HOSTtmpfs functional/process
+fixtures may keep real calls and every fsync; Source/images/SDK/logs/reports stay
+durable. Same2GiBfreefloor/memorycaps apply. Complete new scratch must be archived
+and bytes/modes/link targets verified after terminal/group closure, retaining both
+original and durable archive including FAIL/UNKNOWN. It grants no power-loss proof,
+old-state replay, parallel eligibility or current numbers. Historical WORK already
+contains tmpfs FAIL/UNKNOWN and archived roots; those are not a current admission
+or promised speedup. Capacity, custody, isolation and retention remain unqualified
+for a new root here; no mount/provision/relocation/cleanup was attempted.
+
+Recommendation: do not implement A or B now. B's unchanged two-file split has
+insufficient modeled benefit; A needs a shared coordination invariant first.
+Within read-only authority, prepare that invariant or assess C's current resource
+admission from existing receipts. Actual A adoption needs owner approval only if
+it changes read/consistency/authority semantics; such weakening is not proposed.
+A new bun-cli-run pilot or balanced case/file-sharding protocol needs explicit
+runtime/TESTING/plan-owner adoption and independent compatibility proof before
+execution. No acceptance/gate relaxation is a selectable option. Current16gap
+prerequisites remain, with no objective dispositions, newhits or denominator edits.
+BaselineF546/562/BLOCKED/maxCC504, all UNKNOWN resource flags and timer unchanged.
+
+
 Engine/assurance attribution packet: no production change or full stage. Installed
 Bun advertises CPU-profile flags, but test focusLoftUM passes151assertions without
 creating the requested artifact. A tiny disposable control confirms bun test

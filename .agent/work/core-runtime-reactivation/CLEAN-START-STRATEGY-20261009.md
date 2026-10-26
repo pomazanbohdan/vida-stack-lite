@@ -12,6 +12,19 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Read-only option review adds a strict constraint: bun-cli-run focused sharding is
+not an existing pilot. The runner accepts only exact main-runtime-core/Host pilots
+and forbids external focused review callbacks; writing eligibility JSON alone is
+insufficient. Current file-level split offers only~4.3s idealized overlap, not a
+measured saving. Balanced case/file splitting or new pilot requires owner adoption
+and exact selection/custody/merge proof under the same total budget. CAS snapshot
+also remains design-only until complete authority/race/durability invariants hold.
+TESTING's existing retained-host-tmpfs functional route is an alternative subject
+to unchanged resource floors, proven isolation and verified durable retention;
+no current tmpfs admission, execution or power-loss qualification is established.
+Keep full-stage HOLD. Read-only review does not expand architecture/acceptance.
+
+
 Latest attribution identifies durable config/safe-access reads as a sampled hot
 path; parsed config caching already exists and does not replace source/upgrade
 revalidation. No safe performance fix/headroom is proved. Before another full
