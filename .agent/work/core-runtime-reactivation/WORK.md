@@ -38,6 +38,27 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Owner priority — marketplace publication first, 2026-10-26
+
+The owner makes Odoo Mobile marketplace publication priority1. VIDA Agent
+blocker removal and testing-architecture preparation continue in the background
+only on resources available after publication work. This applies to the existing
+cycle, not a replacement task, writer, plan ledger, automation or timer change.
+Targeted verification can support current changes but never closes the full
+contour or upgrades BLOCKED/UNKNOWN to PASS. Last accepted local baseline remains
+F546/562 with16remaining bodies; all authority, exact gates, budgets, Source/run
+bindings and retained UNKNOWN evidence remain unchanged.
+
+Yield CPU, memory, disk I/O and exclusive execution resources to publication.
+No full UNKNOWN rerun, new numeric producer, broad scan/hash/benchmark or pilot
+launch follows from this priority note. Background work is bounded static
+architecture/contract preparation and necessary targeted checks when publication
+is not consuming those resources. CAS semantics may not be weakened. Any future
+pilot needs independent isolation/completeness proof and stays nonqualifying
+until validated. Escalate an architecture/acceptance decision with exact scope;
+no model, timer or schedule changes are authorized.
+
+
 ### Independent runtime-root preparation, 2026-10-26
 
 Read-only design review of budget options, no source/runtime/runner change:

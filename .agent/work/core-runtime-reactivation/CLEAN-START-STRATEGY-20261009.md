@@ -12,6 +12,16 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+Owner priority2026-10-26: Odoo Mobile marketplace publication is priority1.
+VIDA blocker/refactor is background work on available resources, yielding CPU,
+memory, disk I/O and exclusive execution resources to publication. Keep this
+same cycle/WORK/plan and timer. Continue bounded static design and necessary
+targeted verification without presenting it as full closure; no full UNKNOWN
+rerun or unqualified pilot. Independent isolation/completeness proof, unchanged
+CAS authority, gates and budgets remain prerequisites. No replacement task,
+model change or second automation is authorized.
+
+
 Read-only option review adds a strict constraint: bun-cli-run focused sharding is
 not an existing pilot. The runner accepts only exact main-runtime-core/Host pilots
 and forbids external focused review callbacks; writing eligibility JSON alone is
