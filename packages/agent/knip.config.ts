@@ -33,6 +33,7 @@ const config = {
         'bin/development-controller.ts',
         // Explicit child/preload paths and compiler/declaration inputs.
         'tooling/git-quality-hooks.ts',
+        'tooling/quality-runtime-root.ts',
         'tooling/development-controller-qualification.ts',
         'tooling/bun-coverage-preload.ts',
         'tooling/mutation-command-runner.ts',

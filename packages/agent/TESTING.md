@@ -1879,6 +1879,30 @@ failed assertion or incomplete outcome. Cleanup requires a successful case,
 complete untruncated capture and observed group closure. Keep its3s deadline and
 1MiB per-stream bound. Reuse captured byte counts instead of rereading empty logs.
 
+An independently qualified closed runtime root can replace the host-root view
+without changing the producer. The setup utility `tooling/quality-runtime-root.ts`
+accepts an explicit JSON recipe with files, optional data and dependency_root.
+Each file names an absolute source and logical target. Materialization is exclusive,
+captures regular file bytes/modes once, rejects dependency sockets/special nodes
+and pins the resulting manifest. Reuse checks the owned file and directory
+identities rather than walking or hashing the full installation again.
+
+Pass both `--runtime-root-manifest` and `--runtime-root-sha256` to the existing
+stage after native qualification. The child starts from an empty read-only root,
+with private user/PID/network/IPC/UTS namespaces, explicit readonly runtime files,
+the existing image/dependency mounts and fresh durable writable paths. Its
+environment uses the declared allowlist and owned lane values. No ambient host
+configuration, socket or extra descriptor grants effects authority.
+
+Native bwrap status uses dedicated FD3, not stdout. The controller owns its
+exclusive sibling file outside child-writable mounts. The child does not inherit
+that channel. Preserve child-start and namespace-init exit records separately
+from stdout/stderr. Missing or mismatched status, close failure or changed inputs
+denies publication. Timeout/UNKNOWN and all old safety flags keep their meaning.
+Manifest possession alone is not qualification. Independently review native
+namespace, denied-effect, local IPC, descriptor and direct PID1 terminal controls
+before focused callers, and require their terminal evidence before a full stage.
+
 The first stage accepts `--image-store <absolute directory>`; its retained request
 and launch contain `execution_image`. Pass its `manifest_file` and caller-held
 `manifest_sha256` as `--image-manifest` and `--image-sha256` to subsequent lanes.

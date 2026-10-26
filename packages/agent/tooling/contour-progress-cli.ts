@@ -240,6 +240,22 @@ function readStageOutcome(file: string, commit: string, recorded_at: string): Re
   const result = contourRecord(execution.result);
   const custody = result.processCustody === null ? {} : contourRecord(result.processCustody);
   const capture = result.output_capture === undefined ? {} : contourRecord(result.output_capture);
+  if (launch.runtime_root !== undefined) {
+    if (
+      JSON.stringify(launch.runtime_root) !== JSON.stringify(execution.runtime_root) ||
+      JSON.stringify(launch.runtime_root) !== JSON.stringify(diagnostic.runtime_root) ||
+      diagnostic.runtime_inputs_unchanged !== execution.runtime_inputs_unchanged ||
+      diagnostic.namespace_termination_observed !== execution.namespace_termination_observed ||
+      JSON.stringify(diagnostic.native_namespace_status) !== JSON.stringify(execution.native_namespace_status) ||
+      typeof execution.runtime_inputs_unchanged !== 'boolean'
+    )
+      throw new Error('Stage outcome differs from its retained runtime inputs.');
+    if (
+      report.accepted === true &&
+      (execution.runtime_inputs_unchanged !== true || execution.namespace_termination_observed !== true)
+    )
+      throw new Error('Stage runtime inputs changed before publication.');
+  }
   const observations: readonly (readonly [unknown, unknown])[] = [
     [report.run_id, run_id],
     [diagnostic.directory, directory],

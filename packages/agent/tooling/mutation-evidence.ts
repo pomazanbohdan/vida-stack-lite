@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { constants } from 'node:fs';
+import { closeSync, constants, openSync } from 'node:fs';
 import { open, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from '@babel/parser';
@@ -54,6 +54,8 @@ export type ProcessCustody = {
   attempts: { signal: NodeJS.Signals; target: 'child' | 'process-group'; outcome: string; error?: string }[];
 };
 export type MutationProcessResult = {
+  native_status_file?: string;
+  native_status_error?: string | null;
   exitCode: number | null;
   signal: Bun.Subprocess['signalCode'];
   spawnError: string | null;
@@ -969,30 +971,72 @@ export async function executeMutationCommand(
     outputByteLimit?: number;
     env?: NodeJS.ProcessEnv;
     ownedProcessGroup?: boolean;
+    nativeStatusFile?: string;
   } = {},
 ): Promise<MutationProcessResult> {
   if (!command.length || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1)
     return { exitCode: null, signal: null, spawnError: 'invalid-command', timedOut: false, processCustody: null };
   let child;
+  let nativeFd: number | undefined;
   try {
-    child = spawnMutationChild(command, cwd, limits);
+    if (limits.nativeStatusFile !== undefined) nativeFd = openSync(limits.nativeStatusFile, 'wx', 0o600);
+    child = spawnMutationChild(command, cwd, {
+      ...limits,
+      ...(nativeFd === undefined ? {} : { nativeStatusFd: nativeFd }),
+    });
   } catch (error) {
-    return { exitCode: null, signal: null, spawnError: childErrorCode(error), timedOut: false, processCustody: null };
+    let nativeCloseError: string | null = null;
+    if (nativeFd !== undefined) {
+      try {
+        closeSync(nativeFd);
+      } catch (closeError) {
+        nativeCloseError = childErrorCode(closeError);
+      }
+    }
+    return {
+      exitCode: null,
+      signal: null,
+      spawnError: childErrorCode(error),
+      timedOut: false,
+      processCustody: null,
+      ...(limits.nativeStatusFile === undefined
+        ? {}
+        : { native_status_file: limits.nativeStatusFile, native_status_error: nativeCloseError }),
+    };
   }
-  return observeMutationProcess(child, timeoutMs, limits);
+  let nativeCloseError: string | null = null;
+  if (nativeFd !== undefined) {
+    try {
+      closeSync(nativeFd);
+    } catch (error) {
+      nativeCloseError = childErrorCode(error);
+    }
+  }
+  const result = await observeMutationProcess(child, timeoutMs, limits);
+  return limits.nativeStatusFile === undefined
+    ? result
+    : {
+        ...result,
+        native_status_file: limits.nativeStatusFile,
+        native_status_error: nativeCloseError,
+      };
 }
 
 function spawnMutationChild(
   command: string[],
   cwd: string,
-  limits: { env?: NodeJS.ProcessEnv; ownedProcessGroup?: boolean },
+  limits: { env?: NodeJS.ProcessEnv; ownedProcessGroup?: boolean; nativeStatusFd?: number },
 ): OutputChild {
+  const stdio: ['ignore', 'pipe', 'pipe', number] | undefined =
+    limits.nativeStatusFd === undefined ? undefined : ['ignore', 'pipe', 'pipe', limits.nativeStatusFd];
   return Bun.spawn({
     cmd: command,
     cwd,
     env: limits.env ?? process.env,
+    stdin: 'ignore',
     stdout: 'pipe',
     stderr: 'pipe',
+    ...(stdio ? { stdio } : {}),
     detached: limits.ownedProcessGroup ?? false,
   });
 }

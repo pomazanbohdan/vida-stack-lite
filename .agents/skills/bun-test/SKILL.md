@@ -65,6 +65,10 @@ retains the fixture. Budget and resource-custody gates stay with TESTING.
 For native image-mount controls, reuse the maintained capture/group observer and
 mark the fixture complete only after terminal and filesystem assertions pass.
 Keep raw failed streams and receipts. An afterEach hook alone grants no cleanup.
+For a qualified closed runtime root, keep bwrap namespace status on its dedicated
+controller-owned FD3 channel. FD1 consumes the child's stdout and cannot serve
+both contracts. Root verifies namespace-init terminal proof and unchanged inputs;
+this never settles an older UNKNOWN or permits reuse of its writable resources.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual
 normalization and artifact admission. Use distinct action-bound tool-call refs

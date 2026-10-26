@@ -38,6 +38,102 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Independent runtime-root preparation, 2026-10-26
+
+Safe handoff for the owner's requested model switch: no live Bun/bwrap/Git/check
+process remains, no current capture is abandoned, and no new operation is started.
+HEAD remains e5dc275c. The provider packet below is local and unstaged, including
+the new untracked tooling/quality-runtime-root.ts. Preserve every changed file
+and both producer-owned projection files. No commit/push for this packet yet.
+Next owner checks current resource/tool readiness, reviews this exact packet and
+normal hooks, publishes it, then follows native review02's focused-callers/full-stage
+sequence. Do not recreate the profile or repeat native controls without a changed
+input or unresolved concern. Last native storage admission records9514295296free
+bytes against2147483648; free inodes remain unmeasured. Configured tool pins are
+Vex1.27.4, ast-grep0.50.0 with sg alias, and lean-ctx3.11.4. These are lock values,
+not fresh functional probes. Resolve st-grep/ctx through the existing Cloud
+reference and verify one bounded probe on resume; keep stale Vex fallback and
+do not reindex. No timer change, cleanup or old UNKNOWN fence change is made.
+
+Root resumes e5dc275c in the same bun-cli-run F/L/S/B contour. The standing HOLD
+and every old UNKNOWN resource remain protected. Current non-product bwrap
+user/pid/net/ipc true control returns tool exit0 under uid/gid1000. This resolves
+the user-namespace creation prerequisite only, not native provider qualification.
+Literal DIAG/selected-namespace-inputs-20261026-01.md confirms SDK artifacts are
+already image-captured. Root's explicit runtime recipe and library observations
+select16 regular runtime file paths and four generated configuration files.
+No installed dependency, SDK artifact or immutable measured image is changed.
+
+The private materializer proposal is unvalidated history. Root integrates and
+corrects its handles, nonblocking regular-file gates, protected targets and errors.
+The current candidate adds a digest-pinned private runtime-file capture to the
+existing image/launcher owner, not another numeric producer. Files are copied
+and hashed once. Readonly dependency node types are inspected once; directory
+identities gate reuse without another file walk/hash. Child root starts empty,
+with explicit readonly files and existing image/dependency mounts, new durable
+writable mounts, private namespaces, dropped capabilities and a readonly root.
+Actual environment uses an explicit allowlist plus owned lane values. The shared
+capture owner declares ignored stdin; native descriptor closure still needs proof.
+
+Literal DIAG/runtime-boundary-preflight-review-20261026-01.md permits bounded
+creator/preflight work and names native mount, environment/FD, namespace, local
+IPC, descendant/capture and durable-failure controls. No selected coverage target
+is admitted by that review or by a profile manifest. Static01 catches an unused
+proposal helper; Root removes it and static02 passes strict511/configured lint.
+Further environment/stdio and storage gates are pending their grouped static
+check and review. Native controls and final admission remain pending. No new
+numeric report, exact closure, frozen/CRAP or mutation qualification is claimed.
+
+The initial pending items above are now resolved for the specific pinned boundary.
+Creator PID992049 exits0 with complete capture/group closure. Profile
+/workspace/.vida-quality-inputs/runtime-root-20261026-01/root.manifest.json has
+SHA256c7137d8272efe5786beab4e423163e1d16c0f5294a019c85e753907f19b4b365,
+20copied/generated files,131998955bytes,3104dependency directory bindings and
+949802manifest bytes. SDK inputs stay with their existing image/readiness owner.
+No dependency install, host-root scan, second producer or old image edit occurs.
+
+Positive native controls retain all requested namespace/mount/credential/FD and
+private-network/child-IPC proofs. Control01 failed an oracle that incorrectly
+treated declared capture FDs1/2 as ambient sockets. Control02 corrects that
+declaration. The FD1 status experiment03 exits0 but loses expected child stdout;
+it is a rejected transport, not a successful complete control. Final04 uses
+dedicated FD3, keeps512stdout proof bytes and stderr0, and observes full capture
+and group closure at /workspace/contour-namespace-control-F2Iyt8/stage. Its native
+sibling status is outside the child mounts. Caller stdout and native status are
+not multiplexed or synthesized from each other.
+
+The first drain controls retain heartbeats after leader exit and actual timeout.
+Review01 requires stronger descendant proof. The host does not expose
+/proc/PID/task/TID/children; direct-drain01 stops before launching its child.
+Root instead uses bwrap's native child PID/status and binds PID1 namespace and
+start ticks while live. /workspace/contour-namespace-init-drain-U4gwev/stage records
+PID1=992492/liveS/start69744299 then ENOENT after exit7. N3Bm6T records
+PID1=992499/liveS/start69744306 then Z with identical start ticks after a real
+1000ms timeout/group SIGTERM/exit143. Both retain complete capture and closed
+groups. Direct init termination supplies namespace-teardown proof for the held
+detached descendant, beyond heartbeat stability. Timeout remains timeout; its
+missing native footer denies success. Every original FAIL/TIMEOUT tree is retained.
+
+Literal DIAG/runtime-boundary-native-review-20261026-02.md independently passes
+focused callers in this new boundary and one full changed-input stage only after
+their complete terminal outcomes. The old ec0b969d/tSHoBS UNKNOWN, false resource
+flag, locks, attempts and evidence are unchanged. No archived operation is replayed.
+Admission applies only to fresh exclusive writable namespaces and matching
+readonly profile/dependency custody. This is neither Runtime acceptance nor a
+current numeric report. The default legacy route does not acquire that proof.
+
+Source now preserves native FD3 metadata separately, rejects missing/mismatched
+namespace-init status and cross-binds diagnostic/execution observations. Static04
+catches two exact-optional-property constructions. Root omits absent options;
+static05 passes strict511/configured zero-warning lint. Creator/admission controls
+also reject traversal, foreign fields, existing output, wrong pins, changed copies
+and dependency sockets; the retained controlled fixture is
+/workspace/contour-runtime-admission-sAnnz2. No new full suite or AST/hash pass is
+run for reporting. All native and admission control scripts/receipts remain in
+the current DIAG owner. Baseline F507/555,L2319/2873,S2508/3157,B2932/3686 remains
+the last qualified result. Next: publish this provider packet, qualify focused
+callers under its profile, then one full bun-cli-run stage. Timer stays unchanged.
+
 ### Mount-control evidence retention, 2026-10-25
 
 Root resumes15acaaa3 with only the producer-owned projection dirty and no live

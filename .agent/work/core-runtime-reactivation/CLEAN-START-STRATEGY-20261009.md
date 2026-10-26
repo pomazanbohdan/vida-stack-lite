@@ -12,7 +12,15 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
-Numeric HOLD. Sourcefb31f66d's tSHoBS stage has native UNKNOWN/SIGKILL with
+The pinned independent runtime-root boundary has passed native review02 for
+bounded focused callers in bun-cli-run. Publish the verified provider packet,
+then run the changed mount-control/public-report callers with fresh exclusive
+image/output/scratch and that exact allowlisted profile. After complete focused
+terminal evidence, admit one changed-input full contour stage. WORK owns the
+profile pin, native proof and Source binding. This is not numeric qualification.
+The old tSHoBS UNKNOWN, writable resources and safety flags remain fenced.
+
+Old-resource HOLD. Sourcefb31f66d's tSHoBS stage has native UNKNOWN/SIGKILL with
 timeout_observedtrue and resource_safe_to_advancefalse. The shared300000ms budget
 reserves30000ms, so preparation and execution share at most270000ms. Outer process
 closure does not establish effect custody. No successor producer, runtime target
@@ -20,11 +28,11 @@ or contour change is admitted until an independently qualified full-effect
 namespace or genuinely independent environment exists. Preserve the old image,
 scratch, locks, logs, operation outcome and UNKNOWN flags; never replay that run.
 
-The resume check confirms host network and IPC namespace options are available,
-but the current launcher does not use them or establish full effect isolation.
-Docker has no qualified image or existing contour route. Availability alone does
-not reopen production. [WORK](WORK.md#coverage-resume-custody-check-2026-10-25)
-owns the corrected independent review and the checks to run after qualification.
+The default historical launcher remains unqualified for resource succession.
+The explicit closed-root option in that same owner now has bounded native proof;
+Docker is unused. [WORK](WORK.md#independent-runtime-root-preparation-2026-10-26)
+owns current admission and retained failures. A different profile, code or effect
+boundary requires its own qualification, not a reused approval label.
 
 A supporting native mount-control retention repair now reuses the shared capture
 and group owner. Static checks and independent review pass, but its runtime

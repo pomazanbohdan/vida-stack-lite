@@ -16,6 +16,7 @@ import { executeMutationCommand, mutationToolInputs, type MutationProcessResult 
 import { mutationLimits } from './mutation-limits.ts';
 import { mutationPartitionSources, mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
 import { qualityImageMountArguments } from './quality-image-mounts.ts';
+import type { QualityRuntimeRoot } from './quality-runtime-root.ts';
 import { retainQualityGitSnapshot } from './quality-git-snapshot.ts';
 import {
   prepareQualityExecutionImage,
@@ -284,7 +285,30 @@ export function isolatedCommand(
   tools: { tini: string; bwrap: string },
   retainedScratchRoot?: string,
   image?: QualityExecutionImage,
+  runtimeRoot?: QualityRuntimeRoot,
 ) {
+  if (runtimeRoot) {
+    if (!image || runtimeRoot.dependency_root !== image.dependency_root)
+      throw new Error('Independent runtime root requires its exact image dependency boundary.');
+    const overlaps = (left: string, right: string) =>
+      left === right || left.startsWith(`${right}${path.sep}`) || right.startsWith(`${left}${path.sep}`);
+    for (const writable of [
+      directory,
+      path.join(image.packageRoot, 'coverage'),
+      path.join(image.packageRoot, '.tmp'),
+    ]) {
+      if (overlaps(runtimeRoot.root, writable) || overlaps(runtimeRoot.manifest_file, writable))
+        throw new Error('Runtime inputs overlap writable output.');
+    }
+    for (const file of runtimeRoot.files) {
+      if (
+        [image.repository, image.source_repository, image.manifest_file, directory].some((root) =>
+          overlaps(file.target, root),
+        )
+      )
+        throw new Error('Runtime file target overlaps image or output mounts.');
+    }
+  }
   requireCampaignStorage(directory);
   let scratchParent = directory;
   if (retainedScratchRoot !== undefined) {
@@ -313,12 +337,33 @@ export function isolatedCommand(
   const scratch = path.join(temporary, 'scratch');
   mkdirSync(scratch);
   mkdirSync(path.join(scratch, 'bun-install-cache'));
+  if (runtimeRoot) {
+    if (
+      runtimeRoot.root === scratch ||
+      runtimeRoot.root.startsWith(`${scratch}${path.sep}`) ||
+      scratch.startsWith(`${runtimeRoot.root}${path.sep}`)
+    )
+      throw new Error('Runtime inputs overlap scratch.');
+    for (const name of ['home', 'cache', 'config']) mkdirSync(path.join(scratch, name));
+  }
   return {
     temporary,
+    ...(runtimeRoot
+      ? {
+          native_status_file: `${directory}.namespace-status.jsonl`,
+          runtime_root: {
+            root: runtimeRoot.root,
+            manifest_file: runtimeRoot.manifest_file,
+            manifest_sha256: runtimeRoot.manifest_sha256,
+            dependency_root: runtimeRoot.dependency_root,
+          },
+        }
+      : {}),
     environment: {
       TMPDIR: '/tmp',
       BUN_TMPDIR: '/tmp',
       BUN_INSTALL_CACHE_DIR: '/tmp/bun-install-cache',
+      ...(runtimeRoot ? { HOME: '/tmp/home', XDG_CACHE_HOME: '/tmp/cache', XDG_CONFIG_HOME: '/tmp/config' } : {}),
       ...(image
         ? { VIDA_QUALITY_IMAGE_MANIFEST: image.manifest_file, VIDA_QUALITY_IMAGE_SHA256: image.manifest_sha256 }
         : {}),
@@ -336,9 +381,22 @@ export function isolatedCommand(
       '--die-with-parent',
       '--unshare-pid',
       '--as-pid-1',
-      '--ro-bind',
-      '/',
-      '/',
+      ...(runtimeRoot
+        ? [
+            '--json-status-fd',
+            '3',
+            '--unshare-user',
+            '--unshare-net',
+            '--unshare-ipc',
+            '--unshare-uts',
+            '--new-session',
+            '--cap-drop',
+            'ALL',
+            '--tmpfs',
+            '/',
+            ...runtimeRoot.files.flatMap((file) => ['--ro-bind', file.source, file.target]),
+          ]
+        : ['--ro-bind', '/', '/']),
       '--proc',
       '/proc',
       '--dev',
@@ -349,6 +407,7 @@ export function isolatedCommand(
       ...(image
         ? qualityImageMountArguments(image, directory)
         : ['--bind', repositoryRoot, repositoryRoot, '--bind', directory, directory]),
+      ...(runtimeRoot && image ? ['--ro-bind', image.manifest_file, image.manifest_file, '--remount-ro', '/'] : []),
       '--chdir',
       image?.packageRoot ?? packageRoot,
       tools.tini,

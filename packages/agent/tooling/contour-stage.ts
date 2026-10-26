@@ -1,4 +1,6 @@
 import { parseArgs } from 'node:util';
+import { createHash } from 'node:crypto';
+import { qualityRuntimeEnvironment, readQualityRuntimeRoot } from './quality-runtime-root.ts';
 import { existsSync, mkdtempSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -261,7 +263,7 @@ export async function retainContourStageResourceRefusal(
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
     process.stdout.write(
-      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--image-store <absolute directory> | --image-manifest <absolute JSON> --image-sha256 <digest>] [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]> | --diagnostic-batch-size <1..128>]\nForms a gitless execution image from clean Source, or reuses the exact manifest/digest across lanes without recapturing Source. Source may advance after formation. Input bytes stay read-only; coverage and .tmp are separate writable output namespaces. Retains terminal custody and publishes the exact report. Frozen lanes require coverage-run and budget-ref. Isolated workers default2, opt-in and mutation-only; diagnostics never publish a complete mutation score. Full launch data stays in launch.json.\n',
+      'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--image-store <absolute directory> | --image-manifest <absolute JSON> --image-sha256 <digest>] [--runtime-root-manifest <JSON> --runtime-root-sha256 <digest>] [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]> | --diagnostic-batch-size <1..128>]\nForms a gitless execution image from clean Source, or reuses the exact manifest/digest across lanes without recapturing Source. Source may advance after formation. Input bytes stay read-only; coverage and .tmp are separate writable output namespaces. Retains terminal custody and publishes the exact report. Frozen lanes require coverage-run and budget-ref. Isolated workers default2, opt-in and mutation-only; diagnostics never publish a complete mutation score. Full launch data stays in launch.json.\n',
     );
     return;
   }
@@ -282,9 +284,17 @@ async function main(): Promise<void> {
       'image-manifest': { type: 'string' },
       'image-sha256': { type: 'string' },
       'image-store': { type: 'string' },
+      'runtime-root-manifest': { type: 'string' },
+      'runtime-root-sha256': { type: 'string' },
     },
   });
   const { lane } = values;
+  if (Boolean(values['runtime-root-manifest']) !== Boolean(values['runtime-root-sha256']))
+    throw new Error('Runtime root requires an explicit manifest and digest together.');
+  const runtimeRoot =
+    values['runtime-root-manifest'] && values['runtime-root-sha256']
+      ? await readQualityRuntimeRoot(values['runtime-root-manifest'], values['runtime-root-sha256'])
+      : undefined;
   if (
     !values.output ||
     !path.isAbsolute(values.output) ||
@@ -379,6 +389,7 @@ async function main(): Promise<void> {
       },
       process.env.VIDA_QUALITY_RETAINED_SCRATCH_ROOT,
       image,
+      runtimeRoot,
     );
   } catch (error) {
     return retainContourStageResourceRefusal(error, directory, request, packageRoot, values.snapshot);
@@ -388,7 +399,17 @@ async function main(): Promise<void> {
     ...frozenEnvironment,
     ...(frozen ? { VIDA_BUN_COVERAGE_REPORT: path.resolve(values['coverage-run']!) } : {}),
   };
-  const launch = { ...request, ...isolated, environment: laneEnvironment };
+  const executionEnvironment = runtimeRoot
+    ? qualityRuntimeEnvironment(process.env, laneEnvironment)
+    : { ...process.env, ...laneEnvironment };
+  const launch = {
+    ...request,
+    ...isolated,
+    environment: laneEnvironment,
+    ...(runtimeRoot
+      ? { environment_policy: 'runtime-allowlist-v1', environment_keys: Object.keys(executionEnvironment).sort() }
+      : {}),
+  };
   record('launch', launch);
   process.stdout.write(
     JSON.stringify({
@@ -402,20 +423,66 @@ async function main(): Promise<void> {
   );
   const started = performance.now();
   const result = await executeMutationCommand(isolated.command, image.packageRoot, timeout, {
+    ...(isolated.native_status_file === undefined ? {} : { nativeStatusFile: isolated.native_status_file }),
     ownedProcessGroup: true,
     outputByteLimit: 128 * 1024 * 1024,
     stdoutFile: path.join(directory, 'stdout.log'),
     stderrFile: path.join(directory, 'stderr.log'),
-    env: {
-      ...process.env,
-      ...laneEnvironment,
-    },
+    env: executionEnvironment,
   });
   let imageFailure: { error: unknown } | undefined;
   try {
     await verifyQualityExecutionImage(image);
   } catch (error) {
     imageFailure = { error };
+  }
+  let runtimeFailure: { error: unknown } | undefined;
+  if (runtimeRoot) {
+    try {
+      await readQualityRuntimeRoot(runtimeRoot.manifest_file, runtimeRoot.manifest_sha256);
+    } catch (error) {
+      runtimeFailure = { error };
+    }
+  }
+  let namespaceFailure: { error: unknown } | undefined;
+  let namespaceStatus:
+    | { child_pid: number; pid_namespace: number; exit_code: number; file: string; bytes: number; sha256: string }
+    | undefined;
+  if (runtimeRoot) {
+    try {
+      const file = isolated.native_status_file;
+      if (!file || result.native_status_file !== file || result.native_status_error !== null)
+        throw new Error('Native namespace status channel is missing or failed.');
+      const bytes = readContourArtifact(file, 4096);
+      const lines = bytes.toString('utf8').trim().split('\n');
+      if (lines.length !== 2) throw new Error('Native namespace termination receipt is incomplete.');
+      const header: unknown = JSON.parse(lines[0]!);
+      const footer: unknown = JSON.parse(lines[1]!);
+      if (
+        !isRecord(header) ||
+        !isRecord(footer) ||
+        typeof header['child-pid'] !== 'number' ||
+        !Number.isInteger(header['child-pid']) ||
+        header['child-pid'] <= 0 ||
+        typeof header['pid-namespace'] !== 'number' ||
+        !Number.isInteger(header['pid-namespace']) ||
+        header['pid-namespace'] <= 0 ||
+        typeof footer['exit-code'] !== 'number' ||
+        !Number.isInteger(footer['exit-code']) ||
+        footer['exit-code'] !== result.exitCode
+      )
+        throw new Error('Native namespace terminal identity differs from the observed producer.');
+      namespaceStatus = {
+        child_pid: header['child-pid'],
+        pid_namespace: header['pid-namespace'],
+        exit_code: footer['exit-code'],
+        file,
+        bytes: bytes.byteLength,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+      };
+    } catch (error) {
+      namespaceFailure = { error };
+    }
   }
   const terminal = {
     ...launch,
@@ -424,6 +491,12 @@ async function main(): Promise<void> {
     boot_after: readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim(),
     image_inputs_unchanged: imageFailure === undefined,
     ...(imageFailure === undefined ? {} : { image_error: String(imageFailure.error) }),
+    ...(runtimeRoot ? { runtime_inputs_unchanged: runtimeFailure === undefined } : {}),
+    ...(runtimeFailure === undefined ? {} : { runtime_error: String(runtimeFailure.error) }),
+    ...(runtimeRoot
+      ? { namespace_termination_observed: namespaceFailure === undefined, native_namespace_status: namespaceStatus }
+      : {}),
+    ...(namespaceFailure === undefined ? {} : { namespace_error: String(namespaceFailure.error) }),
   };
   record('execution', terminal);
   let published = false;
@@ -466,6 +539,14 @@ async function main(): Promise<void> {
       source_commit: commit,
       execution_image: image,
       image_inputs_unchanged: terminal.image_inputs_unchanged,
+      ...(runtimeRoot
+        ? {
+            runtime_root: isolated.runtime_root,
+            runtime_inputs_unchanged: terminal.runtime_inputs_unchanged,
+            namespace_termination_observed: terminal.namespace_termination_observed,
+            native_namespace_status: terminal.native_namespace_status,
+          }
+        : {}),
       ...counters,
       ...detail,
     };
@@ -474,10 +555,12 @@ async function main(): Promise<void> {
     if (
       terminal.boot_after !== boot ||
       !terminal.image_inputs_unchanged ||
+      runtimeFailure !== undefined ||
+      namespaceFailure !== undefined ||
       !contourStagePublicationAdmitted(result, selectedLane)
     )
       throw new Error(
-        `Stage publication denied: boot_unchanged=${terminal.boot_after === boot}, image_inputs_unchanged=${terminal.image_inputs_unchanged}, process=${campaignProcessState(result)}, exit=${result.exitCode}, capture_complete=${result.output_capture?.complete === true}, group_closed=${result.processCustody?.processGroupTerminationObserved === true}.`,
+        `Stage publication denied: boot_unchanged=${terminal.boot_after === boot}, image_inputs_unchanged=${terminal.image_inputs_unchanged}, runtime_inputs_unchanged=${runtimeFailure === undefined}, process=${campaignProcessState(result)}, exit=${result.exitCode}, capture_complete=${result.output_capture?.complete === true}, group_closed=${result.processCustody?.processGroupTerminationObserved === true}.`,
       );
     const reportArgs = contourStageReportArguments(
       selectedLane,
