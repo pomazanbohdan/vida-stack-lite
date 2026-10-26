@@ -2387,7 +2387,7 @@ workflow outcome `success` projects completion. A null suspended step with a
 failed, canceled or unknown outcome remains blocked; a ledger-only read cannot
 infer success from the absence of a suspended step.
 The public terminal-synthesis response joins that successful engine run to the
-same terminal journal and its exact ordered, nonnull completed observations.
+same terminal journal and its exact ordered, nonnull canonical JSON observations.
 An outstanding host effect or any mismatch prevents completion projection.
 This read projection does not rewrite ledger status or grant delivery authority.
 

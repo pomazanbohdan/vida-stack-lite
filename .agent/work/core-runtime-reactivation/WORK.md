@@ -117,6 +117,22 @@ altered/reordered observations. Independent review finds no publication blocker;
 scoped static and normal hooks precede a new image/focused qualification.
 No full stage follows the failed focus, and no old UNKNOWN is replayed.
 
+Focused retry jOQdSH also returns blocked, retaining its failed root and complete
+native exit1/capture/group. Bounded readonly comparison of this fresh fixture's
+engine/journal finds4matching observations and all terminal identity fields,
+but their parsed object prototypes differ. JSON fields and values match exactly;
+deep strict equality rejects every object on prototype identity alone. Root
+replaces that comparator with the maintained canonicalJson owner (no hashing),
+as required for the persisted JSON contract, and adds a cross-parser JSON-clone
+positive control beside altered/reordered-content refusals. No guard is removed,
+and neither failed focused attempt permits a full stage or numeric advancement.
+Independent semantic review confirms canonical JSON values, not object prototype
+identity, own this boundary. Missing/extra fields and non-JSON observations remain
+rejected by the existing strict parser; changed fields and meaningful ordering
+remain comparator refusals. Root uses public-ingress's exact re-exported primitive
+directly from canonical-json-core to preserve the lazy-help import boundary and
+avoid eager AJV/schema initialization. No budget or input validator is relaxed.
+
 The first focused native attempt retains a libsql loader failure before CLI
 tests: missing libgcc_s.so.1. A new immutable readonly profile02 adds the trusted
 local libgcc_s.so.1 and librt.so.1 dependency closure, without installation.

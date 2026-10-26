@@ -112,6 +112,7 @@ import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import type { SessionAgentAction } from '../src/orchestration/session-handoff.ts';
 import type { SessionHandoffContext } from '../src/orchestration/session-handoff.ts';
 import type { SessionBridgeObservation } from '../src/orchestration/mastra-session-bridge-contract.ts';
+import { parseSessionBridgeObservation } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import type { DeliveredWorkContinuationRequest } from '../src/orchestration/delivered-work-continuation.ts';
 import type { LocalWorkAdmissionInput } from '../src/orchestration/local-work-admission.ts';
 import { Console } from 'node:console';
@@ -8497,6 +8498,19 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           journal = terminalJournal,
         ) => hasCompletedTerminalSynthesis(journal, snapshot, terminalStage, engine.run_id, false);
         expect(qualifies(engine)).toBe(true);
+        expect(qualifies({ ...engine, observations: observations.map(parseSessionBridgeObservation) })).toBe(true);
+        expect(
+          qualifies({
+            ...engine,
+            observations: observations.map((observation, index) =>
+              index === 0 ? { ...observation, unexpected: true } : observation,
+            ),
+          }),
+        ).toBe(false);
+        const firstObservation = observations[0]!;
+        assert.throws(() => parseSessionBridgeObservation({ ...firstObservation, summary: undefined }));
+        assert.throws(() => parseSessionBridgeObservation({ ...firstObservation, unexpected: true }));
+        assert.throws(() => parseSessionBridgeObservation({ ...firstObservation, summary: Symbol('non-JSON') }));
         for (const status of ['failed', 'canceled', 'unknown', 'suspended'] as const)
           expect(qualifies({ ...engine, status })).toBe(false);
         expect(qualifies({ ...engine, run_id: 'foreign-run' })).toBe(false);

@@ -18,6 +18,7 @@ import {
 } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { standaloneRuntime } from './bun.ts';
+import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { parseForwardJournal } from '../src/documentation/forward-journal.js';
 import {
   runRepeatedOptions,
@@ -6008,7 +6009,7 @@ export function hasCompletedTerminalSynthesis(
     journal.state.items.length === 0 &&
     observations.length > 0 &&
     observations.every((observation) => observation !== null) &&
-    isDeepStrictEqual(observations, snapshot.observations)
+    canonicalJson(observations) === canonicalJson(snapshot.observations)
   );
 }
 
