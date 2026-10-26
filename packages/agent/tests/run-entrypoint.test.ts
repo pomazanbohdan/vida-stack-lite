@@ -9357,7 +9357,27 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       let completed = false;
       let pendingIssue = false;
       try {
-        const fixture = await createInitialSourceWorkFixture({ onRoot: (value) => (root = value) });
+        const fixture = await createInitialSourceWorkFixture({
+          onRoot: (value) => (root = value),
+          configure: (config) => {
+            const task = config.workflows.task_execution;
+            assert.ok(task);
+            return {
+              ...config,
+              workflows: {
+                ...config.workflows,
+                task_execution: {
+                  ...task,
+                  stages: task.stages.map((stage) =>
+                    stage.id === 'synthesize_task'
+                      ? { ...stage, context_source_ids: ['runtime-development-lifecycle'] }
+                      : stage,
+                  ),
+                },
+              },
+            };
+          },
+        });
         const f = fixture;
         await withWorkspaceDatabaseCloseAsync(
           f,
