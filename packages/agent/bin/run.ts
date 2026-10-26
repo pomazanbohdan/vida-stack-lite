@@ -5989,14 +5989,25 @@ function hasRunSpecialSelector(args: readonly string[], selectorIndex: number): 
   return typeof selector === 'string' && args.includes(selector);
 }
 
-export function hasCompletedTerminalSynthesis(
+export function hasCompletedTerminalStage(
   journal: import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot,
   snapshot: import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeSnapshot,
-  stage: Readonly<{ kind: string; produces: readonly string[] }> | undefined,
+  stage: Readonly<{ id: string; kind: string; produces: readonly string[] }> | undefined,
   expectedRunId: string,
   reconciliationRequired: boolean,
 ): boolean {
-  if (reconciliationRequired || stage?.kind !== 'synthesize' || !stage.produces.includes('ResearchSynthesis/v1'))
+  if (
+    reconciliationRequired ||
+    !stage ||
+    !(stage.kind === 'deliver' || (stage.kind === 'synthesize' && stage.produces.includes('ResearchSynthesis/v1')))
+  )
+    return false;
+  if (
+    stage.kind === 'deliver' &&
+    journal.state.completed
+      .flatMap((wave) => wave.items)
+      .filter((item) => item.request.stage_id === stage.id && item.observation !== null).length !== 1
+  )
     return false;
   const observations = journal.state.completed.flatMap((wave) => wave.items.map((item) => item.observation));
   return (
@@ -9255,8 +9266,18 @@ export async function run(args: string[] = process.argv.slice(2)) {
         );
         status = journal.resume_status === 'complete' ? 'all_reports_collected' : 'resumed';
       }
+      const terminalDeliveryStages = activeWorkflow.stages.filter(
+        (stage) => activeWorkflow.terminal_stages.includes(stage.id) && stage.kind === 'deliver',
+      );
+      const terminalDeliveryComplete = hasCompletedTerminalStage(
+        journal,
+        workflowSnapshot,
+        terminalDeliveryStages.length === 1 ? terminalDeliveryStages[0] : undefined,
+        expectedRunId,
+        Boolean(reconciliationRequired),
+      );
       if (
-        journal.resume_status === 'complete' &&
+        (journal.resume_status === 'complete' || terminalDeliveryComplete) &&
         !deliveryInstruction &&
         journal.state.completed.some((entry) =>
           entry.items.some((item) =>
@@ -9275,7 +9296,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
       if (terminalSynthesisStages.length > 1)
         fail('GAP-VIDA-RUN-EXECUTION-001', 'Terminal research synthesis must have one declared output stage.');
       const terminalStage = terminalSynthesisStages[0];
-      const terminalSynthesisComplete = hasCompletedTerminalSynthesis(
+      const terminalSynthesisComplete = hasCompletedTerminalStage(
         journal,
         workflowSnapshot,
         terminalStage,
@@ -9395,7 +9416,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
         execution_status: requireRunData(workflowSnapshot, 'Prepared Mastra snapshot is unavailable.').status,
         resume_status: reconciliationRequired
           ? 'reconciliation_required'
-          : terminalSynthesisComplete
+          : terminalSynthesisComplete || terminalDeliveryComplete
             ? 'complete'
             : journal.resume_status,
         reconciliation_required: reconciliationRequired,

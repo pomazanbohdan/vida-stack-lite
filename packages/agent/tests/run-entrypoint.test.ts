@@ -77,7 +77,7 @@ import {
   recordField,
   repairAuthority,
   requireNoCompletedReadonlyRelease,
-  hasCompletedTerminalSynthesis,
+  hasCompletedTerminalStage,
   requireHistoricalItem,
   requireOneReadonlyReleaseMatch,
   requireRecoveryOperation,
@@ -8532,7 +8532,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const qualifies = (
           snapshot: import('../src/orchestration/mastra-session-bridge.ts').SessionBridgeSnapshot,
           journal = terminalJournal,
-        ) => hasCompletedTerminalSynthesis(journal, snapshot, terminalStage, engine.run_id, false);
+        ) => hasCompletedTerminalStage(journal, snapshot, terminalStage, engine.run_id, false);
         expect(qualifies(engine)).toBe(true);
         expect(qualifies({ ...engine, observations: observations.map(parseSessionBridgeObservation) })).toBe(true);
         expect(
@@ -8568,23 +8568,78 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(qualifies(engine, { ...terminalJournal, state: { ...terminalJournal.state, completed: [] } })).toBe(
           false,
         );
-        expect(hasCompletedTerminalSynthesis(terminalJournal, engine, terminalStage, 'foreign-run', false)).toBe(false);
-        expect(hasCompletedTerminalSynthesis(terminalJournal, engine, terminalStage, engine.run_id, true)).toBe(false);
-        expect(hasCompletedTerminalSynthesis(terminalJournal, engine, undefined, engine.run_id, false)).toBe(false);
+        expect(hasCompletedTerminalStage(terminalJournal, engine, terminalStage, 'foreign-run', false)).toBe(false);
+        expect(hasCompletedTerminalStage(terminalJournal, engine, terminalStage, engine.run_id, true)).toBe(false);
+        expect(hasCompletedTerminalStage(terminalJournal, engine, undefined, engine.run_id, false)).toBe(false);
         expect(
-          hasCompletedTerminalSynthesis(
+          hasCompletedTerminalStage(
             terminalJournal,
             engine,
-            { kind: 'deliver', produces: [] },
+            { id: 'fixture-terminal-delivery', kind: 'deliver', produces: [] },
             engine.run_id,
             false,
           ),
         ).toBe(false);
         expect(
-          hasCompletedTerminalSynthesis(
+          hasCompletedTerminalStage(
             terminalJournal,
             engine,
-            { kind: 'synthesize', produces: [] },
+            { id: 'fixture-terminal-synthesis', kind: 'synthesize', produces: [] },
+            engine.run_id,
+            false,
+          ),
+        ).toBe(false);
+        expect(
+          hasCompletedTerminalStage(
+            terminalJournal,
+            engine,
+            { id: 'fixture-implement', kind: 'implement', produces: [] },
+            engine.run_id,
+            false,
+          ),
+        ).toBe(false);
+        const deliveryStage = { id: 'fixture-terminal-delivery', kind: 'deliver', produces: [] };
+        const deliveryJournal = {
+          ...terminalJournal,
+          state: {
+            ...terminalJournal.state,
+            completed: terminalJournal.state.completed.map((wave, waveIndex) => ({
+              ...wave,
+              items: wave.items.map((item, itemIndex) =>
+                waveIndex === 0 && itemIndex === 0
+                  ? { ...item, request: { ...item.request, stage_id: deliveryStage.id } }
+                  : item,
+              ),
+            })),
+          },
+        };
+        expect(hasCompletedTerminalStage(deliveryJournal, engine, deliveryStage, engine.run_id, false)).toBe(true);
+        expect(
+          hasCompletedTerminalStage(
+            deliveryJournal,
+            engine,
+            { ...deliveryStage, id: 'foreign-terminal' },
+            engine.run_id,
+            false,
+          ),
+        ).toBe(false);
+        expect(
+          hasCompletedTerminalStage(
+            {
+              ...deliveryJournal,
+              state: {
+                ...deliveryJournal.state,
+                completed: [...deliveryJournal.state.completed, deliveryJournal.state.completed[0]!],
+              },
+            },
+            {
+              ...engine,
+              observations: [
+                ...engine.observations,
+                ...deliveryJournal.state.completed[0]!.items.map((item) => item.observation!),
+              ],
+            },
+            deliveryStage,
             engine.run_id,
             false,
           ),
@@ -10844,7 +10899,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const terminalHost = fixture.store.readHostStateSnapshot(fixture.identity);
         const terminalJournal = fixture.ledger.resume(fixture.identity.work_id, 1);
         assert.ok(terminalJournal);
-        expect(terminalJournal.resume_status).toBe('complete');
+        expect(terminalJournal.resume_status).toBe('blocked');
         const terminal = await publicRun([]);
         expect(terminal.resume_status).toBe('complete');
         expect(terminal.state_version).toEqual(terminalJournal.version);

@@ -40,6 +40,26 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Terminal delivery first focus7IApg9/Source95c98a7a failed0pass/1fail because the
+durable null-step journal reads blocked after actual engine completion. The
+fixture and complete native failure evidence remain retained; no full stage ran.
+Independent review identified a selected terminal-stage ID gap before publication.
+It is corrected by requiring exactly one completed nonnull observation matching
+that ID; wrong-stage and duplicate controls are added. The duplicate control
+keeps engine observations equal to the duplicated Journal, isolating multiplicity
+refusal. Multiple declared terminal delivery stages do not qualify the response
+projection; configuration and persisted state remain unchanged.
+Core now reuses the exact existing terminal synthesis engine/journal comparator
+as hasCompletedTerminalStage for configured terminal delivery too: success and
+same run, null steps, empty requests/items, exact ordered nonnull canonical
+observations, no unresolved reconciliation. Caller still selects the configured
+terminal stage and preparedDelivery retains all existing Source/implementation/
+validator/tester/proposal checks. Only public response completion/instruction is
+projected; durable journal and authority are unchanged. Tests retain all mismatch
+controls, add supported delivery kind and unsupported implement-stage refusal.
+Strict511/lint pass; independent review and corrected focus remain pending.
+
+
 Next bounded packet reuses the existing accepted-delivery fixture before final
 assurance creation. It reads the completed native bridge journal through public
 run, checks a current Source-bound delivery instruction, unchanged Host/Journal,

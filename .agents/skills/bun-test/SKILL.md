@@ -74,6 +74,9 @@ reports with its returned source catalog. Join the completed journal plan to the
 artifact path/hash and observation/issue IDs, refuse changed bytes, restore them
 exactly and verify same-version retry. A null journal step alone is not success;
 exercise non-success engine states and mismatched observations as refusal controls.
+For terminal delivery, reuse a completed native bridge fixture before final assurance
+creation, assert current Source-bound instruction and unchanged Host/Journal, refuse
+changed Source bytes, restore them and verify same-version instruction retrieval.
 Keep failed fixtures and native receipts without replaying their reports.
 For a native multi-assignment research wave, configure the assignments before
 admission, activate the whole wave before exposure, and retain each actual

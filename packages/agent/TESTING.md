@@ -3623,6 +3623,11 @@ database changes, restore exact bytes and check same-version retry. Engine
 success must join the same terminal journal and ordered complete observations;
 non-success, foreign runs, pending requests and mismatched observations stay
 blocked. Keep the generic ledger status and delivery gates unchanged.
+Terminal delivery uses a configured terminal deliver stage and the same exact
+engine/journal proof. Reuse its completed native bridge fixture before final
+assurance creation; assert unchanged Host/Journal, current instruction binding,
+changed Source refusal, exact restoration and same-version retrieval. Existing
+implementation, validators, tester and issued proposal checks remain required.
 
 ### Configuration and configured context
 
