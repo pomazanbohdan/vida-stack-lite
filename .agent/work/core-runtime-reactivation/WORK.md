@@ -40,6 +40,50 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ### Independent runtime-root preparation, 2026-10-26
 
+Budget investigation after latest UNKNOWN: no coverage producer or replay ran.
+Existing receipts compare GTvs9v257606.76ms/156rows, lAwiYJ245277.30ms/157rows,
+CYKSkG255665.38ms/157rows and8vfRgV271449.87ms/109completed rows. For108common
+completed rows excluding changed delivery, sums are190659.73/197288.27/236622.92ms
+(lAwiYJ/CYKSkG/8vfRgV). This establishes broad duration variation, not a cause,
+controlled benchmark, speedup or evidence that the new export alone exhausted
+the budget. Different inputs and host conditions are not interchangeable.
+
+Latest top completed costs: released-selector32335.12ms (previous28825.27/
+29205.76), CAS25975.19ms (22340.10/21780.00), delivery24225.80ms (14951.06/
+19613.44, changed inputs), maintained synthesis20431.27ms, Source writer19627.69ms,
+staged-selector16676.58ms. Native refusal/exit/envelope boundaries remain required;
+no mock substitution, assertion removal or contour reduction is justified.
+The prior8to1package-identity batching removed28filesystem mutations statically,
+but no receipt attributes enough elapsed time to it to promise full-stage margin.
+
+Control07 reuses reviewed06 and adds the four exact8vfRgV writable mounts to
+inaccessible-path assertions, while retaining prior fences. It passes on fresh
+owned control roots with native terminal/capture/group proof, readonly image/
+runtime/dependencies, denied host network and positive private IPC. Independent
+DIAG/staged-unknown-boundary-review-20261026-01.md confirms disjoint view isolation,
+not recovery/reconciliation of prior writes and not authorization for a producer.
+Old outcome48afffa0 and resource_safe_to_advance=false remain untouched.
+
+Concrete design blocker: current retained timings do not separate bundle/setup,
+Bun child startup, DB setup and actual contract execution. No removable common
+setup with measured full-budget headroom has been established. Options in order:
+(1) preferred: bounded phase/child timing in the existing focused capture owner,
+with output in already-qualified package .tmp; preserve actual native calls and
+all refusals, then change only the measured redundant preparation and re-focus;
+(2) preserve serial native execution and await a qualified repeatable resource
+admission window, without claiming host contention was proved; (3) only after
+independent resource/effects qualification consider supported within-contour
+parallelism, sharing unchanged total budgets and exact gates. No parallel runner,
+new framework, timeout increase or blanket full rerun is authorized by this note.
+
+Existing runWithInitialSourceTiming is not sufficient unchanged inside this
+profile: it constrains output below repository-root .tmp, while current isolated
+writable .tmp is package-root .tmp. Do not silently widen the writable boundary
+or invent timing output. Reuse/adapt its existing owner explicitly before the
+next targeted measurement rather than add another overlapping timing system.
+No elapsed saving or new numeric hits claimed; accepted F546/562/16gaps stays.
+
+
 Staged witness packet Source0c9c8303b3e077e2f9f7ca88fe0429ddce211fcc has passing
 scoped strict511/lint/hooks, isolated focus EhgxJh1pass/0fail/151assertions22.88s,
 complete capture/group and native child1016806exit0, unchanged image/profile.
