@@ -15,7 +15,7 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 > **For agentic workers:** Use `superpowers:executing-plans` task by task.
 > Root remains the sole writer, producer, Git owner and owner of numbers;
 > independent bounded reviews use the existing blind native reviewer contract.
-> This plan is for review before implementation.
+> The owner approved this plan on 2026-10-27; proceed within its gates.
 
 **Goal:** Enable one accepted, complete trusted `bun-cli-run` coverage run on a
 qualified portable execution boundary, without relying on a particular sandbox.
@@ -95,14 +95,12 @@ boundary. Mutation and untrusted execution retain their native containment gate.
 
 **Existing APIs and changes:**
 
-1. Extend `createFixtureChildObserver(actual, options)` for this reviewed
-   selection. Compose its `spawnSync` underneath `createCliCoverageObserver(context,
-   actual)` in `bun-coverage-preload.ts`, so the three existing CLI subject
-   receipts and counters retain their rules while other direct `spawnSync` calls
-   are observed. Its `spawn` wrapper observes the async SQLite lock-holder.
-   Currently the fixture observer is enabled only for published fixtures, and
-   CLI composition replaces its `spawnSync`. Preserve original returns, raw
-   capture, expected failures, native assertions and prepared/issue group checks.
+1. The CLI observer can now delegate non-subject calls to the fixture observer;
+   its three subjects retain their original native call and independent receipts.
+   This tested seam is dormant under current mutually exclusive selection modes.
+   Enable observation only after reviewed selection binding, and account for the
+   async SQLite lock-holder with the fixture observer's `spawn` wrapper. Preserve
+   original returns, raw capture, expected failures and native group checks.
 2. In the existing `run-bun-coverage.ts` run manifest, bind the exact reviewed
    Source/test/tool selection and effect map to actual fixture, output, coverage,
    temporary and private home/cache roots. Route `TMPDIR`/`TMP`/`TEMP`, `HOME`
@@ -178,8 +176,9 @@ evidence; no partial counter promotion.
 
 Owner priority 2026-10-27: accepted closure of the current Agent/Core contour is
 the resource priority. The earlier marketplace-first instruction is superseded.
-The portable trusted-coverage specification is approved; this plan awaits review
-and does not itself change the implementation, timer, old fences or full-proof HOLD.
+The portable trusted-coverage specification and plan are approved. The tested
+observer composition is a dormant prerequisite; full-proof HOLD, timer and old
+fences remain until actual successor evidence and timing pass their gates.
 
 An explicit retained scratch parent now rejects canonical overlap with Source,
 the image, dependencies or runtime root before allocation. Targeted controls

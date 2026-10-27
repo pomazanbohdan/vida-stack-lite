@@ -4,6 +4,34 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Trusted observer composition prerequisite, 2026-10-27
+
+The owner approved the trusted-coverage implementation plan. Ruling: compose the
+existing observers as a bounded prerequisite before lane admission, because this
+does not enable a trusted lane or alter any current acceptance gate. The CLI
+observer delegates non-subject synchronous calls to the supplied fixture observer;
+its own subjects still use the original native call and retain their own receipts.
+This avoids both dropped direct-child observations and duplicate subject capture.
+
+The retained RED `/workspace/contour-observer-target-ZC0356` demonstrated a lost
+fixture observation, and `/workspace/contour-observer-target-8rxOf6` demonstrated
+double routing of a selected subject. The corrected source passed one targeted
+test with 14 assertions at `/workspace/contour-observer-target-6dFDIz`; native
+exit 0, full stream capture and owned-group closure were recorded. The first two
+probe attempts `/workspace/contour-observer-target-lI7xlC` and `-mtHtfa` failed
+because a nested Bun stdout write returned EPERM; those attempts remain retained.
+Scoped strict and lint passed at `/workspace/contour-observer-static-MofUYK` with
+complete capture and group closure. Earlier strict attempts `-XmFrkF` and `-bQDrWj`
+are retained: the former omitted the inherited Istanbul declaration; the latter
+found a corrected test typing error. No full contour or numeric report was run.
+
+Independent blind review confirmed the routing and its limitation: current
+published-fixture and focused-CLI selection modes do not overlap, so this seam is
+not yet active in a production run. Classification, trusted selection binding,
+private root/effect custody, portable successor proof and timing margin remain
+open. Full-proof HOLD and old UNKNOWN fences remain unchanged. This prerequisite
+does not establish descendant closure or qualify coverage.
+
 ## Trusted coverage specification decision, 2026-10-27
 
 The owner approved separating trusted ordinary coverage from the physical

@@ -316,10 +316,6 @@ const preparedReadCapture = runOperation
     )
   : undefined;
 const rejectedCliLaunch = process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH !== undefined && !cliLaunch;
-const cliObserver =
-  !cliLaunch && !rejectedCliLaunch && focusedCliCoverage(manifest)
-    ? createCliCoverageObserver(cliContext, await import('node:child_process'))
-    : undefined;
 // Fixture children are subjects; observe direct APIs without granting counters
 // or replacing any published command/input/environment.
 const fixtureObserver = fixture
@@ -330,6 +326,10 @@ const fixtureObserver = fixture
       maxOutputBytes: 32 * 1024 * 1024,
     })
   : undefined;
+const cliObserver =
+  !cliLaunch && !rejectedCliLaunch && focusedCliCoverage(manifest)
+    ? createCliCoverageObserver(cliContext, await import('node:child_process'), fixtureObserver)
+    : undefined;
 if (fixtureObserver || cliObserver || preparedReadCapture) {
   const { mock } = await import('bun:test');
   if (fixtureObserver || cliObserver) {

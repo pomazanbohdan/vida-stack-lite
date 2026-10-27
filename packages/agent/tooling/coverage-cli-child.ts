@@ -4,6 +4,7 @@ import { closeSync, fstatSync, lstatSync, mkdirSync, readFileSync, realpathSync,
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { SpawnSyncReturns } from 'node:child_process';
+import type { createFixtureChildObserver } from './fixture-child-observation.ts';
 import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 import { sha256 } from './bun-coverage-evidence.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
@@ -775,10 +776,12 @@ function preparedIssueTargets(
 export function createCliCoverageObserver(
   context: CliCoverageContext,
   actual: Pick<typeof import('node:child_process'), 'spawnSync'>,
+  fixtureObserver?: Pick<ReturnType<typeof createFixtureChildObserver>, 'apis'>,
 ) {
   const subjects = cliSubjects(context.manifest);
   assert.ok(subjects.length > 0);
   const original = actual.spawnSync;
+  const otherSpawn = fixtureObserver?.apis.spawnSync ?? original;
   const observations: CliChildObservation[] = [];
   const launches = new Set<string>();
   let preparedArmed: 'run-admission-prepared' | 'run-issue-wave' | false = false;
@@ -814,7 +817,7 @@ export function createCliCoverageObserver(
           preparedActive = false;
           throw new Error('Armed prepared CLI launch has a foreign command or argv.');
         }
-        return Reflect.apply(original, actual, call) as SpawnSyncReturns<string | Buffer>;
+        return Reflect.apply(otherSpawn, actual, call) as SpawnSyncReturns<string | Buffer>;
       }
       const key = subjectKey(subject);
       assert.ok(!launches.has(key), 'Duplicate focused CLI launch.');

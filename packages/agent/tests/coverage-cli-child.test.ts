@@ -39,6 +39,7 @@ import {
   type CliCoverageContext,
 } from '../tooling/coverage-cli-child.ts';
 import { createPreparedReadCapture } from '../tooling/coverage-cli-prepared-inputs.ts';
+import { createFixtureChildObserver } from '../tooling/fixture-child-observation.ts';
 import { mergeCoverageShardCounters } from '../tooling/coverage-shard-evidence.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
 import { runOptionDetails } from '../bin/run-cli-options.ts';
@@ -405,7 +406,7 @@ test('CLI environment binding preserves absent variables and ignores only non-st
   expect(cliCoverageEnvironmentSha256({ A: undefined })).toBe(cliCoverageEnvironmentSha256({}));
 });
 
-test('prepared run CLI arming is collector-owned, one-shot and required at finish', () => {
+test('prepared run CLI arming is collector-owned, one-shot and required at finish', async () => {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'coverage-cli-prepared-arm-'));
   let passed = false;
   try {
@@ -438,6 +439,51 @@ test('prepared run CLI arming is collector-owned, one-shot and required at finis
       manifest,
       manifest_sha256: sha256(JSON.stringify(manifest)),
     };
+    const fixtureObserver = createFixtureChildObserver(await import('node:child_process'), {
+      runId: manifest.run_id,
+      parentPid: process.pid,
+      fixtureFingerprint: 'a'.repeat(64),
+      maxOutputBytes: 1024,
+    });
+    const composed = createCliCoverageObserver(context, { spawnSync }, fixtureObserver);
+    const unrelated = composed.spawnSync(process.execPath, ['-e', 'process.exitCode=0'], {
+      encoding: 'utf8',
+    });
+    expect({ status: unrelated.status, stderr: unrelated.stderr, error: unrelated.error?.message }).toEqual({
+      status: 0,
+      stderr: '',
+      error: undefined,
+    });
+    expect(unrelated.stdout).toBe('');
+    expect(fixtureObserver.finish().launch_count).toBe(1);
+    expect(fixtureObserver.finish().complete).toBe(true);
+    expect(() => composed.finish()).toThrow('not all observed');
+    let selectedLaunches = 0;
+    const selectedObserver = createCliCoverageObserver(
+      context,
+      {
+        spawnSync: ((): SpawnSyncReturns<string | Buffer> => {
+          selectedLaunches++;
+          return { pid: 123, status: 0, signal: null, stdout: Buffer.alloc(0), stderr: Buffer.alloc(0), output: [] };
+        }) as typeof spawnSync,
+      },
+      fixtureObserver,
+    );
+    expect(() =>
+      selectedObserver.spawnSync(
+        process.execPath,
+        [
+          '--no-env-file',
+          '--no-install',
+          '--config=' + path.join(packageRoot, 'bunfig.toml'),
+          path.join(packageRoot, 'bin/run.ts'),
+          '--help',
+        ],
+        { encoding: 'utf8', windowsHide: true, timeout: 4000 },
+      ),
+    ).toThrow();
+    expect(selectedLaunches).toBe(1);
+    expect(fixtureObserver.finish().launch_count).toBe(1);
     let forwarded = 0;
     const observer = createCliCoverageObserver(context, {
       spawnSync: ((): SpawnSyncReturns<string | Buffer> => {
