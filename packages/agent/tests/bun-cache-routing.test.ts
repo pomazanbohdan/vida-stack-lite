@@ -280,7 +280,7 @@ function realCopy(): CopiedBundle {
 }
 
 function cleanEnv(): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...process.env, TEMP: scratch, TMP: scratch };
+  const env: NodeJS.ProcessEnv = { ...process.env, TMPDIR: scratch, TEMP: scratch, TMP: scratch };
   delete env.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
   return env;
 }
@@ -349,6 +349,38 @@ function capturedChild(label: string, args: string[], options: SpawnSyncOptionsW
     output: child.output.map((value) => (Buffer.isBuffer(value) ? value.toString('utf8') : value)),
   };
 }
+
+test.serial('cache fixture confines the native child temporary directory', () => {
+  const previous = process.env.TMPDIR;
+  const foreign = mkdtempSync(path.join(path.dirname(scratch), 'foreign-temp-'));
+  const output = path.join(scratch, 'child-temp-observation.json');
+  const program = `import {tmpdir} from 'node:os'; import {writeFileSync} from 'node:fs';
+writeFileSync(${JSON.stringify(output)}, JSON.stringify({tmpdir:tmpdir(), env:process.env.TMPDIR, tmp:process.env.TMP, temp:process.env.TEMP}));`;
+  process.env.TMPDIR = foreign;
+  try {
+    const result = capturedChild('temporary-root', ['-e', program], {
+      cwd: scratch,
+      env: cleanEnv(),
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 4000,
+    });
+    assert.equal(result.error, undefined);
+    assert.equal(result.signal, null);
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout, '');
+    assert.equal(result.stderr, '');
+    assert.deepEqual(JSON.parse(readFileSync(output, 'utf8')), {
+      tmpdir: scratch,
+      env: scratch,
+      tmp: scratch,
+      temp: scratch,
+    });
+  } finally {
+    if (previous === undefined) delete process.env.TMPDIR;
+    else process.env.TMPDIR = previous;
+  }
+});
 
 test('actual direct Bun entrypoint terminates with strict public JSON when required arguments are invalid', () => {
   const { root, parent } = realCopy();

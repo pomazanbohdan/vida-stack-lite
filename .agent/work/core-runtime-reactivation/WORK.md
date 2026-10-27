@@ -4,6 +4,28 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Native cache fixture temporary root, 2026-10-27
+
+The cache-routing fixture previously set `TMP` and `TEMP` but inherited `TMPDIR`.
+A native child could therefore select a different temporary root. Its existing
+`cleanEnv` owner now sets all three to the fixture scratch. No production cache
+or launcher behavior changes. The serial regression changes the parent TMPDIR to
+a sibling directory, observes the real child's `os.tmpdir()` and all three child
+variables, and restores the parent environment. The failing native attempt is
+`/workspace/contour-observer-target-GSg99j`; the final passing attempt is
+`/workspace/contour-observer-target-fIhFhn`. Both retain native launch, exit,
+complete capture and closed-group receipts. Scoped strict/lint passed at
+`/workspace/contour-observer-static-HWzDUZ`. Independent blind review found no
+issue; the Codex no-comments review found no added comments or suppressions.
+
+The package-selected Bun and `.bun-version` both report 1.4.4. That does not
+make the real cache re-execution redundant: `run.ts` re-executes when the derived
+cache namespace differs, while the public `invoke` helper already prepares the
+environment and help exits before the re-execution path. The actual invalid-run
+fixture deliberately starts without a Bun cache setting; it remains unchanged.
+The direct-child regression does not establish re-exec descendant custody, timing
+margin or numeric coverage. Preserve full-proof HOLD and old UNKNOWN fences.
+
 ## Trusted coverage descendant boundary, 2026-10-27
 
 At Source `c8003666`, `bin/run.ts` can re-execute Bun through `runPinnedBun`

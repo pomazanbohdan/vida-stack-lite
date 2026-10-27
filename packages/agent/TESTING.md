@@ -2991,6 +2991,10 @@ the child. This avoids loading operation modules again through cache-routing
 self-reexecution. Preserve caller environment overrides and the existing child
 budget, terminal-outcome and UNKNOWN predicates. Cache preparation grants no
 project, thread or trusted initialization authority.
+The cache-routing fixture sets `TMPDIR`, `TMP` and `TEMP` to its owned scratch
+for native children. Its intentionally unset Bun cache still exercises direct
+entrypoint cache routing; the temporary-directory control changes neither the
+cache contract nor child-outcome custody.
 
 The shared uninitialized run fixture latches UNKNOWN for its selected root
 before invoking caller cleanup notices. Its single close owner retains and
