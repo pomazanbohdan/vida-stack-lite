@@ -4,6 +4,43 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Explicit empty Bun cache, 2026-10-27
+
+`pinnedEnvironment` treats an explicitly empty
+`BUN_RUNTIME_TRANSPILER_CACHE_PATH` as absent and replaces it with a derived
+path. [Bun documents](https://bun.com/docs/runtime/environment-variables#configuring-bun)
+empty and `0` as cache-disable settings. A proposed change preserved the empty
+value and checked the running pin and manifest without a re-execution. It is
+**not adopted**: skipping `runPinnedBun` also skips its bounded child and can
+allow work after an inherited deadline. A loop-free replacement must preserve
+real timeout, signal, cleanup and native outcome semantics without accepting a
+caller-forged marker as authority. Existing runtime behavior remains unchanged.
+
+The retained red target `/workspace/contour-observer-target-uWDXha` reproduced
+the incorrect derived path. Under the proposed patch, focused target
+`/workspace/contour-observer-target-8D6tZc` passed both cache cases. Its real Bun child
+imports a TypeScript file over 4 KiB: the custom-path control creates a `.pile`,
+while the empty-path case leaves its private home and temp without one. Both
+native child markers and the parent capture are retained. The scoped strict/lint
+receipt is `/workspace/contour-observer-static-aj5RPT`. Independent blind review
+identified the inherited-budget regression. The native targeted negative control
+`/workspace/contour-observer-target-vvwbVE` confirmed execution continued after
+`VIDA_PINNED_COMMAND_DEADLINE_MS=1`; native exit, capture and group were observed.
+The unadopted proposal and added tests are retained at
+`/workspace/contour-empty-cache-proposal-Ko5DtZtb/proposal.patch` against Source
+`5b5d28e4`. No old counter is promoted or projection edited. The current
+`bun-cli-run` full-proof HOLD, descendant custody and timing gates remain.
+No full producer or cutover was run.
+
+An independent review rejected unconditional re-execution with the same empty
+cache setting: the child would take the same branch again. A possible marker-free
+design is a bounded bootstrap that imports `run.ts` and invokes `main` with the
+original arguments, while `runPinnedBun` retains timeout and cleanup ownership.
+This changes the actual child argv and bypasses the direct-entrypoint help path.
+It needs design approval and native controls for help, arguments, exit, signals,
+deadline, cache, loaded-input receipts and the three focused CLI subjects before
+implementation. It is a proposal, not a qualified successor or measured saving.
+
 ## Bun child temporary environment, 2026-10-27
 
 The existing isolated command also sets `BUN_TMPDIR` to its private scratch.
