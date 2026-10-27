@@ -5850,6 +5850,13 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         message: 'Forward update proof is invalid.',
       },
       {
+        name: 'authorization missing evidence',
+        change: ({ authorization }) => {
+          delete authorization.evidence;
+        },
+        message: 'Forward update proof is invalid.',
+      },
+      {
         name: 'optional first admitted attempt type',
         change: ({ plan }) => {
           plan.first_admitted_work_attempt = true;
@@ -5961,7 +5968,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       let completed = false;
       try {
         const { selector, selectorSha } = buildForwardRefusalFixture(root, scenario.change);
-        const before = snapshotAuthorityFixture(root);
+        const before = snapshotAuthorityFixture(root, true);
         let caught: unknown;
         try {
           forwardUpdateAuthority(root, selector, selectorSha, root, true);
@@ -5969,7 +5976,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           caught = error;
         }
         expect(caught).toMatchObject({ code: 'GAP-VIDA-RUN-SELECTOR-001', message: scenario.message });
-        expect(snapshotAuthorityFixture(root)).toEqual(before);
+        expect(snapshotAuthorityFixture(root, true)).toEqual(before);
         completed = true;
       } finally {
         if (completed) rmSync(root, { recursive: true, force: true });

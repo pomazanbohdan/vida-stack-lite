@@ -38,6 +38,62 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Forward authorization missing evidence and branch 57 disposition — 2026-10-27
+
+The existing linked-record refusal fixture now omits the authorization's
+`evidence` key and verifies rejection before review receipts are read. The
+record bindings remain internally consistent. The fixture compares file bytes,
+paths, device, inode, mode, size, mtime and ctime before and after each refusal;
+atime and metadata of the root directory itself are not compared. The existing
+admitted-journal case remains the positive control. These are parser fixtures,
+not source of cutover authority.
+
+The first target `/workspace/contour-focused-runtime-qUrcQ9` exited 1 with
+complete capture and closed owned group. Its intended downstream-error assertion
+was wrong: the earlier proof guard rejected the missing key. Preserve its
+native status, scratch and streams plus
+`DIAG/forward-missing-evidence-launch-20261027-01.log`. The corrected target
+`/workspace/contour-focused-runtime-RXyMYv` passed one test with 40 `expect()`
+calls in 1.58s. Native child 1041071 exited 0; capture was complete and
+untruncated, the owned group closed, and image, profile and overlay custody
+checks passed. Retain its stage, namespace status and
+`DIAG/forward-missing-evidence-launch-20261027-02.log` and launcher. Composite
+digest is `1bca9ce99e0246e79f03c11596064263ee8f0cf5f20ab339f268ee72e98aeebe`.
+The test overlay SHA-256 is
+`eb873dab919af34cf316392ea6ffd71e48f13173b926273346b1535be2936444`;
+the helper overlay is
+`ffbe530484b957aeac7458abb6c4a5aae426ace50f5294a5e28b76b38654a1de`.
+The base image manifest does not attest those overlays and the live dependency
+mount is not a byte snapshot. Scoped strict passed for 511 files, type-aware
+Oxlint and one-file format passed. An initial reader and review missed the
+preceding exact-key guard; the retained failed target exposed that mistake.
+
+Independent blind review subsequently established the objective disposition
+for historical `bin/run.ts` branch 57 true arm at line 536, columns 2–117,
+`if (!isForwardUpdateAuthorization(value))`. The bound report is
+`8d7391ed-a405-4b06-8147-0a3c73714909`, Source commit
+`60cb6e779553c791cd5ae4ab643afd3d829f7c67`, Source fingerprint
+`ef5d95810149ad8d0cb3bfb59cfb158e0aa9c88c8b5e948e0c6c741c9cab367a`, test
+fingerprint `0ec7f9cfaec1af747988004ab361e829949e2b3a7035b158dcf1b8f13a0bddb5`,
+tool fingerprint `5307fbc3cf5e21a128fd0540ba635ef85a4c18a2635aa5279a07a6d7a16bbd80`,
+configuration digest `d4d7c762c07dbb40bf89432548f9f117ebd99170bd756102c43e2a0af8decb97`,
+and manifest SHA-256 `3ab78d3f3eecfac447ca28ecf02a5f7cb6747abd35c9d54408316c8e9cecfd55`.
+The report is retained at `/workspace/.vida-quality-inputs/88a5a56236dbbf0643ac7263a9b3eff2b3cb711e/repository/packages/agent/coverage/bun-unified/diagnostics/8d7391ed-a405-4b06-8147-0a3c73714909.focused-coverage.json`.
+Its raw counters remain `[0, 52]`. The sole caller parses a canonical JSON
+record and, before this guard, requires exactly the same seven own keys and
+the same six string fields. The intervening synchronous checks do not mutate
+the parsed record. Both the public and recursive parent paths pass that same
+guard. Consequently `!isForwardUpdateAuthorization(value)` cannot be true under
+the supported contract. Current `bin/run.ts` has no tracked diff from that
+report's Source; reopen this disposition if the producer, parser, proof guard or supported
+contract changes. The targeted test proves earlier refusal, not a hit on the
+downstream guard. This skip changes neither denominator nor BLOCKED status and
+does not establish exact 100% or numeric qualification.
+
+The capture owner's admission observed 6,874,226,688 available bytes against
+the unchanged 2,147,483,648-byte floor. Full-proof HOLD and UNKNOWN fences
+remain unchanged. No full suite or cleanup ran.
+
 ### Final assurance delivery gap and retry — 2026-10-27
 
 The existing public accepted-delivery fixture now changes only the local

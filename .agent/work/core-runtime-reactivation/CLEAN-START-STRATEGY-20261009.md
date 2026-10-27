@@ -12,6 +12,12 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The forward-record fixture refuses missing authorization evidence without
+changing its files or metadata. Independent review dispositioned the historical
+branch 57 true arm as unreachable after the exact-key proof guard. Its raw count,
+denominator and BLOCKED status remain unchanged. WORK owns the failed and passing
+target receipts, precise binding and reopening conditions. Full-proof HOLD remains.
+
 The public accepted-delivery fixture now checks a foreign manifest's delivery
 gap, the accepted report and receipt state, and successful retry after restoring
 the manifest. The targeted result adds no numeric qualification; full-proof HOLD
