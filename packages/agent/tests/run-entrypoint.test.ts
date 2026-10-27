@@ -3902,6 +3902,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       admissionArgs: [...admittedArgs, '--intake', intakePath],
       nativeSessionHandle: intake.native_session_handle,
       sourceEntry,
+      runtimePaths,
     };
   };
 
@@ -8711,8 +8712,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       try {
         const { args, config } = createFixture(root);
         const admitted = prepareMutationIntake(args, config, { sourcePath: 'AGENT.sidecar.md', risk: 'high' });
-        const { sourceEntry } = admitted;
-        const runtimePaths = runtimePackageCodePaths(config.runtime.bundle);
+        const { sourceEntry, runtimePaths } = admitted;
         const runtimeSnapshot = snapshotRuntimePackageSources(
           runtimePackageAccess(),
           config.runtime.bundle,

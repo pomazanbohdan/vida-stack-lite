@@ -38,6 +38,37 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Reuse the CAS fixture's runtime path inventory — 2026-10-27
+
+The CAS test now reuses the runtime path list already produced for its intake
+instead of discovering the same inventory again immediately afterwards. The
+snapshot still reads the current listed files and checks their existence. No
+native command, assertion, CAS transition, fault control or production freshness
+check was removed. The read-only list is not mutated between serialization and
+snapshot. Independent blind review checked this identity and the separate live
+checks in production; image custody belongs to the capture owner.
+
+The targeted composite run `/workspace/contour-focused-runtime-DPSARx` passed
+one test with 112 `expect()` calls in 26.30s. Native child 1042803 exited 0;
+capture was complete and untruncated, the owned group closed, and image, profile
+and overlay custody checks passed. Retain the stage, sibling namespace status,
+`DIAG/cas-inventory-reuse-launch-20261027-01.log` and launcher. Composite digest
+is `1146923babde2c7798737699e9fb12b0da81489d515720f64d953ec784edeef1`.
+The test overlay SHA-256 is
+`c6576e3f365fb4fec112dd1c61a462c9d7955284c604f2a48379c2d6dfb56037`;
+the helper overlay is
+`ffbe530484b957aeac7458abb6c4a5aae426ace50f5294a5e28b76b38654a1de`.
+The base image manifest does not attest those overlays and the live dependency
+mount is not a byte snapshot. Scoped strict passed for 511 files, type-aware
+Oxlint and one-file format passed.
+
+The change removes one inventory discovery. Its elapsed saving is unmeasured;
+the prior full-stage CAS durations use different inputs and conditions. This
+target has no numeric counters. It does not establish full-stage headroom,
+clear HOLD, or advance the old UNKNOWN boundary. The capture owner's admission
+observed 6,850,048,000 available bytes against the unchanged 2,147,483,648-byte
+floor. No full suite, benchmark or cleanup ran.
+
 ### Forward authorization missing evidence and branch 57 disposition — 2026-10-27
 
 The existing linked-record refusal fixture now omits the authorization's

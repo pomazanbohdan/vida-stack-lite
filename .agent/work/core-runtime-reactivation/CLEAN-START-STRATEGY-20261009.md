@@ -12,6 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The CAS fixture reuses the runtime path inventory already supplied to its intake.
+The focused test and independent review passed; one discovery is removed, but
+elapsed savings and full-stage headroom remain unmeasured. Full-proof HOLD remains.
+WORK owns the input binding, native terminal evidence and remaining limits.
+
 The forward-record fixture refuses missing authorization evidence without
 changing its files or metadata. Independent review dispositioned the historical
 branch 57 true arm as unreachable after the exact-key proof guard. Its raw count,
