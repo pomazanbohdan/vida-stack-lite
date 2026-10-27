@@ -142,7 +142,11 @@ export function classifyTrustedCoverageSelectionCandidate(
     Object.keys(selection).sort().join(',') !== 'contour,mode,sources,tests' ||
     !same(selection.sources, declared.sources) ||
     !same(selection.tests, declared.tests) ||
-    JSON.stringify(value.command) !== JSON.stringify(['tooling/contour-campaign.ts', '--coverage-child', declared.name])
+    !Array.isArray(value.command) ||
+    value.command.length !== 3 ||
+    value.command[0] !== 'tooling/contour-campaign.ts' ||
+    value.command[1] !== '--coverage-child' ||
+    value.command[2] !== declared.name
   )
     return refused;
   const keys = ['image_manifest_sha256', 'source_fingerprint', 'test_fingerprint', 'tool_fingerprint'] as const;

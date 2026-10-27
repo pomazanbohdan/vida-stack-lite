@@ -47,6 +47,12 @@ test('trusted coverage candidate binds the declared contour and refuses altered 
   for (const invalid of [
     { ...request, lane: 'mutation' },
     { ...request, override: '--unreviewed' },
+    { ...request, command: { toJSON: () => request.command } },
+    { ...request, command: [1n] },
+    { ...request, command: [request.command[0], request.command[1], 1n] },
+    { ...request, command: ['other.ts', ...request.command.slice(1)] },
+    { ...request, command: [request.command[0], '--other', request.command[2]] },
+    { ...request, command: [...request.command.slice(0, 2), 'other-contour'] },
     { ...request, command: [...request.command, '--override'] },
     { ...request, selection: { ...selection, tests: [selection.tests[0]] } },
     { ...request, selection: { ...selection, sources: ['bin/init.ts'] } },
