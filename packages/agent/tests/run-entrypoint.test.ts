@@ -1587,6 +1587,134 @@ function unpreparedRecoveryFixture(deadlineAt: number): {
 }
 
 describe('unprepared recovery', () => {
+  test('read-only recovery refuses a Host hard link created before the final identity check', async () => {
+    const deadline = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadline);
+    const alias = path.join(f.root, 'host-link-fixture');
+    let restoreInspect: (() => void) | undefined;
+    let restoreClose: (() => void) | undefined;
+    let primaryFailure: { error: unknown } | undefined;
+    let hostIdentity: { dev: number; ino: number } | undefined;
+    let inspectionCompleted = false;
+    let linked = false;
+    const requireTime = () => {
+      if (performance.now() >= deadline) throw Error('Unprepared recovery Host identity test deadline expired');
+    };
+    const removeOwnedLink = () => {
+      if (!linked) return;
+      const current = lstatSync(alias);
+      if (!hostIdentity || current.dev !== hostIdentity.dev || current.ino !== hostIdentity.ino)
+        throw Error('Unprepared recovery test link identity changed');
+      unlinkSync(alias);
+      linked = false;
+    };
+    const clean = (action: () => void): undefined => {
+      try {
+        action();
+        return undefined;
+      } catch (error) {
+        f.fail(error);
+        throw error;
+      }
+    };
+    try {
+      requireTime();
+      writeFileSync(
+        path.join(f.root, 'inspect.json'),
+        JSON.stringify({
+          identity: f.identity,
+          attempt: 1,
+          baselinePath: 'baseline.yaml',
+          decisionPointer: f.input.decisionPointer,
+        }),
+      );
+      const args = [
+        '--recover-unprepared-work',
+        'true',
+        '--mode',
+        'inspect',
+        '--project-root',
+        f.root,
+        '--native-session-handle',
+        f.input.operatorHandle,
+        '--request',
+        'inspect.json',
+      ];
+      requireTime();
+      expect(parseUnpreparedRecoveryResult(await run(args)).status).toBe('unprepared_recovery_inspected');
+      const before = f.observed();
+      const hostBytes = readFileSync(f.file);
+      const originalIdentity = lstatSync(f.file);
+      hostIdentity = { dev: originalIdentity.dev, ino: originalIdentity.ino };
+      expect(originalIdentity.nlink).toBe(1);
+      requireTime();
+
+      const originalInspect = Reflect.get(
+        HostStateStore.prototype,
+        'inspectUnpreparedWorkRecovery',
+      ) as HostStateStore['inspectUnpreparedWorkRecovery'];
+      const inspectSpy = spyOn(HostStateStore.prototype, 'inspectUnpreparedWorkRecovery').mockImplementation(function (
+        this: HostStateStore,
+        ...parameters: Parameters<HostStateStore['inspectUnpreparedWorkRecovery']>
+      ) {
+        const result = Reflect.apply(originalInspect, this, parameters);
+        if (this !== f.store && parameters[0].identity.work_id === f.identity.work_id) inspectionCompleted = true;
+        return result;
+      });
+      restoreInspect = () => inspectSpy.mockRestore();
+      const originalClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+      const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+        this: Database,
+        ...parameters: Parameters<Database['close']>
+      ) {
+        const file = path.resolve(this.filename);
+        Reflect.apply(originalClose, this, parameters);
+        if (inspectionCompleted && !linked && this !== f.db && file === path.resolve(f.file)) {
+          linkSync(f.file, alias);
+          linked = true;
+        }
+      });
+      restoreClose = () => closeSpy.mockRestore();
+      requireTime();
+      await Promise.resolve(expect(run(args)).rejects.toThrow('Unprepared recovery Host substituted'));
+      expect(inspectionCompleted).toBe(true);
+      expect(linked).toBe(true);
+      const linkedHost = lstatSync(f.file);
+      const linkedAlias = lstatSync(alias);
+      expect([linkedAlias.dev, linkedAlias.ino, linkedHost.nlink]).toEqual([linkedHost.dev, linkedHost.ino, 2]);
+      restoreClose();
+      restoreClose = undefined;
+      restoreInspect();
+      restoreInspect = undefined;
+      removeOwnedLink();
+      const after = lstatSync(f.file);
+      expect([after.dev, after.ino, after.nlink]).toEqual([originalIdentity.dev, originalIdentity.ino, 1]);
+      expect(readFileSync(f.file)).toEqual(hostBytes);
+      expect(f.observed()).toEqual(before);
+      requireTime();
+      f.complete();
+    } catch (error) {
+      primaryFailure = { error };
+      f.fail(error);
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => clean(() => restoreClose?.()),
+          () => clean(() => restoreInspect?.()),
+          () => clean(removeOwnedLink),
+          () => clean(requireTime),
+          () =>
+            clean(() => {
+              f.close();
+              requireTime();
+            }),
+        ],
+        primaryFailure,
+      );
+    }
+  });
+
   test('current registry descriptor and path metadata are resolved without changing recovery identity', () => {
     const f = unpreparedRecoveryFixture(performance.now() + 5_000);
     try {
