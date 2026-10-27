@@ -1587,7 +1587,7 @@ function unpreparedRecoveryFixture(deadlineAt: number): {
 }
 
 describe('unprepared recovery', () => {
-  test('read-only recovery refuses a Host hard link created before the final identity check', async () => {
+  test('read-only recovery refuses Host hard links before open and after close', async () => {
     const deadline = performance.now() + 5_000;
     const f = unpreparedRecoveryFixture(deadline);
     const alias = path.join(f.root, 'host-link-fixture');
@@ -1647,6 +1647,14 @@ describe('unprepared recovery', () => {
       const originalIdentity = lstatSync(f.file);
       hostIdentity = { dev: originalIdentity.dev, ino: originalIdentity.ino };
       expect(originalIdentity.nlink).toBe(1);
+      requireTime();
+      linkSync(f.file, alias);
+      linked = true;
+      requireTime();
+      await Promise.resolve(expect(run(args)).rejects.toThrow('Unprepared recovery Host path unsafe'));
+      removeOwnedLink();
+      expect(readFileSync(f.file)).toEqual(hostBytes);
+      expect(f.observed()).toEqual(before);
       requireTime();
 
       const originalInspect = Reflect.get(
