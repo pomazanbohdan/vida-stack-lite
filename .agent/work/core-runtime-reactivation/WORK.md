@@ -38,6 +38,32 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Directory-FD probe under the current sandbox — 2026-10-27
+
+The diagnostic in `/workspace/contour-fd-probe-d6Loh7qu` tested one path
+substitution premise without a coverage producer. The direct Bun control opened
+a directory before renaming it and creating a replacement at the old path. Child
+1047741 exited 0 and read `original` through inherited FD4 while the replacement
+still contained `replacement`. Launch and execution records share run ID
+`3ac7fefa-9058-4dd0-a1c3-2fa58d6669b5`. This is a controlled FD traversal
+observation, not a capture-owner or bwrap mount receipt. Its ad hoc records
+have no process-group or descendant custody and do not qualify an actual stage.
+
+The earlier direct probe failed with a Bun stdout `EPERM`; no output was
+observed and no result is inferred from it. The bwrap FD probe exited 1 with
+`setting up uid map: Read-only file system`; its native JSONL has a startup
+record but no terminal record. It therefore did not test the mount. Preserve
+the complete stage, all attempts and their logs. Independent blind review
+confirmed these limitations. The blocker is the sandbox's uid-map setup for
+this native control, not demonstrated absence of Bun FD support or a product
+API impossibility. No permission escalation or retry was performed.
+
+The next necessary proof is the same controlled mount and replacement case
+through the existing capture owner in an environment where its bwrap namespace
+setup succeeds. Actual mount topology, alias closure, descendant custody and
+the separate full-stage timing margin remain unproved. No full producer was
+launched and old UNKNOWN fences and numeric qualification are unchanged.
+
 ### Retained scratch input separation — 2026-10-27
 
 The explicit retained scratch parent is now checked before allocation against
