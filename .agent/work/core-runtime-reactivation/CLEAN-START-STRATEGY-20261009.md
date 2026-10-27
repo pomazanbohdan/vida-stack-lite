@@ -10,6 +10,25 @@ Complete approved P0/P1 corrections and supported simplifications with current,
 bound Source and evidence. Keep archived operational state isolated.
 No consumer effect, native loader activation or DB cutover is part of this cycle.
 
+## Ongoing agent-contour simplification goal
+
+Owner direction, 2026-10-27: pursue the smallest portable agent-contour
+architecture that preserves product behavior, explicit contracts and verifiable
+acceptance. Refine this goal as evidence changes, within the existing cycle and
+one-writer ownership. Separate agent decisions from command execution; remove
+duplicated executor, fixture and observer responsibilities only where their actual
+contracts are preserved. Distinguish retained-output limits from process resource
+caps. Use core tests, native adapter contracts and security/mutation evidence for
+their respective purposes, without silently reducing coverage or its denominator.
+Cover success, error, timeout and large output across the appropriate boundaries.
+
+Before each package, state its concrete need or gate, existing seam, what it
+removes or simplifies, negative risks and how compatible evidence reaches the
+existing accepted coverage validator. Do not repeat disproved hypotheses without
+new evidence or add wrappers, FFI or supervisors by default. Material changes to
+authority, specification or guarantees require the owner's decision. The current
+phase, budgets, exact gates and all UNKNOWN fences remain in force.
+
 ## Trusted coverage implementation plan
 
 > **For agentic workers:** Use `superpowers:executing-plans` task by task.
