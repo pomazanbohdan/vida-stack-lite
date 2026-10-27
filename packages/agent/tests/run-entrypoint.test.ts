@@ -30,6 +30,7 @@ import {
   type DatabaseWorkOutcome,
 } from '../src/config/workspace-database-raw.ts';
 import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.ts';
+import { readSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
 import type { SessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import { boundedSpawnSync, commandOutcomeUnknown, executionBudget, pinnedEnvironment } from '../bin/bun.ts';
 import { spawn, spawnSync } from 'node:child_process';
@@ -11104,6 +11105,53 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           ['review', 'assurance', null],
         ]);
         expect(nextActions.every((action) => action.tool === 'spawn_agent')).toBe(true);
+        const beforeRetryHost = fixture.store.readHostStateSnapshot(fixture.identity);
+        const beforeRetryJournal = fixture.ledger.resume(fixture.identity.work_id, 1);
+        const beforeRetryAssurance = fixture.store.readFinalAssurance(fixture.identity, 1);
+        assert.ok(work.execution.run_id && beforeRetryJournal && beforeRetryAssurance);
+        const engineBinding = {
+          repositoryRoot: fixture.root,
+          config: fixture.config,
+          selection: fixture.producerInput.selection,
+          context: fixture.producerInput.context,
+          workflowId: fixture.producerInput.workflowId,
+          runId: work.execution.run_id,
+        };
+        const beforeRetryEngine = readSessionEngineSnapshot(engineBinding);
+        assert.ok(beforeRetryEngine);
+        const preparationPath = path.join(fixture.root, fixture.preparationPath);
+        const preparationBytes = readFileSync(preparationPath);
+        assert.ok(typeof preparation.clear_path === 'string');
+        const preservedPaths = [
+          'docs/agent-instructions/documentation-policy.v1.json',
+          preparation.clear_path,
+          deliveryManifestPath,
+        ].map((relative) => path.join(assuranceFixture.root, relative));
+        const preservedBytes = preservedPaths.map((file) => readFileSync(file));
+        const retrySourcePaths = sourceScope.entries.map((entry) => entry.path);
+        const beforeRetrySource = snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), retrySourcePaths);
+        const alternatePreparationPath = path.join(path.dirname(preparationPath), 'foreign-preparation.json');
+        expect(existsSync(alternatePreparationPath)).toBe(false);
+        await assert.rejects(
+          run([...runArgs, ...expected(assurance.state_version), '--prepare-assurance', alternatePreparationPath]),
+          {
+            code: 'GAP-VIDA-RUN-CONTEXT-001',
+            message: 'Assurance preparation retry differs from the current packet.',
+          },
+        );
+        expect(existsSync(alternatePreparationPath)).toBe(false);
+        expect(readFileSync(preparationPath)).toEqual(preparationBytes);
+        expect(preservedPaths.map((file) => readFileSync(file))).toEqual(preservedBytes);
+        expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(beforeRetryHost);
+        expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(beforeRetryJournal);
+        expect(fixture.store.readFinalAssurance(fixture.identity, 1)).toEqual(beforeRetryAssurance);
+        expect(readSessionEngineSnapshot(engineBinding)).toEqual(beforeRetryEngine);
+        expect(
+          compareScopedSourceSnapshots(
+            beforeRetrySource,
+            snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), retrySourcePaths),
+          ),
+        ).toEqual([]);
         pendingAssuranceIssue = true;
         const issueReviews = await publicRun([
           ...expected(requireStateVersion(assurance.state_version)),

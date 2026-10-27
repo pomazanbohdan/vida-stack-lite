@@ -38,6 +38,37 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Assurance preparation retry refusal — 2026-10-27
+
+The existing public accepted-delivery fixture now retries assurance preparation
+with a different path after the accepted preparation. The retry refuses with the
+exact context error and leaves the alternate path absent. Host, Ledger, Journal,
+FinalAssurance, engine, declared Source, preparation, documentation policy,
+clear record and delivery manifest remain unchanged. The original preparation
+and subsequent assurance checks stay in the same test. Fixture observations do
+not establish external consumer execution or native approval.
+
+The targeted composite run at `/workspace/contour-focused-runtime-98JNgk`
+passed one test with 160 `expect()` calls in 23.23s. Native child 1037069 exited 0;
+capture was complete and untruncated, the owned group closed, and image, profile
+and overlay custody checks passed. Retain the stage, sibling namespace status,
+`DIAG/assurance-retry-launch-20261027-01.log` and launcher. Composite input digest
+is `1c28f9b971cb61b21381a5a525b8d506fe27ca94761765c86a5ec671b9f8e5c1`.
+The launch record binds the overlays separately; the base manifest does not attest
+them and the live dependency mount is not a byte snapshot. Scoped strict passed
+for 511 files, type-aware Oxlint and one-file format passed. Preserve the earlier
+strict failure in `DIAG/assurance-retry-typecheck-20261027-02.log`, caused by an
+optional fixture reference inside a callback; the final check uses the already
+narrowed fixture. Independent blind Luna reviewed the exact public guard and
+the state and document preservation checks.
+
+Historical report `8d7391ed-a405-4b06-8147-0a3c73714909` maps branch 1022's
+foreign preparation path refusal to zero. This target has no counters and does
+not add qualified hits. Full-proof HOLD, the historical baseline and UNKNOWN
+fences remain unchanged. The capture owner's admission observed 6,970,277,888
+bytes available against the unchanged 2,147,483,648-byte floor. No full suite
+or cleanup ran.
+
 ### Completed readonly next-work inspection — 2026-10-26
 
 The existing public completed-readonly fixture now inspects both request intents.

@@ -12,6 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The public assurance fixture now refuses a changed preparation path on retry and
+checks unchanged state and evidence. Its focused target passed; the target adds
+no numeric qualification. WORK owns its input, terminal and review evidence.
+Full-proof HOLD remains.
+
 The existing completed-readonly inspection now checks both `linked_correction`
 and `next_work` without granting rights. Its focused target passed; it adds no
 numeric qualification. WORK owns the input, terminal and review evidence.
