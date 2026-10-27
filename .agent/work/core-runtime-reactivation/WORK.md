@@ -24,6 +24,16 @@ margin must be established independently before any full successor. The owner
 now prioritizes accepted Agent/Core contour closure over the earlier marketplace
 resource priority; the current timer and schedule are unchanged.
 
+An independent plan review found that the initial Task 2 lacked an actionable
+effect-to-proof mapping. The plan now names the two selected tests' observed
+fixture, SQLite, socket, child, cache and dependency sites, proposes a run-owned
+intent/start/close protocol using the current manifest and capture owners, and
+marks its assumptions and abnormal-termination limit. This is a bounded source
+inspection, not a complete transitive effect inventory or an implemented API.
+It also identifies a documentation mismatch: the collector currently declares
+three run subjects while the focused TESTING description says two. Resolve that
+against compatible evidence before implementation; no run or counters were added.
+
 ## Execution-step optimization, 2026-10-24
 
 This documentation packet keeps bun-cli-run as the active contour and reuses

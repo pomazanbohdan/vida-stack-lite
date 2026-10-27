@@ -40,6 +40,25 @@ live descendants after parent exit; truncated or stale run evidence; a qualifyin
 report from only a subset of Source/tests. Tasks 1–3 each pin their relevant
 failure cases; the final gate checks full inventory and compatible inputs.
 
+**Finite scope and open findings:** `mutation-partitions.ts:208` selects
+`bin/run.ts`, `tests/run-entrypoint.test.ts` and `tests/bun-cache-routing.test.ts`.
+Their direct effects include temporary fixture trees and SQLite files
+(`run-entrypoint.test.ts:152,2356`), a local Unix socket inside a fixture
+(`:6703,6893`), a tracked SQLite lock-holder child (`:2709`), native CLI children
+via `invoke` (`:2820`), and copied bundles, dependency symlinks, Bun cache and
+captured children (`bun-cache-routing.test.ts:23,263,273,283,291`).
+`bin/bun.ts:405,504` makes CLI calls detached on POSIX and may select a cache
+under `homedir()` for a `node_modules` root. The special coverage observer checks
+owned-group closure for selected native CLI roles; a synchronous parent return
+alone does not prove closure for every ordinary invocation. The lock-holder and
+socket have explicit cleanup; abrupt termination can prevent fixture cleanup.
+The bounded inspection has not traced every transitive production/helper effect:
+that inventory remains an explicit prerequisite, not a proven complete map.
+Also `coverage-cli-child.ts:219` currently names three run subjects including
+`run-issue-wave`, while TESTING's focused description says two. Reconcile this
+documentation against current code and receipts before relying on the inventory;
+do not infer a new qualified result.
+
 ### Task 1: Classify the actual captured lane
 
 **Files:** `packages/agent/tooling/contour-campaign.ts`,
@@ -77,8 +96,61 @@ set `resourceSafeToAdvance` from a caller-supplied boolean. The owner supplies
 an exhaustive invocation-specific effect inventory: writable paths and aliases,
 inherited descriptors, stores/services, network or other external effects and
 descendants. Map each entry to its observation and exclusion, custody or closure
-evidence; missing entries or unsupported observations deny qualification. Reuse
-the existing inventory owner rather than adding another accounting system.
+evidence; missing entries or unsupported observations deny qualification. Extend
+the existing `run-bun-coverage.ts` run manifest, which already binds Source, test,
+tool, runtime and selected argv, with these reviewed effects; it does not currently
+own an exhaustive effect inventory. Do not add a separate inventory service.
+
+**Alternative analysis:** (1) Keep current bwrap/group route: native controls
+already exist, but the managed environment's uid-map probe failed; no qualified
+portable successor is established. (2) A trusted run owner with private roots and
+completed program-owned operations can avoid a hostile sandbox in ordinary cases,
+but only if the exact transitive effects and descendants are accounted for. This
+is the candidate below, not a proven route. (3) Assume fresh roots plus parent
+exit establish closure: reject; neither accounts for detached descendants or
+shared cache and external effects. No approach changes acceptance or budget.
+
+| Observed effect | Owner/proposed proof | Current limit |
+| --- | --- | --- |
+| Fixture files, SQLite and socket in `run-entrypoint.test.ts` | private `TMPDIR`, close callbacks, test terminal and retained fixture state | Direct effects are not currently registered; abrupt exit can prevent closure. |
+| Bundle copy, symlink and cache in `bun-cache-routing.test.ts` | private fixture/home/cache, resolve dependency target and bind read-only input | `homedir()` and caller-selected caches can escape the fixture; alias substitution is not yet excluded. |
+| POSIX detached CLI via `boundedSpawnSync` | register launch, capture terminal and independently account for descendants | Direct-child exit alone is insufficient; existing observer applies only to selected roles. |
+| `capturedChild` and async SQLite lock-holder | same owner observes spawn, raw streams and close before releasing resources | Current `spawnSync` helper is not registered; forced owner exit can leave an unknown child. |
+| Outputs, snapshot and scratch in `run-bun-coverage.ts:1491` | bind the existing manifest to actual run roots and retained capture | Current temp selection can use inherited `TMPDIR`; no portable full-closure receipt exists. |
+
+**Optional protocol sketch for review, not an implemented or demonstrated API:** one run owner creates
+private fixture, output, coverage, home/cache and temporary roots, with physical
+identities compared to all old fenced resources and dependency aliases. It passes
+these roots to the exact reviewed test selection. Add an existing-wrapper event
+channel whose records are `intent(operationId, kind, resource)`,
+`started(operationId, childIdentity)` and `closed(operationId, terminal, capture)`;
+the owner acknowledges an intent *before* a child launch and accepts closure only
+after all registered operations close, streams complete and the producer itself
+terminates. A missing acknowledgement, orphaned intent, mismatched run, dropped
+channel, timeout or unknown child blocks the run. Record actual observations in
+the existing capture/terminal receipts, not assertions from test-supplied labels.
+Uninstrumented direct effects or hidden descendants remain unaccounted; when their
+closure cannot be proved by the reviewed effect path or a qualified platform
+observer, the run is unsupported. The launch/start crash window is UNKNOWN, never
+positive evidence. Identity must be bound before access and protected against
+replacement/remount races; a one-time pathname or inode comparison is insufficient.
+Normal completed operations may be observed by program-level ownership for this
+reviewed trusted selection; this is no containment against malicious children or
+an external writer. Mutation and adversarial execution keep their native gate.
+
+**Concrete changes to evaluate:** route `tmpdir()` and cache/home effects to the
+run's private roots; retain the symlinked dependency as read-only input and verify
+its target; route `invoke()`/`boundedSpawnSync`, `capturedChild()` and the async
+lock-holder through the same registration and terminal owner without losing native
+CLI assertions, SIGKILL cleanup, raw output or the socket test. Ensure server and
+SQLite close operations are recorded before resource closure. On abnormal owner or
+test termination, event records cannot prove that an unregistered or still-live
+descendant is gone: retain the roots and return UNKNOWN unless a separately
+qualified platform observer supplies that proof. `executeMutationCommand` already
+captures streams and observes an owned group, but its group check and stage's
+`/proc` boot/namespace receipts are platform-specific; do not call them portable
+or claim its direct `Bun.spawn`/`exited` result accounts for detached descendants.
+There is no demonstrated portable launch-to-closure implementation yet.
 
 - [ ] Test mismatched identities, old fenced roots, shared writable resources,
   aliases and replacement races, missing observations, inherited descriptors,
@@ -86,9 +158,11 @@ the existing inventory owner rather than adding another accounting system.
   and incomplete capture. Each must refuse advance; a supported isolated case
   must prove actual closure for every inventoried effect.
 - [ ] Establish which observations/enforcement the existing capture owner and
-  platform provide for every relevant path and external effect. Implement only
-  those supported adapters; where proof is unavailable return unsupported/unknown
-  and retain HOLD. Keep hostile-process containment as a separate native gate.
+  platform provide for each mapped transitive effect. Reject uncontrolled paths,
+  detached children without custody and unknown effects. Prove that the declared
+  closure matches the exact captured selection before launching it; otherwise
+  return unsupported/unknown and retain HOLD. Keep hostile-process containment
+  as a separate native gate.
 - [ ] Use the existing owner for the changed targeted controls, scoped strict/lint
   and an independent review of the actual launch-to-receipt binding. Keep all
   attempt logs and native custody records; do not rerun fenced operations.
