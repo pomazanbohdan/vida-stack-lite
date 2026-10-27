@@ -51,6 +51,7 @@ const capturedTools = new Map(coverageToolInputs.map((file) => [file, readFileSy
 // not a full production coverage report or an admitted published baseline.
 for (const outcome of [
   'pass',
+  'environment-mismatch',
   'assertion-failure',
   'bail-assertion-failure',
   'report-write-failure',
@@ -163,6 +164,27 @@ for (const outcome of [
             instrumentedSources.map(({ row, fileCoverage }) => [path.join(root, row.path), fileCoverage]),
           ),
         };
+        const childEnvironment = {
+          ...process.env,
+          BUN_OPTIONS: '',
+          VIDA_BUN_COVERAGE_ROOT: root,
+          VIDA_BUN_COVERAGE_MANIFEST: manifestPath,
+          VIDA_BUN_COVERAGE_REPORT_DIRECTORY: reports,
+          VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY: snapshot,
+          VIDA_BUN_COVERAGE_RUN_ID: runId,
+          VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: manifest.source_fingerprint,
+          VIDA_BUN_COVERAGE_TEST_FINGERPRINT: manifest.test_fingerprint,
+          VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: manifest.tool_fingerprint,
+          VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: manifest.test_selection.mode,
+          VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(argv),
+          VIDA_BUN_COVERAGE_SHARD_ID: 'bun-test',
+          VIDA_TEST_ENVIRONMENT_CONTROL: 'expected',
+          BUN_TEST_WORKER_ID: '1',
+          JEST_WORKER_ID: '1',
+        };
+        const environmentHash = coverageEnvironmentSha256(childEnvironment);
+        if (outcome === 'pass' || outcome === 'environment-mismatch')
+          Object.assign(manifest.execution_scope, { serial_environment_sha256: environmentHash });
         writeFileSync(manifestPath, JSON.stringify(manifest));
         if (outcome === 'query-import')
           writeFileSync(
@@ -175,19 +197,8 @@ for (const outcome of [
           timeout: 20_000,
           maxBuffer: 1024 * 1024,
           env: {
-            ...process.env,
-            BUN_OPTIONS: '',
-            VIDA_BUN_COVERAGE_ROOT: root,
-            VIDA_BUN_COVERAGE_MANIFEST: manifestPath,
-            VIDA_BUN_COVERAGE_REPORT_DIRECTORY: reports,
-            VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY: snapshot,
-            VIDA_BUN_COVERAGE_RUN_ID: runId,
-            VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: manifest.source_fingerprint,
-            VIDA_BUN_COVERAGE_TEST_FINGERPRINT: manifest.test_fingerprint,
-            VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: manifest.tool_fingerprint,
-            VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: manifest.test_selection.mode,
-            VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(argv),
-            VIDA_BUN_COVERAGE_SHARD_ID: 'bun-test',
+            ...childEnvironment,
+            ...(outcome === 'environment-mismatch' ? { VIDA_TEST_ENVIRONMENT_CONTROL: 'changed' } : {}),
           },
         });
         writeFileSync(path.join(root, 'child.stdout.log'), result.stdout ?? '');
@@ -195,7 +206,10 @@ for (const outcome of [
         expect(result.error).toBeUndefined();
         expect(result.signal).toBeNull();
         expect(result.status, result.stderr).toBe(outcome === 'pass' || outcome === 'query-import' ? 0 : 1);
-        if (outcome === 'bail-assertion-failure') expect(result.stderr).toContain('Bailed out after 1 failure');
+        if (outcome === 'environment-mismatch') {
+          expect(result.stderr).toContain('Coverage serial environment differs from its manifest.');
+          expect(existsSync(reports)).toBe(false);
+        } else if (outcome === 'bail-assertion-failure') expect(result.stderr).toContain('Bailed out after 1 failure');
         else expect(result.stderr).toContain(`Ran ${outcome === 'report-write-failure' ? 3 : 2} tests across 2 files.`);
         if (outcome === 'report-write-failure') {
           expect(result.stderr).toContain('Bun coverage child report failed:');
@@ -204,13 +218,14 @@ for (const outcome of [
           expect(result.stderr).toContain('Uncaptured query-bearing module input requested by test execution:');
           expect(result.stderr).toContain('src/unbound.ts?fresh=');
           expect(readFileSync(path.join(root, 'src/unbound.ts'), 'utf8')).toBe('export const unbound = true;\n');
-        } else if (outcome === 'bail-assertion-failure') {
+        } else if (outcome === 'bail-assertion-failure' || outcome === 'environment-mismatch') {
           expect(existsSync(reports)).toBe(false);
         } else {
           const files = readdirSync(reports);
           expect(files).toHaveLength(1);
           const receipt: unknown = JSON.parse(readFileSync(path.join(reports, files[0]!), 'utf8'));
           expect(receipt).toMatchObject({ schema: 'VidaBunCoverageProcess/v1', run_id: runId, shard_id: 'bun-test' });
+          if (outcome === 'pass') expect(receipt).toHaveProperty('environment_sha256', environmentHash);
           expect(receipt).toHaveProperty(['coverage', path.join(root, 'src/fixture.ts'), 'f', '0'], 4);
           expect(receipt).toHaveProperty('loaded_inputs', expect.arrayContaining([sources[0]]));
           for (const file of tests)

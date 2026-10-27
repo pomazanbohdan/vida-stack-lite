@@ -693,10 +693,21 @@ function verifyLoadedIdentity(
     if (!shardInvocation) throw new Error('Versioned coverage process has no shard invocation binding.');
   }
   const expectedArgv = shardInvocation?.argv ?? manifest.active_argv;
+  const serialScope =
+    manifest.schema === 'VidaBunCoverageRun/v2' &&
+    typeof manifest.execution_scope === 'object' &&
+    manifest.execution_scope !== null &&
+    !Array.isArray(manifest.execution_scope)
+      ? (manifest.execution_scope as Record<string, unknown>)
+      : undefined;
   if (
     JSON.stringify(child.module_inputs) !== JSON.stringify(current.module_inputs) ||
     JSON.stringify(child.execution_scope) !== JSON.stringify(manifest.execution_scope) ||
     JSON.stringify(child.active_argv) !== JSON.stringify(expectedArgv) ||
+    (serialScope?.serial_environment_sha256 !== undefined &&
+      (typeof serialScope.serial_environment_sha256 !== 'string' ||
+        !/^[0-9a-f]{64}$/u.test(serialScope.serial_environment_sha256) ||
+        child.environment_sha256 !== serialScope.serial_environment_sha256)) ||
     (manifest.schema === 'VidaBunCoverageRun/v3' &&
       (child.cwd !== shardInvocation?.cwd || child.environment_sha256 !== shardInvocation?.environment_sha256)) ||
     JSON.stringify(child.module_inputs) !== JSON.stringify(report.module_inputs)

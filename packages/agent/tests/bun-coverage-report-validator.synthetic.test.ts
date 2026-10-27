@@ -594,6 +594,33 @@ test('accepts a coherent UNTRUSTED synthetic report with full coverage disabled'
   });
 });
 
+test('serial environment binding rejects a changed child receipt', async () => {
+  await withFixture(async (fixture) => {
+    const scope = {
+      ...record(fixture.manifest.execution_scope, 'execution scope'),
+      serial_environment_sha256: 'a'.repeat(64),
+    };
+    fixture.manifest.execution_scope = scope;
+    fixture.report.execution_scope = scope;
+    const manifestFile = path.join(fixture.root, String(fixture.report.manifest_path));
+    const manifestBytes = Buffer.from(JSON.stringify(fixture.manifest));
+    writeFileSync(manifestFile, manifestBytes);
+    fixture.report.manifest_sha256 = sha256(manifestBytes);
+    let bytes = fixture.rewriteChildAndReceiptHash((child) => {
+      child.execution_scope = scope;
+      child.environment_sha256 = 'a'.repeat(64);
+    });
+    await validateCoverageReport(fixture.reportPath, fixture.root, { reportBytes: bytes, requireFullCoverage: false });
+    for (const changed of [undefined, 'b'.repeat(64)]) {
+      bytes = fixture.rewriteChildAndReceiptHash((child) => {
+        if (changed === undefined) delete child.environment_sha256;
+        else child.environment_sha256 = changed;
+      });
+      await rejects(fixture, bytes, /Coverage process snapshot metadata differs from the captured run/u);
+    }
+  });
+});
+
 test('rejects missing, extra, reordered, or duplicate v2 instrumented source rows', async () => {
   for (const mutate of [
     (_fixture: SyntheticFixture, rows: Array<Record<string, unknown>>) => rows.splice(0, 1),

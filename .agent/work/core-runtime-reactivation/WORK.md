@@ -4,6 +4,36 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Serial coverage environment binding, 2026-10-27
+
+The `bun-cli-run` serial coverage owner now records a digest of its actual child
+environment in the run manifest. The captured preload compares its own startup
+environment before tests and reports the observed digest. The producer and the
+coverage validator reject a missing or changed child digest when that binding is
+present. Historical v2 manifests without it retain their existing compatibility.
+The new binding does not admit trusted execution or prove filesystem identity,
+descendant custody, disjoint UNKNOWN resources, or full coverage qualification.
+
+The existing v3 owner already sets both Bun worker IDs to `1` for serial tests.
+The first serial control exposed those two Bun-added keys at
+`/workspace/contour-observer-target-w1Wto1`; the serial owner now supplies the
+same values before hashing. The preload mismatch RED is
+`/workspace/contour-observer-target-RSiIe8`; the positive and negative native
+controls passed at `/workspace/contour-observer-target-2wxJHE`. The validator
+RED is `/workspace/contour-observer-target-aXvLBx`; missing and changed child
+digest controls passed at `/workspace/contour-observer-target-kPu830`. Scoped
+strict and lint passed at `/workspace/contour-observer-static-J3338F` and, after
+the last test change, `/workspace/contour-observer-static-fiep4P`. Captures and
+group terminal records remain in those directories. Independent blind review
+found no blocking issue in the limited binding. Full-proof HOLD remains.
+
+The separate stdout comparison is diagnostic. With the same short payload,
+two caller-owned files retained stdout `SA` and empty stderr for both Bun 1.4.4
+and Node 24.19.0, with exit 0 and successful callbacks, at
+`/workspace/contour-bun-file-repro-7J1Ol0`. The earlier socket capture and its
+EPERM remain at `/workspace/contour-bun-issue-repro-JQ5W0V`. This comparison
+does not identify the EPERM cause or qualify a replacement capture owner.
+
 ## Explicit empty Bun cache, 2026-10-27
 
 `pinnedEnvironment` treats an explicitly empty

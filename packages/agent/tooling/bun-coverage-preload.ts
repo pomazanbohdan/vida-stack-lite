@@ -110,6 +110,18 @@ if (
     JSON.stringify(manifest.active_argv) !== process.env.VIDA_BUN_COVERAGE_ACTIVE_ARGV)
 )
   throw new Error('Bun coverage preload received stale or mismatched run identity.');
+const serialEnvironment =
+  manifest.schema === 'VidaBunCoverageRun/v2' && isRecord(manifest.execution_scope)
+    ? manifest.execution_scope.serial_environment_sha256
+    : undefined;
+const observedSerialEnvironment = serialEnvironment === undefined ? undefined : environmentDigest(process.env);
+if (
+  serialEnvironment !== undefined &&
+  (typeof serialEnvironment !== 'string' ||
+    !/^[0-9a-f]{64}$/u.test(serialEnvironment) ||
+    serialEnvironment !== observedSerialEnvironment)
+)
+  throw new Error('Coverage serial environment differs from its manifest.');
 if (manifest.schema === 'VidaBunCoverageRun/v3') {
   if ((process.env.BUN_OPTIONS ?? '').trim().length > 0)
     throw new Error('Ambient BUN_OPTIONS are unsupported for versioned coverage.');
@@ -635,6 +647,7 @@ if (cliLaunch) {
         active_argv: invocation?.argv ?? manifest.active_argv,
         execution_scope: manifest.execution_scope,
         runtime_executable_sha256: manifest.runtime_executable_sha256,
+        ...(observedSerialEnvironment === undefined ? {} : { environment_sha256: observedSerialEnvironment }),
         ...(manifest.schema === 'VidaBunCoverageRun/v3'
           ? {
               assignment_plan_sha256: manifest.assignment_plan_sha256,

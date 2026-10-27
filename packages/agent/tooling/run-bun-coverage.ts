@@ -1227,6 +1227,9 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       rejectPureReportValidator(error);
     }
     requireSnapshotIdentity(receipt, expected, name);
+    const serialEnvironment = manifest.execution_scope.serial_environment_sha256;
+    if (serialEnvironment !== undefined && receipt.environment_sha256 !== serialEnvironment)
+      reportRejected('Coverage serial environment differs from its manifest: ' + name);
     requireSnapshotLoadedInputs(receipt, manifest, expected.loaded_inputs, name);
   }
 
@@ -1639,6 +1642,11 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       : bunTestInvocation(evidence.tests, manifest, manifestPath, reportDirectory);
     commandBudget.remaining();
     manifest.active_argv = invocation.args;
+    if (!preparedShards && focused?.contour === 'bun-cli-run') {
+      invocation.env.BUN_TEST_WORKER_ID = '1';
+      invocation.env.JEST_WORKER_ID = '1';
+      manifest.execution_scope.serial_environment_sha256 = coverageEnvironmentSha256(invocation.env);
+    }
     writeAtomic(manifestPath, manifest);
     if (preparedShards) {
       for (const shardInvocation of preparedShards.invocations) {
