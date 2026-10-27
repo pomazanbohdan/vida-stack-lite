@@ -12,6 +12,12 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+An explicit retained scratch parent now rejects canonical overlap with Source,
+the image, dependencies or runtime root before allocation. Targeted controls
+passed. Nested bind aliases, replacement races, successor custody and full-run
+time margin remain open. WORK owns the failed and passing evidence. Full-proof
+HOLD remains.
+
 The CAS fixture reuses the runtime path inventory already supplied to its intake.
 The focused test and independent review passed; one discovery is removed, but
 elapsed savings and full-stage headroom remain unmeasured. Full-proof HOLD remains.

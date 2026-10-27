@@ -328,6 +328,23 @@ export function isolatedCommand(
         relativeToPackage !== '..' &&
         !relativeToPackage.startsWith('..' + path.sep));
     if (insidePackage) throw new Error('Retained scratch root must resolve outside packages/agent.');
+    const protectedRoots = [
+      repositoryRoot,
+      ...(image ? [image.source_repository, image.repository, image.dependency_root] : []),
+      ...(runtimeRoot ? [runtimeRoot.root] : []),
+    ];
+    const scratchParentIdentity = statSync(canonicalRoot);
+    for (const input of protectedRoots) {
+      const canonicalInput = realpathSync(input);
+      const relative = path.relative(canonicalInput, canonicalRoot);
+      const identity = statSync(canonicalInput);
+      if (
+        relative === '' ||
+        (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)) ||
+        (identity.dev === scratchParentIdentity.dev && identity.ino === scratchParentIdentity.ino)
+      )
+        throw new Error('Retained scratch root overlaps an input directory.');
+    }
     scratchParent = canonicalRoot;
   }
   const temporary = mkdtempSync(path.join(scratchParent, 'scratch-'));

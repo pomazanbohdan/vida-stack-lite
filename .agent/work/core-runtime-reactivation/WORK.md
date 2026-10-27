@@ -38,6 +38,41 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Retained scratch input separation — 2026-10-27
+
+The explicit retained scratch parent is now checked before allocation against
+the live repository, execution image, dependency root and runtime root. A
+canonical parent inside an input, its symlink path, or the exact directory inode
+is refused. A separate scratch directory under a common ancestor remains allowed.
+The original default scratch and external-parent behavior remain unchanged.
+
+The initial red target `/workspace/contour-focused-runtime-3Lh5yO` observed a
+scratch directory created inside its controlled Source fixture. Native child
+1045007 exited 1, capture was complete and the owned group closed. Retain the
+stage, namespace receipt, `DIAG/scratch-input-separation-launch-20261027-01.log`
+and its fixture at `scratch-tDKUW2/scratch/contour-retained-inputs-FFFray`.
+The corrected composite target `/workspace/contour-focused-runtime-RQ7OpF`
+passed two tests and 24 `expect()` calls in 252ms. Native child 1046326 exited 0;
+capture was complete and untruncated, the owned group closed, and image, runtime
+profile and overlay custody checks passed. Retain the stage, sibling namespace
+status, `DIAG/scratch-input-separation-launch-20261027-02.log` and launcher.
+Composite digest is `e330d202574af9141aac0ea8218ddbab49f77168ee7f75ae6ddead42ad283080`.
+The tooling overlay SHA-256 is
+`07be571dcb8972f97038fe734652c191cf08310436cb69140027e08f2ebe04a5`;
+the test overlay is
+`6548e8c3b4e2457e6e5920edc455ba43386424471d819723daa6443f590a4c62`.
+The base image does not attest the overlays and the live dependency mount is
+not a byte snapshot. Scoped strict passed for 511 files, type-aware Oxlint and
+two-file format passed. Blind review checked path and exact-inode handling.
+
+This is a narrow preallocation guard, not complete successor isolation. A bind
+mount of a nested input directory at another path and a replacement/remount
+between the check and allocation are not proved safe. No new successor is
+admitted by this result; old UNKNOWN resources, full-proof HOLD and the separate
+time-margin gate remain. The capture owner observed 6,822,985,728 available
+bytes against the unchanged 2,147,483,648-byte floor. No full suite, coverage
+producer or cleanup ran.
+
 ### Reuse the CAS fixture's runtime path inventory — 2026-10-27
 
 The CAS test now reuses the runtime path list already produced for its intake

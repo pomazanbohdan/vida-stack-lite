@@ -417,6 +417,11 @@ below; no separate benchmark or ROI lane is required.
 
 Record the actual filesystem and mount backing each fixture. A private bind
 mount inherits its backing filesystem; a path named `/tmp` does not prove tmpfs.
+For an explicit retained scratch parent, reject a path inside Source, the execution
+image, dependency root or runtime root before allocating scratch. Check canonical
+paths and exact directory identity. This does not prove separation from nested bind
+mounts, path replacement races or descendant effects; those need separate custody
+evidence before admitting a successor.
 For disposable functional/process-recovery cases, an explicit owned host tmpfs
 root can preserve real filesystem calls and every fsync without disk flush
 latency. Retain failed or UNKNOWN roots after the child namespace exits; do not

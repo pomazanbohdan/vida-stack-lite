@@ -15,11 +15,22 @@ import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
 import type { MutationPartition } from '../tooling/mutation-partitions.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { selectContourCampaign } from '../tooling/contour-progress.ts';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statfsSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statfsSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import type { QualityExecutionImage } from '../tooling/quality-execution-image.ts';
+import type { QualityRuntimeRoot } from '../tooling/quality-runtime-root.ts';
 
 test('campaign retains private scratch with its stage instead of accumulating host tmpfs roots', () => {
   const parent = tmpdir();
@@ -195,6 +206,88 @@ test('campaign rejects invalid or package-contained retained scratch roots befor
       rmSync(stage, { recursive: true });
       rmSync(external, { recursive: true });
     }
+  }
+});
+
+test('campaign rejects retained scratch inside Source, image, or dependencies before allocation', () => {
+  const base = mkdtempSync(path.join(tmpdir(), 'contour-retained-inputs-'));
+  const source = path.join(base, 'source');
+  const repository = path.join(base, 'image', 'repository');
+  const imagePackage = path.join(repository, 'packages', 'agent');
+  const dependency = path.join(base, 'dependencies');
+  const runtime = path.join(base, 'runtime');
+  const stage = path.join(base, 'stage');
+  for (const directory of [
+    path.join(source, 'nested'),
+    dependency,
+    runtime,
+    stage,
+    path.join(imagePackage, 'coverage'),
+    path.join(imagePackage, '.tmp'),
+    path.join(imagePackage, 'node_modules'),
+  ])
+    mkdirSync(directory, { recursive: true });
+  const image: QualityExecutionImage = {
+    schema: 'VidaQualityExecutionImage/v1',
+    repository,
+    packageRoot: imagePackage,
+    source_repository: source,
+    source_commit: 'a'.repeat(40),
+    source_tree: 'b'.repeat(40),
+    input_fingerprint: 'c'.repeat(64),
+    manifest_file: path.join(repository, '.quality-image.json'),
+    manifest_sha256: 'd'.repeat(64),
+    dependency_root: dependency,
+  };
+  const sourceAlias = path.join(base, 'source-alias');
+  symlinkSync(source, sourceAlias, 'dir');
+  const runtimeRoot: QualityRuntimeRoot = {
+    root: runtime,
+    manifest_file: path.join(runtime, 'manifest.json'),
+    manifest_sha256: 'e'.repeat(64),
+    files: [],
+    dependency_root: dependency,
+  };
+  let completed = false;
+  try {
+    for (const root of [
+      source,
+      path.join(source, 'nested'),
+      sourceAlias,
+      repository,
+      path.join(imagePackage, 'coverage'),
+      path.join(imagePackage, '.tmp'),
+      dependency,
+      runtime,
+    ]) {
+      const before = readdirSync(root).sort();
+      expect(() =>
+        isolatedCommand(
+          stage,
+          ['--help'],
+          { tini: '/control/tini', bwrap: '/control/bwrap' },
+          root,
+          image,
+          runtimeRoot,
+        ),
+      ).toThrow(/retained scratch.*input|input.*retained scratch/iu);
+      expect(readdirSync(root).sort()).toEqual(before);
+    }
+    const sourceBefore = readdirSync(source).sort();
+    const separate = isolatedCommand(
+      stage,
+      ['--help'],
+      { tini: '/control/tini', bwrap: '/control/bwrap' },
+      base,
+      image,
+      runtimeRoot,
+    );
+    expect(path.dirname(separate.temporary)).toBe(base);
+    expect(readdirSync(source).sort()).toEqual(sourceBefore);
+    completed = true;
+  } finally {
+    if (completed) rmSync(base, { recursive: true });
+    else process.stderr.write(`Retained failed scratch separation fixture: ${base}\n`);
   }
 });
 
