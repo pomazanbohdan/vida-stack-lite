@@ -70,6 +70,12 @@ tool and exact command selection. Existing owners supply these inputs; an input
 flag or caller's assertion is not the disposition. The current native route is
 unchanged for any lane lacking a qualified portable route.
 
+The stage now records an explicitly unqualified selection candidate for the exact
+registry selection and command, reusing the validated image manifest fingerprints.
+It rejects extra fields and malformed bindings. This partial step does not prove
+the bytes were reviewed, bind or approve the effective environment, admit a
+portable successor, or complete Task 1. Those checks remain before any new route.
+
 - [ ] Add negative controls for changed/missing selection, mutation, rewritten
   or untrusted inputs, mixed commands and unreviewed overrides; preserve reviewed
   native integration and fault-injection cases. Confirm each is refused before

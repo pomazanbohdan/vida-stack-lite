@@ -6,6 +6,7 @@ import {
   contourStageDiagnostic,
   contourStagePublicationFailure,
   retainContourStageResourceRefusal,
+  classifyTrustedCoverageSelectionCandidate,
 } from '../tooling/contour-stage.ts';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -15,6 +16,48 @@ import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts
 import { executeMutationCommand, type MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
+
+test('trusted coverage candidate binds the declared contour and refuses altered inputs', () => {
+  const classify = classifyTrustedCoverageSelectionCandidate;
+  const selection = {
+    mode: 'focused-diagnostic',
+    contour: 'bun-cli-run',
+    sources: ['bin/run.ts'],
+    tests: ['tests/run-entrypoint.test.ts', 'tests/bun-cache-routing.test.ts'],
+  };
+  const request = {
+    lane: 'coverage',
+    selection,
+    command: ['tooling/contour-campaign.ts', '--coverage-child', 'bun-cli-run'],
+    image_manifest_sha256: 'a'.repeat(64),
+    source_fingerprint: 'b'.repeat(64),
+    test_fingerprint: 'c'.repeat(64),
+    tool_fingerprint: 'd'.repeat(64),
+  };
+  expect(classify(request)).toEqual({
+    kind: 'candidate',
+    qualified: false,
+    binding: {
+      image_manifest_sha256: request.image_manifest_sha256,
+      source_fingerprint: request.source_fingerprint,
+      test_fingerprint: request.test_fingerprint,
+      tool_fingerprint: request.tool_fingerprint,
+    },
+  });
+  for (const invalid of [
+    { ...request, lane: 'mutation' },
+    { ...request, override: '--unreviewed' },
+    { ...request, command: [...request.command, '--override'] },
+    { ...request, selection: { ...selection, tests: [selection.tests[0]] } },
+    { ...request, selection: { ...selection, sources: ['bin/init.ts'] } },
+    { ...request, selection: { ...selection, tests: [...selection.tests, selection.tests[0]] } },
+    { ...request, selection: { ...selection, injected_override: true } },
+    { ...request, selection: { ...selection, mode: 'published-baseline-bun-native' } },
+    { ...request, image_manifest_sha256: 'invalid' },
+    { ...request, test_fingerprint: '' },
+  ])
+    expect(classify(invalid)).toMatchObject({ kind: 'refused', qualified: false });
+});
 
 test.each(['canonical', 'explicit'])(
   'stage rejects an invalid %s snapshot before opening an execution image',

@@ -50,7 +50,7 @@ async function stageExecutionImage(
   repository: string,
   partition: ReturnType<typeof campaignPartition>,
   values: ImageOptions,
-): Promise<QualityExecutionImage> {
+): Promise<{ image: QualityExecutionImage; capture: StageSelectionCapture }> {
   const manifest = values['image-manifest'];
   const digest = values['image-sha256'];
   checkedStageImageOptions(values);
@@ -84,15 +84,21 @@ async function stageExecutionImage(
         })();
   if (image.source_repository !== repository)
     throw new Error('Execution image belongs to a different Source repository.');
-  await assertStageImageSelection(image, partition);
-  return image;
+  const capture = await assertStageImageSelection(image, partition);
+  return { image, capture };
 }
+
+type StageSelectionCapture = Pick<
+  Awaited<ReturnType<typeof readQualityExecutionImageInputs>>,
+  'test_selection' | 'source_fingerprint' | 'test_fingerprint' | 'tool_fingerprint'
+>;
 
 async function assertStageImageSelection(
   image: QualityExecutionImage,
   partition: ReturnType<typeof campaignPartition>,
-): Promise<void> {
-  const selection = (await readQualityExecutionImageInputs(image)).test_selection;
+): Promise<StageSelectionCapture> {
+  const captured = await readQualityExecutionImageInputs(image);
+  const selection = captured.test_selection;
   if (selection.mode !== 'focused-diagnostic') throw new Error('Stage image is not focused.');
   const same = (left: readonly string[], right: readonly string[]) =>
     JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
@@ -102,6 +108,51 @@ async function assertStageImageSelection(
     !same(selection.tests, partition.tests ?? [])
   )
     throw new Error('Stage selection differs from its execution image.');
+  return {
+    test_selection: selection,
+    source_fingerprint: captured.source_fingerprint,
+    test_fingerprint: captured.test_fingerprint,
+    tool_fingerprint: captured.tool_fingerprint,
+  };
+}
+
+/** This matches selection only; it proves no review, environment, isolation or coverage qualification. */
+export function classifyTrustedCoverageSelectionCandidate(
+  value: unknown,
+): { kind: 'candidate'; qualified: false; binding: Record<string, string> } | { kind: 'refused'; qualified: false } {
+  const refused = { kind: 'refused', qualified: false } as const;
+  if (
+    !isRecord(value) ||
+    Object.keys(value).sort().join(',') !==
+      'command,image_manifest_sha256,lane,selection,source_fingerprint,test_fingerprint,tool_fingerprint' ||
+    value.lane !== 'coverage' ||
+    !isRecord(value.selection)
+  )
+    return refused;
+  const selection = value.selection;
+  const declared = mutationPartitions().find((entry) => entry.name === 'bun-cli-run');
+  if (!declared?.sources || !declared.tests) return refused;
+  const same = (actual: unknown, expected: readonly string[]) =>
+    Array.isArray(actual) &&
+    actual.every((entry: unknown) => typeof entry === 'string') &&
+    JSON.stringify([...actual].sort()) === JSON.stringify([...expected].sort());
+  if (
+    selection.mode !== 'focused-diagnostic' ||
+    selection.contour !== declared.name ||
+    Object.keys(selection).sort().join(',') !== 'contour,mode,sources,tests' ||
+    !same(selection.sources, declared.sources) ||
+    !same(selection.tests, declared.tests) ||
+    JSON.stringify(value.command) !== JSON.stringify(['tooling/contour-campaign.ts', '--coverage-child', declared.name])
+  )
+    return refused;
+  const keys = ['image_manifest_sha256', 'source_fingerprint', 'test_fingerprint', 'tool_fingerprint'] as const;
+  const binding: Record<string, string> = {};
+  for (const key of keys) {
+    const digest = value[key];
+    if (typeof digest !== 'string' || !/^[a-f0-9]{64}$/u.test(digest)) return refused;
+    binding[key] = digest;
+  }
+  return { kind: 'candidate', qualified: false, binding };
 }
 
 /** Owner-reported diagnostic counters never enter report routing or native proof admission. */
@@ -332,7 +383,7 @@ async function main(): Promise<void> {
     snapshots.add(snapshot);
   }
   for (const snapshot of snapshots) if (existsSync(snapshot)) checkContourProgressSnapshot(snapshot);
-  const image = await stageExecutionImage(packageRoot, repository, partition, values);
+  const { image, capture } = await stageExecutionImage(packageRoot, repository, partition, values);
   const output = contourStageOutput(image.repository, canonicalOutput);
   const commit = image.source_commit;
   const boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
@@ -376,7 +427,16 @@ async function main(): Promise<void> {
     timeout_ms: timeout,
     execution_image: image,
   };
-  record('request', { ...request, args });
+  const trustedCoverageCandidate = classifyTrustedCoverageSelectionCandidate({
+    lane: selectedLane,
+    selection: capture.test_selection,
+    command: args,
+    image_manifest_sha256: image.manifest_sha256,
+    source_fingerprint: capture.source_fingerprint,
+    test_fingerprint: capture.test_fingerprint,
+    tool_fingerprint: capture.tool_fingerprint,
+  });
+  record('request', { ...request, args, trusted_coverage_selection_candidate: trustedCoverageCandidate });
   const frozenEnvironment = frozen ? retainQualityGitSnapshot(repository, directory, values['budget-ref']!) : {};
   let isolated: ReturnType<typeof isolatedCommand>;
   try {
@@ -405,6 +465,7 @@ async function main(): Promise<void> {
   const launch = {
     ...request,
     ...isolated,
+    trusted_coverage_selection_candidate: trustedCoverageCandidate,
     environment: laneEnvironment,
     ...(runtimeRoot
       ? { environment_policy: 'runtime-allowlist-v1', environment_keys: Object.keys(executionEnvironment).sort() }

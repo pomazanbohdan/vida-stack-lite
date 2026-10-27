@@ -4,6 +4,27 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Trusted coverage selection candidate, 2026-10-27
+
+Ruling: reuse the existing stage image-selection owner rather than reading or
+hashing the image again in a second classifier. The owner now records a
+nonqualifying selection candidate only for the exact declared `bun-cli-run`
+coverage command and Source/test selection, bound to the already validated image
+manifest and Source/test/tool fingerprints. Unexpected fields, changed command,
+selection, lane or malformed digests are refused. This is a selection match, not
+proof that captured bytes were reviewed, that the environment is safe or that
+any producer is qualified. It changes neither launch routing nor the HOLD.
+
+Retained RED `/workspace/contour-observer-target-RT00uE` showed the absent
+classifier; `/workspace/contour-observer-target-jNZokv` showed an unchecked
+extra override. The final focused case `/workspace/contour-observer-target-sUqVa4`
+passed with 11 assertions, native exit 0, full capture and group closure. Scoped
+strict/lint `/workspace/contour-observer-static-pIBS0B` passed with terminal and
+capture records. A normal commit hook initially rejected formatting in two files;
+the formatter correction preceded these final checks. Independent blind review confirmed that image validation binds
+bytes but neither review approval nor ambient environment; both remain separate
+admission requirements. No full producer, new counters or qualification resulted.
+
 ## Trusted observer composition prerequisite, 2026-10-27
 
 The owner approved the trusted-coverage implementation plan. Ruling: compose the
