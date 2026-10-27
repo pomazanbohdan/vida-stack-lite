@@ -607,6 +607,76 @@ test('readonly local inspection keeps Work, Ledger and Journal on one committed 
   if (errors.length > 1) throw new AggregateError(errors, 'Snapshot inspection and cleanup failed');
 });
 
+test('run CLI main fails when the result reader closes stdout', async () => {
+  const source = pathToFileURL(path.resolve(packageRoot, 'bin/run.ts')).href;
+  const program = `import { main } from ${JSON.stringify(source)}; await main({ isMain: true, execute: () => ({ status: 'fixture-success' }) });`;
+  const child = Bun.spawn([process.execPath, '-e', program], {
+    stdout: 'pipe',
+    stderr: 'pipe',
+    timeout: 4000,
+    killSignal: 'SIGKILL',
+  });
+  await child.stdout.cancel();
+  const stderr = await new Response(child.stderr).text();
+  const exit = await child.exited;
+  expect(child.signalCode).toBeNull();
+  expect(exit).toBe(1);
+  expect(JSON.parse(stderr)).toMatchObject({ schema: 'VidaAgentRunResult/v1', status: 'blocked' });
+});
+
+const defaultRunOutputCases = [
+  {
+    name: 'success',
+    body: "return { status: 'fixture-success', value: '✓' };",
+    status: 0,
+    stdout: JSON.stringify({ status: 'fixture-success', value: '✓' }) + '\n',
+    stderr: '',
+  },
+  {
+    name: 'refusal',
+    body: "throw new Error('fixture-private-marker');",
+    status: 1,
+    stdout: '',
+    stderr:
+      JSON.stringify({
+        schema: 'VidaAgentRunResult/v1',
+        status: 'blocked',
+        code: 'GAP-VIDA-RUN-EXECUTION-001',
+        message:
+          'The requested run was blocked by runtime validation. Next action: inspect the exact work and check its issued contract before retrying.',
+      }) + '\n',
+  },
+];
+for (const entry of defaultRunOutputCases) {
+  test(`run CLI main writes complete default ${entry.name} output`, () => {
+    const source = pathToFileURL(path.resolve(packageRoot, 'bin/run.ts')).href;
+    const program = `import { main } from ${JSON.stringify(source)}; await main({ isMain: true, execute: () => { ${entry.body} } });`;
+    const child = spawnSync(process.execPath, ['-e', program], { encoding: 'utf8', timeout: 4000 });
+    expect(child.error).toBeUndefined();
+    expect(child.signal).toBeNull();
+    expect(child.status).toBe(entry.status);
+    expect(child.stdout).toBe(entry.stdout);
+    expect(child.stderr).toBe(entry.stderr);
+  });
+}
+
+test('run CLI main remains failed when the error reader closes stderr', async () => {
+  const source = pathToFileURL(path.resolve(packageRoot, 'bin/run.ts')).href;
+  const program = `import { main } from ${JSON.stringify(source)}; await main({ isMain: true, execute: () => { throw Error('fixture failure'); } });`;
+  const child = Bun.spawn([process.execPath, '-e', program], {
+    stdout: 'pipe',
+    stderr: 'pipe',
+    timeout: 4000,
+    killSignal: 'SIGKILL',
+  });
+  await child.stderr.cancel();
+  const stdout = await new Response(child.stdout).text();
+  const exit = await child.exited;
+  expect(child.signalCode).toBeNull();
+  expect(exit).toBe(1);
+  expect(stdout).toBe('');
+});
+
 test('run CLI main forwards parsed arguments and preserves integer and JSON result routes', async () => {
   const { main } = await import('../bin/run.ts');
   const logged: string[] = [];

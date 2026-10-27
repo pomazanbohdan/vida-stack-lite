@@ -9551,7 +9551,7 @@ function applyIntegerExitResult(exit: Partial<Pick<NodeJS.Process, 'exitCode'>>,
 export async function main({
   isMain = Boolean(process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url),
   args = process.argv.slice(2),
-  io = console,
+  io,
   exit = process,
   execute = run,
 }: {
@@ -9579,11 +9579,22 @@ export async function main({
   }
   try {
     const result = await execute(args);
-    if (!applyIntegerExitResult(exit, result)) io.log(JSON.stringify(result));
+    if (!applyIntegerExitResult(exit, result)) {
+      const text = JSON.stringify(result);
+      if (io === undefined && isBunRuntime) await writeBunRunOutput('stdout', text + '\n');
+      else (io ?? console).log(text);
+    }
   } catch (error) {
-    io.error(JSON.stringify(publicFailure(error)));
     exit.exitCode = 1;
+    const text = JSON.stringify(publicFailure(error));
+    if (io === undefined && isBunRuntime) await writeBunRunOutput('stderr', text + '\n');
+    else (io ?? console).error(text);
   }
+}
+
+async function writeBunRunOutput(stream: 'stdout' | 'stderr', text: string): Promise<void> {
+  if ((await Bun.write(stream === 'stdout' ? Bun.stdout : Bun.stderr, text)) !== Buffer.byteLength(text))
+    throw new Error(`Incomplete run ${stream} output.`);
 }
 
 /** @param {string[]} args */
@@ -9591,7 +9602,7 @@ async function printRunHelp(args: string[]): Promise<void> {
   const { cliMetadataResult } = await import('./cli-metadata.ts');
   const text = JSON.stringify(cliMetadataResult(['run', ...args], { name: 'vida-agent', version: '0.0.0' })) + '\n';
   if (typeof Bun !== 'undefined') {
-    if ((await Bun.write(Bun.stdout, text)) !== Buffer.byteLength(text)) throw new Error('Incomplete run help output.');
+    await writeBunRunOutput('stdout', text);
     return;
   }
   // Explicit entrypoint exit follows the actual pipe-write completion, not enqueueing.

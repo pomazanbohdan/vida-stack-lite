@@ -4,6 +4,31 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Run result Bun output, 2026-10-27
+
+On base `25e4e25f`, a native child calling `main` with the default output and a
+closed stdout returned exit 0 without delivering its result. The focused
+regression at `/workspace/contour-run-output-test-MSUenp/red` failed on that
+false success. The changed `main` now awaits the same byte-count-checked Bun
+writer used by help for default stdout and stderr. A failed or short success
+write sets exit 1 and attempts one sanitized stderr response without retrying
+stdout. A failed stderr write remains a failure. Injected `io`, integer exits
+and the non-Bun fallback retain their existing routes.
+
+The regression passed at `/workspace/contour-run-output-test-MSUenp/green`.
+The related native and injected-output cases, including exact Unicode success,
+exact sanitized refusal, both closed streams and help, passed 7 tests and 82
+expectations at `/workspace/contour-run-output-integrated-qJYF84`. The selected
+prepared/issue behavior passed 1 test and 112 expectations at
+`/workspace/contour-run-output-checks-rEoNZJ/prepared-issue`; its 8 filtered-mode
+skips add no hits. Scoped CLI strict, changed-file type-aware lint and format
+checks passed in the same checks directory. Each owner recorded complete outer
+capture and group closure. The focused fixture does not emit the three bound
+coverage-child receipts or qualify its detached children for coverage admission.
+An independent blind review found no blocking issue. Windows and the non-Bun
+fallback were not runtime-qualified by this package. Full-contour HOLD, source
+qualification and prior UNKNOWN fences remain unchanged.
+
 ## Run help Bun stdout writer, 2026-10-27
 
 At base `253ea9f3`, the actual pinned-Bun help test reproduced the write failure:

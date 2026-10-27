@@ -37,6 +37,12 @@ exit, deadline, limits, custody, authority and the complete coverage inventory.
 Unsupported Bun capabilities are GAPs, not substitutes for required guarantees.
 This conditional goal does not authorize SQLite schema or runtime cutover,
 credentials, permission changes, FFI, or unrelated application migrations.
+For the active `bun-cli-run` contour, the next relevant boundaries include
+`bin/bun.ts` bounded `spawnSync`, the test-side child observers and their
+stdio, timeout and process-group contracts, and file operations that enforce
+source authority. Migrate a boundary only after its Bun replacement proves the
+same behavior and receipt custody. The non-Bun CLI fallback remains until its
+supported consumers and replacement are independently accounted for.
 
 ## Trusted coverage implementation plan
 
