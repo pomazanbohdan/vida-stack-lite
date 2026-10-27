@@ -9590,6 +9590,10 @@ export async function main({
 async function printRunHelp(args: string[]): Promise<void> {
   const { cliMetadataResult } = await import('./cli-metadata.ts');
   const text = JSON.stringify(cliMetadataResult(['run', ...args], { name: 'vida-agent', version: '0.0.0' })) + '\n';
+  if (typeof Bun !== 'undefined') {
+    if ((await Bun.write(Bun.stdout, text)) !== Buffer.byteLength(text)) throw new Error('Incomplete run help output.');
+    return;
+  }
   // Explicit entrypoint exit follows the actual pipe-write completion, not enqueueing.
   await new Promise((resolve, reject) => {
     process.stdout.write(text, (error) => {

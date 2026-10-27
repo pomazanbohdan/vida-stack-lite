@@ -91,6 +91,7 @@ import {
 import { runOptionDetails, runSpecialModeOptions } from '../bin/run-cli-options.ts';
 import * as observedResearchActivation from '../src/orchestration/observed-research-activation.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
+import { cliMetadataResult } from '../bin/cli-metadata.ts';
 import { initializeProject } from '../bin/init.ts';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.js';
@@ -2965,6 +2966,9 @@ describe('vida-agent run entrypoint fast checks', () => {
     expect(result.signal).toBeNull();
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
+    expect(result.stdout).toBe(
+      JSON.stringify(cliMetadataResult(['run', '--help'], { name: 'vida-agent', version: '0.0.0' })) + '\n',
+    );
     const help = requireRecord(parseJsonUnknown(result.stdout), 'run help result');
     expect(help).toMatchObject({
       schema: 'VidaAgentCommandResult/v1',

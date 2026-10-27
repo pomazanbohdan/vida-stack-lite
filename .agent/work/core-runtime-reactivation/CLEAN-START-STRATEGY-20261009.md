@@ -29,6 +29,15 @@ new evidence or add wrappers, FFI or supervisors by default. Material changes to
 authority, specification or guarantees require the owner's decision. The current
 phase, budgets, exact gates and all UNKNOWN fences remain in force.
 
+Owner direction, 2026-10-27: after the Bun-native CLI writer is proven on real
+behavior and compatibility controls, progressively adopt supported Bun APIs in
+relevant agent production and test contours. First inventory actual callers and
+their contracts; migrate one verified contour package at a time. Preserve output,
+exit, deadline, limits, custody, authority and the complete coverage inventory.
+Unsupported Bun capabilities are GAPs, not substitutes for required guarantees.
+This conditional goal does not authorize SQLite schema or runtime cutover,
+credentials, permission changes, FFI, or unrelated application migrations.
+
 ## Trusted coverage implementation plan
 
 > **For agentic workers:** Use `superpowers:executing-plans` task by task.

@@ -4,6 +4,96 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Run help Bun stdout writer, 2026-10-27
+
+At base `253ea9f3`, the actual pinned-Bun help test reproduced the write failure:
+one selected test failed with status 1 instead of 0. After the narrow change,
+the same test passed with exact JSON bytes and newline, 7 expectations, zero
+failures; both attempts retained complete capture and observed outer group closure
+at `/workspace/contour-help-writer-7N9CUi/{red,green}`. `printRunHelp` now
+awaits `Bun.write(Bun.stdout, text)` only on Bun and rejects a returned count
+different from the UTF-8 byte length. It does not retry partial writes; the Node
+callback path and ordinary `main` output are unchanged.
+
+At `/workspace/contour-help-writer-7N9CUi/controls`, the real help CLI returned
+exit 1 with EPIPE when its reader closed, and a delayed reader received the
+complete 4,889-byte help with exit 0 and empty stderr. A separate generic Bun
+write of 1,048,576 bytes passed an exact digest check; it is an API control, not
+a large run-help scenario. The blocked-writer deadline control in `deadline`
+observed SIGKILL and owned-group closure; this expected test signal is not a
+mutation kill or qualified coverage. Scoped strict checked 151 CLI-project
+files, type-aware lint on the two changed files and exact formatting passed;
+their launch, output and terminal records are in `static`.
+
+The affected native prepared/issue behavioral fixture passed one selected test,
+112 expectations and 0 failures at `operation`, with 8 filtered-mode skips;
+those skips add no coverage hits. The outer capture and parent group closed, but
+this focused test does not produce the three bound CLI coverage-child receipts
+and does not qualify their detached children for coverage admission. A blind
+independent review found no blocking issue in the narrow diff. The Node fallback
+and Windows remain untested here. Normal CLI output through `io.log`, old UNKNOWN
+fences, resource/timing admission and full-contour qualification remain open.
+
+## Bun stdout API control, 2026-10-27
+
+The pinned Bun and its installed 1.4.4 types expose `Bun.write(Bun.stdout, ...)`;
+the call returns the number of bytes. A single bounded control used the same
+outer capture owner, Bun-parent `spawnSync` pipe, sandbox, child timeout and
+`SA` payload as the prior small-output comparison. The child awaited that API
+and rejected a count other than two. At
+`/workspace/contour-bun-stdout-api-6dZWw9`, the child returned status 0,
+stdout `SA`, empty stderr and no spawn error; the outer owner observed exit 0,
+complete capture and the owned group gone. The probe did not alter permissions
+or retry a denial. Its two-byte result proves neither the full CLI contract nor
+the cause of the earlier stream-write EPERM. In particular it says nothing
+about large output, partial writes, slow readers, broken pipes, Windows, other
+CLI output paths, full-stage runtime or old UNKNOWN custody.
+
+The installed `bun-types` 1.4.4 states that an `ArrayBufferView` stdout or
+stderr is not implemented. Its documented `maxBuffer` says the child is killed
+on exceeding the output cap; that text alone does not prove equivalence to the
+existing Node `spawnSync` contract. Neither API changes coverage admission or
+authorizes a capture replacement. Preserve old EPERM and UNKNOWN evidence.
+
+## Parent runtime capture control, 2026-10-27
+
+Attack-the-premise control: the existing `/workspace/contour-bun-issue-repro-JQ5W0V`
+has a Bun parent for both children; its Node child does not control the parent
+runtime. On Source `253ea9f3`, the same child payload and `spawnSync` pipe,
+encoding and 4s child timeout were used under a Node 24.19.0 parent, with
+explicit Bun 1.4.4+38afee6c8 and Node executable paths. The two new owned-group
+attempts and native execution/capture records are retained in
+`/workspace/contour-parent-runtime-0zAWDG`; each parent exited 0, capture was
+complete and its owned group was observed gone. No old UNKNOWN was replayed.
+
+The Node-parent/Bun-child attempt returned child status 1, stdout `S` and the
+same Bun stdout-write EPERM callback; Node's `spawnSync` result also contained
+an EPERM error. The Node-parent/Node-child attempt returned child status 0,
+stdout `S`, callback `ok`, and a `spawnSync` EPERM error. The expected full
+payload is `SA`; a successful callback does not establish delivery of `A`.
+The existing Bun-parent controls likewise recorded Bun-child status 1/EPERM,
+Node-child status 0/callback `ok`, and only `S` delivered for each. This bounded
+matrix rejects a Bun-parent-only hypothesis; it does not isolate whether Bun,
+the host transport, or their interaction causes the write failure. Node-parent
+capture is not a qualified workaround. The old process/capture fences and full
+coverage HOLD are unchanged.
+
+## Native help pipe custody, 2026-10-27
+
+At Source `b49146da`, a bounded native `run.ts --help` diagnostic routed stdout
+through a shell pipeline under the existing capture owner. It returned the
+expected complete 4,889-byte JSON, empty stderr, CLI and forwarder exit 0, and
+observed owned-group closure at `/workspace/contour-help-pipe-UwnVpQ`. This is
+not observer integration, an accepted coverage run, or proof of stderr routing.
+
+A separate two-stream process-substitution probe returned the same stdout and
+empty stderr, but its owner recorded `process-group-termination-unobserved` at
+`/workspace/contour-async-help-92t7jX`. Both forwarding processes were later
+observed as zombies in the original process group, not group disappearance.
+Keep this diagnostic UNKNOWN and its resources fenced; do not replay or infer
+acceptance from the complete bytes. No production or fixture implementation was
+changed. The saved `HOME`/XDG proposal and earlier UNKNOWN fences remain intact.
+
 ## Serial coverage environment binding, 2026-10-27
 
 The `bun-cli-run` serial coverage owner now records a digest of its actual child
