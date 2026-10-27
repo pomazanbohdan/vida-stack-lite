@@ -280,7 +280,7 @@ function realCopy(): CopiedBundle {
 }
 
 function cleanEnv(): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...process.env, TMPDIR: scratch, TEMP: scratch, TMP: scratch };
+  const env: NodeJS.ProcessEnv = { ...process.env, TMPDIR: scratch, BUN_TMPDIR: scratch, TEMP: scratch, TMP: scratch };
   delete env.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
   return env;
 }
@@ -352,11 +352,13 @@ function capturedChild(label: string, args: string[], options: SpawnSyncOptionsW
 
 test.serial('cache fixture confines the native child temporary directory', () => {
   const previous = process.env.TMPDIR;
-  const foreign = mkdtempSync(path.join(path.dirname(scratch), 'foreign-temp-'));
+  const previousBun = process.env.BUN_TMPDIR;
+  const foreign = path.dirname(scratch);
   const output = path.join(scratch, 'child-temp-observation.json');
   const program = `import {tmpdir} from 'node:os'; import {writeFileSync} from 'node:fs';
-writeFileSync(${JSON.stringify(output)}, JSON.stringify({tmpdir:tmpdir(), env:process.env.TMPDIR, tmp:process.env.TMP, temp:process.env.TEMP}));`;
+writeFileSync(${JSON.stringify(output)}, JSON.stringify({tmpdir:tmpdir(), env:process.env.TMPDIR, tmp:process.env.TMP, temp:process.env.TEMP, bunTmp:process.env.BUN_TMPDIR}));`;
   process.env.TMPDIR = foreign;
+  process.env.BUN_TMPDIR = foreign;
   try {
     const result = capturedChild('temporary-root', ['-e', program], {
       cwd: scratch,
@@ -375,10 +377,13 @@ writeFileSync(${JSON.stringify(output)}, JSON.stringify({tmpdir:tmpdir(), env:pr
       env: scratch,
       tmp: scratch,
       temp: scratch,
+      bunTmp: scratch,
     });
   } finally {
     if (previous === undefined) delete process.env.TMPDIR;
     else process.env.TMPDIR = previous;
+    if (previousBun === undefined) delete process.env.BUN_TMPDIR;
+    else process.env.BUN_TMPDIR = previousBun;
   }
 });
 

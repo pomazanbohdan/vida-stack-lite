@@ -4,6 +4,21 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Bun child temporary environment, 2026-10-27
+
+The existing isolated command also sets `BUN_TMPDIR` to its private scratch.
+The cache-routing fixture now does the same for its native children. The serial
+regression first showed an inherited foreign value in
+`/workspace/contour-observer-target-7mXKmw`, then passed at
+`/workspace/contour-observer-target-b5lF53`; both retain native terminal, capture
+and group records. The regression proves the child's environment value, not
+which internal Bun operation uses it. The independent review found that an
+earlier test revision left a sibling temporary directory. The final test uses
+the already existing parent as its foreign value and creates no such directory.
+Scoped strict/lint passed with receipts at `/workspace/contour-observer-static-gkBkhu`.
+No full producer or coverage claim was made; the descendant-custody and timing
+HOLD remains.
+
 ## Native cache fixture temporary root, 2026-10-27
 
 The cache-routing fixture previously set `TMP` and `TEMP` but inherited `TMPDIR`.
