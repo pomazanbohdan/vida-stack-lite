@@ -1878,6 +1878,53 @@ runtime Source, full maintained TypeScript compiler files and module configurati
 are extra tool inputs, not extra numeric
 coverage. The image has no `.git`, worktree registration or dependency copy.
 
+#### Trusted coverage and native isolation
+
+The owner approved a portable trusted-coverage path on 2026-10-27. This is a
+verification contract, not evidence that the path is implemented or qualified.
+The current stage continues to use the existing Linux isolation route until the
+new path and its evidence are independently qualified and adopted by the current
+plan. Existing UNKNOWN operations and their resources remain fenced.
+
+Trusted coverage means the exact maintained Source, tests, tool inputs and
+producer selection captured by the existing image and inventory owners. It is
+limited to the reviewed ordinary coverage lane. Mutation, rewritten or untrusted
+test/code inputs, arbitrary selection, externally injected commands or unreviewed
+overrides are not trusted coverage. A caller-provided label is not proof of
+classification. Reject an unknown, changed, incomplete or mixed selection before
+launch. Reviewed native integration and fault-injection cases remain required;
+their effects must satisfy the same run-specific custody contract.
+
+The Root-owned run uses exclusive fixture, output, coverage and scratch resources.
+Before launch, the owner inventories the actual invocation's writable paths and
+aliases, inherited descriptors, shared stores and services, network or other
+external effects, and descendants that may retain access. Each item must bind to
+an observed capability and a run-specific proof of exclusion, custody or safe
+closure, as applicable; an unclassified item blocks admission. The owner must
+establish physical identity and prevent path substitution, and prove the new
+invocation does not access or reuse resources fenced by an earlier UNKNOWN. A fresh pathname,
+one writer, a supplied declaration, a control from another run or a direct
+child exit alone does not establish that proof. If the host cannot observe or
+enforce a necessary boundary, record unsupported or UNKNOWN and retain HOLD.
+
+Portable terminal and capture evidence binds the actual run, selected Source,
+tests, tools and runtime to complete untruncated stdout/stderr and observed
+terminal outcomes. The applicable platform capability must account for the
+producer and its descendants and establish resource custody; unsupported,
+missing, stale, mismatched or unobserved evidence denies acceptance. Every
+required selected child must complete successfully, with no failed test or
+collection error, before the validator can accept its results. Timeout,
+signal, compile/runtime failure and UNKNOWN never become successful tests or
+mutation kills. Failed, interrupted and UNKNOWN evidence remains retained.
+
+Exact F/L/S/B, the full selected Source/test inventory and the existing validator
+remain unchanged. A partial or targeted run cannot update qualified counters.
+Mutation and other untrusted execution continue to require separately qualified
+physical containment and native controls. A completed trusted run never resolves
+or replays an older UNKNOWN. The one 300s command budget, its 30s reserve and
+the existing 330s outer envelope remain unchanged. Timing headroom is a separate
+admission gate; an isolation proof alone does not authorize a full stage.
+
 The native mount control uses the shared command capture and owned process-group
 observer. Retain its fixture, raw streams and launch/execution records on any
 failed assertion or incomplete outcome. Cleanup requires a successful case,
@@ -2290,7 +2337,8 @@ The outer coverage envelope is330s around its existing300s owner; mutation uses
 its independent900s partition/930s outer envelope. Per-test defaults stay5s.
 These are separate budgets, not a five-minute allowance for the entire campaign.
 
-Linux execution requires `bwrap` and `tini` on PATH, or an installed tini path in
+The current Linux campaign implementation requires `bwrap` and `tini` on PATH,
+or an installed tini path in
 `VIDA_QUALITY_TINI`. Each child has a private PID namespace, subreaper and retained
 host-backed scratch under `.agent/work/core-runtime-reactivation/campaign-scratch/<run-id>/<stage>/`
 with at least2GiB free. This root stays outside `packages/agent` so bundle

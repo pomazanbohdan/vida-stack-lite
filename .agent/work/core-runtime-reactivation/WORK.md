@@ -1,8 +1,28 @@
 # Core runtime reactivation work
 
-Status date:2026-10-26. Root owns Source integration, Git and final numbers.
+Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
+
+## Trusted coverage specification decision, 2026-10-27
+
+The owner approved separating trusted ordinary coverage from the physical
+containment required for mutation and untrusted code. The verification contract
+is in [TESTING](../../../packages/agent/TESTING.md#trusted-coverage-and-native-isolation);
+the proposed execution steps are in the existing
+[CLEAR plan](CLEAN-START-STRATEGY-20261009.md#trusted-coverage-implementation-plan).
+This is a specification and reviewable plan, not a qualified implementation.
+The active contour remains `bun-cli-run`; its existing full-proof HOLD, timing
+gate and old UNKNOWN fences remain. No coverage run or numeric update was made
+for this documentation change. Native DB, file, process and recovery contracts,
+exact inventories, F/L/S/B and budgets remain required.
+
+The earlier FD and bwrap probes below are retained as observations of the
+existing route, not prerequisites that prove the new portable route or evidence
+that it exists. Its launch-to-custody proof, platform capabilities and timing
+margin must be established independently before any full successor. The owner
+now prioritizes accepted Agent/Core contour closure over the earlier marketplace
+resource priority; the current timer and schedule are unchanged.
 
 ## Execution-step optimization, 2026-10-24
 

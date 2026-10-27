@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date:2026-10-26. This document owns execution order.
+Status date:2026-10-27. This document owns execution order.
 [WORK](WORK.md) owns decisions and evidence locators; the existing
 [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable IDs.
 
@@ -10,7 +10,129 @@ Complete approved P0/P1 corrections and supported simplifications with current,
 bound Source and evidence. Keep archived operational state isolated.
 No consumer effect, native loader activation or DB cutover is part of this cycle.
 
+## Trusted coverage implementation plan
+
+> **For agentic workers:** Use `superpowers:executing-plans` task by task.
+> Root remains the sole writer, producer, Git owner and owner of numbers;
+> independent bounded reviews use the existing blind native reviewer contract.
+> This plan is for review before implementation.
+
+**Goal:** Enable one accepted, complete trusted `bun-cli-run` coverage run on a
+qualified portable execution boundary, without relying on a particular sandbox.
+
+**Architecture:** The existing campaign owner classifies captured inputs and owns
+the run; platform adapters establish the actual resource and process guarantees.
+The existing coverage validator accepts only complete compatible evidence. Native
+adapter tests and separately contained untrusted/mutation execution remain real.
+
+**Tech stack:** TypeScript, package-selected Bun and existing capture, inventory,
+campaign and coverage evidence owners. **Spec:**
+[`packages/agent/TESTING.md`](../../../packages/agent/TESTING.md#trusted-coverage-and-native-isolation).
+
+**Global constraints:** one contour and one producer; exact F/L/S/B and complete
+inventory; 300s command with 30s reserve, 330s outer envelope; no replay of old
+UNKNOWN, no effects on its fenced resources, no consumer cutover, new locks,
+credentials or CI. Unsupported capabilities and incomplete evidence remain HOLD.
+This specification does not qualify the proposed implementation or clear timing.
+
+**Review focus:** changed selection after admission; path or alias substitution;
+live descendants after parent exit; truncated or stale run evidence; a qualifying
+report from only a subset of Source/tests. Tasks 1–3 each pin their relevant
+failure cases; the final gate checks full inventory and compatible inputs.
+
+### Task 1: Classify the actual captured lane
+
+**Files:** `packages/agent/tooling/contour-campaign.ts`,
+`packages/agent/tooling/contour-stage.ts`;
+`packages/agent/tests/contour-campaign-contract.test.ts`.
+
+**Interface:** extend the existing campaign admission result with a derived
+`trusted-coverage` or refusal disposition bound to the captured Source, test,
+tool and exact command selection. Existing owners supply these inputs; an input
+flag or caller's assertion is not the disposition. The current native route is
+unchanged for any lane lacking a qualified portable route.
+
+- [ ] Add negative controls for changed/missing selection, mutation, rewritten
+  or untrusted inputs, mixed commands and unreviewed overrides; preserve reviewed
+  native integration and fault-injection cases. Confirm each is refused before
+  launch, while the exact maintained ordinary selection is admitted.
+- [ ] Run only the affected campaign-contract cases through the existing capture
+  owner to observe the intended failures, implement the smallest admission change,
+  then rerun the changed cases and scoped strict/lint. Retain both outcomes.
+
+### Task 2: Prove actual run resource and terminal custody
+
+**Files:** `packages/agent/tooling/contour-stage.ts`,
+`packages/agent/tooling/quality-image-mounts.ts`,
+`packages/agent/tooling/run-bun-coverage.ts`;
+`packages/agent/tests/contour-stage.test.ts`,
+`packages/agent/tests/quality-image-mounts.test.ts`,
+`packages/agent/tests/coverage-run-custody.test.ts`.
+
+**Interface:** extend the existing run-bound custody evidence with a derived
+`qualified`, `unsupported` or `unknown` disposition. It consumes actual
+platform observations bound to the same launch, run, image and resource identities;
+neither a fresh name nor a declared capability establishes qualification. Do not
+set `resourceSafeToAdvance` from a caller-supplied boolean. The owner supplies
+an exhaustive invocation-specific effect inventory: writable paths and aliases,
+inherited descriptors, stores/services, network or other external effects and
+descendants. Map each entry to its observation and exclusion, custody or closure
+evidence; missing entries or unsupported observations deny qualification. Reuse
+the existing inventory owner rather than adding another accounting system.
+
+- [ ] Test mismatched identities, old fenced roots, shared writable resources,
+  aliases and replacement races, missing observations, inherited descriptors,
+  an unclassified external effect, live descendants, timeout, unknown terminal
+  and incomplete capture. Each must refuse advance; a supported isolated case
+  must prove actual closure for every inventoried effect.
+- [ ] Establish which observations/enforcement the existing capture owner and
+  platform provide for every relevant path and external effect. Implement only
+  those supported adapters; where proof is unavailable return unsupported/unknown
+  and retain HOLD. Keep hostile-process containment as a separate native gate.
+- [ ] Use the existing owner for the changed targeted controls, scoped strict/lint
+  and an independent review of the actual launch-to-receipt binding. Keep all
+  attempt logs and native custody records; do not rerun fenced operations.
+
+### Task 3: Preserve complete evidence acceptance
+
+**Files:** `packages/agent/tooling/bun-coverage-evidence.ts`,
+`packages/agent/tooling/run-bun-coverage.ts`,
+`packages/agent/tests/coverage-run-custody.test.ts`,
+`packages/agent/tests/coverage-producer-map-custody.test.ts` and, only if its
+existing validation is affected, `coverage-shard-evidence.test.ts`.
+
+**Interface:** the existing validator consumes the Task 1 disposition and Task 2
+run-bound observations alongside the complete Source/test/tool inventory and
+actual terminal and capture records. It returns acceptance only for all required
+successful children and exact complete evidence; no partial counter promotion.
+
+- [ ] Add controls for wrong run/image, stale or truncated receipt, missing test
+  or Source member, failed/unknown child and unsupported platform. Each must
+  remain blocked; a complete compatible controlled case must pass validation.
+- [ ] Observe the new tests fail, make the minimum existing-validator change,
+  rerun changed cases, strict/lint and independent review through current owners.
+  Do not introduce a second merger or treat targeted tests as full qualification.
+
+### Task 4: Admit one complete contour only when proved safe
+
+- [ ] Root verifies compatible Source, tool, runtime and complete inventory;
+  independent review verifies actual closure and old-fence separation. Check
+  available resources against existing floors and use retained compatible timing
+  evidence to establish margin within the unchanged budget. Unknown or absent
+  proof is an explicit blocker; isolation alone does not establish timing.
+- [ ] Once every gate passes, invoke the existing producer once, retain its raw
+  capture and terminal/group or qualified platform-equivalent receipts, and wait
+  for terminal outcome. Projection's current owner alone updates status from a
+  complete source-bound report. Incomplete, failed or UNKNOWN runs add no hits.
+- [ ] Review the package, commit with normal hooks, wait for their terminal exit,
+  then ordinarily push main; preserve existing staged and unrelated local work.
+
 ## Current state
+
+Owner priority 2026-10-27: accepted closure of the current Agent/Core contour is
+the resource priority. The earlier marketplace-first instruction is superseded.
+The portable trusted-coverage specification is approved; this plan awaits review
+and does not itself change the implementation, timer, old fences or full-proof HOLD.
 
 An explicit retained scratch parent now rejects canonical overlap with Source,
 the image, dependencies or runtime root before allocation. Targeted controls
@@ -132,17 +254,12 @@ claimed. Preserve its5s wrapper and helper budgets. See WORK's exact prerequisit
 review; missing authority is not an objective skip. Necessary targeted proof and independent review precede one full proof
 only after the existing isolation/resource and runtime-margin HOLD is resolved.
 Targeted results alone close no numeric criterion. Blocker work stays bounded
-and subordinate to this coverage batch and marketplace resource priority.
+and subordinate to this coverage batch.
 
 
-Owner priority2026-10-26: Odoo Mobile marketplace publication is priority1.
-VIDA blocker/refactor is background work on available resources, yielding CPU,
-memory, disk I/O and exclusive execution resources to publication. Keep this
-same cycle/WORK/plan and timer. Continue bounded static design and necessary
-targeted verification without presenting it as full closure; no full UNKNOWN
-rerun or unqualified pilot. Independent isolation/completeness proof, unchanged
-CAS authority, gates and budgets remain prerequisites. No replacement task,
-model change or second automation is authorized.
+The 2026-10-26 marketplace-first priority is superseded by the current owner
+priority above. Keep this same cycle, WORK, plan and timer. No full UNKNOWN
+rerun or unqualified pilot; unchanged authority, gates and budgets remain.
 
 
 Read-only option review adds a strict constraint: bun-cli-run focused sharding is
