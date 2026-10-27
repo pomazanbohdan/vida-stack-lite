@@ -11372,6 +11372,42 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           expect(reverse.target_agent_id).toBe(acceptedReview.agent_id);
           const reportPath = reportPathFor('final-reverse', reverse);
           writeFileSync(reportPath, JSON.stringify(reportBody(reverse, 'reverse', acceptedReview)));
+          if (index === issuedReverses.length - 1) {
+            const hostBeforeDelivery = fixture.store.readHostStateSnapshot(fixture.identity);
+            const journalBeforeDelivery = fixture.ledger.resume(fixture.identity.work_id, 1);
+            const manifestFile = path.join(fixture.root, deliveryManifestPath);
+            const manifestBytes = readFileSync(manifestFile);
+            const manifest = requireRecord(parseJsonUnknown(manifestBytes.toString('utf8')), 'delivery manifest');
+            let blocked: Awaited<ReturnType<typeof publicRun>>;
+            try {
+              writeFileSync(manifestFile, JSON.stringify({ ...manifest, work_id: 'foreign-work' }));
+              blocked = await publicRun([...expected(currentVersion), '--report', reportPath]);
+            } finally {
+              writeFileSync(manifestFile, manifestBytes);
+            }
+            expect(blocked.status).toBe('assurance_reported');
+            expect(blocked.assurance_status).toBe('reviewed');
+            expect(blocked.delivery_gap).toBe('GAP-FINAL-ASSURANCE-001: current explicit delivery manifest missing');
+            expect(blocked.delivery_manifest).toBeNull();
+            expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(hostBeforeDelivery);
+            expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(journalBeforeDelivery);
+            const accepted = fixture.store.readFinalAssurance(fixture.identity, 1);
+            assert.ok(accepted);
+            expect(accepted.version).toEqual(blocked.state_version);
+            expect(accepted.state.actions.every((entry) => entry.issue_id && entry.observation)).toBe(true);
+            for (const entry of accepted.state.actions) {
+              const receiptPath = path.join(
+                fixture.root,
+                '.agent',
+                'work',
+                work.binding.lifecycle_work_id,
+                `final-${entry.action_id}.json`,
+              );
+              expect(parseJsonUnknown(readFileSync(receiptPath, 'utf8'))).toEqual(entry.observation);
+            }
+            expectPreparationInputsUnchanged();
+            currentVersion = blocked.state_version;
+          }
           const reported = await publicRun([...expected(currentVersion), '--report', reportPath]);
           expect(reported.delivery_gap).toBeNull();
           expect(reported.status).toBe(index === issuedReverses.length - 1 ? 'delivery' : 'assurance_reported');

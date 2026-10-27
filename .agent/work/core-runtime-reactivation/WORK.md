@@ -38,6 +38,40 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Final assurance delivery gap and retry — 2026-10-27
+
+The existing public accepted-delivery fixture now changes only the local
+manifest's Work ID before its last reverse report. The report is accepted and
+persisted, but the foreign manifest produces the explicit delivery gap. Host
+and Journal stay unchanged, and all six published fixture receipts match their
+accepted observations. The test restores the manifest bytes and retries the
+same report with the returned version. The original successful delivery and
+downstream checks remain. These controlled reviewer observations and local
+fixture transitions do not establish real review, deployment or acceptance.
+
+The targeted composite run `/workspace/contour-focused-runtime-5tFhhA` passed
+one test with 186 `expect()` calls in 20.19s. Native child 1039735 exited 0;
+capture was complete and untruncated, the owned group closed, and image, profile
+and overlay custody checks passed. Retain the stage, sibling namespace status,
+`DIAG/assurance-delivery-gap-launch-20261027-01.log` and launcher. Composite
+digest is `62d62a19729e03807ff5c727b54bc05ace58b4db1ddb88decb6362237807d3ee`.
+The test overlay SHA-256 is
+`365241db0c1156d9f6b1b2695313d575e024235f5758aa169c8e082254754c8a`;
+the helper overlay is unchanged at
+`ffbe530484b957aeac7458abb6c4a5aae426ace50f5294a5e28b76b38654a1de`.
+The base image manifest does not attest these overlays, and the live dependency
+mount is not a byte snapshot. Scoped strict passed for 511 files, type-aware
+Oxlint and one-file format passed. Independent blind Luna reviewed the partial
+assurance commit, six receipt writes, exact restore and positive retry.
+
+Historical report `8d7391ed-a405-4b06-8147-0a3c73714909` maps branch 1040's
+delivery-error conversion to `[0, 0]`. This target has no coverage counters and
+adds no qualified hits. Its 20.19s and the earlier 19.64s target have different
+inputs and are not a controlled performance comparison. Full-proof HOLD,
+the historical baseline and UNKNOWN fences remain unchanged. The capture
+owner's admission observed 6,922,031,104 available bytes against the unchanged
+2,147,483,648-byte floor. No full suite or cleanup ran.
+
 ### Stale assurance preparation version — 2026-10-27
 
 The accepted-delivery test now changes one hex digit of the current Journal

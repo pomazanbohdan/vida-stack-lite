@@ -12,6 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The public accepted-delivery fixture now checks a foreign manifest's delivery
+gap, the accepted report and receipt state, and successful retry after restoring
+the manifest. The targeted result adds no numeric qualification; full-proof HOLD
+remains. WORK owns the exact inputs, terminal custody and review.
+
 The accepted-delivery fixture also refuses a stale Journal digest before first
 assurance preparation, with the original valid preparation retained. The focused
 target passed without changing numeric qualification or the full-proof HOLD.
