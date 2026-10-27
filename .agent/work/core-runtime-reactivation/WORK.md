@@ -25,14 +25,13 @@ now prioritizes accepted Agent/Core contour closure over the earlier marketplace
 resource priority; the current timer and schedule are unchanged.
 
 An independent plan review found that the initial Task 2 lacked an actionable
-effect-to-proof mapping. The plan now names the two selected tests' observed
-fixture, SQLite, socket, child, cache and dependency sites, proposes a run-owned
-intent/start/close protocol using the current manifest and capture owners, and
-marks its assumptions and abnormal-termination limit. This is a bounded source
-inspection, not a complete transitive effect inventory or an implemented API.
-It also identifies a documentation mismatch: the collector currently declares
-three run subjects while the focused TESTING description says two. Resolve that
-against compatible evidence before implementation; no run or counters were added.
+effect-to-proof mapping. The plan now names the selected tests' fixture, SQLite,
+socket, child, cache and dependency sites and proposes composing the existing
+fixture-child and CLI observers under one owner, without a new IPC protocol.
+This is a bounded source inspection, not a complete transitive effect inventory
+or a proven portable implementation. The collector declares three run subjects;
+TESTING now describes all three and the issue subject's prepared ancestry. This
+documentation correction does not qualify historical receipts or add counters.
 
 ## Execution-step optimization, 2026-10-24
 

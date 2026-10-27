@@ -1912,10 +1912,13 @@ tests, tools and runtime to complete untruncated stdout/stderr and observed
 terminal outcomes. The applicable platform capability must account for the
 producer and its descendants and establish resource custody; unsupported,
 missing, stale, mismatched or unobserved evidence denies acceptance. Every
-required selected child must complete successfully, with no failed test or
-collection error, before the validator can accept its results. Timeout,
-signal, compile/runtime failure and UNKNOWN never become successful tests or
-mutation kills. Failed, interrupted and UNKNOWN evidence remains retained.
+required test process must complete successfully, with no failed test or
+collection error. Native fixture children must have their expected terminal
+outcomes, including deliberate nonzero refusal controls. An explicitly asserted
+timeout or signal control passes only with its expected outcome and proven
+resource closure; an unexpected timeout, signal, compile/runtime failure or
+UNKNOWN cannot qualify the run. None is a mutation kill. Failed, interrupted
+and UNKNOWN evidence remains retained.
 
 Exact F/L/S/B, the full selected Source/test inventory and the existing validator
 remain unchanged. A partial or targeted run cannot update qualified counters.
@@ -2708,7 +2711,8 @@ Only four serial v2 focused selections may carry `cli_children`:
   budget refuses runtime resolution; it never starts a coverage suite.
 
 - `bun-cli-run`, with exactly `bin/run.ts`, `tests/run-entrypoint.test.ts` and
-  `tests/bun-cache-routing.test.ts`, observes exactly two fixed subjects. Its
+  `tests/bun-cache-routing.test.ts`, observes exactly three fixed subjects: help,
+  `run-admission-prepared` and `run-issue-wave`. Its
   canonical `bin/run.ts --help` invocation requires exit0, empty stderr and the exact schema, help status, run
   command, syntax and complete options from the captured metadata owners.
   Its loaded-input receipt must include `bin/cli-metadata.ts`,
@@ -2742,7 +2746,12 @@ Only four serial v2 focused selections may carry `cli_children`:
   evidence failures propagate through the existing UNKNOWN retention owner before
   fixture cleanup; native command outcome remains separate from boundary UNKNOWN.
   The genuine CLI assertions retain behavior authority. These receipts grant
-  counters only. No private package alias or other run child gains admission.
+  counters only. `run-issue-wave` requires the independently admitted prepared
+  observation, matching prepared ancestry and issue targets, bounded native
+  capture and owned-group closure. Its child-read evidence binds runtime config,
+  initialization, intake and selected Source; scope and acceptance are checked
+  against the prepared binding. No private package alias or other run child gains
+  admission.
 
 Each help/missing-option/toolchain case preserves its original flags, cwd,
 environment and4000ms child bound. The prepared run subject preserves its actual
@@ -2762,7 +2771,7 @@ receipts retain their evidence and cannot contribute counters.
 
 Each declared subject must appear once with a distinct launch ID and its own
 one-Source counter map. Identity includes the fixed subject role, exact source and canonical argv;
-the two toolchain scenarios and two run subjects each share their selected Source. Missing, duplicate and foreign
+the two toolchain scenarios and three run subjects each share their selected Source. Missing, duplicate and foreign
 scenarios deny admission. The clock witness requires an exact copy of parent
 environment with only its two fixed clock replacements; all other subjects keep
 their existing environment. Child startup verifies the bound clock values.
