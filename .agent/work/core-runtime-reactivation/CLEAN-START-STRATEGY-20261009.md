@@ -12,6 +12,11 @@ No consumer effect, native loader activation or DB cutover is part of this cycle
 
 ## Current state
 
+The accepted-delivery fixture also refuses a stale Journal digest before first
+assurance preparation, with the original valid preparation retained. The focused
+target passed without changing numeric qualification or the full-proof HOLD.
+WORK owns its exact input, terminal and review evidence.
+
 The public assurance fixture now refuses a changed preparation path on retry and
 checks unchanged state and evidence. Its focused target passed; the target adds
 no numeric qualification. WORK owns its input, terminal and review evidence.

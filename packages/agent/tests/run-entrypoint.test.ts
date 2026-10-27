@@ -11083,12 +11083,52 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         expect(terminalRetry.state_version).toEqual(terminalJournal.version);
         expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
         expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        assert.ok(work.execution.run_id);
+        const engineBinding = {
+          repositoryRoot: fixture.root,
+          config: fixture.config,
+          selection: fixture.producerInput.selection,
+          context: fixture.producerInput.context,
+          workflowId: fixture.producerInput.workflowId,
+          runId: work.execution.run_id,
+        };
+        const beforeStaleEngine = readSessionEngineSnapshot(engineBinding);
+        assert.ok(beforeStaleEngine);
+        const preparationPath = path.join(fixture.root, fixture.preparationPath);
+        const preparationBytes = readFileSync(preparationPath);
+        assert.ok(typeof preparation.clear_path === 'string');
+        const preservedPaths = [
+          'docs/agent-instructions/documentation-policy.v1.json',
+          preparation.clear_path,
+          deliveryManifestPath,
+        ].map((relative) => path.join(assuranceFixture.root, relative));
+        const preservedBytes = preservedPaths.map((file) => readFileSync(file));
+        const retrySourcePaths = sourceScope.entries.map((entry) => entry.path);
+        const beforeRetrySource = snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), retrySourcePaths);
+        const expectPreparationInputsUnchanged = () => {
+          expect(readFileSync(preparationPath)).toEqual(preparationBytes);
+          expect(preservedPaths.map((file) => readFileSync(file))).toEqual(preservedBytes);
+          expect(
+            compareScopedSourceSnapshots(
+              beforeRetrySource,
+              snapshotDeclaredSources(requireSafeRepositoryAccess(assuranceFixture.root), retrySourcePaths),
+            ),
+          ).toEqual([]);
+        };
+        expect(fixture.store.readFinalAssurance(fixture.identity, 1)).toBeNull();
+        expect(version).toEqual(terminalJournal.version);
+        const staleVersion = { ...version, digest: (version.digest[0] === 'a' ? 'b' : 'a') + version.digest.slice(1) };
+        await assert.rejects(run([...runArgs, ...expected(staleVersion), '--prepare-assurance', preparationPath]), {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message: 'Assurance preparation journal version is stale.',
+        });
+        expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(terminalHost);
+        expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(terminalJournal);
+        expect(fixture.store.readFinalAssurance(fixture.identity, 1)).toBeNull();
+        expect(readSessionEngineSnapshot(engineBinding)).toEqual(beforeStaleEngine);
+        expectPreparationInputsUnchanged();
         markInitialSourceTimingPhase('case.assurance.started');
-        const assurance = await publicRun([
-          ...expected(version),
-          '--prepare-assurance',
-          path.join(fixture.root, fixture.preparationPath),
-        ]);
+        const assurance = await publicRun([...expected(version), '--prepare-assurance', preparationPath]);
         expect(assurance.status).toBe('assurance_resumed');
         expect(assurance.assurance_status).toBe('ready');
         expect(assurance.issued_actions).toEqual([]);
@@ -11108,28 +11148,9 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         const beforeRetryHost = fixture.store.readHostStateSnapshot(fixture.identity);
         const beforeRetryJournal = fixture.ledger.resume(fixture.identity.work_id, 1);
         const beforeRetryAssurance = fixture.store.readFinalAssurance(fixture.identity, 1);
-        assert.ok(work.execution.run_id && beforeRetryJournal && beforeRetryAssurance);
-        const engineBinding = {
-          repositoryRoot: fixture.root,
-          config: fixture.config,
-          selection: fixture.producerInput.selection,
-          context: fixture.producerInput.context,
-          workflowId: fixture.producerInput.workflowId,
-          runId: work.execution.run_id,
-        };
+        assert.ok(beforeRetryJournal && beforeRetryAssurance);
         const beforeRetryEngine = readSessionEngineSnapshot(engineBinding);
         assert.ok(beforeRetryEngine);
-        const preparationPath = path.join(fixture.root, fixture.preparationPath);
-        const preparationBytes = readFileSync(preparationPath);
-        assert.ok(typeof preparation.clear_path === 'string');
-        const preservedPaths = [
-          'docs/agent-instructions/documentation-policy.v1.json',
-          preparation.clear_path,
-          deliveryManifestPath,
-        ].map((relative) => path.join(assuranceFixture.root, relative));
-        const preservedBytes = preservedPaths.map((file) => readFileSync(file));
-        const retrySourcePaths = sourceScope.entries.map((entry) => entry.path);
-        const beforeRetrySource = snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), retrySourcePaths);
         const alternatePreparationPath = path.join(path.dirname(preparationPath), 'foreign-preparation.json');
         expect(existsSync(alternatePreparationPath)).toBe(false);
         await assert.rejects(
@@ -11140,18 +11161,11 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           },
         );
         expect(existsSync(alternatePreparationPath)).toBe(false);
-        expect(readFileSync(preparationPath)).toEqual(preparationBytes);
-        expect(preservedPaths.map((file) => readFileSync(file))).toEqual(preservedBytes);
+        expectPreparationInputsUnchanged();
         expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(beforeRetryHost);
         expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(beforeRetryJournal);
         expect(fixture.store.readFinalAssurance(fixture.identity, 1)).toEqual(beforeRetryAssurance);
         expect(readSessionEngineSnapshot(engineBinding)).toEqual(beforeRetryEngine);
-        expect(
-          compareScopedSourceSnapshots(
-            beforeRetrySource,
-            snapshotDeclaredSources(requireSafeRepositoryAccess(fixture.root), retrySourcePaths),
-          ),
-        ).toEqual([]);
         pendingAssuranceIssue = true;
         const issueReviews = await publicRun([
           ...expected(requireStateVersion(assurance.state_version)),

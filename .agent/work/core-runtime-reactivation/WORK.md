@@ -38,6 +38,35 @@ The producer-owned projection files remain unstaged. No timer or schedule change
 
 ## Current sequential F/L/S/B cycle
 
+### Stale assurance preparation version — 2026-10-27
+
+The accepted-delivery test now changes one hex digit of the current Journal
+digest before first assurance preparation. The public command refuses the stale
+version while the revision is unchanged. Host, Ledger, Journal, engine, Source,
+preparation and documentation evidence remain unchanged, and FinalAssurance
+remains absent. The original exact-version preparation and the later changed-path
+retry remain as controls. Shared input checks are reused for both refusals.
+
+The targeted composite run `/workspace/contour-focused-runtime-36yJp4` passed
+one test with 169 `expect()` calls in 19.64s. Native child 1037881 exited 0;
+capture was complete and untruncated, the owned group closed, and image, profile
+and overlay custody checks passed. Retain the stage, sibling namespace status,
+`DIAG/assurance-stale-launch-20261027-01.log` and launcher. Composite digest
+is `90e81df2b20bfd851f73d19ed2447f9266bea0d19b563f52bc8aafaf277a27e7`.
+The launch binds overlays separately; the base manifest does not attest them and
+the live dependency mount is not a byte snapshot. Scoped strict passed for 511
+files, type-aware Oxlint and one-file format passed. The first format check
+reported an unformatted line; its log is retained. Independent blind Luna
+reviewed the stale version, original positive control and preserved effects.
+
+Historical report `8d7391ed-a405-4b06-8147-0a3c73714909` maps branch 1026's
+stale preparation refusal to zero. This target has no counters and adds no
+qualified hits. Its duration and the earlier 23.23s target have different inputs
+and do not prove a speedup. Full-proof HOLD, the historical baseline and UNKNOWN
+fences remain unchanged. The capture owner's admission observed 6,946,217,984
+available bytes against the unchanged 2,147,483,648-byte floor. No full suite
+or cleanup ran.
+
 ### Assurance preparation retry refusal — 2026-10-27
 
 The existing public accepted-delivery fixture now retries assurance preparation
