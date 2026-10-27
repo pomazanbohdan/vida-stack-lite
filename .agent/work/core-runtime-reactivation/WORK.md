@@ -4,6 +4,31 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Trusted coverage descendant boundary, 2026-10-27
+
+At Source `c8003666`, `bin/run.ts` can re-execute Bun through `runPinnedBun`
+when the entrypoint's cache namespace differs. `boundedSpawnSync` uses detached
+process groups on POSIX. A direct test-child receipt alone therefore does not
+account for this child's own subprocesses. The parent fixture observer currently
+sees direct Node `spawn`/`spawnSync` calls only; selected CLI receipts and process
+group observation do not by themselves prove that separately detached descendants
+have terminated. The next implementation step must bind those actual nested
+operations to supported custody, or retain UNKNOWN and HOLD. Do not prevent the
+cache-routing scenario or replace its native contract merely to avoid the child.
+
+A bounded blind review reused the completed historical run `8d7391ed`'s 181
+loaded-input rows and found no textual `Bun.spawn` or `Deno.Command` calls in
+those inputs. It found the Node launcher path above and other static child API
+references whose focused reachability is unproved. This historical inventory is
+not an exhaustive current transitive inventory or descendant-closure proof.
+No new coverage producer, report or qualification was produced for this finding.
+
+At the admission check, checkout and `/workspace/.vida-quality-inputs` shared the
+same filesystem with 6,817,067,008 available bytes and 1,522,501 free inodes;
+the observed bytes exceed the existing 2 GiB scratch floor. The exact retained
+path `/workspace/.vida-retained` was absent. No cleanup or resource relocation
+was performed, and this capacity observation does not clear the timing gate.
+
 ## Trusted coverage selection candidate, 2026-10-27
 
 Ruling: reuse the existing stage image-selection owner rather than reading or
