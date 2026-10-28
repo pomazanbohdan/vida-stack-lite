@@ -4,6 +4,42 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Documentation CLEAR reference binding packet — 2026-10-28
+
+Root's full selected stage on Source `17eb72b18d3ea5c802782c5a13a69f4a6cfe9e53`
+finished with 24 passed, zero failed and 217 assertions. The suite took 33.26 s;
+the stage took 38.03008195 s. Exit was zero with no signal or timeout, complete
+capture, closed owned group, unchanged boot and image, and published output.
+The focused diagnostic remains blocked on exact coverage. Its retained report is
+`/workspace/contour-doc-clear-measurement-bgsJKI/images/1bb035e8893475db9b943e3979ffc4205467220a/repository/packages/agent/coverage/bun-unified/diagnostics/f1eaffaf-c0d6-4f74-aaaf-107fcd267002.focused-coverage.json`.
+Root reported F 44/46, L 207/230, S 241/281 and B 183/229. This is a focused
+diagnostic, not full qualification or contour closure.
+
+Against that Source, the in-process public API test exercises reference
+identity and cycle refusal, missing and malformed baseline paths, and a baseline
+dated after its closeout. It restores the real checkpoint bytes and verifies the
+valid reference and baseline again. These cases target previously uncovered
+`clear.ts` guards at lines 295, 297, 303, 430 and 431; their new counters have not
+been measured. The test passed initially against existing behavior. No production
+change or RED is claimed. The two missed CLI callbacks remain an open
+collector-attribution gap pending qualification of the existing observer. Real
+CLI child tests already exercise the entrypoint and do not attribute those
+callbacks to the parent report. Existing in-process reference tests cover valid
+references, wrong generation and path, changed bytes and stale inventory,
+leaving the new guards distinct.
+
+After integration, the canonical targeted test passed one case and eight
+expectations. Canonical scoped strict checking passed 95 files; type-aware lint
+and format passed. The scoped Markdown check passed one document and 13 local
+links before this record update. The earlier full affected-file run passed 14
+cases and 70 expectations in the scratch mirror before the fixture-retention and
+Bun hashing correction. Independent reviewer `/root/luna_doc_guard_review`
+reported PASS without material findings. Capture, exit and owned-group receipts
+are retained under `/workspace/contour-doc-clear-exact-kNBxmDTB`. Two earlier
+scratch strict checks failed because the mirror lacked package metadata and a
+tooling link; the final scratch mirror has both. No numeric producer ran. Root
+owns Git and the next exact measurement after commit.
+
 ## Blocked-contour lookahead and documentation CLEAR packet — 2026-10-28
 
 The owner authorizes work on the next declared contour while `bun-cli-run` is

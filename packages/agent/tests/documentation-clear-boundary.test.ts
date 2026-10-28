@@ -319,6 +319,76 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
     }
   });
 
+  test('CLEAR rejects mismatched reference and baseline bindings before accepting restored bytes', async () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const { result, checkpoint } = await documentationCloseout(fixture);
+      const reference = {
+        ...fixture.input,
+        reference_path: result.path,
+        reference_sha256: result.sha256,
+        reference_id: checkpoint.clear_id,
+        expected_cycle: 1,
+      };
+      const closeoutPath = path.join(fixture.root, result.path);
+      const closeoutBytes = readFileSync(closeoutPath);
+      expect(() => runtime.verifyDocumentationClearReference({ ...reference, reference_id: 'foreign' })).toThrow(
+        /reference identity invalid/,
+      );
+
+      for (const change of [
+        { baseline_path: `.agent/work/${fixture.input.work_id}/documentation-baseline-0002.v1.json` },
+        { clear_id: `documentation-clear-${fixture.input.work_id}-closeout-0002` },
+      ]) {
+        const altered = { ...checkpoint, ...change };
+        const bytes = JSON.stringify(altered) + '\n';
+        writeFileSync(closeoutPath, bytes);
+        expect(() =>
+          runtime.verifyDocumentationClearReference({
+            ...reference,
+            reference_sha256: new Bun.CryptoHasher('sha256').update(bytes).digest('hex'),
+            reference_id: altered.clear_id,
+          }),
+        ).toThrow(/reference cycle invalid/);
+      }
+      writeFileSync(closeoutPath, closeoutBytes);
+      expect(runtime.verifyDocumentationClearReference(reference)).toEqual(checkpoint);
+
+      const resign = (value: DocumentationClearCheckpoint): DocumentationClearCheckpoint => {
+        const { digest: _digest, ...body } = value;
+        return { ...body, digest: runtime.canonicalJsonDigest(body) };
+      };
+      expect(() =>
+        runtime.validateDocumentationClearCheckpoint(resign({ ...checkpoint, baseline_path: null }), fixture.input),
+      ).toThrow(/baseline missing/);
+      expect(() =>
+        runtime.validateDocumentationClearCheckpoint(
+          resign({ ...checkpoint, baseline_path: '.agent/work/invalid.json' }),
+          fixture.input,
+        ),
+      ).toThrow(/baseline cycle invalid/);
+
+      const baselinePath = path.join(fixture.root, checkpoint.baseline_path!);
+      const baselineBytes = readFileSync(baselinePath);
+      const baseline = readCheckpoint(baselinePath);
+      const futureBaseline = resign({ ...baseline, created_at: '9999-01-01T00:00:00.000Z' });
+      writeFileSync(baselinePath, JSON.stringify(futureBaseline) + '\n');
+      expect(() =>
+        runtime.validateDocumentationClearCheckpoint(
+          resign({ ...checkpoint, baseline_digest: futureBaseline.digest }),
+          fixture.input,
+        ),
+      ).toThrow(/baseline binding stale/);
+      writeFileSync(baselinePath, baselineBytes);
+      expect(runtime.validateDocumentationClearCheckpoint(checkpoint, fixture.input)).toEqual(checkpoint);
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed CLEAR reference fixture: ${fixture.root}`);
+    }
+  });
+
   test('Simple: CLEAR creates a valid baseline for an ordinary scope', () => {
     const fixture = documentationClearFixture();
     try {
