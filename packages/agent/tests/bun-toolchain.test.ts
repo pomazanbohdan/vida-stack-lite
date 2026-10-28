@@ -2436,11 +2436,16 @@ test('synchronous diagnostic writes advance only by confirmed bytes', () => {
 
 test.each([undefined, 100])('bounded diagnostics retain the original allowance: %s', (allowance) => {
   const moduleUrl = new URL('../bin/bun.ts', import.meta.url).href;
-  const program = `const { boundedSpawnSync } = await import(${JSON.stringify(moduleUrl)});
+  const program = `const { boundedSpawnSync, executionBudget } = await import(${JSON.stringify(moduleUrl)});
+    const inheritedDeadline = executionBudget().deadline;
+    const sampledAt = performance.now();
+    const inheritedCeiling = Number.isFinite(inheritedDeadline) ? Math.floor(inheritedDeadline - sampledAt) : null;
     const original = { status: 0, signal: null };
-    const result = boundedSpawnSync(() => original, 'fixture', [],
+    let childTimeout = null;
+    const result = boundedSpawnSync((_command, _args, options) => { childTimeout = options.timeout ?? null; return original; }, 'fixture', [],
       { diagnostics: true, timeout: ${allowance === undefined ? 'undefined' : allowance} }, 'diagnostic fixture');
-    process.stdout.write(JSON.stringify({ status: result.status, signal: result.signal, identity: result === original }));`;
+    process.stdout.write(JSON.stringify({ status: result.status, signal: result.signal, identity: result === original,
+      inheritedCeiling, childTimeout }));`;
   const child = spawnSync(process.execPath, ['-e', program], {
     encoding: 'utf8',
     env: pinnedEnvironment(process.execPath, process.env),
@@ -2461,8 +2466,15 @@ test.each([undefined, 100])('bounded diagnostics retain the original allowance: 
   assert.equal(Reflect.get(diagnostic, 'stage'), 'diagnostic fixture');
   assert.equal(Reflect.get(diagnostic, 'status'), 0);
   const timeout: unknown = Reflect.get(diagnostic, 'timeout_ms');
-  if (allowance === undefined) assert.equal(timeout, null);
-  else assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= allowance);
+  const inheritedCeiling: unknown = Reflect.get(result, 'inheritedCeiling');
+  assert.ok(inheritedCeiling === null || (typeof inheritedCeiling === 'number' && Number.isFinite(inheritedCeiling)));
+  assert.equal(timeout, Reflect.get(result, 'childTimeout'));
+  if (allowance === undefined && inheritedCeiling === null) assert.equal(timeout, null);
+  else {
+    assert.ok(typeof timeout === 'number' && Number.isSafeInteger(timeout) && timeout > 0);
+    if (allowance !== undefined) assert.ok(timeout <= allowance);
+    if (typeof inheritedCeiling === 'number') assert.ok(timeout <= inheritedCeiling);
+  }
 });
 
 test.each(['enabled-success', 'enabled-failure', 'disabled-failure', 'unwritable-failure'] as const)(
