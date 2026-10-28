@@ -259,7 +259,7 @@ export async function verifyStandalone(input: {
     schema: 'VidaStandaloneIdentity/v1',
     version: manifest.version,
     pin: manifest.pin,
-    target: manifest.target,
+    target: manifest.target.slice('bun-'.length),
     payloadId: manifest.payloadId,
     resourceIndexDigest: manifest.payloadId,
   });
