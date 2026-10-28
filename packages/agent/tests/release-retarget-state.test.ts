@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 import {
   existsSync,
   cpSync,
+  closeSync,
+  openSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -82,6 +84,8 @@ import {
   nativeCIUnadmittedWorkflowDenial,
 } from '../../../tooling/agent/native-ci-delivery.ts';
 import { cliCommandNames } from '../bin/cli-command-contracts.ts';
+import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
+import { withWorkspaceDatabaseClose } from '../src/config/workspace-database-raw.ts';
 import { standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
 import { sdkCompatibilityManifest } from '../tooling/pack-sdk.ts';
 
@@ -2448,6 +2452,124 @@ async function targetCandidateFixture(
   });
   return { candidatePath, bytes };
 }
+
+test('native build reports the failed build child and retains its issued intent', async () => {
+  const deadline = performance.now() + 4000;
+  const target = process.platform === 'win32' ? 'bun-windows-x64' : 'bun-linux-x64';
+  const job = process.platform === 'win32' ? 'native-windows-x64' : 'native-linux-x64';
+  for (const oversized of [false, true]) {
+    const value = await fixture();
+    const initial: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString());
+    assert.ok(isFixtureRecord(initial));
+    write(value.root, 'packages/agent/package.json', {
+      ...initial,
+      packageManager: `bun@${Bun.version}`,
+      engines: { bun: Bun.version, node: '24.0.0' },
+      scripts: { 'ci:pinned': 'bun fail-ci.ts' },
+    });
+    write(value.root, 'packages/agent/.bun-version', Bun.version + '\n');
+    write(
+      value.root,
+      'packages/agent/fail-ci.ts',
+      `${oversized ? "console.error('x'.repeat(8 * 1024 * 1024 + 1));" : ''} console.log('build stdout marker'); console.error('build stderr marker'); process.exit(7);\n`,
+    );
+    const request = requestForCI({ ...value.input, context: ciContext, target });
+    const base = mkdtempSync(path.join(tmpdir(), 'vida-native-build-failure-'));
+    const temporary = path.join(base, 'runner');
+    const source = path.join(temporary, 'source');
+    const checkout = path.join(base, 'checkout');
+    mkdirSync(temporary);
+    cpSync(value.root, source, { recursive: true });
+    cpSync(value.root, checkout, { recursive: true });
+    const commit = 'a'.repeat(40);
+    const stdoutFile = path.join(base, 'stdout');
+    const stderrFile = path.join(base, 'stderr');
+    if (performance.now() >= deadline) {
+      outcomeUnknown = true;
+      assert.fail('Native build fixture deadline elapsed before child; retain fixture: ' + base);
+    }
+    const stdoutFd = openSync(stdoutFile, 'wx');
+    let result: ReturnType<typeof spawnSync>;
+    try {
+      result = withWorkspaceDatabaseClose(
+        stdoutFd,
+        () => {
+          const stderrFd = openSync(stderrFile, 'wx');
+          return withWorkspaceDatabaseClose(
+            stderrFd,
+            () =>
+              spawnSync(
+                process.execPath,
+                [
+                  path.resolve(import.meta.dir, '../../../tooling/agent/native-ci-delivery.ts'),
+                  '--phase',
+                  'native-build',
+                ],
+                {
+                  stdio: ['ignore', stdoutFd, stderrFd],
+                  timeout: Math.max(1, Math.floor(deadline - performance.now())),
+                  env: {
+                    ...process.env,
+                    CI: 'true',
+                    GITHUB_ACTIONS: 'true',
+                    VIDA_NATIVE_CI_ENABLED: 'true',
+                    GITHUB_REPOSITORY: 'pomazanbohdan/vida-stack-lite',
+                    GITHUB_REPOSITORY_ID: '1340911900',
+                    GITHUB_JOB: job,
+                    GITHUB_RUN_ID: '123',
+                    GITHUB_RUN_ATTEMPT: '1',
+                    CI_SOURCE_COMMIT: commit,
+                    GITHUB_SHA: commit,
+                    GITHUB_WORKFLOW_REF:
+                      'pomazanbohdan/vida-stack-lite/.github/workflows/agent-native-delivery.yml@refs/heads/main',
+                    CI_REQUEST: JSON.stringify(request),
+                    VIDA_CI_CACHE_ID: '1',
+                    VIDA_CI_CACHE_KEY: 'vida-bun-install-v1-lock-bun-' + Bun.version + '-' + 'a'.repeat(64),
+                    VIDA_CI_CACHE_REF: 'refs/heads/main',
+                    VIDA_CI_CACHE_VERSION: 'inert fixture cache version',
+                    VIDA_CI_CACHE_BYTES: '1',
+                    VIDA_CI_CACHE_RESTORE: 'miss',
+                    VIDA_CI_CACHE_MATCHED_KEY: '',
+                    VIDA_CI_CACHE_SAVE: 'confirmed',
+                    VIDA_CI_CACHE_SAVE_ACTION: 'success',
+                    VIDA_CI_SOURCE_ROOT: source,
+                    GITHUB_WORKSPACE: checkout,
+                    RUNNER_TEMP: temporary,
+                  },
+                },
+              ),
+            closeSync,
+            'native build stderr cleanup failed',
+          );
+        },
+        closeSync,
+        'native build stdout cleanup failed',
+      );
+    } catch (error) {
+      outcomeUnknown = true;
+      throw error;
+    }
+    if (isUnknownSynchronousChild(result) || performance.now() >= deadline) {
+      outcomeUnknown = true;
+      assert.fail('UNKNOWN native build child; retain fixture: ' + base);
+    }
+    const stdout = readFileSync(stdoutFile, 'utf8');
+    const stderr = readFileSync(stderrFile, 'utf8');
+    assert.equal(result.status, 1, stderr + stdout);
+    assert.match(stdout, /"status": "issued"/);
+    if (oversized) {
+      assert.match(stderr, /Native build diagnostics failed:.*unsafe\/oversized CI file/);
+      assert.match(stderr, /build stdout marker/);
+    } else {
+      assert.match(stdout, /build stdout marker/, stderr);
+    }
+    assert.match(stderr, /build stderr marker/);
+    assert.match(stderr, /Command failed: run ci:pinned/);
+    const operationRoot = path.join(temporary, 'vida-ci-operation-123-1');
+    assert.equal(existsSync(path.join(operationRoot, 'phases/native-build.intent.json')), true);
+    assert.equal(existsSync(path.join(operationRoot, 'phases/native-build.result.json')), false);
+  }
+});
 
 test('the native producer emits candidate beside the formation result and archive', async () => {
   const value = await fixture();

@@ -295,7 +295,7 @@ function readNativeManifest(bytes: Buffer): NativeManifest {
   return value;
 }
 function emitNativeBuildFailureDiagnostics(ctx: NativeCIContext): void {
-  const value = parseUnknownJSON(physical(ctx.root, 'logs/native-build/2.json', 8 * 1024 * 1024).toString('utf8'));
+  const value = parseUnknownJSON(physical(ctx.root, 'logs/native-build/1.json', 8 * 1024 * 1024).toString('utf8'));
   requireCI(
     isRecord(value) && typeof value.stdout === 'string' && typeof value.stderr === 'string',
     'native build diagnostic receipt is malformed',
@@ -727,7 +727,14 @@ async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner):
   try {
     await invoke(process.execPath, ['run', 'ci:pinned'], { cwd: ctx.packageRoot });
   } catch (error) {
-    emitNativeBuildFailureDiagnostics(ctx);
+    try {
+      emitNativeBuildFailureDiagnostics(ctx);
+    } catch (diagnosticError) {
+      throw new Error(
+        `${error instanceof Error ? error.message : String(error)}\nNative build diagnostics failed: ${diagnosticError instanceof Error ? diagnosticError.message : String(diagnosticError)}`,
+        { cause: error },
+      );
+    }
     throw error;
   }
   releaseDirectory(ctx.root, 'output');
