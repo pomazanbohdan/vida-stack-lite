@@ -188,10 +188,11 @@ test('inherited derived cache follows the actual copy while custom and disabled 
     expectedCache(second),
   );
   const custom = path.join(scratch, 'caller-selected-cache');
-  for (const selected of [custom, '0']) {
+  for (const selected of [custom, '0', '']) {
     const input = { BUN_RUNTIME_TRANSPILER_CACHE_PATH: selected, FIXTURE_VALUE: 'retained' };
     const actual = expectReturned(() => pinnedEnvironment(process.execPath, input, second));
     assert.equal(actual.BUN_RUNTIME_TRANSPILER_CACHE_PATH, selected);
+    assert.equal(pinnedEnvironment(process.execPath, actual, second).BUN_RUNTIME_TRANSPILER_CACHE_PATH, selected);
     assert.equal(actual.FIXTURE_VALUE, input.FIXTURE_VALUE);
     assert.deepEqual(input, { BUN_RUNTIME_TRANSPILER_CACHE_PATH: selected, FIXTURE_VALUE: 'retained' });
   }

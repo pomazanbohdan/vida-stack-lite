@@ -432,6 +432,24 @@ Default stage execution and child-effects/custody admission remain OPEN. Preserv
 all older UNKNOWN resources. This packet establishes no qualification or numeric
 increment.
 
+### Explicit empty Bun cache candidate — 2026-10-28
+
+The scratch correction at `/workspace/bun-empty-cache-n1pZ3i9C/empty-cache-preservation.patch`
+changes the pinned environment's default selection only when the cache variable
+is absent or is an inherited derived namespace. It preserves an explicit empty
+value, `0` and custom paths. In the existing cache-routing test, RED observed
+the empty value rewritten to a derived path; GREEN passed four targeted cases,
+including unset, inherited derived, custom, `0` and empty values and repeated
+selection. Scoped typecheck, lint and format passed. Complete captures and
+owned-group terminal receipts are under `/workspace/bun-empty-cache-n1pZ3i9C/privatecheck`.
+
+The `bin/run.ts` entrypoint compares the pinned value to its current environment
+before cache-routing self-reexecution. Preserving explicit empty makes those
+values equal by Source logic; no native child-count or stage admission proof is
+claimed. Caller-owned custom cache identity, stage child-effects/custody, exact
+coverage and prior UNKNOWN fences remain open or unchanged. No SDK build, full
+producer, qualification or numeric increment follows from this scratch packet.
+
 ## Focused serial environment and controller readiness — 2026-10-28
 
 Root's actual full selected stage on Source

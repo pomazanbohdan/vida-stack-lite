@@ -523,11 +523,11 @@ export function pinnedEnvironment(
   const pin = readPin(canonical);
   const inheritedCache = env.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
   // Derived namespaces follow the actual copy. Explicit custom paths and Bun's
-  // supported "0" disable setting remain caller-selected; no cache is cleared.
+  // supported empty and "0" disable settings remain caller-selected; no cache is cleared.
   const inheritedDefault =
     typeof inheritedCache === 'string' &&
     /[\\/]\.tmp[\\/]vida-bun-cache[\\/][^\\/]+[\\/]\d+\.\d+\.\d+$/.test(inheritedCache);
-  if (!inheritedCache || inheritedDefault)
+  if (inheritedCache === undefined || inheritedDefault)
     next.BUN_RUNTIME_TRANSPILER_CACHE_PATH = path.join(
       canonical.split(path.sep).includes('node_modules') ? homedir() : path.dirname(canonical),
       '.tmp',
