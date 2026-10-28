@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { test, expect, spyOn } from 'bun:test';
 import {
   mkdtempSync,
@@ -640,6 +641,17 @@ test('qualified development controller preserves Source identity and accepts a s
     expect(ready.qualification.schema).toBe('DevelopmentControllerQualification/v1');
     expect(ready.qualification.checks).toContain('actual-source-report');
     expect(developmentControllerBinding(ready.package_root)).toBe(ready.package_binding.digest);
+    const persisted: unknown = JSON.parse(readFileSync(stateFile, 'utf8'));
+    assert.deepEqual(persisted, ready);
+    const nodeSha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+    for (const entry of ready.package_binding.files) {
+      const bytes = readFileSync(path.join(ready.package_root, entry.path));
+      assert.equal(bytes.length, entry.bytes);
+      assert.equal(nodeSha256(bytes), entry.sha256);
+    }
+    const { files, links } = ready.package_binding;
+    assert.equal(nodeSha256(Buffer.from(JSON.stringify({ files, links }) + '\n')), ready.package_binding.digest);
+    assert.equal(nodeSha256(readFileSync(ready.engine)), ready.engine_sha256);
     expect(existsSync(ready.qualification.fixture_root)).toBe(false);
     const observations = path.join(controllerRoot, 'observations');
     const observationRuns = readdirSync(observations).sort();
