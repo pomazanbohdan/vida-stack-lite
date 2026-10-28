@@ -15,7 +15,7 @@ import {
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
-import { resolvePinnedBun, runPinnedBun, readPin, checkManifest } from './bun.ts';
+import { resolvePinnedBun, runPinnedBun, readPin, checkManifest, writeDiagnosticSync } from './bun.ts';
 import { invokeObservedControllerChild } from './development-controller-observation.ts';
 import { readPortableLock } from './install.ts';
 import { assertRuntimePackageExports, runtimeExecutableInventory } from '../tooling/maintained-source-inventory.ts';
@@ -247,7 +247,7 @@ const entryArguments = (root: string): string[] => [
 const record = (value: unknown): string => JSON.stringify(value) + '\n';
 function stageMarker(stage: string, event: string, started: number) {
   if (process.env.VIDA_CONTROLLER_DIAGNOSTICS === 'true')
-    process.stderr.write(
+    writeDiagnosticSync(
       record({ schema: 'DevelopmentControllerStage/v1', stage, event, elapsed_ms: Date.now() - started }),
     );
 }

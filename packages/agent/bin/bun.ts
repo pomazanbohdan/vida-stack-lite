@@ -13,6 +13,7 @@ import {
   statSync,
   unlinkSync,
   writeFileSync,
+  writeSync,
   type BigIntStats,
 } from 'node:fs';
 import path from 'node:path';
@@ -334,6 +335,25 @@ function executionCeiling(env: NodeJS.ProcessEnv): { duration: number; expiry: n
 const inherited = executionCeiling(process.env);
 const inheritedDeadline = performance.now() + Math.min(inherited.duration, inherited.expiry - Date.now());
 
+export function writeDiagnosticSync(
+  value: string,
+  write: (fd: number, bytes: Buffer, offset: number, length: number) => number = writeSync,
+): void {
+  const bytes = Buffer.from(value);
+  let confirmedBytes = 0;
+  while (confirmedBytes < bytes.length) {
+    try {
+      const remaining = bytes.length - confirmedBytes;
+      const written = write(2, bytes, confirmedBytes, remaining);
+      if (!Number.isInteger(written) || written <= 0 || written > remaining)
+        throw new Error('Diagnostic output returned an invalid byte count.');
+      confirmedBytes += written;
+    } catch (error) {
+      throw Object.assign(new Error('Diagnostic output failed.', { cause: error }), { confirmedBytes });
+    }
+  }
+}
+
 export function executionBudget(timeoutMs = Infinity, reserveMs = 1_000, parentDeadline = Infinity): ExecutionBudget {
   if (
     !(Number.isSafeInteger(timeoutMs) || timeoutMs === Infinity) ||
@@ -430,24 +450,32 @@ export function boundedSpawnSync(
     result.diagnosticLabel = label;
   }
   result.elapsedMs = performance.now() - started;
-  if (diagnostics)
-    process.stderr.write(
-      JSON.stringify({
-        stage: label,
-        elapsed_ms: performance.now() - started,
-        child_elapsed_ms: result.childElapsedMs,
-        cleanup_elapsed_ms: result.cleanupElapsedMs ?? null,
-        cleanup_allowance_ms: result.cleanupTimeoutMs ?? null,
-        timeout_ms: Number.isFinite(timeoutMs) ? timeoutMs : null,
-        status: result.status,
-        signal: result.signal,
-        timed_out: result.timedOut ?? false,
-        cleanup_outcome: result.cleanupOutcome ?? null,
-        cleanup_status: result.cleanupStatus ?? null,
-        cleanup_error_code: result.cleanupErrorCode ?? null,
-        error_code: result.error?.code ?? null,
-      }) + '\n',
-    );
+  if (diagnostics) {
+    try {
+      writeDiagnosticSync(
+        JSON.stringify({
+          stage: label,
+          elapsed_ms: performance.now() - started,
+          child_elapsed_ms: result.childElapsedMs,
+          cleanup_elapsed_ms: result.cleanupElapsedMs ?? null,
+          cleanup_allowance_ms: result.cleanupTimeoutMs ?? null,
+          timeout_ms: Number.isFinite(timeoutMs) ? timeoutMs : null,
+          status: result.status,
+          signal: result.signal,
+          timed_out: result.timedOut ?? false,
+          cleanup_outcome: result.cleanupOutcome ?? null,
+          cleanup_status: result.cleanupStatus ?? null,
+          cleanup_error_code: result.cleanupErrorCode ?? null,
+          error_code: result.error?.code ?? null,
+        }) + '\n',
+      );
+    } catch (outputError) {
+      const error = result.error
+        ? new AggregateError([result.error, outputError], 'Child observation and diagnostic output failed.')
+        : new Error('Child observation and diagnostic output failed.', { cause: outputError });
+      throw Object.assign(error, { outputError, result });
+    }
+  }
   return result;
 }
 
