@@ -8,6 +8,7 @@ import {
   readFileSync,
   renameSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -34,8 +35,11 @@ import {
   inspectReleaseRetarget,
   runReleaseRetarget,
   readNativeRetargetCandidate,
+  recheckNativeRetargetCandidate,
 } from '../bin/repair-release-retarget.ts';
 import {
+  executeRelease,
+  prepareRelease,
   reserveReleaseWorker,
   claimReleaseWorker,
   withReleaseAdmission,
@@ -43,10 +47,14 @@ import {
 } from '../../../tooling/agent/release-local.ts';
 import {
   testInputBinding,
+  verifyLocalPackTests,
   verifyLocalReleaseTests,
   verifyLocalReleaseAssurance,
+  verifyApprovedGitHubFormationPair,
 } from '../../../tooling/agent/release-assurance.ts';
 import {
+  type verifyCIDeliveryFormationPair,
+  readConfirmedCIDeliveryFormation,
   recordCIDeliveryRequest,
   encodeCIDeliveryResult,
   validateCIDeliveryObservation,
@@ -71,6 +79,7 @@ import {
 } from '../../../tooling/agent/native-ci-delivery.ts';
 import { cliCommandNames } from '../bin/cli-command-contracts.ts';
 import { standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
+import { sdkCompatibilityManifest } from '../tooling/pack-sdk.ts';
 
 const roots = new Set<string>(),
   operation = 'local-original',
@@ -357,12 +366,12 @@ function write(root: string, file: string, value: string | Buffer | NodeJS.Array
   mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
   writeFileSync(path.join(root, file), typeof value === 'object' && !Buffer.isBuffer(value) ? json(value) : value);
 }
-function metadata(bytes: Buffer, files: PackFile[]) {
+function metadata(bytes: Buffer, files: PackFile[], selectedVersion = version) {
   return [
     {
       name: 'vida-agent',
-      version,
-      filename: 'vida-agent-0.1.2.tgz',
+      version: selectedVersion,
+      filename: 'vida-agent-' + selectedVersion + '.tgz',
       integrity: 'sha512-' + createHash('sha512').update(bytes).digest('base64'),
       files,
     },
@@ -712,6 +721,18 @@ test('CI dormant invocation binds exact repository job published commit and nati
   };
   const input = { env, platform: 'win32', arch: 'x64', bun: executingPin };
   assert.deepEqual(validateNativeCIInvocation(input).request, request);
+  const linuxRequest = requestForCI({ ...value.input, context: ciContext, target: 'bun-linux-x64' });
+  const linux = {
+    ...input,
+    platform: 'linux',
+    env: { ...env, GITHUB_JOB: 'native-linux-x64', CI_REQUEST: JSON.stringify(linuxRequest) },
+  };
+  assert.deepEqual(validateNativeCIInvocation(linux).request, linuxRequest);
+  assert.throws(() => validateNativeCIInvocation({ ...linux, platform: 'win32' }), /pinned producer/);
+  assert.throws(
+    () => validateNativeCIInvocation({ ...linux, env: { ...linux.env, CI_REQUEST: JSON.stringify(request) } }),
+    /CI context differs/,
+  );
   for (const [key, bad] of [
     ['VIDA_NATIVE_CI_ENABLED', 'false'],
     ['GITHUB_SHA', sha('other commit').slice(0, 40)],
@@ -2203,5 +2224,654 @@ test('CI provider byte reader rejects oversized and non-byte streams before late
     }
   } finally {
     globalThis.fetch = priorFetch;
+  }
+});
+
+async function targetCandidateFixture(
+  root: string,
+  target: 'bun-linux-x64' | 'bun-windows-x64',
+  manifestTarget = target,
+  selectedOperation = operation,
+  selectedVersion = version,
+) {
+  const manifest = JSON.parse(read(root, 'packages/agent/package.json').toString('utf8')) as object;
+  const inputs = standaloneBuildInputInventory(path.join(root, 'packages/agent')).map((file) => {
+    const bytes = read(root, 'packages/agent/' + file);
+    return { path: file, bytes: bytes.length, sha256: sha(bytes) };
+  });
+  const file = 'vida-agent-' + manifestTarget + (manifestTarget.startsWith('bun-windows-') ? '.exe' : '');
+  const asset = Buffer.from('inert asset ' + manifestTarget);
+  const native = {
+    schema: 'VidaStandaloneBuild/v1',
+    version: selectedVersion,
+    pin: read(root, 'packages/agent/.bun-version').toString('utf8').trim(),
+    target: manifestTarget,
+    payloadId: sha('inert embedded payload'),
+    inputs,
+    asset: { file, bytes: asset.length, sha256: sha(asset) },
+  };
+  const contents: Record<string, string | Buffer> = {
+    'package/package.json': json(manifest),
+    'package/lib.js': read(root, 'packages/agent/lib.js'),
+    'package/dist/src/index.d.ts': read(root, 'packages/agent/dist/src/index.d.ts'),
+    'package/dist/src/trusted-host.d.ts': read(root, 'packages/agent/dist/src/trusted-host.d.ts'),
+    ...Object.fromEntries(inputs.map(({ path: file }) => ['package/' + file, read(root, 'packages/agent/' + file)])),
+    'package/dist/standalone/manifest.json': json(native),
+    ['package/dist/standalone/' + file]: asset,
+  };
+  const bytes = Buffer.from(await new Bun.Archive(contents, { compress: 'gzip' }).bytes());
+  const files = Object.entries(contents).map(([file, value]) => ({
+    path: file.slice(8),
+    size: Buffer.byteLength(value),
+  }));
+  const archivePath = '.tmp/' + target + '/vida-agent-' + selectedVersion + '.tgz';
+  const candidatePath = '.tmp/' + target + '.json';
+  write(root, archivePath, bytes);
+  write(root, candidatePath, {
+    schema: 'VidaNativeRetargetCandidate/v2',
+    operation_id: selectedOperation,
+    version: selectedVersion,
+    target,
+    archive: archivePath,
+    pack_metadata: metadata(bytes, files, selectedVersion),
+    source_binding: releaseSourceBinding(root).source_binding,
+  });
+  return { candidatePath, bytes };
+}
+
+test('two target-specific stages retain separate independently validated bytes', async () => {
+  const value = await fixture();
+  let complete = false;
+  try {
+    const priorState = read(value.root, folder + '/release.json');
+    const priorPending = read(value.root, pending);
+    await value.stage();
+    const legacy = readNativeRetargetCandidate(value.input);
+    assert.throws(() => readNativeRetargetCandidate({ ...value.input, target: 'bun-windows-x64' }));
+    const linux = await targetCandidateFixture(value.root, 'bun-linux-x64');
+    const windows = await targetCandidateFixture(value.root, 'bun-windows-x64');
+    await stageNativeRetargetCandidate({ ...value.input, candidateFile: linux.candidatePath });
+    await stageNativeRetargetCandidate({ ...value.input, candidateFile: windows.candidatePath });
+    const l = readNativeRetargetCandidate({ ...value.input, target: 'bun-linux-x64' });
+    const w = readNativeRetargetCandidate({ ...value.input, target: 'bun-windows-x64' });
+    assert.equal(l.manifest.target, 'bun-linux-x64');
+    assert.equal(w.manifest.target, 'bun-windows-x64');
+    assert.notEqual(l.archive_sha256, w.archive_sha256);
+    assert.notEqual(l.manifest.asset.sha256, w.manifest.asset.sha256);
+    assert.equal(l.version, w.version);
+    assert.equal(l.source_binding, w.source_binding);
+    assert.equal(readNativeRetargetCandidate(value.input).candidate_digest, legacy.candidate_digest);
+    assert.throws(
+      () => readNativeRetargetCandidate({ ...value.input, target: 'bun-linux-x64', published: true }),
+      /published authority/,
+    );
+    assert.deepEqual(read(value.root, folder + '/release.json'), priorState);
+    assert.deepEqual(read(value.root, pending), priorPending);
+    write(value.root, pending, {
+      schema: 'VidaLocalReleaseState/v1',
+      operation_id: operation,
+      version: '0.1.3',
+      status: 'awaiting_assurance',
+    });
+    assert.throws(() => readNativeRetargetCandidate({ ...value.input, target: 'bun-linux-x64' }), /not eligible/);
+    assert.throws(() => recheckNativeRetargetCandidate(value.root, l), /changed/);
+    assert.deepEqual(read(value.root, archive), value.oldBytes);
+    complete = true;
+  } finally {
+    if (complete) {
+      rmSync(value.root, { recursive: true, force: true });
+      roots.delete(value.root);
+    }
+  }
+});
+
+test('target-indexed staging rejects missing and mixed targets and retains failed staging', async () => {
+  const value = await fixture();
+  let complete = false;
+  try {
+    const linux = await targetCandidateFixture(value.root, 'bun-linux-x64');
+    const invalid = JSON.parse(read(value.root, linux.candidatePath).toString('utf8')) as Record<string, unknown>;
+    delete invalid.target;
+    write(value.root, linux.candidatePath, invalid);
+    await assert.rejects(stageNativeRetargetCandidate({ ...value.input, candidateFile: linux.candidatePath }));
+    assert.equal(existsSync(path.join(value.root, folder, 'retarget/candidates')), false);
+    await targetCandidateFixture(value.root, 'bun-linux-x64');
+    await stageNativeRetargetCandidate({ ...value.input, candidateFile: linux.candidatePath });
+    const before = readNativeRetargetCandidate({ ...value.input, target: 'bun-linux-x64' });
+    const mixed = await targetCandidateFixture(value.root, 'bun-windows-x64', 'bun-linux-x64');
+    await assert.rejects(
+      stageNativeRetargetCandidate({ ...value.input, candidateFile: mixed.candidatePath }),
+      /candidate manifest target differs/,
+    );
+    assert.equal(
+      readNativeRetargetCandidate({ ...value.input, target: 'bun-linux-x64' }).candidate_digest,
+      before.candidate_digest,
+    );
+    assert.throws(() => readNativeRetargetCandidate({ ...value.input, target: 'bun-windows-x64' }));
+    assert.equal(existsSync(path.join(value.root, folder, 'retarget/candidates/bun-windows-x64')), true);
+    assert.deepEqual(read(value.root, archive), value.oldBytes);
+    complete = true;
+  } finally {
+    if (complete) {
+      rmSync(value.root, { recursive: true, force: true });
+      roots.delete(value.root);
+    }
+  }
+});
+
+test('target-indexed staging rejects a different version or Source before reserving', async () => {
+  for (const mismatch of ['version', 'source_binding'] as const) {
+    const value = await fixture();
+    let complete = false;
+    try {
+      const selected = await targetCandidateFixture(value.root, 'bun-linux-x64');
+      const record: unknown = JSON.parse(read(value.root, selected.candidatePath).toString('utf8'));
+      assert.ok(typeof record === 'object' && record !== null && !Array.isArray(record));
+      const changed = { ...record, [mismatch]: mismatch === 'version' ? '0.1.3' : 'f'.repeat(64) };
+      write(value.root, selected.candidatePath, changed);
+      const original = read(value.root, folder + '/release.json');
+      await assert.rejects(stageNativeRetargetCandidate({ ...value.input, candidateFile: selected.candidatePath }));
+      assert.equal(existsSync(path.join(value.root, folder, 'retarget/candidates')), false);
+      assert.deepEqual(read(value.root, folder + '/release.json'), original);
+      assert.deepEqual(read(value.root, archive), value.oldBytes);
+      complete = true;
+    } finally {
+      if (complete) {
+        rmSync(value.root, { recursive: true, force: true });
+        roots.delete(value.root);
+      }
+    }
+  }
+});
+
+test('local pack qualification uses current local test evidence without granting CI or install authority', async () => {
+  const value = await fixture();
+  let complete = false;
+  try {
+    const inputs = ['packages/agent/lib.js'];
+    const lanes = ['retained-behavior', 'static', 'release-local'];
+    const tests = lanes.map((lane) => {
+      const file = '.tmp/' + lane + '-fixture.json';
+      const log = { exit_code: 0, command: 'fixture', started_at: 'fixture', completed_at: 'fixture' };
+      write(value.root, file, log);
+      return {
+        lane,
+        path: file,
+        inputs,
+        sha256: sha(read(value.root, file)),
+        input_binding: testInputBinding(value.root, inputs),
+      };
+    });
+    write(value.root, folder + '/tests.json', { operation_id: operation, version, tests });
+    const expected = releaseSourceBinding(value.root).source_binding;
+    assert.deepEqual(await verifyLocalPackTests({ ...value.input, version }), { source_binding: expected });
+    await assert.rejects(verifyLocalReleaseAssurance({ ...value.input, version }), /CI evidence invalid/);
+    write(value.root, '.tmp/static-fixture.json', {
+      exit_code: 1,
+      command: 'fixture',
+      started_at: 'fixture',
+      completed_at: 'fixture',
+    });
+    await assert.rejects(verifyLocalPackTests({ ...value.input, version }), /missing, failed or bound/);
+    assert.deepEqual(read(value.root, archive), value.oldBytes);
+    complete = true;
+  } finally {
+    if (complete) {
+      rmSync(value.root, { recursive: true, force: true });
+      roots.delete(value.root);
+    }
+  }
+});
+
+test('prepare then formation-only pack and two target stages retain CI install gate', async () => {
+  const value = await fixture();
+  let complete = false;
+  try {
+    rmSync(path.join(value.root, '.agent'), { recursive: true });
+    const originalManifest: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString('utf8'));
+    assert.ok(typeof originalManifest === 'object' && originalManifest !== null && !Array.isArray(originalManifest));
+    const sourceRoot = path.resolve(import.meta.dir, '../../..');
+    const maintainedManifest: unknown = JSON.parse(read(sourceRoot, 'packages/agent/package.json').toString('utf8'));
+    assert.ok(
+      typeof maintainedManifest === 'object' && maintainedManifest !== null && 'dependencies' in maintainedManifest,
+    );
+    const maintainedDependencies = maintainedManifest.dependencies as Record<string, string>;
+    assert.ok('devDependencies' in maintainedManifest);
+    const maintainedDevDependencies = maintainedManifest.devDependencies as Record<string, string>;
+    write(value.root, 'packages/agent/package.json', {
+      ...originalManifest,
+      packageManager: `bun@${Bun.version}`,
+      scripts: {},
+      dependencies: { '@openclaw/fs-safe': maintainedDependencies['@openclaw/fs-safe'] },
+      devDependencies: { tar: maintainedDevDependencies.tar },
+      engines: { bun: Bun.version, node: '24.0.0', npm: '12.x' },
+    });
+    write(value.root, 'packages/agent/.bun-version', Bun.version + '\n');
+    write(value.root, 'packages/agent/bun.lock', read(sourceRoot, 'packages/agent/bun.lock'));
+    mkdirSync(path.join(value.root, 'packages/agent/node_modules'));
+    symlinkSync(
+      path.join(sourceRoot, 'packages/agent/node_modules/@openclaw'),
+      path.join(value.root, 'packages/agent/node_modules/@openclaw'),
+      'dir',
+    );
+    symlinkSync(
+      path.join(sourceRoot, 'packages/agent/node_modules/tar'),
+      path.join(value.root, 'packages/agent/node_modules/tar'),
+      'dir',
+    );
+    assert.equal(
+      createRequire(path.join(value.root, 'packages/agent/package.json')).resolve('tar'),
+      createRequire(path.join(sourceRoot, 'packages/agent/package.json')).resolve('tar'),
+    );
+    const installedTar: unknown = createRequire(path.join(value.root, 'packages/agent/package.json'))(
+      'tar/package.json',
+    );
+    assert.ok(typeof installedTar === 'object' && installedTar !== null && 'version' in installedTar);
+    assert.equal(installedTar.version, maintainedDevDependencies.tar);
+    const prepared = await prepareRelease(value.root);
+    assert.ok(prepared);
+    assert.equal(prepared.version, '0.1.3');
+    const current = { root: value.root, operation: prepared.operation_id };
+    const selectedVersion = prepared.version;
+    const releaseFolder = '.agent/work/agent-local-release/' + prepared.operation_id;
+    const tarballPath = '.tmp/releases/' + prepared.operation_id + '/vida-agent-' + selectedVersion + '.tgz';
+    const initial = read(value.root, releaseFolder + '/release.json');
+    const inputs = ['packages/agent/lib.js'];
+    const tests = ['retained-behavior', 'static', 'release-local'].map((lane) => {
+      const file = '.tmp/' + lane + '-pack-fixture.json';
+      write(value.root, file, { exit_code: 0, command: 'fixture', started_at: 'fixture', completed_at: 'fixture' });
+      return {
+        lane,
+        path: file,
+        inputs,
+        sha256: sha(read(value.root, file)),
+        input_binding: testInputBinding(value.root, inputs),
+      };
+    });
+    write(value.root, releaseFolder + '/tests.json', {
+      operation_id: prepared.operation_id,
+      version: selectedVersion,
+      tests,
+    });
+    let calls = 0;
+    const sdk = sdkCompatibilityManifest({ root: path.join(value.root, 'packages/agent') }).bytes;
+    const contents = { 'package/package.json': sdk, 'package/lib.js': read(value.root, 'packages/agent/lib.js') };
+    const tarball = Buffer.from(await new Bun.Archive(contents, { compress: 'gzip' }).bytes());
+    const files = Object.entries(contents).map(([name, data]) => ({
+      path: name.slice('package/'.length),
+      size: data.length,
+    }));
+    const pack = metadata(tarball, files, selectedVersion);
+    const command: typeof runCommand = async (_command, args) => {
+      calls++;
+      assert.ok(args.includes('--pack'));
+      write(value.root, tarballPath, tarball);
+      return json(pack);
+    };
+    await assert.rejects(
+      executeRelease({
+        ...current,
+        packOnly: true,
+        distribution: 'npm',
+        qualify: verifyLocalReleaseTests,
+        command,
+        npmCli: import.meta.filename,
+      }),
+      /trusted controller observation/,
+    );
+    assert.equal(calls, 0);
+    write(value.root, releaseFolder + '/release.json', initial);
+    const result = await executeRelease({
+      ...current,
+      packOnly: true,
+      distribution: 'npm',
+      qualify: verifyLocalPackTests,
+      command,
+      npmCli: import.meta.filename,
+    });
+    assert.equal(result.status, 'awaiting_assurance');
+    assert.equal(calls, 1);
+    assert.deepEqual(read(value.root, tarballPath), tarball);
+    await assert.rejects(verifyLocalReleaseAssurance({ ...current, version: selectedVersion }), /CI evidence invalid/);
+    await assert.rejects(
+      executeRelease({ ...current, distribution: 'npm', qualify: verifyLocalPackTests, npmCli: import.meta.filename }),
+      /SDK archives are library-only/,
+    );
+    assert.equal(calls, 1);
+    const primary = await targetCandidateFixture(
+      value.root,
+      'bun-linux-x64',
+      'bun-linux-x64',
+      prepared.operation_id,
+      selectedVersion,
+    );
+    const primaryRaw: unknown = JSON.parse(read(value.root, primary.candidatePath).toString('utf8'));
+    assert.ok(typeof primaryRaw === 'object' && primaryRaw !== null && !Array.isArray(primaryRaw));
+    const { target: _target, ...primaryFields } = primaryRaw as Record<string, unknown>;
+    const primaryFile = '.tmp/primary-native.json';
+    write(value.root, primaryFile, { ...primaryFields, schema: 'VidaNativeRetargetCandidate/v1' });
+    await stageNativeRetargetCandidate({ ...current, candidateFile: primaryFile });
+    const peer = await targetCandidateFixture(
+      value.root,
+      'bun-windows-x64',
+      'bun-windows-x64',
+      prepared.operation_id,
+      selectedVersion,
+    );
+    await stageNativeRetargetCandidate({ ...current, candidateFile: peer.candidatePath });
+    await planReleaseRetarget({ ...current, actor: 'isolated fixture controller' });
+    await applyReleaseRetarget(current);
+    assert.equal(readNativeRetargetCandidate({ ...current, published: true }).manifest.target, 'bun-linux-x64');
+    assert.equal(
+      readNativeRetargetCandidate({ ...current, target: 'bun-windows-x64' }).manifest.target,
+      'bun-windows-x64',
+    );
+    const beforeDeniedInstall = read(value.root, releaseFolder + '/release.json');
+    let installCalls = 0;
+    const denyInstall: typeof runCommand = async () => {
+      installCalls++;
+      throw new Error('Native install must not run without CI');
+    };
+    await assert.rejects(
+      executeRelease({ ...current, qualify: verifyLocalReleaseAssurance, command: denyInstall }),
+      /CI evidence invalid/,
+    );
+    assert.equal(installCalls, 0);
+    const deniedJournal = read(value.root, releaseFolder + '/release.json');
+    const denied: unknown = JSON.parse(deniedJournal.toString('utf8'));
+    assert.ok(typeof denied === 'object' && denied !== null && !Array.isArray(denied));
+    assert.notEqual((denied as Record<string, unknown>).install_started, true);
+    assert.equal(existsSync(path.join(value.root, '.agent/work/agent-local-release/successful.json')), false);
+    write(value.root, '.tmp/denied-native-install.json', deniedJournal);
+    write(value.root, releaseFolder + '/release.json', beforeDeniedInstall);
+    const journal: unknown = JSON.parse(read(value.root, releaseFolder + '/release.json').toString('utf8'));
+    assert.ok(typeof journal === 'object' && journal !== null && !Array.isArray(journal));
+    write(value.root, releaseFolder + '/release.json', { ...journal, status: 'running' });
+    const context = { schema: 'ProjectContext/v1', repository_id: 'vida-agent', project_ids: ['agent'] };
+    const targets: Parameters<typeof verifyCIDeliveryFormationPair>[0]['targets'] = (
+      ['bun-linux-x64', 'bun-windows-x64'] as const
+    ).map((target, index) => {
+      const request = recordCIDeliveryRequest({ ...current, context, target });
+      const profile = {
+        issuer: 'github-actions',
+        repository_id: request.repository_id,
+        project_ids: request.project_ids,
+        target,
+        required_checks: ['native-build'],
+        github: {
+          repository: 'pomazanbohdan/vida-stack-lite',
+          repository_id: 123,
+          workflow_id: 456,
+          source_commit: 'a'.repeat(40),
+          workflow_path: '.github/workflows/agent-native-delivery.yml',
+          workflow_sha256: 'b'.repeat(64),
+          job: target,
+          steps: [{ id: 'native-build', name: 'native-build' }],
+        },
+      };
+      return {
+        target,
+        request_id: request.request_id,
+        profile,
+        observe: async ({ request, candidate }) => {
+          const checks = [{ id: 'native-build', status: 'passed' }];
+          const key = `vida-bun-install-v1-main-bun-${Bun.version}-${'a'.repeat(64)}`;
+          const result_bytes = encodeCIDeliveryResult({
+            request,
+            candidate,
+            profile,
+            observation: { issuer: 'github-actions', run_id: '123', run_attempt: 1, conclusion: 'success', checks },
+            dependency_cache: {
+              id: 1,
+              key,
+              ref: 'refs/heads/main',
+              version: 'v1',
+              size_in_bytes: 1,
+              restore: 'hit',
+              matched_key: key,
+              save: 'confirmed',
+              save_action: 'skipped',
+            },
+          });
+          return {
+            schema: 'VidaCIDeliveryObservation/v1',
+            issuer: 'github-actions',
+            run_id: '123',
+            run_attempt: 1,
+            artifact_id: String(index + 1),
+            conclusion: 'success',
+            checks,
+            result_bytes,
+          };
+        },
+      };
+    });
+    const formedPath = path.join(value.root, '.agent/work/agent-local-release/formed.json');
+    const oldFetch = globalThis.fetch;
+    let providerCalls = 0;
+    globalThis.fetch = mockedFetch(oldFetch, async (input) => {
+      providerCalls++;
+      assert.equal(
+        String(fetchURL(input)),
+        'https://api.github.com/repos/pomazanbohdan/vida-stack-lite/actions/runs/123/attempts/1',
+      );
+      return new Response(
+        JSON.stringify({
+          id: 123,
+          run_attempt: 1,
+          head_sha: 'a'.repeat(40),
+          workflow_id: 374583166,
+          path: '.github/workflows/agent-native-delivery.yml',
+          event: 'workflow_dispatch',
+          status: 'in_progress',
+          conclusion: null,
+          repository: { id: 1340911900, full_name: 'pomazanbohdan/vida-stack-lite' },
+          head_repository: { id: 1340911900 },
+        }),
+      );
+    });
+    try {
+      await assert.rejects(
+        verifyApprovedGitHubFormationPair({
+          ...current,
+          version: selectedVersion,
+          source_commit: 'a'.repeat(40),
+          run_id: '123',
+          run_attempt: 1,
+          linux: { request_id: targets[0]!.request_id, artifact_id: '1', transport_path: '.tmp/linux.zip' },
+          windows: { request_id: targets[1]!.request_id, artifact_id: '2', transport_path: '.tmp/windows.zip' },
+        }),
+        /provider run response malformed|run\/attempt\/workflow differs/,
+      );
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
+    assert.equal(providerCalls, 1);
+    assert.equal(existsSync(formedPath), false);
+    await assert.rejects(
+      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: targets.slice(0, 1) } }),
+      /two target/,
+    );
+    assert.equal(existsSync(formedPath), false);
+    const mismatchedCommit = [...targets];
+    const second = mismatchedCommit[1];
+    assert.ok(second?.profile.github);
+    mismatchedCommit[1] = {
+      ...second,
+      profile: { ...second.profile, github: { ...second.profile.github, source_commit: 'e'.repeat(40) } },
+    };
+    await assert.rejects(
+      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: mismatchedCommit } }),
+      /provider run/,
+    );
+    assert.equal(existsSync(formedPath), false);
+    const failedTargets = [...targets];
+    const failed = failedTargets[1];
+    assert.ok(failed);
+    failedTargets[1] = {
+      ...failed,
+      observe: async (input) => ({ ...(await failed.observe(input)), conclusion: 'failed' }),
+    };
+    await assert.rejects(
+      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: failedTargets } }),
+      /actual complete controller observation/,
+    );
+    assert.equal(existsSync(formedPath), false);
+    await assert.rejects(
+      verifyLocalReleaseAssurance({ ...current, version: selectedVersion, ci: { targets: failedTargets } }),
+      /actual complete controller observation/,
+    );
+    for (const field of ['version', 'source_binding'] as const) {
+      const mixedTargets = [...targets];
+      mixedTargets[1] = {
+        ...failed,
+        observe: async (input) => {
+          const observed = await failed.observe(input);
+          const parsed: unknown = JSON.parse(observed.result_bytes.toString('utf8'));
+          assert.ok(typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed));
+          return {
+            ...observed,
+            result_bytes: Buffer.from(json({ ...parsed, [field]: field === 'version' ? '0.1.4' : 'f'.repeat(64) })),
+          };
+        },
+      };
+      await assert.rejects(
+        verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: mixedTargets } }),
+        /result request differs/,
+      );
+    }
+    await assert.rejects(
+      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: [targets[0]!, targets[0]!] } }),
+      /exact Linux and Windows/,
+    );
+    const logPath = '.tmp/static-pack-fixture.json';
+    const priorLog = read(value.root, logPath);
+    const driftTargets = [...targets];
+    driftTargets[1] = {
+      ...failed,
+      observe: async (input) => {
+        const observed = await failed.observe(input);
+        write(value.root, logPath, 'changed during observation');
+        return observed;
+      },
+    };
+    await assert.rejects(
+      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: driftTargets } }),
+      /Local test evidence changed/,
+    );
+    write(value.root, logPath, priorLog);
+    assert.equal(existsSync(formedPath), false);
+    for (const target of targets)
+      assert.equal(existsSync(path.join(value.root, releaseFolder, 'ci', target.request_id, 'result.json')), false);
+    const archiveEntry = createRequire(path.join(sourceRoot, 'packages/agent/package.json')).resolve(
+      '@openclaw/fs-safe/archive',
+    );
+    const JSZip = createRequire(archiveEntry)('jszip') as typeof JSZipConstructor;
+    const workflowBytes = read(value.root, '.github/workflows/agent-native-delivery.yml');
+    const run = {
+      id: 123,
+      run_attempt: 1,
+      head_sha: 'a'.repeat(40),
+      workflow_id: 374583166,
+      path: '.github/workflows/agent-native-delivery.yml',
+      event: 'workflow_dispatch',
+      status: 'completed',
+      conclusion: 'success',
+      repository: { id: 1340911900, full_name: 'pomazanbohdan/vida-stack-lite' },
+      head_repository: { id: 1340911900 },
+    };
+    const jobs = (['linux', 'windows'] as const).map((platform) => ({
+      name: 'native-' + platform + '-x64',
+      run_id: 123,
+      run_attempt: 1,
+      status: 'completed',
+      conclusion: 'success',
+      started_at: '2026-10-04T09:00:00Z',
+      completed_at: '2026-10-04T09:01:00Z',
+      steps: [{ name: 'native-build', status: 'completed', conclusion: 'success' }],
+    }));
+    const artifacts: Record<string, unknown> = {};
+    const transportPaths: string[] = [];
+    for (const [index, target] of targets.entries()) {
+      const request = recordCIDeliveryRequest({ ...current, context, target: target.target });
+      const candidate =
+        index === 0
+          ? readNativeRetargetCandidate({ ...current, published: true })
+          : readNativeRetargetCandidate({ ...current, target: 'bun-windows-x64' });
+      const result = await target.observe({ request, candidate });
+      const bytes = await new JSZip()
+        .file('result.json', result.result_bytes)
+        .file(candidate.pack_metadata[0].filename, index === 0 ? primary.bytes : peer.bytes)
+        .generateAsync({ type: 'nodebuffer', compression: 'STORE' });
+      const transport = '.tmp/provider-' + index + '.zip';
+      write(value.root, transport, bytes);
+      transportPaths.push(transport);
+      artifacts[String(index + 1)] = {
+        id: index + 1,
+        name: request.request_id + '-1',
+        expired: false,
+        created_at: '2026-10-04T09:00:30Z',
+        digest: 'sha256:' + sha(bytes),
+        workflow_run: { id: 123, repository_id: 1340911900, head_repository_id: 1340911900, head_sha: run.head_sha },
+      };
+    }
+    const pairInput = {
+      ...current,
+      version: selectedVersion,
+      source_commit: run.head_sha,
+      run_id: '123',
+      run_attempt: 1,
+      linux: { request_id: targets[0]!.request_id, artifact_id: '1', transport_path: transportPaths[0]! },
+      windows: { request_id: targets[1]!.request_id, artifact_id: '2', transport_path: transportPaths[1]! },
+    };
+    let observedProviderCalls = 0;
+    globalThis.fetch = mockedFetch(oldFetch, async (input) => {
+      observedProviderCalls++;
+      const suffix = String(fetchURL(input)).replace('https://api.github.com/repos/pomazanbohdan/vida-stack-lite', '');
+      if (suffix === '/actions/runs/123/attempts/1') return new Response(JSON.stringify(run));
+      if (suffix === '/contents/.github/workflows/agent-native-delivery.yml?ref=' + run.head_sha)
+        return new Response(JSON.stringify({ encoding: 'base64', content: workflowBytes.toString('base64') }));
+      if (suffix === '/actions/runs/123/attempts/1/jobs?per_page=100')
+        return new Response(JSON.stringify({ total_count: jobs.length, jobs }));
+      if (suffix.startsWith('/actions/artifacts/') && artifacts[suffix.slice('/actions/artifacts/'.length)])
+        return new Response(JSON.stringify(artifacts[suffix.slice('/actions/artifacts/'.length)]));
+      throw Error('Unexpected provider request');
+    });
+    let formed;
+    try {
+      jobs[1]!.conclusion = 'failure';
+      await assert.rejects(verifyApprovedGitHubFormationPair(pairInput), /required native job differs/);
+      assert.equal(existsSync(formedPath), false);
+      for (const target of targets)
+        assert.equal(existsSync(path.join(value.root, releaseFolder, 'ci', target.request_id, 'result.json')), false);
+      jobs[1]!.conclusion = 'success';
+      observedProviderCalls = 0;
+      formed = await verifyApprovedGitHubFormationPair(pairInput);
+      assert.equal(observedProviderCalls, 8);
+    } finally {
+      globalThis.fetch = oldFetch;
+    }
+    if (!('targets' in formed)) throw new Error('Target formation is missing.');
+    assert.equal(formed.schema, 'VidaLocalReleaseFormation/v2');
+    assert.deepEqual(
+      formed.targets.map((row) => row.target),
+      ['bun-linux-x64', 'bun-windows-x64'],
+    );
+    assert.deepEqual(readConfirmedCIDeliveryFormation(value.root), formed);
+    const resultPath = path.join(value.root, releaseFolder, 'ci', formed.targets[0]!.request_id, 'result.json');
+    const beforeResult = readFileSync(resultPath);
+    writeFileSync(resultPath, 'changed');
+    assert.throws(() => readConfirmedCIDeliveryFormation(value.root), /result changed/);
+    writeFileSync(resultPath, beforeResult);
+    assert.equal(
+      (await verifyLocalReleaseAssurance({ ...current, version: selectedVersion, ci: { targets } })).source_binding,
+      formed.source_binding,
+    );
+    complete = true;
+  } finally {
+    if (complete) {
+      rmSync(value.root, { recursive: true, force: true });
+      roots.delete(value.root);
+    }
   }
 });

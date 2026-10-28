@@ -6,6 +6,10 @@ on:
         description: Complete controller-issued VidaCIDeliveryRequest/v1 JSON
         required: true
         type: string
+      request_linux:
+        description: Optional controller-issued Linux request for the same operation and Source
+        required: false
+        type: string
       source_commit:
         description: Controller-selected published commit
         required: true
@@ -32,13 +36,15 @@ jobs:
       run:
         shell: pwsh
     steps:
-      - name: selected-source
+      - &shared-selected-source
+        name: selected-source
         run: |
           $ErrorActionPreference = 'Stop'
           ('BUN_INSTALL_CACHE_DIR=' + (Join-Path $env:RUNNER_TEMP 'vida-bun-install-cache')) | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
           if ($env:CI_SOURCE_COMMIT -cnotmatch '^[a-f0-9]{40}$' -or $env:CI_SOURCE_COMMIT -cne $env:GITHUB_SHA) { throw 'Selected published Source differs' }
           if ($env:GITHUB_REPOSITORY -cne 'pomazanbohdan/vida-stack-lite' -or $env:GITHUB_REPOSITORY_ID -cne '1340911900') { throw 'Selected repository differs' }
-      - name: checkout
+      - &shared-checkout
+        name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ inputs.source_commit }}
@@ -46,12 +52,14 @@ jobs:
           persist-credentials: false
           submodules: false
           lfs: false
-      - name: bun
+      - &shared-bun
+        name: bun
         id: bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version-file: packages/agent/.bun-version
-      - name: bun-dependency-cache
+      - &shared-bun-dependency-cache
+        name: bun-dependency-cache
         id: bun-dependency-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
@@ -59,7 +67,8 @@ jobs:
           key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
           restore-keys: |
             vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-version }}-
-      - name: isolated-source
+      - &shared-isolated-source
+        name: isolated-source
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:GITHUB_RUN_ID -notmatch '^\d+$' -or $env:GITHUB_RUN_ATTEMPT -notmatch '^[1-9]\d*$') { throw 'Actual run identity unavailable' }
@@ -99,14 +108,16 @@ jobs:
             [IO.File]::Copy($source, $target, $false)
           }
           "VIDA_CI_SOURCE_ROOT=$mirror" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
-      - id: save-bun-dependency-cache
+      - &shared-save-bun-dependency-cache
+        id: save-bun-dependency-cache
         name: save-bun-dependency-cache
         if: ${{ steps.bun-dependency-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ runner.temp }}/vida-bun-install-cache
           key: ${{ steps.bun-dependency-cache.outputs.cache-primary-key }}
-      - name: require-bun-dependency-cache-evidence
+      - &shared-require-bun-dependency-cache-evidence
+        name: require-bun-dependency-cache-evidence
         env:
           CACHE_KEY: ${{ steps.bun-dependency-cache.outputs.cache-primary-key }}
           CACHE_HIT: ${{ steps.bun-dependency-cache.outputs.cache-hit }}
@@ -155,10 +166,12 @@ jobs:
           "VIDA_CI_CACHE_RESTORE=$restore" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
           "VIDA_CI_CACHE_SAVE=confirmed" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
           "VIDA_CI_CACHE_SAVE_ACTION=$saveAction" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
-      - id: native-build
+      - &shared-native-build
+        id: native-build
         name: native-build
         run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.ts" --phase native-build
-      - id: emit-build
+      - &shared-emit-build
+        id: emit-build
         name: emit-build
         run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.ts" --phase emit-build
       - name: upload
@@ -178,7 +191,8 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
-      - name: upload-formation-proof
+      - &shared-upload-formation-proof
+        name: upload-formation-proof
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ${{ steps.emit-build.outputs.formation_artifact_name }}
@@ -191,3 +205,44 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
+  native-linux-x64:
+    name: native-linux-x64
+    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.request_linux != '' }}
+    runs-on: ubuntu-24.04
+    env:
+      VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
+      CI_REQUEST: ${{ inputs.request_linux }}
+      CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - *shared-selected-source
+      - *shared-checkout
+      - *shared-bun
+      - *shared-bun-dependency-cache
+      - *shared-isolated-source
+      - *shared-save-bun-dependency-cache
+      - *shared-require-bun-dependency-cache-evidence
+      - *shared-native-build
+      - *shared-emit-build
+      - name: upload
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ steps.emit-build.outputs.artifact_name }}
+          path: |
+            ${{ steps.emit-build.outputs.directory }}/${{ steps.emit-build.outputs.archive_file }}
+            ${{ steps.emit-build.outputs.directory }}/${{ steps.emit-build.outputs.asset_file }}
+            ${{ steps.emit-build.outputs.directory }}/manifest.json
+            ${{ steps.emit-build.outputs.directory }}/candidate.json
+            ${{ steps.emit-build.outputs.directory }}/native-build.result.json
+          archive: true
+          compression-level: 0
+          overwrite: false
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14
+      - *shared-upload-formation-proof

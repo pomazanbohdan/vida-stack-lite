@@ -15,7 +15,14 @@ import {
 import { assertNativeDeliveryEvidenceRepairSettled } from '../../packages/agent/bin/repair-native-delivery-evidence.ts';
 import { verifyForwardReviewSet } from './controllers/forward-review-proof.ts';
 import { runCommand } from './release-local.ts';
-import { verifyCIDeliveryEvidence, minimumNativeDeliveryChecks } from './release-ci-evidence.ts';
+import {
+  verifyCIDeliveryEvidence,
+  verifyCIDeliveryFormationPair,
+  observeGitHubCIDelivery,
+  minimumNativeDeliveryChecks,
+  type CIDeliveryRequest,
+  type CIDeliveryCandidate,
+} from './release-ci-evidence.ts';
 
 const rootDefault = fileURLToPath(new URL('../../', import.meta.url));
 type SourceObservations = NonNullable<Parameters<typeof sources>[2]>;
@@ -59,11 +66,15 @@ interface SealInput {
   operation: string;
 }
 type CiEvidence = Parameters<typeof verifyCIDeliveryEvidence>[0]['ci'];
+type TargetCiEvidence = { targets: Parameters<typeof verifyCIDeliveryFormationPair>[0]['targets'] };
+function isTargetCi(value: CiEvidence | TargetCiEvidence | null | undefined): value is TargetCiEvidence {
+  return isRecord(value) && 'targets' in value && Array.isArray(value.targets);
+}
 interface VerifyInput {
   root?: string;
   operation: string;
   version: string;
-  ci?: CiEvidence | null | undefined;
+  ci?: CiEvidence | TargetCiEvidence | null | undefined;
 }
 type JsonRecord = Record<string, unknown>;
 
@@ -295,7 +306,7 @@ export function writeLocalSourceSeal({ root = rootDefault, operation }: SealInpu
     };
   });
 }
-export async function verifyLocalReleaseTests({ root = rootDefault, operation, version, ci }: VerifyInput) {
+function captureLocalReleaseTests({ root = rootDefault, operation, version }: VerifyInput) {
   assertReleaseRetargetSettled(root, operation);
   const folder = path.join(root, '.agent/work/agent-local-release', operation);
   const proofFile = path.join(folder, 'tests.json');
@@ -337,7 +348,11 @@ export async function verifyLocalReleaseTests({ root = rootDefault, operation, v
       throw new Error('Test log is missing, failed or bound to other source.');
     observedEvidence.push({ path: test.path, bytes: raw });
   }
-  const joined = await verifyCIDeliveryEvidence({ root, operation, version, ci });
+  return { root, observedEvidence, inputObservations };
+}
+
+function recheckLocalReleaseTests(capture: ReturnType<typeof captureLocalReleaseTests>): void {
+  const { root, observedEvidence, inputObservations } = capture;
   for (const evidence of observedEvidence)
     if (!readFileSync(localFile(root, evidence.path)).equals(evidence.bytes))
       throw Error('Local test evidence changed during CI observation.');
@@ -346,13 +361,125 @@ export async function verifyLocalReleaseTests({ root = rootDefault, operation, v
     if (JSON.stringify([stat.dev, stat.ino, stat.size, stat.mtimeMs, stat.ctimeMs]) !== JSON.stringify(input.identity))
       throw Error('Local test input changed during CI observation.');
   }
+}
+
+/** Local tests authorize only formation of an inert SDK archive, never installation or publication. */
+export async function verifyLocalPackTests(input: VerifyInput): Promise<{ source_binding: string }> {
+  const root = input.root ?? rootDefault;
+  const before = releaseSourceBinding(root).source_binding;
+  const pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+  const journal = releaseState(releasePath(root, `.agent/work/agent-local-release/${input.operation}/release.json`));
+  if (
+    pending.operation_id !== input.operation ||
+    pending.version !== input.version ||
+    journal.operation_id !== input.operation ||
+    journal.version !== input.version ||
+    journal.install_started ||
+    !['awaiting_assurance', 'running', 'packing'].includes(journal.status)
+  )
+    throw new Error('Local pack operation differs or is no longer eligible.');
+  const capture = captureLocalReleaseTests(input);
+  recheckLocalReleaseTests(capture);
+  if (releaseSourceBinding(root).source_binding !== before)
+    throw new Error('Local pack Source changed during test inspection.');
+  return { source_binding: before };
+}
+
+export async function verifyLocalReleaseTests(input: VerifyInput) {
+  const capture = captureLocalReleaseTests(input);
+  const { root, operation, version, ci } = { ...input, root: input.root ?? rootDefault };
+  if (isTargetCi(ci))
+    return verifyCIDeliveryFormationPair({
+      root,
+      operation,
+      version,
+      targets: ci.targets,
+      recheckLocalTests: () => recheckLocalReleaseTests(capture),
+    });
+  const joined = await verifyCIDeliveryEvidence({ root, operation, version, ci });
+  recheckLocalReleaseTests(capture);
   return joined;
+}
+/** Observe the fixed project workflow only after its actual run has completed. */
+export async function verifyApprovedGitHubFormationPair(input: {
+  root?: string;
+  operation: string;
+  version: string;
+  source_commit: string;
+  run_id: string;
+  run_attempt: number;
+  linux: { request_id: string; artifact_id: string; transport_path: string };
+  windows: { request_id: string; artifact_id: string; transport_path: string };
+  token?: string;
+}) {
+  const root = input.root ?? rootDefault;
+  if (!/^[a-f0-9]{40}$/.test(input.source_commit)) throw Error('Selected Source commit is invalid.');
+  const workflowPath = '.github/workflows/agent-native-delivery.yml';
+  const file = releasePath(root, workflowPath);
+  const stat = lstatSync(file);
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 8 * 1024 * 1024)
+    throw Error('Selected workflow Source is invalid.');
+  const workflowHash = sha(readFileSync(file));
+  const targets = (['bun-linux-x64', 'bun-windows-x64'] as const).map((target) => {
+    const selected = target === 'bun-linux-x64' ? input.linux : input.windows;
+    const profile = {
+      issuer: 'github-actions',
+      repository_id: 'vida-agent',
+      project_ids: ['agent'],
+      target,
+      required_checks: [...minimumNativeDeliveryChecks],
+      github: {
+        repository: 'pomazanbohdan/vida-stack-lite',
+        repository_id: 1340911900,
+        workflow_id: 374583166,
+        source_commit: input.source_commit,
+        workflow_path: workflowPath,
+        workflow_sha256: workflowHash,
+        job: target === 'bun-linux-x64' ? 'native-linux-x64' : 'native-windows-x64',
+        steps: [{ id: 'native-build', name: 'native-build' }],
+      },
+    };
+    return {
+      target,
+      request_id: selected.request_id,
+      profile,
+      observe: ({ request, candidate }: { request: CIDeliveryRequest; candidate: CIDeliveryCandidate }) =>
+        observeGitHubCIDelivery({
+          root,
+          request,
+          candidate,
+          profile,
+          run_id: input.run_id,
+          run_attempt: input.run_attempt,
+          artifact_id: selected.artifact_id,
+          transport_path: selected.transport_path,
+          ...(input.token ? { token: input.token } : {}),
+          signal: AbortSignal.timeout(30_000),
+        }),
+    };
+  });
+  return verifyLocalReleaseTests({
+    root,
+    operation: input.operation,
+    version: input.version,
+    ci: { targets },
+  });
 }
 export async function verifyLocalReleaseAssurance({ root = rootDefault, operation, version, ci }: VerifyInput) {
   if (!isRecord(ci)) throw new Error('CI evidence invalid.');
-  const profile = isRecord(ci.profile) ? ci.profile : undefined;
-  if (JSON.stringify(profile?.required_checks) === JSON.stringify(minimumNativeDeliveryChecks))
-    return verifyCIDeliveryEvidence({ root, operation, version, ci });
+  if (isTargetCi(ci)) {
+    if (
+      ci.targets.length === 2 &&
+      ci.targets.every(
+        (item) => JSON.stringify(item.profile.required_checks) === JSON.stringify(minimumNativeDeliveryChecks),
+      )
+    )
+      return verifyLocalReleaseTests({ root, operation, version, ci });
+  } else {
+    const profile = isRecord(ci.profile) ? ci.profile : undefined;
+    if (JSON.stringify(profile?.required_checks) === JSON.stringify(minimumNativeDeliveryChecks))
+      return verifyCIDeliveryEvidence({ root, operation, version, ci });
+  }
   const tested = await verifyLocalReleaseTests({ root, operation, version, ci });
   const folder = path.join(root, '.agent/work/agent-local-release', operation);
   const seal = asRecord(read(path.join(folder, 'source-seal.json')), 'Source seal invalid.');

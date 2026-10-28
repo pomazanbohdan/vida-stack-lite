@@ -262,6 +262,22 @@ Build owner: `.github/workflows/agent-native-delivery.yml` and
 `tooling/agent/native-ci-delivery.ts`. The workflow publishes the six build
 files. CI/CD forms and publishes the exact package and metadata. No tests run at formation or installation.
 
+The paired formation profile uses repository `pomazanbohdan/vida-stack-lite`
+(ID `1340911900`), workflow `agent-native-delivery.yml` (ID `374583166`),
+and the `native-linux-x64` and `native-windows-x64` jobs. Each job must have a
+successful `native-build` step. Dispatch the Windows request as `request` and
+the Linux request as `request_linux`, both for the same operation, version and
+Source. Linux publishes its five formation files; Windows retains its six.
+The run must complete successfully before local observation.
+
+After staging the primary and peer candidates and retaining each formation ZIP,
+the local controller can invoke `release:local` with
+`--observe-native-pair OPERATION SOURCE_COMMIT RUN_ID ATTEMPT LINUX_REQUEST_ID LINUX_ARTIFACT_ID LINUX_ZIP WINDOWS_REQUEST_ID WINDOWS_ARTIFACT_ID WINDOWS_ZIP`.
+ZIP paths are repository-relative. The controller uses the fixed profile above,
+the selected committed workflow bytes, and the GitHub observer for each target.
+`GITHUB_TOKEN` may supply API authentication. Successful observation records
+local formation consistency; it does not publish a release or install an agent.
+
 The build job restores the Bun package cache before installing dependencies.
 Its key binds the runner OS/architecture, Bun version, package manifest and
 lockfile. A compatible cache may supply already downloaded packages; installation

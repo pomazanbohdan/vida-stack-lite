@@ -56,19 +56,7 @@ import {
 } from '../../packages/agent/bin/release-preparation.ts';
 import type { AgentTarModule } from '../../packages/agent/tooling/release-dependency-types.js';
 
-type ReleaseFormation = {
-  schema: 'VidaLocalReleaseFormation/v1';
-  authority: 'local_consistency_only';
-  operation_id: string;
-  request_id: string;
-  version: string;
-  source_binding: string;
-  run_id: string;
-  run_attempt: number;
-  artifact_id: string;
-  result_sha256: string;
-  digest: string;
-} | null;
+type ReleaseFormation = ReturnType<typeof readConfirmedCIDeliveryFormation>;
 const readReleaseFormation: (root: string) => ReleaseFormation = readConfirmedCIDeliveryFormation;
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
@@ -370,7 +358,7 @@ type ServiceOperationHandoffProof = Awaited<
   ReturnType<Parameters<ServiceOperationCustodyApi['handoffServiceOperationCustody']>[7]>
 >;
 type ReleaseRetargetHandoff = NonNullable<Awaited<ReturnType<typeof verifyCompletedReleaseRetargetHandoff>>>;
-type ReleaseCIEvidence = Parameters<typeof import('./release-ci-evidence.ts').verifyCIDeliveryEvidence>[0]['ci'];
+type ReleaseCIEvidence = Parameters<typeof import('./release-assurance.ts').verifyLocalReleaseTests>[0]['ci'];
 type ReleaseQualificationInput = {
   root: string;
   operation: string;
@@ -621,7 +609,12 @@ function releaseOperationRequestDigest(
         version: state.version,
         pack_only: options.packOnly,
         distribution: options.distribution ?? null,
-        qualification: options.packOnly ? 'release-tests' : 'release-assurance',
+        qualification:
+          options.packOnly && options.distribution === 'npm'
+            ? 'local-pack-tests'
+            : options.packOnly
+              ? 'release-tests'
+              : 'release-assurance',
       }),
     ),
   );
@@ -1658,11 +1651,17 @@ async function runReleaseWorkerEntry(operation: string, workerKind: string) {
 /** @param {string} workerKind */
 /** @param {string} workerKind @returns {Promise<ReleaseWorkerOptions>} */
 async function releaseWorkerOptions(workerKind: string): Promise<ReleaseWorkerOptions> {
-  const { verifyLocalReleaseAssurance, verifyLocalReleaseTests } = await import('./release-assurance.ts');
+  const { verifyLocalReleaseAssurance, verifyLocalReleaseTests, verifyLocalPackTests } =
+    await import('./release-assurance.ts');
   return {
     packOnly: workerKind !== '--worker',
     distribution: workerKind === '--pack-npm-worker' ? 'npm' : workerKind === '--pack-worker' ? 'native' : undefined,
-    qualify: workerKind === '--worker' ? verifyLocalReleaseAssurance : verifyLocalReleaseTests,
+    qualify:
+      workerKind === '--worker'
+        ? verifyLocalReleaseAssurance
+        : workerKind === '--pack-npm-worker'
+          ? verifyLocalPackTests
+          : verifyLocalReleaseTests,
   };
 }
 
@@ -1710,12 +1709,18 @@ async function runReservedReleaseWorkerEntry(
 
 /** @param {readonly string[]} args @param {string} operation @param {string} folder */
 async function reserveOrRunReleaseEntry(args: readonly string[], operation: string, folder: string) {
-  const { verifyLocalReleaseAssurance, verifyLocalReleaseTests } = await import('./release-assurance.ts');
+  const { verifyLocalReleaseAssurance, verifyLocalReleaseTests, verifyLocalPackTests } =
+    await import('./release-assurance.ts');
   const kind = args[0] === '--pack-npm' || args[0] === '--pack' ? 'release-pack-worker' : 'release-worker';
   const options = {
     packOnly: args[0] !== '--operation',
     distribution: args[0] === '--pack-npm' ? 'npm' : args[0] === '--pack' ? 'native' : undefined,
-    qualify: args[0] === '--operation' ? verifyLocalReleaseAssurance : verifyLocalReleaseTests,
+    qualify:
+      args[0] === '--operation'
+        ? verifyLocalReleaseAssurance
+        : args[0] === '--pack-npm'
+          ? verifyLocalPackTests
+          : verifyLocalReleaseTests,
   };
   const initialized = await reserveInitializedReleaseWorker(repositoryRoot, operation, kind, options, args, folder);
   if (initialized !== null) return initialized;
@@ -3632,6 +3637,58 @@ async function main(args: string[]) {
       root: repositoryRoot,
       operation: stageOperation,
       candidateFile,
+    });
+  }
+  if (args.length === 11 && args[0] === '--observe-native-pair') {
+    const [
+      ,
+      operation,
+      sourceCommit,
+      runId,
+      attempt,
+      linuxRequest,
+      linuxArtifact,
+      linuxTransport,
+      windowsRequest,
+      windowsArtifact,
+      windowsTransport,
+    ] = args;
+    if (
+      !operation ||
+      !idPattern.test(operation) ||
+      !sourceCommit ||
+      !runId ||
+      !attempt ||
+      !linuxRequest ||
+      !linuxArtifact ||
+      !linuxTransport ||
+      !windowsRequest ||
+      !windowsArtifact ||
+      !windowsTransport ||
+      !/^[1-9]\d*$/.test(attempt) ||
+      !Number.isSafeInteger(Number(attempt))
+    )
+      throw Error('Native pair observation arguments are invalid.');
+    const state = releaseState(journalFile(repositoryRoot, operation));
+    const { verifyApprovedGitHubFormationPair } = await import('./release-assurance.ts');
+    return verifyApprovedGitHubFormationPair({
+      root: repositoryRoot,
+      operation,
+      version: state.version,
+      source_commit: sourceCommit,
+      run_id: runId,
+      run_attempt: Number(attempt),
+      linux: {
+        request_id: linuxRequest,
+        artifact_id: linuxArtifact,
+        transport_path: linuxTransport,
+      },
+      windows: {
+        request_id: windowsRequest,
+        artifact_id: windowsArtifact,
+        transport_path: windowsTransport,
+      },
+      ...(process.env.GITHUB_TOKEN ? { token: process.env.GITHUB_TOKEN } : {}),
     });
   }
   if (args[0] === '--prepare-after-disposition') {

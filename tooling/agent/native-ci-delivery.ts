@@ -92,7 +92,12 @@ type NativeCIContext = NativeCIIdentity & {
   packageRoot: string;
   manifest: { version: string; engines: { bun: string; node: string } };
 };
-type MessageObjectExpectation = { exact?: string; prefix?: string; includes?: string[]; oneOf?: MessageExpectation[] };
+type MessageObjectExpectation = {
+  exact?: string;
+  prefix?: string;
+  includes?: string[];
+  oneOf?: MessageExpectation[];
+};
 type MessageExpectation = string | MessageObjectExpectation;
 type JsonDenialExpectation = {
   kind: 'json';
@@ -110,7 +115,12 @@ type CommandRecord = {
   stdout?: string;
   stderr?: string;
 };
-type CommandOptions = { cwd?: string; env?: NodeJS.ProcessEnv; log?: string; windowsVerbatimArguments?: boolean };
+type CommandOptions = {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  log?: string;
+  windowsVerbatimArguments?: boolean;
+};
 type CommandExecutor = (command: string, args: string[], options?: CommandOptions) => Promise<string>;
 type NativeCICommandRunner = CommandExecutor & {
   denied?: (
@@ -264,7 +274,10 @@ function isCommandRecord(value: unknown): value is CommandRecord {
 function isArchiveModule(value: unknown): value is AgentExtractArchiveModule {
   return isRecord(value) && typeof value.extractArchive === 'function';
 }
-function readPackageManifest(root: string): { version: string; engines: { bun: string; node: string } } {
+function readPackageManifest(root: string): {
+  version: string;
+  engines: { bun: string; node: string };
+} {
   const value = parseUnknownJSON(physical(root, 'packages/agent/package.json', 1024 * 1024).toString('utf8'));
   requireCI(
     isRecord(value) &&
@@ -309,6 +322,11 @@ const profileFor = (request: NativeCIRequest) => ({
   target: request.target,
   required_checks: [...minimumNativeDeliveryChecks],
 });
+function nativeAssetName(target: string): string {
+  if (target === 'bun-windows-x64') return 'vida-agent-bun-windows-x64.exe';
+  if (target === 'bun-linux-x64') return 'vida-agent-bun-linux-x64';
+  throw Error('GAP-VIDA-CI-DELIVERY-001: unsupported native target');
+}
 function dependencyCacheEvidence(env: NodeJS.ProcessEnv): DependencyCache {
   const evidence = {
     id: Number(env.VIDA_CI_CACHE_ID),
@@ -345,14 +363,19 @@ export function validateNativeCIInvocation({
   const executingPackageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../packages/agent'),
     executingPin = readPin(executingPackageRoot);
   checkManifest(executingPackageRoot, executingPin);
+  const nativeTarget =
+    platform === 'win32' && env.GITHUB_JOB === 'native-windows-x64'
+      ? 'bun-windows-x64'
+      : platform === 'linux' && env.GITHUB_JOB === 'native-linux-x64'
+        ? 'bun-linux-x64'
+        : null;
   requireCI(
-    platform === 'win32' && arch === 'x64' && bun === process.versions.bun && bun === executingPin,
-    'qualified Windows x64 pinned producer required',
+    nativeTarget !== null && arch === 'x64' && bun === process.versions.bun && bun === executingPin,
+    'qualified native x64 pinned producer required',
   );
   requireCI(
     env.GITHUB_REPOSITORY === 'pomazanbohdan/vida-stack-lite' &&
       env.GITHUB_REPOSITORY_ID === '1340911900' &&
-      env.GITHUB_JOB === 'native-windows-x64' &&
       typeof env.GITHUB_RUN_ID === 'string' &&
       /^\d+$/.test(env.GITHUB_RUN_ID) &&
       typeof env.GITHUB_RUN_ATTEMPT === 'string' &&
@@ -372,7 +395,7 @@ export function validateNativeCIInvocation({
   requireCI(
     request.repository_id === 'vida-agent' &&
       json(request.project_ids) === json(['agent']) &&
-      request.target === 'bun-windows-x64',
+      request.target === nativeTarget,
     'CI context differs',
   );
   return {
@@ -757,7 +780,7 @@ async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner):
       manifest.inputs.length > 0,
     'native manifest differs',
   );
-  requireCI(manifest.asset.file === 'vida-agent-bun-windows-x64.exe', 'native executable name differs');
+  requireCI(manifest.asset.file === nativeAssetName(ctx.request.target), 'native executable name differs');
   const asset = physical(ctx.root, 'package/dist/standalone/' + manifest.asset.file);
   requireCI(
     sha(asset) === manifest.asset.sha256 && asset.length === manifest.asset.bytes,
@@ -819,7 +842,7 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
       candidate.manifest.version === ctx.request.version &&
       candidate.manifest.target === ctx.request.target &&
       candidate.manifest.pin === ctx.manifest.engines.bun &&
-      candidate.manifest.asset?.file === 'vida-agent-bun-windows-x64.exe',
+      candidate.manifest.asset?.file === nativeAssetName(ctx.request.target),
     'CI native build manifest identity differs',
   );
   const manifestBytes = physical(ctx.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
@@ -828,13 +851,15 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
   const manifest = manifestValue;
   const assetBytes = physical(ctx.root, 'package/dist/standalone/' + manifest.asset.file, ciArchiveLimit);
   const archiveBytes = physical(ctx.root, 'output/' + pack.filename, ciArchiveLimit);
-  const installerBytes = physical(ctx.source, 'packages/agent/tooling/install-windows.ps1', 1024 * 1024);
+  const installerPath = 'packages/agent/tooling/install-windows.ps1';
+  const installerBytes =
+    ctx.request.target === 'bun-windows-x64' ? physical(ctx.source, installerPath, 1024 * 1024) : null;
   requireCI(
     manifest.schema === 'VidaStandaloneBuild/v1' &&
       manifest.version === ctx.request.version &&
       manifest.target === ctx.request.target &&
       manifest.pin === ctx.manifest.engines.bun &&
-      manifest.asset.file === 'vida-agent-bun-windows-x64.exe' &&
+      manifest.asset.file === nativeAssetName(ctx.request.target) &&
       manifestBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/manifest.json', 8 * 1024 * 1024)) &&
       assetBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/' + manifest.asset.file)),
     'CI source and native bytes differ',
@@ -862,11 +887,13 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
     ['manifest.json', manifestBytes, 8 * 1024 * 1024],
     ['candidate.json', candidateBytes, 8 * 1024 * 1024],
     ['native-build.result.json', receiptBytes, 1024 * 1024],
-    ['install-windows.ps1', installerBytes, 1024 * 1024],
+    ...(installerBytes ? [['install-windows.ps1', installerBytes, 1024 * 1024] as [string, Buffer, number]] : []),
   ];
   const names = files.map(([name]) => name);
   requireCI(
-    names.length === 6 && new Set(names).size === 6 && names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)),
+    names.length === (installerBytes ? 6 : 5) &&
+      new Set(names).size === names.length &&
+      names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)),
     'CI build artifact inventory differs',
   );
   const totalBytes = files.reduce((total, [, bytes, limit]) => {
@@ -905,7 +932,7 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
   const afterArchiveBytes = physical(afterContext.root, 'output/' + pack.filename, ciArchiveLimit);
   const afterManifestBytes = physical(afterContext.root, 'package/dist/standalone/manifest.json', 8 * 1024 * 1024);
   const afterAssetBytes = physical(afterContext.root, 'package/dist/standalone/' + manifest.asset.file, ciArchiveLimit);
-  const afterInstallerBytes = physical(afterContext.source, 'packages/agent/tooling/install-windows.ps1', 1024 * 1024);
+  const afterInstallerBytes = installerBytes ? physical(afterContext.source, installerPath, 1024 * 1024) : null;
   const afterCandidate = candidateFor(afterContext);
   requireCI(
     afterCandidateBytes.equals(candidateBytes) &&
@@ -913,7 +940,7 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
       afterArchiveBytes.equals(archiveBytes) &&
       afterManifestBytes.equals(manifestBytes) &&
       afterAssetBytes.equals(assetBytes) &&
-      afterInstallerBytes.equals(installerBytes) &&
+      (installerBytes === null || (afterInstallerBytes !== null && afterInstallerBytes.equals(installerBytes))) &&
       json(afterCandidate) === json(candidate),
     'CI build inputs changed during emission',
   );

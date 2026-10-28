@@ -48,6 +48,7 @@ type NativeCandidate = {
   source_binding: string;
   archive: string;
   pack_metadata: [PackMetadataEntry];
+  target?: 'bun-linux-x64' | 'bun-windows-x64';
 } & Record<string, unknown>;
 type StandaloneManifest = {
   schema: string;
@@ -60,7 +61,7 @@ type StandaloneManifest = {
 } & Record<string, unknown>;
 type PackMetadataEntry = { filename: string; files: PackFile[] } & Record<string, unknown>;
 type RetargetSeal = {
-  schema: 'VidaNativeRetargetStage/v1';
+  schema: 'VidaNativeRetargetStage/v1' | 'VidaNativeRetargetStage/v2';
   operation_id: string;
   version: string;
   source_binding: string;
@@ -264,15 +265,28 @@ function assertCandidateSealFields(
     Array.isArray(sealValue.entries), 'candidate seal fields invalid');
 }
 
-function candidateSeal(root: string, operation: string): { seal: RetargetSeal; observations: ReadObservation[] } {
+type NativeReleaseTarget = 'bun-linux-x64' | 'bun-windows-x64';
+function candidateFolder(operation: string, target?: NativeReleaseTarget): string {
+  require(target === undefined ||
+    target === 'bun-linux-x64' ||
+    target === 'bun-windows-x64', 'candidate target invalid');
+  return target === undefined ? repair(operation) + '/candidate' : repair(operation) + '/candidates/' + target;
+}
+
+function candidateSeal(
+  root: string,
+  operation: string,
+  target?: NativeReleaseTarget,
+): { seal: RetargetSeal; observations: ReadObservation[] } {
+  const folder = candidateFolder(operation, target);
   const sealValue = unseal(
-    object(root, repair(operation) + '/candidate/seal.json'),
-    'VidaNativeRetargetStage/v1',
-    candidateSealFields,
+    object(root, folder + '/seal.json'),
+    target === undefined ? 'VidaNativeRetargetStage/v1' : 'VidaNativeRetargetStage/v2',
+    target === undefined ? candidateSealFields : [...candidateSealFields, 'target'],
   );
+  if (target !== undefined) require(sealValue.target === target, 'candidate sealed target differs');
   assertCandidateSealFields(sealValue, operation);
   require(sealValue.operation_id === operation, 'candidate operation differs');
-  const folder = repair(operation) + '/candidate';
   const actual = inventory(root, folder).filter((entry) => entry.path !== folder + '/seal.json');
   require(json(actual.map(({ path: file, sha256 }) => ({ path: file, sha256 }))) ===
     json(sealValue.entries), 'candidate stage changed');
@@ -368,10 +382,12 @@ export function readNativeRetargetCandidate({
   root,
   operation,
   published = false,
+  target,
 }: {
   root: string;
   operation: string;
   published?: boolean;
+  target?: NativeReleaseTarget;
 }): {
   operation_id: string;
   version: string;
@@ -385,14 +401,35 @@ export function readNativeRetargetCandidate({
   observations: ReadObservation[];
 } {
   require(releaseIdPattern.test(operation), 'operation invalid');
+  require(target === undefined || !published, 'target-indexed candidate has not acquired published authority');
+  const eligibilityObservations =
+    target === undefined
+      ? []
+      : [base(operation) + '/release.json', '.agent/work/agent-local-release/pending.json'].map((file) =>
+          observation(root, file),
+        );
+  if (target !== undefined) {
+    const state = releaseState(releasePath(root, base(operation) + '/release.json'));
+    const pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+    const manifest = object(root, 'packages/agent/package.json');
+    require(isRecord(manifest) &&
+      state.operation_id === operation &&
+      pending.operation_id === operation &&
+      state.version === pending.version &&
+      state.version === manifest.version &&
+      ['awaiting_assurance', 'running'].includes(state.status) &&
+      !state.install_started, 'target-indexed operation is not eligible');
+    sameObservations(root, eligibilityObservations);
+  }
   if (published) assertReleaseRetargetSettled(root, operation);
-  const { seal, observations } = candidateSeal(root, operation);
+  const { seal, observations } = candidateSeal(root, operation, target);
+  observations.push(...eligibilityObservations);
   const source = releaseSourceBinding(root, true);
   const packageManifest = object(root, 'packages/agent/package.json');
   require(isRecord(packageManifest) &&
     seal.version === packageManifest.version &&
     seal.source_binding === source.source_binding, 'candidate Source differs');
-  const folder = repair(operation) + '/candidate';
+  const folder = candidateFolder(operation, target);
   const manifestPath = folder + '/payload/dist/standalone/manifest.json';
   const manifestBytes = read(root, manifestPath);
   /* @type {unknown} */
@@ -405,6 +442,7 @@ export function readNativeRetargetCandidate({
     packageManifest.engines.bun === pin &&
     packageManifest.packageManager === `bun@${pin}`, 'candidate source Bun pin differs');
   const manifest = nativeManifest(manifestValue, seal.version, pin);
+  if (target !== undefined) require(manifest.target === target, 'candidate manifest target differs');
   assertNativeBuildInputs(releasePath(root, folder + '/payload'), manifest, folder, observations);
   const relative = 'dist/standalone/' + releaseRelative(manifest.asset?.file);
   const assetPath = folder + '/payload/' + relative;
@@ -456,8 +494,12 @@ export function recheckNativeRetargetCandidate(root: string, candidate: { observ
 }
 
 function nativeCandidate(candidateValue: unknown, operation: string): NativeCandidate {
-  keys(candidateValue, candidateFields);
-  require(candidateValue.schema === 'VidaNativeRetargetCandidate/v1' &&
+  require(isRecord(candidateValue), 'candidate identity differs');
+  const target = candidateValue.schema === 'VidaNativeRetargetCandidate/v2' ? candidateValue.target : undefined;
+  keys(candidateValue, target === undefined ? candidateFields : [...candidateFields, 'target']);
+  require(((candidateValue.schema === 'VidaNativeRetargetCandidate/v1' && target === undefined) ||
+    (candidateValue.schema === 'VidaNativeRetargetCandidate/v2' &&
+      (target === 'bun-linux-x64' || target === 'bun-windows-x64'))) &&
     candidateValue.operation_id === operation &&
     typeof candidateValue.version === 'string' &&
     typeof candidateValue.source_binding === 'string' &&
@@ -471,6 +513,7 @@ function nativeCandidate(candidateValue: unknown, operation: string): NativeCand
     source_binding: candidateValue.source_binding,
     archive: candidateValue.archive,
     pack_metadata: packMetadata(candidateValue.pack_metadata),
+    ...(target === undefined ? {} : { target }),
   };
 }
 
@@ -504,10 +547,10 @@ export async function stageNativeRetargetCandidate({
     candidate.pack_metadata[0].filename === original.pack_metadata[0].filename &&
     candidate.archive !==
       archivePath(operation, original.pack_metadata[0].filename), 'candidate archive location differs');
-  const folder = repair(operation) + '/candidate',
+  const folder = candidateFolder(operation, candidate.target),
     api = await access(root);
   if (identity(root, folder + '/seal.json')) {
-    const { seal } = candidateSeal(root, operation);
+    const { seal } = candidateSeal(root, operation, candidate.target);
     require(seal.source_binding === candidate.source_binding &&
       json(seal.pack_metadata) === json(candidate.pack_metadata) &&
       seal.archive_sha256 === sha(read(root, candidate.archive, binaryLimit)), 'existing candidate stage differs');
@@ -570,6 +613,7 @@ export async function stageNativeRetargetCandidate({
     candidate.version,
     pin,
   );
+  if (candidate.target !== undefined) require(native.target === candidate.target, 'candidate manifest target differs');
   assertNativeBuildInputs(path.join(root, 'packages/agent'), native, folder, payload);
   const asset = payload.find(
     (entry) => entry.path === folder + '/payload/dist/standalone/' + releaseRelative(native.asset?.file),
@@ -585,7 +629,8 @@ export async function stageNativeRetargetCandidate({
     folder + '/seal.json',
     json(
       sealed({
-        schema: 'VidaNativeRetargetStage/v1',
+        schema: candidate.target === undefined ? 'VidaNativeRetargetStage/v1' : 'VidaNativeRetargetStage/v2',
+        ...(candidate.target === undefined ? {} : { target: candidate.target }),
         operation_id: operation,
         version: candidate.version,
         source_binding: candidate.source_binding,

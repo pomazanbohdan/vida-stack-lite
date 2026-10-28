@@ -167,6 +167,31 @@ export interface FormationPointer {
   result_sha256: string;
   digest: string;
 }
+type NativeReleaseTarget = 'bun-linux-x64' | 'bun-windows-x64';
+interface TargetFormationRow {
+  target: NativeReleaseTarget;
+  request_id: string;
+  run_id: string;
+  run_attempt: number;
+  artifact_id: string;
+  result_sha256: string;
+}
+export interface FormationPointerV2 {
+  schema: 'VidaLocalReleaseFormation/v2';
+  authority: 'local_consistency_only';
+  operation_id: string;
+  version: string;
+  source_binding: string;
+  targets: TargetFormationRow[];
+  digest: string;
+}
+type TargetCI = {
+  target: NativeReleaseTarget;
+  request_id: string;
+  profile: CIDeliveryProfile;
+  observe: (args: { request: CIDeliveryRequest; candidate: CIDeliveryCandidate }) => Promise<CIDeliveryObservation>;
+};
+
 export interface GitHubJob {
   name: string;
   run_id: number;
@@ -994,11 +1019,13 @@ export function validateCIDeliveryFormationMembers(args: {
     },
   };
 }
-export function readConfirmedCIDeliveryFormation(root: string): FormationPointer | null {
+export function readConfirmedCIDeliveryFormation(root: string): FormationPointer | FormationPointerV2 | null {
   const relative = formationPath();
   const file = releasePath(root, relative, true);
   if (!existsSync(file)) return null;
-  const pointer = formationPointer(parseJSON(regularBytes(root, relative).toString('utf8')));
+  const raw = parseJSON(regularBytes(root, relative).toString('utf8'));
+  if (isRecord(raw) && raw.schema === 'VidaLocalReleaseFormation/v2') return readConfirmedTargetFormation(root, raw);
+  const pointer = formationPointer(raw);
   const journal = releaseState(
     releasePath(root, `.agent/work/agent-local-release/${pointer.operation_id}/release.json`),
   );
@@ -1055,6 +1082,293 @@ export function readConfirmedCIDeliveryFormation(root: string): FormationPointer
   );
   return pointer;
 }
+function readConfirmedTargetFormation(root: string, value: unknown): FormationPointerV2 {
+  exact(value, ['schema', 'authority', 'operation_id', 'version', 'source_binding', 'targets', 'digest']);
+  const { digest: supplied, ...body } = value;
+  check(
+    value.schema === 'VidaLocalReleaseFormation/v2' &&
+      value.authority === 'local_consistency_only' &&
+      typeof value.operation_id === 'string' &&
+      releaseIdPattern.test(value.operation_id) &&
+      typeof value.version === 'string' &&
+      parseReleaseVersion(value.version) !== null &&
+      typeof value.source_binding === 'string' &&
+      hex.test(value.source_binding) &&
+      typeof supplied === 'string' &&
+      supplied === digest(canonicalJSON(body)) &&
+      Array.isArray(value.targets) &&
+      value.targets.length === 2,
+    'target formation pointer is invalid',
+  );
+  const operation = value.operation_id,
+    version = value.version,
+    sourceBinding = value.source_binding;
+  const journal = releaseState(releasePath(root, `.agent/work/agent-local-release/${operation}/release.json`));
+  check(journal.operation_id === operation && journal.version === version, 'target formation journal differs');
+  const rows: TargetFormationRow[] = [];
+  let repositoryId: string | undefined;
+  let projectIds: string[] | undefined;
+  for (const [index, row] of value.targets.entries()) {
+    exact(row, ['target', 'request_id', 'run_id', 'run_attempt', 'artifact_id', 'result_sha256']);
+    const target = index === 0 ? 'bun-linux-x64' : 'bun-windows-x64';
+    check(
+      row.target === target &&
+        typeof row.request_id === 'string' &&
+        hex.test(row.request_id) &&
+        typeof row.run_id === 'string' &&
+        row.run_id.length > 0 &&
+        isPositiveSafeInteger(row.run_attempt) &&
+        typeof row.artifact_id === 'string' &&
+        row.artifact_id.length > 0 &&
+        typeof row.result_sha256 === 'string' &&
+        hex.test(row.result_sha256),
+      'target formation row differs',
+    );
+    const requestValue = parseJSON(regularBytes(root, requestPath(operation, row.request_id)).toString('utf8'));
+    validateCIDeliveryRequest(requestValue);
+    check(
+      requestValue.operation_id === operation &&
+        requestValue.version === version &&
+        requestValue.source_binding === sourceBinding &&
+        requestValue.target === target &&
+        requestValue.request_id === row.request_id,
+      'target formation request differs',
+    );
+    if (repositoryId === undefined) {
+      repositoryId = requestValue.repository_id;
+      projectIds = requestValue.project_ids;
+    } else
+      check(
+        requestValue.repository_id === repositoryId && equal(requestValue.project_ids, projectIds),
+        'target formation project differs',
+      );
+    const resultBytes = regularBytes(root, resultPath(operation, row.request_id));
+    check(digest(resultBytes) === row.result_sha256, 'target formation result changed');
+    const resultValue = parseJSON(resultBytes.toString('utf8'));
+    assertPersistedResult(resultValue);
+    check(resultValue.schema === 'VidaCIDeliveryResult/v2', 'target formation result schema differs');
+    for (const field of [
+      'request_id',
+      'operation_id',
+      'version',
+      'repository_id',
+      'project_ids',
+      'target',
+      'source_binding',
+    ] as const)
+      check(equal(resultValue[field], requestValue[field]), 'target formation result request differs: ' + field);
+    const profile: CIDeliveryProfile = {
+      issuer: resultValue.issuer,
+      repository_id: requestValue.repository_id,
+      project_ids: requestValue.project_ids,
+      target,
+      required_checks: resultValue.checks.map((item) => item.id),
+    };
+    profileMatches(requestValue, profile);
+    validateChecks(resultValue.checks, profile);
+    check(
+      resultValue.run_id === row.run_id &&
+        resultValue.run_attempt === row.run_attempt &&
+        hex.test(resultValue.archive_sha256) &&
+        hex.test(resultValue.manifest_sha256) &&
+        hex.test(resultValue.payload_id) &&
+        isPositiveSafeInteger(resultValue.asset.bytes) &&
+        hex.test(resultValue.asset.sha256) &&
+        resultValue.asset.file === 'vida-agent-' + target + (target.startsWith('bun-windows-') ? '.exe' : ''),
+      'target formation result identity differs',
+    );
+    rows.push({
+      target,
+      request_id: row.request_id,
+      run_id: row.run_id,
+      run_attempt: row.run_attempt,
+      artifact_id: row.artifact_id,
+      result_sha256: row.result_sha256,
+    });
+  }
+  check(
+    rows[0]?.artifact_id !== rows[1]?.artifact_id &&
+      rows[0]?.request_id !== rows[1]?.request_id &&
+      rows[0]?.run_id === rows[1]?.run_id &&
+      rows[0]?.run_attempt === rows[1]?.run_attempt,
+    'target formation observations are not independent',
+  );
+  return {
+    schema: 'VidaLocalReleaseFormation/v2',
+    authority: 'local_consistency_only',
+    operation_id: operation,
+    version,
+    source_binding: sourceBinding,
+    targets: rows,
+    digest: supplied,
+  };
+}
+
+/** Confirm both staged targets from actual controller observations. This grants formation consistency only. */
+export async function verifyCIDeliveryFormationPair(args: {
+  root: string;
+  operation: string;
+  version: string;
+  targets: readonly TargetCI[];
+  recheckLocalTests: () => void;
+}): Promise<FormationPointerV2> {
+  const { root, operation, version, targets, recheckLocalTests } = args;
+  check(
+    Array.isArray(targets as unknown) && targets.length === 2 && typeof recheckLocalTests === 'function',
+    'two target observations required',
+  );
+  const selected = [...targets].sort((a, b) => a.target.localeCompare(b.target));
+  check(
+    selected[0]?.target === 'bun-linux-x64' && selected[1]?.target === 'bun-windows-x64',
+    'exact Linux and Windows targets required',
+  );
+  const primary = readNativeRetargetCandidate({ root, operation, published: true });
+  check(
+    primary.version === version && selected.some((entry) => entry.target === primary.manifest.target),
+    'published primary target differs',
+  );
+  const observations: Array<{
+    request: CIDeliveryRequest;
+    candidate: ReturnType<typeof readNativeRetargetCandidate>;
+    observation: CIDeliveryObservation;
+    profile: CIDeliveryProfile;
+  }> = [];
+  for (const selectedTarget of selected) {
+    const candidate =
+      selectedTarget.target === primary.manifest.target
+        ? primary
+        : readNativeRetargetCandidate({ root, operation, target: selectedTarget.target });
+    const requestValue = parseJSON(
+      regularBytes(root, requestPath(operation, selectedTarget.request_id)).toString('utf8'),
+    );
+    validateCIDeliveryRequest(requestValue);
+    check(
+      requestValue.request_id === selectedTarget.request_id &&
+        requestValue.operation_id === operation &&
+        requestValue.version === version &&
+        requestValue.target === selectedTarget.target &&
+        requestValue.source_binding === candidate.source_binding &&
+        candidate.version === version,
+      'target request differs',
+    );
+    const profile = structuredClone(selectedTarget.profile);
+    profileMatches(requestValue, profile);
+    const delivered = await selectedTarget.observe({
+      request: structuredClone(requestValue),
+      candidate: structuredClone(candidate),
+    });
+    recheckNativeRetargetCandidate(root, candidate);
+    check(
+      regularBytes(root, requestPath(operation, requestValue.request_id)).equals(
+        Buffer.from(canonicalJSON(requestValue)),
+      ),
+      'target request changed',
+    );
+    validateCIDeliveryObservation({ request: requestValue, candidate, profile, observation: delivered });
+    const observation = {
+      ...delivered,
+      checks: structuredClone(delivered.checks),
+      result_bytes: Buffer.from(delivered.result_bytes),
+    };
+    observations.push({ request: requestValue, candidate, observation, profile });
+  }
+  const first = observations[0],
+    second = observations[1];
+  check(
+    first !== undefined &&
+      second !== undefined &&
+      first.observation.artifact_id !== second.observation.artifact_id &&
+      first.observation.run_id === second.observation.run_id &&
+      first.observation.run_attempt === second.observation.run_attempt &&
+      first.profile.issuer === 'github-actions' &&
+      second.profile.issuer === 'github-actions' &&
+      first.profile.github !== undefined &&
+      second.profile.github !== undefined &&
+      first.profile.github.source_commit === second.profile.github.source_commit &&
+      /^[a-f0-9]{40}$/.test(first.profile.github.source_commit) &&
+      first.profile.github.repository === second.profile.github.repository &&
+      first.profile.github.repository_id === second.profile.github.repository_id &&
+      first.profile.github.workflow_id === second.profile.github.workflow_id &&
+      first.profile.github.workflow_path === second.profile.github.workflow_path &&
+      first.profile.github.workflow_sha256 === second.profile.github.workflow_sha256 &&
+      first.profile.github.job !== second.profile.github.job &&
+      first.request.source_binding === second.request.source_binding &&
+      first.request.repository_id === second.request.repository_id &&
+      equal(first.request.project_ids, second.request.project_ids),
+    'target Source, provider run or project differs',
+  );
+  let completed: FormationPointerV2 | undefined;
+  await withReleaseAdmission(root, () => {
+    const pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+    check(
+      pending.operation_id === operation && pending.version === version && !pending.install_started,
+      'pending release changed',
+    );
+    recheckLocalTests();
+    for (const item of observations) {
+      recheckNativeRetargetCandidate(root, item.candidate);
+      validateCIDeliveryObservation(item);
+      check(
+        regularBytes(root, requestPath(operation, item.request.request_id)).equals(
+          Buffer.from(canonicalJSON(item.request)),
+        ),
+        'target request changed',
+      );
+      const relative = resultPath(operation, item.request.request_id);
+      const file = releasePath(root, relative, true);
+      if (existsSync(file))
+        check(regularBytes(root, relative).equals(item.observation.result_bytes), 'target result already differs');
+    }
+    const body: Omit<FormationPointerV2, 'digest'> = {
+      schema: 'VidaLocalReleaseFormation/v2',
+      authority: 'local_consistency_only',
+      operation_id: operation,
+      version,
+      source_binding: first.request.source_binding,
+      targets: observations.map(({ request, observation }) => ({
+        target: request.target as NativeReleaseTarget,
+        request_id: request.request_id,
+        run_id: observation.run_id,
+        run_attempt: observation.run_attempt,
+        artifact_id: observation.artifact_id,
+        result_sha256: digest(observation.result_bytes),
+      })),
+    };
+    const pointer: FormationPointerV2 = { ...body, digest: digest(canonicalJSON(body)) };
+    const current = readConfirmedCIDeliveryFormation(root);
+    if (current?.operation_id === operation) {
+      check(equal(current, pointer), 'formation operation already differs');
+      completed = current as FormationPointerV2;
+      return;
+    }
+    if (current) {
+      const previous = parseReleaseVersion(current.version),
+        next = parseReleaseVersion(version);
+      check(
+        previous !== null && next !== null && compareVersion(next, previous) > 0,
+        'formation baseline cannot regress',
+      );
+    }
+    for (const item of observations) {
+      const relative = resultPath(operation, item.request.request_id);
+      const file = releasePath(root, relative, true);
+      if (!existsSync(file)) {
+        releaseDirectory(root, path.posix.dirname(relative));
+        const descriptor = openSync(file, 'wx', 0o600);
+        try {
+          writeFileSync(descriptor, item.observation.result_bytes);
+          fsyncSync(descriptor);
+        } finally {
+          closeSync(descriptor);
+        }
+      }
+    }
+    saveReceipt(releasePath(root, formationPath(), true), pointer);
+    completed = pointer;
+  });
+  check(completed !== undefined, 'target formation completion missing');
+  return completed;
+}
 function persistCIDeliveryFormation(
   root: string,
   request: CIDeliveryRequest,
@@ -1091,7 +1405,7 @@ function persistCIDeliveryFormation(
   const current = readConfirmedCIDeliveryFormation(root);
   if (current?.operation_id === pointer.operation_id) {
     check(
-      equal(current, pointer),
+      current.schema === 'VidaLocalReleaseFormation/v1' && equal(current, pointer),
       'formed operation is already bound to its exact successful artifact; a new build requires a higher version',
     );
     return current;
