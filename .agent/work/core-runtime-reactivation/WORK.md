@@ -4,6 +4,56 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Documentation CLEAR remaining cases and help custody — 2026-10-28
+
+Root's preceding accepted diagnostic on `f4db048a` ran 27 tests and 256
+expectations: F 46/46, L 215/230, S 253/281 and B 194/229. Stage
+`/workspace/contour-stage-LZ6m7H` finished in 41.546622247 s with complete
+capture, observed group closure and unchanged image. Report run
+`50eac912-97cb-4092-b225-a1f41383ac85` is retained under
+`/workspace/contour-doc-clear-measurement-7jjf1Y`; it is not qualification of
+the changed inputs below.
+
+The tracked Source snapshot `f4db048a` exposed a direct producer defect. A
+closeout with an omitted optional baseline path records
+`GAP-DOCUMENTATION-BASELINE-001` but previously threw during path serialization.
+The producer now serializes an omitted path as null while rejecting explicitly
+provided empty or unsafe paths. The checkpoint schema permits null. The real
+fixture reproduced the old error before the fix and checks the blocked result,
+unchanged document and a restored valid baseline after the fix.
+
+The same packet exercises checkpoint schema and timestamp validation, repository
+and accepted-scope binding, missing governed files, map links and excluded
+files, optional documentation, missing changelog paths and invalid typed events.
+Each fixture retains failures and restores a valid positive case. The existing
+focused CLI profile now observes baseline, invalid mode and public help. Help is
+checked against `cliMetadataResult` and the captured metadata modules; its
+receipt still permits only the entrypoint coverage counter. The synthetic custody
+fixture keeps all loaded inputs and tests altered help output, argv and metadata
+receipt, alongside the existing baseline and invalid-mode controls.
+
+The first worker run inherited a read-only host temporary directory and is a
+`SETUP_FAIL`, not a behavioral RED. Workers must run the existing private-env
+capture with all temporary, home and cache directories under their assigned
+scratch root before starting Bun or tests. Workers prepare patches only; Root
+applies them without an optional canonical patch dry run. The next run used the
+private capture and reproduced the missing path and two-role failures. Its
+unrelated native stdout control observed `EPERM`; the subsequent approved native
+context passed the complete four-file target, 47 tests and 954 expectations,
+with a closed owned process group. After adding help receipt negatives and one
+additional baseline assertion, the final focused target passed 12 tests and 576
+expectations. Scoped strict checking passed 125 files, type-aware lint passed
+with zero warnings, and changed TypeScript formatting passed. The testing-policy
+document check passed. The WORK check found an existing link whose target is
+untracked and absent from the tracked-source snapshot; Root can check that link
+in the current repository after integration. Logs and retained failures are under
+`/workspace/contour-doc-remaining-3v2NVi8D/privatecheck`. The Source packet is
+independently reviewed without must-fix findings. After integration, the canonical
+target passed 12 tests and 576 expectations with complete capture and group
+closure; both documentation checks passed with 50 local links. The sole numeric
+producer remains pending. This packet
+does not establish coverage closure, full qualification or Runtime acceptance.
+
 ## Documentation CLEAR scope and policy guards — 2026-10-28
 
 The selected stage on Source `1a3b4071ccecba3ba3209cc62ebfefc2cf8c0089`

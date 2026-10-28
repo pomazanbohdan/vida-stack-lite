@@ -11,6 +11,7 @@ import { sha256 } from './bun-coverage-evidence.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import { observeOwnedProcessGroup } from './owned-process-group.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
+import { cliMetadataResult } from '../bin/cli-metadata.ts';
 import { runOptionDetails } from '../bin/run-cli-options.ts';
 import { validateIssueSqlConsumption } from './coverage-cli-sql-join.ts';
 
@@ -229,7 +230,11 @@ function cliSubjects(manifest: CliCoverageManifest): CliSubject[] {
   const subject = cliSubject(manifest);
   if (!subject) return [];
   if (subject.source === 'bin/documentation-clear.ts')
-    return [subject, { role: 'documentation-invalid-mode', source: subject.source, exit_code: 1 }];
+    return [
+      subject,
+      { role: 'documentation-invalid-mode', source: subject.source, exit_code: 1 },
+      { role: 'documentation-help', source: subject.source, exit_code: 0 },
+    ];
   if (subject.source === 'bin/bun.ts')
     return [
       subject,
@@ -355,6 +360,7 @@ function nativeArgv(
   assert.ok(subject, 'CLI coverage requires an exact supported selection.');
   if (subject.source === 'bin/documentation-clear.ts') {
     assert.match(context.manifest.run_id, idPattern);
+    if (subject.role === 'documentation-help') return [path.join(context.root, subject.source), '--help'];
     return [
       path.join(context.root, subject.source),
       '--mode',
@@ -1618,6 +1624,9 @@ export function cliCoverageChildMaps(
       assert.equal(clear.path, '.agent/work/doc-clear-test/documentation-baseline-0001.v1.json');
       assert.match(String(clear.sha256), /^[a-f0-9]{64}$/u);
       assert.match(String(clear.checkpoint_digest), /^[a-f0-9]{64}$/u);
+    } else if (subject.role === 'documentation-help') {
+      assert.equal(stderr.length, 0);
+      assert.deepEqual(JSON.parse(stdout.toString('utf8')), cliMetadataResult(['documentation-clear', '--help'], {}));
     } else if (subject.role === 'documentation-invalid-mode') {
       assert.equal(stdout.length, 0);
       assert.deepEqual(stderr, Buffer.from('documentation CLEAR mode invalid\n'));
@@ -1665,6 +1674,14 @@ export function cliCoverageChildMaps(
     assert.ok(Array.isArray(receipt.loaded_inputs));
     const loaded = validateLoaded(receipt.loaded_inputs);
     assert.ok(loaded.has(subject.source) && loaded.has(preload) && loaded.has('tooling/coverage-cli-child.ts'));
+    if (subject.role === 'documentation-help')
+      for (const file of [
+        'bin/cli-metadata.ts',
+        'bin/run-cli-options.ts',
+        'bin/cli-command-contracts.ts',
+        'bin/reconcile-cli-contracts.ts',
+      ])
+        assert.ok(loaded.has(file), 'Documentation help metadata module was not loaded: ' + file);
     if (subject.role === 'run-help') {
       for (const file of ['bin/cli-metadata.ts', 'bin/run-cli-options.ts', 'bin/cli-command-contracts.ts'])
         assert.ok(loaded.has(file), 'Run help metadata module was not loaded: ' + file);

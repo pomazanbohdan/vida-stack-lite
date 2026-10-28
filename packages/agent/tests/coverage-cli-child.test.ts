@@ -44,6 +44,7 @@ import { createPreparedReadCapture } from '../tooling/coverage-cli-prepared-inpu
 import { createFixtureChildObserver } from '../tooling/fixture-child-observation.ts';
 import { mergeCoverageShardCounters } from '../tooling/coverage-shard-evidence.ts';
 import { cliCommandContracts } from '../bin/cli-command-contracts.ts';
+import { cliMetadataResult } from '../bin/cli-metadata.ts';
 import { runOptionDetails } from '../bin/run-cli-options.ts';
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
@@ -432,7 +433,7 @@ test('documentation CLEAR CLI custody requires its complete focused selection', 
     expect(focusedCliCoverage(changed)).toBe(false);
 });
 
-test('documentation CLEAR observer collects only its two exact native roles', () => {
+test('documentation CLEAR observer collects only its three exact native roles', () => {
   const directory = mkdtempSync(path.join(os.tmpdir(), 'clear-observer-'));
   let passed = false;
   try {
@@ -524,9 +525,13 @@ test('documentation CLEAR observer collects only its two exact native roles', ()
     expect(() => observer.spawnSync(process.execPath, args('invalid'), options)).toThrow(
       'Duplicate focused CLI launch.',
     );
+    expect(() => observer.finish()).toThrow('Focused CLI launches were not all observed.');
+    observer.spawnSync(process.execPath, [path.join(context.root, 'bin/documentation-clear.ts'), '--help'], options);
+    expect(matched).toBe(3);
     expect(observer.finish().map((row) => row.subject_role)).toEqual([
       'documentation-baseline',
       'documentation-invalid-mode',
+      'documentation-help',
     ]);
     passed = true;
   } finally {
@@ -955,7 +960,12 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
               : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
       const subjects: { entry: string; args: string[]; exit: number; output: unknown }[] = [
         { entry, args: [argument], exit: expectedExit, output: expectedOutput },
-        ...(variant === 'doc' ? [{ entry, args: [], exit: 1, output: 'documentation CLEAR mode invalid\n' }] : []),
+        ...(variant === 'doc'
+          ? [
+              { entry, args: [], exit: 1, output: 'documentation CLEAR mode invalid\n' },
+              { entry, args: ['--help'], exit: 0, output: cliMetadataResult(['documentation-clear', '--help'], {}) },
+            ]
+          : []),
         ...(variant === 'run'
           ? [
               { entry, args: [], exit: 0, output: { schema: 'VidaAgentRunResult/v1', status: 'prepared' } },
@@ -1199,9 +1209,11 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
                     'import "../src/documentation/clear.ts";',
                     'import "../src/documentation/policy.ts";',
                     'import "../src/documentation/clear-checkpoint-validator.ts";',
+                    'import { cliMetadataResult } from "./cli-metadata.ts";',
                     'export function hit() { return 7; }',
                     'if (import.meta.main) {',
-                    '  if (process.argv[3] === "invalid") { console.error("documentation CLEAR mode invalid"); process.exitCode = 1; }',
+                    '  if (process.argv[2] === "--help") console.log(JSON.stringify(cliMetadataResult(["documentation-clear", "--help"], {})));',
+                    '  else if (process.argv[3] === "invalid") { console.error("documentation CLEAR mode invalid"); process.exitCode = 1; }',
                     `  else console.log(${JSON.stringify(JSON.stringify(subjects[0]!.output))});`,
                     '}',
                   ].join('\n')
@@ -1268,6 +1280,8 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
                     JSON.stringify(JSON.stringify(expectedOutput)) +
                     ');\n';
         const inputs = new Map(capturedTools);
+        for (const file of ['bin/cli-metadata.ts', 'bin/reconcile-cli-contracts.ts'])
+          inputs.set(file, readFileSync(path.join(packageRoot, file)));
         if (variant === 'run') {
           assert.ok(runFixture);
           inputs.set('src/host-state.ts', Buffer.from(hostModuleSource));
@@ -1280,6 +1294,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
               [
                 'import { runOptionDetails } from "./run-cli-options.ts";',
                 'import { cliCommandContracts } from "./cli-command-contracts.ts";',
+                'export function cliMetadataResult() { throw new Error("unused in run fixture"); }',
                 'export function help() { return {schema:"VidaAgentCommandResult/v1",status:"help",command:"run",syntax:cliCommandContracts.run.syntax,options:runOptionDetails()}; }',
               ].join('\n'),
             ),
@@ -1382,9 +1397,10 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
         const testInputs = digests(tests);
         const toolInputs = digests([
           ...coverageToolInputs,
+          'bin/cli-metadata.ts',
+          'bin/reconcile-cli-contracts.ts',
           ...(variant === 'run'
             ? [
-                'bin/cli-metadata.ts',
                 'bin/workspace-database-cli.ts',
                 'src/orchestration/local-work-admission.ts',
                 'src/host-state.ts',
@@ -1572,7 +1588,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
         expect(() => admit(context, [])).toThrow();
         expect(() => admit(context, [child, child])).toThrow();
         if (subjects.length > 1) {
-          for (const length of variant === 'public' || variant === 'run' ? [1, 2, 4] : [1, 3])
+          for (const length of variant === 'public' || variant === 'run' || variant === 'doc' ? [1, 2, 4] : [1, 3])
             expect(() =>
               admit(
                 context,
@@ -2350,6 +2366,54 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
             false,
             0,
           );
+          for (const [key, value] of Object.entries({
+            command: 'foreign',
+            syntax: 'foreign',
+            options: [],
+            status: 'blocked',
+            schema: 'foreign',
+          }))
+            negative(
+              'documentation-help-' + key,
+              (ctx, row) => {
+                const output = record(
+                  JSON.parse(readFileSync(path.join(ctx.directory, String(record(row.stdout).path)), 'utf8')),
+                );
+                output[key] = value;
+                replaceOutput(ctx, row, 'stdout', Buffer.from(JSON.stringify(output) + '\n'));
+              },
+              false,
+              2,
+            );
+          negative(
+            'documentation-help-stderr',
+            (ctx, row) => replaceOutput(ctx, row, 'stderr', Buffer.from('foreign\n')),
+            false,
+            2,
+          );
+          negative(
+            'documentation-help-missing-metadata',
+            (ctx, row) =>
+              rewrite(ctx, row, 'receipt', (proof) => {
+                proof.loaded_inputs = (proof.loaded_inputs as unknown[]).filter(
+                  (input) => record(input).path !== 'bin/cli-metadata.ts',
+                );
+              }),
+            false,
+            2,
+            'Documentation help metadata module was not loaded: bin/cli-metadata.ts',
+          );
+          negative(
+            'documentation-help-foreign-argv',
+            (ctx, row) =>
+              rewrite(ctx, row, 'launch', (proof) => {
+                proof.original_argv = [...subjects[2]!.args, '--extra'];
+              }),
+            false,
+            2,
+            'Foreign focused CLI subject.',
+          );
+
           negative(
             'documentation-invalid-stdout',
             (ctx, row) => replaceOutput(ctx, row, 'stdout', Buffer.from('foreign\n')),

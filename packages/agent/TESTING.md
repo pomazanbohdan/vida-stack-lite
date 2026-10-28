@@ -2777,13 +2777,14 @@ Only five serial v2 focused selections may carry `cli_children`:
   `src/documentation/policy.ts`, `src/documentation/clear-checkpoint-validator.ts`,
   `bin/documentation-clear.ts`, and the `documentation-clear`,
   `documentation-transition-proof` and `documentation-clear-boundary` tests,
-  observes the two native `documentation-clear` calls in its dedicated fixture.
+  observes three native `documentation-clear` calls in its dedicated fixture.
   Its fixture root is derived from the run ID. The baseline requires exit0,
   empty stderr and a passing baseline result with its path and digests. The invalid
   mode requires exit1, empty stdout and exactly `documentation CLEAR mode invalid`
-  plus newline. The maintained test verifies the persisted baseline and both
-  native results. Both invocations retain their complete argv, package cwd and
-  30000ms timeout; other CLEAR calls remain ordinary children.
+  plus newline. Help requires exit0, empty stderr and the exact metadata result
+  from the captured help owners. The maintained test verifies the persisted
+  baseline and all three native results. All invocations retain their complete argv,
+  package cwd and 30000ms timeout; other CLEAR calls remain ordinary children.
 
 - `bun-cli-run`, with exactly `bin/run.ts`, `tests/run-entrypoint.test.ts` and
   `tests/bun-cache-routing.test.ts`, observes exactly three fixed subjects: help,

@@ -9,6 +9,7 @@ import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.t
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { expectAsyncReturned, expectRejection, expectReturned } from './helpers/expect-rejection.ts';
 import { runDocumentationClear } from '../bin/documentation-clear.ts';
+import { cliMetadataResult } from '../bin/cli-metadata.ts';
 
 type Mode = 'baseline' | 'closeout' | 'verify';
 
@@ -154,6 +155,21 @@ test('public CLEAR baseline and invalid mode preserve CLI output', () => {
     const bytes = readFileSync(path.join(root, String(result.path)), 'utf8');
     expect(result.sha256).toBe(sha(bytes));
     expect(result.checkpoint_digest).toBe((JSON.parse(bytes) as { digest: string }).digest);
+    const help = spawnSync(process.execPath, [path.join(bundle, 'bin/documentation-clear.ts'), '--help'], {
+      cwd: bundle,
+      encoding: 'utf8',
+      timeout: 30_000,
+    });
+    if (isUnknownSynchronousChild(help)) {
+      unknownFixtureRoots.add(root);
+      throw new Error(
+        `UNKNOWN CLEAR help child: pid=${help.pid} status=${help.status} signal=${help.signal} error=${String(help.error)}; retained fixture=${root}`,
+        { cause: help.error },
+      );
+    }
+    expect(help.status).toBe(0);
+    expect(help.stderr).toBe('');
+    expect(JSON.parse(help.stdout)).toEqual(cliMetadataResult(['documentation-clear', '--help'], {}));
     const invalid = run(root, 'invalid');
     expect(invalid.status).toBe(1);
     expect(invalid.stdout).toBe('');

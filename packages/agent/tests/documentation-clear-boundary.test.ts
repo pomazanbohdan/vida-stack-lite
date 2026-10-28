@@ -444,6 +444,229 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
     }
   });
 
+  test('direct closeout reports a missing baseline while retaining supplied path validation', () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const before = readFileSync(path.join(fixture.root, 'docs/agent-instructions/current.md'));
+      const closeout = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'closeout' });
+      expect(closeout).toMatchObject({
+        status: 'blocked',
+        baseline_path: null,
+        baseline_digest: null,
+        gaps: ['GAP-DOCUMENTATION-BASELINE-001'],
+      });
+      for (const baseline_path of ['', '../outside.json'])
+        expect(() =>
+          runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'closeout', baseline_path }),
+        ).toThrow();
+      expect(readFileSync(path.join(fixture.root, 'docs/agent-instructions/current.md'))).toEqual(before);
+      const baseline = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      expect(
+        runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'closeout', baseline }),
+      ).toMatchObject({
+        status: 'blocked',
+        baseline_path: null,
+        baseline_digest: baseline.digest,
+        gaps: ['GAP-DOCUMENTATION-BASELINE-001'],
+      });
+      expect(
+        runtime.produceDocumentationClearCheckpoint({
+          ...fixture.input,
+          phase: 'closeout',
+          baseline,
+          baseline_path: '.agent/work/clear-zombies/documentation-baseline-0001.v1.json',
+        }).status,
+      ).toBe('pass');
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed direct closeout fixture: ${fixture.root}`);
+    }
+  });
+
+  test('producer validates checkpoint schema and timestamp before accepting a restored baseline', () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const baseline = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      const input = {
+        ...fixture.input,
+        phase: 'closeout' as const,
+        baseline_path: '.agent/work/clear-zombies/documentation-baseline-0001.v1.json',
+      };
+      const resign = (value: DocumentationClearCheckpoint): DocumentationClearCheckpoint => {
+        const { digest: _digest, ...body } = value;
+        return { ...body, digest: runtime.canonicalJsonDigest(body) };
+      };
+      const before = readFileSync(path.join(fixture.root, 'docs/agent-instructions/current.md'));
+      expect(() =>
+        runtime.produceDocumentationClearCheckpoint({
+          ...input,
+          baseline: resign({ ...baseline, schema: 'invalid' as DocumentationClearCheckpoint['schema'] }),
+        }),
+      ).toThrow('documentation CLEAR checkpoint schema invalid');
+      expect(() =>
+        runtime.produceDocumentationClearCheckpoint({
+          ...input,
+          baseline: resign({ ...baseline, created_at: '2026-99-99T00:00:00.000Z' }),
+        }),
+      ).toThrow('documentation CLEAR checkpoint timestamp invalid');
+      expect(readFileSync(path.join(fixture.root, 'docs/agent-instructions/current.md'))).toEqual(before);
+      expect(runtime.produceDocumentationClearCheckpoint({ ...input, baseline }).status).toBe('pass');
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed checkpoint validation fixture: ${fixture.root}`);
+    }
+  });
+
+  test('scope and identity failures leave work and governed documents intact', async () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const { scope_paths: _scopePaths, ...workInput } = fixture.input;
+      const scopePath = `.agent/work/${fixture.input.work_id}/scope.json`;
+      const scope = readFileSync(path.join(fixture.root, scopePath));
+      const document = readFileSync(path.join(fixture.root, 'docs/agent-instructions/current.md'));
+      const target = path.join(
+        fixture.root,
+        `.agent/work/${fixture.input.work_id}/documentation-baseline-0001.v1.json`,
+      );
+      expect(() =>
+        runtime.produceDocumentationClearCheckpoint({ ...fixture.input, repository_id: 'foreign', phase: 'baseline' }),
+      ).toThrow('documentation repository binding invalid');
+      for (const work_id of ['', '../bad', 'a'.repeat(129)]) {
+        await Promise.resolve(
+          expect(runtime.executeDocumentationClearOperation({ ...fixture.input, work_id }, 'baseline')).rejects.toThrow(
+            'documentation work id invalid',
+          ),
+        );
+        await Promise.resolve(
+          expect(runtime.executeDocumentationClearFromWork({ ...workInput, work_id }, 'baseline')).rejects.toThrow(
+            'documentation work id invalid',
+          ),
+        );
+      }
+      fixture.write(
+        scopePath,
+        JSON.stringify({
+          schema: 'ImplementationScope/v1',
+          work_id: 'foreign',
+          source_revision: fixture.input.source_revision,
+          allowed_paths: fixture.input.scope_paths,
+        }) + '\n',
+      );
+      const foreign = readFileSync(path.join(fixture.root, scopePath));
+      await Promise.resolve(
+        expect(runtime.executeDocumentationClearFromWork(workInput, 'baseline')).rejects.toThrow(
+          'documentation work scope binding invalid',
+        ),
+      );
+      expect(readFileSync(path.join(fixture.root, scopePath))).toEqual(foreign);
+      expect(readFileSync(path.join(fixture.root, 'docs/agent-instructions/current.md'))).toEqual(document);
+      expect(existsSync(target)).toBe(false);
+      writeFileSync(path.join(fixture.root, scopePath), scope);
+      expect((await runtime.executeDocumentationClearFromWork(workInput, 'baseline')).status).toBe('pass');
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed scope and identity fixture: ${fixture.root}`);
+    }
+  });
+
+  test('map links distinguish external, excluded and missing governed targets', () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+      const policyBytes = readFileSync(path.join(fixture.root, policyPath));
+      const policy = JSON.parse(policyBytes.toString('utf8')) as Record<string, unknown>;
+      fixture.write(
+        policyPath,
+        JSON.stringify({ ...policy, excluded_roots: ['.agent', '.planning', 'docs/agent-instructions/excluded'] }) +
+          '\n',
+      );
+      fixture.write('docs/agent-instructions/excluded/present.md', 'excluded\n');
+      fixture.write('docs/agent-instructions/nested/present.md', 'nested\n');
+      const map =
+        '[external](https://example.test/a) [fragment](#part) [outside](../../elsewhere.md) [nested](nested/present.md) [excluded](excluded/present.md)\n';
+      fixture.write('docs/agent-instructions/index.md', map);
+      const baseline = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      expect(baseline.status).toBe('pass');
+      expect(baseline.documents.some((row) => row.path === 'docs/agent-instructions/nested/present.md')).toBe(true);
+      expect(baseline.documents.some((row) => row.path === 'docs/agent-instructions/excluded/present.md')).toBe(false);
+      fixture.write('docs/agent-instructions/index.md', map + '[missing](excluded/missing.md)\n');
+      const blocked = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      expect(blocked).toMatchObject({ status: 'blocked', gaps: ['GAP-DOCUMENTATION-MAP-001'] });
+      expect(readFileSync(path.join(fixture.root, 'docs/agent-instructions/index.md'), 'utf8')).toBe(
+        map + '[missing](excluded/missing.md)\n',
+      );
+      fixture.write('docs/agent-instructions/excluded/missing.md', 'created\n');
+      expect(runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' }).status).toBe('pass');
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed map fixture: ${fixture.root}`);
+    }
+  });
+
+  test('producer reports missing governed scope and missing required changelog path', () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const pathName = 'docs/agent-instructions/documentation-policy.v1.json';
+      const policy = JSON.parse(readFileSync(path.join(fixture.root, pathName), 'utf8')) as Record<string, unknown>;
+      fixture.write(pathName, JSON.stringify({ ...policy, changelog_required: true, changelog_path: null }) + '\n');
+      const baseline = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      expect(baseline).toMatchObject({ status: 'blocked', gaps: ['GAP-DOCUMENTATION-CHANGELOG-001'] });
+      const missing = runtime.produceDocumentationClearCheckpoint({
+        ...fixture.input,
+        scope_paths: ['docs/agent-instructions/missing.md'],
+        phase: 'closeout',
+        baseline,
+        baseline_path: '.agent/work/clear-zombies/documentation-baseline-0001.v1.json',
+      });
+      expect(missing.gaps).toContain('GAP-DOCUMENTATION-SCOPE-001');
+      expect(missing.gaps).toContain('GAP-DOCUMENTATION-CHANGELOG-001');
+      fixture.write(pathName, JSON.stringify({ ...policy, required: false }) + '\n');
+      const optional = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      expect(optional).toMatchObject({ required: false, status: 'not_required', gaps: [] });
+      fixture.write(pathName, JSON.stringify(policy) + '\n');
+      expect(runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' }).status).toBe('pass');
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed policy and scope fixture: ${fixture.root}`);
+    }
+  });
+
+  test('invalid typed changelog payload blocks closeout until repaired', () => {
+    const fixture = documentationClearFixture({ changelogRequired: true });
+    let passed = false;
+    try {
+      const baseline = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+      const input = {
+        ...fixture.input,
+        phase: 'closeout' as const,
+        baseline,
+        baseline_path: '.agent/work/clear-zombies/documentation-baseline-0001.v1.json',
+      };
+      const changelog = 'docs/agent-instructions/agent-instructions.changelog.jsonl';
+      fixture.write(changelog, JSON.stringify({ schema: 'DocumentationChangeEvent/v1', operation: 7 }) + '\n');
+      expect(runtime.produceDocumentationClearCheckpoint(input)).toMatchObject({
+        status: 'blocked',
+        gaps: ['GAP-DOCUMENTATION-CHANGELOG-001'],
+      });
+      fixture.write(changelog, '');
+      expect(runtime.produceDocumentationClearCheckpoint(input).status).toBe('pass');
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed changelog fixture: ${fixture.root}`);
+    }
+  });
+
   test('Simple: CLEAR creates a valid baseline for an ordinary scope', () => {
     const fixture = documentationClearFixture();
     try {

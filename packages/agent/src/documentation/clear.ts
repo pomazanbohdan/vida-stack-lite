@@ -268,7 +268,8 @@ export function produceDocumentationClearCheckpoint(input: DocumentationClearInp
     policy_digest: policyDigest,
     inventory_digest: canonicalJsonDigest(documents),
     documents,
-    baseline_path: input.phase === 'closeout' ? relative(input.baseline_path ?? '') : null,
+    baseline_path:
+      input.phase === 'closeout' && input.baseline_path !== undefined ? relative(input.baseline_path) : null,
     baseline_digest: input.phase === 'closeout' ? (input.baseline?.digest ?? null) : null,
     phase: input.phase,
     status,
