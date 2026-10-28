@@ -199,6 +199,7 @@ jobs:
           path: |
             ${{ steps.emit-build.outputs.formation_directory }}/${{ steps.emit-build.outputs.formation_archive_file }}
             ${{ steps.emit-build.outputs.formation_directory }}/result.json
+            ${{ steps.emit-build.outputs.formation_directory }}/candidate.json
           archive: true
           compression-level: 0
           overwrite: false

@@ -984,6 +984,11 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
     },
   });
   exclusive(ctx.root, 'output/result.json', result);
+  exclusive(ctx.root, 'output/candidate.json', candidateBytes);
+  requireCI(
+    physical(ctx.root, 'output/candidate.json', 8 * 1024 * 1024).equals(candidateBytes),
+    'CI formation candidate copy differs',
+  );
   writeFileSync(
     requiredEnv(process.env, 'GITHUB_OUTPUT'),
     'formation_directory=' +

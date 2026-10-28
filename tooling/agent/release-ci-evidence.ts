@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fsSafeArchiveEntry } from '../../packages/agent/tooling/fs-safe-archive-entry.ts';
+import { ownedTempWorkspace, cleanupOwnedWorkspace } from '../../packages/agent/tooling/owned-staging.ts';
 import { readRuntimeConfigIdentityForObservation } from '../../packages/agent/src/config/runtime-config.ts';
 import type {
   AgentFsSafeArchiveModule,
@@ -1530,6 +1531,7 @@ interface ObserveGitHubOptions extends DownloadOptions {
   candidate: CIDeliveryCandidate;
   transport_path: string;
 }
+type ObserveGitHubFormationOptions = Omit<ObserveGitHubOptions, 'candidate'>;
 interface GitHubRun {
   id: number;
   run_attempt: number;
@@ -1757,10 +1759,17 @@ export async function downloadGitHubCIDelivery(options: DownloadOptions): Promis
   );
   return { transport_path: relative, run_id: String(run_id), run_attempt, artifact_id: String(artifact_id) };
 }
-export async function observeGitHubCIDelivery(options: ObserveGitHubOptions): Promise<CIDeliveryObservation> {
+async function observeGitHubCIDeliveryInternal(
+  options: ObserveGitHubFormationOptions & { candidate?: CIDeliveryCandidate },
+): Promise<{
+  observation: CIDeliveryObservation;
+  candidate: CIDeliveryCandidate;
+  archive_bytes: Buffer;
+  transport_sha256: string;
+}> {
   let { root, request, candidate, profile, run_id, run_attempt, artifact_id, transport_path, token, signal } = options;
   request = structuredClone(request);
-  candidate = structuredClone(candidate);
+  if (candidate) candidate = structuredClone(candidate);
   profile = structuredClone(profile);
   validateCIDeliveryRequest(request);
   profileMatches(request, profile);
@@ -1860,28 +1869,95 @@ export async function observeGitHubCIDelivery(options: ObserveGitHubOptions): Pr
   check(`sha256:${digest(transport)}` === artifact.digest, 'provider ZIP transport differs');
   const { readArchiveEntry, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root);
   const zip = releasePath(root, transport_path);
-  let resultBytes: Buffer;
-  let archiveBytes: Buffer;
+  let resultBytes: Buffer | undefined;
+  let archiveBytes: Buffer | undefined;
+  let snapshot: ReturnType<typeof ownedTempWorkspace> | undefined;
+  let snapshotIdentity: string | undefined;
+  let observationFailure: Error | undefined;
+  let cleanupFailure: Error | undefined;
   try {
     await loadZipArchiveWithPreflight(transport, { maxArchiveBytes: ciTransportLimit });
-    resultBytes = await readArchiveEntry(zip, 'result.json', { kind: 'zip', maxBytes: 8 * 1024 * 1024 });
+    let selectedZip = zip;
+    if (candidate === undefined) {
+      snapshot = ownedTempWorkspace('vida-ci-formation-');
+      snapshot.store.write('formation.zip', transport, { maxBytes: ciTransportLimit });
+      selectedZip = snapshot.path('formation.zip');
+      const directory = lstatSync(snapshot.dir, { bigint: true });
+      check(
+        directory.isDirectory() &&
+          !directory.isSymbolicLink() &&
+          snapshot.exactIdentity !== undefined &&
+          directory.dev === snapshot.exactIdentity.dev &&
+          directory.ino === snapshot.exactIdentity.ino,
+        'formation snapshot directory differs',
+      );
+      const info = lstatSync(selectedZip);
+      check(info.isFile() && !info.isSymbolicLink() && info.nlink === 1, 'formation snapshot identity invalid');
+      snapshotIdentity = JSON.stringify([info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs]);
+      check(snapshot.read('formation.zip').equals(transport), 'formation snapshot differs');
+      const candidateValue = parseFormationJSON(
+        await readArchiveEntry(selectedZip, 'candidate.json', { kind: 'zip', maxBytes: 8 * 1024 * 1024 }),
+        'candidate',
+        8 * 1024 * 1024,
+      );
+      assertCandidate(candidateValue);
+      check(
+        candidateValue.pack_metadata.length === 1 &&
+          candidateValue.pack_metadata[0]?.filename === `vida-agent-${request.version}.tgz`,
+        'candidate archive identity differs',
+      );
+      candidate = candidateValue;
+    }
+    resultBytes = await readArchiveEntry(selectedZip, 'result.json', { kind: 'zip', maxBytes: 8 * 1024 * 1024 });
     const packageMetadata = candidate.pack_metadata[0];
     check(
       packageMetadata !== undefined && typeof packageMetadata.filename === 'string',
       'candidate package metadata absent',
     );
-    archiveBytes = await readArchiveEntry(zip, packageMetadata.filename, { kind: 'zip', maxBytes: ciArchiveLimit });
-  } catch {
-    throw new Error(
+    archiveBytes = await readArchiveEntry(selectedZip, packageMetadata.filename, {
+      kind: 'zip',
+      maxBytes: ciArchiveLimit,
+    });
+    if (snapshot) {
+      const info = lstatSync(selectedZip);
+      const directory = lstatSync(snapshot.dir, { bigint: true });
+      check(
+        directory.isDirectory() &&
+          !directory.isSymbolicLink() &&
+          snapshot.exactIdentity !== undefined &&
+          directory.dev === snapshot.exactIdentity.dev &&
+          directory.ino === snapshot.exactIdentity.ino &&
+          info.isFile() &&
+          !info.isSymbolicLink() &&
+          info.nlink === 1 &&
+          JSON.stringify([info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs]) === snapshotIdentity &&
+          snapshot.read('formation.zip').equals(transport),
+        'formation snapshot changed',
+      );
+    }
+  } catch (error) {
+    observationFailure = new Error(
       'GAP-VIDA-CI-DELIVERY-001: qualified ZIP reader unavailable or artifact invalid; no dependency installation',
+      { cause: error },
     );
+  } finally {
+    if (snapshot && cleanupOwnedWorkspace(snapshot) !== 'removed')
+      cleanupFailure = Error('GAP-VIDA-CI-DELIVERY-001: formation snapshot cleanup incomplete');
   }
+  if (observationFailure && cleanupFailure)
+    throw new AggregateError([observationFailure, cleanupFailure], 'Formation observation and cleanup failed');
+  if (observationFailure) throw observationFailure;
+  if (cleanupFailure) throw cleanupFailure;
+  check(
+    resultBytes !== undefined && archiveBytes !== undefined && candidate !== undefined,
+    'formation members missing',
+  );
   check(
     digest(archiveBytes) === candidate.archive_sha256 &&
       regularBytes(root, transport_path, ciTransportLimit).equals(transport),
     'nested archive or transport changed',
   );
-  return {
+  const observation: CIDeliveryObservation = {
     schema: 'VidaCIDeliveryObservation/v1',
     issuer: profile.issuer,
     run_id: String(run_id),
@@ -1891,6 +1967,15 @@ export async function observeGitHubCIDelivery(options: ObserveGitHubOptions): Pr
     checks,
     result_bytes: resultBytes,
   };
+  if (options.candidate === undefined) validateCIDeliveryObservation({ request, candidate, profile, observation });
+  return { observation, candidate, archive_bytes: archiveBytes, transport_sha256: digest(transport) };
+}
+export async function observeGitHubCIDelivery(options: ObserveGitHubOptions): Promise<CIDeliveryObservation> {
+  return (await observeGitHubCIDeliveryInternal(options)).observation;
+}
+/** Provider-bound candidate and archive from one retained formation ZIP. */
+export async function observeGitHubCIDeliveryWithCandidate(options: ObserveGitHubFormationOptions) {
+  return observeGitHubCIDeliveryInternal(options);
 }
 function githubRun(value: unknown): GitHubRun {
   check(

@@ -3628,10 +3628,58 @@ export async function main(args: string[], issueRoot = repositoryRoot) {
   const usageMessage =
     'Usage: release:local -- --prepare [--minor | --major | --version X.Y.Z] | ' +
     '--prepare-after-disposition --proposal REL [--minor | --major | --version X.Y.Z] | ' +
-    '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID | --issue-native-pair ID';
+    '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID | --issue-native-pair ID | ' +
+    '--stage-observe-native-pair OP SOURCE RUN ATTEMPT LREQ LART LZIP WREQ WART WZIP ACTOR';
   if (args.length === 2 && args[0] === '--issue-native-pair' && args[1] && idPattern.test(args[1])) {
     const { issueApprovedNativePair } = await import('./release-ci-evidence.ts');
     return issueApprovedNativePair({ root: issueRoot, operation: args[1] });
+  }
+  if (args.length === 12 && args[0] === '--stage-observe-native-pair') {
+    const [
+      ,
+      operation,
+      sourceCommit,
+      runId,
+      attempt,
+      linuxRequest,
+      linuxArtifact,
+      linuxTransport,
+      windowsRequest,
+      windowsArtifact,
+      windowsTransport,
+      actor,
+    ] = args;
+    if (
+      !operation ||
+      !idPattern.test(operation) ||
+      !sourceCommit ||
+      !runId ||
+      !attempt ||
+      !linuxRequest ||
+      !linuxArtifact ||
+      !linuxTransport ||
+      !windowsRequest ||
+      !windowsArtifact ||
+      !windowsTransport ||
+      !actor ||
+      !/^[1-9]\d*$/.test(attempt) ||
+      !Number.isSafeInteger(Number(attempt))
+    )
+      throw Error('Native pair staging arguments are invalid.');
+    const state = releaseState(journalFile(issueRoot, operation));
+    const { stageApprovedGitHubFormationPair } = await import('./release-assurance.ts');
+    return stageApprovedGitHubFormationPair({
+      root: issueRoot,
+      operation,
+      version: state.version,
+      source_commit: sourceCommit,
+      run_id: runId,
+      run_attempt: Number(attempt),
+      linux: { request_id: linuxRequest, artifact_id: linuxArtifact, transport_path: linuxTransport },
+      windows: { request_id: windowsRequest, artifact_id: windowsArtifact, transport_path: windowsTransport },
+      actor,
+      ...(process.env.GITHUB_TOKEN ? { token: process.env.GITHUB_TOKEN } : {}),
+    });
   }
   if (args.length === 4 && args[0] === '--stage-native-retarget' && args[2] === '--candidate') {
     const stageOperation = requireString(args[1], usageMessage);

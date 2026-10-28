@@ -277,6 +277,15 @@ through the existing CI request owner. A partial issuance is retained for inspec
 Linux publishes its five formation files; Windows retains its six.
 The run must complete successfully before local observation.
 
+For formation ZIPs containing `candidate.json`, the local controller can stage
+and observe both targets with
+`bun run release:local -- --stage-observe-native-pair OPERATION SOURCE_COMMIT RUN_ID ATTEMPT LINUX_REQUEST_ID LINUX_ARTIFACT_ID LINUX_ZIP WINDOWS_REQUEST_ID WINDOWS_ARTIFACT_ID WINDOWS_ZIP ACTOR`.
+The ZIP paths are repository-relative. The controller verifies both artifacts
+through GitHub before staging, uses the existing retarget owner, then records the
+paired formation. A partial stage or retarget is retained for inspection. This
+does not publish a release or install an agent. Older ZIPs without candidate
+metadata continue to use the manual staging and observation route below.
+
 After staging the primary and peer candidates and retaining each formation ZIP,
 the local controller can invoke `release:local` with
 `--observe-native-pair OPERATION SOURCE_COMMIT RUN_ID ATTEMPT LINUX_REQUEST_ID LINUX_ARTIFACT_ID LINUX_ZIP WINDOWS_REQUEST_ID WINDOWS_ARTIFACT_ID WINDOWS_ZIP`.

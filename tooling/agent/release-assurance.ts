@@ -1,12 +1,14 @@
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import {
   releaseSourceBinding,
   releaseSourceInputs as sources,
   assertReleaseRetargetSettled,
   releasePath,
+  releaseDirectory,
   releaseState,
   admissionMutex,
   operationMutex,
@@ -19,10 +21,19 @@ import {
   verifyCIDeliveryEvidence,
   verifyCIDeliveryFormationPair,
   observeGitHubCIDelivery,
+  observeGitHubCIDeliveryWithCandidate,
+  validateCIDeliveryRequest,
   minimumNativeDeliveryChecks,
+  ciTransportLimit,
   type CIDeliveryRequest,
   type CIDeliveryCandidate,
 } from './release-ci-evidence.ts';
+import {
+  stageNativeRetargetCandidate,
+  planReleaseRetarget,
+  applyReleaseRetarget,
+  readNativeRetargetCandidate,
+} from '../../packages/agent/bin/repair-release-retarget.ts';
 
 const rootDefault = fileURLToPath(new URL('../../', import.meta.url));
 type SourceObservations = NonNullable<Parameters<typeof sources>[2]>;
@@ -400,8 +411,7 @@ export async function verifyLocalReleaseTests(input: VerifyInput) {
   recheckLocalReleaseTests(capture);
   return joined;
 }
-/** Observe the fixed project workflow only after its actual run has completed. */
-export async function verifyApprovedGitHubFormationPair(input: {
+type ApprovedGitHubPair = {
   root?: string;
   operation: string;
   version: string;
@@ -411,7 +421,8 @@ export async function verifyApprovedGitHubFormationPair(input: {
   linux: { request_id: string; artifact_id: string; transport_path: string };
   windows: { request_id: string; artifact_id: string; transport_path: string };
   token?: string;
-}) {
+};
+function approvedGitHubTargets(input: ApprovedGitHubPair) {
   const root = input.root ?? rootDefault;
   if (!/^[a-f0-9]{40}$/.test(input.source_commit)) throw Error('Selected Source commit is invalid.');
   const workflowPath = '.github/workflows/agent-native-delivery.yml';
@@ -458,12 +469,119 @@ export async function verifyApprovedGitHubFormationPair(input: {
         }),
     };
   });
+  return targets;
+}
+/** Observe the fixed project workflow only after its actual run has completed. */
+export async function verifyApprovedGitHubFormationPair(input: ApprovedGitHubPair) {
+  const root = input.root ?? rootDefault;
+  const targets = approvedGitHubTargets(input);
   return verifyLocalReleaseTests({
     root,
     operation: input.operation,
     version: input.version,
     ci: { targets },
   });
+}
+/** Verify both provider artifacts before staging either target through the existing retarget owner. */
+export async function stageApprovedGitHubFormationPair(input: ApprovedGitHubPair & { actor: string }) {
+  const root = input.root ?? rootDefault;
+  if (typeof input.actor !== 'string' || !input.actor.trim() || input.actor.length > 256)
+    throw Error('Retarget actor is invalid.');
+  const retarget = `.agent/work/agent-local-release/${input.operation}/retarget`;
+  if (existsSync(releasePath(root, retarget, true)))
+    throw Error('Existing retarget staging requires inspection; preserve UNKNOWN.');
+  const source = releaseSourceBinding(root).source_binding;
+  const targets = approvedGitHubTargets(input);
+  if (input.linux.artifact_id === input.windows.artifact_id) throw Error('Selected target artifacts differ.');
+  const rows: Array<{
+    target: 'bun-linux-x64' | 'bun-windows-x64';
+    request: CIDeliveryRequest;
+    request_bytes: Buffer;
+    selected: ApprovedGitHubPair['linux'];
+    candidate: CIDeliveryCandidate;
+    archive_bytes: Buffer;
+    transport_sha256: string;
+  }> = [];
+  for (const target of targets) {
+    const selected = target.target === 'bun-linux-x64' ? input.linux : input.windows;
+    if (!/^[a-f0-9]{64}$/.test(selected.request_id)) throw Error('Target request identity invalid.');
+    const requestPath = `.agent/work/agent-local-release/${input.operation}/ci/${selected.request_id}/request.json`;
+    const requestBytes = readFileSync(localFile(root, requestPath));
+    const request: unknown = parseJSON(requestBytes.toString('utf8'));
+    validateCIDeliveryRequest(request);
+    if (
+      request.request_id !== selected.request_id ||
+      request.operation_id !== input.operation ||
+      request.version !== input.version ||
+      request.target !== target.target ||
+      request.source_binding !== source
+    )
+      throw Error('Target request or Source differs.');
+    const observed = await observeGitHubCIDeliveryWithCandidate({
+      root,
+      request,
+      profile: target.profile,
+      run_id: input.run_id,
+      run_attempt: input.run_attempt,
+      artifact_id: selected.artifact_id,
+      transport_path: selected.transport_path,
+      ...(input.token ? { token: input.token } : {}),
+      signal: AbortSignal.timeout(30_000),
+    });
+    rows.push({ target: target.target, request, request_bytes: requestBytes, selected, ...observed });
+  }
+  if (rows.length !== 2 || releaseSourceBinding(root).source_binding !== source) throw Error('Target Source changed.');
+  for (const row of rows) {
+    const requestPath = `.agent/work/agent-local-release/${input.operation}/ci/${row.request.request_id}/request.json`;
+    const transport = localFile(root, row.selected.transport_path);
+    const transportStat = lstatSync(transport);
+    if (!transportStat.isFile() || transportStat.size > ciTransportLimit) throw Error('Provider transport invalid.');
+    if (
+      !readFileSync(localFile(root, requestPath)).equals(row.request_bytes) ||
+      sha(readFileSync(transport)) !== row.transport_sha256
+    )
+      throw Error('Target request or provider transport changed.');
+  }
+  if (existsSync(releasePath(root, retarget, true)))
+    throw Error('Retarget staging changed during provider observation; preserve UNKNOWN.');
+  const parent = `.tmp/ci-retarget/${input.operation}`;
+  releaseDirectory(root, parent);
+  const primary = process.platform === 'win32' ? 'bun-windows-x64' : 'bun-linux-x64';
+  for (const row of rows) {
+    const folder = `${parent}/${row.request.request_id}`;
+    mkdirSync(releasePath(root, folder, true), { mode: 0o700 });
+    const archive = `${folder}/${row.candidate.pack_metadata[0]!.filename}`;
+    writeFileSync(releasePath(root, archive, true), row.archive_bytes, { flag: 'wx', mode: 0o600 });
+    const descriptor = `${folder}/candidate.json`;
+    writeFileSync(
+      releasePath(root, descriptor, true),
+      JSON.stringify({
+        schema: row.target === primary ? 'VidaNativeRetargetCandidate/v1' : 'VidaNativeRetargetCandidate/v2',
+        operation_id: input.operation,
+        version: input.version,
+        source_binding: source,
+        archive,
+        pack_metadata: row.candidate.pack_metadata,
+        ...(row.target === primary ? {} : { target: row.target }),
+      }),
+      { flag: 'wx', mode: 0o600 },
+    );
+    await stageNativeRetargetCandidate({ root, operation: input.operation, candidateFile: descriptor });
+    const staged = readNativeRetargetCandidate({
+      root,
+      operation: input.operation,
+      ...(row.target === primary ? {} : { target: row.target }),
+    });
+    if (
+      staged.archive_sha256 !== row.candidate.archive_sha256 ||
+      staged.manifest_sha256 !== row.candidate.manifest_sha256 ||
+      !isDeepStrictEqual(staged.manifest, row.candidate.manifest)
+    )
+      throw Error('Staged candidate differs from provider observation; preserve stage.');
+  }
+  await planReleaseRetarget({ root, operation: input.operation, actor: input.actor });
+  await applyReleaseRetarget({ root, operation: input.operation });
+  return verifyApprovedGitHubFormationPair(input);
 }
 export async function verifyLocalReleaseAssurance({ root = rootDefault, operation, version, ci }: VerifyInput) {
   if (!isRecord(ci)) throw new Error('CI evidence invalid.');

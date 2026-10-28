@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
   existsSync,
+  cpSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -53,6 +54,7 @@ import {
   verifyLocalReleaseAssurance,
   verifyApprovedGitHubFormationPair,
 } from '../../../tooling/agent/release-assurance.ts';
+import * as releaseAssurance from '../../../tooling/agent/release-assurance.ts';
 import {
   type verifyCIDeliveryFormationPair,
   readConfirmedCIDeliveryFormation,
@@ -221,6 +223,11 @@ afterEach(() => {
 const read = (root: string, file: string) => readFileSync(path.join(root, file));
 function isFixtureRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+function isArchiveReader(
+  value: unknown,
+): value is Pick<typeof import('@openclaw/fs-safe/archive'), 'readArchiveEntry'> {
+  return isFixtureRecord(value) && typeof value.readArchiveEntry === 'function';
 }
 function typedFixtureIO<T>(text: string, validate: (value: unknown) => value is T): T {
   const value: unknown = JSON.parse(text);
@@ -1269,6 +1276,110 @@ test('CI public observer rejects duplicate physical ZIP names before accepting r
       assert.ok(path.basename(directory).startsWith('vida-ci-zip-'));
       rmSync(directory, { recursive: true, force: true });
     }
+  }
+});
+
+test('provider-bound formation ZIP returns candidate only after the actual run and matching result are checked', async () => {
+  const value = await fixture();
+  const repositoryRoot = path.resolve(import.meta.dir, '../../..');
+  const maintained: unknown = JSON.parse(read(repositoryRoot, 'packages/agent/package.json').toString());
+  const initial: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString());
+  assert.ok(isFixtureRecord(maintained) && isFixtureRecord(maintained.dependencies) && isFixtureRecord(initial));
+  write(value.root, 'packages/agent/package.json', {
+    ...initial,
+    dependencies: { '@openclaw/fs-safe': maintained.dependencies['@openclaw/fs-safe'] },
+  });
+  write(value.root, 'packages/agent/bun.lock', read(repositoryRoot, 'packages/agent/bun.lock'));
+  mkdirSync(path.join(value.root, 'packages/agent/node_modules'));
+  symlinkSync(
+    path.join(repositoryRoot, 'packages/agent/node_modules/@openclaw'),
+    path.join(value.root, 'packages/agent/node_modules/@openclaw'),
+    'dir',
+  );
+  const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' });
+  const nested = Buffer.from('inert archive for provider binding');
+  const candidate = ciCandidateForRequest(request, nested);
+  const workflow = Buffer.from('inert workflow definition');
+  const data = githubTransportFixture(request, Buffer.from('placeholder'));
+  data.profile.required_checks = ['native-build'];
+  data.profile.github.steps = [{ id: 'native-build', name: 'native-build' }];
+  data.job.steps = [{ name: 'native-build', status: 'completed', conclusion: 'success' }];
+  const checks = [{ id: 'native-build', status: 'passed' }];
+  const result = encodeCIDeliveryResult({
+    request,
+    candidate,
+    profile: data.profile,
+    observation: { issuer: 'github-actions', run_id: '17', run_attempt: 2, conclusion: 'success', checks },
+    dependency_cache: dependencyCacheFixture(),
+  });
+  const archiveEntry = createRequire(path.join(repositoryRoot, 'packages/agent/package.json')).resolve(
+    '@openclaw/fs-safe/archive',
+  );
+  const JSZip = createRequire(archiveEntry)('jszip') as typeof JSZipConstructor;
+  const observe = (
+    ciEvidence as unknown as {
+      observeGitHubCIDeliveryWithCandidate: (options: {
+        root: string;
+        request: CIDeliveryRequest;
+        profile: typeof data.profile;
+        run_id: string;
+        run_attempt: number;
+        artifact_id: string;
+        transport_path: string;
+      }) => Promise<{ candidate: CIDeliveryCandidate; observation: { result_bytes: Buffer }; archive_bytes: Buffer }>;
+    }
+  ).observeGitHubCIDeliveryWithCandidate;
+  assert.equal(typeof observe, 'function');
+  const originalFetch = globalThis.fetch;
+  const before = read(value.root, pending);
+  try {
+    for (const kind of ['valid', 'old', 'candidate', 'wrong-run', 'changed-zip'] as const) {
+      const embedded = kind === 'candidate' ? { ...candidate, source_binding: 'f'.repeat(64) } : candidate;
+      const zip = new JSZip().file('result.json', result).file(candidate.pack_metadata[0]!.filename, nested);
+      if (kind !== 'old') zip.file('candidate.json', json(embedded));
+      const bytes = await zip.generateAsync({ type: 'nodebuffer', compression: 'STORE' });
+      const transport = '.tmp/provider-bound-' + kind + '.zip';
+      write(value.root, transport, bytes);
+      data.artifact.digest = 'sha256:' + sha(bytes);
+      data.run.head_sha = kind === 'wrong-run' ? 'e'.repeat(40) : data.profile.github.source_commit;
+      globalThis.fetch = mockedFetch(originalFetch, async (input) => {
+        const url = String(fetchURL(input));
+        if (url.endsWith('/runs/17/attempts/2')) return Response.json(data.run);
+        if (url.includes('/contents/'))
+          return Response.json({ encoding: 'base64', content: workflow.toString('base64') });
+        if (url.includes('/jobs?')) return Response.json({ total_count: 1, jobs: [data.job] });
+        if (url.endsWith('/artifacts/19')) {
+          if (kind === 'changed-zip') write(value.root, transport, Buffer.from('changed transport'));
+          return Response.json(data.artifact);
+        }
+        throw Error('unexpected fixture provider request');
+      });
+      const options = {
+        root: value.root,
+        request,
+        profile: data.profile,
+        run_id: '17',
+        run_attempt: 2,
+        artifact_id: '19',
+        transport_path: transport,
+      };
+      if (kind === 'valid') {
+        const observed = await observe(options);
+        assert.deepEqual(observed.candidate, candidate);
+        assert.deepEqual(observed.observation.result_bytes, result);
+        assert.deepEqual(observed.archive_bytes, nested);
+      } else {
+        await assert.rejects(observe(options));
+        if (kind === 'old') {
+          const legacy = await observeGitHubCIDelivery({ ...options, candidate });
+          assert.deepEqual(legacy.result_bytes, result);
+        }
+      }
+      assert.deepEqual(read(value.root, pending), before);
+      assert.equal(existsSync(path.join(value.root, folder + '/retarget')), false);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
   }
 });
 
@@ -2337,6 +2448,364 @@ async function targetCandidateFixture(
   });
   return { candidatePath, bytes };
 }
+
+test('the native producer emits candidate beside the formation result and archive', async () => {
+  const value = await fixture();
+  const initial: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString());
+  assert.ok(isFixtureRecord(initial));
+  write(value.root, 'packages/agent/package.json', {
+    ...initial,
+    packageManager: `bun@${Bun.version}`,
+    engines: { bun: Bun.version, node: '24.0.0' },
+  });
+  write(value.root, 'packages/agent/.bun-version', Bun.version + '\n');
+  const item = await targetCandidateFixture(value.root, 'bun-linux-x64');
+  const descriptor: unknown = JSON.parse(read(value.root, item.candidatePath).toString());
+  assert.ok(isFixtureRecord(descriptor) && typeof descriptor.archive === 'string');
+  const sourceRoot = path.resolve(import.meta.dir, '../../..');
+  const readerEntry = createRequire(path.join(sourceRoot, 'packages/agent/package.json')).resolve(
+    '@openclaw/fs-safe/archive',
+  );
+  const reader: unknown = await import(readerEntry);
+  assert.ok(isArchiveReader(reader), 'qualified archive reader is unavailable');
+  const tar = path.join(value.root, descriptor.archive);
+  const manifestBytes = await reader.readArchiveEntry(tar, 'package/dist/standalone/manifest.json', {
+    kind: 'tar',
+    maxBytes: 8 * 1024 * 1024,
+  });
+  const manifest: unknown = JSON.parse(manifestBytes.toString());
+  assert.ok(isFixtureRecord(manifest) && isFixtureRecord(manifest.asset) && typeof manifest.asset.file === 'string');
+  const asset = await reader.readArchiveEntry(tar, 'package/dist/standalone/' + manifest.asset.file, {
+    kind: 'tar',
+    maxBytes: 1024 * 1024,
+  });
+  write(value.root, 'packages/agent/dist/standalone/manifest.json', manifestBytes);
+  write(value.root, 'packages/agent/dist/standalone/' + manifest.asset.file, asset);
+  const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-linux-x64' });
+  const candidate = {
+    operation_id: operation,
+    version,
+    source_binding: request.source_binding,
+    pack_metadata: descriptor.pack_metadata,
+    archive_sha256: sha(item.bytes),
+    manifest_sha256: sha(manifestBytes),
+    manifest,
+  };
+  const base = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-producer-'));
+  const temporary = path.join(base, 'runner');
+  const source = path.join(temporary, 'source');
+  const checkout = path.join(base, 'checkout');
+  mkdirSync(temporary);
+  cpSync(value.root, source, { recursive: true });
+  cpSync(value.root, checkout, { recursive: true });
+  const operationRoot = path.join(temporary, 'vida-ci-operation-123-1');
+  mkdirSync(operationRoot);
+  write(operationRoot, 'candidate.json', candidate);
+  write(operationRoot, 'output/vida-agent-' + version + '.tgz', item.bytes);
+  write(operationRoot, 'package/dist/standalone/manifest.json', manifestBytes);
+  write(operationRoot, 'package/dist/standalone/' + manifest.asset.file, asset);
+  const key = 'vida-bun-install-v1-lock-bun-' + Bun.version + '-' + 'a'.repeat(64);
+  const cache = { ...dependencyCacheFixture(), key };
+  write(operationRoot, 'phases/native-build.result.json', {
+    schema: 'VidaCIPhaseResult/v2',
+    request_id: request.request_id,
+    run_id: '123',
+    run_attempt: 1,
+    source_binding: request.source_binding,
+    archive_sha256: candidate.archive_sha256,
+    phase: 'native-build',
+    status: 'passed',
+    dependency_cache: cache,
+  });
+  const output = path.join(base, 'github-output');
+  writeFileSync(output, '');
+  const commit = 'a'.repeat(40);
+  const environment = {
+    ...process.env,
+    CI: 'true',
+    GITHUB_ACTIONS: 'true',
+    VIDA_NATIVE_CI_ENABLED: 'true',
+    GITHUB_REPOSITORY: 'pomazanbohdan/vida-stack-lite',
+    GITHUB_REPOSITORY_ID: '1340911900',
+    GITHUB_JOB: 'native-linux-x64',
+    GITHUB_RUN_ID: '123',
+    GITHUB_RUN_ATTEMPT: '1',
+    CI_SOURCE_COMMIT: commit,
+    GITHUB_SHA: commit,
+    GITHUB_WORKFLOW_REF: 'pomazanbohdan/vida-stack-lite/.github/workflows/agent-native-delivery.yml@refs/heads/main',
+    CI_REQUEST: JSON.stringify(request),
+    VIDA_CI_CACHE_ID: '1',
+    VIDA_CI_CACHE_KEY: key,
+    VIDA_CI_CACHE_REF: 'refs/heads/main',
+    VIDA_CI_CACHE_VERSION: cache.version,
+    VIDA_CI_CACHE_BYTES: '1',
+    VIDA_CI_CACHE_RESTORE: 'miss',
+    VIDA_CI_CACHE_MATCHED_KEY: '',
+    VIDA_CI_CACHE_SAVE: 'confirmed',
+    VIDA_CI_CACHE_SAVE_ACTION: 'success',
+    VIDA_CI_SOURCE_ROOT: source,
+    GITHUB_WORKSPACE: checkout,
+    RUNNER_TEMP: temporary,
+    GITHUB_OUTPUT: output,
+  };
+  const result = spawnSync(
+    process.execPath,
+    [path.join(sourceRoot, 'tooling/agent/native-ci-delivery.ts'), '--phase', 'emit-build'],
+    { env: environment, encoding: 'utf8' },
+  );
+  assert.equal(result.status, 0, result.stderr + result.stdout);
+  const formationCandidate = path.join(operationRoot, 'output/candidate.json');
+  assert.equal(existsSync(formationCandidate), true, 'formation artifact has candidate metadata');
+  assert.deepEqual(readFileSync(formationCandidate), readFileSync(path.join(operationRoot, 'candidate.json')));
+  assert.equal(existsSync(path.join(operationRoot, 'output/result.json')), true);
+  assert.deepEqual(read(operationRoot, 'output/vida-agent-' + version + '.tgz'), item.bytes);
+});
+
+test('the approved pair stages provider-bound targets before retarget and formation', async () => {
+  const value = await fixture();
+  const sourceRoot = path.resolve(import.meta.dir, '../../..');
+  const maintained: unknown = JSON.parse(read(sourceRoot, 'packages/agent/package.json').toString());
+  const initial: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString());
+  assert.ok(isFixtureRecord(maintained) && isFixtureRecord(maintained.dependencies) && isFixtureRecord(initial));
+  write(value.root, 'packages/agent/package.json', {
+    ...initial,
+    dependencies: { '@openclaw/fs-safe': maintained.dependencies['@openclaw/fs-safe'] },
+  });
+  write(value.root, 'packages/agent/bun.lock', read(sourceRoot, 'packages/agent/bun.lock'));
+  mkdirSync(path.join(value.root, 'packages/agent/node_modules'));
+  symlinkSync(
+    path.join(sourceRoot, 'packages/agent/node_modules/@openclaw'),
+    path.join(value.root, 'packages/agent/node_modules/@openclaw'),
+    'dir',
+  );
+  const inputs = ['packages/agent/lib.js'];
+  const tests = ['retained-behavior', 'static', 'release-local'].map((lane) => {
+    const file = '.tmp/' + lane + '-pair-fixture.json';
+    write(value.root, file, { exit_code: 0, command: 'fixture', started_at: 'fixture', completed_at: 'fixture' });
+    return {
+      lane,
+      path: file,
+      inputs,
+      sha256: sha(read(value.root, file)),
+      input_binding: testInputBinding(value.root, inputs),
+    };
+  });
+  write(value.root, folder + '/tests.json', { operation_id: operation, version, tests });
+  const readerEntry = createRequire(path.join(sourceRoot, 'packages/agent/package.json')).resolve(
+    '@openclaw/fs-safe/archive',
+  );
+  const archiveReader: unknown = await import(readerEntry);
+  assert.ok(isArchiveReader(archiveReader), 'qualified archive reader is unavailable');
+  const JSZip = createRequire(readerEntry)('jszip') as typeof JSZipConstructor;
+  const workflow = read(value.root, '.github/workflows/agent-native-delivery.yml');
+  const commit = 'a'.repeat(40);
+  const run = {
+    id: 123,
+    run_attempt: 1,
+    head_sha: commit,
+    workflow_id: 374583166,
+    path: '.github/workflows/agent-native-delivery.yml',
+    event: 'workflow_dispatch',
+    status: 'completed',
+    conclusion: 'success',
+    repository: { id: 1340911900, full_name: 'pomazanbohdan/vida-stack-lite' },
+    head_repository: { id: 1340911900 },
+  };
+  const jobs = ['linux', 'windows'].map((platform) => ({
+    name: 'native-' + platform + '-x64',
+    run_id: 123,
+    run_attempt: 1,
+    status: 'completed',
+    conclusion: 'success',
+    started_at: '2026-10-04T09:00:00Z',
+    completed_at: '2026-10-04T09:01:00Z',
+    steps: [{ name: 'native-build', status: 'completed', conclusion: 'success' }],
+  }));
+  const artifacts: Record<string, unknown> = {};
+  const selected: Array<{ request_id: string; artifact_id: string; transport_path: string }> = [];
+  for (const [index, target] of (['bun-linux-x64', 'bun-windows-x64'] as const).entries()) {
+    const item = await targetCandidateFixture(value.root, target);
+    const descriptor: unknown = JSON.parse(read(value.root, item.candidatePath).toString());
+    assert.ok(isFixtureRecord(descriptor) && typeof descriptor.archive === 'string');
+    const manifestBytes = await archiveReader.readArchiveEntry(
+      path.join(value.root, descriptor.archive),
+      'package/dist/standalone/manifest.json',
+      { kind: 'tar', maxBytes: 8 * 1024 * 1024 },
+    );
+    const candidate: CIDeliveryCandidate = {
+      operation_id: operation,
+      version,
+      source_binding: releaseSourceBinding(value.root).source_binding,
+      pack_metadata: descriptor.pack_metadata as CIDeliveryCandidate['pack_metadata'],
+      archive_sha256: sha(item.bytes),
+      manifest_sha256: sha(manifestBytes),
+      manifest: JSON.parse(manifestBytes.toString()) as CIDeliveryCandidate['manifest'],
+    };
+    const request = requestForCI({ ...value.input, context: ciContext, target });
+    const profile = {
+      issuer: 'github-actions',
+      repository_id: request.repository_id,
+      project_ids: request.project_ids,
+      target,
+      required_checks: ['native-build'],
+    };
+    const cache = dependencyCacheFixture();
+    const result = encodeCIDeliveryResult({
+      request,
+      candidate,
+      profile,
+      observation: {
+        issuer: 'github-actions',
+        run_id: '123',
+        run_attempt: 1,
+        conclusion: 'success',
+        checks: [{ id: 'native-build', status: 'passed' }],
+      },
+      dependency_cache: cache,
+    });
+    const bytes = await new JSZip()
+      .file('candidate.json', json(candidate))
+      .file('result.json', result)
+      .file(candidate.pack_metadata[0]!.filename, item.bytes)
+      .generateAsync({ type: 'nodebuffer', compression: 'STORE' });
+    const transport = '.tmp/formed-' + index + '.zip';
+    write(value.root, transport, bytes);
+    const artifactId = String(index + 1);
+    artifacts[artifactId] = {
+      id: index + 1,
+      name: request.request_id + '-1',
+      expired: false,
+      created_at: '2026-10-04T09:00:30Z',
+      digest: 'sha256:' + sha(bytes),
+      workflow_run: { id: 123, repository_id: 1340911900, head_repository_id: 1340911900, head_sha: commit },
+    };
+    selected.push({ request_id: request.request_id, artifact_id: artifactId, transport_path: transport });
+  }
+  const stageAndObserve = (
+    releaseAssurance as unknown as {
+      stageApprovedGitHubFormationPair: (args: {
+        root: string;
+        operation: string;
+        version: string;
+        source_commit: string;
+        run_id: string;
+        run_attempt: number;
+        linux: (typeof selected)[number];
+        windows: (typeof selected)[number];
+        actor: string;
+      }) => Promise<{ schema: string; targets: unknown[] }>;
+    }
+  ).stageApprovedGitHubFormationPair;
+  assert.equal(typeof stageAndObserve, 'function');
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = mockedFetch(previousFetch, async (input) => {
+    const suffix = String(fetchURL(input)).replace('https://api.github.com/repos/pomazanbohdan/vida-stack-lite', '');
+    if (suffix === '/actions/runs/123/attempts/1') return Response.json(run);
+    if (suffix.includes('/contents/'))
+      return Response.json({ encoding: 'base64', content: workflow.toString('base64') });
+    if (suffix.includes('/jobs?')) return Response.json({ total_count: jobs.length, jobs });
+    if (suffix.startsWith('/actions/artifacts/'))
+      return Response.json(artifacts[suffix.slice('/actions/artifacts/'.length)]);
+    throw Error('Unexpected provider fixture request');
+  });
+  try {
+    const input = {
+      ...value.input,
+      version,
+      source_commit: commit,
+      run_id: '123',
+      run_attempt: 1,
+      linux: selected[0]!,
+      windows: selected[1]!,
+      actor: 'isolated fixture controller',
+    };
+    const before = read(value.root, pending);
+    const source = read(value.root, 'packages/agent/lib.js');
+    write(value.root, 'packages/agent/lib.js', 'changed source');
+    await assert.rejects(stageAndObserve(input), /Source|source/);
+    assert.equal(existsSync(path.join(value.root, folder + '/retarget')), false);
+    write(value.root, 'packages/agent/lib.js', source);
+    jobs[1]!.conclusion = 'failure';
+    await assert.rejects(stageAndObserve(input), /required native job differs/);
+    assert.equal(existsSync(path.join(value.root, folder + '/retarget')), false);
+    assert.deepEqual(read(value.root, pending), before);
+    jobs[1]!.conclusion = 'success';
+    const mismatchRoot = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-mismatch-'));
+    cpSync(value.root, mismatchRoot, { recursive: true });
+    const first = selected[0]!;
+    const forgedZip = await new JSZip().loadAsync(read(mismatchRoot, first.transport_path));
+    const forgedCandidate = JSON.parse(await forgedZip.file('candidate.json')!.async('string')) as CIDeliveryCandidate;
+    forgedCandidate.manifest.payloadId = 'b'.repeat(64);
+    const request = JSON.parse(
+      read(mismatchRoot, folder + '/ci/' + first.request_id + '/request.json').toString(),
+    ) as CIDeliveryRequest;
+    const forgedResult = encodeCIDeliveryResult({
+      request,
+      candidate: forgedCandidate,
+      profile: {
+        issuer: 'github-actions',
+        repository_id: request.repository_id,
+        project_ids: request.project_ids,
+        target: request.target,
+        required_checks: ['native-build'],
+      },
+      observation: {
+        issuer: 'github-actions',
+        run_id: '123',
+        run_attempt: 1,
+        conclusion: 'success',
+        checks: [{ id: 'native-build', status: 'passed' }],
+      },
+      dependency_cache: dependencyCacheFixture(),
+    });
+    forgedZip.file('candidate.json', json(forgedCandidate)).file('result.json', forgedResult);
+    const forgedBytes = await forgedZip.generateAsync({ type: 'nodebuffer', compression: 'STORE' });
+    write(mismatchRoot, first.transport_path, forgedBytes);
+    const priorArtifact = artifacts['1'];
+    assert.ok(isFixtureRecord(priorArtifact));
+    artifacts['1'] = { ...priorArtifact, digest: 'sha256:' + sha(forgedBytes) };
+    await assert.rejects(stageAndObserve({ ...input, root: mismatchRoot }), /Staged candidate differs/);
+    assert.equal(existsSync(path.join(mismatchRoot, folder + '/retarget/candidate/seal.json')), true);
+    assert.equal(existsSync(path.join(mismatchRoot, folder + '/retarget/plan.json')), false);
+    assert.equal(existsSync(path.join(mismatchRoot, '.agent/work/agent-local-release/formed.json')), false);
+    artifacts['1'] = priorArtifact;
+    const retainedRoot = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-unknown-'));
+    cpSync(value.root, retainedRoot, { recursive: true });
+    mkdirSync(path.join(retainedRoot, folder + '/retarget/candidate'), { recursive: true });
+    write(retainedRoot, folder + '/retarget/candidate/incomplete', 'retained unknown');
+    await assert.rejects(stageAndObserve({ ...input, root: retainedRoot }));
+    assert.equal(read(retainedRoot, folder + '/retarget/candidate/incomplete').toString(), 'retained unknown');
+    assert.equal(existsSync(path.join(retainedRoot, '.agent/work/agent-local-release/formed.json')), false);
+    assert.deepEqual(read(retainedRoot, pending), before);
+    const formed = (await releaseLocal.main(
+      [
+        '--stage-observe-native-pair',
+        operation,
+        commit,
+        '123',
+        '1',
+        selected[0]!.request_id,
+        selected[0]!.artifact_id,
+        selected[0]!.transport_path,
+        selected[1]!.request_id,
+        selected[1]!.artifact_id,
+        selected[1]!.transport_path,
+        'isolated fixture controller',
+      ],
+      value.root,
+    )) as { schema: string; targets: unknown[] };
+    assert.equal(formed.schema, 'VidaLocalReleaseFormation/v2');
+    assert.equal(formed.targets.length, 2);
+    assert.equal(readNativeRetargetCandidate({ ...value.input, published: true }).manifest.target, 'bun-linux-x64');
+    assert.equal(
+      readNativeRetargetCandidate({ ...value.input, target: 'bun-windows-x64' }).manifest.target,
+      'bun-windows-x64',
+    );
+    assert.equal(existsSync(path.join(value.root, successful)), false);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
 
 test('two target-specific stages retain separate independently validated bytes', async () => {
   const value = await fixture();
