@@ -45,6 +45,7 @@ import {
   withReleaseAdmission,
   runCommand,
 } from '../../../tooling/agent/release-local.ts';
+import * as releaseLocal from '../../../tooling/agent/release-local.ts';
 import {
   testInputBinding,
   verifyLocalPackTests,
@@ -67,6 +68,7 @@ import {
   validateCIZIPReaderVersions,
   observeGitHubCIDelivery,
 } from '../../../tooling/agent/release-ci-evidence.ts';
+import * as ciEvidence from '../../../tooling/agent/release-ci-evidence.ts';
 import {
   validateNativeCIInvocation,
   validateNativeCIReceipts,
@@ -1407,6 +1409,63 @@ function ciRecord(value: RetargetFixture, checks = nativeDeliveryChecks) {
   };
   return { request, candidate, profile, observation };
 }
+
+test('approved native pair issuance binds both dispatch requests to the current operation and Source', async () => {
+  const value = await fixture();
+  const sourceRoot = path.resolve(import.meta.dir, '../../..');
+  write(value.root, 'agent-runtime.config.v1.yaml', read(sourceRoot, 'agent-runtime.config.v1.yaml'));
+  write(value.root, 'AGENTS.md', 'fixture policy\n');
+  const issueApprovedNativePair = (
+    ciEvidence as unknown as {
+      issueApprovedNativePair: (input: typeof value.input) => { linux: CIDeliveryRequest; windows: CIDeliveryRequest };
+    }
+  ).issueApprovedNativePair;
+  assert.equal(typeof issueApprovedNativePair, 'function');
+  const pair = issueApprovedNativePair(value.input);
+  assert.equal(pair.linux.target, 'bun-linux-x64');
+  assert.equal(pair.windows.target, 'bun-windows-x64');
+  assert.equal(pair.linux.operation_id, operation);
+  assert.equal(pair.windows.version, version);
+  assert.equal(pair.linux.source_binding, pair.windows.source_binding);
+  assert.equal(pair.linux.source_binding, releaseSourceBinding(value.root).source_binding);
+  assert.equal(pair.linux.repository_id, 'vida-agent');
+  assert.deepEqual(pair.windows.project_ids, ['agent']);
+  assert.notEqual(pair.linux.request_id, pair.windows.request_id);
+  assert.deepEqual(issueApprovedNativePair(value.input), pair);
+  for (const request of [pair.linux, pair.windows]) {
+    assert.deepEqual(
+      JSON.parse(read(value.root, folder + '/ci/' + request.request_id + '/request.json').toString()),
+      request,
+    );
+  }
+});
+
+test('release CLI issues the native dispatch pair and rejects a foreign repository configuration', async () => {
+  const value = await fixture();
+  const sourceRoot = path.resolve(import.meta.dir, '../../..');
+  const config = read(sourceRoot, 'agent-runtime.config.v1.yaml').toString('utf8');
+  write(value.root, 'agent-runtime.config.v1.yaml', config);
+  write(value.root, 'AGENTS.md', 'fixture policy\n');
+  const main = (
+    releaseLocal as unknown as {
+      main: (args: string[], root: string) => Promise<{ linux: CIDeliveryRequest; windows: CIDeliveryRequest }>;
+    }
+  ).main;
+  assert.equal(typeof main, 'function');
+  const pair = await main(['--issue-native-pair', operation], value.root);
+  assert.equal(pair.linux.operation_id, operation);
+  assert.equal(pair.windows.operation_id, operation);
+  assert.equal(pair.linux.source_binding, pair.windows.source_binding);
+  write(
+    value.root,
+    'agent-runtime.config.v1.yaml',
+    config.replace('repository_id: vida-agent', 'repository_id: foreign'),
+  );
+  await assert.rejects(
+    main(['--issue-native-pair', operation], value.root),
+    /approved repository project identity differs/,
+  );
+});
 
 test('CI request retry preserves custody and Source changes keep the original operation', async () => {
   const value = await fixture(),

@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { fsSafeArchiveEntry } from '../../packages/agent/tooling/fs-safe-archive-entry.ts';
+import { readRuntimeConfigIdentityForObservation } from '../../packages/agent/src/config/runtime-config.ts';
 import type {
   AgentFsSafeArchiveModule,
   AgentLoadZipArchiveWithPreflight,
@@ -549,6 +550,29 @@ export function recordCIDeliveryRequest(args: {
     writeFileSync(file, bytes, { flag: 'wx', mode: 0o600 });
   }
   return request;
+}
+/** Issue the fixed repository workflow's two dispatch inputs through the existing request owner. */
+export function issueApprovedNativePair(args: { root: string; operation: string }): {
+  linux: CIDeliveryRequest;
+  windows: CIDeliveryRequest;
+} {
+  const identity = readRuntimeConfigIdentityForObservation(args.root);
+  check(
+    identity.repository_id === 'vida-agent' &&
+      identity.bundle === 'packages/agent' &&
+      identity.project_ids.includes('agent'),
+    'approved repository project identity differs',
+  );
+  const context = { schema: 'ProjectContext/v1', repository_id: identity.repository_id, project_ids: ['agent'] };
+  const linux = recordCIDeliveryRequest({ ...args, context, target: 'bun-linux-x64' });
+  const windows = recordCIDeliveryRequest({ ...args, context, target: 'bun-windows-x64' });
+  check(
+    linux.operation_id === windows.operation_id &&
+      linux.version === windows.version &&
+      linux.source_binding === windows.source_binding,
+    'request pair changed during issuance; retain issued requests',
+  );
+  return { linux, windows };
 }
 function profileMatches(request: CIDeliveryRequest, profile: CIDeliveryProfile): void {
   check(

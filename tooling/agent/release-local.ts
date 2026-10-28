@@ -3624,11 +3624,15 @@ export async function executeRelease({
   }
 }
 /** @param {string[]} args */
-async function main(args: string[]) {
+export async function main(args: string[], issueRoot = repositoryRoot) {
   const usageMessage =
     'Usage: release:local -- --prepare [--minor | --major | --version X.Y.Z] | ' +
     '--prepare-after-disposition --proposal REL [--minor | --major | --version X.Y.Z] | ' +
-    '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID';
+    '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID | --issue-native-pair ID';
+  if (args.length === 2 && args[0] === '--issue-native-pair' && args[1] && idPattern.test(args[1])) {
+    const { issueApprovedNativePair } = await import('./release-ci-evidence.ts');
+    return issueApprovedNativePair({ root: issueRoot, operation: args[1] });
+  }
   if (args.length === 4 && args[0] === '--stage-native-retarget' && args[2] === '--candidate') {
     const stageOperation = requireString(args[1], usageMessage);
     const candidateFile = requireString(args[3], usageMessage);

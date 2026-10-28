@@ -267,7 +267,15 @@ The paired formation profile uses repository `pomazanbohdan/vida-stack-lite`
 and the `native-linux-x64` and `native-windows-x64` jobs. Each job must have a
 successful `native-build` step. Dispatch the Windows request as `request` and
 the Linux request as `request_linux`, both for the same operation, version and
-Source. Linux publishes its five formation files; Windows retains its six.
+Source. Produce these requests with `bun run release:local -- --issue-native-pair OPERATION`.
+Use the returned `windows` and `linux` JSON objects for the workflow inputs.
+For `source_commit`, supply the full 40-character SHA of the already published
+commit selected by the `workflow_dispatch` branch or tag. It must equal that
+run's `GITHUB_SHA`. This command neither dispatches the workflow nor publishes
+the commit.
+The command validates the configured repository identity and records each request
+through the existing CI request owner. A partial issuance is retained for inspection.
+Linux publishes its five formation files; Windows retains its six.
 The run must complete successfully before local observation.
 
 After staging the primary and peer candidates and retaining each formation ZIP,
