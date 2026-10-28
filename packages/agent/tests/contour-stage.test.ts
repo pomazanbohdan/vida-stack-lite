@@ -8,10 +8,12 @@ import {
   retainContourStageResourceRefusal,
   classifyTrustedCoverageSelectionCandidate,
   assertStageCoverageReport,
+  assertCacheRoutingReceipt,
   priorCoverageRuns,
 } from '../tooling/contour-stage.ts';
 import {
   existsSync,
+  linkSync,
   mkdirSync,
   mkdtempSync,
   renameSync,
@@ -28,6 +30,76 @@ import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts
 import { executeMutationCommand, type MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
+
+test('cache routing receipt binds the native refusal to the selected Source', () => {
+  const validate = assertCacheRoutingReceipt;
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-cache-receipt-'));
+  const fixture = path.join(root, 'fixture');
+  const copy = path.join(fixture, 'real-copy-test');
+  const entry = path.join(copy, 'vida-agent/bin/run.ts');
+  const directory = path.join(fixture, 'invocations-test/invalid-direct-run');
+  mkdirSync(path.dirname(entry), { recursive: true });
+  mkdirSync(directory, { recursive: true });
+  const source = Buffer.from('export const fixture = true;\n');
+  writeFileSync(entry, source);
+  const sha = new Bun.CryptoHasher('sha256').update(source).digest('hex');
+  const launch = {
+    schema: 'PrivateBunCacheFixtureLaunch/v1',
+    executable: process.execPath,
+    args: [entry, '--invalid-fixture-argument'],
+    cwd: copy,
+    timeout_ms: 30000,
+    cache_unset: true,
+  };
+  const terminal = {
+    schema: 'PrivateBunCacheFixtureTerminal/v1',
+    pid: 42,
+    status: 1,
+    signal: null,
+    error: null,
+    capture_complete: true,
+    unknown: false,
+  };
+  writeFileSync(path.join(directory, 'launch.json'), JSON.stringify(launch));
+  writeFileSync(path.join(directory, 'terminal.json'), JSON.stringify(terminal));
+  writeFileSync(path.join(directory, 'stdout.log'), '');
+  writeFileSync(
+    path.join(directory, 'stderr.log'),
+    JSON.stringify({
+      schema: 'VidaAgentRunResult/v1',
+      status: 'blocked',
+      code: 'GAP-VIDA-RUN-CLI-001',
+      message: 'invalid',
+    }) + '\n',
+  );
+  let completed = false;
+  try {
+    expect(() => validate(fixture, sha, process.execPath)).not.toThrow();
+    expect(() => validate(fixture, 'a'.repeat(64), process.execPath)).toThrow();
+    writeFileSync(path.join(directory, 'launch.json'), JSON.stringify({ ...launch, cache_unset: false }));
+    expect(() => validate(fixture, sha, process.execPath)).toThrow();
+    writeFileSync(path.join(directory, 'launch.json'), JSON.stringify(launch));
+    for (const changed of [
+      { ...terminal, unknown: true },
+      { ...terminal, signal: 'SIGKILL' },
+      { ...terminal, error: { code: 'ETIMEDOUT' } },
+      { ...terminal, capture_complete: false },
+    ]) {
+      writeFileSync(path.join(directory, 'terminal.json'), JSON.stringify(changed));
+      expect(() => validate(fixture, sha, process.execPath)).toThrow();
+    }
+    writeFileSync(path.join(directory, 'terminal.json'), JSON.stringify(terminal));
+    const alias = path.join(fixture, 'source-alias');
+    linkSync(entry, alias);
+    expect(() => validate(fixture, sha, process.execPath)).toThrow(/exclusive regular file/u);
+    unlinkSync(alias);
+    writeFileSync(path.join(directory, 'stdout.log'), 'unexpected');
+    expect(() => validate(fixture, sha, process.execPath)).toThrow(/incomplete/u);
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true });
+  }
+});
 
 test('stage rejects stale, foreign and mismatched focused coverage before routing', () => {
   const validate = assertStageCoverageReport;
@@ -60,6 +132,7 @@ test('stage rejects stale, foreign and mismatched focused coverage before routin
     source_fingerprint: 'a'.repeat(64),
     test_fingerprint: 'b'.repeat(64),
     tool_fingerprint: 'c'.repeat(64),
+    sources: [{ path: 'bin/run.ts', sha256: 'd'.repeat(64) }],
   };
   const manifest = { schema: 'VidaBunCoverageRun/v2', run_id: runId, ...capture };
   const manifestBytes = Buffer.from(JSON.stringify(manifest));

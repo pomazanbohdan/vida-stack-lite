@@ -1,7 +1,16 @@
 import { isDeepStrictEqual, parseArgs } from 'node:util';
 import { createHash } from 'node:crypto';
 import { qualityRuntimeEnvironment, readQualityRuntimeRoot } from './quality-runtime-root.ts';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
@@ -90,8 +99,81 @@ async function stageExecutionImage(
 
 type StageSelectionCapture = Pick<
   Awaited<ReturnType<typeof readQualityExecutionImageInputs>>,
-  'test_selection' | 'source_fingerprint' | 'test_fingerprint' | 'tool_fingerprint'
+  'test_selection' | 'source_fingerprint' | 'test_fingerprint' | 'tool_fingerprint' | 'sources'
 >;
+
+/** Validate the existing cache fixture's direct native refusal and copied Source. */
+export function assertCacheRoutingReceipt(
+  fixtureRoot: string,
+  sourceSha256: string,
+  executable: string,
+): { pid: number } {
+  if (
+    !path.isAbsolute(fixtureRoot) ||
+    path.resolve(fixtureRoot) !== fixtureRoot ||
+    realpathSync(fixtureRoot) !== fixtureRoot ||
+    !/^[0-9a-f]{64}$/u.test(sourceSha256)
+  )
+    throw new Error('Cache routing fixture identity is invalid.');
+  const entries = readdirSync(fixtureRoot);
+  if (entries.length > 10_000) throw new Error('Cache routing fixture exceeds its entry bound.');
+  const invocations = entries.filter((entry) => /^invocations-[a-zA-Z0-9_-]+$/u.test(entry));
+  if (invocations.length !== 1) throw new Error('Cache routing invocation root is missing or ambiguous.');
+  const directory = path.join(fixtureRoot, invocations[0]!, 'invalid-direct-run');
+  if (realpathSync(directory) !== directory) throw new Error('Cache routing invocation has an alias.');
+  const readOwned = (file: string, limit = 1024 * 1024) => {
+    const info = lstatSync(file);
+    if (!info.isFile() || info.isSymbolicLink() || info.nlink !== 1 || realpathSync(file) !== file)
+      throw new Error('Cache routing receipt or Source is not an exclusive regular file.');
+    return readContourArtifact(file, limit);
+  };
+  const read = (name: string) => readOwned(path.join(directory, name));
+  const launch: unknown = JSON.parse(read('launch.json').toString('utf8'));
+  const terminal: unknown = JSON.parse(read('terminal.json').toString('utf8'));
+  if (
+    !isRecord(launch) ||
+    Object.keys(launch).sort().join(',') !== 'args,cache_unset,cwd,executable,schema,timeout_ms' ||
+    launch.schema !== 'PrivateBunCacheFixtureLaunch/v1' ||
+    launch.executable !== executable ||
+    typeof launch.cwd !== 'string' ||
+    path.dirname(launch.cwd) !== fixtureRoot ||
+    !/^real-copy-[a-zA-Z0-9_-]+$/u.test(path.basename(launch.cwd)) ||
+    realpathSync(launch.cwd) !== launch.cwd ||
+    launch.timeout_ms !== 30_000 ||
+    launch.cache_unset !== true ||
+    !isDeepStrictEqual(launch.args, [path.join(launch.cwd, 'vida-agent/bin/run.ts'), '--invalid-fixture-argument'])
+  )
+    throw new Error('Cache routing launch differs from the maintained direct invocation.');
+  const source = path.join(launch.cwd, 'vida-agent/bin/run.ts');
+  if (new Bun.CryptoHasher('sha256').update(readOwned(source, 4 * 1024 * 1024)).digest('hex') !== sourceSha256)
+    throw new Error('Cache routing copied Source differs from the execution image.');
+  if (
+    !isRecord(terminal) ||
+    Object.keys(terminal).sort().join(',') !== 'capture_complete,error,pid,schema,signal,status,unknown' ||
+    terminal.schema !== 'PrivateBunCacheFixtureTerminal/v1' ||
+    !Number.isSafeInteger(terminal.pid) ||
+    Number(terminal.pid) < 1 ||
+    terminal.status !== 1 ||
+    terminal.signal !== null ||
+    terminal.error !== null ||
+    terminal.capture_complete !== true ||
+    terminal.unknown !== false
+  )
+    throw new Error('Cache routing native terminal is missing or UNKNOWN.');
+  const stdout = read('stdout.log');
+  const stderr = read('stderr.log');
+  if (stdout.length !== 0 || stderr.at(-1) !== 10) throw new Error('Cache routing output capture is incomplete.');
+  const failure: unknown = JSON.parse(stderr.toString('utf8'));
+  if (
+    !isRecord(failure) ||
+    failure.schema !== 'VidaAgentRunResult/v1' ||
+    failure.status !== 'blocked' ||
+    failure.code !== 'GAP-VIDA-RUN-CLI-001' ||
+    typeof failure.message !== 'string'
+  )
+    throw new Error('Cache routing output differs from the expected refusal.');
+  return { pid: Number(terminal.pid) };
+}
 
 export function priorCoverageRuns(packageRoot: string): Set<string> {
   const diagnostics = path.join(packageRoot, 'coverage/bun-unified/diagnostics');
@@ -181,6 +263,7 @@ async function assertStageImageSelection(
     source_fingerprint: captured.source_fingerprint,
     test_fingerprint: captured.test_fingerprint,
     tool_fingerprint: captured.tool_fingerprint,
+    sources: captured.sources,
   };
 }
 
@@ -702,10 +785,27 @@ async function main(): Promise<void> {
       capturedOutput(),
       frozen ? path.resolve(values['coverage-run']!) : undefined,
     );
+    let cacheRouting: Record<string, unknown> | undefined;
     if (selectedLane === 'coverage') {
       if (!priorRuns || reportArgs[0] !== '--coverage-run' || !reportArgs[1])
         throw new Error('Stage coverage run binding is missing.');
       assertStageCoverageReport(reportArgs[1], image.packageRoot, capture, priorRuns);
+      const fixtureRoot = isolated.environment.VIDA_CACHE_ROUTING_FIXTURE_ROOT;
+      if (fixtureRoot !== undefined) {
+        const expectedRoot = path.join(isolated.temporary, 'scratch', 'cache-routing-fixture');
+        const sources = capture.sources.filter((entry) => entry.path === 'bin/run.ts');
+        if (fixtureRoot !== expectedRoot || sources.length !== 1 || !sources[0])
+          throw new Error('Cache routing fixture does not match the current stage selection.');
+        const observed = assertCacheRoutingReceipt(fixtureRoot, sources[0].sha256, process.execPath);
+        cacheRouting = {
+          run_id: path.basename(reportArgs[1], '.focused-coverage.json'),
+          source_fingerprint: capture.source_fingerprint,
+          source_sha256: sources[0].sha256,
+          image_manifest_sha256: image.manifest_sha256,
+          fixture_root: fixtureRoot,
+          pid: observed.pid,
+        };
+      }
     }
     const snapshot = values.snapshot ?? path.join(output, 'CONTOUR-STATUS.json');
     await runContourProgressWithNative(
@@ -725,6 +825,7 @@ async function main(): Promise<void> {
       source_commit: commit,
       reports: reportArgs,
       snapshot: path.join(output, 'CONTOUR-STATUS.json'),
+      ...(cacheRouting ? { cache_routing: cacheRouting } : {}),
     });
     process.stdout.write(JSON.stringify(diagnostic({ publication: 'published', reports: reportArgs })) + '\n');
   } catch (error) {

@@ -4,6 +4,29 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Cache-routing terminal binding — 2026-10-28
+
+The prepared trusted command gives the existing cache fixture a fresh stage-owned
+root. Before publishing its report, stage can check the fixture's native launch,
+terminal and raw output, compare its copied `bin/run.ts` to the execution-image
+Source digest, and bind the observation to the validated coverage run. Missing,
+aliased, mismatched, timed-out or UNKNOWN evidence refuses publication. This
+does not activate the trusted stage or prove arbitrary descendant containment.
+
+The existing owner ran the real invalid direct invocation on the changed test:
+1 pass, 8 filtered, 2.81 seconds total, with complete capture and observed owned
+group closure. Its direct child exited 1 with the expected blocked result;
+the copied `run.ts` SHA-256 matched the selected current Source. Preserve
+`/workspace/contour-cache-binding-RpPWTA2q/`, including its fixture and native
+receipts. This target is not a coverage run or total-stage timing measurement.
+The assertion REDs are retained at `/workspace/contour-cache-root-red-mD7CAmLx`
+and `/workspace/contour-cache-receipt-red-rMYcZh1w`. The final grouped checks at
+`/workspace/contour-cache-receipt-final-O48B3J1P` passed 7 tests and 103
+expectations with complete capture and owned-group closure. Scoped strict (511
+files), configured type-aware lint, formatting and independent read-only review
+passed. Full coverage, timing headroom and the remaining known child effects
+are not established by this package; old UNKNOWN resources are unchanged.
+
 ## Stage report freshness and Source binding — 2026-10-28
 
 Independent read-only review identified that a nonzero coverage producer's

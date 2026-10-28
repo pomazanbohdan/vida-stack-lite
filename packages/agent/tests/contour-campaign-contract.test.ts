@@ -81,6 +81,7 @@ test('trusted coverage command builder creates fresh run-owned host paths', () =
       HOME: path.join(scratch, 'home'),
       XDG_CACHE_HOME: path.join(scratch, 'cache'),
       BUN_INSTALL_CACHE_DIR: path.join(scratch, 'bun-install-cache'),
+      VIDA_CACHE_ROUTING_FIXTURE_ROOT: path.join(scratch, 'cache-routing-fixture'),
       VIDA_QUALITY_IMAGE_MANIFEST: image.manifest_file,
       VIDA_QUALITY_IMAGE_SHA256: image.manifest_sha256,
     });

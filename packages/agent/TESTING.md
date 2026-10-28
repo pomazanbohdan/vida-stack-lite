@@ -1925,8 +1925,8 @@ and freshness checks required by production authority remain at their effects.
 
 Portable terminal and capture evidence binds the actual run, selected Source,
 tests, tools and runtime to complete untruncated stdout/stderr and observed
-terminal outcomes. The applicable platform capability must account for the
-producer and its descendants and establish resource custody; unsupported,
+terminal outcomes. The applicable owner must account for the producer and its
+known owned children and effects and establish resource custody; unsupported,
 missing, stale, mismatched or unobserved evidence denies acceptance. Every
 required test process must complete successfully, with no failed test or
 collection error. Native fixture children must have their expected terminal
@@ -3020,6 +3020,13 @@ The cache-routing fixture sets `TMPDIR`, `BUN_TMPDIR`, `TMP` and `TEMP` to its
 owned scratch for native children. Its intentionally unset Bun cache still exercises direct
 entrypoint cache routing; the temporary-directory control changes neither the
 cache contract nor child-outcome custody.
+When the ordinary trusted stage is enabled, its existing cache fixture root is
+inside that stage's fresh scratch. Before publication, the stage checks the
+fixture's existing launch, terminal and raw output against the expected direct
+invalid invocation and the image's captured `bin/run.ts` digest. It binds the
+observed terminal to the already validated coverage run and image; absent,
+aliased, incomplete, foreign or UNKNOWN evidence denies publication. This
+checks the direct terminal result, not hostile-descendant containment.
 
 The shared uninitialized run fixture latches UNKNOWN for its selected root
 before invoking caller cleanup notices. Its single close owner retains and

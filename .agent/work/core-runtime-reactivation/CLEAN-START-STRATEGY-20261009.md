@@ -85,6 +85,14 @@ selection, fingerprints or digest-bound manifest. This joins the existing
 outcome reader; it does not activate ordinary execution or establish descendant
 custody, full coverage, timing or acceptance.
 
+The ordinary command preparation assigns the existing cache-routing fixture a
+fresh stage-owned scratch path. Stage can validate its existing native launch,
+terminal, raw output and copied `run.ts` against the selected image and bind the
+result to the validated coverage run. Normal direct completion is the only
+accepted observation; timeout, missing, foreign or incomplete evidence denies
+publication and retains the fixture. Other child effects and ordinary stage
+activation remain separate pending prerequisites.
+
 > **For agentic workers:** Use `superpowers:executing-plans` task by task.
 > Root remains the sole writer, producer, Git owner and owner of numbers;
 > independent bounded reviews use the existing blind native reviewer contract.

@@ -296,6 +296,7 @@ function capturedChild(label: string, args: string[], options: SpawnSyncOptionsW
       args,
       cwd: options.cwd,
       timeout_ms: options.timeout,
+      cache_unset: options.env !== undefined && !Object.hasOwn(options.env, 'BUN_RUNTIME_TRANSPILER_CACHE_PATH'),
     }) + '\n',
     { flag: 'wx' },
   );
