@@ -270,9 +270,8 @@ the Linux request as `request_linux`, both for the same operation, version and
 Source. Produce these requests with `bun run release:local -- --issue-native-pair OPERATION`.
 Use the returned `windows` and `linux` JSON objects for the workflow inputs.
 For `source_commit`, supply the full 40-character SHA of the already published
-commit selected by the `workflow_dispatch` branch or tag. It must equal that
-run's `GITHUB_SHA`. This command neither dispatches the workflow nor publishes
-the commit.
+commit selected by `workflow_dispatch` on `main`. It must equal that run's
+`GITHUB_SHA`. This command neither dispatches the workflow nor publishes the commit.
 The command validates the configured repository identity and records each request
 through the existing CI request owner. A partial issuance is retained for inspection.
 Linux publishes its five formation files; Windows retains its six.
