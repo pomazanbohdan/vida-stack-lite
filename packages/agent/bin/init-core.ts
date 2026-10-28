@@ -1,5 +1,4 @@
 import { projectMappings } from './project-mapping-contract.ts';
-import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -75,7 +74,7 @@ function requireEntry<T>(values: readonly T[], index: number, label: string): T 
   return entry;
 }
 /** @param {string | Uint8Array} bytes */
-const hash = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
+const hash = (bytes: string | Uint8Array): string => new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 
 /** @param {string} raw @param {Record<string, string>} values */
 function render(raw: string, values: Record<string, string>): string {

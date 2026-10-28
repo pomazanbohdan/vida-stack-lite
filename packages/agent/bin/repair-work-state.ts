@@ -7,7 +7,6 @@ import {
 } from './workspace-database-cli.ts';
 import { reconcileCliContracts } from './reconcile-cli-contracts.ts';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
@@ -119,4 +118,4 @@ export function main({
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();
+if (process.argv[1] && Bun.fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) main();

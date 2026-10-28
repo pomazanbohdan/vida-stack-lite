@@ -4,7 +4,6 @@ import {
   inspectCliHostWorkspaceDatabase,
   openCliWorkspaceDatabase,
 } from './workspace-database-cli.ts';
-import { createHash } from 'node:crypto';
 import { realpathSync } from 'node:fs';
 import path from 'node:path';
 
@@ -637,9 +636,9 @@ function inspectionFor(
     current_config_binding: runtimeConfigDigest(original.current),
     engine_binding: original.engine_binding,
     request_binding: canonicalJsonDigest(base),
-    body_binding: createHash('sha256').update(bodyBytes).digest('hex'),
+    body_binding: new Bun.CryptoHasher('sha256').update(bodyBytes).digest('hex'),
     provenance_binding: canonicalJsonDigest(provenance),
-    accepted_scope_binding: createHash('sha256').update(scopeBytes).digest('hex'),
+    accepted_scope_binding: new Bun.CryptoHasher('sha256').update(scopeBytes).digest('hex'),
     original_operation_reference: originalOperationReference,
     nativeSessionHandle,
   };
@@ -836,7 +835,7 @@ export async function captureHistoricalTerminalSynthesis(args: readonly string[]
         original.owner.state.contracts.acceptance.path,
         'accepted original acceptance',
       );
-    if (createHash('sha256').update(scopeBytes).digest('hex') !== original.owner.state.contracts.scope.sha256)
+    if (new Bun.CryptoHasher('sha256').update(scopeBytes).digest('hex') !== original.owner.state.contracts.scope.sha256)
       fail('accepted original scope differs from its owner contract');
     const projectId = base.identity.project_ids[0];
     if (!projectId) fail('original project identity is unavailable');

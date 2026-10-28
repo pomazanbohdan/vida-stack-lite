@@ -5,7 +5,7 @@ import {
 } from './workspace-database-cli.ts';
 import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
 import { readFileSync } from 'node:fs';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import scopeSchema from '../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
@@ -388,7 +388,7 @@ function parseTransition(bytes: Uint8Array): TransitionOperation {
   return value;
 }
 
-const sha = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
+const sha = (bytes: Uint8Array): string => new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 const json = (value: unknown): string => JSON.stringify(value, null, 2) + '\n';
 const seal = (value: Record<string, unknown>): Record<string, unknown> => {
   const { operation_digest: _digest, ...body } = value;

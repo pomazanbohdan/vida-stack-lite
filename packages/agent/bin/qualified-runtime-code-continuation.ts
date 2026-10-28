@@ -13,7 +13,6 @@ import type { MastraSessionLedgerState } from '../src/orchestration/persistent-s
 import type { SessionEngineBinding } from '../src/orchestration/session-engine-snapshot.js';
 import { Buffer } from 'node:buffer';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
 import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.js';
 import { loadRuntimeConfig, runtimePackageCodePaths } from '../src/config/runtime-config.js';
 import { loadProjectSetContext } from '../src/config/project-context.js';
@@ -54,7 +53,7 @@ const requireContinuation: (value: unknown, message: string) => asserts value = 
   if (!value) throw new Error('qualified runtime code continuation: ' + message);
 };
 const same = (left: unknown, right: unknown) => canonicalJsonDigest(left) === canonicalJsonDigest(right);
-const sha = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+const sha = (bytes: string | Uint8Array) => new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 function requiredOption(values: Record<string, string>, key: string): string {
   const value = values[key];
   requireContinuation(typeof value === 'string' && value.length > 0, `missing ${key}`);
