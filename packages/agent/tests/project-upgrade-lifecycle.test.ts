@@ -3040,9 +3040,12 @@ test('fresh upgrade planning reuses the validated plan configuration during depe
         activation: null,
       });
       expect(planned.initial_database).not.toBeNull();
-      expect(await readFile(path.join(root, PROJECT_UPGRADE_OPERATION_PATH), 'utf8')).toBe(
-        JSON.stringify(planned, null, 2) + '\n',
-      );
+      const journal = await readFile(path.join(root, PROJECT_UPGRADE_OPERATION_PATH), 'utf8');
+      expect(journal).toBe(JSON.stringify(planned, null, 2) + '\n');
+      const intent = upgrade.validateProjectUpgradeOperation(JSON.parse(journal));
+      expect(intent.plan.operation_id).toBe(planned.plan.operation_id);
+      expect(intent.plan.token).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
+      expect(intent.plan.token).toBe(planned.plan.token);
       expect(
         await readFile(path.join(root, PROJECT_WORKSPACE_DATABASE_PATH)).catch((error: unknown) => error),
       ).toMatchObject({ code: 'ENOENT' });
