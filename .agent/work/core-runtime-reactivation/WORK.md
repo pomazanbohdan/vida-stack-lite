@@ -4,6 +4,28 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Trusted cache-routing override refusal — 2026-10-28
+
+The existing trusted command builder now rejects ambient Source, baseline and
+dependency cache-routing root overrides, including empty values, before creating
+scratch. For this maintained selection the fixture uses its captured bundle
+defaults; the regular standalone fixture's explicit override behavior is unchanged.
+The RED is retained at `/workspace/contour-cache-override-red-lBtt3LJf`; the
+final targeted run at `/workspace/contour-cache-override-final-yTxTwOWy` passed
+one test with 21 expectations, complete capture and observed owned-group exit.
+Scoped strict511, configured type-aware lint, formatting and independent blind
+review passed. This verifies only the unactivated builder, not actual stage
+environment binding, full coverage or numeric qualification.
+
+Remaining selected child evidence: the two direct `Bun.spawn` output tests wait
+for their own exit, but the dormant fixture observer does not record them; the
+SQLite lock-holder waits for `close` and retains its root on unknown, but its
+observer is not active for this selection; the prepared and issue CLI roles have
+existing group receipts, which must be observed on the new run; and the cache
+direct refusal has the existing stage receipt binding, not a current-run receipt.
+The maintained plan also requires the remaining transitive effect map and actual
+private-root identities. None of these observations settles old UNKNOWN resources.
+
 ## First trusted timing measurement decision — 2026-10-28
 
 The owner approved one first full measurement for new trusted Source after the

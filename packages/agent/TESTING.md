@@ -1914,6 +1914,12 @@ classification. Reject an unknown, changed, incomplete or mixed selection before
 launch. Reviewed native integration and fault-injection cases remain required;
 their effects must satisfy the same run-specific custody contract.
 
+The prepared trusted command builder refuses ambient `VIDA_CACHE_ROUTING_SOURCE_ROOT`,
+`VIDA_CACHE_ROUTING_BASELINE_ROOT` and `VIDA_CACHE_ROUTING_DEPENDENCY_ROOT` before
+allocating scratch, including empty values. The maintained fixture then uses its
+captured bundle defaults; standalone fixture overrides retain their own contract.
+This refusal alone does not activate trusted stage or qualify its actual environment.
+
 The Root-owned run uses exclusive fixture, output, coverage and scratch resources.
 Before launch, the owner accounts for the maintained invocation's writable
 paths, aliases, shared stores, external effects and known descendants, with

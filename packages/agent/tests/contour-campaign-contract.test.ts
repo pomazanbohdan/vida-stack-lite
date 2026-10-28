@@ -107,6 +107,26 @@ test('trusted coverage command builder creates fresh run-owned host paths', () =
     expect(() =>
       isolatedCommand(stage, args, { tini: '', bwrap: '' }, stage, image, undefined, 'trusted-coverage'),
     ).toThrow();
+    const existingScratch = readdirSync(stage).sort();
+    for (const name of [
+      'VIDA_CACHE_ROUTING_SOURCE_ROOT',
+      'VIDA_CACHE_ROUTING_BASELINE_ROOT',
+      'VIDA_CACHE_ROUTING_DEPENDENCY_ROOT',
+    ]) {
+      const prior = process.env[name];
+      try {
+        for (const value of ['/foreign/root', '']) {
+          process.env[name] = value;
+          expect(() =>
+            isolatedCommand(stage, args, { tini: '', bwrap: '' }, undefined, image, undefined, 'trusted-coverage'),
+          ).toThrow(/Ambient cache routing root/u);
+          expect(readdirSync(stage).sort()).toEqual(existingScratch);
+        }
+      } finally {
+        if (prior === undefined) delete process.env[name];
+        else process.env[name] = prior;
+      }
+    }
     completed = true;
   } finally {
     if (completed) rmSync(root, { recursive: true });

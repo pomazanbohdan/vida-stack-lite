@@ -93,6 +93,12 @@ accepted observation; timeout, missing, foreign or incomplete evidence denies
 publication and retains the fixture. Other child effects and ordinary stage
 activation remain separate pending prerequisites.
 
+The prepared command now refuses all three ambient cache-routing Source,
+baseline and dependency root overrides before allocating scratch. The maintained
+fixture's captured bundle defaults remain authoritative, and standalone fixture
+override behavior is unchanged. This is a builder gate, not a binding of a real
+stage child environment or proof of the remaining resource and child effects.
+
 > **For agentic workers:** Use `superpowers:executing-plans` task by task.
 > Root remains the sole writer, producer, Git owner and owner of numbers;
 > independent bounded reviews use the existing blind native reviewer contract.

@@ -303,6 +303,13 @@ export function isolatedCommand(
       JSON.stringify(args) !== JSON.stringify(['tooling/contour-campaign.ts', '--coverage-child', 'bun-cli-run']))
   )
     throw new Error('Trusted coverage requires its exact declared image and command.');
+  if (
+    mode === 'trusted-coverage' &&
+    ['VIDA_CACHE_ROUTING_SOURCE_ROOT', 'VIDA_CACHE_ROUTING_BASELINE_ROOT', 'VIDA_CACHE_ROUTING_DEPENDENCY_ROOT'].some(
+      (key) => Object.hasOwn(process.env, key),
+    )
+  )
+    throw new Error('Ambient cache routing root overrides are unsupported for trusted coverage.');
   if (runtimeRoot) {
     if (!image || runtimeRoot.dependency_root !== image.dependency_root)
       throw new Error('Independent runtime root requires its exact image dependency boundary.');
