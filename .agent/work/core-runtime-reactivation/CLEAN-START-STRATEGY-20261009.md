@@ -79,6 +79,12 @@ effective environment and output roots to the actual run, and reject foreign or
 stale reports. Account for the selected tests' detached children and terminal
 custody. The synthetic builder test is not an admission or coverage proof.
 
+Stage now records prelaunch focused-report and operation-outcome IDs and rejects
+an emitted report that predates the launch or differs from the current image's
+selection, fingerprints or digest-bound manifest. This joins the existing
+outcome reader; it does not activate ordinary execution or establish descendant
+custody, full coverage, timing or acceptance.
+
 > **For agentic workers:** Use `superpowers:executing-plans` task by task.
 > Root remains the sole writer, producer, Git owner and owner of numbers;
 > independent bounded reviews use the existing blind native reviewer contract.

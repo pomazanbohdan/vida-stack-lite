@@ -1,7 +1,7 @@
-import { parseArgs } from 'node:util';
+import { isDeepStrictEqual, parseArgs } from 'node:util';
 import { createHash } from 'node:crypto';
 import { qualityRuntimeEnvironment, readQualityRuntimeRoot } from './quality-runtime-root.ts';
-import { existsSync, mkdtempSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
@@ -92,6 +92,74 @@ type StageSelectionCapture = Pick<
   Awaited<ReturnType<typeof readQualityExecutionImageInputs>>,
   'test_selection' | 'source_fingerprint' | 'test_fingerprint' | 'tool_fingerprint'
 >;
+
+export function priorCoverageRuns(packageRoot: string): Set<string> {
+  const diagnostics = path.join(packageRoot, 'coverage/bun-unified/diagnostics');
+  const runs = new Set<string>();
+  for (const [directory, suffix] of [
+    [diagnostics, '.focused-coverage.json'],
+    [path.join(diagnostics, 'operation-outcomes'), '.json'],
+  ] as const) {
+    let entries: string[];
+    try {
+      if (realpathSync(directory) !== directory) throw new Error('Coverage diagnostic directory has an alias.');
+      entries = readdirSync(directory);
+    } catch (error) {
+      if (isRecord(error) && error.code === 'ENOENT') continue;
+      throw error;
+    }
+    if (entries.length > 10_000) throw new Error('Coverage diagnostic directory exceeds its entry bound.');
+    for (const entry of entries) {
+      if (entry.endsWith(suffix)) runs.add(entry.slice(0, -suffix.length));
+    }
+  }
+  return runs;
+}
+
+/** Bind a reported focused run to this image and reject pre-existing run IDs. */
+export function assertStageCoverageReport(
+  file: string,
+  packageRoot: string,
+  capture: StageSelectionCapture,
+  priorRuns: ReadonlySet<string>,
+): void {
+  const match = /^([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\.focused-coverage\.json$/u.exec(
+    path.basename(file),
+  );
+  if (!match || priorRuns.has(match[1]!)) throw new Error('Coverage report run identity is stale or invalid.');
+  const runId = match[1]!;
+  const diagnostics = path.join(packageRoot, 'coverage/bun-unified/diagnostics');
+  const expectedReport = path.join(diagnostics, `${runId}.focused-coverage.json`);
+  const expectedManifest = path.join(diagnostics, 'runs', runId, 'manifest.json');
+  if (file !== expectedReport || realpathSync(file) !== expectedReport)
+    throw new Error('Coverage report is outside its execution image.');
+  const report: unknown = JSON.parse(readContourArtifact(file).toString('utf8'));
+  if (
+    !isRecord(report) ||
+    report.schema !== 'VidaBunFocusedCoverageDiagnostic/v1' ||
+    report.run_id !== runId ||
+    report.manifest_path !== path.relative(packageRoot, expectedManifest).replaceAll('\\', '/') ||
+    realpathSync(expectedManifest) !== expectedManifest ||
+    typeof report.manifest_sha256 !== 'string' ||
+    !/^[0-9a-f]{64}$/u.test(report.manifest_sha256)
+  )
+    throw new Error('Coverage report is outside its execution image.');
+  const manifestBytes = readContourArtifact(expectedManifest);
+  if (new Bun.CryptoHasher('sha256').update(manifestBytes).digest('hex') !== report.manifest_sha256)
+    throw new Error('Coverage manifest bytes differ from the report.');
+  const manifest: unknown = JSON.parse(manifestBytes.toString('utf8'));
+  if (
+    !isRecord(manifest) ||
+    !['VidaBunCoverageRun/v2', 'VidaBunCoverageRun/v3'].includes(String(manifest.schema)) ||
+    manifest.run_id !== runId ||
+    !isDeepStrictEqual(report.test_selection, capture.test_selection) ||
+    !isDeepStrictEqual(manifest.test_selection, capture.test_selection) ||
+    !(['source_fingerprint', 'test_fingerprint', 'tool_fingerprint'] as const).every(
+      (key) => report[key] === capture[key] && manifest[key] === capture[key],
+    )
+  )
+    throw new Error('Coverage report or manifest differs from the captured selection.');
+}
 
 async function assertStageImageSelection(
   image: QualityExecutionImage,
@@ -466,6 +534,8 @@ async function main(): Promise<void> {
   const executionEnvironment = runtimeRoot
     ? qualityRuntimeEnvironment(process.env, laneEnvironment)
     : { ...process.env, ...laneEnvironment };
+  const priorRuns = selectedLane === 'coverage' ? priorCoverageRuns(image.packageRoot) : undefined;
+  if (priorRuns) record('coverage-prior-runs', { run_ids: [...priorRuns].sort() });
   const launch = {
     ...request,
     ...isolated,
@@ -632,6 +702,11 @@ async function main(): Promise<void> {
       capturedOutput(),
       frozen ? path.resolve(values['coverage-run']!) : undefined,
     );
+    if (selectedLane === 'coverage') {
+      if (!priorRuns || reportArgs[0] !== '--coverage-run' || !reportArgs[1])
+        throw new Error('Stage coverage run binding is missing.');
+      assertStageCoverageReport(reportArgs[1], image.packageRoot, capture, priorRuns);
+    }
     const snapshot = values.snapshot ?? path.join(output, 'CONTOUR-STATUS.json');
     await runContourProgressWithNative(
       [

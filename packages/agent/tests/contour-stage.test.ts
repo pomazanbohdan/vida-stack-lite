@@ -7,8 +7,20 @@ import {
   contourStagePublicationFailure,
   retainContourStageResourceRefusal,
   classifyTrustedCoverageSelectionCandidate,
+  assertStageCoverageReport,
+  priorCoverageRuns,
 } from '../tooling/contour-stage.ts';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, readFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  renameSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+  writeFileSync,
+  readFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { contourAttempts, mergeContourProgress, contourStageInputOutcome } from '../tooling/contour-progress.ts';
@@ -16,6 +28,98 @@ import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts
 import { executeMutationCommand, type MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
+
+test('stage rejects stale, foreign and mismatched focused coverage before routing', () => {
+  const validate = assertStageCoverageReport;
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-report-binding-'));
+  const runId = '11111111-2222-4333-8444-555555555555';
+  const directory = path.join(root, 'coverage/bun-unified/diagnostics');
+  const runDirectory = path.join(directory, 'runs', runId);
+  const oldRunId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
+  mkdirSync(path.join(directory, 'operation-outcomes'), { recursive: true });
+  writeFileSync(path.join(directory, 'operation-outcomes', `${oldRunId}.json`), '{}');
+  const prior = priorCoverageRuns(root);
+  expect(prior.has(oldRunId)).toBe(true);
+  expect(prior.has(runId)).toBe(false);
+  const outcomes = path.join(directory, 'operation-outcomes');
+  const movedOutcomes = path.join(directory, 'moved-outcomes');
+  renameSync(outcomes, movedOutcomes);
+  symlinkSync(movedOutcomes, outcomes);
+  expect(() => priorCoverageRuns(root)).toThrow(/alias/u);
+  unlinkSync(outcomes);
+  renameSync(movedOutcomes, outcomes);
+  mkdirSync(runDirectory, { recursive: true });
+  const selection: Parameters<typeof assertStageCoverageReport>[2]['test_selection'] = {
+    mode: 'focused-diagnostic',
+    contour: 'bun-cli-run',
+    sources: ['bin/run.ts'],
+    tests: ['tests/run-entrypoint.test.ts', 'tests/bun-cache-routing.test.ts'],
+  };
+  const capture = {
+    test_selection: selection,
+    source_fingerprint: 'a'.repeat(64),
+    test_fingerprint: 'b'.repeat(64),
+    tool_fingerprint: 'c'.repeat(64),
+  };
+  const manifest = { schema: 'VidaBunCoverageRun/v2', run_id: runId, ...capture };
+  const manifestBytes = Buffer.from(JSON.stringify(manifest));
+  writeFileSync(path.join(runDirectory, 'manifest.json'), manifestBytes);
+  const report = {
+    schema: 'VidaBunFocusedCoverageDiagnostic/v1',
+    run_id: runId,
+    manifest_path: `coverage/bun-unified/diagnostics/runs/${runId}/manifest.json`,
+    manifest_sha256: new Bun.CryptoHasher('sha256').update(manifestBytes).digest('hex'),
+    ...capture,
+  };
+  const file = path.join(directory, `${runId}.focused-coverage.json`);
+  writeFileSync(file, JSON.stringify(report));
+  let completed = false;
+  try {
+    expect(() => validate(file, root, capture, prior)).not.toThrow();
+    const oldFile = path.join(directory, `${oldRunId}.focused-coverage.json`);
+    writeFileSync(oldFile, 'not JSON');
+    expect(() => validate(oldFile, root, capture, prior)).toThrow(/stale or invalid/u);
+    expect(() => validate(file, root, capture, new Set([runId]))).toThrow();
+    const foreign = path.join(root, `${runId}.focused-coverage.json`);
+    writeFileSync(foreign, 'not JSON');
+    expect(() => validate(foreign, root, capture, new Set<string>())).toThrow(/outside its execution image/u);
+    expect(() => validate(file, root, { ...capture, source_fingerprint: 'd'.repeat(64) }, new Set<string>())).toThrow(
+      /differs from the captured selection/u,
+    );
+    for (const field of ['test_fingerprint', 'tool_fingerprint'] as const)
+      expect(() => validate(file, root, { ...capture, [field]: 'd'.repeat(64) }, new Set<string>())).toThrow(
+        /differs from the captured selection/u,
+      );
+    const moved = path.join(directory, 'moved-report.json');
+    renameSync(file, moved);
+    symlinkSync(moved, file);
+    expect(() => validate(file, root, capture, new Set<string>())).toThrow(/outside its execution image/u);
+    unlinkSync(file);
+    renameSync(moved, file);
+    const manifestFile = path.join(runDirectory, 'manifest.json');
+    const movedManifest = path.join(runDirectory, 'moved-manifest.json');
+    renameSync(manifestFile, movedManifest);
+    symlinkSync(movedManifest, manifestFile);
+    expect(() => validate(file, root, capture, new Set<string>())).toThrow(/outside its execution image/u);
+    unlinkSync(manifestFile);
+    renameSync(movedManifest, manifestFile);
+    writeFileSync(path.join(runDirectory, 'manifest.json'), '{}');
+    expect(() => validate(file, root, capture, new Set<string>())).toThrow();
+    const foreignManifest = Buffer.from(JSON.stringify({ ...manifest, source_fingerprint: 'd'.repeat(64) }));
+    writeFileSync(path.join(runDirectory, 'manifest.json'), foreignManifest);
+    writeFileSync(
+      file,
+      JSON.stringify({
+        ...report,
+        manifest_sha256: new Bun.CryptoHasher('sha256').update(foreignManifest).digest('hex'),
+      }),
+    );
+    expect(() => validate(file, root, capture, new Set<string>())).toThrow(/differs from the captured selection/u);
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true });
+  }
+});
 
 test('trusted coverage candidate binds the declared contour and refuses altered inputs', () => {
   const classify = classifyTrustedCoverageSelectionCandidate;

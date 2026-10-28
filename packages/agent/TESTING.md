@@ -2204,7 +2204,9 @@ throughput correction; avoid unchanged full reruns after budget exhaustion.
    that this complete-triple closure has occurred.
 
 Archived UNKNOWN operations, fixtures and issued effects are never replayed under
-either an old or new ID, and unresolved resource custody still blocks successors.
+either an old or new ID. Unresolved custody blocks reuse of the affected
+resources and successors of those effects. New trusted cooperative runs use the
+separate-resource contract in [trusted coverage](#trusted-coverage-and-native-isolation).
 This does not ban fresh regression or mutation evidence for repaired Source:
 use a newly captured immutable image/run and new fixtures, preserve the original
 artifacts and classification, and require observed process-group closure before
@@ -2509,6 +2511,12 @@ checks unchanged boot/commit/clean inputs, then imports the exact structured
 producer report location through the existing CLI. Coverage always imports its
 paired outcome; native mutation always uses the persisted proof reader. A missing
 report or publication error produces a retained error and nonzero command exit.
+Before launching coverage, stage records the existing focused-report and
+operation-outcome IDs under its image. Before routing a reported location, it
+rejects a prior run ID, a path outside that image or an alias, and checks the
+report and its digest-bound manifest against the captured Source, tests, tools
+and selection. This join is not a replacement for the paired outcome validator
+or a claim that process and resource custody are complete.
 The frozen stage also imports its input coverage/outcome pair, so an earlier missed
 import is repaired idempotently. A publication exception remains unknown/partial
 because JSON may already have committed; a subsequent receipt failure preserves
