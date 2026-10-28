@@ -1,4 +1,4 @@
-import { recordContourReport } from './contour-progress-cli.ts';
+import { recordContourReport, writeContourOutput } from './contour-progress-cli.ts';
 import { Buffer } from 'node:buffer';
 import {
   chmodSync,
@@ -1924,15 +1924,17 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       try {
         recordContourReport(root, finalReport, finalPath);
       } catch (error) {
-        process.stderr.write('Contour projection output gap: ' + String(error) + '\n');
+        await writeContourOutput('stderr', 'Contour projection output gap: ' + String(error) + '\n');
       }
     }
     if (focused)
-      process.stdout.write(
+      await writeContourOutput(
+        'stdout',
         JSON.stringify({ schema: 'VidaBunFocusedCoverageDiagnosticLocation/v1', report: finalPath }) + '\n',
       );
     if (publishedReference) {
-      process.stderr.write(
+      await writeContourOutput(
+        'stderr',
         'Historical measurement admitted; published suite remains FAIL, current quality remains unqualified.\n',
       );
       process.exitCode = 1;
@@ -1968,8 +1970,8 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         operationOutcome.quality_passed = gate.status === 0;
       }
       persistOperationOutcome();
-      process.stdout.write(gate.stdout ?? '');
-      process.stderr.write(gate.stderr ?? '');
+      await writeContourOutput('stdout', gate.stdout ?? '');
+      await writeContourOutput('stderr', gate.stderr ?? '');
       const validationObservationPath = path.join(reportDirectory, 'observations', 'report-validation.json');
       let validationBytes: Buffer | undefined;
       try {
@@ -2067,7 +2069,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         path.join(runOutputRoot, 'operation-outcomes', runId + '.json'),
       );
     } catch (error) {
-      process.stderr.write('Contour operation projection output gap: ' + String(error) + '\n');
+      await writeContourOutput('stderr', 'Contour operation projection output gap: ' + String(error) + '\n');
     }
   }
   if (executionFailed && cleanupFailed)

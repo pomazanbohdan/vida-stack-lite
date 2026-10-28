@@ -4,6 +4,7 @@ import { qualityRuntimeEnvironment, readQualityRuntimeRoot } from './quality-run
 import {
   existsSync,
   lstatSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
@@ -21,18 +22,21 @@ import {
   campaignReportPublicationAdmitted as contourStagePublicationAdmitted,
   isolatedCommand,
   requireCampaignStorage,
-  throwAfterCampaignReceiptFailure,
+  reportCampaignReceiptFailure,
 } from './contour-campaign.ts';
 import {
   checkContourProgressSnapshot,
   readContourArtifact,
   runContourProgressWithNative,
+  writeContourOutput,
 } from './contour-progress-cli.ts';
+import { trustedQualityRoots } from './quality-image-mounts.ts';
 import { executeMutationCommand } from './mutation-evidence.ts';
 import { mutationPartitions } from './mutation-partitions.ts';
 import { mutationToolInputs } from './mutation-evidence.ts';
 import { retainQualityGitSnapshot } from './quality-git-snapshot.ts';
 import {
+  assertTrustedQualityExecutionImage,
   prepareQualityExecutionImage,
   readQualityExecutionImageDescriptor,
   readQualityExecutionImageInputs,
@@ -54,15 +58,36 @@ function checkedStageImageOptions(values: ImageOptions): void {
     throw new Error('Image reuse requires both manifest and digest; image-store is formation-only.');
 }
 
+export function trustedStageImageStore(values: ImageOptions, repository: string): string {
+  if (values['image-manifest'] !== undefined || values['image-sha256'] !== undefined)
+    throw new Error('Trusted coverage requires a fresh image and cannot reuse a manifest.');
+  const store = values['image-store'] ?? path.join(path.dirname(repository), '.vida-quality-inputs');
+  if (
+    !path.isAbsolute(store) ||
+    path.resolve(store) !== store ||
+    realpathSync(path.dirname(store)) !== path.dirname(store)
+  )
+    throw new Error('Trusted image store must have a canonical existing parent.');
+  if (store === repository || store.startsWith(`${repository}${path.sep}`))
+    throw new Error('Trusted image store must be outside Source.');
+  mkdirSync(store, { recursive: true });
+  if (realpathSync(store) !== store || !lstatSync(store).isDirectory())
+    throw new Error('Trusted image store must be a real directory without aliases.');
+  return mkdtempSync(path.join(store, 'trusted-'));
+}
+
 async function stageExecutionImage(
   packageRoot: string,
   repository: string,
   partition: ReturnType<typeof campaignPartition>,
   values: ImageOptions,
+  trusted: boolean,
 ): Promise<{ image: QualityExecutionImage; capture: StageSelectionCapture }> {
   const manifest = values['image-manifest'];
   const digest = values['image-sha256'];
   checkedStageImageOptions(values);
+  if (trusted && (manifest !== undefined || digest !== undefined))
+    throw new Error('Trusted coverage requires a fresh image and cannot reuse a manifest.');
   requireCampaignStorage(
     values['image-store'] === undefined ? path.dirname(repository) : path.dirname(values['image-store']),
   );
@@ -72,13 +97,16 @@ async function stageExecutionImage(
       : await (async () => {
           return prepareQualityExecutionImage({
             sourcePackageRoot: packageRoot,
-            storeRoot: values['image-store'] ?? path.join(path.dirname(repository), '.vida-quality-inputs'),
+            storeRoot: trusted
+              ? trustedStageImageStore(values, repository)
+              : (values['image-store'] ?? path.join(path.dirname(repository), '.vida-quality-inputs')),
             selection: {
               mode: 'focused-diagnostic',
               contour: partition.name,
               sources: partition.sources ?? [],
               tests: partition.tests ?? [],
             },
+            ...(trusted ? { dependencyMode: 'linked' as const } : {}),
             additionalToolInputs: [
               ...mutationToolInputs,
               'tooling/contour-stage.ts',
@@ -310,6 +338,57 @@ export function classifyTrustedCoverageSelectionCandidate(
   return { kind: 'candidate', qualified: false, binding };
 }
 
+export function trustedCoverageCommandMode(
+  candidate: ReturnType<typeof classifyTrustedCoverageSelectionCandidate>,
+  hasRuntimeRoot: boolean,
+): 'trusted-coverage' | 'isolated' {
+  return candidate.kind === 'candidate' && !hasRuntimeRoot ? 'trusted-coverage' : 'isolated';
+}
+
+export function assertTrustedFreshDirectories(directories: readonly string[]): void {
+  for (const directory of directories)
+    if (readdirSync(directory).length !== 0) throw new Error('Trusted writable directories must be fresh and empty.');
+}
+
+function trustedOwnedIdentities(
+  image: QualityExecutionImage,
+  stage: string,
+  output: string,
+  scratch: string,
+): Record<string, string> {
+  const stageRoots = trustedQualityRoots(image, stage);
+  trustedQualityRoots(image, output);
+  const relative = path.relative(stage, output);
+  if (
+    relative === '' ||
+    (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`)) ||
+    stage.startsWith(`${output}${path.sep}`)
+  )
+    throw new Error('Trusted stage and output roots overlap.');
+  const roots = [
+    stageRoots.stage,
+    stageRoots.coverage,
+    stageRoots.temporary,
+    output,
+    scratch,
+    ...['home', 'cache', 'config', 'bun-install-cache'].map((name) => path.join(scratch, name)),
+  ];
+  const executable = realpathSync(process.execPath);
+  const executableStat = lstatSync(executable);
+  if (!executableStat.isFile()) throw new Error('Trusted Bun executable is not a regular file.');
+  return {
+    [executable]: `${executableStat.dev}:${executableStat.ino}`,
+    ...Object.fromEntries(
+      roots.map((root) => {
+        const info = lstatSync(root);
+        if (!info.isDirectory() || info.isSymbolicLink() || realpathSync(root) !== root)
+          throw new Error('Trusted owned directory has an alias or changed type.');
+        return [root, `${info.dev}:${info.ino}`];
+      }),
+    ),
+  };
+}
+
 /** Owner-reported diagnostic counters never enter report routing or native proof admission. */
 export function contourStageDiagnostic(stdout: string): Record<string, unknown> {
   let mutation: Record<string, unknown> | undefined;
@@ -440,9 +519,9 @@ export async function retainContourStageResourceRefusal(
   };
   try {
     writeFileSync(file, JSON.stringify(refusal, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
-    process.stdout.write(JSON.stringify(refusal) + '\n');
+    await writeContourOutput('stdout', JSON.stringify(refusal) + '\n');
   } catch (receiptError) {
-    return throwAfterCampaignReceiptFailure(error, receiptError, { source_commit: request.commit, boot: request.boot });
+    return reportCampaignReceiptFailure(error, receiptError, { source_commit: request.commit, boot: request.boot });
   }
   const snapshot = explicitSnapshot ?? path.join(request.output, 'CONTOUR-STATUS.json');
   try {
@@ -468,7 +547,8 @@ export async function retainContourStageResourceRefusal(
 
 async function main(): Promise<void> {
   if (process.argv.length === 3 && process.argv[2] === '--help') {
-    process.stdout.write(
+    await writeContourOutput(
+      'stdout',
       'Usage: bun tooling/contour-stage.ts --contour <name> --lane coverage|frozen-crap|crap-applicability|mutation --output <absolute canonical directory> [--image-store <absolute directory> | --image-manifest <absolute JSON> --image-sha256 <digest>] [--runtime-root-manifest <JSON> --runtime-root-sha256 <digest>] [--snapshot <JSON>] [--coverage-run <JSON> --budget-ref <commit>] [--isolated-workers [--workers 2|4]] [--diagnostic-mutant-ids <id[,id...]> | --diagnostic-batch-size <1..128>]\nForms a gitless execution image from clean Source, or reuses the exact manifest/digest across lanes without recapturing Source. Source may advance after formation. Input bytes stay read-only; coverage and .tmp are separate writable output namespaces. Retains terminal custody and publishes the exact report. Frozen lanes require coverage-run and budget-ref. Isolated workers default2, opt-in and mutation-only; diagnostics never publish a complete mutation score. Full launch data stays in launch.json.\n',
     );
     return;
@@ -538,7 +618,8 @@ async function main(): Promise<void> {
     snapshots.add(snapshot);
   }
   for (const snapshot of snapshots) if (existsSync(snapshot)) checkContourProgressSnapshot(snapshot);
-  const { image, capture } = await stageExecutionImage(packageRoot, repository, partition, values);
+  const trustedRequested = selectedLane === 'coverage' && partition.name === 'bun-cli-run' && runtimeRoot === undefined;
+  const { image, capture } = await stageExecutionImage(packageRoot, repository, partition, values, trustedRequested);
   const output = contourStageOutput(image.repository, canonicalOutput);
   const commit = image.source_commit;
   const boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
@@ -592,6 +673,14 @@ async function main(): Promise<void> {
     tool_fingerprint: capture.tool_fingerprint,
   });
   record('request', { ...request, args, trusted_coverage_selection_candidate: trustedCoverageCandidate });
+  const commandMode = trustedCoverageCommandMode(trustedCoverageCandidate, runtimeRoot !== undefined);
+  if (trustedRequested !== (commandMode === 'trusted-coverage'))
+    throw new Error('Trusted coverage selection was not admitted.');
+  if (trustedRequested) {
+    if (values.output !== canonicalOutput) throw new Error('Trusted output must be a canonical path without aliases.');
+    const roots = trustedQualityRoots(image, output);
+    assertTrustedFreshDirectories([output, roots.coverage, roots.temporary]);
+  }
   const frozenEnvironment = frozen ? retainQualityGitSnapshot(repository, directory, values['budget-ref']!) : {};
   let isolated: ReturnType<typeof isolatedCommand>;
   try {
@@ -605,6 +694,7 @@ async function main(): Promise<void> {
       process.env.VIDA_QUALITY_RETAINED_SCRATCH_ROOT,
       image,
       runtimeRoot,
+      commandMode,
     );
   } catch (error) {
     return retainContourStageResourceRefusal(error, directory, request, packageRoot, values.snapshot);
@@ -614,9 +704,13 @@ async function main(): Promise<void> {
     ...frozenEnvironment,
     ...(frozen ? { VIDA_BUN_COVERAGE_REPORT: path.resolve(values['coverage-run']!) } : {}),
   };
-  const executionEnvironment = runtimeRoot
-    ? qualityRuntimeEnvironment(process.env, laneEnvironment)
-    : { ...process.env, ...laneEnvironment };
+  const executionEnvironment =
+    runtimeRoot || trustedRequested
+      ? qualityRuntimeEnvironment(process.env, laneEnvironment)
+      : { ...process.env, ...laneEnvironment };
+  const ownedIdentities = trustedRequested
+    ? trustedOwnedIdentities(image, directory, output, path.join(isolated.temporary, 'scratch'))
+    : undefined;
   const priorRuns = selectedLane === 'coverage' ? priorCoverageRuns(image.packageRoot) : undefined;
   if (priorRuns) record('coverage-prior-runs', { run_ids: [...priorRuns].sort() });
   const launch = {
@@ -624,12 +718,14 @@ async function main(): Promise<void> {
     ...isolated,
     trusted_coverage_selection_candidate: trustedCoverageCandidate,
     environment: laneEnvironment,
-    ...(runtimeRoot
+    ...(ownedIdentities ? { trusted_owned_identities: ownedIdentities } : {}),
+    ...(runtimeRoot || trustedRequested
       ? { environment_policy: 'runtime-allowlist-v1', environment_keys: Object.keys(executionEnvironment).sort() }
       : {}),
   };
   record('launch', launch);
-  process.stdout.write(
+  await writeContourOutput(
+    'stdout',
     JSON.stringify({
       schema: 'VidaContourStageLocation/v1',
       directory,
@@ -639,6 +735,7 @@ async function main(): Promise<void> {
       timeout_ms: timeout,
     }) + '\n',
   );
+  if (trustedRequested) await assertTrustedQualityExecutionImage(image, repository);
   const started = performance.now();
   const result = await executeMutationCommand(isolated.command, image.packageRoot, timeout, {
     ...(isolated.native_status_file === undefined ? {} : { nativeStatusFile: isolated.native_status_file }),
@@ -650,7 +747,16 @@ async function main(): Promise<void> {
   });
   let imageFailure: { error: unknown } | undefined;
   try {
-    await verifyQualityExecutionImage(image);
+    if (trustedRequested) {
+      await assertTrustedQualityExecutionImage(image, repository);
+      if (
+        !isDeepStrictEqual(
+          ownedIdentities,
+          trustedOwnedIdentities(image, directory, output, path.join(isolated.temporary, 'scratch')),
+        )
+      )
+        throw new Error('Trusted owned directory identity changed.');
+    } else await verifyQualityExecutionImage(image);
   } catch (error) {
     imageFailure = { error };
   }
@@ -818,8 +924,12 @@ async function main(): Promise<void> {
         ...reportArgs,
       ],
       image.packageRoot,
+      {
+        onPublished: () => {
+          published = true;
+        },
+      },
     );
-    published = true;
     record('publication', {
       schema: 'VidaContourStagePublication/v1',
       source_commit: commit,
@@ -827,7 +937,10 @@ async function main(): Promise<void> {
       snapshot: path.join(output, 'CONTOUR-STATUS.json'),
       ...(cacheRouting ? { cache_routing: cacheRouting } : {}),
     });
-    process.stdout.write(JSON.stringify(diagnostic({ publication: 'published', reports: reportArgs })) + '\n');
+    await writeContourOutput(
+      'stdout',
+      JSON.stringify(diagnostic({ publication: 'published', reports: reportArgs })) + '\n',
+    );
   } catch (error) {
     let primaryError = error;
     let projectionFailure: { error: unknown } | undefined;
@@ -845,7 +958,7 @@ async function main(): Promise<void> {
         source_commit: commit,
         diagnostic: detail,
       });
-      process.stdout.write(JSON.stringify(detail) + '\n');
+      await writeContourOutput('stdout', JSON.stringify(detail) + '\n');
       const snapshot = values.snapshot ?? path.join(output, 'CONTOUR-STATUS.json');
       try {
         await runContourProgressWithNative(
@@ -864,7 +977,7 @@ async function main(): Promise<void> {
         projectionFailure = { error: projectionError };
       }
     } catch (receiptError) {
-      return throwAfterCampaignReceiptFailure(primaryError, receiptError, { source_commit: commit, boot });
+      return reportCampaignReceiptFailure(primaryError, receiptError, { source_commit: commit, boot });
     }
     if (projectionFailure)
       throw new AggregateError(

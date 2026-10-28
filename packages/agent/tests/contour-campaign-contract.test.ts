@@ -8,6 +8,8 @@ import {
   executeContourCampaign,
   isolatedCommand,
   throwAfterCampaignReceiptFailure,
+  reportCampaignReceiptFailure,
+  publishCampaignProgress,
   type CampaignOutcome,
 } from '../tooling/contour-campaign.ts';
 import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
@@ -16,6 +18,7 @@ import type { MutationPartition } from '../tooling/mutation-partitions.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { selectContourCampaign } from '../tooling/contour-progress.ts';
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -30,7 +33,31 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import type { QualityExecutionImage } from '../tooling/quality-execution-image.ts';
+import { trustedQualityRoots } from '../tooling/quality-image-mounts.ts';
 import type { QualityRuntimeRoot } from '../tooling/quality-runtime-root.ts';
+
+test('campaign classifies published snapshot with failed diagnostic separately from rejected proof', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'campaign-publication-output-'));
+  const output = path.join(root, 'output');
+  mkdirSync(output);
+  let completed = false;
+  try {
+    const outcome = await publishCampaignProgress(['--output', output], root, root, 'report.json', async () => {
+      throw new Error('diagnostic output failed');
+    });
+    expect(outcome).toMatchObject({ state: 'gap', report: 'report.json' });
+    expect(outcome?.detail).toContain('Published report diagnostic output failed');
+    expect(outcome?.detail).toContain('diagnostic output failed');
+    expect(existsSync(path.join(output, 'CONTOUR-STATUS.json'))).toBe(true);
+    expect(existsSync(path.join(output, 'CONTOUR-STATUS.md'))).toBe(true);
+    const rejected = await publishCampaignProgress(['--unknown', 'value'], root, root, 'report.json');
+    expect(rejected?.state).toBe('gap');
+    expect(rejected?.detail).toContain('Report proof rejected');
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true });
+  }
+});
 
 test('trusted coverage command builder creates fresh run-owned host paths', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'contour-trusted-control-'));
@@ -63,6 +90,12 @@ test('trusted coverage command builder creates fresh run-owned host paths', () =
   const args = ['tooling/contour-campaign.ts', '--coverage-child', 'bun-cli-run'];
   let completed = false;
   try {
+    const trusted = trustedQualityRoots(image, stage);
+    expect(trusted.stage).toBe(stage);
+    const stageAlias = path.join(root, 'stage-alias');
+    symlinkSync(stage, stageAlias);
+    expect(() => trustedQualityRoots(image, stageAlias)).toThrow(/real directory/u);
+    expect(() => trustedQualityRoots(image, sourceRepository)).toThrow(/overlap/u);
     const invocation = isolatedCommand(
       stage,
       args,
@@ -421,6 +454,22 @@ test('campaign reports resource receipt failures and preserves both causes', () 
     error: String(primary),
     receipt_error: String(receipt),
   });
+});
+
+test('campaign awaits diagnostic output and preserves all failures', async () => {
+  const receipt = new Error('receipt unavailable');
+  const diagnostic = new Error('output unavailable');
+  let observed: unknown;
+  try {
+    await reportCampaignReceiptFailure(undefined, receipt, { source_commit: 'fixture-commit' }, async () => {
+      throw diagnostic;
+    });
+  } catch (error) {
+    observed = error;
+  }
+  expect(observed).toBeInstanceOf(AggregateError);
+  if (!(observed instanceof AggregateError)) throw new Error('Expected all failures');
+  expect(observed.errors).toEqual([undefined, receipt, diagnostic]);
 });
 
 test('campaign preserves thrown undefined when receipt and diagnostic reporting fail', () => {

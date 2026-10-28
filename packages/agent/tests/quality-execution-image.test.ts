@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
-import { chmod, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, readlink, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {
+  assertTrustedQualityExecutionImage,
   loadQualityExecutionImageInputs,
   prepareQualityExecutionImage,
   qualitySourceStatusAdmitted,
@@ -11,6 +12,7 @@ import {
   readQualityExecutionImageInputs,
   verifyQualityExecutionImage,
 } from '../tooling/quality-execution-image.ts';
+import { trustedStageImageStore } from '../tooling/contour-stage.ts';
 import { coverageToolInputs } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 
@@ -55,7 +57,7 @@ async function fixture(): Promise<{ root: string; packageRoot: string; sourcePac
     await write(source, 'export const fixture = true;\n');
   await write('bin/cli-metadata.ts', 'export const fixture = true;\n');
   await write('tests/fixture.test.mjs', "test('fixture input', () => {});\n");
-  for (const file of coverageToolInputs) if (file !== 'package.json') await write(file);
+  for (const file of coverageToolInputs) if (file !== 'package.json' && file !== '.bun-version') await write(file);
   for (const file of [
     'tsconfig.json',
     'tsconfig.checked-js.json',
@@ -149,6 +151,70 @@ describe('quality execution images', () => {
     const advanced = await prepareQualityExecutionImage({ ...source, selection, additionalToolInputs: [] });
     expect(advanced.source_commit).not.toBe(first.source_commit);
     expect(advanced.repository).not.toBe(first.repository);
+  });
+
+  test('binds a fresh linked dependency image and rejects changed links or directory identity', async () => {
+    const source = await fixture();
+    const options = { ...source, selection, additionalToolInputs: [], dependencyMode: 'linked' as const };
+    const image = await prepareQualityExecutionImage(options);
+    const mountpoint = path.join(image.packageRoot, 'node_modules');
+    expect(await readlink(mountpoint)).toBe(image.dependency_root);
+    expect(await prepareQualityExecutionImage(options)).toEqual(image);
+    await assertTrustedQualityExecutionImage(image, source.root);
+    expect((await readQualityExecutionImageInputs(image)).tests).toEqual(selection.tests);
+    process.env.VIDA_QUALITY_IMAGE_MANIFEST = image.manifest_file;
+    process.env.VIDA_QUALITY_IMAGE_SHA256 = image.manifest_sha256;
+    expect((await loadQualityExecutionImageInputs(image.packageRoot))?.tests).toEqual(selection.tests);
+    await rm(mountpoint);
+    await symlink(source.root, mountpoint);
+    await expectRejection(verifyQualityExecutionImage(image), /dependency link/u);
+    await rm(mountpoint);
+    await symlink(image.dependency_root, mountpoint);
+    const moved = image.dependency_root + '-saved';
+    await rename(image.dependency_root, moved);
+    await mkdir(image.dependency_root);
+    await expectRejection(loadQualityExecutionImageInputs(image.packageRoot), /dependency directory identity/u);
+    await rm(image.dependency_root, { recursive: true });
+    await rename(moved, image.dependency_root);
+    await verifyQualityExecutionImage(image);
+    const empty = await prepareQualityExecutionImage({ ...source, selection, additionalToolInputs: [] });
+    expect(empty.repository).not.toBe(image.repository);
+    await verifyQualityExecutionImage(empty);
+    await expectRejection(assertTrustedQualityExecutionImage(empty, source.root), /linked dependency/u);
+    await writeFile(path.join(source.packageRoot, 'src/host-state.ts'), 'export const fixture = false;\n');
+    await commitAll(source.root, 'advance trusted source');
+    await expectRejection(assertTrustedQualityExecutionImage(image, source.root), /current Source/u);
+    await writeFile(path.join(source.packageRoot, '.bun-version'), '0.0.0\n');
+    await commitAll(source.root, 'change Bun pin');
+    const wrongPin = await prepareQualityExecutionImage(options);
+    await expectRejection(assertTrustedQualityExecutionImage(wrongPin, source.root), /captured Bun version/u);
+  });
+
+  test('trusted stages refuse reused images and form distinct fresh image namespaces', async () => {
+    const source = await fixture();
+    await mkdir(source.storeRoot);
+    expect(() =>
+      trustedStageImageStore({ 'image-manifest': '/old/manifest', 'image-sha256': 'a'.repeat(64) }, source.root),
+    ).toThrow(/fresh image/u);
+    const firstStore = trustedStageImageStore({ 'image-store': source.storeRoot }, source.root);
+    const secondStore = trustedStageImageStore({ 'image-store': source.storeRoot }, source.root);
+    const first = await prepareQualityExecutionImage({
+      ...source,
+      storeRoot: firstStore,
+      selection,
+      additionalToolInputs: [],
+      dependencyMode: 'linked',
+    });
+    const second = await prepareQualityExecutionImage({
+      ...source,
+      storeRoot: secondStore,
+      selection,
+      additionalToolInputs: [],
+      dependencyMode: 'linked',
+    });
+    expect(first.repository).not.toBe(second.repository);
+    expect(path.dirname(path.dirname(first.repository))).toBe(firstStore);
+    expect(path.dirname(path.dirname(second.repository))).toBe(secondStore);
   });
 
   test('rejects immutable byte and mode drift and retains partial image roots', async () => {

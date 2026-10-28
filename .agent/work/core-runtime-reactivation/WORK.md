@@ -4,6 +4,114 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Trusted stage integration in progress — 2026-10-28
+
+The stage now selects ordinary trusted execution for the exact captured
+`bun-cli-run` coverage request. A manifest-bound linked dependency image checks
+its target and directory identity on formation, reuse, load and completion.
+Prelaunch checks current clean Source commit/tree, exact image selection and
+fingerprints, captured Bun pin, canonical disjoint roots and fresh writable
+output, coverage and temporary directories. The allowlisted environment directs
+home and caches into fresh stage scratch. The stage records owned-root and Bun
+executable identities and rechecks them on completion; the existing capture,
+report/manifest pairing and cache refusal owners retain their publication roles.
+This remains unqualified until targeted verification and independent review.
+
+Ruling: the approved cooperative contract replaces the earlier proposed blanket
+fixture-observer extension. Direct Bun cancellation cases await their exits and
+opposite streams; the SQLite lock-holder observes its expected kill and close and
+retains on unknown. Existing prepared/issue group receipts, selected test outcomes,
+cache refusal and enclosing owned-group closure remain the evidence owners. This
+neither claims both cancelled streams nor changes hostile/mutation contracts.
+Disposable test Git operations were authorized only in new private fixture roots;
+canonical Git operations remain Root-owned.
+
+Evidence under `/workspace/contour-trusted-terra-bX5zTfWB`: `image-red` failed
+before the test because inherited temp was read-only; `image-red-owned` reached
+the intended regression and failed at readlink on the empty mountpoint.
+`image-green` passed the full image suite. `current-red`, `roots-red`, `stage-red`
+and `fresh-red` establish missing controls; `current-green`, `roots-green2`,
+`stage-green` and `fresh-green` passed their respective checks. The combined
+`affected-tests` run recorded 53 pass and 8 fail with complete untruncated capture
+and closed outer group. Five native bwrap cases encountered read-only uid-map
+setup; two cases encountered EPERM when writing process output; a combined image
+case reported a Bun pin mismatch. These are retained failures, not qualification.
+`strict` passed the tooling check (205 files); `lint` and `format-check` passed
+on changed owners. Root owns the exact native-control rerun after approval.
+No full coverage, CRAP, mutation or timing measurement was run.
+
+Follow-up identified the combined pin mismatch: the fixture's generic tool-input
+loop overwrote its real `.bun-version`. The fixture now preserves the pin and
+includes a wrong-pin refusal. `pin-green` passed six cases. The two output EPERM
+failures came from Node stream writes under Bun's piped execution. The existing
+progress output owner now awaits supported `Bun.write` and checks byte counts;
+the stage and coverage owner use it, while the campaign diagnostic wrapper
+preserves primary, receipt and write failures. `output-red` and `diagnostic-red`
+record missing behavior; `output-green` and `diagnostic-green` passed. The
+original sync diagnostic callback still retains its two- and three-cause controls.
+
+On the changed files, `stage-final` passed 32 tests and 339 expectations,
+`campaign-final` passed four tests and 31 expectations, and `progress-final`
+passed 160 tests and 506 expectations. All used the existing command capture,
+with complete untruncated output and observed group closure. `strict-final`
+passed 205 tooling files, `scoped-strict-final2` passed the selected project,
+and `typed-lint-final` and `format-final` passed. The first scoped strict config
+omitted the existing Istanbul declaration and failed with 16 errors; that log
+is retained and the corrected selection includes the real declaration. Root
+then ran the five native bwrap controls under the specifically approved
+execution capability. `native-mount-approved` passed one test with nine
+expectations; `native-reaper-approved` passed four tests with 31 expectations.
+Both exited zero with complete untruncated capture and observed owned-group
+termination. Their launch, execution and stream files are retained beside the
+original uid-map denial logs in `/workspace/contour-trusted-terra-bX5zTfWB`.
+Selected source hashes, the bounded diff and the prepared but unrun first
+measurement command are retained in `/workspace/contour-trusted-terra-bX5zTfWB`.
+Independent review and the one permitted first timing measurement remain open.
+
+## Trusted integration independent review — 2026-10-28
+
+Both final independent reviewers found the reviewed fixes addressed. The image
+review confirmed fresh namespaces and the pre-spawn binding; the lifecycle
+review confirmed the campaign publication classification. Review does not
+establish full coverage, timing qualification, phase completion or acceptance.
+Root owns Source integration and the sole authorized first measurement.
+
+## Campaign publication review fix — 2026-10-28
+
+The campaign now uses the existing publication callback to distinguish a
+successfully published snapshot followed by failed diagnostic output from a
+rejected report proof. Both remain a gap; neither is a successful campaign
+result. A subsequent failure to inspect the published snapshot is reported as
+published-report verification failure. `campaign-publication-red` and
+`campaign-publication-green` retain the regression evidence. The control uses
+the actual campaign publication path, confirms both snapshot files exist after
+injected output failure, and checks the separate pre-publication rejection.
+`campaign-r2-tests` passed five tests and 38 expectations with complete capture
+and owned-group closure. `campaign-r2-strict`, type-aware lint and format passed;
+no native controls or full producer were repeated. The updated patch and
+selected Source hashes are in `/workspace/contour-trusted-terra-bX5zTfWB`.
+
+## Trusted stage review fixes — 2026-10-28
+
+Independent review identified three gaps in the unqualified integration. Trusted
+coverage now rejects explicit image reuse and allocates an exclusive per-run image
+store even when callers share a store parent. The current Source, pinned Bun and
+dependency/image assertion runs immediately before the producer spawn and again
+afterward; the early duplicate assertion was removed. Publication completion is
+marked after the snapshot owner returns and before diagnostic output, so output
+failure is recorded as `published-receipt-failed` without claiming success.
+
+`review-fresh-red` and `review-publication-red` retain the failing controls;
+`review-fresh-green` and `review-publication-green` pass. The fresh control forms
+two real images in separate stores and rejects explicit reuse. `review-reuse-cli`
+confirms the actual stage rejects an explicit manifest before reading or launching
+it. `review-stage-image` passed 35 tests and 356 expectations, `review-progress`
+passed its selected adapter case, and `review-strict`, `review-lint` and
+`review-format` passed. Each command's captured output was complete and its
+owned process group closed. No native controls were repeated and no full producer
+was run. Selected Source hashes and the refreshed bounded patch are in
+`/workspace/contour-trusted-terra-bX5zTfWB`; scoped independent rereview remains.
+
 ## Trusted cache-routing override refusal — 2026-10-28
 
 The existing trusted command builder now rejects ambient Source, baseline and

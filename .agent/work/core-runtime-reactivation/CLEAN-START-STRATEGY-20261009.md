@@ -46,6 +46,34 @@ supported consumers and replacement are independently accounted for.
 
 ## Trusted coverage implementation plan
 
+### Integration in progress, 2026-10-28
+
+The stage now routes the exact captured ordinary `bun-cli-run` selection through
+the trusted builder. Linked dependency mode is bound in the fresh image manifest
+and checked at formation, load and after execution. The stage rejects explicit
+image reuse and creates an exclusive image store for each launch. Current clean
+Source and the Bun pin are checked immediately before launch; selection and
+fingerprints, disjoint canonical roots and fresh writable directories are checked
+before launch; the effective environment is allowlisted
+and owned root identities are compared after termination. Existing report and
+cache-refusal validation remain the publication owners. A completed snapshot is
+marked published before its diagnostic output is attempted. The route is not yet
+qualified: targeted verification and independent review are still required.
+
+Ruling: the owner-approved cooperative model supersedes Task 2's proposed blanket
+fixture-observer extension. The two direct Bun children deliberately cancel one
+stream and await their exit and opposite stream; the SQLite holder waits for its
+expected kill and close and retains on unknown. Existing prepared/issue group
+receipts, the cache refusal assertion, actual selected test outcomes and the outer
+owned-group check account for these known effects. Do not invent both-stream
+capture or new child receipts for deliberately cancelled streams. Hostile and
+mutation guarantees retain their separate native requirements and denominator.
+
+The native bwrap controls encountered a read-only uid-map denial in the command
+sandbox. Preserve that evidence; Root owns any explicitly approved native control.
+No full producer, numeric result or prior UNKNOWN settlement follows from this
+implementation.
+
 ### Prospective ordinary trusted execution, 2026-10-28
 
 The owner approved ordinary trusted same-user execution. The 2026-10-28 rule in
@@ -63,13 +91,17 @@ their own physical guarantees. Earlier historical statements remain historical.
    timeouts, cleanup, incomplete capture and foreign or stale evidence. An
    incomplete or unsupported operation stays UNKNOWN or refused.
 3. Run scoped checks and independent review. Only after all actual admission
-   prerequisites, including timing, execute one unchanged-budget coverage
-   producer. The existing collector and validator retain the exact inventory;
-   CRAP stays in its declared phase with the same bound image and report.
+   prerequisites, apply the authorized first-measurement exception and execute
+   one unchanged-budget coverage producer. The existing collector and validator
+   retain the exact inventory; CRAP stays in its declared phase with the same bound image and report.
 
 Do not add an IPC protocol, supervisor, service, UID, container or a new
 coverage collector. A candidate is not a qualified run. Source may change in
 the separately owned Bun pilot: bind evidence to the final integrated Source.
+
+The following preparation and task notes describe the earlier checkpoint; the
+integration ruling above supersedes their proposed observer extension and
+unactivated-stage wording. Their other checks remain applicable.
 
 The existing `isolatedCommand` owner now has an unactivated command-building
 mode for the exact `bun-cli-run` child. Its unit control proves only command

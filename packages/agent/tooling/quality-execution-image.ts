@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { lstat, mkdir, readdir, realpath, writeFile } from 'node:fs/promises';
+import { realpathSync as realpathSyncForSource } from 'node:fs';
+import { lstat, mkdir, readdir, readlink, realpath, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import {
@@ -42,7 +43,7 @@ type ImageFile = {
 type ImageManifest = {
   schema: 'VidaQualityExecutionImageManifest/v1';
   image: QualityExecutionImage;
-  dependency: { root: string; identity: string; lock_sha256: string; bun_pin: string };
+  dependency: { root: string; identity: string; lock_sha256: string; bun_pin: string; mode?: 'linked' };
   files: ImageFile[];
   sdk_formation_inputs: InputDigest[] | null;
   capture: Pick<
@@ -110,6 +111,18 @@ async function assertDependencyMount(packageRoot: string, manifest: ImageManifes
       `${mounted.dev}:${mounted.ino}` === manifest.dependency.identity,
     'Quality image dependency mount does not match its captured directory identity.',
   );
+}
+
+async function assertDependencyLink(packageRoot: string, manifest: ImageManifest): Promise<void> {
+  const mountpoint = path.join(packageRoot, 'node_modules');
+  const stat = await lstat(mountpoint);
+  assert(
+    stat.isSymbolicLink() &&
+      (await readlink(mountpoint)) === manifest.dependency.root &&
+      (await realpath(mountpoint)) === manifest.dependency.root,
+    'Quality image dependency link differs from its captured target.',
+  );
+  await verifyExternalDependency(manifest);
 }
 
 async function verifyExternalDependency(manifest: ImageManifest): Promise<void> {
@@ -291,7 +304,10 @@ function parseImageFiles(value: unknown): ImageFile[] {
 function parseDependency(value: unknown): ImageManifest['dependency'] {
   assert(
     record(value) &&
-      Object.keys(value).sort().join(',') === 'bun_pin,identity,lock_sha256,root' &&
+      ['bun_pin,identity,lock_sha256,root', 'bun_pin,identity,lock_sha256,mode,root'].includes(
+        Object.keys(value).sort().join(','),
+      ) &&
+      (value.mode === undefined || value.mode === 'linked') &&
       typeof value.root === 'string' &&
       typeof value.identity === 'string' &&
       typeof value.bun_pin === 'string' &&
@@ -303,7 +319,13 @@ function parseDependency(value: unknown): ImageManifest['dependency'] {
     path.isAbsolute(value.root) && value.bun_pin.length > 0 && value.bun_pin.length <= 128 && value.identity.length > 0,
     'Quality image dependency metadata is invalid.',
   );
-  return { root: value.root, identity: value.identity, lock_sha256: value.lock_sha256, bun_pin: value.bun_pin };
+  return {
+    root: value.root,
+    identity: value.identity,
+    lock_sha256: value.lock_sha256,
+    bun_pin: value.bun_pin,
+    ...(value.mode === 'linked' ? { mode: 'linked' as const } : {}),
+  };
 }
 
 function stringRows(value: unknown, label: string): string[] {
@@ -496,19 +518,15 @@ async function validateImageManifest(file: string, expectedSha?: string): Promis
 async function verifyMaterialized(
   manifest: ImageManifest,
   packageRoot = manifest.image.packageRoot,
-  dependencyMount: 'empty' | 'mounted' = 'empty',
+  dependencyMount: 'empty' | 'mounted' | 'linked' = manifest.dependency.mode ?? 'empty',
 ): Promise<Map<string, Buffer>> {
-  for (const directory of [
-    packageRoot,
-    path.join(packageRoot, 'coverage'),
-    path.join(packageRoot, '.tmp'),
-    path.join(packageRoot, 'node_modules'),
-  ]) {
+  for (const directory of [packageRoot, path.join(packageRoot, 'coverage'), path.join(packageRoot, '.tmp')]) {
     const stat = await lstat(directory);
     assert(stat.isDirectory() && !stat.isSymbolicLink(), `Quality image directory is missing or unsafe: ${directory}`);
   }
   if (dependencyMount === 'empty') await assertEmptyNodeModules(packageRoot);
-  else await assertDependencyMount(packageRoot, manifest);
+  else if (dependencyMount === 'mounted') await assertDependencyMount(packageRoot, manifest);
+  else await assertDependencyLink(packageRoot, manifest);
   const inputs = await readQualityInputs(
     packageRoot,
     manifest.files.map((row) => row.path),
@@ -634,7 +652,10 @@ async function materializeImage(
     assert(contents !== undefined, `Quality image captured bytes disappeared: ${row.path}`);
     await writeFile(target, contents, { flag: 'wx', mode: row.mode === '100755' ? 0o755 : 0o644 });
   }
-  await mkdir(path.join(imagePackage, 'node_modules'), { recursive: true });
+  if (payload.dependency.mode === 'linked') {
+    await verifyExternalDependency(payload);
+    await symlink(payload.dependency.root, path.join(imagePackage, 'node_modules'));
+  } else await mkdir(path.join(imagePackage, 'node_modules'), { recursive: true });
   await mkdir(path.join(imagePackage, 'coverage'), { recursive: true });
   await mkdir(path.join(imagePackage, '.tmp'), { recursive: true });
   for (const root of MAINTAINED_SOURCE_ROOTS) await mkdir(path.join(imageRepository, root), { recursive: true });
@@ -683,6 +704,7 @@ export async function prepareQualityExecutionImage(args: {
   storeRoot: string;
   selection: FocusedDiagnosticSelection;
   additionalToolInputs: readonly string[];
+  dependencyMode?: 'linked';
   prepareSdkInputs?: (input: {
     root: string;
     tests: readonly string[];
@@ -740,7 +762,9 @@ export async function prepareQualityExecutionImage(args: {
   const dependencyStat = await lstat(dependencyRoot);
   assert(dependencyStat.isDirectory(), 'Captured dependency root is not a directory.');
   const dependencyIdentity = `${dependencyStat.dev}:${dependencyStat.ino}`;
-  const id = sha256(`${source.commit}\n${inputFingerprint}\n${bunPin}`).slice(0, 40);
+  const id = sha256(
+    `${source.commit}\n${inputFingerprint}\n${bunPin}${args.dependencyMode === 'linked' ? '\nlinked' : ''}`,
+  ).slice(0, 40);
   const imageRepository = path.join(storeRoot, id, 'repository');
   const imageDirectory = path.dirname(imageRepository);
   const imagePackage = path.join(imageRepository, 'packages', 'agent');
@@ -759,7 +783,13 @@ export async function prepareQualityExecutionImage(args: {
   const payload: ImageManifest = {
     schema: 'VidaQualityExecutionImageManifest/v1',
     image,
-    dependency: { root: dependencyRoot, identity: dependencyIdentity, lock_sha256: lockSha, bun_pin: bunPin },
+    dependency: {
+      root: dependencyRoot,
+      identity: dependencyIdentity,
+      lock_sha256: lockSha,
+      bun_pin: bunPin,
+      ...(args.dependencyMode === 'linked' ? { mode: 'linked' as const } : {}),
+    },
     files: captured.files,
     sdk_formation_inputs: sdkRows,
     capture: {
@@ -798,7 +828,7 @@ export async function loadQualityExecutionImageInputs(packageRoot: string): Prom
     path.resolve(decoded.image.packageRoot) === path.resolve(packageRoot),
     'Loaded package root differs from the quality image descriptor.',
   );
-  const bytes = await verifyMaterialized(decoded, packageRoot, 'mounted');
+  const bytes = await verifyMaterialized(decoded, packageRoot, decoded.dependency.mode ?? 'mounted');
   return await inputsFromImage(packageRoot, decoded, bytes);
 }
 
@@ -843,7 +873,7 @@ export async function readQualityExecutionImageInputs(image: QualityExecutionIma
     isDeepStrictEqual(manifest.image, image),
     'Quality image manifest descriptor differs from caller-held descriptor.',
   );
-  const bytes = await verifyMaterialized(manifest, manifest.image.packageRoot, 'empty');
+  const bytes = await verifyMaterialized(manifest);
   await verifyExternalDependency(manifest);
   return inputsFromImage(manifest.image.packageRoot, manifest, bytes);
 }
@@ -866,4 +896,22 @@ export async function verifyQualityExecutionImage(image: QualityExecutionImage):
   );
   await verifyMaterialized(manifest);
   await verifyExternalDependency(manifest);
+}
+
+export async function assertTrustedQualityExecutionImage(
+  image: QualityExecutionImage,
+  sourceRepository: string,
+): Promise<void> {
+  await verifyQualityExecutionImage(image);
+  const manifest = await validateImageManifest(image.manifest_file, image.manifest_sha256);
+  assert(manifest.dependency.mode === 'linked', 'Trusted coverage requires a linked dependency image.');
+  assert(Bun.version === manifest.dependency.bun_pin, 'Trusted coverage requires the captured Bun version.');
+  assert(
+    sourceRepository === image.source_repository &&
+      realpathSyncForSource(sourceRepository) === sourceRepository &&
+      qualitySourceStatusAdmitted(git(sourceRepository, ['status', '--porcelain=v1', '--untracked-files=all'])) &&
+      git(sourceRepository, ['rev-parse', 'HEAD']).trim() === image.source_commit &&
+      git(sourceRepository, ['rev-parse', 'HEAD^{tree}']).trim() === image.source_tree,
+    'Trusted coverage image differs from current Source.',
+  );
 }

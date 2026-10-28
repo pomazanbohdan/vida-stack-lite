@@ -133,3 +133,18 @@ export function qualityImageMountArguments(image: QualityExecutionImage, stageDi
     stage,
   ];
 }
+
+export function trustedQualityRoots(image: QualityExecutionImage, stageDirectory: string) {
+  const repository = canonicalDirectory(image.repository, 'repository');
+  const packageRoot = canonicalDirectory(image.packageRoot, 'package root');
+  const sourceRepository = canonicalDirectory(image.source_repository, 'source repository');
+  const dependencyRoot = canonicalDirectory(image.dependency_root, 'dependency root');
+  const stage = canonicalDirectory(stageDirectory, 'stage directory');
+  assertInputRootsDisjoint(repository, packageRoot, sourceRepository, dependencyRoot, stage);
+  const coverage = canonicalDirectory(path.join(packageRoot, 'coverage'), 'coverage directory');
+  const temporary = canonicalDirectory(path.join(packageRoot, '.tmp'), 'temporary directory');
+  assertNoMountOverlap([coverage, temporary]);
+  assertWritableDisjoint([coverage, temporary], [sourceRepository, dependencyRoot, stage]);
+  assertNoAliases([coverage, temporary], [repository]);
+  return { stage, coverage, temporary };
+}

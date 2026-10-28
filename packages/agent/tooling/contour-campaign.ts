@@ -10,12 +10,12 @@ import {
   mergeContourProgress,
   selectContourCampaign,
 } from './contour-progress.ts';
-import { readContourArtifact, runContourProgressWithNative } from './contour-progress-cli.ts';
+import { readContourArtifact, runContourProgressWithNative, writeContourOutput } from './contour-progress-cli.ts';
 import { fsSafeApplicabilityReview, latestScopedCrapBudgetRef } from './crap-gate.ts';
 import { executeMutationCommand, mutationToolInputs, type MutationProcessResult } from './mutation-evidence.ts';
 import { mutationLimits } from './mutation-limits.ts';
 import { mutationPartitionSources, mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
-import { qualityImageMountArguments } from './quality-image-mounts.ts';
+import { qualityImageMountArguments, trustedQualityRoots } from './quality-image-mounts.ts';
 import type { QualityRuntimeRoot } from './quality-runtime-root.ts';
 import { retainQualityGitSnapshot } from './quality-git-snapshot.ts';
 import {
@@ -34,6 +34,28 @@ export type CampaignOutcome = {
   detail: string;
   report?: string;
 };
+export async function publishCampaignProgress(
+  args: string[],
+  packageRoot: string,
+  stageDirectory: string,
+  report: string,
+  writeOutput?: typeof writeContourOutput,
+): Promise<CampaignOutcome | null> {
+  let published = false;
+  try {
+    await runContourProgressWithNative(args, packageRoot, {
+      onPublished: () => {
+        published = true;
+      },
+      ...(writeOutput ? { writeOutput } : {}),
+    });
+    return null;
+  } catch (error) {
+    const detail = published ? 'Published report diagnostic output failed' : 'Report proof rejected';
+    return { state: 'gap', detail: `${detail}: ${String(error)}; ${stageDirectory}`, report };
+  }
+}
+
 type Step = { contour: string; lane: Lane; outcome: CampaignOutcome };
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryRoot = path.resolve(packageRoot, '../..');
@@ -84,9 +106,7 @@ export function throwAfterCampaignReceiptFailure(
   primaryError: unknown,
   receiptError: unknown,
   context: { source_commit: string; boot?: string },
-  writeDiagnostic: (line: string) => void = (line) => {
-    process.stderr.write(line);
-  },
+  writeDiagnostic: (line: string) => void,
 ): never {
   const resourceFailure = isCampaignResourceFailure(primaryError) || isCampaignResourceFailure(receiptError);
   const diagnostic = {
@@ -110,7 +130,33 @@ export function throwAfterCampaignReceiptFailure(
   );
 }
 
-function recordCampaignFailure(directory: string, commit: string, boot: string, error: unknown): never {
+export async function reportCampaignReceiptFailure(
+  primaryError: unknown,
+  receiptError: unknown,
+  context: { source_commit: string; boot?: string },
+  writeDiagnostic: (line: string) => Promise<void> = (line) => writeContourOutput('stderr', line),
+): Promise<never> {
+  let diagnostic = '';
+  let aggregate: unknown;
+  try {
+    throwAfterCampaignReceiptFailure(primaryError, receiptError, context, (line) => {
+      diagnostic = line;
+    });
+  } catch (error) {
+    aggregate = error;
+  }
+  try {
+    await writeDiagnostic(diagnostic);
+  } catch (error) {
+    throw new AggregateError(
+      [primaryError, receiptError, error],
+      'Campaign failure and receipt failure could not be fully reported.',
+    );
+  }
+  throw aggregate;
+}
+
+async function recordCampaignFailure(directory: string, commit: string, boot: string, error: unknown): Promise<never> {
   try {
     writeRecord(directory, 'interrupted.json', {
       status: isCampaignResourceFailure(error) ? 'resource-incomplete' : 'incomplete',
@@ -119,7 +165,7 @@ function recordCampaignFailure(directory: string, commit: string, boot: string, 
       boot,
     });
   } catch (receiptError) {
-    return throwAfterCampaignReceiptFailure(error, receiptError, { source_commit: commit, boot });
+    return reportCampaignReceiptFailure(error, receiptError, { source_commit: commit, boot });
   }
   throw error;
 }
@@ -332,6 +378,7 @@ export function isolatedCommand(
         throw new Error('Runtime file target overlaps image or output mounts.');
     }
   }
+  if (mode === 'trusted-coverage' && image) trustedQualityRoots(image, directory);
   requireCampaignStorage(directory);
   let scratchParent = directory;
   if (retainedScratchRoot !== undefined) {
@@ -610,7 +657,7 @@ async function main(): Promise<void> {
           'Linux bwrap and tini are required; VIDA_QUALITY_TINI may name an installed tini binary. No producers launched.',
       });
     } catch (receiptError) {
-      return throwAfterCampaignReceiptFailure(setupError, receiptError, { source_commit: commit });
+      return reportCampaignReceiptFailure(setupError, receiptError, { source_commit: commit });
     }
     throw setupError;
   }
@@ -800,7 +847,13 @@ async function main(): Promise<void> {
                 ? ['--coverage-run', report]
                 : ['--coverage-run', coverage!, '--report', report]),
           ];
-          await runContourProgressWithNative(reportArgs, image.packageRoot);
+          const publicationFailure = await publishCampaignProgress(
+            reportArgs,
+            image.packageRoot,
+            stageDirectory,
+            report,
+          );
+          if (publicationFailure) return publicationFailure;
           const projected = mergeContourProgress(jsonFile(snapshotPath), []);
           const attempts = projected.attempts.filter(
             (row) => row.contour === partition.name && row.artifact === report && row.commit === commit,
@@ -816,7 +869,11 @@ async function main(): Promise<void> {
           if (state === 'completed' && !stageSatisfied) return { state: 'failed', detail: stageDirectory, report };
           return { state, detail: stageDirectory, report };
         } catch (error) {
-          return { state: 'gap', detail: `Report proof rejected: ${String(error)}; ${stageDirectory}`, report };
+          return {
+            state: 'gap',
+            detail: `Published report verification failed: ${String(error)}; ${stageDirectory}`,
+            report,
+          };
         }
       },
       (step) => {

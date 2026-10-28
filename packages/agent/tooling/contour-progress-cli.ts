@@ -296,7 +296,7 @@ export function runContourProgress(
   args: string[],
   root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
   qualifiedNativeAttempts: ReturnType<typeof contourAttempts> = [],
-): void {
+): string {
   let output = outputRoot(root);
   let snapshotPath: string | undefined;
   let commit = 'not-captured';
@@ -370,20 +370,31 @@ export function runContourProgress(
   }
   snapshot = mergeContourProgress(snapshot, incoming);
   const report = publishSnapshot(output, snapshot);
-  process.stdout.write(
+  return (
     JSON.stringify({
       schema: snapshot.schema,
       attempts: snapshot.attempts.length,
       report,
       ...(coverageRuns.length ? { coverage_runs: coverageRuns } : {}),
-    }) + '\n',
+    }) + '\n'
   );
+}
+
+export async function writeContourOutput(
+  stream: 'stdout' | 'stderr',
+  text: string,
+  write: (target: typeof Bun.stdout, value: string) => Promise<number> = async (target, value) =>
+    Bun.write(target, value),
+): Promise<void> {
+  if ((await write(stream === 'stdout' ? Bun.stdout : Bun.stderr, text)) !== Buffer.byteLength(text))
+    throw new Error(`Incomplete contour ${stream} output.`);
 }
 
 /** Native reports enter the synchronous publisher only after persisted-reader qualification. */
 export async function runContourProgressWithNative(
   args: string[],
   root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+  options: { onPublished?: () => void; writeOutput?: typeof writeContourOutput } = {},
 ): Promise<void> {
   const nativeFiles: string[] = [];
   const stageOutcomeFiles: string[] = [];
@@ -420,6 +431,8 @@ export async function runContourProgressWithNative(
     });
     attempts.push(nativeMutationAttempt(read, { artifact: file, commit, recorded_at }));
   }
-  runContourProgress(ordinary, root, attempts);
+  const output = runContourProgress(ordinary, root, attempts);
+  options.onPublished?.();
+  await (options.writeOutput ?? writeContourOutput)('stdout', output);
 }
 if (import.meta.main) await runContourProgressWithNative(process.argv.slice(2));

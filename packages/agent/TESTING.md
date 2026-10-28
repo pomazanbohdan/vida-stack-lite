@@ -1891,19 +1891,17 @@ or change that UNKNOWN or its `resource_safe_to_advance` value. Hostile-process
 contracts remain visible, separately qualified on their native capabilities;
 mutation and untrusted input requirements remain unchanged.
 
-This decision authorizes a successor execution design, not a completed
-implementation, a qualified producer or a report. The current stage must keep
-its existing admission until the maintained trusted path, actual input binding,
-terminal/capture and resource ownership are verified. A timeout, incomplete
-capture, mismatched Source or unknown child remains a refusal. Exact F/L/S/B,
-inventory, frozen CC/CRAP and the 300s/30s/330s budgets are unchanged.
+The selected stage now routes the exact captured `bun-cli-run` coverage selection
+through the trusted command. This implementation remains unqualified pending
+scoped verification and independent review; it has not produced a report. A
+timeout, incomplete capture, mismatched Source or unknown child remains a refusal.
+Exact F/L/S/B, inventory, frozen CC/CRAP and the 300s/30s/330s budgets are unchanged.
 
 The owner approved a portable trusted-coverage path on 2026-10-27. The
 2026-10-28 decision above supersedes physical hostile same-user exclusion for
-new trusted cooperative runs. The portable path is not yet qualified.
-The current stage continues to use the existing Linux isolation route until the
-new path and its evidence are independently qualified and adopted by the current
-plan. Existing UNKNOWN operations and their resources remain fenced.
+new trusted cooperative runs. The portable path is not yet qualified. Other
+stage selections continue to use the existing isolation route. Existing UNKNOWN operations and their resources
+remain fenced.
 
 Trusted coverage means the exact maintained Source, tests, tool inputs and
 producer selection captured by the existing image and inventory owners. It is
@@ -1918,7 +1916,27 @@ The prepared trusted command builder refuses ambient `VIDA_CACHE_ROUTING_SOURCE_
 `VIDA_CACHE_ROUTING_BASELINE_ROOT` and `VIDA_CACHE_ROUTING_DEPENDENCY_ROOT` before
 allocating scratch, including empty values. The maintained fixture then uses its
 captured bundle defaults; standalone fixture overrides retain their own contract.
-This refusal alone does not activate trusted stage or qualify its actual environment.
+The stage applies the runtime environment allowlist to the trusted child and
+uses fresh stage-owned temp, home and cache directories.
+
+The trusted stage forms a linked dependency image in an exclusive per-run image
+namespace. It refuses explicit image-manifest reuse for this lane. Its manifest binds the exact target and directory identity; formation,
+reuse, loading and post-run verification check the link and target. The stage
+checks the captured Bun version and clean current Source commit and tree immediately
+before spawning, and requires the exact selection and fresh output/coverage/temp
+directories. It records the identities
+of its executable and owned roots before launch and checks them after completion.
+A previous image namespace or populated output cannot be reused as a fresh trusted
+stage. If publication succeeds but its subsequent diagnostic output fails, the
+stage records the completed publication and the output failure separately.
+
+The two direct Bun stream-cancellation tests await their own child exit and check
+the opposite stream. The SQLite holder observes its expected termination and close,
+retaining its fixture on unknown. The prepared and issue CLI roles keep their
+existing group receipts, and the cache refusal keeps its native stage assertion.
+The cooperative contract uses these actual outcomes and the enclosing owned group;
+it does not demand both streams from a deliberately cancelled child or add a new
+fixture observer. This does not claim hostile descendant containment.
 
 The Root-owned run uses exclusive fixture, output, coverage and scratch resources.
 Before launch, the owner accounts for the maintained invocation's writable

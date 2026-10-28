@@ -7,6 +7,8 @@ import {
   contourStagePublicationFailure,
   retainContourStageResourceRefusal,
   classifyTrustedCoverageSelectionCandidate,
+  trustedCoverageCommandMode,
+  assertTrustedFreshDirectories,
   assertStageCoverageReport,
   assertCacheRoutingReceipt,
   priorCoverageRuns,
@@ -26,10 +28,57 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { contourAttempts, mergeContourProgress, contourStageInputOutcome } from '../tooling/contour-progress.ts';
-import { runContourProgressWithNative } from '../tooling/contour-progress-cli.ts';
+import { runContourProgressWithNative, writeContourOutput } from '../tooling/contour-progress-cli.ts';
 import { executeMutationCommand, type MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
+
+test('contour output awaits its writer and rejects short or failed writes', async () => {
+  let finished = false;
+  await writeContourOutput('stdout', 'é', async (_stream, text) => {
+    await Promise.resolve();
+    finished = true;
+    return Buffer.byteLength(text);
+  });
+  expect(finished).toBe(true);
+  await expectRejection(
+    writeContourOutput('stdout', 'é', async () => 1),
+    /Incomplete contour stdout output/u,
+  );
+  await expectRejection(
+    writeContourOutput('stderr', 'x', async () => {
+      throw new Error('write failed');
+    }),
+    /write failed/u,
+  );
+});
+
+test('published snapshot remains marked published when its diagnostic output fails', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-publication-output-'));
+  const output = path.join(root, 'output');
+  mkdirSync(output);
+  let published = false;
+  let completed = false;
+  try {
+    await expectRejection(
+      runContourProgressWithNative(['--output', output], root, {
+        onPublished: () => {
+          published = true;
+        },
+        writeOutput: async () => {
+          throw new Error('diagnostic output failed');
+        },
+      }),
+      /diagnostic output failed/u,
+    );
+    expect(published).toBe(true);
+    expect(existsSync(path.join(output, 'CONTOUR-STATUS.json'))).toBe(true);
+    expect(existsSync(path.join(output, 'CONTOUR-STATUS.md'))).toBe(true);
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true });
+  }
+});
 
 test('cache routing receipt binds the native refusal to the selected Source', () => {
   const validate = assertCacheRoutingReceipt;
@@ -194,6 +243,21 @@ test('stage rejects stale, foreign and mismatched focused coverage before routin
   }
 });
 
+test('trusted stage requires fresh owned output and writable image directories', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'trusted-fresh-'));
+  const directories = ['output', 'coverage', 'temporary'].map((name) => path.join(root, name));
+  for (const directory of directories) mkdirSync(directory);
+  let completed = false;
+  try {
+    assertTrustedFreshDirectories(directories);
+    writeFileSync(path.join(directories[1]!, 'old-run'), 'retained');
+    expect(() => assertTrustedFreshDirectories(directories)).toThrow(/fresh and empty/u);
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true });
+  }
+});
+
 test('trusted coverage candidate binds the declared contour and refuses altered inputs', () => {
   const classify = classifyTrustedCoverageSelectionCandidate;
   const selection = {
@@ -221,6 +285,9 @@ test('trusted coverage candidate binds the declared contour and refuses altered 
       tool_fingerprint: request.tool_fingerprint,
     },
   });
+  expect(trustedCoverageCommandMode(classify(request), false)).toBe('trusted-coverage');
+  expect(trustedCoverageCommandMode(classify(request), true)).toBe('isolated');
+  expect(trustedCoverageCommandMode(classify({ ...request, lane: 'mutation' }), false)).toBe('isolated');
   for (const invalid of [
     { ...request, lane: 'mutation' },
     { ...request, override: '--unreviewed' },
@@ -240,6 +307,45 @@ test('trusted coverage candidate binds the declared contour and refuses altered 
     { ...request, test_fingerprint: '' },
   ])
     expect(classify(invalid)).toMatchObject({ kind: 'refused', qualified: false });
+});
+
+test('trusted stage rejects an explicit image manifest before reading or launching it', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-trusted-reuse-'));
+  const output = path.join(root, 'output');
+  mkdirSync(output);
+  let completed = false;
+  try {
+    const result = await executeMutationCommand(
+      [
+        process.execPath,
+        'tooling/contour-stage.ts',
+        '--contour',
+        'bun-cli-run',
+        '--lane',
+        'coverage',
+        '--output',
+        output,
+        '--image-manifest',
+        path.join(root, 'old-image.json'),
+        '--image-sha256',
+        'a'.repeat(64),
+      ],
+      path.resolve(import.meta.dir, '..'),
+      5_000,
+      { ownedProcessGroup: true, stdoutFile: path.join(root, 'stdout.log'), stderrFile: path.join(root, 'stderr.log') },
+    );
+    expect(result.exitCode).toBe(1);
+    expect(result.timedOut).toBe(false);
+    expect(result.signal).toBeNull();
+    expect(result.spawnError).toBeNull();
+    expect(result.output_capture?.complete).toBe(true);
+    expect(result.processCustody?.processGroupTerminationObserved).toBe(true);
+    expect(readFileSync(path.join(root, 'stderr.log'), 'utf8')).toContain('requires a fresh image');
+    expect(readFileSync(path.join(root, 'stdout.log'), 'utf8')).not.toContain('VidaContourStageLocation');
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true });
+  }
 });
 
 test.each(['canonical', 'explicit'])(
