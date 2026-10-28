@@ -953,17 +953,22 @@ Issued formation retains exclusive custody and is not automatically reissued.
 The lifecycle instruction owns sequencing; this specification owns behavior.
 
 The Windows delivery entry is `packages/agent/tooling/install-windows.ps1`.
-It accepts `-Action install|update|uninstall` and `-Source` with an explicitly
-selected local EXE/ZIP or a direct HTTPS URL. No Node, npm or external Bun is needed.
+It accepts `-Action install|update|uninstall` and an optional `-Source` with an
+explicitly selected local EXE/ZIP or a direct HTTPS URL. When `-Source` is omitted,
+install and update select the latest stable GitHub Release. The installer verifies
+its tag, checksums, manifest, target, version and native bytes. No Node, npm or
+external Bun is needed.
 It uses the current user's `%LOCALAPPDATA%\Programs\vida-agent\bin\vida-agent.exe`.
 ZIP input uses the standard single-disk release format: at most six flat files,
 member names up to 128 bytes, directory metadata up to 64 KiB and no archive
 comments or ZIP64. Preflight bounds metadata before .NET allocates entries.
 ZIP input is read without general extraction. Only the exact native executable
 is extracted; an included manifest binds its bytes and Windows x64 target.
-Embedded URL login credentials, ambient authorization, redirects, linked paths
-and non-flat ZIP members reject. Explicitly selected signed query URLs are
-allowed; their tokens remain private to the operator.
+Embedded URL login credentials, ambient authorization, linked paths and non-flat
+ZIP members reject. Explicit HTTPS sources reject redirects. Latest-release
+asset downloads allow bounded HTTPS redirects to the approved GitHub asset host.
+Explicitly selected signed query URLs are allowed; their tokens remain private to
+the operator.
 Input and native sizes are bounded. A byte digest is not publisher authentication.
 
 Installer actions serialize with one file lock. Update stages the candidate next
@@ -983,7 +988,6 @@ Source rights or grant user Runtime acceptance. Use exact current formation
 proof before delivery and actual installed byte/version/PATH proof afterward.
 Do not repeat development tests, reviews or documentation assurance at either
 boundary. Keep original release identity and historical failed/UNKNOWN custody.
-The future automatic Release-only consumer contract remains a separate task.
 
 The optional explicit downloader `downloadGitHubCIDelivery` binds the selected
 successful run/attempt/workflow/repository and exact artifact to its actual job's
