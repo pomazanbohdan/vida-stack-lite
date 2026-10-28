@@ -4,6 +4,197 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Stage report freshness and Source binding — 2026-10-28
+
+Independent read-only review identified that a nonzero coverage producer's
+stdout could name an old valid report/outcome pair, which stage could associate
+with a newer image commit. Stage now snapshots existing diagnostic/outcome IDs
+before launch, rejects an existing ID and foreign or aliased paths before reading
+the report, and checks its manifest digest, run ID, exact selection and captured
+Source/test/tool fingerprints. The existing reader still pairs the real outcome;
+failed and UNKNOWN artifacts and their dispositions are not rewritten.
+
+The missing-binding RED is retained at
+`/workspace/contour-report-binding-red-HEQurYVD`; the foreign-directory-alias
+RED is retained at `/workspace/contour-report-alias-red-qr8C2zLU`. Final
+targeted checks at `/workspace/contour-report-binding-final-p1Ho1bTv` passed
+5 tests, 77 expectations, complete capture and owned-group closure. Scoped
+strict511, configured type-aware lint and formatting passed. Independent
+read-only review and an alias-focused follow-up found no remaining blocking
+issue. This is not a full producer or numeric qualification. Ordinary trusted
+stage invocation, descendant custody, clean Source formation and timing remain
+open; existing local projection and WORK edits are retained.
+Normal hooks completed on `0b4db4704da4131833760a84f5489ee0af77850f`; ordinary
+push completed and GitHub main was verified at that SHA.
+
+## Ordinary trusted coverage preparation — 2026-10-28
+
+The owner approved ordinary same-user execution for new cooperative coverage;
+TESTING, the existing plan, sidecar and Bun test reference now record the
+prospective rule without changing the old UNKNOWN, native security or mutation
+contracts. The existing campaign command owner has an unactivated exact
+`bun-cli-run` command-building mode with fresh host temp, home and cache and
+refuses an explicit retained scratch root. No stage caller uses it yet.
+
+The initial assertion RED is retained at
+`/workspace/contour-trusted-red-IBJUmrr0`; the retained-root refusal RED is at
+`/workspace/contour-trusted-fence-red-gi0M6Yq0`. The final scoped run at
+`/workspace/contour-trusted-final-9v4KoBVB` passed 5 tests and 80 expectations
+with full capture and observed group closure. Strict511, configured type-aware
+lint, format and diff check passed. Independent read-only review confirms this
+is only command construction. At that checkpoint exact image/selection and
+actual environment, run/output binding, nested-child terminal custody,
+foreign/stale evidence and timing remained open. The later stage report binding
+above addresses the report freshness and captured-image join only.
+No new numeric result, completion or UNKNOWN settlement is claimed.
+Normal hooks completed on commit `d77874b29d1ecf79f08342af17160d09aad2c1ba`;
+the ordinary push completed and GitHub main was independently verified at the
+same SHA. The first commit attempt failed because its inherited temporary root
+was read-only; the successful normal hooks used a fresh owned workspace temp.
+
+## Native mount control — 2026-10-28
+
+On Source `cda2918c8537f92560cbe36c863f0971d5f34d46`, the existing native
+mount test passed outside the command sandbox after the specific execution
+approval: 1 test, 9 expectations, 0 failures and 3 filtered tests. The outer
+existing capture owner recorded exit 0, no timeout, complete untruncated streams
+and observed owned-process-group termination. Preserve the command, source
+owner, raw streams and execution receipt at
+`/workspace/contour-mount-control-jH5cOJtG/`.
+
+This is a control for that invocation, not full closed-root isolation: the test
+uses a read-only host-root bind and does not prove exclusion of an unlocated
+old UNKNOWN or old processes from new writable roots. The portable route remains
+unqualified, its effect and custody proof and separate timing gate remain open,
+and no coverage, CRAP or mutation producer ran. The prior note below that push
+was blocked is historical: normal push completed and remote main was verified
+at `cda2918c`.
+
+## Unprepared recovery Host identity — targeted, 2026-10-27
+
+Commit `7713b527` adds an in-process regression for the real read-only
+unprepared recovery path. After a successful inspection, the existing fixture
+creates an actual owned hard link immediately after the CLI Host connection
+closes. The final identity guard refuses it; the test removes only its verified
+link and checks the original inode, Host bytes and observed state are unchanged.
+No consumer, cutover, synthetic authority or child process is introduced.
+
+Final target `/workspace/contour-host-identity-KTrrQH/attempt-2` passed 1 test,
+9 expectations, 0 failures; native exit, raw capture and outer group closure
+are retained. The existing guard already performed the refusal, so this is a
+test-only regression with no production RED or new product fix. Independent
+review found cleanup and deadline risks in the initial test; the final version
+uses the existing cleanup owner, identity-checked unlink and one deadline.
+Scoped tests strict (511 files), type-aware lint, format and normal hooks passed;
+retained strict and lint failures reflect corrected test typing/style. The old
+diagnostic report's branch 268 has zero hits, but this target carries no numeric
+counters and does not establish current full-coverage qualification or closure.
+At that checkpoint the commit was local and the previously recorded proxy
+blocked normal push; the later push confirmation is recorded above.
+
+Commit `cda2918c` extends the same owned fixture to create the hard link before
+opening Host. The public inspect refuses with `Unprepared recovery Host path
+unsafe`; after identity-checked unlink, Host bytes and state still match the
+successful baseline. The previous post-close control remains. The targeted
+`/workspace/contour-host-identity-KTrrQH/attempt-4` passed 1 test / 12
+expectations, with complete capture and observed group closure. Scoped strict,
+lint, format, independent review and normal hooks passed. This is a test-only
+behavioral proof for the old report's zero-hit branch 483, not a current numeric
+hit. Guard-removal sensitivity was not tested: mutation is not admitted in this
+phase. At that checkpoint one ordinary push attempt again failed at the
+unchanged proxy and all three commits remained local; the later successful push
+is recorded above. Existing fences and the full-proof HOLD remain.
+
+## Trusted lane bounded effect map, 2026-10-27
+
+Root and two independent read-only reviewers traced selected test source at
+`d9a4fdd6`. This is a partial map, not a reviewed transitive effect closure or
+run-bound physical custody evidence. No producer, tests or new hash pass ran.
+
+- `tests/run-entrypoint.test.ts:2427` owns a temporary repository fixture; it
+  retains that root after unknown child outcome. The public `invoke` path at
+  `:2887` calls `boundedSpawnSync` with a pinned environment and a detached
+  POSIX group. The three selected CLI roles have their own observer, but other
+  calls do not thereby acquire its group evidence.
+- The SQLite lock-holder at `:2780` has a 10 s readiness bound; its owner
+  requests SIGKILL and waits for `close`, retaining the root if closure is
+  unknown. SQLite fixtures also create WAL/SHM sidecars. The Unix socket case
+  at `:6777` closes the server and unlinks its socket in its fixture owner.
+- `tests/bun-cache-routing.test.ts:258` copies a bundle and links its dependency
+  root; `:282` removes the inherited Bun cache in `cleanEnv`. The real invalid
+  direct-run case at `:390` therefore exercises `run.ts`'s cache-mismatch path,
+  which can create separate POSIX groups in `bin/bun.ts`. Its existing launch
+  and terminal receipts capture the direct child, not those groups. The separate
+  help case exits before that path. The older three CLI-role receipts cannot
+  prove current-source closure for this independent invalid-run fixture.
+- Derived cache may be beside a copied bundle or under HOME for a node_modules
+  root; custom paths and `0` remain explicit. Temp, HOME, cache, the actual
+  dependency symlink target, SQLite sidecars and inherited descriptors require
+  run-specific identity and old-fence separation. Historic UNKNOWN tSHoBS has
+  seven retained roots plus an old writer-fixture root with no recoverable
+  locator; see `DIAG/public-reports-unknown-custody-20261025-01.json` and the
+  corresponding historical work entry. A pathname list alone is not closure.
+
+Read-only historical source tracing narrows, but does not resolve, that locator:
+at `fb31f66d`, `createInitialSourceWorkFixture` without a `parentRoot` uses
+`tmpdir()` for `vida-initial-source-*`; the retained tSHoBS launch sets
+`TMPDIR=/tmp` and binds its own scratch there. If that block actually ran in
+that launch with the environment and mount unchanged at the call, the scratch
+is a possible parent. Neither the block nor the launch records the actual call,
+basename or all external effects. Independent review confirmed this conditional
+boundary; do not turn it into a recovered path or successor admission.
+
+The current fixture observer does not yet supply a complete proof for this
+selection. Do not promote this map or a targeted result into lane admission;
+the existing trusted plan requires observed custody, complete inventory and a
+separate timing gate before a producer can advance.
+
+Early invalid-argument refusal was considered as a way to remove this nested
+launch. Independent read-only review rejected it as behavior-preserving: with
+an inherited expired deadline, the existing cache-mismatch path checks its
+bounded Bun owner before parsing and reports the exhausted budget; early CLI
+refusal would instead report malformed arguments. Pin, manifest and selected
+runtime checks similarly precede the parser. `TESTING.md` explicitly keeps the
+unset-cache fixture as a direct-entrypoint cache-routing contract. No code or
+test was changed, and a separate valid mismatch control has not been proved.
+
+## Trusted candidate command shape, 2026-10-27
+
+Commit `d9a4fdd6` requires the candidate command to be an actual three-element
+array of the exact expected strings. Previously a non-array `toJSON` object
+could be classified as a candidate and a BigInt could throw instead of being
+refused. This changes no producer route or `qualified: false` disposition.
+RED and GREEN terminal, capture and group receipts are retained at
+`/workspace/contour-classifier-UKr2g9/{red,green,green2}`. The final targeted
+test passed 1 test / 17 assertions; tooling strict, two-file typed lint and
+format passed with receipts in the same directory. Independent review passed.
+Normal hooks passed after routing their temporary files to the owned workspace
+scratch. At that checkpoint normal push failed because the configured proxy on
+port 8080 was unreachable; the later successful push is recorded above. Full coverage
+qualification, prior UNKNOWN fences and all budgets remain unchanged.
+
+## Trusted coverage child inventory boundary, 2026-10-27
+
+The selected `run-entrypoint.test.ts` now contains two direct `Bun.spawn` calls
+for the closed-output regressions added at `5e4d1526`. Each test retains its
+child, uses a four-second timeout, intentionally cancels one pipe, consumes the
+other and awaits the direct child's terminal result. Its inline program imports
+`run.ts` as a library, so that program does not enter the cache re-execution
+path. The tests' passing assertions demonstrate their direct terminal outcomes;
+they do not publish separate fixture-child receipts or prove process-group
+emptiness. The current fixture observer intercepts only Node child-process APIs
+and is not active for the selected trusted lane. The new Bun launches therefore
+belong in its reviewed effect/child inventory before admission. Do not treat the
+older inventory's absence of `Bun.spawn` as current.
+
+Changing these calls to Node `spawn` alone would not establish a receipt: the
+observer is still dormant for this lane, and its stream proof requires `end`,
+whereas these tests intentionally close a reader. That case needs an explicit
+bounded, run-bound interpretation of the expected closed stream. The separate
+cache re-execution still starts a detached process group that the outer CLI group
+observation cannot see. No runtime or numeric qualification follows from this
+inspection; preserve the existing UNKNOWN fences and full-stage HOLD.
+
 ## Run result Bun output, 2026-10-27
 
 On base `25e4e25f`, a native child calling `main` with the default output and a
