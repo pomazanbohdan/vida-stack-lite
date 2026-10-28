@@ -90,7 +90,35 @@ test('disposition proposal reads stay inside the repository and require a bounde
 test('patch is the default and increments from the confirmed version', () => {
   assert.equal(candidateVersion('0.1.2', '0.1.2'), '0.1.3');
   assert.equal(candidateVersion('2.4.9', '2.4.9'), '2.4.10');
-  assert.equal(candidateVersion('0.1.0', null), '0.1.0');
+  assert.equal(candidateVersion('0.1.0', null), '0.1.1');
+  assert.equal(candidateVersion('2.4.9', undefined), '2.4.10');
+});
+
+test('first release preparation advances the fixture manifest and retries its pending version', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-first-release-version-'));
+  let complete = false;
+  try {
+    const packageManifest = {
+      name: 'vida-agent',
+      version: '0.1.2',
+      bin: { 'vida-agent': './bin/vida-agent.ts' },
+      engines: { bun: selectedBunPin },
+      packageManager: `bun@${selectedBunPin}`,
+    };
+    writeFixture(root, 'packages/agent/package.json', packageManifest);
+    writeFixture(root, 'packages/agent/.bun-version', Buffer.from(`${selectedBunPin}\n`));
+    const prepared = await prepareRelease(root);
+    assert.ok(prepared);
+    assert.equal(prepared.version, '0.1.3');
+    assert.deepEqual(JSON.parse(readFileSync(path.join(root, 'packages/agent/package.json'), 'utf8')), {
+      ...packageManifest,
+      version: '0.1.3',
+    });
+    assert.deepEqual(await prepareRelease(root), prepared);
+    complete = true;
+  } finally {
+    if (complete) rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('minor and major selections apply SemVer reset semantics', () => {
@@ -98,6 +126,8 @@ test('minor and major selections apply SemVer reset semantics', () => {
   assert.equal(candidateVersion('2.4.9', '2.4.9', { mode: 'minor' }), '2.5.0');
   assert.equal(candidateVersion('0.5.7', '0.5.7', { mode: 'major' }), '1.0.0');
   assert.equal(candidateVersion('2.4.9', '2.4.9', { mode: 'major' }), '3.0.0');
+  assert.equal(candidateVersion('2.4.9', null, parseVersionSelection(['--minor'])), '2.5.0');
+  assert.equal(candidateVersion('2.4.9', null, parseVersionSelection(['--major'])), '3.0.0');
 });
 
 test('an exact version must be canonical and higher than the confirmed baseline', () => {
@@ -112,6 +142,9 @@ test('component overflow and competing CLI overrides fail closed', () => {
   const maximum = Number.MAX_SAFE_INTEGER;
   assert.throws(() => candidateVersion(`${maximum}.0.0`, `${maximum}.0.0`, { mode: 'major' }), /integer bound/);
   assert.throws(() => candidateVersion(`0.0.${maximum}`, `0.0.${maximum}`), /integer bound/);
+  assert.throws(() => candidateVersion(`0.0.${maximum}`, null), /integer bound/);
+  assert.throws(() => candidateVersion('01.2.3', null), /valid/);
+  assert.throws(() => candidateVersion('1.2.3', 'invalid'), /valid/);
   assert.deepEqual(parseVersionSelection([]), { mode: 'patch', explicit: false });
   assert.deepEqual(parseVersionSelection(['--minor']), { mode: 'minor', explicit: true });
   assert.deepEqual(parseVersionSelection(['--major']), { mode: 'major', explicit: true });

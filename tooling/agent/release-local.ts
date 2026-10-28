@@ -1807,7 +1807,6 @@ export function candidateVersion(
     return selection.version;
   }
   const mode = selection?.mode ?? 'patch';
-  if (mode === 'patch' && !successful) return current;
   if (mode === 'patch') return `${base.major}.${base.minor}.${increment(base.patch, 'Patch')}`;
   if (mode === 'minor') return `${base.major}.${increment(base.minor, 'Minor')}.0`;
   if (mode === 'major') return `${increment(base.major, 'Major')}.0.0`;
