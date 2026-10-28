@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import path from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { policy, preparedFixture } from './helpers/documentation-policy-fixture.ts';
+import { prepareAuditedPolicyTransition } from './helpers/documentation-policy-cycle.ts';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { executeDocumentationClearFromWork } from '../src/documentation/clear.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
@@ -113,22 +114,7 @@ test('public policy transition denies forward overlay inspection without sealed 
 });
 
 test('public policy transition preserves genuine baseline and completes one audited cycle', async () => {
-  const { f, input, baseline, before, targetPolicy, args } = await preparedFixture();
-  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('inspect'))))).toBe(
-    'inspect_ready_unauthorized',
-  );
-  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('plan'))))).toBe('planned');
-  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('apply'))))).toBe(
-    'author_policy_required',
-  );
-  expect(readFileSync(path.join(f.root, f.policyPath), 'utf8')).toBe(f.json(f.oldPolicy));
-  f.put(f.policyPath, targetPolicy);
-  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('resume'))))).toBe('applied');
-  const lineage = readFileSync(path.join(f.root, f.oldPolicy.changelog_path), 'utf8');
-  expect(lineage.trim().split('\n')).toHaveLength(1);
-  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('resume'))))).toBe('applied');
-  expect(readFileSync(path.join(f.root, f.oldPolicy.changelog_path), 'utf8')).toBe(lineage);
-  expect(readFileSync(path.join(f.root, baseline.path)).equals(before)).toBe(true);
+  const { input, args } = await prepareAuditedPolicyTransition();
   expect((await executeDocumentationClearFromWork(input, 'verify')).status).toBe('verified');
   await Promise.resolve(expect(runReconcileArtifacts(args('restore'))).rejects.toThrow('rollback'));
 }, 30000);

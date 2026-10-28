@@ -310,6 +310,26 @@ no RED or product fix is claimed. Native reviewer `/root/luna_doc_clear_review`
 approved the packet without material issues and ran no tests. Numeric evidence
 remains pending. No contour closure or changed denominator follows from this packet.
 
+### Documentation CLEAR focused diagnostic and transition candidate — 2026-10-28
+
+The sole producer measured commit `22a8322dee7f69ac9b4fb7ed471d1069ec333649`
+in `/workspace/contour-doc-clear-measurement-dn784P`. The complete three-file
+selected suite passed 37 tests and 321 expectations in 35.37 s; the stage took
+39,714.171765 ms with complete capture and observed group closure. The focused
+diagnostic reported F 46/46, L 228/230, S 276/281 and B 223/229, with
+`full_qualification: false` and status BLOCKED. Its Source fingerprint is
+`752f7ec2a5c083a3d42d4e747f2f8a870da96b2979beded00655b831f998c809` and test
+fingerprint is `785a2fa44d6e6c7874dd627a0ba2a2aefb2ee34744c8f0adf93e03b467b4edf3`.
+
+The later scratch patch at
+`/workspace/contour-doc-transition-XQ4NmoJs/documentation-policy-cycle.patch`
+reuses a real audited policy transition in the existing CLEAR selection. Its
+filtered native target passed two cases and 22 expectations; this is targeted
+behavior evidence, not a new coverage report or qualification. Four proposed
+objective dispositions remain candidates until independently bound to the final
+report. Preserve the existing selection, denominators and all older UNKNOWN
+fences; no contour closure or source qualification follows from these results.
+
 ## Focused serial environment and controller readiness — 2026-10-28
 
 Root's actual full selected stage on Source

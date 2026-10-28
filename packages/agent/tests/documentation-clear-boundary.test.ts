@@ -19,6 +19,15 @@ import * as runtime from '../src/index.ts';
 import type { DocumentationClearCheckpoint, DocumentationClearInput } from '../src/documentation/clear.ts';
 import { documentationRelativePath, validateDocumentationPolicy } from '../src/documentation/policy.ts';
 import { expectAsyncReturned, expectReturned } from './helpers/expect-rejection.ts';
+import { prepareAuditedPolicyTransition } from './helpers/documentation-policy-cycle.ts';
+import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
+import { executeDocumentationClearFromWork } from '../src/documentation/clear.ts';
+
+test('public CLEAR verifies an authorized map after an audited policy transition', async () => {
+  const { input, args } = await prepareAuditedPolicyTransition();
+  expect((await executeDocumentationClearFromWork(input, 'verify')).status).toBe('verified');
+  await Promise.resolve(expect(runReconcileArtifacts(args('restore'))).rejects.toThrow('rollback'));
+}, 30000);
 
 const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const { repositoryRoot, config, context } = configuredTestContext();
