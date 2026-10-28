@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync, type SpawnSyncOptions } from 'node:child_process';
+import { spawn, spawnSync, type SpawnSyncOptions, type SpawnSyncReturns } from 'node:child_process';
 import {
   linkSync,
   mkdirSync,
@@ -35,6 +35,7 @@ import {
   writeDiagnosticSync,
 } from '../bin/bun.ts';
 import { coverageReviewEnvironmentSha256, coverageEnvironmentSha256 } from '../tooling/bun-coverage-evidence.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 
 interface CommandResult {
   status: number | null;
@@ -2468,6 +2469,14 @@ test.each(['enabled-success', 'enabled-failure', 'disabled-failure', 'unwritable
   'bounded child diagnostics preserve the terminal child result with stderr %s',
   (mode) => {
     const { root } = fixture();
+    const retainRoot = () => {
+      temporaryRoots.delete(root);
+      try {
+        writeDiagnosticSync('Retained uncertain diagnostic fixture: ' + root + '\n');
+      } catch (error) {
+        throw new Error('Could not report retained diagnostic fixture: ' + root, { cause: error });
+      }
+    };
     const moduleUrl = new URL('../bin/bun.ts', import.meta.url).href;
     const status = mode === 'enabled-success' ? 0 : 7;
     const childProgram = `process.stdout.write('child stdout'); process.stderr.write('child stderr'); process.exitCode = ${status};`;
@@ -2494,14 +2503,43 @@ test.each(['enabled-success', 'enabled-failure', 'disabled-failure', 'unwritable
     const target = path.join(root, 'readonly-stderr');
     writeFileSync(target, 'unchanged');
     const descriptor = mode === 'unwritable-failure' ? fs.openSync(target, 'r') : undefined;
-    const processResult = spawnSync(process.execPath, ['-e', program], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', descriptor ?? 'pipe'],
-      env: pinnedEnvironment(process.execPath, process.env),
-      timeout: 10_000,
-    });
-    if (descriptor !== undefined) fs.closeSync(descriptor);
-    if (commandOutcomeUnknown(processResult)) temporaryRoots.delete(root);
+    let processResult: SpawnSyncReturns<string>;
+    let primaryFailure: { error: unknown } | undefined;
+    let retain = false;
+    try {
+      processResult = spawnSync(process.execPath, ['-e', program], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', descriptor ?? 'pipe'],
+        env: pinnedEnvironment(process.execPath, process.env),
+        timeout: 10_000,
+      });
+    } catch (error) {
+      primaryFailure = { error };
+      retain = true;
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            if (descriptor === undefined) return;
+            try {
+              fs.closeSync(descriptor);
+            } catch (error) {
+              retain = true;
+              throw error;
+            }
+          },
+          () => {
+            if (retain) retainRoot();
+          },
+        ],
+        primaryFailure,
+      );
+    }
+    if (commandOutcomeUnknown(processResult)) {
+      retainRoot();
+    }
+    assert.equal(commandOutcomeUnknown(processResult), false, processResult.stderr ?? undefined);
     assert.equal(processResult.status, 0, processResult.stderr ?? undefined);
     const observed: unknown = JSON.parse(processResult.stdout);
     assert.ok(typeof observed === 'object' && observed !== null && !Array.isArray(observed));
