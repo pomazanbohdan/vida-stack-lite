@@ -29,9 +29,9 @@ jobs:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
-      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: core.autocrlf
-      GIT_CONFIG_VALUE_0: 'false'
+      GIT_CONFIG_VALUE_0: "false"
     defaults:
       run:
         shell: pwsh
@@ -64,13 +64,27 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ runner.temp }}/vida-bun-install-cache
-          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
+          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release2-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
           restore-keys: |
-            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-version }}-
+            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release2-bun-${{ steps.bun.outputs.bun-version }}-
       - &shared-isolated-source
         name: isolated-source
+        env:
+          CACHE_PRIMARY_KEY: ${{ steps.bun-dependency-cache.outputs.cache-primary-key }}
+          CACHE_MATCHED_KEY: ${{ steps.bun-dependency-cache.outputs.cache-matched-key }}
+          CACHE_HIT: ${{ steps.bun-dependency-cache.outputs.cache-hit }}
         run: |
           $ErrorActionPreference = 'Stop'
+          $pin = (Get-Content -LiteralPath 'packages/agent/.bun-version' -Raw).Trim()
+          if ($pin -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw 'Selected Bun pin is invalid' }
+          $cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release2-bun-' + $pin + '-'
+          $cacheKeyPattern = '^' + [regex]::Escape($cacheNamespace) + '[a-f0-9]{64}$'
+          $cacheHit = [string]$env:CACHE_HIT
+          if ($env:CACHE_PRIMARY_KEY -cnotmatch $cacheKeyPattern -or
+              ($env:CACHE_MATCHED_KEY -and $env:CACHE_MATCHED_KEY -cnotmatch $cacheKeyPattern) -or
+              $cacheHit -cnotin @('', 'false', 'true') -or
+              ($cacheHit -ceq 'true' -and $env:CACHE_MATCHED_KEY -cne $env:CACHE_PRIMARY_KEY) -or
+              ($cacheHit -cne 'true' -and $env:CACHE_MATCHED_KEY -and $env:CACHE_MATCHED_KEY -ceq $env:CACHE_PRIMARY_KEY)) { throw 'Restored dependency cache key is invalid' }
           if ($env:GITHUB_RUN_ID -notmatch '^\d+$' -or $env:GITHUB_RUN_ATTEMPT -notmatch '^[1-9]\d*$') { throw 'Actual run identity unavailable' }
           $mirror = Join-Path $env:RUNNER_TEMP ('vida-ci-source-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
           if (Test-Path -LiteralPath $mirror) { throw 'Retained Source preparation; inspect UNKNOWN before replay' }
@@ -131,7 +145,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $pin = (Get-Content -LiteralPath 'packages/agent/.bun-version' -Raw).Trim()
           if ($pin -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw 'Selected Bun pin is invalid' }
-          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-' + [regex]::Escape($pin) + '-[a-f0-9]{64}$'
+          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-release2-bun-' + [regex]::Escape($pin) + '-[a-f0-9]{64}$'
           if ($env:CACHE_KEY -cnotmatch $keyPattern) { throw 'Exact dependency cache key is missing or invalid' }
           $cache = Join-Path $env:RUNNER_TEMP 'vida-bun-install-cache'
           if (-not (Test-Path -LiteralPath $cache -PathType Container)) { throw 'Bun dependency cache directory is absent' }
@@ -214,9 +228,9 @@ jobs:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request_linux }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
-      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: core.autocrlf
-      GIT_CONFIG_VALUE_0: 'false'
+      GIT_CONFIG_VALUE_0: "false"
     defaults:
       run:
         shell: pwsh

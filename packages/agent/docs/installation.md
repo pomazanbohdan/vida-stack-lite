@@ -297,8 +297,10 @@ local formation consistency; it does not publish a release or install an agent.
 
 The build job restores the Bun package cache before installing dependencies.
 Its key binds the runner OS/architecture, Bun version, package manifest and
-lockfile. A compatible cache may supply already downloaded packages; installation
-still uses `--frozen-lockfile --ignore-scripts --backend=copyfile`. Each run gets
+lockfile. The release2 namespace isolates earlier cache entries while allowing
+compatible later runs to reuse downloaded packages. The workflow checks any
+restored key against the selected platform and Bun pin before installation.
+Installation still uses `--frozen-lockfile --ignore-scripts --backend=copyfile`. Each run gets
 fresh `node_modules`. Source, compiled outputs, receipts and credentials are not
 cached. A cache miss downloads the locked dependencies normally. Cache hits do
 not qualify a build. See the [Bun cache contract](https://bun.sh/docs/pm/global-cache)
@@ -306,8 +308,9 @@ and [GitHub cache action](https://github.com/actions/cache).
 
 Save downloaded packages after dependency installation succeeds and before
 compilation. A later compilation failure therefore retains the reusable cache.
-Restore and save use the same key and directory. A cache-save failure remains
-visible and does not become a runtime qualification or admission prerequisite.
+Restore and save use the same key and directory. A miss requires a successful
+save step and an exact cache API entry before native build formation. Cache
+evidence alone does not establish runtime qualification or acceptance.
 
 After a required build, inspect the cache action's restore/save result and the
 repository cache entry. Record its exact key, ID, nonzero size and creation/access

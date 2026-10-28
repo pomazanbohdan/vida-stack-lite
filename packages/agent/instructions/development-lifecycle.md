@@ -716,6 +716,15 @@ fs-safe, ProjectContext, CAS, maintenance or Mastra/LibSQL. Use actual full-prod
 native target checks, not a thin probe or assumed loader ABI.
 
 Use the formation and installation policy above for the current delivery.
+An explicitly authorized first-baseline independent successor may take the
+pending pointer at the same version after the cooperative owner observes no
+live local predecessor producer and the release owner validates its exact
+pointer, journal and preparation. Preserve the predecessor operation and its
+UNKNOWN effects; do not replay its requests or claim a complete disposition.
+The successor has distinct operation and request identities and a separate CI
+cache. Resume interrupted preparation under the same cooperative single-writer
+ownership. Ordinary Source, build, publication and assurance gates still apply.
+
 Keep one pending operation/version and exact asset identity. Formation proof,
 physical installation and user Runtime acceptance are separate observations.
 Use supported bundle-owned repair before changing active artifact contracts or

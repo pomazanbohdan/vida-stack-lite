@@ -787,6 +787,18 @@ formation; it does not allocate another version. Installation has its own outcom
 and does not repeat version selection. A new delivery follows the existing
 supported disposition of its predecessor. Durable publication state is project-owned under
 `.agent/work/agent-local-release`, independently of scratch archive retention.
+An explicitly authorized independent successor may replace the first-baseline
+pending pointer only when the caller identifies the exact uninstalled
+`awaiting_assurance` predecessor, its pointer and journal bytes match, its
+preparation receipt records the immediately preceding patch baseline, and no
+successful or formed baseline exists. This route excludes initialized service
+custody. Admission and any existing operation lock guard the transition. The cooperative owner first observes that no local
+predecessor producer is live. The successor uses a new operation and request
+identity at the same candidate version, with separately keyed CI cache. The
+predecessor journal, preparation and request evidence remain in custody and its
+UNKNOWN effects are not resolved. Old requests are not replayed. The new
+attempt must meet all ordinary Source, build, publication and assurance gates.
+
 The pending, per-operation and successful receipts use the strict current
 `VidaLocalReleaseState/v1` contract: package version, operation identity and
 status are required; worker PID, timing, source/archive bindings, exact npm
@@ -916,8 +928,11 @@ No active release/tests/retarget/Host v1 fields change.
 
 The CI producer encodes new `VidaCIDeliveryResult/v2` records from actual
 observations and formed bytes. It binds request, run/attempt, archive, native
-manifest, embedded payload, executable and dependency cache evidence. The pinned
-cache action can report success after a caught cache-service warning, so the
+manifest, embedded payload, executable and dependency cache evidence. Native
+delivery uses the release2 Bun cache namespace to isolate earlier entries;
+compatible later runs can reuse it. Before installation, the workflow validates
+the primary and any matched key against the selected platform and Bun pin.
+Existing cache receipts remain valid. The pinned cache action can report success after a caught cache-service warning, so the
 workflow also reads the official repository cache API after restore/save. It
 requires one exact key/ref row and records the cache ID, key, ref, version and
 size in bytes. Cache evidence binds the restore hit or miss, matched restore key, save action

@@ -199,6 +199,15 @@ test('source correction CI result keeps v1 cache-free and requires a valid cache
     ).toBe(true);
   }
 
+  const currentCache = dependencyCache('1.4.3');
+  currentCache.key = `vida-bun-install-v1-Windows-X64-release2-bun-1.4.3-${hash}`;
+  expect(
+    validateSourceCorrectionCiResult({
+      ...ciResult('VidaCIDeliveryResult/v2'),
+      dependency_cache: currentCache,
+    }),
+  ).toBe(true);
+
   expect(validateSourceCorrectionCiResult(ciResult('VidaCIDeliveryResult/v2'))).toBe(false);
   for (const version of ['latest', '1.4.3-beta.1', '01.4.3', '1.04.3']) {
     expect(

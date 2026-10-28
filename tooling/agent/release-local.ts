@@ -381,8 +381,16 @@ type ReleaseWorkerOptions = {
 type ReleaseExecutionInput = ReleaseWorkerOptions & { operation: string };
 type JsonRecord = Record<string, unknown>;
 type PreparedRelease = Parameters<typeof publishReleasePreparation>[1];
-type RunCommandOptions = { cwd?: string; env?: NodeJS.ProcessEnv; log?: string; windowsVerbatimArguments?: boolean };
-type InstalledTreeOptions = { distribution?: 'native' | 'npm'; expectedManifestBytes?: Buffer | undefined };
+type RunCommandOptions = {
+  cwd?: string;
+  env?: NodeJS.ProcessEnv;
+  log?: string;
+  windowsVerbatimArguments?: boolean;
+};
+type InstalledTreeOptions = {
+  distribution?: 'native' | 'npm';
+  expectedManifestBytes?: Buffer | undefined;
+};
 type NativeInstallationPaths = { installed_root: string; prefix: string; path_command: string };
 type PriorPublishedAsset = { path: string; bytes: number; sha256: string };
 type PackageManifestRecord = {
@@ -393,10 +401,19 @@ type PackageManifestRecord = {
   packageManager: string;
 } & JsonRecord;
 type PreparedReleaseLaunch =
-  | { state: ReleaseJournalState; requestDigest: string; proof: ServiceOperationProof; result?: never }
+  | {
+      state: ReleaseJournalState;
+      requestDigest: string;
+      proof: ServiceOperationProof;
+      result?: never;
+    }
   | { result: ReleaseJournalState; state?: never; requestDigest?: never; proof?: never };
 
-type InitializedReleaseCustody = { workspace_id: string; relative: string; api: ServiceOperationCustodyApi };
+type InitializedReleaseCustody = {
+  workspace_id: string;
+  relative: string;
+  api: ServiceOperationCustodyApi;
+};
 type ReleaseDatabaseHolder = { value: ServiceOperationDatabase | undefined };
 /** @param {ReleaseDatabaseHolder} holder @param {string} [message] @returns {ServiceOperationDatabase} */
 function requireReleaseDatabase(
@@ -459,8 +476,16 @@ type CIDeliveryRequest = {
   request_id: string;
 };
 type DispositionCensusReference = JsonRecord & { path: string; status: string; run_ids?: string[] };
-type DispositionCensusRequestRow = { request_id: string; target: string; references: DispositionCensusReference[] };
-type DispositionRequestCensus = { operation_id: string; version: string; requests: DispositionCensusRequestRow[] };
+type DispositionCensusRequestRow = {
+  request_id: string;
+  target: string;
+  references: DispositionCensusReference[];
+};
+type DispositionRequestCensus = {
+  operation_id: string;
+  version: string;
+  requests: DispositionCensusRequestRow[];
+};
 type DispositionObservationRequestRow = JsonRecord & {
   request_id: string;
   references: DispositionReference[];
@@ -473,7 +498,11 @@ type DispositionNoIssueObservation = JsonRecord & {
   status: string;
   observed_at: string;
 };
-type DispositionSupplementalIntent = JsonRecord & { request_id: string; reference_path: string; kind: string };
+type DispositionSupplementalIntent = JsonRecord & {
+  request_id: string;
+  reference_path: string;
+  kind: string;
+};
 type DispositionRunObservations = {
   operation_id: string;
   observed_at: string;
@@ -584,7 +613,11 @@ function releaseCustodyStatus(root: string) {
     const configured = initializedReleaseCustody(root);
     return configured
       ? { state: 'configured_unverified', prerequisite }
-      : { state: 'missing', prerequisite, detail: 'initialized .vida workspace custody is not configured' };
+      : {
+          state: 'missing',
+          prerequisite,
+          detail: 'initialized .vida workspace custody is not configured',
+        };
   } catch (error) {
     return {
       state: 'unavailable',
@@ -2763,6 +2796,52 @@ export async function prepareReleaseAfterDisposition(
 ) {
   return withReleaseAdmission(root, () => prepareCandidate(root, false, selection, proposal), true);
 }
+export function prepareIndependentSuccessor(root: string, predecessor: string) {
+  return withReleaseAdmission(root, () => {
+    if (!idPattern.test(predecessor)) throw new Error('Predecessor operation identity is invalid.');
+    if (existsSync(path.join(root, '.vida', 'project.yaml')))
+      throw new Error('Independent successor does not support initialized service custody.');
+    const pendingFile = releasePath(root, '.agent/work/agent-local-release/pending.json');
+    const successFile = releasePath(root, '.agent/work/agent-local-release/successful.json', true);
+    const journal = journalFile(root, predecessor);
+    const pending = releaseState(pendingFile);
+    const state = releaseState(journal);
+    const { value } = manifest(root);
+    const preparation = readReleasePreparation(root, pending);
+    if (
+      pending.operation_id !== predecessor ||
+      state.operation_id !== predecessor ||
+      pending.status !== 'awaiting_assurance' ||
+      state.status !== 'awaiting_assurance' ||
+      Object.keys(pending).sort().join(',') !== 'operation_id,schema,status,version' ||
+      !readFileSync(pendingFile).equals(readFileSync(journal)) ||
+      pending.version !== value.version ||
+      existsSync(successFile) ||
+      readReleaseFormation(root) ||
+      !preparation ||
+      preparation.disposition !== null ||
+      typeof preparation.priorVersion !== 'string' ||
+      candidateVersion(preparation.priorVersion, null) !== pending.version
+    )
+      throw new Error('Independent successor requires the exact first-baseline pending candidate.');
+    assertReleaseRetargetSettled(root, predecessor);
+    assertNativeDeliveryEvidenceRepairSettled(root, predecessor);
+    const workerFile = releasePath(root, `.agent/work/agent-local-release/${predecessor}/worker.sqlite`, true);
+    const worker = existsSync(workerFile) ? operationMutex(root, predecessor) : null;
+    if (existsSync(workerFile) && !worker) throw new Error('Predecessor operation is active.');
+    try {
+      const prepared: PreparedRelease = {
+        schema: 'VidaLocalReleaseState/v1',
+        operation_id: `local-${randomUUID()}`,
+        version: pending.version,
+        status: 'awaiting_assurance',
+      };
+      return publishReleasePreparation(root, prepared, value, null);
+    } finally {
+      worker?.close();
+    }
+  });
+}
 export function prepareSystemUpdate(root: string = repositoryRoot) {
   return withReleaseAdmission(root, () => prepareCandidate(root, true), true);
 }
@@ -3628,6 +3707,7 @@ export async function main(args: string[], issueRoot = repositoryRoot) {
   const usageMessage =
     'Usage: release:local -- --prepare [--minor | --major | --version X.Y.Z] | ' +
     '--prepare-after-disposition --proposal REL [--minor | --major | --version X.Y.Z] | ' +
+    '--prepare-independent-successor ID | ' +
     '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID | --issue-native-pair ID | ' +
     '--stage-observe-native-pair OP SOURCE RUN ATTEMPT LREQ LART LZIP WREQ WART WZIP ACTOR';
   if (args.length === 2 && args[0] === '--issue-native-pair' && args[1] && idPattern.test(args[1])) {
@@ -3675,8 +3755,16 @@ export async function main(args: string[], issueRoot = repositoryRoot) {
       source_commit: sourceCommit,
       run_id: runId,
       run_attempt: Number(attempt),
-      linux: { request_id: linuxRequest, artifact_id: linuxArtifact, transport_path: linuxTransport },
-      windows: { request_id: windowsRequest, artifact_id: windowsArtifact, transport_path: windowsTransport },
+      linux: {
+        request_id: linuxRequest,
+        artifact_id: linuxArtifact,
+        transport_path: linuxTransport,
+      },
+      windows: {
+        request_id: windowsRequest,
+        artifact_id: windowsArtifact,
+        transport_path: windowsTransport,
+      },
       actor,
       ...(process.env.GITHUB_TOKEN ? { token: process.env.GITHUB_TOKEN } : {}),
     });
@@ -3748,6 +3836,8 @@ export async function main(args: string[], issueRoot = repositoryRoot) {
     const proposal = readDispositionProposal(repositoryRoot, parsed.proposalPath);
     return prepareReleaseAfterDisposition(repositoryRoot, parsed.selection, proposal);
   }
+  if (args.length === 2 && args[0] === '--prepare-independent-successor' && args[1])
+    return prepareIndependentSuccessor(repositoryRoot, args[1]);
   if (args[0] === '--prepare') return prepareRelease(repositoryRoot, parseVersionSelection(args.slice(1)));
   if (args.length === 1 && args[0] === '--prepare-system-update') return prepareSystemUpdate();
   const commandName = requireString(args[0], usageMessage);
