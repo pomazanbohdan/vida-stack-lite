@@ -5,6 +5,15 @@ The canonical [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns next work;
 [WORK](WORK.md) owns current terminal evidence. Earlier execution narratives
 below retain their historical scope and do not schedule unchanged retries.
 
+For a causal correction packet, the executor completes the implementation,
+coupling regression, ordinary scoped checks and documentation as one frozen
+batch before one independent blind final review. Exercise the affected coupling
+regression before a broader native suite and batch independent scoped checks.
+Use the standard native approval route when required. Root integrates and owns
+Git and the sole numeric producer. Reuse bound receipts and existing inventories;
+no separate scan or new workflow ledger is required. The budgets, gates and
+UNKNOWN handling below remain unchanged.
+
 Current scheduling extension: PARALLEL-TESTING-DESIGN-20261012.md and
 PARALLEL-TESTING-IMPLEMENTATION-20261012.md. Their explicit shard architecture
 is reviewed/pending, not deployed. Existing repair/numeric constraints remain.

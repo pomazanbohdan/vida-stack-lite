@@ -597,7 +597,11 @@ if (cliLaunch) {
             }
           : {}),
         external_module_inputs: [...externalModules].map(([file, sha256]) => ({ path: file, sha256 })),
-        coverage: Object.fromEntries([...loadedFiles].sort().map((file) => [file, coverage[file]])),
+        coverage: Object.fromEntries(
+          [...loadedFiles]
+            .filter((file) => file === path.join(root, cliLaunch.entry.path))
+            .map((file) => [file, coverage[file]]),
+        ),
       },
       code,
     );

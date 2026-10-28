@@ -4,6 +4,55 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Documentation CLEAR child counter projection — 2026-10-28
+
+The full selected stage on Source `958234db` failed in run
+`c2983d5c-a3f3-497f-810c-4f99046a3f53`: 25 passes, two failures and 225
+expectations in a 31.9 s suite and 35.9685 s stage. The producer exited 1 with
+complete capture, unchanged boot/image and observed group termination. It
+produced no admitted report; the earlier F/L/S/B counts do not describe this
+Source. The original stage and image remain retained at
+`/workspace/contour-stage-QwzssK` and
+`/workspace/contour-doc-clear-measurement-1ngwWO`.
+
+The real baseline emitted a passing JSON result, but its child receipt writer
+rejected a counter map containing the entry and three selected transitive
+Sources. That child exited 1 without a receipt, and the parent then reported a
+missing bounded proof and incomplete subject set. The failed child capture is
+retained at `cli/d1243fa5-dc20-4cd7-b8ba-793d5a2b17e7` under the run's
+`processes` directory. This was not a native permission denial. The prior
+synthetic CLI fixture loaded only the entry, so it did not exercise this four-map
+condition.
+
+The integrated preload correction selects the exact observed CLI entry for its
+receipt while retaining the full actual loaded-input list. The existing writer
+still rejects a missing entry, and the validator still requires the single-entry
+map. The synthetic harness loads all four selected Sources, checks each child's
+full loaded inputs and entry-only receipt, and refuses forged missing or extra
+counter maps. Its native red run reproduced the missing-receipt failure; the
+green run passed one case and 102 expectations in 1.54 s. Complete captures and
+observed owned-group termination are retained at
+`/workspace/contour-doc-cli-packet-Yf404QJO/projection-fix/red-capture-juqyxy`
+and `/workspace/contour-doc-cli-packet-Yf404QJO/projection-fix/green-capture-tMd8nD`.
+The synthetic entry establishes receipt behavior, not the real documentation
+Source counter join. The canonical full observer suite passed 14 cases and 647
+expectations in 6.54 s with complete capture and owned-group termination, at
+`/workspace/contour-doc-cli-packet-Yf404QJO/canonical-profiles-ZidlsU`.
+Canonical scoped strict TypeScript checked 34 files; type-aware lint, format,
+and two-document link checks passed. Independent final review remains pending.
+No new numeric result, full qualification or contour closure is claimed.
+
+PR 9 is merged at `608de16d`. Its earlier 21.615 s readiness observation applies
+to the I/O correction sites and does not qualify the current whole artifact.
+Root retains Git and the only numeric producer. The executor completes the
+ordinary coupling target, scoped checks and documentation in one frozen packet
+before one independent blind review. Native execution uses the standard approval
+route when required. Reuse captured bindings and artifacts without repeating
+inventories, AST scans or hashes. The existing 300 s budget, 30 s reserve and
+330 s outer limit remain; a timeout is UNKNOWN with retained evidence. Short
+commands may yield at 10 s and longer commands at 30 s; polling does not change
+budgets.
+
 ## Documentation CLEAR native CLI custody preparation — 2026-10-28
 
 Root's full selected stage on Source `afcf16ad` retained run `c523c29b`.

@@ -1196,6 +1196,9 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
                 ].join('\n')
               : variant === 'doc'
                 ? [
+                    'import "../src/documentation/clear.ts";',
+                    'import "../src/documentation/policy.ts";',
+                    'import "../src/documentation/clear-checkpoint-validator.ts";',
                     'export function hit() { return 7; }',
                     'if (import.meta.main) {',
                     '  if (process.argv[3] === "invalid") { console.error("documentation CLEAR mode invalid"); process.exitCode = 1; }',
@@ -1549,6 +1552,14 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
             );
             expect(receipt.environment_sha256).toBe(launch.environment_sha256);
             expect(receipt.manifest_sha256).toBe(context.manifest_sha256);
+          }
+        if (variant === 'doc')
+          for (const row of children) {
+            const receipt = record(
+              JSON.parse(readFileSync(path.join(directory, String(record(row.receipt).path)), 'utf8')),
+            );
+            for (const source of sources) expect(receipt.loaded_inputs).toContainEqual(source);
+            expect(Object.keys(record(receipt.coverage))).toEqual([path.join(root, entry)]);
           }
         const siblings = children.slice(1);
         const childReceipt = record(
@@ -2267,6 +2278,27 @@ for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as con
           writeFileSync(path.join(ctx.directory, String(record(row.stderr).path)), '{}'),
         );
         if (variant === 'doc') {
+          negative(
+            'documentation-missing-entry-counter',
+            (ctx, row) =>
+              rewrite(ctx, row, 'receipt', (proof) => {
+                delete record(proof.coverage)[path.join(root, entry)];
+              }),
+            false,
+            0,
+            'Foreign or unloaded CLI Source counter.',
+          );
+          negative(
+            'documentation-extra-source-counter',
+            (ctx, row) =>
+              rewrite(ctx, row, 'receipt', (proof) => {
+                const maps = record(proof.coverage);
+                maps[path.join(root, selectedSources[0]!)] = maps[path.join(root, entry)];
+              }),
+            false,
+            0,
+            'Foreign or unloaded CLI Source counter.',
+          );
           const replaceOutput = (
             ctx: CliCoverageContext,
             row: Record<string, unknown>,
