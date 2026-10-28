@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -25,7 +24,7 @@ interface ReviewFile {
 const hex = /^[a-f0-9]{64}$/;
 
 function sha(bytes: string | Uint8Array): string {
-  return createHash('sha256').update(bytes).digest('hex');
+  return new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 }
 
 function json(value: unknown): Buffer {
