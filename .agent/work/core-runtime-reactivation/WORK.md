@@ -4,6 +4,36 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Documentation CLEAR scope and policy guards — 2026-10-28
+
+The selected stage on Source `1a3b4071ccecba3ba3209cc62ebfefc2cf8c0089`
+passed 26 tests and 234 expectations in a 35.99 s suite and 39.673 s stage.
+Its complete capture and closed group are retained at
+`/workspace/contour-stage-u8JQvg`. The published focused diagnostic is
+`/workspace/contour-doc-clear-measurement-xxagYb/images/385b2ff70c395b40363e28d4b4d30d5899386798/repository/packages/agent/coverage/bun-unified/diagnostics/bc683938-4f7a-4a4c-87bb-07cac9d2bb3b.focused-coverage.json`.
+Its Source fingerprint is
+`7d44c93008e3ea0a8f82a882148cc69d9e6c036060d943d83ba1dc750c291d2f`.
+The selected totals are F 46/46, L 214/230, S 251/281 and B 191/229.
+All selected functions, including the CLEAR entrypoint, were covered; lines,
+statements and branches remain incomplete. Full qualification is false. The
+older Source `958234db` failure remains retained below and was not replayed.
+
+The new public fixture rejects null, primitive and array scope records before
+baseline creation, preserves the rejected bytes, policy and document, and
+rejects a valid-schema policy for a foreign project with its specific binding
+error. It restores the inputs and creates a passing baseline. The current
+report maps the untaken `clear.ts` line 67 refusal to branch 1 arm 0 and the
+foreign policy refusal at lines 94–95 to branch 7 arm 0. This is existing
+behavior: the initial test is green and no production change or RED is claimed.
+The exact scratch target passed one case and 22 expectations; scoped strict
+checking passed 95 files, typed lint and formatting passed. Complete captures
+and owned-group termination are retained under
+`/workspace/contour-doc-scope-mH3PLqp5`. An initial anchored selector matched
+zero cases because it omitted the enclosing describe name; its capture is
+retained separately. The new test is a coverage candidate until Root's next
+producer. Current whole-Source artifact readiness, contour closure, frozen CRAP
+and mutation are not established by this packet.
+
 ## Documentation CLEAR child counter projection — 2026-10-28
 
 The full selected stage on Source `958234db` failed in run

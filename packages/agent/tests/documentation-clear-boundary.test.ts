@@ -203,6 +203,61 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
     }
   });
 
+  test('CLEAR rejects non-record scope and foreign policy before creating a baseline', async () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const { scope_paths: _scopePaths, ...workInput } = fixture.input;
+      const scopePath = `.agent/work/${fixture.input.work_id}/scope.json`;
+      const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+      const documentPath = 'docs/agent-instructions/current.md';
+      const baselinePath = path.join(
+        fixture.root,
+        `.agent/work/${fixture.input.work_id}/documentation-baseline-0001.v1.json`,
+      );
+      const scopeBytes = readFileSync(path.join(fixture.root, scopePath));
+      const policyBytes = readFileSync(path.join(fixture.root, policyPath));
+      const documentBytes = readFileSync(path.join(fixture.root, documentPath));
+
+      for (const value of [null, 42, []]) {
+        const invalid = JSON.stringify(value) + '\n';
+        fixture.write(scopePath, invalid);
+        await Promise.resolve(
+          expect(runtime.executeDocumentationClearFromWork(workInput, 'baseline')).rejects.toThrow(
+            'documentation record invalid',
+          ),
+        );
+        expect(readFileSync(path.join(fixture.root, scopePath), 'utf8')).toBe(invalid);
+        expect(readFileSync(path.join(fixture.root, policyPath))).toEqual(policyBytes);
+        expect(readFileSync(path.join(fixture.root, documentPath))).toEqual(documentBytes);
+        expect(existsSync(baselinePath)).toBe(false);
+      }
+
+      writeFileSync(path.join(fixture.root, scopePath), scopeBytes);
+      const policy: unknown = JSON.parse(policyBytes.toString('utf8'));
+      if (!isRecord(policy)) throw new Error('Fixture policy is not a record.');
+      const foreignPolicy = JSON.stringify({ ...policy, project_id: 'foreign-project' }) + '\n';
+      fixture.write(policyPath, foreignPolicy);
+      await Promise.resolve(
+        expect(runtime.executeDocumentationClearFromWork(workInput, 'baseline')).rejects.toThrow(
+          'documentation policy project identity differs from current project',
+        ),
+      );
+      expect(readFileSync(path.join(fixture.root, scopePath))).toEqual(scopeBytes);
+      expect(readFileSync(path.join(fixture.root, policyPath), 'utf8')).toBe(foreignPolicy);
+      expect(readFileSync(path.join(fixture.root, documentPath))).toEqual(documentBytes);
+      expect(existsSync(baselinePath)).toBe(false);
+
+      writeFileSync(path.join(fixture.root, policyPath), policyBytes);
+      expect((await runtime.executeDocumentationClearFromWork(workInput, 'baseline')).status).toBe('pass');
+      expect(existsSync(baselinePath)).toBe(true);
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed CLEAR scope fixture: ${fixture.root}`);
+    }
+  });
+
   test('One: CLEAR public APIs create and verify one bound closeout', async () => {
     const fixture = documentationClearFixture();
     try {
