@@ -1,10 +1,9 @@
-import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { verifyForwardReviewSet } from './forward-review-proof.ts';
+import { forwardReviewFileDigest as sha, verifyForwardReviewSet } from './forward-review-proof.ts';
 import { createFsSafeNativeImportBoundary } from './fs-safe-native-import-boundary.ts';
 import { moduleDeclarationFacts } from './runtime-import-bindings.ts';
 import type { ModuleDeclarationFacts } from './runtime-import-bindings.ts';
@@ -37,7 +36,6 @@ type AdmissionInput = {
   purpose?: AdmissionPurpose;
 };
 
-const sha = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 const encoded = (value: unknown) => Buffer.from(JSON.stringify(value, null, 2) + '\n');
 const requireAdmission: (condition: unknown, message: string) => asserts condition = (condition, message) => {
   if (!condition) throw Error(`forward candidate admission: ${message}`);

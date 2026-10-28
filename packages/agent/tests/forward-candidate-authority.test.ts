@@ -196,6 +196,128 @@ test('sealed public admin denies altered authority, root, closure and target bef
   expect(admitted.target_path).toBe(f.policyPath);
   expect(admitted.target_sha256).toBe(sha(targetPolicy));
   expect(admitted.parent_selector_sha256).toBe(sha(selected));
+  const admissionInput = {
+    root: f.root,
+    payloadRoot: payload,
+    operationId: operation,
+    moduleUrl: pathToFileURL(path.join(bundle, 'bin/documentation-policy-transition.ts')).href,
+    targetPath: f.policyPath,
+  };
+  const captureEntry = path.join(bundle, 'bin/capture-completed-readonly.ts');
+  const captured = verifyForwardCandidateAdmission({
+    ...admissionInput,
+    moduleUrl: pathToFileURL(captureEntry).href,
+    purpose: 'completed-readonly-capture',
+  });
+  expect(captured.purpose).toBe('completed-readonly-capture');
+  expect(captured.entrypoint_sha256).toBe(sha(readFileSync(captureEntry)));
+  expect(() =>
+    verifyForwardCandidateAdmission({ ...admissionInput, moduleUrl: pathToFileURL(captureEntry).href }),
+  ).toThrow('public operation origin is outside admitted source');
+  expect(() => verifyForwardCandidateAdmission({ ...admissionInput, targetPath: 'absent-policy.json' })).toThrow(
+    'missing manifest entry absent-policy.json',
+  );
+  unchanged();
+
+  const denyWithChangedRootFile = (relative: string, replacement: Buffer, reason: string): void => {
+    const file = path.join(f.root, relative);
+    const before = readFileSync(file);
+    try {
+      writeFileSync(file, replacement);
+      const altered = readFileSync(file);
+      expect(() => verifyForwardCandidateAdmission(admissionInput)).toThrow(reason);
+      expect(readFileSync(file)).toEqual(altered);
+      unchanged();
+    } finally {
+      writeFileSync(file, before);
+    }
+    expect(readFileSync(file)).toEqual(before);
+  };
+  const rootPackage = path.join(f.root, 'vida-agent/package.json');
+  const packageMetadata = parseRecord(readFileSync(rootPackage, 'utf8'));
+  denyWithChangedRootFile(
+    'vida-agent/package.json',
+    Buffer.from(f.json({ ...packageMetadata, packageManager: 'foreign' })),
+    'installed dependency inputs differ from admitted source',
+  );
+  denyWithChangedRootFile('vida-agent/bun.lock', Buffer.from('foreign lock'), 'installed dependency lock/pin differs');
+
+  const extra = path.join(payload, 'unmanifested.txt');
+  writeFileSync(extra, 'foreign bytes');
+  try {
+    expect(() => verifyForwardCandidateAdmission(admissionInput)).toThrow('unmanifested payload bytes');
+    expect(readFileSync(extra, 'utf8')).toBe('foreign bytes');
+    unchanged();
+  } finally {
+    unlinkSync(extra);
+  }
+
+  const closureEntry = 'vida-agent/bin/documentation-policy-transition.ts';
+  const closurePath = path.join(payload, closureEntry);
+  const manifestPath = path.join(payload, 'vida-agent-payload.manifest.v1.json');
+  const intentPath = path.join(f.root, base, 'forward-intent.v1.json');
+  const overlayPath = path.join(f.root, '.agent/cutover/fixture-parent/maintenance-lock.v1.json');
+  const authorityFiles = evidence.flatMap((item) => [
+    path.join(f.root, item.path),
+    path.join(f.root, item.reverse_path),
+  ]);
+  const resealFiles = [
+    closurePath,
+    manifestPath,
+    intentPath,
+    overlayPath,
+    path.join(f.root, authorizationPath),
+    ...authorityFiles,
+  ];
+  for (const [imported, reason] of [
+    ['./missing-closure.ts', 'local dependency escapes sealed bundle'],
+    ['undeclared-fixture-dependency', 'external dependency is not declared and locked'],
+  ] as const) {
+    const originals = new Map(resealFiles.map((file) => [file, readFileSync(file)]));
+    try {
+      const changed = Buffer.concat([originals.get(closurePath)!, Buffer.from(`\nimport '${imported}';\n`)]);
+      writeFileSync(closurePath, changed);
+      const updatedFiles = files.map((file) =>
+        file.path === closureEntry ? { ...file, size: changed.length, sha256: sha(changed) } : file,
+      );
+      const updatedManifest = f.json({
+        schema: 'VidaAgentPreparedPayload/v1',
+        files: updatedFiles,
+        unresolved_integration_paths: [],
+      });
+      writeFileSync(manifestPath, updatedManifest);
+      const updatedIntent = f.json({ ...intent, new_payload_manifest_sha256: sha(updatedManifest) });
+      writeFileSync(intentPath, updatedIntent);
+      writeFileSync(overlayPath, updatedIntent);
+      const updatedEvidence = evidence.map((item) => {
+        const reviewPath = path.join(f.root, item.path);
+        const reversePath = path.join(f.root, item.reverse_path);
+        const review = f.json({
+          ...parseRecord(originals.get(reviewPath)!.toString('utf8')),
+          sealed_fingerprint: sha(updatedIntent),
+        });
+        const reverse = f.json({
+          ...parseRecord(originals.get(reversePath)!.toString('utf8')),
+          sealed_fingerprint: sha(updatedIntent),
+          review_sha256: sha(review),
+        });
+        writeFileSync(reviewPath, review);
+        writeFileSync(reversePath, reverse);
+        return { ...item, sha256: sha(review), reverse_sha256: sha(reverse) };
+      });
+      writeFileSync(
+        path.join(f.root, authorizationPath),
+        f.json({ ...parseRecord(authorization), plan_sha256: sha(updatedIntent), evidence: updatedEvidence }),
+      );
+      const beforeAdmission = new Map(resealFiles.map((file) => [file, readFileSync(file)]));
+      expect(() => verifyForwardCandidateAdmission(admissionInput)).toThrow(reason);
+      for (const [file, bytes] of beforeAdmission) expect(readFileSync(file)).toEqual(bytes);
+      unchanged();
+    } finally {
+      for (const [file, bytes] of originals) writeFileSync(file, bytes);
+    }
+    for (const [file, bytes] of originals) expect(readFileSync(file)).toEqual(bytes);
+  }
   const approvedBytes = readFileSync(path.join(f.root, authorizationPath));
   f.put(authorizationPath, f.json({ ...parseRecord(approvedBytes.toString('utf8')), outcome: 'rejected' }));
   expect(() =>
