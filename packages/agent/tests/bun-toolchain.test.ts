@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync, type SpawnSyncOptions } from 'node:child_process';
+import { spawn, spawnSync, type SpawnSyncOptions, type SpawnSyncReturns } from 'node:child_process';
 import {
   linkSync,
   mkdirSync,
@@ -32,8 +32,10 @@ import {
   standaloneEnvironment,
   standaloneRuntime,
   syncPin,
+  writeDiagnosticSync,
 } from '../bin/bun.ts';
 import { coverageReviewEnvironmentSha256, coverageEnvironmentSha256 } from '../tooling/bun-coverage-evidence.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 
 interface CommandResult {
   status: number | null;
@@ -865,8 +867,10 @@ test('sync rejects a changed manifest identity after staging and removes the sta
       'bun@9.8.7',
     );
     const changedIdentity = Object.create(observed) as typeof observed;
-    const changedInode = typeof observed.ino === 'bigint' ? observed.ino + 1n : observed.ino + 1;
-    Reflect.set(changedIdentity, 'ino', changedInode);
+    const changedInode =
+      typeof observed.ino === 'bigint' ? (observed.ino === 0n ? 1n : 0n) : observed.ino === 0 ? 1 : 0;
+    assert.equal(Reflect.set(changedIdentity, 'ino', changedInode), true);
+    assert.notEqual(changedIdentity.ino, observed.ino);
     return changedIdentity;
   }) as typeof fs.lstatSync);
 
@@ -2386,37 +2390,197 @@ test('embedded runtime rejects a linked package root', () => {
   }
 });
 
-test.each([undefined, 100])('bounded child diagnostics report the exact stage and terminal status: %s', (allowance) => {
-  let captured = '';
-  const capture = spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-    const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
-    assert.ok(Buffer.byteLength(captured) + Buffer.byteLength(text) <= 4096, 'stderr capture is bounded');
-    captured += text;
-    return true;
+test('synchronous diagnostic writes advance only by confirmed bytes', () => {
+  const value = 'діагностика ✓\n';
+  const expected = Buffer.from(value);
+  const parts: Buffer[] = [];
+  writeDiagnosticSync('', () => assert.fail('empty diagnostic wrote bytes'));
+  writeDiagnosticSync(value, (fd, bytes, offset, length) => {
+    assert.equal(fd, 2);
+    assert.equal(length, expected.length - offset);
+    const count = Math.min(2, length);
+    parts.push(Buffer.from(bytes.subarray(offset, offset + count)));
+    return count;
   });
+  assert.deepEqual(Buffer.concat(parts), expected);
+  for (const count of [0, -1, NaN, expected.length + 1]) {
+    let calls = 0;
+    try {
+      writeDiagnosticSync(value, () => {
+        calls += 1;
+        return count;
+      });
+      assert.fail('invalid byte count was not reported');
+    } catch (error) {
+      assert.ok(error instanceof Error);
+      assert.equal(error.message, 'Diagnostic output failed.');
+      assert.equal(Reflect.get(error, 'confirmedBytes'), 0);
+    }
+    assert.equal(calls, 1);
+  }
+  const original = Object.assign(new Error('write failed'), { code: 'EAGAIN' });
+  let calls = 0;
   try {
-    const result = boundedSpawnSync(
-      () => ({ status: 0, signal: null }),
-      'fixture',
-      [],
-      { env: {}, diagnostics: true, timeout: allowance },
-      'diagnostic fixture',
-    );
-    assert.equal(result.status, 0);
-    assert.equal(result.signal, null);
-    assert.equal(captured.endsWith('\n'), true);
-    const lines = captured.trimEnd().split('\n');
-    assert.equal(lines.length, 1);
-    const diagnostic: unknown = JSON.parse(lines[0]!);
-    assert.ok(typeof diagnostic === 'object' && diagnostic !== null && !Array.isArray(diagnostic));
-    assert.equal(Reflect.get(diagnostic, 'stage'), 'diagnostic fixture');
-    assert.equal(Reflect.get(diagnostic, 'status'), 0);
-    const timeout: unknown = Reflect.get(diagnostic, 'timeout_ms');
-    if (allowance === undefined) assert.equal(timeout, null);
-    else assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= allowance);
-    assert.equal(typeof Reflect.get(diagnostic, 'elapsed_ms'), 'number');
-    assert.equal(typeof Reflect.get(diagnostic, 'child_elapsed_ms'), 'number');
-  } finally {
-    capture.mockRestore();
+    writeDiagnosticSync(value, () => {
+      if (calls++ === 0) return 1;
+      throw original;
+    });
+    assert.fail('write failure was not reported');
+  } catch (error) {
+    assert.ok(error instanceof Error);
+    assert.equal(error.cause, original);
+    assert.equal(Reflect.get(error, 'confirmedBytes'), 1);
+    assert.equal(calls, 2);
   }
 });
+
+test.each([undefined, 100])('bounded diagnostics retain the original allowance: %s', (allowance) => {
+  const moduleUrl = new URL('../bin/bun.ts', import.meta.url).href;
+  const program = `const { boundedSpawnSync, executionBudget } = await import(${JSON.stringify(moduleUrl)});
+    const inheritedDeadline = executionBudget().deadline;
+    const sampledAt = performance.now();
+    const inheritedCeiling = Number.isFinite(inheritedDeadline) ? Math.floor(inheritedDeadline - sampledAt) : null;
+    const original = { status: 0, signal: null };
+    let childTimeout = null;
+    const result = boundedSpawnSync((_command, _args, options) => { childTimeout = options.timeout ?? null; return original; }, 'fixture', [],
+      { diagnostics: true, timeout: ${allowance === undefined ? 'undefined' : allowance} }, 'diagnostic fixture');
+    process.stdout.write(JSON.stringify({ status: result.status, signal: result.signal, identity: result === original,
+      inheritedCeiling, childTimeout }));`;
+  const child = spawnSync(process.execPath, ['-e', program], {
+    encoding: 'utf8',
+    env: pinnedEnvironment(process.execPath, process.env),
+    timeout: 5_000,
+  });
+  assert.equal(commandOutcomeUnknown(child), false, child.stderr);
+  assert.equal(child.status, 0, child.stderr);
+  const result: unknown = JSON.parse(child.stdout);
+  assert.ok(typeof result === 'object' && result !== null && !Array.isArray(result));
+  assert.equal(Reflect.get(result, 'status'), 0);
+  assert.equal(Reflect.get(result, 'signal'), null);
+  assert.equal(Reflect.get(result, 'identity'), true);
+  assert.ok(child.stderr.endsWith('\n'));
+  const lines = child.stderr.trimEnd().split('\n');
+  assert.equal(lines.length, 1);
+  const diagnostic: unknown = JSON.parse(lines[0]!);
+  assert.ok(typeof diagnostic === 'object' && diagnostic !== null && !Array.isArray(diagnostic));
+  assert.equal(Reflect.get(diagnostic, 'stage'), 'diagnostic fixture');
+  assert.equal(Reflect.get(diagnostic, 'status'), 0);
+  const timeout: unknown = Reflect.get(diagnostic, 'timeout_ms');
+  const inheritedCeiling: unknown = Reflect.get(result, 'inheritedCeiling');
+  assert.ok(inheritedCeiling === null || (typeof inheritedCeiling === 'number' && Number.isFinite(inheritedCeiling)));
+  assert.equal(timeout, Reflect.get(result, 'childTimeout'));
+  if (allowance === undefined && inheritedCeiling === null) assert.equal(timeout, null);
+  else {
+    assert.ok(typeof timeout === 'number' && Number.isSafeInteger(timeout) && timeout > 0);
+    if (allowance !== undefined) assert.ok(timeout <= allowance);
+    if (typeof inheritedCeiling === 'number') assert.ok(timeout <= inheritedCeiling);
+  }
+});
+
+test.each(['enabled-success', 'enabled-failure', 'disabled-failure', 'unwritable-failure'] as const)(
+  'bounded child diagnostics preserve the terminal child result with stderr %s',
+  (mode) => {
+    const { root } = fixture();
+    const retainRoot = () => {
+      temporaryRoots.delete(root);
+      try {
+        writeDiagnosticSync('Retained uncertain diagnostic fixture: ' + root + '\n');
+      } catch (error) {
+        throw new Error('Could not report retained diagnostic fixture: ' + root, { cause: error });
+      }
+    };
+    const moduleUrl = new URL('../bin/bun.ts', import.meta.url).href;
+    const status = mode === 'enabled-success' ? 0 : 7;
+    const childProgram = `process.stdout.write('child stdout'); process.stderr.write('child stderr'); process.exitCode = ${status};`;
+    const program = `const { boundedSpawnSync } = await import(${JSON.stringify(moduleUrl)});
+      const { spawnSync } = await import('node:child_process');
+      try {
+        const result = boundedSpawnSync(spawnSync, process.execPath, ['-e', ${JSON.stringify(childProgram)}],
+          { encoding: 'utf8', diagnostics: ${mode !== 'disabled-failure'}, timeout: 5_000 }, 'diagnostic fixture');
+        process.stdout.write(JSON.stringify({ result }));
+      } catch (error) {
+        const { result, outputError } = error;
+        const nativeError = Object.assign(new Error('child spawn failed'), { code: 'ENOENT' });
+        const originalResult = { status: null, signal: null, error: nativeError, stdout: 'captured', stderr: 'failure' };
+        let identity = false;
+        try {
+          boundedSpawnSync(() => originalResult, 'fixture', [], { diagnostics: true }, 'identity fixture');
+        } catch (both) {
+          identity = both instanceof AggregateError && both.result === originalResult && both.result.error === nativeError &&
+            both.errors[0] === nativeError && both.errors[1] === both.outputError;
+        }
+        process.stdout.write(JSON.stringify({ result, outputCode: outputError.cause.code,
+          confirmedBytes: outputError.confirmedBytes, identity }));
+      }`;
+    const target = path.join(root, 'readonly-stderr');
+    writeFileSync(target, 'unchanged');
+    const descriptor = mode === 'unwritable-failure' ? fs.openSync(target, 'r') : undefined;
+    let processResult: SpawnSyncReturns<string>;
+    let primaryFailure: { error: unknown } | undefined;
+    let retain = false;
+    try {
+      processResult = spawnSync(process.execPath, ['-e', program], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', descriptor ?? 'pipe'],
+        env: pinnedEnvironment(process.execPath, process.env),
+        timeout: 10_000,
+      });
+    } catch (error) {
+      primaryFailure = { error };
+      retain = true;
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            if (descriptor === undefined) return;
+            try {
+              fs.closeSync(descriptor);
+            } catch (error) {
+              retain = true;
+              throw error;
+            }
+          },
+          () => {
+            if (retain) retainRoot();
+          },
+        ],
+        primaryFailure,
+      );
+    }
+    if (commandOutcomeUnknown(processResult)) {
+      retainRoot();
+    }
+    assert.equal(commandOutcomeUnknown(processResult), false, processResult.stderr ?? undefined);
+    assert.equal(processResult.status, 0, processResult.stderr ?? undefined);
+    const observed: unknown = JSON.parse(processResult.stdout);
+    assert.ok(typeof observed === 'object' && observed !== null && !Array.isArray(observed));
+    const result: unknown = Reflect.get(observed, 'result');
+    assert.ok(typeof result === 'object' && result !== null && !Array.isArray(result));
+    assert.equal(Reflect.get(result, 'status'), status);
+    assert.equal(Reflect.get(result, 'signal'), null);
+    assert.equal(Reflect.get(result, 'stdout'), 'child stdout');
+    assert.equal(Reflect.get(result, 'stderr'), 'child stderr');
+    if (mode === 'unwritable-failure') {
+      assert.equal(Reflect.get(observed, 'outputCode'), 'EBADF');
+      assert.equal(Reflect.get(observed, 'confirmedBytes'), 0);
+      assert.equal(Reflect.get(observed, 'identity'), true);
+      assert.equal(readFileSync(target, 'utf8'), 'unchanged');
+    } else if (mode === 'disabled-failure') {
+      assert.equal(processResult.stderr, '');
+    } else {
+      assert.ok(processResult.stderr.endsWith('\n'));
+      const lines = processResult.stderr.trimEnd().split('\n');
+      assert.equal(lines.length, 1);
+      const diagnostic: unknown = JSON.parse(lines[0]!);
+      assert.ok(typeof diagnostic === 'object' && diagnostic !== null && !Array.isArray(diagnostic));
+      assert.equal(Reflect.get(diagnostic, 'stage'), 'diagnostic fixture');
+      assert.equal(Reflect.get(diagnostic, 'status'), status);
+      const timeout: unknown = Reflect.get(diagnostic, 'timeout_ms');
+      assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 5_000);
+      assert.equal(typeof Reflect.get(diagnostic, 'elapsed_ms'), 'number');
+      assert.equal(typeof Reflect.get(diagnostic, 'child_elapsed_ms'), 'number');
+    }
+  },
+  15_000,
+);
