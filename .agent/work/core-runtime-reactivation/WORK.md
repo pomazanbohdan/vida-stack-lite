@@ -402,6 +402,36 @@ outcome is BLOCKED with `quality_complete=false`, `report_complete=false`,
 These dispositions change no measured hits or denominator and do not reattest
 older runs, establish closure, PASS or CRAP qualification.
 
+### Observed validation lookahead: SDK readiness and child custody — 2026-10-28
+
+The owner ran the existing SDK readiness owner once; the result under
+`/workspace/contour-observed-custody-mUPIbNjP/sdk-readiness` exited 0 with
+complete capture and observed owned-group closure. The prior dist was retained.
+The existing SDK capture and validator confirmed 156 formation inputs and 131
+output files, including the receipt, identical and valid in the canonical and
+private scratch copies. This is development-test input evidence.
+
+The scratch candidate
+`/workspace/contour-observed-custody-mUPIbNjP/scoped-child-custody.patch` passed
+its filtered native target with one test and eight expectations when the runtime
+cache variable was unset. It selected a cache inside its private consumer root.
+The existing pinned helper rewrites explicit empty cache values to its derived
+path; a caller-selected nonempty path is not bound to the fresh fixture owner.
+A fail-closed guard for these inputs remains unresolved against the caller-override
+contract. The candidate keeps one 30-second case deadline and preserves uncertain
+fixtures.
+Five earlier controls injected timeout, signal, spawn error, missing status and
+missing PID through the existing seam. After the cache-default change, a separate
+representative synthetic timeout control confirmed that root and alias are
+retained and the child receives the owned cache path and SIGKILL option. These
+controls do not prove native failures or child-group termination. Captured child
+output is returned UTF-8 text, not raw OS bytes. Receipts are under
+`/workspace/contour-observed-custody-mUPIbNjP/privatecheck`.
+
+Default stage execution and child-effects/custody admission remain OPEN. Preserve
+all older UNKNOWN resources. This packet establishes no qualification or numeric
+increment.
+
 ## Focused serial environment and controller readiness — 2026-10-28
 
 Root's actual full selected stage on Source
