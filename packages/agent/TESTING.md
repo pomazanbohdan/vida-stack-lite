@@ -974,6 +974,12 @@ Oxlint type-aware analysis needs a declared TypeScript project for each file. So
 
 Type shared fixture state and helpers with the existing production contracts. Give SQLite results the exact selected row type and check missing rows. Preserve deliberately invalid test inputs with separate malformed values; do not present them as valid production data.
 
+The current quality utility awaits Bun stdout and stderr writes and checks their
+byte counts. Its captured CLI control preserves compiler success and failure
+status and forwards actual diagnostics. The pinned typecheck phase remains the
+owner of the full maintained and Source checks; the output control does not
+qualify coverage or replace that phase.
+
 Maintained Source and tests are TypeScript-only. A zero-lint result does not
 prove that their TypeScript contracts compile.
 The mandatory full typecheck first rejects any maintained JS/MJS, then compiles

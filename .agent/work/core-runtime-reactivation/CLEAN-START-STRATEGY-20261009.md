@@ -29,20 +29,12 @@ new evidence or add wrappers, FFI or supervisors by default. Material changes to
 authority, specification or guarantees require the owner's decision. The current
 phase, budgets, exact gates and all UNKNOWN fences remain in force.
 
-Owner direction, 2026-10-27: after the Bun-native CLI writer is proven on real
-behavior and compatibility controls, progressively adopt supported Bun APIs in
-relevant agent production and test contours. First inventory actual callers and
-their contracts; migrate one verified contour package at a time. Preserve output,
-exit, deadline, limits, custody, authority and the complete coverage inventory.
-Unsupported Bun capabilities are GAPs, not substitutes for required guarantees.
-This conditional goal does not authorize SQLite schema or runtime cutover,
-credentials, permission changes, FFI, or unrelated application migrations.
-For the active `bun-cli-run` contour, the next relevant boundaries include
-`bin/bun.ts` bounded `spawnSync`, the test-side child observers and their
-stdio, timeout and process-group contracts, and file operations that enforce
-source authority. Migrate a boundary only after its Bun replacement proves the
-same behavior and receipt custody. The non-Bun CLI fallback remains until its
-supported consumers and replacement are independently accounted for.
+Owner clarification, 2026-10-28: the broader Bun-native migration belongs to a
+separate session. This tooling lane changes only concrete Bun compatibility
+blockers to its coverage work. Prove each changed boundary's behavior and retain
+its output, exit, deadline, custody, authority and complete coverage inventory.
+Unsupported capabilities remain GAPs. The separate product lane retains its
+assigned files; this lane does not perform a broad product migration.
 
 ## Trusted coverage implementation plan
 

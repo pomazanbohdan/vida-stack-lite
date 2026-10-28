@@ -68,6 +68,38 @@ Selected source hashes, the bounded diff and the prepared but unrun first
 measurement command are retained in `/workspace/contour-trusted-terra-bX5zTfWB`.
 Independent review and the one permitted first timing measurement remain open.
 
+## First trusted measurement and Bun output correction — 2026-10-28
+
+Root integrated and verified Source `8a231143b11780134c6e5f1ffbaf1684c2a91bf9`
+and ran one first trusted stage. The producer failed after 1832.24 ms in the
+pinned typecheck before the selected test suite. The retained
+`/workspace/contour-stage-1fYFoz/stderr.log` shows EPERM on the synchronous
+stdout write in `quality-current.ts` and on its error-path stderr write. The
+stage observed exit 1, no signal or timeout, complete capture, unchanged image
+and owned-group termination. It produced no coverage report; its outcome remains
+`unknown-or-partial`. Preserve that stage and
+`/workspace/contour-trusted-measurement-I4PbLR` without reuse or replay.
+
+`quality-current.ts` now uses sequential awaited `Bun.write` with exact byte-count
+checks for all its output. It forwards each captured compiler stream, stdout
+before stderr; it cannot preserve interleaving across those streams. A failed
+error diagnostic retains both causes. The actual pinned typecheck phase,
+with the same inherited-stream process shape and new private roots, passed at
+`/workspace/contour-quality-typecheck-OS8rn2`: exit 0, complete untruncated
+capture and owned-group termination. Its Source gate reported 546 TypeScript
+files and no JavaScript violations; the maintained and Source checks reported
+zero diagnostics. The existing test owner now exercises the actual copied-owner
+CLI through captured streams for success and a real TS2322 compiler failure
+with exit 1. `quality-fix-tests` passed 14 tests and 47 expectations;
+`quality-fix-lint` and `quality-fix-format` passed. All three retained complete
+capture and owned-group closure. No coverage, CRAP or mutation producer was run.
+Independent review found no blocking issue in this correction. Root integration
+and its checks remain before any separate new-Source measurement.
+
+The owner clarified that broader Bun-native migration belongs to a separate
+session. This lane changes only concrete compatibility blockers to its coverage
+work, and the product lane retains its assigned files.
+
 ## Trusted integration independent review — 2026-10-28
 
 Both final independent reviewers found the reviewed fixes addressed. The image

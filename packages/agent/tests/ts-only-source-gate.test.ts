@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { parseArguments, scanMaintainedSources } from '../tooling/ts-only-source-gate.js';
 import { createCompilerProject } from '../tooling/quality-current.js';
+import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
 
 const roots = ['packages/agent', 'packages/plugin', 'tests/agent', 'tooling/agent', '.githooks'];
 
@@ -215,6 +216,48 @@ describe('TS-only maintained source gate', () => {
     expect(result.error).toBeUndefined();
     expect(result.status).not.toBe(0);
     expect(`${result.stdout}${result.stderr}`).toContain('TS2322');
+  });
+
+  test('quality CLI forwards compiler diagnostics and preserves exit status through captured streams', async () => {
+    const root = fixture();
+    const packageRoot = path.join(root, 'packages/agent');
+    const maintainedPackage = path.resolve(import.meta.dir, '..');
+    put(root, 'package.json', '{"type":"module"}\n');
+    for (const file of [
+      '.bun-version',
+      'tsconfig.json',
+      'tsconfig.checked-js.json',
+      'bin/tsconfig.json',
+      'tooling/quality-current.ts',
+      'tooling/ts-only-source-gate.ts',
+      'tooling/owned-cleanup-completion.ts',
+      'bin/bun.ts',
+      'bin/cli-error-properties.ts',
+    ])
+      put(root, `packages/agent/${file}`, readFileSync(path.join(maintainedPackage, file), 'utf8'));
+    symlinkSync(path.join(maintainedPackage, 'node_modules'), path.join(packageRoot, 'node_modules'), 'dir');
+    const run = async (name: string) =>
+      executeMutationCommand([process.execPath, 'tooling/quality-current.ts'], packageRoot, 30_000, {
+        ownedProcessGroup: true,
+        stdoutFile: path.join(root, `${name}.stdout.log`),
+        stderrFile: path.join(root, `${name}.stderr.log`),
+      });
+    const success = await run('success');
+    expect(success.exitCode).toBe(0);
+    expect(success.output_capture?.complete).toBe(true);
+    expect(success.processCustody?.processGroupTerminationObserved).toBe(true);
+    expect(readFileSync(path.join(root, 'success.stdout.log'), 'utf8')).toContain('0 diagnostics');
+    put(root, 'packages/agent/src/strictness.ts', 'export const value: string = 4;\n');
+    const failure = await run('failure');
+    expect(failure.exitCode).toBe(1);
+    expect(failure.signal).toBeNull();
+    expect(failure.timedOut).toBe(false);
+    expect(failure.output_capture?.complete).toBe(true);
+    expect(failure.processCustody?.processGroupTerminationObserved).toBe(true);
+    const diagnostic =
+      readFileSync(path.join(root, 'failure.stdout.log'), 'utf8') +
+      readFileSync(path.join(root, 'failure.stderr.log'), 'utf8');
+    expect(diagnostic).toContain('TS2322');
   });
 
   test('fails closed when a declared source root is missing', () => {

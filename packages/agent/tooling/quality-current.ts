@@ -31,14 +31,21 @@ export function createCompilerProject(
   };
 }
 
-function run(): number {
+async function writeQualityCurrentOutput(stream: 'stdout' | 'stderr', text: string): Promise<void> {
+  if ((await Bun.write(stream === 'stdout' ? Bun.stdout : Bun.stderr, text)) !== Buffer.byteLength(text))
+    throw new Error(`Incomplete quality ${stream} output.`);
+}
+
+async function run(): Promise<number> {
   const repositoryRoot = repositoryRootFromModule();
   const report = scanMaintainedSources(repositoryRoot);
-  process.stdout.write(
+  await writeQualityCurrentOutput(
+    'stdout',
     `TS-only source gate: roots=${report.roots.join(',')} files=${report.counts.files} typescript=${report.counts.typescript} javascript_violations=${report.counts.javascriptViolations}\n`,
   );
   if (report.counts.violations > 0) {
-    for (const violation of report.violations) process.stderr.write(`${violation.path}\t${violation.extension}\n`);
+    for (const violation of report.violations)
+      await writeQualityCurrentOutput('stderr', `${violation.path}\t${violation.extension}\n`);
     return 1;
   }
 
@@ -59,22 +66,32 @@ function run(): number {
       encoding: 'utf8',
       windowsHide: true,
     });
-    if (result.stdout) process.stdout.write(result.stdout);
-    if (result.stderr) process.stderr.write(result.stderr);
+    if (result.stdout) await writeQualityCurrentOutput('stdout', result.stdout);
+    if (result.stderr) await writeQualityCurrentOutput('stderr', result.stderr);
     if (result.error) throw result.error;
     if (result.status !== 0) return result.status ?? 1;
   } finally {
     rmSync(temporaryDirectory, { recursive: true, force: true });
   }
-  process.stdout.write(`TS-only check: ${rootNames.length} captured TypeScript source files, 0 diagnostics.\n`);
+  await writeQualityCurrentOutput(
+    'stdout',
+    `TS-only check: ${rootNames.length} captured TypeScript source files, 0 diagnostics.\n`,
+  );
   return 0;
 }
 
 if (import.meta.main) {
   try {
-    process.exitCode = run();
+    process.exitCode = await run();
   } catch (error) {
-    process.stderr.write(`${error instanceof Error ? error.message : 'Unknown current quality failure.'}\n`);
     process.exitCode = 2;
+    try {
+      await writeQualityCurrentOutput(
+        'stderr',
+        `${error instanceof Error ? error.message : 'Unknown current quality failure.'}\n`,
+      );
+    } catch (outputError) {
+      throw new AggregateError([error, outputError], 'Current quality check and diagnostic output failed.');
+    }
   }
 }
