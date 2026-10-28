@@ -348,6 +348,60 @@ expectations. A separate target confirmed the explicit override. Receipts are
 under `/workspace/contour-doc-transition-XQ4NmoJs/fixturecheck`. Windows
 precedence was checked against Bun 1.4.4 Source, not by native Windows execution.
 
+### Documentation CLEAR focused diagnostic after fixture correction — 2026-10-28
+
+The sole producer measured Source `eeb47c0706032bca2bd4727da4ce0e59e59b941a`
+at `/workspace/contour-stage-8T0UeW`, with image and output under
+`/workspace/contour-doc-clear-measurement-6HECIc`. The full selected suite passed
+38 tests and 332 expectations in 40.67 s. The stage took 45,010.654537 ms,
+with complete capture, observed group closure, unchanged image inputs and
+published output. Run `fc235e1f-dad3-44b3-8b35-6d4b1db87c2b` reported F 46/46,
+L 230/230, S 278/281 and B 224/229; `full_qualification` is false and the
+operation remains BLOCKED. The exact focused report is
+`/workspace/contour-doc-clear-measurement-6HECIc/images/6ff61e7ec057034a5f1a4159bb3afd735f721128/repository/packages/agent/coverage/bun-unified/diagnostics/fc235e1f-dad3-44b3-8b35-6d4b1db87c2b.focused-coverage.json`.
+Its Source fingerprint is
+`752f7ec2a5c083a3d42d4e747f2f8a870da96b2979beded00655b831f998c809`, test
+fingerprint is `06b029ade56d43a18107243a5f35a5f0db5da0e7c5516c111f968014741199fc`,
+and tool fingerprint is
+`1477e568da580afcc03b368d7e7ec1c4fb681edbb6827d8c65a5c516336c5c56`.
+
+The following independent review binds objective dispositions to this report.
+The CLI no-message fallback remains OPEN; retain prior failed and UNKNOWN
+evidence and the existing selection and denominators.
+
+### Documentation CLEAR objective review for the current report — 2026-10-28
+
+Independent reviewer `/root/luna_doc_objective_review` bound the following
+objective dispositions to run `fc235e1f-dad3-44b3-8b35-6d4b1db87c2b` and its
+report named by the preceding record. In that report’s diagnostics directory,
+the manifest is `runs/fc235e1f-dad3-44b3-8b35-6d4b1db87c2b/manifest.json` and
+the outcome is `operation-outcomes/fc235e1f-dad3-44b3-8b35-6d4b1db87c2b.json`:
+
+- `src/documentation/clear.ts:132`, B15 arm 0 `[0, 90]`, S59 = 0: the missing
+  binding guard follows `loadProjectContext`, which validates the exact selected
+  project binding (`src/config/project-context.ts:915`).
+- `src/documentation/clear.ts:219`, B35 arm 0 `[0, 5]`, S117 = 0: valid
+  transition preimages exclude paths already in the baseline
+  (`src/documentation/policy-transition.ts:135`).
+- `bin/documentation-clear.ts:13`, B1 arm 1 `[4, 0]`: the argument parser
+  rejects an empty value before `safeId` (`bin/documentation-clear.ts:35`).
+- `bin/documentation-clear.ts:18`, B2 arm 0 `[0, 19]`, S6 = 0: required
+  options are rejected as missing before `requiredOption`
+  (`bin/documentation-clear.ts:45`).
+
+The report's manifest SHA-256 is
+`9ba36cdc8ce4a7f5c8a2b6b2ee95fe0da862ffa0aa0140e0e836109fa6478a41`; the bound
+`agent-runtime.config.v1.yaml` digest is
+`d4d7c762c07dbb40bf89432548f9f117ebd99170bd756102c43e2a0af8decb97`, and the
+runtime SHA-256 is
+`10702245766b225e70bbf6235fd6b47214fd94b4760d00ffaed8ab0df57ac235`. Source,
+test and tool fingerprints are those in the preceding record. The operation
+outcome is BLOCKED with `quality_complete=false`, `report_complete=false`,
+`report_validated=null`, `resource_safe_to_advance=false` and
+`retention_required=true`. The CLI B9 arm 1 no-message fallback remains OPEN.
+These dispositions change no measured hits or denominator and do not reattest
+older runs, establish closure, PASS or CRAP qualification.
+
 ## Focused serial environment and controller readiness — 2026-10-28
 
 Root's actual full selected stage on Source
