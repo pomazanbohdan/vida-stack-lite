@@ -119,7 +119,7 @@ if (
   serialEnvironment !== undefined &&
   (typeof serialEnvironment !== 'string' ||
     !/^[0-9a-f]{64}$/u.test(serialEnvironment) ||
-    serialEnvironment !== observedSerialEnvironment)
+    (process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH === undefined && serialEnvironment !== observedSerialEnvironment))
 )
   throw new Error('Coverage serial environment differs from its manifest.');
 if (manifest.schema === 'VidaBunCoverageRun/v3') {
@@ -290,6 +290,8 @@ const cliContext: CliCoverageContext = {
   manifest_sha256: digest(manifestBytes),
 };
 const cliLaunch = readCliCoverageLaunch(cliContext);
+if (serialEnvironment !== undefined && process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH !== undefined && !cliLaunch)
+  throw new Error('Coverage CLI launch is not a validated serial child.');
 const consumptionIssues: string[] = [];
 let consumptionOperations = 0;
 let consumptionBytes = 0;

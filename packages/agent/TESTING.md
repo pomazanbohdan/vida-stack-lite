@@ -2824,7 +2824,11 @@ part of this attribution. Partial or foreign Source/test selections are denied.
 `coverage-cli-child.ts` binds an exclusive launch ID, parent/native child PIDs,
 original/effective argv, captured entry/preload, manifest, runtime and input
 fingerprints. Direct CLI environment hashing binds every string entry exactly;
-it does not substitute Bun Test defaults for absent NODE_ENV or TZ. Capture uses
+it does not substitute Bun Test defaults for absent NODE_ENV or TZ. A serial
+runner must match its manifest environment fingerprint. An observed CLI child
+must instead validate its exact final environment, including launch metadata,
+against its own current run-bound launch; malformed or foreign launch evidence
+is refused. Capture uses
 native Buffer output, preserves the original stdout/stderr bytes and terminal
 sidecar before receipt admission, and returns the originally requested UTF-8
 strings to the test. Launch errors, signal/timeout, unavailable capture or absent

@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 import {
   capturedModuleInputs,
+  coverageEnvironmentSha256,
   coverageToolInputs,
   instrumentSource,
   sha256,
@@ -1124,6 +1125,13 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             [
               'import { expect, test } from "bun:test";',
               'import { spawnSync } from "node:child_process";',
+              ...(variant === 'run'
+                ? [
+                    'import { readdirSync, readFileSync, writeFileSync } from "node:fs";',
+                    'import path from "node:path";',
+                    'import { createHash } from "node:crypto";',
+                  ]
+                : []),
               `import { hit } from "../${entry}";`,
               'test("native denial", () => {',
               '  expect(hit()).toBe(7);',
@@ -1146,6 +1154,20 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                   ? `  expect(child${index}.${subject.exit === 0 ? 'stdout' : 'stderr'}).toBe(${JSON.stringify(subject.exit === 0 ? Bun.version + '\n' : subject.output)});`
                   : `  expect(JSON.parse(child${index}.${subject.exit === 1 ? 'stderr' : 'stdout'})).toEqual(${JSON.stringify(subject.output)});`,
               ]),
+              ...(variant === 'run'
+                ? [
+                    `  const proofRoot = ${JSON.stringify(directory)};`,
+                    '  const first = readdirSync(path.join(proofRoot,"cli")).map(id => path.join(proofRoot,"cli",id,"launch.json")).find(file => JSON.parse(readFileSync(file,"utf8")).subject_role === "run-help");',
+                    '  expect(first).toBeDefined(); const original=readFileSync(first); const launch=JSON.parse(original.toString("utf8"));',
+                    '  const baseEnv={...process.env,VIDA_BUN_COVERAGE_CLI_LAUNCH:first}; const envRows=Object.entries(baseEnv).filter(([,value])=>typeof value==="string").sort(([left],[right])=>left.localeCompare(right)); expect(createHash("sha256").update(JSON.stringify(envRows)).digest("hex")).toBe(launch.environment_sha256);',
+                    '  const runChild = (file, extra={}) => spawnSync(process.execPath,launch.effective_argv,{cwd:launch.cwd,encoding:"utf8",windowsHide:true,timeout:4000,env:{...process.env,VIDA_BUN_COVERAGE_CLI_LAUNCH:file,...extra}});',
+                    '  const forged=runChild(path.join(proofRoot,"cli","00000000-0000-4000-8000-000000000000","launch.json"));',
+                    '  expect(forged.status).toBe(1); expect(forged.stderr).toContain("CLI proof is not a bounded regular owned file");',
+                    '  const mismatched=runChild(first,{VIDA_TEST_CHILD_ENV_OVERRIDE:"foreign"});',
+                    '  expect(mismatched.status).toBe(1); expect(mismatched.stderr).toContain("AssertionError");',
+                    '  try { writeFileSync(first,JSON.stringify({...launch,run_id:"stale-run"})); const stale=runChild(first); expect(stale.status).toBe(1); expect(stale.stderr).toContain("AssertionError"); } finally { writeFileSync(first,original); }',
+                  ]
+                : []),
               '});',
             ].join('\n'),
           ),
@@ -1243,31 +1265,37 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
           instrumented_sources: instrumentedSources.map(({ row }) => row),
           source_maps: sourceMaps,
         };
+        const manifestPath = path.join(root, 'manifest.json');
+        const childEnvironment = {
+          ...process.env,
+          BUN_OPTIONS: '',
+          VIDA_BUN_COVERAGE_ROOT: root,
+          VIDA_BUN_COVERAGE_MANIFEST: manifestPath,
+          VIDA_BUN_COVERAGE_REPORT_DIRECTORY: directory,
+          VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY: snapshot,
+          VIDA_BUN_COVERAGE_RUN_ID: runId,
+          VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: manifest.source_fingerprint,
+          VIDA_BUN_COVERAGE_TEST_FINGERPRINT: manifest.test_fingerprint,
+          VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: manifest.tool_fingerprint,
+          VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: manifest.test_selection.mode,
+          VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(argv),
+          VIDA_BUN_COVERAGE_SHARD_ID: 'bun-test',
+          ...(variant === 'run' ? { BUN_TEST_WORKER_ID: '1', JEST_WORKER_ID: '1' } : {}),
+        };
+        if (variant === 'run')
+          Object.assign(manifest.execution_scope, {
+            serial_environment_sha256: coverageEnvironmentSha256(childEnvironment),
+          });
         const manifestBytes = Buffer.from(JSON.stringify(manifest));
         expect(focusedCliCoverage(manifest)).toBe(true);
         expect(focusedControllerCliCoverage(manifest)).toBe(variant === 'controller');
-        const manifestPath = path.join(root, 'manifest.json');
         writeFileSync(manifestPath, manifestBytes);
         const result = spawnSync(process.execPath, argv, {
           cwd: root,
           encoding: 'utf8',
           timeout: 4000,
           maxBuffer: 1024 * 1024,
-          env: {
-            ...process.env,
-            BUN_OPTIONS: '',
-            VIDA_BUN_COVERAGE_ROOT: root,
-            VIDA_BUN_COVERAGE_MANIFEST: manifestPath,
-            VIDA_BUN_COVERAGE_REPORT_DIRECTORY: directory,
-            VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY: snapshot,
-            VIDA_BUN_COVERAGE_RUN_ID: runId,
-            VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: manifest.source_fingerprint,
-            VIDA_BUN_COVERAGE_TEST_FINGERPRINT: manifest.test_fingerprint,
-            VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: manifest.tool_fingerprint,
-            VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: manifest.test_selection.mode,
-            VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(argv),
-            VIDA_BUN_COVERAGE_SHARD_ID: 'bun-test',
-          },
+          env: childEnvironment,
         });
         writeFileSync(path.join(root, 'child.stdout.log'), result.stdout ?? '');
         writeFileSync(path.join(root, 'child.stderr.log'), result.stderr ?? '');
@@ -1284,6 +1312,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         const reportFiles = readdirSync(directory).filter((file) => file.endsWith('.json'));
         expect(reportFiles).toHaveLength(1);
         const report = record(JSON.parse(readFileSync(path.join(directory, reportFiles[0]!), 'utf8')));
+        if (variant === 'run') expect(report.environment_sha256).toBe(coverageEnvironmentSha256(childEnvironment));
         expect(report.pid).toBe(result.pid);
         for (const testInput of testInputs) expect(report.loaded_inputs).toContainEqual(testInput);
         const context: CliCoverageContext = {
@@ -1319,6 +1348,17 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         assert.ok(Array.isArray(report.cli_children));
         const children = report.cli_children.map(record);
         const child = children[0]!;
+        if (variant === 'run')
+          for (const row of children) {
+            const launch = record(
+              JSON.parse(readFileSync(path.join(directory, String(record(row.launch).path)), 'utf8')),
+            );
+            const receipt = record(
+              JSON.parse(readFileSync(path.join(directory, String(record(row.receipt).path)), 'utf8')),
+            );
+            expect(receipt.environment_sha256).toBe(launch.environment_sha256);
+            expect(receipt.manifest_sha256).toBe(context.manifest_sha256);
+          }
         const siblings = children.slice(1);
         const childReceipt = record(
           JSON.parse(readFileSync(path.join(directory, String(record(child.receipt).path)), 'utf8')),

@@ -4,6 +4,56 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Focused serial environment and controller readiness — 2026-10-28
+
+Root's actual full selected stage on Source
+`3d81acb7d439828ee06faaa6c871125c0c7872fa` is retained at
+`/workspace/contour-stage-H9TQiL` and its fresh image under
+`/workspace/contour-trusted-measurement-zbyxfv`. It observed 158 passed and
+7 failed tests across the full 165-test selection, and elapsed 260547.549 ms.
+The producer exited 1 with complete capture, unchanged image and closed owned
+group; it produced no accepted coverage report. This old-Source timing neither
+qualifies the stage nor establishes headroom for changed Source. The raw logs,
+image and all failed evidence remain retained and are not replayed.
+
+The child preload compared the root runner's serial environment fingerprint
+before validating the CLI launch, although the observed CLI's exact environment
+includes its run-bound launch metadata and may contain authorized child options.
+Independent review found no blocking issue in this serial correction. The runner
+still compares its complete environment to the manifest. A child with launch
+metadata now must pass the existing run, manifest, parent PID, argv, cwd
+and exact full child-environment validation before attribution; missing, forged,
+stale or mismatched launches remain refusals. No environment keys are excluded.
+`serial-child-red2` reproduces the actual child failure and is retained;
+`/workspace/contour-serial-finalserial-zSgA7v` passes one real-preload protocol
+case with 164 outer expectations, validating three synthetic fixture receipts
+and forged path, stale run and changed environment controls. The runner's matching
+and mismatching environment controls pass at `/workspace/contour-serial-root-X9GEfr`
+(two cases, 17 expectations). Selected strict passed 137 files, type-aware lint
+and format passed; command capture and owned-group closure were complete. The
+fixture uses synthetic state and does not prove actual prepared/issue CAS; genuine
+three-child receipts remain required as post-run evidence. No new prelaunch
+receipt or coverage producer is introduced.
+
+The controller `beforeAll` still calls `developmentControllerBinding(packageRoot)`;
+the linked image's `node_modules` target lies outside that package and the real
+production escape guard correctly refuses it. The existing self-contained helper
+was probed only in new private roots. Its frozen install reported DNS resolution failures and its product-bin diagnostics
+encountered EPERM. The probe's explicit environment allowlist omitted the host
+proxy and CA variables required by `.codex/README.md`, so the DNS result does
+not establish a host networking limitation. No retry was performed. Full terminal
+and retained fixture evidence is at `/workspace/contour-controller-probe-TJQSJh`. The helper
+was not adopted, no successful setup cost or new-Source timing headroom is claimed,
+and no dependency guard or network/security setting was changed. Root owns the
+separate readiness execution after the product-owner output handoff, preserving
+the inherited proxy/CA environment with redacted evidence and without changing
+network or security policy.
+The Unix-socket exact target's initial context selected zero cases; Root's later
+qualified context ran the real target successfully with complete capture and
+owned-group closure, retained as `unix-socket-qualified-context.*` under
+`/workspace/contour-trusted-terra-bX5zTfWB`. The next full run needs the same
+supported socket context. No full suite was rerun in this packet.
+
 ## Trusted stage integration in progress — 2026-10-28
 
 The stage now selects ordinary trusted execution for the exact captured

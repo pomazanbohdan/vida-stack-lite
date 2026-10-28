@@ -38,6 +38,24 @@ assigned files; this lane does not perform a broad product migration.
 
 ## Trusted coverage implementation plan
 
+### Serial environment correction and remaining preconditions, 2026-10-28
+
+The runner's serial environment remains bound to its manifest. A child carrying
+CLI launch metadata must pass the existing run, parent, argv, cwd and exact
+final-environment launch validation before attribution. The selected protocol
+controls cover valid and forged, stale or changed child inputs; genuine prepared
+and issue-wave CAS receipts remain post-run evidence, not a new prelaunch gate.
+
+The actual linked-image controller binding remains blocked: the self-contained
+fixture's frozen install reported DNS failures with fresh private cache and
+its existing product diagnostic path encountered EPERM. The probe omitted the
+host proxy and CA environment, so its DNS result does not establish a host
+networking limitation; no retry was performed. The separate product
+owner handles the diagnostic sites; Root owns the supported readiness execution
+and capability. No production dependency-escape guard has been weakened. The
+Unix-socket target passed only in the separately approved qualified context.
+Do not infer changed-Source timing headroom from the prior failed measurement.
+
 ### Integration in progress, 2026-10-28
 
 The stage now routes the exact captured ordinary `bun-cli-run` selection through
