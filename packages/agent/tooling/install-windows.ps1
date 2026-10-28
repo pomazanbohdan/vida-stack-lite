@@ -43,15 +43,100 @@ function Get-FileDigest([string] $Path) {
     if ($item.PSIsContainer -or $item.Length -lt 1 -or $item.Length -gt 268435456) { throw 'Invalid input or installation file.' }
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
 }
-function Copy-Limited([IO.Stream] $InputStream, [IO.Stream] $OutputStream, [long] $MaximumBytes) {
+function Copy-Limited([IO.Stream] $InputStream, [IO.Stream] $OutputStream, [long] $MaximumBytes, [Diagnostics.Stopwatch] $Clock = $null, [long] $MaximumMilliseconds = 0) {
     $buffer = New-Object byte[] 65536
     $total = 0L
-    while (($count = $InputStream.Read($buffer,0,$buffer.Length)) -gt 0) {
+    while ($true) {
+        if ($Clock -and $Clock.ElapsedMilliseconds -ge $MaximumMilliseconds) { throw 'Download time limit exceeded.' }
+        $count = $InputStream.Read($buffer,0,$buffer.Length)
+        if ($Clock -and $Clock.ElapsedMilliseconds -ge $MaximumMilliseconds) { throw 'Download time limit exceeded.' }
+        if ($count -le 0) { break }
         $total += $count
         if ($total -gt $MaximumBytes) { throw 'Input exceeds its byte bound.' }
         $OutputStream.Write($buffer,0,$count)
     }
     return $total
+}
+function New-HttpsRequest([Uri] $Uri) {
+    return [Net.HttpWebRequest]::Create($Uri)
+}
+function Save-HttpsFile([Uri] $Uri, [string] $Destination, [long] $MaximumBytes, [int] $MaximumRedirects, [string] $LatestOrigin = '') {
+    if ($LatestOrigin -and $LatestOrigin -cnotin @('api.github.com', 'github.com')) { throw 'Invalid latest origin.' }
+    $clock = if ($LatestOrigin) { [Diagnostics.Stopwatch]::StartNew() } else { $null }
+    $maximumMilliseconds = 300000
+    for ($redirects = 0; ; $redirects++) {
+        if ($clock -and $clock.ElapsedMilliseconds -ge $maximumMilliseconds) { throw 'Download time limit exceeded.' }
+        if ($Uri.Scheme -cne 'https' -or $Uri.UserInfo) { throw 'Use HTTPS without credentials.' }
+        if ($LatestOrigin -and ($Uri.Port -ne 443 -or
+            ($redirects -eq 0 -and $Uri.DnsSafeHost -cne $LatestOrigin) -or
+            ($redirects -gt 0 -and ($LatestOrigin -cne 'github.com' -or $Uri.DnsSafeHost -cne 'release-assets.githubusercontent.com')))) {
+            throw 'Latest release download host or port is invalid.'
+        }
+        $request = New-HttpsRequest $Uri
+        $request.AllowAutoRedirect = $false
+        $request.Timeout = 60000
+        $request.ReadWriteTimeout = 60000
+        $request.UserAgent = 'vida-agent-installer'
+        $response = $request.GetResponse()
+        try {
+            if ($clock -and $clock.ElapsedMilliseconds -ge $maximumMilliseconds) { throw 'Download time limit exceeded.' }
+            $status = [int]$response.StatusCode
+            if ($status -in @(301, 302, 303, 307, 308)) {
+                if ($redirects -ge $MaximumRedirects -or -not $response.Headers['Location']) { throw 'Download redirect limit or location is invalid.' }
+                $Uri = [Uri]::new($Uri, [string]$response.Headers['Location'])
+                continue
+            }
+            if ($status -ne 200 -or $response.ContentLength -gt $MaximumBytes) { throw 'Invalid download response.' }
+            $stream = $response.GetResponseStream()
+            try {
+                $target = [IO.File]::Open($Destination, 'CreateNew', 'Write', 'None')
+                try { [void](Copy-Limited $stream $target $MaximumBytes $clock $maximumMilliseconds) }
+                finally { $target.Dispose() }
+            } finally { $stream.Dispose() }
+            return
+        } finally { $response.Dispose() }
+    }
+}
+function Get-LatestNativeRelease([string] $Stage) {
+    $latest = Join-Path $Stage 'latest.json'
+    Save-HttpsFile ([Uri]'https://api.github.com/repos/pomazanbohdan/vida-stack-lite/releases/latest') $latest 1048576 5 'api.github.com'
+    $selection = Get-Content -LiteralPath $latest -Raw | ConvertFrom-Json
+    if ($selection.tag_name -isnot [string] -or $selection.tag_name.Length -gt 128 -or
+        $selection.tag_name -cnotmatch '^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' -or
+        $selection.draft -isnot [bool] -or $selection.draft -or
+        $selection.prerelease -isnot [bool] -or $selection.prerelease) { throw 'Latest release identity is invalid.' }
+    $version = $selection.tag_name.Substring(1)
+    $base = 'https://github.com/pomazanbohdan/vida-stack-lite/releases/download/' + $selection.tag_name
+    $checksums = Join-Path $Stage 'SHA256SUMS-windows-x64'
+    Save-HttpsFile ([Uri]($base + '/SHA256SUMS-windows-x64')) $checksums 1024 5 'github.com'
+    $manifestHash = $null
+    $nativeHash = $null
+    $lines = [IO.File]::ReadAllLines($checksums)
+    if ($lines.Count -ne 2) { throw 'Release checksums are incomplete.' }
+    foreach ($line in $lines) {
+        if ($line -cnotmatch '^([a-f0-9]{64})  (vida-agent-bun-windows-x64\.manifest\.json|vida-agent-bun-windows-x64\.exe)$') { throw 'Release checksum entry is invalid.' }
+        if ($Matches[2] -ceq 'vida-agent-bun-windows-x64.manifest.json') {
+            if ($manifestHash) { throw 'Duplicate manifest checksum.' }
+            $manifestHash = $Matches[1]
+        } else {
+            if ($nativeHash) { throw 'Duplicate executable checksum.' }
+            $nativeHash = $Matches[1]
+        }
+    }
+    if (-not $manifestHash -or -not $nativeHash) { throw 'Release checksums are incomplete.' }
+    $manifest = Join-Path $Stage 'manifest.json'
+    $inputPath = Join-Path $Stage 'download'
+    Save-HttpsFile ([Uri]($base + '/vida-agent-bun-windows-x64.manifest.json')) $manifest 1048576 5 'github.com'
+    Save-HttpsFile ([Uri]($base + '/vida-agent-bun-windows-x64.exe')) $inputPath 268435456 5 'github.com'
+    if ((Get-FileDigest $manifest) -ine $manifestHash -or (Get-FileDigest $inputPath) -ine $nativeHash) { throw 'Release bytes differ from their checksums.' }
+    $manifestValue = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
+    if ($manifestValue -isnot [pscustomobject] -or $manifestValue.asset -isnot [pscustomobject] -or
+        $manifestValue.schema -cne 'VidaStandaloneBuild/v1' -or $manifestValue.version -cne $version -or
+        $manifestValue.target -cne 'bun-windows-x64' -or $manifestValue.asset.file -cne 'vida-agent-bun-windows-x64.exe' -or
+        $manifestValue.asset.sha256 -ine $nativeHash -or $manifestValue.asset.bytes -ne (Get-Item -LiteralPath $inputPath).Length) {
+        throw 'Manifest differs from the selected release.'
+    }
+    return @{ Version = $version; InputPath = $inputPath; ManifestHash = $manifestHash }
 }
 # Validate the small release ZIP directory before .NET allocates its entries.
 # Layout: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT sections 4.3.12/4.3.16.
@@ -159,31 +244,21 @@ try {
         Write-Output 'Uninstalled vida-agent. Project data and configuration are preserved.'
         return
     }
-    if (-not $Source) { throw '-Source requires a local EXE/ZIP path or a direct HTTPS URL.' }
-    $uri = $null
-    if ([Uri]::TryCreate($Source, [UriKind]::Absolute, [ref] $uri) -and $uri.Scheme -in @('http','https')) {
-        if ($uri.Scheme -ne 'https' -or $uri.UserInfo) { throw 'Use a direct HTTPS URL without credentials.' }
-        $inputPath = Join-Path $stage 'download'
-        $request = [Net.HttpWebRequest]::Create($uri)
-        $request.AllowAutoRedirect = $false
-        $request.Timeout = 60000
-        $request.ReadWriteTimeout = 60000
-        $response = $request.GetResponse()
-        try {
-            if ([int]$response.StatusCode -ne 200 -or $response.ContentLength -gt 268435456) { throw 'Invalid download response.' }
-            $stream = $response.GetResponseStream()
-            $target = [IO.File]::Open($inputPath, 'CreateNew', 'Write', 'None')
-            try {
-                $buffer = New-Object byte[] 65536
-                $total = 0L
-                while (($count = $stream.Read($buffer,0,$buffer.Length)) -gt 0) {
-                    $total += $count
-                    if ($total -gt 268435456) { throw 'Download exceeds 256 MiB.' }
-                    $target.Write($buffer,0,$count)
-                }
-            } finally { $target.Dispose(); $stream.Dispose() }
-        } finally { $response.Dispose() }
-    } else { $inputPath = (Resolve-Path -LiteralPath $Source).Path }
+    $latestVersion = $null
+    $latestManifestHash = $null
+    if (-not $Source) {
+        $latest = Get-LatestNativeRelease $stage
+        $inputPath = $latest.InputPath
+        $latestVersion = $latest.Version
+        $latestManifestHash = $latest.ManifestHash
+    } else {
+        $uri = $null
+        if ([Uri]::TryCreate($Source, [UriKind]::Absolute, [ref] $uri) -and $uri.Scheme -in @('http','https')) {
+            if ($uri.Scheme -ne 'https' -or $uri.UserInfo) { throw 'Use a direct HTTPS URL without credentials.' }
+            $inputPath = Join-Path $stage 'download'
+            Save-HttpsFile $uri $inputPath 268435456 0
+        } else { $inputPath = (Resolve-Path -LiteralPath $Source).Path }
+    }
     $inputHash = Get-FileDigest $inputPath
     $header = [IO.File]::OpenRead($inputPath)
     try { $isZip = $header.ReadByte() -eq 80 -and $header.ReadByte() -eq 75 } finally { $header.Dispose() }
@@ -241,6 +316,8 @@ try {
     $candidateHash = Get-FileDigest $pending
     if (-not $isZip -and $candidateHash -ine $inputHash) { throw 'Copied executable differs from the selected input.' }
     if ($hasManifest -and ($manifest -isnot [pscustomobject] -or $manifest.asset -isnot [pscustomobject] -or $manifest.schema -cne 'VidaStandaloneBuild/v1' -or $manifest.target -cne 'bun-windows-x64' -or $manifest.asset.file -cne 'vida-agent-bun-windows-x64.exe' -or $manifest.asset.sha256 -ine $candidateHash -or $manifest.asset.bytes -ne (Get-Item -LiteralPath $pending).Length)) { throw 'Native bytes differ from the manifest.' }
+    if ($latestVersion -and (-not $hasManifest -or $manifest.version -cne $latestVersion -or
+        (Get-FileDigest (Join-Path $stage 'manifest.json')) -ine $latestManifestHash)) { throw 'Selected release manifest changed.' }
     if ($exists) {
         if ((Get-FileDigest $command) -ine $priorHash) { throw 'Installed file changed before replacement.' }
         [IO.File]::Replace($pending, $command, $backup)

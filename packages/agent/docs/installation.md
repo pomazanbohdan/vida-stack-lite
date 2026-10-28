@@ -58,8 +58,9 @@ development reviews. The Windows workflow publishes the six formation files and
 an archive/result metadata artifact with the native-build profile. A historical
 seven-check profile keeps its original declared requirements.
 
-Use the maintained PowerShell adapter for physical Windows delivery. It accepts
-the selected EXE/ZIP or direct HTTPS URL, checks manifest bytes when present and
+Use the maintained PowerShell adapter for physical Windows delivery. It selects
+the latest GitHub release when `-Source` is omitted, or accepts a selected
+EXE/ZIP or direct HTTPS URL. It checks manifest bytes when present and
 replaces the fixed command with a transient previous copy. Observe installed
 version/bytes and effective PATH. Preserve uncertainty before retry. Qualification
 and installation do not grant user Runtime acceptance or consumer initialization.
@@ -346,11 +347,20 @@ fractional digits and does not match the current operation contract.
 Run the maintained `packages/agent/tooling/install-windows.ps1`:
 
 ```powershell
+.\install-windows.ps1 install
+.\install-windows.ps1 update
 .\install-windows.ps1 -Action install -Source 'C:\Downloads\vida-agent.zip'
 .\install-windows.ps1 -Action update -Source 'C:\Downloads\vida-agent.zip'
 .\install-windows.ps1 -Action update -Source 'https://example.org/vida-agent.exe'
 .\install-windows.ps1 -Action uninstall
 ```
+
+When `-Source` is omitted, the installer selects the latest published release
+once, then downloads the Windows executable, manifest and
+`SHA256SUMS-windows-x64` for that exact tag. Those assets must exist in the
+selected GitHub release. It verifies both checksums and the manifest version
+before replacing the command. An explicit `-Source` continues to select the
+specified file or direct URL; uninstall does not download a release.
 
 Use an actual selected package address in place of the examples. URL downloads
 require direct HTTPS without embedded login credentials, ambient authorization
