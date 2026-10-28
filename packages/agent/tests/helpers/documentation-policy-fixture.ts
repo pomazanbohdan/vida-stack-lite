@@ -28,7 +28,7 @@ type PreparedFixtureOptions = {
 
 function fixture(options: PreparedFixtureOptions = {}) {
   const bundle = process.env.VIDA_POLICY_TEST_BUNDLE ?? path.resolve(import.meta.dirname, '../..');
-  const scratch = process.env.VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT ?? process.env.TEMP ?? tmpdir();
+  const scratch = process.env.VIDA_DOCUMENTATION_POLICY_FIXTURE_ROOT ?? tmpdir();
   if (!scratch || !path.isAbsolute(scratch)) throw Error('absolute private fixture root required');
   mkdirSync(scratch, { recursive: true });
   const root = mkdtempSync(path.join(scratch, 'policy-'));

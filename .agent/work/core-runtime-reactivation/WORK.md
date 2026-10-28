@@ -330,6 +330,24 @@ objective dispositions remain candidates until independently bound to the final
 report. Preserve the existing selection, denominators and all older UNKNOWN
 fences; no contour closure or source qualification follows from these results.
 
+### Documentation CLEAR stage fixture failure — 2026-10-28
+
+The stage at `/workspace/contour-stage-emSpVT` on Source
+`060f39007a6ba78fc3855007e0dd2189bcb73883` ended with 37 pass and one fail.
+The new transition fixture chose an inherited read-only `TEMP` and `mkdtemp`
+failed with EROFS. The process exited 1 with complete capture and observed
+process-group closure; no report was produced and publication is
+`unknown-or-partial`. Preserve that stage and its failed evidence.
+
+The scratch fix at
+`/workspace/contour-doc-transition-XQ4NmoJs/fixture-temp-priority.patch`
+keeps the explicit fixture-root override and otherwise uses `os.tmpdir()`.
+With read-only `TEMP`/`TMP` and writable `TMPDIR`, the original target failed
+with EROFS before the fix; afterward both affected cases passed with 22
+expectations. A separate target confirmed the explicit override. Receipts are
+under `/workspace/contour-doc-transition-XQ4NmoJs/fixturecheck`. Windows
+precedence was checked against Bun 1.4.4 Source, not by native Windows execution.
+
 ## Focused serial environment and controller readiness — 2026-10-28
 
 Root's actual full selected stage on Source
