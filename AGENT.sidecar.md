@@ -88,6 +88,10 @@ For test-contour repairs, work on exactly one contour at a time. The owner's
 2026-10-19 order replaces the earlier three-contour pool. The owner's2026-10-21
 amendment permits objectively untestable coverage paths to be skipped under
 [TESTING's disposition rule](packages/agent/TESTING.md#objective-coverage-skips).
+The owner's 2026-10-28 trusted-run decision permits ordinary same-user execution
+under [TESTING's trusted coverage contract](packages/agent/TESTING.md#trusted-coverage-and-native-isolation).
+It leaves old UNKNOWN resources fenced, and does not qualify an unimplemented
+route or weaken mutation, untrusted-code or native security contracts.
 Finish exact input-bound F/L/S/B100 or disposition every remaining path under
 that rule before selecting another contour. Root owns
 the sole numeric producer and all final numbers. Repeat repair, focused checks and

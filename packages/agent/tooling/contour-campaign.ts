@@ -286,7 +286,23 @@ export function isolatedCommand(
   retainedScratchRoot?: string,
   image?: QualityExecutionImage,
   runtimeRoot?: QualityRuntimeRoot,
-) {
+  mode: 'isolated' | 'trusted-coverage' = 'isolated',
+): {
+  temporary: string;
+  native_status_file?: string;
+  runtime_root?: Pick<QualityRuntimeRoot, 'root' | 'manifest_file' | 'manifest_sha256' | 'dependency_root'>;
+  environment: NodeJS.ProcessEnv;
+  scratch_storage: { filesystem_type: string; available_bytes: string; minimum_free_bytes: string };
+  command: string[];
+} {
+  if (
+    mode === 'trusted-coverage' &&
+    (!image ||
+      runtimeRoot ||
+      retainedScratchRoot !== undefined ||
+      JSON.stringify(args) !== JSON.stringify(['tooling/contour-campaign.ts', '--coverage-child', 'bun-cli-run']))
+  )
+    throw new Error('Trusted coverage requires its exact declared image and command.');
   if (runtimeRoot) {
     if (!image || runtimeRoot.dependency_root !== image.dependency_root)
       throw new Error('Independent runtime root requires its exact image dependency boundary.');
@@ -351,9 +367,35 @@ export function isolatedCommand(
   const info = statfsSync(temporary, { bigint: true });
   if (!campaignStorageAdmitted(info.bavail * info.bsize))
     throw new CampaignResourceError(temporary, String(info.bavail * info.bsize));
+  const scratchStorage = {
+    filesystem_type: String(info.type),
+    available_bytes: String(info.bavail * info.bsize),
+    minimum_free_bytes: String(2n * 1024n ** 3n),
+  };
   const scratch = path.join(temporary, 'scratch');
   mkdirSync(scratch);
   mkdirSync(path.join(scratch, 'bun-install-cache'));
+  if (mode === 'trusted-coverage') {
+    if (!image) throw new Error('Trusted coverage requires an execution image.');
+    for (const name of ['home', 'cache', 'config']) mkdirSync(path.join(scratch, name));
+    return {
+      temporary,
+      environment: {
+        TMPDIR: scratch,
+        BUN_TMPDIR: scratch,
+        TMP: scratch,
+        TEMP: scratch,
+        HOME: path.join(scratch, 'home'),
+        XDG_CACHE_HOME: path.join(scratch, 'cache'),
+        XDG_CONFIG_HOME: path.join(scratch, 'config'),
+        BUN_INSTALL_CACHE_DIR: path.join(scratch, 'bun-install-cache'),
+        VIDA_QUALITY_IMAGE_MANIFEST: image.manifest_file,
+        VIDA_QUALITY_IMAGE_SHA256: image.manifest_sha256,
+      },
+      scratch_storage: scratchStorage,
+      command: [process.execPath, '--no-env-file', '--no-install', ...args],
+    };
+  }
   if (runtimeRoot) {
     if (
       runtimeRoot.root === scratch ||
@@ -385,11 +427,7 @@ export function isolatedCommand(
         ? { VIDA_QUALITY_IMAGE_MANIFEST: image.manifest_file, VIDA_QUALITY_IMAGE_SHA256: image.manifest_sha256 }
         : {}),
     },
-    scratch_storage: {
-      filesystem_type: String(info.type),
-      available_bytes: String(info.bavail * info.bsize),
-      minimum_free_bytes: String(2n * 1024n ** 3n),
-    },
+    scratch_storage: scratchStorage,
     command: [
       tools.tini,
       '-s',

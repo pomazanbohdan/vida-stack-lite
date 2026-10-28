@@ -32,6 +32,86 @@ import { randomUUID } from 'node:crypto';
 import type { QualityExecutionImage } from '../tooling/quality-execution-image.ts';
 import type { QualityRuntimeRoot } from '../tooling/quality-runtime-root.ts';
 
+test('trusted coverage command builder creates fresh run-owned host paths', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-trusted-control-'));
+  const stage = path.join(root, 'stage');
+  const repository = path.join(root, 'image', 'repository');
+  const packageRoot = path.join(repository, 'packages', 'agent');
+  const sourceRepository = path.join(root, 'source');
+  const dependencyRoot = path.join(root, 'dependencies');
+  for (const directory of [
+    stage,
+    sourceRepository,
+    dependencyRoot,
+    path.join(packageRoot, 'coverage'),
+    path.join(packageRoot, '.tmp'),
+    path.join(packageRoot, 'node_modules'),
+  ])
+    mkdirSync(directory, { recursive: true });
+  const image = {
+    schema: 'VidaQualityExecutionImage/v1',
+    repository,
+    packageRoot,
+    source_repository: sourceRepository,
+    dependency_root: dependencyRoot,
+    source_commit: 'a'.repeat(40),
+    source_tree: 'b'.repeat(40),
+    input_fingerprint: 'c'.repeat(64),
+    manifest_file: path.join(repository, 'image.json'),
+    manifest_sha256: 'd'.repeat(64),
+  } satisfies QualityExecutionImage;
+  const args = ['tooling/contour-campaign.ts', '--coverage-child', 'bun-cli-run'];
+  let completed = false;
+  try {
+    const invocation = isolatedCommand(
+      stage,
+      args,
+      { tini: '/control/tini', bwrap: '/control/bwrap' },
+      undefined,
+      image,
+      undefined,
+      'trusted-coverage',
+    );
+    const scratch = path.join(invocation.temporary, 'scratch');
+    expect(invocation.command).toEqual([process.execPath, '--no-env-file', '--no-install', ...args]);
+    expect(invocation.environment).toMatchObject({
+      TMPDIR: scratch,
+      TMP: scratch,
+      TEMP: scratch,
+      HOME: path.join(scratch, 'home'),
+      XDG_CACHE_HOME: path.join(scratch, 'cache'),
+      BUN_INSTALL_CACHE_DIR: path.join(scratch, 'bun-install-cache'),
+      VIDA_QUALITY_IMAGE_MANIFEST: image.manifest_file,
+      VIDA_QUALITY_IMAGE_SHA256: image.manifest_sha256,
+    });
+    for (const directory of ['home', 'cache', 'config', 'bun-install-cache']) {
+      const marker = path.join(scratch, directory, 'marker');
+      writeFileSync(marker, directory, { flag: 'wx' });
+      expect(readFileSync(marker, 'utf8')).toBe(directory);
+    }
+    expect(() =>
+      isolatedCommand(
+        stage,
+        [...args, '--mutation'],
+        { tini: '', bwrap: '' },
+        undefined,
+        image,
+        undefined,
+        'trusted-coverage',
+      ),
+    ).toThrow();
+    expect(() =>
+      isolatedCommand(stage, args, { tini: '', bwrap: '' }, undefined, undefined, undefined, 'trusted-coverage'),
+    ).toThrow();
+    expect(() =>
+      isolatedCommand(stage, args, { tini: '', bwrap: '' }, stage, image, undefined, 'trusted-coverage'),
+    ).toThrow();
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true });
+  }
+});
+
 test('campaign retains private scratch with its stage instead of accumulating host tmpfs roots', () => {
   const parent = tmpdir();
   const stage = mkdtempSync(path.join(parent, 'contour-scratch-control-'));

@@ -46,6 +46,39 @@ supported consumers and replacement are independently accounted for.
 
 ## Trusted coverage implementation plan
 
+### Prospective ordinary trusted execution, 2026-10-28
+
+The owner approved ordinary trusted same-user execution. The 2026-10-28 rule in
+`TESTING.md#trusted-coverage-and-native-isolation` supersedes this plan's older
+requirement to prove physical exclusion against unknown hostile same-user
+processes for new trusted runs. Old UNKNOWN operations, receipts and resources
+remain fenced. Mutation, untrusted input and native security contracts keep
+their own physical guarantees. Earlier historical statements remain historical.
+
+1. Reuse the stage's captured image, exact selection and owner. For the declared
+   trusted coverage lane only, launch the existing Bun coverage child in the
+   ordinary host with exclusive new temp/home/cache and output paths. Preserve
+   the existing image verification, output, group, timeout and report owners.
+2. Add focused negative controls for selection and Source mismatch, failures,
+   timeouts, cleanup, incomplete capture and foreign or stale evidence. An
+   incomplete or unsupported operation stays UNKNOWN or refused.
+3. Run scoped checks and independent review. Only after all actual admission
+   prerequisites, including timing, execute one unchanged-budget coverage
+   producer. The existing collector and validator retain the exact inventory;
+   CRAP stays in its declared phase with the same bound image and report.
+
+Do not add an IPC protocol, supervisor, service, UID, container or a new
+coverage collector. A candidate is not a qualified run. Source may change in
+the separately owned Bun pilot: bind evidence to the final integrated Source.
+
+The existing `isolatedCommand` owner now has an unactivated command-building
+mode for the exact `bun-cli-run` child. Its unit control proves only command
+construction, private-path creation and refusal of explicit retained roots.
+Before any production caller, bind the verified captured selection and image,
+effective environment and output roots to the actual run, and reject foreign or
+stale reports. Account for the selected tests' detached children and terminal
+custody. The synthetic builder test is not an admission or coverage proof.
+
 > **For agentic workers:** Use `superpowers:executing-plans` task by task.
 > Root remains the sole writer, producer, Git owner and owner of numbers;
 > independent bounded reviews use the existing blind native reviewer contract.

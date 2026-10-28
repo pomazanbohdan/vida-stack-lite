@@ -1880,8 +1880,27 @@ coverage. The image has no `.git`, worktree registration or dependency copy.
 
 #### Trusted coverage and native isolation
 
-The owner approved a portable trusted-coverage path on 2026-10-27. This is a
-verification contract, not evidence that the path is implemented or qualified.
+The owner approved ordinary same-user execution for new trusted, cooperative
+coverage runs on 2026-10-28. The maintained producer uses one Bun command and
+its existing capture, validator and exact input inventory. A trusted host does
+not promise protection against an unknown hostile process with the same user.
+Use exclusive new fixtures and outputs, preserve the existing per-operation
+ownership and bounded child lifecycle, and do not access, reuse, settle or
+replay resources fenced by an earlier UNKNOWN. This assumption does not resolve
+or change that UNKNOWN or its `resource_safe_to_advance` value. Hostile-process
+contracts remain visible, separately qualified on their native capabilities;
+mutation and untrusted input requirements remain unchanged.
+
+This decision authorizes a successor execution design, not a completed
+implementation, a qualified producer or a report. The current stage must keep
+its existing admission until the maintained trusted path, actual input binding,
+terminal/capture and resource ownership are verified. A timeout, incomplete
+capture, mismatched Source or unknown child remains a refusal. Exact F/L/S/B,
+inventory, frozen CC/CRAP and the 300s/30s/330s budgets are unchanged.
+
+The owner approved a portable trusted-coverage path on 2026-10-27. The
+2026-10-28 decision above supersedes physical hostile same-user exclusion for
+new trusted cooperative runs. The portable path is not yet qualified.
 The current stage continues to use the existing Linux isolation route until the
 new path and its evidence are independently qualified and adopted by the current
 plan. Existing UNKNOWN operations and their resources remain fenced.
@@ -1896,16 +1915,13 @@ launch. Reviewed native integration and fault-injection cases remain required;
 their effects must satisfy the same run-specific custody contract.
 
 The Root-owned run uses exclusive fixture, output, coverage and scratch resources.
-Before launch, the owner inventories the actual invocation's writable paths and
-aliases, inherited descriptors, shared stores and services, network or other
-external effects, and descendants that may retain access. Each item must bind to
-an observed capability and a run-specific proof of exclusion, custody or safe
-closure, as applicable; an unclassified item blocks admission. The owner must
-establish physical identity and prevent path substitution, and prove the new
-invocation does not access or reuse resources fenced by an earlier UNKNOWN. A fresh pathname,
-one writer, a supplied declaration, a control from another run or a direct
-child exit alone does not establish that proof. If the host cannot observe or
-enforce a necessary boundary, record unsupported or UNKNOWN and retain HOLD.
+Before launch, the owner accounts for the maintained invocation's writable
+paths, aliases, shared stores, external effects and known descendants, with
+run-specific ownership and terminal evidence. New runs do not access or reuse
+fenced resources. Trusted same-user execution does not assert kernel-enforced
+exclusion against a hostile same-user process; unknown ownership, missing
+required completion or an unaccounted effect remains a GAP. Physical identity
+and freshness checks required by production authority remain at their effects.
 
 Portable terminal and capture evidence binds the actual run, selected Source,
 tests, tools and runtime to complete untruncated stdout/stderr and observed
@@ -2335,7 +2351,8 @@ clean-commit and worktree checks, so status cannot refresh the index during a
 concurrent staged-hook observation.
 In that full sequence, if coverage is not completed at its exact maximum, record frozen CRAP
 as GAP without launching that producer. Continue independent mutation lanes;
-UNKNOWN custody and resource denial still fence every successor.
+UNKNOWN custody and resource denial fence the affected resources and operations;
+the prospective trusted-run rule above governs new, separate test resources.
 The outer coverage envelope is330s around its existing300s owner; mutation uses
 its independent900s partition/930s outer envelope. Per-test defaults stay5s.
 These are separate budgets, not a five-minute allowance for the entire campaign.

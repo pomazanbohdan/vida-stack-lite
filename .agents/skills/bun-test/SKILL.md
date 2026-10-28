@@ -65,6 +65,10 @@ retains the fixture. Budget and resource-custody gates stay with TESTING.
 For native image-mount controls, reuse the maintained capture/group observer and
 mark the fixture complete only after terminal and filesystem assertions pass.
 Keep raw failed streams and receipts. An afterEach hook alone grants no cleanup.
+For new trusted cooperative coverage, follow TESTING's ordinary same-user
+contract. Keep fresh owned fixtures, exact captured inputs and bounded process
+completion; do not reuse or settle old UNKNOWN resources. This does not establish
+hostile-process isolation or qualify an unimplemented trusted runner.
 For a qualified closed runtime root, keep bwrap namespace status on its dedicated
 controller-owned FD3 channel. FD1 consumes the child's stdout and cannot serve
 both contracts. Root verifies namespace-init terminal proof and unchanged inputs;
