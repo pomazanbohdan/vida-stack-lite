@@ -1941,8 +1941,14 @@ remain unchanged. A partial or targeted run cannot update qualified counters.
 Mutation and other untrusted execution continue to require separately qualified
 physical containment and native controls. A completed trusted run never resolves
 or replays an older UNKNOWN. The one 300s command budget, its 30s reserve and
-the existing 330s outer envelope remain unchanged. Timing headroom is a separate
-admission gate; an isolation proof alone does not authorize a full stage.
+the existing 330s outer envelope remain unchanged. Timing headroom remains a
+separate gate. For the first measurement of a new trusted Source, the owner may
+run one full selected contour without previously established timing headroom for
+that Source, but only after all other admission prerequisites are actually met.
+The unchanged budget and reserve apply. The resulting elapsed time is evidence, not automatic
+acceptance: all coverage, binding, terminal and custody checks still apply. A
+timeout remains UNKNOWN and its evidence and resources remain retained. This
+does not authorize replay or alteration of an earlier fenced UNKNOWN.
 
 The native mount control uses the shared command capture and owned process-group
 observer. Retain its fixture, raw streams and launch/execution records on any

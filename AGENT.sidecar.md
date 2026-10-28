@@ -92,6 +92,9 @@ The owner's 2026-10-28 trusted-run decision permits ordinary same-user execution
 under [TESTING's trusted coverage contract](packages/agent/TESTING.md#trusted-coverage-and-native-isolation).
 It leaves old UNKNOWN resources fenced, and does not qualify an unimplemented
 route or weaken mutation, untrusted-code or native security contracts.
+For one first measurement on a new trusted Source, follow TESTING's timing
+admission: all other prerequisites remain mandatory, the budget and reserve are
+unchanged, and a timeout is UNKNOWN with retained evidence.
 Finish exact input-bound F/L/S/B100 or disposition every remaining path under
 that rule before selecting another contour. Root owns
 the sole numeric producer and all final numbers. Repeat repair, focused checks and

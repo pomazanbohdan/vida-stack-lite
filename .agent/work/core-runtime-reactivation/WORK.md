@@ -4,6 +4,16 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## First trusted timing measurement decision — 2026-10-28
+
+The owner approved one first full measurement for new trusted Source after the
+other prerequisites are met. TESTING, the existing plan, sidecar and Bun test
+instructions now state this without changing the 300s budget, 30s reserve or
+330s outer envelope. Timeout is UNKNOWN and evidence is retained; a result is
+not automatically accepted and old fenced UNKNOWN resources remain unchanged.
+The decision does not activate the unfinished trusted stage or establish its
+effective environment, owned resources and known-child custody.
+
 ## Cache-routing terminal binding — 2026-10-28
 
 The prepared trusted command gives the existing cache fixture a fresh stage-owned

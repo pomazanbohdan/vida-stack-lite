@@ -69,6 +69,9 @@ For new trusted cooperative coverage, follow TESTING's ordinary same-user
 contract. Keep fresh owned fixtures, exact captured inputs and bounded process
 completion; do not reuse or settle old UNKNOWN resources. This does not establish
 hostile-process isolation or qualify an unimplemented trusted runner.
+TESTING permits one first full timing measurement of new trusted Source only
+after the other admission prerequisites are met. Keep the existing budget and
+reserve; a measurement is not automatic acceptance, and timeout remains UNKNOWN.
 For a qualified closed runtime root, keep bwrap namespace status on its dedicated
 controller-owned FD3 channel. FD1 consumes the child's stdout and cannot serve
 both contracts. Root verifies namespace-init terminal proof and unchanged inputs;

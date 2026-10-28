@@ -116,6 +116,15 @@ UNKNOWN, no effects on its fenced resources, no consumer cutover, new locks,
 credentials or CI. Unsupported capabilities and incomplete evidence remain HOLD.
 This specification does not qualify the proposed implementation or clear timing.
 
+On 2026-10-28 the owner authorized one first timing measurement for a new
+trusted Source after every other admission prerequisite is met, without requiring
+previously established timing headroom for that Source. The 300s budget, 30s
+reserve and 330s outer envelope are unchanged. A completed measurement is not automatic
+acceptance; timeout is UNKNOWN with retained evidence, and old fenced UNKNOWN
+resources remain untouched. Later runs still require the applicable timing
+evidence and the same acceptance gates. The existing stage remains unactivated
+until its real environment, resource and known-child prerequisites are proved.
+
 **Review focus:** changed selection after admission; path or alias substitution;
 live descendants after parent exit; truncated or stale run evidence; a qualifying
 report from only a subset of Source/tests. Tasks 1–3 each pin their relevant
@@ -249,11 +258,12 @@ evidence; no partial counter promotion.
 
 - [ ] Root verifies compatible Source, tool, runtime and complete inventory;
   independent review verifies actual closure and old-fence separation. Check
-  available resources against existing floors and use retained compatible timing
-  evidence to establish margin within the unchanged budget. Unknown or absent
-  proof is an explicit blocker; isolation alone does not establish timing.
-- [ ] Once every gate passes, invoke the existing producer once, retain its raw
-  capture and terminal/group or qualified platform-equivalent receipts, and wait
+  available resources against existing floors. Use retained compatible timing
+  evidence to establish margin within the unchanged budget, except for the
+  explicitly approved first measurement described above. Unknown or absent
+  ownership proof is an explicit blocker; isolation alone does not establish timing.
+- [ ] Once the applicable prelaunch gates pass, invoke the existing producer
+  once, retain its raw capture and terminal/group or qualified platform-equivalent receipts, and wait
   for terminal outcome. Projection's current owner alone updates status from a
   complete source-bound report. Incomplete, failed or UNKNOWN runs add no hits.
 - [ ] Review the package, commit with normal hooks, wait for their terminal exit,
@@ -384,8 +394,10 @@ retained bindings, authentic closed-rebind proof, and continuation receipt throu
 HostStateStore.continueDeliveredWork, followed by public CAS issue/report calls.
 The current fixture lacks that producer chain; no targeted test or new hit is
 claimed. Preserve its5s wrapper and helper budgets. See WORK's exact prerequisite
-review; missing authority is not an objective skip. Necessary targeted proof and independent review precede one full proof
-only after the existing isolation/resource and runtime-margin HOLD is resolved.
+review; missing authority is not an objective skip. Necessary targeted proof and
+independent review precede full proof. The later first-measurement decision above
+permits the initial trusted measurement after its other prerequisites, without
+assuming that its outcome resolves the runtime-margin HOLD.
 Targeted results alone close no numeric criterion. Blocker work stays bounded
 and subordinate to this coverage batch.
 
@@ -410,8 +422,9 @@ Keep full-stage HOLD. Read-only review does not expand architecture/acceptance.
 
 Latest attribution identifies durable config/safe-access reads as a sampled hot
 path; parsed config caching already exists and does not replace source/upgrade
-revalidation. No safe performance fix/headroom is proved. Before another full
-stage, choose and independently establish invariants for an existing-owner atomic
+revalidation. At that historical checkpoint no safe performance fix/headroom was
+proved. For later runs outside the first-measurement decision above, choose and
+independently establish invariants for an existing-owner atomic
 CAS read-snapshot (preferred investigation) or qualified owned within-contour
 shards under one unchanged total budget. Keep source-change/race/refusal/native
 proof and exact coverage; no cache-by-mtime, omitted fsync/lock or broad test skip.
