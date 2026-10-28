@@ -482,8 +482,9 @@ summary remain incomplete; preserve their original logs and fixtures.
 Separate artifact downloads from process inspection. For owner checks, list
 PID, parent PID, state and command names instead of full caller argv, which can
 echo a temporary signed transport URL. Keep those URLs out of retained summaries.
-During the owner's sequential exact F/L/S/B phase, work on one contour only and
-defer frozen CRAP and mutation producers. Preserve their existing gaps and
+During the owner's exact F/L/S/B phase, follow the blocked-contour lookahead in
+TESTING and keep numeric producers serial. Continue to defer frozen CRAP and
+mutation producers. Preserve their existing gaps and
 evidence; a coverage milestone is not complete-triple closure. Do not launch CRAP
 merely to reconfirm a known coverage prerequisite failure.
 Before reviewing image resources, trace the actual launch environment: its
@@ -967,10 +968,11 @@ property descriptor and close the connection through owned cleanup. A seam error
 is not the product regression; retain it separately from the actual RED/GREEN.
 
 Follow [TESTING's rolling contour cycle](../../../packages/agent/TESTING.md#rolling-contour-repair-cycle)
-with exactly one active contour. Keep Root as the sole final-check and numeric
-owner. Select the next contour only after the active contour has accepted exact
-F/L/S/B100 or every remaining counter has a reviewed objective skip under
-TESTING. A skip permits queue progression while raw counts and BLOCKED remain;
+with the blocked-contour lookahead in the sidecar. Keep Root as the sole final-check
+and numeric owner. A blocked contour remains open and paused while work on the next
+declared contour proceeds, including serial coverage after its own admission. Resume
+the blocked contour at a safe atomic boundary when its prerequisite is available. A skip permits
+ordinary queue progression while raw counts and BLOCKED remain;
 it grants no numeric PASS or frozen/mutation waiver. A prepared patch or partial diagnostic proves no milestone. This
 strategy does not activate parallel numeric producers or coverage shards.
 

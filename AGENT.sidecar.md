@@ -82,10 +82,16 @@ backlog and WORK as their existing owners. Do not create another outer workflow,
 orchestration store, standing-orders register or canonical ledger for the same work.
 
 Root retains Source integration, shared-file ownership, final checks and Git.
-Native blind Luna is the selected provider/model route for all delegated lanes.
+Native blind Luna is the default provider/model route for delegated lanes. An
+explicit owner model selection takes precedence for its assigned lane.
 
-For test-contour repairs, work on exactly one contour at a time. The owner's
-2026-10-19 order replaces the earlier three-contour pool. The owner's2026-10-21
+For test-contour repairs, work on one contour at a time except for the owner's
+2026-10-28 blocked-contour lookahead. If a prerequisite blocks the current contour,
+keep it open and paused, and work on the next declared contour, including scoped
+implementation, tests and serial coverage after its own admission. Resume the
+blocked contour at a safe atomic boundary when its prerequisite is available.
+Root keeps numeric producers serial.
+The owner's 2026-10-19 order replaces the earlier three-contour pool. The owner's2026-10-21
 amendment permits objectively untestable coverage paths to be skipped under
 [TESTING's disposition rule](packages/agent/TESTING.md#objective-coverage-skips).
 The owner's 2026-10-28 trusted-run decision permits ordinary same-user execution
@@ -96,13 +102,12 @@ For one first measurement on a new trusted Source, follow TESTING's timing
 admission: all other prerequisites remain mandatory, the budget and reserve are
 unchanged, and a timeout is UNKNOWN with retained evidence.
 Finish exact input-bound F/L/S/B100 or disposition every remaining path under
-that rule before selecting another contour. Root owns
+that rule before ordinary queue progression. Root owns
 the sole numeric producer and all final numbers. Repeat repair, focused checks and
 the exact selected-contour run through
 [TESTING's contour cycle](packages/agent/TESTING.md#rolling-contour-repair-cycle).
-Do not start another contour while testable or undispositioned paths remain;
-record the exact GAP and continue resolving that same contour. Objective skips
-permit queue progression, not numeric PASS or changed denominators. Frozen correspondence, CRAP and
+Record each exact GAP and preserve the blocked contour's status during lookahead.
+Objective skips permit queue progression, not numeric PASS or changed denominators. Frozen correspondence, CRAP and
 mutation remain deferred until the coverage phase finishes; their budgets and
 assertion-confirmed Killed100 rules are unchanged. A patch, review, partial run or
 timeout does not close a contour.

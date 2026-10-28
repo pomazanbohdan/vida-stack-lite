@@ -497,6 +497,59 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
     }
   });
 
+  test('closeout rejects typed events with incorrect document hashes and accepts the correct binding', async () => {
+    for (const wrongField of ['before_sha256', 'after_sha256'] as const) {
+      const fixture = documentationClearFixture({ changelogRequired: true });
+      let passed = false;
+      try {
+        const baselineResult = await runtime.executeDocumentationClearOperation(fixture.input, 'baseline');
+        const baselinePath = path.join(fixture.root, baselineResult.path);
+        const baselineBytes = readFileSync(baselinePath);
+        const documentPath = 'docs/agent-instructions/current.md';
+        const before = readFileSync(path.join(fixture.root, documentPath));
+        const after = 'current, revised\n';
+        fixture.write(documentPath, after);
+        const digest = (content: string | Uint8Array): string =>
+          new Bun.CryptoHasher('sha256').update(content).digest('hex');
+        const event = {
+          schema: 'DocumentationChangeEvent/v1',
+          event_id: 'finalize-current-hash',
+          logical_edit_id: 'finalize-current-hash',
+          work_id: fixture.input.work_id,
+          source_revision: fixture.input.source_revision,
+          operation: 'finalize',
+          document_id: documentPath,
+          path_before: documentPath,
+          path_after: documentPath,
+          before_sha256: digest(before),
+          after_sha256: digest(after),
+          actor: 'test:documentation-owner',
+          pointer: 'test:finalize-current-hash',
+          timestamp: new Date().toISOString(),
+        };
+        const changelog = 'docs/agent-instructions/agent-instructions.changelog.jsonl';
+        fixture.write(changelog, JSON.stringify({ ...event, [wrongField]: '0'.repeat(64) }) + '\n');
+        await Promise.resolve(
+          expect(runtime.executeDocumentationClearOperation(fixture.input, 'closeout')).rejects.toThrow(
+            'documentation CLEAR blocked: GAP-DOCUMENTATION-CHANGELOG-001',
+          ),
+        );
+        expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+
+        fixture.write(changelog, JSON.stringify(event) + '\n');
+        const closeout = await runtime.executeDocumentationClearOperation(fixture.input, 'closeout');
+        const checkpoint = readCheckpoint(path.join(fixture.root, closeout.path));
+        expect(closeout.status).toBe('pass');
+        expect(checkpoint.gaps).toEqual([]);
+        expect((await runtime.executeDocumentationClearOperation(fixture.input, 'verify')).path).toBe(closeout.path);
+        passed = true;
+      } finally {
+        if (passed) fixture.cleanup();
+        else console.error(`Retained failed changelog hash fixture: ${fixture.root}`);
+      }
+    }
+  });
+
   test('CLEAR document paths reject absolute, traversal, empty-segment, and platform-specific spellings', () => {
     for (const unsafe of [
       '',

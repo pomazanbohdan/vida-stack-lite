@@ -4,6 +4,14 @@ Status date:2026-10-27. This document owns execution order.
 [WORK](WORK.md) owns decisions and evidence locators; the existing
 [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable IDs.
 
+Current queue amendment, 2026-10-28: `bun-cli-run` remains open and paused
+on controller output and readiness. Work on the next declared contour,
+`bun-doc-clear`, including scoped implementation, tests and serial coverage after
+its own admission. Resume `bun-cli-run` at a safe atomic boundary when its
+prerequisite is available. Earlier single-contour directions below describe their historical
+cycles; the blocked-contour lookahead in the sidecar governs this queue. Root
+owns serial numeric producers. Phase F/L/S/B and its existing gates remain in force.
+
 ## Objective
 
 Complete approved P0/P1 corrections and supported simplifications with current,
@@ -158,7 +166,7 @@ adapter tests and separately contained untrusted/mutation execution remain real.
 campaign and coverage evidence owners. **Spec:**
 [`packages/agent/TESTING.md`](../../../packages/agent/TESTING.md#trusted-coverage-and-native-isolation).
 
-**Global constraints:** one contour and one producer; exact F/L/S/B and complete
+**Global constraints:** serial numeric producers; exact F/L/S/B and complete
 inventory; 300s command with 30s reserve, 330s outer envelope; no replay of old
 UNKNOWN, no effects on its fenced resources, no consumer cutover, new locks,
 credentials or CI. Unsupported capabilities and incomplete evidence remain HOLD.
@@ -708,18 +716,23 @@ owns checks and numeric gates; this plan owns order; WORK owns decisions and
 locators. Generated projection owns derived counts. Change each fact once at its
 existing owner, preserving resolvable historical Git references and live anchors.
 
-### 2. Continue one contour at a time
+### 2. Continue the contour queue
 
 Finish the complete selected contour's positive-denominator exact F/L/S/B100,
 or disposition every remaining path under the owner's2026-10-21
 [objective-skip amendment](../../../packages/agent/TESTING.md#objective-coverage-skips),
-before choosing another contour. The completed Host disposition permits the
-current queue advance only; reopen it when its supported producer/contract changes.
+before ordinary queue progression. The owner's 2026-10-28 blocked-contour
+lookahead permits work on the next declared contour when a prerequisite blocks the
+current one, including serial coverage after its own admission. Keep the blocked
+contour open and paused, and resume it at a safe atomic boundary when the
+prerequisite is available. Root retains serial numeric ownership. The
+completed Host disposition permits the current queue advance only; reopen it when
+its supported producer/contract changes.
 The owner's named controller deferral in WORK is the separate2026-10-23
 queue exception for its native Windows GAP; it is not a general platform waiver.
 Preserve selection, denial/retry/restoration
 assertions, CAS, ownership, authorization and UNKNOWN semantics. Keep a blocked
-contour active while testable or undispositioned paths remain. An objective skip
+contour open while testable or undispositioned paths remain. An objective skip
 permits queue progression while its true counts and numeric GAP remain visible.
 
 Root alone integrates Source, owns Git and produces final numbers. Independent
@@ -747,7 +760,7 @@ and [gitless execution contract](../../../packages/agent/TESTING.md#gitless-cont
    by owning mechanism, integrate supported corrections together and record the
    exact prerequisite for each blocked path. Run focused checks during repair.
    Do not launch a full stage per individual candidate or pretend an unresolved
-   path is covered. Other contours and numeric lanes remain deferred.
+   path is covered. Other numeric lanes remain deferred.
 3. Run strict TypeScript and configured zero-warning lint first, then the exact
    edited test declarations. Reconcile case names with existing inventory/current
    declarations rather than a new AST pass. Diagnose causal failures; never loop

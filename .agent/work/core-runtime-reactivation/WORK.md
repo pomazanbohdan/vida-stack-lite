@@ -4,6 +4,36 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Blocked-contour lookahead and documentation CLEAR packet — 2026-10-28
+
+The owner authorizes work on the next declared contour while `bun-cli-run` is
+blocked on controller output and readiness. `bun-cli-run` remains open and
+paused; resume it at a safe atomic boundary when the prerequisite is available.
+The next contour is `bun-doc-clear`. Its scoped implementation and tests may
+proceed, followed by serial coverage after its own admission. Root retains serial
+numeric ownership, phase F/L/S/B and all
+existing acceptance, denominator, UNKNOWN, frozen CRAP and mutation gates. The
+sidecar, TESTING, Bun Test skill and current plan record this queue amendment.
+
+Against base `36c1d7b6616b302347c5b9fb85638bb70e15f123`, the test packet adds
+an in-process typed changelog event case in `documentation-clear-boundary.test.ts`.
+It checks wrong before and after content hashes separately, preserves baseline
+bytes after refusal, and accepts and verifies the correct binding. The existing
+valid finalize and foreign-revision cases do not exercise those mismatches. The
+supplied retained diagnostic locator was absent, so this is a behavioral candidate,
+not an identified current coverage gap. A future producer must establish counters.
+
+The final pinned Bun 1.4.4 target passed one case with ten expectations. Scoped
+strict TypeScript passed 95 files; typed Oxlint and one-file format passed. The
+first scratch strict attempt failed to resolve Bun and Node types; the
+corrected config uses the existing package type roots. An earlier excluded-map
+target candidate passed, then was replaced by the selected event-binding packet.
+Captured outputs and terminal custody are under
+`/workspace/contour-doc-clear-terra-bAC1NYhY`. This tests existing behavior;
+no RED or product fix is claimed. Native reviewer `/root/luna_doc_clear_review`
+approved the packet without material issues and ran no tests. Numeric evidence
+remains pending. No contour closure or changed denominator follows from this packet.
+
 ## Focused serial environment and controller readiness — 2026-10-28
 
 Root's actual full selected stage on Source
