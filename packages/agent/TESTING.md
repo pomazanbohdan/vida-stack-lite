@@ -2755,7 +2755,7 @@ function execution from statement counters or replace them with field closures.
 
 ### Focused controller CLI counter custody
 
-Only four serial v2 focused selections may carry `cli_children`:
+Only five serial v2 focused selections may carry `cli_children`:
 
 - `bun-development-controller`, with its one declared Source and test, observes
   one native missing-option `inspect` invocation.
@@ -2772,6 +2772,18 @@ Only four serial v2 focused selections may carry `cli_children`:
   and exactly `Execution budget exhausted before child launch.` plus newline.
   The fresh import computes finite ancestor clock policy before the spent
   budget refuses runtime resolution; it never starts a coverage suite.
+
+- `bun-doc-clear`, with exactly `src/documentation/clear.ts`,
+  `src/documentation/policy.ts`, `src/documentation/clear-checkpoint-validator.ts`,
+  `bin/documentation-clear.ts`, and the `documentation-clear`,
+  `documentation-transition-proof` and `documentation-clear-boundary` tests,
+  observes the two native `documentation-clear` calls in its dedicated fixture.
+  Its fixture root is derived from the run ID. The baseline requires exit0,
+  empty stderr and a passing baseline result with its path and digests. The invalid
+  mode requires exit1, empty stdout and exactly `documentation CLEAR mode invalid`
+  plus newline. The maintained test verifies the persisted baseline and both
+  native results. Both invocations retain their complete argv, package cwd and
+  30000ms timeout; other CLEAR calls remain ordinary children.
 
 - `bun-cli-run`, with exactly `bin/run.ts`, `tests/run-entrypoint.test.ts` and
   `tests/bun-cache-routing.test.ts`, observes exactly three fixed subjects: help,
@@ -2838,7 +2850,7 @@ receipts retain their evidence and cannot contribute counters.
 
 Each declared subject must appear once with a distinct launch ID and its own
 one-Source counter map. Identity includes the fixed subject role, exact source and canonical argv;
-the two toolchain scenarios and three run subjects each share their selected Source. Missing, duplicate and foreign
+the two toolchain scenarios, three run subjects and two CLEAR subjects each share their selected Source. Missing, duplicate and foreign
 scenarios deny admission. The clock witness requires an exact copy of parent
 environment with only its two fixed clock replacements; all other subjects keep
 their existing environment. Child startup verifies the bound clock values.

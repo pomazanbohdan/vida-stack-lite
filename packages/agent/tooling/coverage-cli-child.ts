@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { closeSync, fstatSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { isDeepStrictEqual } from 'node:util';
 import type { SpawnSyncReturns } from 'node:child_process';
 import type { createFixtureChildObserver } from './fixture-child-observation.ts';
@@ -163,7 +164,25 @@ function samePaths(actual: readonly string[] | undefined, expected: readonly str
   );
 }
 
+const documentationClearSources = [
+  'src/documentation/clear.ts',
+  'src/documentation/policy.ts',
+  'src/documentation/clear-checkpoint-validator.ts',
+  'bin/documentation-clear.ts',
+];
+const documentationClearTests = [
+  'tests/documentation-clear.test.ts',
+  'tests/documentation-transition-proof.test.ts',
+  'tests/documentation-clear-boundary.test.ts',
+];
+
 const cliProfiles = [
+  {
+    contour: 'bun-doc-clear',
+    sources: documentationClearSources,
+    tests: documentationClearTests,
+    subject: { role: 'documentation-baseline', source: 'bin/documentation-clear.ts', exit_code: 0 },
+  },
   {
     contour: 'bun-cli-toolchain',
     sources: toolchainSources,
@@ -209,6 +228,8 @@ type CliSubject = { role: string; source: string; argument?: string; exit_code: 
 function cliSubjects(manifest: CliCoverageManifest): CliSubject[] {
   const subject = cliSubject(manifest);
   if (!subject) return [];
+  if (subject.source === 'bin/documentation-clear.ts')
+    return [subject, { role: 'documentation-invalid-mode', source: subject.source, exit_code: 1 }];
   if (subject.source === 'bin/bun.ts')
     return [
       subject,
@@ -332,6 +353,24 @@ function nativeArgv(
   subject: CliSubject | undefined = cliSubject(context.manifest),
 ): string[] {
   assert.ok(subject, 'CLI coverage requires an exact supported selection.');
+  if (subject.source === 'bin/documentation-clear.ts') {
+    assert.match(context.manifest.run_id, idPattern);
+    return [
+      path.join(context.root, subject.source),
+      '--mode',
+      subject.role === 'documentation-baseline' ? 'baseline' : 'invalid',
+      '--project-root',
+      path.join(tmpdir(), 'vida-clear-coverage-' + context.manifest.run_id),
+      '--repository',
+      'creatio-sample-repository',
+      '--project',
+      'refactoring',
+      '--work-id',
+      'doc-clear-test',
+      '--source-revision',
+      'revision-one',
+    ];
+  }
   return [
     '--no-env-file',
     '--no-install',
@@ -424,6 +463,11 @@ function checkedLaunch(context: CliCoverageContext, value: unknown): CliChildLau
   assert.equal(typeof row.environment_sha256, 'string');
   assert.match(String(row.environment_sha256), /^[a-f0-9]{64}$/u);
   assert.ok(isRecord(row.native_options));
+  if (subject.source === 'bin/documentation-clear.ts')
+    assert.ok(
+      isDeepStrictEqual(row.native_options, { cwd: context.root, encoding: 'utf8', timeout: 30_000 }),
+      'CLEAR CLI native options differ.',
+    );
   if (runOperationRoles.has(subject.role)) {
     assert.ok(typeof row.native_options.detached === 'boolean');
     assert.deepEqual(row.native_options, {
@@ -574,13 +618,18 @@ export function readCliCoverageLaunch(context: CliCoverageContext): CliChildLaun
     path.join(context.root, launch.entry.path),
     ...(runOperationRoles.has(subject.role)
       ? launch.original_argv.slice(1)
-      : subject.argument === undefined
-        ? []
-        : [subject.argument]),
+      : nativeArgv(context, subject).slice(
+          nativeArgv(context, subject).indexOf(path.join(context.root, subject.source)) + 1,
+        )),
   ]);
   assert.deepEqual(
     process.execArgv,
-    launch.effective_argv.slice(0, runOperationRoles.has(subject.role) ? 2 : subject.argument === undefined ? -1 : -2),
+    launch.effective_argv.slice(
+      0,
+      runOperationRoles.has(subject.role)
+        ? 2
+        : 2 + nativeArgv(context, subject).indexOf(path.join(context.root, subject.source)),
+    ),
   );
   assert.equal(process.cwd(), launch.cwd);
   assert.equal((process.env.BUN_OPTIONS ?? '').trim(), '');
@@ -836,7 +885,9 @@ export function createCliCoverageObserver(
               killSignal: 'SIGKILL',
               detached: process.platform !== 'win32',
             }
-          : { encoding: 'utf8', windowsHide: true, timeout: 4000 },
+          : subject.source === 'bin/documentation-clear.ts'
+            ? { cwd: context.root, encoding: 'utf8', timeout: 30_000 }
+            : { encoding: 'utf8', windowsHide: true, timeout: 4000 },
         'CLI observation requires the unchanged bounded native invocation.',
       );
       if (runOperationRoles.has(subject.role)) {
@@ -1472,15 +1523,17 @@ export function cliCoverageChildMaps(
       path.join(context.root, subject.source),
       ...(runOperationRoles.has(subject.role)
         ? launch.original_argv.slice(1)
-        : subject.argument === undefined
-          ? []
-          : [subject.argument]),
+        : nativeArgv(context, subject).slice(
+            nativeArgv(context, subject).indexOf(path.join(context.root, subject.source)) + 1,
+          )),
     ]);
     assert.deepEqual(
       receipt.exec_argv,
       launch.effective_argv.slice(
         0,
-        runOperationRoles.has(subject.role) ? 2 : subject.argument === undefined ? -1 : -2,
+        runOperationRoles.has(subject.role)
+          ? 2
+          : 2 + nativeArgv(context, subject).indexOf(path.join(context.root, subject.source)),
       ),
     );
     const stdout = referencedBytes(context, observation.stdout, proofPath(id, 'stdout.log'));
@@ -1557,6 +1610,17 @@ export function cliCoverageChildMaps(
         preparedInputs: launch.prepared!.inputs.map((value) => proofRecord(value)),
         intakeInput,
       });
+    } else if (subject.role === 'documentation-baseline') {
+      assert.equal(stderr.length, 0);
+      const clear = proofRecord(JSON.parse(stdout.toString('utf8')));
+      assert.deepEqual(Object.keys(clear).sort(), ['checkpoint_digest', 'path', 'sha256', 'status']);
+      assert.equal(clear.status, 'pass');
+      assert.equal(clear.path, '.agent/work/doc-clear-test/documentation-baseline-0001.v1.json');
+      assert.match(String(clear.sha256), /^[a-f0-9]{64}$/u);
+      assert.match(String(clear.checkpoint_digest), /^[a-f0-9]{64}$/u);
+    } else if (subject.role === 'documentation-invalid-mode') {
+      assert.equal(stdout.length, 0);
+      assert.deepEqual(stderr, Buffer.from('documentation CLEAR mode invalid\n'));
     } else if (subject.source === 'bin/bun.ts') {
       if (subject.expired_clock) {
         assert.equal(stdout.length, 0);

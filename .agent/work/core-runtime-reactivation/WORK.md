@@ -4,6 +4,76 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Documentation CLEAR native CLI custody preparation — 2026-10-28
+
+Root's full selected stage on Source `afcf16ad` retained run `c523c29b`.
+It passed 25 tests and 225 expectations in 31.4 s, with a 35.396 s stage.
+The focused diagnostic reported F 44/46, L 209/230, S 246/281 and B 188/229;
+full qualification remains false and the operation remains blocked. The Source
+fingerprint matches the previous measurement. The only changed captured tool
+input is `tests/documentation-clear-boundary.test.ts`, so the improved counters
+reflect changed tests rather than a production Source delta.
+
+The integrated proposal extends the existing exact-selection observer with
+baseline and invalid-mode roles for the native CLEAR entrypoint. The ordinary
+scratch capture at `/workspace/contour-doc-cli-packet-Yf404QJO/capture-ptAnQI`
+passed three cases and 30 expectations, including the genuine CLI fixture. Its
+collector and fixture bytes match the integrated files; the test file also
+contained then-unselected E2E additions, so it is not evidence for the frozen
+initial packet's exact test bytes. The follow-up synthetic protocol capture at
+`/workspace/contour-doc-cli-packet-Yf404QJO/e2e-capture-FGLuHR` passed one
+case and 90 expectations. Both captures had complete streams and observed
+owned-group termination. The synthetic entry tests receipt and refusal semantics;
+it does not prove a real Source-bound counter join. Independent review reported
+no must-fix findings. The three integrated TypeScript files match the reviewed
+follow-up bytes; canonical scoped strict TypeScript passed 118 files, type-aware
+lint and formatting passed. The canonical full observer suite passed 14 cases
+and 635 expectations in 6.14 s, retained at
+`/workspace/contour-doc-cli-packet-Yf404QJO/canonical-profiles-NqzQAY`.
+The genuine canonical CLI case passed one case and nine expectations in 0.98 s,
+retained at `/workspace/contour-doc-cli-packet-Yf404QJO/canonical-doc-zjlOc3`.
+Both had verified case selection, complete capture and observed owned-group
+termination, with no timeout or signal. The Source-bound selected stage remains
+pending and must establish the real join and exact counters; no new numeric
+result or contour closure is claimed. The selected Sources and tests, gates and
+denominators are unchanged.
+
+The catalog refresh reported a read-only PATH-alias warning; that refresh is a
+GAP. Root's previously qualified Pstack skill locator remained readable and was
+used for this packet, with no functional Pstack gap observed.
+
+### Three-hour execution audit — 07:23–10:23 UTC, 2026-10-28
+
+The recorded main-line commits in this window are `80eda508`, `d1814956`,
+`6bf65ced`, `8a231143`, `3d81acb7`, PR 8 merge `3ba36405`, `36c1d7b6`,
+`17eb72b1` and `afcf16ad`. Root reports the retained native `bun-cli-run` stage
+on `3d81acb7` had 158 passes, 7 failures and 3,824 expectations, with a
+255.33 s suite and 260.548 s stage; it produced no accepted report. Its retained
+root and known failure context are recorded below. The first documentation stage
+on `17eb72b1` had 24 passes and 217 expectations, a 38.030 s stage, and
+F 44/46, L 207/230, S 241/281 and B 183/229. The latest documentation stage
+is the `afcf16ad` run above. Same Source fingerprint and only the boundary test
+changed among captured tool inputs bind the counter difference to changed test
+execution; neither result is full qualification.
+
+The PR 9 controller candidate reached readiness in 21.615 s with all four
+stage markers, complete capture and owned-group closure. Its scoped strict CLI
+check examined 151 files without type errors; its target reported 7 PASS and
+1 FAIL at the inherited
+ceiling assertion, which remains pending upstream. The observed documentation
+order was targeted test, scoped checks, review, then one serial stage. The
+`bun-cli-run` stage ran before fixture qualification and failed without a new
+accepted report. These are finite observations, not matched benchmarks or a
+speed comparison. Two- and four-producer numeric execution remain unqualified;
+retain one serial numeric producer. Billed tokens and aggregate tool-call totals
+are GAPs because their authoritative totals were not supplied.
+
+The previously observed checkout and scratch filesystem had 6,407,045,120 bytes
+available against the 2,147,483,648-byte floor. The retained-path absence was a
+no-op. This record adds no disk check, scan or cleanup. Full qualification is
+false; frozen CRAP and mutation phases do not advance, and old UNKNOWN resources
+remain fenced.
+
 ## Documentation CLEAR reference binding packet — 2026-10-28
 
 Root's full selected stage on Source `17eb72b18d3ea5c802782c5a13a69f4a6cfe9e53`

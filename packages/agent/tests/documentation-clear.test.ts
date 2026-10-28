@@ -32,7 +32,7 @@ const write = (root: string, relative: string, content: string): void => {
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, content);
 };
-const run = (root: string, mode: Mode): RunResult => {
+const run = (root: string, mode: Mode | 'invalid'): RunResult => {
   const result = spawnSync(
     process.execPath,
     [
@@ -104,6 +104,66 @@ const initializeFixture = (root: string, { localSchemas = true }: { localSchemas
     write(root, 'vida-agent/TESTING.md', 'fixture testing\n');
   }
 };
+
+test('public CLEAR baseline and invalid mode preserve CLI output', () => {
+  const runId = process.env.VIDA_BUN_COVERAGE_RUN_ID;
+  if (runId && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/u.test(runId))
+    throw new Error('Coverage run ID is invalid.');
+  const root = runId
+    ? path.join(tmpdir(), 'vida-clear-coverage-' + runId)
+    : mkdtempSync(path.join(tmpdir(), 'vida-clear-native-'));
+  let passed = false;
+  try {
+    if (runId) mkdirSync(root, { mode: 0o700 });
+    initializeFixture(root);
+    const policy = {
+      schema: 'DocumentationPolicy/v1',
+      policy_id: 'clear-native',
+      project_id: 'refactoring',
+      source_path: 'docs/agent-instructions/documentation-policy.v1.json',
+      owner: 'project:refactoring',
+      required: true,
+      canonical_roots: ['docs/agent-instructions'],
+      map_paths: ['docs/agent-instructions/index.md'],
+      excluded_roots: ['.agent', '.planning'],
+      changelog_required: false,
+      changelog_path: null,
+      relations: ['owns'],
+      updated_at: new Date().toISOString(),
+    };
+    write(root, policy.source_path, JSON.stringify(policy) + '\n');
+    write(root, policy.map_paths[0]!, 'Current documentation map\n');
+    write(root, 'docs/agent-instructions/current.md', 'Current document\n');
+    const scopePath = '.agent/work/doc-clear-test/scope.json';
+    write(
+      root,
+      scopePath,
+      JSON.stringify({
+        schema: 'ImplementationScope/v1',
+        work_id: 'doc-clear-test',
+        source_revision: 'revision-one',
+        allowed_paths: ['docs/agent-instructions/current.md'],
+      }) + '\n',
+    );
+    const baseline = run(root, 'baseline');
+    expect(baseline.status, baseline.stderr).toBe(0);
+    expect(baseline.stderr).toBe('');
+    const result = JSON.parse(baseline.stdout) as Record<string, unknown>;
+    expect(result.status).toBe('pass');
+    expect(result.path).toBe('.agent/work/doc-clear-test/documentation-baseline-0001.v1.json');
+    const bytes = readFileSync(path.join(root, String(result.path)), 'utf8');
+    expect(result.sha256).toBe(sha(bytes));
+    expect(result.checkpoint_digest).toBe((JSON.parse(bytes) as { digest: string }).digest);
+    const invalid = run(root, 'invalid');
+    expect(invalid.status).toBe(1);
+    expect(invalid.stdout).toBe('');
+    expect(invalid.stderr).toBe('documentation CLEAR mode invalid\n');
+    passed = true;
+  } finally {
+    if (passed) disposeFixture(root);
+    else console.error(`Retained failed native CLEAR fixture: ${root}`);
+  }
+}, 60_000);
 
 test('public CLEAR uses package policy schema without local assets and rejects consumer schema overrides', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-package-schema-'));

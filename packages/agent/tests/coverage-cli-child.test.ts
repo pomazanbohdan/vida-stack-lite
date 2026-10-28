@@ -36,6 +36,7 @@ import {
   focusedCliCoverage,
   focusedControllerCliCoverage,
   preparedCliInputRoles,
+  readCliCoverageLaunch,
   preparedCliOutputHasRepositorySourceWriter,
   type CliCoverageContext,
 } from '../tooling/coverage-cli-child.ts';
@@ -400,6 +401,140 @@ function preparedObserverContext(directory: string): CliCoverageContext {
   };
 }
 
+test('documentation CLEAR CLI custody requires its complete focused selection', () => {
+  const context = preparedObserverContext('/tmp');
+  const sources = [
+    'src/documentation/clear.ts',
+    'src/documentation/policy.ts',
+    'src/documentation/clear-checkpoint-validator.ts',
+    'bin/documentation-clear.ts',
+  ];
+  const tests = [
+    'tests/documentation-clear.test.ts',
+    'tests/documentation-transition-proof.test.ts',
+    'tests/documentation-clear-boundary.test.ts',
+  ];
+  const manifest = {
+    ...context.manifest,
+    sources: sources.map((source) => ({ path: source, sha256: '0'.repeat(64) })),
+    tests,
+    test_selection: { mode: 'focused-diagnostic', contour: 'bun-doc-clear', sources, tests },
+  };
+  expect(focusedCliCoverage(manifest)).toBe(true);
+  for (const changed of [
+    { ...manifest, test_selection: { ...manifest.test_selection, contour: 'foreign' } },
+    { ...manifest, test_selection: { ...manifest.test_selection, mode: 'full-current-test-set' } },
+    { ...manifest, test_selection: { ...manifest.test_selection, sources: sources.slice(1) } },
+    { ...manifest, test_selection: { ...manifest.test_selection, tests: tests.slice(1) } },
+    { ...manifest, sources: manifest.sources.slice(1) },
+    { ...manifest, tests: tests.slice(1) },
+  ])
+    expect(focusedCliCoverage(changed)).toBe(false);
+});
+
+test('documentation CLEAR observer collects only its two exact native roles', () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'clear-observer-'));
+  let passed = false;
+  try {
+    const base = preparedObserverContext(directory);
+    const sources = [
+      'src/documentation/clear.ts',
+      'src/documentation/policy.ts',
+      'src/documentation/clear-checkpoint-validator.ts',
+      'bin/documentation-clear.ts',
+    ];
+    const tests = [
+      'tests/documentation-clear.test.ts',
+      'tests/documentation-transition-proof.test.ts',
+      'tests/documentation-clear-boundary.test.ts',
+    ];
+    const manifest = {
+      ...base.manifest,
+      sources: sources.map((source) => ({ path: source, sha256: '0'.repeat(64) })),
+      tests,
+      test_selection: { mode: 'focused-diagnostic', contour: 'bun-doc-clear', sources, tests },
+    };
+    const context = { ...base, manifest };
+    let matched = 0;
+    let baselineLaunch = '';
+    const native = ((...call: unknown[]) => {
+      const settings = call[2] as { env?: NodeJS.ProcessEnv };
+      const launch = settings.env?.VIDA_BUN_COVERAGE_CLI_LAUNCH;
+      if (launch) {
+        matched++;
+        if (matched === 1) baselineLaunch = launch;
+        writeFileSync(path.join(path.dirname(launch), 'receipt.json'), '{}');
+      }
+      const stdout = Buffer.from('');
+      const stderr = Buffer.from('');
+      return { pid: 42, status: 0, signal: null, stdout, stderr, output: [null, stdout, stderr] };
+    }) as typeof spawnSync;
+    const observer = createCliCoverageObserver(context, { spawnSync: native });
+    const root = path.join(os.tmpdir(), 'vida-clear-coverage-' + manifest.run_id);
+    const args = (mode: string) => [
+      path.join(context.root, 'bin/documentation-clear.ts'),
+      '--mode',
+      mode,
+      '--project-root',
+      root,
+      '--repository',
+      'creatio-sample-repository',
+      '--project',
+      'refactoring',
+      '--work-id',
+      'doc-clear-test',
+      '--source-revision',
+      'revision-one',
+    ];
+    const options = { cwd: context.root, encoding: 'utf8', timeout: 30_000 };
+    observer.spawnSync(process.execPath, [...args('baseline'), '--extra'], options);
+    observer.spawnSync(process.execPath, args('verify'), options);
+    expect(matched).toBe(0);
+    expect(() => observer.finish()).toThrow('Focused CLI launches were not all observed.');
+    observer.spawnSync(process.execPath, args('baseline'), options);
+    expect(matched).toBe(1);
+    const originalLaunch = readFileSync(baselineLaunch, 'utf8');
+    const oldLaunchEnvironment = process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH;
+    try {
+      process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH = baselineLaunch;
+      const original = JSON.parse(originalLaunch) as Record<string, unknown>;
+      for (const changed of [
+        { ...original, subject_role: 'documentation-invalid-mode' },
+        { ...original, subject_role: 'foreign' },
+        { ...original, original_argv: [...args('baseline'), '--extra'] },
+        { ...original, original_argv: args('invalid') },
+        { ...original, entry: { path: 'bin/run.ts', sha256: '0'.repeat(64) } },
+      ]) {
+        writeFileSync(baselineLaunch, JSON.stringify(changed));
+        expect(() => readCliCoverageLaunch(context)).toThrow('Foreign focused CLI subject.');
+      }
+      writeFileSync(baselineLaunch, JSON.stringify({ ...original, native_options: { ...options, timeout: 1 } }));
+      expect(() => readCliCoverageLaunch(context)).toThrow('CLEAR CLI native options differ.');
+    } finally {
+      writeFileSync(baselineLaunch, originalLaunch);
+      if (oldLaunchEnvironment === undefined) delete process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH;
+      else process.env.VIDA_BUN_COVERAGE_CLI_LAUNCH = oldLaunchEnvironment;
+    }
+    expect(() => observer.spawnSync(process.execPath, args('baseline'), options)).toThrow(
+      'Duplicate focused CLI launch.',
+    );
+    expect(() => observer.finish()).toThrow('Focused CLI launches were not all observed.');
+    observer.spawnSync(process.execPath, args('invalid'), options);
+    expect(matched).toBe(2);
+    expect(() => observer.spawnSync(process.execPath, args('invalid'), options)).toThrow(
+      'Duplicate focused CLI launch.',
+    );
+    expect(observer.finish().map((row) => row.subject_role)).toEqual([
+      'documentation-baseline',
+      'documentation-invalid-mode',
+    ]);
+    passed = true;
+  } finally {
+    if (passed) rmSync(directory, { recursive: true, force: true });
+    else console.error('Preserved failed CLEAR observer fixture at ' + directory);
+  }
+});
+
 test('CLI environment binding preserves absent variables and ignores only non-string entries', () => {
   expect(cliCoverageEnvironmentSha256({})).not.toBe(cliCoverageEnvironmentSha256({ NODE_ENV: 'test' }));
   expect(cliCoverageEnvironmentSha256({})).not.toBe(cliCoverageEnvironmentSha256({ TZ: 'Etc/UTC' }));
@@ -753,33 +888,51 @@ test.skipIf(process.platform === 'win32')(
   },
 );
 
-for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
+for (const variant of ['controller', 'public', 'toolchain', 'run', 'doc'] as const) {
   test.skipIf(variant === 'run' && process.platform === 'win32')(
     `focused ${variant} CLI counters require native custody and canonical counter validation`,
     () => {
       const entry =
         variant === 'controller'
           ? sourceFile
-          : variant === 'toolchain'
-            ? 'bin/bun.ts'
-            : variant === 'run'
-              ? 'bin/run.ts'
-              : 'bin/vida-agent.ts';
-      const selectedSources = variant === 'public' ? ['bin/repair-work-state.ts', 'bin/scope.ts', entry] : [entry];
+          : variant === 'doc'
+            ? 'bin/documentation-clear.ts'
+            : variant === 'toolchain'
+              ? 'bin/bun.ts'
+              : variant === 'run'
+                ? 'bin/run.ts'
+                : 'bin/vida-agent.ts';
+      const selectedSources =
+        variant === 'doc'
+          ? [
+              'src/documentation/clear.ts',
+              'src/documentation/policy.ts',
+              'src/documentation/clear-checkpoint-validator.ts',
+              entry,
+            ]
+          : variant === 'public'
+            ? ['bin/repair-work-state.ts', 'bin/scope.ts', entry]
+            : [entry];
       const selectedTests =
         variant === 'controller'
           ? [testFile]
-          : variant === 'toolchain'
-            ? ['tests/bun-toolchain.test.ts', 'tests/bun-cache-routing.test.ts']
-            : variant === 'run'
-              ? ['tests/run-entrypoint.test.ts', 'tests/bun-cache-routing.test.ts']
-              : [
-                  'tests/scope-help-parity.test.ts',
-                  'tests/scoped-source-snapshot.test.ts',
-                  'tests/run-entrypoint.test.ts',
-                  'tests/automatic-work-absorption.test.ts',
-                  'tests/admitted-runtime-canonical-intake.test.ts',
-                ];
+          : variant === 'doc'
+            ? [
+                'tests/documentation-clear.test.ts',
+                'tests/documentation-transition-proof.test.ts',
+                'tests/documentation-clear-boundary.test.ts',
+              ]
+            : variant === 'toolchain'
+              ? ['tests/bun-toolchain.test.ts', 'tests/bun-cache-routing.test.ts']
+              : variant === 'run'
+                ? ['tests/run-entrypoint.test.ts', 'tests/bun-cache-routing.test.ts']
+                : [
+                    'tests/scope-help-parity.test.ts',
+                    'tests/scoped-source-snapshot.test.ts',
+                    'tests/run-entrypoint.test.ts',
+                    'tests/automatic-work-absorption.test.ts',
+                    'tests/admitted-runtime-canonical-intake.test.ts',
+                  ];
       const expectedExit = variant === 'controller' ? 1 : 0;
       const argument = variant === 'controller' ? 'inspect' : variant === 'toolchain' ? '--version' : '--help';
       const expectedOutput =
@@ -802,6 +955,7 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
               : { schema: 'VidaAgentCommandResult/v1', status: 'help', commands: ['help'] };
       const subjects: { entry: string; args: string[]; exit: number; output: unknown }[] = [
         { entry, args: [argument], exit: expectedExit, output: expectedOutput },
+        ...(variant === 'doc' ? [{ entry, args: [], exit: 1, output: 'documentation CLEAR mode invalid\n' }] : []),
         ...(variant === 'run'
           ? [
               { entry, args: [], exit: 0, output: { schema: 'VidaAgentRunResult/v1', status: 'prepared' } },
@@ -848,6 +1002,31 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
       let runFixtureRoot: string | undefined;
       try {
         const runId = randomUUID();
+        if (variant === 'doc') {
+          const fixture = path.join(os.tmpdir(), 'vida-clear-coverage-' + runId);
+          const args = (mode: string) => [
+            '--mode',
+            mode,
+            '--project-root',
+            fixture,
+            '--repository',
+            'creatio-sample-repository',
+            '--project',
+            'refactoring',
+            '--work-id',
+            'doc-clear-test',
+            '--source-revision',
+            'revision-one',
+          ];
+          subjects[0]!.args = args('baseline');
+          subjects[0]!.output = {
+            status: 'pass',
+            path: '.agent/work/doc-clear-test/documentation-baseline-0001.v1.json',
+            sha256: 'a'.repeat(64),
+            checkpoint_digest: 'b'.repeat(64),
+          };
+          subjects[1]!.args = args('invalid');
+        }
         const fixtureRoot = path.resolve(root, '..', path.basename(root) + '-prepared-fixture');
         const workId = 'mutation-run-' + runId;
         let runFixture: Record<string, unknown> | undefined;
@@ -1015,68 +1194,76 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                   '  } else console.log(Bun.version);',
                   '}',
                 ].join('\n')
-              : variant === 'run'
+              : variant === 'doc'
                 ? [
-                    'import { help } from "./cli-metadata.ts";',
-                    'import { openSync, readSync, closeSync, readFileSync, writeFileSync } from "node:fs";',
-                    'import { Database } from "bun:sqlite";',
-                    'import { createHash } from "node:crypto";',
-                    'import path from "node:path";',
-                    `const fixture=${JSON.stringify(runFixture ?? {})};`,
                     'export function hit() { return 7; }',
-                    'function read(file) { if(file.endsWith("selected.txt")) { const fd=openSync(file,"r"); const chunks=[]; const buffer=Buffer.alloc(65536); try { while(true) { const n=readSync(fd,buffer,0,buffer.length,null); if(!n)break; chunks.push(Buffer.from(buffer.subarray(0,n))); } return Buffer.concat(chunks); } finally { closeSync(fd); } } return readFileSync(file); }',
-                    'function digest(value) { return createHash("sha256").update(value).digest("hex"); }',
-                    'function seedDatabase(root) {',
-                    '  writeFileSync(path.join(root,fixture.admittedIntakePath),fixture.admittedIntakeBytes);',
-                    '  const db=new Database(path.join(root,".agent/host-state.sqlite"));',
-                    '  db.exec("CREATE TABLE agent_host_state (workspace_id TEXT, kind TEXT, id TEXT, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
-                    '  db.exec("CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
-                    '  const putState=db.prepare("INSERT INTO agent_host_state VALUES (?,?,?,?,?,?,?)");',
-                    '  const putJournal=db.prepare("INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?,?)");',
-                    '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,work_source_revision:"a".repeat(64),scope_contract_digest:fixture.scopeSha256,acceptance_manifest_digest:fixture.acceptanceSha256},contracts:{scope:{path:path.relative(root,fixture.scopePath),sha256:fixture.scopeSha256},acceptance:{path:path.relative(root,fixture.acceptancePath),sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id},artifacts:[{artifact_id:"local-session-intake",schema:"VidaLocalSessionIntake/v1",path:fixture.admittedIntakePath,sha256:fixture.admittedIntakeSha256}]};',
-                    '  const claimId="claim-"+fixture.actionId; const secondClaimId="claim-secondary-"+fixture.actionId;',
-                    '  const ledger={schema:"CoordinationLedger/v1",workspace_id:fixture.workspaceId,revision:1,tickets:[{ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active",claim_ids:[claimId,secondClaimId]}],claims:[{claim_id:claimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"},{claim_id:secondClaimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"}]};',
-                    '  for (const [kind,id,value] of [["work",fixture.initialJournal.work_id,work],["ledger","shared",ledger]]) { const payload=JSON.stringify(value); putState.run(fixture.workspaceId,kind,id,1,payload,digest(payload),Buffer.from(payload)); }',
-                    '  putJournal.run(fixture.workspaceId,fixture.initialJournal.work_id,1,2,fixture.initialJournalPayload,fixture.initialJournalDigest,Buffer.from(fixture.initialJournalPayload));',
-                    '  db.close();',
-                    '}',
-                    'async function hostRead(root,workId) {',
-                    '  const { openHostStateDatabase }=await import("../src/host-state.ts");',
-                    '  const db=openHostStateDatabase(root,".agent/host-state.sqlite");',
-                    '  const work=db.query("SELECT workspace_id,kind,id,revision,payload,digest,raw_payload_bytes FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ?").get(fixture.workspaceId,"work",workId);',
-                    '  const ledger=db.query("SELECT workspace_id,kind,id,revision,payload,digest,raw_payload_bytes FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ?").get(fixture.workspaceId,"ledger","shared");',
-                    '  const journal=db.query("SELECT workspace_id,work_id,attempt,revision,payload,digest,raw_payload_bytes FROM agent_host_mastra_session_ledger WHERE workspace_id = ? AND work_id = ? AND attempt = ?").get(fixture.workspaceId,workId,1);',
-                    '  const other=openHostStateDatabase(root,".agent/host-state.sqlite"); other.close();',
-                    '  const changed=db.query("UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?").run(3,JSON.stringify(fixture.finalJournal),fixture.finalJournalDigest,fixture.workspaceId,workId,1,2,fixture.initialJournalDigest);',
-                    '  db.close(); return {work,ledger,journal,changed};',
-                    '}',
                     'if (import.meta.main) {',
-                    '  if (process.argv.includes("--issue-wave")) {',
-                    '    await import("./workspace-database-cli.ts");',
-                    '    if(fixture.preparedOutput.next_actions.some((row)=>row.action.mutation_scope==="repository_source")) await import("../src/orchestration/local-work-admission.ts");',
-                    '    const root=process.argv[process.argv.indexOf("--project-root")+1]; const workId=process.argv[process.argv.indexOf("--work-id")+1];',
-                    '    read(path.join(root,"agent-runtime.config.v1.yaml")); read(path.join(root,".agent/runtime-initialization.v1.json"));',
-                    '    const intake=JSON.parse(read(path.join(root,".agent/work",workId,"local-session-intake.v1.json")).toString()); read(path.join(root,"selected.txt"));',
-                    '    const state=await hostRead(root,workId); if(state.changed.changes!==1) throw new Error("Synthetic journal compare-and-swap failed");',
-                    '    console.log(JSON.stringify(fixture.issuedOutput));',
-                    '  } else if (!process.argv.includes("--intake")) console.log(JSON.stringify(help()));',
-                    '  else {',
-                    '    await import("./workspace-database-cli.ts"); await import("../src/orchestration/local-work-admission.ts");',
-                    '    const root=process.argv[process.argv.indexOf("--project-root")+1];',
-                    '    seedDatabase(root);',
-                    '    const config=path.join(root,"agent-runtime.config.v1.yaml");',
-                    '    for(let i=0;i<7;i++)closeSync(openSync(config,"r"));',
-                    '    read(config); read(path.join(root,".agent/runtime-initialization.v1.json"));',
-                    '    const intake=JSON.parse(read(process.argv[process.argv.indexOf("--intake")+1]).toString());',
-                    '    const scope=JSON.parse(read(path.join(root,intake.scope_path)).toString());',
-                    '    read(path.join(root,intake.acceptance_path)); read(path.join(root,scope.implementation_paths[0]));',
-                    '    console.log(JSON.stringify(fixture.preparedOutput));',
-                    '  }',
+                    '  if (process.argv[3] === "invalid") { console.error("documentation CLEAR mode invalid"); process.exitCode = 1; }',
+                    `  else console.log(${JSON.stringify(JSON.stringify(subjects[0]!.output))});`,
                     '}',
                   ].join('\n')
-                : 'export function hit() { return 7; }\nif (import.meta.main) console.log(' +
-                  JSON.stringify(JSON.stringify(expectedOutput)) +
-                  ');\n';
+                : variant === 'run'
+                  ? [
+                      'import { help } from "./cli-metadata.ts";',
+                      'import { openSync, readSync, closeSync, readFileSync, writeFileSync } from "node:fs";',
+                      'import { Database } from "bun:sqlite";',
+                      'import { createHash } from "node:crypto";',
+                      'import path from "node:path";',
+                      `const fixture=${JSON.stringify(runFixture ?? {})};`,
+                      'export function hit() { return 7; }',
+                      'function read(file) { if(file.endsWith("selected.txt")) { const fd=openSync(file,"r"); const chunks=[]; const buffer=Buffer.alloc(65536); try { while(true) { const n=readSync(fd,buffer,0,buffer.length,null); if(!n)break; chunks.push(Buffer.from(buffer.subarray(0,n))); } return Buffer.concat(chunks); } finally { closeSync(fd); } } return readFileSync(file); }',
+                      'function digest(value) { return createHash("sha256").update(value).digest("hex"); }',
+                      'function seedDatabase(root) {',
+                      '  writeFileSync(path.join(root,fixture.admittedIntakePath),fixture.admittedIntakeBytes);',
+                      '  const db=new Database(path.join(root,".agent/host-state.sqlite"));',
+                      '  db.exec("CREATE TABLE agent_host_state (workspace_id TEXT, kind TEXT, id TEXT, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
+                      '  db.exec("CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, raw_payload_bytes BLOB)");',
+                      '  const putState=db.prepare("INSERT INTO agent_host_state VALUES (?,?,?,?,?,?,?)");',
+                      '  const putJournal=db.prepare("INSERT INTO agent_host_mastra_session_ledger VALUES (?,?,?,?,?,?,?)");',
+                      '  const work={schema:"WorkState/v1",workspace_id:fixture.workspaceId,revision:1,binding:{lifecycle_work_id:fixture.initialJournal.work_id,work_source_revision:"a".repeat(64),scope_contract_digest:fixture.scopeSha256,acceptance_manifest_digest:fixture.acceptanceSha256},contracts:{scope:{path:path.relative(root,fixture.scopePath),sha256:fixture.scopeSha256},acceptance:{path:path.relative(root,fixture.acceptancePath),sha256:fixture.acceptanceSha256}},lease:{ticket_id:"ticket-"+fixture.actionId,thread_id:"thread-"+fixture.actionId,generation:1},execution:{run_id:fixture.initialJournal.run_id},artifacts:[{artifact_id:"local-session-intake",schema:"VidaLocalSessionIntake/v1",path:fixture.admittedIntakePath,sha256:fixture.admittedIntakeSha256}]};',
+                      '  const claimId="claim-"+fixture.actionId; const secondClaimId="claim-secondary-"+fixture.actionId;',
+                      '  const ledger={schema:"CoordinationLedger/v1",workspace_id:fixture.workspaceId,revision:1,tickets:[{ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active",claim_ids:[claimId,secondClaimId]}],claims:[{claim_id:claimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"},{claim_id:secondClaimId,ticket_id:work.lease.ticket_id,work_id:fixture.initialJournal.work_id,thread_id:work.lease.thread_id,generation:1,status:"active"}]};',
+                      '  for (const [kind,id,value] of [["work",fixture.initialJournal.work_id,work],["ledger","shared",ledger]]) { const payload=JSON.stringify(value); putState.run(fixture.workspaceId,kind,id,1,payload,digest(payload),Buffer.from(payload)); }',
+                      '  putJournal.run(fixture.workspaceId,fixture.initialJournal.work_id,1,2,fixture.initialJournalPayload,fixture.initialJournalDigest,Buffer.from(fixture.initialJournalPayload));',
+                      '  db.close();',
+                      '}',
+                      'async function hostRead(root,workId) {',
+                      '  const { openHostStateDatabase }=await import("../src/host-state.ts");',
+                      '  const db=openHostStateDatabase(root,".agent/host-state.sqlite");',
+                      '  const work=db.query("SELECT workspace_id,kind,id,revision,payload,digest,raw_payload_bytes FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ?").get(fixture.workspaceId,"work",workId);',
+                      '  const ledger=db.query("SELECT workspace_id,kind,id,revision,payload,digest,raw_payload_bytes FROM agent_host_state WHERE workspace_id = ? AND kind = ? AND id = ?").get(fixture.workspaceId,"ledger","shared");',
+                      '  const journal=db.query("SELECT workspace_id,work_id,attempt,revision,payload,digest,raw_payload_bytes FROM agent_host_mastra_session_ledger WHERE workspace_id = ? AND work_id = ? AND attempt = ?").get(fixture.workspaceId,workId,1);',
+                      '  const other=openHostStateDatabase(root,".agent/host-state.sqlite"); other.close();',
+                      '  const changed=db.query("UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?").run(3,JSON.stringify(fixture.finalJournal),fixture.finalJournalDigest,fixture.workspaceId,workId,1,2,fixture.initialJournalDigest);',
+                      '  db.close(); return {work,ledger,journal,changed};',
+                      '}',
+                      'if (import.meta.main) {',
+                      '  if (process.argv.includes("--issue-wave")) {',
+                      '    await import("./workspace-database-cli.ts");',
+                      '    if(fixture.preparedOutput.next_actions.some((row)=>row.action.mutation_scope==="repository_source")) await import("../src/orchestration/local-work-admission.ts");',
+                      '    const root=process.argv[process.argv.indexOf("--project-root")+1]; const workId=process.argv[process.argv.indexOf("--work-id")+1];',
+                      '    read(path.join(root,"agent-runtime.config.v1.yaml")); read(path.join(root,".agent/runtime-initialization.v1.json"));',
+                      '    const intake=JSON.parse(read(path.join(root,".agent/work",workId,"local-session-intake.v1.json")).toString()); read(path.join(root,"selected.txt"));',
+                      '    const state=await hostRead(root,workId); if(state.changed.changes!==1) throw new Error("Synthetic journal compare-and-swap failed");',
+                      '    console.log(JSON.stringify(fixture.issuedOutput));',
+                      '  } else if (!process.argv.includes("--intake")) console.log(JSON.stringify(help()));',
+                      '  else {',
+                      '    await import("./workspace-database-cli.ts"); await import("../src/orchestration/local-work-admission.ts");',
+                      '    const root=process.argv[process.argv.indexOf("--project-root")+1];',
+                      '    seedDatabase(root);',
+                      '    const config=path.join(root,"agent-runtime.config.v1.yaml");',
+                      '    for(let i=0;i<7;i++)closeSync(openSync(config,"r"));',
+                      '    read(config); read(path.join(root,".agent/runtime-initialization.v1.json"));',
+                      '    const intake=JSON.parse(read(process.argv[process.argv.indexOf("--intake")+1]).toString());',
+                      '    const scope=JSON.parse(read(path.join(root,intake.scope_path)).toString());',
+                      '    read(path.join(root,intake.acceptance_path)); read(path.join(root,scope.implementation_paths[0]));',
+                      '    console.log(JSON.stringify(fixture.preparedOutput));',
+                      '  }',
+                      '}',
+                    ].join('\n')
+                  : 'export function hit() { return 7; }\nif (import.meta.main) console.log(' +
+                    JSON.stringify(JSON.stringify(expectedOutput)) +
+                    ');\n';
         const inputs = new Map(capturedTools);
         if (variant === 'run') {
           assert.ok(runFixture);
@@ -1100,14 +1287,14 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         }
         for (const selected of selectedSources) {
           const subject = subjects.find((row) => row.entry === selected);
-          assert.ok(subject);
+          assert.ok(subject || variant === 'doc');
           inputs.set(
             selected,
             Buffer.from(
               selected === entry
                 ? sourceText
                 : 'export function hit() { return 7; }\nif (import.meta.main) { console.error(' +
-                    JSON.stringify(JSON.stringify(subject.output)) +
+                    JSON.stringify(JSON.stringify(subject?.output)) +
                     '); process.exitCode = 1; }\n',
             ),
           );
@@ -1142,15 +1329,15 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
                     ? ['  spawnSync.armIssue();']
                     : []),
                 `  const child${index} = spawnSync(process.execPath, ${JSON.stringify([
-                  ...(variant === 'run' && (index === 1 || index === 2)
+                  ...(variant === 'doc' || (variant === 'run' && (index === 1 || index === 2))
                     ? []
                     : ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml')]),
                   path.join(root, subject.entry),
                   ...subject.args,
-                ])}, {encoding:"utf8",windowsHide:true,timeout:4000${variant === 'run' && (index === 1 || index === 2) ? ',cwd:' + JSON.stringify(root) + ',killSignal:"SIGKILL",detached:true,env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:String(Date.now()+4000)}' : variant === 'toolchain' && subject.exit === 1 ? ',env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:"1"}' : ''}});`,
+                ])}, ${variant === 'doc' ? '{encoding:"utf8",timeout:30000,cwd:' + JSON.stringify(root) + '}' : '{encoding:"utf8",windowsHide:true,timeout:4000' + (variant === 'run' && (index === 1 || index === 2) ? ',cwd:' + JSON.stringify(root) + ',killSignal:"SIGKILL",detached:true,env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:String(Date.now()+4000)}' : variant === 'toolchain' && subject.exit === 1 ? ',env:{...process.env,VIDA_PINNED_COMMAND_BUDGET_MS:"4000",VIDA_PINNED_COMMAND_DEADLINE_MS:"1"}' : '') + '}'});`,
                 `  expect(child${index}.error).toBeUndefined(); expect(child${index}.signal).toBeNull(); expect(child${index}.status).toBe(${subject.exit});`,
                 `  expect(child${index}.${subject.exit === 1 ? 'stdout' : 'stderr'}).toBe("");`,
-                variant === 'toolchain'
+                variant === 'toolchain' || (variant === 'doc' && subject.exit === 1)
                   ? `  expect(child${index}.${subject.exit === 0 ? 'stdout' : 'stderr'}).toBe(${JSON.stringify(subject.exit === 0 ? Bun.version + '\n' : subject.output)});`
                   : `  expect(JSON.parse(child${index}.${subject.exit === 1 ? 'stderr' : 'stdout'})).toEqual(${JSON.stringify(subject.output)});`,
               ]),
@@ -1252,11 +1439,13 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
             contour:
               variant === 'controller'
                 ? 'bun-development-controller'
-                : variant === 'toolchain'
-                  ? 'bun-cli-toolchain'
-                  : variant === 'run'
-                    ? 'bun-cli-run'
-                    : 'bun-cli-public-entrypoints',
+                : variant === 'doc'
+                  ? 'bun-doc-clear'
+                  : variant === 'toolchain'
+                    ? 'bun-cli-toolchain'
+                    : variant === 'run'
+                      ? 'bun-cli-run'
+                      : 'bun-cli-public-entrypoints',
             sources: selectedSources,
             tests,
           },
@@ -1305,9 +1494,11 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         expect(result.stderr).toContain(
           variant === 'controller'
             ? 'Ran 1 test across 1 file.'
-            : variant === 'toolchain' || variant === 'run'
-              ? 'Ran 2 tests across 2 files.'
-              : 'Ran 5 tests across 5 files.',
+            : variant === 'doc'
+              ? 'Ran 3 tests across 3 files.'
+              : variant === 'toolchain' || variant === 'run'
+                ? 'Ran 2 tests across 2 files.'
+                : 'Ran 5 tests across 5 files.',
         );
         const reportFiles = readdirSync(directory).filter((file) => file.endsWith('.json'));
         expect(reportFiles).toHaveLength(1);
@@ -2075,6 +2266,91 @@ for (const variant of ['controller', 'public', 'toolchain', 'run'] as const) {
         negative('changed-output', (ctx, row) =>
           writeFileSync(path.join(ctx.directory, String(record(row.stderr).path)), '{}'),
         );
+        if (variant === 'doc') {
+          const replaceOutput = (
+            ctx: CliCoverageContext,
+            row: Record<string, unknown>,
+            stream: 'stdout' | 'stderr',
+            bytes: Buffer,
+          ) => {
+            const reference = record(row[stream]);
+            writeFileSync(path.join(ctx.directory, String(reference.path)), bytes);
+            row[stream] = { ...reference, sha256: sha256(bytes), bytes: bytes.length };
+            rewrite(ctx, row, 'terminal', (proof) => {
+              proof[stream] = row[stream];
+            });
+          };
+          for (const [key, value] of Object.entries({
+            status: 'blocked',
+            path: 'foreign',
+            sha256: 'invalid',
+            checkpoint_digest: 'invalid',
+          }))
+            negative(
+              'documentation-baseline-' + key,
+              (ctx, row) => {
+                const output = record(
+                  JSON.parse(readFileSync(path.join(ctx.directory, String(record(row.stdout).path)), 'utf8')),
+                );
+                output[key] = value;
+                replaceOutput(ctx, row, 'stdout', Buffer.from(JSON.stringify(output) + '\n'));
+              },
+              false,
+              0,
+              String(value),
+            );
+          negative(
+            'documentation-baseline-extra-field',
+            (ctx, row) => {
+              const output = record(
+                JSON.parse(readFileSync(path.join(ctx.directory, String(record(row.stdout).path)), 'utf8')),
+              );
+              output.foreign = true;
+              replaceOutput(ctx, row, 'stdout', Buffer.from(JSON.stringify(output) + '\n'));
+            },
+            false,
+            0,
+            'foreign',
+          );
+          negative(
+            'documentation-baseline-stderr',
+            (ctx, row) => replaceOutput(ctx, row, 'stderr', Buffer.from('foreign\n')),
+            false,
+            0,
+          );
+          negative(
+            'documentation-invalid-stdout',
+            (ctx, row) => replaceOutput(ctx, row, 'stdout', Buffer.from('foreign\n')),
+            false,
+            1,
+          );
+          negative(
+            'documentation-invalid-stderr',
+            (ctx, row) => replaceOutput(ctx, row, 'stderr', Buffer.from('documentation CLEAR mode invalid extra\n')),
+            false,
+            1,
+          );
+          negative(
+            'documentation-swapped-role',
+            (ctx, row) =>
+              rewrite(ctx, row, 'launch', (proof) => {
+                proof.subject_role = 'documentation-invalid-mode';
+              }),
+            false,
+            0,
+            'Foreign focused CLI subject.',
+          );
+          negative(
+            'documentation-invalid-foreign-argv',
+            (ctx, row) =>
+              rewrite(ctx, row, 'launch', (proof) => {
+                proof.original_argv = [...subjects[1]!.args, '--extra'];
+              }),
+            false,
+            1,
+            'Foreign focused CLI subject.',
+          );
+        }
         if (variant === 'run') {
           for (const [key, value] of Object.entries({
             command: 'scope',
