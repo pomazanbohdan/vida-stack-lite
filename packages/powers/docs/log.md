@@ -1,5 +1,11 @@
 # Directory Update Log
 
+## 2026-10-28
+
+* **Packet counter and evidence correction:** The proposal checker labels declared-counter bases and checks available saved-hash and catalog-order claims; comparisons without their required basis remain unchecked. An optional pinned r1 input checks proposal-wide r1-to-current-capture drift separately from saved r2-to-current and selected current-file drift. The earlier focused coverage command replaced `packages/powers/coverage/lcov.info`; its previous bytes were not retained and cannot be recovered from that file. The replacement is focused evidence, not package coverage. Independent review, package gate and historical custody remain open.
+
+* **Proposal packet mechanics:** Added `scripts/packet.ts` and focused tests for read-only proposal validation, slice selection, parser roundtrips and explicit mismatch reporting. It does not establish semantic review or an atomic snapshot; declared scope and optional report/delta checks remain explicitly bounded. Independent final Source review and package acceptance remain open.
+
 ## 2026-10-26
 
 * **Compact retrieval acceptance reconciliation:** Independent combined and exact repair reviews are READY with zero Critical/Important findings. Four Minor corrections are closed; the existing first-carrier dependency substitution remains an explicit deferred Minor. Root verified current Source and receipt bindings and reconciled AC-65–AC-69 as verified for the CLI/library/skill contract. The qualified evidence is 598 passing tests, one expected Windows skip, zero failures, unchanged exact coverage gates, typecheck/Knip/corpus/documentation checks, 24-query parity and real-corpus CLI exercises. Source publication uses only the scoped product allowlist. The frozen classification trial/full rollout, donor rights/fidelity/admission, installation and Runtime acceptance remain open.

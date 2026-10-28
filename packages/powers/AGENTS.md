@@ -106,7 +106,28 @@ bun packages/powers/scripts/validate-donors.ts
 
 # Corpus audit (read-only reports over the corpus)
 bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [--limit <n>] [--offset <n>] [--filter <text>] [--summary] [--all] [--json] [--out <file>]
+
+# Read-only mechanical review of an existing proposal packet
+bun packages/powers/scripts/packet.ts PACKET PRODUCT_ROOT [PRIOR|-] [PACKET_SHA|-] [PRIOR_SHA|-] [REPORT|-] [REPORT_SHA|-] [OFFSET] [LIMIT] [R1_BASIS|-]
 ```
+
+Packet and product-root paths must be absolute; assignments and rows packets use
+`packages/powers/instructions/<id>.md`, proposal packets use `instructions/<id>.md`,
+and positions must be contiguous.
+Offset is zero-based and defaults to the remaining rows; a slice cannot be combined
+with a prior. Exit 1 reports a mismatch or error. Packet-wide declaration checks and
+selected-row parser and raw-drift observations have separate scopes. Each declared
+counter has a checked or unchecked status and basis; historical comparisons lacking
+their exact basis remain unchecked. For proposal packets `R1_BASIS` is optional and
+must match the packet's r1 SHA pin; it checks full-packet r1-to-current-capture drift,
+including IDs, body and conditions. Saved r2-to-current-capture drift and selected
+current-file drift are separate; the report's raw-drift claim is not checked.
+The JSON result marks skipped report, delta and
+declared-scope checks. Parser checks use synthetic proposal
+frontmatter and a fixed packet serialization order; they do not verify applied metadata
+or semantic review. Declared ranges and corpus totals remain unchecked, and readback
+is non-atomic. The tool reads catalog bytes once for hashing and positional ID checks;
+it does not run the full catalog schema validator. It grants no review or write authority.
 
 > Invocation form: `bun run --cwd <dir> <script>`. The variant `bun --cwd <dir> run <script>`
 > prints usage and does not execute the script.
@@ -142,7 +163,7 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | E5a selected host manifests generated from explicit package inputs; production inputs/outputs are absent | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |
