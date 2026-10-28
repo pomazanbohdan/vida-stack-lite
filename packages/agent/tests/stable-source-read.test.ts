@@ -74,6 +74,61 @@ test('stable source snapshots retain exact per-file aggregate and canonical path
   expect(() => snapshotDeclaredSources(reader, ['../foreign.ts'])).toThrow('canonical repository-relative');
 });
 
+const windowsTest = test.skipIf(process.platform !== 'win32');
+
+windowsTest('verified capture reads nested regular files and rejects a directory leaf', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-windows-verified-capture-'));
+  let observedSuccess = false;
+  try {
+    mkdirSync(path.join(root, 'nested'));
+    writeFileSync(path.join(root, 'nested/source.txt'), 'verified bytes');
+    const access = requireSafeRepositoryAccess(root);
+    expect(access.provider).toBe('fs-safe-windows');
+    const read = access.readVerifiedCaptureBytes;
+    if (!read) throw new Error('Windows verified capture capability is unavailable');
+    expect(read.call(access, 'nested/source.txt', 'verified capture')).toEqual(Buffer.from('verified bytes'));
+    expect(() => read.call(access, 'nested', 'directory capture')).toThrow();
+    expect(readdirSync(path.join(root, 'nested'))).toEqual(['source.txt']);
+    expect(readFileSync(path.join(root, 'nested/source.txt'), 'utf8')).toBe('verified bytes');
+    observedSuccess = true;
+  } finally {
+    if (observedSuccess) rmSync(root, { recursive: true, force: true });
+    else process.stderr.write('Retained failed or uncertain Windows verified capture fixture: ' + root + '\n');
+  }
+});
+
+windowsTest('verified capture rejects symlink leaves and ancestors without changing their targets', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-windows-verified-links-'));
+  const outside = mkdtempSync(path.join(tmpdir(), 'vida-windows-verified-outside-'));
+  let observedSuccess = false;
+  try {
+    mkdirSync(path.join(root, 'nested'));
+    writeFileSync(path.join(root, 'nested/source.txt'), 'owned bytes');
+    writeFileSync(path.join(outside, 'foreign.txt'), 'foreign bytes');
+    const access = requireSafeRepositoryAccess(root);
+    const read = access.readVerifiedCaptureBytes;
+    if (!read) throw new Error('Windows verified capture capability is unavailable');
+    expect(read.call(access, 'nested/source.txt', 'regular control')).toEqual(Buffer.from('owned bytes'));
+    symlinkSync(outside, path.join(root, 'linked-directory'), 'junction');
+    expect(() => read.call(access, 'linked-directory', 'linked leaf')).toThrow('must not traverse symlinked directory');
+    expect(() => read.call(access, 'linked-directory/foreign.txt', 'linked ancestor')).toThrow(
+      'must not traverse symlinked directory',
+    );
+    expect(readFileSync(path.join(root, 'nested/source.txt'), 'utf8')).toBe('owned bytes');
+    expect(readFileSync(path.join(outside, 'foreign.txt'), 'utf8')).toBe('foreign bytes');
+    observedSuccess = true;
+  } finally {
+    if (observedSuccess) {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(outside, { recursive: true, force: true });
+    } else {
+      process.stderr.write(
+        'Retained failed or uncertain Windows verified capture fixtures: ' + root + ', ' + outside + '\n',
+      );
+    }
+  }
+});
+
 const linuxTest = test.skipIf(process.platform !== 'linux');
 function withNativeFixture(operation: (root: string, read: (target: string) => Buffer | null) => void): void {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stable-source-read-'));
@@ -97,13 +152,18 @@ test('native capture reads are bounded without CAS sidecars and deny unsafe alia
   try {
     writeFileSync(path.join(root, 'subject.txt'), 'exact bytes');
     writeFileSync(path.join(outside, 'foreign.txt'), 'foreign bytes');
-    symlinkSync(path.join(outside, 'foreign.txt'), path.join(root, 'link.txt'));
-    symlinkSync(outside, path.join(root, 'linked-directory'), 'dir');
+    const linkedTarget = process.platform === 'win32' ? outside : path.join(outside, 'foreign.txt');
+    symlinkSync(linkedTarget, path.join(root, 'link.txt'), process.platform === 'win32' ? 'junction' : 'file');
+    symlinkSync(outside, path.join(root, 'linked-directory'), process.platform === 'win32' ? 'junction' : 'dir');
     const access = requireSafeRepositoryAccess(root);
     const before = readdirSync(root).sort();
     expect(access.readCapturedBytes('subject.txt', 'read-only capture', 11)).toEqual(Buffer.from('exact bytes'));
     expect(() => access.readCapturedBytes('subject.txt', 'bounded capture', 10)).toThrow();
-    expect(() => access.readCapturedBytes('link.txt', 'linked capture')).toThrow();
+    if (process.platform === 'win32')
+      expect(() => access.readCapturedBytes('link.txt/foreign.txt', 'linked capture')).toThrow(
+        'fs-safe boundary rejected the target',
+      );
+    else expect(() => access.readCapturedBytes('link.txt', 'linked capture')).toThrow();
     expect(() => access.readCapturedBytes('linked-directory/foreign.txt', 'ancestor capture')).toThrow();
     expect(() => access.readCapturedBytes('../foreign.txt', 'escaped capture')).toThrow();
     expect(() => access.readCapturedBytes('subject.txt', 'invalid bound', 0)).toThrow();
@@ -111,6 +171,7 @@ test('native capture reads are bounded without CAS sidecars and deny unsafe alia
     expect(() => access.readCapturedBytes('subject.txt', 'invalid bound', 1.5)).toThrow();
     expect(readdirSync(root).sort()).toEqual(before);
     expect(readFileSync(path.join(root, 'subject.txt'), 'utf8')).toBe('exact bytes');
+    expect(readFileSync(path.join(outside, 'foreign.txt'), 'utf8')).toBe('foreign bytes');
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(outside, { recursive: true, force: true });

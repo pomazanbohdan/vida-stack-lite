@@ -2071,14 +2071,14 @@ function fsSafeReadBytes(root: string, target: string, label: string, limit = ma
     closeQuietly(opened.fd);
   }
 }
-function sameFsSafeCaptureMetadata(left: Stats, right: Stats): boolean {
+function sameFsSafeCaptureMetadata(left: BigIntStats, right: BigIntStats): boolean {
   return (
     sameFileIdentity(left, right) &&
     left.mode === right.mode &&
     left.nlink === right.nlink &&
     left.size === right.size &&
-    left.ctimeMs === right.ctimeMs &&
-    left.mtimeMs === right.mtimeMs
+    left.ctimeNs === right.ctimeNs &&
+    left.mtimeNs === right.mtimeNs
   );
 }
 function fsSafeReadVerifiedCaptureBytes(
@@ -2094,32 +2094,32 @@ function fsSafeReadVerifiedCaptureBytes(
       rootDir: root,
       targetPath: absolute,
       allowMissing: false,
-      requireDirectories: true,
+      requireDirectories: false,
       messagePrefix: label,
     });
   checkParents();
   const opened = fsSafeOpen(root, target, label, maximum);
   try {
-    const beforeFd = fstatSync(opened.fd);
-    const beforePath = lstatSync(absolute);
+    const beforeFd = fstatSync(opened.fd, { bigint: true });
+    const beforePath = lstatSync(absolute, { bigint: true });
     reject(
       !beforeFd.isFile() ||
-        beforeFd.nlink !== 1 ||
+        beforeFd.nlink !== 1n ||
         !beforePath.isFile() ||
         beforePath.isSymbolicLink() ||
-        beforePath.nlink !== 1,
+        beforePath.nlink !== 1n,
       `${label} must be a regular single-link file`,
     );
     reject(!sameFsSafeCaptureMetadata(beforeFd, beforePath), `${label} pathname changed before capture`);
-    reject(beforeFd.size > maximum, `${label} exceeds the bounded repository read size`);
-    const bytes = readBoundedBuffer(opened.fd, label, maximum, false, beforeFd.size);
-    const afterFd = fstatSync(opened.fd);
-    const afterPath = lstatSync(absolute);
+    reject(beforeFd.size < 0n || beforeFd.size > BigInt(maximum), `${label} exceeds the bounded repository read size`);
+    const bytes = readBoundedBuffer(opened.fd, label, maximum, false, Number(beforeFd.size));
+    const afterFd = fstatSync(opened.fd, { bigint: true });
+    const afterPath = lstatSync(absolute, { bigint: true });
     reject(
       !sameFsSafeCaptureMetadata(beforeFd, afterFd) || !sameFsSafeCaptureMetadata(beforePath, afterPath),
       `${label} changed during capture`,
     );
-    reject(bytes.length !== afterFd.size, `${label} did not reach the exact file EOF`);
+    reject(BigInt(bytes.length) !== afterFd.size, `${label} did not reach the exact file EOF`);
     checkParents();
     return bytes;
   } finally {
