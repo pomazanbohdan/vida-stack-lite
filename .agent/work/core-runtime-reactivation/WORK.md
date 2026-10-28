@@ -4,6 +4,47 @@ Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.
 
+## Documentation CLEAR inventory and event controls — 2026-10-28
+
+The last focused diagnostic on Source `e64805ce` passed 33 tests and 294
+expectations: F 46/46, L 227/230, S 274/281 and B 214/229. Its retained
+report is
+`/workspace/contour-doc-clear-measurement-5deFkc/images/241ddeab731f9e6adc795cc1c84bfa9944115be6/repository/packages/agent/coverage/bun-unified/diagnostics/a347361b-3f25-4274-b1d5-f64db93adbf7.focused-coverage.json`.
+It is a BLOCKED focused diagnostic, not full qualification of the new tests.
+
+The prepared test packet exercises a real symlink and a real Unix socket in a
+canonical root, the stale-baseline gap after a valid policy field change without
+a transition, and typed init and delete events over real document changes. Each
+case checks persisted baseline beforeimages and a successful repaired or valid
+closeout. These target existing behavior; no artificial RED or production
+change is claimed. The grouped unaffected check passed 3 tests and 22
+expectations; scoped strict checked 125 TypeScript files, and typed lint,
+format and the TESTING document check passed. Complete captures and observed
+process-group closure are retained under
+`/workspace/contour-doc-final-sdVilWZV/privatecheck`.
+
+The initial grouped run passed three cases but the socket listener failed with
+`EPERM`; its complete capture and closed group are retained as `focused.*` and
+its fixture remains at
+`/workspace/contour-doc-final-sdVilWZV/privatecheck/tmp/vida-clear-zombies-N6N0fY`.
+The original socket pathname was 112 bytes; the future fixture prefix was
+shortened without changing that retained fixture. Root's approved native socket
+check then passed one test and five expectations in 1.87 s, with complete
+capture and observed group termination in `native-socket.*`. The initial
+`EPERM` remains recorded and is not attributed to pathname length.
+
+Four possible objective-coverage candidates remain pending exact current-report
+rebinding and independent acceptance: `clear.ts` B15 missing project binding
+after validated selection, `clear.ts` B35 duplicate transition path after
+validated transition, and CLI B1 and B2 prevalidated parser guards. These are
+not skips. The CLI non-Error fallback remains OPEN pending an admitted native
+role; a transition addition requires the real transition owner. Independent
+review, Source integration and one full-selection changed-input producer remain
+pending. The 300-second budget, 30-second reserve and 330-second outer bound
+remain unchanged. This packet neither changes prior counts nor establishes
+coverage closure, frozen CRAP, mutation qualification or Runtime acceptance.
+Old UNKNOWN and SDK evidence remain fenced.
+
 ## Documentation CLEAR remaining cases and help custody — 2026-10-28
 
 Root's preceding accepted diagnostic on `f4db048a` ran 27 tests and 256

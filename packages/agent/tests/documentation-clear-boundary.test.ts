@@ -3,7 +3,17 @@ import { describe, expect, test } from 'bun:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearCheckpoint, DocumentationClearInput } from '../src/documentation/clear.ts';
@@ -33,8 +43,10 @@ function requiredProjectId(): string {
   if (!projectId) throw new Error('Configured test context has no project ID.');
   return projectId;
 }
-function documentationClearFixture(options: { readonly changelogRequired?: boolean } = {}): DocumentationClearFixture {
-  const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-zombies-'));
+function documentationClearFixture(
+  options: { readonly changelogRequired?: boolean; readonly shortRoot?: boolean } = {},
+): DocumentationClearFixture {
+  const root = mkdtempSync(path.join(tmpdir(), options.shortRoot ? 'dc-' : 'vida-clear-zombies-'));
   const write = (relativePath: string, content: string): void => {
     const file = path.join(root, relativePath);
     mkdirSync(path.dirname(file), { recursive: true });
@@ -664,6 +676,184 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
     } finally {
       if (passed) fixture.cleanup();
       else console.error(`Retained failed changelog fixture: ${fixture.root}`);
+    }
+  });
+
+  test('inventory rejects a real symlink and accepts the repaired canonical root', async () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const baseline = await runtime.executeDocumentationClearOperation(fixture.input, 'baseline');
+      const baselinePath = path.join(fixture.root, baseline.path);
+      const baselineBytes = readFileSync(baselinePath);
+      const target = path.join(fixture.root, 'docs/agent-instructions/current.md');
+      const targetBytes = readFileSync(target);
+      const link = path.join(fixture.root, 'docs/agent-instructions/link.md');
+      symlinkSync('current.md', link);
+      expect(() => runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' })).toThrow(
+        'documentation inventory contains a reparse point',
+      );
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      expect(readFileSync(target)).toEqual(targetBytes);
+      unlinkSync(link);
+      const closeout = await runtime.executeDocumentationClearOperation(fixture.input, 'closeout');
+      expect(closeout.status).toBe('pass');
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed symlink inventory fixture: ${fixture.root}`);
+    }
+  });
+
+  test('inventory rejects a real unix socket and accepts the repaired canonical root', async () => {
+    const fixture = documentationClearFixture({ shortRoot: true });
+    let passed = false;
+    try {
+      const baseline = await runtime.executeDocumentationClearOperation(fixture.input, 'baseline');
+      const baselinePath = path.join(fixture.root, baseline.path);
+      const baselineBytes = readFileSync(baselinePath);
+      const documentPath = path.join(fixture.root, 'docs/agent-instructions/current.md');
+      const documentBytes = readFileSync(documentPath);
+      const socketPath = path.join(fixture.root, 'docs/agent-instructions/io.sock');
+      const listener = Bun.listen({ unix: socketPath, socket: { data() {} } });
+      try {
+        expect(() => runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' })).toThrow(
+          'documentation inventory contains an unsupported path',
+        );
+        expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+        expect(readFileSync(documentPath)).toEqual(documentBytes);
+      } finally {
+        listener.stop(true);
+        if (existsSync(socketPath)) unlinkSync(socketPath);
+      }
+      const closeout = await runtime.executeDocumentationClearOperation(fixture.input, 'closeout');
+      expect(closeout.status).toBe('pass');
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed socket inventory fixture: ${fixture.root}`);
+    }
+  });
+
+  test('policy change without a transition blocks the baseline until exact restoration', async () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const baselineResult = await runtime.executeDocumentationClearOperation(fixture.input, 'baseline');
+      const baselinePath = path.join(fixture.root, baselineResult.path);
+      const baselineBytes = readFileSync(baselinePath);
+      const baseline = readCheckpoint(baselinePath);
+      expect(baseline.status).toBe('pass');
+      const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+      const policyBytes = readFileSync(path.join(fixture.root, policyPath));
+      const policy = JSON.parse(policyBytes.toString('utf8')) as Record<string, unknown>;
+      fixture.write(policyPath, JSON.stringify({ ...policy, owner: 'project:changed-owner' }) + '\n');
+      const input = { ...fixture.input, phase: 'closeout' as const, baseline, baseline_path: baselineResult.path };
+      const blocked = runtime.produceDocumentationClearCheckpoint(input);
+      expect(blocked).toMatchObject({ status: 'blocked', gaps: ['GAP-DOCUMENTATION-BASELINE-STALE-001'] });
+      await Promise.resolve(
+        expect(runtime.executeDocumentationClearOperation(fixture.input, 'closeout')).rejects.toThrow(
+          'documentation CLEAR blocked: GAP-DOCUMENTATION-BASELINE-STALE-001',
+        ),
+      );
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      expect(
+        existsSync(path.join(fixture.root, `.agent/work/${fixture.input.work_id}/documentation-closeout-0001.v1.json`)),
+      ).toBe(false);
+      writeFileSync(path.join(fixture.root, policyPath), policyBytes);
+      const closeout = await runtime.executeDocumentationClearOperation(fixture.input, 'closeout');
+      expect(closeout.status).toBe('pass');
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed policy transition fixture: ${fixture.root}`);
+    }
+  });
+
+  test('closeout requires real init and delete events for changed inventory', async () => {
+    const fixture = documentationClearFixture({ changelogRequired: true });
+    let passed = false;
+    try {
+      const oldPath = 'docs/agent-instructions/old.md';
+      const newPath = 'docs/agent-instructions/new.md';
+      const oldBody = 'old documentation\n';
+      const newBody = 'new documentation\n';
+      fixture.write(oldPath, oldBody);
+      const baselineResult = await runtime.executeDocumentationClearOperation(fixture.input, 'baseline');
+      const baselinePath = path.join(fixture.root, baselineResult.path);
+      const baselineBytes = readFileSync(baselinePath);
+      const baseline = readCheckpoint(baselinePath);
+      const digest = (content: string): string => createHash('sha256').update(content).digest('hex');
+      expect(baseline.documents).toContainEqual({
+        path: oldPath,
+        sha256: digest(oldBody),
+        size: Buffer.byteLength(oldBody),
+      });
+      expect(baseline.documents.some((document) => document.path === newPath)).toBe(false);
+      unlinkSync(path.join(fixture.root, oldPath));
+      fixture.write(newPath, newBody);
+      await Promise.resolve(
+        expect(runtime.executeDocumentationClearOperation(fixture.input, 'closeout')).rejects.toThrow(
+          'documentation CLEAR blocked: GAP-DOCUMENTATION-CHANGELOG-001',
+        ),
+      );
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      expect(readFileSync(path.join(fixture.root, newPath), 'utf8')).toBe(newBody);
+      const common = {
+        schema: 'DocumentationChangeEvent/v1',
+        work_id: fixture.input.work_id,
+        source_revision: fixture.input.source_revision,
+        actor: 'test:documentation-owner',
+        timestamp: new Date().toISOString(),
+      };
+      const events = [
+        {
+          ...common,
+          event_id: 'init-new',
+          logical_edit_id: 'init-new',
+          operation: 'init',
+          document_id: newPath,
+          path_before: null,
+          path_after: newPath,
+          before_sha256: '0'.repeat(64),
+          after_sha256: digest(newBody),
+          pointer: 'test:init-new',
+        },
+        {
+          ...common,
+          event_id: 'delete-old',
+          logical_edit_id: 'delete-old',
+          operation: 'delete',
+          document_id: oldPath,
+          path_before: oldPath,
+          path_after: null,
+          before_sha256: digest(oldBody),
+          after_sha256: '0'.repeat(64),
+          pointer: 'test:delete-old',
+        },
+      ];
+      fixture.write(
+        'docs/agent-instructions/agent-instructions.changelog.jsonl',
+        events.map((event) => JSON.stringify(event)).join('\n') + '\n',
+      );
+      const closeout = await runtime.executeDocumentationClearOperation(fixture.input, 'closeout');
+      const checkpoint = readCheckpoint(path.join(fixture.root, closeout.path));
+      expect(checkpoint).toMatchObject({ status: 'pass', gaps: [], baseline_digest: baseline.digest });
+      expect(checkpoint.documents).toContainEqual({
+        path: newPath,
+        sha256: digest(newBody),
+        size: Buffer.byteLength(newBody),
+      });
+      expect(checkpoint.documents.some((document) => document.path === oldPath)).toBe(false);
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      expect((await runtime.executeDocumentationClearOperation(fixture.input, 'verify')).path).toBe(closeout.path);
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
+      else console.error(`Retained failed init and delete fixture: ${fixture.root}`);
     }
   });
 
