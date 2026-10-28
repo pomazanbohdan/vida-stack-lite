@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { z } from 'zod';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
@@ -520,7 +519,7 @@ export function inspectProjectUpgrade(
     repository_identity: access.directoryIdentity('.', label),
     repository_id: config.repository.repository_id,
     project_ids: config.projects.map((entry) => entry.project_id).sort(),
-    token: randomUUID(),
+    token: globalThis.crypto.randomUUID(),
     input_digest: prepared.input_digest,
     database_mode: databaseMode,
     dependencies,
