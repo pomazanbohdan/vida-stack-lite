@@ -74,6 +74,8 @@ async function fixture(
     '.github/workflows/agent-native-delivery.yml',
   ])
     write(root, file, '{}\n');
+  for (const file of ['packages/plugin/fixture.ts', 'tests/agent/fixture.ts', '.githooks/fixture.ts'])
+    write(root, file, 'export const fixture = true;\n');
   const oldBytes = Buffer.from('retained inert SDK provenance');
   const original = {
     schema: 'VidaLocalReleaseState/v1',

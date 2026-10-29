@@ -595,6 +595,8 @@ async function fixture({ success = false }: { success?: boolean } = {}): Promise
     '.github/workflows/agent-native-delivery.yml',
   ])
     write(root, file, '{}\n');
+  for (const file of ['packages/plugin/fixture.ts', 'tests/agent/fixture.ts', '.githooks/fixture.ts'])
+    write(root, file, 'export const fixture = true;\n');
   const oldBytes = Buffer.from('retained inert SDK provenance');
   const original = {
     schema: 'VidaLocalReleaseState/v1',
@@ -685,12 +687,7 @@ test('Windows delivery source manifest names existing maintained regular files w
   });
   assert.ok(files.length > 0, 'workflow copy list must contain literal paths');
   assert.equal(body.replace(/'[^']+'/gu, '').replace(/[\s,]/gu, ''), '', 'copy list must contain only path literals');
-  assert.deepEqual(
-    files.filter((file) =>
-      /(?:^|\/)release-assurance\.(?:mjs|ts)$|(?:^|\/)forward-review-proof\.(?:mjs|ts)$/u.test(file),
-    ),
-    ['tooling/agent/release-assurance.ts', 'tooling/agent/controllers/forward-review-proof.ts'],
-  );
+  assert.match(workflow, /foreach \(\$root in @\('packages\/plugin','tests\/agent','tooling\/agent','\.githooks'\)\)/u);
   for (const file of files) {
     assert.ok(!path.isAbsolute(file) && !file.split(/[\\/]/u).includes('..'), `copy path must stay in Source: ${file}`);
     assert.ok(lstatSync(path.join(sourceRoot, file)).isFile(), `copy input must be a maintained regular file: ${file}`);

@@ -164,7 +164,17 @@ function receiptPath(root: string, prepared: PreparationIdentity): string {
 export function readReleasePreparation(
   root: string,
   prepared: PreparationIdentity,
-): { priorVersion: unknown; disposition: unknown } | null {
+): { priorVersion: unknown; disposition: unknown } | null;
+export function readReleasePreparation(
+  root: string,
+  prepared: PreparationIdentity,
+  includePreviousPending: true,
+): { priorVersion: unknown; disposition: unknown; previousPending: Buffer | null } | null;
+export function readReleasePreparation(
+  root: string,
+  prepared: PreparationIdentity,
+  includePreviousPending = false,
+): { priorVersion: unknown; disposition: unknown; previousPending?: Buffer | null } | null {
   const file = receiptPath(root, prepared);
   if (!existsSync(file)) return null;
   const { intent } = readIntent(root, file);
@@ -182,7 +192,14 @@ export function readReleasePreparation(
   const disposition: unknown = dispositionTarget
     ? JSON.parse(decodeImage(dispositionTarget.after).toString('utf8'))
     : null;
-  return { priorVersion: priorManifest.version, disposition };
+  const result = { priorVersion: priorManifest.version, disposition };
+  if (!includePreviousPending) return result;
+  const pendingTarget = intent.targets.at(-1);
+  requireRelease(pendingTarget, 'preparation pending target missing');
+  return {
+    ...result,
+    previousPending: pendingTarget.before === null ? null : decodeImage(pendingTarget.before),
+  };
 }
 
 function readPreparationDisposition(root: string, intent: PreparationIntent): PreparationTarget | null {

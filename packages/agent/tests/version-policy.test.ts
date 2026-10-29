@@ -1,5 +1,14 @@
 import assert from 'node:assert/strict';
-import { linkSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  linkSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,12 +27,13 @@ import {
   readDispositionProposal,
 } from '../../../tooling/agent/release-local.ts';
 import {
+  recordCIDeliveryRequest,
   validateCIDeliveryFormationMembers,
   validateDependencyCache,
 } from '../../../tooling/agent/release-ci-evidence.ts';
 import { readPin } from '../bin/bun.ts';
 import { resumeReleasePreparation } from '../bin/release-preparation.ts';
-import { withReleaseAdmission } from '../bin/local-release-artifacts.ts';
+import { releaseSourceBinding, withReleaseAdmission } from '../bin/local-release-artifacts.ts';
 
 type CIDeliveryRequest = Parameters<typeof normalizeLegacyReleaseDispatchIntent>[0]['request'];
 type CIDeliveryRequestBody = Omit<CIDeliveryRequest, 'request_id'>;
@@ -85,12 +95,12 @@ test('native delivery cache isolates fenced entries while allowing later reuse a
     assert.match(install.run!, /\$env:CACHE_MATCHED_KEY -cnotmatch \$cacheKeyPattern/);
     assert.ok(
       install.run!.includes(
-        "$cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release2-bun-' + $pin + '-'",
+        "$cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release3-bun-' + $pin + '-'",
       ),
     );
     assert.ok(install.run!.includes("$cacheKeyPattern = '^' + [regex]::Escape($cacheNamespace) + '[a-f0-9]{64}$'"));
     assert.ok(install.run!.includes("$cacheHit -ceq 'true' -and $env:CACHE_MATCHED_KEY -cne $env:CACHE_PRIMARY_KEY"));
-    assert.match(evidence.run!, /\$keyPattern = '\^vida-bun-install-v1-\[A-Za-z0-9_-\]\+-release2-bun-'/);
+    assert.match(evidence.run!, /\$keyPattern = '\^vida-bun-install-v1-\[A-Za-z0-9_-\]\+-release3-bun-'/);
     for (const [os, arch] of [
       ['Windows', 'X64'],
       ['Linux', 'X64'],
@@ -106,10 +116,12 @@ test('native delivery cache isolates fenced entries while allowing later reuse a
       const later = expand(keyTemplate, 'b'.repeat(64));
       const old = `vida-bun-install-v1-${os}-${arch}-bun-${selectedBunPin}-${'a'.repeat(64)}`;
       const oldPrefix = old.slice(0, -64);
-      assert.equal(prefix, `vida-bun-install-v1-${os}-${arch}-release2-bun-${selectedBunPin}-`);
+      const fenced = `vida-bun-install-v1-${os}-${arch}-release2-bun-${selectedBunPin}-${'a'.repeat(64)}`;
+      assert.equal(prefix, `vida-bun-install-v1-${os}-${arch}-release3-bun-${selectedBunPin}-`);
       assert.ok(key.startsWith(prefix) && later.startsWith(prefix));
       assert.ok(!old.startsWith(key) && !old.startsWith(prefix));
       assert.ok(!key.startsWith(old) && !key.startsWith(oldPrefix));
+      assert.ok(!fenced.startsWith(prefix));
       const receipt = {
         id: 1,
         key,
@@ -124,17 +136,46 @@ test('native delivery cache isolates fenced entries while allowing later reuse a
       assert.deepEqual(validateDependencyCache(receipt), receipt);
       const oldReceipt = { ...receipt, key: old, matched_key: old };
       assert.deepEqual(validateDependencyCache(oldReceipt), oldReceipt);
+      const fencedReceipt = { ...receipt, key: fenced, matched_key: fenced };
+      assert.deepEqual(validateDependencyCache(fencedReceipt), fencedReceipt);
       const fallbackReceipt = { ...receipt, restore: 'miss', matched_key: later, save_action: 'success' };
       assert.deepEqual(validateDependencyCache(fallbackReceipt), fallbackReceipt);
       const keyPattern = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[a-f0-9]{64}$');
       assert.ok(keyPattern.test(key) && keyPattern.test(later));
-      for (const invalid of [old, prefix + 'a'.repeat(63), prefix + 'a'.repeat(65), prefix + 'z'.repeat(64)]) {
+      for (const invalid of [old, fenced, prefix + 'a'.repeat(63), prefix + 'a'.repeat(65), prefix + 'z'.repeat(64)]) {
         assert.ok(!keyPattern.test(invalid));
         assert.throws(() =>
           validateDependencyCache({ ...receipt, restore: 'miss', matched_key: invalid, save_action: 'success' }),
         );
       }
     }
+  }
+});
+
+test('release Source binding covers every maintained gate root', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-release-source-roots-'));
+  try {
+    const files = [
+      'package.json',
+      'agent-runtime.config.v1.yaml',
+      'AGENT.sidecar.md',
+      'packages/agent/fixture.ts',
+      'packages/plugin/fixture.ts',
+      'tests/agent/fixture.ts',
+      'tooling/agent/fixture.ts',
+      '.githooks/fixture.ts',
+      '.github/workflows/agent-native-delivery.yml',
+    ];
+    for (const file of files) writeFixture(root, file, Buffer.from('original'));
+    const original = releaseSourceBinding(root).source_binding;
+    for (const file of files.slice(3, 8)) {
+      writeFixture(root, file, Buffer.from('changed'));
+      assert.notEqual(releaseSourceBinding(root).source_binding, original, file);
+      writeFixture(root, file, Buffer.from('original'));
+    }
+    assert.equal(releaseSourceBinding(root).source_binding, original);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 
@@ -257,6 +298,75 @@ test('independent successor retains the first candidate version and predecessor 
     assert.ok(isRecord(manifest));
     assert.equal(manifest.version, '0.1.5');
     await assert.rejects(prepareIndependentSuccessor(root, old.operation_id));
+    const nextPath = `.agent/work/agent-local-release/${next.operation_id}/release.json`;
+    const nextPreparationPath = `.agent/work/agent-local-release/${next.operation_id}/preparation.json`;
+    const nextBytes = readFileSync(path.join(root, nextPath));
+    const nextPreparation = readFileSync(path.join(root, nextPreparationPath));
+    const third = await prepareIndependentSuccessor(root, next.operation_id);
+    assert.ok(third);
+    assert.notEqual(third.operation_id, next.operation_id);
+    assert.notEqual(third.operation_id, old.operation_id);
+    assert.equal(third.version, '0.1.5');
+    assert.deepEqual(readFileSync(path.join(root, oldPath)), oldBytes);
+    assert.deepEqual(
+      readFileSync(path.join(root, `.agent/work/agent-local-release/${old.operation_id}/preparation.json`)),
+      oldPreparation,
+    );
+    assert.deepEqual(readFileSync(path.join(root, nextPath)), nextBytes);
+    assert.deepEqual(readFileSync(path.join(root, nextPreparationPath)), nextPreparation);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('successive independent operations issue distinct Source-bound requests and retain earlier bytes', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-independent-requests-'));
+  try {
+    writeFixture(root, 'packages/agent/package.json', {
+      name: 'vida-agent',
+      version: '0.1.4',
+      bin: { 'vida-agent': './bin/vida-agent.ts' },
+      engines: { bun: selectedBunPin },
+      packageManager: `bun@${selectedBunPin}`,
+    });
+    writeFixture(root, 'packages/agent/.bun-version', Buffer.from(`${selectedBunPin}\n`));
+    for (const file of [
+      'package.json',
+      'agent-runtime.config.v1.yaml',
+      'AGENT.sidecar.md',
+      'packages/plugin/fixture.ts',
+      'tests/agent/fixture.ts',
+      'tooling/agent/fixture.ts',
+      '.githooks/fixture.ts',
+      '.github/workflows/agent-native-delivery.yml',
+    ])
+      writeFixture(root, file, Buffer.from('original\n'));
+    const context = { schema: 'ProjectContext/v1', repository_id: 'vida-agent', project_ids: ['agent'] };
+    const requests: Array<{ request_id: string; operation_id: string; source_binding: string }> = [];
+    const captured: Array<{ file: string; bytes: Buffer }> = [];
+    let operation = await prepareRelease(root);
+    assert.ok(operation);
+    for (let i = 0; i < 3; i++) {
+      for (const target of ['bun-linux-x64', 'bun-windows-x64']) {
+        const request = recordCIDeliveryRequest({ root, operation: operation.operation_id, context, target });
+        requests.push(request);
+        const file = path.join(
+          root,
+          `.agent/work/agent-local-release/${operation.operation_id}/ci/${request.request_id}/request.json`,
+        );
+        captured.push({ file, bytes: readFileSync(file) });
+      }
+      if (i < 2) {
+        writeFixture(root, 'packages/plugin/fixture.ts', Buffer.from(`revision ${i}\n`));
+        const next = await prepareIndependentSuccessor(root, operation.operation_id);
+        assert.ok(next);
+        operation = next;
+      }
+    }
+    assert.equal(new Set(requests.map((request) => request.request_id)).size, 6);
+    assert.equal(new Set(requests.map((request) => request.operation_id)).size, 3);
+    assert.equal(new Set(requests.map((request) => request.source_binding)).size, 3);
+    for (const { file, bytes } of captured) assert.deepEqual(readFileSync(file), bytes);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -339,6 +449,58 @@ test('independent successor refuses missing, changed, foreign and active predece
       assert.deepEqual(readFileSync(journalPath), journalBytes);
     } finally {
       lock?.close();
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test('successor chain rejects cycles, foreign or missing history and changed version or journal', async () => {
+  for (const scenario of ['cycle', 'foreign', 'missing', 'version', 'journal']) {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-independent-chain-deny-'));
+    try {
+      writeFixture(root, 'packages/agent/package.json', {
+        name: 'vida-agent',
+        version: '0.1.4',
+        bin: { 'vida-agent': './bin/vida-agent.ts' },
+        engines: { bun: selectedBunPin },
+        packageManager: `bun@${selectedBunPin}`,
+      });
+      writeFixture(root, 'packages/agent/.bun-version', Buffer.from(`${selectedBunPin}\n`));
+      const old = await prepareRelease(root);
+      assert.ok(old);
+      const next = await prepareIndependentSuccessor(root, old.operation_id);
+      assert.ok(next);
+      const base = '.agent/work/agent-local-release';
+      const receiptPath = path.join(root, base, next.operation_id, 'preparation.json');
+      const receipt: unknown = JSON.parse(readFileSync(receiptPath, 'utf8'));
+      const previous =
+        scenario === 'cycle'
+          ? next
+          : scenario === 'foreign'
+            ? { ...old, operation_id: 'foreign-operation' }
+            : scenario === 'version'
+              ? { ...old, version: '0.1.6' }
+              : old;
+      if (['cycle', 'foreign', 'version'].includes(scenario)) {
+        assert.ok(isRecord(receipt));
+        assert.ok(Array.isArray(receipt.targets));
+        const target: unknown = receipt.targets.at(-1);
+        assert.ok(isRecord(target));
+        target.before = Buffer.from(json(previous)).toString('base64');
+        writeFileSync(receiptPath, json(receipt));
+      }
+      if (scenario === 'missing') rmSync(path.join(root, base, old.operation_id, 'preparation.json'));
+      if (scenario === 'journal')
+        writeFixture(root, `${base}/${old.operation_id}/release.json`, { ...old, status: 'running' });
+      const pendingPath = path.join(root, base, 'pending.json');
+      const beforePending = readFileSync(pendingPath);
+      const beforeReceipt = readFileSync(receiptPath);
+      const beforeNames = readdirSync(path.join(root, base)).sort();
+      await assert.rejects(prepareIndependentSuccessor(root, next.operation_id));
+      assert.deepEqual(readFileSync(pendingPath), beforePending);
+      assert.deepEqual(readFileSync(receiptPath), beforeReceipt);
+      assert.deepEqual(readdirSync(path.join(root, base)).sort(), beforeNames);
+    } finally {
       rmSync(root, { recursive: true, force: true });
     }
   }

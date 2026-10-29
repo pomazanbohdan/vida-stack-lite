@@ -2807,7 +2807,7 @@ export function prepareIndependentSuccessor(root: string, predecessor: string) {
     const pending = releaseState(pendingFile);
     const state = releaseState(journal);
     const { value } = manifest(root);
-    const preparation = readReleasePreparation(root, pending);
+    const preparation = readReleasePreparation(root, pending, true);
     if (
       pending.operation_id !== predecessor ||
       state.operation_id !== predecessor ||
@@ -2818,12 +2818,41 @@ export function prepareIndependentSuccessor(root: string, predecessor: string) {
       pending.version !== value.version ||
       existsSync(successFile) ||
       readReleaseFormation(root) ||
-      !preparation ||
-      preparation.disposition !== null ||
-      typeof preparation.priorVersion !== 'string' ||
-      candidateVersion(preparation.priorVersion, null) !== pending.version
+      !preparation
     )
       throw new Error('Independent successor requires the exact first-baseline pending candidate.');
+    const seen = new Set<string>();
+    let current = pending;
+    let receipt: { priorVersion: unknown; disposition: unknown; previousPending: Buffer | null } | null = preparation;
+    for (;;) {
+      if (seen.size >= 64 || seen.has(current.operation_id))
+        throw new Error('Independent successor preparation chain is cyclic or too long.');
+      seen.add(current.operation_id);
+      if (!receipt || receipt.disposition !== null || typeof receipt.priorVersion !== 'string')
+        throw new Error('Independent successor preparation chain is invalid.');
+      if (receipt.previousPending === null) {
+        if (candidateVersion(receipt.priorVersion, null) !== pending.version)
+          throw new Error('Independent successor baseline differs.');
+        break;
+      }
+      if (receipt.priorVersion !== pending.version) throw new Error('Independent successor version changed.');
+      const previous: unknown = JSON.parse(receipt.previousPending.toString('utf8'));
+      if (
+        !isRecord(previous) ||
+        Object.keys(previous).sort().join(',') !== 'operation_id,schema,status,version' ||
+        previous.schema !== 'VidaLocalReleaseState/v1' ||
+        typeof previous.operation_id !== 'string' ||
+        !idPattern.test(previous.operation_id) ||
+        previous.version !== pending.version ||
+        previous.status !== 'awaiting_assurance'
+      )
+        throw new Error('Independent successor predecessor differs.');
+      const previousJournal = journalFile(root, previous.operation_id);
+      if (!receipt.previousPending.equals(readFileSync(previousJournal)))
+        throw new Error('Independent successor predecessor journal differs.');
+      current = releaseState(previousJournal);
+      receipt = readReleasePreparation(root, current, true);
+    }
     assertReleaseRetargetSettled(root, predecessor);
     assertNativeDeliveryEvidenceRepairSettled(root, predecessor);
     const workerFile = releasePath(root, `.agent/work/agent-local-release/${predecessor}/worker.sqlite`, true);

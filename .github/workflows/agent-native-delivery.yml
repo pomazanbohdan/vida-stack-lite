@@ -64,9 +64,9 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ runner.temp }}/vida-bun-install-cache
-          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release2-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
+          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release3-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
           restore-keys: |
-            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release2-bun-${{ steps.bun.outputs.bun-version }}-
+            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release3-bun-${{ steps.bun.outputs.bun-version }}-
       - &shared-isolated-source
         name: isolated-source
         env:
@@ -77,7 +77,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $pin = (Get-Content -LiteralPath 'packages/agent/.bun-version' -Raw).Trim()
           if ($pin -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw 'Selected Bun pin is invalid' }
-          $cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release2-bun-' + $pin + '-'
+          $cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release3-bun-' + $pin + '-'
           $cacheKeyPattern = '^' + [regex]::Escape($cacheNamespace) + '[a-f0-9]{64}$'
           $cacheHit = [string]$env:CACHE_HIT
           if ($env:CACHE_PRIMARY_KEY -cnotmatch $cacheKeyPattern -or
@@ -90,11 +90,17 @@ jobs:
           if (Test-Path -LiteralPath $mirror) { throw 'Retained Source preparation; inspect UNKNOWN before replay' }
           New-Item -ItemType Directory -Path $mirror | Out-Null
           $excluded = @('node_modules','dist','coverage','.pack-inspect','.agent','.tmp','.git')
+          $generated = @('packages/agent/node_modules','packages/agent/dist','packages/agent/coverage','packages/agent/.tmp',
+            'packages/plugin/node_modules','packages/plugin/dist','packages/plugin/coverage','packages/plugin/.tmp')
           function Copy-SourceDirectory([string] $source, [string] $destination) {
             New-Item -ItemType Directory -Path $destination | Out-Null
             foreach ($entry in Get-ChildItem -LiteralPath $source -Force) {
               if ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Linked Source input' }
-              if ($entry.PSIsContainer -and $excluded -contains $entry.Name) { continue }
+              if ($entry.PSIsContainer -and $excluded -contains $entry.Name) {
+                $relative = [IO.Path]::GetRelativePath($env:GITHUB_WORKSPACE, $entry.FullName).Replace('\', '/')
+                if ($generated -cnotcontains $relative) { throw 'Unsupported Source directory excluded from binding' }
+                continue
+              }
               $target = Join-Path $destination $entry.Name
               if ($entry.PSIsContainer) { Copy-SourceDirectory $entry.FullName $target }
               else { Copy-Item -LiteralPath $entry.FullName -Destination $target }
@@ -103,6 +109,11 @@ jobs:
           New-Item -ItemType Directory -Path (Join-Path $mirror 'packages') | Out-Null
           $package = Join-Path $mirror 'packages/agent'
           Copy-SourceDirectory (Join-Path $env:GITHUB_WORKSPACE 'packages/agent') $package
+          foreach ($root in @('packages/plugin','tests/agent','tooling/agent','.githooks')) {
+            $target = Join-Path $mirror $root
+            [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null
+            Copy-SourceDirectory (Join-Path $env:GITHUB_WORKSPACE $root) $target
+          }
           # Install from the package's own lock before any parent workspace manifest exists.
           Push-Location $package
           try {
@@ -110,9 +121,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Frozen producer dependencies unavailable' }
           } finally { Pop-Location }
           $files = @('package.json','agent-runtime.config.v1.yaml','AGENT.sidecar.md',
-            'tooling/agent/release-local.ts','tooling/agent/release-assurance.ts',
-            'tooling/agent/release-ci-evidence.ts','tooling/agent/native-ci-delivery.ts',
-            'tooling/agent/controllers/forward-review-proof.ts','.github/workflows/agent-native-delivery.yml')
+            '.github/workflows/agent-native-delivery.yml')
           foreach ($file in $files) {
             $source = Join-Path $env:GITHUB_WORKSPACE $file
             $entry = Get-Item -LiteralPath $source
@@ -145,7 +154,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $pin = (Get-Content -LiteralPath 'packages/agent/.bun-version' -Raw).Trim()
           if ($pin -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw 'Selected Bun pin is invalid' }
-          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-release2-bun-' + [regex]::Escape($pin) + '-[a-f0-9]{64}$'
+          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-release3-bun-' + [regex]::Escape($pin) + '-[a-f0-9]{64}$'
           if ($env:CACHE_KEY -cnotmatch $keyPattern) { throw 'Exact dependency cache key is missing or invalid' }
           $cache = Join-Path $env:RUNNER_TEMP 'vida-bun-install-cache'
           if (-not (Test-Path -LiteralPath $cache -PathType Container)) { throw 'Bun dependency cache directory is absent' }

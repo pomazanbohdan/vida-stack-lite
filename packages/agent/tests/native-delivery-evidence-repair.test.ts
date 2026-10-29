@@ -196,6 +196,9 @@ function fixture({
     'tooling/agent/native-ci-delivery.ts': 'export const fixture = true;\n',
     'tooling/agent/controllers/forward-review-proof.ts': 'export const fixture = true;\n',
     'packages/agent/package.json': JSON.stringify({ name: 'vida-agent', version: '0.1.2', private: true }) + '\n',
+    'packages/plugin/fixture.ts': 'export const fixture = true;\n',
+    'tests/agent/fixture.ts': 'export const fixture = true;\n',
+    '.githooks/fixture.ts': 'export const fixture = true;\n',
     '.github/workflows/agent-native-delivery.yml': 'name: Synthetic repair fixture\n',
   };
   for (const [file, contents] of Object.entries(sourceFiles)) write(root, file, contents);

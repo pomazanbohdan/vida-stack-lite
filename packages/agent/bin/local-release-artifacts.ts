@@ -505,7 +505,7 @@ export function selectedTarball(metadata: unknown, folder: string, version: stri
 }
 
 const excluded = new Set(['node_modules', 'dist', 'coverage', '.pack-inspect']);
-const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent']);
+const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent', 'packages/plugin/.tmp']);
 /**
  */
 const repairSourcePasses = new WeakMap<RepairSourcePass, RepairSourceState>();
@@ -727,11 +727,10 @@ export function releaseSourceBinding(
     'agent-runtime.config.v1.yaml',
     'AGENT.sidecar.md',
     'packages/agent',
-    'tooling/agent/release-local.ts',
-    'tooling/agent/release-assurance.ts',
-    'tooling/agent/release-ci-evidence.ts',
-    'tooling/agent/native-ci-delivery.ts',
-    'tooling/agent/controllers/forward-review-proof.ts',
+    'packages/plugin',
+    'tests/agent',
+    'tooling/agent',
+    '.githooks',
     '.github/workflows/agent-native-delivery.yml',
   ].flatMap((relative) => releaseSourceInputs(root, relative, observations, repairPass));
   return { source_binding: releaseDigest(JSON.stringify(entries)), entries, ...(observations ? { observations } : {}) };
