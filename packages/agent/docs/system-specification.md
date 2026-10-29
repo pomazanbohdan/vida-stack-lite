@@ -929,7 +929,7 @@ No active release/tests/retarget/Host v1 fields change.
 The CI producer encodes new `VidaCIDeliveryResult/v2` records from actual
 observations and formed bytes. It binds request, run/attempt, archive, native
 manifest, embedded payload, executable and dependency cache evidence. Native
-delivery uses the release3 Bun cache namespace to isolate earlier entries;
+delivery uses the release4 Bun cache namespace to isolate earlier entries;
 compatible later runs can reuse it. Before installation, the workflow validates
 the primary and any matched key against the selected platform and Bun pin.
 Existing cache receipts remain valid. The pinned cache action can report success after a caught cache-service warning, so the

@@ -16,6 +16,7 @@ export type BunPackEntry = {
 const maxArchiveBytes = 256 * 1024 * 1024;
 const maxFiles = 20_000;
 const maxFileBytes = 64 * 1024 * 1024;
+const maxNativeAssetBytes = 240 * 1024 * 1024;
 const maxExpandedBytes = 512 * 1024 * 1024;
 const maxManifestBytes = 1024 * 1024;
 
@@ -44,8 +45,18 @@ export async function readBunPackMetadata(input: {
   name: string;
   version: string;
   filename: string;
+  nativeTarget?: string;
 }): Promise<BunPackEntry[]> {
-  const { archive, name, version, filename } = input;
+  const { archive, name, version, filename, nativeTarget } = input;
+  const nativeAsset =
+    nativeTarget === undefined
+      ? undefined
+      : nativeTarget === 'bun-linux-x64'
+        ? 'dist/standalone/vida-agent-bun-linux-x64'
+        : nativeTarget === 'bun-windows-x64'
+          ? 'dist/standalone/vida-agent-bun-windows-x64.exe'
+          : null;
+  if (nativeAsset === null) throw new Error('Bun package archive native target is unsupported');
   if (!path.isAbsolute(archive)) throw new Error('Bun package archive path must be absolute');
   if (!filename || path.basename(filename) !== filename || filename !== path.basename(archive))
     throw new Error('Bun package archive filename differs');
@@ -93,7 +104,8 @@ export async function readBunPackMetadata(input: {
       relative = canonicalPackagePath(entry.path);
       if (paths.has(relative)) throw new Error(`Bun package archive contains a duplicate path: ${relative}`);
       if (paths.size >= maxFiles) throw new Error('Bun package archive contains too many files');
-      if (!Number.isSafeInteger(entry.size) || entry.size < 0 || entry.size > maxFileBytes)
+      const fileLimit = relative === nativeAsset ? maxNativeAssetBytes : maxFileBytes;
+      if (!Number.isSafeInteger(entry.size) || entry.size < 0 || entry.size > fileLimit)
         throw new Error(`Bun package archive file exceeds its size limit: ${relative}`);
       paths.add(relative);
     } catch (error: unknown) {

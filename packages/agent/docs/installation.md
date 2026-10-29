@@ -297,7 +297,7 @@ local formation consistency; it does not publish a release or install an agent.
 
 The build job restores the Bun package cache before installing dependencies.
 Its key binds the runner OS/architecture, Bun version, package manifest and
-lockfile. The release3 namespace isolates earlier cache entries while allowing
+lockfile. The release4 namespace isolates earlier cache entries while allowing
 compatible later runs to reuse downloaded packages. The workflow checks any
 restored key against the selected platform and Bun pin before installation.
 Installation still uses `--frozen-lockfile --ignore-scripts --backend=copyfile`. Each run gets

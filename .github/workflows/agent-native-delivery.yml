@@ -64,9 +64,9 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ runner.temp }}/vida-bun-install-cache
-          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release3-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
+          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release4-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
           restore-keys: |
-            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release3-bun-${{ steps.bun.outputs.bun-version }}-
+            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-release4-bun-${{ steps.bun.outputs.bun-version }}-
       - &shared-isolated-source
         name: isolated-source
         env:
@@ -77,7 +77,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $pin = (Get-Content -LiteralPath 'packages/agent/.bun-version' -Raw).Trim()
           if ($pin -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw 'Selected Bun pin is invalid' }
-          $cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release3-bun-' + $pin + '-'
+          $cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release4-bun-' + $pin + '-'
           $cacheKeyPattern = '^' + [regex]::Escape($cacheNamespace) + '[a-f0-9]{64}$'
           $cacheHit = [string]$env:CACHE_HIT
           if ($env:CACHE_PRIMARY_KEY -cnotmatch $cacheKeyPattern -or
@@ -154,7 +154,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $pin = (Get-Content -LiteralPath 'packages/agent/.bun-version' -Raw).Trim()
           if ($pin -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw 'Selected Bun pin is invalid' }
-          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-release3-bun-' + [regex]::Escape($pin) + '-[a-f0-9]{64}$'
+          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-release4-bun-' + [regex]::Escape($pin) + '-[a-f0-9]{64}$'
           if ($env:CACHE_KEY -cnotmatch $keyPattern) { throw 'Exact dependency cache key is missing or invalid' }
           $cache = Join-Path $env:RUNNER_TEMP 'vida-bun-install-cache'
           if (-not (Test-Path -LiteralPath $cache -PathType Container)) { throw 'Bun dependency cache directory is absent' }

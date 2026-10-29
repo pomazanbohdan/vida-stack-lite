@@ -1,7 +1,8 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomFillSync } from 'node:crypto';
 import { mkdtempSync, rmSync, truncateSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { expect, test } from 'bun:test';
 import { readBunPackMetadata } from '../tooling/bun-pack-metadata.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
@@ -162,5 +163,87 @@ test('rejects archive and expanded-file sizes before materializing unbounded inp
     await expectRejection(readBunPackMetadata({ archive: oversizedEntry.archive, ...expected }), /size limit/u);
   } finally {
     oversizedEntry.dispose();
+  }
+});
+
+for (const [target, otherTarget, asset] of [
+  ['bun-linux-x64', 'bun-windows-x64', 'vida-agent-bun-linux-x64'],
+  ['bun-windows-x64', 'bun-linux-x64', 'vida-agent-bun-windows-x64.exe'],
+] as const)
+  test(`accepts only the selected ${target} native asset above the generic file bound`, async () => {
+    const body = Buffer.alloc(64 * 1024 * 1024 + 1);
+    const pattern = randomFillSync(Buffer.alloc(8 * 1024));
+    for (let offset = 0; offset < body.length; offset += pattern.length) pattern.copy(body, offset);
+    const owned = fixture(
+      gzipSync(
+        archive([
+          { path: 'package/package.json', body: packageJson },
+          { path: `package/dist/standalone/${asset}`, body },
+        ]),
+      ),
+    );
+    try {
+      const result = await readBunPackMetadata({ archive: owned.archive, ...expected, nativeTarget: target });
+      expect(result[0]?.files).toContainEqual({ path: `dist/standalone/${asset}`, size: body.length });
+      await expectRejection(readBunPackMetadata({ archive: owned.archive, ...expected }), /size limit/u);
+      await expectRejection(
+        readBunPackMetadata({ archive: owned.archive, ...expected, nativeTarget: otherTarget }),
+        /size limit/u,
+      );
+    } finally {
+      owned.dispose();
+    }
+    const wrongName = fixture(
+      gzipSync(
+        archive([
+          { path: 'package/package.json', body: packageJson },
+          { path: `package/dist/standalone/${asset}.bak`, body },
+        ]),
+      ),
+    );
+    try {
+      await expectRejection(
+        readBunPackMetadata({ archive: wrongName.archive, ...expected, nativeTarget: target }),
+        /size limit/u,
+      );
+    } finally {
+      wrongName.dispose();
+    }
+  });
+
+test('preserves the native and manifest bounds and rejects unsupported targets', async () => {
+  for (const [target, asset] of [
+    ['bun-linux-x64', 'vida-agent-bun-linux-x64'],
+    ['bun-windows-x64', 'vida-agent-bun-windows-x64.exe'],
+  ] as const) {
+    const oversized = fixture(
+      archive([
+        { path: 'package/package.json', body: packageJson },
+        { path: `package/dist/standalone/${asset}`, declaredSize: 240 * 1024 * 1024 + 1 },
+      ]),
+    );
+    try {
+      await expectRejection(
+        readBunPackMetadata({ archive: oversized.archive, ...expected, nativeTarget: target }),
+        /size limit/u,
+      );
+    } finally {
+      oversized.dispose();
+    }
+  }
+  const manifest = fixture(
+    gzipSync(archive([{ path: 'package/package.json', body: Buffer.alloc(1024 * 1024 + 1, 0x20) }])),
+  );
+  try {
+    await expectRejection(
+      readBunPackMetadata({ archive: manifest.archive, ...expected, nativeTarget: 'bun-linux-x64' }),
+      /size limit/u,
+    );
+    await expectRejection(
+      readBunPackMetadata({ archive: manifest.archive, ...expected, nativeTarget: '../other' }),
+      /unsupported/u,
+    );
+  } finally {
+    manifest.dispose();
   }
 });

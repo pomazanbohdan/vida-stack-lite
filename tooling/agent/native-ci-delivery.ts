@@ -749,6 +749,7 @@ async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner):
     name: 'vida-agent',
     version: ctx.request.version,
     filename,
+    nativeTarget: ctx.request.target,
   });
   requireCI(packed.length === 1, 'CI pack metadata cardinality differs');
   const packedEntry = packed[0];

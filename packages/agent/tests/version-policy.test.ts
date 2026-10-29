@@ -95,12 +95,12 @@ test('native delivery cache isolates fenced entries while allowing later reuse a
     assert.match(install.run!, /\$env:CACHE_MATCHED_KEY -cnotmatch \$cacheKeyPattern/);
     assert.ok(
       install.run!.includes(
-        "$cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release3-bun-' + $pin + '-'",
+        "$cacheNamespace = 'vida-bun-install-v1-' + $env:RUNNER_OS + '-' + $env:RUNNER_ARCH + '-release4-bun-' + $pin + '-'",
       ),
     );
     assert.ok(install.run!.includes("$cacheKeyPattern = '^' + [regex]::Escape($cacheNamespace) + '[a-f0-9]{64}$'"));
     assert.ok(install.run!.includes("$cacheHit -ceq 'true' -and $env:CACHE_MATCHED_KEY -cne $env:CACHE_PRIMARY_KEY"));
-    assert.match(evidence.run!, /\$keyPattern = '\^vida-bun-install-v1-\[A-Za-z0-9_-\]\+-release3-bun-'/);
+    assert.match(evidence.run!, /\$keyPattern = '\^vida-bun-install-v1-\[A-Za-z0-9_-\]\+-release4-bun-'/);
     for (const [os, arch] of [
       ['Windows', 'X64'],
       ['Linux', 'X64'],
@@ -116,12 +116,13 @@ test('native delivery cache isolates fenced entries while allowing later reuse a
       const later = expand(keyTemplate, 'b'.repeat(64));
       const old = `vida-bun-install-v1-${os}-${arch}-bun-${selectedBunPin}-${'a'.repeat(64)}`;
       const oldPrefix = old.slice(0, -64);
-      const fenced = `vida-bun-install-v1-${os}-${arch}-release2-bun-${selectedBunPin}-${'a'.repeat(64)}`;
-      assert.equal(prefix, `vida-bun-install-v1-${os}-${arch}-release3-bun-${selectedBunPin}-`);
+      const fenced = `vida-bun-install-v1-${os}-${arch}-release3-bun-${selectedBunPin}-${'a'.repeat(64)}`;
+      const earlier = `vida-bun-install-v1-${os}-${arch}-release2-bun-${selectedBunPin}-${'a'.repeat(64)}`;
+      assert.equal(prefix, `vida-bun-install-v1-${os}-${arch}-release4-bun-${selectedBunPin}-`);
       assert.ok(key.startsWith(prefix) && later.startsWith(prefix));
       assert.ok(!old.startsWith(key) && !old.startsWith(prefix));
       assert.ok(!key.startsWith(old) && !key.startsWith(oldPrefix));
-      assert.ok(!fenced.startsWith(prefix));
+      assert.ok(!fenced.startsWith(prefix) && !earlier.startsWith(prefix));
       const receipt = {
         id: 1,
         key,
@@ -138,11 +139,20 @@ test('native delivery cache isolates fenced entries while allowing later reuse a
       assert.deepEqual(validateDependencyCache(oldReceipt), oldReceipt);
       const fencedReceipt = { ...receipt, key: fenced, matched_key: fenced };
       assert.deepEqual(validateDependencyCache(fencedReceipt), fencedReceipt);
+      const earlierReceipt = { ...receipt, key: earlier, matched_key: earlier };
+      assert.deepEqual(validateDependencyCache(earlierReceipt), earlierReceipt);
       const fallbackReceipt = { ...receipt, restore: 'miss', matched_key: later, save_action: 'success' };
       assert.deepEqual(validateDependencyCache(fallbackReceipt), fallbackReceipt);
       const keyPattern = new RegExp('^' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[a-f0-9]{64}$');
       assert.ok(keyPattern.test(key) && keyPattern.test(later));
-      for (const invalid of [old, fenced, prefix + 'a'.repeat(63), prefix + 'a'.repeat(65), prefix + 'z'.repeat(64)]) {
+      for (const invalid of [
+        old,
+        fenced,
+        earlier,
+        prefix + 'a'.repeat(63),
+        prefix + 'a'.repeat(65),
+        prefix + 'z'.repeat(64),
+      ]) {
         assert.ok(!keyPattern.test(invalid));
         assert.throws(() =>
           validateDependencyCache({ ...receipt, restore: 'miss', matched_key: invalid, save_action: 'success' }),
