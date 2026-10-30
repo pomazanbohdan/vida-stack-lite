@@ -550,6 +550,13 @@ controlled Source work resumes. Copied predecessors, manual-ready state,
 inferred no-effect and reconstructed absent release journals remain forbidden;
 installation does not establish Runtime acceptance.
 
+The observed pre-push documentation-capture blocker additionally scopes
+`tests/contained-controller-fixture.ts`, `tooling/bun-coverage-evidence.ts`,
+`tests/quality-input-projections.test.ts` and `TESTING.md` to this repair.
+The fixture uses fixed generated configuration and only its actual package
+resources; capture follows those reads. File, aggregate, path and timing bounds,
+integrity checks and UNKNOWN retention remain unchanged.
+
 Each controller child runs under one exclusive compound reservation at
 `<controllerRoot>/observations/`. The controller retains the exact executable
 and arguments, parent and child working directories, pinned runtime context,

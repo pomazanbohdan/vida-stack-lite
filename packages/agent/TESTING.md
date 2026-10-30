@@ -461,8 +461,11 @@ For example, `bun-coverage-evidence.ts` imports `ts-only-source-gate.ts`, so
 omitting that module makes coverage children fail at load.
 
 Filesystem data copied by reached fixture helpers belongs to that same capture.
-`contained-controller-fixture.ts` requires package docs and TESTING.md; unrelated
-selections do not capture them. Share the closure's running byte total, check
+`contained-controller-fixture.ts` generates fixed Source-shaped integration through
+the supported initializer from package templates, schemas and instructions.
+Its explicit initializer module edge and TESTING.md remain captured; ambient
+repository configuration and package documentation are not fixture inputs.
+Unrelated selections do not capture TESTING.md. Share the closure's running byte total, check
 path limits before another read and the aggregate byte limit before retention,
 then retain the existing final projection checks. Reuse initialization-bundle
 helpers instead of maintaining another copy list. Qualify equivalent fixture

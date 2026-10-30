@@ -1213,7 +1213,7 @@ describe('final quality input projections', () => {
     expect(pathBound.has('TESTING.md')).toBe(false);
   });
 
-  test('captures reachable controller documentation once without widening unrelated closures', async () => {
+  test('captures the contained controller fixture without widening to docs', async () => {
     const root = fixtureRoot();
     try {
       const selection = {
@@ -1223,36 +1223,55 @@ describe('final quality input projections', () => {
         tests: ['tests/fixture.test.mjs'],
       };
       const helper = 'tests/contained-controller-fixture.ts';
-      const files = ['TESTING.md', 'docs/system-specification.md', 'docs/research/fixture.md'];
-      writeFileSync(path.join(root, helper), 'export const fixture = true;\n');
-      for (const file of files) {
-        mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
-        writeFileSync(path.join(root, file), '# Captured controller data\n');
-      }
-      const unrelated = await coverageInputs(root, selection);
-      for (const file of files) expect(unrelated.input_bytes[file]).toBeUndefined();
+      const testing = 'TESTING.md';
+      const initCore = 'bin/init-core.ts';
+      const catalog = 'docs/research/catalog.json';
+      writeFileSync(path.join(root, testing), '# Fixture testing\n');
+      mkdirSync(path.dirname(path.join(root, catalog)), { recursive: true });
+      writeFileSync(path.join(root, catalog), Buffer.alloc(4 * 1024 * 1024 + 1));
+      writeFileSync(path.join(root, helper), "import '../bin/init-core.ts';\nexport const fixture = true;\n");
+      writeFileSync(path.join(root, initCore), 'export const initialized = true;\n');
+      const absent = await coverageInputs(root, selection);
+      expect(absent.input_bytes[testing]).toBeUndefined();
+      expect(absent.input_bytes[initCore]).toBeUndefined();
       writeFileSync(path.join(root, selection.tests[0]!), "import './contained-controller-fixture.ts';\n");
       const before = await coverageInputs(root, selection);
       expect(before.sources.map((entry) => entry.path)).toEqual(selection.sources);
       expect(before.tests).toEqual(selection.tests);
-      for (const file of files) {
-        expect(before.input_bytes[file]?.toString()).toBe('# Captured controller data\n');
+      for (const file of [testing, initCore]) {
         expect(before.module_inputs.filter((entry) => entry.path === file)).toHaveLength(1);
         expect(before.tool_inputs.filter((entry) => entry.path === file)).toHaveLength(1);
       }
-      writeFileSync(path.join(root, files[2]!), '# Changed controller data\n');
-      const changed = await coverageInputs(root, selection);
-      expect(changed.source_fingerprint).toBe(before.source_fingerprint);
-      expect(changed.test_fingerprint).toBe(before.test_fingerprint);
-      expect(changed.tool_fingerprint).not.toBe(before.tool_fingerprint);
-      rmSync(path.join(root, files[2]!));
-      symlinkSync('../system-specification.md', path.join(root, files[2]!));
-      await expectRejected(() => coverageInputs(root, selection), /symlink/u);
+      for (const file of [
+        'schemas/fixture.schema.json',
+        'templates/fixture.template.yaml',
+        'instructions/fixture.md',
+      ]) {
+        expect(before.input_bytes[file]?.equals(readFileSync(path.join(root, file)))).toBe(true);
+        expect(before.tool_inputs.map(({ path: input }) => input)).toContain(file);
+      }
+      expect(before.input_bytes[catalog]).toBeUndefined();
+      expect(before.tool_inputs.map(({ path: input }) => input)).not.toContain(catalog);
+      writeFileSync(path.join(root, catalog), 'changed, still irrelevant\n');
+      const changedCatalog = await coverageInputs(root, selection);
+      expect(changedCatalog.source_fingerprint).toBe(before.source_fingerprint);
+      expect(changedCatalog.test_fingerprint).toBe(before.test_fingerprint);
+      expect(changedCatalog.tool_fingerprint).toBe(before.tool_fingerprint);
       rmSync(path.join(root, 'docs'), { recursive: true });
-      await expectRejected(() => coverageInputs(root, selection), /docs/u);
+      const withoutDocs = await coverageInputs(root, selection);
+      expect(withoutDocs.source_fingerprint).toBe(before.source_fingerprint);
+      expect(withoutDocs.test_fingerprint).toBe(before.test_fingerprint);
+      expect(withoutDocs.tool_fingerprint).toBe(before.tool_fingerprint);
+      writeFileSync(path.join(root, testing), '# Changed fixture testing\n');
+      const changedTesting = await coverageInputs(root, selection);
+      expect(changedTesting.source_fingerprint).toBe(before.source_fingerprint);
+      expect(changedTesting.test_fingerprint).toBe(before.test_fingerprint);
+      expect(changedTesting.tool_fingerprint).not.toBe(before.tool_fingerprint);
+      rmSync(path.join(root, testing));
+      await expectRejected(() => coverageInputs(root, selection), /TESTING\.md/u);
     } catch (error) {
       temporaryRoots.splice(temporaryRoots.indexOf(root), 1);
-      console.error(`Retained failed controller data capture: ${root}`);
+      console.error(`Retained failed controller fixture capture: ${root}`);
       throw error;
     }
   });

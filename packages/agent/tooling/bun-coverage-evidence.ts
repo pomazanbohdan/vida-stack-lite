@@ -1187,19 +1187,16 @@ export async function captureRuntimeInputClosure(
     }
   }
   return [
-    ...new Set([
-      ...runtimeTools,
-      ...(await captureConfiguredTestContextInputs(root, visited, inputBytes, capturedBytes)),
-    ]),
+    ...new Set([...runtimeTools, ...captureConfiguredTestContextInputs(root, visited, inputBytes, capturedBytes)]),
   ].sort();
 }
 
-async function captureConfiguredTestContextInputs(
+function captureConfiguredTestContextInputs(
   root: string,
   visited: ReadonlySet<string>,
   inputBytes: Map<string, Buffer>,
   capturedBytes: number,
-): Promise<string[]> {
+): string[] {
   const paths = visited.has('tests/configured-context.ts')
     ? repositoryTestContextFiles.map((file) => `${repositoryTestContextInputPrefix}/${file}`)
     : [];
@@ -1224,8 +1221,6 @@ async function captureConfiguredTestContextInputs(
     }
   }
   if (visited.has('tests/init-entrypoint-v8.test.ts')) paths.push('README.md');
-  if (visited.has('tests/contained-controller-fixture.ts'))
-    paths.push(...(await walkFiles(root, path.join(root, 'docs'))));
   for (const file of paths) {
     if (inputBytes.has(file)) continue;
     if (inputBytes.size + 1 > maxInputPaths) throw new Error('Coverage input path limit exceeded.');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -13,6 +13,9 @@ import {
   requireTerminalCommand,
 } from '../bin/bun.ts';
 import { developmentControllerBinding } from '../bin/development-controller.ts';
+// The generated initializer child belongs to this fixture's captured module closure.
+import '../bin/init-core.ts';
+import { createInitializationBundle } from './helpers/init-bundle.ts';
 
 type ExecutionBudget = ReturnType<typeof executionBudget>;
 type ControllerBinding = ReturnType<typeof developmentControllerBinding>;
@@ -73,16 +76,17 @@ export function containedControllerFixture(bundle: string): ContainedControllerF
   const target = path.join(root, 'source');
   const controllerRoot = path.join(root, 'controller');
   mkdirSync(target);
-  const repository = path.resolve(bundle, '../..');
-  for (const name of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml', 'docs']) {
-    cpSync(path.join(repository, name), path.join(target, name), { recursive: true });
-  }
-  mkdirSync(path.join(target, 'packages/agent'), { recursive: true });
-  cpSync(path.join(bundle, 'docs'), path.join(target, 'packages/agent/docs'), { recursive: true });
+  const stagedBundleRoot = createInitializationBundle(bundle, target, undefined, 'packages/agent');
   const driver = path.join(root, 'prepare.mjs');
   writeFileSync(
     driver,
-    `import {prepareDevelopmentController, verifyDevelopmentController} from ${JSON.stringify(pathToFileURL(path.join(bundle, 'bin/development-controller.ts')).href)};
+    `import {initializeProjectFromBundle} from ${JSON.stringify(pathToFileURL(path.join(bundle, 'bin/init-core.ts')).href)};
+import {prepareDevelopmentController, verifyDevelopmentController} from ${JSON.stringify(pathToFileURL(path.join(bundle, 'bin/development-controller.ts')).href)};
+await initializeProjectFromBundle({
+  projectRoot: ${JSON.stringify(target)},
+  repository: 'controller-fixture',
+  projectMappings: ['agent=packages/agent'],
+}, ${JSON.stringify(stagedBundleRoot)});
 await prepareDevelopmentController(${JSON.stringify({ target, controllerRoot })});
 console.log(JSON.stringify(await verifyDevelopmentController(${JSON.stringify({ controllerRoot })})));
 `,
