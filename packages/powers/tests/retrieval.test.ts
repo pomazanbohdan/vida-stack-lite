@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { resolveIntent, topPatternFor } from '../skills/vp-mode/scripts/retrieval.ts';
+import { resolveIntent, suggestionHint, topPatternFor } from '../skills/vp-mode/scripts/retrieval.ts';
 import type { LoadedInstruction } from '../skills/vp-mode/scripts/catalog.ts';
 
 function instruction(id: string, capability: string[], pattern: string[]): LoadedInstruction {
@@ -105,4 +105,9 @@ test('resolves a pattern alias declared in the dictionary', () => {
 test('topPatternFor returns the most frequent pattern or nothing for an unknown capability', () => {
   expect(topPatternFor(base, 'debug-root-cause')).toBe('systematic-debugging');
   expect(topPatternFor(base, 'missing')).toBeUndefined();
+});
+
+test('builds a nearest-tag hint or falls back to the tag query', () => {
+  expect(suggestionHint([])).toBe('run tags --query with canonical nouns');
+  expect(suggestionHint(['capability:review-code', 'pattern:code-review'])).toBe('nearest tags: capability:review-code, pattern:code-review; search one with --capability <tag> or --pattern <tag>');
 });

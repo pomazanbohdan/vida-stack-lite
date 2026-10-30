@@ -106,6 +106,12 @@ export function topPatternFor(instructions: Map<string, LoadedInstruction>, capa
     .sort((left, right) => right[1] - left[1] || (left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0))[0]?.[0];
 }
 
+export function suggestionHint(alternatives: readonly string[]): string {
+  return alternatives.length === 0
+    ? 'run tags --query with canonical nouns'
+    : `nearest tags: ${alternatives.join(', ')}; search one with --capability <tag> or --pattern <tag>`;
+}
+
 export function resolveIntent(
   instructions: Map<string, LoadedInstruction>,
   terms: readonly string[],

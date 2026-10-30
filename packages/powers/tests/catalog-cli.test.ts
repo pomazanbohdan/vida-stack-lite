@@ -1773,6 +1773,16 @@ describe('retrieval workflow contract', () => {
     expect(missing.status).toBe(1);
     expect(missing.stderr).toContain('no capability or pattern matched --for');
 
+    const nearest = await runInProcess(['search', '--for', 'checklist', '--catalog', realCatalog]);
+    expect(nearest.status).toBe(1);
+    expect(nearest.stderr).toContain('nearest tags: pattern:release-readiness');
+    expect(nearest.stderr).toContain('search one with --capability <tag> or --pattern <tag>');
+
+    const weakNearest = await runInProcess(['search', '--for', 'properly', 'handling', 'any', 'request', '--catalog', realCatalog]);
+    expect(weakNearest.status).toBe(0);
+    expect(weakNearest.stderr).toContain('weak match');
+    expect(weakNearest.stderr).toContain('nearest tags:');
+
     const patternOnly = await runInProcess(['search', '--for', 'incremental', 'cutover', '--catalog', realCatalog]);
     expect(patternOnly.status).toBe(0);
     expect(patternOnly.stderr).toContain('resolved: pattern=incremental-cutover');

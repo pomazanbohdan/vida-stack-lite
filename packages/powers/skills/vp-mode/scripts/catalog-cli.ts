@@ -26,7 +26,7 @@ import {
   stemToken,
 } from './catalog.ts';
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
-import { resolveIntent, topPatternFor } from './retrieval.ts';
+import { resolveIntent, suggestionHint, topPatternFor } from './retrieval.ts';
 import { validateAgainstSchema } from './schema.ts';
 import {
   INSTRUCTION_DOMAINS,
@@ -677,13 +677,23 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         const resolution = resolveIntent(instructions, forTerms, aliases);
         const capability = capabilityTags?.[0] ?? resolution.capability;
         const pattern = patternTags?.[0] ?? resolution.pattern ?? (capability === undefined ? undefined : topPatternFor(instructions, capability));
-        if (capability === undefined && pattern === undefined) throw invalid('no capability or pattern matched --for; run tags --query with canonical nouns', { terms: forTerms });
+        if (capability === undefined && pattern === undefined) {
+          const nearest = catalogFindTags(catalog, forTerms).slice(0, 3).map(({ dimension, tag }) => `${dimension}:${tag}`);
+          throw invalid(`no capability or pattern matched --for; ${suggestionHint(nearest)}`, { terms: forTerms });
+        }
         if (capability !== undefined) capabilityTags = capabilityTags ?? [capability];
         if (pattern !== undefined) patternTags = patternTags ?? [pattern];
         const explicit = flags.has('--capability') || flags.has('--pattern');
         const weak = resolution.status === 'weak' && !explicit;
         resolved = `resolved: ${capability === undefined ? '' : `capability=${capabilityTags?.join(',')}`}${capability !== undefined && pattern !== undefined ? ' ' : ''}${pattern === undefined ? '' : `pattern=${patternTags?.join(',')}`} (from --for)`;
-        if (weak) resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved and run tags --query with canonical nouns`;
+        if (weak) {
+          const alternatives = resolution.candidates
+            .filter((candidate) => candidate.tag !== capability && candidate.tag !== pattern)
+            .slice(0, 2)
+            .map((candidate) => `${candidate.dimension}:${candidate.tag}(${candidate.score.toFixed(1)})`);
+          const hint = suggestionHint(alternatives);
+          resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved; ${hint}`;
+        }
       }
       const roles = listValues(flags, '--roles');
       const instructionIds = listValues(flags, '--id');
