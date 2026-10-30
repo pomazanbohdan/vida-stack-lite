@@ -141,6 +141,7 @@ function readFsSafePackageFile(root: string, relative: string): Buffer {
   const opened = openRootFileSync({
     absolutePath: path.join(root, relative),
     rootPath: root,
+    rootRealPath: root,
     boundaryLabel: 'fs-safe package attestation',
     maxBytes: fsSafePackageMaxBytes,
     rejectHardlinks: false,

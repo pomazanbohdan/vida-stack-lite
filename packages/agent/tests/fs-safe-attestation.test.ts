@@ -1,14 +1,87 @@
-import { expect, test } from 'bun:test';
+import { expect, test, spyOn } from 'bun:test';
 import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, realpathSync } from 'node:fs';
+import fs, {
+  closeSync,
+  fstatSync,
+  linkSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  statSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
+import { openRootFileSync, type OpenRootFileSyncParams } from '@openclaw/fs-safe/advanced';
 import { instrumentSource } from '../tooling/bun-coverage-evidence.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
 
 type JsonRecord = Record<string, unknown>;
 type BunLockEntry = readonly [string, string, JsonRecord, string?];
+type IoFs = NonNullable<OpenRootFileSyncParams['ioFs']>;
+
+const fsSafeReadFlags = {
+  maxBytes: 64 * 1024 * 1024,
+  rejectHardlinks: false,
+  rejectSymlinks: true,
+  allowedType: 'file',
+} as const;
+
+function withFreshFsSafeFixture(run: (fixturePath: string, rootPath: string) => void): void {
+  const fixturePath = mkdtempSync(path.join(tmpdir(), 'vida-fs-safe-root-admission-'));
+  const rootPath = path.join(fixturePath, 'root');
+  let assertionsPassed = false;
+  try {
+    mkdirSync(rootPath);
+    run(fixturePath, rootPath);
+    assertionsPassed = true;
+  } finally {
+    if (assertionsPassed) rmSync(fixturePath, { recursive: true, force: false });
+    else console.error(`Retained fs-safe root admission fixture after failure: ${fixturePath}`);
+  }
+}
+
+function openFixtureFile(absolutePath: string, rootPath: string, ioFs?: IoFs) {
+  const canonicalRoot = realpathSync(rootPath);
+  return openRootFileSync({
+    absolutePath,
+    rootPath: canonicalRoot,
+    rootRealPath: canonicalRoot,
+    boundaryLabel: 'fs-safe canonical-root regression',
+    ...fsSafeReadFlags,
+    ...(ioFs === undefined ? {} : { ioFs }),
+  });
+}
+
+function expectDeniedAndClosed(result: ReturnType<typeof openRootFileSync>, fd: number | undefined): void {
+  expect(result.ok).toBe(false);
+  expect(fd).toBeDefined();
+  if (fd === undefined) throw new Error('The leaf open was not observed.');
+  expect(() => fstatSync(fd)).toThrow(/EBADF/u);
+}
+
+function interceptedLeafOpen(targetPath: string, afterOpen: (fd: number) => void): IoFs {
+  return {
+    ...fs,
+    openSync: (filePath, flags, mode) => {
+      const fd = fs.openSync(filePath, flags, mode);
+      try {
+        if (typeof filePath === 'string' && path.resolve(filePath) === targetPath) afterOpen(fd);
+      } catch (error) {
+        closeSync(fd);
+        throw error;
+      }
+      return fd;
+    },
+  };
+}
 
 const fsSafeRequire = createRequire(import.meta.url);
 const fsSafeAttestationModulePath = fsSafeRequire.resolve('../src/config/fs-safe-attestation.ts');
@@ -180,5 +253,203 @@ test
       packageTreeHash(packageRoot, nativeRoot, nativeTarget, fsSafePackageManifest),
     );
     expect(fsSafePackageTreeSha256ByNativeTarget[nativeTarget]).toBe(actualTreeHash);
+  },
+);
+
+test('fs-safe advanced root admission preserves canonical package-file reads', () => {
+  withFreshFsSafeFixture((_fixturePath, rootPath) => {
+    const targetPath = path.join(rootPath, 'package.json');
+    const contents = Buffer.from('{"name":"fixture-package"}\n');
+    writeFileSync(targetPath, contents);
+
+    const opened = openFixtureFile(targetPath, rootPath);
+    if (!opened.ok) throw new Error(`Canonical package-file read was denied: ${opened.reason}`);
+    try {
+      expect(opened.rootRealPath).toBe(realpathSync(rootPath));
+      expect(readFileSync(opened.fd)).toEqual(contents);
+    } finally {
+      closeSync(opened.fd);
+    }
+  });
+});
+
+test('fs-safe advanced root admission denies a changed Root identity after the leaf fd opens', () => {
+  withFreshFsSafeFixture((_fixturePath, rootPath) => {
+    const targetPath = path.join(rootPath, 'package.json');
+    const contents = Buffer.from('{"name":"root-identity-package"}\n');
+    writeFileSync(targetPath, contents);
+    let openedFd: number | undefined;
+    let changedRootObservation = false;
+    const ioFs = interceptedLeafOpen(targetPath, (fd) => {
+      openedFd = fd;
+    });
+    ioFs.lstatSync = new Proxy(ioFs.lstatSync, {
+      apply(target, receiver, args) {
+        const stat: unknown = Reflect.apply(target, receiver, args);
+        if (openedFd === undefined || args[0] !== rootPath || typeof stat !== 'object' || stat === null) return stat;
+        return new Proxy(stat, {
+          get(targetStat, key, statReceiver) {
+            const value: unknown = Reflect.get(targetStat, key, statReceiver);
+            if (key !== 'ino') return value;
+            if (typeof value !== 'bigint') throw new Error('Expected a bigint Root identity observation.');
+            changedRootObservation = true;
+            return value ^ 1n;
+          },
+        });
+      },
+    });
+    const result = openFixtureFile(targetPath, rootPath, ioFs);
+    expect(changedRootObservation).toBe(true);
+    expectDeniedAndClosed(result, openedFd);
+    expect(readFileSync(targetPath)).toEqual(contents);
+    if (result.ok || !(result.error instanceof Error)) throw new Error('Expected the Root identity denial.');
+    expect(result.error).toMatchObject({ code: 'path-mismatch' });
+  });
+});
+
+test.skipIf(process.platform !== 'linux')(
+  'fs-safe advanced root admission denies real root replacement with unchanged leaf identity',
+  () => {
+    withFreshFsSafeFixture((fixturePath, rootPath) => {
+      const targetPath = path.join(rootPath, 'package.json');
+      const original = Buffer.from('{"name":"original-package"}\n');
+      const movedRootPath = path.join(fixturePath, 'moved-root');
+      writeFileSync(targetPath, original);
+      let injected = false;
+      let openedFd: number | undefined;
+      const ioFs = interceptedLeafOpen(targetPath, (fd) => {
+        openedFd = fd;
+        renameSync(rootPath, movedRootPath);
+        mkdirSync(rootPath);
+        linkSync(path.join(movedRootPath, 'package.json'), path.join(rootPath, 'package.json'));
+        injected = true;
+      });
+
+      const result = openFixtureFile(targetPath, rootPath, ioFs);
+      expect(injected).toBe(true);
+      expectDeniedAndClosed(result, openedFd);
+      expect(readFileSync(path.join(movedRootPath, 'package.json'))).toEqual(original);
+      expect(readFileSync(targetPath)).toEqual(original);
+      if (result.ok || !(result.error instanceof Error)) throw new Error('Expected the Root identity denial.');
+      expect(result.error).toMatchObject({ code: 'path-mismatch' });
+    });
+  },
+);
+
+test('fs-safe advanced root admission denies a same-byte leaf replacement after open', () => {
+  withFreshFsSafeFixture((fixturePath, rootPath) => {
+    const targetPath = path.join(rootPath, 'package.json');
+    const movedLeafPath = path.join(fixturePath, 'moved-package.json');
+    const contents = Buffer.from('{"name":"same-byte-package"}\n');
+    writeFileSync(targetPath, contents);
+    let injected = false;
+    let openedFd: number | undefined;
+    let openedIdentity: { dev: bigint; ino: bigint } | undefined;
+    const ioFs = interceptedLeafOpen(targetPath, (fd) => {
+      openedFd = fd;
+      const openedStat = fstatSync(fd, { bigint: true });
+      openedIdentity = { dev: openedStat.dev, ino: openedStat.ino };
+      renameSync(targetPath, movedLeafPath);
+      writeFileSync(targetPath, contents);
+      injected = true;
+    });
+
+    const result = openFixtureFile(targetPath, rootPath, ioFs);
+    expect(injected).toBe(true);
+    expectDeniedAndClosed(result, openedFd);
+    expect(readFileSync(targetPath)).toEqual(contents);
+    expect(readFileSync(movedLeafPath)).toEqual(contents);
+    expect(openedIdentity).toBeDefined();
+    if (openedIdentity === undefined) throw new Error('The opened leaf identity was not captured.');
+    const replacementStat = statSync(targetPath, { bigint: true });
+    expect([replacementStat.dev, replacementStat.ino]).not.toEqual([openedIdentity.dev, openedIdentity.ino]);
+  });
+});
+
+test('fs-safe advanced root admission denies a final canonical path escape observed by ioFs.realpathSync', () => {
+  withFreshFsSafeFixture((fixturePath, rootPath) => {
+    const targetPath = path.join(rootPath, 'package.json');
+    const escapedPath = path.join(fixturePath, 'outside-package.json');
+    const contents = Buffer.from('{"name":"canonical-path-package"}\n');
+    writeFileSync(targetPath, contents);
+    writeFileSync(escapedPath, contents);
+    let openedFd: number | undefined;
+    const ioFs: IoFs = {
+      ...fs,
+      openSync: (filePath, flags, mode) => {
+        const fd = fs.openSync(filePath, flags, mode);
+        if (typeof filePath === 'string' && path.resolve(filePath) === targetPath) openedFd = fd;
+        return fd;
+      },
+    };
+    const observation = spyOn(ioFs, 'realpathSync').mockReturnValue(escapedPath);
+    try {
+      const result = openFixtureFile(targetPath, rootPath, ioFs);
+      expect(observation).toHaveBeenCalledTimes(1);
+      expect(observation).toHaveBeenCalledWith(targetPath);
+      expectDeniedAndClosed(result, openedFd);
+    } finally {
+      observation.mockRestore();
+    }
+  });
+});
+
+test.skipIf(process.platform !== 'linux')('fs-safe advanced root admission rejects an actual nested symlink', () => {
+  withFreshFsSafeFixture((_fixturePath, rootPath) => {
+    const targetPath = path.join(rootPath, 'inside', 'package.json');
+    const linkPath = path.join(rootPath, 'nested-link');
+    mkdirSync(path.dirname(targetPath));
+    writeFileSync(targetPath, Buffer.from('{"name":"nested-link-target"}\n'));
+    symlinkSync(path.dirname(targetPath), linkPath, 'dir');
+
+    const result = openFixtureFile(path.join(linkPath, 'package.json'), rootPath);
+    expect(result.ok).toBe(false);
+  });
+});
+
+test.skipIf(process.platform !== 'linux')(
+  'fs-safe advanced root admission denies a Root ancestor redirect after open',
+  () => {
+    withFreshFsSafeFixture((fixturePath, rootPath) => {
+      const parent = path.join(fixturePath, 'parent');
+      const movedParent = path.join(fixturePath, 'moved-parent');
+      const nestedRoot = path.join(parent, 'root');
+      mkdirSync(parent);
+      renameSync(rootPath, nestedRoot);
+      const targetPath = path.join(nestedRoot, 'package.json');
+      const contents = Buffer.from('{"name":"ancestor-redirect-package"}\n');
+      writeFileSync(targetPath, contents);
+      let openedFd: number | undefined;
+      let injected = false;
+      const ioFs = interceptedLeafOpen(targetPath, (fd) => {
+        openedFd = fd;
+        renameSync(parent, movedParent);
+        symlinkSync(movedParent, parent, 'dir');
+        injected = true;
+      });
+      const result = openFixtureFile(targetPath, nestedRoot, ioFs);
+      expect(injected).toBe(true);
+      expectDeniedAndClosed(result, openedFd);
+      expect(readFileSync(path.join(movedParent, 'root', 'package.json'))).toEqual(contents);
+      if (result.ok || !(result.error instanceof Error)) throw new Error('Expected the canonical path escape denial.');
+      expect(result.error).toMatchObject({ code: 'outside-workspace' });
+    });
+  },
+);
+
+test.skipIf(process.platform !== 'linux')(
+  'fs-safe advanced root admission rejects an actual symlink ancestor redirect',
+  () => {
+    withFreshFsSafeFixture((fixturePath, rootPath) => {
+      const outsidePath = path.join(fixturePath, 'outside');
+      const targetPath = path.join(outsidePath, 'package.json');
+      const redirectPath = path.join(rootPath, 'redirect');
+      mkdirSync(outsidePath);
+      writeFileSync(targetPath, Buffer.from('{"name":"redirect-target"}\n'));
+      symlinkSync(outsidePath, redirectPath, 'dir');
+
+      const result = openFixtureFile(path.join(redirectPath, 'package.json'), rootPath);
+      expect(result.ok).toBe(false);
+    });
   },
 );
