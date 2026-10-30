@@ -1753,6 +1753,10 @@ describe('retrieval workflow contract', () => {
     expect(verification.status).toBe(0);
     expect(verification.stderr).toContain('resolved: capability=verify-work-results');
 
+    const docs = await runInProcess(['search', '--for', 'API', 'documentation', 'endpoint', 'contract', '--catalog', realCatalog]);
+    expect(docs.status).toBe(0);
+    expect(docs.stderr).toContain('resolved: capability=write-technical-prose');
+
     const migration = await runInProcess(['search', '--for', 'legacy', 'endpoint', 'consumer', 'migration', '--catalog', realCatalog]);
     expect(migration.status).toBe(0);
     expect(migration.stderr).toContain('resolved: capability=migrate-consumers-off-the-old-system');
