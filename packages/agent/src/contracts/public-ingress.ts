@@ -57,15 +57,17 @@ export interface VerifiedApprovalEvidence extends ApprovalEvidence {
   readonly verification_id: string;
   readonly verified_at: string;
 }
+type IngressValidator = ((value: unknown) => boolean) & { errors?: ErrorObject[] | null };
 type AjvConstructor = new (options?: Record<string, unknown>) => {
-  compile(schema: object): ((value: unknown) => boolean) & { errors?: ErrorObject[] | null };
+  compile(schema: object): IngressValidator;
 };
 const Ajv2020Constructor = Ajv2020 as unknown as AjvConstructor;
-const authorizationValidator = new Ajv2020Constructor({ allErrors: true }).compile(authorizationSchema as object);
-const governedWriteIntentValidator = new Ajv2020Constructor({ allErrors: true }).compile(
-  governedWriteIntentSchema as object,
-);
-const governedWriteValidator = new Ajv2020Constructor({ allErrors: true }).compile(governedWriteSchema as object);
+const authorizationSchemaSnapshot = structuredClone(authorizationSchema as object);
+const governedWriteIntentSchemaSnapshot = structuredClone(governedWriteIntentSchema as object);
+const governedWriteSchemaSnapshot = structuredClone(governedWriteSchema as object);
+let authorizationValidator: IngressValidator | undefined;
+let governedWriteIntentValidator: IngressValidator | undefined;
+let governedWriteValidator: IngressValidator | undefined;
 export {
   MAX_CANONICAL_BYTES,
   isPlainRecord,
@@ -119,10 +121,10 @@ export function computeWriteOperationHash(input: {
 }
 export function validateAuthorizationRequest(value: unknown): ProjectAuthorizationRequest {
   const { image } = canonicalJsonImageWithNodeLimit(value, 0, MAX_CANONICAL_NODES);
-  reject(
-    [!authorizationValidator(image)],
-    `authorization request rejected: ${errorText(authorizationValidator.errors)}`,
-  );
+  const validator = (authorizationValidator ??= new Ajv2020Constructor({ allErrors: true }).compile(
+    authorizationSchemaSnapshot,
+  ));
+  reject([!validator(image)], `authorization request rejected: ${errorText(validator.errors)}`);
   return freezeJsonValue(image as ProjectAuthorizationRequest);
 }
 export interface GovernedWriteIntent {
@@ -220,10 +222,10 @@ function assertFresh(issuedAt: string, approvedAt: string, expiresAt: string, ve
 }
 export function validateGovernedWriteRequest(value: unknown): GovernedWriteRequest {
   const { image } = canonicalJsonImageWithNodeLimit(value, 0, MAX_CANONICAL_NODES);
-  reject(
-    [!governedWriteValidator(image)],
-    'governed write request rejected: ' + errorText(governedWriteValidator.errors),
-  );
+  const validator = (governedWriteValidator ??= new Ajv2020Constructor({ allErrors: true }).compile(
+    governedWriteSchemaSnapshot,
+  ));
+  reject([!validator(image)], 'governed write request rejected: ' + errorText(validator.errors));
   const request = image as GovernedWriteRequest;
   const authorization = request.authorization;
   const expectedHash = computeWriteOperationHash({
@@ -268,10 +270,10 @@ export function validateGovernedWriteRequest(value: unknown): GovernedWriteReque
 }
 export function validateGovernedWriteIntent(value: unknown): GovernedWriteIntent {
   const { image } = canonicalJsonImageWithNodeLimit(value, 0, MAX_CANONICAL_NODES);
-  reject(
-    [!governedWriteIntentValidator(image)],
-    `governed write intent rejected: ${errorText(governedWriteIntentValidator.errors)}`,
-  );
+  const validator = (governedWriteIntentValidator ??= new Ajv2020Constructor({ allErrors: true }).compile(
+    governedWriteIntentSchemaSnapshot,
+  ));
+  reject([!validator(image)], `governed write intent rejected: ${errorText(validator.errors)}`);
   const intent = image as GovernedWriteIntent;
   reject(
     [!isStrictRfc3339Timestamp(intent.approval.approved_at), !isStrictRfc3339Timestamp(intent.approval.expires_at)],

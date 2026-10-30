@@ -62,21 +62,26 @@ test('public ingress retains diagnostic fallbacks after a real Ajv rejection', a
     faultIngress = (await import(
       String(`../src/contracts/public-ingress.ts?diagnostic-fault=${randomUUID()}`)
     )) as typeof import('../src/contracts/public-ingress.ts');
+    assert.deepEqual(compiledSchemaIds, new Set());
+    assert.ok(faultIngress);
+    const ingress = faultIngress;
+    assert.throws(() => ingress.validateAuthorizationRequest({}), {
+      message: 'authorization request rejected: / invalid',
+    });
+    assert.throws(() => ingress.validateGovernedWriteIntent({}), {
+      message: 'governed write intent rejected: / invalid',
+    });
+    assert.throws(() => ingress.validateGovernedWriteRequest({}), {
+      message: 'governed write request rejected: / invalid',
+    });
+    assert.deepEqual(compiledSchemaIds, formatterSchemaIds);
+    assert.deepEqual(rejectedSchemaIds, formatterSchemaIds);
   } finally {
     compileSpy.mockRestore();
   }
   const restoredCompile: unknown = Reflect.get(Ajv2020.prototype, 'compile');
   assert.equal(restoredCompile, originalCompile);
-  assert.deepEqual(compiledSchemaIds, formatterSchemaIds);
   assert.ok(faultIngress);
-  const ingress = faultIngress;
-  assert.throws(() => ingress.validateAuthorizationRequest({}), {
-    message: 'authorization request rejected: / invalid',
-  });
-  assert.throws(() => ingress.validateGovernedWriteIntent({}), {
-    message: 'governed write intent rejected: / invalid',
-  });
-  assert.deepEqual(rejectedSchemaIds, new Set([...formatterSchemaIds].slice(0, 2)));
 
   const normalIngress = (await import(
     String(`../src/contracts/public-ingress.ts?normal-diagnostic=${randomUUID()}`)

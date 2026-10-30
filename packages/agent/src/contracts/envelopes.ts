@@ -34,9 +34,10 @@ type AjvConstructor = new (options?: Record<string, unknown>) => {
   compile<T>(schema: object): ValidateFunction<T>;
 };
 const Ajv2020Constructor = Ajv2020 as unknown as AjvConstructor;
-const validator: ValidateFunction<RuntimeEnvelope> = new Ajv2020Constructor({
-  allErrors: true,
-}).compile<RuntimeEnvelope>(envelopeSchema);
+const envelopeSchemaSnapshot = structuredClone(envelopeSchema);
+const coordinationLedgerSchemaSnapshot = structuredClone(coordinationLedgerSchema);
+let compiledEnvelopeValidator: ValidateFunction<RuntimeEnvelope> | undefined;
+let ledgerValidator: ValidateFunction<CoordinationLedger> | undefined;
 
 function reject(conditions: readonly boolean[], message: string): void {
   conditions.filter(Boolean).forEach(() => {
@@ -54,7 +55,11 @@ function assertDataOnlyJson(value: unknown): unknown {
 
 export function validateRuntimeEnvelope(value: unknown): RuntimeEnvelope {
   const image = assertDataOnlyJson(value);
-  if (!validator(image)) rejectCanonical(validator.errors!.map((error) => error.message).join('; '));
+  const runtimeEnvelopeValidator = (compiledEnvelopeValidator ??= new Ajv2020Constructor({
+    allErrors: true,
+  }).compile<RuntimeEnvelope>(envelopeSchemaSnapshot));
+  if (!runtimeEnvelopeValidator(image))
+    rejectCanonical(runtimeEnvelopeValidator.errors!.map((error) => error.message).join('; '));
   return image as RuntimeEnvelope;
 }
 
@@ -178,10 +183,6 @@ class CoordinationValidationFailure extends Error {
     super(issue.message);
   }
 }
-
-const ledgerValidator = new Ajv2020Constructor({ allErrors: true, messages: true }).compile<CoordinationLedger>(
-  coordinationLedgerSchema,
-);
 
 // Require the actual end of a segment: `$` also matches before a final Unicode line separator.
 const invalidPathSegmentSyntax = /(?:^|^\.[gG][iI][tT]|[. ])(?![\s\S])|\p{Cc}|[<>|"?*]/u;
@@ -773,12 +774,16 @@ function validateCoordinationLedgerImageV1(
   value: unknown,
   options: { readonly currentTimeMs?: number | null },
 ): CoordinationLedgerValidationResult {
-  if (!ledgerValidator(value))
+  const validator = (ledgerValidator ??= new Ajv2020Constructor({
+    allErrors: true,
+    messages: true,
+  }).compile<CoordinationLedger>(coordinationLedgerSchemaSnapshot));
+  if (!validator(value))
     return {
       ok: false,
       ledger: null,
       // Synchronous Ajv failure supplies errors; messages are enabled above.
-      issues: ledgerValidator.errors!.map((error) => ({
+      issues: validator.errors!.map((error) => ({
         code: 'SCHEMA_INVALID',
         path: '$' + error.instancePath.replaceAll('/', '.'),
         message: 'ledger record must match current CoordinationLedger/v1: ' + error.message!,
