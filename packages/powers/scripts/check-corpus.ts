@@ -4,6 +4,7 @@ import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
+import { stemToken, tagTokens } from '../skills/vp-mode/scripts/catalog.ts';
 import { APPROACH_VOCABULARY, parseApproachAssessments } from '../skills/vp-mode/scripts/instruction-approaches.ts';
 import {
   FACETED_INSTRUCTION_SCHEMA_NAME,
@@ -115,9 +116,18 @@ function checkDictionary(catalog: Dict, issues: CorpusIssue[]): { dictionary: Di
     }
   }
   const aliases = isRecord(catalog.tag_aliases) ? catalog.tag_aliases : {};
+  const aliasKeys = new Map<string, { alias: string; target: string }>();
   for (const [alias, target] of Object.entries(aliases)) {
     if (typeof target !== 'string' || !dimensions.some((dimension) => isRecord(dictionary[dimension]) && Object.prototype.hasOwnProperty.call(dictionary[dimension], target))) issue(issues, 'CORPUS_TAG_ALIAS_INVALID', `tag alias ${alias} targets unknown canonical tag ${String(target)}`, { alias, target });
     if (dimensions.some((dimension) => isRecord(dictionary[dimension]) && Object.prototype.hasOwnProperty.call(dictionary[dimension], alias))) issue(issues, 'CORPUS_TAG_ALIAS_INVALID', `tag alias ${alias} is also a canonical tag`, { alias });
+    if (typeof target !== 'string') continue;
+    const key = tagTokens(alias).map(stemToken).join(' ');
+    const prior = aliasKeys.get(key);
+    if (prior !== undefined && prior.target !== target) {
+      issue(issues, 'CORPUS_TAG_ALIAS_COLLISION', `aliases ${prior.alias} and ${alias} share the resolver key ${key} but target ${prior.target} and ${target}`, { alias, prior: prior.alias, key });
+    } else {
+      aliasKeys.set(key, { alias, target });
+    }
   }
   const exemptions = Array.isArray(catalog.tag_exemptions) ? catalog.tag_exemptions.filter(isRecord) : [];
   return { dictionary, aliases, exemptions };

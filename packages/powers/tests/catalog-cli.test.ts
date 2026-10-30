@@ -633,7 +633,7 @@ describe('catalog CLI', () => {
     const result = runCli(fixtureArgs(['tags', '--query', 'tdd', 'test-first', 'TDD', '--match', 'all', '--limit', '1', '--offset', '1']));
     expect(result.status).toBe(0);
     expect(result.stdout).toBe('');
-    expect(result.stderr).toBe('pagination: showing 0 of 1; no more rows\n');
+    expect(result.stderr).toBe('pagination: page 1 of 1: showing 0 of 1; no more rows\n');
   });
 
   test('tags reads a catalog-only snapshot without instruction bodies', async () => {
@@ -673,7 +673,7 @@ describe('catalog CLI', () => {
     ]));
     expect(paged.status).toBe(0);
     expect(paged.stdout).toBe('beta\tDefines acceptance checks.\n');
-    expect(paged.stderr).toBe('pagination: showing 1 of 2; no more rows\n');
+    expect(paged.stderr).toBe('pagination: page 2 of 2: showing 1 of 2; no more rows\n');
 
     const broad = runCli(fixtureArgs(['search']));
     expect(broad.status).toBe(0);
@@ -734,7 +734,7 @@ describe('catalog CLI', () => {
     const paged = runCli(['browse', '--catalog', catalogPath, '--axis', 'domain', '--limit', '1', '--offset', '1']);
     expect(paged.status).toBe(0);
     expect(paged.stdout).toBe('domain:design-ux\tDomain design-ux; 1 active instructions.\n');
-    expect(paged.stderr).toBe('pagination: showing 1 of 7; next: --offset 2 (5 remaining; same search, not a new query)\n');
+    expect(paged.stderr).toBe('pagination: page 2 of 7: showing 1 of 7; next: --offset 2 (5 remaining; same search, not a new query)\n');
 
     const unsupported = await runInProcess(['browse', '--catalog', catalogPath, '--axis', 'policy']);
     expect(unsupported.status).toBe(1);
@@ -1238,7 +1238,7 @@ describe('catalog CLI', () => {
     const emptyPage = await runInProcess(fixtureArgs(['tags', '--limit', '0']));
     expect(emptyPage.status).toBe(0);
     expect(emptyPage.stdout).toBe('');
-    expect(emptyPage.stderr).toContain('pagination: showing 0 of');
+    expect(emptyPage.stderr).toContain('showing 0 of');
   });
 
   test('get requires IDs and a profile while evaluate keeps its JSON error contract', () => {
@@ -1292,6 +1292,12 @@ describe('catalog CLI', () => {
     expect(duplicateProfile.stdout).toBe('');
     expect(duplicateProfile.stderr).toContain('flag --profile may only be supplied once');
     expect(duplicateProfile.stderr).not.toMatch(/^\{/u);
+
+    const sameProfileTwice = await runInProcess([
+      'search', '--capability', 'test-design',
+      '--catalog', join(fixtureDir, 'catalog.json'), '--catalog', join(fixtureDir, 'catalog.json'),
+    ]);
+    expect(sameProfileTwice.status).toBe(0);
   });
 
   test('in-process entry exercises successful dispatch for every operation', async () => {
@@ -1717,7 +1723,7 @@ describe('retrieval workflow contract', () => {
     const first = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog]);
     expect(first.status).toBe(0);
     expect(first.stdout.trim().split('\n')).toHaveLength(20);
-    expect(first.stderr).toContain('pagination: showing 20 of');
+    expect(first.stderr).toContain('page 1 of');
     expect(first.stderr).toContain('next: --offset 20');
     expect(first.stderr).toContain('refine:');
 
@@ -1726,6 +1732,17 @@ describe('retrieval workflow contract', () => {
     expect(next.stdout.trim().split('\n')).toHaveLength(20);
 
     const all = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog, '--all']);
+    expect(all.status).toBe(0);
+    expect(all.stdout.trim().split('\n').length).toBeGreaterThan(20);
+  });
+
+  test('tags pages like search and --all lifts the default', async () => {
+    const first = await runInProcess(['tags', '--query', 'the', '--catalog', realCatalog]);
+    expect(first.status).toBe(0);
+    expect(first.stdout.trim().split('\n')).toHaveLength(20);
+    expect(first.stderr).toContain('next: --offset 20');
+
+    const all = await runInProcess(['tags', '--query', 'the', '--catalog', realCatalog, '--all']);
     expect(all.status).toBe(0);
     expect(all.stdout.trim().split('\n').length).toBeGreaterThan(20);
   });
@@ -1775,7 +1792,7 @@ describe('retrieval workflow contract', () => {
 
     const nearest = await runInProcess(['search', '--for', 'checklist', '--catalog', realCatalog]);
     expect(nearest.status).toBe(1);
-    expect(nearest.stderr).toContain('nearest tags: pattern:release-readiness');
+    expect(nearest.stderr).toContain('description matches (heuristic): pattern:release-readiness');
     expect(nearest.stderr).toContain('search one with --capability <tag> or --pattern <tag>');
 
     const weakNearest = await runInProcess(['search', '--for', 'properly', 'handling', 'any', 'request', '--catalog', realCatalog]);
@@ -1833,6 +1850,16 @@ describe('retrieval workflow contract', () => {
     const result = await runInProcess(['search', '--query', 'debug', '--catalog', realCatalog]);
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('free-text discovery uses tags --query');
+  });
+
+  test('get suggests the nearest instruction id for a misspelled id', async () => {
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const typo = await runInProcess([
+      'get', '--catalog', realCatalog, '--profile', profilePath,
+      '--id', 'call-a-fix-only-when-all-five-conditions-hold',
+    ]);
+    expect(typo.status).toBe(1);
+    expect(typo.stderr).toContain('nearest instruction id: call-a-fix-verified-only-when-all-five-conditions-hold');
   });
 
   test('get explains that a tag is not an instruction id', async () => {

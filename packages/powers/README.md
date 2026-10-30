@@ -88,6 +88,16 @@ a permission. Compatibility is defined by a separate registry: `test-first-devel
 `test-after-development` are mutually exclusive alternatives in the `testing-sequence` group,
 `risk-based-testing` is a compatible supplement.
 
+**Vocabulary formation.** A new capability or pattern tag is created only when a
+distinct norm needs its own name; a natural phrase that already points at an
+existing tag becomes an alias instead. An alias is one word or a short phrase
+(`architecture`, `consumer migration`, `hard constraints`), maps to exactly one
+canonical tag, and is added only with a recorded natural intent and a collision
+check. `check-corpus` rejects two aliases that normalize to the same resolver key
+but target different tags, and the retrieval benchmark records the first-pass
+outcome so a new alias cannot silently weaken an existing intent. A phrase alias
+outranks a single generic word but never outranks a multi-token name match.
+
 **Catalog operations:**
 
 | Operation | Result |

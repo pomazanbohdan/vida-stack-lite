@@ -6,7 +6,7 @@ import type { LoadedInstruction } from '../skills/vp-mode/scripts/catalog.ts';
 import { resolveIntent } from '../skills/vp-mode/scripts/retrieval.ts';
 import { isEntryPoint } from '../skills/vp-mode/scripts/catalog-cli.ts';
 
-export type RetrievalReportIntent = { name: string; terms: string[]; ids: string[]; capability?: string; pattern?: string };
+export type RetrievalReportIntent = { name: string; terms: string[]; ids: string[]; rows?: string[]; capability?: string; pattern?: string };
 export type RetrievalReport = { intents: RetrievalReportIntent[] };
 
 export type RetrievalIssue = { code: string; message: string; intent?: string; instruction_id?: string };
@@ -19,6 +19,7 @@ export type RetrievalCheck = {
     capability: string | null;
     pattern: string | null;
     weak: boolean;
+    rows_declared: boolean;
     ids: string[];
   }>;
   alias_coverage: { reachable: number; total: number };
@@ -49,6 +50,8 @@ export function parseReport(value: unknown): { report?: RetrievalReport; issues:
     const name = typeof raw.name === 'string' && raw.name.trim() !== '' ? raw.name : undefined;
     const terms = strings(raw.terms);
     const ids = strings(raw.ids);
+    const rows = raw.rows === undefined ? undefined : strings(raw.rows);
+    if (raw.rows !== undefined && (rows === undefined || rows.length === 0)) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: `intent ${index} has invalid rows`, ...(name === undefined ? {} : { intent: name }) });
     const capability = typeof raw.capability === 'string' && raw.capability.trim() !== '' ? raw.capability : undefined;
     const pattern = typeof raw.pattern === 'string' && raw.pattern.trim() !== '' ? raw.pattern : undefined;
     if (raw.capability !== undefined && capability === undefined) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: `intent ${index} has an empty capability`, ...(name === undefined ? {} : { intent: name }) });
@@ -57,7 +60,7 @@ export function parseReport(value: unknown): { report?: RetrievalReport; issues:
     if (terms === undefined || terms.length === 0) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: `intent ${index} has no terms`, ...(name === undefined ? {} : { intent: name }) });
     if (ids === undefined || ids.length === 0) issues.push({ code: 'RETRIEVAL_INTENT_EMPTY', message: `intent ${index} has no instruction ids`, ...(name === undefined ? {} : { intent: name }) });
     if (name !== undefined && terms !== undefined && ids !== undefined && terms.length > 0 && ids.length > 0) {
-      intents.push({ name, terms, ids, ...(capability === undefined ? {} : { capability }), ...(pattern === undefined ? {} : { pattern }) });
+      intents.push({ name, terms, ids, ...(rows === undefined ? {} : { rows }), ...(capability === undefined ? {} : { capability }), ...(pattern === undefined ? {} : { pattern }) });
     }
   }
   if (value.intents.length === 0) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: 'report has no intents' });
@@ -122,12 +125,21 @@ export function checkReport(
         });
       }
     }
+    if (intent.rows !== undefined) {
+      const observed = new Set(intent.rows);
+      for (const id of intent.ids) {
+        if (!observed.has(id)) {
+          issues.push({ code: 'RETRIEVAL_ID_NOT_IN_ROW', message: `instruction ${id} was not among the declared search rows`, intent: intent.name, instruction_id: id });
+        }
+      }
+    }
     intents.push({
       name: intent.name,
       status: resolution.status,
       capability: resolution.capability ?? null,
       pattern: resolution.pattern ?? null,
       weak: resolution.status === 'weak',
+      rows_declared: intent.rows !== undefined,
       ids: intent.ids,
     });
   }

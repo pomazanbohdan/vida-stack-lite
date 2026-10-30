@@ -50,6 +50,10 @@ const resolvedCases: Array<{ terms: string[]; expects: string }> = [
   { terms: ['requirements', 'clarifying', 'questions'], expects: 'clarify-requirements' },
   { terms: ['technical', 'debt', 'review', 'cadence'], expects: 'manage-technical-debt' },
   { terms: ['quality', 'bar', 'floor', 'ratchet'], expects: 'define-quality-bar' },
+  { terms: ['clarify', 'ambiguous', 'request', 'scope'], expects: 'clarify-requirements' },
+  { terms: ['request', 'processing', 'quality', 'intake'], expects: 'define-quality-bar' },
+  { terms: ['decision', 'search', 'solution', 'algorithm', 'options'], expects: 'keep-decision-trail' },
+  { terms: ['brownfield', 'characterization', 'test'], expects: 'write-tests-first' },
 ];
 
 // A single generic action verb says "do something", not what. These must not
@@ -58,11 +62,14 @@ const weakCases: string[][] = [
   ['properly', 'handling', 'any', 'request'],
   ['algorithms', 'finding', 'solutions'],
   ['explore', 'alternatives', 'tradeoffs', 'before', 'deciding'],
+  ['redesign', 'foundational', 'data', 'shape'],
 ];
 
 const unresolvedCases: string[][] = [
   ['zzzznotatag'],
   ['process', 'pull', 'request', 'merge'],
+  ['solution', 'option', 'exploration', 'alternatives'],
+  ['intermittent', 'http', '500', 'after', 'deploy'],
 ];
 
 test('keeps every recorded intent resolvable and confident', () => {
@@ -89,6 +96,39 @@ test('keeps unmatchable intents unresolved', () => {
   for (const terms of unresolvedCases) {
     const result = resolveIntent(instructions, terms, aliases);
     if (result.status !== 'unresolved') failures.push(`${terms.join(' ')} -> ${result.status}:${String(result.capability ?? result.pattern)}`);
+  }
+  expect(failures).toEqual([]);
+});
+
+// Phrases recorded while exercising the ten development-cycle stages.
+const stageCases: Array<{ terms: string[]; expects: string }> = [
+  { terms: ['scope', 'boundary', 'permitted', 'actions', 'exclusions'], expects: 'clarify-requirements' },
+  { terms: ['acceptance', 'evidence', 'command', 'test', 'receipt'], expects: 'verify-work-results' },
+  { terms: ['security', 'data', 'loss', 'migration', 'public'], expects: 'assess-change-impact' },
+  { terms: ['task', 'packet', 'work', 'item', 'source', 'revision'], expects: 'plan-implementation' },
+  { terms: ['dependency', 'order', 'single', 'writer', 'shared'], expects: 'plan-implementation' },
+  { terms: ['step', 'count', 'estimate', 'correction', 'cap'], expects: 'plan-implementation' },
+  { terms: ['preserve', 'public', 'behaviour', 'caller', 'migration'], expects: 'migrate-consumers-off-the-old-system' },
+  { terms: ['smallest', 'coherent', 'change', 'owned', 'paths'], expects: 'minimize-code-surface' },
+  { terms: ['focused', 'checks', 'batch', 'failures'], expects: 'verify-work-results' },
+  { terms: ['update', 'system', 'specification', 'behaviour', 'interfaces'], expects: 'write-technical-prose' },
+  { terms: ['pull', 'request', 'review', 'typescript'], expects: 'review-code' },
+  { terms: ['consumer', 'migration', 'off', 'deprecated', 'endpoint'], expects: 'migrate-consumers-off-the-old-system' },
+  { terms: ['data', 'migration', 'schema', 'change'], expects: 'migrate-a-data-schema' },
+  { terms: ['test', 'suite', 'full', 'run'], expects: 'verify-work-results' },
+  { terms: ['decision', 'record', 'owner', 'open', 'question'], expects: 'keep-decision-trail' },
+  { terms: ['risk', 'classification', 'security'], expects: 'assess-change-impact' },
+  { terms: ['hard', 'constraints', 'options'], expects: 'metric-gated-decision' },
+  { terms: ['architectural', 'redesign'], expects: 'design-structure' },
+  { terms: ['observability', 'alerting', 'errors'], expects: 'instrument-production-code' },
+];
+
+test('keeps the recorded stage steps on their first-pass tag', () => {
+  const failures: string[] = [];
+  for (const { terms, expects } of stageCases) {
+    const result = resolveIntent(instructions, terms, aliases);
+    const got = result.capability ?? result.pattern;
+    if (result.status !== 'resolved' || got !== expects) failures.push(`${terms.join(' ')} -> ${result.status}:${String(got)}`);
   }
   expect(failures).toEqual([]);
 });

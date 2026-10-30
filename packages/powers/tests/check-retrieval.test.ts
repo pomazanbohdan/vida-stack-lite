@@ -30,8 +30,8 @@ afterAll(async () => {
 
 const goodReport = {
   intents: [
-    { name: 'diagnosis', terms: ['diagnosis', 'intermittent', '500'], ids: ['debug-systematically'] },
-    { name: 'verification', terms: ['completion', 'verification', 'acceptance'], ids: ['call-a-fix-verified-only-when-all-five-conditions-hold'] },
+    { name: 'diagnosis', terms: ['diagnosis', 'intermittent', '500'], ids: ['debug-systematically'], rows: ['debug-systematically', 'classify-a-non-reproducible-failure'] },
+    { name: 'verification', terms: ['completion', 'verification', 'acceptance'], ids: ['call-a-fix-verified-only-when-all-five-conditions-hold'], rows: ['call-a-fix-verified-only-when-all-five-conditions-hold', 'a-requirement-nobody-verified-is-unsatisfied'] },
   ],
 };
 
@@ -41,7 +41,20 @@ test('accepts a report whose intents resolve and whose ids fit the intent', asyn
   expect(result.issues).toEqual([]);
   expect(result.intents[0]?.capability).toBe('debug-root-cause');
   expect(result.intents[0]?.weak).toBe(false);
+  expect(result.intents[0]?.rows_declared).toBe(true);
   expect(result.alias_coverage.reachable).toBeGreaterThanOrEqual(8);
+});
+
+test('rejects an id that was not among the declared search rows', async () => {
+  const missingRow = await checkRetrievalReport(catalogPath, await reportFile({
+    intents: [{ name: 'diagnosis', terms: ['diagnosis'], ids: ['debug-systematically'], rows: ['classify-a-non-reproducible-failure'] }],
+  }));
+  expect(missingRow.issues.map((issue) => issue.code)).toContain('RETRIEVAL_ID_NOT_IN_ROW');
+
+  const invalidRows = await checkRetrievalReport(catalogPath, await reportFile({
+    intents: [{ name: 'diagnosis', terms: ['diagnosis'], ids: ['debug-systematically'], rows: [] }],
+  }));
+  expect(invalidRows.issues.map((issue) => issue.code)).toContain('RETRIEVAL_REPORT_INVALID');
 });
 
 test('rejects an unknown id, a reused id and an id outside the intent', async () => {

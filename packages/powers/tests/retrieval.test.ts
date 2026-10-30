@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { resolveIntent, suggestionHint, topPatternFor } from '../skills/vp-mode/scripts/retrieval.ts';
+import { nearestInstructionId, rankSuggestions, resolveIntent, suggestionHint, suggestionText, topPatternFor } from '../skills/vp-mode/scripts/retrieval.ts';
 import type { LoadedInstruction } from '../skills/vp-mode/scripts/catalog.ts';
 
 function instruction(id: string, capability: string[], pattern: string[]): LoadedInstruction {
@@ -107,7 +107,52 @@ test('topPatternFor returns the most frequent pattern or nothing for an unknown 
   expect(topPatternFor(base, 'missing')).toBeUndefined();
 });
 
+test('resolves a phrase alias only when all of its tokens appear in order', () => {
+  const catalog = catalogOf(
+    instruction('r', ['review-code'], ['code-review']),
+    instruction('m', ['migrate-consumers-off-the-old-system'], ['incremental-cutover']),
+  );
+  const aliases = new Map([
+    ['pull request review', 'review-code'],
+    ['consumer migration', 'migrate-consumers-off-the-old-system'],
+  ]);
+  const review = resolveIntent(catalog, ['pull', 'request', 'review'], aliases);
+  expect(review.capability).toBe('review-code');
+  expect(review.matchedAlias).toBe(true);
+
+  const merge = resolveIntent(catalog, ['process', 'pull', 'request', 'merge'], aliases);
+  expect(merge.capability).not.toBe('review-code');
+
+  const migration = resolveIntent(catalog, ['consumer', 'migration', 'plan'], aliases);
+  expect(migration.capability).toBe('migrate-consumers-off-the-old-system');
+});
+
+test('finds the nearest instruction id within a bounded distance', () => {
+  const ids = ['call-a-fix-verified-only-when-all-five-conditions-hold', 'debug-systematically', 'review-code'];
+  expect(nearestInstructionId('call-a-fix-only-when-all-five-conditions-hold', ids)).toBe('call-a-fix-verified-only-when-all-five-conditions-hold');
+  expect(nearestInstructionId('zzzznotatag', ids)).toBeUndefined();
+});
+
 test('builds a nearest-tag hint or falls back to the tag query', () => {
   expect(suggestionHint([])).toBe('run tags --query with canonical nouns');
   expect(suggestionHint(['capability:review-code', 'pattern:code-review'])).toBe('nearest tags: capability:review-code, pattern:code-review; search one with --capability <tag> or --pattern <tag>');
+});
+
+test('separates name matches from description-only suggestions', () => {
+  const ranked = rankSuggestions(['review', 'spreadsheet'], [
+    { dimension: 'pattern', tag: 'release-readiness' },
+    { dimension: 'capability', tag: 'review-code' },
+  ]);
+  expect(ranked.names).toEqual(['capability:review-code']);
+  expect(ranked.descriptions).toEqual(['pattern:release-readiness']);
+
+  const text = suggestionText(['review', 'spreadsheet'], [
+    { dimension: 'pattern', tag: 'release-readiness' },
+    { dimension: 'capability', tag: 'review-code' },
+  ]);
+  expect(text).toContain('nearest tags: capability:review-code');
+  expect(text).toContain('description matches (heuristic): pattern:release-readiness');
+
+  expect(suggestionText(['zzzz'], [])).toBe('run tags --query with canonical nouns');
+  expect(suggestionText(['zzzz'], [{ dimension: 'pattern', tag: 'release-readiness' }])).toContain('description matches (heuristic)');
 });

@@ -154,6 +154,13 @@ describe('checkCorpus synthetic fixtures', () => {
     expect(corpusCli(['--root', corpus.root])).toMatchObject({ instructions: 1, exitCode: 0, issues: [] });
   });
 
+  test('rejects two aliases that collide on the resolver key', async () => {
+    const corpus = await fixture();
+    corpus.catalog.tag_aliases = { review: 'write-tests-first', reviews: 'test-first-development' };
+    await corpus.save();
+    expect(codes(corpus.root)).toContain('CORPUS_TAG_ALIAS_COLLISION');
+  });
+
   test('v1.2 validation checks catalog digests', async () => {
     const corpus = await fixture({ twoInstructions: true });
     expect(checkCorpus(corpus.root)).toEqual([]);

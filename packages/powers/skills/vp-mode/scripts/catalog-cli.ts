@@ -26,7 +26,7 @@ import {
   stemToken,
 } from './catalog.ts';
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
-import { resolveIntent, suggestionHint, topPatternFor } from './retrieval.ts';
+import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText, topPatternFor } from './retrieval.ts';
 import { validateAgainstSchema } from './schema.ts';
 import {
   INSTRUCTION_DOMAINS,
@@ -113,8 +113,9 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--match': { arity: 'scalar', value: 'any|all', description: 'Require any or all query tokens.' },
       '--limit': { arity: 'scalar', value: 'N', description: 'Return at most N rows.' },
       '--offset': { arity: 'scalar', value: 'N', description: 'Skip N rows after deduplication.' },
+      '--all': { arity: 'switch', description: 'List every row instead of the first page.' },
     },
-    examples: ['tags --query pr review', 'tags --query tdd --match all'],
+    examples: ['tags --query pr review', 'tags --query tdd --match all', 'tags --query review --all'],
   },
   search: {
     description: 'List active instruction candidates by selectors; without --profile this is discovery only.',
@@ -301,7 +302,6 @@ function parseArgs(argv: string[]): ParsedArgs {
       throw invalid(`unexpected argument ${flag ?? ''}`, { argument: flag });
     }
     const definition = flagDefinition(command, flag);
-    if (definition.arity !== 'repeat-list' && flags.has(flag)) throw invalid(`flag ${flag} may only be supplied once`, { flag });
     if (definition.arity === 'switch') {
       flags.set(flag, []);
       continue;
@@ -320,6 +320,12 @@ function parseArgs(argv: string[]): ParsedArgs {
         index += 1;
       }
       if (values.length === 0) throw invalid(`missing value for ${flag}`, { flag });
+    }
+    if (definition.arity !== 'repeat-list' && flags.has(flag)) {
+      const prior = flags.get(flag) as string[];
+      const identical = prior.length === values.length && prior.every((value, position) => value === values[position]);
+      if (!identical) throw invalid(`flag ${flag} may only be supplied once with the same value`, { flag });
+      continue;
     }
     flags.set(flag, [...(flags.get(flag) ?? []), ...values]);
   }
@@ -549,8 +555,11 @@ function compactRows(rows: CompactRow[], flags: Map<string, string[]>, defaultLi
   const text = page.map((row) => `${escapeField(row.id)}\t${escapeField(row.description)}`).join('\n');
   const remaining = Math.max(0, rows.length - offset - page.length);
   const paginated = page.length < rows.length || offset > 0;
+  const pageNumber = Math.floor(offset / Math.max(limit ?? page.length, 1)) + 1;
+  const pageCount = limit === undefined ? undefined : Math.max(1, Math.ceil(rows.length / limit));
+  const pageLabel = pageCount === undefined ? `page ${pageNumber}` : `page ${Math.min(pageNumber, pageCount)} of ${pageCount}`;
   const lines = paginated
-    ? [`pagination: showing ${page.length} of ${rows.length}${remaining > 0 ? `; next: --offset ${offset + page.length} (${remaining} remaining; same search, not a new query)` : '; no more rows'}`]
+    ? [`pagination: ${pageLabel}: showing ${page.length} of ${rows.length}${remaining > 0 ? `; next: --offset ${offset + page.length} (${remaining} remaining; same search, not a new query)` : '; no more rows'}`]
     : [];
   if (remaining > 0 && refine !== undefined) lines.push(refine);
   return {
@@ -655,7 +664,7 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         ...(entries?.pattern.map(({ tag, description }) => ({ id: `pattern:${tag}`, description })) ?? []),
       ]
       : catalogFindTags(catalog, terms, match).map(({ dimension, tag, description }) => ({ id: `${dimension}:${tag}`, description }));
-    return compactRows(rows, flags);
+    return compactRows(rows, flags, 20, 'refine: use a more specific word, or pass --all');
   }
   const instructions = await loadInstructions(catalog, dirname(resolve(catalogPath)));
   switch (command) {
@@ -678,8 +687,7 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         const capability = capabilityTags?.[0] ?? resolution.capability;
         const pattern = patternTags?.[0] ?? resolution.pattern ?? (capability === undefined ? undefined : topPatternFor(instructions, capability));
         if (capability === undefined && pattern === undefined) {
-          const nearest = catalogFindTags(catalog, forTerms).slice(0, 3).map(({ dimension, tag }) => `${dimension}:${tag}`);
-          throw invalid(`no capability or pattern matched --for; ${suggestionHint(nearest)}`, { terms: forTerms });
+          throw invalid(`no capability or pattern matched --for; ${suggestionText(forTerms, catalogFindTags(catalog, forTerms))}`, { terms: forTerms });
         }
         if (capability !== undefined) capabilityTags = capabilityTags ?? [capability];
         if (pattern !== undefined) patternTags = patternTags ?? [pattern];
@@ -689,9 +697,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         if (weak) {
           const alternatives = resolution.candidates
             .filter((candidate) => candidate.tag !== capability && candidate.tag !== pattern)
-            .slice(0, 2)
-            .map((candidate) => `${candidate.dimension}:${candidate.tag}(${candidate.score.toFixed(1)})`);
-          const hint = suggestionHint(alternatives);
+            .map((candidate) => ({ dimension: candidate.dimension, tag: candidate.tag }));
+          const hint = alternatives.length === 0 ? suggestionHint([]) : suggestionText(forTerms, alternatives);
           resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved; ${hint}`;
         }
       }
@@ -756,6 +763,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
             hint,
           });
         }
+        const nearest = nearestInstructionId(id, instructions.keys());
+        if (nearest !== undefined) throw invalid(`unknown instruction id: ${id}; nearest instruction id: ${nearest}`, { instruction_id: id, nearest });
       }
       const profile = await profileAt(required(flags, '--profile'), dirname(resolve(catalogPath)));
       const approaches = listValues(flags, '--approach');
