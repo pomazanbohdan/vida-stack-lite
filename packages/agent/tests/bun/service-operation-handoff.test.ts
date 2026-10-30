@@ -1901,6 +1901,7 @@ for (const [label, column, value] of invalidPersistedHandoffCases) {
 
 test('handoff rolls back when an AFTER UPDATE trigger deletes its CAS row', async () => {
   const fixture = openCustodyFixture('handoff-missing-afterimage-');
+  let completed = false;
   try {
     const prior = finishOperation(fixture, 'release-pack-worker');
     const setup = expectReturned(() =>
@@ -1926,7 +1927,7 @@ test('handoff rolls back when an AFTER UPDATE trigger deletes its CAS row', asyn
         retargetDigest,
         preparedReceipt,
       ),
-      'same-operation handoff compare-and-swap failed',
+      'handed-off owner row disappeared',
     );
     const reopened = expectReturned(() =>
       openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
@@ -1938,10 +1939,65 @@ test('handoff rolls back when an AFTER UPDATE trigger deletes its CAS row', asyn
     } finally {
       closeServiceOperationDatabase(reopened);
     }
+    completed = true;
   } finally {
-    rmSync(fixture.root, { recursive: true, force: true });
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('SERVICE_CUSTODY_MISSING_HANDOFF_AFTERIMAGE_FIXTURE_RETAINED', fixture.root);
   }
 });
+
+for (const [column, value] of [
+  ['evidence_digest', 'a'.repeat(64)],
+  ['request_digest', 'a'.repeat(64)],
+  ['handoff_digest', 'a'.repeat(64)],
+  ['revision', 99],
+] as const) {
+  test(`handoff rolls back a valid but changed ${column} afterimage`, async () => {
+    const fixture = openCustodyFixture('handoff-changed-afterimage-');
+    let completed = false;
+    try {
+      const prior = finishOperation(fixture, 'release-pack-worker');
+      const setup = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      try {
+        const literal = typeof value === 'string' ? "'" + value + "'" : String(value);
+        setup.exec(
+          'CREATE TRIGGER change_handoff_custody AFTER UPDATE OF owner_kind ON agent_host_service_operation_custody ' +
+            "WHEN NEW.owner_kind='release-worker' BEGIN UPDATE agent_host_service_operation_custody SET " +
+            column +
+            '=' +
+            literal +
+            ' WHERE workspace_id=NEW.workspace_id AND operation_id=NEW.operation_id; END',
+        );
+      } finally {
+        closeServiceOperationDatabase(setup);
+      }
+      const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      await expectRejection(
+        handoffServiceOperationCustody(
+          source,
+          fixture.root,
+          fixture.relative,
+          fixture.workspaceId,
+          operationId,
+          requestDigest,
+          retargetDigest,
+          preparedReceipt,
+        ),
+        'handed-off owner row differs from receipt',
+      );
+      const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      try {
+        expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toEqual(prior);
+      } finally {
+        closeServiceOperationDatabase(reopened);
+      }
+      completed = true;
+    } finally {
+      if (completed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('SERVICE_CUSTODY_CHANGED_HANDOFF_AFTERIMAGE_FIXTURE_RETAINED', fixture.root);
+    }
+  });
+}
 
 for (const route of ['handoff', 'reconciliation'] as const) {
   test(`${route} gate replacement during an awaited receipt leaves its original row intact`, async () => {

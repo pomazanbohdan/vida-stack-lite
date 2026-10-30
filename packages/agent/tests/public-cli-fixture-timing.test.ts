@@ -1,8 +1,85 @@
 import { expect, spyOn, test } from 'bun:test';
-import { mkdtempSync, readFileSync, mkdirSync, rmSync } from 'node:fs';
+import { existsSync, lstatSync, mkdtempSync, readFileSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import * as fixtureTiming from './helpers/public-cli-fixture-runner.ts';
+
+let lastAllocatedChild = 0;
+
+function profileFixture(): { readonly root: string; readonly profileRoot: string } {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-public-cli-cpu-profile-'));
+  const profileRoot = path.join(root, '.tmp', 'release-runtime-diagnostic');
+  mkdirSync(profileRoot, { recursive: true });
+  return { root, profileRoot };
+}
+
+test('CPU profile opt-out adds no argv and performs no profile-root IO', () => {
+  const absentRoot = path.join(tmpdir(), 'vida-public-cli-profile-absent-' + randomUUID());
+  expect(fixtureTiming.bunCpuProfileArgs(absentRoot)).toEqual([]);
+  expect(existsSync(absentRoot)).toBe(false);
+});
+
+test('CPU profile args use a fresh exclusive child below the allowed package diagnostic root', () => {
+  const { root, profileRoot } = profileFixture();
+  try {
+    const args = fixtureTiming.bunCpuProfileArgs(root, profileRoot);
+    const child = path.join(profileRoot, 'child-01');
+    expect(args).toEqual(['--cpu-prof', '--cpu-prof-dir=' + child]);
+    expect(lstatSync(child).isDirectory()).toBe(true);
+    lastAllocatedChild = 1;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CPU profile rejects relative, outside, missing, and file roots', () => {
+  const { root, profileRoot } = profileFixture();
+  const outside = path.join(root, 'outside');
+  const file = path.join(profileRoot, 'profile-file');
+  try {
+    mkdirSync(outside);
+    writeFileSync(file, 'retained', { flag: 'wx' });
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, 'relative-profile-root')).toThrow();
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, outside)).toThrow();
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, path.join(profileRoot, 'missing'))).toThrow();
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, file)).toThrow();
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CPU profile skips a retained child directory without replacing its contents', () => {
+  const { root, profileRoot } = profileFixture();
+  const retainedChild = path.join(profileRoot, 'child-' + String(lastAllocatedChild + 1).padStart(2, '0'));
+  mkdirSync(retainedChild);
+  const retainedFile = path.join(retainedChild, 'retained.txt');
+  writeFileSync(retainedFile, 'preserve', { flag: 'wx' });
+  try {
+    const args = fixtureTiming.bunCpuProfileArgs(root, profileRoot);
+    const child = path.join(profileRoot, 'child-' + String(lastAllocatedChild + 2).padStart(2, '0'));
+    expect(args).toEqual(['--cpu-prof', '--cpu-prof-dir=' + child]);
+    expect(readFileSync(retainedFile, 'utf8')).toBe('preserve');
+    lastAllocatedChild += 2;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('CPU profile child allocation stops at 64 per process', () => {
+  const { root, profileRoot } = profileFixture();
+  try {
+    for (let index = lastAllocatedChild; index < 64; index += 1) {
+      const args = fixtureTiming.bunCpuProfileArgs(root, profileRoot);
+      const child = args.find((argument) => argument.startsWith('--cpu-prof-dir='));
+      expect(child).toBeTypeOf('string');
+      lastAllocatedChild += 1;
+    }
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, profileRoot)).toThrow(/bound exceeded/u);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('parent phase receipts distinguish completed intervals from the last started phase', () => {
   expect(fixtureTiming).toHaveProperty('createPublicCliFixturePhaseMarker');

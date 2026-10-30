@@ -376,6 +376,7 @@ export function createFsSafeNativeImportBoundary(
         properties: [
           property('absolutePath', call(member(id('path'), 'join'), id('root'), id('relative'))),
           property('rootPath', id('root')),
+          property('rootRealPath', id('root')),
           property('boundaryLabel', text('fs-safe package attestation')),
           property('maxBytes', id('fsSafePackageMaxBytes')),
           property('rejectHardlinks', { type: 'BooleanLiteral', value: false }),

@@ -16,6 +16,7 @@ const config = {
         // Package coverage scripts select this child through the pinned launcher.
         'tooling/agent/run-coverage.ts',
         'tooling/agent/release-ci-source-quality.ts',
+        'tooling/agent/ci-runtime-diagnostic.ts',
         'tooling/agent/controllers/forward-update-prepare.ts',
         'tooling/agent/controllers/forward-update-finalize.ts',
         'tooling/agent/controllers/forward-documentation-phase.ts',

@@ -104,6 +104,19 @@ completion. The old completed-workflow observer remains strict. Build-only dispa
 formation-only profile. Source assurance is separate from package formation and
 installation; it does not close other task-specific mutation or acceptance gaps.
 
+The same workflow offers `diagnose_runtime: true` only with `publish: false`.
+It skips native formation and runs one maintained released-journal CLI case in
+a fresh Linux Source mirror. The private diagnostic adapter reuses SDK readiness,
+the existing 300000ms budget with 30000ms reserve and owned-process observation.
+Only explicitly enabled direct CLI children receive Bun CPU profiler arguments;
+ordinary test argv and case budgets remain unchanged. Retained evidence binds
+Source, request, version, run/attempt, exact JUnit case, native process closure,
+output capture, phase timing and bounded profile hashes. Failed or UNKNOWN runs
+retain their directories and cannot automatically replay. Profiling overhead is
+unmeasured; these observations establish no full quality, delivery, installation
+or Runtime acceptance. Descendant profiling is not claimed. The diagnostic
+artifact also retains SDK preparation evidence and cannot enter publication.
+
 ## New and modified files
 
 Apply this policy when authoring or changing production files. Inventory every

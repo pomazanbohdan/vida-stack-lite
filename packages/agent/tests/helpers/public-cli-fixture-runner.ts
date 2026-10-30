@@ -1,4 +1,4 @@
-import { appendFileSync, mkdirSync } from 'node:fs';
+import { appendFileSync, lstatSync, mkdirSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { pinnedEnvironment, readPin } from '../../bin/bun.ts';
@@ -9,6 +9,52 @@ interface PublicCliFixtureRunnerOptions {
   readonly diagnosticReceiptPath: string;
   readonly fixtureRoot: string;
   readonly onUnknown: () => void;
+}
+
+let cpuProfileChildNumber = 0;
+
+/** Optional, bounded Bun CPU profiles for direct public CLI children. */
+export function bunCpuProfileArgs(originalPackageRoot: string, profileRoot?: string): string[] {
+  if (profileRoot === undefined) return [];
+  if (
+    !path.isAbsolute(originalPackageRoot) ||
+    path.resolve(originalPackageRoot) !== originalPackageRoot ||
+    !path.isAbsolute(profileRoot) ||
+    path.resolve(profileRoot) !== profileRoot
+  )
+    throw new Error('Public CLI CPU profile paths must be absolute and normalized.');
+  if (cpuProfileChildNumber >= 64) throw new Error('Public CLI CPU profile child bound exceeded.');
+
+  const allowedRoot = path.join(originalPackageRoot, '.tmp', 'release-runtime-diagnostic');
+  const relativeRoot = path.relative(allowedRoot, profileRoot);
+  if (relativeRoot === '..' || relativeRoot.startsWith('..' + path.sep) || path.isAbsolute(relativeRoot))
+    throw new Error('Public CLI CPU profile directory must be under the release diagnostic root.');
+
+  let current = path.parse(profileRoot).root;
+  for (const part of profileRoot.slice(current.length).split(path.sep).filter(Boolean)) {
+    current = path.join(current, part);
+    const stat = lstatSync(current);
+    if (!stat.isDirectory() || stat.isSymbolicLink())
+      throw new Error('Public CLI CPU profile path contains a non-directory or link.');
+  }
+  const canonicalAllowedRoot = realpathSync.native(allowedRoot);
+  const canonicalProfileRoot = realpathSync.native(profileRoot);
+  const canonicalRelative = path.relative(canonicalAllowedRoot, canonicalProfileRoot);
+  if (canonicalRelative === '..' || canonicalRelative.startsWith('..' + path.sep) || path.isAbsolute(canonicalRelative))
+    throw new Error('Public CLI CPU profile directory resolves outside the release diagnostic root.');
+
+  for (let childNumber = cpuProfileChildNumber + 1; childNumber <= 64; childNumber += 1) {
+    const child = path.join(profileRoot, 'child-' + String(childNumber).padStart(2, '0'));
+    try {
+      mkdirSync(child, { mode: 0o700 });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST') continue;
+      throw error;
+    }
+    cpuProfileChildNumber = childNumber;
+    return ['--cpu-prof', '--cpu-prof-dir=' + child];
+  }
+  throw new Error('Public CLI CPU profile child namespace is full.');
 }
 
 /** Phase starts only: the final row never implies that its phase completed. */

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 import { Database } from 'bun:sqlite';
 import {
   serviceOperationLaunchCapabilityDigest,
@@ -562,6 +563,21 @@ export async function handoffServiceOperationCustody(
       requireCustody(proof.phase === 'prepared', 'handoff receipt is not a prepared install image');
       validateDigest(proof.evidence_digest, 'handoff install image digest');
       validateDigest(proof.handoff_digest, 'retarget receipt digest');
+      const expected: ServiceOperationCustody = {
+        ...prior,
+        owner_kind: 'release-worker',
+        request_digest: requestDigest,
+        owner_token: null,
+        revision,
+        phase: 'prepared',
+        evidence_digest: proof.evidence_digest,
+        handoff_digest: proof.handoff_digest,
+        handoff_from_kind: 'release-pack-worker',
+        handoff_from_phase: 'terminal',
+        handoff_from_request_digest: prior.request_digest,
+        handoff_from_revision: prior.revision,
+        handoff_from_evidence_digest: prior.evidence_digest,
+      };
       exclusive.assertActive();
       const database = openUnadmittedWorkspaceDatabase(root, relative, false, true, exclusive.captureSource);
       withCleanup(
@@ -588,9 +604,13 @@ export async function handoffServiceOperationCustody(
                 prior.evidence_digest,
               );
             requireCustody(handedOff.changes === 1, 'same-operation handoff compare-and-swap failed');
+            const afterimage = readRow(database, workspaceId, operationId);
+            requireCustody(afterimage !== null, 'handed-off owner row disappeared');
+            requireCustody(isDeepStrictEqual(afterimage, expected), 'handed-off owner row differs from receipt');
           });
           result = readRow(database, workspaceId, operationId) ?? undefined;
           requireCustody(result !== undefined, 'handed-off owner row disappeared');
+          requireCustody(isDeepStrictEqual(result, expected), 'handed-off owner row changed after commit');
         },
         () => exclusive.closeSource(database),
         'handoff CAS and close failed',

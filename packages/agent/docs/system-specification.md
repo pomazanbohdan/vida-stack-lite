@@ -523,6 +523,13 @@ has no whole-workflow completion claim. The existing completed-workflow observer
 still requires actual workflow completion and success before its own receipt and
 local release-operation closeout.
 
+An explicit diagnostic-only dispatch in this same workflow requires publication
+disabled and performs no native formation. Its selected CLI observation retains
+Source/run/request/version, process and profile evidence separately from the
+quality and native producer receipts. Diagnostic success grants no publication,
+installation or Runtime-acceptance evidence; publication retains the complete
+Source quality and native pair requirements above.
+
 One immutable annotated version tag binds the operation, exact requests, original
 producer run/attempt/artifacts and public asset name/size/hash inventory. Its
 commit must be the selected published Source. A draft body binds that claim's

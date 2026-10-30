@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { bunCpuProfileArgs } from './helpers/public-cli-fixture-runner.ts';
 import { recoverFailedPrewriterOwner } from '../bin/recover-failed-prewriter-owner.ts';
 import { afterAll, beforeAll, describe, expect, mock, setSystemTime, test, spyOn } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
@@ -3048,7 +3049,14 @@ function invoke(
     result = boundedSpawnSync(
       nativeSpawn,
       process.execPath,
-      [entrypoint, ...args],
+      [
+        ...bunCpuProfileArgs(
+          packageRoot,
+          env.VIDA_PUBLIC_CLI_CPU_PROFILE_DIR ?? process.env.VIDA_PUBLIC_CLI_CPU_PROFILE_DIR,
+        ),
+        entrypoint,
+        ...args,
+      ],
       {
         cwd: packageRoot,
         env: pinnedEnvironment(process.execPath, { ...process.env, ...env }, options.bundleRoot ?? packageRoot),

@@ -19,6 +19,11 @@ on:
         required: false
         type: boolean
         default: false
+      diagnose_runtime:
+        description: Diagnose one Linux CLI case without formation or publication
+        required: false
+        type: boolean
+        default: false
 permissions:
   actions: read
   contents: read
@@ -28,7 +33,7 @@ concurrency:
 jobs:
   native-windows-x64:
     name: native-windows-x64
-    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' }}
+    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && !inputs.diagnose_runtime }}
     runs-on: windows-2025
     outputs:
       artifact_id: ${{ steps.upload.outputs.artifact-id }}
@@ -39,9 +44,9 @@ jobs:
       CI_PUBLICATION: ${{ inputs.publish }}
       CI_REQUEST_LINUX: ${{ inputs.request_linux }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
-      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_COUNT: '1'
       GIT_CONFIG_KEY_0: core.autocrlf
-      GIT_CONFIG_VALUE_0: "false"
+      GIT_CONFIG_VALUE_0: 'false'
     defaults:
       run:
         shell: pwsh
@@ -243,7 +248,7 @@ jobs:
           retention-days: 14
   full-source-quality:
     name: full-source-quality
-    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.publish }}
+    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.publish && !inputs.diagnose_runtime }}
     runs-on: ubuntu-24.04
     env:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
@@ -251,9 +256,9 @@ jobs:
       CI_REQUEST_LINUX: ${{ inputs.request_linux }}
       CI_PUBLICATION: ${{ inputs.publish }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
-      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_COUNT: '1'
       GIT_CONFIG_KEY_0: core.autocrlf
-      GIT_CONFIG_VALUE_0: "false"
+      GIT_CONFIG_VALUE_0: 'false'
     defaults:
       run:
         shell: pwsh
@@ -283,10 +288,51 @@ jobs:
           if-no-files-found: error
           include-hidden-files: true
           retention-days: 14
+  diagnose-public-cli-runtime:
+    name: diagnose-public-cli-runtime
+    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.diagnose_runtime && !inputs.publish && inputs.request_linux != '' }}
+    runs-on: ubuntu-24.04
+    env:
+      VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
+      CI_REQUEST: ${{ inputs.request_linux }}
+      CI_REQUEST_LINUX: ${{ inputs.request_linux }}
+      CI_PUBLICATION: ${{ inputs.publish }}
+      CI_DIAGNOSE_RUNTIME: ${{ inputs.diagnose_runtime }}
+      CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: 'false'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - *shared-selected-source
+      - *shared-checkout
+      - *shared-bun
+      - *shared-bun-dependency-cache
+      - *shared-isolated-source
+      - *shared-save-bun-dependency-cache
+      - *shared-require-bun-dependency-cache-evidence
+      - name: public-cli-runtime-diagnostic
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/ci-runtime-diagnostic.ts"
+      - name: retain-public-cli-runtime-diagnostic
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: vida-public-cli-runtime-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}-linux
+          path: |
+            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/.tmp/release-runtime-diagnostic/${{ github.run_id }}-${{ github.run_attempt }}
+            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/sdk-test-inputs
+          archive: true
+          compression-level: 6
+          overwrite: false
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
   native-linux-x64:
     name: native-linux-x64
     needs: full-source-quality
-    if: ${{ always() && vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.request_linux != '' && (!inputs.publish || needs.full-source-quality.result == 'success') }}
+    if: ${{ always() && vars.VIDA_NATIVE_CI_ENABLED == 'true' && !inputs.diagnose_runtime && inputs.request_linux != '' && (!inputs.publish || needs.full-source-quality.result == 'success') }}
     runs-on: ubuntu-24.04
     outputs:
       artifact_id: ${{ steps.upload.outputs.artifact-id }}
@@ -297,9 +343,9 @@ jobs:
       CI_REQUEST_LINUX: ${{ inputs.request_linux }}
       CI_PUBLICATION: ${{ inputs.publish }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
-      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_COUNT: '1'
       GIT_CONFIG_KEY_0: core.autocrlf
-      GIT_CONFIG_VALUE_0: "false"
+      GIT_CONFIG_VALUE_0: 'false'
     defaults:
       run:
         shell: pwsh
@@ -360,9 +406,9 @@ jobs:
       CI_WINDOWS_PRODUCER_ATTEMPT: ${{ needs.native-windows-x64.outputs.producer_attempt }}
       CI_LINUX_PRODUCER_ATTEMPT: ${{ needs.native-linux-x64.outputs.producer_attempt }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_COUNT: '1'
       GIT_CONFIG_KEY_0: core.autocrlf
-      GIT_CONFIG_VALUE_0: "false"
+      GIT_CONFIG_VALUE_0: 'false'
     steps:
       - *shared-selected-source
       - *shared-checkout

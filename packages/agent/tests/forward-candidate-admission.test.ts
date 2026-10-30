@@ -355,6 +355,8 @@ test('sealed admission supports the maintained attested fs-safe root and native 
 });
 
 const nativeDenials: readonly [string, string, string, number][] = [
+  ['foreign canonical root', 'rootRealPath: root,', 'rootRealPath: foreignRoot,', 1],
+  ['missing canonical root', 'rootRealPath: root,', '', 1],
   [
     'foreign root',
     "path.join(fsSafePackageRoot, 'dist', 'native.js')",
