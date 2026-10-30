@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/templates/research-project/PITFALLS.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body provides a shortcut trade-off table without establishing a supported domain or one of the four defined forms.
 ---
 
 # Record the cost and the conditions of a shortcut

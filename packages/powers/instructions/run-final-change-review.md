@@ -20,7 +20,13 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/executing-plans/SKILL.md
 status: active
-revision: 2
+revision: 3
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - engineering
+  - operations
 ---
 
 # Run one final review of the whole change

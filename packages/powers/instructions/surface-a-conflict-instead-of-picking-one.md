@@ -23,7 +23,13 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/profile-user.md
 status: active
-revision: 3
+revision: 4
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - engineering
+  - operations
 ---
 
 # Surface a conflict instead of picking one side

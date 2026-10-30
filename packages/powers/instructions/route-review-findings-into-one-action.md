@@ -23,7 +23,13 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-04-review.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/build/autonomous-development-loops.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: decision-rule
+domains:
+  - engineering
+  - operations
 ---
 
 # Route every review finding into one action

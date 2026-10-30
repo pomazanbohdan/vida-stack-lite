@@ -23,7 +23,12 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase/steps/closed-phase-gate.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/handle-quick-and-fast-tasks.md
 status: active
-revision: 3
+revision: 4
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: decision-rule
+domains:
+  - operations
 ---
 
 # Never reshape a closed record

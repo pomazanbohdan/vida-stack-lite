@@ -21,7 +21,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/plan-checker-examples.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body supplies a structured finding example and field names, but no judgment principle, conditional choice, ordered action sequence, or checks."
 ---
 
 # Report a checker finding with its dimension, invariant and evidence

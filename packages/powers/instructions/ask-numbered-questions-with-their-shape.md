@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/assets/codebase.template.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body specifies question numbering and shape only; it contains no judgment principle, conditional choice, ordered action sequence, or enumerated checks."
 ---
 
 # Ask numbered questions with their shape

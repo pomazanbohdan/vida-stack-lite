@@ -21,7 +21,13 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/SKILL.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/explore.md
 status: active
-revision: 4
+revision: 5
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: decision-rule
+domains:
+  - design-ux
+  - product
 ---
 
 # Ask one open question at a time

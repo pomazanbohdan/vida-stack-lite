@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { CatalogError, readSchema, type Catalog, type Provenance } from '../skills/vp-mode/scripts/catalog.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 import { instructionSchemaVersion, isInstructionClassification, LEGACY_CLASSIFICATION, parseFacetClassification, type InstructionClassification } from '../skills/vp-mode/scripts/instruction-facets.ts';
+import { APPROACH_VOCABULARY, parseApproachAssessments } from '../skills/vp-mode/scripts/instruction-approaches.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 import { readEligibleSource, sealArtifact, verifyArtifact, resolveArtifactPath, type ArtifactRef, type EligibleSource } from './source-packets.ts';
 import { checkCorpus } from './check-corpus.ts';
@@ -31,6 +32,7 @@ export type PrepareInstructionFacetBatchOptions = Omit<ConvertOptions, 'instruct
   stagingRoot: string;
   classificationEvidence: ArtifactRef;
   policyConfig: ArtifactRef;
+  migration?: FacetMigration;
 };
 export type ConversionResult = {
   kind: 'instruction';
@@ -208,6 +210,9 @@ export function parseInstructionSpec(value: unknown, source: string): Instructio
 export function renderInstruction(spec: InstructionSpec): string {
   const lines = [
     '---',
+    'schema: VPInstruction/v1.2',
+    'classification_status: unclassified',
+    'classification_reason: classification-not-assessed',
     yamlString('instruction_id', spec.instruction_id),
     yamlString('title', spec.title),
     yamlString('summary', spec.summary),
@@ -322,7 +327,7 @@ async function compileInstruction(specPath: string, options: ConvertOptions, io:
   const raw = await readJson(specPath, 'instruction spec', io);
   if (raw === undefined) throw new CatalogError('CATALOG_INVALID', 'instruction spec file is missing', { source: specPath });
   const spec = parseInstructionSpec(raw, specPath);
-  const instructionSchema = await schema('vpinstruction.v1.schema.json');
+  const instructionSchema = await schema('vpinstruction.v1.2.schema.json');
 
   const catalogPath = target(root, options.catalogPath, join(root, 'catalog.json'));
   const mapPath = target(root, options.mapPath, join(root, 'corpus-map.json'));
@@ -360,8 +365,15 @@ async function compileInstruction(specPath: string, options: ConvertOptions, io:
   try { oldMarkdown = await io.read(instructionPath); } catch (error) {
     if (!(typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT')) throw error;
   }
-  if (oldMarkdown !== undefined && instructionSchemaVersion(parseFrontmatter(oldMarkdown).data.schema) !== 'legacy-v1') {
+  if (oldMarkdown !== undefined && instructionSchemaVersion(parseFrontmatter(oldMarkdown).data.schema) !== 'faceted-v1.2') {
     throw new CatalogError('CATALOG_INVALID', `instruction ${spec.instruction_id} has faceted or unsupported metadata; use prepareInstructionFacetBatch for a reviewed metadata update`, { instruction_id: spec.instruction_id });
+  }
+  if (oldMarkdown !== undefined && oldMarkdown !== rendered) {
+    const existing = parseFrontmatter(oldMarkdown);
+    const errors = validateAgainstSchema(existing.data, instructionSchema);
+    if (errors.length || !same(parseFacetClassification(existing.data), { classification_status: 'unclassified', classification_reason: 'classification-not-assessed' }) || existing.data.approach_assessments !== undefined || existing.data.approach_body_sha256 !== undefined) {
+      throw new CatalogError('CATALOG_INVALID', 'existing instruction has metadata requiring a reviewed update; use prepareInstructionFacetBatch', { instruction_id: spec.instruction_id });
+    }
   }
   const written = oldMarkdown !== rendered;
   const digest = sha256(rendered);
@@ -572,13 +584,20 @@ export async function releasePreparedOwnership(plan: PreparedBatch, observe: (re
 }
 
 type PreparedTarget = { path: string; before: string | null; after: string; staged: ArtifactRef; backup: ArtifactRef | null };
-type BatchManifest = { schema: 'VPPreparedBatch/v1'; root: string; targets: PreparedTarget[]; specs: ArtifactRef[]; tools: ArtifactRef[]; context: { path: string; sha256: string | null }[]; runtime: ArtifactRef; sources: { source: Awaited<ReturnType<typeof readEligibleSource>>['source']; packet: ArtifactRef; unitIds: string[]; specs: ArtifactRef[] }[] };
+type MigrationRecord = { id: string; path: string; before: string; body: string; marker: 'legacy' | 'v1.1' | 'v1.2' };
+type MigrationBinding = { initialCatalog: string; map: string; cohort: MigrationRecord[]; catalog: string; current: string[] };
+type BatchManifest = { schema: 'VPPreparedBatch/v1'; root: string; targets: PreparedTarget[]; specs: ArtifactRef[]; tools: ArtifactRef[]; context: { path: string; sha256: string | null }[]; runtime: ArtifactRef; sources: { source: Awaited<ReturnType<typeof readEligibleSource>>['source']; packet: ArtifactRef; unitIds: string[]; specs: ArtifactRef[] }[]; migration?: MigrationBinding };
 export type PreparedBatch = Readonly<{ directory: string; manifest: ArtifactRef }>;
 export type BatchApproval = Readonly<{ review: ArtifactRef; observe: (request: Readonly<{ plan: ArtifactRef; review: ArtifactRef; targets: readonly string[] }>) => Promise<{ kind: 'observed'; writer: string; reviewPointer: string } | { kind: 'unconfirmed' }> }>;
 export type ApplyOutcome = { kind: 'applied' | 'no-change' | 'no-write-conflict' | 'partial-or-unknown'; receipt: ArtifactRef };
-type BatchState = { manifest: BatchManifest; sources: readonly EligibleSource[] };
+type BatchState = { manifest: BatchManifest; sources: readonly EligibleSource[]; migration?: FacetMigration | undefined };
 const preparedBatches = new WeakMap<PreparedBatch, BatchState>();
 const attemptedBatches = new WeakSet<PreparedBatch>();
+
+// Temporary cutover capability. Remove with the preimage decoder after cutover.
+export type FacetMigration = Readonly<{ readonly kind: 'facet-migration' }>;
+type MigrationState = { root: string; binding: MigrationBinding; fenced: boolean };
+const migrations = new WeakMap<FacetMigration, MigrationState>();
 const fingerprint = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 async function optionalBytes(path: string): Promise<Buffer | undefined> {
   try { return await readFile(path); } catch (error) {
@@ -657,6 +676,65 @@ function frontmatterEnvelope(markdown: string): { bom: string; source: string; l
   return { bom, source, lines, closingIndex, bodySuffix: source.slice(bodyStart) };
 }
 
+// Cutover-only: the returned opaque capability is valid only in this process.
+export async function prepareFacetMigration(rootPath: string): Promise<FacetMigration> {
+  const root = resolve(rootPath);
+  const catalogBytes = await readFile(await resolveArtifactPath(root, 'catalog.json'));
+  const mapBytes = await readFile(await resolveArtifactPath(root, 'corpus-map.json'));
+  const catalog: unknown = JSON.parse(catalogBytes.toString('utf8'));
+  if (!record(catalog) || !Array.isArray(catalog.instructions)) throw new Error('invalid migration catalog');
+  const cohort: MigrationRecord[] = [];
+  const ids = new Set<string>(); const paths = new Set<string>();
+  const legacySchema = await readSchema(packageRoot, 'vpinstruction.v1.schema.json');
+  const oldSchema = await readSchema(packageRoot, 'vpinstruction.v1.1.schema.json');
+  for (const item of catalog.instructions) {
+    if (!record(item) || typeof item.instruction_id !== 'string' || !kebab.test(item.instruction_id) || typeof item.path !== 'string' || item.path !== `instructions/${item.instruction_id}.md` || typeof item.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(item.sha256) || ids.has(item.instruction_id) || paths.has(item.path)) throw new Error('invalid or duplicate migration identity');
+    ids.add(item.instruction_id); paths.add(item.path);
+    const bytes = await readFile(await resolveArtifactPath(root, item.path));
+    if (fingerprint(bytes) !== item.sha256) throw new Error(`migration preimage digest mismatch: ${item.instruction_id}`);
+    const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+    const parsed = parseFrontmatter(text);
+    if (parsed.data.instruction_id !== item.instruction_id) throw new Error('migration frontmatter identity mismatch');
+    const marker = parsed.data.schema === undefined ? 'legacy' : parsed.data.schema === 'VPInstruction/v1.1' ? 'v1.1' : parsed.data.schema === 'VPInstruction/v1.2' ? 'v1.2' : undefined;
+    if (marker === undefined) throw new Error('unsupported migration preimage marker');
+    if (marker !== 'v1.2' && validateAgainstSchema(parsed.data, marker === 'legacy' ? legacySchema : oldSchema).length) throw new Error(`invalid migration preimage: ${item.instruction_id}`);
+    if (marker === 'v1.1' && parseFacetClassification(parsed.data) === undefined) throw new Error(`invalid migration classification: ${item.instruction_id}`);
+    cohort.push({ id: item.instruction_id, path: item.path, before: item.sha256, body: fingerprint(Buffer.from(frontmatterEnvelope(text).bodySuffix, 'utf8')), marker });
+  }
+  const capability: FacetMigration = Object.freeze({ kind: 'facet-migration' });
+  const binding: MigrationBinding = { initialCatalog: fingerprint(catalogBytes), map: fingerprint(mapBytes), cohort, catalog: fingerprint(catalogBytes), current: cohort.map(item => item.before) };
+  const state: MigrationState = { root, binding, fenced: false };
+  await validateFacetMigration(state, binding);
+  migrations.set(capability, state);
+  return capability;
+}
+
+async function validateFacetMigration(state: MigrationState, binding: MigrationBinding): Promise<number> {
+  if (state.fenced) throw new Error('migration capability is fenced');
+  const catalogBytes = await readFile(await resolveArtifactPath(state.root, 'catalog.json'));
+  if (fingerprint(catalogBytes) !== binding.catalog || fingerprint(await readFile(await resolveArtifactPath(state.root, 'corpus-map.json'))) !== binding.map) throw new Error('migration catalog or map changed');
+  const catalog: unknown = JSON.parse(catalogBytes.toString('utf8'));
+  if (!record(catalog) || !Array.isArray(catalog.instructions) || catalog.instructions.length !== binding.cohort.length || binding.current.length !== binding.cohort.length) throw new Error('migration cohort changed');
+  const legacyIds = new Set<string>();
+  for (const [index, item] of binding.cohort.entries()) {
+    const entry: unknown = catalog.instructions[index];
+    if (!record(entry) || entry.instruction_id !== item.id || entry.path !== item.path || entry.sha256 !== binding.current[index]) throw new Error(`migration catalog identity changed: ${item.id}`);
+    const bytes = await readFile(await resolveArtifactPath(state.root, item.path));
+    if (fingerprint(bytes) !== binding.current[index]) throw new Error(`migration instruction changed: ${item.id}`);
+    const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+    const parsed = parseFrontmatter(text);
+    if (parsed.data.instruction_id !== item.id || fingerprint(Buffer.from(frontmatterEnvelope(text).bodySuffix, 'utf8')) !== item.body) throw new Error(`migration body or identity changed: ${item.id}`);
+    if (parsed.data.schema !== 'VPInstruction/v1.2') {
+      const marker = parsed.data.schema === undefined ? 'legacy' : parsed.data.schema === 'VPInstruction/v1.1' ? 'v1.1' : undefined;
+      if (marker === undefined || marker !== item.marker || fingerprint(bytes) !== item.before) throw new Error(`migration legacy preimage changed: ${item.id}`);
+      legacyIds.add(item.id);
+    }
+  }
+  const issues = checkCorpus(state.root).filter(issue => !(issue.code === 'CORPUS_INSTRUCTION_VERSION_UNSUPPORTED' && typeof issue.details?.instruction_id === 'string' && legacyIds.has(issue.details.instruction_id)));
+  if (issues.length) throw new Error(`migration corpus validation: ${JSON.stringify(issues)}`);
+  return legacyIds.size;
+}
+
 function sameClassification(left: InstructionClassification, right: InstructionClassification): boolean {
   if (left.classification_status === 'unclassified') return right.classification_status === 'unclassified' && left.classification_reason === right.classification_reason;
   return right.classification_status === 'classified' && left.instruction_form === right.instruction_form
@@ -673,17 +751,21 @@ function classificationFrontmatterLines(classification: InstructionClassificatio
   return ['classification_status: unclassified', yamlString('classification_reason', classification.classification_reason)];
 }
 
-function updateInstructionFacets(markdown: string, instructionId: string, classification: InstructionClassification, legacySchema: Schema, facetedSchema: Schema): Buffer {
+// Cutover-only decoder; remove legacy schema handling after migration.
+function updateInstructionFacets(markdown: string, instructionId: string, classification: InstructionClassification, legacySchema: Schema, oldFacetedSchema: Schema, facetedSchema: Schema): Buffer {
   const parsed = parseFrontmatter(markdown);
-  const version = instructionSchemaVersion(parsed.data.schema);
-  if (version === undefined) throw new Error(`unsupported instruction schema marker for ${instructionId}`);
-  const sourceSchema = version === 'legacy-v1' ? legacySchema : facetedSchema;
+  const marker = parsed.data.schema;
+  if (marker !== undefined && marker !== 'VPInstruction/v1.1' && marker !== 'VPInstruction/v1.2') throw new Error(`unsupported instruction schema marker for ${instructionId}`);
+  const sourceSchema = marker === undefined ? legacySchema : marker === 'VPInstruction/v1.1' ? oldFacetedSchema : facetedSchema;
   const sourceErrors = validateAgainstSchema(parsed.data, sourceSchema);
   if (sourceErrors.length > 0) throw new Error(`invalid current instruction ${instructionId}: ${sourceErrors.join('; ')}`);
   if (parsed.data.instruction_id !== instructionId) throw new Error(`catalog ID does not match instruction frontmatter: ${instructionId}`);
-  const previous = version === 'legacy-v1' ? LEGACY_CLASSIFICATION : parseFacetClassification(parsed.data);
+  const previous = marker === undefined ? LEGACY_CLASSIFICATION : parseFacetClassification(parsed.data);
   if (previous === undefined) throw new Error(`invalid current facet classification: ${instructionId}`);
-  if (version === 'faceted-v1.1' && sameClassification(previous, classification)) return Buffer.from(markdown, 'utf8');
+  if (marker === 'VPInstruction/v1.2') {
+    parseApproachAssessments(parsed, new Map(Object.entries(APPROACH_VOCABULARY)));
+    if (sameClassification(previous, classification)) return Buffer.from(markdown, 'utf8');
+  }
   const revision = parsed.data.revision;
   if (typeof revision !== 'number' || !Number.isSafeInteger(revision)) throw new Error(`invalid current revision: ${instructionId}`);
 
@@ -716,11 +798,11 @@ function updateInstructionFacets(markdown: string, instructionId: string, classi
   const insertionEnding = envelope.lines[envelope.closingIndex - 1]?.ending || envelope.lines[0]?.ending || '\n';
   const header = envelope.lines.slice(0, envelope.closingIndex).flatMap((line, index) => {
     if (removals.has(index)) return [];
-    if (index === schemaIndex) return [{ ...line, value: 'schema: VPInstruction/v1.1' }];
+    if (index === schemaIndex) return [{ ...line, value: 'schema: VPInstruction/v1.2' }];
     if (index === revisionIndex) return [{ ...line, value: `revision: ${revision + 1}` }];
     return [line];
   });
-  if (schemaIndex === -1) header.push({ value: 'schema: VPInstruction/v1.1', ending: insertionEnding, start: 0 });
+  if (schemaIndex === -1) header.push({ value: 'schema: VPInstruction/v1.2', ending: insertionEnding, start: 0 });
   const classificationLines = classificationFrontmatterLines(classification).map(value => ({ value, ending: insertionEnding, start: 0 }));
   const output = envelope.bom + [...header, ...classificationLines, ...envelope.lines.slice(envelope.closingIndex)].map(line => line.value + line.ending).join('');
   const next = parseFrontmatter(output);
@@ -742,8 +824,9 @@ type PreparedBatchInputs = {
   before: Map<string, Buffer | undefined>; outputs: Map<string, Buffer>; specs: readonly ArtifactRef[];
   context: BatchManifest['context']; sources: readonly EligibleSource[];
   sourceData: readonly Awaited<ReturnType<typeof readEligibleSource>>[];
+  migration?: FacetMigration | undefined;
 };
-async function createPreparedBatch({ root, directory, prefix, targetPaths, before, outputs, specs, context, sources, sourceData }: PreparedBatchInputs): Promise<PreparedBatch> {
+async function createPreparedBatch({ root, directory, prefix, targetPaths, before, outputs, specs, context, sources, sourceData, migration }: PreparedBatchInputs): Promise<PreparedBatch> {
   const targets: PreparedTarget[] = [];
   for (const [index, path] of [...new Set(targetPaths)].entries()) {
     const name = targetRelative(root, path);
@@ -762,12 +845,17 @@ async function createPreparedBatch({ root, directory, prefix, targetPaths, befor
     }
     targets.push({ path: name, before: old === undefined ? null : fingerprint(old), after: fingerprint(next), staged, backup });
   }
-  const toolPaths = ['scripts/convert.ts', 'scripts/source-packets.ts', 'scripts/check-corpus.ts', 'skills/vp-mode/scripts/catalog.ts', 'skills/vp-mode/scripts/frontmatter.ts', 'skills/vp-mode/scripts/schema.ts', 'skills/vp-mode/scripts/instruction-facets.ts', 'config/vpinstruction.v1.schema.json', 'config/vpinstruction.v1.1.schema.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json'];
+  const toolPaths = ['scripts/convert.ts', 'scripts/source-packets.ts', 'scripts/check-corpus.ts', 'skills/vp-mode/scripts/catalog.ts', 'skills/vp-mode/scripts/frontmatter.ts', 'skills/vp-mode/scripts/schema.ts', 'skills/vp-mode/scripts/instruction-facets.ts', 'skills/vp-mode/scripts/instruction-approaches.ts', 'config/vpinstruction.v1.schema.json', 'config/vpinstruction.v1.1.schema.json', 'config/vpinstruction.v1.2.schema.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json'];
   const tools: ArtifactRef[] = [];
   for (const path of toolPaths) { const absolute = join(packageRoot, path); tools.push({ path: absolute, sha256: fingerprint(await readFile(absolute)) }); }
   const manifest: BatchManifest = { schema: 'VPPreparedBatch/v1', root, targets, specs: [...specs], tools, context, runtime: { path: process.execPath, sha256: fingerprint(await readFile(process.execPath)) }, sources: sourceData.map(source => ({ source: source.source, packet: source.evidence, unitIds: [...new Set(source.specs.flatMap(spec => [...spec.unitIds]))], specs: source.specs.map(spec => ({ ...spec.ref })) })) };
+  if (migration !== undefined) {
+    const state = migrations.get(migration);
+    if (state === undefined || state.root !== root || state.fenced) throw new Error('invalid migration capability');
+    manifest.migration = structuredClone(state.binding);
+  }
   const plan: PreparedBatch = Object.freeze({ directory, manifest: await sealArtifact(directory, `${prefix}/plan.json`, manifest) });
-  preparedBatches.set(plan, { manifest, sources: [...sources] });
+  preparedBatches.set(plan, { manifest, sources: [...sources], migration });
   return plan;
 }
 
@@ -778,6 +866,11 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
   await assertFileBinding(classificationEvidence);
   await assertFileBinding(policyConfig);
   const root = resolve(options.root);
+  if (options.migration !== undefined) {
+    const state = migrations.get(options.migration);
+    if (state === undefined || state.root !== root || options.catalogPath !== undefined || options.mapPath !== undefined) throw new Error('invalid migration capability or corpus paths');
+    await validateFacetMigration(state, state.binding);
+  }
   const directory = resolve(options.stagingRoot);
   const prefix = randomUUID();
   const catalogPath = target(root, options.catalogPath, join(root, 'catalog.json'));
@@ -797,7 +890,8 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
   const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
   const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
   const legacySchema = await readSchema(packageRoot, 'vpinstruction.v1.schema.json');
-  const facetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.1.schema.json');
+  const oldFacetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.1.schema.json');
+  const facetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.2.schema.json');
   const catalogValue = parseJsonBytes(catalogBefore, 'catalog manifest');
   if (!record(catalogValue)) throw new Error('catalog manifest must be an object');
   const catalogErrors = validateAgainstSchema(catalogValue, catalogSchema);
@@ -833,7 +927,7 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
     if (originalDigest !== assignment.expected_sha256) throw new Error(`stale expected instruction digest: ${assignment.instruction_id}`);
     if (originalDigest !== entry.sha256) throw new Error(`catalog instruction digest mismatch: ${assignment.instruction_id}`);
     const markdown = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(original);
-    const next = updateInstructionFacets(markdown, assignment.instruction_id, assignment.classification, legacySchema, facetedSchema);
+    const next = updateInstructionFacets(markdown, assignment.instruction_id, assignment.classification, legacySchema, oldFacetedSchema, facetedSchema);
     before.set(instructionPath, original);
     instructionTargets.push(instructionPath);
     if (!next.equals(original)) {
@@ -855,7 +949,7 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
     const bytes = await optionalBytes(path);
     context.push({ path, sha256: bytes === undefined ? null : fingerprint(bytes) });
   }
-  return createPreparedBatch({ root, directory, prefix, targetPaths: [...instructionTargets, catalogTarget, mapTarget], before, outputs, specs: [classificationEvidence, policyConfig], context, sources: [], sourceData: [] });
+  return createPreparedBatch({ root, directory, prefix, targetPaths: [...instructionTargets, catalogTarget, mapTarget], before, outputs, specs: [classificationEvidence, policyConfig], context, sources: [], sourceData: [], migration: options.migration });
 }
 
 export async function prepareBatch(sources: readonly EligibleSource[], options: ConvertOptions & { stagingRoot: string }): Promise<PreparedBatch> {
@@ -922,6 +1016,10 @@ const manifestSchema: Schema = { type: 'object', required: ['schema', 'root', 't
   schema: { const: 'VPPreparedBatch/v1' }, root: batchText, specs: { type: 'array', items: batchRef }, tools: { type: 'array', items: batchRef }, runtime: batchRef, sources: { type: 'array', items: { type: 'object' } },
   context: { type: 'array', items: { type: 'object', required: ['path', 'sha256'], properties: { path: batchText, sha256: { type: ['string', 'null'] } }, additionalProperties: false } },
   targets: { type: 'array', items: { type: 'object', required: ['path', 'before', 'after', 'staged', 'backup'], additionalProperties: false, properties: { path: batchText, before: { type: ['string', 'null'] }, after: batchSha, staged: batchRef, backup: nullableRef } } },
+  migration: { type: 'object', required: ['initialCatalog', 'map', 'cohort', 'catalog', 'current'], additionalProperties: false, properties: {
+    initialCatalog: batchSha, map: batchSha, catalog: batchSha, current: { type: 'array', items: batchSha },
+    cohort: { type: 'array', items: { type: 'object', required: ['id', 'path', 'before', 'body', 'marker'], additionalProperties: false, properties: { id: batchText, path: batchText, before: batchSha, body: batchSha, marker: { enum: ['legacy', 'v1.1', 'v1.2'] } } } },
+  } },
 } };
 async function readBatchManifest(plan: PreparedBatch): Promise<BatchManifest> {
   const value: unknown = JSON.parse((await verifyArtifact(plan.directory, plan.manifest)).toString('utf8'));
@@ -969,22 +1067,48 @@ export async function applyPreparedBatch(plan: PreparedBatch, approval: BatchApp
       await verifyArtifact(plan.directory, approval.review);
       const observation = await reconcilePreparedBatch(plan);
       if (observation.state !== 'NO_EFFECT_OBSERVED' && observation.state !== 'NO_CHANGE') return receipt('no-write-conflict', observation);
+      if (state.migration !== undefined) {
+        const migration = migrations.get(state.migration);
+        if (migration === undefined || manifest.migration === undefined || JSON.stringify(migration.binding) !== JSON.stringify(manifest.migration)) throw new Error('stale or unbound migration capability');
+        await validateFacetMigration(migration, manifest.migration);
+      } else {
+        const currentIssues = checkCorpus(manifest.root);
+        if ((state.sources.length === 0 && currentIssues.length > 0) || currentIssues.some(issue => issue.code === 'CORPUS_INSTRUCTION_VERSION_UNSUPPORTED' || issue.code === 'CORPUS_FRONTMATTER_INVALID')) throw new Error('corpus preflight failed; mixed-version cutover requires a preimage-bound transition validator');
+      }
       if (observation.state === 'NO_CHANGE') return receipt('no-change', observation);
     } catch (error) { return receipt('no-write-conflict', { error: error instanceof Error ? error.message : String(error) }); }
     try {
       for (const target of manifest.targets) {
         if (target.before === target.after) continue;
-        const path = await resolveArtifactPath(manifest.root, target.path, true);
         const bytes = await verifyArtifact(plan.directory, target.staged);
+        const path = await resolveArtifactPath(manifest.root, target.path, true);
+        const current = await optionalBytes(path);
+        if ((current === undefined ? null : fingerprint(current)) !== target.before) throw new Error(`publication target changed before write: ${target.path}`);
         await io.write(path, bytes.toString('utf8'));
       }
       const observation = await reconcilePreparedBatch(plan);
       if (observation.state !== 'TARGET_STATE_MATCHES') throw new Error(`publication readback: ${observation.state}`);
+      if (state.migration !== undefined && manifest.migration !== undefined) {
+        const migration = migrations.get(state.migration);
+        if (migration === undefined) throw new Error('migration capability disappeared');
+        const next = structuredClone(manifest.migration);
+        const catalogTarget = manifest.targets.find(target => target.path === 'catalog.json');
+        if (catalogTarget === undefined) throw new Error('migration catalog target missing');
+        next.catalog = catalogTarget.after;
+        for (const [index, item] of next.cohort.entries()) {
+          const target = manifest.targets.find(target => target.path === item.path);
+          if (target !== undefined) next.current[index] = target.after;
+        }
+        const remaining = await validateFacetMigration(migration, next);
+        migration.binding = next;
+        return receipt('applied', { observation, validation: remaining === 0 ? 'strict-corpus' : 'migration-transition', remaining });
+      }
       const issues = checkCorpus(manifest.root);
       if (issues.length) throw new Error(`published corpus validation: ${JSON.stringify(issues)}`);
       return receipt('applied', { observation, corpusIssues: issues });
     } catch (error) {
       fence();
+      if (state.migration !== undefined) { const migration = migrations.get(state.migration); if (migration !== undefined) migration.fenced = true; }
       return receipt('partial-or-unknown', { error: error instanceof Error ? error.message : String(error), observation: await reconcilePreparedBatch(plan), retry: 'fenced' });
     }
   }, plan.manifest);

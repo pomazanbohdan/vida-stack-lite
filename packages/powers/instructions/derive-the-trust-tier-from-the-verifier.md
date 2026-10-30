@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=SPEC.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body maps verifier identity to trust labels for documents; it does not identify what the document is about, so a content domain would be inferred."
 ---
 
 # Derive the trust tier from the verifier

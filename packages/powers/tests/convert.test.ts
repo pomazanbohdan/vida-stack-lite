@@ -19,7 +19,7 @@ async function makeRoot(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'vida-convert-'));
   temporaryRoots.push(root);
   await mkdir(join(root, 'config'), { recursive: true });
-  for (const name of ['vpinstruction.v1.schema.json', 'vpcatalog.v1.schema.json', 'vpcorpusmap.v1.schema.json']) {
+  for (const name of ['vpinstruction.v1.2.schema.json', 'vpcatalog.v1.schema.json', 'vpcorpusmap.v1.schema.json']) {
     await writeFile(join(root, 'config', name), await readFile(join(packageRoot, 'config', name)));
   }
   await writeFile(join(root, 'catalog.json'), JSON.stringify({ schema: 'VPCatalog/v1', catalog_id: 'vida-powers', revision: 1, source_revision: 'seed-v1', updated_at: '2026-01-01T00:00:00.000Z', tag_dictionary: { capability: { 'release-note': 'Release note' }, pattern: { 'delivery-review': 'Delivery review' } }, tag_aliases: {}, tag_exemptions: [], instructions: [] }));
@@ -127,10 +127,10 @@ describe('renderInstruction', () => {
   test('emits canonical frontmatter, preserves the body, and validates against the schema', async () => {
     const rendered = renderInstruction(validSpec({ roles: [], products: [] }));
     const parsed = parseFrontmatter(rendered);
-    const schema = JSON.parse(await readFile(join(packageRoot, 'config', 'vpinstruction.v1.schema.json'), 'utf8')) as Schema;
+    const schema = JSON.parse(await readFile(join(packageRoot, 'config', 'vpinstruction.v1.2.schema.json'), 'utf8')) as Schema;
     expect(validateAgainstSchema(parsed.data, schema)).toEqual([]);
     expect(parsed.body).toBe(validSpec({ roles: [], products: [] }).body);
-    expect(rendered).toBe(`---\ninstruction_id: write-release-note\ntitle: Write release note\nsummary: Prepare a concise release note.\ncapability_tags:\n  - release-note\npattern_tags:\n  - delivery-review\nconditions_applies_when: A release is prepared.\nconditions_does_not_apply_when: No release is planned.\nartifact_contract_output_type: markdown\nartifact_contract_required_data:\n  - version\nartifact_contract_verified_by: Release owner review\ncompatibility_excludes: []\ncompatibility_requires: []\nprovenance:\n  - donor=sample-donor; license=MIT; revision=${'a'.repeat(40)}; path=docs/release.md\nstatus: active\nrevision: 1\n---\n\n## Steps\n\nKeep this body verbatim.\n`);
+    expect(rendered).toBe(`---\nschema: VPInstruction/v1.2\nclassification_status: unclassified\nclassification_reason: classification-not-assessed\ninstruction_id: write-release-note\ntitle: Write release note\nsummary: Prepare a concise release note.\ncapability_tags:\n  - release-note\npattern_tags:\n  - delivery-review\nconditions_applies_when: A release is prepared.\nconditions_does_not_apply_when: No release is planned.\nartifact_contract_output_type: markdown\nartifact_contract_required_data:\n  - version\nartifact_contract_verified_by: Release owner review\ncompatibility_excludes: []\ncompatibility_requires: []\nprovenance:\n  - donor=sample-donor; license=MIT; revision=${'a'.repeat(40)}; path=docs/release.md\nstatus: active\nrevision: 1\n---\n\n## Steps\n\nKeep this body verbatim.\n`);
   });
 });
 
@@ -320,7 +320,7 @@ describe('convert', () => {
     expect(map).toMatchObject({ schema: 'VPCorpusMap/v1', revision: 1, donors: { 'sample-donor': { source_revision: 'a'.repeat(40), files: { 'docs/release.md': { status: 'converted', instruction_ids: ['write-release-note'] } } } } });
     expect(validateAgainstSchema(map, mapSchema)).toEqual([]);
     const walk = async (dir: string): Promise<string[]> => (await Promise.all((await readdir(dir, { withFileTypes: true })).map(async (entry) => entry.isDirectory() ? (await walk(join(dir, entry.name))).map((path) => join(entry.name, path)) : [entry.name]))).flat().sort();
-    expect((await walk(root)).map((path) => path.replaceAll('\\', '/'))).toEqual(['catalog.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json', 'config/vpinstruction.v1.schema.json', 'corpus-map.json', 'instructions/write-release-note.md', 'spec.json'].sort());
+    expect((await walk(root)).map((path) => path.replaceAll('\\', '/'))).toEqual(['catalog.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json', 'config/vpinstruction.v1.2.schema.json', 'corpus-map.json', 'instructions/write-release-note.md', 'spec.json'].sort());
   });
 
   test('is idempotent, then updates only on changed content without duplicate manifest entries', async () => {

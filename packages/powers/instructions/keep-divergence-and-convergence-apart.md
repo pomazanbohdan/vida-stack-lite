@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/converge.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body describes a generic transition between idea generation and narrowing without grounding it in a supported domain; assigning product, design, research, or business would infer the ideation subject."
 ---
 
 # Keep divergence and convergence apart

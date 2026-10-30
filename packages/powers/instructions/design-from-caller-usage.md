@@ -22,7 +22,12 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=docs/guide/04-design.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=docs/adoption-guide.md
 status: active
-revision: 2
+revision: 3
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - engineering
 ---
 
 # Derive the interface from the caller's usage

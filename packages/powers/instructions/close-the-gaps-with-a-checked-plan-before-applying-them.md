@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/verify-and-ship.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body gives a root-cause action, then ends after a colon introducing the next step without stating it; the incomplete sequence cannot support a reliable form or domain."
 ---
 
 # Close the gaps with a checked plan before applying them

@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, mock, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, mock, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import type { SpawnSyncReturns } from 'node:child_process';
@@ -15,13 +15,31 @@ import {
 } from '../skills/vp-mode/scripts/catalog.ts';
 import type { DecisionRequest } from '../skills/vp-mode/scripts/catalog.ts';
 import { defaultCatalogPath, isEntryPoint, runCatalogCli } from '../skills/vp-mode/scripts/catalog-cli.ts';
+import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const fixtureDir = join(here, 'fixtures/catalog');
+let fixtureDir: string;
 const cliPath = resolve(here, '../skills/vp-mode/scripts/catalog-cli.ts');
 const bunPath = process.execPath;
 const profileDirs: string[] = [];
 const originalFsPromises = { ...fsPromises };
+
+beforeAll(async () => {
+  fixtureDir = await mkdtemp(join(tmpdir(), 'vp-cli-v12-'));
+  profileDirs.push(fixtureDir);
+  await cp(join(here, 'fixtures/catalog'), fixtureDir, { recursive: true });
+  await copyFile(join(here, '../config/vpinstruction.v1.2.schema.json'), join(fixtureDir, 'config/vpinstruction.v1.2.schema.json'));
+  const path = join(fixtureDir, 'catalog.json');
+  const catalog = await loadCatalog(path);
+  for (const entry of catalog.instructions) {
+    const sourcePath = join(fixtureDir, entry.path);
+    const source = await readFile(sourcePath, 'utf8');
+    const updated = source.replace(/^---\r?\n/u, '$&schema: VPInstruction/v1.2\nclassification_status: unclassified\nclassification_reason: Synthetic fixture.\n');
+    await writeFile(sourcePath, updated);
+    entry.sha256 = createHash('sha256').update(updated).digest('hex');
+  }
+  await writeFile(path, JSON.stringify(catalog));
+});
 
 afterAll(async () => {
   await Promise.all(profileDirs.map((directory) => rm(directory, { recursive: true, force: true })));
@@ -78,7 +96,7 @@ async function catalogWithFacets(): Promise<string> {
     const source = await readFile(path, 'utf8');
     const firstLine = source.indexOf('\n');
     if (firstLine < 0) throw new Error(`fixture instruction ${id} has no frontmatter delimiter`);
-    const updated = `${source.slice(0, firstLine + 1)}${fields}\n${source.slice(firstLine + 1)}`;
+    const updated = source.replace(/schema: VPInstruction\/v1\.2\nclassification_status: unclassified\nclassification_reason: Synthetic fixture\.\n/u, fields.replace('VPInstruction/v1.1', 'VPInstruction/v1.2') + '\n');
     await writeFile(path, updated, 'utf8');
     entry.sha256 = createHash('sha256').update(updated).digest('hex');
   }
@@ -122,6 +140,150 @@ async function rewriteFixtureInstruction(
   entry.sha256 = createHash('sha256').update(updated).digest('hex');
   await writeFile(catalogPath, JSON.stringify(catalog, null, 2) + '\n', 'utf8');
 }
+
+async function assess(catalogPath: string, id: string, rows: string[]): Promise<void> {
+  await rewriteFixtureInstruction(catalogPath, id, (source) => {
+    const body = parseFrontmatter(source).body;
+    const digest = createHash('sha256').update(body).digest('hex');
+    const metadata = `approach_body_sha256: ${digest}\napproach_assessments:\n${rows.map(row => `  - "${row}; evidence=body:0-1"`).join('\n')}\n`;
+    return source.replace('schema: VPInstruction/v1.2\n', `schema: VPInstruction/v1.2\n${metadata}`);
+  });
+}
+
+test('approach selector explain and required conflicts on a v1.2 snapshot', async () => {
+  const catalogPath = await catalogWithProfileSchema();
+  await assess(catalogPath, 'alpha', ['dimension=execution; state=declared; values=solo,delegated', 'dimension=review-requirement; state=unknown; reason=insufficient']);
+  await assess(catalogPath, 'beta', ['dimension=execution; state=declared; values=delegated', 'dimension=review-requirement; state=no-decision; reason=none stated']);
+  await assess(catalogPath, 'gamma', ['dimension=execution; state=not-applicable; reason=irrelevant']);
+  const args = ['--catalog', catalogPath, '--approach', 'execution=solo', '--approach', 'review-requirement=independent'];
+  const search = runCli(['search', ...args]);
+  expect(search.status).toBe(0);
+  const ids = search.stdout.trim().split('\n').map(line => line.split('\t')[0] ?? '');
+  expect(ids).toContain('alpha');
+  expect(ids).toContain('gamma');
+  expect(ids).not.toContain('beta');
+  const explanation = runCli(['explain', ...args]);
+  expect(explanation.status).toBe(0);
+  const result = JSON.parse(explanation.stdout) as { bindings: Record<string, string>; candidates: { instruction_id: string; included: boolean; source_sha256: string; body_sha256: string; dimensions: { decision: string }[] }[] };
+  expect(result.candidates.filter(row => row.included).map(row => row.instruction_id)).toEqual(ids);
+  expect(result.candidates.find(row => row.instruction_id === 'beta')?.dimensions.map(row => row.decision)).toEqual(['contradictory', 'no-decision']);
+  const catalog = await loadCatalog(catalogPath);
+  const alpha = catalog.instructions.find(entry => entry.instruction_id === 'alpha');
+  expect(result.candidates.find(row => row.instruction_id === 'alpha')?.source_sha256).toBe(alpha?.sha256);
+  if (alpha === undefined) throw new Error('alpha missing');
+  const alphaSource = await readFile(join(dirname(catalogPath), alpha.path), 'utf8');
+  expect(result.candidates.find(row => row.instruction_id === 'alpha')?.body_sha256).toBe(createHash('sha256').update(parseFrontmatter(alphaSource).body).digest('hex'));
+  expect(result.bindings.catalog_sha256).toBe(createHash('sha256').update(await readFile(catalogPath)).digest('hex'));
+  expect(result.bindings.instruction_schema_sha256).toBe(createHash('sha256').update(await readFile(join(dirname(catalogPath), 'config/vpinstruction.v1.2.schema.json'))).digest('hex'));
+  expect(result.bindings.policy_sha256).toBe(createHash('sha256').update(await readFile(join(here, '../config/methodology-profile.json'))).digest('hex'));
+  const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+  const conflict = runCli(['get', '--catalog', catalogPath, '--id', 'beta', '--profile', profilePath, '--approach', 'execution=solo']);
+  expect(conflict.status).toBe(1);
+  expect(conflict.stdout).toBe('');
+  expect(conflict.stderr).toContain('beta');
+  const dependencyConflict = runCli(['get', '--catalog', catalogPath, '--id', 'alpha', '--profile', profilePath, '--approach', 'execution=solo']);
+  expect(dependencyConflict.status).toBe(1);
+  expect(dependencyConflict.stdout).toBe('');
+  expect(dependencyConflict.stderr).toContain('beta');
+  const hardConflict = runCli(['get', '--catalog', catalogPath, '--id', 'alpha', 'conflict-mode', '--profile', profilePath, '--approach', 'execution=delegated']);
+  expect(hardConflict.status).toBe(1);
+  expect(hardConflict.stdout).toBe('');
+  expect(hardConflict.stderr).toContain('exclude each other');
+  const valid = runCli(['get', '--catalog', catalogPath, '--id', 'guidance', '--profile', profilePath, '--approach', 'execution=solo']);
+  if (valid.status !== 0) throw new Error(valid.stderr);
+  expect(valid.status).toBe(0);
+  expect(valid.stdout).not.toContain('assessment');
+  for (const invalidArgs of [['--approach', 'execution=swarm'], ['--approach', 'other=solo'], ['--approach', 'execution=solo', '--approach', 'execution=delegated'], ['--limit', '1']]) {
+    const invalid = runCli(['explain', '--catalog', catalogPath, ...invalidArgs]);
+    expect(invalid.status).toBe(1);
+    expect(invalid.stdout).toBe('');
+  }
+  const repeated = runCli(['search', ...args, '--approach', 'execution=solo']);
+  expect(repeated.stdout).toBe(search.stdout);
+});
+
+test('approach exclusions precede candidate profile negotiation in search and explain', async () => {
+  const { catalogPath, group, alternatives } = await catalogWithPolicyAlternatives();
+  await assess(catalogPath, 'alpha', ['dimension=execution; state=declared; values=delegated']);
+  await assess(catalogPath, 'beta', ['dimension=execution; state=unknown; reason=insufficient']);
+  const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: { [group]: alternatives } });
+  const common = ['--catalog', catalogPath, '--profile', profilePath, '--approach', 'execution=solo'];
+  const excluded = runCli(['search', ...common, '--id', 'alpha']);
+  expect(excluded.status).toBe(0);
+  expect(excluded.stdout).toBe('');
+  const explanation = runCli(['explain', ...common, '--id', 'alpha']);
+  expect(explanation.status).toBe(0);
+  expect(JSON.parse(explanation.stdout).candidates).toEqual([expect.objectContaining({ instruction_id: 'alpha', included: false })]);
+  for (const command of ['search', 'explain']) {
+    const uncertain = runCli([command, ...common, '--id', 'beta']);
+    expect(uncertain.status).toBe(1);
+    expect(uncertain.stdout).toBe('');
+    expect(uncertain.stderr).toContain('unresolved');
+  }
+  const active = alternatives[0];
+  if (active === undefined) throw new Error('missing alternative');
+  const stale = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: { [group]: { active, alternatives: [active] } }, unresolved_groups: {} });
+  for (const command of ['search', 'explain']) {
+    const invalid = runCli([command, '--catalog', catalogPath, '--profile', stale, '--id', 'alpha', '--approach', 'execution=solo']);
+    expect(invalid.status).toBe(1);
+    expect(invalid.stdout).toBe('');
+    expect(invalid.stderr).toContain('refresh it with vp-setup');
+  }
+});
+
+test('browse counts retain uncertain and exclude contradictory approaches', async () => {
+  const catalogPath = await catalogWithFacets();
+  await assess(catalogPath, 'alpha', ['dimension=execution; state=declared; values=delegated']);
+  await assess(catalogPath, 'gamma', ['dimension=execution; state=unknown; reason=insufficient']);
+  const browse = runCli(['browse', '--catalog', catalogPath, '--axis', 'domain', '--approach', 'execution=solo']);
+  expect(browse.status).toBe(0);
+  expect(browse.stdout).toContain('domain:engineering\tDomain engineering; 1 active instructions.');
+  expect(browse.stdout).toContain('domain:design-ux\tDomain design-ux; 0 active instructions.');
+  expect(browse.stdout).toContain('domain:operations\tDomain operations; 1 active instructions.');
+  const invalid = runCli(['browse', '--catalog', catalogPath, '--profile', 'unused']);
+  expect(invalid.status).toBe(1);
+  expect(invalid.stdout).toBe('');
+});
+
+test('get checks substituted dependency approaches and stays atomic on effective conflict', async () => {
+  const { catalogPath, group, alternatives } = await catalogWithPolicyAlternatives();
+  const policy = JSON.parse(await readFile(join(here, '../config/methodology-profile.json'), 'utf8')) as { groups: { id: string; alternatives: { id: string; instruction_ids: string[] }[] }[] };
+  const canonical = policy.groups.find(item => item.id === group);
+  const activeTag = alternatives[0];
+  const inactiveTag = alternatives[1];
+  const activeIds = canonical?.alternatives.find(item => item.id === activeTag)?.instruction_ids;
+  const inactiveId = canonical?.alternatives.find(item => item.id === inactiveTag)?.instruction_ids[0];
+  if (activeTag === undefined || inactiveTag === undefined || activeIds === undefined || activeIds.length === 0 || inactiveId === undefined) throw new Error('missing canonical mapping');
+  const catalog = await loadCatalog(catalogPath);
+  const beta = catalog.instructions.find(entry => entry.instruction_id === 'beta');
+  if (beta === undefined) throw new Error('missing beta');
+  const template = await readFile(join(dirname(catalogPath), beta.path), 'utf8');
+  for (const [id, tag] of [[inactiveId, inactiveTag], ...activeIds.map(id => [id, activeTag])]) {
+    if (id === undefined || tag === undefined) throw new Error('missing mapping');
+    const path = `instructions/${id}.md`;
+    const source = template.replace('instruction_id: beta', `instruction_id: ${id}`)
+      .replace(`  - ${inactiveTag}`, `  - ${tag}`)
+      .replace('compatibility_requires:\n  - gamma', 'compatibility_requires: []');
+    await writeFile(join(dirname(catalogPath), path), source);
+    catalog.instructions.push({ instruction_id: id, path, sha256: createHash('sha256').update(source).digest('hex') });
+  }
+  await writeFile(catalogPath, JSON.stringify(catalog));
+  await rewriteFixtureInstruction(catalogPath, 'alpha', source => source.replace('compatibility_requires:\n  - beta', `compatibility_requires:\n  - ${inactiveId}`));
+  await assess(catalogPath, inactiveId, ['dimension=execution; state=declared; values=delegated']);
+  for (const id of activeIds) await assess(catalogPath, id, ['dimension=execution; state=declared; values=solo,delegated']);
+  const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: { [group]: { active: activeTag, alternatives } }, unresolved_groups: {} });
+  const args = ['get', '--catalog', catalogPath, '--id', 'alpha', '--profile', profilePath, '--approach', 'execution=solo'];
+  const compatible = runCli(args);
+  expect(compatible.status).toBe(0);
+  expect(compatible.stdout).toContain('Beta body.');
+  const conflictId = activeIds[0];
+  if (conflictId === undefined) throw new Error('missing active mapping');
+  await rewriteFixtureInstruction(catalogPath, conflictId, source => source.replace('values=solo,delegated', 'values=delegated'));
+  const conflict = runCli(args);
+  expect(conflict.status).toBe(1);
+  expect(conflict.stdout).toBe('');
+  expect(conflict.stderr).toContain(conflictId);
+});
 
 async function catalogWithLargeProjection(): Promise<string> {
   const catalogPath = await catalogWithProfileSchema();
@@ -779,7 +941,7 @@ describe('catalog CLI', () => {
     const snapshot = runCli(['get', '--catalog', snapshotCatalog, '--id', 'alpha', '--profile', profilePath]);
     expect(snapshot.status).toBe(1);
     expect(snapshot.stdout).toBe('');
-    expect(snapshot.stderr).toContain('cannot read vpinstruction.v1.schema.json');
+    expect(snapshot.stderr).toContain('cannot read vpinstruction.v1.2.schema.json');
   });
 
   test('get enforces the compose body limit and adds no output-byte limit', async () => {

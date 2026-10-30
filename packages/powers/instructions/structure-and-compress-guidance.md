@@ -25,7 +25,12 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/canon.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/plain-skill/shape.md
 status: active
-revision: 4
+revision: 5
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: decision-rule
+domains:
+  - engineering
 ---
 
 # Keep guidance short and navigable

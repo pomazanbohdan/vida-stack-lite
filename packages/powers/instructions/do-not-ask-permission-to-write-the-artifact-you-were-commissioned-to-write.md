@@ -19,7 +19,12 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-research-synthesizer.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-research-synthesizer.compact.md
 status: active
-revision: 2
+revision: 3
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: decision-rule
+domains:
+  - operations
 ---
 
 # Do not ask permission to write the artifact you were commissioned to write

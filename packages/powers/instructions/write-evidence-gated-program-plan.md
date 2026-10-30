@@ -22,7 +22,13 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/multi-phase-plan.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=docs/guide/05-build-and-clean.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - engineering
+  - operations
 ---
 
 # Write an evidence-gated program plan

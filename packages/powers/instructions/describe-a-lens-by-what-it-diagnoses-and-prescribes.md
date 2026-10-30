@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/artifact-types.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body defines reusable diagnostic-lens fields, but the lens subject is unspecified; no listed domain can be grounded from the body or conditions."
 ---
 
 # Describe a lens by what it diagnoses and what it prescribes

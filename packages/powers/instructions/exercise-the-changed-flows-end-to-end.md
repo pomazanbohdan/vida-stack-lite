@@ -19,7 +19,13 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-retrospective/workflow.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: decision-rule
+domains:
+  - engineering
+  - operations
 ---
 
 # Exercise the changed flows end to end

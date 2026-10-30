@@ -20,7 +20,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/assets/codebase.template.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body lists response-format requirements for sections and citations but does not express judgment guidance, a conditional choice, an ordered action sequence, or unordered checks."
 ---
 
 # Answer one question per section with inline citations

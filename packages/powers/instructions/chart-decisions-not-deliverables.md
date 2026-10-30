@@ -19,7 +19,12 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/wayfinder/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - operations
 ---
 
 # Chart decisions not deliverables

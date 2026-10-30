@@ -21,7 +21,14 @@ provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/teach/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/teach/MISSION-FORMAT.md
 status: active
-revision: 2
+revision: 3
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - design-ux
+  - research
+  - operations
 ---
 
 # Teach with a stateful workspace

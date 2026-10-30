@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-forge-idea/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body constrains a concise handoff from a hardening session, but the decisions may span domains and the source names no subject domain."
 ---
 
 # Distil the forged idea to the decisions

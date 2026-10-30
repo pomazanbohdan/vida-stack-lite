@@ -19,7 +19,10 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body projects decisions from a log into shared documents across PRD, UX, architecture, and epics; it names a cross-domain document workflow but no content domain that can be assigned without inference."
 ---
 
 # Derive the document from the log

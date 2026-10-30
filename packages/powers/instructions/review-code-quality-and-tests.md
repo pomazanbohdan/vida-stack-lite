@@ -23,7 +23,12 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=.opencode/command/ponytail-review.md
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
 status: active
-revision: 3
+revision: 4
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: checklist
+domains:
+  - engineering
 ---
 
 # Review the quality of the code and the tests

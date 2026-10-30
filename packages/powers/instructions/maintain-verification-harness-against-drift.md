@@ -20,7 +20,13 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/maintain-verification-skill/SKILL.md
 status: active
-revision: 3
+revision: 4
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - engineering
+  - operations
 ---
 
 # Maintain the verification harness against drift

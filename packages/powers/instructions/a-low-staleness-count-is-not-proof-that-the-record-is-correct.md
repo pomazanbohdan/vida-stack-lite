@@ -18,7 +18,12 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/read-the-statusline-freshness-marker.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: principle
+domains:
+  - engineering
 ---
 
 # A low staleness count is not proof that the record is correct

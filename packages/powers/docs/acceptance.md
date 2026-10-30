@@ -16,7 +16,7 @@ sources:
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '16'
+revision: '17'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
@@ -134,7 +134,7 @@ The criteria below are future gates. They do not change the current E4 acceptanc
 
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
-| AC-60 | Exact v1/v1.1 dispatch preserves legacy inputs and rejects unknown markers, unsupported labels and illegal classified/unclassified states | SR-06, SR-92 | Schema/parser/reader boundary and round-trip fixtures; explicit legacy regression results | auto | open |
+| AC-60 | Exact v1.2 dispatch rejects legacy and unknown markers, unsupported labels and illegal classified/unclassified states | SR-06, SR-92 | Schema/parser/reader boundary and round-trip fixtures; explicit legacy rejection results | auto | open |
 | AC-61 | Optional facet filters obey OR/AND rules; no-facet results/metadata order stay unchanged; active unclassified inclusion and disabled/digest/dependency/profile/compose-limit rules are preserved | SR-10, SR-58, SR-70, SR-92 | Public catalog/CLI/compose positive, negative, no-facet and limit checks | auto | open |
 | AC-62 | Browse derives deterministic groups/counts from one verified listing; multi-domain membership does not duplicate canonical IDs; strict final checking accounts for every frozen rollout ID with evidence or an unclassified reason | SR-76, SR-92 | Browse fixtures, exact cohort manifest, classification evidence and strict corpus/invariant receipt | auto | open |
 | AC-63 | Metadata batches use converter-owned prepared publication over existing IDs only, preserve body/provenance/map invariants and exact donor eligibility guards, and fence stale, partial or unknown writes | SR-90, SR-92 | Prepared converter ownership/CAS/review-binding/no-op/interruption/reconcile fixtures and per-batch readback receipts | auto | open |
@@ -146,13 +146,13 @@ These criteria do not close AC-57/AC-59, legal clearance or Runtime acceptance.
 
 | ID | Criterion | System trace | Evidence | Kind | State |
 |---|---|---|---|---|---|
-| AC-65 | One multi-value query/filter flag works; tag and candidate identities are unique before pagination; ordinary lists contain only ID and description; help matches grammar and explicit source selection | BR-24, SR-10, SR-70, SR-92, SR-93 | CLI positive/negative/alias/duplicate/pagination/source-snapshot fixtures and exact stdout checks | auto | verified |
-| AC-66 | One multi-ID get uses compose, includes each required/dependency rule once, preserves body/applicability/output obligations, enforces limits and emits no partial text on any failure | SR-11, SR-12, SR-13, SR-58, SR-93 | Public process tests with duplicate IDs, bad later ID, dependencies, source/digest/schema/status errors and exact text/limit checks | auto | verified |
-| AC-67 | Current resolved profiles, stale alternatives, unresolved choices and declared exclusions take their existing distinct paths; opposite IDs are not deduplicated or chosen by rank, and shared themes do not falsely exclude complementary rules | SR-14, SR-25, SR-26, SR-93, D12 | Profile/closure/conflicting-pair and same-theme-complementary fixtures, including atomic empty stdout | auto | verified |
-| AC-68 | vp-mode explains evidence-based task-to-tag routing and uncertainty; PR handling does not infer write authority; maintained skill/help/README examples execute the implemented compact workflow | BR-24, SR-22, SR-25, SR-93 | Routing examples for code/documentation/ambiguous PRs and authorized sequential roles, source review and actual CLI exercises | mixed | verified |
-| AC-69 | Dictionary-only discovery reads no instruction bodies; library metadata/get contracts and frozen no-facet outputs remain compatible, and legacy records remain discoverable without a full-classification prerequisite | SR-10, SR-11, SR-92, SR-93 | Catalog-only fixture, unchanged public library tests, fresh 24-query parity and matched read/output accounting | auto | verified |
+| AC-65 | One multi-value query/filter flag works; tag and candidate identities are unique before pagination; ordinary lists contain only ID and description; help matches grammar and explicit source selection | BR-24, SR-10, SR-70, SR-92, SR-93 | CLI positive/negative/alias/duplicate/pagination/source-snapshot fixtures and exact stdout checks | auto | open |
+| AC-66 | One multi-ID get uses compose, includes each required/dependency rule once, preserves body/applicability/output obligations, enforces limits and emits no partial text on any failure | SR-11, SR-12, SR-13, SR-58, SR-93 | Public process tests with duplicate IDs, bad later ID, dependencies, source/digest/schema/status errors and exact text/limit checks | auto | open |
+| AC-67 | Current resolved profiles, stale alternatives, unresolved choices and declared exclusions take their existing distinct paths; opposite IDs are not deduplicated or chosen by rank, and shared themes do not falsely exclude complementary rules | SR-14, SR-25, SR-26, SR-93, D12 | Profile/closure/conflicting-pair and same-theme-complementary fixtures, including atomic empty stdout | auto | open |
+| AC-68 | vp-mode explains evidence-based task-to-tag routing and uncertainty; PR handling does not infer write authority; maintained skill/help/README examples execute the implemented compact workflow | BR-24, SR-22, SR-25, SR-93 | Routing examples for code/documentation/ambiguous PRs and authorized sequential roles, source review and actual CLI exercises | mixed | open |
+| AC-69 | Dictionary-only discovery reads no instruction bodies; v1.2 metadata/get contracts and no-facet outputs meet the current contract after corpus migration | SR-10, SR-11, SR-92, SR-93 | Catalog-only fixture, current public library tests, migrated corpus and matched read/output accounting | auto | open |
 
-All five criteria are verified for current Source and the CLI/library/skill contract. Root executed the canonical coverage gate (598 pass, one expected Windows skip, zero failures; 613/613 functions and 4,917/4,917 lines), typecheck, Knip, corpus/documentation checks, the 24-query parity check and real-corpus CLI exercises. Independent combined and repair reviews are READY; exact bindings and native receipts are retained under the existing instruction-organization work directory (retrieval-batch and retrieval-review-minor prefixes). The preexisting first-carrier dependency substitution remains a deferred Minor in next-actions; this qualification does not claim it fixed. These criteria do not establish full-corpus classification, rights, donor admission, installation or Runtime acceptance.
+The earlier 598-test coverage gate, 24-query parity, corpus checks and real-corpus CLI exercises are historical evidence for their bound inputs, not acceptance of current Source. AC-65–AC-69 remain open until the full migrated suite and corpus checks qualify current hashes. The substitution mapping follow-up remains in next-actions. These criteria do not establish rights, donor admission, installation or Runtime acceptance.
 
 ## What we do not prove
 

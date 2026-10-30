@@ -22,7 +22,10 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/authoring-a-skill.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/sharpen/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body mixes authoring principles, validation checks, questions, delegation, and response requirements without one dominant principle, conditional choice, ordered procedure, or checklist form."
 ---
 
 # Author an agent skill

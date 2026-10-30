@@ -21,7 +21,10 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/agent/shape.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/memory-agent/shape.md
 status: active
-revision: 2
+revision: 3
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body specifies agent persona and skill customization but does not ground a supported substantive domain; labeling it product or UX would infer beyond the body.
 ---
 
 # Make a persona unmistakable

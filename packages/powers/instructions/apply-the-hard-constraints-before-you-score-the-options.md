@@ -19,7 +19,10 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-framework-selector.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-framework-selector.compact.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body gives a clear framework-scoring sequence, but neither it nor its applicability conditions identify the framework subject area; no supported domain can be grounded."
 ---
 
 # Apply the hard constraints before you score the options

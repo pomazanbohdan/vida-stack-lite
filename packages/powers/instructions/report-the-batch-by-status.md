@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/quick-batch/steps/completion.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The frozen body contains incomplete status fragments without the labels or mapping they refer to, so a form cannot be chosen without reconstructing omitted content."
 ---
 
 # Report the batch by status

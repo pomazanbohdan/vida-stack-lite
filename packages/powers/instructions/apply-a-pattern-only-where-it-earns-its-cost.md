@@ -20,7 +20,12 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/lenses/lens-architecture.md
 status: active
-revision: 4
+revision: 5
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: principle
+domains:
+  - operations
 ---
 
 # Apply a pattern only where it earns its cost

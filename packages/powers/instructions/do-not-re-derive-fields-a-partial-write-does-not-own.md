@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/reachable-lint-rules-and-non-destructive-quick-task-append.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body recounts a prior append and re-derivation failure but states no judgment rule, conditional obligation, ordered action, or set of checks from which a form can be supported."
 ---
 
 # Do not re-derive fields a partial write does not own

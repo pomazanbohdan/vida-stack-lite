@@ -22,7 +22,10 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-forge-idea/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/explore-and-validate-an-idea.md
 status: active
-revision: 2
+revision: 3
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body gives generic ideation-partner tone without enough source-specific content to assign an approved subject domain.
 ---
 
 # Push back on a weak idea

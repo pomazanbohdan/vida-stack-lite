@@ -4,6 +4,7 @@ import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
+import { APPROACH_VOCABULARY, parseApproachAssessments } from '../skills/vp-mode/scripts/instruction-approaches.ts';
 import {
   FACETED_INSTRUCTION_SCHEMA_NAME,
   instructionSchemaVersion,
@@ -258,7 +259,7 @@ function checkDonorCoverage(map: Dict, donors: DonorSet, issues: CorpusIssue[]):
   }
 }
 
-function checkMethodologyProfile(base: string, catalog: Dict, instructionIds: Set<string>, issues: CorpusIssue[]): void {
+function checkMethodologyProfile(base: string, catalog: Dict, frontmatterById: Map<string, Dict>, issues: CorpusIssue[]): void {
   const profilePath = join(base, 'config', 'methodology-profile.json');
   if (!existsSync(profilePath)) return;
   let profile: unknown;
@@ -270,8 +271,12 @@ function checkMethodologyProfile(base: string, catalog: Dict, instructionIds: Se
   if (!isRecord(profile) || !Array.isArray(profile.groups)) return;
   const patterns = isRecord(catalog.tag_dictionary) && isRecord(catalog.tag_dictionary.pattern) ? catalog.tag_dictionary.pattern : {};
   const owners = new Map<string, string>();
+  const groupIds = new Set<string>();
+  const alternativeOwners = new Map<string, string>();
   for (const group of profile.groups.filter(isRecord)) {
     const groupId = String(group.id ?? '');
+    if (groupIds.has(groupId)) issue(issues, 'CORPUS_PROFILE_GROUP_DUPLICATE', `duplicate methodology group ${groupId}`, { group_id: groupId });
+    groupIds.add(groupId);
     const alternatives = Array.isArray(group.alternatives) ? group.alternatives.filter(isRecord) : [];
     const defaultId = group.default;
     const hasDefault = Object.prototype.hasOwnProperty.call(group, 'default');
@@ -282,9 +287,17 @@ function checkMethodologyProfile(base: string, catalog: Dict, instructionIds: Se
     if (group.user_decision === true && alternatives.length < 2) issue(issues, 'CORPUS_PROFILE_DECISION_INVALID', `user-decision group ${groupId} must have at least two alternatives`, { group_id: groupId });
     for (const alternative of alternatives) {
       const alternativeId = String(alternative.id ?? '');
+      const alternativeOwner = alternativeOwners.get(alternativeId);
+      if (alternativeOwner !== undefined) issue(issues, 'CORPUS_PROFILE_ALTERNATIVE_DUPLICATE', `alternative ${alternativeId} is repeated in groups ${alternativeOwner} and ${groupId}`, { group_id: groupId, alternative_id: alternativeId, previous_group_id: alternativeOwner });
+      else alternativeOwners.set(alternativeId, groupId);
       if (!Object.prototype.hasOwnProperty.call(patterns, alternativeId)) issue(issues, 'CORPUS_PROFILE_TAG_UNKNOWN', `profile alternative ${alternativeId} is not a pattern tag in catalog.json`, { group_id: groupId, alternative_id: alternativeId });
       for (const instructionId of stringArray(alternative.instruction_ids)) {
-        if (!instructionIds.has(instructionId)) issue(issues, 'CORPUS_PROFILE_INSTRUCTION_UNKNOWN', `profile alternative ${alternativeId} names unknown instruction ${instructionId}`, { group_id: groupId, alternative_id: alternativeId, instruction_id: instructionId });
+        const front = frontmatterById.get(instructionId);
+        if (front === undefined) issue(issues, 'CORPUS_PROFILE_INSTRUCTION_UNKNOWN', `profile alternative ${alternativeId} names unknown instruction ${instructionId}`, { group_id: groupId, alternative_id: alternativeId, instruction_id: instructionId });
+        else {
+          if (front.status !== 'active') issue(issues, 'CORPUS_PROFILE_INSTRUCTION_DISABLED', `profile alternative ${alternativeId} names inactive instruction ${instructionId}`, { group_id: groupId, alternative_id: alternativeId, instruction_id: instructionId });
+          if (!stringArray(front.pattern_tags).includes(alternativeId)) issue(issues, 'CORPUS_PROFILE_INSTRUCTION_TAG_MISMATCH', `profile alternative ${alternativeId} names instruction ${instructionId} without its pattern tag`, { group_id: groupId, alternative_id: alternativeId, instruction_id: instructionId });
+        }
         const owner = owners.get(instructionId);
         if (owner !== undefined) issue(issues, 'CORPUS_PROFILE_INSTRUCTION_DUPLICATE', `instruction ${instructionId} belongs to alternatives ${owner} and ${alternativeId}`, { instruction_id: instructionId, alternatives: [owner, alternativeId] });
         else owners.set(instructionId, alternativeId);
@@ -293,14 +306,12 @@ function checkMethodologyProfile(base: string, catalog: Dict, instructionIds: Se
   }
 }
 
-function checkCorpusContents(base: string, issues: CorpusIssue[], options: { requireFacets?: boolean }): void {
+function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   const catalog = readCorpusJson(base, 'catalog.json', issues, 'CORPUS_MANIFEST_INVALID');
   const map = readCorpusJson(base, 'corpus-map.json', issues, 'CORPUS_MAP_INCONSISTENT');
   const catalogSchema = readJson(join(packageRoot, 'config/vpcatalog.v1.schema.json')) as Schema;
   const mapSchema = readJson(join(packageRoot, 'config/vpcorpusmap.v1.schema.json')) as Schema;
-  const instructionSchema = readJson(join(packageRoot, 'config/vpinstruction.v1.schema.json')) as Schema;
-  let facetedInstructionSchema: Schema | undefined;
-  let facetedSchemaRead = false;
+  const instructionSchema = readJson(join(packageRoot, 'config', FACETED_INSTRUCTION_SCHEMA_NAME)) as Schema;
   checkSchema(catalog, catalogSchema, issues, 'CORPUS_MANIFEST');
   checkSchema(map, mapSchema, issues, 'CORPUS_MAP');
   const donorSet = readDonors(base, issues);
@@ -329,7 +340,6 @@ function checkCorpusContents(base: string, issues: CorpusIssue[], options: { req
   }
   const instructionIds = new Set<string>();
   const frontmatterById = new Map<string, Dict>();
-  const facetDispositionCounts = new Map<string, number>();
   const donorRoots = new Map<string, DonorRoots>();
   const regularSources = new Set<string>();
   for (const file of files) {
@@ -343,25 +353,12 @@ function checkCorpusContents(base: string, issues: CorpusIssue[], options: { req
     if (version === undefined) {
       issue(issues, 'CORPUS_INSTRUCTION_VERSION_UNSUPPORTED', `instruction ${filename} has an unsupported schema marker`, { instruction_id: filename, schema: front.schema });
     } else {
-      let selectedSchema: Schema | undefined = instructionSchema;
-      if (version === 'faceted-v1.1') {
-        if (!facetedSchemaRead) {
-          facetedSchemaRead = true;
-          const schemaPath = join(packageRoot, 'config', FACETED_INSTRUCTION_SCHEMA_NAME);
-          try { facetedInstructionSchema = readJson(schemaPath) as Schema; }
-          catch (error) { issue(issues, 'CORPUS_INSTRUCTION_SCHEMA_UNAVAILABLE', `cannot read ${FACETED_INSTRUCTION_SCHEMA_NAME}: ${String(error)}`, { path: schemaPath }); }
-        }
-        selectedSchema = facetedInstructionSchema;
-      }
-      const schemaValid = selectedSchema === undefined
-        ? false
-        : checkSchema(front, selectedSchema, issues, 'CORPUS_INSTRUCTION', { instruction_id: filename });
-      if (version === 'faceted-v1.1') {
-        const classification = parseFacetClassification(front);
-        if (classification === undefined) issue(issues, 'CORPUS_INSTRUCTION_CLASSIFICATION_INVALID', `instruction ${filename} has an invalid facet classification`, { instruction_id: filename });
-        else if (schemaValid && id === filename && !issues.some((item) => item.code === 'CORPUS_DIGEST_MISMATCH' && item.details?.instruction_id === filename)) {
-          facetDispositionCounts.set(filename, (facetDispositionCounts.get(filename) ?? 0) + 1);
-        }
+      checkSchema(front, instructionSchema, issues, 'CORPUS_INSTRUCTION', { instruction_id: filename });
+      if (parseFacetClassification(front) === undefined) issue(issues, 'CORPUS_INSTRUCTION_CLASSIFICATION_INVALID', `instruction ${filename} has an invalid facet classification`, { instruction_id: filename });
+      try {
+        parseApproachAssessments(parseFrontmatter(instructionBytes.get(file) ?? readFileSync(path, 'utf8')), new Map(Object.entries(APPROACH_VOCABULARY)));
+      } catch (error) {
+        issue(issues, 'CORPUS_INSTRUCTION_APPROACH_INVALID', `instruction ${filename} has invalid approach assessments: ${String(error)}`, { instruction_id: filename });
       }
     }
     checkInstructionTags(filename, front, dictionary, aliases, exemptions, issues);
@@ -376,49 +373,28 @@ function checkCorpusContents(base: string, issues: CorpusIssue[], options: { req
       if (field === 'compatibility_requires' && ref === id) issue(issues, 'CORPUS_COMPATIBILITY_SELF_REQUIRE', `instruction ${id} requires itself`, { instruction_id: id });
     }
   }
-  if (options.requireFacets === true) {
-    const expectedCounts = new Map<string, number>();
-    for (const entry of entries) {
-      if (typeof entry.instruction_id === 'string') expectedCounts.set(entry.instruction_id, (expectedCounts.get(entry.instruction_id) ?? 0) + 1);
-    }
-    for (const [id, expectedCount] of expectedCounts) {
-      const dispositionCount = facetDispositionCounts.get(id) ?? 0;
-      if (expectedCount !== 1 || dispositionCount !== 1) {
-        issue(issues, 'CORPUS_FACETS_REQUIRED', `catalog instruction ${id} must have exactly one valid VPInstruction/v1.1 disposition`, {
-          instruction_id: id,
-          catalog_entries: expectedCount,
-          valid_facet_dispositions: dispositionCount,
-        });
-      }
-    }
-  }
   checkMap(map, donorSet, instructionIds, issues);
   checkDonorCoverage(map, donorSet, issues);
-  checkMethodologyProfile(base, catalog, instructionIds, issues);
+  checkMethodologyProfile(base, catalog, frontmatterById, issues);
 }
 
-export function checkCorpus(root: string, options: { requireFacets?: boolean } = {}): CorpusIssue[] {
+export function checkCorpus(root: string): CorpusIssue[] {
   const issues: CorpusIssue[] = [];
-  try { checkCorpusContents(resolve(root), issues, options); }
+  try { checkCorpusContents(resolve(root), issues); }
   catch (error) { issue(issues, 'CORPUS_FILESYSTEM_ERROR', `corpus validation could not complete for ${root}: ${String(error)}`, { root, error: String(error) }); }
   return issues;
 }
 
 export function corpusCli(args: string[]): { issues: CorpusIssue[]; instructions: number; exitCode: number } {
   let root = packageRoot;
-  let requireFacets = false;
   for (let index = 0; index < args.length; index += 1) {
-    if (args[index] === '--require-facets') {
-      requireFacets = true;
-      continue;
-    }
-    if (args[index] === '--root' && args[index + 1] !== undefined) {
+    if (args[index] === '--root' && args[index + 1] !== undefined && !args[index + 1]?.startsWith('--')) {
       root = args[index + 1] as string; index += 1;
       continue;
     }
-    throw new Error('usage: check-corpus.ts [--root <dir>] [--require-facets]');
+    throw new Error('usage: check-corpus.ts [--root <dir>]');
   }
-  const issues = checkCorpus(root, { requireFacets });
+  const issues = checkCorpus(root);
   let instructions = 0;
   try { instructions = readdirSync(join(resolve(root), 'instructions')).filter((name) => name.endsWith('.md') && statSync(join(resolve(root), 'instructions', name)).isFile()).length; }
   catch { instructions = 0; }

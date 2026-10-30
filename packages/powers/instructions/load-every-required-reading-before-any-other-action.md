@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/mandatory-initial-read.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body gives a generic pre-action reading rule for any required_reading block but names no substantive domain; a domain would be inferred from the reader or tool.
 ---
 
 # Load every required reading before any other action

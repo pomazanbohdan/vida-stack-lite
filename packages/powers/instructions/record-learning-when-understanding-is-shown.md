@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/teach/LEARNING-RECORD-FORMAT.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body governs pedagogical learner records and prior knowledge; no supported domain follows without broadening operations beyond its defined workflow sense.
 ---
 
 # Record learning when understanding is shown

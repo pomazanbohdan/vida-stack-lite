@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/modes/convert.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body describes adapting material for another tool but does not ground that adaptation in any supported domain.
 ---
 
 # Convert in place and leave the source untouched

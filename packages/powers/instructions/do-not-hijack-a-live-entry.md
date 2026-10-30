@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/take-over-a-capability-or-eos.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body protects an active repository entry and identifier from takeover, but the entry subject is unspecified; repository ownership mechanics alone do not support a listed content domain."
 ---
 
 # Do not hijack a live entry

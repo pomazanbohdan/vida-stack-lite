@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/work-in-parallel-with-workstreams.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body only defines a workstream and shared code/history/branches; it contains no judgment guidance, obligation, conditional choice, ordered actions, or independent checks supporting an instruction form."
 ---
 
 # Separate the planning state when the code is shared

@@ -23,7 +23,13 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-never-block-on-the-human/SKILL.md
 status: active
-revision: 4
+revision: 5
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: decision-rule
+domains:
+  - engineering
+  - operations
 ---
 
 # Proceed without waiting for confirmation

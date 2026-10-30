@@ -9,11 +9,8 @@ import { FrontmatterError } from './frontmatter.ts';
 import { validateAgainstSchema } from './schema.ts';
 import type { Schema } from './schema.ts';
 import {
-  FACETED_INSTRUCTION_SCHEMA_NAME,
   INSTRUCTION_DOMAINS,
   INSTRUCTION_FORMS,
-  LEGACY_CLASSIFICATION,
-  instructionSchemaVersion,
   isClassificationStatus,
   isInstructionClassification,
   isInstructionDomain,
@@ -21,6 +18,8 @@ import {
   parseFacetClassification,
 } from './instruction-facets.ts';
 import type { ClassificationStatus, InstructionClassification, InstructionDomain, InstructionForm } from './instruction-facets.ts';
+import { APPROACH_VOCABULARY, parseApproachAssessments } from './instruction-approaches.ts';
+import type { ApproachAssessment } from './instruction-approaches.ts';
 
 export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED';
 
@@ -45,7 +44,7 @@ export type Instruction = {
   compatibility: { excludes: string[]; requires: string[] };
   provenance: Provenance[]; status: 'active' | 'disabled'; revision: number; content: string;
 };
-export type LoadedInstruction = Instruction & { classification: InstructionClassification };
+export type LoadedInstruction = Instruction & { classification: InstructionClassification; approach_assessments: ApproachAssessment[] };
 export type Catalog = {
   schema: 'VPCatalog/v1'; catalog_id: string; revision: number; source_revision: string; updated_at: string;
   tag_dictionary: { capability: Record<string, string>; pattern: Record<string, string> };
@@ -59,6 +58,7 @@ export type InstructionMetadata = { instruction_id: string; title: string; summa
 export type SearchQuery = {
   capability_tags?: string[]; pattern_tags?: string[]; instruction_ids?: string[]; roles?: string[]; products?: string[]; conditions?: string[];
   instruction_forms?: InstructionForm[]; domains?: InstructionDomain[]; classification_statuses?: ClassificationStatus[];
+  approaches?: string[];
 };
 export type CatalogBrowseGroup<T extends string> = { value: T; count: number; instruction_ids: string[] };
 export type CatalogBrowseResult = {
@@ -74,10 +74,11 @@ export type ComposeQuery = SearchQuery & { required_ids?: string[]; profile?: Ef
 export type ComposedInstruction = { instruction_id: string; title: string; summary: string; content: string; capability_tags: string[]; pattern_tags: string[]; artifact_contract: Instruction['artifact_contract']; provenance: Provenance[]; selection_reason: 'matched' | 'dependency' | 'required' };
 export type ComposedBundle = { catalog_id: string; catalog_revision: number; tag_dictionary: Catalog['tag_dictionary']; instructions: ComposedInstruction[]; role: string; task_contract: string; effective_methodology: string; work_scope: string; materialization_requirements: string[]; artifact_references: string[] };
 
-const instructionSchemaName = 'vpinstruction.v1.schema.json';
+const instructionSchemaName = 'vpinstruction.v1.2.schema.json';
+const approachDeclarations = new Map<string, readonly string[]>(Object.entries(APPROACH_VOCABULARY));
 const catalogSchemaName = 'vpcatalog.v1.schema.json';
-type CanonicalMethodologyGroup = { id: string; alternatives: string[]; user_decision: boolean };
-type CanonicalMethodologyProfile = { schema: 'VPMethodologyProfile/v1'; groups: { id: string; user_decision: boolean; alternatives: { id: string }[] }[] };
+type CanonicalMethodologyGroup = { id: string; alternatives: string[]; instructionIdsByAlternative: Map<string, string[]>; user_decision: boolean; default?: string };
+type CanonicalMethodologyProfile = { schema: 'VPMethodologyProfile/v1'; groups: { id: string; user_decision: boolean; default?: string; alternatives: { id: string; instruction_ids: string[] }[] }[] };
 let canonicalMethodologyCache: { fingerprint: string; groups: CanonicalMethodologyGroup[] } | undefined;
 
 function compareNames(left: string, right: string): number {
@@ -162,7 +163,9 @@ function loadCanonicalMethodologyGroups(): CanonicalMethodologyGroup[] {
       }
       alternativeOwners.set(alternative, group.id);
     }
-    return { id: group.id, alternatives, user_decision: group.user_decision };
+    const instructionIdsByAlternative = new Map<string, string[]>();
+    for (const alternative of group.alternatives) instructionIdsByAlternative.set(alternative.id, alternative.instruction_ids);
+    return { id: group.id, alternatives, instructionIdsByAlternative, user_decision: group.user_decision, ...(group.default === undefined ? {} : { default: group.default }) };
   });
   canonicalMethodologyCache = { fingerprint, groups };
   return groups;
@@ -236,8 +239,7 @@ function validateTags(catalog: Catalog, instruction: Instruction): void {
 }
 
 export async function loadInstructions(catalog: Catalog, directory: string): Promise<Map<string, LoadedInstruction>> {
-  const legacySchema = await readSchema(directory, instructionSchemaName);
-  let facetedSchema: Schema | undefined;
+  const schema = await readSchema(directory, instructionSchemaName);
   const instructions = new Map<string, LoadedInstruction>();
   for (const entry of catalog.instructions) {
     let bytes: Buffer;
@@ -259,19 +261,19 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
         line: frontmatterError?.line ?? 0,
       });
     }
-    const version = instructionSchemaVersion(parsed.data.schema);
-    if (version === undefined) throw invalid(`unsupported instruction schema marker for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schema: parsed.data.schema });
-    if (version === 'faceted-v1.1' && facetedSchema === undefined) {
-      facetedSchema = await readSchema(directory, FACETED_INSTRUCTION_SCHEMA_NAME);
-    }
-    const schema = version === 'legacy-v1' ? legacySchema : facetedSchema;
-    if (schema === undefined) throw invalid(`cannot load instruction schema for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, version });
+    if (parsed.data.schema !== 'VPInstruction/v1.2') throw invalid(`unsupported instruction schema marker for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schema: parsed.data.schema });
     const schemaErrors = validateAgainstSchema(parsed.data, schema);
     if (schemaErrors.length > 0) throw invalid(`instruction schema validation failed for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schemaErrors });
     if (parsed.data.instruction_id !== entry.instruction_id) throw invalid(`instruction id mismatch for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, actual_id: parsed.data.instruction_id });
     const data = parsed.data;
-    const classification = version === 'legacy-v1' ? { ...LEGACY_CLASSIFICATION } : parseFacetClassification(data);
+    const classification = parseFacetClassification(data);
     if (classification === undefined) throw invalid(`instruction classification is invalid for ${entry.instruction_id}`, { instruction_id: entry.instruction_id });
+    let approach_assessments: ApproachAssessment[];
+    try {
+      approach_assessments = parseApproachAssessments(parsed, approachDeclarations);
+    } catch (error) {
+      throw invalid(`instruction approach assessments are invalid for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, message: error instanceof Error ? error.message : String(error) });
+    }
     const instruction: LoadedInstruction = {
       instruction_id: entry.instruction_id,
       title: data.title as string,
@@ -288,6 +290,7 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
       revision: data.revision as number,
       content: parsed.body,
       classification,
+      approach_assessments,
     };
     validateTags(catalog, instruction);
     instructions.set(instruction.instruction_id, instruction);
@@ -403,8 +406,31 @@ function matchesConditions(instruction: Instruction, conditions: string[] | unde
     && !containsWord(instruction.conditions.does_not_apply_when, token));
 }
 
+export function parseApproachSelectors(values: readonly string[] = []): { dimension: string; value: string }[] {
+  const selected = new Map<string, string>();
+  for (const item of values) {
+    const parts = item.split('=');
+    const dimension = parts[0] ?? '';
+    const value = parts[1] ?? '';
+    if (parts.length !== 2 || !approachDeclarations.get(dimension)?.includes(value)) throw invalid('unsupported approach selector', { selector: item });
+    const previous = selected.get(dimension);
+    if (previous !== undefined && previous !== value) throw invalid('conflicting approach selectors', { dimension, values: [previous, value] });
+    selected.set(dimension, value);
+  }
+  return [...selected].sort(([a], [b]) => compareNames(a, b)).map(([dimension, value]) => ({ dimension, value }));
+}
+
+export function evaluateApproaches(instruction: LoadedInstruction, selectors: ReturnType<typeof parseApproachSelectors>) {
+  const dimensions = selectors.map(({ dimension, value }) => {
+    const assessment = instruction.approach_assessments.find((item) => item.dimension === dimension);
+    return { dimension, value, assessment: assessment ?? null, decision: assessment === undefined ? 'unassessed' : assessment.state === 'declared' ? (assessment.values.includes(value) ? 'match' : 'contradictory') : assessment.state };
+  });
+  return { included: !dimensions.some((item) => item.decision === 'contradictory'), dimensions };
+}
+
 export function catalogSearch(catalog: Catalog, instructions: Map<string, LoadedInstruction>, query: SearchQuery): InstructionMetadata[] {
   const facets = validateQueryDimensions(query);
+  const approaches = parseApproachSelectors(query.approaches);
   const capabilities = canonicalTags(catalog, 'capability', query.capability_tags);
   const patterns = canonicalTags(catalog, 'pattern', query.pattern_tags);
   for (const token of query.conditions ?? []) {
@@ -413,6 +439,7 @@ export function catalogSearch(catalog: Catalog, instructions: Map<string, Loaded
   const ids = query.instruction_ids ?? [];
   return [...instructions.values()]
     .filter((instruction) => instruction.status === 'active')
+    .filter((instruction) => evaluateApproaches(instruction, approaches).included)
     .filter((instruction) => hasAny(instruction.capability_tags, capabilities))
     .filter((instruction) => hasAny(instruction.pattern_tags, patterns))
     .filter((instruction) => ids.length === 0 || ids.includes(instruction.instruction_id))
@@ -437,11 +464,14 @@ export function catalogSearchWithProfile(
   profile: EffectiveProfile,
 ): InstructionMetadata[] {
   validateProfile(profile);
-  const matches = catalogSearch(catalog, instructions, query);
+  const { approaches, ...ordinaryQuery } = query;
+  const selectors = parseApproachSelectors(approaches);
+  const matches = catalogSearch(catalog, instructions, ordinaryQuery);
   const selected = new Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>();
   const results: InstructionMetadata[] = [];
   for (const metadata of matches) {
     const instruction = activeInstruction(instructions, metadata.instruction_id);
+    if (!evaluateApproaches(instruction, selectors).included) continue;
     const unresolved = unresolvedProfileConflictFor(instruction, profile);
     if (unresolved !== undefined) requireProfileResolution(unresolved, { instruction_id: instruction.instruction_id });
     if (profileConflictFor(instruction, profile) !== undefined) continue;
@@ -452,7 +482,8 @@ export function catalogSearchWithProfile(
   return results;
 }
 
-export function catalogBrowse(catalog: Catalog, instructions: Map<string, LoadedInstruction>): CatalogBrowseResult {
+export function catalogBrowse(catalog: Catalog, instructions: Map<string, LoadedInstruction>, approaches: string[] = []): CatalogBrowseResult {
+  const selectors = parseApproachSelectors(approaches);
   const formIds = new Map<InstructionForm, Set<string>>();
   const domainIds = new Map<InstructionDomain, Set<string>>();
   for (const form of INSTRUCTION_FORMS) formIds.set(form, new Set<string>());
@@ -468,6 +499,7 @@ export function catalogBrowse(catalog: Catalog, instructions: Map<string, Loaded
     if (instruction.status !== 'active' && instruction.status !== 'disabled') throw invalid('catalog browse found an invalid instruction status', { instruction_id: id, status: instruction.status });
     if (!isInstructionClassification(instruction.classification)) throw invalid('catalog browse found invalid instruction classification', { instruction_id: id });
     if (instruction.status === 'disabled') continue;
+    if (!evaluateApproaches(instruction, selectors).included) continue;
     switch (instruction.classification.classification_status) {
       case 'classified': {
         const formGroup = formIds.get(instruction.classification.instruction_form);
@@ -670,19 +702,19 @@ function validateProfile(profile: EffectiveProfile | undefined): void {
   const canonicalGroups = loadCanonicalMethodologyGroups();
   const canonicalById = new Map(canonicalGroups.map((group) => [group.id, group]));
   for (const [groupId, choice] of Object.entries(profile.groups)) {
+    const activePolicy = canonicalGroups.find((group) => !group.user_decision && group.alternatives.includes(choice.active));
+    if (activePolicy !== undefined && choice.active !== activePolicy.default) {
+      requireCanonicalProfileRefresh(activePolicy.id, activePolicy.alternatives, choice.alternatives, { active: choice.active, expected_active: activePolicy.default });
+    }
     const canonical = canonicalById.get(groupId);
-    if (canonical !== undefined) {
-      if (!sameAlternatives(choice.alternatives, canonical.alternatives)) {
-        requireCanonicalProfileRefresh(groupId, canonical.alternatives, choice.alternatives);
-      }
+    if (canonical === undefined || !sameAlternatives(choice.alternatives, canonical.alternatives)) {
+      requireCanonicalProfileRefresh(groupId, canonical?.alternatives ?? [], choice.alternatives);
     }
   }
   for (const [groupId, alternatives] of Object.entries(profile.unresolved_groups)) {
     const canonical = canonicalById.get(groupId);
-    if (canonical !== undefined) {
-      if (!sameAlternatives(alternatives, canonical.alternatives)) {
-        requireCanonicalProfileRefresh(groupId, canonical.alternatives, alternatives);
-      }
+    if (canonical === undefined || !sameAlternatives(alternatives, canonical.alternatives)) {
+      requireCanonicalProfileRefresh(groupId, canonical?.alternatives ?? [], alternatives);
     }
   }
 }
@@ -711,6 +743,12 @@ function validateCanonicalPolicySelection(
     }
   }
   for (const [groupId, entry] of selectedByGroup) {
+    if (!entry.group.user_decision && [...entry.alternatives].some((alternative) => alternative !== entry.group.default)) {
+      throw new CatalogError('CATALOG_PROFILE_CONFLICT', `selection violates non-negotiable policy ${groupId}`, {
+        group: groupId, selected_alternatives: [...entry.alternatives].sort(compareNames), expected_active: entry.group.default,
+        instruction_ids: [...entry.instructionIds].sort(compareNames),
+      });
+    }
     const matchingResolved = profile === undefined
       ? undefined
       : Object.values(profile.groups).find((choice) => sameAlternatives(choice.alternatives, entry.group.alternatives));
@@ -774,9 +812,14 @@ function checkExcludes(selected: Map<string, { instruction: LoadedInstruction; r
 
 export function catalogCompose(catalog: Catalog, instructions: Map<string, LoadedInstruction>, query: ComposeQuery): ComposedBundle {
   const facets = validateQueryDimensions(query);
+  const selectors = parseApproachSelectors(query.approaches);
+  const requireApproach = (instruction: LoadedInstruction, requiring?: string): void => {
+    const decision = evaluateApproaches(instruction, selectors);
+    if (!decision.included) throw new CatalogError('CATALOG_REQUIRED_CONFLICT', `instruction ${instruction.instruction_id} conflicts with approach selector`, { instruction_id: instruction.instruction_id, ...(requiring === undefined ? {} : { requiring_instruction_id: requiring }), dimensions: decision.dimensions });
+  };
   validateProfile(query.profile);
   const selected = new Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>();
-  for (const id of query.required_ids ?? []) addSelected(selected, activeInstruction(instructions, id), 'required');
+  for (const id of query.required_ids ?? []) { const instruction = activeInstruction(instructions, id); requireApproach(instruction); addSelected(selected, instruction, 'required'); }
   const supplied = (value: string[] | undefined): boolean => Array.isArray(value) && value.length > 0;
   const hasSelectionDimension = supplied(query.capability_tags) || supplied(query.pattern_tags) || supplied(query.instruction_ids)
     || supplied(query.roles) || supplied(query.products) || supplied(query.conditions)
@@ -800,6 +843,7 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
     if (item.reason === 'matched' && profileDrops(item.instruction, query)) selected.delete(item.instruction.instruction_id);
   }
   const pending = [...selected.values()].map((item) => item.instruction);
+  let canonicalGroupsForSubstitution: CanonicalMethodologyGroup[] | undefined;
   for (let index = 0; index < pending.length; index += 1) {
     const instruction = pending[index];
     if (instruction === undefined) continue;
@@ -811,17 +855,34 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
       if (unresolvedConflict !== undefined) requireProfileResolution(unresolvedConflict, { dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
       const profileConflict = profileConflictFor(dependency, query.profile);
       if (profileConflict !== undefined) {
-        const active = [...instructions.values()].find((candidate) => candidate.status === 'active' && candidate.pattern_tags.includes(profileConflict.active));
-        if (active === undefined) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `active profile pattern ${profileConflict.active} has no instruction in ${profileConflict.group}`, { ...profileConflict, dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
-        const unresolvedActiveConflict = unresolvedProfileConflictFor(active, query.profile);
-        if (unresolvedActiveConflict !== undefined) requireProfileResolution(unresolvedActiveConflict, { dependency_id: active.instruction_id, requiring_instruction_id: instruction.instruction_id });
-        if (!selected.has(active.instruction_id)) {
-          addSelected(selected, active, 'dependency');
-          pending.push(active);
+        const canonicalGroup = (canonicalGroupsForSubstitution ??= loadCanonicalMethodologyGroups()).find((group) => group.id === profileConflict.group);
+        const mappedIds = canonicalGroup?.instructionIdsByAlternative.get(profileConflict.active);
+        const activeInstructions: LoadedInstruction[] = [];
+        let completeMapping = mappedIds !== undefined && mappedIds.length > 0;
+        for (const id of mappedIds ?? []) {
+          const active = instructions.get(id);
+          if (active === undefined || active.status !== 'active' || !active.pattern_tags.includes(profileConflict.active)) {
+            completeMapping = false;
+            break;
+          }
+          activeInstructions.push(active);
         }
-      } else if (!selected.has(dependencyId)) {
-        addSelected(selected, dependency, 'dependency');
-        pending.push(dependency);
+        if (!completeMapping) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `active profile pattern ${profileConflict.active} has no instruction in ${profileConflict.group}`, { ...profileConflict, dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
+        for (const active of activeInstructions) {
+          requireApproach(active, instruction.instruction_id);
+          const unresolvedActiveConflict = unresolvedProfileConflictFor(active, query.profile);
+          if (unresolvedActiveConflict !== undefined) requireProfileResolution(unresolvedActiveConflict, { dependency_id: active.instruction_id, requiring_instruction_id: instruction.instruction_id });
+          if (!selected.has(active.instruction_id)) {
+            addSelected(selected, active, 'dependency');
+            pending.push(active);
+          }
+        }
+      } else {
+        requireApproach(dependency, instruction.instruction_id);
+        if (!selected.has(dependencyId)) {
+          addSelected(selected, dependency, 'dependency');
+          pending.push(dependency);
+        }
       }
     }
   }

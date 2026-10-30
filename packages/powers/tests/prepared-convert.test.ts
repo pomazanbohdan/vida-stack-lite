@@ -6,7 +6,8 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prepareBatch, prepareInstructionFacetBatch, applyPreparedBatch, reconcilePreparedBatch, releasePreparedOwnership, convertMany, convertMapRecord } from '../scripts/convert.ts';
+import { prepareBatch, prepareFacetMigration, prepareInstructionFacetBatch, applyPreparedBatch, reconcilePreparedBatch, releasePreparedOwnership, convertMany, convertMapRecord } from '../scripts/convert.ts';
+import { checkCorpus } from '../scripts/check-corpus.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 import { sealArtifact } from '../scripts/source-packets.ts';
 import { fixtureCatalog, fixtureEligibility, fixtureSpec } from './source-packet-fixture.ts';
@@ -68,6 +69,206 @@ function suffixAfterFrontmatter(bytes: Buffer): Buffer {
   throw new Error('fixture frontmatter closing line is missing');
 }
 const facetFields = new Set(['schema', 'revision', 'classification_status', 'instruction_form', 'domains', 'classification_reason']);
+test('unbound first batch of a mixed cohort is fenced before either instruction changes', async () => {
+  const f = await fixture(2);
+  const seeded = [await seedFacetInstruction(f, 0), await seedFacetInstruction(f, 1)];
+  const catalogPath = join(f.root, 'catalog.json');
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
+  const legacy = seeded.map(item => Buffer.from(item.bytes.toString('utf8').replace('schema: VPInstruction/v1.2\nclassification_status: unclassified\nclassification_reason: classification-not-assessed\n', '')));
+  for (const [index, item] of seeded.entries()) {
+    const bytes = legacy[index];
+    if (bytes === undefined || bytes.equals(item.bytes)) throw new Error('fixture did not create a legacy preimage');
+    await writeFile(item.path, bytes);
+    catalog.instructions.find((entry: { instruction_id: string }) => entry.instruction_id === item.entry.instruction_id).sha256 = digest(bytes);
+  }
+  await writeFile(catalogPath, JSON.stringify(catalog));
+  const beforeCatalog = await readFile(catalogPath);
+  const beforeMap = await readFile(join(f.root, 'corpus-map.json'));
+  const first = seeded[0];
+  const firstBytes = legacy[0];
+  if (first === undefined || firstBytes === undefined) throw new Error('fixture has no first instruction');
+  const plan = await prepareInstructionFacetBatch([{ instruction_id: first.entry.instruction_id, expected_sha256: digest(firstBytes), classification: { classification_status: 'unclassified', classification_reason: 'Not assessed.' } }], await facetOptions(f));
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('no-write-conflict');
+  for (const [index, item] of seeded.entries()) { const bytes = legacy[index]; if (bytes === undefined) throw new Error('missing fixture'); expect(await readFile(item.path)).toEqual(bytes); }
+  expect(await readFile(catalogPath)).toEqual(beforeCatalog);
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(beforeMap);
+});
+async function migrationFixture() {
+  const f = await fixture(2);
+  const seeded = [await seedFacetInstruction(f, 0, { body: 'Україна\r\nfirst\n' }), await seedFacetInstruction(f, 1, { body: 'second 🌍\r\n' })];
+  const catalogPath = join(f.root, 'catalog.json');
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
+  const legacy: Buffer[] = [];
+  for (const item of seeded) {
+    const bytes = Buffer.from(item.bytes.toString('utf8').replace('schema: VPInstruction/v1.2\nclassification_status: unclassified\nclassification_reason: classification-not-assessed\n', ''));
+    if (bytes.equals(item.bytes)) throw new Error('fixture did not create legacy bytes');
+    legacy.push(bytes); await writeFile(item.path, bytes);
+    catalog.instructions.find((entry: { instruction_id: string }) => entry.instruction_id === item.entry.instruction_id).sha256 = digest(bytes);
+  }
+  await writeFile(catalogPath, JSON.stringify(catalog));
+  const migration = await prepareFacetMigration(f.root);
+  const options = { ...await facetOptions(f), migration };
+  const assignment = (index: number) => {
+    const item = seeded[index]; const bytes = legacy[index];
+    if (item === undefined || bytes === undefined) throw new Error('missing fixture');
+    return { instruction_id: item.entry.instruction_id, expected_sha256: digest(bytes), classification: { classification_status: 'unclassified' as const, classification_reason: 'Not assessed.' } };
+  };
+  return { f, seeded, legacy, options, assignment, catalogPath };
+}
+test('cohort-bound batches preserve bodies and map through mixed state to strict corpus', async () => {
+  const { f, seeded, legacy, options, assignment, catalogPath } = await migrationFixture();
+  const map = await readFile(join(f.root, 'corpus-map.json'));
+  const initialCatalog = digest(await readFile(catalogPath));
+  expect(checkCorpus(f.root).some(issue => issue.code === 'CORPUS_INSTRUCTION_VERSION_UNSUPPORTED')).toBe(true);
+  const first = await prepareInstructionFacetBatch([assignment(0)], options);
+  const firstManifest = JSON.parse(await readFile(join(first.directory, first.manifest.path), 'utf8'));
+  expect(firstManifest.migration.initialCatalog).toBe(initialCatalog);
+  expect((await applyPreparedBatch(first, await approval(first, f.staging))).kind).toBe('applied');
+  expect(checkCorpus(f.root).some(issue => issue.code === 'CORPUS_INSTRUCTION_VERSION_UNSUPPORTED')).toBe(true);
+  const second = await prepareInstructionFacetBatch([assignment(1)], options);
+  const secondManifest = JSON.parse(await readFile(join(second.directory, second.manifest.path), 'utf8'));
+  expect(secondManifest.migration.initialCatalog).toBe(initialCatalog);
+  expect(secondManifest.migration.catalog).not.toBe(initialCatalog);
+  const result = await applyPreparedBatch(second, await approval(second, f.staging));
+  expect(result.kind).toBe('applied');
+  const receipt = JSON.parse(await readFile(join(f.staging, result.receipt.path), 'utf8'));
+  expect(receipt.details).toMatchObject({ validation: 'strict-corpus', remaining: 0 });
+  expect(checkCorpus(f.root)).toEqual([]);
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(map);
+  for (const [index, item] of seeded.entries()) { const bytes = legacy[index]; if (bytes === undefined) throw new Error('missing fixture'); expect(suffixAfterFrontmatter(await readFile(item.path))).toEqual(suffixAfterFrontmatter(bytes)); }
+});
+test('forged and serialized migration capabilities cannot prepare a batch', async () => {
+  const { options, assignment } = await migrationFixture();
+  await expect(prepareInstructionFacetBatch([assignment(0)], { ...options, migration: { kind: 'facet-migration' } })).rejects.toThrow('capability');
+  const serialized = JSON.parse(JSON.stringify(options.migration));
+  await expect(prepareInstructionFacetBatch([assignment(0)], { ...options, migration: serialized })).rejects.toThrow('capability');
+});
+test('a competing live migration capability cannot publish a stale plan', async () => {
+  const { f, options, assignment } = await migrationFixture();
+  const other = await prepareFacetMigration(f.root);
+  const first = await prepareInstructionFacetBatch([assignment(0)], options);
+  const competing = await prepareInstructionFacetBatch([assignment(1)], { ...options, migration: other });
+  expect((await applyPreparedBatch(first, await approval(first, f.staging))).kind).toBe('applied');
+  expect((await applyPreparedBatch(competing, await approval(competing, f.staging))).kind).toBe('no-write-conflict');
+  await expect(prepareInstructionFacetBatch([assignment(1)], { ...options, migration: other })).rejects.toThrow('changed');
+});
+test('cohort reorder alone fences a prepared migration', async () => {
+  const { f, options, assignment, catalogPath, seeded } = await migrationFixture();
+  const plan = await prepareInstructionFacetBatch([assignment(0)], options);
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
+  catalog.instructions.reverse();
+  await writeFile(catalogPath, JSON.stringify(catalog));
+  const before = await readFile(seeded[0]!.path);
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('no-write-conflict');
+  expect(await readFile(seeded[0]!.path)).toEqual(before);
+});
+test('a target changed after the first write is preserved and fences migration reuse', async () => {
+  const { f, seeded, options, assignment } = await migrationFixture();
+  const plan = await prepareInstructionFacetBatch([assignment(0), assignment(1)], options);
+  const approved = await approval(plan, f.staging);
+  const first = seeded[0]; const second = seeded[1];
+  if (first === undefined || second === undefined) throw new Error('missing fixture');
+  const foreign = Buffer.from('foreign concurrent bytes');
+  const realWrite = files.writeFile;
+  const spy = spyOn(files, 'writeFile').mockImplementation(async (...args: Parameters<typeof files.writeFile>) => {
+    await realWrite(...args);
+    if (String(args[0]) === first.path) await realWrite(second.path, foreign);
+  });
+  try { expect((await applyPreparedBatch(plan, approved)).kind).toBe('partial-or-unknown'); }
+  finally { spy.mockRestore(); }
+  expect(await readFile(second.path)).toEqual(foreign);
+  expect((await reconcilePreparedBatch(plan)).state).toBe('CONFLICT_OR_UNKNOWN');
+  await expect(applyPreparedBatch(plan, approved)).rejects.toThrow('fenced');
+  await expect(prepareInstructionFacetBatch([assignment(1)], options)).rejects.toThrow('fenced');
+});
+for (const name of ['catalog.json', 'corpus-map.json'] as const) {
+  test(`migration rejects a symlinked ${name} before effects`, async () => {
+    const { f, options, assignment } = await migrationFixture();
+    const plan = await prepareInstructionFacetBatch([assignment(0)], options);
+    const path = join(f.root, name); const external = join(f.evidence, `external-${name}`);
+    const bytes = await readFile(path); await mkdir(external); await writeFile(join(external, 'sentinel'), bytes); await rm(path);
+    await files.symlink(external, path, process.platform === 'win32' ? 'junction' : 'dir');
+    await expect(prepareFacetMigration(f.root)).rejects.toThrow('symlink');
+    await expect(prepareInstructionFacetBatch([assignment(0)], options)).rejects.toThrow('symlink');
+    expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('no-write-conflict');
+    expect(await readFile(join(external, 'sentinel'))).toEqual(bytes);
+  });
+}
+test('a newly created foreign target is not overwritten after preflight', async () => {
+  const f = await fixture(2);
+  const plan = await prepareBatch(f.sources, f.options);
+  const approved = await approval(plan, f.staging);
+  const manifest = JSON.parse(await readFile(join(plan.directory, plan.manifest.path), 'utf8'));
+  const creates = manifest.targets.filter((item: { before: string | null }) => item.before === null);
+  expect(creates).toHaveLength(3);
+  const first = join(f.root, creates[0].path); const second = join(f.root, creates[1].path);
+  const realWrite = files.writeFile; const foreign = 'foreign new file';
+  const spy = spyOn(files, 'writeFile').mockImplementation(async (...args: Parameters<typeof files.writeFile>) => {
+    await realWrite(...args);
+    if (String(args[0]) === first) await realWrite(second, foreign);
+  });
+  try { expect((await applyPreparedBatch(plan, approved)).kind).toBe('partial-or-unknown'); }
+  finally { spy.mockRestore(); }
+  expect(await readFile(second, 'utf8')).toBe(foreign);
+  await expect(applyPreparedBatch(plan, approved)).rejects.toThrow('fenced');
+});
+for (const tamper of ['legacy', 'body', 'map', 'extra', 'missing', 'path', 'marker'] as const) {
+  test(`migration rejects ${tamper} drift before writing the next batch`, async () => {
+    const { f, seeded, options, assignment, catalogPath } = await migrationFixture();
+    const first = await prepareInstructionFacetBatch([assignment(0)], options);
+    expect((await applyPreparedBatch(first, await approval(first, f.staging))).kind).toBe('applied');
+    const second = await prepareInstructionFacetBatch([assignment(1)], options);
+    const firstItem = seeded[0]; const secondItem = seeded[1];
+    if (firstItem === undefined || secondItem === undefined) throw new Error('missing fixture');
+    if (tamper === 'legacy') await writeFile(secondItem.path, 'changed legacy');
+    if (tamper === 'body') await writeFile(firstItem.path, Buffer.concat([await readFile(firstItem.path), Buffer.from('changed body')]));
+    if (tamper === 'marker') await writeFile(secondItem.path, (await readFile(secondItem.path, 'utf8')).replace('revision:', 'schema: unknown\nrevision:'));
+    if (tamper === 'map') await writeFile(join(f.root, 'corpus-map.json'), '{}');
+    if (tamper === 'extra') await writeFile(join(f.root, 'instructions', 'extra.md'), 'extra');
+    if (tamper === 'missing') await rm(firstItem.path);
+    if (tamper === 'path') { const catalog = JSON.parse(await readFile(catalogPath, 'utf8')); catalog.instructions[1].path = 'instructions/other.md'; await writeFile(catalogPath, JSON.stringify(catalog)); }
+    const before = await readFile(secondItem.path);
+    expect((await applyPreparedBatch(second, await approval(second, f.staging))).kind).toBe('no-write-conflict');
+    expect(await readFile(secondItem.path)).toEqual(before);
+  });
+}
+test('migration binding rejects a malformed current assessment even when the catalog digest matches', async () => {
+  const { f, seeded, options, assignment, catalogPath } = await migrationFixture();
+  const plan = await prepareInstructionFacetBatch([assignment(0)], options);
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('applied');
+  const item = seeded[0]; if (item === undefined) throw new Error('missing fixture');
+  const bytes = Buffer.from((await readFile(item.path, 'utf8')).replace('revision:', `approach_assessments:\n  - "dimension=execution; state=declared; values=solo; evidence=body:0-1"\napproach_body_sha256: ${'0'.repeat(64)}\nrevision:`));
+  await writeFile(item.path, bytes);
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
+  catalog.instructions[0].sha256 = digest(bytes);
+  await writeFile(catalogPath, JSON.stringify(catalog));
+  expect(checkCorpus(f.root).some(issue => issue.code === 'CORPUS_INSTRUCTION_APPROACH_INVALID')).toBe(true);
+  await expect(prepareFacetMigration(f.root)).rejects.toThrow('migration corpus validation');
+});
+test('legacy preimage stages v1.2 while mixed corpus apply is fenced before effects', async () => {
+  const f = await fixture(1);
+  const seeded = await seedFacetInstruction(f, 0, { body: 'Україна\r\nbody\r\n' });
+  const legacy = Buffer.from('\uFEFF' + seeded.bytes.toString('utf8').replace('schema: VPInstruction/v1.2\nclassification_status: unclassified\nclassification_reason: classification-not-assessed\n', '').replace(/\r?\n/g, '\r\n'));
+  await writeFile(seeded.path, legacy);
+  const catalogPath = join(f.root, 'catalog.json');
+  const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
+  catalog.instructions[0].sha256 = digest(legacy);
+  await writeFile(catalogPath, JSON.stringify(catalog));
+  const catalogBefore = await readFile(catalogPath);
+  const mapBefore = await readFile(join(f.root, 'corpus-map.json'));
+  const assignment = { instruction_id: seeded.entry.instruction_id, expected_sha256: digest(legacy), classification: { classification_status: 'unclassified' as const, classification_reason: 'Not assessed.' } };
+  const plan = await prepareInstructionFacetBatch([assignment], await facetOptions(f));
+  const manifest = JSON.parse(await readFile(join(plan.directory, plan.manifest.path), 'utf8'));
+  const target = manifest.targets.find((item: { path: string }) => item.path.endsWith(`${seeded.entry.instruction_id}.md`));
+  const staged = await readFile(join(plan.directory, target.staged.path));
+  expect(staged.toString('utf8').startsWith('\uFEFF')).toBe(true);
+  expect(suffixAfterFrontmatter(staged)).toEqual(suffixAfterFrontmatter(legacy));
+  expect(parseFrontmatter(staged.toString('utf8')).data).toMatchObject({ schema: 'VPInstruction/v1.2', revision: 2 });
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('no-write-conflict');
+  expect(await readFile(seeded.path)).toEqual(legacy);
+  expect(await readFile(catalogPath)).toEqual(catalogBefore);
+  expect(await readFile(join(f.root, 'corpus-map.json'))).toEqual(mapBefore);
+});
 function nonFacetMetadata(data: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(data).filter(([key]) => !facetFields.has(key)));
 }
@@ -84,7 +285,7 @@ test('prepared batch stages all outputs without writing, then applies once and p
   expect(await readFile(join(f.root, 'unrelated.txt'), 'utf8')).toBe('Keep unrelated bytes.');
   await expect(applyPreparedBatch(plan, { review: { path: 'review.json', sha256: '0'.repeat(64) }, observe: async () => ({ kind: 'unconfirmed' }) })).rejects.toThrow();
 });
-test('metadata-only batches stage strict v1.1 classifications, preserve raw body and map bytes, then apply through the shared owner', async () => {
+test('metadata-only batches stage strict v1.2 classifications, preserve raw body and map bytes, then apply through the shared owner', async () => {
   const f = await fixture(2);
   const first = await seedFacetInstruction(f, 0, { body: 'Alpha Ω\r\n\r\nSecond line.\n\n😀\r\n' });
   const second = await seedFacetInstruction(f, 1, { status: 'disabled' });
@@ -114,9 +315,9 @@ test('metadata-only batches stage strict v1.1 classifications, preserve raw body
   const secondAfter = await readFile(second.path);
   const firstData = parseFrontmatter(firstAfter.toString('utf8')).data;
   const secondData = parseFrontmatter(secondAfter.toString('utf8')).data;
-  expect(firstData).toMatchObject({ schema: 'VPInstruction/v1.1', classification_status: 'classified', instruction_form: 'procedure', domains: ['engineering', 'design-ux'], revision: 2, status: 'active' });
+  expect(firstData).toMatchObject({ schema: 'VPInstruction/v1.2', classification_status: 'classified', instruction_form: 'procedure', domains: ['engineering', 'design-ux'], revision: 2, status: 'active' });
   expect(firstData).not.toHaveProperty('classification_reason');
-  expect(secondData).toMatchObject({ schema: 'VPInstruction/v1.1', classification_status: 'unclassified', classification_reason: 'Evidence is not sufficient yet.', revision: 2, status: 'disabled' });
+  expect(secondData).toMatchObject({ schema: 'VPInstruction/v1.2', classification_status: 'unclassified', classification_reason: 'Evidence is not sufficient yet.', revision: 2, status: 'disabled' });
   expect(secondData).not.toHaveProperty('instruction_form');
   expect(secondData).not.toHaveProperty('domains');
   expect(nonFacetMetadata(firstData)).toEqual(nonFacetMetadata(parseFrontmatter(firstBefore.toString('utf8')).data));
@@ -196,7 +397,7 @@ test('reclassification preserves BOM, CRLF, body bytes and non-facet fields whil
   expect((await applyPreparedBatch(second, await approval(second, f.staging))).kind).toBe('applied');
   const after = await readFile(seeded.path);
   const parsed = parseFrontmatter(after.toString('utf8')).data;
-  expect(parsed).toMatchObject({ schema: 'VPInstruction/v1.1', revision: 3, classification_status: 'unclassified' });
+  expect(parsed).toMatchObject({ schema: 'VPInstruction/v1.2', revision: 3, classification_status: 'unclassified' });
   expect(parsed).not.toHaveProperty('instruction_form');
   expect(parsed).not.toHaveProperty('domains');
   expect(after.subarray(0, 3)).toEqual(Buffer.from([0xef, 0xbb, 0xbf]));

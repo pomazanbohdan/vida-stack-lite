@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/quick-batch/steps/planner-wave.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The frozen body ends mid-sentence after requiring whole-batch wave recomputation, so its operative form cannot be established without supplying missing text."
 ---
 
 # Recompute the layering after every layer

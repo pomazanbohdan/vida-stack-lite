@@ -109,7 +109,12 @@ bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fideli
 
 # Read-only mechanical review of an existing proposal packet
 bun packages/powers/scripts/packet.ts PACKET PRODUCT_ROOT [PRIOR|-] [PACKET_SHA|-] [PRIOR_SHA|-] [REPORT|-] [REPORT_SHA|-] [OFFSET] [LIMIT] [R1_BASIS|-]
+
+# Read-only exact migration plan mechanics; status is not authorization
+bun packages/powers/scripts/review-migration-plan.ts ROOT STAGE PLAN PLAN_SHA prepared|applied OFFSET PREFIX ASSIGNMENTS ASSIGNMENTS_SHA RECEIPT RECEIPT_SHA [--detail] [--plan-review REVIEW REVIEW_SHA]
 ```
+
+The migration-plan checker accepts only the canonical product root or an unattested fixture below the product `.tmp` directory. All paths and hashes are explicit. It checks every current cohort file and up to 25 instruction targets, catalog and map; it does not re-audit prior applications' preimages. `MECHANICAL_MATCH` is not semantic approval, independent review or authorization. Missing evidence is `UNKNOWN`. Optional review binding checks an artifact against the exact plan SHA but does not establish its independence. Reads are non-atomic; concurrent replacement or transient drift can escape detection. Runtime reads/bytes/hashes, data reads/bytes, total hashes, lstat calls and cohort count are operation counters, not time or tokens. Output identifies executed and skipped checks; inspect it. It does not verify rights, classification meaning, nonce, UNKNOWN recovery or timestamp policy. Record comparable same-scope counters and output bytes after every third applied batch; the checker neither tracks nor applies batches. Token savings and timing require separate measurement.
 
 Packet and product-root paths must be absolute; assignments and rows packets use
 `packages/powers/instructions/<id>.md`, proposal packets use `instructions/<id>.md`,
@@ -163,7 +168,7 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | E5a selected host manifests generated from explicit package inputs; production inputs/outputs are absent | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `review-migration-plan.ts` (read-only migration-plan mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |

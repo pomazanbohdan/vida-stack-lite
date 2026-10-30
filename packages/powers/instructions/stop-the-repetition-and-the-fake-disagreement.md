@@ -19,7 +19,13 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/customize/run-multi-agent-discussions.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: principle
+domains:
+  - research
+  - operations
 ---
 
 # Stop the repetition and the fake disagreement

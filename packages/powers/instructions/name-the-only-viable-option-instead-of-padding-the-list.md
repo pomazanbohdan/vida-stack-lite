@@ -18,7 +18,10 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-advisor-researcher.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=agents/gsd-advisor-researcher.compact.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body governs how to present options for an unspecified decision and provides no supported subject domain for classifying the decision itself.
 ---
 
 # Name the only viable option instead of padding the list

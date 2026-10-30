@@ -31,7 +31,12 @@ provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/test-driven-development/SKILL.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=TESTING-STANDARDS.md
 status: active
-revision: 7
+revision: 8
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: principle
+domains:
+  - engineering
 ---
 
 # Write tests that catch a specific break

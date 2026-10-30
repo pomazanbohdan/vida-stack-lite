@@ -1,11 +1,11 @@
 export const INSTRUCTION_FORMS = ['principle', 'decision-rule', 'procedure', 'checklist'] as const;
 export const INSTRUCTION_DOMAINS = ['engineering', 'design-ux', 'product', 'business', 'research', 'operations'] as const;
-export const FACETED_INSTRUCTION_SCHEMA_NAME = 'vpinstruction.v1.1.schema.json';
+export const FACETED_INSTRUCTION_SCHEMA_NAME = 'vpinstruction.v1.2.schema.json';
 
 export type InstructionForm = typeof INSTRUCTION_FORMS[number];
 export type InstructionDomain = typeof INSTRUCTION_DOMAINS[number];
 export type ClassificationStatus = 'classified' | 'unclassified';
-export type InstructionSchemaVersion = 'legacy-v1' | 'faceted-v1.1';
+export type InstructionSchemaVersion = 'faceted-v1.2';
 
 export const INSTRUCTION_FORM_DESCRIPTIONS: Record<InstructionForm, string> = {
   principle: 'Guides judgment.',
@@ -30,8 +30,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export function instructionSchemaVersion(marker: unknown): InstructionSchemaVersion | undefined {
-  if (marker === undefined) return 'legacy-v1';
-  if (marker === 'VPInstruction/v1.1') return 'faceted-v1.1';
+  if (marker === 'VPInstruction/v1.2') return 'faceted-v1.2';
   return undefined;
 }
 

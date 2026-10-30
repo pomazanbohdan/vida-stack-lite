@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/in-chat-techniques.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The source describes choosing from a library but does not identify a supported discipline or concrete operational lifecycle.
 ---
 
 # Never pull the library whole into context

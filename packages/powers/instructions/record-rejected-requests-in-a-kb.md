@@ -20,7 +20,13 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/triage/OUT-OF-SCOPE.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: procedure
+domains:
+  - product
+  - operations
 ---
 
 # Record rejected requests in a knowledge base

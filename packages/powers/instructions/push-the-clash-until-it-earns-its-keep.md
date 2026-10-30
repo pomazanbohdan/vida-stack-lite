@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-party-mode/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body states a generic collaboration goal without identifying a supported engineering, design, product, business, research or operations subject."
 ---
 
 # Push the clash until it earns its keep

@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/in-progress/writing-fragments/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body governs freeform creative-writing exploration and fragment capture, but names no supported engineering, UX, product, business, research, or concrete operations domain."
 ---
 
 # Mine fragments before structuring

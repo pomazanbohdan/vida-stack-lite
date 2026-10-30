@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/teach/GLOSSARY-FORMAT.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body requires a teaching-workspace glossary for learner terminology, but education is outside the six supported domains."
 ---
 
 # Build the glossary as compressed knowledge

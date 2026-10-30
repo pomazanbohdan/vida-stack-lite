@@ -17,7 +17,10 @@ compatibility_requires: []
 provenance:
   - donor=open-knowledge-format; license=Apache-2.0; revision=ad30107c31c06aec8a7d5636e0d1058118604e6f; path=src/reference_agent/prompts/reference_instruction.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body prescribes general document style without grounding it in a product, design-UX, business, research, engineering, or operations task."
 ---
 
 # Write the body concretely and without narration

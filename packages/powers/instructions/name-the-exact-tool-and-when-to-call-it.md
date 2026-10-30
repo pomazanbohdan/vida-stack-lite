@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-core-tools/help/team-adoption.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body gives generic advice to identify a shared tool and its call condition and ensure teammates can connect, without a supported domain or concrete operational tool workflow."
 ---
 
 # Name the exact tool and when to call it

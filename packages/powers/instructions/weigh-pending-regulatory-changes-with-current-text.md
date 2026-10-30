@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/types/domain.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body only names regulated-field advice and pending regulatory text; it does not identify an allowed domain, so assigning business or operations would add context absent from the source."
 ---
 
 # Weigh pending regulatory changes with the current text

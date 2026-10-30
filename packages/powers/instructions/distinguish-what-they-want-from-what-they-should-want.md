@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/interview-me/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body asks for concrete user intent when an answer is only convention or a buzzword; it gives no task subject that grounds a listed domain.
 ---
 
 # Distinguish what they want from what they should want

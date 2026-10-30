@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { lstat } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
@@ -17,6 +18,8 @@ import {
   loadCatalog,
   loadInstructions,
   readSchema,
+  parseApproachSelectors,
+  evaluateApproaches,
 } from './catalog.ts';
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
 import { validateAgainstSchema } from './schema.ts';
@@ -30,7 +33,7 @@ import {
 } from './instruction-facets.ts';
 import type { ClassificationStatus, InstructionDomain, InstructionForm } from './instruction-facets.ts';
 
-const commandNames = ['tags', 'search', 'get', 'compose', 'evaluate', 'browse', 'findings'] as const;
+const commandNames = ['tags', 'search', 'explain', 'get', 'compose', 'evaluate', 'browse', 'findings'] as const;
 type Command = typeof commandNames[number];
 type FindingsOperation = 'append' | 'candidates';
 type ParsedArgs = { kind: 'help'; command?: Command }
@@ -94,17 +97,37 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--form': { arity: 'list', value: 'FORM', description: 'OR within supported instruction forms.' },
       '--domain': { arity: 'list', value: 'DOMAIN', description: 'OR within supported domains.' },
       '--classification-status': { arity: 'list', value: 'STATUS', description: 'Select classified or unclassified records.' },
+      '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Filter to the current resolved effective profile.' },
       '--limit': { arity: 'scalar', value: 'N', description: 'Return at most N rows.' },
       '--offset': { arity: 'scalar', value: 'N', description: 'Skip N rows after deduplication.' },
     },
     examples: ['search --capability test-design acceptance-design', 'search --domain engineering operations --form procedure checklist'],
   },
+  explain: {
+    description: 'Explain approach decisions for discovery candidates; metadata is not authority.',
+    flags: {
+      '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
+      '--capability': { arity: 'list', value: 'TAG', description: 'Filter capability tags.' },
+      '--pattern': { arity: 'list', value: 'TAG', description: 'Filter pattern tags.' },
+      '--id': { arity: 'list', value: 'ID', description: 'Filter instruction IDs.' },
+      '--roles': { arity: 'list', value: 'ROLE', description: 'Filter roles.' },
+      '--product': { arity: 'list', value: 'PRODUCT', description: 'Filter products.' },
+      '--condition': { arity: 'list', value: 'TOKEN', description: 'Filter conditions.' },
+      '--form': { arity: 'list', value: 'FORM', description: 'Filter forms.' },
+      '--domain': { arity: 'list', value: 'DOMAIN', description: 'Filter domains.' },
+      '--classification-status': { arity: 'list', value: 'STATUS', description: 'Filter classification status.' },
+      '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
+      '--profile': { arity: 'scalar', value: 'PATH', description: 'Use the effective profile.' },
+    },
+    examples: ['explain --approach execution=solo'],
+  },
   get: {
     description: 'Compose required instructions with dependencies and print their source bodies and obligations as text.',
     flags: {
       '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
       '--id': { arity: 'list', value: 'ID', description: 'Required instruction IDs; all must compose.' },
+      '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Required effective profile from this snapshot.' },
     },
     examples: ['get --id alpha beta --profile .tmp/effective-profile.json'],
@@ -117,6 +140,7 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--pattern': { arity: 'list', value: 'TAG', description: 'OR within pattern tags.' },
       '--id': { arity: 'list', value: 'ID', description: 'Restrict candidate IDs.' },
       '--required': { arity: 'list', value: 'ID', description: 'Require these instruction IDs.' },
+      '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--role': { arity: 'scalar', value: 'ROLE', description: 'Set compose execution context.' },
       '--roles': { arity: 'list', value: 'ROLE', description: 'Filter instruction roles; distinct from --role.' },
       '--product': { arity: 'list', value: 'PRODUCT', description: 'Filter products.' },
@@ -144,6 +168,7 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
     flags: {
       '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
       '--axis': { arity: 'scalar', value: 'domain|form', description: 'Show one facet axis; default shows both.' },
+      '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--limit': { arity: 'scalar', value: 'N', description: 'Return at most N rows.' },
       '--offset': { arity: 'scalar', value: 'N', description: 'Skip N rows after deduplication.' },
     },
@@ -398,7 +423,8 @@ function validateStaticFlags(command: Command, flags: Map<string, string[]>): vo
   if (flags.has('--offset')) nonnegativeInteger(flags, '--offset', 0);
   if (command === 'tags') tagMatch(flags);
   if (command === 'browse') browseAxis(flags);
-  if (command === 'search') {
+  if (flags.has('--approach')) parseApproachSelectors(listValues(flags, '--approach'));
+  if (command === 'search' || command === 'explain') {
     allowedListValues(flags, '--form', isInstructionForm);
     allowedListValues(flags, '--domain', isInstructionDomain);
     allowedListValues(flags, '--classification-status', isClassificationStatus);
@@ -494,6 +520,19 @@ function renderGet(bundle: ComposedBundle, catalog: Catalog, instructions: Map<s
 }
 
 async function dispatch(command: Exclude<Command, 'findings'>, flags: Map<string, string[]>, catalogPath: string): Promise<DispatchResult> {
+  const directory = dirname(resolve(catalogPath));
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
+  const digest = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
+  const bindingPaths: Record<string, string> = command === 'explain' ? {
+    catalog_sha256: catalogPath,
+    catalog_schema_sha256: resolve(directory, 'config/vpcatalog.v1.schema.json'),
+    instruction_schema_sha256: resolve(directory, 'config/vpinstruction.v1.2.schema.json'),
+    policy_sha256: resolve(packageRoot, 'config/methodology-profile.json'),
+    policy_schema_sha256: resolve(packageRoot, 'config/vpmethodologyprofile.v1.schema.json'),
+    ...(one(flags, '--profile') === undefined ? {} : { profile_sha256: required(flags, '--profile'), profile_schema_sha256: resolve(directory, 'config/vpeffectiveprofile.v1.schema.json') }),
+  } : {};
+  const bindings: Record<string, string> = {};
+  for (const [key, path] of Object.entries(bindingPaths)) bindings[key] = await digest(path);
   const catalog = await loadCatalog(catalogPath);
   if (command === 'tags') {
     const terms = listValues(flags, '--query');
@@ -513,10 +552,11 @@ async function dispatch(command: Exclude<Command, 'findings'>, flags: Map<string
   switch (command) {
     case 'browse': {
       const axis = browseAxis(flags);
-      const rows = browseRows(catalogBrowse(catalog, instructions), axis);
+      const rows = browseRows(catalogBrowse(catalog, instructions, listValues(flags, '--approach')), axis);
       return compactRows(rows, flags);
     }
-    case 'search': {
+    case 'search':
+    case 'explain': {
       const query: SearchQuery = {};
       const capabilityTags = listValues(flags, '--capability');
       const patternTags = listValues(flags, '--pattern');
@@ -537,6 +577,26 @@ async function dispatch(command: Exclude<Command, 'findings'>, flags: Map<string
       if (domains !== undefined) query.domains = domains;
       if (classificationStatuses !== undefined) query.classification_statuses = classificationStatuses;
       const profile = await profileAt(one(flags, '--profile'), dirname(resolve(catalogPath)));
+      const approaches = listValues(flags, '--approach');
+      if (command === 'explain') {
+        const selectors = parseApproachSelectors(approaches);
+        const ordinaryCandidates = catalogSearch(catalog, instructions, query);
+        const included = profile === undefined ? ordinaryCandidates : catalogSearchWithProfile(catalog, instructions, { ...query, ...(approaches === undefined ? {} : { approaches }) }, profile);
+        const includedIds = new Set(included.map(item => item.instruction_id));
+        const candidates = profile === undefined ? ordinaryCandidates : ordinaryCandidates.filter(({ instruction_id }) => {
+          const instruction = instructions.get(instruction_id);
+          if (instruction === undefined) throw invalid('candidate missing', { instruction_id });
+          return includedIds.has(instruction_id) || !evaluateApproaches(instruction, selectors).included;
+        });
+        for (const [key, path] of Object.entries(bindingPaths)) if (bindings[key] !== await digest(path)) throw invalid('explain input changed during evaluation', { input: key });
+        for (const entry of catalog.instructions) if (entry.sha256 !== await digest(resolve(directory, entry.path))) throw invalid('instruction changed during explanation', { instruction_id: entry.instruction_id });
+        return { kind: 'json', value: { bindings, selectors, candidates: candidates.map(({ instruction_id }) => {
+          const instruction = instructions.get(instruction_id);
+          if (instruction === undefined) throw invalid('candidate missing', { instruction_id });
+          return { instruction_id, source_sha256: catalog.instructions.find((entry) => entry.instruction_id === instruction_id)?.sha256, body_sha256: createHash('sha256').update(instruction.content, 'utf8').digest('hex'), ...evaluateApproaches(instruction, selectors) };
+        }) } };
+      }
+      if (approaches !== undefined) query.approaches = approaches;
       const matches = profile === undefined
         ? catalogSearch(catalog, instructions, query)
         : catalogSearchWithProfile(catalog, instructions, query, profile);
@@ -547,12 +607,15 @@ async function dispatch(command: Exclude<Command, 'findings'>, flags: Map<string
       const ids = listValues(flags, '--id');
       if (ids === undefined) throw invalid('missing required flag --id', { flag: '--id' });
       const profile = await profileAt(required(flags, '--profile'), dirname(resolve(catalogPath)));
-      const bundle = catalogCompose(catalog, instructions, { required_ids: ids, profile });
+      const approaches = listValues(flags, '--approach');
+      const bundle = catalogCompose(catalog, instructions, { required_ids: ids, profile, ...(approaches === undefined ? {} : { approaches }) });
       return { kind: 'text', text: renderGet(bundle, catalog, instructions) };
     }
     case 'compose': {
       const profile = await profileAt(one(flags, '--profile'), dirname(resolve(catalogPath)));
       const query: ComposeQuery = {};
+      const approaches = listValues(flags, '--approach');
+      if (approaches !== undefined) query.approaches = approaches;
       const capabilityTags = listValues(flags, '--capability');
       const patternTags = listValues(flags, '--pattern');
       const instructionIds = listValues(flags, '--id');

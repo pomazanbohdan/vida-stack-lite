@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/references/editorial-common.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body governs editorial word-count estimates but provides no defensible substantive domain within the six supported values; assigning one would require adding project context.
 ---
 
 # Ground the length estimate in word counts

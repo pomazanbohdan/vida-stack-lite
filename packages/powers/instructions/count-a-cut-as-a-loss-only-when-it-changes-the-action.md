@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/toolsmith/modes.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: The body evaluates instruction edits but does not ground that editing rule in any supported domain.
 ---
 
 # Count a cut as a loss only when it changes the action

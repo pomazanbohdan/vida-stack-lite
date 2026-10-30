@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/templates/requirements.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body maps generic requirements to roadmap phases without identifying what the requirements or roadmap govern, so no domain is grounded."
 ---
 
 # Map every requirement to a phase and treat the gap as a defect

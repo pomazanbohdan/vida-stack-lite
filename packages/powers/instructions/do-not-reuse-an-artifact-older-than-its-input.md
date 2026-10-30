@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/context-drift-gate.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body describes an artifact timestamp comparison and neighboring drift gates but gives no body-level rule, conditional obligation, ordered action, or checklist."
 ---
 
 # Do not reuse an artefact older than its input

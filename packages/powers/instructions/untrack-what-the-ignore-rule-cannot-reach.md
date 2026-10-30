@@ -18,7 +18,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/keep-planning-docs-private.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body explains .gitignore and --cached effects but gives no clear judgment principle, conditional choice, ordered procedure, or checklist; the four-form contract does not support a forced form."
 ---
 
 # Untrack what the ignore rule cannot reach

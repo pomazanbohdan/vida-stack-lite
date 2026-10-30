@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-phase/steps/post-merge-gate.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body refers to missing report contents and ends an incomplete 'Subsequent waves should report' list, so its instruction form cannot be assigned without reconstructing omitted text."
 ---
 
 # Report a gate failure and carry it forward

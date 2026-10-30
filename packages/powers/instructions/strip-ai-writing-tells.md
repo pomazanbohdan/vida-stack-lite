@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/unslop/SKILL.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "Body lists general prose-editing rules for any human-read text; conditions distinguish editable text from fixed templates, but neither establishes a supported domain."
 ---
 
 # Strip AI writing tells

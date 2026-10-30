@@ -1,10 +1,24 @@
 # Directory Update Log
 
+## 2026-10-30
+
+* **D16 corpus migration:** Migrated all 2,510 instructions to VPInstruction/v1.2 through reviewed batches. The final converter receipt reports strict corpus validation and zero remaining; a separate corpus check reports 2,510 instructions and zero issues. The final runner's native exit was observed as code 0. Historical snapshot and process-custody gaps remain open; this does not establish rights, release or Runtime acceptance.
+
+## 2026-10-29
+
+* **Read-only migration-plan evidence:** Added bounded plan mechanics and focused fixture tests. Semantic review, independent review, Root authorization, runtime acceptance and lifecycle fences remain separate.
+
 ## 2026-10-28
 
 * **Packet counter and evidence correction:** The proposal checker labels declared-counter bases and checks available saved-hash and catalog-order claims; comparisons without their required basis remain unchecked. An optional pinned r1 input checks proposal-wide r1-to-current-capture drift separately from saved r2-to-current and selected current-file drift. The earlier focused coverage command replaced `packages/powers/coverage/lcov.info`; its previous bytes were not retained and cannot be recovered from that file. The replacement is focused evidence, not package coverage. Independent review, package gate and historical custody remain open.
 
 * **Proposal packet mechanics:** Added `scripts/packet.ts` and focused tests for read-only proposal validation, slice selection, parser roundtrips and explicit mismatch reporting. It does not establish semantic review or an atomic snapshot; declared scope and optional report/delta checks remain explicitly bounded. Independent final Source review and package acceptance remain open.
+
+* **Approach selector review repair:** Check approach compatibility after inactive-dependency profile substitution and exclude declared contradictions before candidate-specific profile negotiation. Explain retains excluded candidate decisions; browse remains descriptive. Current reader/checker are v1.2-only; corpus migration and current-Source acceptance remain open. Earlier 598-test and real-corpus evidence remains historical.
+
+* **Approach selector slice:** Added task-local approach selectors and metadata-only explanation to the catalog and CLI. Declared disjoint values exclude discovery candidates and reject required or dependency conflicts; uncertain and unassessed records remain visible. Profile policy, declared exclusions and bundle bounds remain authoritative. The canonical corpus remains on legacy markers and requires a separately qualified v1.2 converter and migration before real-corpus retrieval can succeed; no delivery or Runtime acceptance is claimed.
+
+* **Profile guard integration in progress:** Reject noncanonical effective profile groups and duplicate source group/alternative ownership; report forbidden product-policy selection as a policy conflict. Synthetic checker tests pass. Catalog tests expose seven fixture/expectation failures requiring reconciliation; v1.2 reader and corpus conversion remain open. No package or Runtime acceptance is claimed.
 
 ## 2026-10-26
 

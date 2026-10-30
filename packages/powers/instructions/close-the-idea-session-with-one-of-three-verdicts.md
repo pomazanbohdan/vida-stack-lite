@@ -19,7 +19,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/explore-and-validate-an-idea.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body describes an idea session but names no supported domain; assigning product, research, or design-ux would infer context."
 ---
 
 # Close the idea session with one of three verdicts

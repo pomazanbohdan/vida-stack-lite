@@ -17,7 +17,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/templates/log-template.md
 status: active
-revision: 1
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body sets a length and empty-field rule for an unspecified log entry, but identifies no supported domain in either the text or its conditions."
 ---
 
 # Keep each log entry short

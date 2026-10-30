@@ -72,6 +72,8 @@ No feature implementation occurs in the documentation reconciliation that create
 
 H3 cannot run in parallel with H2. No phase inherits a PASS from E4 or another phase.
 
+The prospective H2 VPInstruction/v2 contract preserves approved v1.2 facet and approach metadata. This does not commit to dual-runtime or backward compatibility. The v1.2 reader and corpus cutover remain pending.
+
 ## H0 — baseline and plan closeout
 
 - **Owner:** repository owner for frozen checks; independent M3.1 reviewer for the plan.

@@ -26,7 +26,10 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/SKILL.md
 status: active
-revision: 3
+revision: 4
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: "The body defines a canonical structured finding schema and rendering exception, but no supported judgment, choice, ordered action sequence, or checks."
 ---
 
 # Report the review in one canonical finding shape
