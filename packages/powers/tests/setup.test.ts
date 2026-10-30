@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
-import { detectCarrier, profileBlock, readInventory, resolveProfile, runCli, runSetup, upsertProfile } from '../skills/vp-setup/scripts/setup.ts';
+import { detectCarrier, profileBlock, readInventory, readProfileBlock, resolveProfile, runCli, runSetup, upsertProfile } from '../skills/vp-setup/scripts/setup.ts';
 import type { EffectiveProfile, ModelInventory } from '../skills/vp-setup/scripts/setup.ts';
 
 const script = fileURLToPath(new URL('../skills/vp-setup/scripts/cli.ts', import.meta.url));
@@ -134,6 +134,97 @@ describe('vp-setup', () => {
     expect(empty.limitations.length).toBeGreaterThan(0);
     const agentOnly: ModelInventory = { providers: [{ id: 'agent-provider', models: [{ id: 'agent-model', family: 'agent-family', roles: ['agent'], available: true }] }] };
     expect(resolveProfile(source as never, { selections: {}, inventory: agentOnly }).verification.lane_assignment[0]?.model).toBe('agent-model');
+  });
+
+  test('records a task-scoped override without persisting it', async () => {
+    const root = await temp();
+    const inventoryPath = join(root, 'inventory.json');
+    await writeFile(inventoryPath, JSON.stringify(inventory));
+    const selections = { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-measured' };
+    try {
+      const normal = await runSetup({ root, carrier: 'host-shim', selections, inventoryPath });
+      const overridden = await runSetup({
+        root,
+        carrier: 'host-shim',
+        selections,
+        inventoryPath,
+        taskOverride: { task: 'hotfix-release', selections: { 'approval-policy': 'approval-policy-proceed' } },
+      });
+      expect(overridden.profile.task_override).toEqual({
+        task: 'hotfix-release',
+        groups: { 'approval-policy': { active: 'approval-policy-proceed', alternatives: ['approval-policy-proceed', 'approval-policy-gate'], previous_active: 'approval-policy-gate' } },
+      });
+      expect(overridden.profile.groups['approval-policy']?.active).toBe('approval-policy-proceed');
+      expect(overridden.profile.groups['context-degradation-policy']?.active).toBe('context-degradation-measured');
+      const written = JSON.parse(await readFile(overridden.path, 'utf8'));
+      expect(written.task_override).toBeUndefined();
+      expect(written.groups['approval-policy'].active).toBe('approval-policy-gate');
+      expect(await readFile(overridden.path, 'utf8')).toBe(await readFile(normal.path, 'utf8'));
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
+  test('refuses a task override on a product-policy group or an unknown alternative', () => {
+    expect(() => resolveProfile(source as never, {
+      selections: { 'approval-policy': 'approval-policy-gate' },
+      inventory,
+      taskOverride: { task: 'hotfix', selections: { 'testing-sequence': 'test-first-development' } },
+    })).toThrow('task override cannot change product-policy group testing-sequence');
+    expect(() => resolveProfile(source as never, {
+      selections: {},
+      inventory,
+      taskOverride: { task: 'hotfix', selections: { 'approval-policy': 'approval-policy-proceed' } },
+    })).not.toThrow();
+    expect(() => resolveProfile(source as never, {
+      selections: {},
+      inventory,
+      taskOverride: { task: 'hotfix', selections: { 'approval-policy': 'nope' } },
+    })).toThrow('invalid alternative nope for group approval-policy');
+    expect(() => resolveProfile(source as never, { selections: {}, inventory, taskOverride: { task: ' ', selections: {} } }))
+      .toThrow('task override requires a task name');
+    expect(() => resolveProfile(source as never, { selections: {}, inventory, taskOverride: { task: 'hotfix', selections: { nope: 'x' } } }))
+      .toThrow('unknown group nope');
+  });
+
+  test('an override of an unresolved group is scoped to the task and leaves the carrier untouched', () => {
+    const blocked = resolveProfile(source as never, {
+      selections: {},
+      inventory,
+      taskOverride: { task: 'hotfix', selections: { 'approval-policy': 'approval-policy-proceed' } },
+    });
+    expect(blocked.task_override?.groups['approval-policy']).toEqual({
+      active: 'approval-policy-proceed',
+      alternatives: ['approval-policy-proceed', 'approval-policy-gate'],
+    });
+    expect(blocked.unresolvedGroups).not.toContain('approval-policy');
+    expect(profileBlock(blocked)).not.toContain('approval-policy');
+  });
+
+  test('the light flow level keeps every mandatory policy group resolved', () => {
+    const selections = { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-signals' };
+    const light = resolveProfile(source as never, { selections, flowLevel: 'light', inventory });
+    const full = resolveProfile(source as never, { selections, flowLevel: 'full', inventory });
+    expect(light.flow_level).toBe('light');
+    expect(light.groups).toEqual(full.groups);
+    expect(light.unresolvedGroups).toEqual([]);
+    expect(light.verification).toEqual(full.verification);
+  });
+
+  test('standalone, runtime and host-shim carriers read back the same profile semantics', async () => {
+    const root = await temp();
+    const inventoryPath = join(root, 'inventory.json');
+    await writeFile(inventoryPath, JSON.stringify(inventory));
+    const selections = { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-measured' };
+    try {
+      const standalone = await runSetup({ root, carrier: 'standalone', selections, inventoryPath });
+      const runtime = await runSetup({ root, carrier: 'runtime', selections, inventoryPath });
+      const host = await runSetup({ root, carrier: 'host-shim', selections, inventoryPath });
+      const fromBlock = readProfileBlock(await readFile(standalone.path, 'utf8'));
+      const runtimeProfile = JSON.parse(await readFile(runtime.path, 'utf8'));
+      const hostProfile = JSON.parse(await readFile(host.path, 'utf8'));
+      expect(fromBlock).toEqual(runtimeProfile);
+      expect(runtimeProfile).toEqual(hostProfile);
+      expect(validateAgainstSchema(fromBlock, effectiveProfileSchema)).toEqual([]);
+    } finally { await rm(root, { recursive: true, force: true }); }
   });
 
   test('runSetup writes carrier idempotently and dry-run does not write', async () => {

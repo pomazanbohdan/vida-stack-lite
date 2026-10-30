@@ -5,10 +5,10 @@ import { fileURLToPath } from 'node:url';
 
 export type Carrier = 'standalone' | 'runtime' | 'host-shim';
 export type ModelInventory = { providers: { id: string; models: { id: string; family: string; roles: ('main'|'agent')[]; available: boolean }[] }[] };
-export type SetupOptions = { root: string; carrier?: Carrier; inventoryPath?: string; selections?: Record<string,string>; flowLevel?: 'full'|'medium'|'light'; dryRun?: boolean; now?: () => string };
+export type SetupOptions = { root: string; carrier?: Carrier; inventoryPath?: string; selections?: Record<string,string>; flowLevel?: 'full'|'medium'|'light'; taskOverride?: { task: string; selections: Record<string,string> }; dryRun?: boolean; now?: () => string };
 type MethodologyProfile = { groups: { id: string; user_decision: boolean; default?: string; alternatives: { id: string }[] }[] };
 type LanePolicy = 'independent-provider' | 'independent-model' | 'blind-same-model';
-export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; unresolved_groups: Record<string, string[]>; flow_level?: 'full'|'medium'|'light'; verification: { available_models: { provider: string; model: string; family: string; roles: ('main'|'agent')[]; available: boolean }[]; lane_assignment: { lane: string; provider: string; model: string; blind: boolean }[]; lane_policy: LanePolicy; limitations: string }; unresolvedGroups: string[]; limitations: string[] };
+export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; unresolved_groups: Record<string, string[]>; flow_level?: 'full'|'medium'|'light'; task_override?: { task: string; groups: Record<string, { active: string; alternatives: string[]; previous_active?: string }> }; verification: { available_models: { provider: string; model: string; family: string; roles: ('main'|'agent')[]; available: boolean }[]; lane_assignment: { lane: string; provider: string; model: string; blind: boolean }[]; lane_policy: LanePolicy; limitations: string }; unresolvedGroups: string[]; limitations: string[] };
 
 const begin = '<!-- vida-powers:profile:begin -->';
 const end = '<!-- vida-powers:profile:end -->';
@@ -32,7 +32,7 @@ function available(inventory: ModelInventory): { provider: string; model: string
   return inventory.providers.flatMap((provider) => provider.models.filter((model) => model.available).map((model) => ({ provider: provider.id, model: model.id, family: model.family, roles: model.roles, available: model.available })));
 }
 
-export function resolveProfile(sourceProfile: MethodologyProfile, options: { selections: Record<string,string>; flowLevel?: 'full'|'medium'|'light'; inventory: ModelInventory }): EffectiveProfile {
+export function resolveProfile(sourceProfile: MethodologyProfile, options: { selections: Record<string,string>; flowLevel?: 'full'|'medium'|'light'; inventory: ModelInventory; taskOverride?: { task: string; selections: Record<string,string> } }): EffectiveProfile {
   const groups: EffectiveProfile['groups'] = {};
   const unresolvedGroups: string[] = [];
   const unresolved_groups: EffectiveProfile['unresolved_groups'] = {};
@@ -47,6 +47,23 @@ export function resolveProfile(sourceProfile: MethodologyProfile, options: { sel
   }
   for (const groupId of Object.keys(options.selections)) {
     if (!sourceProfile.groups.some((group) => group.id === groupId)) throw new Error(`unknown group ${groupId}`);
+  }
+  const overridden: NonNullable<EffectiveProfile['task_override']>['groups'] = {};
+  if (options.taskOverride !== undefined) {
+    if (options.taskOverride.task.trim() === '') throw new Error('task override requires a task name');
+    for (const [groupId, chosen] of Object.entries(options.taskOverride.selections)) {
+      const group = sourceProfile.groups.find((item) => item.id === groupId);
+      if (group === undefined) throw new Error(`unknown group ${groupId}`);
+      if (!group.user_decision) throw new Error(`task override cannot change product-policy group ${groupId}`);
+      const alternativeIds = group.alternatives.map((alternative) => alternative.id);
+      if (!alternativeIds.includes(chosen)) throw new Error(`invalid alternative ${chosen} for group ${groupId}`);
+      const previous = groups[groupId]?.active;
+      groups[groupId] = { active: chosen, alternatives: alternativeIds };
+      overridden[groupId] = { active: chosen, alternatives: alternativeIds, ...(previous === undefined ? {} : { previous_active: previous }) };
+      delete unresolved_groups[groupId];
+      const pending = unresolvedGroups.indexOf(groupId);
+      if (pending >= 0) unresolvedGroups.splice(pending, 1);
+    }
   }
   const models = available(options.inventory);
   const executor = models.find((model) => model.roles.includes('main')) ?? models.find((model) => model.roles.includes('agent'));
@@ -73,12 +90,23 @@ export function resolveProfile(sourceProfile: MethodologyProfile, options: { sel
   ];
   const result: EffectiveProfile = { schema: 'VPEffectiveProfile/v1', groups, unresolved_groups, verification: { available_models: models, lane_assignment, lane_policy, limitations }, unresolvedGroups, limitations: [...(unresolvedGroups.length > 0 ? [`Unresolved groups: ${unresolvedGroups.join(', ')}.`] : []), limitations] };
   if (options.flowLevel !== undefined) result.flow_level = options.flowLevel;
+  if (options.taskOverride !== undefined) result.task_override = { task: options.taskOverride.task, groups: overridden };
   return result;
 }
 
-function persisted(profile: EffectiveProfile): Omit<EffectiveProfile, 'unresolvedGroups'|'limitations'> {
-  const { unresolvedGroups: _unresolved, limitations: _limits, ...value } = profile;
-  return value;
+function persisted(profile: EffectiveProfile): Omit<EffectiveProfile, 'unresolvedGroups'|'limitations'|'task_override'> {
+  const { unresolvedGroups: _unresolved, limitations: _limits, task_override, ...value } = profile;
+  if (task_override === undefined) return value;
+  const groups = { ...value.groups };
+  for (const [groupId, override] of Object.entries(task_override.groups)) {
+    if (override.previous_active === undefined) delete groups[groupId];
+    else groups[groupId] = { active: override.previous_active, alternatives: override.alternatives };
+  }
+  return { ...value, groups };
+}
+
+export function readProfileBlock(content: string): unknown | undefined {
+  return parsedBlock(content);
 }
 
 export function profileBlock(profile: EffectiveProfile): string {
@@ -119,7 +147,7 @@ export async function runSetup(options: SetupOptions): Promise<{ carrier: Carrie
   const carrier = options.carrier ?? detectCarrier(options.root);
   const inventoryPath = options.inventoryPath ?? process.env.VP_MODEL_INVENTORY;
   const inventory = inventoryPath === undefined ? { providers: [] } : readInventory(inventoryPath);
-  const profile = resolveProfile(source, { selections: options.selections ?? {}, inventory, ...(options.flowLevel === undefined ? {} : { flowLevel: options.flowLevel }) });
+  const profile = resolveProfile(source, { selections: options.selections ?? {}, inventory, ...(options.flowLevel === undefined ? {} : { flowLevel: options.flowLevel }), ...(options.taskOverride === undefined ? {} : { taskOverride: options.taskOverride }) });
   const path = carrier === 'standalone'
     ? join(resolve(options.root), existsSync(join(options.root, 'AGENTS.md')) ? 'AGENTS.md' : existsSync(join(options.root, 'CLAUDE.md')) ? 'CLAUDE.md' : 'AGENTS.md')
     : carrier === 'runtime' ? join(resolve(options.root), '.vida', 'vp-profile.json') : join(resolve(options.root), 'vida-project-profile.json');

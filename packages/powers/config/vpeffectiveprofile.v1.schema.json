@@ -28,6 +28,27 @@
       }
     },
     "flow_level": { "enum": ["full", "medium", "light"] },
+    "task_override": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task", "groups"],
+      "properties": {
+        "task": { "type": "string", "minLength": 1 },
+        "groups": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["active", "alternatives"],
+            "properties": {
+              "active": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" },
+              "previous_active": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" },
+              "alternatives": { "type": "array", "items": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" } }
+            }
+          }
+        }
+      }
+    },
     "verification": {
       "type": "object", "additionalProperties": false,
       "required": ["available_models", "lane_assignment", "lane_policy", "limitations"],

@@ -35,6 +35,8 @@ Do not use `decision.evaluate` scores or tag counts as calibrated semantic relev
 
 Agent Fallback is mandatory. Route to the main agent when a delegated agent is unavailable, times out (timeout), returns an API error or malformed format, names an unknown candidate ID, or has insufficient confidence. Materialize the source of the decision, selected IDs, and fallback reason. For every output, follow its `artifact_contract`: produce the required data at the requested destination and report the specified verification. Do not claim materialization or verification that did not occur. These rules preserve SR-22, SR-23, SR-24, SR-25, and AC-13.
 
+The effective profile may carry a `task_override` block for one task. Apply it for that task only, pass it unchanged to delegated agents, and never write it into a carrier; it never changes the permanent profile, another product, a permission or a security gate. The depth level (`full`, `medium`, `light`) changes ceremony only: mandatory acceptance criteria, materialization and gates always apply.
+
 ## Findings procedure
 
 Check artifact presence, format, and digest against the requested revision separately from any semantic review. A correct artifact digest does not prove that its contents are valid or equivalent to another finding.
