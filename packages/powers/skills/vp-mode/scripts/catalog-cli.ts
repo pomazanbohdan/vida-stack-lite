@@ -22,6 +22,8 @@ import {
   readSchema,
   parseApproachSelectors,
   evaluateApproaches,
+  tagTokens,
+  stemToken,
 } from './catalog.ts';
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
 import { validateAgainstSchema } from './schema.ts';
@@ -489,6 +491,29 @@ function topPatternFor(instructions: Map<string, LoadedInstruction>, capability:
     .sort((left, right) => right[1] - left[1] || (left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0))[0]?.[0];
 }
 
+function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonly string[]): { capability: string; pattern?: string } | undefined {
+  const query = [...new Set(terms.flatMap(tagTokens).map(stemToken))];
+  if (query.length === 0) return undefined;
+  const counts = new Map<string, number>();
+  const nameSets = new Map<string, Set<string>>();
+  for (const instruction of instructions.values()) {
+    for (const capability of instruction.capability_tags) {
+      counts.set(capability, (counts.get(capability) ?? 0) + 1);
+      if (!nameSets.has(capability)) nameSets.set(capability, new Set(tagTokens(capability).map(stemToken)));
+    }
+  }
+  const ranked = [...nameSets.entries()]
+    .map(([capability, names]) => ({ capability, score: query.filter((token) => names.has(token)).length }))
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score
+      || (counts.get(right.capability) ?? 0) - (counts.get(left.capability) ?? 0)
+      || (left.capability < right.capability ? -1 : left.capability > right.capability ? 1 : 0));
+  const best = ranked[0]?.capability;
+  if (best === undefined) return undefined;
+  const pattern = topPatternFor(instructions, best);
+  return { capability: best, ...(pattern === undefined ? {} : { pattern }) };
+}
+
 function allowedListValues<T extends string>(
   flags: Map<string, string[]>,
   name: string,
@@ -678,8 +703,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       let resolved: string | undefined;
       const forTerms = listValues(flags, '--for');
       if (forTerms !== undefined) {
-        const found = catalogFindTags(catalog, forTerms, 'any');
-        const capability = capabilityTags?.[0] ?? found.find((item) => item.dimension === 'capability')?.tag;
+        const resolvedTags = resolveFor(instructions, forTerms);
+        const capability = capabilityTags?.[0] ?? resolvedTags?.capability;
         if (capability === undefined) throw invalid('no capability matched --for; run tags --query with canonical nouns', { terms: forTerms });
         const pattern = patternTags?.[0] ?? topPatternFor(instructions, capability);
         capabilityTags = capabilityTags ?? [capability];

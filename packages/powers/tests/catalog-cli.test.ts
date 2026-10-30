@@ -1737,11 +1737,19 @@ describe('retrieval workflow contract', () => {
     expect(resolved.stderr).toContain('pattern=systematic-debugging');
     expect(resolved.stdout.trim().split('\n').length).toBeGreaterThan(0);
 
+    const review = await runInProcess(['search', '--for', 'review', 'typescript', 'pull', 'request', '--catalog', realCatalog]);
+    expect(review.status).toBe(0);
+    expect(review.stderr).toContain('resolved: capability=review-code');
+
+    const migration = await runInProcess(['search', '--for', 'legacy', 'endpoint', 'consumer', 'migration', '--catalog', realCatalog]);
+    expect(migration.status).toBe(0);
+    expect(migration.stderr).toContain('resolved: capability=migrate-consumers-off-the-old-system');
+
     const explicit = await runInProcess(['search', '--for', 'debugging', '--capability', 'review-code', '--catalog', realCatalog]);
     expect(explicit.status).toBe(0);
     expect(explicit.stderr).toContain('resolved: capability=review-code');
 
-    const missing = await runInProcess(['search', '--for', 'zzzznotatag', '--catalog', realCatalog]);
+    const missing = await runInProcess(['search', '--for', 'argument', 'option', 'parser', 'flag', '--catalog', realCatalog]);
     expect(missing.status).toBe(1);
     expect(missing.stderr).toContain('no capability matched --for');
   });

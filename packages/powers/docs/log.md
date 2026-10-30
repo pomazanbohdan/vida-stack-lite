@@ -2,6 +2,8 @@
 
 ## 2026-10-30
 
+* **`--for` resolver corrected after the fourth blind round:** The first resolver scored words from tag descriptions, so "option" resolved to ideation and "fix" to review-feedback in three of six first passes. It now scores only capability tag names, breaks ties by corpus size, and returns an explicit no-match error instead of guessing; `stemToken`/`tagTokens` are shared from the catalog owner. Tests cover review, consumer migration, debugging and the option/parser false positive. Package gate: 697 passed, 4 Windows skips, 0 failures, 100 % functions and lines.
+
 * **One-call retrieval and a wider first page:** `search --for "<terms>"` now resolves a capability and its most frequent pattern from the dictionary in a single call and prints the resolved tags on stderr, so the separate `tags` step disappears; explicit `--capability` or `--pattern` still override either dimension. The default page grew from 10 to 20 rows, which covers the common case where the decisive instruction sat on page two. `SKILL.md`, `--help` and the skill-contract test describe the new first pass. Package gate: 697 passed, 4 Windows skips, 0 failures, 100 % functions and lines, typecheck 46 files.
 
 * **Retrieval hint follow-up:** The pagination line now says the next page continues the same search, `SKILL.md` and `--help` state that a page is a sample rather than a ranking, and `search --query` explains that free text belongs to `tags --query` and that `search` filters by capability or pattern. These close the two frictions the second blind round exposed; package gate: 696 passed, 4 Windows skips, 0 failures, 100 % functions and lines, typecheck 46 files.

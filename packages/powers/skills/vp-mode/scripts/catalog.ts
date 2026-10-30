@@ -313,11 +313,11 @@ function normalizedTagText(value: string): string {
   return value.normalize('NFKC').trim().toLowerCase().replace(/\s+/gu, ' ');
 }
 
-function tagTokens(value: string): string[] {
+export function tagTokens(value: string): string[] {
   return value.normalize('NFKC').toLowerCase().match(/[\p{L}\p{M}\p{N}]+/gu) ?? [];
 }
 
-function stemToken(token: string): string {
+export function stemToken(token: string): string {
   if (token.length <= 3 || token.endsWith('ss') || token.endsWith('us') || token.endsWith('is')) return token;
   let value = token;
   if (value.endsWith('ies') && value.length > 4) value = `${value.slice(0, -3)}y`;
