@@ -522,6 +522,22 @@ PowerShell and Bash installers, and producer provenance. Publication requires an
 exact complete asset inventory and byte readback. A public release is delivery
 evidence, not an installed runtime or attributable user Runtime acceptance.
 
+### Windows Source producer custody
+
+Windows x64 Source tooling uses one native Job Object adapter for owned process
+groups. It creates the process suspended with JOB_LIST assignment and only the
+declared inherited stdio handles, verifies membership and retained-handle identity,
+then resumes it. The adapter records actual creation/exit FILETIMEs and Job process
+counts. Group closure requires an observed zero active-process count; PID absence
+or a successful direct-child exit cannot substitute for it.
+
+Existing command, output hashing, retention, deadlines and cleanup bounds remain
+with the command owner. A normal leader exit with surviving descendants remains
+non-successful after cleanup. Errors after process creation retain non-null
+custody, including cleanup errors; unsupported native FD3 rejects before launch.
+This route does not establish hostile-process isolation or close prior UNKNOWN
+observations. Its native qualification and campaign limits belong to TESTING.
+
 ## Source development controller
 
 The bundle-owned development-controller seam provides prepare, inspect, verify

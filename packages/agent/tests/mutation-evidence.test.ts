@@ -1074,7 +1074,7 @@ describe('mutation execution receipts', () => {
     expect(result.timedOut).toBe(true);
     expect(result.processCustody).toMatchObject({
       terminationObserved: true,
-      attempts: [{ signal: 'SIGTERM' }, { signal: 'SIGKILL' }],
+      attempts: process.platform === 'win32' ? [{ signal: 'SIGTERM' }] : [{ signal: 'SIGTERM' }, { signal: 'SIGKILL' }],
     });
     expect(typeof result.processCustody?.pid).toBe('number');
     expect(result.exitCode).not.toBeNull();

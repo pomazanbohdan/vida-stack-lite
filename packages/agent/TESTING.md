@@ -396,8 +396,16 @@ existing bounded TERM/KILL settlement before returning. Preserve the original
 leader exit/signal and timedOut:false plus the non-successful unobserved-group
 diagnostic; successful cleanup updates custody, not execution success. Unsupported
 group observation remains GAP.
-The current observer is qualified on Linux; a native Windows campaign cannot
-establish this proof through a direct-child result and remains unqualified.
+The POSIX group observer is qualified on Linux. The Windows x64 owned-executable
+route uses a native Job Object created with atomic JOB_LIST assignment before the
+suspended process resumes. It restricts inherited handles to stdio, preserves
+argv/environment bytes, binds the retained process handle and FILETIMEs, and
+observes Job accounting ActiveProcesses0 before claiming group closure. Timeout
+cleanup uses the owned Job; a direct-child exit or missing PID is insufficient.
+Its platform qualification is the maintained native Windows process test. A
+passing local qualification does not qualify a full mutation campaign. Windows
+native FD3 is unsupported and rejects before launch; other missing platform
+evidence remains GAP. Preserve every earlier UNKNOWN and its resource namespace.
 Known nonzero exits stay available for reporting; they permit another partition
 only with affirmative group termination. Importing the mutation gate runs no
 campaign or inventory. These controls do not establish Killed mutants.

@@ -6,6 +6,12 @@ import { parse } from '@babel/parser';
 import { typescriptSyntaxPlugins } from './babel-syntax.js';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { observeOwnedProcessGroup } from './owned-process-group.ts';
+import {
+  spawnWindowsOwnedProcess,
+  WindowsSpawnFailure,
+  type WindowsJobEvidence,
+  type WindowsOwnedGroup,
+} from './windows-owned-process.ts';
 
 export type MutationBodyEvent =
   | {
@@ -36,7 +42,9 @@ export type MutationEvidenceReceipt = Record<string, unknown> & {
   per_test_capture?: MutationPerTestCaptureReceipt;
 };
 export type ObservedExit = { observed: true; exitCode: number } | { observed: false };
-export type TimedOutChild = Pick<Bun.Subprocess, 'pid' | 'exited' | 'signalCode' | 'kill' | 'unref'>;
+export type TimedOutChild = Pick<Bun.Subprocess, 'pid' | 'exited' | 'signalCode' | 'kill' | 'unref'> & {
+  nativeGroup?: WindowsOwnedGroup;
+};
 export type OutputChild = Pick<Bun.ReadableSubprocess, 'stdout' | 'stderr'> & TimedOutChild;
 export type OutputReader = {
   read: () => Promise<{ done: true; value?: Uint8Array | undefined } | { done: false; value: Uint8Array }>;
@@ -52,6 +60,7 @@ export type ProcessCustody = {
   unrefCalled: boolean;
   unrefError?: string | null;
   attempts: { signal: NodeJS.Signals; target: 'child' | 'process-group'; outcome: string; error?: string }[];
+  native_job?: WindowsJobEvidence;
 };
 export type MutationProcessResult = {
   native_status_file?: string;
@@ -766,8 +775,37 @@ async function waitForOwnedProcessGroup(pid: number | null, durationMs: number):
   }
 }
 
-function processCustodyScope(ownedProcessGroup: boolean): 'child' | 'owned-process-group' {
-  return ownedProcessGroup && process.platform !== 'win32' ? 'owned-process-group' : 'child';
+function processCustodyScope(ownedProcessGroup: boolean, child?: TimedOutChild): 'child' | 'owned-process-group' {
+  return (ownedProcessGroup && process.platform !== 'win32') || child?.nativeGroup ? 'owned-process-group' : 'child';
+}
+
+async function waitForChildGroup(child: TimedOutChild, waitMs: number): Promise<boolean> {
+  if (child.nativeGroup) return child.nativeGroup.waitForEmpty(waitMs);
+  return waitForOwnedProcessGroup(Number.isSafeInteger(child.pid) ? child.pid : null, waitMs);
+}
+
+function closeNativeGroupIfSettled(child: TimedOutChild, result: MutationProcessResult): MutationProcessResult {
+  if (!child.nativeGroup) return result;
+  const native_job = child.nativeGroup.evidence();
+  if (!result.processCustody) return result;
+  const processCustody: ProcessCustody = { ...result.processCustody, native_job };
+  if (result.processCustody.terminationObserved && result.processCustody.processGroupTerminationObserved === true) {
+    try {
+      child.nativeGroup.closeIfSettled();
+    } catch {
+      return { ...result, spawnError: result.spawnError ?? 'windows-job-close-failed', processCustody };
+    }
+  } else {
+    try {
+      child.unref();
+    } catch (error) {
+      return {
+        ...result,
+        processCustody: { ...processCustody, unrefCalled: false, unrefError: childErrorCode(error) },
+      };
+    }
+  }
+  return { ...result, processCustody };
 }
 
 function assertObservableChildExit(child: TimedOutChild) {
@@ -781,9 +819,13 @@ function sendTimeoutSignal(
 ): ProcessCustody['attempts'][number] {
   const pid = Number.isSafeInteger(child.pid) ? child.pid : null;
 
-  const target: 'child' | 'process-group' =
-    ownedProcessGroup && process.platform !== 'win32' && pid !== null ? 'process-group' : 'child';
+  const target: 'child' | 'process-group' = child.nativeGroup
+    ? 'process-group'
+    : ownedProcessGroup && process.platform !== 'win32' && pid !== null
+      ? 'process-group'
+      : 'child';
   try {
+    if (child.nativeGroup) return child.nativeGroup.signal(signal);
     if (target === 'process-group') process.kill(-(pid as number), signal);
     else child.kill(signal);
     return { signal, target, outcome: 'sent' };
@@ -799,10 +841,15 @@ async function signalAndObserveTimeout(
   ownedProcessGroup: boolean,
 ): Promise<{ observed: ObservedExit; processGroupGone: boolean; attempt: ProcessCustody['attempts'][number] }> {
   const pid = Number.isSafeInteger(child.pid) ? child.pid : null;
-  const target = ownedProcessGroup && process.platform !== 'win32' && pid !== null ? 'process-group' : 'child';
+  const target =
+    child.nativeGroup || (ownedProcessGroup && process.platform !== 'win32' && pid !== null)
+      ? 'process-group'
+      : 'child';
+  const deadline = Date.now() + waitMs;
   const attempt = sendTimeoutSignal(child, signal, ownedProcessGroup);
-  const processGroupGone = target === 'process-group' ? await waitForOwnedProcessGroup(pid, waitMs) : false;
-  const observed = await observeExit(child.exited, target === 'process-group' ? 0 : waitMs);
+  const processGroupGone = target === 'process-group' ? await waitForChildGroup(child, waitMs) : false;
+  const exitWaitMs = child.nativeGroup ? Math.max(0, deadline - Date.now()) : target === 'process-group' ? 0 : waitMs;
+  const observed = await observeExit(child.exited, exitWaitMs);
   return { observed, processGroupGone, attempt };
 }
 
@@ -815,7 +862,7 @@ async function escalateTimedOutChild(
   const attempts = [];
   let observed = await observeExit(child.exited, 0);
   let processGroupGone = false;
-  const groupCleanup = ownedProcessGroup && process.platform !== 'win32';
+  const groupCleanup = (ownedProcessGroup && process.platform !== 'win32') || Boolean(child.nativeGroup);
   for (const [signal, waitMs] of [
     ['SIGTERM', terminationGraceMs],
     ['SIGKILL', forceWaitMs],
@@ -889,10 +936,12 @@ async function makeTimedOutChildResult(
   ownedProcessGroup: boolean,
 ): Promise<MutationProcessResult> {
   const pid = Number.isSafeInteger(child.pid) ? child.pid : null;
-  const scope = processCustodyScope(ownedProcessGroup);
-  if (settled.processGroupGone || (settled.observed.observed && scope === 'child'))
-    return observedTimedOutResult(child, pid, scope, settled);
-  return unobservedTimedOutResult(child, pid, scope, settled);
+  const scope = processCustodyScope(ownedProcessGroup, child);
+  const result =
+    settled.processGroupGone || (settled.observed.observed && scope === 'child')
+      ? observedTimedOutResult(child, pid, scope, settled)
+      : unobservedTimedOutResult(child, pid, scope, settled);
+  return closeNativeGroupIfSettled(child, result);
 }
 
 export async function settleTimedOutChild(
@@ -976,11 +1025,21 @@ export async function executeMutationCommand(
 ): Promise<MutationProcessResult> {
   if (!command.length || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1)
     return { exitCode: null, signal: null, spawnError: 'invalid-command', timedOut: false, processCustody: null };
+  if (process.platform === 'win32' && limits.ownedProcessGroup === true && limits.nativeStatusFile !== undefined)
+    return {
+      exitCode: null,
+      signal: null,
+      spawnError: 'windows-native-status-unsupported',
+      timedOut: false,
+      processCustody: null,
+      native_status_file: limits.nativeStatusFile,
+      native_status_error: 'windows-native-status-unsupported',
+    };
   let child;
   let nativeFd: number | undefined;
   try {
     if (limits.nativeStatusFile !== undefined) nativeFd = openSync(limits.nativeStatusFile, 'wx', 0o600);
-    child = spawnMutationChild(command, cwd, {
+    child = await spawnMutationChild(command, cwd, {
       ...limits,
       ...(nativeFd === undefined ? {} : { nativeStatusFd: nativeFd }),
     });
@@ -993,12 +1052,13 @@ export async function executeMutationCommand(
         nativeCloseError = childErrorCode(closeError);
       }
     }
+    const spawnFailure = error instanceof WindowsSpawnFailure ? error : null;
     return {
       exitCode: null,
       signal: null,
-      spawnError: childErrorCode(error),
+      spawnError: spawnFailure ? 'windows-native-spawn-failed' : childErrorCode(error),
       timedOut: false,
-      processCustody: null,
+      processCustody: spawnFailure ? { ...spawnFailure.custody, native_job: spawnFailure.custody.native_job } : null,
       ...(limits.nativeStatusFile === undefined
         ? {}
         : { native_status_file: limits.nativeStatusFile, native_status_error: nativeCloseError }),
@@ -1022,11 +1082,15 @@ export async function executeMutationCommand(
       };
 }
 
-function spawnMutationChild(
+async function spawnMutationChild(
   command: string[],
   cwd: string,
-  limits: { env?: NodeJS.ProcessEnv; ownedProcessGroup?: boolean; nativeStatusFd?: number },
-): OutputChild {
+  limits: { env?: NodeJS.ProcessEnv; ownedProcessGroup?: boolean; nativeStatusFd?: number; forceWaitMs?: number },
+): Promise<OutputChild> {
+  if (process.platform === 'win32' && limits.ownedProcessGroup === true) {
+    if (limits.nativeStatusFd !== undefined) throw new Error('windows-native-status-fd-unsupported');
+    return spawnWindowsOwnedProcess(command, cwd, limits.env ?? process.env, limits.forceWaitMs ?? 1_000);
+  }
   const stdio: ['ignore', 'pipe', 'pipe', number] | undefined =
     limits.nativeStatusFd === undefined ? undefined : ['ignore', 'pipe', 'pipe', limits.nativeStatusFd];
   return Bun.spawn({
@@ -1059,42 +1123,103 @@ async function observeMutationProcess(
   const stdout = captureMutationOutput(child.stdout, limits.stdoutFile ?? '', outputLimit);
   const stderr = captureMutationOutput(child.stderr, limits.stderrFile ?? '', outputLimit);
   const outputResults = Promise.allSettled([stdout.result, stderr.result]);
-  const initial = await observeExit(child.exited, timeoutMs);
-  let result;
-  if (initial.observed) {
-    const processGroupTerminationObserved = ownedProcessGroup ? await waitForOwnedProcessGroup(child.pid, 0) : null;
-    result = {
-      exitCode: initial.exitCode,
-      signal: child.signalCode,
-      spawnError: ownedProcessGroup && !processGroupTerminationObserved ? 'process-group-termination-unobserved' : null,
-      timedOut: false,
-      processCustody: {
-        pid: child.pid,
-        scope: processCustodyScope(ownedProcessGroup),
-        terminationObserved: true,
-        processGroupTerminationObserved,
-        unrefCalled: false,
-        attempts: [],
-      },
-    };
-    if (ownedProcessGroup && !processGroupTerminationObserved) {
-      const cleanup = await settleTimedOutChild(
+  let result: MutationProcessResult;
+  try {
+    const initial = await observeExit(child.exited, timeoutMs);
+    if (initial.observed) {
+      const processGroupTerminationObserved = ownedProcessGroup ? await waitForChildGroup(child, 0) : null;
+      result = {
+        exitCode: initial.exitCode,
+        signal: child.signalCode,
+        spawnError:
+          ownedProcessGroup && !processGroupTerminationObserved ? 'process-group-termination-unobserved' : null,
+        timedOut: false,
+        processCustody: {
+          pid: child.pid,
+          scope: processCustodyScope(ownedProcessGroup, child),
+          terminationObserved: true,
+          processGroupTerminationObserved,
+          unrefCalled: false,
+          attempts: [],
+        },
+      };
+      if (ownedProcessGroup && !processGroupTerminationObserved) {
+        const cleanup = await settleTimedOutChild(
+          child,
+          limits.terminationGraceMs ?? 1_000,
+          limits.forceWaitMs ?? 1_000,
+          true,
+        );
+        // Settlement does not turn the unexpected group into a clean completion
+        // or change the already observed leader exit into a timeout.
+        result = { ...result, processCustody: cleanup.processCustody };
+      }
+    } else {
+      result = await settleTimedOutChild(
         child,
         limits.terminationGraceMs ?? 1_000,
         limits.forceWaitMs ?? 1_000,
-        true,
+        ownedProcessGroup,
       );
-      // Settlement does not turn the unexpected group into a clean completion
-      // or change the already observed leader exit into a timeout.
-      result = { ...result, processCustody: cleanup.processCustody };
     }
-  } else {
-    result = await settleTimedOutChild(
-      child,
-      limits.terminationGraceMs ?? 1_000,
-      limits.forceWaitMs ?? 1_000,
-      ownedProcessGroup,
-    );
+    result = closeNativeGroupIfSettled(child, result);
+  } catch (error) {
+    if (!child.nativeGroup) throw error;
+    const attempts: ProcessCustody['attempts'] = [];
+    attempts.push(sendTimeoutSignal(child, 'SIGKILL', true));
+    const processGroupTerminationObserved = await child.nativeGroup
+      .waitForEmpty(limits.forceWaitMs ?? 1_000)
+      .catch(() => false);
+    const directExit = await observeExit(child.exited, 0).catch(() => ({ observed: false as const }));
+    const native_job = child.nativeGroup.evidence();
+    if (directExit.observed && processGroupTerminationObserved) {
+      try {
+        child.nativeGroup.closeIfSettled();
+      } catch {}
+    }
+    let unrefCalled = false;
+    let unrefError: string | null = null;
+    try {
+      child.unref();
+      unrefCalled = true;
+    } catch (unrefFailure) {
+      unrefError = childErrorCode(unrefFailure);
+    }
+    const captureDeadline = Date.now() + 500;
+    let cancelTimer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      Promise.allSettled([
+        Promise.resolve().then(() => stdout.cancel()),
+        Promise.resolve().then(() => stderr.cancel()),
+      ]),
+      new Promise<void>((resolve) => {
+        cancelTimer = setTimeout(resolve, 500);
+      }),
+    ]).finally(() => clearTimeout(cancelTimer));
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    await Promise.race([
+      outputResults,
+      new Promise<void>((resolve) => {
+        settleTimer = setTimeout(resolve, Math.max(0, captureDeadline - Date.now()));
+      }),
+    ]).finally(() => clearTimeout(settleTimer));
+    return {
+      exitCode: directExit.observed ? directExit.exitCode : null,
+      signal: child.signalCode ?? null,
+      spawnError: 'windows-job-observation-failed',
+      timedOut: false,
+      processCustody: {
+        pid: Number.isSafeInteger(child.pid) ? child.pid : null,
+        scope: 'owned-process-group',
+        terminationObserved: directExit.observed,
+        processGroupTerminationObserved,
+        unrefCalled,
+        unrefError,
+        attempts,
+        native_job,
+      },
+      output_capture: { complete: false },
+    };
   }
 
   let outputTimer: ReturnType<typeof setTimeout> | undefined;
