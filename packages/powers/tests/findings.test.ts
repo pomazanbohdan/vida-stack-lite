@@ -406,6 +406,35 @@ describe('appendFindingEvent', () => {
     expect((await readEvent(storePath))['finding_id']).toBe('finding-1');
   });
 
+  test('records a beyond-scope finding as a blocker with a permission request', async () => {
+    const api = await loadFindingsApi();
+    const storePath = await newStore();
+    const beyond = observation({ scope: { decision: 'beyond', permission_request: 'Owner approval to extend the work scope is required.' } });
+    const appended = await api.appendFindingEvent(storePath, beyond);
+    expect(appended.outcome).toBe('appended');
+    const row = await readEvent(storePath);
+    expect(row['scope']).toEqual({ decision: 'beyond', permission_request: 'Owner approval to extend the work scope is required.' });
+    expect(row['blocking_impact']).toBe('non-blocking: isolated test case');
+  });
+
+  test('rejects a beyond-scope finding without a permission request and a within-scope one that carries a request', async () => {
+    const api = await loadFindingsApi();
+    const storePath = await newStore();
+    await expect(api.appendFindingEvent(storePath, observation({ scope: { decision: 'beyond', permission_request: '' } })))
+      .rejects.toThrow('FINDING_INVALID');
+    await expect(api.appendFindingEvent(storePath, observation({ scope: { decision: 'beyond' } })))
+      .rejects.toThrow('FINDING_INVALID');
+    await expect(api.appendFindingEvent(storePath, observation({ scope: { decision: 'within', permission_request: 'please' } })))
+      .rejects.toThrow('FINDING_INVALID');
+    await expect(api.appendFindingEvent(storePath, observation({ scope: { decision: 'elsewhere', permission_request: '' } })))
+      .rejects.toThrow('FINDING_INVALID');
+    await expect(api.appendFindingEvent(storePath, observation({ scope: { decision: 'within', permission_request: '', extra: true } })))
+      .rejects.toThrow('FINDING_INVALID');
+    expect(existsSync(storePath)).toBe(false);
+    const within = await api.appendFindingEvent(storePath, observation({ scope: { decision: 'within', permission_request: '' } }));
+    expect(within.outcome).toBe('appended');
+  });
+
   test('queries full observation rows in append order with every exact reason in fixed order', async () => {
     const api = await loadFindingsApi();
     const storePath = await newStore();

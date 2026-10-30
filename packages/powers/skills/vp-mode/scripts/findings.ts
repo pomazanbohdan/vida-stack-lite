@@ -7,6 +7,7 @@ import { basename, dirname, isAbsolute, resolve } from 'node:path';
 type JsonPrimitive = null | boolean | number | string;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 type SourceIdentity = { origin: 'observed' | 'reported'; actor: string; reference: string };
+type FindingScope = { decision: 'within' | 'beyond'; permission_request: string };
 type ObservationEvent = {
   kind: 'observation';
   finding_id: string;
@@ -18,6 +19,7 @@ type ObservationEvent = {
   blocking_impact: string;
   context: { [key: string]: JsonValue };
   provenance: string[];
+  scope?: FindingScope;
 };
 type MergeEvent = {
   kind: 'merge';
@@ -135,10 +137,18 @@ function validContext(value: unknown): value is { [key: string]: JsonValue } {
   return isRecord(value) && isJsonValue(value);
 }
 
+function validScope(value: unknown): value is FindingScope {
+  if (!isRecord(value) || !hasExactKeys(value, ['decision', 'permission_request'])) return false;
+  if (value['decision'] === 'within') return value['permission_request'] === '';
+  return value['decision'] === 'beyond' && nonemptyText(value['permission_request']);
+}
+
 function validateEvent(value: unknown): FindingEvent {
   if (!isRecord(value) || !isJsonValue(value)) return fail('FINDING_INVALID');
+  const observationKeys = ['kind', 'finding_id', 'problem', 'evidence', 'source', 'product', 'work_scope', 'blocking_impact', 'context', 'provenance'];
   if (value['kind'] === 'observation'
-    && hasExactKeys(value, ['kind', 'finding_id', 'problem', 'evidence', 'source', 'product', 'work_scope', 'blocking_impact', 'context', 'provenance'])
+    && (hasExactKeys(value, observationKeys) || hasExactKeys(value, [...observationKeys, 'scope']))
+    && (value['scope'] === undefined || validScope(value['scope']))
     && nonemptyText(value['finding_id'])
     && nonemptyText(value['problem'])
     && stringList(value['evidence'])
@@ -173,6 +183,7 @@ function candidateFingerprint(event: FindingEvent): string | null {
     work_scope: event.work_scope,
     blocking_impact: event.blocking_impact,
     provenance: event.provenance,
+    ...(event.scope === undefined ? {} : { scope: event.scope }),
   };
   return sha256(canonicalJson(candidate));
 }

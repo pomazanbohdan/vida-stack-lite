@@ -5,6 +5,8 @@ import { realpathSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { appendFindingEvent, findFindingCandidates } from './findings.ts';
+import { appendArtifactEvent, indexArtifacts, verifyArtifact } from './artifacts.ts';
+import type { SemanticJudgment } from './artifacts.ts';
 import {
   CatalogError,
   catalogBrowse,
@@ -33,12 +35,14 @@ import {
 } from './instruction-facets.ts';
 import type { ClassificationStatus, InstructionDomain, InstructionForm } from './instruction-facets.ts';
 
-const commandNames = ['tags', 'search', 'explain', 'get', 'compose', 'evaluate', 'browse', 'findings'] as const;
+const commandNames = ['tags', 'search', 'explain', 'get', 'compose', 'evaluate', 'browse', 'findings', 'artifacts'] as const;
 type Command = typeof commandNames[number];
 type FindingsOperation = 'append' | 'candidates';
+type ArtifactsOperation = 'append' | 'index' | 'verify';
 type ParsedArgs = { kind: 'help'; command?: Command }
-  | { kind: 'run'; command: Exclude<Command, 'findings'>; flags: Map<string, string[]> }
-  | { kind: 'findings'; subcommand: FindingsOperation; flags: Map<string, string[]> };
+  | { kind: 'run'; command: Exclude<Command, 'findings' | 'artifacts'>; flags: Map<string, string[]> }
+  | { kind: 'findings'; subcommand: FindingsOperation; flags: Map<string, string[]> }
+  | { kind: 'artifacts'; subcommand: ArtifactsOperation; flags: Map<string, string[]> };
 type CliOutput = { stdout: (text: string) => void; stderr: (text: string) => void };
 type FlagArity = 'scalar' | 'list' | 'repeat-list' | 'switch';
 type FlagDefinition = { arity: FlagArity; value?: string; description: string };
@@ -70,6 +74,31 @@ const findingsErrorCodes = new Set<FindingsErrorCode>([
   'FINDING_INPUT_JSON_INVALID', 'FINDING_INPUT_PATH_INVALID', 'FINDING_INPUT_READ_FAILED',
   'FINDING_INVALID', 'FINDING_CANDIDATE_QUERY_INVALID', 'FINDING_STORE_PATH_INVALID',
   'FINDING_STORE_INVALID', 'FINDING_ID_CONFLICT', 'FINDING_MERGE_TARGET_MISSING', 'FINDING_STORE_RECOVERY_REQUIRED',
+]);
+
+type ArtifactErrorCode =
+  | 'ARTIFACT_INVALID'
+  | 'ARTIFACT_PATH_INVALID'
+  | 'ARTIFACT_STORE_MISSING'
+  | 'ARTIFACT_STORE_INVALID'
+  | 'ARTIFACT_NOT_FOUND'
+  | 'ARTIFACT_REVISION_CONFLICT'
+  | 'ARTIFACT_ROOT_INVALID'
+  | 'ARTIFACT_OPERATION_FAILED';
+
+class ArtifactsCliError extends Error {
+  readonly code: ArtifactErrorCode;
+
+  constructor(code: ArtifactErrorCode) {
+    super(code === 'ARTIFACT_OPERATION_FAILED' ? 'artifacts operation failed' : code);
+    this.name = 'ArtifactsCliError';
+    this.code = code;
+  }
+}
+
+const artifactErrorCodes = new Set<ArtifactErrorCode>([
+  'ARTIFACT_INVALID', 'ARTIFACT_PATH_INVALID', 'ARTIFACT_STORE_MISSING', 'ARTIFACT_STORE_INVALID',
+  'ARTIFACT_NOT_FOUND', 'ARTIFACT_REVISION_CONFLICT', 'ARTIFACT_ROOT_INVALID',
 ]);
 
 const commandDefinitions: Record<Command, CommandDefinition> = {
@@ -182,6 +211,17 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
     },
     examples: ['findings append --store PATH --event-file EVENT.json', 'findings candidates --store PATH --event-file EVENT.json'],
   },
+  artifacts: {
+    description: 'Append, index or verify artifact references and their separate mechanical and semantic checks.',
+    flags: {
+      '--store': { arity: 'scalar', value: 'PATH', description: 'Required absolute artifacts.jsonl path.' },
+      '--event-file': { arity: 'scalar', value: 'PATH', description: 'Required absolute artifact event path for append.' },
+      '--id': { arity: 'scalar', value: 'ID', description: 'Artifact ID for verify.' },
+      '--root': { arity: 'scalar', value: 'PATH', description: 'Product root that resolves the artifact locator for verify.' },
+      '--semantic-file': { arity: 'scalar', value: 'PATH', description: 'Optional absolute semantic judgment path for verify.' },
+    },
+    examples: ['artifacts append --store PATH --event-file EVENT.json', 'artifacts index --store PATH', 'artifacts verify --store PATH --id VP-6 --root ROOT'],
+  },
 } satisfies Record<Command, CommandDefinition>;
 
 const helpFlag = { description: 'Show command help without loading catalog or instruction files; supplied arguments still validate.' };
@@ -219,6 +259,7 @@ function flagDefinition(command: Command, flag: string): FlagDefinition {
   const knownElsewhere = Object.values(commandDefinitions).some((item) => Object.prototype.hasOwnProperty.call(item.flags, flag));
   if (knownElsewhere) throw invalid(`flag ${flag} is not valid for ${command}`, { command, flag });
   if (command === 'findings') throw invalid('unknown findings flag');
+  if (command === 'artifacts') throw invalid('unknown artifacts flag');
   throw invalid(`unknown flag ${flag}`, { flag });
 }
 
@@ -235,17 +276,20 @@ function parseArgs(argv: string[]): ParsedArgs {
     return { kind: 'help', command };
   }
   const findingsCommand = command === 'findings';
-  const hasFindingsSubcommand = findingsCommand && argv[1] !== undefined && !argv[1].startsWith('--');
-  const subcommand = hasFindingsSubcommand ? argv[1] : undefined;
-  if (findingsCommand && hasFindingsSubcommand && subcommand !== 'append' && subcommand !== 'candidates') {
-    throw invalid('unknown findings operation', { command, usage });
+  const artifactsCommand = command === 'artifacts';
+  const nestedCommand = findingsCommand || artifactsCommand;
+  const hasSubcommand = nestedCommand && argv[1] !== undefined && !argv[1].startsWith('--');
+  const subcommand = hasSubcommand ? argv[1] : undefined;
+  const operations: readonly string[] = findingsCommand ? ['append', 'candidates'] : ['append', 'index', 'verify'];
+  if (nestedCommand && hasSubcommand && !operations.includes(subcommand ?? '')) {
+    throw invalid(`unknown ${command} operation`, { command, usage });
   }
-  const firstFlagIndex = hasFindingsSubcommand ? 2 : 1;
+  const firstFlagIndex = hasSubcommand ? 2 : 1;
   const flags = new Map<string, string[]>();
   for (let index = firstFlagIndex; index < argv.length; index += 1) {
     const flag = argv[index];
     if (flag === undefined || !flag.startsWith('--')) {
-      if (findingsCommand) throw invalid('unexpected findings argument');
+      if (nestedCommand) throw invalid(`unexpected ${command} argument`);
       throw invalid(`unexpected argument ${flag ?? ''}`, { argument: flag });
     }
     const definition = flagDefinition(command, flag);
@@ -276,6 +320,10 @@ function parseArgs(argv: string[]): ParsedArgs {
     if (subcommand !== 'append' && subcommand !== 'candidates') throw invalid('unknown findings operation', { command, usage });
     return { kind: 'findings', subcommand, flags };
   }
+  if (command === 'artifacts') {
+    if (subcommand !== 'append' && subcommand !== 'index' && subcommand !== 'verify') throw invalid('unknown artifacts operation', { command, usage });
+    return { kind: 'artifacts', subcommand, flags };
+  }
   return { kind: 'run', command, flags };
 }
 
@@ -296,7 +344,7 @@ function renderHelp(command?: Command): string {
     }
     for (const [flag, spec] of Object.entries(definition.flags)) {
       const value = spec.arity === 'switch' ? '' : ` <${spec.value ?? 'VALUE'}${spec.arity === 'list' || spec.arity === 'repeat-list' ? '...' : ''}>`;
-      const invocation = name === 'findings' ? 'findings <append|candidates>' : name;
+      const invocation = name === 'findings' ? 'findings <append|candidates>' : name === 'artifacts' ? 'artifacts <append|index|verify>' : name;
       lines.push(`  ${invocation} ${flag}${value}: ${spec.description}`);
     }
     lines.push(`  --help: ${helpFlag.description}`);
@@ -357,6 +405,30 @@ async function dispatchFindings(
       throw new FindingsCliError(error.message as FindingsErrorCode);
     }
     throw new FindingsCliError('FINDING_OPERATION_FAILED');
+  }
+}
+
+async function dispatchArtifacts(
+  subcommand: ArtifactsOperation,
+  flags: Map<string, string[]>,
+): Promise<unknown> {
+  try {
+    const storePath = required(flags, '--store');
+    if (subcommand === 'append') return await appendArtifactEvent(storePath, await eventFromFile(required(flags, '--event-file')));
+    if (subcommand === 'index') return await indexArtifacts(storePath);
+    const semanticPath = one(flags, '--semantic-file');
+    const semantic = semanticPath === undefined ? undefined : await eventFromFile(semanticPath) as SemanticJudgment;
+    return await verifyArtifact(storePath, required(flags, '--id'), {
+      root: required(flags, '--root'),
+      ...(semantic === undefined ? {} : { semantic }),
+    });
+  } catch (error) {
+    if (error instanceof CatalogError) throw error;
+    if (error instanceof FindingsCliError) throw new ArtifactsCliError(error.code.replace('FINDING_', 'ARTIFACT_') as ArtifactErrorCode);
+    if (error instanceof Error && artifactErrorCodes.has(error.message as ArtifactErrorCode)) {
+      throw new ArtifactsCliError(error.message as ArtifactErrorCode);
+    }
+    throw new ArtifactsCliError('ARTIFACT_OPERATION_FAILED');
   }
 }
 
@@ -519,7 +591,7 @@ function renderGet(bundle: ComposedBundle, catalog: Catalog, instructions: Map<s
   return sections.reduce((output, section) => output + (output === '' ? '' : output.endsWith('\n') ? '\n' : '\n\n') + section, '');
 }
 
-async function dispatch(command: Exclude<Command, 'findings'>, flags: Map<string, string[]>, catalogPath: string): Promise<DispatchResult> {
+async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, flags: Map<string, string[]>, catalogPath: string): Promise<DispatchResult> {
   const directory = dirname(resolve(catalogPath));
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
   const digest = async (path: string): Promise<string> => createHash('sha256').update(await readFile(path)).digest('hex');
@@ -661,6 +733,11 @@ async function main(argv: string[], output: CliOutput): Promise<number> {
       output.stdout(`${JSON.stringify(result)}\n`);
       return 0;
     }
+    if (parsed.kind === 'artifacts') {
+      const result = await dispatchArtifacts(parsed.subcommand, parsed.flags);
+      output.stdout(`${JSON.stringify(result)}\n`);
+      return 0;
+    }
     const command = parsed.command;
     const catalogPath = one(parsed.flags, '--catalog') ?? defaultCatalogPath(import.meta.url);
     const result = await dispatch(command, parsed.flags, catalogPath);
@@ -681,6 +758,8 @@ async function main(argv: string[], output: CliOutput): Promise<number> {
       return 1;
     }
     const payload = error instanceof FindingsCliError
+      ? { code: error.code, message: error.message, details: {} }
+      : error instanceof ArtifactsCliError
       ? { code: error.code, message: error.message, details: {} }
       : error instanceof CatalogError
       ? { code: error.code, message: error.message, details: error.details }

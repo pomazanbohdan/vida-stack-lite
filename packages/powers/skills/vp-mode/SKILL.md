@@ -61,4 +61,16 @@ bun skills/vp-mode/scripts/catalog-cli.ts findings append --store <absolute-stor
 
 If append returns `FINDING_STORE_RECOVERY_REQUIRED`, treat the store state as unknown. Stop the caller flow, preserve the file, and request owner recovery before retrying.
 
-An out-of-Work-Scope blocker requests owner permission before any scope expansion. Recording a finding or merge grants no fix authority. Runtime findings remain with the Agent-owned state owner. After the main work, an optional human loop may present a proposal to fix a third-party problem. Without standing permission, do not perform the fix unless permission is granted (SR-55).
+An out-of-Work-Scope blocker requests owner permission before any scope expansion. Record the decision in the observation as `scope: { "decision": "within" | "beyond", "permission_request": "<text>" }`: `beyond` requires a non-empty permission request and `within` forbids one. The writer rejects a scope expansion recorded without that request; detecting that a finding is out of scope remains the caller's judgment. Recording a finding or merge grants no fix authority. Runtime findings remain with the Agent-owned state owner. After the main work, an optional human loop may present a proposal to fix a third-party problem. Without standing permission, do not perform the fix unless permission is granted (SR-55).
+
+## Artifact reference procedure
+
+Record each content operation in the per-product artifact index before claiming its result. Resolve the canonical Standalone store at `packages/powers/docs/work/artifacts.jsonl` and pass it as an absolute `--store` path; never derive it from the working directory.
+
+```sh
+bun skills/vp-mode/scripts/catalog-cli.ts artifacts append --store <absolute-store-path> --event-file <absolute-artifact-event-json>
+bun skills/vp-mode/scripts/catalog-cli.ts artifacts index --store <absolute-store-path>
+bun skills/vp-mode/scripts/catalog-cli.ts artifacts verify --store <absolute-store-path> --id <artifact-id> --root <product-root> [--semantic-file <absolute-semantic-json>]
+```
+
+An event is either the first `artifact` for an ID or an explicit `update` of an existing one; an update for an unknown ID fails with `ARTIFACT_NOT_FOUND` and a changed digest under an existing revision fails with `ARTIFACT_REVISION_CONFLICT`. `verify` reports presence, format and digest as one mechanical result and the supplied semantic judgment as a separate one. It reports `complete: true` only when the mechanical parts pass and the semantic verdict is `pass`. A matching digest alone never proves valid content or equivalence. Do not claim artifact materialization, semantic acceptance or AC closure that was not actually checked.

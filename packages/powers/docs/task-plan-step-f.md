@@ -29,7 +29,7 @@ sources:
   resource: /../../../agent-runtime.config.v1.yaml
   title: Current WorkItem/v1 artifact contract
 generated: { by: vida-agent/gpt-6-luna, at: '2026-10-23T00:33:38Z' }
-revision: '8'
+revision: '9'
 ---
 
 **Goal:** keep VP-5, VP-6, and VP-7 separate; implement the bounded Standalone findings store API, existing CLI caller, caller procedure, and proof cases.
@@ -162,3 +162,28 @@ semantic equivalence. Malformed JSONL fails closed and needs manual repair; no e
 fsync durability guarantee is implemented. No real finding event exists, so
 `docs/work/findings.jsonl` remains absent. Full package gates remain queued until all
 active code writers freeze.
+
+## Revision 6 addendum — 2026-10-30 artifact reference and scope gate
+
+The owner approved the artifact-reference extension that closes the AC-20/AC-21 evidence gap
+and a writer-level scope gate for AC-23. This widens the revision-5 allowlist by two files:
+`skills/vp-mode/scripts/artifacts.ts` and `tests/artifacts.test.ts`, and adds artifact cases to
+`tests/catalog-cli.test.ts`.
+
+1. `artifacts.ts` is the only Standalone artifact-index writer. It appends one JSON line to an
+   absolute `artifacts.jsonl`, accepts only a first `artifact` or an explicit `update` of an
+   existing ID, replays an identical event without a new line, and rejects an unknown update
+   target, a changed digest under the same revision, a malformed path and a corrupt store.
+2. `indexArtifacts` returns the latest revision per artifact in append order and creates
+   nothing. `verifyArtifact` returns presence, format and digest as separate mechanical parts
+   plus an optional semantic judgment; `complete` is true only when both pass.
+3. The findings writer accepts an optional `scope` decision. `beyond` requires a non-empty
+   permission request and `within` forbids one, so an expansion cannot be recorded silently.
+   Detecting that a finding is out of scope remains caller judgment.
+4. `artifacts.jsonl` is a derived, recoverable, non-authoritative index, not a second ledger:
+   VP-6's Frozen Work Scope already permits a product-owned derived index, and no state,
+   scheduler or transaction owner is added.
+5. Evidence: 17 focused artifact tests, CLI cases, package `test:coverage` at 100 % functions
+   and lines with 684 passed and four Windows skips, and a 46-file typecheck. AC-20/21/23 move
+   to component evidence; AC-22 stays partial; a real store, host acceptance and Runtime
+   acceptance remain open.

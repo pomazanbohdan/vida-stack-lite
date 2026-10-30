@@ -1708,3 +1708,106 @@ describe('decisionEvaluate', () => {
   });
 
 });
+
+describe('artifacts commands', () => {
+  async function storeFixture(): Promise<{ root: string; store: string; eventPath: string; semanticPath: string }> {
+    const root = await mkdtemp(join(tmpdir(), 'vp-artifacts-cli-'));
+    const store = join(root, 'artifacts.jsonl');
+    const eventPath = join(root, 'event.json');
+    const semanticPath = join(root, 'semantic.json');
+    const bytes = '# VP-6\n';
+    await mkdir(join(root, 'docs/work'), { recursive: true });
+    await writeFile(join(root, 'docs/work/VP-6.md'), bytes);
+    await writeFile(eventPath, JSON.stringify({
+      kind: 'artifact',
+      artifact_id: 'VP-6',
+      artifact_type: 'markdown',
+      product: 'vida-powers',
+      work_scope: 'stage-6',
+      locator: 'docs/work/VP-6.md',
+      revision: 1,
+      digest: createHash('sha256').update(bytes).digest('hex'),
+      links: [],
+      source: { origin: 'observed', actor: 'root', reference: 'run-1' },
+    }));
+    await writeFile(semanticPath, JSON.stringify({ verdict: 'pass', actor: 'root', reference: 'review-1', basis: 'scope and contract agree' }));
+    return { root, store, eventPath, semanticPath };
+  }
+
+  test('appends, indexes and verifies without loading a catalog', async () => {
+    const { root, store, eventPath, semanticPath } = await storeFixture();
+    try {
+      const appended = await runInProcess(['artifacts', 'append', '--store', store, '--event-file', eventPath]);
+      expect(appended.status).toBe(0);
+      expect(JSON.parse(appended.stdout)).toMatchObject({ operation: 'append', outcome: 'appended', artifact_id: 'VP-6', revision: 1 });
+
+      const index = await runInProcess(['artifacts', 'index', '--store', store]);
+      expect(index.status).toBe(0);
+      expect(JSON.parse(index.stdout)).toMatchObject({ artifacts: [{ artifact_id: 'VP-6', revision: 1, events: 1 }] });
+
+      const mechanical = await runInProcess(['artifacts', 'verify', '--store', store, '--id', 'VP-6', '--root', root]);
+      expect(mechanical.status).toBe(0);
+      expect(JSON.parse(mechanical.stdout)).toMatchObject({ mechanical_ok: true, complete: false, semantic: null });
+
+      const complete = await runInProcess(['artifacts', 'verify', '--store', store, '--id', 'VP-6', '--root', root, '--semantic-file', semanticPath]);
+      expect(complete.status).toBe(0);
+      expect(JSON.parse(complete.stdout)).toMatchObject({ mechanical_ok: true, complete: true });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test('reports stable codes for a missing store, an unknown id and a bad input file', async () => {
+    const { root, store, eventPath } = await storeFixture();
+    try {
+      const missing = await runInProcess(['artifacts', 'index', '--store', store]);
+      expect(missing.status).toBe(1);
+      expect(JSON.parse(missing.stderr)).toMatchObject({ code: 'ARTIFACT_STORE_MISSING' });
+
+      const appended = await runInProcess(['artifacts', 'append', '--store', store, '--event-file', eventPath]);
+      expect(appended.status).toBe(0);
+
+      const unknown = await runInProcess(['artifacts', 'verify', '--store', store, '--id', 'nope', '--root', root]);
+      expect(unknown.status).toBe(1);
+      expect(JSON.parse(unknown.stderr)).toMatchObject({ code: 'ARTIFACT_NOT_FOUND' });
+
+      const badInput = await runInProcess(['artifacts', 'append', '--store', store, '--event-file', join(root, 'nope.json')]);
+      expect(badInput.status).toBe(1);
+      expect(JSON.parse(badInput.stderr)).toMatchObject({ code: 'ARTIFACT_INPUT_READ_FAILED' });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test('rejects parser misuse and reports uncoded failures stably', async () => {
+    const { root, store, eventPath } = await storeFixture();
+    try {
+      const unknownOperation = await runInProcess(['artifacts', 'nope', '--store', store]);
+      expect(unknownOperation.status).toBe(1);
+      expect(JSON.parse(unknownOperation.stderr)).toMatchObject({ code: 'CATALOG_INVALID' });
+
+      const unknownFlag = await runInProcess(['artifacts', 'index', '--store', store, '--bogus', 'x']);
+      expect(unknownFlag.status).toBe(1);
+      expect(JSON.parse(unknownFlag.stderr).message).toContain('unknown artifacts flag');
+
+      const missingFlag = await runInProcess(['artifacts', 'index']);
+      expect(missingFlag.status).toBe(1);
+      expect(JSON.parse(missingFlag.stderr).message).toContain('missing required flag --store');
+
+      const directoryStore = join(root, 'dir');
+      await mkdir(directoryStore);
+      const uncoded = await runInProcess(['artifacts', 'index', '--store', join(directoryStore, 'nested', 'artifacts.jsonl')]);
+      expect(uncoded.status).toBe(1);
+      expect(JSON.parse(uncoded.stderr)).toMatchObject({ code: 'ARTIFACT_PATH_INVALID' });
+
+      const blocked = join(root, 'blocked');
+      await mkdir(join(blocked, 'artifacts.jsonl'), { recursive: true });
+      const fallback = await runInProcess(['artifacts', 'append', '--store', join(blocked, 'artifacts.jsonl'), '--event-file', eventPath]);
+      expect(fallback.status).toBe(1);
+      expect(JSON.parse(fallback.stderr)).toMatchObject({ code: 'ARTIFACT_OPERATION_FAILED' });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+});
+

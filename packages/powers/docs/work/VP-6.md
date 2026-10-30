@@ -32,7 +32,7 @@ sources:
   resource: /../../../agent-runtime.config.v1.yaml
   title: Current WorkItem/v1 required fields
 generated: { by: vida-agent/gpt-6-luna, at: '2026-10-23T00:33:38Z' }
-revision: '7'
+revision: '8'
 ---
 
 # VP-6 — Materialization, Work Items, and Findings
@@ -55,6 +55,7 @@ Materialize content through existing artifact contracts and create the smallest 
 - The main Standalone caller queries before append. Deterministic OR matches return stored observations, exact reasons, and original append order; they do not rank or prove equivalence. Every new primary observation uses a distinct caller-supplied `finding_id`. After explicit semantic confirmation, preserve the new observation and evidence, then append a separate merge event; ambiguity remains separate.
 - One main Standalone host caller invokes findings commands sequentially; subagents return structured findings and never write. The read/check/append path has no cross-process lock or race-safety claim. Runtime findings and transactional Work state remain with the Agent's existing SQLite/HostState owner. Standalone adds no database, lease, reservation service, scheduler, or lock owner.
 - The derived search index remains recoverable and non-authoritative. Scope violations are recorded with a permission request, not silently expanded.
+- Artifact references use one append-only `artifacts.jsonl` per product, written only by `artifacts.ts`. A content operation records either a first artifact or an explicit update of an existing one. Presence/format/digest is one operation; the semantic judgment is a separate supplied input, and a receipt is complete only when both agree.
 
 ## Acceptance references
 
@@ -63,14 +64,17 @@ Relevant canonical criteria include AC-20 through AC-24, AC-38, and AC-39. Only 
 ## Current implementation evidence
 
 Current review evidence supports the no-fix boundary in AC-24 and only the deterministic
-portion of AC-22. AC-20, AC-21, and AC-23 remain open pending materialization, index, and
-scope-orchestrator proof. AC-22's semantic candidate generation and equivalence remain open.
-The merge path accepts caller-reported evidence and context. It does not independently verify
-the reported reproduction, context, or semantic equivalence.
+portion of AC-22. AC-20, AC-21 and AC-23 now have component evidence in the artifact
+reference writer and the findings scope gate; a real content operation, a real
+artifact store and an acceptance review remain open. AC-22's semantic candidate
+generation and equivalence remain open. The merge path accepts caller-reported
+evidence and context. It does not independently verify the reported reproduction,
+context, or semantic equivalence.
 
-The writer roundtrip records caller-supplied Work Scope and evidence text. It does not detect
-out-of-Work-Scope input or require permission to expand scope. No real finding event exists, so
-`docs/work/findings.jsonl` remains absent.
+The writer roundtrip records caller-supplied Work Scope and evidence text. A
+`beyond` scope decision now requires a permission request and a `within` decision
+forbids one, so an expansion cannot be recorded silently. Out-of-scope detection
+itself remains caller judgment.
 
 The `.35` focused packet records 8 pass / 0 fail / 45 assertions and the `.40` independent
 review judged the component ready; neither closes Step F. Malformed existing JSONL fails closed
@@ -100,8 +104,8 @@ Candidate evidence from `.104` on 2026-10-23: `findings.ts` returns append/repla
 
 - **Output kind:** Human Markdown Work Items plus the Standalone findings writer and append-only JSONL events when real events exist.
 - **Required data:** Work Item identity, goal, Work Scope, acceptance, typed relations, evidence and artifact contract; findings carry problem/evidence/source/product/scope/impact data, replay identity, candidate-query identity (`event_id`, `finding_id`, and fingerprint), and an explicit caller decision before merge. A failed rollback reports `FINDING_STORE_RECOVERY_REQUIRED` for owner recovery.
-- **Materialization location:** `packages/powers/docs/work/VP-5.md`, `VP-6.md`, `VP-7.md`, `packages/powers/skills/vp-mode/scripts/findings.ts`, `catalog-cli.ts`, `skills/vp-mode/SKILL.md`, focused tests, and conditionally `packages/powers/docs/work/findings.jsonl`. The caller derives the explicit absolute store path from this contract; it is never derived from CWD.
-- **Presence/format/digest verification:** OKF and focused document checks for the Markdown records; CLI JSON lines and stable exit/error framing; JSONL line parsing, event identity, exact append-byte checks, partial-write rollback checks, and query read-only checks for test stores and any actual event.
+- **Materialization location:** `packages/powers/docs/work/VP-5.md`, `VP-6.md`, `VP-7.md`, `packages/powers/skills/vp-mode/scripts/findings.ts`, `artifacts.ts`, `catalog-cli.ts`, `skills/vp-mode/SKILL.md`, focused tests, and conditionally `packages/powers/docs/work/findings.jsonl` and `artifacts.jsonl`. The caller derives the explicit absolute store path from this contract; it is never derived from CWD.
+- **Presence/format/digest verification:** OKF and focused document checks for the Markdown records; CLI JSON lines and stable exit/error framing; JSONL line parsing, event identity, exact append-byte checks, partial-write rollback checks, and query read-only checks for test stores and any actual event; `artifacts verify` reports presence, format and digest separately from a supplied semantic judgment.
 - **Semantic verification:** separate acceptance review establishes scope/classification and any claimed equivalence from reproduction, context, and evidence. Deterministic equality alone does not prove semantic equivalence.
 
 ## Implementation status addendum — 2026-10-22
@@ -126,6 +130,23 @@ This is component evidence only. It does not prove host artifact materialization
 The `.113` isolated candidate addresses the three Important and five Minor findings from `.110`. The final regression tests were run against unchanged `.104` production hashes and produced seven behavior failures in 61 tests. After the fixes, Bun 1.4.3 reports 61 pass, 0 fail, and 367 assertions; `bun check --project tsconfig.json` reports no type errors in 29 files. The injected partial-write tests cover rollback for an existing store, removal of a newly created store, and `FINDING_STORE_RECOVERY_REQUIRED` when rollback itself fails.
 
 The receipt-only CLI smoke passes query-before-append, append, query with `finding_id` and all exact reasons, replay with unchanged bytes, raw-argv redaction, inapplicable-flag rejection, and event-path dot-component rejection. The changed-script API scan finds no Bun API use. These checks are bound to the candidate files and do not prove full F acceptance. AC-20/21/23 remain open, AC-22 remains partial, and AC-24 remains component-only. No real finding event, host acceptance, or Runtime acceptance exists. Independent follow-up review, full package tests, coverage, root typecheck and Knip, G rebind before handoff/admission, and root reconciliation remain pending.
+
+## Implementation status addendum — 2026-10-30
+
+The owner approved the artifact-reference extension. `artifacts.ts` adds one append-only
+`artifacts.jsonl` per product with `append`, `index` and `verify`; the CLI exposes
+`artifacts append|index|verify` before catalog loading. An event is either a first artifact
+or an explicit update of an existing one, and the store rejects an unknown update target, a
+changed digest under the same revision, a malformed path and a corrupt store. `verify`
+reports presence, format and digest as separate parts and sets `complete` only when a
+semantic judgment is supplied and passes. The findings writer now accepts an optional
+`scope` decision: `beyond` requires a non-empty permission request and `within` forbids one.
+
+Focused evidence: 17 artifact tests plus CLI cases; package `test:coverage` reports 100 %
+functions and lines with 684 passed, four expected Windows skips and zero failures;
+typecheck passes 46 files. AC-20, AC-21 and AC-23 now carry component evidence. A real
+content operation, a real store, semantic acceptance review, AC-22 equivalence, host
+installation and Runtime acceptance remain open.
 
 ## Links and handoff
 
