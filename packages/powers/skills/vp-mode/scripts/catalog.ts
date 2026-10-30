@@ -402,7 +402,7 @@ function canonicalTags(catalog: Catalog, dimension: 'capability' | 'pattern', va
   return (values ?? []).map((tag) => {
     const canonical = catalog.tag_aliases[tag] ?? tag;
     if (!Object.prototype.hasOwnProperty.call(catalog.tag_dictionary[dimension], canonical)) {
-      throw invalid(`unknown ${dimension} query tag ${tag}`, { tag, dimension });
+      throw invalid(`unknown ${dimension} query tag ${tag}; run tags --query <terms> to discover canonical tags`, { tag, dimension });
     }
     return canonical;
   });

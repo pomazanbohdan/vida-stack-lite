@@ -711,6 +711,7 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       let resolved: string | undefined;
       const forTerms = listValues(flags, '--for');
       if (forTerms !== undefined) {
+        if (forTerms.length > 8) throw invalid('--for accepts at most 8 terms; run one focused --for per intent (3-6 terms)', { terms: forTerms });
         const resolvedTags = resolveFor(instructions, forTerms);
         const capability = capabilityTags?.[0] ?? resolvedTags?.capability;
         if (capability === undefined) throw invalid('no capability matched --for; run tags --query with canonical nouns', { terms: forTerms });

@@ -1756,6 +1756,10 @@ describe('retrieval workflow contract', () => {
     const missing = await runInProcess(['search', '--for', 'argument', 'option', 'parser', 'flag', '--catalog', realCatalog]);
     expect(missing.status).toBe(1);
     expect(missing.stderr).toContain('no capability matched --for');
+
+    const sentence = await runInProcess(['search', '--for', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', '--catalog', realCatalog]);
+    expect(sentence.status).toBe(1);
+    expect(sentence.stderr).toContain('run one focused --for per intent');
   }, 20000);
 
   test('search accepts a namespaced tag copied from tags output', async () => {
