@@ -556,6 +556,8 @@ The observed pre-push documentation-capture blocker additionally scopes
 The fixture uses fixed generated configuration and only its actual package
 resources; capture follows those reads. File, aggregate, path and timing bounds,
 integrity checks and UNKNOWN retention remain unchanged.
+The same packet may restore only the executable Git mode of
+`.githooks/pre-push`, whose unchanged script must run during native Linux pushes.
 
 Each controller child runs under one exclusive compound reservation at
 `<controllerRoot>/observations/`. The controller retains the exact executable
