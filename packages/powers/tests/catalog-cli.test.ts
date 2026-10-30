@@ -1791,9 +1791,11 @@ describe('retrieval workflow contract', () => {
     const capability = await runInProcess(['get', '--catalog', join(fixtureDir, 'catalog.json'), '--id', 'test-design', '--profile', profilePath]);
     expect(capability.status).toBe(1);
     expect(capability.stderr).toContain('is a capability, not an instruction');
+    expect(capability.stderr).toContain('search --capability test-design');
     const pattern = await runInProcess(['get', '--catalog', join(fixtureDir, 'catalog.json'), '--id', 'test-first-development', '--profile', profilePath]);
     expect(pattern.status).toBe(1);
     expect(pattern.stderr).toContain('is a pattern, not an instruction');
+    expect(pattern.stderr).toContain('search --pattern test-first-development');
     const alias = await runInProcess(['get', '--catalog', join(fixtureDir, 'catalog.json'), '--id', 'tdd', '--profile', profilePath]);
     expect(alias.status).toBe(1);
     expect(alias.stderr).toContain('is a tag alias, not an instruction');

@@ -775,9 +775,10 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
           ? 'pattern'
           : catalog.tag_aliases[id] !== undefined ? 'tag alias' : undefined;
         if (dimension !== undefined) {
-          throw invalid(`unknown instruction id: ${id}; ${id} is a ${dimension}, not an instruction`, {
+          const hint = dimension === 'capability' ? `search --capability ${id}` : dimension === 'pattern' ? `search --pattern ${id}` : `tags --query ${id}`;
+          throw invalid(`unknown instruction id: ${id}; ${id} is a ${dimension}, not an instruction; try ${hint}`, {
             instruction_id: id,
-            hint: `search --query ${id}`,
+            hint,
           });
         }
       }
