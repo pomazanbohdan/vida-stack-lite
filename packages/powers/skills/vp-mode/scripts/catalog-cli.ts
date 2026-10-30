@@ -257,6 +257,9 @@ function isCommand(value: string): value is Command {
 function flagDefinition(command: Command, flag: string): FlagDefinition {
   const definition = commandDefinitions[command].flags[flag];
   if (definition !== undefined) return definition;
+  if (command === 'search' && flag === '--query') {
+    throw invalid('flag --query is not valid for search; free-text discovery uses tags --query, search filters by --capability or --pattern', { command, flag });
+  }
   const knownElsewhere = Object.values(commandDefinitions).some((item) => Object.prototype.hasOwnProperty.call(item.flags, flag));
   if (knownElsewhere) throw invalid(`flag ${flag} is not valid for ${command}`, { command, flag });
   if (command === 'findings') throw invalid('unknown findings flag');
@@ -339,7 +342,8 @@ function renderHelp(command?: Command): string {
       '  2. search --capability <tag> [--pattern <tag>]  -> candidates, 10 per page',
       '  3. get --id <id...> --profile <path>            -> full text + obligations',
       'notes: search takes bare tags (review-code, not capability:review-code);',
-      '       --offset 10 gets the next page; --all lists every row.',
+      '       --offset 10 gets the next page; --all lists every row;',
+      '       a page is a sample, not a ranking; page again when an intent is missing.',
     );
   }
   for (const name of commands) {
@@ -540,7 +544,7 @@ function compactRows(rows: CompactRow[], flags: Map<string, string[]>, defaultLi
   const remaining = Math.max(0, rows.length - offset - page.length);
   const paginated = page.length < rows.length || offset > 0;
   const lines = paginated
-    ? [`pagination: showing ${page.length} of ${rows.length}${remaining > 0 ? `; next: --offset ${offset + page.length} (${remaining} remaining)` : '; no more rows'}`]
+    ? [`pagination: showing ${page.length} of ${rows.length}${remaining > 0 ? `; next: --offset ${offset + page.length} (${remaining} remaining; same search, not a new query)` : '; no more rows'}`]
     : [];
   if (remaining > 0 && refine !== undefined) lines.push(refine);
   return {

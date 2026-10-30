@@ -734,7 +734,7 @@ describe('catalog CLI', () => {
     const paged = runCli(['browse', '--catalog', catalogPath, '--axis', 'domain', '--limit', '1', '--offset', '1']);
     expect(paged.status).toBe(0);
     expect(paged.stdout).toBe('domain:design-ux\tDomain design-ux; 1 active instructions.\n');
-    expect(paged.stderr).toBe('pagination: showing 1 of 7; next: --offset 2 (5 remaining)\n');
+    expect(paged.stderr).toBe('pagination: showing 1 of 7; next: --offset 2 (5 remaining; same search, not a new query)\n');
 
     const unsupported = await runInProcess(['browse', '--catalog', catalogPath, '--axis', 'policy']);
     expect(unsupported.status).toBe(1);
@@ -1746,6 +1746,12 @@ describe('retrieval workflow contract', () => {
     const alias = await runInProcess(['tags', '--query', 'pr-review', '--catalog', realCatalog]);
     expect(alias.status).toBe(0);
     expect(alias.stdout).toContain('capability:review-code');
+  });
+
+  test('search explains that free text belongs to tags', async () => {
+    const result = await runInProcess(['search', '--query', 'debug', '--catalog', realCatalog]);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('free-text discovery uses tags --query');
   });
 
   test('get explains that a tag is not an instruction id', async () => {
