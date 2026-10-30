@@ -253,10 +253,21 @@
     "tdd": "test-first-development",
     "debugging": "debug-root-cause",
     "diagnose": "debug-root-cause",
+    "diagnosis": "debug-root-cause",
+    "incident": "debug-root-cause",
+    "troubleshooting": "debug-root-cause",
+    "rca": "debug-root-cause",
     "deprecate": "decide-on-deprecation",
     "pr-review": "review-code",
     "verification": "verify-work-results",
-    "documentation": "write-technical-prose"
+    "observability": "instrument-production-code",
+    "alerting": "instrument-production-code",
+    "monitoring": "instrument-production-code",
+    "telemetry": "instrument-production-code",
+    "documentation": "write-technical-prose",
+    "docs": "write-technical-prose",
+    "readme": "write-technical-prose",
+    "guide": "write-technical-prose"
   },
   "tag_exemptions": [],
   "instructions": [

@@ -1765,14 +1765,41 @@ describe('retrieval workflow contract', () => {
     expect(explicit.status).toBe(0);
     expect(explicit.stderr).toContain('resolved: capability=review-code');
 
-    const missing = await runInProcess(['search', '--for', 'argument', 'option', 'parser', 'flag', '--catalog', realCatalog]);
+    const parserIntent = await runInProcess(['search', '--for', 'argument', 'option', 'parser', 'flag', '--catalog', realCatalog]);
+    expect(parserIntent.status).toBe(0);
+    expect(parserIntent.stderr).toContain('resolved: pattern=strict-argument-parsing');
+
+    const missing = await runInProcess(['search', '--for', 'zzzznotatag', '--catalog', realCatalog]);
     expect(missing.status).toBe(1);
-    expect(missing.stderr).toContain('no capability matched --for');
+    expect(missing.stderr).toContain('no capability or pattern matched --for');
+
+    const patternOnly = await runInProcess(['search', '--for', 'incremental', 'cutover', '--catalog', realCatalog]);
+    expect(patternOnly.status).toBe(0);
+    expect(patternOnly.stderr).toContain('resolved: pattern=incremental-cutover');
+
+    const diagnosis = await runInProcess(['search', '--for', 'diagnosis', 'intermittent', '500', '--catalog', realCatalog]);
+    expect(diagnosis.status).toBe(0);
+    expect(diagnosis.stderr).toContain('resolved: capability=debug-root-cause');
+
+    const alerting = await runInProcess(['search', '--for', 'alerting', 'production', 'errors', '--catalog', realCatalog]);
+    expect(alerting.status).toBe(0);
+    expect(alerting.stderr).toContain('resolved: capability=instrument-production-code');
 
     const sentence = await runInProcess(['search', '--for', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', '--catalog', realCatalog]);
     expect(sentence.status).toBe(1);
     expect(sentence.stderr).toContain('run one focused --for per intent');
   }, 20000);
+
+  test('--for falls back to the most frequent matching pattern when no capability matches', async () => {
+    const competingCatalog = await catalogWithProfileSchema();
+    const competing = await runInProcess(['search', '--for', 'development', '--catalog', competingCatalog]);
+    expect(competing.status).toBe(0);
+    expect(competing.stderr).toContain('resolved: pattern=test-first-development');
+
+    const equalCounts = await runInProcess(['search', '--for', 'staged', '--catalog', realCatalog]);
+    expect(equalCounts.status).toBe(0);
+    expect(equalCounts.stderr).toContain('resolved: pattern=staged-elicitation');
+  });
 
   test('search accepts a namespaced tag copied from tags output', async () => {
     const result = await runInProcess(['search', '--capability', 'capability:review-code', '--catalog', realCatalog]);

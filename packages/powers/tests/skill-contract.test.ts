@@ -24,16 +24,16 @@ test('defines the session bundle limit over selected instruction content', async
 
 test('routes final retrieval through one compose-backed multi-ID get', async () => {
   const skill = await readSkill();
-  expect(skill).toMatch(/`tags --query`[\s\S]*search[\s\S]*get --id <id\.\.\.>[\s\S]*`catalog\.compose`/u);
+  expect(skill).toMatch(/search --for[\s\S]*`tags --query`[\s\S]*get --id <id\.\.\.>[\s\S]*`catalog\.compose`/u);
   expect(skill).toContain('Do not issue one get per ID or manually concatenate results.');
   expect(skill).toMatch(/`catalog\.get` library operation remains a single-record inspection API and is not a bundle assembler/u);
 });
 
 test('documents executable catalog CLI commands from the package root', async () => {
   const skill = await readSkill();
-  expect(skill).toContain('From `packages/powers/`, run `bun skills/vp-mode/scripts/catalog-cli.ts search --for <literal terms>');
-  expect(skill).toContain('Override either dimension with explicit `--capability` or `--pattern`');
-  expect(skill).toContain('`bun skills/vp-mode/scripts/catalog-cli.ts get --id <id...> --profile <effective-profile.json> --catalog <snapshot>`');
+  expect(skill).toContain('search --for "<terms>" --profile <effective-profile.json> --catalog <snapshot>');
+  expect(skill).toContain('Fallback on the observable signal');
+  expect(skill).toContain('get --id <id...> --profile <effective-profile.json> --catalog <snapshot>');
 });
 
 test('uses the effective profile and negotiates unresolved policy groups', async () => {
