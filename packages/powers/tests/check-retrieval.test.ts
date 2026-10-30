@@ -1,4 +1,5 @@
 import { afterAll, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -98,6 +99,16 @@ test('the CLI prints a result, a usage line, or a failure with the matching exit
   expect(out.join('')).toContain('"ok": true');
 
   expect(await runRetrievalCli(['--catalog', catalogPath, '--report', await reportFile({ intents: [] })], io)).toBe(1);
+});
+
+test('reads the intent map from stdin when --report is a dash', () => {
+  const result = spawnSync(process.execPath, [scriptPath, '--catalog', catalogPath, '--report', '-'], {
+    input: JSON.stringify(goodReport),
+    encoding: 'utf8',
+  });
+  expect(result.status).toBe(0);
+  expect(result.stdout).toContain('"ok": true');
+  expect(result.stdout).toContain('debug-root-cause');
 });
 
 test('the entry point guard ignores an unrelated argv and runs when invoked directly', async () => {

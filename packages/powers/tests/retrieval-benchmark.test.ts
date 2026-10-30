@@ -40,6 +40,16 @@ const resolvedCases: Array<{ terms: string[]; expects: string }> = [
   { terms: ['staged'], expects: 'staged-elicitation' },
   { terms: ['incremental', 'cutover'], expects: 'incremental-cutover' },
   { terms: ['argument', 'option', 'parser', 'flag'], expects: 'strict-argument-parsing' },
+  { terms: ['request', 'intake', 'triage', 'requirement', 'clarification'], expects: 'triage-reports' },
+  { terms: ['decision', 'search', 'options', 'tradeoff', 'algorithm'], expects: 'keep-decision-trail' },
+  { terms: ['find', 'root', 'cause', 'evaluate', 'candidate', 'solutions'], expects: 'debug-root-cause' },
+  { terms: ['500', 'error', 'incident', 'diagnosis'], expects: 'debug-root-cause' },
+  { terms: ['external', 'consumer', 'migration', 'API'], expects: 'migrate-consumers-off-the-old-system' },
+  { terms: ['verify', 'completion', 'acceptance'], expects: 'verify-work-results' },
+  { terms: ['agent', 'skill', 'instructions', 'authoring'], expects: 'author-agent-instructions' },
+  { terms: ['requirements', 'clarifying', 'questions'], expects: 'clarify-requirements' },
+  { terms: ['technical', 'debt', 'review', 'cadence'], expects: 'manage-technical-debt' },
+  { terms: ['quality', 'bar', 'floor', 'ratchet'], expects: 'define-quality-bar' },
 ];
 
 // A single generic action verb says "do something", not what. These must not
@@ -47,6 +57,7 @@ const resolvedCases: Array<{ terms: string[]; expects: string }> = [
 const weakCases: string[][] = [
   ['properly', 'handling', 'any', 'request'],
   ['algorithms', 'finding', 'solutions'],
+  ['explore', 'alternatives', 'tradeoffs', 'before', 'deciding'],
 ];
 
 const unresolvedCases: string[][] = [

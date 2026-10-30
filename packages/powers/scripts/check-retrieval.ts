@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadCatalog, loadInstructions } from '../skills/vp-mode/scripts/catalog.ts';
@@ -122,8 +122,18 @@ export function checkReport(
   };
 }
 
-export async function checkRetrievalReport(catalogPath: string, reportPath: string): Promise<RetrievalCheck> {
-  const parsed = parseReport(JSON.parse(await readFile(reportPath, 'utf8')) as unknown);
+export function parseReportText(text: string): { report?: RetrievalReport; issues: RetrievalIssue[] } {
+  return parseReport(JSON.parse(text) as unknown);
+}
+
+const readReportText = (path: string): string => readFileSync(path === '-' ? 0 : path, 'utf8');
+
+export async function checkRetrievalReport(
+  catalogPath: string,
+  reportPath: string,
+  read: (path: string) => string = readReportText,
+): Promise<RetrievalCheck> {
+  const parsed = parseReportText(read(reportPath));
   if (parsed.report === undefined) return { ok: false, intents: [], alias_coverage: { reachable: 0, total: 0 }, issues: parsed.issues };
   const catalog = await loadCatalog(catalogPath);
   const instructions = await loadInstructions(catalog, dirname(resolve(catalogPath)));
@@ -141,7 +151,7 @@ export async function runRetrievalCli(argv: readonly string[], io: RetrievalIo):
   const catalogPath = flag(argv, '--catalog');
   const reportPath = flag(argv, '--report');
   if (catalogPath === undefined || reportPath === undefined) {
-    io.err('usage: check-retrieval.ts --catalog <catalog.json> --report <report.json>\n');
+    io.err('usage: check-retrieval.ts --catalog <catalog.json> --report <report.json|->\n');
     return 2;
   }
   let result: RetrievalCheck;

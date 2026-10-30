@@ -26,7 +26,7 @@ const STOPWORDS = new Set(['a', 'an', 'the', 'for', 'to', 'of', 'and', 'or', 'wi
 const GENERIC_ACTION_TOKENS = new Set([
   'add', 'adjust', 'apply', 'ask', 'assign', 'avoid', 'build', 'call', 'change', 'check',
   'choose', 'clean', 'close', 'collect', 'compare', 'complete', 'confirm', 'convert',
-  'create', 'delete', 'detect', 'document', 'ensure', 'extract', 'find', 'fix', 'follow',
+  'create', 'decide', 'delete', 'detect', 'document', 'ensure', 'extract', 'find', 'fix', 'follow',
   'generate', 'give', 'handle', 'improve', 'include', 'integrate', 'keep', 'list', 'make',
   'manage', 'map', 'mark', 'move', 'name', 'open', 'pick', 'prepare', 'preserve', 'prevent',
   'process', 'produce', 'protect', 'provide', 'put', 'rank', 'reduce', 'remove', 'rename',
