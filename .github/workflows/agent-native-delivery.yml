@@ -251,6 +251,7 @@ jobs:
     env:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request_linux }}
+      CI_REQUEST_LINUX: ${{ inputs.request_linux }}
       CI_PUBLICATION: ${{ inputs.publish }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
       GIT_CONFIG_COUNT: "1"
