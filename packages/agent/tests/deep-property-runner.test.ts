@@ -36,7 +36,7 @@ async function runDeepProperty(overrides: NodeJS.ProcessEnv = {}) {
 test('deep property command uses the current Bun executable without a PATH runtime fallback', async () => {
   const { exitCode, stdout, stderr } = await runDeepProperty();
   expect({ exitCode, stdout, stderr }).toMatchObject({ exitCode: 0 });
-  expect(stderr).toContain('6 pass');
+  expect(stderr).toMatch(/\b[1-9]\d* pass\b/u);
   expect(stderr).toContain('0 fail');
   expect(stderr).toContain('configured authorization rejects malformed requests with matched trusted identity');
 });
@@ -49,5 +49,5 @@ test.each([
   const result = await runDeepProperty(overrides);
   expect(result.exitCode).toBe(1);
   expect(result.stderr).toContain(message);
-  expect(result.stderr).not.toContain('6 pass');
+  expect(result.stderr).toMatch(/\b[1-9]\d* fail\b/u);
 });

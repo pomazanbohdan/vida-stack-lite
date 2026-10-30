@@ -18,8 +18,6 @@ import {
 } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { standaloneRuntime } from './bun.ts';
-import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
-import { parseForwardJournal } from '../src/documentation/forward-journal.js';
 import {
   runRepeatedOptions,
   runScalarOptionFields,
@@ -37,6 +35,8 @@ if (isRunMain && process.argv[2] === '--help') {
   process.exit(0);
 }
 
+const { canonicalJson } = await import('../src/contracts/canonical-json-core.ts');
+const { parseForwardJournal } = await import('../src/documentation/forward-journal.js');
 const {
   createCliHostStateStore,
   closeWorkspaceDatabaseWithAdmission,
