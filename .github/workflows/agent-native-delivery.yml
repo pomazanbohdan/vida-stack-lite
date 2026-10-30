@@ -270,6 +270,17 @@ jobs:
       - *shared-isolated-source
       - *shared-save-bun-dependency-cache
       - *shared-require-bun-dependency-cache-evidence
+      - name: native-isolation-prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends bubblewrap tini
+          command -v bwrap
+          command -v tini
+          bwrap --version
+          tini --version
+          bwrap --die-with-parent --unshare-all --new-session --ro-bind / / --proc /proc --dev /dev /usr/bin/tini -- /usr/bin/true
       - name: full-source-quality
         id: source-quality
         run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/release-ci-source-quality.ts"

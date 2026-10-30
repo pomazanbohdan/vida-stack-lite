@@ -15,7 +15,10 @@ import {
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
-import { validateMutationPerTestJoin } from '../tooling/mutation-per-test-evidence.ts';
+import {
+  validateMutationPerTestJoin,
+  validateMutationPerTestRegistration,
+} from '../tooling/mutation-per-test-evidence.ts';
 import { generateMutationImage } from '../tooling/mutation-generation.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
@@ -116,6 +119,7 @@ async function runAdapterChild(
     maxConcurrency?: number;
     parallel?: number;
     pattern?: string;
+    ci?: 'false' | 'true';
     activeMutantId?: string;
   } = {},
 ) {
@@ -157,6 +161,7 @@ async function runAdapterChild(
         AGENT_MUTATION_ADAPTER_DIRECTORY: path.join(root, `adapters-${suffix}`),
         AGENT_MUTATION_PER_TEST_CAPTURE: options.capture ? '1' : undefined,
         ...(options.activeMutantId === undefined ? {} : { __STRYKER_ACTIVE_MUTANT__: options.activeMutantId }),
+        ...(options.ci === undefined ? {} : { CI: options.ci }),
       },
       stdout: 'pipe',
       stderr: 'pipe',
@@ -169,6 +174,7 @@ async function runAdapterChild(
   ]);
   expect({ stdout, stderr, exitCode }).toMatchObject({ exitCode: options.exitCode ?? 1 });
   const junit = await readFile(junitFile, 'utf8').catch((error: unknown) => {
+    if (options.ci === 'true' && isRecord(error) && error.code === 'ENOENT') return '';
     throw new Error(`Adapter child did not produce JUnit: ${stderr}`, { cause: error });
   });
   const bodyEventBytes = await readFile(receiptFile);
@@ -1039,19 +1045,40 @@ test.each([
     label: 'async',
     registration: "describe('suite',async()=>{await Promise.resolve();test('body',()=>expect(true).toBe(true));});",
   },
-])('per-test scope capture refuses unsupported describe $label', async ({ registration }) => {
+])('per-test scope capture refuses unsupported describe $label', async ({ label, registration }) => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-unsupported-describe-'));
   console.error('Retained unsupported describe fixture: ' + root);
   const body = `import { describe, test, expect } from 'bun:test';
 test('ordinary',()=>expect(true).toBe(true));
 ${registration}`;
-  const ordinary = await runAdapterChild(root, body, 'ordinary', { exitCode: 0 });
+  const syntheticOnlyCI = label === 'only' ? { ci: 'false' as const } : {};
+  const ordinary = await runAdapterChild(root, body, 'ordinary', { exitCode: 0, ...syntheticOnlyCI });
   expect(junitOutcome(ordinary.junit, [ordinary.selectedTest], [], ordinary.events).outcome).toBe('passed');
-  const unsupported = await runAdapterChild(root, body, 'unsupported-describe', { capture: true });
+  const unsupported = await runAdapterChild(root, body, 'unsupported-describe', { capture: true, ...syntheticOnlyCI });
   expect(unsupported.stderr).toContain('Mutation per-test capture does not support');
   expect(existsSync(path.join(root, 'adapters-unsupported-describe', 'per-test-coverage.json'))).toBe(false);
   expect(() => junitOutcome(unsupported.junit, [unsupported.selectedTest], [], unsupported.events)).toThrow();
   expect(confirmedRunnerOutcome(unsupported.exitCode, 'unproven')).toBe('unknown');
+  if (label === 'only') {
+    const nativeGuard = await runAdapterChild(root, body, 'native-only-ci-guard', { capture: true, ci: 'true' });
+    expect(nativeGuard.stderr).toContain('.only is disabled in CI environments');
+    expect(nativeGuard.events).toEqual([]);
+    expect(nativeGuard.bodyEventBytes).toHaveLength(0);
+    const nativeCapture = path.join(root, 'adapters-native-only-ci-guard', 'per-test-coverage.json');
+    if (existsSync(nativeCapture)) {
+      const capture: unknown = JSON.parse(await readFile(nativeCapture, 'utf8'));
+      expect(() =>
+        validateMutationPerTestRegistration({
+          capture,
+          junit: nativeGuard.junit,
+          bodyEvents: nativeGuard.bodyEventBytes,
+          exitCode: nativeGuard.exitCode,
+          tests: [nativeGuard.selectedTest.replaceAll('\\', '/')],
+        }),
+      ).toThrow('Per-test registration probe executed work or has invalid coverage/exit evidence.');
+    }
+    expect(confirmedRunnerOutcome(nativeGuard.exitCode, 'unproven')).toBe('unknown');
+  }
 });
 
 test('per-test scope capture stays invalid after an unsupported registration error is caught', async () => {

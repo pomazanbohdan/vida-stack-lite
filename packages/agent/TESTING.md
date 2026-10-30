@@ -86,6 +86,9 @@ different file names, case and traversal components remain distinct bindings.
 A Windows Source push may therefore precede full CI quality. Publication in the
 existing native delivery workflow requires its dedicated Linux
 `full-source-quality` job to complete successfully before Linux native formation.
+That job installs Ubuntu's `bubblewrap` and `tini` packages and requires an
+unprivileged namespace probe to succeed before assurance starts. Kernel or
+AppArmor denials remain blocking; the workflow does not relax host security policy.
 Its quality step runs unconditionally, fails closed and calls the
 same Git-independent fresh coverage and complete CRAP validator as the unchanged
 Linux pre-push route. It retains the full suite, inventory, numerical budgets,

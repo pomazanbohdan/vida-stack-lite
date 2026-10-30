@@ -142,7 +142,7 @@ async function expectAdmissionExpiry(
   let drainFailure: { readonly error: unknown } | undefined;
   try {
     const firstAttempt = await Promise.race([
-      observedBinding.then(() => 'settled'),
+      observedBinding.then(({ status }) => status),
       new Promise<'pending'>((resolve) => setTimeout(() => resolve('pending'), 25)),
     ]);
     expect(firstAttempt).toBe('pending');
@@ -549,8 +549,8 @@ test('workspace binding retries a read-only activation preflight while its owned
   try {
     const firstAttempt = await Promise.race([
       binding.then(
-        () => 'settled',
-        () => 'settled',
+        () => 'fulfilled',
+        () => 'rejected',
       ),
       new Promise<'pending'>((resolve) => setTimeout(() => resolve('pending'), 25)),
     ]);
@@ -797,8 +797,8 @@ test('workspace binding waits for an owned activation lock quarantine to clear b
   const binding = bindRuntimeInitialization(root, store);
   const firstAttempt = await Promise.race([
     binding.then(
-      () => 'settled',
-      () => 'settled',
+      () => 'fulfilled',
+      () => 'rejected',
     ),
     new Promise<'pending'>((resolve) => setTimeout(() => resolve('pending'), 25)),
   ]);

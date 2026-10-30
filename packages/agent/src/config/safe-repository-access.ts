@@ -94,11 +94,13 @@ const fsSafePackageMaxBytes = 64 * 1024 * 1024;
 const maxRepositoryReadBytes = 8 * 1024 * 1024;
 const boundedReadChunkBytes = 64 * 1024;
 const staleLockAgeMs = 30_000;
-/** A read admission denial while a reclaim owner holds the exact lock namespace. */
+/** A read admission denial while a writer or reclaim owner holds the exact lock namespace. */
 export class SafeRepositoryLockContentionError extends Error {
   readonly code: 'SAFE_REPOSITORY_LOCK_CONTENTION' | 'EEXIST';
-  constructor(label: string, cause?: Error) {
-    super(cause?.message ?? `safe repository access unavailable: ${label} lock reclaim is in progress`, { cause });
+  constructor(label: string, cause?: Error, message?: string) {
+    super(message ?? cause?.message ?? `safe repository access unavailable: ${label} lock reclaim is in progress`, {
+      cause,
+    });
     this.name = 'SafeRepositoryLockContentionError';
     this.code = cause === undefined ? 'SAFE_REPOSITORY_LOCK_CONTENTION' : 'EEXIST';
   }
@@ -1271,8 +1273,18 @@ function captureDirectoryChain(
 }
 function assertCaptureIdle(parentFd: number, targetName: string, label: string): void {
   const lockName = linuxCasLockName(targetName);
-  reject(linuxFileExistsAtParent(parentFd, lockName), label + ' has an active CAS writer');
-  reject(reclaimGuardStats(parentFd, lockName + '.reclaim', label) !== null, label + ' CAS reclaim is active');
+  if (linuxFileExistsAtParent(parentFd, lockName))
+    throw new SafeRepositoryLockContentionError(
+      label,
+      undefined,
+      `safe repository access unavailable: ${label} has an active CAS writer`,
+    );
+  if (reclaimGuardStats(parentFd, lockName + '.reclaim', label) !== null)
+    throw new SafeRepositoryLockContentionError(
+      label,
+      undefined,
+      `safe repository access unavailable: ${label} CAS reclaim is active`,
+    );
   rejectRetainedLockQuarantine(parentFd, lockName, label, 'admission');
   rejectLinuxOrphanBackups(parentFd, targetName, label);
 }

@@ -69,6 +69,7 @@ export const standaloneDiscoveryFiles = [
   'bin/run-cli-options.ts',
   'bin/reconcile-cli-contracts.ts',
   'bin/cli-error-properties.ts',
+  'tooling/owned-cleanup-completion.ts',
   'bin/project-mapping-contract.ts',
   'bunfig.toml',
 ];

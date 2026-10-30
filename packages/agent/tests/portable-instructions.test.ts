@@ -32,8 +32,11 @@ beforeAll(() => {
     mkdirSync(consumer);
     mkdirSync(path.join(bundle, 'bin'), { recursive: true });
     cpSync(path.join(bundleRoot, 'instructions'), path.join(bundle, 'instructions'), { recursive: true });
-    for (const relative of standaloneDiscoveryFiles)
-      cpSync(path.join(bundleRoot, relative), path.join(bundle, relative));
+    for (const relative of standaloneDiscoveryFiles) {
+      const destination = path.join(bundle, relative);
+      mkdirSync(path.dirname(destination), { recursive: true });
+      cpSync(path.join(bundleRoot, relative), destination);
+    }
     const agents = readFileSync(path.join(bundleRoot, 'templates/AGENTS.template.md'), 'utf8').replaceAll(
       '{{BUNDLE}}',
       'vida-agent',
