@@ -72,8 +72,8 @@ function rankByNames(
   for (const item of ranked) {
     item.score = query.reduce((total, token) => total
       + (item.names.has(token) ? 1 / (documentFrequency.get(token) ?? 1) : 0)
-      + (aliasesApply && aliases.get(token) === item.tag ? 2 : 0), 0);
-    const firstIndex = query.findIndex((token) => item.names.has(token));
+      + (aliasesApply && aliases.get(token) === item.tag ? 1 : 0), 0);
+    const firstIndex = query.findIndex((token) => item.names.has(token) || (aliasesApply && aliases.get(token) === item.tag));
     item.firstIndex = firstIndex === -1 ? Number.MAX_SAFE_INTEGER : firstIndex;
   }
   ranked.sort((left, right) => right.score - left.score

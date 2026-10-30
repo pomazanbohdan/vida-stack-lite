@@ -29,6 +29,7 @@ const resolvedCases: Array<{ terms: string[]; expects: string }> = [
   { terms: ['completion', 'verification', 'acceptance'], expects: 'verify-work-results' },
   { terms: ['endpoint', 'deprecation', 'fix', 'decision'], expects: 'decide-on-deprecation' },
   { terms: ['legacy', 'endpoint', 'consumer', 'migration'], expects: 'migrate-consumers-off-the-old-system' },
+  { terms: ['migrate', 'external', 'consumers', 'off', 'deprecated', 'endpoint'], expects: 'migrate-consumers-off-the-old-system' },
   { terms: ['pull', 'request', 'review', 'typescript'], expects: 'review-code' },
   { terms: ['architecture', 'improve'], expects: 'design-structure' },
   { terms: ['architectural', 'design', 'structure'], expects: 'design-structure' },
