@@ -119,6 +119,7 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
       '--capability': { arity: 'list', value: 'TAG', description: 'OR within capability tags.' },
       '--pattern': { arity: 'list', value: 'TAG', description: 'OR within pattern tags.' },
+      '--for': { arity: 'list', value: 'TERM', description: 'Resolve a capability and its most frequent pattern from free-text terms, then search.' },
       '--id': { arity: 'list', value: 'ID', description: 'Restrict to instruction IDs.' },
       '--roles': { arity: 'list', value: 'ROLE', description: 'Filter roles; empty instruction role lists remain universal.' },
       '--product': { arity: 'list', value: 'PRODUCT', description: 'Filter products.' },
@@ -342,7 +343,8 @@ function renderHelp(command?: Command): string {
       '  2. search --capability <tag> [--pattern <tag>]  -> candidates, 10 per page',
       '  3. get --id <id...> --profile <path>            -> full text + obligations',
       'notes: search takes bare tags (review-code, not capability:review-code);',
-      '       --offset 10 gets the next page; --all lists every row;',
+      '       first pass: search --for "<terms>" resolves a capability and its top pattern;',
+      '       --offset 20 gets the next page; --all lists every row;',
       '       a page is a sample, not a ranking; page again when an intent is missing.',
     );
   }
@@ -477,6 +479,16 @@ function tagListValues(flags: Map<string, string[]>, name: string, dimension: 'c
   });
 }
 
+function topPatternFor(instructions: Map<string, LoadedInstruction>, capability: string): string | undefined {
+  const counts = new Map<string, number>();
+  for (const instruction of instructions.values()) {
+    if (!instruction.capability_tags.includes(capability)) continue;
+    for (const tag of instruction.pattern_tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((left, right) => right[1] - left[1] || (left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0))[0]?.[0];
+}
+
 function allowedListValues<T extends string>(
   flags: Map<string, string[]>,
   name: string,
@@ -531,7 +543,7 @@ function validateStaticFlags(command: Command, flags: Map<string, string[]>): vo
 }
 
 type CompactRow = { id: string; description: string };
-type CompactResult = { kind: 'compact'; text: string; pagination?: string };
+type CompactResult = { kind: 'compact'; text: string; pagination?: string; notes?: string };
 type JsonResult = { kind: 'json'; value: unknown };
 type TextResult = { kind: 'text'; text: string; stats?: string };
 type DispatchResult = CompactResult | JsonResult | TextResult;
@@ -661,8 +673,19 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
     case 'search':
     case 'explain': {
       const query: SearchQuery = {};
-      const capabilityTags = tagListValues(flags, '--capability', 'capability');
-      const patternTags = tagListValues(flags, '--pattern', 'pattern');
+      let capabilityTags = tagListValues(flags, '--capability', 'capability');
+      let patternTags = tagListValues(flags, '--pattern', 'pattern');
+      let resolved: string | undefined;
+      const forTerms = listValues(flags, '--for');
+      if (forTerms !== undefined) {
+        const found = catalogFindTags(catalog, forTerms, 'any');
+        const capability = capabilityTags?.[0] ?? found.find((item) => item.dimension === 'capability')?.tag;
+        if (capability === undefined) throw invalid('no capability matched --for; run tags --query with canonical nouns', { terms: forTerms });
+        const pattern = patternTags?.[0] ?? topPatternFor(instructions, capability);
+        capabilityTags = capabilityTags ?? [capability];
+        if (pattern !== undefined) patternTags = patternTags ?? [pattern];
+        resolved = `resolved: capability=${capabilityTags.join(',')}${patternTags === undefined ? '' : ` pattern=${patternTags.join(',')}`} (from --for)`;
+      }
       const roles = listValues(flags, '--roles');
       const instructionIds = listValues(flags, '--id');
       const products = listValues(flags, '--product');
@@ -704,7 +727,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         ? catalogSearch(catalog, instructions, query)
         : catalogSearchWithProfile(catalog, instructions, query, profile);
       const rows = matches.map(({ instruction_id, summary }) => ({ id: instruction_id, description: summary }));
-      return compactRows(rows, flags, 10, 'refine: narrow with --pattern <tag> or --query <terms>, or pass --all');
+      const compact = compactRows(rows, flags, 20, 'refine: narrow with --pattern <tag> or --query <terms>, or pass --all');
+      return resolved === undefined ? compact : { ...compact, notes: resolved };
     }
     case 'get': {
       const ids = listValues(flags, '--id');
@@ -792,6 +816,7 @@ async function main(argv: string[], output: CliOutput): Promise<number> {
     const catalogPath = one(parsed.flags, '--catalog') ?? defaultCatalogPath(import.meta.url);
     const result = await dispatch(command, parsed.flags, catalogPath);
     if (result.kind === 'compact') {
+      if (result.notes !== undefined) output.stderr(`${result.notes}\n`);
       if (result.pagination !== undefined) output.stderr(`${result.pagination}\n`);
       if (result.text !== '') output.stdout(`${result.text}\n`);
       return 0;

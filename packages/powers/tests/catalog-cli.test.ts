@@ -1713,27 +1713,43 @@ describe('decisionEvaluate', () => {
 describe('retrieval workflow contract', () => {
   const realCatalog = join(here, '../catalog.json');
 
-  test('search defaults to ten rows, points at the next page, and --all lifts the default', async () => {
+  test('search defaults to twenty rows, points at the next page, and --all lifts the default', async () => {
     const first = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog]);
     expect(first.status).toBe(0);
-    expect(first.stdout.trim().split('\n')).toHaveLength(10);
-    expect(first.stderr).toContain('pagination: showing 10 of');
-    expect(first.stderr).toContain('next: --offset 10');
+    expect(first.stdout.trim().split('\n')).toHaveLength(20);
+    expect(first.stderr).toContain('pagination: showing 20 of');
+    expect(first.stderr).toContain('next: --offset 20');
     expect(first.stderr).toContain('refine:');
 
-    const next = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog, '--offset', '10']);
+    const next = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog, '--offset', '20']);
     expect(next.status).toBe(0);
-    expect(next.stdout.trim().split('\n')).toHaveLength(10);
+    expect(next.stdout.trim().split('\n')).toHaveLength(20);
 
     const all = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog, '--all']);
     expect(all.status).toBe(0);
-    expect(all.stdout.trim().split('\n').length).toBeGreaterThan(10);
+    expect(all.stdout.trim().split('\n').length).toBeGreaterThan(20);
+  });
+
+  test('--for resolves a capability and its most frequent pattern in one call', async () => {
+    const resolved = await runInProcess(['search', '--for', 'debugging', 'incident', '--catalog', realCatalog]);
+    expect(resolved.status).toBe(0);
+    expect(resolved.stderr).toContain('resolved: capability=debug-root-cause');
+    expect(resolved.stderr).toContain('pattern=systematic-debugging');
+    expect(resolved.stdout.trim().split('\n').length).toBeGreaterThan(0);
+
+    const explicit = await runInProcess(['search', '--for', 'debugging', '--capability', 'review-code', '--catalog', realCatalog]);
+    expect(explicit.status).toBe(0);
+    expect(explicit.stderr).toContain('resolved: capability=review-code');
+
+    const missing = await runInProcess(['search', '--for', 'zzzznotatag', '--catalog', realCatalog]);
+    expect(missing.status).toBe(1);
+    expect(missing.stderr).toContain('no capability matched --for');
   });
 
   test('search accepts a namespaced tag copied from tags output', async () => {
     const result = await runInProcess(['search', '--capability', 'capability:review-code', '--catalog', realCatalog]);
     expect(result.status).toBe(0);
-    expect(result.stdout.trim().split('\n')).toHaveLength(10);
+    expect(result.stdout.trim().split('\n')).toHaveLength(20);
     const wrongDimension = await runInProcess(['search', '--capability', 'pattern:code-review', '--catalog', realCatalog]);
     expect(wrongDimension.status).toBe(1);
     expect(wrongDimension.stderr).toContain('expects a capability tag');

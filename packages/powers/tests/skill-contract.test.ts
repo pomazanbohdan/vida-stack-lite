@@ -31,8 +31,8 @@ test('routes final retrieval through one compose-backed multi-ID get', async () 
 
 test('documents executable catalog CLI commands from the package root', async () => {
   const skill = await readSkill();
-  expect(skill).toContain('From `packages/powers/`, run `bun skills/vp-mode/scripts/catalog-cli.ts tags --query <literal terms> --catalog <snapshot>`');
-  expect(skill).toContain('`bun skills/vp-mode/scripts/catalog-cli.ts search --capability <mapped tag> --profile <effective-profile.json> --catalog <snapshot>`');
+  expect(skill).toContain('From `packages/powers/`, run `bun skills/vp-mode/scripts/catalog-cli.ts search --for <literal terms>');
+  expect(skill).toContain('Override either dimension with explicit `--capability` or `--pattern`');
   expect(skill).toContain('`bun skills/vp-mode/scripts/catalog-cli.ts get --id <id...> --profile <effective-profile.json> --catalog <snapshot>`');
 });
 
