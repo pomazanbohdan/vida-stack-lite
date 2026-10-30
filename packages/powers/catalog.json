@@ -267,7 +267,10 @@
     "documentation": "write-technical-prose",
     "docs": "write-technical-prose",
     "readme": "write-technical-prose",
-    "guide": "write-technical-prose"
+    "guide": "write-technical-prose",
+    "architecture": "design-structure",
+    "architectural": "design-structure",
+    "modules": "design-structure"
   },
   "tag_exemptions": [],
   "instructions": [

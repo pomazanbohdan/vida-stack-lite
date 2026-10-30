@@ -26,6 +26,7 @@ import {
   stemToken,
 } from './catalog.ts';
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
+import { resolveIntent, topPatternFor } from './retrieval.ts';
 import { validateAgainstSchema } from './schema.ts';
 import {
   INSTRUCTION_DOMAINS,
@@ -482,77 +483,6 @@ function tagListValues(flags: Map<string, string[]>, name: string, dimension: 'c
   });
 }
 
-function topPatternFor(instructions: Map<string, LoadedInstruction>, capability: string): string | undefined {
-  const counts = new Map<string, number>();
-  for (const instruction of instructions.values()) {
-    if (!instruction.capability_tags.includes(capability)) continue;
-    for (const tag of instruction.pattern_tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .sort((left, right) => right[1] - left[1] || (left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0))[0]?.[0];
-}
-
-const RESOLVER_STOPWORDS = new Set(['a', 'an', 'the', 'for', 'to', 'of', 'and', 'or', 'with', 'on', 'in', 'by', 'vs', 'versus', 'after', 'before', 'from', 'into', 'over', 'under', 'this', 'that']);
-
-type ResolvedFor = { capability?: string; pattern?: string };
-
-function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonly string[], aliases?: Map<string, string>): ResolvedFor | undefined {
-  const query = [...new Set(terms.flatMap(tagTokens).map(stemToken))].filter((token) => !RESOLVER_STOPWORDS.has(token));
-  if (query.length === 0) return undefined;
-  const counts = new Map<string, number>();
-  const nameSets = new Map<string, Set<string>>();
-  for (const instruction of instructions.values()) {
-    for (const capability of instruction.capability_tags) {
-      counts.set(capability, (counts.get(capability) ?? 0) + 1);
-      if (!nameSets.has(capability)) nameSets.set(capability, new Set(tagTokens(capability).map(stemToken)));
-    }
-  }
-  const ranked = [...nameSets.entries()]
-    .map(([capability, names]) => ({ capability, names, score: 0, firstIndex: Number.MAX_SAFE_INTEGER }))
-    .filter((item) => query.some((token) => item.names.has(token) || aliases?.get(token) === item.capability));
-  const documentFrequency = new Map<string, number>();
-  for (const { names } of ranked) for (const token of names) documentFrequency.set(token, (documentFrequency.get(token) ?? 0) + 1);
-  for (const item of ranked) {
-    item.score = query.reduce((total, token) => total + (item.names.has(token) ? 1 / (documentFrequency.get(token) ?? 1) : 0)
-      + (aliases?.get(token) === item.capability ? 2 : 0), 0);
-    const firstIndex = query.findIndex((token) => item.names.has(token));
-    item.firstIndex = firstIndex === -1 ? Number.MAX_SAFE_INTEGER : firstIndex;
-  }
-  ranked.sort((left, right) => right.score - left.score
-    || left.firstIndex - right.firstIndex
-    || (counts.get(right.capability) ?? 0) - (counts.get(left.capability) ?? 0)
-    || (left.capability < right.capability ? -1 : left.capability > right.capability ? 1 : 0));
-  const best = ranked[0]?.capability;
-  if (best !== undefined) {
-    const pattern = topPatternFor(instructions, best);
-    return { capability: best, ...(pattern === undefined ? {} : { pattern }) };
-  }
-  const patternCounts = new Map<string, number>();
-  const patternNames = new Map<string, Set<string>>();
-  for (const instruction of instructions.values()) {
-    for (const tag of instruction.pattern_tags) {
-      patternCounts.set(tag, (patternCounts.get(tag) ?? 0) + 1);
-      if (!patternNames.has(tag)) patternNames.set(tag, new Set(tagTokens(tag).map(stemToken)));
-    }
-  }
-  const patternRanked = [...patternNames.entries()]
-    .map(([pattern, names]) => ({ pattern, names }))
-    .filter((item) => query.some((token) => item.names.has(token)));
-  if (patternRanked.length === 0) return undefined;
-  const patternFrequency = new Map<string, number>();
-  for (const { names } of patternRanked) for (const token of names) patternFrequency.set(token, (patternFrequency.get(token) ?? 0) + 1);
-  const score = (names: Set<string>): number => query.reduce((total, token) => total + (names.has(token) ? 1 / (patternFrequency.get(token) ?? 1) : 0), 0);
-  const rankedPatterns = patternRanked.map((item) => ({ ...item, score: score(item.names), count: patternCounts.get(item.pattern) ?? 0 }));
-  const bestPattern = rankedPatterns.reduce<(typeof rankedPatterns)[number] | undefined>((current, candidate) => {
-    if (current === undefined) return candidate;
-    const better = candidate.score - current.score
-      || candidate.count - current.count
-      || (current.pattern < candidate.pattern ? -1 : current.pattern > candidate.pattern ? 1 : 0);
-    return better > 0 ? candidate : current;
-  }, undefined);
-  return bestPattern === undefined ? undefined : { pattern: bestPattern.pattern };
-}
-
 function allowedListValues<T extends string>(
   flags: Map<string, string[]>,
   name: string,
@@ -743,16 +673,17 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       const forTerms = listValues(flags, '--for');
       if (forTerms !== undefined) {
         if (forTerms.length > 8) throw invalid('--for accepts at most 8 terms; run one focused --for per intent (3-6 terms)', { terms: forTerms });
-        const capabilityAliases = new Map(Object.entries(catalog.tag_aliases)
-          .filter(([, canonical]) => Object.prototype.hasOwnProperty.call(catalog.tag_dictionary.capability, canonical))
-          .map(([alias, canonical]) => [stemToken(tagTokens(alias)[0] ?? alias), canonical] as [string, string]));
-        const resolvedTags = resolveFor(instructions, forTerms, capabilityAliases);
-        const capability = capabilityTags?.[0] ?? resolvedTags?.capability;
-        const pattern = patternTags?.[0] ?? resolvedTags?.pattern ?? (capability === undefined ? undefined : topPatternFor(instructions, capability));
+        const aliases = new Map(Object.entries(catalog.tag_aliases));
+        const resolution = resolveIntent(instructions, forTerms, aliases);
+        const capability = capabilityTags?.[0] ?? resolution.capability;
+        const pattern = patternTags?.[0] ?? resolution.pattern ?? (capability === undefined ? undefined : topPatternFor(instructions, capability));
         if (capability === undefined && pattern === undefined) throw invalid('no capability or pattern matched --for; run tags --query with canonical nouns', { terms: forTerms });
         if (capability !== undefined) capabilityTags = capabilityTags ?? [capability];
         if (pattern !== undefined) patternTags = patternTags ?? [pattern];
+        const explicit = flags.has('--capability') || flags.has('--pattern');
+        const weak = resolution.status === 'weak' && !explicit;
         resolved = `resolved: ${capability === undefined ? '' : `capability=${capabilityTags?.join(',')}`}${capability !== undefined && pattern !== undefined ? ' ' : ''}${pattern === undefined ? '' : `pattern=${patternTags?.join(',')}`} (from --for)`;
+        if (weak) resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved and run tags --query with canonical nouns`;
       }
       const roles = listValues(flags, '--roles');
       const instructionIds = listValues(flags, '--id');

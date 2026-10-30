@@ -167,7 +167,7 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | E5a selected host manifests generated from explicit package inputs; production inputs/outputs are absent | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `review-migration-plan.ts` (read-only migration-plan mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `check-retrieval.ts` (read-only receipt validator for an intent-to-ID retrieval map), `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `review-migration-plan.ts` (read-only migration-plan mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |
