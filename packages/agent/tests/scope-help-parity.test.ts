@@ -1,7 +1,16 @@
 import { expect, test, spyOn } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import * as childProcess from 'node:child_process';
-import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -427,7 +436,7 @@ test.each([
 ])('public %s dispatch reaches its command argument guard', (command, message) => {
   const runtimePath = mkdtempSync(path.join(tmpdir(), 'vida-dispatch-runtime-'));
   try {
-    symlinkSync(process.execPath, path.join(runtimePath, process.platform === 'win32' ? 'bun.exe' : 'bun'));
+    copyFileSync(process.execPath, path.join(runtimePath, process.platform === 'win32' ? 'bun.exe' : 'bun'));
     const result = spawnSync(
       process.execPath,
       [
