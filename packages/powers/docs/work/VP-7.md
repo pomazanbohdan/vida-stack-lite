@@ -10,9 +10,9 @@ tags:
 - work-item
 - stage-7
 sources:
-- id: implementation-plan
-  resource: /implementation-plan.md
-  title: Vida Powers implementation plan
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers delivery status and forward stages
 - id: research
   resource: /research/vida-powers-product-research.md
   title: Vida Powers product research
@@ -56,7 +56,7 @@ Integrate the VP extended instruction registry and VP-owned methodology profile 
 
 ## Acceptance references
 
-Relevant canonical criteria include AC-19 through AC-24, AC-38, and AC-40, plus Stage 7's acceptance block in the [implementation plan](../implementation-plan.md). The trace includes BR-07, BR-08, BR-10, D3, D8, SR-34 through SR-54, and SR-72. Runtime support and user acceptance remain open until the Agent-owned implementation, installation, and attributable acceptance evidence exist.
+Relevant canonical criteria include AC-19 through AC-24, AC-38, and AC-40, plus the Runtime track in the [next actions](../next-actions.md#forward-stages). The trace includes BR-07, BR-08, BR-10, D3, D8, SR-34 through SR-54, and SR-72. Runtime support and user acceptance remain open until the Agent-owned implementation, installation, and attributable acceptance evidence exist.
 
 ## Implementation status addendum — 2026-10-23
 
@@ -70,7 +70,7 @@ exists, so the G phase remains open. Runtime acceptance remains a separate gate.
 
 ## Relations
 
-- `implements` → Stage 7 in the [implementation plan](../implementation-plan.md).
+- `implements` → the Runtime track in the [next actions](../next-actions.md#forward-stages).
 - `derived-from` → BR-07/BR-08/BR-10, D3, and D8.
 - `informs` → the separate `REQ-D3-D8` request; this relation does not reuse its ID or make the request a Work Item.
 - Depends on VP-5 and VP-6; Stage 7b additionally depends on the runtime storage-admission decision.
@@ -92,7 +92,7 @@ exists, so the G phase remains open. Runtime acceptance remains a separate gate.
 
 ## Links and handoff
 
-- [Implementation plan](../implementation-plan.md)
+- [Next actions](../next-actions.md)
 - [Product research](../research/vida-powers-product-research.md)
 - [System specification](../system-specification.md)
 - [Acceptance criteria](../acceptance.md)

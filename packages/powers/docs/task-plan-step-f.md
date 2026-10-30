@@ -10,21 +10,15 @@ tags:
 - work-items
 - findings
 sources:
-- id: design
-  resource: /catalog-design.md
-  title: Vida Powers - instruction catalog design
 - id: system-specification
   resource: /system-specification.md
   title: Vida Powers - system specification
 - id: acceptance
   resource: /acceptance.md
   title: Vida Powers - acceptance criteria
-- id: implementation-plan
-  resource: /implementation-plan.md
-  title: Vida Powers - implementation plan
-- id: step-e-plan
-  resource: /task-plan-step-e.md
-  title: Vida Powers - task-level plan for step E
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers - delivery status and forward stages
 - id: research
   resource: /research/vida-powers-product-research.md
   title: Vida Powers - product concept
@@ -40,7 +34,7 @@ revision: '8'
 
 **Goal:** keep VP-5, VP-6, and VP-7 separate; implement the bounded Standalone findings store API, existing CLI caller, caller procedure, and proof cases.
 
-**The specification this plan follows from:** B: `docs/business-requirements.md` BR-07, BR-11, BR-16, BR-17 and `docs/research/vida-powers-product-research.md` sections 8-10. S: `docs/system-specification.md` SR-37-SR-54, SR-55, and SR-72. C: `docs/implementation-plan.md` Stages 5-7, `docs/catalog-design.md` section 16, `docs/task-plan-step-e.md` outside-plan boundary, and the existing runtime WorkItem/v1 owner. Relevant acceptance criteria are AC-20 through AC-24; only proven portions may close, and AC-22 remains open wherever semantic candidate generation or equivalence is not proven. AC-23 traces through both SR-53 and SR-54.
+**The specification this plan follows from:** B: `docs/business-requirements.md` BR-07, BR-11, BR-16, BR-17 and `docs/research/vida-powers-product-research.md` sections 8-10. S: `docs/system-specification.md` SR-37-SR-54, SR-55, and SR-72. C: the delivery status in `docs/next-actions.md` and the existing runtime WorkItem/v1 owner. Relevant acceptance criteria are AC-20 through AC-24; only proven portions may close, and AC-22 remains open wherever semantic candidate generation or equivalence is not proven. AC-23 traces through both SR-53 and SR-54.
 
 ## Global constraints
 

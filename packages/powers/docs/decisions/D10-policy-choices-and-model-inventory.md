@@ -20,15 +20,15 @@ sources:
 - id: d8
   resource: /decisions/D8-methodology-profile.md
   title: 'D8 — Methodology profile: one VP schema, carrier per environment'
-- id: design
-  resource: /catalog-design.md
-  title: Vida Powers — instruction catalog design
-- id: step-e-plan
-  resource: /task-plan-step-e.md
-  title: Vida Powers — task-level plan for step E
+- id: system-specification
+  resource: /system-specification.md
+  title: Vida Powers — system specification
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers — delivery status and target status
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T19:45:00Z' }
 verified: { by: human:repository-owner, at: '2026-10-20T20:10:00Z' }
-revision: '4'
+revision: '5'
 ---
 
 # Decision

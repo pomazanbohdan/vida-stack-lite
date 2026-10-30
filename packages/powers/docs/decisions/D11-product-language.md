@@ -11,18 +11,15 @@ tags:
 - documentation
 - decision
 sources:
-- id: step-d-plan
-  resource: /task-plan-step-d.md
-  title: Vida Powers — task-level plan for step D
-- id: step-e-plan
-  resource: /task-plan-step-e.md
-  title: Vida Powers — task-level plan for step E
-- id: design
-  resource: /catalog-design.md
-  title: Vida Powers — instruction catalog design
+- id: system-specification
+  resource: /system-specification.md
+  title: Vida Powers — system specification
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers — delivery status and target status
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T21:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-10-20T21:00:00Z' }
-revision: '1'
+revision: '2'
 ---
 
 # Decision

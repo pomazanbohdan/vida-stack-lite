@@ -23,12 +23,9 @@ sources:
 - id: acceptance
   resource: /acceptance.md
   title: Vida Powers acceptance criteria
-- id: catalog-design
-  resource: /catalog-design.md
-  title: Vida Powers instruction catalog design
-- id: implementation-plan
-  resource: /implementation-plan.md
-  title: Vida Powers implementation plan
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers delivery status and forward stages
 - id: vp-catalog
   resource: /catalog.json
   title: Canonical VP catalog listing
@@ -95,7 +92,7 @@ revision: '4'
 
 ## Intent and contract trace
 
-The request implements the D3 boundary for a separate VP extended registry and the D8 boundary for VP-owned methodology profile data. The trace is BR-07 and BR-16, D3/D8, SR-33 through SR-41, AC-15, AC-19, AC-26, and Stage 7 of the [implementation plan](../implementation-plan.md). AC-15 keeps profile conflict handling, AC-19 keeps the carrier rule, and AC-26 with SR-58 keeps the composed-bundle limit. The [acceptance criteria](../acceptance.md), [catalog design](../catalog-design.md), D3 and D8 define the current contracts; this request adds no canonical ACs.
+The request implements the D3 boundary for a separate VP extended registry and the D8 boundary for VP-owned methodology profile data. The trace is BR-07 and BR-16, D3/D8, SR-33 through SR-41, AC-15, AC-19, AC-26, and the Runtime track in [next actions](../next-actions.md#forward-stages). AC-15 keeps profile conflict handling, AC-19 keeps the carrier rule, and AC-26 with SR-58 keeps the composed-bundle limit. The [acceptance criteria](../acceptance.md), [system specification](../system-specification.md), D3 and D8 define the current contracts; this request adds no canonical ACs.
 
 ## Current evidence and boundaries
 

@@ -21,11 +21,8 @@ sources:
 - id: acceptance
   resource: /acceptance.md
   title: Vida Powers — acceptance criteria
-- id: catalog-design
-  resource: /catalog-design.md
-  title: Vida Powers — instruction catalog design
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '17'
+revision: '18'
 ---
 
 ## Research → BR → SR → AC
@@ -74,9 +71,9 @@ the list of technically open questions (closed by stages, not by the specificati
 |---|---|
 | D1 VP = `packages/powers` | BR-21; registration — Stage 0 |
 | D2 monorepo of products | BR-21; NFR-06 |
-| D3 its own catalog (`.md` instructions + `catalog.json`) + extended registry in the agent package | SR-01, SR-06, SR-07, SR-15, SR-34, SR-36; AC-01, AC-09, AC-29, AC-30; runtime request; design `catalog-design.md` |
+| D3 its own catalog (`.md` instructions + `catalog.json`) + extended registry in the agent package | SR-01, SR-06, SR-07, SR-15, SR-34, SR-36; AC-01, AC-09, AC-29, AC-30; runtime request; design — `system-specification.md` §1 and the catalog schemas in `config/` |
 | D4 three delivery channels, skills `vp-mode`/`vp-setup` | BR-19; SR-22, SR-56, SR-58 |
-| D4b marketplace owner, Codex first | BR-19; SR-79, SR-80; AC-27, AC-45, AC-46; [E5a/E5b target status](task-plan-step-e.md#e5-target-status); [.54 formation receipt](../../../.tmp/panel/native-formations-implementation-20261022-54/final-handoff.json); the target-specific Muse/Antigravity layout supersession is recorded in D4b and D10 §5 |
+| D4b marketplace owner, Codex first | BR-19; SR-79, SR-80; AC-27, AC-45, AC-46; [E5a/E5b target status](next-actions.md#delivery-target-status-e5ae5b); [.54 formation receipt](../../../.tmp/panel/native-formations-implementation-20261022-54/final-handoff.json); the target-specific Muse/Antigravity layout supersession is recorded in D4b and D10 §5 |
 | D5 provider-neutral Decision Provider | SR-16, SR-17; AC-10 |
 | D6 log in the bundle | NFR-05; `docs/log.md` |
 | D7 environment-driven initialization | BR-20; SR-57, SR-59; AC-25 |
@@ -97,7 +94,7 @@ the list of technically open questions (closed by stages, not by the specificati
 | CAT-D1 | Project layer of instructions | v1 canonical | — |
 | CAT-D2 | Semantic `decision.evaluate` | v1 deterministic | SR-16…SR-21, AC-10…AC-12 |
 | CAT-D3 | Digest binding of instructions | decided: digest in `catalog.json` | SR-76, AC-42 |
-| CAT-D4 | Language of instructions | resolved by D11: English documentation and donor-original instruction text | SR-77 (catalog-design §13) |
+| CAT-D4 | Language of instructions | resolved by D11: English documentation and donor-original instruction text | SR-77 |
 | CAT-D5 | Catalog hierarchy | v1 — flat | — |
 | CAT-D6 | CRAP/mutation gate for VP | deferred (a new dependency) | — |
 | CAT-D7 | Corpus navigation | bundle index | SR-73 |
@@ -119,8 +116,8 @@ SR-48, SR-49, SR-50, SR-51, SR-52, SR-55, SR-60, SR-61, SR-64, SR-65, SR-77. Rea
 of configuration, schemas, runtime requests or semantic conditions that are closed by the gates
 of stages Stage 2/4/5/7 or by human review, not by an automated test.
 
-Current implementation evidence follows the canonical step owners: E4/E5 in
-[task plan E](task-plan-step-e.md), F in [task plan F](task-plan-step-f.md) and
+Current implementation evidence follows the canonical owners: E4/E5 in
+[next actions](next-actions.md) and [VP-5](work/VP-5.md), F in [task plan F](task-plan-step-f.md) and
 [VP-6](work/VP-6.md), and G in [task plan G](task-plan-step-g.md),
 [VP-7](work/VP-7.md), and [REQ-D3-D8](requests/REQ-D3-D8-runtime-request.md).
 These evidence routes do not add AC definitions or imply Runtime acceptance.

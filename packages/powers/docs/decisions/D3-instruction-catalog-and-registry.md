@@ -60,7 +60,8 @@ the converter (the single writer); runtime scripts only read.
 rules is **`.md` instructions with metadata** in the flat `instructions/` directory; the machine
 catalog file is `catalog.json` — identity, tag vocabulary, tag aliases and
 exception entries. There are no separate per-donor directories: source, license and revision
-live in the instruction metadata. Design — `docs/catalog-design.md`.
+live in the instruction metadata. Design — this specification (§1–§9) and the catalog schemas in
+`config/`.
 
 Below is the model accepted in rev 1; rev 2 changes only the **physical form of the catalog**,
 not the boundaries with the agent package registry and not the delivery modes.

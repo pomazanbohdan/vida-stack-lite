@@ -10,9 +10,9 @@ tags:
 - work-item
 - stage-5
 sources:
-- id: implementation-plan
-  resource: /implementation-plan.md
-  title: Vida Powers implementation plan
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers delivery status and forward stages
 - id: business-requirements
   resource: /business-requirements.md
   title: Vida Powers business requirements
@@ -54,7 +54,7 @@ Deliver Stage 5's VP routing and setup behavior, package, and three delivery cha
 
 ## Acceptance references
 
-Relevant canonical criteria include AC-13 through AC-19, AC-25 through AC-28, AC-41, and AC-45 through AC-46. Their states remain governed by the canonical acceptance document; this draft closes none. The trace includes BR-01, BR-05, BR-07, BR-19, BR-20, the Stage 5 section of the [implementation plan](../implementation-plan.md), and the [system specification](../system-specification.md).
+Relevant canonical criteria include AC-13 through AC-19, AC-25 through AC-28, AC-41, and AC-45 through AC-46. Their states remain governed by the canonical acceptance document; this draft closes none. The trace includes BR-01, BR-05, BR-07, BR-19, BR-20, the delivery status in the [next actions](../next-actions.md), and the [system specification](../system-specification.md).
 
 ## Implementation status before .54 (2026-10-22)
 
@@ -68,7 +68,7 @@ algorithm or vector. Production outputs, host acceptance and release remain open
 
 ## Relations
 
-- `implements` → Stage 5 in the [implementation plan](../implementation-plan.md).
+- `implements` → the skills and delivery stage in the [next actions](../next-actions.md).
 - `derived-from` → BR-01/BR-05/BR-07/BR-19/BR-20, D5, and D7.
 - `blocks` → VP-7, which depends on Stages 5 and 6.
 - Related Work Items: VP-6 and VP-7.
@@ -99,11 +99,11 @@ with `MANIFEST_MUSE_CATALOG_NOT_READY`; the default production check returns
 `MANIFEST_INPUT_MISSING`, and production inputs/outputs remain absent. The `.60` package
 tests passed (411 pass, 1 Windows skip, 0 fail), but coverage and Knip exited 1. Their repairs
 and rerun remain pending. No host installation, public release, or Runtime acceptance is
-established; see the canonical [Step E status](../task-plan-step-e.md#e5-target-status).
+established; see the canonical [delivery target status](../next-actions.md#delivery-target-status-e5ae5b).
 
 ## Links and handoff
 
-- [Implementation plan](../implementation-plan.md)
+- [Next actions](../next-actions.md)
 - [Business requirements](../business-requirements.md)
 - [System specification](../system-specification.md)
 - [Acceptance criteria](../acceptance.md)

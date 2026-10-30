@@ -17,9 +17,8 @@ materialization of results in two modes (Standalone / Runtime).
 | 1 | `docs/next-actions.md` | Current scope, order and gates of work |
 | 2 | `docs/research/vida-powers-product-research.md` | B-level: product concept (source of truth) |
 | 3 | `docs/decisions/index.md` | Accepted decisions D1–D16 (and D4b) with grounds |
-| 4 | `docs/implementation-plan.md` | Roadmap of stages 0–10 and quality gates |
-| 5 | `docs/system-specification.md` (after step B) | S-level: observable behavior |
-| 6 | repository `AGENT.sidecar.md` | Placement, owners, policy, verification gates |
+| 4 | `docs/system-specification.md` (after step B) | S-level: observable behavior |
+| 5 | repository `AGENT.sidecar.md` | Placement, owners, policy, verification gates |
 
 Repository rules (ownership, delegation, documentation policy, Git) are in
 `../../AGENT.sidecar.md`; they take priority over this file in shared matters.

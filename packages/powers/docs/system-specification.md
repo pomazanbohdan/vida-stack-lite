@@ -29,7 +29,7 @@ normative behavior.
 
 ## 1. Instruction
 
-- **SR-01.** An instruction is an `.md` file with frontmatter: `instruction_id` (kebab-case, stable, not reused, = the file name), `title`, `summary`, `revision` ≥1, `status` (`active`/`disabled`). These are the canonical field names; the encoding of the fields in the frontmatter and the exact composition of the catalog are defined in `catalog-design.md`.
+- **SR-01.** An instruction is an `.md` file with frontmatter: `instruction_id` (kebab-case, stable, not reused, = the file name), `title`, `summary`, `revision` ≥1, `status` (`active`/`disabled`). These are the canonical field names; the encoding of the fields in the frontmatter and the exact composition of the catalog are defined by this specification, `config/vpinstruction.v1.2.schema.json` and `config/vpcatalog.v1.schema.json`.
 - **SR-02.** Two dimensions of tags: `capability_tags[]` (what to do) and `pattern_tags[]` (which methodology). A tag ≠ an agent/skill/step/permission.
 - **SR-03.** A tag is kebab-case with at least two meaningful components; abbreviations — aliases, the canonical tag dominates.
 - **SR-04.** An active instruction has ≥1 capability tag and ≥1 pattern tag; an absence is closed by an **explicit exception entry with a reason**.
@@ -195,7 +195,7 @@ the existing numbering.
   and skill; manifests do not copy the catalog or add a vendor-specific catalog field. Local generation
   requires only metadata required by selected host formats and never fabricates missing values. D4b's
   owner-supplied public-release metadata remains a separate publication gate. Current target status and
-  deferred E5b gaps are recorded in `task-plan-step-e.md#e5-target-status`.
+  deferred E5b gaps are recorded in [next actions](next-actions.md#delivery-target-status-e5ae5b).
 - **SR-80.** Manifest generation owns only files recorded in its package-local ownership ledger and
   whose current SHA-256 matches the recorded digest. It regenerates or prunes only proven-owned files;
   foreign or modified targets conflict before writes. Check mode reconciles ledger digests against present

@@ -161,7 +161,7 @@ The agent's instruction-discovery workflow is explicit and economical: derive ta
 | ID | Question | State |
 |---|---|---|
 | BR-Q1 | Which exact tags and groups form the initial set of the profile? | **Resolved 2026-10-22:** the groups and their alternatives are declared in `packages/powers/config/methodology-profile.json` (D10, `packages/powers/docs/decisions/D10-policy-choices-and-model-inventory.md`). |
-| BR-Q2 | Which set of instructions is considered minimally sufficient for the first version? | **Resolved 2026-10-22:** applying the owner's step D coverage criterion in `packages/powers/docs/task-plan-step-d.md` (an instruction covers both actions and behaviour; donor skills/files are split into atomic instructions; templates and prompts into rules) produced a corpus of 2510 instructions from 8 donors. The count does not establish minimal sufficiency. |
+| BR-Q2 | Which set of instructions is considered minimally sufficient for the first version? | **Resolved 2026-10-22:** applying the owner's step D coverage criterion (an instruction covers both actions and behaviour; donor skills/files are split into atomic instructions; templates and prompts into rules) produced a corpus of 2510 instructions from 8 donors. The count does not establish minimal sufficiency. |
 | BR-Q3 | Who actually holds the role "Vida Powers owner"? | **Resolved 2026-10-19:** the role is performed by the repository owner; the unit of registration is the **role**, not the person, so a handover is possible without rewriting the ownership map (D2). |
 
 ---

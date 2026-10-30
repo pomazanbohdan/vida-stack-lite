@@ -11,15 +11,12 @@ tags:
 - review
 - decision
 sources:
-- id: step-d-plan
-  resource: /task-plan-step-d.md
-  title: Vida Powers — task-level plan for step D
-- id: design
-  resource: /catalog-design.md
-  title: Vida Powers — instruction catalog design
+- id: system-specification
+  resource: /system-specification.md
+  title: Vida Powers — system specification
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-20T23:45:00Z' }
 verified: { by: human:repository-owner, at: '2026-10-20T23:45:00Z' }
-revision: '1'
+revision: '2'
 ---
 
 # Decision

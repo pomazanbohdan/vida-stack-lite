@@ -10,9 +10,9 @@ tags:
 - work-item
 - stage-6
 sources:
-- id: implementation-plan
-  resource: /implementation-plan.md
-  title: Vida Powers implementation plan
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers delivery status and forward stages
 - id: business-requirements
   resource: /business-requirements.md
   title: Vida Powers business requirements
@@ -83,7 +83,7 @@ Candidate evidence from `.104` on 2026-10-23: `findings.ts` returns append/repla
 
 ## Relations
 
-- `implements` → Stage 6 in the [implementation plan](../implementation-plan.md).
+- `implements` → the materialization, Work Item and findings stage in the [next actions](../next-actions.md).
 - `derived-from` → BR-03/BR-04/BR-07/BR-10/BR-11/BR-16/BR-17 and research sections 8-10.
 - `blocks` → VP-7, which depends on Stages 5 and 6.
 - Related Work Items: VP-5 and VP-7.
@@ -129,7 +129,7 @@ The receipt-only CLI smoke passes query-before-append, append, query with `findi
 
 ## Links and handoff
 
-- [Implementation plan](../implementation-plan.md)
+- [Next actions](../next-actions.md)
 - [Product research](../research/vida-powers-product-research.md)
 - [System specification](../system-specification.md)
 - [Acceptance criteria](../acceptance.md)

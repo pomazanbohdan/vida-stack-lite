@@ -11,21 +11,15 @@ tags:
 - d3
 - d8
 sources:
-- id: design
-  resource: /catalog-design.md
-  title: Vida Powers - instruction catalog design
 - id: system-specification
   resource: /system-specification.md
   title: Vida Powers - system specification
 - id: acceptance
   resource: /acceptance.md
   title: Vida Powers - acceptance criteria
-- id: implementation-plan
-  resource: /implementation-plan.md
-  title: Vida Powers - implementation plan
-- id: step-e-plan
-  resource: /task-plan-step-e.md
-  title: Vida Powers - task-level plan for step E
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers - delivery status and forward stages
 - id: d3
   resource: /decisions/D3-instruction-catalog-and-registry.md
   title: D3 - VP instruction catalog and extended Agent registry

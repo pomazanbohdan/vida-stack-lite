@@ -14,9 +14,8 @@ donor rights review and Runtime acceptance remain separate gates.
 | Document | What it is about |
 |---|---|
 | [Research — product concept](docs/research/vida-powers-product-research.md) | B-level: why the product exists, which boundaries it has, which behavior rules it follows |
-| [Implementation plan](docs/implementation-plan.md) | Roadmap of stages 0–10, gates, risks |
 | [Step H plan](docs/task-plan-step-h.md) | H0–H3 gates for the accepted D14/D15 scope; implementation has not started |
-| [Next actions](docs/next-actions.md) | Current scope within the catalog: A0 → A → B → C → D → E → F → G → H |
+| [Next actions](docs/next-actions.md) | Single owner of delivery status, order and gates: A0 → A → B → C → D → E → F → G → H, plus the E5 target status and the remaining forward stages |
 | [Decisions D1–D16 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
 | [AGENTS.md](AGENTS.md) | Instructions for the agents developing VP |
 | [Donor manifest](donors.yaml) | Eight processed donors plus Wondelai registered-not-processed; rights review remains open |
@@ -313,57 +312,28 @@ rows, `--summary` prints the counters only, `--all` prints every row, and
 `--out <file>` writes the whole report to a file and leaves the terminal with the
 counters. `--json` emits the report as JSON.
 
-## 11. Roadmap
+## 11. Roadmap and status
 
-| Step | Content | Status |
-|---|---|---|
-| A0 | Risk check for the agent lint gate | **closed** — the gate returns `{"issues":[]}`, exit 0 |
-| A | Product skeleton and harness (Bun package, tests) | **closed 2026-10-19** — 13 package tests passed; typecheck reported "No type errors" |
-| B | Canonical product documents (BR/SR/AC + matrix) | **closed** |
-| C | `VPCatalog/v1`, `VPMethodologyProfile/v1`, `catalog.*` operations, `decision.evaluate` | **closed 2026-10-20**: the schemas, the `catalog.*` operations, `decision.evaluate` and the CLI exist and are tested |
-| D | Full corpus from all eight donors | **closed**: 2510 instructions from 8 donors, 2790 map records, the map and the provenance reconciled (`audit map` → 0 findings) |
-| E | `vp-mode`/`vp-setup` skills, per-host manifests, marketplace | **in progress**: E1–E3 closed; E4 implemented; E5a code component READY; E5b production qualification open. The `.65` M3.1 review marks `.62` repair CODE+EVIDENCE READY with no code blocker. The `.70` M3.1 review marks `.67` READY as an evidence baseline (0 Critical/Important, 2 Minor receipt-wording findings); `.67` remains `NOT_CLOSED` with `packagePass: false`. Coverage has no statement counter, so no separate 100% statement-coverage claim is made; branches 0/0 are uninstrumented. Its fixture count is 2,617 package files plus 1 fixture-only input, not 2,618 package files. Production inputs/outputs, Muse digest proof, host installation, public metadata/publication, legal review and Runtime acceptance remain open. Deno unavailable |
-| F | Work Items, findings (Standalone), `artifact_contract` | component ready; Step F gates pending. AC-20/21/23 remain open; AC-22 is deterministic-only; AC-24 no-fix boundary is verified. The .35 initial RED was missing-module/absence evidence, not a behavioral RED. No real finding event exists |
-| G | Runtime request (D3 + D8) as a document | draft prepared, unsent and unaccepted; final relevant Source/schema hash binding waits for the current `.62` catalog/findings repair to freeze; E5a is not a prerequisite |
-| H | D14/D15 accepted scope, implemented only through the gated phases in [Step H](docs/task-plan-step-h.md): baseline closeout, rights-cleared Wondelai method subset, engineering/UX applicability and CSV map, then selected typed JSON resources | H0 current hash-bound gates and review record; H1 complete disposition and rights/fidelity evidence; H2 versioned applicability and cell-level evidence; H3 exact-ID, safety and shared-budget evidence | plan drafted; no donor admission, conversion, resource schema, feature implementation, or Runtime acceptance; see Step H for the canonical plan-review and current H0 evidence status |
-
-In detail — in [docs/next-actions.md](docs/next-actions.md).
+Delivery status, order and gates have one owner: [docs/next-actions.md](docs/next-actions.md). It
+holds the A0–H table, the E5a/E5b host target status, the remaining forward stages, the deferred
+product questions, the quality gates and the risks. This README does not restate that state.
 
 ## 12. Status and deferred items
 
-**Done:** product concept (research), roadmap, catalog design, seventeen decision
-records (D1–D9, D4b and D10–D16), an OKF bundle with a validator, and a donor manifest
-with eight processed snapshots (seven methodological donors and Open Knowledge Format)
-plus Wondelai registered-not-processed.
+**Done:** product concept (research), canonical BR/SR/AC with a traceability matrix, seventeen
+decision records (D1–D9, D4b and D10–D16), an OKF bundle with a validator, and a donor manifest
+with eight processed snapshots (seven methodological donors and Open Knowledge Format) plus
+Wondelai registered-not-processed. `research_status: finalized`; steps A0, A, B, C and D are
+closed; E1–E4 are implemented and E5b production qualification remains open.
 
-**Deferred outside the current scope:** registration in the shared root files of the
-repository; D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover;
-marketplace publication; the Runtime mode of VP in general.
+**Deferred outside the current scope:** registration in the shared root files of the repository;
+D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover; marketplace publication; the
+Runtime mode of VP in general; and Runtime Stage 7b behind the storage GAP.
 
-**Status:** `research_status: finalized`; steps A0, A, B, C and D are closed. E4 code and
-documentation are implemented; Step E remains open. The latent default guard stays deferred
-while each of the four fixed-product groups has one alternative. The `.65` review marks `.62`
-repair CODE+EVIDENCE READY. The `.67` numeric receipt is terminal and remains `NOT_CLOSED` with
-`packagePass: false`; the independent `.70` review marks it READY as an evidence baseline.
-Tests, typecheck, Knip, corpus and audit checks, OKF, and Markdown checks passed for the `.67`
-bytes; `.69` reran focused OKF and eight-document Markdown checks on the corrected docs.
-On the migrated v1.2 corpus the canonical coverage gate records 693/693 functions and
-5,402/5,402 lines (659 passed, four expected Windows skips, zero failures, seed 20261019),
-no statement counter, and uninstrumented 0/0 branch counters; no separate 100 %
-statement-coverage claim is made. The repository Knip gate is red on four
-`packages/agent` research files outside this scope, so package qualification remains open.
-Production inputs and outputs are absent. Muse catalog formation remains blocked by missing
-first-party digest proof. No host
-installation, publication, legal clearance or Runtime acceptance is established. Local metadata
-is optional where the selected host format permits it; public-release metadata remains unknown.
-F's three Work Items and findings component are ready,
-but Step F remains open: AC-20/21/23 lack required materialization, index, and scope-orchestrator
-proof. AC-22 has deterministic evidence only; merge accepts caller-reported evidence and does
-not verify reproduction, context, or equivalence. AC-24 verifies the no-fix boundary. The .35
-initial RED was absence evidence only, not a behavioral RED. No real event exists, so
-`docs/work/findings.jsonl` remains absent. G's request is prepared, unsent and unaccepted;
-final binding waits for the current `.62` catalog/findings repair to freeze. Runtime acceptance
-remains open.
+**Open gates that no document may shortcut:** E5b production qualification and host installation,
+Step F AC-20/21/23, Step G handoff, Step H0–H3, the 40-ID classification trial and full-corpus
+rollout, legal clearance, and Runtime acceptance. Package gate state, including the currently red
+repository Knip gate, is recorded in [docs/next-actions.md](docs/next-actions.md).
 
 ## 13. Source licenses
 

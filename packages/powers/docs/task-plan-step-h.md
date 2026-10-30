@@ -28,21 +28,15 @@ sources:
 - id: acceptance
   resource: /acceptance.md
   title: Vida Powers acceptance criteria
-- id: catalog-design
-  resource: /catalog-design.md
-  title: Vida Powers catalog design
+- id: next-actions
+  resource: /next-actions.md
+  title: Vida Powers delivery status and forward stages
 - id: research
   resource: /research/vida-powers-product-research.md
   title: Vida Powers product research
 - id: traceability
   resource: /traceability.md
   title: Vida Powers traceability matrix
-- id: implementation-plan
-  resource: /implementation-plan.md
-  title: Vida Powers implementation plan
-- id: step-c
-  resource: /task-plan-step-c.md
-  title: Step C closed plan and dated applicability-refusal boundary
 - id: research-amendment
   resource: /../.tmp/panel/csv-framework-joint-research-c120-20261022/DECISION-r2.md
   title: Corrected D-a/D-b research amendment
