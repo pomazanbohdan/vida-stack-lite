@@ -14,20 +14,30 @@ on:
         description: Controller-selected published commit
         required: true
         type: string
+      publish:
+        description: Publish verified native pair as a public GitHub Release
+        required: false
+        type: boolean
+        default: false
 permissions:
   actions: read
   contents: read
 concurrency:
-  group: vida-native-${{ fromJSON(inputs.request).request_id }}-${{ fromJSON(inputs.request).target }}
+  group: ${{ inputs.publish && 'vida-native-publication' || format('vida-native-{0}-{1}', fromJSON(inputs.request).request_id, fromJSON(inputs.request).target) }}
   cancel-in-progress: false
 jobs:
   native-windows-x64:
     name: native-windows-x64
     if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' }}
     runs-on: windows-2025
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      producer_attempt: ${{ github.run_attempt }}
     env:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request }}
+      CI_PUBLICATION: ${{ inputs.publish }}
+      CI_REQUEST_LINUX: ${{ inputs.request_linux }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
       GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: core.autocrlf
@@ -43,6 +53,7 @@ jobs:
           ('BUN_INSTALL_CACHE_DIR=' + (Join-Path $env:RUNNER_TEMP 'vida-bun-install-cache')) | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
           if ($env:CI_SOURCE_COMMIT -cnotmatch '^[a-f0-9]{40}$' -or $env:CI_SOURCE_COMMIT -cne $env:GITHUB_SHA) { throw 'Selected published Source differs' }
           if ($env:GITHUB_REPOSITORY -cne 'pomazanbohdan/vida-stack-lite' -or $env:GITHUB_REPOSITORY_ID -cne '1340911900') { throw 'Selected repository differs' }
+           if ($env:CI_PUBLICATION -ceq 'true' -and [string]::IsNullOrWhiteSpace($env:CI_REQUEST_LINUX)) { throw 'Publication requires the Linux native request' }
       - &shared-checkout
         name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -198,6 +209,7 @@ jobs:
         name: emit-build
         run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/native-ci-delivery.ts" --phase emit-build
       - name: upload
+        id: upload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ${{ steps.emit-build.outputs.artifact_name }}
@@ -233,6 +245,9 @@ jobs:
     name: native-linux-x64
     if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.request_linux != '' }}
     runs-on: ubuntu-24.04
+    outputs:
+      artifact_id: ${{ steps.upload.outputs.artifact-id }}
+      producer_attempt: ${{ github.run_attempt }}
     env:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request_linux }}
@@ -254,6 +269,7 @@ jobs:
       - *shared-native-build
       - *shared-emit-build
       - name: upload
+        id: upload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: ${{ steps.emit-build.outputs.artifact_name }}
@@ -270,3 +286,49 @@ jobs:
           include-hidden-files: false
           retention-days: 14
       - *shared-upload-formation-proof
+  publish:
+    name: publish-public-release
+    needs:
+      - native-windows-x64
+      - native-linux-x64
+    if: ${{ always() && inputs.publish }}
+    runs-on: windows-2025
+    permissions:
+      actions: read
+      contents: write
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
+      CI_REQUEST: ${{ inputs.request }}
+      CI_REQUEST_LINUX: ${{ inputs.request_linux }}
+      CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      CI_WINDOWS_RESULT: ${{ needs.native-windows-x64.result }}
+      CI_LINUX_RESULT: ${{ needs.native-linux-x64.result }}
+      CI_WINDOWS_ARTIFACT_ID: ${{ needs.native-windows-x64.outputs.artifact_id }}
+      CI_LINUX_ARTIFACT_ID: ${{ needs.native-linux-x64.outputs.artifact_id }}
+      CI_WINDOWS_PRODUCER_ATTEMPT: ${{ needs.native-windows-x64.outputs.producer_attempt }}
+      CI_LINUX_PRODUCER_ATTEMPT: ${{ needs.native-linux-x64.outputs.producer_attempt }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: "false"
+    steps:
+      - *shared-selected-source
+      - *shared-checkout
+      - *shared-bun
+      - name: publisher-dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+        working-directory: packages/agent
+      - name: publish-release
+        run: bun --no-env-file --no-install tooling/agent/release-ci-publisher.ts
+      - name: upload-publication-receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: vida-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .tmp/ci-publication/receipt.json
+          overwrite: false
+          if-no-files-found: error
+          retention-days: 14
+          include-hidden-files: false

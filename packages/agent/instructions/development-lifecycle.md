@@ -527,6 +527,21 @@ or installation. Those belong to the changed development task and are reused
 while current. An unchanged selected artifact needs no new build or Git effect
 solely to install it. Publish changed reviewed Source before its CI formation.
 
+The native workflow's explicit publication path consumes both exact requests
+issued by this operation/version owner. Its publisher is the sole GitHub tag,
+draft, asset and public-release writer. CI does not assume that ignored local
+journals or locks exist on its runner, reconstruct absent history, or create a
+parallel version baseline. Its immutable annotated-tag claim and matching draft
+bind the original operation, Source, producer attempts/artifacts and asset hashes.
+Matching remote effects are adopted; conflicting or uncertain objects remain
+fenced without overwrites or blind retries. The current operation remains open
+until this owner persists actual terminal and published-artifact evidence.
+
+The in-workflow publisher uses actual completed successful producer jobs and
+exact artifact integrity. It emits a distinct publication receipt and never
+claims that its still-running workflow completed. The existing completed-workflow
+observer retains its actual completed/success requirement for later closeout.
+
 Use four delivery steps: publish changed reviewed Source, issue one cached CI
 build, retrieve and qualify its exact artifact, then run the maintained installer.
 On every build or installation change, remove repeated work and duplicate

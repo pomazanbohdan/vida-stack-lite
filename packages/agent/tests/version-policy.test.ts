@@ -28,6 +28,7 @@ import {
 } from '../../../tooling/agent/release-local.ts';
 import {
   recordCIDeliveryRequest,
+  validateCIProducerFormationMembers,
   validateCIDeliveryFormationMembers,
   validateDependencyCache,
 } from '../../../tooling/agent/release-ci-evidence.ts';
@@ -775,6 +776,55 @@ test('fresh formation derives the canonical result from actual native artifact m
   };
 
   const formed = validateCIDeliveryFormationMembers({ request, members, providerObservation, profile });
+  const producer = validateCIProducerFormationMembers({ request, members, providerObservation, profile });
+  assert.deepEqual(producer, {
+    candidate,
+    checks: [{ id: 'native-build', status: 'passed' }],
+    dependency_cache: nativeBuildReceipt.dependency_cache,
+  });
+  assert.equal(Object.hasOwn(producer, 'observation'), false);
+  assert.equal(Object.hasOwn(producer, 'result_bytes'), false);
+  assert.throws(
+    () =>
+      validateCIProducerFormationMembers({
+        request,
+        members,
+        providerObservation,
+        profile: {
+          ...profile,
+          required_checks: [
+            'native-build',
+            'native-install',
+            'public-routes',
+            'offline-runtime',
+            'native-dependencies',
+            'state-preservation',
+            'upgrade-recovery',
+          ],
+        },
+      }),
+    /required CI checks differ/,
+  );
+  assert.throws(
+    () =>
+      validateCIProducerFormationMembers({
+        request,
+        members,
+        providerObservation: { ...providerObservation, issuer: 'other' },
+        profile,
+      }),
+    /producer provider identity invalid/,
+  );
+  assert.throws(
+    () =>
+      validateCIProducerFormationMembers({
+        request,
+        members,
+        providerObservation: { ...providerObservation, run_id: 'invalid' },
+        profile,
+      }),
+    /native-build result differs/,
+  );
   const parsedResult: unknown = JSON.parse(formed.observation.result_bytes.toString('utf8'));
   assert.ok(isRecord(parsedResult));
   const result = parsedResult;

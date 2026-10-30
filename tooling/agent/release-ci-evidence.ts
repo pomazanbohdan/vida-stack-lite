@@ -210,7 +210,12 @@ export interface GitHubArtifact {
   expired: boolean;
   digest: string;
   created_at: string;
-  workflow_run: { id: number; repository_id: number; head_repository_id: number; head_sha: string };
+  workflow_run: {
+    id: number;
+    repository_id: number;
+    head_repository_id: number;
+    head_sha: string;
+  };
 }
 
 function check(condition: unknown, message: string): asserts condition {
@@ -540,7 +545,10 @@ export function recordCIDeliveryRequest(args: {
   target: string;
 }): CIDeliveryRequest {
   const body = requestBody(args);
-  const request: CIDeliveryRequest = { ...body, request_id: digest(canonicalJSON(body)) };
+  const request: CIDeliveryRequest = {
+    ...body,
+    request_id: digest(canonicalJSON(body)),
+  };
   const relative = requestPath(args.operation, request.request_id);
   const bytes = Buffer.from(canonicalJSON(request));
   const file = releasePath(args.root, relative, true);
@@ -564,9 +572,21 @@ export function issueApprovedNativePair(args: { root: string; operation: string 
       identity.project_ids.includes('agent'),
     'approved repository project identity differs',
   );
-  const context = { schema: 'ProjectContext/v1', repository_id: identity.repository_id, project_ids: ['agent'] };
-  const linux = recordCIDeliveryRequest({ ...args, context, target: 'bun-linux-x64' });
-  const windows = recordCIDeliveryRequest({ ...args, context, target: 'bun-windows-x64' });
+  const context = {
+    schema: 'ProjectContext/v1',
+    repository_id: identity.repository_id,
+    project_ids: ['agent'],
+  };
+  const linux = recordCIDeliveryRequest({
+    ...args,
+    context,
+    target: 'bun-linux-x64',
+  });
+  const windows = recordCIDeliveryRequest({
+    ...args,
+    context,
+    target: 'bun-windows-x64',
+  });
   check(
     linux.operation_id === windows.operation_id &&
       linux.version === windows.version &&
@@ -680,6 +700,7 @@ function validateResult(args: {
     result.dependency_cache === undefined ||
     /^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-(\d+\.\d+\.\d+)-[a-f0-9]{64}$/.exec(result.dependency_cache.key)?.[1] ===
       candidate.manifest.pin;
+  check(cachePinMatches, 'dependency cache Bun pin differs');
   exact(result.asset, ['file', 'bytes', 'sha256']);
   check(
     result.schema === 'VidaCIDeliveryResult/v2' &&
@@ -702,7 +723,13 @@ export function encodeCIDeliveryResult(args: {
   request: CIDeliveryRequest;
   candidate: CIDeliveryCandidate;
   profile: CIDeliveryProfile;
-  observation: { issuer: string; run_id: string; run_attempt: number; conclusion: string; checks: CIDeliveryCheck[] };
+  observation: {
+    issuer: string;
+    run_id: string;
+    run_attempt: number;
+    conclusion: string;
+    checks: CIDeliveryCheck[];
+  };
   dependency_cache: DependencyCache;
 }): Buffer {
   const { request, candidate, profile, observation, dependency_cache } = args;
@@ -770,7 +797,11 @@ export function validateCIDeliveryObservation(args: {
   const observationFields: (keyof CIDeliveryObservation)[] = ['issuer', 'run_id', 'run_attempt', 'checks'];
   for (const field of observationFields)
     check(equal(result[field], observation[field]), `result observation differs: ${field}`);
-  return { source_binding: request.source_binding, request_id: request.request_id, operation_id: request.operation_id };
+  return {
+    source_binding: request.source_binding,
+    request_id: request.request_id,
+    operation_id: request.operation_id,
+  };
 }
 export async function verifyCIDeliveryEvidence(args: {
   root: string;
@@ -787,13 +818,21 @@ export async function verifyCIDeliveryEvidence(args: {
       }
     | null
     | undefined;
-}): Promise<{ source_binding: string; request_id: string; operation_id: string }> {
+}): Promise<{
+  source_binding: string;
+  request_id: string;
+  operation_id: string;
+}> {
   const { root, operation, version, ci } = args;
   check(
     ci && typeof ci.observe === 'function',
     'no actual trusted controller observation supplied; local logs cannot qualify delivery',
   );
-  const candidate = readNativeRetargetCandidate({ root, operation, published: true });
+  const candidate = readNativeRetargetCandidate({
+    root,
+    operation,
+    published: true,
+  });
   const requestValue = parseJSON(regularBytes(root, requestPath(operation, ci.request_id)).toString('utf8'));
   validateCIDeliveryRequest(requestValue);
   const request = requestValue;
@@ -809,13 +848,21 @@ export async function verifyCIDeliveryEvidence(args: {
   );
   const profile = structuredClone(ci.profile);
   profileMatches(request, profile);
-  const observation = await ci.observe({ request: structuredClone(request), candidate: structuredClone(candidate) });
+  const observation = await ci.observe({
+    request: structuredClone(request),
+    candidate: structuredClone(candidate),
+  });
   recheckNativeRetargetCandidate(root, candidate);
   check(
     regularBytes(root, requestPath(operation, ci.request_id)).equals(Buffer.from(canonicalJSON(request))),
     'request changed during observation',
   );
-  const validated = validateCIDeliveryObservation({ request, candidate, profile, observation });
+  const validated = validateCIDeliveryObservation({
+    request,
+    candidate,
+    profile,
+    observation,
+  });
   await withReleaseAdmission(root, () => {
     const currentPending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
     check(
@@ -886,9 +933,63 @@ export function validateCIDownloadLocation(location: string | null, hosts: unkno
 export function validateCIDeliveryFormationMembers(args: {
   request: CIDeliveryRequest;
   members: FormationMembers;
-  providerObservation: { issuer: string; run_id: string; run_attempt: number; artifact_id: string };
+  providerObservation: {
+    issuer: string;
+    run_id: string;
+    run_attempt: number;
+    artifact_id: string;
+  };
   profile: CIDeliveryProfile;
-}): { candidate: CIDeliveryCandidate; checks: CIDeliveryCheck[]; observation: CIDeliveryObservation } {
+}): {
+  candidate: CIDeliveryCandidate;
+  checks: CIDeliveryCheck[];
+  observation: CIDeliveryObservation;
+} {
+  const { request, providerObservation, profile } = args;
+  const { candidate, checks, dependency_cache } = validateCIProducerFormationMembers(args);
+  const resultBytes = encodeCIDeliveryResult({
+    request,
+    candidate,
+    profile,
+    observation: {
+      issuer: providerObservation.issuer,
+      run_id: providerObservation.run_id,
+      run_attempt: providerObservation.run_attempt,
+      conclusion: 'success',
+      checks,
+    },
+    dependency_cache,
+  });
+  return {
+    candidate,
+    checks,
+    observation: {
+      schema: 'VidaCIDeliveryObservation/v1',
+      issuer: providerObservation.issuer,
+      run_id: providerObservation.run_id,
+      run_attempt: providerObservation.run_attempt,
+      artifact_id: providerObservation.artifact_id,
+      conclusion: 'success',
+      checks,
+      result_bytes: resultBytes,
+    },
+  };
+}
+export function validateCIProducerFormationMembers(args: {
+  request: CIDeliveryRequest;
+  members: FormationMembers;
+  providerObservation: {
+    issuer: string;
+    run_id: string;
+    run_attempt: number;
+    artifact_id: string;
+  };
+  profile: CIDeliveryProfile;
+}): {
+  candidate: CIDeliveryCandidate;
+  checks: CIDeliveryCheck[];
+  dependency_cache: DependencyCache;
+} {
   const { request, members, providerObservation, profile } = args;
   validateCIDeliveryRequest(request);
   check(
@@ -1016,33 +1117,22 @@ export function validateCIDeliveryFormationMembers(args: {
   check(isRecord(dependencyCache), 'native dependency cache result invalid');
   const validatedDependencyCache = validateDependencyCache(dependencyCache);
   const checks = [{ id: 'native-build', status: 'passed' }];
-  const resultBytes = encodeCIDeliveryResult({
-    request,
-    candidate,
-    profile,
-    observation: {
-      issuer: providerObservation.issuer,
-      run_id: providerObservation.run_id,
-      run_attempt: providerObservation.run_attempt,
-      conclusion: 'success',
-      checks,
-    },
-    dependency_cache: validatedDependencyCache,
-  });
-  return {
-    candidate,
-    checks,
-    observation: {
-      schema: 'VidaCIDeliveryObservation/v1',
-      issuer: providerObservation.issuer,
-      run_id: providerObservation.run_id,
-      run_attempt: providerObservation.run_attempt,
-      artifact_id: providerObservation.artifact_id,
-      conclusion: 'success',
-      checks,
-      result_bytes: resultBytes,
-    },
-  };
+  profileMatches(request, profile);
+  check(
+    providerObservation.issuer === profile.issuer &&
+      approvedProviderNumber(providerObservation.run_id) &&
+      Number.isSafeInteger(providerObservation.run_attempt) &&
+      providerObservation.run_attempt > 0 &&
+      approvedProviderNumber(providerObservation.artifact_id),
+    'producer provider identity invalid',
+  );
+  validateChecks(checks, profile);
+  check(
+    /^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-(\d+\.\d+\.\d+)-[a-f0-9]{64}$/.exec(validatedDependencyCache.key)?.[1] ===
+      candidate.manifest.pin,
+    'CI candidate archive/manifest/payload differs',
+  );
+  return { candidate, checks, dependency_cache: validatedDependencyCache };
 }
 export function readConfirmedCIDeliveryFormation(root: string): FormationPointer | FormationPointerV2 | null {
   const relative = formationPath();
@@ -1247,7 +1337,11 @@ export async function verifyCIDeliveryFormationPair(args: {
     selected[0]?.target === 'bun-linux-x64' && selected[1]?.target === 'bun-windows-x64',
     'exact Linux and Windows targets required',
   );
-  const primary = readNativeRetargetCandidate({ root, operation, published: true });
+  const primary = readNativeRetargetCandidate({
+    root,
+    operation,
+    published: true,
+  });
   check(
     primary.version === version && selected.some((entry) => entry.target === primary.manifest.target),
     'published primary target differs',
@@ -1262,7 +1356,11 @@ export async function verifyCIDeliveryFormationPair(args: {
     const candidate =
       selectedTarget.target === primary.manifest.target
         ? primary
-        : readNativeRetargetCandidate({ root, operation, target: selectedTarget.target });
+        : readNativeRetargetCandidate({
+            root,
+            operation,
+            target: selectedTarget.target,
+          });
     const requestValue = parseJSON(
       regularBytes(root, requestPath(operation, selectedTarget.request_id)).toString('utf8'),
     );
@@ -1289,13 +1387,23 @@ export async function verifyCIDeliveryFormationPair(args: {
       ),
       'target request changed',
     );
-    validateCIDeliveryObservation({ request: requestValue, candidate, profile, observation: delivered });
+    validateCIDeliveryObservation({
+      request: requestValue,
+      candidate,
+      profile,
+      observation: delivered,
+    });
     const observation = {
       ...delivered,
       checks: structuredClone(delivered.checks),
       result_bytes: Buffer.from(delivered.result_bytes),
     };
-    observations.push({ request: requestValue, candidate, observation, profile });
+    observations.push({
+      request: requestValue,
+      candidate,
+      observation,
+      profile,
+    });
   }
   const first = observations[0],
     second = observations[1];
@@ -1359,7 +1467,10 @@ export async function verifyCIDeliveryFormationPair(args: {
         result_sha256: digest(observation.result_bytes),
       })),
     };
-    const pointer: FormationPointerV2 = { ...body, digest: digest(canonicalJSON(body)) };
+    const pointer: FormationPointerV2 = {
+      ...body,
+      digest: digest(canonicalJSON(body)),
+    };
     const current = readConfirmedCIDeliveryFormation(root);
     if (current?.operation_id === operation) {
       check(equal(current, pointer), 'formation operation already differs');
@@ -1426,7 +1537,10 @@ function persistCIDeliveryFormation(
     artifact_id: observation.artifact_id,
     result_sha256: digest(resultBytes),
   };
-  const pointer: FormationPointer = { ...pointerBody, digest: digest(canonicalJSON(pointerBody)) };
+  const pointer: FormationPointer = {
+    ...pointerBody,
+    digest: digest(canonicalJSON(pointerBody)),
+  };
   const current = readConfirmedCIDeliveryFormation(root);
   if (current?.operation_id === pointer.operation_id) {
     check(
@@ -1539,7 +1653,7 @@ interface GitHubRun {
   path: string;
   event: string;
   status: string;
-  conclusion: string;
+  conclusion: string | null;
   head_sha: string;
   repository: { id: number; full_name: string };
   head_repository: { id: number };
@@ -1573,7 +1687,11 @@ function selectedGitHubJob(value: unknown): GitHubJob {
         typeof step.conclusion === 'string',
       'selected provider job step malformed',
     );
-    steps.push({ name: step.name, status: step.status, conclusion: step.conclusion });
+    steps.push({
+      name: step.name,
+      status: step.status,
+      conclusion: step.conclusion,
+    });
   }
   return {
     name: value.name,
@@ -1630,7 +1748,10 @@ async function responseBytes(response: Response, limit: number): Promise<Buffer>
   }
   return Buffer.concat(chunks, size);
 }
-export async function downloadGitHubCIDelivery(options: DownloadOptions): Promise<{
+async function downloadGitHubArtifact(
+  options: DownloadOptions,
+  requireCompletedWorkflow: boolean,
+): Promise<{
   transport_path: string;
   run_id: string;
   run_attempt: number;
@@ -1654,6 +1775,11 @@ export async function downloadGitHubCIDelivery(options: DownloadOptions): Promis
       /^\.github\/workflows\/[A-Za-z0-9_.-]+\.ya?ml$/.test(policy.workflow_path) &&
       typeof policy.job === 'string' &&
       policy.job.length > 0 &&
+      (requireCompletedWorkflow ||
+        (hex.test(policy.workflow_sha256) &&
+          Array.isArray(policy.steps) &&
+          policy.steps.length === profile.required_checks.length &&
+          equal(policy.steps.map((item) => item.id).sort(), [...profile.required_checks].sort()))) &&
       [run_id, artifact_id].every(approvedProviderNumber) &&
       Number.isSafeInteger(run_attempt) &&
       run_attempt > 0,
@@ -1676,7 +1802,11 @@ export async function downloadGitHubCIDelivery(options: DownloadOptions): Promis
     parseJSON(
       (
         await responseBytes(
-          await fetch(base + suffix, { headers, ...(signal === undefined ? {} : { signal }), redirect: 'error' }),
+          await fetch(base + suffix, {
+            headers,
+            ...(signal === undefined ? {} : { signal }),
+            redirect: 'error',
+          }),
           8 * 1024 * 1024,
         )
       ).toString('utf8'),
@@ -1689,18 +1819,35 @@ export async function downloadGitHubCIDelivery(options: DownloadOptions): Promis
       run.workflow_id === policy.workflow_id &&
       run.path === policy.workflow_path &&
       run.event === 'workflow_dispatch' &&
-      run.status === 'completed' &&
-      run.conclusion === 'success' &&
+      (requireCompletedWorkflow ? run.status === 'completed' && run.conclusion === 'success' : true) &&
       run.repository.id === policy.repository_id &&
       run.head_repository.id === policy.repository_id &&
       run.repository.full_name === policy.repository,
     'selected download run differs',
   );
+  if (!requireCompletedWorkflow) {
+    const definition = await get(`/contents/${policy.workflow_path}?ref=${run.head_sha}`);
+    check(
+      isRecord(definition) &&
+        typeof definition.encoding === 'string' &&
+        typeof definition.content === 'string' &&
+        definition.encoding === 'base64' &&
+        digest(Buffer.from(definition.content, 'base64')) === policy.workflow_sha256,
+      'workflow definition differs',
+    );
+  }
   const jobs = githubJobs(await get(`/actions/runs/${run_id}/attempts/${run_attempt}/jobs?per_page=100`));
   check(jobs.jobs.length === jobs.total_count, 'complete bounded download job observation required');
   const selectedJobs = jobs.jobs.filter((job) => isRecord(job) && job.name === policy.job);
   check(selectedJobs.length === 1, 'selected download job differs');
   const selectedJob = selectedGitHubJob(selectedJobs[0]);
+  for (const step of requireCompletedWorkflow ? [] : policy.steps) {
+    const matches = selectedJob.steps.filter((item) => item.name === step.name);
+    check(
+      matches.length === 1 && matches[0]?.status === 'completed' && matches[0]?.conclusion === 'success',
+      'required native step failed/skipped',
+    );
+  }
   check(
     selectedJob.run_id === Number(run_id) &&
       selectedJob.run_attempt === run_attempt &&
@@ -1732,7 +1879,10 @@ export async function downloadGitHubCIDelivery(options: DownloadOptions): Promis
   const descriptor = openSync(file, 'wx', 0o600);
   let size = 0;
   try {
-    const data = await fetch(location, { ...(signal === undefined ? {} : { signal }), redirect: 'error' });
+    const data = await fetch(location, {
+      ...(signal === undefined ? {} : { signal }),
+      redirect: 'error',
+    });
     check(data.ok && data.body, 'artifact storage unavailable; retain download intent');
     const length = data.headers.get('content-length');
     check(
@@ -1757,7 +1907,94 @@ export async function downloadGitHubCIDelivery(options: DownloadOptions): Promis
     `sha256:${digest(regularBytes(root, relative, ciTransportLimit))}` === artifact.digest,
     'download digest differs; retain custody',
   );
-  return { transport_path: relative, run_id: String(run_id), run_attempt, artifact_id: String(artifact_id) };
+  return {
+    transport_path: relative,
+    run_id: String(run_id),
+    run_attempt,
+    artifact_id: String(artifact_id),
+  };
+}
+export async function downloadGitHubCIDelivery(options: DownloadOptions): Promise<{
+  transport_path: string;
+  run_id: string;
+  run_attempt: number;
+  artifact_id: string;
+}> {
+  return downloadGitHubArtifact(options, true);
+}
+export async function downloadGitHubCIProducerArtifact(options: DownloadOptions): Promise<{
+  transport_path: string;
+  run_id: string;
+  run_attempt: number;
+  artifact_id: string;
+}> {
+  const profile = structuredClone(options.profile);
+  const policy = profile.github;
+  const jobByTarget: Record<string, string> = {
+    'bun-windows-x64': 'native-windows-x64',
+    'bun-linux-x64': 'native-linux-x64',
+  };
+  check(
+    equal(profile.required_checks, minimumNativeDeliveryChecks) &&
+      policy?.repository_id === 1340911900 &&
+      policy.workflow_path === '.github/workflows/agent-native-delivery.yml' &&
+      Array.isArray(policy.steps) &&
+      equal(
+        policy.steps.map((item) => item.id),
+        ['native-build'],
+      ) &&
+      policy.job === jobByTarget[options.request.target],
+    'approved native producer profile required',
+  );
+  return downloadGitHubArtifact(options, false);
+}
+export async function readCIProducerFormationMembers(args: {
+  root: string;
+  request: CIDeliveryRequest;
+  transport_path: string;
+  installer_bytes: Buffer;
+}): Promise<FormationMembers> {
+  const { root, request, transport_path, installer_bytes } = args;
+  validateCIDeliveryRequest(request);
+  check(Buffer.isBuffer(installer_bytes), 'source installer must be bytes');
+  const target = request.target;
+  check(target === 'bun-windows-x64' || target === 'bun-linux-x64', 'unsupported producer target');
+  const currentInstaller = regularBytes(
+    root,
+    target === 'bun-windows-x64' ? 'packages/agent/tooling/install-windows.ps1' : 'install/install.sh',
+    1024 * 1024,
+  );
+  check(currentInstaller.equals(installer_bytes), 'supplied installer differs from current Source');
+  const transport = regularBytes(root, transport_path, ciTransportLimit);
+  const { readArchiveEntry, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root);
+  const zip = releasePath(root, transport_path);
+  await loadZipArchiveWithPreflight(transport, {
+    maxArchiveBytes: ciTransportLimit,
+  });
+  const read = (name: string, maxBytes: number): Promise<Buffer> =>
+    readArchiveEntry(zip, name, { kind: 'zip', maxBytes });
+  const candidate_bytes = await read('candidate.json', 8 * 1024 * 1024);
+  const archive_bytes = await read(`vida-agent-${request.version}.tgz`, ciArchiveLimit);
+  const manifest_bytes = await read('manifest.json', 8 * 1024 * 1024);
+  const asset_bytes = await read(`vida-agent-${target}${target === 'bun-windows-x64' ? '.exe' : ''}`, ciTransportLimit);
+  const native_build_result_bytes = await read('native-build.result.json', 1024 * 1024);
+  let selectedInstaller = installer_bytes;
+  if (target === 'bun-windows-x64') {
+    selectedInstaller = await read('install-windows.ps1', 1024 * 1024);
+    check(selectedInstaller.equals(installer_bytes), 'formation Windows installer differs from current Source');
+  }
+  check(
+    regularBytes(root, transport_path, ciTransportLimit).equals(transport),
+    'producer transport changed during reads',
+  );
+  return {
+    candidate_bytes,
+    archive_bytes,
+    manifest_bytes,
+    asset_bytes,
+    native_build_result_bytes,
+    installer_bytes: selectedInstaller,
+  };
 }
 async function observeGitHubCIDeliveryInternal(
   options: ObserveGitHubFormationOptions & { candidate?: CIDeliveryCandidate },
@@ -1805,7 +2042,11 @@ async function observeGitHubCIDeliveryInternal(
     parseJSON(
       (
         await responseBytes(
-          await fetch(base + suffix, { headers, ...(signal === undefined ? {} : { signal }), redirect: 'error' }),
+          await fetch(base + suffix, {
+            headers,
+            ...(signal === undefined ? {} : { signal }),
+            redirect: 'error',
+          }),
           8 * 1024 * 1024,
         )
       ).toString('utf8'),
@@ -1876,11 +2117,15 @@ async function observeGitHubCIDeliveryInternal(
   let observationFailure: Error | undefined;
   let cleanupFailure: Error | undefined;
   try {
-    await loadZipArchiveWithPreflight(transport, { maxArchiveBytes: ciTransportLimit });
+    await loadZipArchiveWithPreflight(transport, {
+      maxArchiveBytes: ciTransportLimit,
+    });
     let selectedZip = zip;
     if (candidate === undefined) {
       snapshot = ownedTempWorkspace('vida-ci-formation-');
-      snapshot.store.write('formation.zip', transport, { maxBytes: ciTransportLimit });
+      snapshot.store.write('formation.zip', transport, {
+        maxBytes: ciTransportLimit,
+      });
       selectedZip = snapshot.path('formation.zip');
       const directory = lstatSync(snapshot.dir, { bigint: true });
       check(
@@ -1896,7 +2141,10 @@ async function observeGitHubCIDeliveryInternal(
       snapshotIdentity = JSON.stringify([info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs]);
       check(snapshot.read('formation.zip').equals(transport), 'formation snapshot differs');
       const candidateValue = parseFormationJSON(
-        await readArchiveEntry(selectedZip, 'candidate.json', { kind: 'zip', maxBytes: 8 * 1024 * 1024 }),
+        await readArchiveEntry(selectedZip, 'candidate.json', {
+          kind: 'zip',
+          maxBytes: 8 * 1024 * 1024,
+        }),
         'candidate',
         8 * 1024 * 1024,
       );
@@ -1908,7 +2156,10 @@ async function observeGitHubCIDeliveryInternal(
       );
       candidate = candidateValue;
     }
-    resultBytes = await readArchiveEntry(selectedZip, 'result.json', { kind: 'zip', maxBytes: 8 * 1024 * 1024 });
+    resultBytes = await readArchiveEntry(selectedZip, 'result.json', {
+      kind: 'zip',
+      maxBytes: 8 * 1024 * 1024,
+    });
     const packageMetadata = candidate.pack_metadata[0];
     check(
       packageMetadata !== undefined && typeof packageMetadata.filename === 'string',
@@ -1968,7 +2219,12 @@ async function observeGitHubCIDeliveryInternal(
     result_bytes: resultBytes,
   };
   if (options.candidate === undefined) validateCIDeliveryObservation({ request, candidate, profile, observation });
-  return { observation, candidate, archive_bytes: archiveBytes, transport_sha256: digest(transport) };
+  return {
+    observation,
+    candidate,
+    archive_bytes: archiveBytes,
+    transport_sha256: digest(transport),
+  };
 }
 export async function observeGitHubCIDelivery(options: ObserveGitHubOptions): Promise<CIDeliveryObservation> {
   return (await observeGitHubCIDeliveryInternal(options)).observation;
@@ -1988,7 +2244,7 @@ function githubRun(value: unknown): GitHubRun {
       typeof value.path === 'string' &&
       typeof value.event === 'string' &&
       typeof value.status === 'string' &&
-      typeof value.conclusion === 'string' &&
+      (value.conclusion === null || typeof value.conclusion === 'string') &&
       typeof value.head_sha === 'string' &&
       typeof value.repository.id === 'number' &&
       typeof value.repository.full_name === 'string' &&
@@ -2004,7 +2260,10 @@ function githubRun(value: unknown): GitHubRun {
     status: value.status,
     conclusion: value.conclusion,
     head_sha: value.head_sha,
-    repository: { id: value.repository.id, full_name: value.repository.full_name },
+    repository: {
+      id: value.repository.id,
+      full_name: value.repository.full_name,
+    },
     head_repository: { id: value.head_repository.id },
   };
 }

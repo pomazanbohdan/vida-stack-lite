@@ -349,6 +349,23 @@ fractional digits and does not match the current operation contract.
 
 Run the maintained `packages/agent/tooling/install-windows.ps1`:
 
+For installation from the public internet, download the released installer
+outside the Source checkout, then invoke it without `-Source`:
+
+```powershell
+$installer = Join-Path $env:TEMP 'vida-agent-install-windows.ps1'
+Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/pomazanbohdan/vida-stack-lite/releases/latest/download/install-windows.ps1' -OutFile $installer
+& $installer -Action install
+```
+
+The release must already be public and contain both platform executables,
+target-qualified manifests, platform checksum files and maintained installers.
+This route needs PowerShell and Windows system facilities; it does not require
+Git, Bun, Node, jq, a Source checkout or administrator elevation. Windows
+development-test symlink rights are separate from consumer installation.
+
+For an existing downloaded installer or an explicitly selected artifact:
+
 ```powershell
 .\install-windows.ps1 install
 .\install-windows.ps1 update

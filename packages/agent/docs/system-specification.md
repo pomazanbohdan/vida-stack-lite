@@ -490,6 +490,38 @@ The version has the normal MAJOR.MINOR.PATCH form defined by
 increments by human policy; a version number alone grants no qualification or
 Runtime acceptance.
 
+### GitHub publication in the native workflow
+
+The existing release owner selects the version and issues the exact operation's
+Linux and Windows requests before dispatch. The native delivery workflow remains
+the single workflow. Build-only dispatch retains its existing behavior. Explicit
+`publish: true` requires both native producers and gives `contents: write` only
+to its publisher job; publication runs serialize under one concurrency group.
+
+The publisher checks the actual completed successful native jobs and required
+steps, exact Source/workflow, producer run attempt, artifact identity and creation
+interval, transport digest, candidate, manifest, archive and executable bytes.
+Both targets must bind the selected operation, Source and version. Producer proof
+has no whole-workflow completion claim. The existing completed-workflow observer
+still requires actual workflow completion and success before its own receipt and
+local release-operation closeout.
+
+One immutable annotated version tag binds the operation, exact requests, original
+producer run/attempt/artifacts and public asset name/size/hash inventory. Its
+commit must be the selected published Source. A draft body binds that claim's
+digest. Recovery reads these remote objects before any missing effect and reuses
+the original producer artifacts. It adopts only one matching release and complete
+matching assets. It never overwrites a tag, release body or asset, deletes an
+asset, or invents no-effect proof. Foreign, mismatched, starter or uncertain
+objects remain fenced for explicit reconciliation. A fully matching published
+retry performs no remote writes.
+
+Public assets are the native executable and unchanged target-qualified manifest
+for each platform, the installer's exact platform checksum file, the maintained
+PowerShell and Bash installers, and producer provenance. Publication requires an
+exact complete asset inventory and byte readback. A public release is delivery
+evidence, not an installed runtime or attributable user Runtime acceptance.
+
 ## Source development controller
 
 The bundle-owned development-controller seam provides prepare, inspect, verify
