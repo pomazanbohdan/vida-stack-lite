@@ -51,7 +51,7 @@ Repository rules (ownership, delegation, documentation policy, Git) are in
   bundler, package manager, CLI framework or test runner: everything is
   borrowed from the project.
 - **The plugin code is runtime-agnostic.** VP modules must work in any
-  environment (Bun, Node, Deno) without external dependencies: only the standard
+  environment (Bun or Node) without external dependencies: only the standard
   `node:` modules (`fs`, `path`, `process`, `child_process`). Bun-specific APIs
   (`Bun.YAML`, `Bun.file`, `Bun.spawn`, `import.meta.dir`) are allowed **only in
   dev tools** (they run under the project runtime); in the code
@@ -61,7 +61,7 @@ Repository rules (ownership, delegation, documentation policy, Git) are in
   environment. YAML — only for human manifests (`donors.yaml`), where parsing
   is performed by a project tool.
 - **Scripts shipped in the skills** (setup, instruction search) —
-  plain TS **without a build**: they run under Bun, Node or Deno. Constraints:
+  plain TS **without a build**: they run under Bun or Node. Constraints:
   only `node:` modules, `import type` for types, no `enum`/`namespace`/
   parameter properties (so that type-stripping works), paths are derived from
   `import.meta.url` through `node:url` (not from `import.meta.dir`), YAML is not

@@ -128,7 +128,7 @@ Canonical profile/schema metadata reused by compose is bound to the exact curren
 ## 12. Formats
 
 - **SR-62.** The machine formats that the shipped code reads are JSON (catalog, profiles, registry, work records); YAML — only human manifests. The exception is the format of the instruction itself: `.md` with frontmatter of a limited YAML subset (the product's own format).
-- **SR-63.** The code shipped in the skills runs without a build under Bun/Node/Deno: only `node:` modules, no external dependencies and no Bun-specific APIs.
+- **SR-63.** The code shipped in the skills runs without a build under Bun and Node: only `node:` modules, no external dependencies and no Bun-specific APIs.
 - **SR-64.** VP dev tools run under the project runtime (Bun) and may use Bun-specific APIs.
 - **SR-65.** One canonical owner per document and contract; parallel copies of normative text are forbidden.
 
@@ -232,7 +232,7 @@ Reconversion under SR-90 preserves a previously merged disposition when its outp
 ### Existing clause clarifications
 - **Interpretation of SR-16 and SR-20.** Current v1 refusal triggers remain exactly four: no candidates, unknown candidate ID, candidate outside the admissible set, and malformed format; the current codes are no-candidates, unknown-candidate, candidate-not-allowed, and invalid-format. The fifth code applicability-unresolved is a future extension for SR-82 only. Once that phase is implemented, SR-20 also materializes this reason and the unresolved context; it is not a current E4 behavior.
 - **Interpretation of SR-58.** The current 20-instruction / 64,000-byte contract remains. After D15 retrieval is implemented, the 20 cap still counts instructions only and the 64,000-byte sum also counts selected canonical UTF-8 JSON resource payloads. Overflow still rejects the whole result.
-- **Interpretation of SR-62 through SR-64.** Shipped readers consume JSON, typed JSON records, and Markdown frontmatter; they never read CSV. Only pinned-source development intake may parse CSV, using the project runtime. Shipped skill code stays dependency-free and portable under Bun, Node, and Deno; Bun-specific APIs remain limited to development tools.
+- **Interpretation of SR-62 through SR-64.** Shipped readers consume JSON, typed JSON records, and Markdown frontmatter; they never read CSV. Only pinned-source development intake may parse CSV, using the project runtime. Shipped skill code stays dependency-free and portable under Bun and Node; Bun-specific APIs remain limited to development tools.
 - **Interpretation of SR-70.** The future application filter is structured framework/package identity, version range, runtime, platform, standard identifier and version, and conformance level where relevant. It preserves source labels and never infers an unparsed range.
 - **Interpretation of SR-73.** Resource bodies are not copied into the generic derived full-text index; typed resources are selected by exact ID and only metadata may appear in search.
 - **Interpretation of SR-76.** catalog.json remains the single canonical listing. A versioned schema migration adds typed resource entries to that manifest before resource code; no second catalog is allowed.

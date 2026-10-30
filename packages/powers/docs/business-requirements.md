@@ -134,8 +134,8 @@ The agent's instruction-discovery workflow is explicit and economical: derive ta
 
 - **NFR-01.** VP has no infrastructure of its own: the runtime, the bundler, the package
   manager, the CLI framework and the test runner are taken from the project.
-- **NFR-02.** The code shipped in the skills works without a build under Bun, Node
-  or Deno: only standard `node:` modules, no external dependencies.
+- **NFR-02.** The code shipped in the skills works without a build under Bun and Node:
+  only standard `node:` modules, no external dependencies.
 - **NFR-03.** Shipped code reads JSON catalogs and typed records plus Markdown instruction
   frontmatter; it does not read CSV. The development-only donor intake may parse CSV only from
   explicitly inventoried, pinned source paths. YAML remains limited to human manifests.
