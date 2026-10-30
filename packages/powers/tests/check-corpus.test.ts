@@ -412,6 +412,15 @@ describe('checkCorpus synthetic fixtures', () => {
     await expectCodes(corpus, ['CORPUS_TAG_EXEMPTION_INVALID']);
   });
 
+  test('rejects a canonical tag that is not a two-component kebab tag', async () => {
+    const corpus = await fixture();
+    corpus.catalog.tag_dictionary.pattern['onepart'] = 'Single component.';
+    await expectCodes(corpus, ['CORPUS_TAG_SHAPE_INVALID']);
+    delete corpus.catalog.tag_dictionary.pattern['onepart'];
+    corpus.catalog.tag_dictionary.pattern['Bad_Tag'] = 'Not kebab.';
+    await expectCodes(corpus, ['CORPUS_TAG_SHAPE_INVALID']);
+  });
+
   test('requires tags unless the dimension has a reasoned exemption', async () => {
     const corpus = await fixture(); const item = { ...corpus.instructions[0] as Instruction, capability_tags: [], pattern_tags: [] };
     await rewriteInstruction(corpus, item);

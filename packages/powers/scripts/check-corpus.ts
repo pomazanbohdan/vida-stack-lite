@@ -106,9 +106,11 @@ function validateManifestPaths(base: string, entries: Dict[], files: string[], i
 function checkDictionary(catalog: Dict, issues: CorpusIssue[]): { dictionary: Dict; aliases: Dict; exemptions: Dict[] } {
   const dictionary = isRecord(catalog.tag_dictionary) ? catalog.tag_dictionary : {};
   const dimensions = ['capability', 'pattern'] as const;
+  const tagShape = /^[a-z0-9]+(?:-[a-z0-9]+)+$/;
   for (const dimension of dimensions) {
     const entries = isRecord(dictionary[dimension]) ? dictionary[dimension] as Dict : {};
     for (const [tag, description] of Object.entries(entries)) {
+      if (!tagShape.test(tag)) issue(issues, 'CORPUS_TAG_SHAPE_INVALID', `${dimension} tag ${tag} is not a two-component kebab tag`, { dimension, tag });
       if (typeof description !== 'string' || description.trim() === '') issue(issues, 'CORPUS_TAG_DESCRIPTION_EMPTY', `${dimension} tag ${tag} has an empty description`, { dimension, tag });
     }
   }
