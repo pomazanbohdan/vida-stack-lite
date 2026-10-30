@@ -21,7 +21,7 @@ Use this procedure for every instruction lookup; it is the only one the task nee
    Read the `resolved:` line on stderr. A task with several intents gets one call per intent, up to six calls.
 2. **Fallback on the observable signal.** When the CLI prints `no capability or pattern matched`, run `tags --query` with the same 3-6 terms and retry with the canonical tag it returns (`--capability` or `--pattern`). Bare tags are the normal form; a namespaced tag is also accepted.
 3. **Page when the intent is missing.** Search returns 20 rows by default. If page one does not contain the intent, read the next page with `--offset 20`; paging continues the same search and does not consume another one.
-4. **IDs come from rows.** Search rows are instruction IDs; capability and pattern tags are filters. If `get` reports that a value is a capability or pattern, run the command it prints instead of resending the same ID.
+4. **IDs come from rows.** Search rows are instruction IDs; capability and pattern tags are filters. If `get` reports that a value is a capability or pattern, run the command it prints instead of resending the same ID. Never reconstruct an ID from a title: when the ID you expect is not in a returned row, page or search again before choosing.
 5. **One retrieval call.** Choose 8-10 IDs for a multi-intent task, 3-6 for one intent, and run one
    `bun skills/vp-mode/scripts/catalog-cli.ts get --id <id...> --profile <effective-profile.json> --catalog <snapshot>`
    `get` passes every ID as required to `catalog.compose`, adds mandatory and transitive dependencies, and never returns a partial bundle. Do not issue one get per ID or manually concatenate results.
