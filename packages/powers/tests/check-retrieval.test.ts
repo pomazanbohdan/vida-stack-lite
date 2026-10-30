@@ -65,6 +65,42 @@ test('rejects an unknown id, a reused id and an id outside the intent', async ()
   expect(misplaced.issues.map((issue) => issue.code)).toContain('RETRIEVAL_ID_NOT_IN_INTENT');
 });
 
+test('accepts a declared canonical tag when the fallback changed the terms', async () => {
+  const declared = await checkRetrievalReport(catalogPath, await reportFile({
+    intents: [
+      {
+        name: 'solution-option-exploration',
+        terms: ['solution', 'option', 'exploration', 'alternatives', 'tradeoffs'],
+        capability: 'generate-idea-variations',
+        ids: ['generate-a-bounded-set-of-variations', 'look-for-structural-analogies'],
+      },
+    ],
+  }));
+  expect(declared.ok).toBe(true);
+  expect(declared.intents[0]?.status).toBe('declared');
+  expect(declared.intents[0]?.capability).toBe('generate-idea-variations');
+
+  const unknownTag = await checkRetrievalReport(catalogPath, await reportFile({
+    intents: [{ name: 'x', terms: ['diagnosis'], capability: 'not-a-capability', ids: ['debug-systematically'] }],
+  }));
+  expect(unknownTag.issues.map((issue) => issue.code)).toContain('RETRIEVAL_TAG_UNKNOWN');
+
+  const unknownPattern = await checkRetrievalReport(catalogPath, await reportFile({
+    intents: [{ name: 'x', terms: ['diagnosis'], pattern: 'not-a-pattern', ids: ['debug-systematically'] }],
+  }));
+  expect(unknownPattern.issues.map((issue) => issue.code)).toContain('RETRIEVAL_TAG_UNKNOWN');
+
+  const emptyTag = await checkRetrievalReport(catalogPath, await reportFile({
+    intents: [{ name: 'x', terms: ['diagnosis'], capability: '', ids: ['debug-systematically'] }],
+  }));
+  expect(emptyTag.issues.map((issue) => issue.code)).toContain('RETRIEVAL_REPORT_INVALID');
+
+  const emptyPattern = await checkRetrievalReport(catalogPath, await reportFile({
+    intents: [{ name: 'x', terms: ['diagnosis'], pattern: '', ids: ['debug-systematically'] }],
+  }));
+  expect(emptyPattern.issues.map((issue) => issue.code)).toContain('RETRIEVAL_REPORT_INVALID');
+});
+
 test('reports an unresolved intent separately from empty and malformed reports', async () => {
   const unresolved = await checkRetrievalReport(catalogPath, await reportFile({
     intents: [{ name: 'nothing', terms: ['zzzznotatag'], ids: ['debug-systematically'] }],

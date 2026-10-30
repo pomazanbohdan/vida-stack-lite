@@ -6,7 +6,7 @@ import type { LoadedInstruction } from '../skills/vp-mode/scripts/catalog.ts';
 import { resolveIntent } from '../skills/vp-mode/scripts/retrieval.ts';
 import { isEntryPoint } from '../skills/vp-mode/scripts/catalog-cli.ts';
 
-export type RetrievalReportIntent = { name: string; terms: string[]; ids: string[] };
+export type RetrievalReportIntent = { name: string; terms: string[]; ids: string[]; capability?: string; pattern?: string };
 export type RetrievalReport = { intents: RetrievalReportIntent[] };
 
 export type RetrievalIssue = { code: string; message: string; intent?: string; instruction_id?: string };
@@ -49,10 +49,16 @@ export function parseReport(value: unknown): { report?: RetrievalReport; issues:
     const name = typeof raw.name === 'string' && raw.name.trim() !== '' ? raw.name : undefined;
     const terms = strings(raw.terms);
     const ids = strings(raw.ids);
+    const capability = typeof raw.capability === 'string' && raw.capability.trim() !== '' ? raw.capability : undefined;
+    const pattern = typeof raw.pattern === 'string' && raw.pattern.trim() !== '' ? raw.pattern : undefined;
+    if (raw.capability !== undefined && capability === undefined) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: `intent ${index} has an empty capability`, ...(name === undefined ? {} : { intent: name }) });
+    if (raw.pattern !== undefined && pattern === undefined) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: `intent ${index} has an empty pattern`, ...(name === undefined ? {} : { intent: name }) });
     if (name === undefined) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: `intent ${index} has no name` });
     if (terms === undefined || terms.length === 0) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: `intent ${index} has no terms`, ...(name === undefined ? {} : { intent: name }) });
     if (ids === undefined || ids.length === 0) issues.push({ code: 'RETRIEVAL_INTENT_EMPTY', message: `intent ${index} has no instruction ids`, ...(name === undefined ? {} : { intent: name }) });
-    if (name !== undefined && terms !== undefined && ids !== undefined && terms.length > 0 && ids.length > 0) intents.push({ name, terms, ids });
+    if (name !== undefined && terms !== undefined && ids !== undefined && terms.length > 0 && ids.length > 0) {
+      intents.push({ name, terms, ids, ...(capability === undefined ? {} : { capability }), ...(pattern === undefined ? {} : { pattern }) });
+    }
   }
   if (value.intents.length === 0) issues.push({ code: 'RETRIEVAL_REPORT_INVALID', message: 'report has no intents' });
   return issues.length === 0 ? { report: { intents }, issues } : { issues };
@@ -67,8 +73,26 @@ export function checkReport(
   const issues: RetrievalIssue[] = [];
   const seen = new Map<string, string>();
   const intents: RetrievalCheck['intents'] = [];
+  const tags = new Set<string>();
+  for (const instruction of instructions.values()) {
+    for (const tag of instruction.capability_tags) tags.add(tag);
+    for (const tag of instruction.pattern_tags) tags.add(tag);
+  }
   for (const intent of report.intents) {
-    const resolution = resolveIntent(instructions, intent.terms, aliases);
+    const declared = intent.capability !== undefined || intent.pattern !== undefined;
+    const resolution: { status: string; capability?: string; pattern?: string } = declared
+      ? {
+        status: 'declared',
+        ...(intent.capability === undefined ? {} : { capability: intent.capability }),
+        ...(intent.pattern === undefined ? {} : { pattern: intent.pattern }),
+      }
+      : resolveIntent(instructions, intent.terms, aliases);
+    if (intent.capability !== undefined && !tags.has(intent.capability)) {
+      issues.push({ code: 'RETRIEVAL_TAG_UNKNOWN', message: `declared capability ${intent.capability} carries no instruction`, intent: intent.name });
+    }
+    if (intent.pattern !== undefined && !tags.has(intent.pattern)) {
+      issues.push({ code: 'RETRIEVAL_TAG_UNKNOWN', message: `declared pattern ${intent.pattern} carries no instruction`, intent: intent.name });
+    }
     for (const id of intent.ids) {
       const instruction = instructions.get(id);
       if (instruction === undefined) {
@@ -106,11 +130,6 @@ export function checkReport(
       weak: resolution.status === 'weak',
       ids: intent.ids,
     });
-  }
-  const tags = new Set<string>();
-  for (const instruction of instructions.values()) {
-    for (const tag of instruction.capability_tags) tags.add(tag);
-    for (const tag of instruction.pattern_tags) tags.add(tag);
   }
   const reachable = new Set<string>();
   for (const target of aliases.values()) if (tags.has(target)) reachable.add(target);
