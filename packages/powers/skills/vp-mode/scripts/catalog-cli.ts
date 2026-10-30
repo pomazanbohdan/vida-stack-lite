@@ -494,7 +494,7 @@ function topPatternFor(instructions: Map<string, LoadedInstruction>, capability:
 
 const RESOLVER_STOPWORDS = new Set(['a', 'an', 'the', 'for', 'to', 'of', 'and', 'or', 'with', 'on', 'in', 'by', 'vs', 'versus', 'after', 'before', 'from', 'into', 'over', 'under', 'this', 'that']);
 
-function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonly string[]): { capability: string; pattern?: string } | undefined {
+function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonly string[], aliases?: Map<string, string>): { capability: string; pattern?: string } | undefined {
   const query = [...new Set(terms.flatMap(tagTokens).map(stemToken))].filter((token) => !RESOLVER_STOPWORDS.has(token));
   if (query.length === 0) return undefined;
   const counts = new Map<string, number>();
@@ -507,11 +507,12 @@ function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonl
   }
   const ranked = [...nameSets.entries()]
     .map(([capability, names]) => ({ capability, names, score: 0, firstIndex: Number.MAX_SAFE_INTEGER }))
-    .filter((item) => query.some((token) => item.names.has(token)));
+    .filter((item) => query.some((token) => item.names.has(token) || aliases?.get(token) === item.capability));
   const documentFrequency = new Map<string, number>();
   for (const { names } of ranked) for (const token of names) documentFrequency.set(token, (documentFrequency.get(token) ?? 0) + 1);
   for (const item of ranked) {
-    item.score = query.reduce((total, token) => total + (item.names.has(token) ? 1 / (documentFrequency.get(token) ?? 1) : 0), 0);
+    item.score = query.reduce((total, token) => total + (item.names.has(token) ? 1 / (documentFrequency.get(token) ?? 1) : 0)
+      + (aliases?.get(token) === item.capability ? 2 : 0), 0);
     const firstIndex = query.findIndex((token) => item.names.has(token));
     item.firstIndex = firstIndex === -1 ? Number.MAX_SAFE_INTEGER : firstIndex;
   }
@@ -715,7 +716,10 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       const forTerms = listValues(flags, '--for');
       if (forTerms !== undefined) {
         if (forTerms.length > 8) throw invalid('--for accepts at most 8 terms; run one focused --for per intent (3-6 terms)', { terms: forTerms });
-        const resolvedTags = resolveFor(instructions, forTerms);
+        const capabilityAliases = new Map(Object.entries(catalog.tag_aliases)
+          .filter(([, canonical]) => Object.prototype.hasOwnProperty.call(catalog.tag_dictionary.capability, canonical))
+          .map(([alias, canonical]) => [stemToken(tagTokens(alias)[0] ?? alias), canonical] as [string, string]));
+        const resolvedTags = resolveFor(instructions, forTerms, capabilityAliases);
         const capability = capabilityTags?.[0] ?? resolvedTags?.capability;
         if (capability === undefined) throw invalid('no capability matched --for; run tags --query with canonical nouns', { terms: forTerms });
         const pattern = patternTags?.[0] ?? topPatternFor(instructions, capability);

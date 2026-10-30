@@ -1749,6 +1749,10 @@ describe('retrieval workflow contract', () => {
     expect(decision.status).toBe(0);
     expect(decision.stderr).toContain('resolved: capability=decide-on-deprecation');
 
+    const verification = await runInProcess(['search', '--for', 'completion', 'verification', 'acceptance', 'checks', '--catalog', realCatalog]);
+    expect(verification.status).toBe(0);
+    expect(verification.stderr).toContain('resolved: capability=verify-work-results');
+
     const migration = await runInProcess(['search', '--for', 'legacy', 'endpoint', 'consumer', 'migration', '--catalog', realCatalog]);
     expect(migration.status).toBe(0);
     expect(migration.stderr).toContain('resolved: capability=migrate-consumers-off-the-old-system');

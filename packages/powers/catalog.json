@@ -254,7 +254,8 @@
     "debugging": "debug-root-cause",
     "diagnose": "debug-root-cause",
     "deprecate": "decide-on-deprecation",
-    "pr-review": "review-code"
+    "pr-review": "review-code",
+    "verification": "verify-work-results"
   },
   "tag_exemptions": [],
   "instructions": [
