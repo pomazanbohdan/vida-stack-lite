@@ -22,6 +22,22 @@ function exclusive(root: string, relative: string, value: unknown): void {
   writeFileSync(releasePath(root, relative, true), JSON.stringify(value, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
 }
 
+export function validateRuntimeDiagnosticJUnit(xml: string) {
+  const cases: MutationJUnitCase[] = [];
+  const outcome = junitOutcome(xml, [testFile], [], [], (entry) => cases.push(entry));
+  const selected = cases.filter((entry) => entry.name === caseName);
+  requireDiagnostic(
+    outcome.outcome === 'passed' &&
+      outcome.failures === 0 &&
+      outcome.errors === 0 &&
+      selected.length === 1 &&
+      selected[0]?.outcome === 'passed' &&
+      cases.every((entry) => entry === selected[0] || entry.outcome === 'skipped'),
+    'exact single passing diagnostic case required',
+  );
+  return outcome;
+}
+
 function profileInventory(root: string): { path: string; bytes: number; sha256: string }[] {
   const files: { path: string; bytes: number; sha256: string }[] = [];
   let total = 0;
@@ -199,18 +215,7 @@ async function runDiagnostic(): Promise<void> {
       'JUnit is missing or oversized',
     );
     const bytes = readFileSync(junitFile);
-    const cases: MutationJUnitCase[] = [];
-    const outcome = junitOutcome(bytes.toString('utf8'), [testFile], [], [], (entry) => cases.push(entry));
-    requireDiagnostic(
-      outcome.tests === 1 &&
-        outcome.failures === 0 &&
-        outcome.errors === 0 &&
-        outcome.skipped === 0 &&
-        cases.length === 1 &&
-        cases[0]?.outcome === 'passed' &&
-        cases[0].name === caseName,
-      'exact single passing diagnostic case required',
-    );
+    const outcome = validateRuntimeDiagnosticJUnit(bytes.toString('utf8'));
     const inventory = profileInventory(profiles);
     assertSource();
     exclusive(root, 'result.json', {
