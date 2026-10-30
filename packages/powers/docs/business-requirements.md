@@ -16,7 +16,7 @@ sources:
   resource: /decisions/index.md
   title: Accepted decisions D1–D16 (and D4b)
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '8'
+revision: '9'
 ---
 
 # 1. Purpose
@@ -97,7 +97,7 @@ The agent's instruction-discovery workflow is explicit and economical: derive ta
 
 # 5. Methodology policy
 
-- **BR-13.** The methodology is determined by the product. The selection groups (testing, review, architecture, delivery, approval-policy) are independent of one another; alternatives in one group are mutually exclusive, additions are compatible.
+- **BR-13.** The methodology is determined by the product. The selection groups (testing, review, architecture, delivery, approval-policy, context-degradation-policy) are independent of one another; alternatives in one group are mutually exclusive, additions are compatible.
 - **BR-14.** Profile inheritance is explicit and selective: a separate group or a separate
   methodology of another product. Implicit full inheritance through a shared repository
   is not applied. An inheritance conflict — a question to the owner, not the rule

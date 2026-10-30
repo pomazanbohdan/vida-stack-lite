@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - bounded-artifact-reading
   - context-degradation-policy
+  - context-degradation-measured
 conditions_applies_when: "The utilisation of the running session's context can be measured."
 conditions_does_not_apply_when: The run is short and the context cannot fill up.
 artifact_contract_output_type: context-state-report
@@ -22,7 +23,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=commands/gsd/health.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=skills/gsd-health/SKILL.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule

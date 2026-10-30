@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6086,
+  "revision": 6087,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-30T09:48:59.236Z",
+  "updated_at": "2026-10-30T12:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -235,6 +235,8 @@
       "attested-computation": "An approach in which a computed value is produced by a declared computation and checked by deterministic code against the receipt of the run.",
       "portable-knowledge": "An approach in which the knowledge lives in plain files that any tool can read, diff and ship.",
       "context-degradation-policy": "An approach in which the context degradation is detected by the signals of the running session, or by the measured utilisation bands, and the two are alternatives.",
+      "context-degradation-signals": "Context degradation policy: react to the degradation signals the running session already shows.",
+      "context-degradation-measured": "Context degradation policy: decide from the measured context utilisation bands.",
       "checkpoint-cadence-policy": "An approach in which the verification checkpoints are placed, against the rule that the work is checkpointed once at the end of the meaningful part.",
       "acceptance-criteria-timing-policy": "An approach in which the acceptance criteria are judged, against the rule that they are cleared before the next step starts.",
       "control-failure-posture-policy": "An approach in which a control that cannot load is declared and its failure is loud, against the rule that a hook contract declares the error posture of every step.",
@@ -488,7 +490,7 @@
     {
       "instruction_id": "adjust-the-behaviour-to-the-context-degradation-signals",
       "path": "instructions/adjust-the-behaviour-to-the-context-degradation-signals.md",
-      "sha256": "fb71296fdfc084465f8234c1387c9b2f330bf51c1a2b386dd764bc8f01883a9c"
+      "sha256": "cbc6b20b0604496144b36179d9dcc43d76a2ff0e48b69589c8f9a320a55a461d"
     },
     {
       "instruction_id": "admit-a-new-condition-only-with-a-consumer-and-a-computable-fact",
@@ -5868,7 +5870,7 @@
     {
       "instruction_id": "lock-only-an-accepted-architecture-decision",
       "path": "instructions/lock-only-an-accepted-architecture-decision.md",
-      "sha256": "d6c5abbe7e121772ba6f9155fe40901809aa40f3c998763135768f7ef16ea854"
+      "sha256": "a6b7fa0be68ae765e8c98fbba03afec7dd49ffb91ab6c4d81447ba2f2681c4dc"
     },
     {
       "instruction_id": "log-accepted-risks-so-they-do-not-resurface",
@@ -6333,7 +6335,7 @@
     {
       "instruction_id": "measure-the-context-and-start-a-fresh-session-before-it-degrades",
       "path": "instructions/measure-the-context-and-start-a-fresh-session-before-it-degrades.md",
-      "sha256": "c4350cc6301cd0e76033b551fd8565fcb6703503ccb813222788771a128e46cb"
+      "sha256": "63c6cd5ec19d22bc3b5815fc695cdfedb1299558e532254abe5ed5add7da2170"
     },
     {
       "instruction_id": "measure-the-number-instead-of-believing-the-stale-document",

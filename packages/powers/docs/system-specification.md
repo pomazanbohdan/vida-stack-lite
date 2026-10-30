@@ -19,7 +19,7 @@ sources:
   resource: /decisions/index.md
   title: Accepted decisions D1–D13 (and D4b)
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '15'
+revision: '16'
 ---
 
 S-level: **what VP does, observably**. The B-level — `business-requirements.md`,
@@ -66,10 +66,10 @@ normative behavior.
 
 ## 5. Methodology profile
 
-- **SR-25.** The profile (`VPMethodologyProfile/v1`): selection groups (`testing-sequence`, `review-strategy`, `architecture`, `delivery`, `approval-policy`), active alternatives, compatible additions, conditional dependencies. The groups and their alternatives are declared by the **profile**; an instruction binds to a group through its `pattern_tags`, and **each alternative has its own pattern tag** (the shared group tag is a search marker, not an alternative). The resolved (effective) profile — `VPEffectiveProfile/v1` (D10). Groups with a product policy have an **explicitly declared** active alternative in the source profile (`default`); for groups where the choice is made by the user, `default` is forbidden (D10 §1).
+- **SR-25.** The profile (`VPMethodologyProfile/v1`): selection groups (`testing-sequence`, `review-strategy`, `architecture`, `delivery`, `approval-policy`, `context-degradation-policy`), active alternatives, compatible additions, conditional dependencies. The groups and their alternatives are declared by the **profile**; an instruction binds to a group through its `pattern_tags`, and **each alternative has its own pattern tag** (the shared group tag is a search marker, not an alternative). The resolved (effective) profile — `VPEffectiveProfile/v1` (D10). Groups with a product policy have an **explicitly declared** active alternative in the source profile (`default`); for groups where the choice is made by the user, `default` is forbidden (D10 §1).
 
 Canonical profile/schema metadata reused by compose is bound to the exact current bytes of both files, decoded with strict UTF-8. Changed bytes require validation before reuse. An unreadable, ill-formed UTF-8 or invalid replacement fails closed; a prior cached parse cannot make that replacement valid. This does not replace the caller's agreed task snapshot under SR-67.
-- **SR-26.** The groups are independent; alternatives in one group are mutually exclusive. The current user-choice `approval-policy` alternatives are `approval-policy-proceed` and `approval-policy-gate`; compatible additions are admitted only where the profile declares them.
+- **SR-26.** The groups are independent; alternatives in one group are mutually exclusive. The current user-choice `approval-policy` alternatives are `approval-policy-proceed` and `approval-policy-gate`, and the `context-degradation-policy` alternatives are `context-degradation-signals` and `context-degradation-measured`; compatible additions are admitted only where the profile declares them.
 - **SR-27.** Inheritance is explicit and selective by stable IDs; implicit full inheritance through a shared repository is not applied.
 - **SR-28.** A local override has priority over the inherited one without repeated confirmation; two contradictory inherited alternatives → a block with a request to the owner.
 - **SR-29.** A task-scoped override is a one-off agreed exception for a task and a product: it is recorded, passed to child agents; it does not change the permanent profile, other products, permissions or security gates.

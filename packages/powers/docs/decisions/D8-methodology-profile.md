@@ -25,7 +25,7 @@ sources:
   title: Agent runtime system specification — initialized project layout
 generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '1'
+revision: '2'
 ---
 
 # Decision
@@ -45,7 +45,7 @@ environments; only the carrier file differs.
 
 # Profile composition
 
-- Selection groups: `testing-sequence`, `review-strategy`, `architecture`, `delivery` —
+- Selection groups (for example `testing-sequence`, `review-strategy`, `architecture`, `delivery`) —
   each group has mutually exclusive alternatives, compatible additions and conditional dependencies.
 - Explicit selective inheritance between products: the profile references stable IDs
   of another product; implicit full inheritance through a shared repository is **not**

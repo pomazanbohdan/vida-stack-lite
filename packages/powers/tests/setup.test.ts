@@ -112,11 +112,14 @@ describe('vp-setup', () => {
     expect(unresolved.groups['review-strategy']?.active).toBe('code-review');
     expect(unresolved.groups.architecture?.active).toBe('structural-design');
     expect(unresolved.groups.delivery?.active).toBe('plan-execution');
-    expect(unresolved.unresolvedGroups).toEqual(['approval-policy']);
-    expect(unresolved.unresolved_groups).toEqual({ 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] });
-    const complete = resolveProfile(source as never, { selections: { 'approval-policy': 'approval-policy-gate' }, inventory });
+    expect(unresolved.unresolvedGroups).toEqual(['approval-policy', 'context-degradation-policy']);
+    expect(unresolved.unresolved_groups).toEqual({
+      'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'],
+      'context-degradation-policy': ['context-degradation-signals', 'context-degradation-measured'],
+    });
+    const complete = resolveProfile(source as never, { selections: { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-measured' }, inventory });
     expect(complete.unresolvedGroups).toEqual([]);
-    expect(Object.keys(complete.groups)).toHaveLength(5);
+    expect(Object.keys(complete.groups)).toHaveLength(6);
     expect(() => resolveProfile(source as never, { selections: { 'testing-sequence': 'test-first-development' }, inventory })).toThrow('invalid selection');
     const same = resolveProfile(source as never, { selections: {}, inventory });
     expect(same.verification.lane_policy).toBe('blind-same-model');
@@ -167,7 +170,10 @@ describe('vp-setup', () => {
   test('persists unresolved approval-policy alternatives in every carrier', async () => {
     const root = await temp();
     const inventoryPath = join(root, 'empty.json');
-    const expected = { 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] };
+    const expected = {
+      'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'],
+      'context-degradation-policy': ['context-degradation-signals', 'context-degradation-measured'],
+    };
     try {
       await writeFile(inventoryPath, '{"providers":[]}');
       const standalone = await runSetup({ root, carrier: 'standalone', inventoryPath });

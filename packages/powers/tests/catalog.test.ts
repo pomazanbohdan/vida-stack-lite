@@ -23,6 +23,7 @@ import {
 import type { Catalog, CatalogBrowseResult, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from '../skills/vp-mode/scripts/catalog.ts';
 import { validateAgainstSchema } from '../skills/vp-mode/scripts/schema.ts';
 import type { Schema } from '../skills/vp-mode/scripts/schema.ts';
+import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 
 const fixtureDir = fileURLToPath(new URL('./fixtures/catalog/', import.meta.url));
 const tempDirs: string[] = [];
@@ -120,7 +121,15 @@ async function fixture(): Promise<{ catalog: Catalog; instructions: Map<string, 
   return { catalog, instructions: await loadInstructions(catalog, dir) };
 }
 
-type CanonicalMethodologyProfile = { groups: { id: string; alternatives: { id: string; instruction_ids: string[] }[] }[] };
+type CanonicalMethodologyProfile = {
+  groups: {
+    id: string;
+    title?: string;
+    description?: string;
+    user_decision?: boolean;
+    alternatives: { id: string; title?: string; description?: string; instruction_ids: string[] }[];
+  }[];
+};
 
 async function readCanonicalMethodologyProfile(): Promise<CanonicalMethodologyProfile> {
   const path = join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'config', 'methodology-profile.json');
@@ -1492,6 +1501,84 @@ describe('catalogCompose', () => {
       capability_tags: ['test-design', 'alternate-workflow'],
     })).toThrow(expect.objectContaining({ code: 'CATALOG_REQUIRED_CONFLICT' }));
   });
+});
+
+test('the context-degradation pair is one user-decision group, not a bare exclusion', async () => {
+  const canonical = await readCanonicalMethodologyProfile();
+  const group = canonical.groups.find((item) => item.id === 'context-degradation-policy');
+  expect(group).toEqual({
+    id: 'context-degradation-policy',
+    title: expect.any(String),
+    description: expect.any(String),
+    user_decision: true,
+    alternatives: [
+      {
+        id: 'context-degradation-signals',
+        title: expect.any(String),
+        description: expect.any(String),
+        instruction_ids: ['adjust-the-behaviour-to-the-context-degradation-signals'],
+      },
+      {
+        id: 'context-degradation-measured',
+        title: expect.any(String),
+        description: expect.any(String),
+        instruction_ids: ['measure-the-context-and-start-a-fresh-session-before-it-degrades'],
+      },
+    ],
+  });
+});
+
+test('an unresolved context-degradation group asks for a choice before the exclusion fires', async () => {
+  const { catalog, instructions } = await fixture();
+  const alpha = instructions.get('alpha');
+  const beta = instructions.get('beta');
+  if (alpha === undefined || beta === undefined) throw new Error('missing fixture instructions');
+  instructions.set('alpha', {
+    ...alpha,
+    pattern_tags: ['context-degradation-signals'],
+    compatibility: { excludes: ['beta'], requires: [] },
+  });
+  instructions.set('beta', {
+    ...beta,
+    pattern_tags: ['context-degradation-measured'],
+    compatibility: { excludes: ['alpha'], requires: [] },
+  });
+
+  expect(() => catalogCompose(catalog, instructions, { instruction_ids: ['alpha', 'beta'] }))
+    .toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({
+        group: 'context-degradation-policy',
+        resolution_required: true,
+        profile_required: true,
+      }),
+    }));
+
+  const unresolved: EffectiveProfile = {
+    schema: 'VPEffectiveProfile/v1',
+    groups: {},
+    unresolved_groups: {
+      'context-degradation-policy': ['context-degradation-signals', 'context-degradation-measured'],
+    },
+  };
+  expect(() => catalogCompose(catalog, instructions, { instruction_ids: ['alpha', 'beta'], profile: unresolved }))
+    .toThrow(expect.objectContaining({
+      code: 'CATALOG_PROFILE_CONFLICT',
+      details: expect.objectContaining({
+        group: 'context-degradation-policy',
+        resolution_required: true,
+        alternatives: ['context-degradation-signals', 'context-degradation-measured'],
+      }),
+    }));
+});
+
+test('a deprecated architecture decision stays readable and unlocked', async () => {
+  const source = await readFile(join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'instructions/lock-only-an-accepted-architecture-decision.md'), 'utf8');
+  const front = parseFrontmatter(source);
+  expect(front.data.revision).toBe(3);
+  expect(front.data.summary).toContain('deprecated');
+  expect(front.body).toContain('`Deprecated`');
+  expect(front.body).toContain('only `Accepted` counts as locked');
 });
 
 test.each(['profile-read', 'profile-json', 'schema-json', 'profile-shape', 'duplicate-groups', 'duplicate-alternatives', 'shared-alternative'])('a warmed canonical policy cache rejects changed invalid %s inputs', async kind => {

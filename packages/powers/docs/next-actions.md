@@ -144,10 +144,11 @@ The CAT-D1, CAT-D2, CAT-D5, CAT-D6 and CAT-D7 deferrals, with their SR/AC state,
 [deferred decisions table](traceability.md#deferred-decisions-cat-d--srac); this queue does not
 restate them.
 
-Four owner decisions outside this queue are recorded in `.agent/work/vp-next-steps/WORK.md`
-("The open items that are not this work"): the ADR status vocabulary for `DEPRECATED`, the profile
-group of the context-degradation pair, whether the `approval-policy` marker and its group are one
-thing, and the final wording of D12 §4.
+Four owner decisions outside this queue were recorded in `.agent/work/vp-next-steps/WORK.md`
+("The open items that are not this work"). All four were answered on 2026-10-30: `Deprecated` is a
+valid ADR status and stays unlocked; the `approval-policy` marker stays a topic tag while group
+membership comes from the profile alternatives; the D12 §4 wording is accepted as written; and the
+context-degradation pair became the `context-degradation-policy` user-decision group.
 
 # Key decisions of the queue
 

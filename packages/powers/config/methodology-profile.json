@@ -26,6 +26,30 @@
       ]
     },
     {
+      "id": "context-degradation-policy",
+      "title": "Context degradation policy",
+      "description": "Choose how the session decides that its context is degrading.",
+      "user_decision": true,
+      "alternatives": [
+        {
+          "id": "context-degradation-signals",
+          "title": "React to degradation signals",
+          "description": "Judge from the signals the run already shows: vagueness, skipped steps and partial completion.",
+          "instruction_ids": [
+            "adjust-the-behaviour-to-the-context-degradation-signals"
+          ]
+        },
+        {
+          "id": "context-degradation-measured",
+          "title": "Measure context utilisation",
+          "description": "Decide from measured token utilisation bands and start a fresh session before degradation.",
+          "instruction_ids": [
+            "measure-the-context-and-start-a-fresh-session-before-it-degrades"
+          ]
+        }
+      ]
+    },
+    {
       "id": "testing-sequence",
       "title": "Testing sequence",
       "description": "Test-first development workflow.",

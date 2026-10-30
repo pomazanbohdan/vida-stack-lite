@@ -7,6 +7,7 @@ capability_tags:
 pattern_tags:
   - resource-bounds
   - context-degradation-policy
+  - context-degradation-signals
 conditions_applies_when: A long run notices that its own output is degrading.
 conditions_does_not_apply_when: The run is short and the context is nearly empty.
 artifact_contract_output_type: degradation-response
@@ -22,7 +23,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/context-budget.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/execute-phase-context-guard.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
