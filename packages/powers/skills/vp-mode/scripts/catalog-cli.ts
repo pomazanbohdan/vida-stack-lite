@@ -506,14 +506,17 @@ function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonl
     }
   }
   const ranked = [...nameSets.entries()]
-    .map(([capability, names]) => ({ capability, names, score: 0 }))
+    .map(([capability, names]) => ({ capability, names, score: 0, firstIndex: Number.MAX_SAFE_INTEGER }))
     .filter((item) => query.some((token) => item.names.has(token)));
   const documentFrequency = new Map<string, number>();
   for (const { names } of ranked) for (const token of names) documentFrequency.set(token, (documentFrequency.get(token) ?? 0) + 1);
   for (const item of ranked) {
     item.score = query.reduce((total, token) => total + (item.names.has(token) ? 1 / (documentFrequency.get(token) ?? 1) : 0), 0);
+    const firstIndex = query.findIndex((token) => item.names.has(token));
+    item.firstIndex = firstIndex === -1 ? Number.MAX_SAFE_INTEGER : firstIndex;
   }
   ranked.sort((left, right) => right.score - left.score
+    || left.firstIndex - right.firstIndex
     || (counts.get(right.capability) ?? 0) - (counts.get(left.capability) ?? 0)
     || (left.capability < right.capability ? -1 : left.capability > right.capability ? 1 : 0));
   const best = ranked[0]?.capability;
