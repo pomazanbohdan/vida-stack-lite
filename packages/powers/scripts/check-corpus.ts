@@ -304,6 +304,14 @@ function checkMethodologyProfile(base: string, catalog: Dict, frontmatterById: M
         if (owner !== undefined) issue(issues, 'CORPUS_PROFILE_INSTRUCTION_DUPLICATE', `instruction ${instructionId} belongs to alternatives ${owner} and ${alternativeId}`, { instruction_id: instructionId, alternatives: [owner, alternativeId] });
         else owners.set(instructionId, alternativeId);
       }
+      const declared = new Set(stringArray(alternative.instruction_ids));
+      if (alternatives.length > 1) {
+        for (const [instructionId, front] of frontmatterById) {
+          if (stringArray(front.pattern_tags).includes(alternativeId) && !declared.has(instructionId)) {
+            issue(issues, 'CORPUS_PROFILE_TAG_UNDECLARED_CARRIER', `pattern tag ${alternativeId} is carried by ${instructionId} but the profile does not declare it`, { group_id: groupId, alternative_id: alternativeId, instruction_id: instructionId });
+          }
+        }
+      }
     }
   }
 }

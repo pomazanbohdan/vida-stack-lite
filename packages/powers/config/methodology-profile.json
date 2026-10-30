@@ -8,7 +8,7 @@
       "user_decision": true,
       "alternatives": [
         {
-          "id": "approval-policy-proceed",
+          "id": "approval-policy-choice-proceed",
           "title": "Proceed with approved work",
           "description": "Do approved work and stop only at irreversible decisions.",
           "instruction_ids": [
@@ -16,7 +16,7 @@
           ]
         },
         {
-          "id": "approval-policy-gate",
+          "id": "approval-policy-choice-gate",
           "title": "Size and gate the work",
           "description": "Determine the work size before requesting approval.",
           "instruction_ids": [

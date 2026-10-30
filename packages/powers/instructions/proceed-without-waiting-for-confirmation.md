@@ -8,6 +8,7 @@ pattern_tags:
   - plan-execution
   - approval-policy
   - approval-policy-proceed
+  - approval-policy-choice-proceed
 conditions_applies_when: The direction is agreed and the ambiguity concerns a detail of execution.
 conditions_does_not_apply_when: "The decision is a product call, irreversible, or needs the owner's permission."
 artifact_contract_output_type: decision-record
@@ -23,7 +24,7 @@ compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-never-block-on-the-human/SKILL.md
 status: active
-revision: 5
+revision: 6
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule

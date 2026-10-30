@@ -1006,12 +1006,12 @@ describe('catalogCompose', () => {
     const gamma = instructions.get('gamma');
     if (beta === undefined || gamma === undefined) throw new Error('approval-policy fixture instructions missing');
     const alternatives = new Map(instructions);
-    alternatives.set('beta', { ...beta, pattern_tags: ['approval-policy-gate'] });
-    alternatives.set('gamma', { ...gamma, pattern_tags: ['approval-policy-proceed'] });
+    alternatives.set('beta', { ...beta, pattern_tags: ['approval-policy-choice-gate'] });
+    alternatives.set('gamma', { ...gamma, pattern_tags: ['approval-policy-choice-proceed'] });
     const profile = {
       schema: 'VPEffectiveProfile/v1' as const,
       groups: {},
-      unresolved_groups: { 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] },
+      unresolved_groups: { 'approval-policy': ['approval-policy-choice-proceed', 'approval-policy-choice-gate'] },
     };
     for (const query of [
       { instruction_ids: ['beta', 'gamma'], profile },
@@ -1026,7 +1026,7 @@ describe('catalogCompose', () => {
       }
       expect(error).toMatchObject({
         code: 'CATALOG_PROFILE_CONFLICT',
-        details: { group: 'approval-policy', resolution_required: true, alternatives: ['approval-policy-proceed', 'approval-policy-gate'] },
+        details: { group: 'approval-policy', resolution_required: true, alternatives: ['approval-policy-choice-proceed', 'approval-policy-choice-gate'] },
       });
       expect(bundle).toBeUndefined();
     }
@@ -1054,18 +1054,18 @@ describe('catalogCompose', () => {
     if (alpha === undefined || beta === undefined) throw new Error('dependency fixture instructions missing');
     const dependent = new Map(instructions);
     dependent.set('alpha', { ...alpha, compatibility: { excludes: [], requires: ['beta'] } });
-    dependent.set('beta', { ...beta, pattern_tags: ['approval-policy-gate'] });
+    dependent.set('beta', { ...beta, pattern_tags: ['approval-policy-choice-gate'] });
     const profile = {
       schema: 'VPEffectiveProfile/v1' as const,
       groups: {},
-      unresolved_groups: { 'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'] },
+      unresolved_groups: { 'approval-policy': ['approval-policy-choice-proceed', 'approval-policy-choice-gate'] },
     };
     expect(() => catalogCompose(catalog, dependent, { required_ids: ['alpha'], profile })).toThrow(expect.objectContaining({
       code: 'CATALOG_PROFILE_CONFLICT',
       details: {
         group: 'approval-policy',
         resolution_required: true,
-        alternatives: ['approval-policy-proceed', 'approval-policy-gate'],
+        alternatives: ['approval-policy-choice-proceed', 'approval-policy-choice-gate'],
         dependency_id: 'beta',
         requiring_instruction_id: 'alpha',
       },

@@ -8,6 +8,7 @@ pattern_tags:
   - requirements-clarification
   - approval-policy
   - approval-policy-gate
+  - approval-policy-choice-gate
 conditions_applies_when: "The need could be a quick task, a small change, or a project with a design."
 conditions_does_not_apply_when: The owner has already approved the size and the full description of the result.
 artifact_contract_output_type: work-size-decision
@@ -29,7 +30,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/the-phase-loop.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/context-engineering.md
 status: active
-revision: 7
+revision: 8
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure

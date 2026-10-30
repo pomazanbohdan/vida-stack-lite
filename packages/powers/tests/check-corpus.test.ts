@@ -270,6 +270,22 @@ describe('checkCorpus synthetic fixtures', () => {
     }));
   });
 
+  test('rejects an alternative tag carried by an instruction the profile does not declare', async () => {
+    const corpus = await fixture();
+    await mkdir(join(corpus.root, 'config'), { recursive: true });
+    await writeFile(join(corpus.root, 'config/vpmethodologyprofile.v1.schema.json'), readFileSync(join(packageRoot, 'config/vpmethodologyprofile.v1.schema.json')));
+    corpus.catalog.tag_dictionary.pattern['code-review'] = 'Review code.';
+    corpus.catalog.tag_dictionary.pattern['review-policy'] = 'Review policy.';
+    await rewriteInstruction(corpus, { ...defaultInstruction(), pattern_tags: ['code-review'] });
+    await writeFile(join(corpus.root, 'config/methodology-profile.json'), JSON.stringify({ schema: 'VPMethodologyProfile/v1', groups: [{
+      id: 'policy', title: 'Policy', description: 'Policy choice.', user_decision: true, alternatives: [
+        { id: 'code-review', title: 'First', description: 'First policy.', instruction_ids: [] },
+        { id: 'review-policy', title: 'Second', description: 'Second policy.', instruction_ids: [] },
+      ],
+    }] }));
+    expect(codes(corpus.root)).toContain('CORPUS_PROFILE_TAG_UNDECLARED_CARRIER');
+  });
+
   test('reports a donor carrier file missing from the corpus map', async () => {
     const corpus = await fixture();
     await writeFile(join(corpus.root, cloneRoot, 'unmapped.md'), 'unprocessed donor source\n');

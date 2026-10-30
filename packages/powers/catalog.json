@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6087,
+  "revision": 6088,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-10-30T12:00:00.000Z",
+  "updated_at": "2026-10-30T12:30:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -88,6 +88,8 @@
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
       "approval-policy-gate": "Approval policy: size the work first, then ask for approval.",
+      "approval-policy-choice-proceed": "Approval policy choice: proceed with agreed work and stop only at an irreversible step.",
+      "approval-policy-choice-gate": "Approval policy choice: size the work first, then ask for approval.",
       "test-first-development": "Verifies the expected behaviour first, then adds the implementation.",
       "verification-before-completion": "Backs every claim with fresh check results.",
       "implementation-planning": "Organises dependent steps into a verifiable plan.",
@@ -7700,7 +7702,7 @@
     {
       "instruction_id": "proceed-without-waiting-for-confirmation",
       "path": "instructions/proceed-without-waiting-for-confirmation.md",
-      "sha256": "ad9ecdce1f1f39c7d767ca97efd8e3c549ad8d35c7f89681fc6515bcad3f5510"
+      "sha256": "e0ff30620323187ed869d94b15041ed40dd269ba99a978afc5f44e7ef983fa85"
     },
     {
       "instruction_id": "profile-to-find-the-real-bottleneck",
@@ -10435,7 +10437,7 @@
     {
       "instruction_id": "size-and-gate-the-work",
       "path": "instructions/size-and-gate-the-work.md",
-      "sha256": "168c59f47ba604d45f0ca31944a636b00e9e3e6f9e0dc69720397b41d3a0646e"
+      "sha256": "661c0814e64e103dabf41e75d03eb4b43dcaa1fd144ee1c7ae00cdbb098428dc"
     },
     {
       "instruction_id": "size-one-connection-pool-per-process",

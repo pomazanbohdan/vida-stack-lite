@@ -11,7 +11,7 @@ import type { EffectiveProfile, ModelInventory } from '../skills/vp-setup/script
 const script = fileURLToPath(new URL('../skills/vp-setup/scripts/cli.ts', import.meta.url));
 const source = JSON.parse(await readFile(new URL('../config/methodology-profile.json', import.meta.url), 'utf8')) as { groups: { id: string; user_decision: boolean; default?: string; alternatives: { id: string }[] }[] };
 const effectiveProfileSchema: Schema = JSON.parse(await readFile(new URL('../config/vpeffectiveprofile.v1.schema.json', import.meta.url), 'utf8'));
-const profile: EffectiveProfile = { schema: 'VPEffectiveProfile/v1', groups: { 'approval-policy': { active: 'approval-policy-gate', alternatives: ['approval-policy-proceed', 'approval-policy-gate'] } }, unresolved_groups: {}, flow_level: 'medium', verification: { available_models: [], lane_assignment: [], lane_policy: 'blind-same-model', limitations: 'blind same model' }, unresolvedGroups: [], limitations: [] };
+const profile: EffectiveProfile = { schema: 'VPEffectiveProfile/v1', groups: { 'approval-policy': { active: 'approval-policy-choice-gate', alternatives: ['approval-policy-choice-proceed', 'approval-policy-choice-gate'] } }, unresolved_groups: {}, flow_level: 'medium', verification: { available_models: [], lane_assignment: [], lane_policy: 'blind-same-model', limitations: 'blind same model' }, unresolvedGroups: [], limitations: [] };
 const inventory: ModelInventory = { providers: [{ id: 'p1', models: [{ id: 'm1', family: 'f1', roles: ['main', 'agent'], available: true }] }] };
 
 async function temp(): Promise<string> { return mkdtemp(join(tmpdir(), 'vp-setup-')); }
@@ -104,8 +104,8 @@ describe('vp-setup', () => {
   });
 
   test('resolves selections, reports undecided groups, and derives verification ladder', () => {
-    const selected = resolveProfile(source as never, { selections: { 'approval-policy': 'approval-policy-proceed' }, flowLevel: 'full', inventory });
-    expect(selected.groups['approval-policy']?.active).toBe('approval-policy-proceed');
+    const selected = resolveProfile(source as never, { selections: { 'approval-policy': 'approval-policy-choice-proceed' }, flowLevel: 'full', inventory });
+    expect(selected.groups['approval-policy']?.active).toBe('approval-policy-choice-proceed');
     const unresolved = resolveProfile(source as never, { selections: {}, inventory });
     expect(unresolved.groups['approval-policy']).toBeUndefined();
     expect(unresolved.groups['testing-sequence']?.active).toBe('test-first-development');
@@ -114,10 +114,10 @@ describe('vp-setup', () => {
     expect(unresolved.groups.delivery?.active).toBe('plan-execution');
     expect(unresolved.unresolvedGroups).toEqual(['approval-policy', 'context-degradation-policy']);
     expect(unresolved.unresolved_groups).toEqual({
-      'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'],
+      'approval-policy': ['approval-policy-choice-proceed', 'approval-policy-choice-gate'],
       'context-degradation-policy': ['context-degradation-signals', 'context-degradation-measured'],
     });
-    const complete = resolveProfile(source as never, { selections: { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-measured' }, inventory });
+    const complete = resolveProfile(source as never, { selections: { 'approval-policy': 'approval-policy-choice-gate', 'context-degradation-policy': 'context-degradation-measured' }, inventory });
     expect(complete.unresolvedGroups).toEqual([]);
     expect(Object.keys(complete.groups)).toHaveLength(6);
     expect(() => resolveProfile(source as never, { selections: { 'testing-sequence': 'test-first-development' }, inventory })).toThrow('invalid selection');
@@ -140,7 +140,7 @@ describe('vp-setup', () => {
     const root = await temp();
     const inventoryPath = join(root, 'inventory.json');
     await writeFile(inventoryPath, JSON.stringify(inventory));
-    const selections = { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-measured' };
+    const selections = { 'approval-policy': 'approval-policy-choice-gate', 'context-degradation-policy': 'context-degradation-measured' };
     try {
       const normal = await runSetup({ root, carrier: 'host-shim', selections, inventoryPath });
       const overridden = await runSetup({
@@ -148,31 +148,31 @@ describe('vp-setup', () => {
         carrier: 'host-shim',
         selections,
         inventoryPath,
-        taskOverride: { task: 'hotfix-release', selections: { 'approval-policy': 'approval-policy-proceed' } },
+        taskOverride: { task: 'hotfix-release', selections: { 'approval-policy': 'approval-policy-choice-proceed' } },
       });
       expect(overridden.profile.task_override).toEqual({
         task: 'hotfix-release',
-        groups: { 'approval-policy': { active: 'approval-policy-proceed', alternatives: ['approval-policy-proceed', 'approval-policy-gate'], previous_active: 'approval-policy-gate' } },
+        groups: { 'approval-policy': { active: 'approval-policy-choice-proceed', alternatives: ['approval-policy-choice-proceed', 'approval-policy-choice-gate'], previous_active: 'approval-policy-choice-gate' } },
       });
-      expect(overridden.profile.groups['approval-policy']?.active).toBe('approval-policy-proceed');
+      expect(overridden.profile.groups['approval-policy']?.active).toBe('approval-policy-choice-proceed');
       expect(overridden.profile.groups['context-degradation-policy']?.active).toBe('context-degradation-measured');
       const written = JSON.parse(await readFile(overridden.path, 'utf8'));
       expect(written.task_override).toBeUndefined();
-      expect(written.groups['approval-policy'].active).toBe('approval-policy-gate');
+      expect(written.groups['approval-policy'].active).toBe('approval-policy-choice-gate');
       expect(await readFile(overridden.path, 'utf8')).toBe(await readFile(normal.path, 'utf8'));
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
   test('refuses a task override on a product-policy group or an unknown alternative', () => {
     expect(() => resolveProfile(source as never, {
-      selections: { 'approval-policy': 'approval-policy-gate' },
+      selections: { 'approval-policy': 'approval-policy-choice-gate' },
       inventory,
       taskOverride: { task: 'hotfix', selections: { 'testing-sequence': 'test-first-development' } },
     })).toThrow('task override cannot change product-policy group testing-sequence');
     expect(() => resolveProfile(source as never, {
       selections: {},
       inventory,
-      taskOverride: { task: 'hotfix', selections: { 'approval-policy': 'approval-policy-proceed' } },
+      taskOverride: { task: 'hotfix', selections: { 'approval-policy': 'approval-policy-choice-proceed' } },
     })).not.toThrow();
     expect(() => resolveProfile(source as never, {
       selections: {},
@@ -189,18 +189,18 @@ describe('vp-setup', () => {
     const blocked = resolveProfile(source as never, {
       selections: {},
       inventory,
-      taskOverride: { task: 'hotfix', selections: { 'approval-policy': 'approval-policy-proceed' } },
+      taskOverride: { task: 'hotfix', selections: { 'approval-policy': 'approval-policy-choice-proceed' } },
     });
     expect(blocked.task_override?.groups['approval-policy']).toEqual({
-      active: 'approval-policy-proceed',
-      alternatives: ['approval-policy-proceed', 'approval-policy-gate'],
+      active: 'approval-policy-choice-proceed',
+      alternatives: ['approval-policy-choice-proceed', 'approval-policy-choice-gate'],
     });
     expect(blocked.unresolvedGroups).not.toContain('approval-policy');
     expect(profileBlock(blocked)).not.toContain('approval-policy');
   });
 
   test('the light flow level keeps every mandatory policy group resolved', () => {
-    const selections = { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-signals' };
+    const selections = { 'approval-policy': 'approval-policy-choice-gate', 'context-degradation-policy': 'context-degradation-signals' };
     const light = resolveProfile(source as never, { selections, flowLevel: 'light', inventory });
     const full = resolveProfile(source as never, { selections, flowLevel: 'full', inventory });
     expect(light.flow_level).toBe('light');
@@ -213,7 +213,7 @@ describe('vp-setup', () => {
     const root = await temp();
     const inventoryPath = join(root, 'inventory.json');
     await writeFile(inventoryPath, JSON.stringify(inventory));
-    const selections = { 'approval-policy': 'approval-policy-gate', 'context-degradation-policy': 'context-degradation-measured' };
+    const selections = { 'approval-policy': 'approval-policy-choice-gate', 'context-degradation-policy': 'context-degradation-measured' };
     try {
       const standalone = await runSetup({ root, carrier: 'standalone', selections, inventoryPath });
       const runtime = await runSetup({ root, carrier: 'runtime', selections, inventoryPath });
@@ -230,7 +230,7 @@ describe('vp-setup', () => {
   test('runSetup writes carrier idempotently and dry-run does not write', async () => {
     const root = await temp();
     try {
-      const opts = { root, selections: { 'approval-policy': 'approval-policy-gate' }, inventoryPath: join(root, 'inventory.json'), now: () => '2026-10-20' };
+      const opts = { root, selections: { 'approval-policy': 'approval-policy-choice-gate' }, inventoryPath: join(root, 'inventory.json'), now: () => '2026-10-20' };
       await writeFile(opts.inventoryPath, JSON.stringify(inventory));
       const dry = await runSetup({ ...opts, dryRun: true });
       expect(dry.changed).toBe(true);
@@ -245,7 +245,7 @@ describe('vp-setup', () => {
   test('runSetup writes runtime and host JSON carriers idempotently', async () => {
     const root = await temp();
     try {
-      const runtime = await runSetup({ root, carrier: 'runtime', selections: { 'approval-policy': 'approval-policy-gate' }, inventoryPath: join(root, 'empty.json') }).catch(() => undefined);
+      const runtime = await runSetup({ root, carrier: 'runtime', selections: { 'approval-policy': 'approval-policy-choice-gate' }, inventoryPath: join(root, 'empty.json') }).catch(() => undefined);
       expect(runtime).toBeUndefined();
       await writeFile(join(root, 'empty.json'), '{"providers":[]}');
       const first = await runSetup({ root, carrier: 'runtime', inventoryPath: join(root, 'empty.json') });
@@ -262,7 +262,7 @@ describe('vp-setup', () => {
     const root = await temp();
     const inventoryPath = join(root, 'empty.json');
     const expected = {
-      'approval-policy': ['approval-policy-proceed', 'approval-policy-gate'],
+      'approval-policy': ['approval-policy-choice-proceed', 'approval-policy-choice-gate'],
       'context-degradation-policy': ['context-degradation-signals', 'context-degradation-measured'],
     };
     try {
@@ -291,7 +291,7 @@ describe('vp-setup', () => {
     const root = await temp();
     try {
       const bun = 'C:\\Users\\pomaz\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\\bun-windows-x64\\bun.exe';
-      const good = spawnSync(bun, [script, '--root', root, '--select', 'approval-policy=approval-policy-gate', '--dry-run'], { encoding: 'utf8' });
+      const good = spawnSync(bun, [script, '--root', root, '--select', 'approval-policy=approval-policy-choice-gate', '--dry-run'], { encoding: 'utf8' });
       expect(good.status).toBe(0);
       expect(JSON.parse(good.stdout).carrier).toBe('standalone');
       const bad = spawnSync(bun, [script, '--root', root, '--select', 'unknown=nope'], { encoding: 'utf8' });
@@ -329,7 +329,7 @@ describe('vp-setup', () => {
       await runCli(['--root', root, '--carrier', 'wrong']);
       expect(JSON.parse(errors.pop() ?? '{}').error).toContain('invalid argument');
       await writeFile(join(root, 'inv.json'), '{"providers":[]}');
-      await runCli(['--root', root, '--carrier', 'standalone', '--flow-level', 'light', '--inventory', join(root, 'inv.json'), '--select', 'approval-policy=approval-policy-gate', '--dry-run']);
+      await runCli(['--root', root, '--carrier', 'standalone', '--flow-level', 'light', '--inventory', join(root, 'inv.json'), '--select', 'approval-policy=approval-policy-choice-gate', '--dry-run']);
       expect(JSON.parse(outputs.pop() ?? '{}').profile.flow_level).toBe('light');
       expect(errors).toEqual([]);
     } finally {
