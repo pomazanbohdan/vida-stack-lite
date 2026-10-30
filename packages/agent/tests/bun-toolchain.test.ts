@@ -1398,24 +1398,85 @@ test.each([
   { args: ['other.ts', 'tooling/run-bun-coverage.ts'] },
   { args: ['tooling/run-bun-coverage.ts/near-match'] },
 ])('coverage-like arguments retain ordinary launcher policy: %j', ({ args }) => {
-  const { root, pin } = fixture();
-  const calls: LauncherCall[] = [];
-  runPinnedBun(args, {
-    root,
-    cwd: root,
-    executable: path.join(root, 'coverage-bun'),
-    timeoutMs: 400_000,
-    spawn(command, argv, options) {
-      calls.push({ command, argv, options });
-      return calls.length === 1 ? success(pin) : success('');
-    },
+  retainFailedFixture(({ root, pin }) => {
+    const moduleUrl = new URL('../bin/bun.ts', import.meta.url).href;
+    const program = `import assert from 'node:assert/strict';
+      import path from 'node:path';
+      const { runPinnedBun } = await import(${JSON.stringify(moduleUrl)});
+      const args = ${JSON.stringify(args)};
+      const root = ${JSON.stringify(root)};
+      const pin = ${JSON.stringify(pin)};
+      const calls = [];
+      runPinnedBun(args, {
+        root, cwd: root, executable: path.join(root, 'coverage-bun'), timeoutMs: 400_000,
+        env: { ...process.env, VIDA_PINNED_COMMAND_BUDGET_MS: undefined, VIDA_PINNED_COMMAND_DEADLINE_MS: undefined },
+        spawn(command, argv, options) {
+          calls.push({ command, argv, options });
+          return calls.length === 1 ? { status: 0, stdout: pin } : { status: 0, stdout: '' };
+        },
+      });
+      assert.equal(calls.length, 2);
+      const command = calls[1];
+      assert.ok(command);
+      assert.deepEqual(command.argv, args);
+      assert.ok(typeof command.options.timeout === 'number' && command.options.timeout > 300_000);
+      assert.equal(command.options.env?.VIDA_COVERAGE_REVIEW_CLOCK_POLICY, undefined);
+      console.log('ordinary-launcher-policy-preserved');`;
+    const ambientFreeEnv = {
+      ...process.env,
+      VIDA_PINNED_COMMAND_BUDGET_MS: undefined,
+      VIDA_PINNED_COMMAND_DEADLINE_MS: undefined,
+    };
+    const result = spawnSync(process.execPath, ['-e', program], {
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 10_000,
+      env: ambientFreeEnv,
+    });
+    assert.equal(commandOutcomeUnknown(result), false, result.stderr);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'ordinary-launcher-policy-preserved');
   });
-  assert.equal(calls.length, 2);
-  const command = calls[1];
-  assert.ok(command);
-  assert.deepEqual(command.argv, args);
-  assert.ok(typeof command.options.timeout === 'number' && command.options.timeout > 300_000);
-  assert.equal(command.options.env?.VIDA_COVERAGE_REVIEW_CLOCK_POLICY, undefined);
+});
+
+test('ordinary launcher preserves a positive ambient command ceiling', () => {
+  retainFailedFixture(({ root, pin }) => {
+    const moduleUrl = new URL('../bin/bun.ts', import.meta.url).href;
+    const program = `import assert from 'node:assert/strict';
+      const { runPinnedBun } = await import(${JSON.stringify(moduleUrl)});
+      const root = ${JSON.stringify(root)};
+      const pin = ${JSON.stringify(pin)};
+      const calls = [];
+      runPinnedBun(['ordinary.ts'], {
+        root, cwd: root, executable: ${JSON.stringify(path.join(root, 'coverage-bun'))}, timeoutMs: 400_000,
+        spawn(command, argv, options) {
+          calls.push({ command, argv, options });
+          return calls.length === 1 ? { status: 0, stdout: pin } : { status: 0, stdout: '' };
+        },
+      });
+      assert.equal(calls.length, 2);
+      const command = calls[1];
+      assert.ok(command);
+      assert.deepEqual(command.argv, ['ordinary.ts']);
+      assert.ok(typeof command.options.timeout === 'number' && command.options.timeout > 0 && command.options.timeout <= 240_000);
+      assert.equal(command.options.env?.VIDA_PINNED_COMMAND_BUDGET_MS, String(command.options.timeout));
+      assert.ok(Number(command.options.env?.VIDA_PINNED_COMMAND_DEADLINE_MS) <= Number(process.env.VIDA_PINNED_COMMAND_DEADLINE_MS));
+      console.log('ambient-command-ceiling-preserved');`;
+    const ambientBudgetEnv = {
+      ...process.env,
+      VIDA_PINNED_COMMAND_BUDGET_MS: '240000',
+      VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() + 240_000),
+    };
+    const result = spawnSync(process.execPath, ['-e', program], {
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 10_000,
+      env: ambientBudgetEnv,
+    });
+    assert.equal(commandOutcomeUnknown(result), false, result.stderr);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout.trim(), 'ambient-command-ceiling-preserved');
+  });
 });
 
 test.each(['tooling/run-bun-coverage.ts', '../../tooling/agent/run-coverage.ts'])(

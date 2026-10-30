@@ -501,14 +501,23 @@ to its publisher job; publication runs serialize under one concurrency group.
 The publisher checks the actual completed successful native jobs and required
 steps, exact Source/workflow, producer run attempt, artifact identity and creation
 interval, transport digest, candidate, manifest, archive and executable bytes.
-Publication additionally requires exactly one completed successful Linux
-`full-source-quality` step before that producer's native build. This is Source
+Publication additionally requires exactly one completed successful dedicated Linux
+`full-source-quality` job before that producer's native job starts. Its quality
+step is unconditional and has no continue-on-error. This is Source
 development assurance, separate from the minimal native formation profile. It
 uses the same fresh full coverage, complete function inventory, CRAP budgets and
 report/run join as Linux pre-push. Its own intent and receipt bind the actual
 Source, request, workflow run, attempt and reports; they contain no invented
 candidate archive or whole-workflow completion. Recovery revalidates this
-requirement for the original Linux artifact before any publication write.
+requirement for the original Linux artifact before any artifact ZIP redirect,
+storage read or publication write. Positive provider job evidence binds unique
+job ID, original run/attempt, Source/workflow digest and finite ordered intervals.
+Only a literal empty provider step inventory permits native job-scoped evidence;
+nonempty missing, failed, skipped or malformed required steps remain denials.
+Native phase receipts and all candidate/manifest/archive/executable byte checks
+remain mandatory before asset use or publication writes. Job-scoped evidence
+does not fabricate unavailable step records. Build-only dispatch skips the quality
+job explicitly; Windows native formation may run in parallel with Source quality.
 Both targets must bind the selected operation, Source and version. Producer proof
 has no whole-workflow completion claim. The existing completed-workflow observer
 still requires actual workflow completion and success before its own receipt and

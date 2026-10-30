@@ -3,18 +3,18 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { releaseDigest, releaseJSON, releasePath } from '../../packages/agent/bin/local-release-artifacts.ts';
 import { runFreshFullQuality } from '../../packages/agent/tooling/git-quality-hooks.ts';
-import { context, exclusive } from './native-ci-delivery.ts';
+import { sourceQualityContext, exclusive } from './native-ci-delivery.ts';
 
 /** Source development assurance precedes formation and has no candidate/archive receipt. */
 export async function collectCISourceQuality(): Promise<void> {
   if (
     process.platform !== 'linux' ||
     process.arch !== 'x64' ||
-    process.env.GITHUB_JOB !== 'native-linux-x64' ||
+    process.env.GITHUB_JOB !== 'full-source-quality' ||
     process.env.CI_PUBLICATION !== 'true'
   )
     throw new Error('Source quality requires the native Linux publication job.');
-  const before = context();
+  const before = sourceQualityContext();
   if (before.request.target !== 'bun-linux-x64') throw new Error('Source quality requires the Linux request.');
   const intent = 'source-quality/intent.json';
   if (existsSync(releasePath(before.root, intent, true)))
@@ -37,7 +37,7 @@ export async function collectCISourceQuality(): Promise<void> {
   if (!output || /[\r\n]/u.test(evidenceDirectory)) throw new Error('Source quality output path unavailable.');
   writeFileSync(output, `evidence_directory=${evidenceDirectory}\n`, { flag: 'a' });
   const assertStableInputs = (): void => {
-    const current = context();
+    const current = sourceQualityContext();
     if (
       current.root !== before.root ||
       current.source !== before.source ||

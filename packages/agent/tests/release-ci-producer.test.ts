@@ -13,7 +13,7 @@ import { releaseDigest, releaseJSON } from '../bin/local-release-artifacts.ts';
 const sourceCommit = 'a'.repeat(40);
 const workflowBytes = Buffer.from('workflow definition fixture');
 const transportBytes = Buffer.from('opaque selected artifact ZIP bytes');
-const storageURL = 'https://ci-artifacts.blob.core.windows.net/selected.zip';
+const storageURL = 'https://productionresults1.blob.core.windows.net/selected.zip';
 
 function requestFixture(target: 'bun-windows-x64' | 'bun-linux-x64' = 'bun-windows-x64'): CIDeliveryRequest {
   const body: Omit<CIDeliveryRequest, 'request_id'> = {
@@ -28,7 +28,7 @@ function requestFixture(target: 'bun-windows-x64' | 'bun-linux-x64' = 'bun-windo
   return { ...body, request_id: releaseDigest(releaseJSON(body)) };
 }
 
-function profileFixture(request: ReturnType<typeof requestFixture>) {
+function profileFixture(request: ReturnType<typeof requestFixture>, artifactHosts?: string[]) {
   return {
     issuer: 'github-actions',
     repository_id: request.repository_id,
@@ -44,7 +44,7 @@ function profileFixture(request: ReturnType<typeof requestFixture>) {
       workflow_sha256: releaseDigest(workflowBytes),
       job: request.target === 'bun-linux-x64' ? 'native-linux-x64' : 'native-windows-x64',
       steps: [{ id: 'native-build', name: 'native-build' }],
-      artifact_hosts: ['ci-artifacts.blob.core.windows.net'],
+      ...(artifactHosts === undefined ? {} : { artifact_hosts: artifactHosts }),
     },
   };
 }
@@ -55,6 +55,8 @@ function providerFixture(
     run?: Record<string, unknown>;
     job?: Record<string, unknown>;
     artifact?: Record<string, unknown>;
+    qualityJob?: Record<string, unknown>;
+    qualityJobs?: Record<string, unknown>[];
     redirect?: string;
     transport?: Buffer;
   } = {},
@@ -73,19 +75,31 @@ function providerFixture(
     ...changes.run,
   };
   const job = {
+    id: 1234,
     name: request.target === 'bun-linux-x64' ? 'native-linux-x64' : 'native-windows-x64',
     run_id: 123,
     run_attempt: 1,
     status: 'completed',
     conclusion: 'success',
-    started_at: '2026-10-30T09:00:00Z',
+    started_at: request.target === 'bun-linux-x64' ? '2026-10-30T09:00:11Z' : '2026-10-30T09:00:00Z',
     completed_at: '2026-10-30T09:01:00Z',
     steps:
       request.target === 'bun-linux-x64'
-        ? Object.values(linuxSteps())
-        : [{ name: 'native-build', status: 'completed', conclusion: 'success' }],
+        ? [linuxSteps().native]
+        : [
+            {
+              name: 'native-build',
+              status: 'completed',
+              conclusion: 'success',
+              number: 9,
+              started_at: '2026-10-30T09:00:11Z',
+              completed_at: '2026-10-30T09:00:25Z',
+            },
+          ],
     ...changes.job,
   };
+  const qualityJob = { ...linuxSteps().qualityJob, ...changes.qualityJob };
+  const qualityJobs = changes.qualityJobs ?? [qualityJob];
   const bytes = changes.transport ?? transportBytes;
   const artifact = {
     id: 456,
@@ -101,16 +115,29 @@ function providerFixture(
     },
     ...changes.artifact,
   };
-  return { run, job, artifact, bytes, redirect: changes.redirect ?? storageURL };
+  return {
+    run,
+    job,
+    jobs: [job, ...(request.target === 'bun-linux-x64' ? qualityJobs : [])],
+    artifact,
+    bytes,
+    redirect: changes.redirect ?? storageURL,
+  };
 }
 
 async function withStubbedFetch<T>(
   fixture: ReturnType<typeof providerFixture>,
-  action: (state: { calls: string[]; storageCalls: number; storageAuthorization: string | null }) => Promise<T>,
+  action: (state: {
+    calls: string[];
+    zipCalls: number;
+    storageCalls: number;
+    storageAuthorization: string | null;
+  }) => Promise<T>,
 ): Promise<T> {
   const previousFetch = globalThis.fetch;
-  const state: { calls: string[]; storageCalls: number; storageAuthorization: string | null } = {
+  const state: { calls: string[]; zipCalls: number; storageCalls: number; storageAuthorization: string | null } = {
     calls: [],
+    zipCalls: 0,
     storageCalls: 0,
     storageAuthorization: null,
   };
@@ -125,11 +152,13 @@ async function withStubbedFetch<T>(
         )
           return Response.json({ encoding: 'base64', content: workflowBytes.toString('base64') });
         if (url.pathname.endsWith('/actions/runs/123/attempts/1/jobs'))
-          return Response.json({ jobs: [fixture.job], total_count: 1 });
+          return Response.json({ jobs: fixture.jobs, total_count: fixture.jobs.length });
         if (url.pathname === '/repos/pomazanbohdan/vida-stack-lite/actions/artifacts/456')
           return Response.json(fixture.artifact);
-        if (url.pathname === '/repos/pomazanbohdan/vida-stack-lite/actions/artifacts/456/zip')
+        if (url.pathname === '/repos/pomazanbohdan/vida-stack-lite/actions/artifacts/456/zip') {
+          state.zipCalls += 1;
           return new Response(null, { status: 302, headers: { location: fixture.redirect } });
+        }
         throw new Error(`unexpected API request: ${url.href}`);
       }
       state.storageCalls += 1;
@@ -173,6 +202,23 @@ test('producer downloader accepts the completed native producer during an in-pro
     rmSync(successRoot, { recursive: true, force: true });
   });
 
+  const emptyWindowsRoot = mkdtempSync(path.join(tmpdir(), 'vida-ci-windows-empty-steps-'));
+  await withStubbedFetch(providerFixture(request, { job: { steps: [] } }), async (state) => {
+    const result = await downloadGitHubCIProducerArtifact({
+      root: emptyWindowsRoot,
+      token: 'explicit-api-token',
+      request,
+      profile,
+      run_id: 123,
+      run_attempt: 1,
+      artifact_id: 456,
+    });
+    assert.deepEqual(readFileSync(path.join(emptyWindowsRoot, result.transport_path)), transportBytes);
+    assert.equal(state.zipCalls, 1);
+    assert.equal(state.storageAuthorization, null);
+  });
+  rmSync(emptyWindowsRoot, { recursive: true, force: true });
+
   const oldRoot = mkdtempSync(path.join(tmpdir(), 'vida-ci-producer-old-api-'));
   const oldFixture = providerFixture(request);
   await withStubbedFetch(oldFixture, async (state) => {
@@ -181,7 +227,7 @@ test('producer downloader accepts the completed native producer during an in-pro
         root: oldRoot,
         token: 'explicit-api-token',
         request,
-        profile,
+        profile: profileFixture(request, ['productionresults1.blob.core.windows.net']),
         run_id: 123,
         run_attempt: 1,
         artifact_id: 456,
@@ -228,7 +274,7 @@ test('producer downloader accepts the completed native producer during an in-pro
     },
     {
       name: 'wrong redirect origin',
-      error: /artifact redirect origin differs/,
+      error: /producer artifact host rejected/,
       changes: { redirect: 'https://unapproved.invalid/selected.zip' },
     },
     {
@@ -269,14 +315,25 @@ test('producer downloader accepts the completed native producer during an in-pro
 });
 
 function linuxSteps() {
+  const quality = {
+    name: 'full-source-quality',
+    status: 'completed',
+    conclusion: 'success',
+    number: 8,
+    started_at: '2026-10-30T09:00:01Z',
+    completed_at: '2026-10-30T09:00:10Z',
+  };
   return {
-    quality: {
+    qualityJob: {
+      id: 789,
       name: 'full-source-quality',
+      run_id: 123,
+      run_attempt: 1,
       status: 'completed',
       conclusion: 'success',
-      number: 8,
-      started_at: '2026-10-30T09:00:01Z',
+      started_at: '2026-10-30T09:00:00Z',
       completed_at: '2026-10-30T09:00:10Z',
+      steps: [quality],
     },
     native: {
       name: 'native-build',
@@ -286,10 +343,11 @@ function linuxSteps() {
       started_at: '2026-10-30T09:00:11Z',
       completed_at: '2026-10-30T09:00:25Z',
     },
+    quality,
   };
 }
 
-test('Linux publication requires its exact successful pre-build Source quality step', async () => {
+test('Linux publication requires its exact successful Source quality job before native formation', async () => {
   const request = requestFixture('bun-linux-x64');
   const successfulRoot = mkdtempSync(path.join(tmpdir(), 'vida-ci-linux-quality-success-'));
   await withStubbedFetch(providerFixture(request), async (state) => {
@@ -307,59 +365,153 @@ test('Linux publication requires its exact successful pre-build Source quality s
     assert.equal(state.storageAuthorization, null);
   });
   rmSync(successfulRoot, { recursive: true, force: true });
-  const { quality, native } = linuxSteps();
+  const { quality } = linuxSteps();
+  const emptyStepsRoot = mkdtempSync(path.join(tmpdir(), 'vida-ci-linux-empty-steps-'));
+  await withStubbedFetch(providerFixture(request, { job: { steps: [] } }), async (state) => {
+    const result = await downloadGitHubCIProducerArtifact({
+      root: emptyStepsRoot,
+      request,
+      profile: profileFixture(request),
+      token: 'explicit-api-token',
+      run_id: 123,
+      run_attempt: 1,
+      artifact_id: 456,
+    });
+    assert.deepEqual(readFileSync(path.join(emptyStepsRoot, result.transport_path)), transportBytes);
+    assert.equal(state.zipCalls, 1);
+    assert.equal(state.storageCalls, 1);
+  });
+  rmSync(emptyStepsRoot, { recursive: true, force: true });
+  const emptyQualityStepsRoot = mkdtempSync(path.join(tmpdir(), 'vida-ci-linux-empty-quality-steps-'));
+  await withStubbedFetch(providerFixture(request, { qualityJob: { steps: [] } }), async (state) => {
+    const result = await downloadGitHubCIProducerArtifact({
+      root: emptyQualityStepsRoot,
+      request,
+      profile: profileFixture(request),
+      token: 'explicit-api-token',
+      run_id: 123,
+      run_attempt: 1,
+      artifact_id: 456,
+    });
+    assert.deepEqual(readFileSync(path.join(emptyQualityStepsRoot, result.transport_path)), transportBytes);
+    assert.equal(state.zipCalls, 1);
+    assert.equal(state.storageCalls, 1);
+  });
+  rmSync(emptyQualityStepsRoot, { recursive: true, force: true });
   const negatives: Array<{
     name: string;
     changes: Parameters<typeof providerFixture>[1];
     error: RegExp;
     workflowDigest?: string;
+    artifactHosts?: string[];
   }> = [
-    { name: 'missing quality', changes: { job: { steps: [native] } }, error: /exactly one full-source-quality/ },
+    { name: 'missing quality job', changes: { qualityJobs: [] }, error: /unique full-source-quality provider job/ },
     {
-      name: 'duplicate quality',
-      changes: { job: { steps: [quality, quality, native] } },
-      error: /exactly one full-source-quality/,
+      name: 'failed quality job',
+      changes: { qualityJob: { conclusion: 'failure' } },
+      error: /quality\/native job identity differs/,
+    },
+    {
+      name: 'skipped quality job',
+      changes: { qualityJob: { conclusion: 'skipped' } },
+      error: /quality\/native job identity differs/,
+    },
+    {
+      name: 'unfinished quality job',
+      changes: { qualityJob: { status: 'in_progress' } },
+      error: /quality\/native job identity differs/,
+    },
+    {
+      name: 'duplicate quality jobs',
+      changes: { qualityJobs: [linuxSteps().qualityJob, linuxSteps().qualityJob] },
+      error: /unique full-source-quality provider job/,
+    },
+    {
+      name: 'quality job id duplicates native job',
+      changes: { qualityJob: { id: 1234 } },
+      error: /native provider job ID is invalid or not unique/,
+    },
+    {
+      name: 'missing quality job ID',
+      changes: { qualityJob: { id: undefined } },
+      error: /quality\/native job identity differs/,
+    },
+    {
+      name: 'invalid quality job ID',
+      changes: { qualityJob: { id: 0 } },
+      error: /quality\/native job identity differs/,
+    },
+    { name: 'missing native job ID', changes: { job: { id: undefined } }, error: /native provider job ID is invalid/ },
+    {
+      name: 'unsafe native job ID',
+      changes: { job: { id: Number.MAX_SAFE_INTEGER + 1 } },
+      error: /native provider job ID is invalid/,
     },
     {
       name: 'skipped quality',
-      changes: { job: { steps: [{ ...quality, conclusion: 'skipped' }, native] } },
+      changes: { qualityJob: { steps: [{ ...quality, conclusion: 'skipped' }] } },
       error: /source-quality step failed\/skipped/,
     },
     {
       name: 'failed quality',
-      changes: { job: { steps: [{ ...quality, conclusion: 'failure' }, native] } },
+      changes: { qualityJob: { steps: [{ ...quality, conclusion: 'failure' }] } },
       error: /source-quality step failed\/skipped/,
+    },
+    {
+      name: 'duplicate source-quality steps',
+      changes: { qualityJob: { steps: [quality, quality] } },
+      error: /exactly one full-source-quality step required/,
     },
     {
       name: 'unfinished quality',
-      changes: { job: { steps: [{ ...quality, status: 'in_progress' }, native] } },
+      changes: { qualityJob: { steps: [{ ...quality, status: 'in_progress' }] } },
       error: /source-quality step failed\/skipped/,
     },
     {
-      name: 'quality after build',
-      changes: {
-        job: {
-          steps: [{ ...quality, started_at: '2026-10-30T09:00:26Z', completed_at: '2026-10-30T09:00:29Z' }, native],
-        },
-      },
-      error: /must precede native build/,
+      name: 'missing source-quality step in nonempty quality job',
+      changes: { qualityJob: { steps: [{ name: 'upload', status: 'completed', conclusion: 'success' }] } },
+      error: /exactly one full-source-quality step required/,
     },
     {
-      name: 'quality step number after build',
-      changes: { job: { steps: [{ ...quality, number: 10 }, native] } },
-      error: /must precede native build/,
+      name: 'malformed quality steps',
+      changes: { qualityJob: { steps: null } },
+      error: /selected provider job malformed/,
+    },
+    {
+      name: 'undefined quality steps',
+      changes: { qualityJob: { steps: undefined } },
+      error: /selected provider job malformed/,
+    },
+    {
+      name: 'quality after build',
+      changes: { qualityJob: { completed_at: '2026-10-30T09:00:26Z' } },
+      error: /quality job must precede native job/,
     },
     {
       name: 'quality timestamp malformed',
-      changes: { job: { steps: [{ ...quality, started_at: 'invalid' }, native] } },
+      changes: { qualityJob: { steps: [{ ...quality, started_at: 'invalid' }] } },
       error: /step interval differs/,
     },
     {
       name: 'artifact predates build and quality',
       changes: { artifact: { created_at: '2026-10-30T09:00:05Z' } },
-      error: /must precede native build/,
+      error: /artifact differs from selected Source\/run attempt interval/,
     },
-    { name: 'foreign attempt', changes: { job: { run_attempt: 2 } }, error: /selected download job differs/ },
+    {
+      name: 'artifact predates native build step completion',
+      changes: { artifact: { created_at: '2026-10-30T09:00:20Z' } },
+      error: /required native step failed\/skipped or missing/,
+    },
+    {
+      name: 'foreign quality attempt',
+      changes: { qualityJob: { run_attempt: 2 } },
+      error: /quality\/native job identity differs/,
+    },
+    {
+      name: 'foreign quality run',
+      changes: { qualityJob: { run_id: 124 } },
+      error: /quality\/native job identity differs/,
+    },
     { name: 'foreign Source', changes: { run: { head_sha: 'c'.repeat(40) } }, error: /selected download run differs/ },
     { name: 'foreign workflow', changes: { run: { workflow_id: 1 } }, error: /selected download run differs/ },
     {
@@ -373,10 +525,54 @@ test('Linux publication requires its exact successful pre-build Source quality s
       workflowDigest: 'c'.repeat(64),
       error: /workflow definition differs/,
     },
+    {
+      name: 'missing native step in nonempty list',
+      changes: { job: { steps: [{ name: 'upload', status: 'completed', conclusion: 'success' }] } },
+      error: /required native step failed\/skipped or missing/,
+    },
+    {
+      name: 'failed native step',
+      changes: {
+        job: {
+          steps: [
+            {
+              name: 'native-build',
+              status: 'completed',
+              conclusion: 'failure',
+              number: 9,
+              started_at: '2026-10-30T09:00:11Z',
+              completed_at: '2026-10-30T09:00:25Z',
+            },
+          ],
+        },
+      },
+      error: /required native step failed\/skipped or missing/,
+    },
+    {
+      name: 'malformed required native step',
+      changes: { job: { steps: [{ name: 'native-build', status: 'completed', conclusion: 'success' }] } },
+      error: /required native step failed\/skipped or missing/,
+    },
+    {
+      name: 'malformed native steps',
+      changes: { job: { steps: null } },
+      error: /selected provider job malformed/,
+    },
+    {
+      name: 'undefined native steps',
+      changes: { job: { steps: undefined } },
+      error: /selected provider job malformed/,
+    },
+    {
+      name: 'producer profile cannot override artifact host policy',
+      changes: {},
+      artifactHosts: ['unapproved.invalid'],
+      error: /approved native producer profile required/,
+    },
   ];
   for (const negative of negatives) {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-ci-linux-quality-denial-'));
-    const profile = profileFixture(request);
+    const profile = profileFixture(request, negative.artifactHosts);
     if (negative.workflowDigest) profile.github.workflow_sha256 = negative.workflowDigest;
     await withStubbedFetch(providerFixture(request, negative.changes), async (state) => {
       await assert.rejects(
@@ -392,6 +588,7 @@ test('Linux publication requires its exact successful pre-build Source quality s
         negative.error,
         negative.name,
       );
+      assert.equal(state.zipCalls, 0, negative.name);
       assert.equal(state.storageCalls, 0);
       assert.equal(existsSync(path.join(root, '.tmp/ci-delivery', request.request_id, '123-1-456.zip')), false);
     });
@@ -410,7 +607,7 @@ test('completed-workflow downloader retains its formation artifact contract', as
     const result = await downloadGitHubCIDelivery({
       root,
       request,
-      profile: profileFixture(request),
+      profile: profileFixture(request, ['productionresults1.blob.core.windows.net']),
       token: 'explicit-api-token',
       run_id: 123,
       run_attempt: 1,

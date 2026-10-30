@@ -241,9 +241,52 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
+  full-source-quality:
+    name: full-source-quality
+    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.publish }}
+    runs-on: ubuntu-24.04
+    env:
+      VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
+      CI_REQUEST: ${{ inputs.request_linux }}
+      CI_REQUEST_LINUX: ${{ inputs.request_linux }}
+      CI_PUBLICATION: ${{ inputs.publish }}
+      CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      GIT_CONFIG_COUNT: "1"
+      GIT_CONFIG_KEY_0: core.autocrlf
+      GIT_CONFIG_VALUE_0: "false"
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - *shared-selected-source
+      - *shared-checkout
+      - *shared-bun
+      - *shared-bun-dependency-cache
+      - *shared-isolated-source
+      - *shared-save-bun-dependency-cache
+      - *shared-require-bun-dependency-cache-evidence
+      - name: full-source-quality
+        id: source-quality
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/release-ci-source-quality.ts"
+      - name: retain-source-quality-evidence
+        if: ${{ always() && steps.source-quality.outputs.evidence_directory != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: vida-source-quality-${{ github.run_id }}-${{ github.run_attempt }}-linux
+          path: |
+            ${{ steps.source-quality.outputs.evidence_directory }}
+            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/bun-unified
+            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/sdk-test-inputs
+          archive: true
+          compression-level: 6
+          overwrite: false
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
   native-linux-x64:
     name: native-linux-x64
-    if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.request_linux != '' }}
+    needs: full-source-quality
+    if: ${{ always() && vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.request_linux != '' && (!inputs.publish || needs.full-source-quality.result == 'success') }}
     runs-on: ubuntu-24.04
     outputs:
       artifact_id: ${{ steps.upload.outputs.artifact-id }}
@@ -268,10 +311,6 @@ jobs:
       - *shared-isolated-source
       - *shared-save-bun-dependency-cache
       - *shared-require-bun-dependency-cache-evidence
-      - name: full-source-quality
-        id: source-quality
-        if: ${{ inputs.publish }}
-        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/release-ci-source-quality.ts"
       - *shared-native-build
       - *shared-emit-build
       - name: upload
@@ -292,21 +331,6 @@ jobs:
           include-hidden-files: false
           retention-days: 14
       - *shared-upload-formation-proof
-      - name: retain-source-quality-evidence
-        if: ${{ always() && steps.source-quality.outputs.evidence_directory != '' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: vida-source-quality-${{ github.run_id }}-${{ github.run_attempt }}-linux
-          path: |
-            ${{ steps.source-quality.outputs.evidence_directory }}
-            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/bun-unified
-            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/sdk-test-inputs
-          archive: true
-          compression-level: 6
-          overwrite: false
-          if-no-files-found: error
-          include-hidden-files: true
-          retention-days: 14
   publish:
     name: publish-public-release
     outputs:

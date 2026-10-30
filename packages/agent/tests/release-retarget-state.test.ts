@@ -75,6 +75,7 @@ import {
 import * as ciEvidence from '../../../tooling/agent/release-ci-evidence.ts';
 import {
   validateNativeCIInvocation,
+  validateCISourceQualityInvocation,
   validateNativeCIReceipts,
   validateNativeCIDenial,
   validateNativeCIUnadmittedRun,
@@ -738,6 +739,18 @@ test('CI dormant invocation binds exact repository job published commit and nati
     env: { ...env, GITHUB_JOB: 'native-linux-x64', CI_REQUEST: JSON.stringify(linuxRequest) },
   };
   assert.deepEqual(validateNativeCIInvocation(linux).request, linuxRequest);
+  const quality = {
+    ...linux,
+    env: { ...linux.env, GITHUB_JOB: 'full-source-quality', CI_PUBLICATION: 'true' },
+  };
+  assert.deepEqual(validateCISourceQualityInvocation(quality).request, linuxRequest);
+  assert.throws(() => validateNativeCIInvocation(quality), /pinned producer/);
+  assert.throws(() => validateCISourceQualityInvocation(linux), /publication intent/);
+  assert.throws(
+    () => validateCISourceQualityInvocation({ ...quality, env: { ...quality.env, GITHUB_JOB: 'native-linux-x64' } }),
+    /pinned producer/,
+  );
+  assert.throws(() => validateCISourceQualityInvocation({ ...quality, platform: 'win32' }), /pinned producer/);
   assert.throws(() => validateNativeCIInvocation({ ...linux, platform: 'win32' }), /pinned producer/);
   assert.throws(
     () => validateNativeCIInvocation({ ...linux, env: { ...linux.env, CI_REQUEST: JSON.stringify(request) } }),

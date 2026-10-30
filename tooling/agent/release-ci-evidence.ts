@@ -195,6 +195,7 @@ type TargetCI = {
 };
 
 export interface GitHubJob {
+  id?: number;
   name: string;
   run_id: number;
   run_attempt: number;
@@ -202,7 +203,14 @@ export interface GitHubJob {
   conclusion: string;
   started_at: string;
   completed_at: string;
-  steps: Array<{ name: string; status: string; conclusion: string }>;
+  steps: Array<{
+    name: string;
+    status: string;
+    conclusion: string;
+    number?: number | null;
+    started_at?: string | null;
+    completed_at?: string | null;
+  }>;
 }
 export interface GitHubArtifact {
   id: number;
@@ -941,6 +949,21 @@ export function validateCIDownloadLocation(location: string | null, hosts: unkno
     'artifact redirect origin differs',
   );
   return url.href;
+}
+
+function validateCIProducerArtifactLocation(location: string | null): string {
+  check(typeof location === 'string', 'artifact redirect missing');
+  let url: URL;
+  try {
+    url = new URL(location);
+  } catch {
+    throw new Error('GAP-VIDA-CI-DELIVERY-001: invalid artifact redirect');
+  }
+  check(
+    /^productionresults[a-z0-9-]*\.blob\.core\.windows\.net$/.test(url.hostname),
+    'producer artifact host rejected',
+  );
+  return validateCIDownloadLocation(location, [url.hostname]);
 }
 export function validateCIDeliveryFormationMembers(args: {
   request: CIDeliveryRequest;
@@ -1703,9 +1726,13 @@ function selectedGitHubJob(value: unknown): GitHubJob {
       name: step.name,
       status: step.status,
       conclusion: step.conclusion,
+      number: typeof step.number === 'number' ? step.number : null,
+      started_at: typeof step.started_at === 'string' ? step.started_at : null,
+      completed_at: typeof step.completed_at === 'string' ? step.completed_at : null,
     });
   }
   return {
+    ...(typeof value.id === 'number' ? { id: value.id } : {}),
     name: value.name,
     run_id: value.run_id,
     run_attempt: value.run_attempt,
@@ -1737,21 +1764,72 @@ function publicationStep(value: unknown, name: string): { number: number; start:
   return { number: value.number, start, end };
 }
 
-function assertLinuxPublicationQualityStep(raw: unknown, job: GitHubJob, artifact: GitHubArtifact): void {
-  check(isRecord(raw) && Array.isArray(raw.steps), 'publication source-quality steps unavailable');
-  const quality = raw.steps.filter((step: unknown) => isRecord(step) && step.name === 'full-source-quality');
-  const native = raw.steps.filter((step: unknown) => isRecord(step) && step.name === 'native-build');
-  check(quality.length === 1 && native.length === 1, 'exactly one full-source-quality and native-build step required');
-  const qualified = publicationStep(quality[0], 'full-source-quality');
-  const built = publicationStep(native[0], 'native-build');
+function jobInterval(job: GitHubJob): { start: number; end: number } {
+  const start = Date.parse(job.started_at);
+  const end = Date.parse(job.completed_at);
+  check(Number.isFinite(start) && Number.isFinite(end) && start <= end, 'provider job interval malformed');
+  return { start, end };
+}
+
+function assertNativeBuildJobSteps(job: GitHubJob, artifactCreatedAt: number): void {
+  if (job.steps.length === 0) return;
+  const native = job.steps.filter((step) => step.name === 'native-build');
+  const step = native[0];
+  const start = typeof step?.started_at === 'string' ? Date.parse(step.started_at) : Number.NaN;
+  const end = typeof step?.completed_at === 'string' ? Date.parse(step.completed_at) : Number.NaN;
+  const jobRange = jobInterval(job);
   check(
-    qualified.number < built.number &&
-      Date.parse(job.started_at) <= qualified.start &&
-      qualified.end <= built.start &&
-      built.end <= Date.parse(artifact.created_at) &&
-      Date.parse(artifact.created_at) <= Date.parse(job.completed_at),
-    'publication source-quality must precede native build and artifact',
+    native.length === 1 &&
+      step?.status === 'completed' &&
+      step.conclusion === 'success' &&
+      isPositiveSafeInteger(step.number) &&
+      Number.isFinite(start) &&
+      Number.isFinite(end) &&
+      start <= end &&
+      start >= jobRange.start &&
+      end <= artifactCreatedAt &&
+      artifactCreatedAt <= jobRange.end,
+    'required native step failed/skipped or missing/malformed',
   );
+}
+
+function assertLinuxPublicationQualityJob(
+  rawQualityJob: unknown,
+  qualityJob: GitHubJob,
+  nativeJob: GitHubJob,
+  runId: number,
+  runAttempt: number,
+): void {
+  check(
+    qualityJob.name === 'full-source-quality' &&
+      isPositiveSafeInteger(qualityJob.id) &&
+      isPositiveSafeInteger(nativeJob.id) &&
+      qualityJob.id !== nativeJob.id &&
+      qualityJob.run_id === runId &&
+      qualityJob.run_attempt === runAttempt &&
+      qualityJob.status === 'completed' &&
+      qualityJob.conclusion === 'success' &&
+      nativeJob.run_id === runId &&
+      nativeJob.run_attempt === runAttempt &&
+      nativeJob.status === 'completed' &&
+      nativeJob.conclusion === 'success',
+    'publication quality/native job identity differs',
+  );
+  const qualityInterval = jobInterval(qualityJob);
+  const nativeInterval = jobInterval(nativeJob);
+  check(qualityInterval.end <= nativeInterval.start, 'publication source-quality job must precede native job');
+  check(isRecord(rawQualityJob) && Array.isArray(rawQualityJob.steps), 'publication source-quality steps malformed');
+  if (rawQualityJob.steps.length > 0) {
+    const qualitySteps = rawQualityJob.steps.filter(
+      (step: unknown) => isRecord(step) && step.name === 'full-source-quality',
+    );
+    check(qualitySteps.length === 1, 'exactly one full-source-quality step required in quality job');
+    const step = publicationStep(qualitySteps[0], 'full-source-quality');
+    check(
+      step.start >= qualityInterval.start && step.end <= qualityInterval.end,
+      'publication source-quality step interval differs from its job',
+    );
+  }
 }
 function githubArtifact(value: unknown): GitHubArtifact {
   check(
@@ -1838,7 +1916,8 @@ async function downloadGitHubArtifact(
     token === undefined || (typeof token === 'string' && token.length > 0 && !/[\p{Cc}]/u.test(token)),
     'explicit token invalid',
   );
-  validateCIDownloadLocation(`https://${policy.artifact_hosts?.[0] ?? ''}/`, policy.artifact_hosts ?? []);
+  if (requireCompletedWorkflow)
+    validateCIDownloadLocation(`https://${policy.artifact_hosts?.[0] ?? ''}/`, policy.artifact_hosts ?? []);
   const relative = `.tmp/ci-delivery/${request.request_id}/${run_id}-${run_attempt}-${artifact_id}.zip`;
   check(!existsSync(releasePath(root, relative, true)), 'retained download exists; inspect UNKNOWN before any retry');
   const base = `https://api.github.com/repos/${policy.repository}`;
@@ -1890,13 +1969,12 @@ async function downloadGitHubArtifact(
   const selectedJobs = jobs.jobs.filter((job) => isRecord(job) && job.name === policy.job);
   check(selectedJobs.length === 1, 'selected download job differs');
   const selectedJob = selectedGitHubJob(selectedJobs[0]);
-  for (const step of requireCompletedWorkflow ? [] : policy.steps) {
-    const matches = selectedJob.steps.filter((item) => item.name === step.name);
+  if (!requireCompletedWorkflow)
     check(
-      matches.length === 1 && matches[0]?.status === 'completed' && matches[0]?.conclusion === 'success',
-      'required native step failed/skipped',
+      isPositiveSafeInteger(selectedJob.id) &&
+        jobs.jobs.filter((job) => isRecord(job) && job.id === selectedJob.id).length === 1,
+      'native provider job ID is invalid or not unique',
     );
-  }
   check(
     selectedJob.run_id === Number(run_id) &&
       selectedJob.run_attempt === run_attempt &&
@@ -1904,6 +1982,19 @@ async function downloadGitHubArtifact(
       selectedJob.conclusion === 'success',
     'selected download job differs',
   );
+  if (!requireCompletedWorkflow) {
+    if (request.target === 'bun-linux-x64') {
+      const qualityJobs = jobs.jobs.filter((job) => isRecord(job) && job.name === 'full-source-quality');
+      check(qualityJobs.length === 1, 'unique full-source-quality provider job required');
+      const qualityJob = selectedGitHubJob(qualityJobs[0]);
+      check(
+        jobs.jobs.filter((job) => isRecord(job) && job.id === qualityJob.id).length === 1 &&
+          jobs.jobs.filter((job) => isRecord(job) && job.id === selectedJob.id).length === 1,
+        'provider job IDs are not unique',
+      );
+      assertLinuxPublicationQualityJob(qualityJobs[0], qualityJob, selectedJob, Number(run_id), run_attempt);
+    }
+  }
   const artifact = githubArtifact(await get(`/actions/artifacts/${artifact_id}`));
   check(artifact.id === Number(artifact_id), 'download artifact identity differs');
   validateCIArtifactAttempt({
@@ -1916,15 +2007,16 @@ async function downloadGitHubArtifact(
     job: selectedJob,
     artifact_kind: requireCompletedWorkflow ? 'formation' : 'native-build',
   });
-  if (!requireCompletedWorkflow && request.target === 'bun-linux-x64')
-    assertLinuxPublicationQualityStep(selectedJobs[0], selectedJob, artifact);
+  if (!requireCompletedWorkflow) assertNativeBuildJobSteps(selectedJob, Date.parse(artifact.created_at));
   const response = await fetch(`${base}/actions/artifacts/${artifact_id}/zip`, {
     headers,
     ...(signal === undefined ? {} : { signal }),
     redirect: 'manual',
   });
   check(response.status === 302, 'artifact download did not return its selected redirect');
-  const location = validateCIDownloadLocation(response.headers.get('location'), policy.artifact_hosts ?? []);
+  const location = requireCompletedWorkflow
+    ? validateCIDownloadLocation(response.headers.get('location'), policy.artifact_hosts ?? [])
+    : validateCIProducerArtifactLocation(response.headers.get('location'));
   // The API credential is deliberately absent from the storage request.
   releaseDirectory(root, path.posix.dirname(relative));
   const file = releasePath(root, relative, true);
@@ -1988,6 +2080,7 @@ export async function downloadGitHubCIProducerArtifact(options: DownloadOptions)
   };
   check(
     equal(profile.required_checks, minimumNativeDeliveryChecks) &&
+      policy?.artifact_hosts === undefined &&
       policy?.repository_id === 1340911900 &&
       policy.workflow_path === '.github/workflows/agent-native-delivery.yml' &&
       Array.isArray(policy.steps) &&

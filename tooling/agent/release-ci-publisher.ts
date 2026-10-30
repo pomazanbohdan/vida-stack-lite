@@ -244,7 +244,8 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
       need(producers.length === 2, 'producer pair invalid');
       const assets: Array<{ file: string; data: Buffer }> = [];
       const candidates: Array<Record<string, unknown>> = [];
-      const targets: string[] = ['bun-windows-x64', 'bun-linux-x64'];
+      // Establish the publication-wide Source quality proof before either target is downloaded.
+      const targets: string[] = ['bun-linux-x64', 'bun-windows-x64'];
       for (const target of targets) {
         const selectedRequest = target === 'bun-windows-x64' ? win : lin;
         const producer = producers.find((item) => item.request.target === target);
@@ -252,29 +253,6 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
           producer && releaseJSON(producer.request) === releaseJSON(selectedRequest),
           'recovered producer request differs',
         );
-        const artifactResponse = await fetch(`${apiBase}/actions/artifacts/${producer.artifact_id}/zip`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-          },
-          redirect: 'manual',
-          signal: AbortSignal.timeout(300000),
-        });
-        need(artifactResponse.status === 302, 'artifact redirect status rejected');
-        const artifactLocation = artifactResponse.headers.get('location');
-        need(controlled(artifactLocation), 'artifact redirect missing');
-        const first = new URL(artifactLocation);
-        need(
-          first.protocol === 'https:' &&
-            !first.username &&
-            !first.password &&
-            !first.port &&
-            !first.hash &&
-            /^productionresults[a-z0-9-]*\.blob\.core\.windows\.net$/.test(first.hostname),
-          'artifact host rejected',
-        );
-        validateCIDownloadLocation(artifactLocation, [first.hostname]);
         const profile = {
           issuer: 'github-actions',
           repository_id: 'vida-agent',
@@ -290,7 +268,6 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
             workflow_sha256: sha(workflow),
             job: target === 'bun-windows-x64' ? 'native-windows-x64' : 'native-linux-x64',
             steps: [{ id: 'native-build', name: 'native-build' }],
-            artifact_hosts: [first.hostname],
           },
         };
         const downloaded = await downloadGitHubCIProducerArtifact({

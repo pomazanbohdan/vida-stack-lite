@@ -84,15 +84,23 @@ JUnit suite and testcase attribution normalizes Windows path separators only;
 different file names, case and traversal components remain distinct bindings.
 
 A Windows Source push may therefore precede full CI quality. Publication in the
-existing native delivery workflow requires its Linux producer's actual
-`full-source-quality` step to pass before native formation. That step calls the
+existing native delivery workflow requires its dedicated Linux
+`full-source-quality` job to complete successfully before Linux native formation.
+Its quality step runs unconditionally, fails closed and calls the
 same Git-independent fresh coverage and complete CRAP validator as the unchanged
 Linux pre-push route. It retains the full suite, inventory, numerical budgets,
 report/run bindings and security link fixtures. No local unsupported case is
 silently converted to PASS or removed from the full quality scope. Failure or
 UNKNOWN keeps publication blocked and retains the assurance intent and evidence.
-The publisher verifies this step on the exact original producer attempt, also
-when recovering an interrupted publication. Build-only dispatch keeps its
+The publisher verifies the unique provider job ID, original producer run/attempt,
+Source/workflow digest and quality completion before Linux build start, before
+any artifact ZIP redirect or storage request, including recovery. Native jobs
+also require completed/success. Only literal empty provider `steps: []` permits
+job-scoped evidence; nonempty missing, skipped, failed or malformed required steps
+remain denials. The artifact's native phase receipt, candidate and complete byte
+binding remain mandatory before asset use or publication writes. This route
+establishes positive job evidence, not unavailable step records or whole-workflow
+completion. The old completed-workflow observer remains strict. Build-only dispatch skips the quality job and keeps its
 formation-only profile. Source assurance is separate from package formation and
 installation; it does not close other task-specific mutation or acceptance gaps.
 

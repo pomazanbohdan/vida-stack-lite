@@ -548,11 +548,20 @@ release/native tests under the existing HEAD/index/lock and terminal-evidence
 guards. Its success admits the Source push with full CI quality still pending;
 it does not establish coverage, CRAP, delivery or acceptance. The Linux pre-push
 route retains its complete fresh quality gate. The same Git-independent quality
-owner runs as development assurance in the Linux publication producer before
-native formation. Its exclusive Source/run/attempt/report-bound intent and receipt
+owner runs as development assurance in a dedicated Linux publication quality job
+before Linux native formation. Its step is unconditional and fails closed, with
+no continue-on-error. Its exclusive Source/run/attempt/report-bound intent and receipt
 are separate from the formation record and contain no placeholder archive hash.
-The publisher must verify the actual successful quality step for the exact Linux
-producer attempt before artifact use or publication writes, including recovery.
+The publisher must verify the actual completed successful quality job for the
+exact original Linux producer run/attempt and Source/workflow digest, unique
+provider job ID and quality completion before Linux build start. This gate
+precedes every artifact ZIP redirect and storage request, including recovery.
+Native jobs require actual completed/success too. Only literal provider
+`steps: []` permits job-scoped evidence; nonempty missing, failed, skipped or
+malformed required steps remain denials. Native phase receipt, candidate,
+manifest/archive/executable checks still precede asset use or publication writes.
+This does not establish absent step records or whole-workflow completion; the
+completed-workflow observer retains its original strict contract.
 Failure or UNKNOWN retains evidence and blocks publication. This routing changes
 no task-specific mutation prerequisite, Source lease/CAS, historical UNKNOWN or
 user Runtime-acceptance boundary. Build-only formation and installation run no

@@ -357,6 +357,23 @@ export function validateNativeCIInvocation({
   arch: string;
   bun: string | undefined;
 }): NativeCIIdentity {
+  return validateCIInvocation({ env, platform, arch, bun }, 'native');
+}
+
+export function validateCISourceQualityInvocation(options: {
+  env: NodeJS.ProcessEnv;
+  platform: string;
+  arch: string;
+  bun: string | undefined;
+}): NativeCIIdentity {
+  requireCI(options.env.CI_PUBLICATION === 'true', 'Source quality requires publication intent');
+  return validateCIInvocation(options, 'source-quality');
+}
+
+function validateCIInvocation(
+  { env, platform, arch, bun }: { env: NodeJS.ProcessEnv; platform: string; arch: string; bun: string | undefined },
+  purpose: 'native' | 'source-quality',
+): NativeCIIdentity {
   requireCI(
     env.CI === 'true' && env.GITHUB_ACTIONS === 'true' && env.VIDA_NATIVE_CI_ENABLED === 'true',
     'CI producer is dormant',
@@ -365,9 +382,9 @@ export function validateNativeCIInvocation({
     executingPin = readPin(executingPackageRoot);
   checkManifest(executingPackageRoot, executingPin);
   const nativeTarget =
-    platform === 'win32' && env.GITHUB_JOB === 'native-windows-x64'
+    purpose === 'native' && platform === 'win32' && env.GITHUB_JOB === 'native-windows-x64'
       ? 'bun-windows-x64'
-      : platform === 'linux' && env.GITHUB_JOB === 'native-linux-x64'
+      : platform === 'linux' && env.GITHUB_JOB === (purpose === 'native' ? 'native-linux-x64' : 'full-source-quality')
         ? 'bun-linux-x64'
         : null;
   requireCI(
@@ -467,13 +484,29 @@ export function exclusive(root: string, relative: string, value: Buffer | object
     mode: 0o600,
   });
 }
-export function context(): NativeCIContext {
-  const identity = validateNativeCIInvocation({
-    env: process.env,
-    platform: process.platform,
-    arch: process.arch,
-    bun: process.versions.bun,
-  });
+function context(): NativeCIContext {
+  return contextFor(
+    validateNativeCIInvocation({
+      env: process.env,
+      platform: process.platform,
+      arch: process.arch,
+      bun: process.versions.bun,
+    }),
+  );
+}
+
+export function sourceQualityContext(): NativeCIContext {
+  return contextFor(
+    validateCISourceQualityInvocation({
+      env: process.env,
+      platform: process.platform,
+      arch: process.arch,
+      bun: process.versions.bun,
+    }),
+  );
+}
+
+function contextFor(identity: NativeCIIdentity): NativeCIContext {
   const source = realpathSync(requiredEnv(process.env, 'VIDA_CI_SOURCE_ROOT')),
     checkout = realpathSync(requiredEnv(process.env, 'GITHUB_WORKSPACE'));
   const temporary = realpathSync(requiredEnv(process.env, 'RUNNER_TEMP'));
