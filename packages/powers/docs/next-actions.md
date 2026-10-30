@@ -150,6 +150,18 @@ valid ADR status and stays unlocked; the `approval-policy` marker stays a topic 
 membership comes from the profile alternatives; the D12 §4 wording is accepted as written; and the
 context-degradation pair became the `context-degradation-policy` user-decision group.
 
+# Paused scope — Step H content extension
+
+Step H (D14/D15) is **paused by the owner on 2026-10-30** and tracked as a separate scope. It is not part of the active queue and it is not a code gap: every phase waits for an owner decision about sources, rights and admission.
+
+1. May Wondelai be used at all, and for which bounded subset?
+2. How much of the 391 candidate Markdown files is in scope — a ten-file pilot or a wider set?
+3. Are the 1,434 normative CSV rows taken now, later, or not at all?
+4. Which typed reference families (palettes, font pairings, style records, icon lists, standards checklists) are admitted, each with its own rights review?
+5. Who signs each admitted packet, and what counts as human fidelity evidence?
+
+Until those answers exist, AC-47 to AC-59 stay open outside the active queue. The existing corpus, the scripts and the current gates are unaffected.
+
 # Key decisions of the queue
 
 - **Current package gate state (2026-10-30):** the owner-selected Powers pin is Bun 1.4.4. On the migrated v1.2 corpus the canonical `test:coverage` run records 659 passed, four expected Windows skips, zero failures, 3,221 assertions and native exit 0 across 663 tests in 20 files, with 693/693 functions and 5,402/5,402 lines under unchanged 1.0 thresholds (seed 20261019). Statement and branch counters are not separately claimed. Strict typecheck passes 44 files; the corpus check reports 2,510 instructions and zero issues; OKF reports 30 concepts with no failures or warnings. The repository `lint:knip:pinned` gate is **not** green: it returns four issues, all in `packages/agent/docs/research/bun-1.4.4-api/*.ts`, which D9 places outside this scope and which therefore need a separate owner request. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, rights, delivery and Runtime acceptance remain separate open gates.

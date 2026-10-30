@@ -109,6 +109,8 @@ the current scope (recorded as a GAP, not as passed).
 
 The criteria below are future gates. They do not change the current E4 acceptance record or prove implementation.
 
+**Scope note (2026-10-30):** Step H is paused and tracked as a separate owner-gated scope. AC-47 to AC-59 remain open because source admission, rights clearance and packet sign-off are undecided — not because of a code gap. The active queue covers the existing corpus and its scripts only.
+
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
 | AC-47 | The engineering/UX, product and business pack admits only individually reviewed, rights-cleared and owner-admitted subsets within D14; general methodology remains in the same catalog; journey exclusions persist and former domain exclusions are not automatically promoted | SR-81 | Exact per-source selection/disposition, fidelity, rights and owner-admission records | manual | open |
