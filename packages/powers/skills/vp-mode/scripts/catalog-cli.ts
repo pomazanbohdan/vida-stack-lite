@@ -503,11 +503,16 @@ function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonl
     }
   }
   const ranked = [...nameSets.entries()]
-    .map(([capability, names]) => ({ capability, score: query.filter((token) => names.has(token)).length }))
-    .filter((item) => item.score > 0)
-    .sort((left, right) => right.score - left.score
-      || (counts.get(right.capability) ?? 0) - (counts.get(left.capability) ?? 0)
-      || (left.capability < right.capability ? -1 : left.capability > right.capability ? 1 : 0));
+    .map(([capability, names]) => ({ capability, names, score: 0 }))
+    .filter((item) => query.some((token) => item.names.has(token)));
+  const documentFrequency = new Map<string, number>();
+  for (const { names } of ranked) for (const token of names) documentFrequency.set(token, (documentFrequency.get(token) ?? 0) + 1);
+  for (const item of ranked) {
+    item.score = query.reduce((total, token) => total + (item.names.has(token) ? 1 / (documentFrequency.get(token) ?? 1) : 0), 0);
+  }
+  ranked.sort((left, right) => right.score - left.score
+    || (counts.get(right.capability) ?? 0) - (counts.get(left.capability) ?? 0)
+    || (left.capability < right.capability ? -1 : left.capability > right.capability ? 1 : 0));
   const best = ranked[0]?.capability;
   if (best === undefined) return undefined;
   const pattern = topPatternFor(instructions, best);

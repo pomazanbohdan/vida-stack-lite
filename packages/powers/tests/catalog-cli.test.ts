@@ -1737,6 +1737,10 @@ describe('retrieval workflow contract', () => {
     expect(resolved.stderr).toContain('pattern=systematic-debugging');
     expect(resolved.stdout.trim().split('\n').length).toBeGreaterThan(0);
 
+    const debugging = await runInProcess(['search', '--for', 'systematic', 'debugging', 'failing', 'test', 'fix', 'deploy', '--catalog', realCatalog]);
+    expect(debugging.status).toBe(0);
+    expect(debugging.stderr).toContain('resolved: capability=debug-root-cause');
+
     const review = await runInProcess(['search', '--for', 'review', 'typescript', 'pull', 'request', '--catalog', realCatalog]);
     expect(review.status).toBe(0);
     expect(review.stderr).toContain('resolved: capability=review-code');
