@@ -531,6 +531,25 @@ Opt-in bounded stage markers expose install and snapshot elapsed time. These
 changes do not claim a speed improvement without comparable measurement.
 No current controller or successful qualification is inferred from this contract.
 
+The repository owner's one-time 2026-10-30 bootstrap authorization permits Root
+to integrate only the causal repair in `bin/local-release-artifacts.ts`,
+`tooling/development-controller-qualification.ts`,
+`tests/release-source-inventory.test.ts`, explicit consumed-entry registration
+in `knip.config.ts`, this exception and its
+[lifecycle counterpart](../instructions/development-lifecycle.md).
+Root obtains independent plan and diff review and completes focused checks
+before forming a fresh current-source candidate. Its controller, writable
+fixture, dependencies and receipts must be physically separate from the retained
+controller `C:/project/vida-controller-bootstrap-20261030`; observation
+`a1bb2f49-65f5-4721-b4e7-f504f8673e22`, its UNKNOWN and reservation remain untouched.
+The current target supplies read-only input binding. This authorizes no old
+resource reuse, alternate observations of the old controller, or retry of its
+possible effects. Qualification performs no release publication or installation.
+Actual fresh immutable-candidate qualification is required before ordinary
+controlled Source work resumes. Copied predecessors, manual-ready state,
+inferred no-effect and reconstructed absent release journals remain forbidden;
+installation does not establish Runtime acceptance.
+
 Each controller child runs under one exclusive compound reservation at
 `<controllerRoot>/observations/`. The controller retains the exact executable
 and arguments, parent and child working directories, pinned runtime context,

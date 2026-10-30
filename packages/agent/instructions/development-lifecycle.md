@@ -761,6 +761,20 @@ lease or Runtime acceptance; authorization controls do not promise physical
 isolation or global unrelated-edit detection. A copied controller alone is not
 qualified, and manual integrity-value handling is unnecessary.
 
+The repository owner's one-time 2026-10-30 bootstrap authorization is limited to
+the exact causal file scope and safeguards in the
+[Source development controller contract](../docs/system-specification.md#source-development-controller).
+Root alone integrates the reviewed repair, obtains independent plan and diff
+review, and completes focused checks before fresh candidate formation.
+Prepare and verify use a physically separate current-source controller,
+writable fixture, dependencies and receipts, with read-only current-target
+binding. The original controller, UNKNOWN observation and active reservation
+remain untouched and fenced; this is no retry, old-resource reuse or alternate
+observation root for that controller. Qualification publishes and installs
+nothing. Ordinary controlled Source work resumes only after actual fresh
+immutable-candidate qualification. No predecessor, manual-ready state,
+inferred no-effect or reconstructed absent release journal qualifies it.
+
 ## Delivery and cutover
 
 The delivery manifest separates deployable bundle and root integration files

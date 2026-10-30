@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { releaseDigest as sha } from '../bin/local-release-artifacts.ts';
+import { releaseDigest as sha, getReleaseSourceRoots } from '../bin/local-release-artifacts.ts';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { invokeNestedObservedControllerChild } from '../bin/development-controller-observation.ts';
@@ -497,6 +497,11 @@ try {
     const file = path.join(repairRoot, relative);
     mkdirSync(path.dirname(file), { recursive: true });
     writeFileSync(file, contents);
+  }
+  for (const source of getReleaseSourceRoots()) {
+    const root = path.join(repairRoot, source.path);
+    if (source.kind === 'directory') mkdirSync(root, { recursive: true });
+    else assert.ok(existsSync(root), `Qualification fixture is missing ${source.path}`);
   }
   const repairOperation = 'controller-native-repair',
     releaseRoot = `.agent/work/agent-local-release/${repairOperation}`,

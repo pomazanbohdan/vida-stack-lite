@@ -716,23 +716,31 @@ export function releaseSourceInputs(
   return result;
 }
 
+const releaseSourceRoots = [
+  { path: 'package.json', kind: 'file' },
+  { path: 'agent-runtime.config.v1.yaml', kind: 'file' },
+  { path: 'AGENT.sidecar.md', kind: 'file' },
+  { path: 'packages/agent', kind: 'directory' },
+  { path: 'packages/plugin', kind: 'directory' },
+  { path: 'tests/agent', kind: 'directory' },
+  { path: 'tooling/agent', kind: 'directory' },
+  { path: '.githooks', kind: 'directory' },
+  { path: '.github/workflows/agent-native-delivery.yml', kind: 'file' },
+] as const;
+
+export function getReleaseSourceRoots() {
+  return releaseSourceRoots.map((source) => ({ ...source }));
+}
+
 export function releaseSourceBinding(
   root = releaseRootDefault,
   withObservations = false,
   repairPass?: RepairSourcePass,
 ): ReleaseSourceBinding {
   const observations: SourceObservation[] | undefined = withObservations ? [] : undefined;
-  const entries = [
-    'package.json',
-    'agent-runtime.config.v1.yaml',
-    'AGENT.sidecar.md',
-    'packages/agent',
-    'packages/plugin',
-    'tests/agent',
-    'tooling/agent',
-    '.githooks',
-    '.github/workflows/agent-native-delivery.yml',
-  ].flatMap((relative) => releaseSourceInputs(root, relative, observations, repairPass));
+  const entries = releaseSourceRoots.flatMap(({ path: relative }) =>
+    releaseSourceInputs(root, relative, observations, repairPass),
+  );
   return { source_binding: releaseDigest(JSON.stringify(entries)), entries, ...(observations ? { observations } : {}) };
 }
 

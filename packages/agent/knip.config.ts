@@ -29,6 +29,11 @@ const config = {
       // These exact exceptions do not suppress files, exports or dependencies.
       ignoreBinaries: ['mkfifo', 'check', 'fmt'],
       entry: [
+        'knip.config.ts',
+        // README reproduction commands and their audit child.
+        'docs/research/bun-1.4.4-api/generate-catalog.ts',
+        'docs/research/bun-1.4.4-api/scan-source.ts',
+        'docs/research/bun-1.4.4-api/audit-catalog.ts',
         'bin/scope.ts',
         'bin/development-controller.ts',
         // Explicit child/preload paths and compiler/declaration inputs.
