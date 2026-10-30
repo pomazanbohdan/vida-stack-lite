@@ -4,7 +4,6 @@ import {
   openCliWorkspaceDatabase,
 } from './workspace-database-cli.ts';
 import { realpathSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import path from 'node:path';
 import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -32,7 +31,7 @@ type ResumeInspection = Record<string, unknown>;
 
 /** @param {Uint8Array} bytes */
 function sha256(bytes: Uint8Array): string {
-  return createHash('sha256').update(bytes).digest('hex');
+  return new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 }
 
 /** @param {string} message */

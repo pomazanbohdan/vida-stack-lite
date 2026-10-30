@@ -3,7 +3,6 @@ import { cliCommandContracts } from './cli-command-contracts.ts';
 import { installerProtectedFiles } from './cli-metadata.ts';
 export { installerProtectedFiles } from './cli-metadata.ts';
 import { spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
 import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -56,7 +55,7 @@ function snapshot(root: string): string {
       if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1) {
         throw new Error('Installer input must be a regular unlinked file: ' + relative);
       }
-      return createHash('sha256').update(readFileSync(file)).digest('hex');
+      return new Bun.CryptoHasher('sha256').update(readFileSync(file)).digest('hex');
     })
     .join(':');
 }

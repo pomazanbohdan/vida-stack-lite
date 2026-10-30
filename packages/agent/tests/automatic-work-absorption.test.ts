@@ -1,4 +1,6 @@
 import { test, expect, spyOn, afterEach, type Mock } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import {
   createAutomaticWorkAdmissionFixture as createFixture,
   withAutomaticWorkAdmissionCase,
@@ -10,9 +12,20 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import acceptanceSchema from '../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
 import workStateSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
 import runtimeConfigSchema from '../schemas/agent-runtime-config.v1.schema.json' with { type: 'json' };
-import { mkdirSync, readFileSync, writeFileSync, unlinkSync, linkSync, symlinkSync, existsSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  readFileSync,
+  writeFileSync,
+  unlinkSync,
+  linkSync,
+  symlinkSync,
+  existsSync,
+} from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, type AgentRuntimeConfig, type WorkItemSelection } from '../src/config/runtime-config.ts';
@@ -2005,6 +2018,43 @@ test('public admission rejects drifted predecessor attribution without any effec
     expect(foreignAfter).toEqual(foreignBefore);
   } finally {
     f.close();
+  }
+});
+
+test('work-state repair direct entry blocks invalid selectors while imports remain inert', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'repair-direct-entry-'));
+  const entry = fileURLToPath(new URL('../bin/repair-work-state.ts', import.meta.url));
+  let complete = false;
+  try {
+    const options = { cwd: root, encoding: 'utf8' as const, timeout: 30000, maxBuffer: 1024 * 1024, windowsHide: true };
+    const imported = spawnSync(
+      process.execPath,
+      [
+        '--no-env-file',
+        '--no-install',
+        '--eval',
+        `await import(${JSON.stringify(pathToFileURL(entry).href)}); console.log('import-ok')`,
+      ],
+      options,
+    );
+    expect(imported.error).toBeUndefined();
+    expect(imported.signal).toBeNull();
+    expect(imported.status).toBe(0);
+    expect(imported.stdout).toBe('import-ok\n');
+    expect(imported.stderr).toBe('');
+    const direct = spawnSync(process.execPath, ['--no-env-file', '--no-install', entry, '--unknown', 'value'], options);
+    expect(direct.error).toBeUndefined();
+    expect(direct.signal).toBeNull();
+    expect(direct.status).toBe(1);
+    expect(direct.stdout).toBe('');
+    expect(direct.stderr).toBe(
+      JSON.stringify({ status: 'blocked', message: 'vida work-state repair: invalid or duplicate arguments' }) + '\n',
+    );
+    expect(readdirSync(root)).toEqual([]);
+    complete = true;
+  } finally {
+    if (complete) rmSync(root, { recursive: true });
+    else console.error('Retained failed direct-entry fixture: ' + root);
   }
 });
 

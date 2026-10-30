@@ -18,7 +18,6 @@ import type { ScopedSourceSnapshot } from '../src/orchestration/scoped-source-sn
 
 // Four parent segments from this private artifact reach the repository root.
 // Keep that root anchor when rebasing this research artifact.
-import { createHash } from 'node:crypto';
 import { lstatSync, realpathSync } from 'node:fs';
 import { parseSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import {
@@ -63,7 +62,7 @@ const requireInitial: (condition: unknown, message: string) => asserts condition
 const same = (left: unknown, right: unknown): boolean => canonicalJsonDigest(left) === canonicalJsonDigest(right);
 const compareText = (left: string, right: string): number => (left < right ? -1 : left > right ? 1 : 0);
 const keys = (value: Record<string, unknown>): string => Object.keys(value).sort(compareText).join(',');
-const sha256 = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
+const sha256 = (bytes: Buffer): string => new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 
 function exactKeys(value: unknown, expected: readonly string[]): value is Record<string, unknown> {
   return isPlainRecord(value) && keys(value) === [...expected].sort(compareText).join(',');
