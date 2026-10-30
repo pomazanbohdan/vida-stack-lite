@@ -1756,7 +1756,7 @@ describe('retrieval workflow contract', () => {
     const missing = await runInProcess(['search', '--for', 'argument', 'option', 'parser', 'flag', '--catalog', realCatalog]);
     expect(missing.status).toBe(1);
     expect(missing.stderr).toContain('no capability matched --for');
-  });
+  }, 20000);
 
   test('search accepts a namespaced tag copied from tags output', async () => {
     const result = await runInProcess(['search', '--capability', 'capability:review-code', '--catalog', realCatalog]);

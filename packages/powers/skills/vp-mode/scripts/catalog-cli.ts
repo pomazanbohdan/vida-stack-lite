@@ -346,6 +346,7 @@ function renderHelp(command?: Command): string {
       '  3. get --id <id...> --profile <path>            -> full text + obligations',
       'notes: search takes bare tags (review-code, not capability:review-code);',
       '       first pass: search --for "<terms>" resolves a capability and its top pattern;',
+      '       multi-intent task: one focused --for per intent, 3-6 terms each;',
       '       --offset 20 gets the next page; --all lists every row;',
       '       a page is a sample, not a ranking; page again when an intent is missing.',
     );
@@ -491,8 +492,10 @@ function topPatternFor(instructions: Map<string, LoadedInstruction>, capability:
     .sort((left, right) => right[1] - left[1] || (left[0] < right[0] ? -1 : left[0] > right[0] ? 1 : 0))[0]?.[0];
 }
 
+const RESOLVER_STOPWORDS = new Set(['a', 'an', 'the', 'for', 'to', 'of', 'and', 'or', 'with', 'on', 'in', 'by', 'vs', 'versus', 'after', 'before', 'from', 'into', 'over', 'under', 'this', 'that']);
+
 function resolveFor(instructions: Map<string, LoadedInstruction>, terms: readonly string[]): { capability: string; pattern?: string } | undefined {
-  const query = [...new Set(terms.flatMap(tagTokens).map(stemToken))];
+  const query = [...new Set(terms.flatMap(tagTokens).map(stemToken))].filter((token) => !RESOLVER_STOPWORDS.has(token));
   if (query.length === 0) return undefined;
   const counts = new Map<string, number>();
   const nameSets = new Map<string, Set<string>>();
