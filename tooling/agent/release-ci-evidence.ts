@@ -218,6 +218,14 @@ export interface GitHubArtifact {
   };
 }
 
+export function nativeBuildArtifactName(requestId: string, runId: string, attempt: number): string {
+  check(
+    hex.test(requestId) && /^[1-9]\d*$/u.test(runId) && isPositiveSafeInteger(attempt),
+    'native artifact name identity invalid',
+  );
+  return `build-${requestId}-${runId}-${attempt}`;
+}
+
 function check(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error('GAP-VIDA-CI-DELIVERY-001: ' + message);
 }
@@ -885,6 +893,7 @@ export function validateCIArtifactAttempt(args: {
   repository_id: number;
   source_commit: string;
   job: GitHubJob;
+  artifact_kind?: 'formation' | 'native-build';
 }): void {
   const { artifact, request, run_id, run_attempt, repository_id, source_commit, job } = args;
   const start = Date.parse(job.started_at),
@@ -899,7 +908,10 @@ export function validateCIArtifactAttempt(args: {
       artifact.workflow_run.repository_id === repository_id &&
       artifact.workflow_run.head_repository_id === repository_id &&
       artifact.workflow_run.head_sha === source_commit &&
-      artifact.name === `${request.request_id}-${run_attempt}` &&
+      artifact.name ===
+        (args.artifact_kind === 'native-build'
+          ? nativeBuildArtifactName(request.request_id, run_id, run_attempt)
+          : `${request.request_id}-${run_attempt}`) &&
       /^sha256:[a-f0-9]{64}$/.test(artifact.digest),
     'artifact differs from selected Source/run attempt interval',
   );
@@ -1704,6 +1716,43 @@ function selectedGitHubJob(value: unknown): GitHubJob {
     steps,
   };
 }
+
+function publicationStep(value: unknown, name: string): { number: number; start: number; end: number } {
+  check(
+    isRecord(value) &&
+      value.name === name &&
+      value.status === 'completed' &&
+      value.conclusion === 'success' &&
+      isPositiveSafeInteger(value.number) &&
+      typeof value.started_at === 'string' &&
+      typeof value.completed_at === 'string',
+    'publication source-quality step failed/skipped or malformed',
+  );
+  const start = Date.parse(value.started_at),
+    end = Date.parse(value.completed_at);
+  check(
+    Number.isFinite(start) && Number.isFinite(end) && start <= end,
+    'publication source-quality step interval differs',
+  );
+  return { number: value.number, start, end };
+}
+
+function assertLinuxPublicationQualityStep(raw: unknown, job: GitHubJob, artifact: GitHubArtifact): void {
+  check(isRecord(raw) && Array.isArray(raw.steps), 'publication source-quality steps unavailable');
+  const quality = raw.steps.filter((step: unknown) => isRecord(step) && step.name === 'full-source-quality');
+  const native = raw.steps.filter((step: unknown) => isRecord(step) && step.name === 'native-build');
+  check(quality.length === 1 && native.length === 1, 'exactly one full-source-quality and native-build step required');
+  const qualified = publicationStep(quality[0], 'full-source-quality');
+  const built = publicationStep(native[0], 'native-build');
+  check(
+    qualified.number < built.number &&
+      Date.parse(job.started_at) <= qualified.start &&
+      qualified.end <= built.start &&
+      built.end <= Date.parse(artifact.created_at) &&
+      Date.parse(artifact.created_at) <= Date.parse(job.completed_at),
+    'publication source-quality must precede native build and artifact',
+  );
+}
 function githubArtifact(value: unknown): GitHubArtifact {
   check(
     isRecord(value) &&
@@ -1865,7 +1914,10 @@ async function downloadGitHubArtifact(
     repository_id: policy.repository_id,
     source_commit: policy.source_commit,
     job: selectedJob,
+    artifact_kind: requireCompletedWorkflow ? 'formation' : 'native-build',
   });
+  if (!requireCompletedWorkflow && request.target === 'bun-linux-x64')
+    assertLinuxPublicationQualityStep(selectedJobs[0], selectedJob, artifact);
   const response = await fetch(`${base}/actions/artifacts/${artifact_id}/zip`, {
     headers,
     ...(signal === undefined ? {} : { signal }),

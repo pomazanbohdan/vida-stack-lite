@@ -143,6 +143,17 @@ describe('mutation JUnit attribution', () => {
     expect(junitOutcome(report(), ['tests/one.test.mjs']).outcome).toBe('passed');
   });
 
+  test('binds Windows JUnit separators while rejecting different nested and testcase paths', () => {
+    const file = process.platform === 'win32' ? 'tests\\one.test.ts' : 'tests/one.test.ts';
+    const xml = (nested = file, testcase = file) =>
+      `<testsuites tests="1" assertions="1" failures="0" errors="0" skipped="0"><testsuite file="${file}" tests="1" assertions="1" failures="0" errors="0" skipped="0"><testsuite file="${nested}" tests="1" assertions="1" failures="0" errors="0" skipped="0"><testcase name="ok" file="${testcase}" assertions="1"/></testsuite></testsuite></testsuites>`;
+    expect(junitOutcome(xml(), ['tests/one.test.ts']).outcome).toBe('passed');
+    for (const foreign of ['tests\\two.test.ts', 'tests\\One.test.ts', 'tests\\..\\one.test.ts']) {
+      expect(() => junitOutcome(xml(foreign), ['tests/one.test.ts'])).toThrow(/nested suite/);
+      expect(() => junitOutcome(xml(file, foreign), ['tests/one.test.ts'])).toThrow(/source binding/);
+    }
+  });
+
   test('permits selected-suite subsets only for causally confirmed assertion kills', () => {
     const selected = ['tests/a.test.ts', 'tests/b.test.ts'];
     const failing = (file: string, id: number) =>

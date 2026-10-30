@@ -15,14 +15,14 @@ const workflowBytes = Buffer.from('workflow definition fixture');
 const transportBytes = Buffer.from('opaque selected artifact ZIP bytes');
 const storageURL = 'https://ci-artifacts.blob.core.windows.net/selected.zip';
 
-function requestFixture(): CIDeliveryRequest {
+function requestFixture(target: 'bun-windows-x64' | 'bun-linux-x64' = 'bun-windows-x64'): CIDeliveryRequest {
   const body: Omit<CIDeliveryRequest, 'request_id'> = {
     schema: 'VidaCIDeliveryRequest/v1',
     operation_id: 'ci-producer-download-test',
     version: '1.2.3',
     repository_id: 'vida-agent',
     project_ids: ['agent'],
-    target: 'bun-windows-x64',
+    target,
     source_binding: 'b'.repeat(64),
   };
   return { ...body, request_id: releaseDigest(releaseJSON(body)) };
@@ -42,7 +42,7 @@ function profileFixture(request: ReturnType<typeof requestFixture>) {
       source_commit: sourceCommit,
       workflow_path: '.github/workflows/agent-native-delivery.yml',
       workflow_sha256: releaseDigest(workflowBytes),
-      job: 'native-windows-x64',
+      job: request.target === 'bun-linux-x64' ? 'native-linux-x64' : 'native-windows-x64',
       steps: [{ id: 'native-build', name: 'native-build' }],
       artifact_hosts: ['ci-artifacts.blob.core.windows.net'],
     },
@@ -73,20 +73,23 @@ function providerFixture(
     ...changes.run,
   };
   const job = {
-    name: 'native-windows-x64',
+    name: request.target === 'bun-linux-x64' ? 'native-linux-x64' : 'native-windows-x64',
     run_id: 123,
     run_attempt: 1,
     status: 'completed',
     conclusion: 'success',
     started_at: '2026-10-30T09:00:00Z',
     completed_at: '2026-10-30T09:01:00Z',
-    steps: [{ name: 'native-build', status: 'completed', conclusion: 'success' }],
+    steps:
+      request.target === 'bun-linux-x64'
+        ? Object.values(linuxSteps())
+        : [{ name: 'native-build', status: 'completed', conclusion: 'success' }],
     ...changes.job,
   };
   const bytes = changes.transport ?? transportBytes;
   const artifact = {
     id: 456,
-    name: `${request.request_id}-1`,
+    name: `build-${request.request_id}-123-1`,
     expired: false,
     digest: `sha256:${releaseDigest(bytes)}`,
     created_at: '2026-10-30T09:00:30Z',
@@ -198,6 +201,11 @@ test('producer downloader accepts the completed native producer during an in-pro
     retained?: boolean;
   }> = [
     {
+      name: 'formation artifact cannot substitute for a native build',
+      error: /artifact differs from selected Source\/run attempt interval/,
+      changes: { artifact: { name: `${request.request_id}-1` } },
+    },
+    {
       name: 'wrong source SHA',
       error: /selected download run differs/,
       changes: { run: { head_sha: 'c'.repeat(40) } },
@@ -211,7 +219,7 @@ test('producer downloader accepts the completed native producer during an in-pro
     {
       name: 'wrong artifact attempt name',
       error: /artifact differs from selected Source\/run attempt interval/,
-      changes: { artifact: { name: `${request.request_id}-2` } },
+      changes: { artifact: { name: `build-${request.request_id}-123-2` } },
     },
     {
       name: 'expired artifact',
@@ -258,4 +266,159 @@ test('producer downloader accepts the completed native producer during an in-pro
       }
     });
   }
+});
+
+function linuxSteps() {
+  return {
+    quality: {
+      name: 'full-source-quality',
+      status: 'completed',
+      conclusion: 'success',
+      number: 8,
+      started_at: '2026-10-30T09:00:01Z',
+      completed_at: '2026-10-30T09:00:10Z',
+    },
+    native: {
+      name: 'native-build',
+      status: 'completed',
+      conclusion: 'success',
+      number: 9,
+      started_at: '2026-10-30T09:00:11Z',
+      completed_at: '2026-10-30T09:00:25Z',
+    },
+  };
+}
+
+test('Linux publication requires its exact successful pre-build Source quality step', async () => {
+  const request = requestFixture('bun-linux-x64');
+  const successfulRoot = mkdtempSync(path.join(tmpdir(), 'vida-ci-linux-quality-success-'));
+  await withStubbedFetch(providerFixture(request), async (state) => {
+    const result = await downloadGitHubCIProducerArtifact({
+      root: successfulRoot,
+      request,
+      profile: profileFixture(request),
+      token: 'explicit-api-token',
+      run_id: 123,
+      run_attempt: 1,
+      artifact_id: 456,
+    });
+    assert.deepEqual(readFileSync(path.join(successfulRoot, result.transport_path)), transportBytes);
+    assert.equal(state.storageCalls, 1);
+    assert.equal(state.storageAuthorization, null);
+  });
+  rmSync(successfulRoot, { recursive: true, force: true });
+  const { quality, native } = linuxSteps();
+  const negatives: Array<{
+    name: string;
+    changes: Parameters<typeof providerFixture>[1];
+    error: RegExp;
+    workflowDigest?: string;
+  }> = [
+    { name: 'missing quality', changes: { job: { steps: [native] } }, error: /exactly one full-source-quality/ },
+    {
+      name: 'duplicate quality',
+      changes: { job: { steps: [quality, quality, native] } },
+      error: /exactly one full-source-quality/,
+    },
+    {
+      name: 'skipped quality',
+      changes: { job: { steps: [{ ...quality, conclusion: 'skipped' }, native] } },
+      error: /source-quality step failed\/skipped/,
+    },
+    {
+      name: 'failed quality',
+      changes: { job: { steps: [{ ...quality, conclusion: 'failure' }, native] } },
+      error: /source-quality step failed\/skipped/,
+    },
+    {
+      name: 'unfinished quality',
+      changes: { job: { steps: [{ ...quality, status: 'in_progress' }, native] } },
+      error: /source-quality step failed\/skipped/,
+    },
+    {
+      name: 'quality after build',
+      changes: {
+        job: {
+          steps: [{ ...quality, started_at: '2026-10-30T09:00:26Z', completed_at: '2026-10-30T09:00:29Z' }, native],
+        },
+      },
+      error: /must precede native build/,
+    },
+    {
+      name: 'quality step number after build',
+      changes: { job: { steps: [{ ...quality, number: 10 }, native] } },
+      error: /must precede native build/,
+    },
+    {
+      name: 'quality timestamp malformed',
+      changes: { job: { steps: [{ ...quality, started_at: 'invalid' }, native] } },
+      error: /step interval differs/,
+    },
+    {
+      name: 'artifact predates build and quality',
+      changes: { artifact: { created_at: '2026-10-30T09:00:05Z' } },
+      error: /must precede native build/,
+    },
+    { name: 'foreign attempt', changes: { job: { run_attempt: 2 } }, error: /selected download job differs/ },
+    { name: 'foreign Source', changes: { run: { head_sha: 'c'.repeat(40) } }, error: /selected download run differs/ },
+    { name: 'foreign workflow', changes: { run: { workflow_id: 1 } }, error: /selected download run differs/ },
+    {
+      name: 'old artifact attempt',
+      changes: { artifact: { name: `build-${request.request_id}-123-2` } },
+      error: /artifact differs from selected Source/,
+    },
+    {
+      name: 'changed workflow definition',
+      changes: {},
+      workflowDigest: 'c'.repeat(64),
+      error: /workflow definition differs/,
+    },
+  ];
+  for (const negative of negatives) {
+    const root = mkdtempSync(path.join(tmpdir(), 'vida-ci-linux-quality-denial-'));
+    const profile = profileFixture(request);
+    if (negative.workflowDigest) profile.github.workflow_sha256 = negative.workflowDigest;
+    await withStubbedFetch(providerFixture(request, negative.changes), async (state) => {
+      await assert.rejects(
+        downloadGitHubCIProducerArtifact({
+          root,
+          request,
+          profile,
+          token: 'explicit-api-token',
+          run_id: 123,
+          run_attempt: 1,
+          artifact_id: 456,
+        }),
+        negative.error,
+        negative.name,
+      );
+      assert.equal(state.storageCalls, 0);
+      assert.equal(existsSync(path.join(root, '.tmp/ci-delivery', request.request_id, '123-1-456.zip')), false);
+    });
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('completed-workflow downloader retains its formation artifact contract', async () => {
+  const request = requestFixture();
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-ci-completed-formation-'));
+  const fixture = providerFixture(request, {
+    run: { status: 'completed', conclusion: 'success' },
+    artifact: { name: `${request.request_id}-1` },
+  });
+  await withStubbedFetch(fixture, async (state) => {
+    const result = await downloadGitHubCIDelivery({
+      root,
+      request,
+      profile: profileFixture(request),
+      token: 'explicit-api-token',
+      run_id: 123,
+      run_attempt: 1,
+      artifact_id: 456,
+    });
+    assert.deepEqual(readFileSync(path.join(root, result.transport_path)), transportBytes);
+    assert.equal(state.storageCalls, 1);
+    assert.equal(state.storageAuthorization, null);
+  });
+  rmSync(root, { recursive: true, force: true });
 });

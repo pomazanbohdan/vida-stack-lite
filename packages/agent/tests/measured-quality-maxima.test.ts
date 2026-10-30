@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { measuredMaxima, pushedHead } from '../tooling/git-quality-hooks.js';
+import { measuredMaxima, pushedHead, validateFreshQualityReports } from '../tooling/git-quality-hooks.js';
 
 const inventory = new Map([['src/subject.ts:0:20', 2]]);
 function report() {
@@ -27,6 +27,51 @@ function report() {
 
 test('accepts finite frozen ceilings exactly at the measured function boundary', () => {
   expect(measuredMaxima(report(), 0, inventory)).toEqual({ maximum_complexity: 2, maximum_crap: 2 });
+});
+
+function freshReports(coverageRunId = 'fixture-run') {
+  const crap = report();
+  const coverage = { schema: 'VidaBunCoverageReport/v2', run_id: coverageRunId };
+  return {
+    crapReportBytes: Buffer.from(JSON.stringify(crap)),
+    coverageReportBytes: Buffer.from(JSON.stringify(coverage)),
+    collectionStatus: 0,
+    inventory,
+  };
+}
+
+test('joins fresh coverage and CRAP reports by exact run id and hashes validated bytes', () => {
+  const input = freshReports();
+  const summary = validateFreshQualityReports(input);
+  expect(summary).toMatchObject({
+    schema: 'VidaSourceQualitySummary/v1',
+    coverage_run_id: 'fixture-run',
+    maximum_crap: 2,
+    maximum_complexity: 2,
+  });
+  expect(summary.crap_report_sha256).toHaveLength(64);
+  expect(summary.coverage_report_sha256).toHaveLength(64);
+  const changed = validateFreshQualityReports({
+    ...input,
+    crapReportBytes: Buffer.concat([input.crapReportBytes, Buffer.from('\n')]),
+    coverageReportBytes: Buffer.concat([input.coverageReportBytes, Buffer.from('\n')]),
+  });
+  expect(changed.crap_report_sha256).not.toBe(summary.crap_report_sha256);
+  expect(changed.coverage_report_sha256).not.toBe(summary.coverage_report_sha256);
+});
+
+test('rejects a stale coverage report from another run', () => {
+  expect(() => validateFreshQualityReports(freshReports('stale-run'))).toThrow(/share one qualified run/);
+});
+
+test('rejects a fresh CRAP report with an incomplete function inventory', () => {
+  expect(() =>
+    validateFreshQualityReports({ ...freshReports(), inventory: new Map([['src/other.ts:0:20', 2]]) }),
+  ).toThrow(/incomplete/);
+});
+
+test('rejects failed full coverage collection', () => {
+  expect(() => validateFreshQualityReports({ ...freshReports(), collectionStatus: 1 })).toThrow(/collection failed/);
 });
 
 for (const field of ['maximum_complexity', 'maximum_crap'] as const) {

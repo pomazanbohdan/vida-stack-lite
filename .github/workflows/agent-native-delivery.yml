@@ -120,26 +120,26 @@ jobs:
           New-Item -ItemType Directory -Path (Join-Path $mirror 'packages') | Out-Null
           $package = Join-Path $mirror 'packages/agent'
           Copy-SourceDirectory (Join-Path $env:GITHUB_WORKSPACE 'packages/agent') $package
-          foreach ($root in @('packages/plugin','tests/agent','tooling/agent','.githooks')) {
-            $target = Join-Path $mirror $root
-            [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null
-            Copy-SourceDirectory (Join-Path $env:GITHUB_WORKSPACE $root) $target
-          }
           # Install from the package's own lock before any parent workspace manifest exists.
           Push-Location $package
           try {
             bun install --frozen-lockfile --ignore-scripts --linker=hoisted --backend=copyfile
             if ($LASTEXITCODE -ne 0) { throw 'Frozen producer dependencies unavailable' }
           } finally { Pop-Location }
-          $files = @('package.json','agent-runtime.config.v1.yaml','AGENT.sidecar.md',
-            '.github/workflows/agent-native-delivery.yml')
-          foreach ($file in $files) {
+          # Full development assurance needs tracked test data outside the native package roots.
+          # The package lock is installed first, without the parent workspace manifest.
+          $tracked = (git -C $env:GITHUB_WORKSPACE ls-files -z) -join "`n"
+          if ($LASTEXITCODE -ne 0) { throw 'Tracked Source inventory unavailable' }
+          foreach ($file in $tracked.Split([char[]]@([char]0), [StringSplitOptions]::RemoveEmptyEntries)) {
+            if ($file.StartsWith('packages/agent/', [StringComparison]::Ordinal)) { continue }
+            if ([IO.Path]::IsPathRooted($file) -or $file -match '(^|/)\.\.?(/|$)' -or $file.Contains('\')) { throw 'Unsafe tracked Source path' }
             $source = Join-Path $env:GITHUB_WORKSPACE $file
-            $entry = Get-Item -LiteralPath $source
+            $entry = Get-Item -LiteralPath $source -Force
             if ($entry.PSIsContainer -or $entry.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Non-regular declared Source' }
             $target = Join-Path $mirror $file
             [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null
             [IO.File]::Copy($source, $target, $false)
+            if ($IsLinux) { [IO.File]::SetUnixFileMode($target, [IO.File]::GetUnixFileMode($source)) }
           }
           "VIDA_CI_SOURCE_ROOT=$mirror" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
       - &shared-save-bun-dependency-cache
@@ -251,6 +251,7 @@ jobs:
     env:
       VIDA_NATIVE_CI_ENABLED: ${{ vars.VIDA_NATIVE_CI_ENABLED }}
       CI_REQUEST: ${{ inputs.request_linux }}
+      CI_PUBLICATION: ${{ inputs.publish }}
       CI_SOURCE_COMMIT: ${{ inputs.source_commit }}
       GIT_CONFIG_COUNT: "1"
       GIT_CONFIG_KEY_0: core.autocrlf
@@ -266,6 +267,10 @@ jobs:
       - *shared-isolated-source
       - *shared-save-bun-dependency-cache
       - *shared-require-bun-dependency-cache-evidence
+      - name: full-source-quality
+        id: source-quality
+        if: ${{ inputs.publish }}
+        run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/release-ci-source-quality.ts"
       - *shared-native-build
       - *shared-emit-build
       - name: upload
@@ -286,8 +291,27 @@ jobs:
           include-hidden-files: false
           retention-days: 14
       - *shared-upload-formation-proof
+      - name: retain-source-quality-evidence
+        if: ${{ always() && steps.source-quality.outputs.evidence_directory != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: vida-source-quality-${{ github.run_id }}-${{ github.run_attempt }}-linux
+          path: |
+            ${{ steps.source-quality.outputs.evidence_directory }}
+            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/bun-unified
+            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/sdk-test-inputs
+          archive: true
+          compression-level: 6
+          overwrite: false
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
   publish:
     name: publish-public-release
+    outputs:
+      tag: ${{ steps.publish-release.outputs.tag }}
+      version: ${{ steps.publish-release.outputs.version }}
+      bash_installer_sha256: ${{ steps.publish-release.outputs.bash_installer_sha256 }}
     needs:
       - native-windows-x64
       - native-linux-x64
@@ -322,6 +346,7 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
         working-directory: packages/agent
       - name: publish-release
+        id: publish-release
         run: bun --no-env-file --no-install tooling/agent/release-ci-publisher.ts
       - name: upload-publication-receipt
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -332,3 +357,52 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           include-hidden-files: false
+  external-linux-install:
+    name: external-linux-install
+    needs: publish
+    if: ${{ always() && inputs.publish && needs.publish.result == 'success' }}
+    runs-on: ubuntu-24.04
+    env:
+      EXPECTED_TAG: ${{ needs.publish.outputs.tag }}
+      EXPECTED_VERSION: ${{ needs.publish.outputs.version }}
+      EXPECTED_INSTALLER_SHA256: ${{ needs.publish.outputs.bash_installer_sha256 }}
+    steps:
+      - name: install-public-release-with-system-tools
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          [[ $EXPECTED_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && $EXPECTED_TAG == "v$EXPECTED_VERSION" ]]
+          [[ $EXPECTED_INSTALLER_SHA256 =~ ^[a-f0-9]{64}$ ]]
+          proof="$RUNNER_TEMP/vida-external-install-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          [[ ! -e $proof ]]
+          mkdir "$proof" "$proof/home" "$proof/runtime-denials"
+          cd "$proof"
+          for runtime in bun node jq; do
+            printf '#!/bin/sh\nexit 97\n' > "runtime-denials/$runtime"
+            chmod 700 "runtime-denials/$runtime"
+          done
+          export PATH="$proof/runtime-denials:/usr/bin:/bin"
+          export HOME="$proof/home"
+          curl --fail --show-error --silent --location --proto '=https' --tlsv1.2 --max-time 120 \
+            "https://github.com/pomazanbohdan/vida-stack-lite/releases/download/$EXPECTED_TAG/install.sh" -o install.sh
+          printf '%s  install.sh\n' "$EXPECTED_INSTALLER_SHA256" | sha256sum --check --strict
+          bash ./install.sh > installer.stdout.json 2> installer.stderr.log
+          "$HOME/.local/bin/vida-agent" version > runtime.version.json
+          [[ $(cat runtime.version.json) == "{\"schema\":\"VidaAgentPackage/v1\",\"name\":\"vida-agent\",\"version\":\"$EXPECTED_VERSION\"}" ]]
+          "$HOME/.local/bin/vida-agent" --help > runtime.help.json
+          sha256sum "$HOME/.local/bin/vida-agent" > runtime.sha256
+          cp "$HOME/.local/bin/.vida-agent-installation" installation.receipt
+      - name: retain-external-install-evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: vida-external-linux-install-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/vida-external-install-${{ github.run_id }}-${{ github.run_attempt }}/install.sh
+            ${{ runner.temp }}/vida-external-install-${{ github.run_id }}-${{ github.run_attempt }}/installer.*
+            ${{ runner.temp }}/vida-external-install-${{ github.run_id }}-${{ github.run_attempt }}/runtime.*
+            ${{ runner.temp }}/vida-external-install-${{ github.run_id }}-${{ github.run_attempt }}/installation.receipt
+          overwrite: false
+          if-no-files-found: error
+          retention-days: 14

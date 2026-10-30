@@ -15,6 +15,7 @@ const config = {
         'tooling/agent/check-documentation.ts',
         // Package coverage scripts select this child through the pinned launcher.
         'tooling/agent/run-coverage.ts',
+        'tooling/agent/release-ci-source-quality.ts',
         'tooling/agent/controllers/forward-update-prepare.ts',
         'tooling/agent/controllers/forward-update-finalize.ts',
         'tooling/agent/controllers/forward-documentation-phase.ts',
@@ -38,6 +39,7 @@ const config = {
         'bin/development-controller.ts',
         // Explicit child/preload paths and compiler/declaration inputs.
         'tooling/git-quality-hooks.ts',
+        'tooling/no-link-test-preload.ts',
         'tooling/quality-runtime-root.ts',
         'tooling/development-controller-qualification.ts',
         'tooling/bun-coverage-preload.ts',

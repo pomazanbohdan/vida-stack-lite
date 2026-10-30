@@ -22,6 +22,7 @@ import {
   validateCIDeliveryRequest,
   encodeCIDeliveryResult,
   validateDependencyCache,
+  nativeBuildArtifactName,
 } from './release-ci-evidence.ts';
 
 type NativeCIRequest = {
@@ -458,7 +459,7 @@ function physical(root: string, relative: string, maximum = ciArchiveLimit): Buf
   requireCI(stat.isFile() && stat.nlink === 1 && stat.size <= maximum, 'unsafe/oversized CI file');
   return readFileSync(file);
 }
-function exclusive(root: string, relative: string, value: Buffer | object): void {
+export function exclusive(root: string, relative: string, value: Buffer | object): void {
   const directory = path.posix.dirname(relative);
   if (directory !== '.') releaseDirectory(root, directory);
   writeFileSync(releasePath(root, relative, true), Buffer.isBuffer(value) ? value : json(value), {
@@ -466,7 +467,7 @@ function exclusive(root: string, relative: string, value: Buffer | object): void
     mode: 0o600,
   });
 }
-function context(): NativeCIContext {
+export function context(): NativeCIContext {
   const identity = validateNativeCIInvocation({
     env: process.env,
     platform: process.platform,
@@ -815,7 +816,7 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
   const phaseName = 'emit-build';
   const intent = 'phases/' + phaseName + '.intent.json';
   const outputDirectory = path.join(ctx.root, 'publication');
-  const artifactName = 'build-' + ctx.request.request_id + '-' + ctx.run_id + '-' + ctx.run_attempt;
+  const artifactName = nativeBuildArtifactName(ctx.request.request_id, ctx.run_id, ctx.run_attempt);
   requireCI(
     typeof process.env.GITHUB_OUTPUT === 'string' && !/[\r\n\0]/.test(process.env.GITHUB_OUTPUT),
     'actual CI output boundary missing',

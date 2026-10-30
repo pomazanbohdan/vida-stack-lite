@@ -11,7 +11,7 @@ import {
   type CIDeliveryRequest,
 } from './release-ci-evidence.ts';
 import { publishGitHubRelease, type PublicationAPI, type PublicationProducer } from './release-github-publication.ts';
-import { releaseSourceBinding, releaseJSON } from '../../packages/agent/bin/local-release-artifacts.ts';
+import { releaseSourceBinding, releaseJSON, releasePath } from '../../packages/agent/bin/local-release-artifacts.ts';
 import { checkManifest, readPin } from '../../packages/agent/bin/bun.ts';
 
 const repo = 'pomazanbohdan/vida-stack-lite';
@@ -225,6 +225,9 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
     'source commit date invalid',
   );
   const workflow = readFileSync(path.join(root, '.github/workflows/agent-native-delivery.yml'));
+  const bashInstallerHash = sha(readFileSync(releasePath(root, 'install/install.sh')));
+  const githubOutput = env.GITHUB_OUTPUT;
+  need(controlled(githubOutput), 'publisher output context unavailable');
   const receipt = await publishGitHubRelease({
     api,
     identity: {
@@ -339,6 +342,7 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
           file: windows ? 'install-windows.ps1' : 'install.sh',
           data: members.installer_bytes,
         });
+        if (!windows) need(sha(members.installer_bytes) === bashInstallerHash, 'Linux installer Source changed');
         candidates.push({
           target,
           request_id: selectedRequest.request_id,
@@ -378,6 +382,9 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
   mkdirSync(receiptDir, { recursive: true });
   const output = path.join(receiptDir, 'receipt.json');
   writeFileSync(output, JSON.stringify(receipt) + '\n', { flag: 'wx' });
+  writeFileSync(githubOutput, `tag=${receipt.tag}\nversion=${version}\nbash_installer_sha256=${bashInstallerHash}\n`, {
+    flag: 'a',
+  });
   process.stdout.write(JSON.stringify(receipt) + '\n');
   return receipt;
 }

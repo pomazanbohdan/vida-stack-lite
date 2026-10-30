@@ -103,7 +103,12 @@ function emptyTotals(): {
 }
 
 function assertTestcaseBinding(testcase: Record<string, unknown>, suiteFile: string) {
-  if (typeof testcase['@_name'] !== 'string' || testcase['@_name'].length === 0 || testcase['@_file'] !== suiteFile)
+  if (
+    typeof testcase['@_name'] !== 'string' ||
+    testcase['@_name'].length === 0 ||
+    typeof testcase['@_file'] !== 'string' ||
+    (process.platform === 'win32' ? testcase['@_file'].replaceAll('\\', '/') : testcase['@_file']) !== suiteFile
+  )
     throw new Error('JUnit testcase name or source binding is invalid.');
 }
 
@@ -244,7 +249,11 @@ function countSuite(
   assertionFailures: number;
   hookFailures: number;
 } {
-  if (suite['@_file'] !== suiteFile) throw new Error('JUnit nested suite is not bound to its selected source file.');
+  if (
+    typeof suite['@_file'] !== 'string' ||
+    (process.platform === 'win32' ? suite['@_file'].replaceAll('\\', '/') : suite['@_file']) !== suiteFile
+  )
+    throw new Error('JUnit nested suite is not bound to its selected source file.');
   const totals = countTestcases(suite.testcase, suiteFile, hookFiles, bodyEvents, observe);
   addTotals(totals, countNestedSuites(suite.testsuite, suiteFile, hookFiles, bodyEvents, observe));
   assertCounters(suite, totals);

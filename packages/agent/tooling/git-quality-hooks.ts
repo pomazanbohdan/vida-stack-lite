@@ -1,10 +1,12 @@
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, rmdirSync, unlinkSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { functionInventory as sharedFunctionInventory } from './function-inventory.js';
 import { rejectFocusedTests } from './focused-test-guard.js';
 import { environmentPath, prependEnvironmentPath } from './environment-path.js';
+import { runWindowsPushProfile } from './windows-push-profile.ts';
 export { rejectFocusedTests };
 
 type SyncResult = SpawnSyncReturns<string>;
@@ -299,6 +301,102 @@ async function functionInventory(pkg: string): Promise<FunctionComplexityInvento
   return inventory;
 }
 
+type FreshQualitySummary = {
+  schema: 'VidaSourceQualitySummary/v1';
+  coverage_run_id: string;
+  maximum_crap: number;
+  maximum_complexity: number;
+  crap_report_sha256: string;
+  coverage_report_sha256: string;
+};
+
+export function validateFreshQualityReports(input: {
+  crapReportBytes: Buffer;
+  coverageReportBytes: Buffer;
+  collectionStatus: number | null;
+  inventory: FunctionComplexityInventory;
+}): FreshQualitySummary {
+  if (input.collectionStatus !== 0) throw new Error(`Fresh coverage test collection failed: ${input.collectionStatus}`);
+  const crapValue: unknown = JSON.parse(input.crapReportBytes.toString('utf8'));
+  const maxima = measuredMaxima(crapValue, input.collectionStatus, input.inventory);
+  const crapReport = requireRecord(crapValue, 'Malformed CRAP report header.');
+  const coverageRunId = requireString(
+    crapReport.coverage_run_id,
+    'CRAP report has no bound coverage selector receipt.',
+  );
+  if (!coverageRunId) throw new Error('CRAP report has no bound coverage selector receipt.');
+  const coverageValue: unknown = JSON.parse(input.coverageReportBytes.toString('utf8'));
+  const coverageReport = requireRecord(coverageValue, 'Malformed coverage report.');
+  if (
+    (coverageReport.schema !== 'VidaBunCoverageReport/v1' && coverageReport.schema !== 'VidaBunCoverageReport/v2') ||
+    coverageReport.run_id !== coverageRunId
+  )
+    throw new Error('Coverage and CRAP reports do not share one qualified run.');
+  return {
+    schema: 'VidaSourceQualitySummary/v1',
+    coverage_run_id: coverageRunId,
+    ...maxima,
+    crap_report_sha256: createHash('sha256').update(input.crapReportBytes).digest('hex'),
+    coverage_report_sha256: createHash('sha256').update(input.coverageReportBytes).digest('hex'),
+  };
+}
+
+export async function runFreshFullQuality(input: {
+  packageRoot: string;
+  bunExecutable: string;
+  assertStableInputs: () => void;
+}): Promise<FreshQualitySummary> {
+  const pkg = input.packageRoot;
+  const baseEnv = environment(pkg);
+  if (realpathSync(input.bunExecutable) !== installedBun(pkg, baseEnv))
+    throw new Error('Full quality requires the package-selected Bun executable.');
+  const env = prependEnvironmentPath(baseEnv, path.dirname(input.bunExecutable));
+  assertPinnedQualityTools(pkg);
+  const reportFile = path.join(pkg, 'coverage/bun-unified/crap-budget-report.json');
+  const coverageReportFile = path.join(pkg, 'coverage/bun-unified/coverage-final.json');
+  if (existsSync(reportFile)) unlinkSync(reportFile);
+  const collection = command(
+    input.bunExecutable,
+    ['--no-env-file', '--no-install', '--config=' + path.join(pkg, 'bunfig.toml'), 'run', 'test:coverage:pinned'],
+    pkg,
+    env,
+    false,
+  );
+  input.assertStableInputs();
+  if (collection.status !== 0) throw new Error('Fresh coverage test collection failed; push rejected.');
+  const crapReportBytes = readFileSync(reportFile);
+  const coverageReportBytes = readFileSync(coverageReportFile);
+  const summary = validateFreshQualityReports({
+    crapReportBytes,
+    coverageReportBytes,
+    collectionStatus: collection.status,
+    inventory: await functionInventory(pkg),
+  });
+  input.assertStableInputs();
+  return summary;
+}
+
+function assertPinnedQualityTools(pkg: string): void {
+  const manifest = requireRecord(
+    JSON.parse(readFileSync(path.join(pkg, 'package.json'), 'utf8')),
+    'Malformed package manifest.',
+  );
+  const dependencies = requireRecord(manifest.dependencies, 'Malformed dependencies.');
+  const devDependencies = requireRecord(manifest.devDependencies, 'Malformed development dependencies.');
+  installedTool(pkg, 'typescript', requireString(devDependencies.typescript, 'Missing TypeScript pin.'));
+  installedPackage(
+    pkg,
+    'istanbul-lib-coverage',
+    requireString(devDependencies['istanbul-lib-coverage'], 'Missing coverage pin.'),
+  );
+  installedPackage(
+    pkg,
+    'istanbul-lib-instrument',
+    requireString(devDependencies['istanbul-lib-instrument'], 'Missing instrumenter pin.'),
+  );
+  installedPackage(pkg, '@babel/parser', requireString(dependencies['@babel/parser'], 'Missing parser pin.'));
+}
+
 function indexObjects(index: string): Map<string, StagedEntry> {
   return new Map(
     nul(index).map((row) => {
@@ -340,55 +438,31 @@ async function main(mode: string | undefined): Promise<void> {
   if (!pushedHead(readFileSync(0, 'utf8'), head)) return;
   const before = stableInputs(root, true);
   const bun = installedBun(pkg, env);
-  const prePushEnv = prependEnvironmentPath(env, path.dirname(bun));
-  const manifest = requireRecord(
-    JSON.parse(readFileSync(path.join(pkg, 'package.json'), 'utf8')),
-    'Malformed package manifest.',
-  );
-  const dependencies = requireRecord(manifest.dependencies, 'Malformed dependencies.');
-  const devDependencies = requireRecord(manifest.devDependencies, 'Malformed development dependencies.');
-  installedTool(pkg, 'typescript', requireString(devDependencies.typescript, 'Missing TypeScript pin.'));
-  installedPackage(
-    pkg,
-    'istanbul-lib-coverage',
-    requireString(devDependencies['istanbul-lib-coverage'], 'Missing coverage pin.'),
-  );
-  installedPackage(
-    pkg,
-    'istanbul-lib-instrument',
-    requireString(devDependencies['istanbul-lib-instrument'], 'Missing instrumenter pin.'),
-  );
-  installedPackage(pkg, '@babel/parser', requireString(dependencies['@babel/parser'], 'Missing parser pin.'));
+  assertPinnedQualityTools(pkg);
   const gitDirectory = path.resolve(root, git(root, ['rev-parse', '--git-common-dir']).trim());
   const lock = path.join(gitDirectory, 'vida-quality-run.lock');
   mkdirSync(lock);
   try {
-    const reportFile = path.join(pkg, 'coverage/bun-unified/crap-budget-report.json');
-    const coverageReportFile = path.join(pkg, 'coverage/bun-unified/coverage-final.json');
-    if (existsSync(reportFile)) unlinkSync(reportFile);
-    const run = (script: string, capture = false): SyncResult =>
-      command(
-        bun,
-        ['--no-env-file', '--no-install', '--config=' + path.join(pkg, 'bunfig.toml'), 'run', script],
-        pkg,
-        prePushEnv,
-        capture,
-      );
-    const collection = run('test:coverage:pinned');
-    if (stableInputs(root, true) !== before) throw new Error('Checked HEAD inputs changed during collection.');
-    if (collection.status !== 0) throw new Error('Fresh coverage test collection failed; push rejected.');
-    const reportValue: unknown = JSON.parse(readFileSync(reportFile, 'utf8'));
-    measuredMaxima(reportValue, collection.status, await functionInventory(pkg));
-    const report = requireRecord(reportValue, 'Malformed CRAP report header.');
-    const coverageRunId = requireString(report.coverage_run_id, 'CRAP report has no bound coverage selector receipt.');
-    const coverageReportValue: unknown = JSON.parse(readFileSync(coverageReportFile, 'utf8'));
-    const coverageReport = requireRecord(coverageReportValue, 'Malformed coverage report.');
-    if (
-      (coverageReport.schema !== 'VidaBunCoverageReport/v1' && coverageReport.schema !== 'VidaBunCoverageReport/v2') ||
-      coverageReport.run_id !== coverageRunId
-    )
-      throw new Error('Coverage and CRAP reports do not share one qualified run.');
-    if (stableInputs(root, true) !== before) throw new Error('Checked HEAD inputs changed before completion.');
+    if (process.platform === 'win32') {
+      const summary = await runWindowsPushProfile({
+        packageRoot: pkg,
+        bunExecutable: bun,
+        environment: prependEnvironmentPath(env, path.dirname(bun)),
+        assertStableInputs: () => {
+          if (stableInputs(root, true) !== before)
+            throw new Error('Checked HEAD inputs changed during Windows profile.');
+        },
+      });
+      process.stdout.write(JSON.stringify(summary) + '\n');
+      return;
+    }
+    await runFreshFullQuality({
+      packageRoot: pkg,
+      bunExecutable: bun,
+      assertStableInputs: () => {
+        if (stableInputs(root, true) !== before) throw new Error('Checked HEAD inputs changed during full quality.');
+      },
+    });
   } finally {
     rmdirSync(lock);
   }

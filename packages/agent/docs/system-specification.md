@@ -501,6 +501,14 @@ to its publisher job; publication runs serialize under one concurrency group.
 The publisher checks the actual completed successful native jobs and required
 steps, exact Source/workflow, producer run attempt, artifact identity and creation
 interval, transport digest, candidate, manifest, archive and executable bytes.
+Publication additionally requires exactly one completed successful Linux
+`full-source-quality` step before that producer's native build. This is Source
+development assurance, separate from the minimal native formation profile. It
+uses the same fresh full coverage, complete function inventory, CRAP budgets and
+report/run join as Linux pre-push. Its own intent and receipt bind the actual
+Source, request, workflow run, attempt and reports; they contain no invented
+candidate archive or whole-workflow completion. Recovery revalidates this
+requirement for the original Linux artifact before any publication write.
 Both targets must bind the selected operation, Source and version. Producer proof
 has no whole-workflow completion claim. The existing completed-workflow observer
 still requires actual workflow completion and success before its own receipt and
@@ -521,6 +529,21 @@ for each platform, the installer's exact platform checksum file, the maintained
 PowerShell and Bash installers, and producer provenance. Publication requires an
 exact complete asset inventory and byte readback. A public release is delivery
 evidence, not an installed runtime or attributable user Runtime acceptance.
+
+After publication, the same workflow downloads the published Bash installer into
+a fresh Linux consumer home. It checks the installer bytes against the verified
+publisher output, runs with Bun/Node/jq commands blocked, and records installation,
+version/help and executable digest evidence. This is external technical delivery
+verification. Failure leaves the already-published immutable release intact and
+requires recovery or a later PATCH; it grants no user Runtime acceptance.
+
+Native Windows Source push uses the maintained no-link development profile:
+pinned tools, full current typecheck/lint, nonempty declared release/native tests,
+observed terminal capture and existing HEAD/index/lock guards. It creates no
+symlinks and needs no Developer Mode. A Windows Source push can remain pending
+full CI quality; public release cannot. The Windows profile does not claim full
+coverage or CRAP, alter filesystem path/reparse denials, or replace other required
+task assurance and user Runtime acceptance.
 
 ### Windows Source producer custody
 

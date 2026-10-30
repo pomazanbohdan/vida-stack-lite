@@ -542,6 +542,22 @@ exact artifact integrity. It emits a distinct publication receipt and never
 claims that its still-running workflow completed. The existing completed-workflow
 observer retains its actual completed/success requirement for later closeout.
 
+For native Windows development without symlink creation, the maintained pre-push
+profile checks pinned tools, full current typecheck/lint and its nonempty declared
+release/native tests under the existing HEAD/index/lock and terminal-evidence
+guards. Its success admits the Source push with full CI quality still pending;
+it does not establish coverage, CRAP, delivery or acceptance. The Linux pre-push
+route retains its complete fresh quality gate. The same Git-independent quality
+owner runs as development assurance in the Linux publication producer before
+native formation. Its exclusive Source/run/attempt/report-bound intent and receipt
+are separate from the formation record and contain no placeholder archive hash.
+The publisher must verify the actual successful quality step for the exact Linux
+producer attempt before artifact use or publication writes, including recovery.
+Failure or UNKNOWN retains evidence and blocks publication. This routing changes
+no task-specific mutation prerequisite, Source lease/CAS, historical UNKNOWN or
+user Runtime-acceptance boundary. Build-only formation and installation run no
+test suite.
+
 Use four delivery steps: publish changed reviewed Source, issue one cached CI
 build, retrieve and qualify its exact artifact, then run the maintained installer.
 On every build or installation change, remove repeated work and duplicate

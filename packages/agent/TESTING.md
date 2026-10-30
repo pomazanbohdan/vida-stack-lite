@@ -69,6 +69,33 @@ metrics. The frozen-budget CRAP policy must match its executable gate; a fixed
 legacy threshold does not establish that match. Pre-commit is authorized after
 its required checks; pre-push and automatic mutation are separate.
 
+### Native Windows push without symlink fixtures
+
+The native Windows x64 pre-push route uses the maintained Windows profile with
+the package-selected Bun and tools. It runs full current typecheck and lint,
+then the declared release, producer and native process tests without creating
+symlinks, junctions or replacement hardlinks. The hook retains HEAD/index byte
+checks and its exclusive Git quality lock. Each selected test file must execute
+passing cases; empty selection, failed tests, incomplete capture or unknown
+process termination deny the push. This profile needs no Developer Mode or
+administrative privilege. A passing Windows profile is not full coverage, CRAP
+qualification, delivery or Runtime acceptance.
+JUnit suite and testcase attribution normalizes Windows path separators only;
+different file names, case and traversal components remain distinct bindings.
+
+A Windows Source push may therefore precede full CI quality. Publication in the
+existing native delivery workflow requires its Linux producer's actual
+`full-source-quality` step to pass before native formation. That step calls the
+same Git-independent fresh coverage and complete CRAP validator as the unchanged
+Linux pre-push route. It retains the full suite, inventory, numerical budgets,
+report/run bindings and security link fixtures. No local unsupported case is
+silently converted to PASS or removed from the full quality scope. Failure or
+UNKNOWN keeps publication blocked and retains the assurance intent and evidence.
+The publisher verifies this step on the exact original producer attempt, also
+when recovering an interrupted publication. Build-only dispatch keeps its
+formation-only profile. Source assurance is separate from package formation and
+installation; it does not close other task-specific mutation or acceptance gaps.
+
 ## New and modified files
 
 Apply this policy when authoring or changing production files. Inventory every
