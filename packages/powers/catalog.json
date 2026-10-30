@@ -250,7 +250,11 @@
     }
   },
   "tag_aliases": {
-    "tdd": "test-first-development"
+    "tdd": "test-first-development",
+    "debugging": "debug-root-cause",
+    "diagnose": "debug-root-cause",
+    "deprecate": "decide-on-deprecation",
+    "pr-review": "review-code"
   },
   "tag_exemptions": [],
   "instructions": [

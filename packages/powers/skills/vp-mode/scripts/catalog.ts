@@ -317,6 +317,19 @@ function tagTokens(value: string): string[] {
   return value.normalize('NFKC').toLowerCase().match(/[\p{L}\p{M}\p{N}]+/gu) ?? [];
 }
 
+function stemToken(token: string): string {
+  if (token.length <= 3 || token.endsWith('ss') || token.endsWith('us') || token.endsWith('is')) return token;
+  let value = token;
+  if (value.endsWith('ies') && value.length > 4) value = `${value.slice(0, -3)}y`;
+  else if (value.endsWith('ing') && value.length > 5) value = value.slice(0, -3);
+  else if (value.endsWith('ation') && value.length > 6) value = `${value.slice(0, -5)}at`;
+  else if (value.endsWith('ed') && value.length > 4) value = value.slice(0, -2);
+  else if (value.endsWith('es') && value.length > 4) value = value.slice(0, -2);
+  else if (value.endsWith('s') && value.length > 3) value = value.slice(0, -1);
+  if (value.endsWith('e') && value.length > 3) value = value.slice(0, -1);
+  return value.replace(/([b-df-hj-np-tv-z])\1$/u, '$1');
+}
+
 export function catalogFindTags(
   catalog: Catalog,
   terms: readonly string[],
@@ -324,7 +337,7 @@ export function catalogFindTags(
 ): CatalogTagMatch[] {
   if (match !== 'any' && match !== 'all') throw invalid('tag match must be any or all', { match });
   const phrases = [...new Set(terms.map(normalizedTagText).filter((term) => term !== ''))];
-  const tokens = [...new Set(terms.flatMap(tagTokens))];
+  const tokens = [...new Set(terms.flatMap(tagTokens).map(stemToken))];
   if (tokens.length === 0) return [];
   const matches: Array<{ rank: number; entry: CatalogTagMatch }> = [];
   for (const dimension of ['capability', 'pattern'] as const) {
@@ -334,7 +347,7 @@ export function catalogFindTags(
         .map(([alias]) => alias);
       const names = [tag, ...aliases];
       const searchable = [...names, description];
-      const availableTokens = new Set(searchable.flatMap(tagTokens));
+      const availableTokens = new Set(searchable.flatMap(tagTokens).map(stemToken));
       const matchedTokenCount = tokens.filter((token) => availableTokens.has(token)).length;
       const selected = match === 'all' ? matchedTokenCount === tokens.length : matchedTokenCount > 0;
       if (!selected) continue;

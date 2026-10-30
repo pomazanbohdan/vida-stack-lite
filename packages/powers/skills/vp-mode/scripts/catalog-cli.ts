@@ -130,6 +130,7 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Filter to the current resolved effective profile.' },
       '--limit': { arity: 'scalar', value: 'N', description: 'Return at most N rows.' },
       '--offset': { arity: 'scalar', value: 'N', description: 'Skip N rows after deduplication.' },
+      '--all': { arity: 'switch', description: 'Return every row instead of the default first page of 10.' },
     },
     examples: ['search --capability test-design acceptance-design', 'search --domain engineering operations --form procedure checklist'],
   },
@@ -330,6 +331,17 @@ function parseArgs(argv: string[]): ParsedArgs {
 function renderHelp(command?: Command): string {
   const commands = command === undefined ? commandNames : [command];
   const lines = ['usage: bun catalog-cli.ts <command> [flags]', 'Use --help or <command> --help.'];
+  if (command === undefined) {
+    lines.push(
+      '',
+      'workflow:',
+      '  1. tags --query "<terms>"                      -> capability:/pattern: matches',
+      '  2. search --capability <tag> [--pattern <tag>]  -> candidates, 10 per page',
+      '  3. get --id <id...> --profile <path>            -> full text + obligations',
+      'notes: search takes bare tags (review-code, not capability:review-code);',
+      '       --offset 10 gets the next page; --all lists every row.',
+    );
+  }
   for (const name of commands) {
     const definition = commandDefinitions[name];
     lines.push('', `${name}: ${definition.description}`);
@@ -450,6 +462,17 @@ function listValues(flags: Map<string, string[]>, name: string): string[] | unde
   return [...new Set(parsed)];
 }
 
+function tagListValues(flags: Map<string, string[]>, name: string, dimension: 'capability' | 'pattern'): string[] | undefined {
+  const values = listValues(flags, name);
+  if (values === undefined) return undefined;
+  return values.map((value) => {
+    const match = /^(capability|pattern):(.+)$/u.exec(value);
+    if (match === null) return value;
+    if (match[1] !== dimension) throw invalid(`flag ${name} expects a ${dimension} tag`, { flag: name, value });
+    return match[2] as string;
+  });
+}
+
 function allowedListValues<T extends string>(
   flags: Map<string, string[]>,
   name: string,
@@ -506,20 +529,24 @@ function validateStaticFlags(command: Command, flags: Map<string, string[]>): vo
 type CompactRow = { id: string; description: string };
 type CompactResult = { kind: 'compact'; text: string; pagination?: string };
 type JsonResult = { kind: 'json'; value: unknown };
-type TextResult = { kind: 'text'; text: string };
+type TextResult = { kind: 'text'; text: string; stats?: string };
 type DispatchResult = CompactResult | JsonResult | TextResult;
 
-function compactRows(rows: CompactRow[], flags: Map<string, string[]>): CompactResult {
+function compactRows(rows: CompactRow[], flags: Map<string, string[]>, defaultLimit?: number, refine?: string): CompactResult {
   const offset = nonnegativeInteger(flags, '--offset', 0);
-  const limit = flags.has('--limit') ? nonnegativeInteger(flags, '--limit', 0) : undefined;
+  const limit = flags.has('--limit') ? nonnegativeInteger(flags, '--limit', 0) : flags.has('--all') ? undefined : defaultLimit;
   const page = rows.slice(offset, limit === undefined ? undefined : offset + limit);
   const text = page.map((row) => `${escapeField(row.id)}\t${escapeField(row.description)}`).join('\n');
-  const hasPagination = flags.has('--limit') || flags.has('--offset');
   const remaining = Math.max(0, rows.length - offset - page.length);
+  const paginated = page.length < rows.length || offset > 0;
+  const lines = paginated
+    ? [`pagination: showing ${page.length} of ${rows.length}${remaining > 0 ? `; next: --offset ${offset + page.length} (${remaining} remaining)` : '; no more rows'}`]
+    : [];
+  if (remaining > 0 && refine !== undefined) lines.push(refine);
   return {
     kind: 'compact',
     text,
-    ...(hasPagination ? { pagination: `pagination: returned ${page.length}/${rows.length}; ${remaining} remaining after offset ${offset}.` } : {}),
+    ...(lines.length > 0 ? { pagination: lines.join('\n') } : {}),
   };
 }
 
@@ -630,8 +657,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
     case 'search':
     case 'explain': {
       const query: SearchQuery = {};
-      const capabilityTags = listValues(flags, '--capability');
-      const patternTags = listValues(flags, '--pattern');
+      const capabilityTags = tagListValues(flags, '--capability', 'capability');
+      const patternTags = tagListValues(flags, '--pattern', 'pattern');
       const roles = listValues(flags, '--roles');
       const instructionIds = listValues(flags, '--id');
       const products = listValues(flags, '--product');
@@ -673,23 +700,42 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         ? catalogSearch(catalog, instructions, query)
         : catalogSearchWithProfile(catalog, instructions, query, profile);
       const rows = matches.map(({ instruction_id, summary }) => ({ id: instruction_id, description: summary }));
-      return compactRows(rows, flags);
+      return compactRows(rows, flags, 10, 'refine: narrow with --pattern <tag> or --query <terms>, or pass --all');
     }
     case 'get': {
       const ids = listValues(flags, '--id');
       if (ids === undefined) throw invalid('missing required flag --id', { flag: '--id' });
+      for (const id of ids) {
+        if (instructions.has(id)) continue;
+        const dimension = Object.prototype.hasOwnProperty.call(catalog.tag_dictionary.capability, id)
+          ? 'capability'
+          : Object.prototype.hasOwnProperty.call(catalog.tag_dictionary.pattern, id)
+          ? 'pattern'
+          : catalog.tag_aliases[id] !== undefined ? 'tag alias' : undefined;
+        if (dimension !== undefined) {
+          throw invalid(`unknown instruction id: ${id}; ${id} is a ${dimension}, not an instruction`, {
+            instruction_id: id,
+            hint: `search --query ${id}`,
+          });
+        }
+      }
       const profile = await profileAt(required(flags, '--profile'), dirname(resolve(catalogPath)));
       const approaches = listValues(flags, '--approach');
       const bundle = catalogCompose(catalog, instructions, { required_ids: ids, profile, ...(approaches === undefined ? {} : { approaches }) });
-      return { kind: 'text', text: renderGet(bundle, catalog, instructions) };
+      const bytes = bundle.instructions.reduce((total, instruction) => total + Buffer.byteLength(instruction.content, 'utf8'), 0);
+      return {
+        kind: 'text',
+        text: renderGet(bundle, catalog, instructions),
+        stats: `bundle: ${bundle.instructions.length} instructions, ${bytes} of 64000 bytes (max 20 instructions)`,
+      };
     }
     case 'compose': {
       const profile = await profileAt(one(flags, '--profile'), dirname(resolve(catalogPath)));
       const query: ComposeQuery = {};
       const approaches = listValues(flags, '--approach');
       if (approaches !== undefined) query.approaches = approaches;
-      const capabilityTags = listValues(flags, '--capability');
-      const patternTags = listValues(flags, '--pattern');
+      const capabilityTags = tagListValues(flags, '--capability', 'capability');
+      const patternTags = tagListValues(flags, '--pattern', 'pattern');
       const instructionIds = listValues(flags, '--id');
       const requiredIds = listValues(flags, '--required');
       const role = one(flags, '--role');
@@ -747,6 +793,7 @@ async function main(argv: string[], output: CliOutput): Promise<number> {
       return 0;
     }
     if (result.kind === 'text') {
+      if (result.stats !== undefined) output.stderr(`${result.stats}\n`);
       if (result.text !== '') output.stdout(result.text + '\n');
       return 0;
     }

@@ -633,7 +633,7 @@ describe('catalog CLI', () => {
     const result = runCli(fixtureArgs(['tags', '--query', 'tdd', 'test-first', 'TDD', '--match', 'all', '--limit', '1', '--offset', '1']));
     expect(result.status).toBe(0);
     expect(result.stdout).toBe('');
-    expect(result.stderr).toBe('pagination: returned 0/1; 0 remaining after offset 1.\n');
+    expect(result.stderr).toBe('pagination: showing 0 of 1; no more rows\n');
   });
 
   test('tags reads a catalog-only snapshot without instruction bodies', async () => {
@@ -673,7 +673,7 @@ describe('catalog CLI', () => {
     ]));
     expect(paged.status).toBe(0);
     expect(paged.stdout).toBe('beta\tDefines acceptance checks.\n');
-    expect(paged.stderr).toBe('pagination: returned 1/2; 0 remaining after offset 1.\n');
+    expect(paged.stderr).toBe('pagination: showing 1 of 2; no more rows\n');
 
     const broad = runCli(fixtureArgs(['search']));
     expect(broad.status).toBe(0);
@@ -734,7 +734,7 @@ describe('catalog CLI', () => {
     const paged = runCli(['browse', '--catalog', catalogPath, '--axis', 'domain', '--limit', '1', '--offset', '1']);
     expect(paged.status).toBe(0);
     expect(paged.stdout).toBe('domain:design-ux\tDomain design-ux; 1 active instructions.\n');
-    expect(paged.stderr).toBe('pagination: returned 1/7; 5 remaining after offset 1.\n');
+    expect(paged.stderr).toBe('pagination: showing 1 of 7; next: --offset 2 (5 remaining)\n');
 
     const unsupported = await runInProcess(['browse', '--catalog', catalogPath, '--axis', 'policy']);
     expect(unsupported.status).toBe(1);
@@ -843,7 +843,7 @@ describe('catalog CLI', () => {
     const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
     const result = runCli(['get', '--catalog', catalogPath, '--id', 'alpha', 'beta', 'alpha', '--profile', profilePath]);
     expect(result.status).toBe(0);
-    expect(result.stderr).toBe('');
+    expect(result.stderr).toContain('bundle: ');
     expect(result.stdout).not.toContain('{');
     expect((result.stdout.match(/Alpha body\./gu) ?? []).length).toBe(1);
     expect((result.stdout.match(/Beta body\./gu) ?? []).length).toBe(1);
@@ -1238,7 +1238,7 @@ describe('catalog CLI', () => {
     const emptyPage = await runInProcess(fixtureArgs(['tags', '--limit', '0']));
     expect(emptyPage.status).toBe(0);
     expect(emptyPage.stdout).toBe('');
-    expect(emptyPage.stderr).toContain('pagination: returned 0/');
+    expect(emptyPage.stderr).toContain('pagination: showing 0 of');
   });
 
   test('get requires IDs and a profile while evaluate keeps its JSON error contract', () => {
@@ -1312,8 +1312,9 @@ describe('catalog CLI', () => {
         expect(result.stdout.split('\n').filter(Boolean).every((line) => line.split('\t').length === 2)).toBe(true);
       } else if (command[0] === 'get') {
         expect(result.stdout).toContain('Alpha body.');
+        expect(result.stderr).toContain('bundle: ');
       } else expect(JSON.parse(result.stdout)).toBeTruthy();
-      expect(result.stderr).toBe('');
+      if (command[0] !== 'get') expect(result.stderr).toBe('');
     }
   });
 
@@ -1707,6 +1708,58 @@ describe('decisionEvaluate', () => {
     expect(result.rationale).toContain('product "vida-powers" in context "review"');
   });
 
+});
+
+describe('retrieval workflow contract', () => {
+  const realCatalog = join(here, '../catalog.json');
+
+  test('search defaults to ten rows, points at the next page, and --all lifts the default', async () => {
+    const first = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog]);
+    expect(first.status).toBe(0);
+    expect(first.stdout.trim().split('\n')).toHaveLength(10);
+    expect(first.stderr).toContain('pagination: showing 10 of');
+    expect(first.stderr).toContain('next: --offset 10');
+    expect(first.stderr).toContain('refine:');
+
+    const next = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog, '--offset', '10']);
+    expect(next.status).toBe(0);
+    expect(next.stdout.trim().split('\n')).toHaveLength(10);
+
+    const all = await runInProcess(['search', '--capability', 'review-code', '--catalog', realCatalog, '--all']);
+    expect(all.status).toBe(0);
+    expect(all.stdout.trim().split('\n').length).toBeGreaterThan(10);
+  });
+
+  test('search accepts a namespaced tag copied from tags output', async () => {
+    const result = await runInProcess(['search', '--capability', 'capability:review-code', '--catalog', realCatalog]);
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim().split('\n')).toHaveLength(10);
+    const wrongDimension = await runInProcess(['search', '--capability', 'pattern:code-review', '--catalog', realCatalog]);
+    expect(wrongDimension.status).toBe(1);
+    expect(wrongDimension.stderr).toContain('expects a capability tag');
+  });
+
+  test('natural word forms reach the canonical tag', async () => {
+    const debugging = await runInProcess(['tags', '--query', 'debugging', '--catalog', realCatalog]);
+    expect(debugging.status).toBe(0);
+    expect(debugging.stdout).toContain('capability:debug-root-cause');
+    const alias = await runInProcess(['tags', '--query', 'pr-review', '--catalog', realCatalog]);
+    expect(alias.status).toBe(0);
+    expect(alias.stdout).toContain('capability:review-code');
+  });
+
+  test('get explains that a tag is not an instruction id', async () => {
+    const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+    const capability = await runInProcess(['get', '--catalog', join(fixtureDir, 'catalog.json'), '--id', 'test-design', '--profile', profilePath]);
+    expect(capability.status).toBe(1);
+    expect(capability.stderr).toContain('is a capability, not an instruction');
+    const pattern = await runInProcess(['get', '--catalog', join(fixtureDir, 'catalog.json'), '--id', 'test-first-development', '--profile', profilePath]);
+    expect(pattern.status).toBe(1);
+    expect(pattern.stderr).toContain('is a pattern, not an instruction');
+    const alias = await runInProcess(['get', '--catalog', join(fixtureDir, 'catalog.json'), '--id', 'tdd', '--profile', profilePath]);
+    expect(alias.status).toBe(1);
+    expect(alias.stderr).toContain('is a tag alias, not an instruction');
+  });
 });
 
 describe('artifacts commands', () => {
