@@ -144,6 +144,11 @@ evidence: their exact bytes and digests belong to the corpus and receipt owners.
 The 1.4.4 coverage fixes can change counters relative to 1.4.3. Keep the configured
 1.0 thresholds and report actual new counters; do not relabel historical receipts.
 
+Text inspection is done with Bun or Node, never with a PowerShell text pipeline.
+Windows PowerShell decodes UTF-8 files as ANSI, so a clean file can look Cyrillic
+and redirected output can corrupt multi-byte text. Use `bun -e` with absolute
+paths for any encoding, Unicode or byte-level check.
+
 **Installing dependencies.** VP has its own install directory (`packages/powers/bun.lock`,
 `packages/powers/node_modules`) — like `packages/agent`; in VP there are only dev types
 (`@types/bun`, `@types/node`). Command: `bun install --cwd packages/powers`.

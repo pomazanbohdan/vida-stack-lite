@@ -95,7 +95,7 @@ test('unbound first batch of a mixed cohort is fenced before either instruction 
 });
 async function migrationFixture() {
   const f = await fixture(2);
-  const seeded = [await seedFacetInstruction(f, 0, { body: 'Україна\r\nfirst\n' }), await seedFacetInstruction(f, 1, { body: 'second 🌍\r\n' })];
+  const seeded = [await seedFacetInstruction(f, 0, { body: 'Grüße\r\nfirst\n' }), await seedFacetInstruction(f, 1, { body: 'second 🌍\r\n' })];
   const catalogPath = join(f.root, 'catalog.json');
   const catalog = JSON.parse(await readFile(catalogPath, 'utf8'));
   const legacy: Buffer[] = [];
@@ -247,7 +247,7 @@ test('migration binding rejects a malformed current assessment even when the cat
 });
 test('legacy preimage stages v1.2 while mixed corpus apply is fenced before effects', async () => {
   const f = await fixture(1);
-  const seeded = await seedFacetInstruction(f, 0, { body: 'Україна\r\nbody\r\n' });
+  const seeded = await seedFacetInstruction(f, 0, { body: 'Grüße\r\nbody\r\n' });
   const legacy = Buffer.from('\uFEFF' + seeded.bytes.toString('utf8').replace('schema: VPInstruction/v1.2\nclassification_status: unclassified\nclassification_reason: classification-not-assessed\n', '').replace(/\r?\n/g, '\r\n'));
   await writeFile(seeded.path, legacy);
   const catalogPath = join(f.root, 'catalog.json');
@@ -368,7 +368,7 @@ test('legacy conversion refuses to erase an existing v1.1 classification', async
 
 test('reclassification preserves BOM, CRLF, body bytes and non-facet fields while removing an old domain block', async () => {
   const f = await fixture(1);
-  const seeded = await seedFacetInstruction(f, 0, { body: 'Original Unicode guidance: Україна 🌍.\n\nKeep this body.' });
+  const seeded = await seedFacetInstruction(f, 0, { body: 'Original Unicode guidance: Grüße 🌍.\n\nKeep this body.' });
   const original = Buffer.from('\uFEFF' + seeded.bytes.toString('utf8').replace(/\r?\n/g, '\r\n'));
   await writeFile(seeded.path, original);
   const catalog = JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8'));
