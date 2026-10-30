@@ -1,0 +1,133 @@
+{
+  "schema": "VPMethodologyProfile/v1",
+  "groups": [
+    {
+      "id": "approval-policy",
+      "title": "Approval policy",
+      "description": "Select how approved work proceeds and when it must be gated.",
+      "user_decision": true,
+      "alternatives": [
+        {
+          "id": "approval-policy-proceed",
+          "title": "Proceed with approved work",
+          "description": "Do approved work and stop only at irreversible decisions.",
+          "instruction_ids": [
+            "proceed-without-waiting-for-confirmation"
+          ]
+        },
+        {
+          "id": "approval-policy-gate",
+          "title": "Size and gate the work",
+          "description": "Determine the work size before requesting approval.",
+          "instruction_ids": [
+            "size-and-gate-the-work"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testing-sequence",
+      "title": "Testing sequence",
+      "description": "Test-first development workflow.",
+      "user_decision": false,
+      "default": "test-first-development",
+      "alternatives": [
+        {
+          "id": "test-first-development",
+          "title": "Test-first development",
+          "description": "Write behavior tests before implementation.",
+          "instruction_ids": [
+            "simplify-design-when-tests-are-hard",
+            "test-first-development",
+            "write-tests-that-catch-breaks"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "review-strategy",
+      "title": "Review strategy",
+      "description": "Code review and review finding handling.",
+      "user_decision": false,
+      "default": "code-review",
+      "alternatives": [
+        {
+          "id": "code-review",
+          "title": "Code review",
+          "description": "Review changes using scoped, evidence-based review practices.",
+          "instruction_ids": [
+            "apply-code-review",
+            "avoid-performative-review-agreement",
+            "check-requested-feature-usage",
+            "classify-and-state-review-verdict",
+            "establish-review-scope",
+            "inspect-data-integrity",
+            "inspect-edge-case-classes",
+            "inspect-scalability-hazards",
+            "inspect-security-surface",
+            "keep-review-read-only",
+            "request-independent-review",
+            "require-concrete-failure-case",
+            "review-adversarially",
+            "review-change-against-requirements",
+            "review-code-quality-and-tests",
+            "review-task-both-verdicts",
+            "run-bounded-fix-loop",
+            "run-final-change-review",
+            "separate-blocking-slowdowns",
+            "state-assumed-load",
+            "treat-declared-shortcut-as-decision",
+            "triage-review-findings-with-judgment"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "description": "Structural design practices.",
+      "user_decision": false,
+      "default": "structural-design",
+      "alternatives": [
+        {
+          "id": "structural-design",
+          "title": "Structural design",
+          "description": "Shape structures around callers, data, and foundational constraints.",
+          "instruction_ids": [
+            "choose-user-experience-over-implementation",
+            "design-an-agent-facing-control-interface",
+            "design-data-structures-first",
+            "design-from-caller-usage",
+            "redesign-as-if-foundational",
+            "screen-design-for-structural-red-flags"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "delivery",
+      "title": "Delivery",
+      "description": "Plan execution practices.",
+      "user_decision": false,
+      "default": "plan-execution",
+      "alternatives": [
+        {
+          "id": "plan-execution",
+          "title": "Plan execution",
+          "description": "Execute approved plans and preserve progress and handoffs.",
+          "instruction_ids": [
+            "enforce-plan-completion-contract",
+            "execute-plan-in-order",
+            "pause-work-with-a-handoff",
+            "record-execution-rulings",
+            "record-skipped-steps-with-reason",
+            "resume-plan-from-record",
+            "run-until-a-done-predicate",
+            "scan-plan-for-conflicts",
+            "take-over-in-flight-work"
+          ]
+        }
+      ]
+    }
+  ]
+}

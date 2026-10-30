@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VPInstruction/v1.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "classification_status", "instruction_id", "title", "summary", "capability_tags", "pattern_tags",
+    "conditions_applies_when", "conditions_does_not_apply_when",
+    "artifact_contract_output_type", "artifact_contract_required_data", "artifact_contract_verified_by",
+    "compatibility_excludes", "compatibility_requires", "provenance", "status", "revision"
+  ],
+  "properties": {
+    "schema": { "const": "VPInstruction/v1.2" },
+    "approach_assessments": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "approach_body_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "classification_status": { "enum": ["classified", "unclassified"] },
+    "instruction_form": { "enum": ["principle", "decision-rule", "procedure", "checklist"] },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["engineering", "design-ux", "product", "business", "research", "operations"] }
+    },
+    "classification_reason": { "type": "string", "minLength": 1, "pattern": "\\S" },
+    "instruction_id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "capability_tags": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" } },
+    "pattern_tags": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" } },
+    "conditions_applies_when": { "type": "string", "minLength": 1 },
+    "conditions_does_not_apply_when": { "type": "string", "minLength": 1 },
+    "artifact_contract_output_type": { "type": "string", "minLength": 1 },
+    "artifact_contract_required_data": { "type": "array", "items": { "type": "string" } },
+    "artifact_contract_verified_by": { "type": "string" },
+    "compatibility_excludes": { "type": "array", "items": { "type": "string" } },
+    "compatibility_requires": { "type": "array", "items": { "type": "string" } },
+    "roles": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" } },
+    "products": { "type": "array", "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" } },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^donor=[^;]+; license=[^;]+; revision=[0-9a-f]{40}; path=.+$"
+      }
+    },
+    "status": { "enum": ["active", "disabled"] },
+    "revision": { "type": "integer", "minimum": 1 }
+  },
+  "allOf": [
+    { "if": { "required": ["approach_assessments"] }, "then": { "required": ["approach_body_sha256"] } },
+    { "if": { "required": ["approach_body_sha256"] }, "then": { "required": ["approach_assessments"] } },
+    {
+      "if": {
+        "properties": { "artifact_contract_output_type": { "const": "none" } },
+        "required": ["artifact_contract_output_type"]
+      },
+      "then": {
+        "properties": { "artifact_contract_required_data": { "maxItems": 0 } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "classification_status": { "const": "classified" } },
+        "required": ["classification_status"]
+      },
+      "then": {
+        "required": ["instruction_form", "domains"],
+        "not": { "required": ["classification_reason"] }
+      }
+    },
+    {
+      "if": {
+        "properties": { "classification_status": { "const": "unclassified" } },
+        "required": ["classification_status"]
+      },
+      "then": {
+        "required": ["classification_reason"],
+        "allOf": [
+          { "not": { "required": ["instruction_form"] } },
+          { "not": { "required": ["domains"] } }
+        ]
+      }
+    }
+  ]
+}

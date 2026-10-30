@@ -1,0 +1,19 @@
+{
+  "name": "vida-powers",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Portable agent plugin: canonical instruction corpus, one orchestration skill, artifact-first materialization.",
+  "type": "module",
+  "scripts": {
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "typecheck": "bun check --no-script --project tsconfig.json",
+    "format:check": "bun scripts/check-format.ts",
+    "build:manifests": "bun scripts/build-manifests.ts",
+    "check:manifests": "bun scripts/build-manifests.ts --check"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2",
+    "@types/node": "26.6.5"
+  }
+}

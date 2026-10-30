@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "groups"],
+  "properties": {
+    "schema": { "const": "VPEffectiveProfile/v1" },
+    "groups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["active", "alternatives"],
+        "properties": {
+          "active": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" },
+          "alternatives": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" }
+          }
+        }
+      }
+    },
+    "unresolved_groups": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)+$" }
+      }
+    },
+    "flow_level": { "enum": ["full", "medium", "light"] },
+    "verification": {
+      "type": "object", "additionalProperties": false,
+      "required": ["available_models", "lane_assignment", "lane_policy", "limitations"],
+      "properties": {
+        "available_models": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["provider", "model", "family", "roles", "available"], "properties": {
+          "provider": { "type": "string" }, "model": { "type": "string" }, "family": { "type": "string" }, "roles": { "type": "array", "items": { "enum": ["main", "agent"] } }, "available": { "type": "boolean" }
+        } } },
+        "lane_assignment": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["lane", "provider", "model", "blind"], "properties": {
+          "lane": { "type": "string" }, "provider": { "type": "string" }, "model": { "type": "string" }, "blind": { "type": "boolean" }
+        } } },
+        "lane_policy": { "enum": ["independent-provider", "independent-model", "blind-same-model"] },
+        "limitations": { "type": "string" }
+      }
+    }
+  }
+}

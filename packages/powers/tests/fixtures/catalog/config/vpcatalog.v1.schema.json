@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "catalog_id", "revision", "source_revision", "updated_at", "tag_dictionary", "tag_aliases", "tag_exemptions", "instructions"],
+  "properties": {
+    "schema": { "const": "VPCatalog/v1" },
+    "catalog_id": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "source_revision": { "type": "string", "minLength": 1 },
+    "updated_at": { "type": "string", "minLength": 1 },
+    "tag_dictionary": {
+      "type": "object", "additionalProperties": false, "required": ["capability", "pattern"],
+      "properties": {
+        "capability": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } },
+        "pattern": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "tag_aliases": { "type": "object", "additionalProperties": { "type": "string" } },
+    "tag_exemptions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["instruction_id", "dimension", "reason"],
+        "properties": {
+          "instruction_id": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "dimension": { "enum": ["capability", "pattern"] },
+          "reason": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "instructions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["instruction_id", "path", "sha256"],
+        "properties": {
+          "instruction_id": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    }
+  }
+}

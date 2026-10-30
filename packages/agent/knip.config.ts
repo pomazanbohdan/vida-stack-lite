@@ -60,6 +60,14 @@ const config = {
       entry: [],
       project: [codeFiles],
     },
+    'packages/powers': {
+      // Bun's built-in check subcommand and Windows attrib.exe are not npm binaries.
+      ignoreBinaries: ['check', 'attrib'],
+      // Every product script is a manual entrypoint; the test files are entrypoints too.
+      // The scratch area (.tmp) is already excluded through .gitignore.
+      entry: ['scripts/*.ts', 'skills/*/scripts/*.ts', ...tests],
+      project: [codeFiles],
+    },
   },
 } satisfies KnipConfig;
 

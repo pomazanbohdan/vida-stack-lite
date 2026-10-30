@@ -1,0 +1,24 @@
+# Decisions
+
+Accepted decisions with the questions that blocked the implementation. Each
+decision is a separate concept with the rationale, the options considered, the
+evidence and the authority (research §7.2). The current state is in the bundle
+log `../log.md`.
+
+* [D1 — Placement of the Vida Powers product](D1-product-placement.md) - Vida Powers lives in `packages/powers` as the third product of the repository; `packages/plugin` remains the Codex layer between the Codex host and the agent.
+* [D2 — Ownership and workspace model of VP in the monorepo](D2-ownership-and-work-space.md) - Each plugin has its own owner, its own documentation, its own task set and its own workspace; VP Work Items and evidence live in the product, coordination — in the repository.
+* [D3 — VP instruction catalog: a standalone plugin and an extended registry in the agent package](D3-instruction-catalog-and-registry.md) - VP keeps its own catalog and its own scripts for finding and using instructions; in the mode of building into the agent delivery package, the agent package must have its own extended instruction registry.
+* [D4 — VP delivery channels: separate plugin, build into the agent package, marketplace](D4-delivery-channels.md) - Three channels in scope; the skill surface: `vp-mode` (the main orchestration skill) and `vp-setup` (the auxiliary setup one).
+* [D4b — VP marketplace owner and the host set of the first release](D4b-marketplace-and-hosts.md) - `packages/powers` is itself the marketplace owner; Codex — the verified first host, the rest — declared support with a marked limitation.
+* [D5 — Decision Provider and routing in VP: provider-neutral interface, LLM selection and agent formation](D5-decision-provider.md) - The `decision.evaluate` contract with two implementations and a mandatory Agent Fallback; routing = LLM selection, agent formation from a fixed reference, and the flow level.
+* [D6 — Product change log: a bundle log per Open Knowledge Format](D6-bundle-change-log.md) - The change history of VP concepts is kept in `docs/log.md` per OKF §9; a separate `*changelog.md` is not maintained.
+* [D7 — Environment-driven VP initialization: three configuration carriers](D7-consumer-initialization.md) - `vp-setup` determines the environment and writes the configuration into the project instruction file, the config file of the agent runtime, or the project config file of the host layer.
+* [D8 — Methodology profile: one VP schema, carrier per environment](D8-methodology-profile.md) - The `VPMethodologyProfile/v1` schema belongs to VP; Runtime — a section in `.vida/project.yaml`, Standalone — a managed YAML block, host shim — the project config file.
+* [D9 — Work scope: only packages/powers, registration in root files deferred](D9-scoped-to-powers.md) - The scope of work is limited to the product catalog; registration in the shared root files of the repository — an external dependency.
+* [D10 — Policy choices, executor ladder and the managed block](D10-policy-choices-and-model-inventory.md) - Opposite approval policies live in the corpus as alternatives of one group and the user chooses them at setup; the verification ladder is other provider family → other model of the same provider → blind agent on the same model, with the setup recording the available models; the managed block carries a JSON payload so no YAML parser is needed; the setup hooks are deferred with a condition.
+* [D11 — Product language: documentation in English, instructions from the donor originals](D11-product-language.md) - All product documentation is maintained in English; corpus instructions are not translated but taken from the original donor texts; tags, schemas, error codes and terms are in English.
+* [D12 — Opposing instructions are declared, not narrowed away](D12-declared-conflicts.md) - Two instructions that state opposite rules are declared as a conflicting pair: each names the other, the pair shares one theme pattern tag, and the catalogue reports the pair by name instead of applying both.
+* [D13 — One canonical severity scale: Critical / Important / Minor](D13-canonical-severity-scale.md) - The severity of a finding is expressed on one scale across the corpus; the domain scales of the donors and the earlier groups of the corpus are rewritten to it, the criteria of every level kept verbatim.
+* [D14 — Bounded engineering, UX, product and business guidance](D14-bounded-engineering-ux-guidance.md) - One instruction pack with per-source research, fidelity, rights and admission gates; historical exclusions are not automatically promoted.
+* [D15 — Selected typed reference resources](D15-selected-typed-reference-resources.md) - Selected typed reference families use exact-ID retrieval through the existing catalog in a separate phase.
+* [D16 — Instruction form and domain facets](D16-faceted-instruction-browse.md) - Stable canonical files support optional form/domain filters and generated browse views.

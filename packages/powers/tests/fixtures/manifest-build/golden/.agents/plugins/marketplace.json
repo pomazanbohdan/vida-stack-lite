@@ -1,0 +1,20 @@
+{
+  "name": "fixture-plugin",
+  "plugins": [
+    {
+      "category": "Fixture Category",
+      "description": "Synthetic manifest fixture; never production metadata.",
+      "license": "FIXTURE-ONLY",
+      "name": "fixture-plugin",
+      "policy": {
+        "authentication": "ON_INSTALL",
+        "installation": "AVAILABLE"
+      },
+      "source": {
+        "path": "./",
+        "source": "local"
+      },
+      "version": "0.0.0-fixture"
+    }
+  ]
+}

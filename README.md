@@ -30,6 +30,56 @@ Use the [installation guide](packages/agent/docs/installation.md) for the
 supported delivery route. A source version, build artifact or installed version
 alone does not prove that a particular project is ready to resume work.
 
+## VidaPowers
+
+The VidaPowers package provides a reusable instruction catalog for AI agents.
+It turns selected practices from open-source projects into small, attributed
+instructions, then composes the set a task needs. Each instruction keeps its
+source and revision. VidaPowers uses attributed instructions from donors without
+bundling their runtimes.
+
+The product owner has accepted a bounded engineering/UX pack and selected typed
+reference families for phased work. The choices do not admit sources or claim
+rights clearance, implementation, or Runtime acceptance.
+
+### How the architecture stays adaptable
+
+- **One shared catalog.** Each instruction carries capability and methodology
+  tags, conditions, dependencies, exclusions, and provenance. The canonical
+  catalog uses one format even when donors use different layouts.
+- **Task and product policy.** Methodology profiles select alternatives for
+  testing, review, architecture, and delivery. Inheritance and task-scoped
+  overrides are not yet implemented.
+- **Separate selection, composition, and host setup.** Search finds candidates.
+  Composition adds required instructions, checks conflicts, and forms the task
+  bundle. `vp-mode` orchestrates the task; `vp-setup` writes the selected profile
+  to the host's configuration. Host-specific manifests keep delivery formats
+  separate from shared instructions.
+
+### Donor projects
+
+The first seven projects contribute methods. Open Knowledge Format v0.2 provides
+a document-format reference.
+
+| Project | Selected contribution |
+|---|---|
+| [Superpowers](https://github.com/obra/superpowers) | Brainstorming, planning, test-first development, review, verification, and delegation |
+| [BMAD Method](https://github.com/bmad-code-org/BMAD-METHOD) | Research, decisions, PRDs and specs, build, QA, and triage |
+| [Matt Pocock Skills](https://github.com/mattpocock/skills) | Research, specs, tickets, test-first work, and review against specs |
+| [Addy Osmani Agent Skills](https://github.com/addyosmani/agent-skills) | Specialist roles, test engineering, code review, security, and constraints |
+| [Cursor pstack](https://github.com/cursor/plugins/tree/main/pstack) | Focused playbooks, agents, verification, and bounded programs |
+| [GSD Core](https://github.com/open-gsd/gsd-core) | Requirements, planning artifacts, wave execution, verification, and user acceptance |
+| [Ponytail](https://github.com/DietrichGebert/ponytail) | Complete changes with less avoidable complexity and preserved risk controls |
+| [Open Knowledge Format v0.2](https://github.com/GoogleCloudPlatform/open-knowledge-format/blob/main/SPEC.md) | Knowledge-document structure, metadata, and provenance as a format reference |
+
+See the [donor manifest](packages/powers/donors.yaml) for pinned revisions and
+licenses. Read the [Vida Powers package guide](packages/powers/README.md),
+[catalog design](packages/powers/docs/catalog-design.md), and [product
+documentation index](packages/powers/docs/index.md) for details and current
+status. The package is under development. Local fixture formation is
+implemented, but production manifest inputs and outputs, host installation,
+and public distribution remain unqualified.
+
 ## What Vida Agent provides
 
 - A repository-owned configuration for projects, workflow selection and roles.
@@ -147,6 +197,7 @@ work, stable project IDs and historical evidence.
 packages/
   agent/       Runtime, public CLI, schemas, instructions and tests
   plugin/      Vida Codex product workspace
+  powers/      Vida Powers instruction catalog and package tooling
 tooling/agent/ Repository-side release and CI evidence tooling
 .github/       CI workflows
 AGENT.sidecar.md Project-owned source and authority map

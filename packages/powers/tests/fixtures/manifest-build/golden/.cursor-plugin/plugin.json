@@ -1,0 +1,14 @@
+{
+  "author": {
+    "email": "fixture@example.invalid",
+    "name": "Fixture Maintainer"
+  },
+  "description": "Synthetic manifest fixture; never production metadata.",
+  "license": "FIXTURE-ONLY",
+  "name": "fixture-plugin",
+  "skills": [
+    "./skills/vp-mode/",
+    "./skills/vp-setup/"
+  ],
+  "version": "0.0.0-fixture"
+}

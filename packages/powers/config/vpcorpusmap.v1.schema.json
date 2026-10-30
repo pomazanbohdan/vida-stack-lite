@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://vida-powers.invalid/schemas/vpcorpusmap.v1.schema.json",
+  "title": "VPCorpusMap/v1",
+  "description": "Corpus processing map: for every donor (with a pinned revision) and every carrier file, the processing result (converted | split | merged | rejected).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "revision", "updated_at", "donors"],
+  "properties": {
+    "schema": { "const": "VPCorpusMap/v1" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "updated_at": { "type": "string", "minLength": 1 },
+    "donors": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/donor" }
+    }
+  },
+  "definitions": {
+    "donor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_revision", "files"],
+      "properties": {
+        "source_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "The exact revision of the donor clone the files were taken from."
+        },
+        "files": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/file" }
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["converted", "split", "merged", "rejected"] },
+        "instruction_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "The instructions produced from this file (converted: one; split: several; merged: the merge target)."
+        },
+        "contributed_sources": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "The sources that contributed to the instruction during a merge, in the format donor:path."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Required for rejected: why the file did not become an instruction."
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "not": { "required": ["instruction_ids"] } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "converted" } }, "required": ["status"] },
+          "then": { "required": ["instruction_ids"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "split" } }, "required": ["status"] },
+          "then": { "required": ["instruction_ids"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "merged" } }, "required": ["status"] },
+          "then": { "required": ["instruction_ids"] }
+        }
+      ]
+    }
+  }
+}

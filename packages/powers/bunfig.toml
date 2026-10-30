@@ -1,0 +1,19 @@
+# Bun runtime and local test configuration for the Vida Powers product.
+# Mirrors the conventions of packages/agent: deterministic tests, full coverage
+# threshold, no telemetry, no automatic installs.
+telemetry = false
+env = false
+
+[install]
+saveTextLockfile = true
+linker = "hoisted"
+auto = "disable"
+
+[test]
+root = "./tests"
+randomize = true
+seed = 20261019
+coverageReporter = ["text", "lcov"]
+coverageDir = "./coverage"
+coverageThreshold = { lines = 1.0, functions = 1.0, statements = 1.0 }
+coverageSkipTestFiles = true
