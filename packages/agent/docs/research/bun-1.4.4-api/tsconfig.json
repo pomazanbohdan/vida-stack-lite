@@ -1,0 +1,5 @@
+{
+  "extends": "../../../tsconfig.checked-js.json",
+  "include": ["generate-catalog.ts", "scan-source.ts", "audit-catalog.ts", "json-layout.ts"],
+  "exclude": []
+}
