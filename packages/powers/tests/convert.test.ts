@@ -135,6 +135,23 @@ describe('renderInstruction', () => {
 });
 
 describe('convert', () => {
+  test('refuses to overwrite non-v1.2 metadata without the reviewed batch owner', async () => {
+    const root = await makeRoot();
+    const specPath = await writeSpec(root, validSpec());
+    await mkdir(join(root, 'instructions'), { recursive: true });
+    const instructionPath = join(root, 'instructions', 'write-release-note.md');
+    const legacy = '---\nschema: VPInstruction/v1\ninstruction_id: write-release-note\nrevision: 1\n---\n\nLegacy body.\n';
+    await writeFile(instructionPath, legacy, 'utf8');
+    const raised = await convert(specPath, { root }).then(() => undefined, (error: unknown) => error);
+    expect(raised).toBeInstanceOf(CatalogError);
+    expect(raised).toMatchObject({
+      code: 'CATALOG_INVALID',
+      message: expect.stringContaining('faceted or unsupported metadata'),
+      details: { instruction_id: 'write-release-note' },
+    });
+    expect(await readFile(instructionPath, 'utf8')).toBe(legacy);
+  });
+
   test('removes an instruction and recomputes all affected map entries', async () => {
     const root = await makeRoot();
     await convert(await writeSpec(root, validSpec()), { root });

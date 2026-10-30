@@ -778,11 +778,6 @@ function validateCanonicalPolicySelection(
         );
       }
       if (matchingUnresolved !== undefined) requireProfileResolution({ group: groupId, alternatives: matchingUnresolved }, {});
-      if (matchingResolved === undefined) {
-        requireCanonicalProfileRefresh(groupId, entry.group.alternatives, [], {
-          instruction_ids: [...entry.instructionIds].sort(compareNames),
-        });
-      }
       throw new CatalogError('CATALOG_PROFILE_CONFLICT', `conflicting alternatives remain selected in ${groupId}`, {
         group: groupId,
         alternatives: entry.group.alternatives,

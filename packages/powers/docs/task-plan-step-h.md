@@ -72,7 +72,7 @@ No feature implementation occurs in the documentation reconciliation that create
 
 H3 cannot run in parallel with H2. No phase inherits a PASS from E4 or another phase.
 
-The prospective H2 VPInstruction/v2 contract preserves approved v1.2 facet and approach metadata. This does not commit to dual-runtime or backward compatibility. The v1.2 reader and corpus cutover remain pending.
+The prospective H2 VPInstruction/v2 contract preserves approved v1.2 facet and approach metadata. This does not commit to dual-runtime or backward compatibility. The v1.2 reader and the clean corpus cutover are in place for all 2,510 instructions; domain classification and approach assessments remain pending.
 
 ## H0 — baseline and plan closeout
 

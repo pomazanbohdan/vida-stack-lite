@@ -50,8 +50,8 @@ function renderInstruction(item: Instruction): string {
 
 function digest(text: string | Uint8Array): string { return createHash('sha256').update(text).digest('hex'); }
 
-async function fixture(options: { twoInstructions?: boolean } = {}): Promise<Corpus> {
-  const root = await mkdtemp(join(tmpdir(), 'vp-corpus-fixture-'));
+async function fixture(options: { twoInstructions?: boolean; root?: string; localRoot?: string } = {}): Promise<Corpus> {
+  const root = options.root ?? await mkdtemp(join(tmpdir(), 'vp-corpus-fixture-'));
   tempRoots.push(root);
   const instructions = [defaultInstruction()];
   if (options.twoInstructions) instructions.push({ ...defaultInstruction('beta-instruction'), title: 'Beta instruction' });
@@ -73,7 +73,7 @@ async function fixture(options: { twoInstructions?: boolean } = {}): Promise<Cor
     await mkdir(join(root, 'instructions'), { recursive: true });
     await writeFile(join(root, 'catalog.json'), `${JSON.stringify(catalog, null, 2)}\n`);
     await writeFile(join(root, 'corpus-map.json'), `${JSON.stringify(map, null, 2)}\n`);
-    await writeFile(join(root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: .tmp/donors\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    head_sha: '${revision}'\n    license: MIT\n`);
+    await writeFile(join(root, 'donors.yaml'), `schema: vida-powers-donors/v1\nlocal_root: ${options.localRoot ?? '.tmp/donors'}\ndonors:\n  - id: ${donorId}\n    local_path: synthetic\n    head_sha: '${revision}'\n    license: MIT\n`);
   };
   await mkdir(join(root, cloneRoot), { recursive: true });
   await writeFile(join(root, cloneRoot, donorFile), 'synthetic donor source\n');
@@ -143,6 +143,15 @@ describe('checkCorpus synthetic fixtures', () => {
   test('accepts a fully synthetic corpus without external clones', async () => {
     const corpus = await fixture();
     expect(codes(corpus.root)).toEqual([]);
+  });
+
+  test('resolves a repository-relative local_root from the repository root', async () => {
+    const repository = await mkdtemp(join(tmpdir(), 'vp-corpus-repository-'));
+    tempRoots.push(repository);
+    const root = join(repository, 'packages', 'powers');
+    const corpus = await fixture({ root, localRoot: 'packages/powers/.tmp/donors' });
+    expect(checkCorpus(corpus.root)).toEqual([]);
+    expect(corpusCli(['--root', corpus.root])).toMatchObject({ instructions: 1, exitCode: 0, issues: [] });
   });
 
   test('v1.2 validation checks catalog digests', async () => {

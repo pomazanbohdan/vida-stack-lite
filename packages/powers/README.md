@@ -347,8 +347,11 @@ repair CODE+EVIDENCE READY. The `.67` numeric receipt is terminal and remains `N
 `packagePass: false`; the independent `.70` review marks it READY as an evidence baseline.
 Tests, typecheck, Knip, corpus and audit checks, OKF, and Markdown checks passed for the `.67`
 bytes; `.69` reran focused OKF and eight-document Markdown checks on the corrected docs.
-Coverage records function 467/467 and line 3,874/3,874 counters, no statement counter, and
-uninstrumented 0/0 branch counters; no separate 100% statement-coverage claim is made.
+On the migrated v1.2 corpus the canonical coverage gate records 693/693 functions and
+5,402/5,402 lines (659 passed, four expected Windows skips, zero failures, seed 20261019),
+no statement counter, and uninstrumented 0/0 branch counters; no separate 100 %
+statement-coverage claim is made. The repository Knip gate is red on four
+`packages/agent` research files outside this scope, so package qualification remains open.
 Production inputs and outputs are absent. Muse catalog formation remains blocked by missing
 first-party digest proof. No host
 installation, publication, legal clearance or Runtime acceptance is established. Local metadata

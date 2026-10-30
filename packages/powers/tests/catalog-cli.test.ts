@@ -231,6 +231,45 @@ test('approach exclusions precede candidate profile negotiation in search and ex
   }
 });
 
+test('explain binds every discovery input digest and reports approach decisions without a profile', async () => {
+  const catalogPath = await catalogWithProfileSchema();
+  await assess(catalogPath, 'alpha', ['dimension=execution; state=declared; values=solo,delegated']);
+  await assess(catalogPath, 'beta', ['dimension=execution; state=declared; values=delegated']);
+  const result = await runInProcess(['explain', '--catalog', catalogPath, '--approach', 'execution=solo']);
+  expect(result.status).toBe(0);
+  expect(result.stderr).toBe('');
+  const explained = JSON.parse(result.stdout) as {
+    bindings: Record<string, string>;
+    selectors: unknown[];
+    candidates: { instruction_id: string; included: boolean; dimensions: { decision: string }[] }[];
+  };
+  expect(explained.bindings).toEqual({
+    catalog_sha256: createHash('sha256').update(await readFile(catalogPath)).digest('hex'),
+    catalog_schema_sha256: createHash('sha256').update(await readFile(join(dirname(catalogPath), 'config/vpcatalog.v1.schema.json'))).digest('hex'),
+    instruction_schema_sha256: createHash('sha256').update(await readFile(join(dirname(catalogPath), 'config/vpinstruction.v1.2.schema.json'))).digest('hex'),
+    policy_sha256: createHash('sha256').update(await readFile(join(here, '../config/methodology-profile.json'))).digest('hex'),
+    policy_schema_sha256: createHash('sha256').update(await readFile(join(here, '../config/vpmethodologyprofile.v1.schema.json'))).digest('hex'),
+  });
+  expect(explained.selectors).toHaveLength(1);
+  expect(explained.candidates.find((row) => row.instruction_id === 'alpha')?.included).toBe(true);
+  expect(explained.candidates.find((row) => row.instruction_id === 'beta')).toMatchObject({
+    included: false,
+    dimensions: [{ decision: 'contradictory' }],
+  });
+});
+
+test('explain adds the selected profile digests when a resolved profile is supplied', async () => {
+  const catalogPath = await catalogWithProfileSchema();
+  await assess(catalogPath, 'alpha', ['dimension=execution; state=declared; values=solo']);
+  const profilePath = await profileFile({ schema: 'VPEffectiveProfile/v1', groups: {}, unresolved_groups: {} });
+  const result = await runInProcess(['explain', '--catalog', catalogPath, '--profile', profilePath, '--approach', 'execution=solo']);
+  expect(result.status).toBe(0);
+  const explained = JSON.parse(result.stdout) as { bindings: Record<string, string>; candidates: { instruction_id: string; included: boolean }[] };
+  expect(explained.bindings.profile_sha256).toBe(createHash('sha256').update(await readFile(profilePath)).digest('hex'));
+  expect(explained.bindings.profile_schema_sha256).toBe(createHash('sha256').update(await readFile(join(dirname(catalogPath), 'config/vpeffectiveprofile.v1.schema.json'))).digest('hex'));
+  expect(explained.candidates.find((row) => row.instruction_id === 'alpha')?.included).toBe(true);
+});
+
 test('browse counts retain uncertain and exclude contradictory approaches', async () => {
   const catalogPath = await catalogWithFacets();
   await assess(catalogPath, 'alpha', ['dimension=execution; state=declared; values=delegated']);

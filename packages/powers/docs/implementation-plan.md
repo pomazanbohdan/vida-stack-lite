@@ -65,7 +65,11 @@ the S-documents that Stage 1 creates.
 schema, decision D8 added), six minor, the remainder of a DAG contradiction (R-12) and
 four research coverage gaps. See §1a.
 
-**Currency.** Last significant change: 2026-10-22: all eight donors are processed (2790 carrier files → 2510 instructions), the package `NOTICE` is present, and decisions D10–D13 are recorded. `stale_after` = 2026-11-19 —
+**Currency.** Last significant change: 2026-10-30: the corpus clean-cutover to
+VPInstruction/v1.2 is complete (all 2,510 instructions) and the package coverage gate
+passes at 693/693 functions and 5,402/5,402 lines; all eight donors are processed
+(2790 carrier files → 2510 instructions), the package `NOTICE` is present, and
+decisions D10–D16 are recorded. `stale_after` = 2026-11-19 —
 after this date the plan is considered stale and needs review. The independent
 verification of round 2 concerned rev 2; rev 2.1 applied its remarks, so
 independent verification of rev 2.1 remains a **GAP**. Runtime acceptance is not
