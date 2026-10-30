@@ -331,9 +331,9 @@ D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover; marketplace 
 Runtime mode of VP in general; and Runtime Stage 7b behind the storage GAP.
 
 **Open gates that no document may shortcut:** E5b production qualification and host installation,
-Step F AC-22 equivalence and a real finding/artifact store, Step G handoff, Step H0–H3, the 40-ID
-classification trial and full-corpus rollout, legal clearance, and Runtime acceptance. Package gate
-state, including the currently red repository Knip gate, is recorded in
+Step F AC-22 equivalence and a real finding/artifact store, Step G handoff, Step H0–H3, the v1.2
+re-binding of the frozen 40-ID trial, legal clearance, and Runtime acceptance. Package gate state,
+including the currently red repository Knip gate, is recorded in
 [docs/next-actions.md](docs/next-actions.md).
 
 ## 13. Source licenses
