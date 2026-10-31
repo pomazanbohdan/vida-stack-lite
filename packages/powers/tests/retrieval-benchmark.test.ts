@@ -120,6 +120,7 @@ const stageCases: Array<{ terms: string[]; expects: string }> = [
   { terms: ['risk', 'classification', 'security'], expects: 'assess-change-impact' },
   { terms: ['hard', 'constraints', 'options'], expects: 'metric-gated-decision' },
   { terms: ['architectural', 'redesign'], expects: 'design-structure' },
+  { terms: ['one', 'owner', 'per', 'document', 'no', 'parallel'], expects: 'single-source-of-truth' },
   { terms: ['observability', 'alerting', 'errors'], expects: 'instrument-production-code' },
 ];
 

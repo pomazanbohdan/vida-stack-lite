@@ -107,8 +107,18 @@ test('topPatternFor returns the most frequent pattern or nothing for an unknown 
   expect(topPatternFor(base, 'missing')).toBeUndefined();
 });
 
-test('resolves a phrase alias only when all of its tokens appear in order', () => {
+test('lets a phrase alias select a pattern over a weaker capability match', () => {
   const catalog = catalogOf(
+    instruction('d', ['write-knowledge-documents'], ['documentation-writing']),
+    instruction('s', ['some-capability'], ['single-source-of-truth']),
+  );
+  const result = resolveIntent(catalog, ['one', 'owner', 'per', 'document'], new Map([['one owner', 'single-source-of-truth']]));
+  expect(result.capability).toBeUndefined();
+  expect(result.pattern).toBe('single-source-of-truth');
+  expect(result.matchedAlias).toBe(true);
+});
+
+test('resolves a phrase alias only when all of its tokens appear in order', () => {  const catalog = catalogOf(
     instruction('r', ['review-code'], ['code-review']),
     instruction('m', ['migrate-consumers-off-the-old-system'], ['incremental-cutover']),
   );

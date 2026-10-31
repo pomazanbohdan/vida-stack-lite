@@ -239,14 +239,15 @@ export function resolveIntent(
     .slice(0, 3);
 
   const bestCapability = capabilities[0];
-  const bestPattern = bestCapability === undefined ? patterns[0] : undefined;
-  const best = bestCapability ?? bestPattern;
+  const candidatePattern = patterns[0];
+  const patternPhrase = candidatePattern !== undefined && phraseHits(query, patternAliases, candidatePattern.tag).length > 0;
+  const choosePattern = candidatePattern !== undefined
+    && (bestCapability === undefined || (patternPhrase && candidatePattern.score > bestCapability.score));
+  const best = choosePattern ? candidatePattern : bestCapability;
   if (best === undefined) return empty;
 
-  const matchedTokens = bestCapability === undefined
-    ? matchedTokensFor(best.names, query, best.tag, patternAliases)
-    : matchedTokensFor(best.names, query, best.tag, capabilityAliases);
-  const activeAliases = bestCapability === undefined ? patternAliases : capabilityAliases;
+  const activeAliases = choosePattern ? patternAliases : capabilityAliases;
+  const matchedTokens = matchedTokensFor(best.names, query, best.tag, activeAliases);
   const matchedAlias = phraseHits(query, activeAliases, best.tag).length > 0
     || matchedTokens.some((token) => activeAliases.single.get(token) === best.tag);
   const genericOnly = matchedTokens.length > 0 && !matchedAlias && matchedTokens.every((token) => GENERIC_ACTION_TOKENS.has(token));
@@ -258,12 +259,12 @@ export function resolveIntent(
     matchedTokens,
     matchedAlias,
   };
-  if (bestCapability !== undefined) {
-    resolution.capability = bestCapability.tag;
-    const pattern = topPatternFor(instructions, bestCapability.tag);
+  if (choosePattern) {
+    resolution.pattern = best.tag;
+  } else {
+    resolution.capability = best.tag;
+    const pattern = topPatternFor(instructions, best.tag);
     if (pattern !== undefined) resolution.pattern = pattern;
-  } else if (bestPattern !== undefined) {
-    resolution.pattern = bestPattern.tag;
   }
   return resolution;
 }
