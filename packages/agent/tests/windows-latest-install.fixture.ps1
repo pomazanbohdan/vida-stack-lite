@@ -1,7 +1,8 @@
 #requires -Version 5.1
 [CmdletBinding()]
-param([string] $Installer = (Join-Path $PSScriptRoot '../tooling/install-windows.ps1'))
+param([string] $Installer)
 $ErrorActionPreference = 'Stop'
+if (-not $PSBoundParameters.ContainsKey('Installer')) { $Installer = Join-Path $PSScriptRoot '../tooling/install-windows.ps1' }
 Import-Module (Join-Path $PSHOME 'Modules\Microsoft.PowerShell.Utility\Microsoft.PowerShell.Utility.psd1') -ErrorAction Stop
 $tokens = $null
 $parseErrors = $null

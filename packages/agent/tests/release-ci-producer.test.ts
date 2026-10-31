@@ -316,7 +316,7 @@ test('producer downloader accepts the completed native producer during an in-pro
 
 function linuxSteps() {
   const quality = {
-    name: 'full-source-quality',
+    name: 'release-assurance',
     status: 'completed',
     conclusion: 'success',
     number: 8,
@@ -326,7 +326,7 @@ function linuxSteps() {
   return {
     qualityJob: {
       id: 789,
-      name: 'full-source-quality',
+      name: 'release-assurance',
       run_id: 123,
       run_attempt: 1,
       status: 'completed',
@@ -361,6 +361,7 @@ test('Linux publication requires its exact successful Source quality job before 
       artifact_id: 456,
     });
     assert.deepEqual(readFileSync(path.join(successfulRoot, result.transport_path)), transportBytes);
+    assert.equal(state.zipCalls, 1);
     assert.equal(state.storageCalls, 1);
     assert.equal(state.storageAuthorization, null);
   });
@@ -380,6 +381,7 @@ test('Linux publication requires its exact successful Source quality job before 
     assert.deepEqual(readFileSync(path.join(emptyStepsRoot, result.transport_path)), transportBytes);
     assert.equal(state.zipCalls, 1);
     assert.equal(state.storageCalls, 1);
+    assert.equal(state.storageAuthorization, null);
   });
   rmSync(emptyStepsRoot, { recursive: true, force: true });
   const emptyQualityStepsRoot = mkdtempSync(path.join(tmpdir(), 'vida-ci-linux-empty-quality-steps-'));
@@ -396,6 +398,7 @@ test('Linux publication requires its exact successful Source quality job before 
     assert.deepEqual(readFileSync(path.join(emptyQualityStepsRoot, result.transport_path)), transportBytes);
     assert.equal(state.zipCalls, 1);
     assert.equal(state.storageCalls, 1);
+    assert.equal(state.storageAuthorization, null);
   });
   rmSync(emptyQualityStepsRoot, { recursive: true, force: true });
   const negatives: Array<{
@@ -405,7 +408,7 @@ test('Linux publication requires its exact successful Source quality job before 
     workflowDigest?: string;
     artifactHosts?: string[];
   }> = [
-    { name: 'missing quality job', changes: { qualityJobs: [] }, error: /unique full-source-quality provider job/ },
+    { name: 'missing quality job', changes: { qualityJobs: [] }, error: /unique release-assurance provider job/ },
     {
       name: 'failed quality job',
       changes: { qualityJob: { conclusion: 'failure' } },
@@ -424,7 +427,7 @@ test('Linux publication requires its exact successful Source quality job before 
     {
       name: 'duplicate quality jobs',
       changes: { qualityJobs: [linuxSteps().qualityJob, linuxSteps().qualityJob] },
-      error: /unique full-source-quality provider job/,
+      error: /unique release-assurance provider job/,
     },
     {
       name: 'quality job id duplicates native job',
@@ -460,7 +463,7 @@ test('Linux publication requires its exact successful Source quality job before 
     {
       name: 'duplicate source-quality steps',
       changes: { qualityJob: { steps: [quality, quality] } },
-      error: /exactly one full-source-quality step required/,
+      error: /exactly one release-assurance step required/,
     },
     {
       name: 'unfinished quality',
@@ -470,7 +473,7 @@ test('Linux publication requires its exact successful Source quality job before 
     {
       name: 'missing source-quality step in nonempty quality job',
       changes: { qualityJob: { steps: [{ name: 'upload', status: 'completed', conclusion: 'success' }] } },
-      error: /exactly one full-source-quality step required/,
+      error: /exactly one release-assurance step required/,
     },
     {
       name: 'malformed quality steps',
@@ -493,6 +496,16 @@ test('Linux publication requires its exact successful Source quality job before 
       error: /step interval differs/,
     },
     {
+      name: 'quality job interval malformed',
+      changes: { qualityJob: { started_at: 'invalid' } },
+      error: /provider job interval malformed/,
+    },
+    {
+      name: 'quality job interval reversed',
+      changes: { qualityJob: { started_at: '2026-10-30T09:00:11Z' } },
+      error: /provider job interval malformed/,
+    },
+    {
       name: 'artifact predates build and quality',
       changes: { artifact: { created_at: '2026-10-30T09:00:05Z' } },
       error: /artifact differs from selected Source\/run attempt interval/,
@@ -500,7 +513,7 @@ test('Linux publication requires its exact successful Source quality job before 
     {
       name: 'artifact predates native build step completion',
       changes: { artifact: { created_at: '2026-10-30T09:00:20Z' } },
-      error: /required native step failed\/skipped or missing/,
+      error: /required native step failed\/skipped or missing\/malformed/,
     },
     {
       name: 'foreign quality attempt',
@@ -517,7 +530,7 @@ test('Linux publication requires its exact successful Source quality job before 
     {
       name: 'old artifact attempt',
       changes: { artifact: { name: `build-${request.request_id}-123-2` } },
-      error: /artifact differs from selected Source/,
+      error: /artifact differs from selected Source\/run attempt interval/,
     },
     {
       name: 'changed workflow definition',
@@ -528,7 +541,7 @@ test('Linux publication requires its exact successful Source quality job before 
     {
       name: 'missing native step in nonempty list',
       changes: { job: { steps: [{ name: 'upload', status: 'completed', conclusion: 'success' }] } },
-      error: /required native step failed\/skipped or missing/,
+      error: /required native step failed\/skipped or missing\/malformed/,
     },
     {
       name: 'failed native step',
@@ -546,12 +559,12 @@ test('Linux publication requires its exact successful Source quality job before 
           ],
         },
       },
-      error: /required native step failed\/skipped or missing/,
+      error: /required native step failed\/skipped or missing\/malformed/,
     },
     {
       name: 'malformed required native step',
       changes: { job: { steps: [{ name: 'native-build', status: 'completed', conclusion: 'success' }] } },
-      error: /required native step failed\/skipped or missing/,
+      error: /required native step failed\/skipped or missing\/malformed/,
     },
     {
       name: 'malformed native steps',

@@ -502,22 +502,26 @@ The publisher checks the actual completed successful native jobs and required
 steps, exact Source/workflow, producer run attempt, artifact identity and creation
 interval, transport digest, candidate, manifest, archive and executable bytes.
 Publication additionally requires exactly one completed successful dedicated Linux
-`full-source-quality` job before that producer's native job starts. Its quality
-step is unconditional and has no continue-on-error. This is Source
-development assurance, separate from the minimal native formation profile. It
-uses the same fresh full coverage, complete function inventory, CRAP budgets and
-report/run join as Linux pre-push. Its own intent and receipt bind the actual
-Source, request, workflow run, attempt and reports; they contain no invented
-candidate archive or whole-workflow completion. Recovery revalidates this
+release-assurance job before Linux native starts in the same original run attempt
+and Source/workflow. Its step is unconditional and has no continue-on-error.
+One fixed maintained profile has version, digest and native-platform eligibility;
+it includes full current pinned typecheck/lint and nonempty maintained release,
+producer, publication, installer, native-process and causal-safety tests. Scope
+is not caller-selected. Real JUnit and process/output closure are required.
+`VidaCIPublicationAssurance/v1` binds profile, operation, request, version,
+Source, run, attempt and test proof, distinct from historical numeric receipts;
+it invents no archive hash or whole-workflow completion. Recovery revalidates this
 requirement for the original Linux artifact before any artifact ZIP redirect,
 storage read or publication write. Positive provider job evidence binds unique
 job ID, original run/attempt, Source/workflow digest and finite ordered intervals.
+The actual successful bound job is the scoped admission authority. The retained
+receipt and JUnit are audit evidence, not a second admission proof.
 Only a literal empty provider step inventory permits native job-scoped evidence;
 nonempty missing, failed, skipped or malformed required steps remain denials.
 Native phase receipts and all candidate/manifest/archive/executable byte checks
 remain mandatory before asset use or publication writes. Job-scoped evidence
-does not fabricate unavailable step records. Build-only dispatch skips the quality
-job explicitly; Windows native formation may run in parallel with Source quality.
+does not fabricate unavailable step records. Build-only dispatch skips the assurance
+job explicitly; Windows native formation may run in parallel with assurance.
 Both targets must bind the selected operation, Source and version. Producer proof
 has no whole-workflow completion claim. The existing completed-workflow observer
 still requires actual workflow completion and success before its own receipt and
@@ -528,7 +532,7 @@ disabled and performs no native formation. Its selected CLI observation retains
 Source/run/request/version, process and profile evidence separately from the
 quality and native producer receipts. Diagnostic success grants no publication,
 installation or Runtime-acceptance evidence; publication retains the complete
-Source quality and native pair requirements above.
+release assurance and native pair requirements above.
 
 One immutable annotated version tag binds the operation, exact requests, original
 producer run/attempt/artifacts and public asset name/size/hash inventory. Its
@@ -556,10 +560,16 @@ requires recovery or a later PATCH; it grants no user Runtime acceptance.
 Native Windows Source push uses the maintained no-link development profile:
 pinned tools, full current typecheck/lint, nonempty declared release/native tests,
 observed terminal capture and existing HEAD/index/lock guards. It creates no
-symlinks and needs no Developer Mode. A Windows Source push can remain pending
-full CI quality; public release cannot. The Windows profile does not claim full
+symlinks and needs no Developer Mode. A Windows Source push can precede CI release
+assurance. Linux also pushes reviewed Source after current Source checks, before CI
+assurance. The Windows profile does not claim full
 coverage or CRAP, alter filesystem path/reparse denials, or replace other required
 task assurance and user Runtime acceptance.
+
+Full coverage, frozen CRAP and mutation remain separate maintained development
+tasks with their existing frozen budgets and 100 targets where applicable. They
+are not new numeric barriers to this technical release or installation. Preserve
+historical GAP, FAIL and UNKNOWN; the release profile claims no global coverage.
 
 ### Windows Source producer custody
 
@@ -617,6 +627,13 @@ the child returns the supplied exact binding without duplicate inventory walks.
 Opt-in bounded stage markers expose install and snapshot elapsed time. These
 changes do not claim a speed improvement without comparable measurement.
 No current controller or successful qualification is inferred from this contract.
+An explicitly owner-authorized native Source bootstrap may use the checked-in
+lifecycle fallback for bounded causal fixes when an absent installed runtime or
+stale controller circularly blocks repair. Record user intent, exact files,
+current Source binding, focused checks and independent review. Do not fabricate
+Source grants or CLI execution. Preserve consumer/host grants, CAS, active
+selector, UNKNOWN-operation guards and old controller reservations. Fresh
+controller qualification is required for its controlled execution, not every edit.
 
 The repository owner's one-time 2026-10-30 bootstrap authorization permits Root
 to integrate only the causal repair in `bin/local-release-artifacts.ts`,
@@ -644,7 +661,7 @@ The fixture uses fixed generated configuration and only its actual package
 resources; capture follows those reads. File, aggregate, path and timing bounds,
 integrity checks and UNKNOWN retention remain unchanged.
 The same packet may restore only the executable Git mode of
-`.githooks/pre-push`, whose unchanged script must run during native Linux pushes.
+`.githooks/pre-push`, whose current reviewed script runs during native Linux pushes.
 
 Each controller child runs under one exclusive compound reservation at
 `<controllerRoot>/observations/`. The controller retains the exact executable
@@ -1273,11 +1290,12 @@ and prepared publication tooling, and SA-ASSURANCE to fresh final reviews, rever
 validation, CLEAR and attributable delivery observation. The accepted trace is
 retained in `.agent/work/teamlead-standalone-release-20261001/WORK.md`.
 
-Agent behavior tests, coverage and CRAP run locally. Build, packaging and
+Agent behavior tests, coverage and CRAP run locally as development tasks. Build, packaging and
 installation checks belong to CI/CD and are not local agent test tasks. Do not
 create or run build/install test suites, compiler probes or copied-package
-installation harnesses. CI/CD may run these delivery checks, but not agent
-behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
+installation harnesses. CI/CD may run delivery checks and only the named tests
+in the maintained fixed release-assurance profile above. Full coverage, CRAP and
+mutation remain separate development tasks. Mutation requires an explicit manual
 launch. Missing local or CI/CD evidence remains a GAP, never a pass.
 Runtime qualification and attributable user acceptance remain separate from
 CI/CD delivery checks and local Static evidence.

@@ -6,8 +6,9 @@ import { pathToFileURL } from 'node:url';
 import { functionInventory as sharedFunctionInventory } from './function-inventory.js';
 import { rejectFocusedTests } from './focused-test-guard.js';
 import { environmentPath, prependEnvironmentPath } from './environment-path.js';
-import { runWindowsPushProfile } from './windows-push-profile.ts';
+import { runReleaseSourceAssurance, runWindowsPushProfile } from './windows-push-profile.ts';
 export { rejectFocusedTests };
+export { runReleaseSourceAssurance };
 
 type SyncResult = SpawnSyncReturns<string>;
 type Environment = Record<string, string | undefined>;
@@ -397,6 +398,16 @@ function assertPinnedQualityTools(pkg: string): void {
   installedPackage(pkg, '@babel/parser', requireString(dependencies['@babel/parser'], 'Missing parser pin.'));
 }
 
+export function releaseAssuranceEnvironment(pkg: string, bun: string): Environment {
+  const env = prependEnvironmentPath(environment(pkg), path.dirname(bun));
+  if (realpathSync(bun) !== installedBun(pkg, env))
+    throw new Error('Release assurance requires the package-selected Bun.');
+  const pin = readFileSync(path.join(pkg, '.bun-version'), 'utf8').trim();
+  if (checked(bun, ['--version'], pkg, env).trim() !== pin) throw new Error('Release assurance Bun version mismatch.');
+  assertPinnedQualityTools(pkg);
+  return env;
+}
+
 function indexObjects(index: string): Map<string, StagedEntry> {
   return new Map(
     nul(index).map((row) => {
@@ -456,13 +467,15 @@ async function main(mode: string | undefined): Promise<void> {
       process.stdout.write(JSON.stringify(summary) + '\n');
       return;
     }
-    await runFreshFullQuality({
+    const summary = await runReleaseSourceAssurance({
       packageRoot: pkg,
       bunExecutable: bun,
       assertStableInputs: () => {
-        if (stableInputs(root, true) !== before) throw new Error('Checked HEAD inputs changed during full quality.');
+        if (stableInputs(root, true) !== before)
+          throw new Error('Checked HEAD inputs changed during release assurance.');
       },
     });
+    process.stdout.write(JSON.stringify(summary) + '\n');
   } finally {
     rmdirSync(lock);
   }

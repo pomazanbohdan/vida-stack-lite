@@ -384,7 +384,7 @@ function validateCIInvocation(
   const nativeTarget =
     purpose === 'native' && platform === 'win32' && env.GITHUB_JOB === 'native-windows-x64'
       ? 'bun-windows-x64'
-      : platform === 'linux' && env.GITHUB_JOB === (purpose === 'native' ? 'native-linux-x64' : 'full-source-quality')
+      : platform === 'linux' && env.GITHUB_JOB === (purpose === 'native' ? 'native-linux-x64' : 'release-assurance')
         ? 'bun-linux-x64'
         : null;
   requireCI(

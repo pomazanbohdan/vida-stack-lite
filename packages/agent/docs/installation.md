@@ -17,11 +17,19 @@ Use the resulting build provenance, target and byte-integrity metadata for
 the selected artifact. An unchanged artifact needs no new build or Git effect
 solely for installation. Preserve original operation and failed/UNKNOWN history.
 
-The delivery sequence is: publish changed reviewed Source, run one cached CI
-build, obtain its exact qualified artifact, then install or update with the
-maintained PowerShell script. Reuse the current run and download. Development
-tests, numeric reports and reviews stay in their task. They are not rerun during
-delivery. Record version, installed bytes and effective PATH once after update.
+The delivery sequence is: select the default next PATCH before final Source
+checks; publish the reviewed Source packet; run one `publish: true` Actions run
+for assurance, both native builds and publication; then download the public
+`install-windows.ps1` and run `-Action install` without a Source override. Reuse
+current checks and independent review, the installer's structured version/hash
+postchecks, and observe effective PATH once. After installation perform the six
+native instruction lookups requested by the user and deliver their instructions.
+Formation and installation do not establish user Runtime acceptance. The pending
+0.1.6 operation is unchanged by this documentation.
+
+Publication admission uses the actual successful, Source/workflow-bound Linux
+assurance job before native formation, including recovery. Its retained assurance
+receipt and JUnit are audit evidence, not a second admission proof.
 
 Windows uses one maintained PowerShell adapter and the fixed current-user
 Programs/vida-agent/bin command. It retains a previous binary only during the
@@ -42,6 +50,9 @@ is insufficient, and installed older releases are not a fallback. Use the actual
 implemented public interface and qualification evidence rather than inventing
 command arguments from this guide. Drift or wrong package/pin/dependencies rejects
 execution; no controller readiness is established by this documentation.
+The owner-authorized native Source bootstrap fallback and its evidence boundaries
+are specified in the lifecycle; fresh controller qualification is needed when
+controlled execution is used, not for each bounded causal Source edit.
 
 ## SDK library and Source tooling
 

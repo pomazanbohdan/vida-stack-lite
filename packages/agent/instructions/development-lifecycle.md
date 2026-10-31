@@ -388,14 +388,23 @@ source-bound context while its bytes and authority remain current. Keep one
 writer for overlapping paths. Use bounded independent agents for research and
 required review; do not create a separate agent for each helper or file.
 
-Ordinary work uses the configured VIDA runtime lifecycle exclusively. When
+Ordinary consumer and host runtime Source work uses the configured VIDA runtime lifecycle. When
 that lifecycle is blocked, repair its cause locally as an architectural Source
-code change, then immediately update the whole qualified runtime through its
-existing owner and resume the configured flow. This bounded exception does not
+code change under the applicable authorization. Qualify and update the whole
+runtime through its existing owner when controlled execution is needed. This bounded exception does not
 authorize private-state edits, fabricated admission, replay of `UNKNOWN`
 effects, weaker controls, a new authorization framework or partial-agent
 delivery. Preserve current Source ownership, CAS, final assurance and native
 qualification requirements.
+
+In an explicitly owner-authorized Source repository, native Source bootstrap may
+make bounded causal Source fixes when an absent installed runtime or stale
+controller would circularly block repair. Use this checked-in lifecycle as
+fallback; record user intent, exact files, current Source binding, focused checks
+and independent review. Do not mint a LocalSourceWriteAuthorization or claim the
+runtime CLI ran. Preserve ordinary consumer/host grants, CAS, active-selector and
+UNKNOWN-operation guards and old controller reservations. Qualify a fresh
+controller when its controlled execution is needed, not for every edit.
 
 The repository owner's explicit emergency instruction may authorize the lead
 developer to repair Source manually when the runtime's own admission, lease or
@@ -404,8 +413,8 @@ attempt, terminal blocker and instruction once. Limit this exception to the
 causal code, regression checks and maintained instructions; retain one writer
 and inspect competing claims before edits. Do not fabricate a live lease,
 rewrite private operational state, replay UNKNOWN effects or treat the exception
-as Runtime acceptance. Verify the correction, update the whole qualified system
-runtime, then recover the original attempt through its repaired public operation
+as Runtime acceptance. Verify the correction, qualify the system runtime when
+needed, then recover the original attempt through its repaired public operation
 and return to the configured flow. Do not repeat the same permission question.
 
 For an admitted task with a separate Source root, inspect its current task-source
@@ -483,8 +492,8 @@ is a compatibility binding, not a release baseline. This distinct input artifact
 is not a product build or delivery: it never selects, advances or confirms a
 release version, enters a native release operation, or permits installation.
 The SDK delivery verifier and packer reject this receipt before delivery effects.
-CI may prepare these inputs independently; it runs no test suites. Development
-coverage retains its exact selected-input and emitted-output validation.
+CI may run the maintained release-assurance profile below. Development coverage
+retains its exact selected-input and emitted-output validation.
 
 Each new successful build advances the product version. The release owner
 selects the next version before Source publication and formation. Default to
@@ -527,6 +536,15 @@ or installation. Those belong to the changed development task and are reused
 while current. An unchanged selected artifact needs no new build or Git effect
 solely to install it. Publish changed reviewed Source before its CI formation.
 
+For the authorized public Windows delivery, select the default next PATCH before
+final Source checks, then reuse one reviewed Source packet for one `publish: true`
+Actions run that assures, builds and publishes both targets. Download the public
+`install-windows.ps1` and run `-Action install` without a Source override. Reuse
+the installer's structured version/hash postchecks, observe effective PATH once,
+and perform the user's six requested native instruction lookups after install.
+Deliver those instructions. Do not repeat suites or reviews solely for delivery.
+Formation and installation are not Runtime acceptance.
+
 The native workflow's explicit publication path consumes both exact requests
 issued by this operation/version owner. Its publisher is the sole GitHub tag,
 draft, asset and public-release writer. CI does not assume that ignored local
@@ -546,16 +564,23 @@ For native Windows development without symlink creation, the maintained pre-push
 profile checks pinned tools, full current typecheck/lint and its nonempty declared
 release/native tests under the existing HEAD/index/lock and terminal-evidence
 guards. Its success admits the Source push with full CI quality still pending;
-it does not establish coverage, CRAP, delivery or acceptance. The Linux pre-push
-route retains its complete fresh quality gate. The same Git-independent quality
-owner runs as development assurance in a dedicated Linux publication quality job
-before Linux native formation. Its step is unconditional and fails closed, with
-no continue-on-error. Its exclusive Source/run/attempt/report-bound intent and receipt
-are separate from the formation record and contain no placeholder archive hash.
-The publisher must verify the actual completed successful quality job for the
+it does not establish coverage, CRAP, delivery or acceptance. Linux and Windows
+push current reviewed Source after applicable Source checks without requiring CI
+quality before push. A dedicated Linux release-assurance job runs before Linux
+native formation, unconditionally and without continue-on-error. One fixed,
+maintained profile binds version, digest and native-platform eligibility and
+contains full current pinned typecheck/lint and nonempty maintained release,
+producer, publication, installer, native-process and causal-safety tests. Callers
+cannot select scope. Require real JUnit and terminal process/output closure.
+The distinct `VidaCIPublicationAssurance/v1` receipt binds profile, operation,
+request, version, Source, run, attempt and test proof, without placeholder archive
+hash or invented workflow completion. The publisher verifies the actual completed
+successful assurance job for the
 exact original Linux producer run/attempt and Source/workflow digest, unique
 provider job ID and quality completion before Linux build start. This gate
 precedes every artifact ZIP redirect and storage request, including recovery.
+That job proof is the scoped publication admission authority. The retained
+receipt and JUnit are audit evidence, not a second admission proof.
 Native jobs require actual completed/success too. Only literal provider
 `steps: []` permits job-scoped evidence; nonempty missing, failed, skipped or
 malformed required steps remain denials. Native phase receipt, candidate,
@@ -564,8 +589,10 @@ This does not establish absent step records or whole-workflow completion; the
 completed-workflow observer retains its original strict contract.
 Failure or UNKNOWN retains evidence and blocks publication. This routing changes
 no task-specific mutation prerequisite, Source lease/CAS, historical UNKNOWN or
-user Runtime-acceptance boundary. Build-only formation and installation run no
-test suite.
+user Runtime-acceptance boundary. Full coverage, frozen CRAP and mutation remain
+separate maintained development tasks with existing budgets and targets; old GAP,
+FAIL and UNKNOWN remain unchanged. This profile claims no global test coverage.
+Build-only formation and installation run no test suite.
 
 Use four delivery steps: publish changed reviewed Source, issue one cached CI
 build, retrieve and qualify its exact artifact, then run the maintained installer.
@@ -690,8 +717,8 @@ Retain failed and UNKNOWN evidence; an isolated pass does not erase either.
 Agent behavior tests, coverage and CRAP run locally. Build, packaging and
 installation checks belong to CI/CD and are not local agent test tasks. Do not
 create or run build/install test suites, compiler probes or copied-package
-installation harnesses. CI/CD may run these delivery checks, but not agent
-behavior tests, coverage, CRAP or mutation. Mutation requires an explicit manual
+installation harnesses. CI/CD may run the fixed release-assurance tests and
+delivery checks; full coverage, CRAP and mutation remain separate. Mutation requires an explicit manual
 launch. Missing local or CI/CD evidence remains a GAP, never a pass. Tests and
 comments describe the current architecture and supported behavior, without
 narratives about absent legacy implementations. The approved pre-commit includes
@@ -784,7 +811,7 @@ optimization claims. Prepared CI/release notes/publication scripts create no
 registry/GitHub publication authority or Runtime acceptance. Fresh final three
 reviews, reverse validation and CLEAR bind the changed final source and assets.
 
-For Source self-development, use only the bundle-owned prepare/inspect/verify and
+For controlled Source self-development, use the bundle-owned prepare/inspect/verify and
 controlled-execution seam with a qualified immutable current-candidate controller
 outside the editable target. Preserve logical `runtime.bundle=packages/agent`,
 actual target repository/project/request attribution and existing scope/lease/CAS
@@ -812,7 +839,8 @@ binding. The original controller, UNKNOWN observation and active reservation
 remain untouched and fenced; this is no retry, old-resource reuse or alternate
 observation root for that controller. Qualification publishes and installs
 nothing. Ordinary controlled Source work resumes only after actual fresh
-immutable-candidate qualification. No predecessor, manual-ready state,
+immutable-candidate qualification for controlled execution. The owner-authorized
+native Source bootstrap exception above remains available. No predecessor, manual-ready state,
 inferred no-effect or reconstructed absent release journal qualifies it.
 
 ## Delivery and cutover

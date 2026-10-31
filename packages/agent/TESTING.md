@@ -83,18 +83,18 @@ qualification, delivery or Runtime acceptance.
 JUnit suite and testcase attribution normalizes Windows path separators only;
 different file names, case and traversal components remain distinct bindings.
 
-A Windows Source push may therefore precede full CI quality. Publication in the
-existing native delivery workflow requires its dedicated Linux
-`full-source-quality` job to complete successfully before Linux native formation.
-That job installs Ubuntu's `bubblewrap` and `tini` packages and requires an
-unprivileged namespace probe to succeed before assurance starts. Kernel or
-AppArmor denials remain blocking; the workflow does not relax host security policy.
-Its quality step runs unconditionally, fails closed and calls the
-same Git-independent fresh coverage and complete CRAP validator as the unchanged
-Linux pre-push route. It retains the full suite, inventory, numerical budgets,
-report/run bindings and security link fixtures. No local unsupported case is
-silently converted to PASS or removed from the full quality scope. Failure or
-UNKNOWN keeps publication blocked and retains the assurance intent and evidence.
+A Linux or Windows Source push follows current Source checks and review; CI
+assurance follows push. Publication requires one completed successful dedicated
+Linux release-assurance job before Linux native formation in the same original
+run attempt and Source/workflow. Its unconditional step fails closed. The one
+fixed maintained profile binds version, digest and native-platform eligibility;
+it includes full current pinned typecheck/lint and nonempty maintained release,
+producer, publication, installer, native-process and causal-safety tests. No
+caller selects scope. Require real JUnit and terminal process/output closure.
+`VidaCIPublicationAssurance/v1` binds profile, operation, request, version,
+Source, run, attempt and test proof, separately from historical numeric receipts,
+without placeholder archive hashes or invented workflow completion. Failure or
+UNKNOWN keeps publication blocked and retains assurance evidence.
 The publisher verifies the unique provider job ID, original producer run/attempt,
 Source/workflow digest and quality completion before Linux build start, before
 any artifact ZIP redirect or storage request, including recovery. Native jobs
@@ -106,6 +106,12 @@ establishes positive job evidence, not unavailable step records or whole-workflo
 completion. The old completed-workflow observer remains strict. Build-only dispatch skips the quality job and keeps its
 formation-only profile. Source assurance is separate from package formation and
 installation; it does not close other task-specific mutation or acceptance gaps.
+The actual successful bound job is the scoped admission authority; retained
+`VidaCIPublicationAssurance/v1` and JUnit are audit evidence, not a second gate.
+Full coverage, frozen CRAP and mutation remain separate maintained development
+tasks with their existing frozen budgets and 100 targets where applicable. Their
+GAP, FAIL and UNKNOWN remain truthful; this profile claims no global coverage
+and adds no numeric barrier to the authorized technical release or install.
 
 The same workflow offers `diagnose_runtime: true` only with `publish: false`.
 It skips native formation and runs one maintained released-journal CLI case in
@@ -740,7 +746,7 @@ Run agent behavior, property, ZOMBIES, concurrency, fault, schema, integration,
 and security checks locally. The coverage command runs the selected Bun Test
 files, checks coverage, and checks CRAP budgets in one invocation.
 
-CI/CD forms and publishes the exact package and its provenance/integrity metadata. Formation and installation run no test suites. Keep behavior, security, data, coverage, CRAP and mutation checks in development tasks. Do not add local delivery tests, compiler probes or copied-package installation harnesses. Synthetic artifact-state fixtures test their development task only.
+CI/CD forms and publishes the exact package and its provenance/integrity metadata. Formation and installation run no test suites. CI release assurance may run the named tests in the maintained fixed profile described above; other behavior, security and data checks remain development tasks. Full coverage, CRAP and mutation remain separate development tasks. Do not add local delivery tests, compiler probes or copied-package installation harnesses. Synthetic artifact-state fixtures test their development task only.
 
 During development, select the affected test files and cases. Include direct callers and configuration, schema, filesystem and subprocess dependencies. Use an exact file path with a name filter. Do not load unrelated tests.
 

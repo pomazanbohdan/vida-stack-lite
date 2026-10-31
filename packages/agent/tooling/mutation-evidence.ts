@@ -793,6 +793,38 @@ async function waitForChildGroup(child: TimedOutChild, waitMs: number): Promise<
   return waitForOwnedProcessGroup(Number.isSafeInteger(child.pid) ? child.pid : null, waitMs);
 }
 
+/** Internal completion seam; native group ownership remains with the caller. */
+export async function observeCompletedOwnedGroup(input: {
+  graceMs: number;
+  now: () => number;
+  waitForGroup: (waitMs: number) => Promise<boolean>;
+  waitForOutput: (waitMs: number) => Promise<void>;
+  cleanup: (remainingGraceMs: number) => Promise<MutationProcessResult>;
+}): Promise<{ closedBeforeSignal: boolean; spawnError: string | null; cleanup?: MutationProcessResult }> {
+  const deadline = input.now() + input.graceMs;
+  const remaining = () => Math.max(0, deadline - input.now());
+  const failed = async () => ({
+    closedBeforeSignal: false,
+    spawnError: 'process-group-termination-unobserved',
+    cleanup: await input.cleanup(remaining()),
+  });
+  let initial: boolean;
+  try {
+    initial = await input.waitForGroup(0);
+  } catch {
+    await input.waitForOutput(Math.min(500, remaining()));
+    return failed();
+  }
+  await input.waitForOutput(Math.min(500, remaining()));
+  if (initial) return { closedBeforeSignal: true, spawnError: null };
+  try {
+    if (await input.waitForGroup(remaining())) return { closedBeforeSignal: true, spawnError: null };
+  } catch {
+    return failed();
+  }
+  return failed();
+}
+
 function closeNativeGroupIfSettled(child: TimedOutChild, result: MutationProcessResult): MutationProcessResult {
   if (!child.nativeGroup) return result;
   const native_job = child.nativeGroup.evidence();
@@ -1132,16 +1164,40 @@ async function observeMutationProcess(
   const stdout = captureMutationOutput(child.stdout, limits.stdoutFile ?? '', outputLimit);
   const stderr = captureMutationOutput(child.stderr, limits.stderrFile ?? '', outputLimit);
   const outputResults = Promise.allSettled([stdout.result, stderr.result]);
+  let outputObservation:
+    | Promise<{ complete: false } | { complete: true; results: Awaited<typeof outputResults> }>
+    | undefined;
+  const observeOutput = (waitMs: number) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    return Promise.race([
+      outputResults.then((results) => ({ complete: true as const, results })),
+      new Promise<{ complete: false }>((resolve) => {
+        timer = setTimeout(() => resolve({ complete: false }), waitMs);
+      }),
+    ]).finally(() => clearTimeout(timer));
+  };
   let result: MutationProcessResult;
   try {
     const initial = await observeExit(child.exited, timeoutMs);
     if (initial.observed) {
-      const processGroupTerminationObserved = ownedProcessGroup ? await waitForChildGroup(child, 0) : null;
+      const group = ownedProcessGroup
+        ? await observeCompletedOwnedGroup({
+            graceMs: limits.terminationGraceMs ?? 1_000,
+            now: Date.now,
+            waitForGroup: (waitMs) => waitForChildGroup(child, waitMs),
+            waitForOutput: async (waitMs) => {
+              outputObservation = observeOutput(waitMs);
+              await outputObservation;
+            },
+            cleanup: (remainingGraceMs) =>
+              settleTimedOutChild(child, remainingGraceMs, limits.forceWaitMs ?? 1_000, true),
+          })
+        : null;
+      const processGroupTerminationObserved = group ? group.closedBeforeSignal : null;
       result = {
         exitCode: initial.exitCode,
         signal: child.signalCode,
-        spawnError:
-          ownedProcessGroup && !processGroupTerminationObserved ? 'process-group-termination-unobserved' : null,
+        spawnError: group?.spawnError ?? null,
         timedOut: false,
         processCustody: {
           pid: child.pid,
@@ -1152,16 +1208,10 @@ async function observeMutationProcess(
           attempts: [],
         },
       };
-      if (ownedProcessGroup && !processGroupTerminationObserved) {
-        const cleanup = await settleTimedOutChild(
-          child,
-          limits.terminationGraceMs ?? 1_000,
-          limits.forceWaitMs ?? 1_000,
-          true,
-        );
+      if (group?.cleanup) {
         // Settlement does not turn the unexpected group into a clean completion
         // or change the already observed leader exit into a timeout.
-        result = { ...result, processCustody: cleanup.processCustody };
+        result = { ...result, processCustody: group.cleanup.processCustody };
       }
     } else {
       result = await settleTimedOutChild(
@@ -1231,14 +1281,13 @@ async function observeMutationProcess(
     };
   }
 
-  let outputTimer: ReturnType<typeof setTimeout> | undefined;
-  const outputDeadline: Promise<{ complete: false }> = new Promise((resolve) => {
-    outputTimer = setTimeout(() => resolve({ complete: false }), 500);
-  });
-  const settled = await Promise.race([
-    outputResults.then((results) => ({ complete: true, results })),
-    outputDeadline,
-  ]).finally(() => clearTimeout(outputTimer));
+  let settled = await (outputObservation ?? observeOutput(500));
+  if (!settled.complete && outputObservation) {
+    settled = await Promise.race([
+      outputResults.then((results) => ({ complete: true as const, results })),
+      Promise.resolve({ complete: false as const }),
+    ]);
+  }
   if (!settled.complete) {
     stdout.cancel().catch(() => {});
     stderr.cancel().catch(() => {});

@@ -15,11 +15,82 @@ import {
   junitOutcome,
   mutationReceiptMatches,
   nativeMutationActivationHitCount,
+  observeCompletedOwnedGroup,
   parseMutationBodyEvents,
   settleTimedOutChild,
   testFilesWithLifecycleHooks,
   type MutationBodyEvent,
 } from '../tooling/mutation-evidence.ts';
+
+test('passively observes owned group closure before signaling', async () => {
+  const waits: number[] = [];
+  let signals = 0;
+  const result = await observeCompletedOwnedGroup({
+    graceMs: 1000,
+    now: () => 0,
+    waitForGroup: async (ms) => {
+      waits.push(ms);
+      return waits.length === 2;
+    },
+    waitForOutput: async () => {},
+    cleanup: async () => {
+      signals++;
+      throw new Error('unexpected cleanup');
+    },
+  });
+  expect(waits).toEqual([0, 1000]);
+  expect(signals).toBe(0);
+  expect(result).toEqual({ closedBeforeSignal: true, spawnError: null });
+});
+
+test.each(['unresolved', 'rejected'] as const)(
+  'retains unobserved error after %s observation and shares the grace deadline',
+  async (outcome) => {
+    let now = 100;
+    const waits: number[] = [];
+    let cleanupGrace = -1;
+    const cleanupResult = {
+      exitCode: 0,
+      signal: null,
+      spawnError: null,
+      timedOut: true,
+      processCustody: {
+        pid: 1,
+        scope: 'owned-process-group' as const,
+        terminationObserved: true,
+        processGroupTerminationObserved: true,
+        unrefCalled: false,
+        attempts: [],
+      },
+    };
+    const result = await observeCompletedOwnedGroup({
+      graceMs: 1000,
+      now: () => now,
+      waitForGroup: async (ms) => {
+        waits.push(ms);
+        if (waits.length === 1) return false;
+        now += 300;
+        if (outcome === 'rejected') throw new Error('observation failed');
+        return false;
+      },
+      waitForOutput: async (ms) => {
+        expect(ms).toBe(500);
+        now += 400;
+      },
+      cleanup: async (ms) => {
+        cleanupGrace = ms;
+        return cleanupResult;
+      },
+    });
+    expect(waits).toEqual([0, 600]);
+    expect(cleanupGrace).toBe(300);
+    expect(result).toEqual({
+      closedBeforeSignal: false,
+      spawnError: 'process-group-termination-unobserved',
+      cleanup: cleanupResult,
+    });
+  },
+);
 
 test('parent invocation projection matches a fresh identity and isolates command/test/file metadata aliases', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'mutation-parent-identity-'));

@@ -1801,7 +1801,7 @@ function assertLinuxPublicationQualityJob(
   runAttempt: number,
 ): void {
   check(
-    qualityJob.name === 'full-source-quality' &&
+    qualityJob.name === 'release-assurance' &&
       isPositiveSafeInteger(qualityJob.id) &&
       isPositiveSafeInteger(nativeJob.id) &&
       qualityJob.id !== nativeJob.id &&
@@ -1821,10 +1821,10 @@ function assertLinuxPublicationQualityJob(
   check(isRecord(rawQualityJob) && Array.isArray(rawQualityJob.steps), 'publication source-quality steps malformed');
   if (rawQualityJob.steps.length > 0) {
     const qualitySteps = rawQualityJob.steps.filter(
-      (step: unknown) => isRecord(step) && step.name === 'full-source-quality',
+      (step: unknown) => isRecord(step) && step.name === 'release-assurance',
     );
-    check(qualitySteps.length === 1, 'exactly one full-source-quality step required in quality job');
-    const step = publicationStep(qualitySteps[0], 'full-source-quality');
+    check(qualitySteps.length === 1, 'exactly one release-assurance step required in quality job');
+    const step = publicationStep(qualitySteps[0], 'release-assurance');
     check(
       step.start >= qualityInterval.start && step.end <= qualityInterval.end,
       'publication source-quality step interval differs from its job',
@@ -1984,8 +1984,8 @@ async function downloadGitHubArtifact(
   );
   if (!requireCompletedWorkflow) {
     if (request.target === 'bun-linux-x64') {
-      const qualityJobs = jobs.jobs.filter((job) => isRecord(job) && job.name === 'full-source-quality');
-      check(qualityJobs.length === 1, 'unique full-source-quality provider job required');
+      const qualityJobs = jobs.jobs.filter((job) => isRecord(job) && job.name === 'release-assurance');
+      check(qualityJobs.length === 1, 'unique release-assurance provider job required');
       const qualityJob = selectedGitHubJob(qualityJobs[0]);
       check(
         jobs.jobs.filter((job) => isRecord(job) && job.id === qualityJob.id).length === 1 &&

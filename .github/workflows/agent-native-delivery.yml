@@ -246,8 +246,8 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
-  full-source-quality:
-    name: full-source-quality
+  release-assurance:
+    name: release-assurance
     if: ${{ vars.VIDA_NATIVE_CI_ENABLED == 'true' && inputs.publish && !inputs.diagnose_runtime }}
     runs-on: ubuntu-24.04
     env:
@@ -281,18 +281,17 @@ jobs:
           bwrap --version
           tini --version
           bwrap --die-with-parent --unshare-all --new-session --ro-bind / / --proc /proc --dev /dev /usr/bin/tini -- /usr/bin/true
-      - name: full-source-quality
+      - name: release-assurance
         id: source-quality
         run: bun --no-env-file --no-install "$env:VIDA_CI_SOURCE_ROOT/tooling/agent/release-ci-source-quality.ts"
-      - name: retain-source-quality-evidence
+      - name: retain-release-assurance-evidence
         if: ${{ always() && steps.source-quality.outputs.evidence_directory != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: vida-source-quality-${{ github.run_id }}-${{ github.run_attempt }}-linux
+          name: vida-release-assurance-${{ github.run_id }}-${{ github.run_attempt }}-linux
           path: |
             ${{ steps.source-quality.outputs.evidence_directory }}
-            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/bun-unified
-            ${{ env.VIDA_CI_SOURCE_ROOT }}/packages/agent/coverage/sdk-test-inputs
+            ${{ steps.source-quality.outputs.runner_report_directory }}
           archive: true
           compression-level: 6
           overwrite: false
@@ -342,8 +341,8 @@ jobs:
           retention-days: 14
   native-linux-x64:
     name: native-linux-x64
-    needs: full-source-quality
-    if: ${{ always() && vars.VIDA_NATIVE_CI_ENABLED == 'true' && !inputs.diagnose_runtime && inputs.request_linux != '' && (!inputs.publish || needs.full-source-quality.result == 'success') }}
+    needs: release-assurance
+    if: ${{ always() && vars.VIDA_NATIVE_CI_ENABLED == 'true' && !inputs.diagnose_runtime && inputs.request_linux != '' && (!inputs.publish || needs.release-assurance.result == 'success') }}
     runs-on: ubuntu-24.04
     outputs:
       artifact_id: ${{ steps.upload.outputs.artifact-id }}
@@ -395,9 +394,10 @@ jobs:
       version: ${{ steps.publish-release.outputs.version }}
       bash_installer_sha256: ${{ steps.publish-release.outputs.bash_installer_sha256 }}
     needs:
+      - release-assurance
       - native-windows-x64
       - native-linux-x64
-    if: ${{ always() && inputs.publish }}
+    if: ${{ always() && inputs.publish && needs.release-assurance.result == 'success' }}
     runs-on: windows-2025
     permissions:
       actions: read

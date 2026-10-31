@@ -299,6 +299,12 @@ can refresh the active index and invalidate its frozen identity. For read-only
 status outside that interval, use `git --no-optional-locks status`. Do not weaken
 the staged-byte/index guard to accommodate concurrent observers.
 
+The owner authorizes bounded native Source bootstrap under the checked-in
+lifecycle fallback when absent installed runtime or stale controller would
+circularly block causal repairs. Record intent, exact files, current Source
+binding, focused checks and independent review. Preserve existing reservations,
+CAS and UNKNOWN guards; qualify a fresh controller for controlled execution.
+
 Formation, qualification and installation sequencing has one owner:
 the installed development-lifecycle instruction's self-development protocol.
 This sidecar supplies locations and repository exceptions, not a second set of
