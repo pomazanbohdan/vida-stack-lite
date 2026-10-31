@@ -1835,6 +1835,11 @@ describe('retrieval workflow contract', () => {
     expect(top.stderr).toContain('top 2');
     expect(top.stdout.trim().split('\n').length).toBeGreaterThan(0);
 
+    const union = await runInProcess(['search', '--for', 'architecture', 'testing', '--top', '2', '--catalog', realCatalog, '--all']);
+    expect(union.status).toBe(0);
+    expect(union.stdout).toContain('add-the-rendering-machinery-only-when-the-teams-really-differ');
+    expect(union.stdout).toContain('add-a-property-test-for-a-parsing-or-transformation-module');
+
     const tooMany = await runInProcess(['search', '--for', 'architecture', 'testing', '--top', '4', '--catalog', realCatalog]);
     expect(tooMany.status).toBe(1);
     expect(tooMany.stderr).toContain('--top accepts 1, 2 or 3');

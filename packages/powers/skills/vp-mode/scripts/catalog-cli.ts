@@ -351,11 +351,12 @@ function renderHelp(command?: Command): string {
       '',
       'workflow:',
       '  1. tags --query "<terms>"                      -> capability:/pattern: matches',
-      '  2. search --capability <tag> [--pattern <tag>]  -> candidates, 10 per page',
+      '  2. search --capability <tag> [--pattern <tag>]  -> candidates, 20 per page',
       '  3. get --id <id...> --profile <path>            -> full text + obligations',
       'notes: search takes bare tags (review-code, not capability:review-code);',
       '       first pass: search --for "<terms>" resolves a capability and its top pattern;',
       '       multi-intent task: one focused --for per intent, 3-6 terms each;',
+      '       compound intent: --top 2 unions two capabilities with distinct evidence;',
       '       --offset 20 gets the next page; --all lists every row;',
       '       a page is a sample, not a ranking; page again when an intent is missing.',
     );
