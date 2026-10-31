@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/consumer-clean-initialization-operation.v1.schema.json",
+  "title": "Consumer Clean Initialization Operation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "operation_id", "root", "root_identity", "workspace_id", "request", "runtime", "archive_root", "inventory", "moves", "containers", "phase", "prepared", "initialization", "binding"],
+  "properties": {
+    "schema": { "const": "ConsumerCleanInitializationOperation/v1" },
+    "version": { "const": 1 },
+    "operation_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "root": { "$ref": "#/$defs/text" },
+    "root_identity": { "$ref": "#/$defs/identity" },
+    "workspace_id": { "$ref": "#/$defs/digest" },
+    "request": { "$ref": "#/$defs/request" },
+    "runtime": { "$ref": "#/$defs/runtime" },
+    "archive_root": { "$ref": "#/$defs/path" },
+    "inventory": { "type": "array", "maxItems": 10000, "items": { "oneOf": [{ "$ref": "#/$defs/file" }, { "$ref": "#/$defs/directory" }] } },
+    "moves": { "type": "array", "maxItems": 10000, "items": { "$ref": "#/$defs/move" } },
+    "containers": { "type": "array", "maxItems": 10000, "items": { "$ref": "#/$defs/container" } },
+    "phase": { "enum": ["intent", "archiving", "archive_complete", "initializing", "complete"] },
+    "prepared": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/prepared" }] },
+    "initialization": { "$ref": "#/$defs/state" },
+    "binding": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "text": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "identity": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "state": { "enum": ["not-started", "issued", "completed"] },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["projectRoot", "repository", "projectMappings"],
+      "properties": {
+        "projectRoot": { "$ref": "#/$defs/path" },
+        "repository": { "$ref": "#/$defs/text" },
+        "projectMappings": { "type": "array", "minItems": 1, "maxItems": 10000, "items": { "$ref": "#/$defs/text" } },
+        "reconcileExisting": { "const": false }
+      }
+    },
+    "runtime": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "bundle_identity", "resource_digest"],
+      "properties": {
+        "version": { "type": "string", "maxLength": 256, "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$" },
+        "bundle_identity": { "$ref": "#/$defs/identity" },
+        "resource_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "path", "identity", "size", "sha256"],
+      "properties": {
+        "type": { "const": "file" }, "path": { "$ref": "#/$defs/path" },
+        "identity": { "$ref": "#/$defs/identity" },
+        "size": { "type": "integer", "minimum": 0, "maximum": 67108864 },
+        "sha256": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "directory": {
+      "type": "object", "additionalProperties": false,
+      "required": ["type", "path", "identity", "children"],
+      "properties": {
+        "type": { "const": "directory" }, "path": { "$ref": "#/$defs/path" },
+        "identity": { "$ref": "#/$defs/identity" },
+        "children": { "type": "array", "maxItems": 10000, "items": { "type": "string", "minLength": 1, "maxLength": 255 } }
+      }
+    },
+    "move": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "source", "target", "source_identity", "type", "state"],
+      "properties": {
+        "kind": { "enum": ["archive", "project"] },
+        "source": { "$ref": "#/$defs/path" }, "target": { "$ref": "#/$defs/path" },
+        "source_identity": { "$ref": "#/$defs/identity" },
+        "type": { "enum": ["file", "directory"] }, "state": { "$ref": "#/$defs/state" }
+      }
+    },
+    "container": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "state", "identity"],
+      "properties": {
+        "path": { "$ref": "#/$defs/path" }, "state": { "$ref": "#/$defs/state" },
+        "identity": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/identity" }] }
+      }
+    },
+    "prepared": {
+      "type": "object", "additionalProperties": false,
+      "required": ["intent", "rootIdentity", "bundleIdentity", "projectIdentities", "resourceDigest"],
+      "properties": {
+        "intent": { "type": "string", "minLength": 1, "maxLength": 8388608 },
+        "rootIdentity": { "$ref": "#/$defs/identity" },
+        "bundleIdentity": { "$ref": "#/$defs/identity" },
+        "projectIdentities": { "type": "array", "maxItems": 10000, "items": { "$ref": "#/$defs/identity" } },
+        "resourceDigest": { "$ref": "#/$defs/digest" }
+      }
+    }
+  }
+}

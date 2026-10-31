@@ -52,6 +52,23 @@ exclusive gate. Gate-only inspection under a live proof lists the directory
 without opening another SQLite connection. Its owner checks outside receipt-lock
 sidecars and retains the journal after an issued callback failure. These
 primitives do not constitute a connected clean-init command or its recovery owner.
+The [clean journal schema](../schemas/consumer-clean-initialization-operation.v1.schema.json)
+and [data validator](../bin/consumer-clean-initialization.ts) define one closed
+operation record. Its frozen plan binds the request, declared root/runtime
+identities, exact archive destinations, directory inventory and file sizes/hashes.
+Progress and subsequently captured prepared facts are outside that plan binding;
+the effect owner separately binds every complete journal image by its exact raw
+bytes for CAS. Declared identity and completed flags grant no physical proof or
+authority. Data validation performs no consumer filesystem observations or effects.
+The clean profile permits 10,000 inventory entries, 64 MiB per file, 512 MiB
+aggregate and 8 MiB serialized UTF-8. Its scoped canonical-node allowance preserves
+the ordinary ingress limits. Directory closure, path collisions, archive/move
+scope, prepared bindings and phase consistency are checked before returning a
+deeply frozen independent record. The `initializing` phase permits a null prepared
+DTO only while initialization is not started, so the existing read-only helper
+can capture that DTO; issuance requires its prior persistence. These contracts
+do not establish a connected publisher, recovery flow, installed artifact or
+Runtime acceptance.
 
 Local execution assumes a trusted orchestrating session and its observed
 built-in tool results. Before authoring `LocalSourceWriteAuthorization/v1`,
