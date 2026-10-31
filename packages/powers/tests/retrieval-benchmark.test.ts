@@ -121,6 +121,14 @@ const stageCases: Array<{ terms: string[]; expects: string }> = [
   { terms: ['hard', 'constraints', 'options'], expects: 'metric-gated-decision' },
   { terms: ['architectural', 'redesign'], expects: 'design-structure' },
   { terms: ['one', 'owner', 'per', 'document', 'no', 'parallel'], expects: 'single-source-of-truth' },
+  { terms: ['incoming', 'reports', 'triage', 'classification'], expects: 'triage-reports' },
+  { terms: ['keep', 'a', 'decision', 'trail', 'with', 'alternatives'], expects: 'keep-decision-trail' },
+  { terms: ['deprecate', 'a', 'public', 'endpoint'], expects: 'decide-on-deprecation' },
+  { terms: ['characterization', 'test', 'before', 'refactor'], expects: 'write-tests-first' },
+  { terms: ['observability', 'for', 'error', 'rate'], expects: 'instrument-production-code' },
+  { terms: ['hand', 'off', 'the', 'next', 'step', 'to', 'the', 'owner'], expects: 'hand-back-the-next-step' },
+  { terms: ['write', 'the', 'installation', 'guide'], expects: 'write-technical-prose' },
+  { terms: ['pin', 'dependency', 'versions'], expects: 'manage-dependency-supply-chain' },
   { terms: ['observability', 'alerting', 'errors'], expects: 'instrument-production-code' },
 ];
 

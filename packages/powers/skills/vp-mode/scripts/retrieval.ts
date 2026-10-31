@@ -8,6 +8,7 @@ export type IntentCandidate = {
   tag: string;
   score: number;
   matchedTokens: string[];
+  specific: boolean;
 };
 
 export type IntentResolution = {
@@ -15,6 +16,7 @@ export type IntentResolution = {
   capability?: string;
   pattern?: string;
   candidates: IntentCandidate[];
+  rankedCapabilities: IntentCandidate[];
   matchedTokens: string[];
   matchedAlias: boolean;
 };
@@ -209,7 +211,7 @@ export function resolveIntent(
   aliases?: ReadonlyMap<string, string>,
 ): IntentResolution {
   const query = queryTokens(terms);
-  const empty: IntentResolution = { status: 'unresolved', candidates: [], matchedTokens: [], matchedAlias: false };
+  const empty: IntentResolution = { status: 'unresolved', candidates: [], rankedCapabilities: [], matchedTokens: [], matchedAlias: false };
   if (query.length === 0) return empty;
 
   const capabilityNames = nameSets(instructions, 'capability');
@@ -222,18 +224,26 @@ export function resolveIntent(
   const capabilities = rankByNames(query, capabilityNames.entries, capabilityNames.counts, capabilityAliases);
   const patterns = rankByNames(query, patternNames.entries, patternNames.counts, patternAliases);
   const candidates: IntentCandidate[] = [
-    ...capabilities.slice(0, 3).map((item) => ({
-      dimension: 'capability' as const,
-      tag: item.tag,
-      score: item.score,
-      matchedTokens: matchedTokensFor(item.names, query, item.tag, capabilityAliases),
-    })),
-    ...patterns.slice(0, 3).map((item) => ({
-      dimension: 'pattern' as const,
-      tag: item.tag,
-      score: item.score,
-      matchedTokens: matchedTokensFor(item.names, query, item.tag, patternAliases),
-    })),
+    ...capabilities.slice(0, 3).map((item) => {
+      const matchedTokens = matchedTokensFor(item.names, query, item.tag, capabilityAliases);
+      return {
+        dimension: 'capability' as const,
+        tag: item.tag,
+        score: item.score,
+        matchedTokens,
+        specific: matchedTokens.some((token) => !GENERIC_ACTION_TOKENS.has(token)),
+      };
+    }),
+    ...patterns.slice(0, 3).map((item) => {
+      const matchedTokens = matchedTokensFor(item.names, query, item.tag, patternAliases);
+      return {
+        dimension: 'pattern' as const,
+        tag: item.tag,
+        score: item.score,
+        matchedTokens,
+        specific: matchedTokens.some((token) => !GENERIC_ACTION_TOKENS.has(token)),
+      };
+    }),
   ].sort((left, right) => right.score - left.score
     || (left.tag < right.tag ? -1 : left.tag > right.tag ? 1 : 0))
     .slice(0, 3);
@@ -256,6 +266,16 @@ export function resolveIntent(
   const resolution: IntentResolution = {
     status: weak ? 'weak' : 'resolved',
     candidates,
+    rankedCapabilities: capabilities.slice(0, 3).map((item) => {
+      const matchedTokens = matchedTokensFor(item.names, query, item.tag, capabilityAliases);
+      return {
+        dimension: 'capability' as const,
+        tag: item.tag,
+        score: item.score,
+        matchedTokens,
+        specific: matchedTokens.some((token) => !GENERIC_ACTION_TOKENS.has(token)),
+      };
+    }),
     matchedTokens,
     matchedAlias,
   };

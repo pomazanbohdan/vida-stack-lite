@@ -1828,6 +1828,30 @@ describe('retrieval workflow contract', () => {
     expect(equalCounts.stderr).toContain('resolved: pattern=staged-elicitation');
   });
 
+  test('--top returns the union of the two best capabilities', async () => {
+    const top = await runInProcess(['search', '--for', 'architecture', 'testing', '--top', '2', '--catalog', realCatalog]);
+    expect(top.status).toBe(0);
+    expect(top.stderr).toContain('capability=design-structure,write-tests-first');
+    expect(top.stderr).toContain('top 2');
+    expect(top.stdout.trim().split('\n').length).toBeGreaterThan(0);
+
+    const tooMany = await runInProcess(['search', '--for', 'architecture', 'testing', '--top', '4', '--catalog', realCatalog]);
+    expect(tooMany.status).toBe(1);
+    expect(tooMany.stderr).toContain('--top accepts 1, 2 or 3');
+
+    const withoutFor = await runInProcess(['search', '--capability', 'review-code', '--top', '2', '--catalog', realCatalog]);
+    expect(withoutFor.status).toBe(1);
+    expect(withoutFor.stderr).toContain('--top requires --for');
+
+    const mixed = await runInProcess(['search', '--for', 'architecture', 'testing', '--top', '2', '--capability', 'review-code', '--catalog', realCatalog]);
+    expect(mixed.status).toBe(1);
+    expect(mixed.stderr).toContain('--top cannot be combined');
+
+    const oneEvidence = await runInProcess(['search', '--for', 'characterization', 'test', 'before', 'refactor', '--top', '2', '--catalog', realCatalog]);
+    expect(oneEvidence.status).toBe(1);
+    expect(oneEvidence.stderr).toContain('distinct evidence');
+  });
+
   test('search accepts a namespaced tag copied from tags output', async () => {
     const result = await runInProcess(['search', '--capability', 'capability:review-code', '--catalog', realCatalog]);
     expect(result.status).toBe(0);

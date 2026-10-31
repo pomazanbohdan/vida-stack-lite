@@ -27,6 +27,7 @@ import {
 } from './catalog.ts';
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
 import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText, topPatternFor } from './retrieval.ts';
+import type { IntentCandidate } from './retrieval.ts';
 import { validateAgainstSchema } from './schema.ts';
 import {
   INSTRUCTION_DOMAINS,
@@ -124,6 +125,7 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--capability': { arity: 'list', value: 'TAG', description: 'OR within capability tags.' },
       '--pattern': { arity: 'list', value: 'TAG', description: 'OR within pattern tags.' },
       '--for': { arity: 'list', value: 'TERM', description: 'Resolve a capability and its most frequent pattern from free-text terms, then search.' },
+      '--top': { arity: 'scalar', value: 'N', description: 'Resolve the top N capabilities for a compound intent (1-3); the pattern filter is not applied and every extra capability must add distinct evidence.' },
       '--id': { arity: 'list', value: 'ID', description: 'Restrict to instruction IDs.' },
       '--roles': { arity: 'list', value: 'ROLE', description: 'Filter roles; empty instruction role lists remain universal.' },
       '--product': { arity: 'list', value: 'PRODUCT', description: 'Filter products.' },
@@ -680,26 +682,51 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       let patternTags = tagListValues(flags, '--pattern', 'pattern');
       let resolved: string | undefined;
       const forTerms = listValues(flags, '--for');
+      const topValues = listValues(flags, '--top');
+      if (topValues !== undefined && topValues.length !== 1) throw invalid('--top accepts one value', { flag: '--top' });
+      const top = topValues === undefined ? 1 : Number(topValues[0]);
+      if (!Number.isInteger(top) || top < 1 || top > 3) throw invalid('--top accepts 1, 2 or 3', { flag: '--top' });
+      if (topValues !== undefined && forTerms === undefined) throw invalid('--top requires --for', { flag: '--top' });
       if (forTerms !== undefined) {
         if (forTerms.length > 8) throw invalid('--for accepts at most 8 terms; run one focused --for per intent (3-6 terms)', { terms: forTerms });
         const aliases = new Map(Object.entries(catalog.tag_aliases));
         const resolution = resolveIntent(instructions, forTerms, aliases);
-        const capability = capabilityTags?.[0] ?? resolution.capability;
-        const pattern = patternTags?.[0] ?? resolution.pattern ?? (capability === undefined ? undefined : topPatternFor(instructions, capability));
-        if (capability === undefined && pattern === undefined) {
-          throw invalid(`no capability or pattern matched --for; ${suggestionText(forTerms, catalogFindTags(catalog, forTerms))}`, { terms: forTerms });
-        }
-        if (capability !== undefined) capabilityTags = capabilityTags ?? [capability];
-        if (pattern !== undefined) patternTags = patternTags ?? [pattern];
-        const explicit = flags.has('--capability') || flags.has('--pattern');
-        const weak = resolution.status === 'weak' && !explicit;
-        resolved = `resolved: ${capability === undefined ? '' : `capability=${capabilityTags?.join(',')}`}${capability !== undefined && pattern !== undefined ? ' ' : ''}${pattern === undefined ? '' : `pattern=${patternTags?.join(',')}`} (from --for)`;
-        if (weak) {
-          const alternatives = resolution.candidates
-            .filter((candidate) => candidate.tag !== capability && candidate.tag !== pattern)
-            .map((candidate) => ({ dimension: candidate.dimension, tag: candidate.tag }));
-          const hint = alternatives.length === 0 ? suggestionHint([]) : suggestionText(forTerms, alternatives);
-          resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved; ${hint}`;
+        if (top > 1) {
+          if (flags.has('--capability') || flags.has('--pattern')) throw invalid('--top cannot be combined with --capability or --pattern', { flag: '--top' });
+          const ranked: IntentCandidate[] = [];
+          const covered = new Set<string>();
+          for (const candidate of resolution.rankedCapabilities) {
+            const adds = candidate.matchedTokens.some((token) => !covered.has(token));
+            if (ranked.length === 0 || adds) {
+              ranked.push(candidate);
+              for (const token of candidate.matchedTokens) covered.add(token);
+            }
+            if (ranked.length === top) break;
+          }
+          if (ranked.length < top) {
+            throw invalid(`--top ${top} needs ${top} capabilities with distinct evidence; matched ${ranked.length}`, { terms: forTerms });
+          }
+          capabilityTags = ranked.map((candidate) => candidate.tag);
+          resolved = `resolved: capability=${capabilityTags.join(',')} (from --for, top ${top})`;
+          if (resolution.status === 'weak') resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved`;
+        } else {
+          const capability = capabilityTags?.[0] ?? resolution.capability;
+          const pattern = patternTags?.[0] ?? resolution.pattern ?? (capability === undefined ? undefined : topPatternFor(instructions, capability));
+          if (capability === undefined && pattern === undefined) {
+            throw invalid(`no capability or pattern matched --for; ${suggestionText(forTerms, catalogFindTags(catalog, forTerms))}`, { terms: forTerms });
+          }
+          if (capability !== undefined) capabilityTags = capabilityTags ?? [capability];
+          if (pattern !== undefined) patternTags = patternTags ?? [pattern];
+          const explicit = flags.has('--capability') || flags.has('--pattern');
+          const weak = resolution.status === 'weak' && !explicit;
+          resolved = `resolved: ${capability === undefined ? '' : `capability=${capabilityTags?.join(',')}`}${capability !== undefined && pattern !== undefined ? ' ' : ''}${pattern === undefined ? '' : `pattern=${patternTags?.join(',')}`} (from --for)`;
+          if (weak) {
+            const alternatives = resolution.candidates
+              .filter((candidate) => candidate.tag !== capability && candidate.tag !== pattern)
+              .map((candidate) => ({ dimension: candidate.dimension, tag: candidate.tag }));
+            const hint = alternatives.length === 0 ? suggestionHint([]) : suggestionText(forTerms, alternatives);
+            resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved; ${hint}`;
+          }
         }
       }
       const roles = listValues(flags, '--roles');
