@@ -5,7 +5,7 @@
   "type": "module",
   "workspaces": [
     "packages/agent",
-    "packages/plugin"
+    "packages/codex"
   ],
   "scripts": {
     "agent:build": "bun --cwd packages/agent run build",

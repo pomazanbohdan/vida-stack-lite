@@ -14,3 +14,7 @@ graphify-out/
 *.log
 *.tmp
 *.local
+/.vida/storage-admission.v1.sqlite
+/.vida/storage-admission.v1.sqlite-journal
+/.vida/storage-admission.v1.sqlite-wal
+/.vida/storage-admission.v1.sqlite-shm

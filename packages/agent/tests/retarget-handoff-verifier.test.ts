@@ -6,7 +6,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { test } from 'bun:test';
 import { releaseJSON, releaseSourceBinding } from '../bin/local-release-artifacts.ts';
-import { expectedJavascriptFiles, standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
+import {
+  expectedJavascriptFiles,
+  standaloneBuildInputInventory,
+  standaloneDiscoveryFiles,
+} from '../tooling/maintained-source-inventory.ts';
 import {
   applyReleaseRetarget,
   inspectReleaseRetarget,
@@ -74,7 +78,7 @@ async function fixture(
     '.github/workflows/agent-native-delivery.yml',
   ])
     write(root, file, '{}\n');
-  for (const file of ['packages/plugin/fixture.ts', 'tests/agent/fixture.ts', '.githooks/fixture.ts'])
+  for (const file of ['packages/codex/fixture.ts', 'tests/agent/fixture.ts', '.githooks/fixture.ts'])
     write(root, file, 'export const fixture = true;\n');
   const oldBytes = Buffer.from('retained inert SDK provenance');
   const original = {
@@ -104,6 +108,7 @@ async function fixture(
   });
   write(root, 'packages/agent/bin/vida-agent.ts', 'export const inert = 1;\n');
   for (const file of [
+    ...standaloneDiscoveryFiles.filter((file) => file !== 'package.json'),
     'tooling/maintained-source-inventory.ts',
     'TESTING.md',
     '.bun-version',

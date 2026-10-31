@@ -171,7 +171,7 @@ test('release Source binding covers every maintained gate root', () => {
       'agent-runtime.config.v1.yaml',
       'AGENT.sidecar.md',
       'packages/agent/fixture.ts',
-      'packages/plugin/fixture.ts',
+      'packages/codex/fixture.ts',
       'tests/agent/fixture.ts',
       'tooling/agent/fixture.ts',
       '.githooks/fixture.ts',
@@ -345,7 +345,7 @@ test('successive independent operations issue distinct Source-bound requests and
       'package.json',
       'agent-runtime.config.v1.yaml',
       'AGENT.sidecar.md',
-      'packages/plugin/fixture.ts',
+      'packages/codex/fixture.ts',
       'tests/agent/fixture.ts',
       'tooling/agent/fixture.ts',
       '.githooks/fixture.ts',
@@ -368,7 +368,7 @@ test('successive independent operations issue distinct Source-bound requests and
         captured.push({ file, bytes: readFileSync(file) });
       }
       if (i < 2) {
-        writeFixture(root, 'packages/plugin/fixture.ts', Buffer.from(`revision ${i}\n`));
+        writeFixture(root, 'packages/codex/fixture.ts', Buffer.from(`revision ${i}\n`));
         const next = await prepareIndependentSuccessor(root, operation.operation_id);
         assert.ok(next);
         operation = next;

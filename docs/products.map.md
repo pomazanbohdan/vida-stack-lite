@@ -8,14 +8,11 @@ duplicated here.
 | Product | Stable project ID | Actual root | Registration |
 | --- | --- | --- | --- |
 | VIDA Agent | `agent` | `packages/agent` | Registered |
-| VIDA Codex | `plugin` | `packages/plugin` | Registered |
-| Vida Powers | `powers` | `packages/powers` | Not registered |
+| VIDA Codex | `plugin` | `packages/codex` | Registered |
+| Vida Powers | `powers` | `packages/powers` | Registered |
 
-The product documentation identifies three products; the
-sidecar and root cfg still describe/register only `agent` and `plugin`. Codex
-product docs remain a setup GAP. The requested Codex root `packages/codex` is
-not in place; relocation is unsupported by the current public CLI. No project
-IDs have changed.
+The root configuration registers `agent`, `plugin`, and `powers`.
+Codex product docs remain an owner setup gap. Project IDs remain unchanged.
 
 Powers canonical sources: [index](../packages/powers/docs/index.md),
 [business requirements](../packages/powers/docs/business-requirements.md),
@@ -30,13 +27,12 @@ Powers canonical sources: [index](../packages/powers/docs/index.md),
 - Agent verification: `packages/agent/TESTING.md`.
 - Derived native-primary and npm/SDK compatibility installation/repair guide: `packages/agent/docs/installation.md`.
 - Agent implementation: `packages/agent/src/`, public commands in `packages/agent/bin/`.
-- Plugin owner sources: `packages/plugin/docs/business-requirements.md`,
+- Plugin owner sources: `packages/codex/docs/business-requirements.md`,
   `system-specification.md`, `acceptance.md`; absent files remain an explicit
   owner setup gap.
 - Repository identity, owners and commands: `AGENT.sidecar.md`.
-- Source-only standing package/Git authorization: `AGENT.sidecar.md#source-package-git-policy`.
 
-Relations: the agent specification documents the implementation and is verified
-by its package tests; the product map depends on the Sidecar source bindings.
+Relations: the agent specification documents the implementation; package tests
+provide verification evidence.
 
 Repository-only migration evidence: [consumer retirement inventory and ordering](migration/consumer-source-retirement.md). This is supporting evidence, not an npm asset or runtime authority.

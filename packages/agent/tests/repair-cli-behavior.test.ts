@@ -482,7 +482,8 @@ function fixture() {
       !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'].includes(path.basename(entry)),
   });
   symlinkSync(path.join(bundle, 'node_modules'), path.join(copiedBundle, 'node_modules'), 'junction');
-  cpSync(path.join(repository, 'packages/plugin'), path.join(root, 'packages/plugin'), { recursive: true });
+  cpSync(path.join(repository, 'packages/codex'), path.join(root, 'packages/codex'), { recursive: true });
+  mkdirSync(path.join(root, 'packages/powers'), { recursive: true });
   const documentationPolicy = 'docs/agent-instructions/documentation-policy.v1.json';
   mkdirSync(path.dirname(path.join(root, documentationPolicy)), { recursive: true });
   writeFileSync(path.join(root, documentationPolicy), readFileSync(path.join(contextRoot, documentationPolicy)));

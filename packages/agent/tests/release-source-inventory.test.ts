@@ -8,7 +8,7 @@ test('the release source inventory has the expected ordered roots', () => {
     { path: 'agent-runtime.config.v1.yaml', kind: 'file' },
     { path: 'AGENT.sidecar.md', kind: 'file' },
     { path: 'packages/agent', kind: 'directory' },
-    { path: 'packages/plugin', kind: 'directory' },
+    { path: 'packages/codex', kind: 'directory' },
     { path: 'tests/agent', kind: 'directory' },
     { path: 'tooling/agent', kind: 'directory' },
     { path: '.githooks', kind: 'directory' },

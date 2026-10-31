@@ -6,7 +6,7 @@ const comparePaths = (left: string, right: string): number => (left < right ? -1
 
 export const MAINTAINED_SOURCE_ROOTS = [
   'packages/agent',
-  'packages/plugin',
+  'packages/codex',
   'tests/agent',
   'tooling/agent',
   '.githooks',
@@ -17,10 +17,10 @@ const GENERATED_BOUNDARIES = new Set([
   'packages/agent/dist',
   'packages/agent/node_modules',
   'packages/agent/coverage',
-  'packages/plugin/dist',
-  'packages/plugin/.tmp',
-  'packages/plugin/node_modules',
-  'packages/plugin/coverage',
+  'packages/codex/dist',
+  'packages/codex/.tmp',
+  'packages/codex/node_modules',
+  'packages/codex/coverage',
 ]);
 
 const TYPESCRIPT_EXTENSIONS = new Set(['.ts', '.mts', '.cts', '.tsx']);

@@ -64,7 +64,7 @@ const config = {
       ],
       project: [codeFiles],
     },
-    'packages/plugin': {
+    'packages/codex': {
       entry: [],
       project: [codeFiles],
     },

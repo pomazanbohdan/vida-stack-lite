@@ -505,7 +505,7 @@ export function selectedTarball(metadata: unknown, folder: string, version: stri
 }
 
 const excluded = new Set(['node_modules', 'dist', 'coverage', '.pack-inspect']);
-const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent', 'packages/plugin/.tmp']);
+const scratch = new Set(['.tmp', '.agent', 'packages/agent/.tmp', 'packages/agent/.agent', 'packages/codex/.tmp']);
 /**
  */
 const repairSourcePasses = new WeakMap<RepairSourcePass, RepairSourceState>();
@@ -721,7 +721,7 @@ const releaseSourceRoots = [
   { path: 'agent-runtime.config.v1.yaml', kind: 'file' },
   { path: 'AGENT.sidecar.md', kind: 'file' },
   { path: 'packages/agent', kind: 'directory' },
-  { path: 'packages/plugin', kind: 'directory' },
+  { path: 'packages/codex', kind: 'directory' },
   { path: 'tests/agent', kind: 'directory' },
   { path: 'tooling/agent', kind: 'directory' },
   { path: '.githooks', kind: 'directory' },

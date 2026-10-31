@@ -13,8 +13,7 @@ repository:
   title: vida-agent repository
   project_root: .
   code_selectors:
-    - packages/agent/**
-    - packages/plugin/**
+    - src/**
 integrations:
   providers:
     - id: local-agent
@@ -27,11 +26,16 @@ integrations:
       project_id: plugin
       tenant_id: local
       namespace: plugin
+    - id: local-powers
+      provider: local
+      project_id: powers
+      tenant_id: local
+      namespace: powers
 runtime:
-  bundle: packages/agent
-  schema_root: packages/agent/schemas
-  instruction_root: packages/agent/instructions
-  tooling_root: packages/agent/tooling
+  bundle: vida-agent
+  schema_root: vida-agent/schemas
+  instruction_root: vida-agent/instructions
+  tooling_root: vida-agent/tooling
 control:
   work_root: .agent/work
   coordination_ledger: .agent/coordination/ownership.v1.json
@@ -67,26 +71,38 @@ projects:
     title: agent
     project_root: packages/agent
     wiki_root: packages/agent/docs
-    wiki_path: AGENT.sidecar.md
-    wiki_output_root: .planning/agent-flow/agent/wiki-output
-    internal_root: packages/agent/docs
-    ledger_root: .agent/work
+    wiki_path: packages/agent/AGENT.sidecar.md
+    wiki_output_root: packages/agent/.planning/agent-flow/wiki-output
+    internal_root: packages/agent/docs/internal
+    ledger_root: packages/agent/backlogs
     task_prefix: TASK
     code_selectors:
-      - packages/agent/**
+      - packages/agent/src/**
     delivery_group: agent
   - project_id: plugin
     title: plugin
-    project_root: packages/plugin
-    wiki_root: packages/plugin/docs
-    wiki_path: AGENT.sidecar.md
-    wiki_output_root: .planning/agent-flow/plugin/wiki-output
-    internal_root: packages/plugin/docs
-    ledger_root: .agent/work
+    project_root: packages/codex
+    wiki_root: packages/codex/docs
+    wiki_path: packages/codex/AGENT.sidecar.md
+    wiki_output_root: packages/codex/.planning/agent-flow/wiki-output
+    internal_root: packages/codex/docs/internal
+    ledger_root: packages/codex/backlogs
     task_prefix: TASK
     code_selectors:
-      - packages/plugin/**
+      - packages/codex/src/**
     delivery_group: plugin
+  - project_id: powers
+    title: powers
+    project_root: packages/powers
+    wiki_root: packages/powers/docs
+    wiki_path: packages/powers/AGENT.sidecar.md
+    wiki_output_root: packages/powers/.planning/agent-flow/wiki-output
+    internal_root: packages/powers/docs/internal
+    ledger_root: packages/powers/backlogs
+    task_prefix: TASK
+    code_selectors:
+      - packages/powers/src/**
+    delivery_group: powers
 agents:
   profiles:
     executor:
@@ -253,8 +269,18 @@ agents:
       rules:
         - Implement only the immutable packet within owned paths and source
           revision.
-        - Do not research, validate, test independently, deliver, or repeat
-          prohibited failed patterns.
+        - Author, run and correct the feature/fix tests within the immutable
+          packet and owned paths, following TESTING.md new-and-modified-files.
+        - Developer test evidence does not replace the independent tester or
+          validator. Do not independently validate, deliver, expand research, or
+          repeat prohibited failed patterns.
+        - Exact coverage/mutation targets and frozen budgets govern development
+          verification. They add no numeric barrier to minimum native formation/
+          install or supported developer unblocking. Follow the lifecycle owner
+          without suites or repeated task checks/reviews solely for those
+          operations; keep missing measurements pending/GAP, never PASS or
+          Runtime acceptance. Preserve current defect ownership, Source rights,
+          CAS, UNKNOWN and required integrity controls.
     diagnostics-researcher:
       description: Configured research role.
       consumes:
@@ -338,29 +364,6 @@ agents:
       rules:
         - Review security and data constraints without changing source.
         - Return a fingerprint-bound pass or actionable findings.
-    tester:
-      description: Configured test role.
-      consumes:
-        - DevelopmentTaskPacket/v1
-        - ImplementationResult/v1
-        - ValidationReceipt/v1
-      produces:
-        - TestReceipt/v1
-        - TesterInstruction/v1
-      rules:
-        - Execute only packet-specified and configured verification commands
-          without changing source.
-        - Return sanitized evidence bound to the implementation fingerprint.
-    security-data-researcher:
-      description: Configured conditional security and data research role.
-      consumes:
-        - WorkItem/v1
-      produces:
-        - ResearchResult/v1
-      rules:
-        - Identify security, authorization, privacy, and data-integrity
-          constraints.
-        - Return threat and data-boundary evidence without changing source.
     source-planner:
       description: Read-only source planner for the current development packet, scoped
         Source, acceptance criteria, verification, and rollback.
@@ -375,6 +378,9 @@ agents:
           source_plan and actual evidence_refs.
         - Include scope_acceptance_trace and verification_rollback observations,
           each tied to actual evidence.
+        - Plan function/scenario coverage for new and modified production files,
+          affected callers and frozen CRAP budgets under TESTING.md. Record
+          legacy, tooling and pending manual-mutation proof gaps explicitly.
         - Do not infer a plan from the task packet alone and do not mutate
           Source, the packet, policy, lifecycle state, or Host state.
         - Report a GAP for every unverified mechanic; never infer PASS from a
@@ -397,6 +403,32 @@ agents:
           state.
         - Report a GAP for every unverified mechanic; never infer PASS from a
           plan or configuration.
+    tester:
+      description: Configured test role.
+      consumes:
+        - DevelopmentTaskPacket/v1
+        - ImplementationResult/v1
+        - ValidationReceipt/v1
+      produces:
+        - TestReceipt/v1
+        - TesterInstruction/v1
+      rules:
+        - Execute only packet-specified and configured verification commands
+          without changing source.
+        - Verify the TESTING.md function/scenario proof and applicable task
+          checks independently. Report actual runtime/runner versions and
+          preserve failed, skipped, missing and uncertain results as GAPs.
+        - Return sanitized evidence bound to the implementation fingerprint.
+    security-data-researcher:
+      description: Configured conditional security and data research role.
+      consumes:
+        - WorkItem/v1
+      produces:
+        - ResearchResult/v1
+      rules:
+        - Identify security, authorization, privacy, and data-integrity
+          constraints.
+        - Return threat and data-boundary evidence without changing source.
 teams:
   default-development:
     enabled: true
@@ -404,6 +436,7 @@ teams:
     allowed_projects:
       - agent
       - plugin
+      - powers
     allowed_work_item_kinds:
       - epic
       - feature
@@ -425,10 +458,10 @@ teams:
       regression-validator: reviewer-correctness
       requirements-validator: reviewer-requirements
       security-data-validator: reviewer-security
-      tester: tester
-      delivery-agent: delivery
       source-planner: architect
       security-prewriter: reviewer-security
+      tester: tester
+      delivery-agent: delivery
     stage_overrides: {}
 work_items:
   types:
@@ -1177,6 +1210,24 @@ artifact_contracts:
       - source_revision
       - lease_expires_at
       - digest
+  LifecyclePreparationObservation/v1:
+    schema: LifecyclePreparationObservation/v1
+    required_fields:
+      - schema
+      - record_id
+      - kind
+      - work_id
+      - attempt
+      - source_revision
+      - scope_id
+      - config_digest
+      - ac_ids
+      - observed_at
+      - observer_id
+      - status
+      - evidence_refs
+      - observations
+      - gaps
   ImplementationResult/v1:
     schema: ImplementationResult/v1
     required_fields:
@@ -1344,24 +1395,6 @@ artifact_contracts:
       - registry_digest
       - source_digests
       - digest
-  LifecyclePreparationObservation/v1:
-    schema: LifecyclePreparationObservation/v1
-    required_fields:
-      - schema
-      - record_id
-      - kind
-      - work_id
-      - attempt
-      - source_revision
-      - scope_id
-      - config_digest
-      - ac_ids
-      - observed_at
-      - observer_id
-      - status
-      - evidence_refs
-      - observations
-      - gaps
 research_decision:
   schema: ResearchDecisionConfig/v1
   limits:
@@ -1568,7 +1601,7 @@ knowledge:
       title: Project-owned requirements and source map
     - id: runtime-development-lifecycle
       kind: local
-      location: packages/agent/instructions/development-lifecycle.md
+      location: vida-agent/instructions/development-lifecycle.md
       title: Current portable development lifecycle
 authorization:
   cedar:
@@ -1724,7 +1757,7 @@ verification:
       module: verification/reference-runtime.cjs
       authority: non_executor_reference
     candidate:
-      module: packages/agent/dist/src/index.js
+      module: vida-agent/dist/src/index.js
       allowed_exports:
         - canonicalJson
     cases:

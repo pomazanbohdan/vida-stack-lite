@@ -3,7 +3,7 @@ managed-by: agent-runtime
 template-schema: v1
 orchestrator-schema: 1.0
 project-sidecar: AGENT.sidecar.md
-runtime-package: {{BUNDLE}}
+runtime-package: vida-agent
 update-policy: replace-this-file-wholesale
 project-specific-content: forbidden
 -->

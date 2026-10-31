@@ -445,8 +445,11 @@ project migration and Runtime acceptance remain distinct results.
 
 ## Package and consumer boundaries
 
-The source repository contains exactly `agent=packages/agent` and
-`plugin=packages/plugin`. Existing Git history and origin are preserved.
+The repository project registry declares `agent=packages/agent`,
+`plugin=packages/codex` and the separately owned `powers=packages/powers`.
+The Codex directory change preserves the stable project ID `plugin` and its
+package identity. Project registration does not add a Bun workspace or merge
+product distribution ownership. Existing Git history and origin are preserved.
 Predecessor framework code is inactive provenance, never an active fallback.
 
 Workflow-owned paths retain exact, well-formed Unicode string identity. Reject

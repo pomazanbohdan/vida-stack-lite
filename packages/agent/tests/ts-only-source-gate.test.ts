@@ -7,7 +7,7 @@ import { parseArguments, scanMaintainedSources } from '../tooling/ts-only-source
 import { createCompilerProject } from '../tooling/quality-current.js';
 import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
 
-const roots = ['packages/agent', 'packages/plugin', 'tests/agent', 'tooling/agent', '.githooks'];
+const roots = ['packages/agent', 'packages/codex', 'tests/agent', 'tooling/agent', '.githooks'];
 
 let temporaryRoots: string[] = [];
 
@@ -68,19 +68,19 @@ describe('TS-only maintained source gate', () => {
 
   test('excludes only declared generated output boundaries', () => {
     const root = fixture();
-    put(root, 'packages/plugin/dist/generated.js');
+    put(root, 'packages/codex/dist/generated.js');
     put(root, 'packages/agent/src/dist/handwritten.js');
 
     const result = scanMaintainedSources(root);
 
-    expect(result.generatedExcludedPaths).toEqual(['packages/plugin/dist']);
+    expect(result.generatedExcludedPaths).toEqual(['packages/codex/dist']);
     expect(result.violations.map(({ path: file }) => file)).toEqual(['packages/agent/src/dist/handwritten.js']);
   });
 
   test('excludes links only at the declared package dependency roots', () => {
     const root = fixture();
     const baseline = scanMaintainedSources(root);
-    for (const relative of ['packages/agent/node_modules', 'packages/plugin/node_modules']) {
+    for (const relative of ['packages/agent/node_modules', 'packages/codex/node_modules']) {
       const target = path.join(root, 'external', relative.replaceAll('/', '-'));
       mkdirSync(target, { recursive: true });
       writeFileSync(path.join(target, 'vendor.js'), 'export const vendor = true;\n');
@@ -89,7 +89,7 @@ describe('TS-only maintained source gate', () => {
 
     const result = scanMaintainedSources(root);
 
-    expect(result.generatedExcludedPaths).toEqual(['packages/agent/node_modules', 'packages/plugin/node_modules']);
+    expect(result.generatedExcludedPaths).toEqual(['packages/agent/node_modules', 'packages/codex/node_modules']);
     expect(result.counts.files).toBe(baseline.counts.files);
     expect(result.counts.typescript).toBe(baseline.counts.typescript);
     expect(result.counts.javascriptViolations).toBe(baseline.counts.javascriptViolations);
@@ -130,14 +130,14 @@ describe('TS-only maintained source gate', () => {
     const root = fixture();
     put(root, 'packages/agent/.tmp/mutation-evidence/sandbox/subject.js');
     symlinkSync(
-      path.join(root, 'packages/plugin'),
+      path.join(root, 'packages/codex'),
       path.join(root, 'packages/agent/.tmp/mutation-evidence/sandbox/node_modules'),
       'dir',
     );
-    put(root, 'packages/plugin/.tmp/diagnostic.js');
+    put(root, 'packages/codex/.tmp/diagnostic.js');
     put(root, 'packages/agent/src/.tmp/handwritten.js');
     const result = scanMaintainedSources(root);
-    expect(result.generatedExcludedPaths).toEqual(['packages/agent/.tmp', 'packages/plugin/.tmp']);
+    expect(result.generatedExcludedPaths).toEqual(['packages/agent/.tmp', 'packages/codex/.tmp']);
     expect(result.violations.map((entry) => entry.path)).toEqual(['packages/agent/src/.tmp/handwritten.js']);
   });
 
@@ -145,14 +145,14 @@ describe('TS-only maintained source gate', () => {
     const root = fixture();
     put(root, 'tooling/agent/z-parent/deep/z-helper.cjs');
     put(root, 'tooling/agent/a-helper.tsx');
-    put(root, 'packages/plugin/nested/feature.jsx');
+    put(root, 'packages/codex/nested/feature.jsx');
 
     const first = scanMaintainedSources(root);
     const second = scanMaintainedSources(root);
 
     expect(first.roots).toEqual(roots);
     expect(first.violations.map(({ path: file }) => file)).toEqual([
-      'packages/plugin/nested/feature.jsx',
+      'packages/codex/nested/feature.jsx',
       'tooling/agent/z-parent/deep/z-helper.cjs',
     ]);
     expect(first).toEqual(second);

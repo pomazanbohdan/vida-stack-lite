@@ -107,7 +107,7 @@ jobs:
           New-Item -ItemType Directory -Path $mirror | Out-Null
           $excluded = @('node_modules','dist','coverage','.pack-inspect','.agent','.tmp','.git')
           $generated = @('packages/agent/node_modules','packages/agent/dist','packages/agent/coverage','packages/agent/.tmp',
-            'packages/plugin/node_modules','packages/plugin/dist','packages/plugin/coverage','packages/plugin/.tmp')
+            'packages/codex/node_modules','packages/codex/dist','packages/codex/coverage','packages/codex/.tmp')
           function Copy-SourceDirectory([string] $source, [string] $destination) {
             New-Item -ItemType Directory -Path $destination | Out-Null
             foreach ($entry in Get-ChildItem -LiteralPath $source -Force) {
