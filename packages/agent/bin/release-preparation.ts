@@ -2,8 +2,10 @@ import { existsSync, renameSync } from 'node:fs';
 import path from 'node:path';
 import {
   parseReleaseState,
+  parseReleaseVersion,
   readReleaseBytes,
   releaseDirectory,
+  releaseDigest,
   releaseJSON,
   releasePath,
   requireRelease,
@@ -146,6 +148,77 @@ function validateIntent(value: unknown): PreparationIntent {
     targets.at(-1)?.after === stateImage && targets.at(-2)?.after === stateImage,
     'preparation journal or pending identity differs',
   );
+  if (targets.length === 4) {
+    const metadata = targets[1];
+    requireRelease(metadata, 'preparation metadata missing');
+    const witness: unknown = JSON.parse(decodeImage(metadata.after).toString('utf8'));
+    if (isRecord(witness) && witness.schema === 'VidaPublishedVersionBaseline/v1') {
+      requireRelease(
+        exactKeys(witness, [
+          'schema',
+          'role',
+          'operation_id',
+          'version',
+          'tag_sha',
+          'release_id',
+          'claim_digest',
+          'assets_digest',
+          'historical_source_binding',
+          'current_source_binding',
+          'requests',
+          'pending_digest',
+          'journal_digest',
+        ]) &&
+          witness.role === 'baseline-only' &&
+          typeof witness.operation_id === 'string' &&
+          /^[a-z0-9][a-z0-9-]{0,95}$/.test(witness.operation_id) &&
+          witness.version === originalValue.version &&
+          typeof witness.tag_sha === 'string' &&
+          /^[a-f0-9]{40}$/.test(witness.tag_sha) &&
+          typeof witness.release_id === 'number' &&
+          Number.isSafeInteger(witness.release_id) &&
+          witness.release_id > 0 &&
+          [
+            'claim_digest',
+            'assets_digest',
+            'historical_source_binding',
+            'current_source_binding',
+            'pending_digest',
+            'journal_digest',
+          ].every((key) => typeof witness[key] === 'string' && /^[a-f0-9]{64}$/.test(witness[key] as string)) &&
+          Array.isArray(witness.requests) &&
+          witness.requests.length === 2 &&
+          witness.requests.every(
+            (request: unknown) =>
+              exactKeys(request, ['request_id', 'digest']) &&
+              typeof request.request_id === 'string' &&
+              typeof request.digest === 'string' &&
+              /^[a-f0-9]{64}$/.test(request.digest),
+          ) &&
+          new Set(witness.requests.map((request: unknown) => (isRecord(request) ? request.request_id : undefined)))
+            .size === 2,
+        'published baseline witness invalid',
+      );
+      const previous = targets.at(-1)?.before;
+      requireRelease(previous !== null && previous !== undefined, 'published baseline pending beforeimage missing');
+      const pendingBytes = decodeImage(previous);
+      const pending = parseReleaseState(JSON.parse(pendingBytes.toString('utf8')));
+      const version = typeof witness.version === 'string' ? parseReleaseVersion(witness.version) : null;
+      requireRelease(
+        pending.operation_id === witness.operation_id &&
+          pending.version === witness.version &&
+          pending.status === 'awaiting_assurance' &&
+          releaseDigest(pendingBytes) === witness.pending_digest,
+        'published baseline pending beforeimage differs',
+      );
+      requireRelease(
+        version &&
+          version.patch < Number.MAX_SAFE_INTEGER &&
+          prepared.version === `${version.major}.${version.minor}.${version.patch + 1}`,
+        'published baseline successor version differs',
+      );
+    }
+  }
   return { schema: 'VidaReleasePreparation/v1', prepared, targets };
 }
 
@@ -215,6 +288,20 @@ export function resumeReleasePreparation(root: string): PreparedRelease | null {
   const file = releasePath(root, intentPath, true);
   if (!existsSync(file)) return null;
   const { bytes, intent } = readIntent(root, file);
+  if (intent.targets.length === 4) {
+    const metadata = intent.targets[1];
+    requireRelease(metadata, 'preparation metadata missing');
+    const witness: unknown = JSON.parse(decodeImage(metadata.after).toString('utf8'));
+    if (isRecord(witness) && witness.schema === 'VidaPublishedVersionBaseline/v1') {
+      const operation = witness.operation_id;
+      requireRelease(typeof operation === 'string', 'published baseline operation missing');
+      const journal = readReleaseBytes(root, `.agent/work/agent-local-release/${operation}/release.json`, byteLimit);
+      requireRelease(
+        releaseDigest(journal) === witness.journal_digest,
+        'published baseline journal changed; preserve the intent',
+      );
+    }
+  }
   const receipt = receiptPath(root, intent.prepared);
   requireRelease(!existsSync(receipt), 'preparation receipt already exists; retain the intent');
   const currentImage = (target: PreparationTarget): string | null => {

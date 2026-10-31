@@ -6,6 +6,7 @@ import path from 'node:path';
 import { releaseDigest, releaseJSON } from '../../../packages/agent/bin/local-release-artifacts.ts';
 import {
   publishGitHubRelease,
+  observePublishedRelease,
   type PublicationAPI,
   type PublicationAsset,
   type PublicationClaim,
@@ -17,6 +18,7 @@ import {
   main as publisherMain,
   observedPublicationFetch,
   PublicationDiagnostic,
+  createPublishedReleaseReadClient,
 } from '../../../tooling/agent/release-ci-publisher.ts';
 
 const identity: PublicationIdentity = {
@@ -219,6 +221,86 @@ async function publish(
     },
   });
 }
+
+const managedAssets = [
+  'SHA256SUMS-linux-x64',
+  'SHA256SUMS-windows-x64',
+  'install-windows.ps1',
+  'install.sh',
+  'publication-provenance.json',
+  'vida-agent-bun-linux-x64',
+  'vida-agent-bun-linux-x64.manifest.json',
+  'vida-agent-bun-windows-x64.exe',
+  'vida-agent-bun-windows-x64.manifest.json',
+].map((file) => ({ file, data: Buffer.from(file) }));
+
+function observe(
+  api: MemoryGitHub,
+  requests = new Map(producers().map(({ request }) => [request.request_id, request])),
+) {
+  return observePublishedRelease({ api, operation_id: identity.operation_id, version: identity.version, requests });
+}
+
+describe('published version baseline', () => {
+  test('reads exact managed assets without mutation', async () => {
+    const api = new MemoryGitHub();
+    await publish(api, managedAssets);
+    const before = api.mutations.length;
+    const result = await observe(api);
+    assert.equal(result.kind, 'published_version_baseline');
+    assert.equal(result.claim.source_commit, identity.source_commit);
+    assert.equal(result.claim.assets.length, 9);
+    assert.equal(result.assetInventoryDigest, releaseDigest(releaseJSON(result.claim.assets)));
+    assert.equal(api.mutations.length, before);
+  });
+
+  test.each(['draft', 'foreign', 'lightweight', 'request', 'bytes', 'missing', 'extra', 'drift'])(
+    'rejects %s without mutation',
+    async (kind) => {
+      const api = new MemoryGitHub();
+      await publish(api, managedAssets);
+      const release = api.releases[0]!;
+      const ref = api.refs.get('v0.1.6')!;
+      const tag = api.tags.get(ref.object.sha)!;
+      const requests = new Map(producers().map(({ request }) => [request.request_id, request]));
+      if (kind === 'draft') release.draft = true;
+      if (kind === 'foreign') tag.message = 'foreign';
+      if (kind === 'lightweight') ref.object.type = 'commit';
+      if (kind === 'request') {
+        const first = producers()[0]!.request;
+        requests.set(first.request_id, { ...first, source_binding: 'c'.repeat(64) });
+      }
+      if (kind === 'bytes') release.assets[0]!.data = Buffer.from('changed');
+      if (kind === 'missing') release.assets.pop();
+      if (kind === 'extra')
+        release.assets.push({ id: 999, name: 'extra', size: 1, state: 'uploaded', data: Buffer.from('x') });
+      if (kind === 'drift') {
+        const download = api.download.bind(api);
+        api.download = async (id) => {
+          const data = await download(id);
+          release.body = 'changed';
+          return data;
+        };
+      }
+      const before = api.mutations.length;
+      await assert.rejects(() => observe(api, requests));
+      assert.equal(api.mutations.length, before);
+    },
+  );
+
+  test('read transport rejects mutation methods before fetch', async () => {
+    let calls = 0;
+    const api = createPublishedReleaseReadClient('token', async () => {
+      calls++;
+      throw new Error('unexpected fetch');
+    });
+    const unsafe = api as unknown as PublicationAPI;
+    await assert.rejects(() => unsafe.json('POST', '/releases', {}));
+    await assert.rejects(() => unsafe.json('PATCH', '/releases/1', {}));
+    assert.equal(typeof unsafe.upload, 'undefined');
+    assert.equal(calls, 0);
+  });
+});
 
 describe('GitHub release publication owner', () => {
   test('diagnostics are exclusive, bounded, terminal, and do not retain poisoned data', async () => {

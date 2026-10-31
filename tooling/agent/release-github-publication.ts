@@ -28,6 +28,11 @@ export interface PublicationAPI {
   download(assetId: number): Promise<Buffer>;
 }
 
+export interface PublicationReadAPI {
+  json(method: 'GET', suffix: string, body?: undefined, allow404?: boolean): Promise<unknown>;
+  download(assetId: number): Promise<Buffer>;
+}
+
 type Release = {
   id: number;
   tag_name: string;
@@ -207,7 +212,7 @@ function sameJSON(left: unknown, right: unknown): boolean {
 }
 
 async function readTag(
-  api: PublicationAPI,
+  api: PublicationReadAPI,
   version: string,
   source: string,
   message: string | null,
@@ -231,7 +236,7 @@ async function requireTag(api: PublicationAPI, version: string, source: string, 
   return sha;
 }
 
-async function listReleases(api: PublicationAPI): Promise<Release[]> {
+async function listReleases(api: PublicationReadAPI): Promise<Release[]> {
   const value = await api.json('GET', '/releases?per_page=100');
   if (!Array.isArray(value) || value.length > 100) fail('release list is incomplete or invalid');
   return value.map(parseRelease);
@@ -250,7 +255,7 @@ function assertRelease(release: Release, id: PublicationIdentity, body: string, 
 }
 
 async function verifyAssetBytes(
-  api: PublicationAPI,
+  api: PublicationReadAPI,
   asset: RemoteAsset,
   expected: PublicationClaim['assets'][number],
 ): Promise<void> {
@@ -258,6 +263,102 @@ async function verifyAssetBytes(
   const bytes = await api.download(asset.id);
   if (bytes.length !== expected.bytes || releaseDigest(bytes) !== expected.sha256)
     fail(`asset ${expected.file} bytes differ`);
+}
+
+/** Read-only publication evidence. This alone does not authorize a successor. */
+export async function observePublishedRelease(args: {
+  api: PublicationReadAPI;
+  operation_id: string;
+  version: string;
+  requests: ReadonlyMap<string, CIDeliveryRequest>;
+}): Promise<{
+  kind: 'published_version_baseline';
+  claim: PublicationClaim;
+  claimDigest: string;
+  assetInventoryDigest: string;
+  tagSha: string;
+  releaseId: number;
+}> {
+  const { api } = args;
+  validateIdentity({
+    operation_id: args.operation_id,
+    version: args.version,
+    source_commit: '0'.repeat(40),
+    source_binding: '0'.repeat(64),
+  });
+  const ref = record(await api.json('GET', `/git/ref/tags/v${args.version}`));
+  const object = record(ref.object);
+  if (ref.ref !== `refs/tags/v${args.version}` || object.type !== 'tag') fail('release tag must be annotated');
+  const tagSha = stringField(object.sha, 'tag object sha');
+  if (!sha40.test(tagSha)) fail('tag object sha invalid');
+  const tag = record(await api.json('GET', `/git/tags/${tagSha}`));
+  const message = stringField(tag.message, 'tag message');
+  const prefix = 'VIDA-CI-PUBLICATION/v1\n';
+  if (!message.startsWith(prefix)) fail('existing tag is not owned by this publisher');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(message.slice(prefix.length));
+  } catch {
+    return fail('existing tag claim JSON invalid');
+  }
+  const rawClaim = record(parsed);
+  const identity: PublicationIdentity = {
+    operation_id: args.operation_id,
+    version: args.version,
+    source_commit: stringField(record(tag.object).sha, 'tag source'),
+    source_binding: stringField(rawClaim.source_binding, 'claim source binding'),
+  };
+  validateIdentity(identity);
+  const claim = validateClaim(parsed, identity);
+  if (message !== prefix + releaseJSON(claim)) fail('tag claim is not canonical');
+  parseTag(tag, identity.version, identity.source_commit, message);
+  for (const producer of claim.producers) {
+    const request = args.requests.get(producer.request.request_id);
+    if (!request) fail('stored producer request missing');
+    validateCIDeliveryRequest(request);
+    if (request.request_id !== producer.request.request_id || !sameJSON(request, producer.request))
+      fail('stored producer request differs from publication claim');
+  }
+  const names = [
+    'SHA256SUMS-linux-x64',
+    'SHA256SUMS-windows-x64',
+    'install-windows.ps1',
+    'install.sh',
+    'publication-provenance.json',
+    'vida-agent-bun-linux-x64',
+    'vida-agent-bun-linux-x64.manifest.json',
+    'vida-agent-bun-windows-x64.exe',
+    'vida-agent-bun-windows-x64.manifest.json',
+  ].sort();
+  if (!sameJSON(claim.assets.map((asset) => asset.file).sort(), names)) fail('publication asset inventory differs');
+  const claim_sha256 = releaseDigest(releaseJSON(claim));
+  const body = `${prefix}${claim_sha256}\n`;
+  const releases = (await listReleases(api)).filter((release) => release.tag_name === `v${identity.version}`);
+  if (releases.length !== 1 || !releases[0]) fail('published release missing or ambiguous');
+  const release = releases[0];
+  assertRelease(release, identity, body, false);
+  const assets = parseAssets(await api.json('GET', `/releases/${release.id}/assets?per_page=100`));
+  if (assets.length !== claim.assets.length || new Set(assets.map((asset) => asset.id)).size !== assets.length)
+    fail('publication assets missing or ambiguous');
+  for (const expected of claim.assets) {
+    const matches = assets.filter((asset) => asset.name === expected.file);
+    if (matches.length !== 1 || !matches[0]) fail('publication asset missing or ambiguous');
+    await verifyAssetBytes(api, matches[0], expected);
+  }
+  const latestAssets = parseAssets(await api.json('GET', `/releases/${release.id}/assets?per_page=100`));
+  const latest = (await listReleases(api)).filter((item) => item.tag_name === `v${identity.version}`);
+  if (latest.length !== 1 || !sameJSON(latest[0], release) || !sameJSON(latestAssets, assets))
+    fail('publication changed during observation');
+  const latestTag = await readTag(api, identity.version, identity.source_commit, message);
+  if (latestTag !== tagSha) fail('tag changed during observation');
+  return {
+    kind: 'published_version_baseline',
+    claim,
+    claimDigest: claim_sha256,
+    assetInventoryDigest: releaseDigest(releaseJSON(claim.assets)),
+    tagSha,
+    releaseId: release.id,
+  };
 }
 
 async function reconcileAssets(

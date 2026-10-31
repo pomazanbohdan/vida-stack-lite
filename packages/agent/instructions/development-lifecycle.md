@@ -510,6 +510,17 @@ package with the same version. Serialize version selection through the existing
 release owner. Preserve historical operations and receipts. Installing an
 already selected artifact does not advance its version or require a new build.
 
+Separately, complete canonical direct readback of the owned annotated tag, claim,
+non-draft release and exact assets consumes the published SemVer even if local
+assurance or closeout failed or is UNKNOWN. `published_version_baseline` proves
+version consumption only, not CI, Code, formation, assurance or Runtime PASS.
+The explicit Source-only `--prepare-after-publication OP` selects the default
+next PATCH through existing intent and CAS, binds current patched Source
+separately from that historical publication, and preserves the predecessor's
+journal, evidence and debt without declaring its operation complete. New release
+CI gates remain unchanged. User JSON receipts confer no authority; this route
+creates no new ledger or database initialization.
+
 Persist each current CI terminal result and published artifact before closing
 its release operation and confirming the version baseline. Use the existing
 owner locks and CAS. Normal next-build selection reads the current operation
@@ -530,8 +541,10 @@ declares only native-build. This is delivery qualification, not evidence of
 functional testing. A supported historical profile that explicitly declares
 seven checks still requires all seven; never rewrite old claims as minimal proof.
 
-Do not run test suites when forming or installing a package. Do not require
-fresh task reviews, coverage, mutation, a new seal or CLEAR for every formation
+Do not run test suites when forming or installing a package. The one bounded
+ordinary native instruction readiness command during formation is not a test
+suite and makes no functional or Runtime acceptance claim. Do not require fresh
+task reviews, coverage, mutation, a new seal or CLEAR for every formation
 or installation. Those belong to the changed development task and are reused
 while current. An unchanged selected artifact needs no new build or Git effect
 solely to install it. Publish changed reviewed Source before its CI formation.

@@ -11,7 +11,12 @@ import {
   type CIDeliveryRequest,
   type ProducerDownloadEvent,
 } from './release-ci-evidence.ts';
-import { publishGitHubRelease, type PublicationAPI, type PublicationProducer } from './release-github-publication.ts';
+import {
+  publishGitHubRelease,
+  type PublicationAPI,
+  type PublicationReadAPI,
+  type PublicationProducer,
+} from './release-github-publication.ts';
 import { releaseSourceBinding, releaseJSON, releasePath } from '../../packages/agent/bin/local-release-artifacts.ts';
 import { checkManifest, readPin } from '../../packages/agent/bin/bun.ts';
 
@@ -271,6 +276,84 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
   }
 }
 
+function createNativeGitHubReleaseClient(token: string, fetcher: Fetch = fetch): PublicationAPI {
+  need(controlled(token), 'publisher token missing');
+  return {
+    async json(method, suffix, data, allow404 = false) {
+      const headers = new Headers({
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        Authorization: `Bearer ${token}`,
+      });
+      if (data !== undefined) headers.set('Content-Type', 'application/json');
+      const res = await fetcher(apiBase + suffix, {
+        method,
+        headers,
+        ...(data === undefined ? {} : { body: JSON.stringify(data) }),
+        redirect: 'error',
+        signal: AbortSignal.timeout(300000),
+      });
+      if (allow404 && res.status === 404) return null;
+      if (!res.ok) throw new Error(`GitHub HTTP ${res.status}`);
+      return jsonResponse(res);
+    },
+    async upload(id, file, data) {
+      const url = `https://uploads.github.com/repos/${repo}/releases/${id}/assets?name=${encodeURIComponent(file)}`;
+      const res = await response(fetcher, url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': String(data.length),
+        },
+        body: data,
+      });
+      return jsonResponse(res);
+    },
+    async download(id) {
+      const url = `${apiBase}/releases/assets/${id}`;
+      const res = await fetcher(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/octet-stream',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        redirect: 'manual',
+        signal: AbortSignal.timeout(300000),
+      });
+      if (res.status === 200) return bodyBytes(res, 256 * 1024 * 1024);
+      need(res.status === 302, 'release asset redirect status rejected');
+      const location = validateCIDownloadLocation(res.headers.get('location'), [
+        'release-assets.githubusercontent.com',
+      ]);
+      const storage = new URL(location);
+      need(storage.hostname === 'release-assets.githubusercontent.com', 'release asset host rejected');
+      return bodyBytes(
+        await response(fetcher, location, {
+          headers: { Accept: 'application/octet-stream' },
+        }),
+        256 * 1024 * 1024,
+      );
+    },
+  };
+}
+
+export function createPublishedReleaseReadClient(token: string, fetcher: Fetch = fetch): PublicationReadAPI {
+  const api = createNativeGitHubReleaseClient(token, fetcher);
+  return {
+    async json(method, suffix, body, allow404) {
+      need(method === 'GET' && body === undefined, 'read-only transport rejected');
+      return api.json('GET', suffix, undefined, allow404);
+    },
+    async download(id) {
+      need(Number.isSafeInteger(id) && id > 0, 'asset id invalid');
+      return api.download(id);
+    },
+  };
+}
+
 async function publisherMain(
   env: NodeJS.ProcessEnv,
   diagnostic?: PublicationDiagnostic,
@@ -333,66 +416,7 @@ async function publisherMain(
   need(winProducer.run_attempt === linProducer.run_attempt, 'producer attempts differ');
   need(controlled(env.GITHUB_TOKEN), 'publisher token missing');
   const token = env.GITHUB_TOKEN;
-  const api: PublicationAPI = {
-    async json(method, suffix, data, allow404 = false) {
-      const headers = new Headers({
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        Authorization: `Bearer ${token}`,
-      });
-      if (data !== undefined) headers.set('Content-Type', 'application/json');
-      const res = await fetcher(apiBase + suffix, {
-        method,
-        headers,
-        ...(data === undefined ? {} : { body: JSON.stringify(data) }),
-        redirect: 'error',
-        signal: AbortSignal.timeout(300000),
-      });
-      if (allow404 && res.status === 404) return null;
-      if (!res.ok) throw new Error(`GitHub HTTP ${res.status}`);
-      return jsonResponse(res);
-    },
-    async upload(id, file, data) {
-      const url = `https://uploads.github.com/repos/${repo}/releases/${id}/assets?name=${encodeURIComponent(file)}`;
-      const res = await response(fetcher, url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/vnd.github+json',
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/octet-stream',
-          'Content-Length': String(data.length),
-        },
-        body: data,
-      });
-      return jsonResponse(res);
-    },
-    async download(id) {
-      const url = `${apiBase}/releases/assets/${id}`;
-      const res = await fetcher(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/octet-stream',
-          'X-GitHub-Api-Version': '2022-11-28',
-        },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(300000),
-      });
-      if (res.status === 200) return bodyBytes(res, 256 * 1024 * 1024);
-      need(res.status === 302, 'release asset redirect status rejected');
-      const location = validateCIDownloadLocation(res.headers.get('location'), [
-        'release-assets.githubusercontent.com',
-      ]);
-      const storage = new URL(location);
-      need(storage.hostname === 'release-assets.githubusercontent.com', 'release asset host rejected');
-      return bodyBytes(
-        await response(fetcher, location, {
-          headers: { Accept: 'application/octet-stream' },
-        }),
-        256 * 1024 * 1024,
-      );
-    },
-  };
+  const api = createNativeGitHubReleaseClient(token, fetcher);
   const commitResponse = await api.json('GET', `/git/commits/${source}`);
   need(
     good(commitResponse) &&

@@ -472,6 +472,17 @@ release owner; they do not create a second version ledger. Package metadata,
 native version, archive, manifest and CI result must agree. Installation preserves
 the selected version and does not create another build.
 
+Public version occupancy is separate from the confirmed build baseline. Complete
+canonical direct readback of the owned annotated tag, claim, non-draft release and
+exact assets consumes that SemVer even when predecessor local assurance or
+closeout failed or is UNKNOWN. `published_version_baseline` establishes version
+consumption only, not CI, Code, formation, assurance or Runtime PASS. The explicit
+Source-only `--prepare-after-publication OP` selects the default next PATCH via
+the existing intent and CAS, preserves predecessor journal, evidence and debt,
+and binds current patched Source separately from the historical publication.
+New release CI gates remain unchanged. User JSON receipts confer no authority;
+this route creates no new ledger or database initialization.
+
 The release owner persists the actual CI terminal result and selected published
 artifact against the current request. It then closes that operation or records
 its exact failed or UNKNOWN state under the existing release locks and CAS.
@@ -1085,6 +1096,11 @@ does not form its prerequisite candidate.
 
 The manual Windows workflow uses tooling/agent/native-ci-delivery.ts for
 native-build -> emit-build -> publication. Formation invokes no test suites.
+Before a candidate or passed phase receipt, formation runs the formed EXE's
+ordinary `instructions --path development-lifecycle` on the matching native
+host in an owned, bounded process group with capture and a 5000 ms limit. It
+checks the typed version and path and the declared payload hash. This establishes
+command readiness only, not functional testing or Runtime acceptance.
 The isolated frozen package lock, declared current Source, platform and version
 are bound to one actual request/run/attempt. emit-build requires the successful
 build receipt and unchanged archive, manifest, native and installer bytes.

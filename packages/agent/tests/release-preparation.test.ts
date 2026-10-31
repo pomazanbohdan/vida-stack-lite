@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { test } from 'bun:test';
+import { spyOn, test } from 'bun:test';
 import {
   publishReleasePreparation,
   readReleasePreparation,
@@ -10,6 +11,7 @@ import {
   runReleasePreparation,
 } from '../bin/release-preparation.ts';
 import { releaseJSON, withReleaseAdmission } from '../bin/local-release-artifacts.ts';
+import { prepareReleaseAfterPublication } from '../../../tooling/agent/release-local.ts';
 
 type PreparedRelease = Parameters<typeof publishReleasePreparation>[1];
 type PreparationTarget = { path: string; before: string | null; after: string };
@@ -438,6 +440,121 @@ function assertTargetImage(root: string, target: PreparationTarget, expected: st
   }
   assert.deepEqual(readFileSync(file), Buffer.from(expected, 'base64'), target.path);
 }
+
+test('published baseline recovery returns the same successor after a lost preparation ACK', async () => {
+  const root = ownedRoot();
+  const throwingFetch = () => {
+    throw new Error('Unexpected remote observation');
+  };
+  const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(throwingFetch, { preconnect: throwingFetch }),
+  );
+  try {
+    const predecessor = makePrepared('published-predecessor', '0.1.2');
+    const successor = makePrepared('published-successor', '0.1.3');
+    const oldBytes = Buffer.from(releaseJSON(predecessor));
+    const prior = Buffer.from(releaseJSON(makeManifest(predecessor.version)));
+    const digest = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+    const witness = {
+      schema: 'VidaPublishedVersionBaseline/v1',
+      role: 'baseline-only',
+      operation_id: predecessor.operation_id,
+      version: predecessor.version,
+      tag_sha: 'a'.repeat(40),
+      release_id: 1,
+      claim_digest: 'b'.repeat(64),
+      assets_digest: 'c'.repeat(64),
+      historical_source_binding: 'd'.repeat(64),
+      current_source_binding: 'e'.repeat(64),
+      pending_digest: digest(oldBytes),
+      journal_digest: digest(oldBytes),
+      requests: [
+        { request_id: 'one', digest: 'f'.repeat(64) },
+        { request_id: 'two', digest: '0'.repeat(64) },
+      ],
+    };
+    const intent = makeDispositionIntent(successor, prior, predecessor.version, witness);
+    targetAt(intent, 3).before = oldBytes.toString('base64');
+    writeBytes(root, manifestPath, prior);
+    writeBytes(root, 'packages/agent/.bun-version', Buffer.from('1.4.2\n'));
+    writeBytes(root, pendingPath, oldBytes);
+    writeBytes(root, operationJournalPath(predecessor), oldBytes);
+    writeIntent(root, intent);
+
+    assert.deepEqual(await prepareReleaseAfterPublication(root, predecessor.operation_id), successor);
+    assert.equal(fetchSpy.mock.calls.length, 0);
+    const receipt = readFileSync(
+      path.join(root, `.agent/work/agent-local-release/${successor.operation_id}/preparation.json`),
+    );
+    assert.deepEqual(await prepareReleaseAfterPublication(root, predecessor.operation_id), successor);
+    assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
+    assert.deepEqual(readFileSync(path.join(root, operationJournalPath(predecessor))), oldBytes);
+    assert.deepEqual(
+      readFileSync(path.join(root, `.agent/work/agent-local-release/${successor.operation_id}/preparation.json`)),
+      receipt,
+    );
+    writeBytes(root, operationJournalPath(predecessor), Buffer.from('changed'));
+    await assert.rejects(prepareReleaseAfterPublication(root, predecessor.operation_id), /preserve UNKNOWN/);
+    assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
+  } finally {
+    fetchSpy.mockRestore();
+    assert.ok(path.basename(root).startsWith('vida-release-preparation-v465-'));
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+async function assertStartedPredecessorDenied(started: 'pending' | 'journal'): Promise<void> {
+  const root = ownedRoot();
+  const throwingFetch = () => {
+    throw new Error('Unexpected remote observation');
+  };
+  const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(throwingFetch, { preconnect: throwingFetch }),
+  );
+  try {
+    const predecessor = makePrepared(`published-started-${started}`, '0.1.2');
+    const manifest = Buffer.from(releaseJSON(makeManifest(predecessor.version)));
+    const pending = Buffer.from(releaseJSON({ ...predecessor, install_started: started === 'pending' }));
+    const journal = Buffer.from(releaseJSON({ ...predecessor, install_started: started === 'journal' }));
+    const receiptPath = `.agent/work/agent-local-release/${predecessor.operation_id}/preparation.json`;
+    const receipt = Buffer.from(releaseJSON(makeIntent(predecessor, manifest, predecessor.version)));
+    const pin = Buffer.from('1.4.2\n');
+    const files = new Map([
+      [manifestPath, manifest],
+      ['packages/agent/.bun-version', pin],
+      [pendingPath, pending],
+      [operationJournalPath(predecessor), journal],
+      [receiptPath, receipt],
+    ]);
+    for (const [relative, bytes] of files) writeBytes(root, relative, bytes);
+    assert.deepEqual(readReleasePreparation(root, predecessor), {
+      priorVersion: predecessor.version,
+      disposition: null,
+    });
+
+    await assert.rejects(
+      prepareReleaseAfterPublication(root, predecessor.operation_id),
+      /Published predecessor is not the current uninstalled pending candidate/,
+    );
+    assert.equal(fetchSpy.mock.calls.length, 0);
+    for (const [relative, bytes] of files) assert.deepEqual(readFileSync(path.join(root, relative)), bytes, relative);
+    assert.equal(existsSync(path.join(root, intentPath)), false);
+    assert.equal(existsSync(path.join(root, '.agent/work/agent-local-release/successful.json')), false);
+    assert.equal(existsSync(path.join(root, '.agent/work/agent-local-release/formed.json')), false);
+  } finally {
+    fetchSpy.mockRestore();
+    assert.ok(path.basename(root).startsWith('vida-release-preparation-v465-'));
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+test('published baseline rejects pending install start with journal unstarted without writes', async () => {
+  await assertStartedPredecessorDenied('pending');
+});
+
+test('published baseline rejects journal install start with pending unstarted without writes', async () => {
+  await assertStartedPredecessorDenied('journal');
+});
 
 test('release preparation resumes each exact 3/4-target prefix and retains its complete receipt', async () => {
   const disposition: unknown = { decision: 'defer', reason: 'prepared disposition image' };

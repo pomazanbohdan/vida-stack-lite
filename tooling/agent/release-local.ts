@@ -13,6 +13,8 @@ import {
   parseReleasePackMetadata,
   releasePath,
   releaseRelative,
+  readReleaseBytes,
+  releaseSourceBinding,
 } from '../../packages/agent/bin/local-release-artifacts.ts';
 export {
   withReleaseAdmission,
@@ -50,6 +52,11 @@ import {
 import { assertNativeDeliveryEvidenceRepairSettled } from '../../packages/agent/bin/repair-native-delivery-evidence.ts';
 import { readConfirmedCIDeliveryFormation, validateCIDeliveryRequest } from './release-ci-evidence.ts';
 import {
+  activeRuntimeConfigurationSource,
+  readRuntimeConfigIdentityForObservation,
+} from '../../packages/agent/src/config/runtime-config.ts';
+import { requireSafeRepositoryAccess } from '../../packages/agent/src/config/safe-repository-access.ts';
+import {
   publishReleasePreparation,
   readReleasePreparation,
   resumeReleasePreparation,
@@ -57,6 +64,7 @@ import {
 import type { AgentTarModule } from '../../packages/agent/tooling/release-dependency-types.js';
 
 type ReleaseFormation = ReturnType<typeof readConfirmedCIDeliveryFormation>;
+type PublishedBaseline = Awaited<ReturnType<typeof import('./release-github-publication.ts').observePublishedRelease>>;
 const readReleaseFormation: (root: string) => ReleaseFormation = readConfirmedCIDeliveryFormation;
 
 const repositoryRoot = fileURLToPath(new URL('../../', import.meta.url));
@@ -2796,6 +2804,179 @@ export async function prepareReleaseAfterDisposition(
 ) {
   return withReleaseAdmission(root, () => prepareCandidate(root, false, selection, proposal), true);
 }
+
+function publishedPreparationSnapshot(root: string, operation: string) {
+  if (!idPattern.test(operation)) throw new Error('Published predecessor identity is invalid.');
+  const base = '.agent/work/agent-local-release';
+  const paths = [
+    'packages/agent/package.json',
+    `${base}/pending.json`,
+    `${base}/${operation}/release.json`,
+    `${base}/${operation}/preparation.json`,
+    `${base}/preparation.json`,
+    `${base}/successful.json`,
+    `${base}/formed.json`,
+  ];
+  const images = new Map<string, Buffer | null>();
+  for (const relative of paths) {
+    const file = releasePath(root, relative, true);
+    images.set(relative, existsSync(file) ? readReleaseBytes(root, relative) : null);
+  }
+  if (paths.slice(0, 4).some((relative) => !images.get(relative)))
+    throw new Error('Published predecessor state or preparation receipt is missing; preserve UNKNOWN.');
+  const pending = releaseState(releasePath(root, `${base}/pending.json`));
+  const journal = releaseState(journalFile(root, operation));
+  const currentManifest = manifest(root).value;
+  if (
+    pending.operation_id !== operation ||
+    journal.operation_id !== operation ||
+    pending.version !== currentManifest.version ||
+    journal.version !== pending.version ||
+    pending.status !== 'awaiting_assurance' ||
+    journal.status !== 'awaiting_assurance' ||
+    pending.install_started ||
+    journal.install_started ||
+    !readReleasePreparation(root, pending, true)
+  )
+    throw new Error('Published predecessor is not the current uninstalled pending candidate.');
+  const identity = readRuntimeConfigIdentityForObservation(root);
+  if (
+    identity.repository_id !== 'vida-agent' ||
+    identity.bundle !== 'packages/agent' ||
+    !identity.project_ids.includes('agent')
+  )
+    throw new Error('Approved repository project identity differs.');
+  const configSource = activeRuntimeConfigurationSource(requireSafeRepositoryAccess(root));
+  images.set(configSource, readReleaseBytes(root, configSource));
+  const ci = `${base}/${operation}/ci`;
+  const entries = readdirSync(releasePath(root, ci), { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
+  const requests = new Map<string, CIDeliveryRequest>();
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !/^[a-f0-9]{64}$/.test(entry.name))
+      throw new Error('Published predecessor request namespace is unknown.');
+    const relative = `${ci}/${entry.name}/request.json`;
+    const bytes = readReleaseBytes(root, relative);
+    images.set(relative, bytes);
+    try {
+      const request: unknown = parseJson(bytes.toString('utf8'));
+      assertCIDeliveryRequest(request);
+      if (request.request_id === entry.name && bytes.equals(Buffer.from(json(request))))
+        requests.set(entry.name, request);
+    } catch {
+      // Retain unknown historical request bytes without treating them as evidence.
+    }
+  }
+  return {
+    images,
+    requests,
+    version: pending.version,
+    sourceBinding: releaseSourceBinding(root).source_binding,
+    identity: json(identity),
+    formation: json(readReleaseFormation(root)),
+  };
+}
+
+export async function prepareReleaseAfterPublication(root: string, operation: string) {
+  const captured = await withReleaseAdmission(
+    root,
+    () => {
+      if (!idPattern.test(operation)) throw new Error('Published predecessor identity is invalid.');
+      const base = '.agent/work/agent-local-release';
+      const intentPath = `${base}/preparation.json`;
+      if (existsSync(releasePath(root, intentPath, true))) {
+        const intent: unknown = parseJson(readReleaseBytes(root, intentPath).toString('utf8'));
+        const targets = isRecord(intent) && Array.isArray(intent.targets) ? intent.targets : [];
+        const metadata: unknown = targets[1];
+        const witness: unknown =
+          isRecord(metadata) && typeof metadata.after === 'string'
+            ? parseJson(Buffer.from(metadata.after, 'base64').toString('utf8'))
+            : null;
+        if (
+          targets.length !== 4 ||
+          !isRecord(witness) ||
+          witness.schema !== 'VidaPublishedVersionBaseline/v1' ||
+          witness.operation_id !== operation
+        )
+          throw new Error('Published preparation intent differs; preserve UNKNOWN.');
+      }
+      resumeReleasePreparation(root);
+      const pendingBytes = readReleaseBytes(root, `${base}/pending.json`);
+      const pending = releaseState(releasePath(root, `${base}/pending.json`));
+      if (pending.operation_id !== operation) {
+        const receipt = readReleasePreparation(root, pending, true);
+        const witness = receipt?.disposition;
+        const previous = receipt?.previousPending;
+        const journalBytes = readReleaseBytes(root, `${base}/${operation}/release.json`);
+        const newJournal = readReleaseBytes(root, `${base}/${pending.operation_id}/release.json`);
+        const intent: unknown = parseJson(
+          readReleaseBytes(root, `${base}/${pending.operation_id}/preparation.json`).toString('utf8'),
+        );
+        const targets = isRecord(intent) && Array.isArray(intent.targets) ? intent.targets : [];
+        const exactAfter = (index: number, bytes: Buffer) => {
+          const target: unknown = targets[index];
+          return (
+            isRecord(target) && typeof target.after === 'string' && bytes.equals(Buffer.from(target.after, 'base64'))
+          );
+        };
+        if (
+          !receipt ||
+          !isRecord(witness) ||
+          witness.schema !== 'VidaPublishedVersionBaseline/v1' ||
+          witness.operation_id !== operation ||
+          !previous ||
+          sha(previous) !== witness.pending_digest ||
+          sha(journalBytes) !== witness.journal_digest ||
+          !pendingBytes.equals(newJournal) ||
+          !pendingBytes.equals(Buffer.from(json(pending))) ||
+          pending.status !== 'awaiting_assurance' ||
+          pending.install_started ||
+          manifest(root).value.version !== pending.version ||
+          targets.length !== 4 ||
+          !exactAfter(0, readReleaseBytes(root, 'packages/agent/package.json')) ||
+          !exactAfter(2, newJournal) ||
+          !exactAfter(3, pendingBytes)
+        )
+          throw new Error('Published preparation retry differs; preserve UNKNOWN.');
+        return { prepared: pending } as const;
+      }
+      return { snapshot: publishedPreparationSnapshot(root, operation) } as const;
+    },
+    true,
+  );
+  if ('prepared' in captured) return captured.prepared;
+  const snapshot = captured.snapshot;
+  const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  if (!token) throw new Error('GitHub read token is required for published baseline observation.');
+  const { createPublishedReleaseReadClient } = await import('./release-ci-publisher.ts');
+  const { observePublishedRelease } = await import('./release-github-publication.ts');
+  const observedBaseline = await observePublishedRelease({
+    api: createPublishedReleaseReadClient(token),
+    operation_id: operation,
+    version: snapshot.version,
+    requests: snapshot.requests,
+  });
+  return withReleaseAdmission(
+    root,
+    () => {
+      const current = publishedPreparationSnapshot(root, operation);
+      if (
+        current.sourceBinding !== snapshot.sourceBinding ||
+        current.identity !== snapshot.identity ||
+        current.formation !== snapshot.formation ||
+        current.images.size !== snapshot.images.size ||
+        [...snapshot.images].some(([key, bytes]) => {
+          const next = current.images.get(key);
+          return next === undefined || (bytes === null ? next !== null : next === null || !bytes.equals(next));
+        })
+      )
+        throw new Error('Published predecessor changed during observation; preserve UNKNOWN.');
+      return prepareCandidate(root, false, { mode: 'patch' }, undefined, observedBaseline, current.sourceBinding);
+    },
+    true,
+  );
+}
 export function prepareIndependentSuccessor(root: string, predecessor: string) {
   return withReleaseAdmission(root, () => {
     if (!idPattern.test(predecessor)) throw new Error('Predecessor operation identity is invalid.');
@@ -2911,6 +3092,8 @@ function prepareCandidate(
   systemUpdate: boolean = false,
   selection: ReleaseVersionSelection = { mode: 'patch' },
   dispositionProposal?: unknown,
+  publishedBaseline?: PublishedBaseline,
+  currentSourceBinding?: string,
 ) {
   const releases = directory(root, '.agent/work/agent-local-release');
   resumeReleasePreparation(root);
@@ -2919,6 +3102,77 @@ function prepareCandidate(
   const { value } = manifest(root);
   let successful = existsSync(successFile) ? releaseState(successFile) : null;
   const pending = existsSync(pendingFile) ? releaseState(pendingFile) : null;
+  if (publishedBaseline) {
+    const claim = publishedBaseline.claim;
+    if (
+      systemUpdate ||
+      dispositionProposal ||
+      selection.mode !== 'patch' ||
+      publishedBaseline.kind !== 'published_version_baseline' ||
+      !pending ||
+      pending.operation_id !== claim.operation_id ||
+      pending.version !== claim.version ||
+      value.version !== claim.version ||
+      pending.status !== 'awaiting_assurance' ||
+      pending.install_started ||
+      !/^[a-f0-9]{64}$/.test(currentSourceBinding ?? '') ||
+      !/^[a-f0-9]{40}$/.test(publishedBaseline.tagSha) ||
+      !Number.isSafeInteger(publishedBaseline.releaseId) ||
+      publishedBaseline.releaseId <= 0 ||
+      sha(json(claim)) !== publishedBaseline.claimDigest ||
+      sha(json(claim.assets)) !== publishedBaseline.assetInventoryDigest
+    )
+      throw new Error('Published baseline does not match the current pending candidate.');
+    if (successful) successfulBaseline(root, successful);
+    const confirmed = confirmedVersionBaseline(successful, readReleaseFormation(root));
+    if (confirmed && compareVersions(confirmed.version, claim.version) > 0)
+      throw new Error('Published baseline precedes a confirmed version.');
+    assertReleaseRetargetSettled(root, pending.operation_id);
+    assertNativeDeliveryEvidenceRepairSettled(root, pending.operation_id);
+    const pendingBytes = readFileSync(pendingFile);
+    const journal = journalFile(root, pending.operation_id);
+    const journalBytes = readFileSync(journal);
+    const current = releaseState(journal);
+    if (
+      current.operation_id !== pending.operation_id ||
+      current.version !== pending.version ||
+      current.status !== pending.status ||
+      current.install_started
+    )
+      throw new Error('Published baseline pending journal differs.');
+    const workerFile = releasePath(root, `.agent/work/agent-local-release/${pending.operation_id}/worker.sqlite`, true);
+    const worker = existsSync(workerFile) ? operationMutex(root, pending.operation_id) : null;
+    if (existsSync(workerFile) && !worker) throw new Error('Published baseline operation is active.');
+    try {
+      const prepared: PreparedRelease = {
+        schema: 'VidaLocalReleaseState/v1',
+        operation_id: `local-${randomUUID()}`,
+        version: candidateVersion(claim.version, claim.version, { mode: 'patch' }),
+        status: 'awaiting_assurance',
+      };
+      const witness = {
+        schema: 'VidaPublishedVersionBaseline/v1',
+        role: 'baseline-only',
+        operation_id: claim.operation_id,
+        version: claim.version,
+        tag_sha: publishedBaseline.tagSha,
+        release_id: publishedBaseline.releaseId,
+        claim_digest: publishedBaseline.claimDigest,
+        assets_digest: publishedBaseline.assetInventoryDigest,
+        historical_source_binding: claim.source_binding,
+        current_source_binding: currentSourceBinding,
+        requests: claim.producers.map(({ request }) => ({
+          request_id: request.request_id,
+          digest: sha(json(request)),
+        })),
+        pending_digest: sha(pendingBytes),
+        journal_digest: sha(journalBytes),
+      };
+      return publishReleasePreparation(root, prepared, { ...value, version: prepared.version }, witness);
+    } finally {
+      worker?.close();
+    }
+  }
   if (successful) successfulBaseline(root, successful);
   if (systemUpdate) preflightSystemUpdate(root, value.version, pending, successful);
   if (pending) assertReleaseRetargetSettled(root, pending.operation_id);
@@ -3732,10 +3986,11 @@ export async function executeRelease({
   }
 }
 /** @param {string[]} args */
-export async function main(args: string[], issueRoot = repositoryRoot) {
+export async function main(args: string[], issueRoot = path.resolve(repositoryRoot)) {
   const usageMessage =
     'Usage: release:local -- --prepare [--minor | --major | --version X.Y.Z] | ' +
     '--prepare-after-disposition --proposal REL [--minor | --major | --version X.Y.Z] | ' +
+    '--prepare-after-publication OP | ' +
     '--prepare-independent-successor ID | ' +
     '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID | --issue-native-pair ID | ' +
     '--stage-observe-native-pair OP SOURCE RUN ATTEMPT LREQ LART LZIP WREQ WART WZIP ACTOR';
@@ -3860,6 +4115,8 @@ export async function main(args: string[], issueRoot = repositoryRoot) {
       ...(process.env.GITHUB_TOKEN ? { token: process.env.GITHUB_TOKEN } : {}),
     });
   }
+  if (args.length === 2 && args[0] === '--prepare-after-publication' && args[1])
+    return await prepareReleaseAfterPublication(issueRoot, args[1]);
   if (args[0] === '--prepare-after-disposition') {
     const parsed = parseDispositionPreparationArgs(args.slice(1));
     const proposal = readDispositionProposal(repositoryRoot, parsed.proposalPath);
