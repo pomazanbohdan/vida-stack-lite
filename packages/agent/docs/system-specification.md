@@ -276,6 +276,14 @@ state without creating reader sidecars. They grant neither a multi-file snapshot
 nor write authority. The operation lock, maintenance fence and actual writer CAS
 remain required; capture errors preserve the existing failure/UNKNOWN handling.
 The Windows provider retains its declared best-effort capture profile.
+The optional Windows large-file custody capability observes one regular,
+single-link file up to 64 MiB as its identity, exact size and SHA-256. Its
+no-replace move snapshots and validates the caller's expected tuple before
+asynchronous hashing, verifies the same identity, size and digest at the
+destination, and leaves uncertain effects to caller-owned reconciliation.
+This is Windows best-effort containment, not a multi-file snapshot or a Linux
+capability. Existing 8 MiB read and move limits and the 32 MiB relocation
+aggregate limit remain unchanged. ADS preservation requires native qualification.
 Only the frozen parsing/validation result for one exact original YAML string may
 be reused. Each decoded operation still validates its complete plan and progress;
 live dependencies, bundle, output and ownership checks are never memoized.

@@ -77,7 +77,12 @@ type WindowsNativeBinding = {
     readonly isDirectory: boolean;
     readonly isSymbolicLink: boolean;
   };
-  readonly sha256File: (fd: number) => Promise<{ readonly bytes: number; readonly digest: string }>;
+  readonly sha256File: (
+    fd: number,
+    maxBytes?: number,
+    signal?: AbortSignal,
+    ownsPosition?: boolean,
+  ) => Promise<{ readonly bytes: number; readonly digest: string }>;
 };
 type Thunk<T> = () => T;
 const choose = <T>(condition: unknown, yes: Thunk<T>, no: Thunk<T>): T => [no, yes][Number(Boolean(condition))]!();
@@ -446,6 +451,11 @@ export interface ExclusiveRepositoryCreation {
   readonly ensureDirectory: (target: string, label: string) => Promise<string>;
   readonly writeExclusive: (target: string, contents: string, label: string) => Promise<void>;
 }
+export interface LargeFileObservation {
+  readonly identity: string;
+  readonly size: number;
+  readonly sha256: string;
+}
 export interface SafeRepositoryAccess {
   readonly schema: 'SafeRepositoryAccess/v1';
   readonly provider: 'linux-proc-fd' | 'fs-safe-windows' | 'unavailable';
@@ -480,6 +490,15 @@ export interface SafeRepositoryAccess {
   readonly readVerifiedCaptureBytes?: (target: string, label: string, maxBytes?: number) => Buffer;
   /** Optional cooperative stable read under one per-file CAS lock; null is twice-observed absence. */
   readonly readStableBytes?: (target: string, label: string) => Buffer | null;
+  /** Windows best-effort, single-file observation; fixed 64 MiB maximum. */
+  readonly observeLargeFile?: (target: string, label: string) => Promise<LargeFileObservation>;
+  /** Windows no-replace custody; caller owns recovery from UNKNOWN. */
+  readonly moveLargeFileNoReplace?: (
+    source: string,
+    target: string,
+    expected: LargeFileObservation,
+    label: string,
+  ) => Promise<'moved' | 'already_moved'>;
   readonly fileExists: (target: string, label: string) => boolean;
   readonly listFiles: (target: string, label: string) => readonly string[];
   /** No-write path observation. Linux checks the target CAS namespace before and after the observation. */
@@ -2438,8 +2457,236 @@ function windowsOpenParent(
   }
 }
 function windowsCloseParent(opened: { readonly rootFd: number; readonly parentFd: number }): void {
-  if (opened.parentFd !== opened.rootFd) closeQuietly(opened.parentFd);
-  closeQuietly(opened.rootFd);
+  try {
+    if (opened.parentFd !== opened.rootFd) closeQuietly(opened.parentFd);
+  } finally {
+    closeQuietly(opened.rootFd);
+  }
+}
+const maxLargeFileBytes = 64 * 1024 * 1024;
+
+function windowsLargeProvider(label: string): WindowsNativeBinding {
+  assertFsSafeNativeCreateEnabled(label);
+  const binding = loadWindowsNativeBinding();
+  if (!binding || binding !== windowsNativeBinding)
+    fail(label + ' requires the currently attested Windows native provider');
+  return binding;
+}
+
+function windowsLargeChain(root: string, target: string, label: string): readonly string[] {
+  const segments = safeRelative(root, target, label);
+  const directories: string[] = [];
+  let cursor = path.resolve(root);
+  while (true) {
+    directories.push(cursor);
+    const next = path.dirname(cursor);
+    if (next === cursor) break;
+    cursor = next;
+  }
+  cursor = path.resolve(root);
+  for (const segment of segments.slice(0, -1)) {
+    cursor = path.join(cursor, segment);
+    directories.push(cursor);
+  }
+  return directories.map((directory) => {
+    const stats = lstatSync(directory, { bigint: true });
+    reject(
+      !stats.isDirectory() || stats.isSymbolicLink() || stats.dev === 0n || stats.ino === 0n || stats.birthtimeNs <= 0n,
+      label + ' directory identity unavailable',
+    );
+    return JSON.stringify([
+      directory,
+      String(stats.dev),
+      String(stats.ino),
+      String(stats.birthtimeNs),
+      String(stats.mode),
+    ]);
+  });
+}
+
+function sameLargeChain(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((item, index) => item === right[index]);
+}
+
+async function windowsWithLargeFile<T>(
+  root: string,
+  target: string,
+  label: string,
+  use: (
+    observation: LargeFileObservation,
+    parent: ReturnType<typeof windowsOpenParent>,
+    fd: number,
+    stats: BigIntStats,
+    chain: readonly string[],
+  ) => T,
+): Promise<T> {
+  const binding = windowsLargeProvider(label);
+  const absolute = fsSafeAbsolute(root, target, label);
+  const chain = windowsLargeChain(root, target, label);
+  const parent = windowsOpenParent(root, target, label);
+  let fd: number | undefined;
+  try {
+    const rootStats = fstatSync(parent.rootFd, { bigint: true });
+    const parentStats = fstatSync(parent.parentFd, { bigint: true });
+    reject(
+      !sameFileIdentity(rootStats, lstatSync(root, { bigint: true })) ||
+        !sameFileIdentity(parentStats, lstatSync(path.dirname(absolute), { bigint: true })),
+      label + ' opened directory changed',
+    );
+    fd = binding.openBeneath(parent.parentFd, parent.basename, windowsNativeOpenFlags(fsConstants.O_RDONLY)).fd;
+    const before = fstatSync(fd, { bigint: true });
+    const pathBefore = lstatSync(absolute, { bigint: true });
+    regularFile(before, label);
+    regularFile(pathBefore, label);
+    const identity = observedFileIdentity(before, label);
+    reject(before.size < 0n || before.size > BigInt(maxLargeFileBytes), label + ' exceeds large-file limit');
+    reject(
+      !sameCaptureMetadata(before, pathBefore, captureFileFields) ||
+        observedFileIdentity(pathBefore, label) !== identity,
+      label + ' pathname changed before hashing',
+    );
+    const native = binding.fstatIdentity(fd);
+    reject(
+      !native.isFile || native.isSymbolicLink || native.nlink !== 1 || native.size !== Number(before.size),
+      label + ' native file metadata mismatch',
+    );
+    const digest = await binding.sha256File(fd, maxLargeFileBytes, undefined, true);
+    reject(windowsLargeProvider(label) !== binding, label + ' provider changed during hashing');
+    const after = fstatSync(fd, { bigint: true });
+    const pathAfter = lstatSync(absolute, { bigint: true });
+    regularFile(after, label);
+    regularFile(pathAfter, label);
+    reject(
+      !sameCaptureMetadata(before, after, captureFileFields) ||
+        !sameCaptureMetadata(before, pathAfter, captureFileFields) ||
+        observedFileIdentity(after, label) !== identity ||
+        observedFileIdentity(pathAfter, label) !== identity ||
+        digest.bytes !== Number(before.size) ||
+        !/^[a-f0-9]{64}$/u.test(digest.digest),
+      label + ' changed during hashing or failed exact EOF',
+    );
+    reject(
+      !sameLargeChain(chain, windowsLargeChain(root, target, label)) ||
+        !sameFileIdentity(rootStats, fstatSync(parent.rootFd, { bigint: true })) ||
+        !sameFileIdentity(parentStats, fstatSync(parent.parentFd, { bigint: true })) ||
+        !sameFileIdentity(rootStats, lstatSync(root, { bigint: true })) ||
+        !sameFileIdentity(parentStats, lstatSync(path.dirname(absolute), { bigint: true })),
+      label + ' directory changed during hashing',
+    );
+    return use({ identity, size: Number(before.size), sha256: digest.digest }, parent, fd, before, chain);
+  } finally {
+    try {
+      if (fd !== undefined) closeQuietly(fd);
+    } finally {
+      windowsCloseParent(parent);
+    }
+  }
+}
+
+function sameLargeObservation(actual: LargeFileObservation, expected: LargeFileObservation): boolean {
+  return actual.identity === expected.identity && actual.size === expected.size && actual.sha256 === expected.sha256;
+}
+
+async function windowsMoveLargeFileNoReplace(
+  root: string,
+  source: string,
+  target: string,
+  expected: LargeFileObservation,
+  label: string,
+): Promise<'moved' | 'already_moved'> {
+  windowsLargeProvider(label);
+  if (!expected) fail(label + ' invalid expected observation');
+  const { identity, size, sha256 } = expected;
+  reject(
+    typeof identity !== 'string' ||
+      !identity ||
+      typeof size !== 'number' ||
+      !Number.isSafeInteger(size) ||
+      size < 0 ||
+      size > maxLargeFileBytes ||
+      typeof sha256 !== 'string' ||
+      !/^[a-f0-9]{64}$/u.test(sha256),
+    label + ' invalid expected observation',
+  );
+  const snapshot: LargeFileObservation = { identity, size, sha256 };
+  const fromPath = windowsNativeRelative(root, source, label);
+  const toPath = windowsNativeRelative(root, target, label);
+  reject(fromPath.toLowerCase() === toPath.toLowerCase(), label + ' source and target must differ');
+  let effectAttempted = false;
+  let effectCompleted = false;
+  try {
+    const fromExists = fsSafeFileExists(root, fromPath, label);
+    const toExists = fsSafeFileExists(root, toPath, label);
+    if (!fromExists && toExists) {
+      const result = await windowsWithLargeFile(root, toPath, label, (observation) => observation);
+      reject(
+        !sameLargeObservation(result, snapshot) || fsSafeFileExists(root, fromPath, label),
+        label + ' recovery identity conflict',
+      );
+      windowsLargeProvider(label);
+      return 'already_moved';
+    }
+    reject(!fromExists || toExists, label + ' source/target state is conflicting');
+    await windowsWithLargeFile(root, fromPath, label, (observation, from, fd, before, chain) => {
+      reject(!sameLargeObservation(observation, snapshot), label + ' source observation differs');
+      const toChain = windowsLargeChain(root, toPath, label);
+      const to = windowsOpenParent(root, toPath, label);
+      try {
+        const targetParent = fstatSync(to.parentFd, { bigint: true });
+        const targetRoot = fstatSync(to.rootFd, { bigint: true });
+        const absolute = fsSafeAbsolute(root, fromPath, label);
+        reject(
+          !sameCaptureMetadata(before, fstatSync(fd, { bigint: true }), captureFileFields) ||
+            !sameCaptureMetadata(before, lstatSync(absolute, { bigint: true }), captureFileFields) ||
+            !sameLargeChain(chain, windowsLargeChain(root, fromPath, label)) ||
+            !sameLargeChain(toChain, windowsLargeChain(root, toPath, label)) ||
+            !sameFileIdentity(targetRoot, lstatSync(root, { bigint: true })) ||
+            !sameFileIdentity(
+              targetParent,
+              lstatSync(path.dirname(fsSafeAbsolute(root, toPath, label)), { bigint: true }),
+            ) ||
+            fsSafeFileExists(root, toPath, label),
+          label + ' source or destination changed before rename',
+        );
+        const binding = windowsLargeProvider(label);
+        effectAttempted = true;
+        binding.renameNoReplace(from.parentFd, from.basename, to.parentFd, to.basename);
+        effectCompleted = true;
+      } finally {
+        windowsCloseParent(to);
+      }
+    });
+    const after = await windowsWithLargeFile(root, toPath, label, (observation) => observation);
+    reject(
+      !sameLargeObservation(after, snapshot) || fsSafeFileExists(root, fromPath, label),
+      label + ' post-move verification failed',
+    );
+    windowsLargeProvider(label);
+    return 'moved';
+  } catch (error) {
+    try {
+      if (!effectCompleted && !fsSafeFileExists(root, toPath, label) && fsSafeFileExists(root, fromPath, label)) {
+        const current = await windowsWithLargeFile(root, fromPath, label, (observation) => observation);
+        if (sameLargeObservation(current, snapshot) && !fsSafeFileExists(root, toPath, label)) {
+          windowsLargeProvider(label);
+          throw new SafeRepositoryMoveError(
+            'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
+            label + ' move did not occur; revalidate before retry',
+            { cause: error },
+          );
+        }
+      }
+    } catch (probeError) {
+      if (probeError instanceof SafeRepositoryMoveError && probeError.code === 'SAFE_REPOSITORY_MOVE_NOT_APPLIED')
+        throw probeError;
+    }
+    throw new SafeRepositoryMoveError(
+      'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+      label +
+        (effectAttempted ? ' move effect requires reconciliation' : ' source/target state requires reconciliation'),
+      { cause: error },
+    );
+  }
 }
 function windowsObserveFileIdentity(root: string, target: string, label: string): string {
   const assertProvider = () => {
@@ -3290,6 +3537,9 @@ function windowsAccess(root: string): SafeRepositoryAccess {
       windowsReadBytes(root, target, label, captureReadLimit(limit)),
     readVerifiedCaptureBytes: (target, label, limit = maxRepositoryReadBytes) =>
       windowsReadBytes(root, target, label, captureReadLimit(limit)),
+    observeLargeFile: (target, label) => windowsWithLargeFile(root, target, label, (observation) => observation),
+    moveLargeFileNoReplace: (source, target, expected, label) =>
+      windowsMoveLargeFileNoReplace(root, source, target, expected, label),
     fileExists: (target, label) => fsSafeFileExists(root, target, label),
     listFiles: (target, label) => fsSafeListFiles(root, target, label),
     observeFileExists: (target, label) => fsSafeFileExists(root, target, label),
