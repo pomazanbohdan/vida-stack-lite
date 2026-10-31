@@ -69,6 +69,14 @@ DTO only while initialization is not started, so the existing read-only helper
 can capture that DTO; issuance requires its prior persistence. These contracts
 do not establish a connected publisher, recovery flow, installed artifact or
 Runtime acceptance.
+The executing initializer exposes a read-only package binding before consumer
+project directories exist. It observes the package version from the same
+manifest bytes included in its ordered resource digest, compares fresh bytes
+with the immutable package reader, and reports the package directory identity.
+Prepared initialization reuses that binding and rechecks package identity after
+rendering. Default rendering and explicitly selected copied bundles retain their
+existing routes. These package observations do not establish executable artifact
+identity; delivery evidence supplies that separate binding.
 
 Local execution assumes a trusted orchestrating session and its observed
 built-in tool results. Before authoring `LocalSourceWriteAuthorization/v1`,

@@ -1102,15 +1102,14 @@ function samePreparedInitialization(left: PreparedInitialization, right: Prepare
   );
 }
 
-/** Bind the inputs that the initializer reads, using uncached package observations. */
-function preparedInputs(request: InitializationRequest, createdAt: string): PreparedInitialization {
-  if (request.reconcileExisting) throw new Error('Prepared initialization requires a fresh request');
-  const context = initializationContext({
-    projectRoot: request.projectRoot,
-    repository: request.repository,
-    mappings: request.projectMappings,
-    bundleRoot: executingPackageRoot,
-  });
+/** Capture executing package facts without inspecting any consumer project directory. */
+export function captureInitializationRuntimeBinding(): Readonly<{
+  version: string;
+  bundle_identity: string;
+  resource_digest: string;
+}> {
+  const packageReader = requireRuntimeModule(runtimeConfig);
+  const packageAccess = packageReader.runtimePackageAccess();
   const livePackage = requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(executingPackageRoot);
   const liveObservation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(livePackage);
   const resources = [
@@ -1120,26 +1119,63 @@ function preparedInputs(request: InitializationRequest, createdAt: string): Prep
     ...outputs.map(([template]) => `templates/${template}`),
     ...requiredInstructions.map((instruction) => `instructions/${instruction}`),
   ];
+  let manifestBytes: Buffer | undefined;
   const resourceDigest = hash(
     JSON.stringify(
       resources.map((name) => {
-        const digest = hash(liveObservation.readBytes(name, 'live initialization resource'));
-        if (digest !== hash(context.packageAccess.readBytes(name, 'initialization resource')))
+        const fresh = liveObservation.readBytes(name, 'live initialization resource');
+        const digest = hash(fresh);
+        if (
+          digest !== hash(packageReader.readRuntimePackageResourceBytes(packageAccess, name, 'initialization resource'))
+        )
           throw new Error('Executing initialization resource changed');
+        if (name === 'package.json') manifestBytes = fresh;
         return [name, digest];
       }),
     ),
   );
+  if (!manifestBytes) throw new Error('Executing initialization manifest is missing');
+  const manifest: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes));
+  if (
+    !isPackageManifest(manifest) ||
+    manifest.name !== 'vida-agent' ||
+    !('version' in manifest) ||
+    typeof manifest.version !== 'string' ||
+    !manifest.version
+  )
+    throw new Error('Executing initialization package version is invalid');
+  return Object.freeze({
+    version: manifest.version,
+    bundle_identity: livePackage.directoryIdentity('.', 'runtime package'),
+    resource_digest: resourceDigest,
+  });
+}
+
+/** Bind the inputs that the initializer reads, using uncached package observations. */
+function preparedInputs(request: InitializationRequest, createdAt: string): PreparedInitialization {
+  if (request.reconcileExisting) throw new Error('Prepared initialization requires a fresh request');
+  const context = initializationContext({
+    projectRoot: request.projectRoot,
+    repository: request.repository,
+    mappings: request.projectMappings,
+    bundleRoot: executingPackageRoot,
+  });
+  const runtime = captureInitializationRuntimeBinding();
   const { receipt } = renderFreshInitialization(request, context, createdAt);
   const projectIdentities = context.selectedProjects.map(({ id, root }) =>
     JSON.stringify([id, root, context.access.directoryIdentity(root, 'configured project root')]),
   );
+  const rootIdentity = context.access.directoryIdentity('.', 'project root');
+  const bundleIdentity = requireRuntimeModule(repositoryAccess)
+    .requireSafeRepositoryAccess(executingPackageRoot)
+    .directoryIdentity('.', 'runtime package');
+  if (bundleIdentity !== runtime.bundle_identity) throw new Error('Executing initialization package changed');
   return Object.freeze({
     intent: JSON.stringify(receipt, null, 2) + '\n',
-    rootIdentity: context.access.directoryIdentity('.', 'project root'),
-    bundleIdentity: livePackage.directoryIdentity('.', 'runtime package'),
+    rootIdentity,
+    bundleIdentity,
     projectIdentities: Object.freeze(projectIdentities),
-    resourceDigest,
+    resourceDigest: runtime.resource_digest,
   });
 }
 
