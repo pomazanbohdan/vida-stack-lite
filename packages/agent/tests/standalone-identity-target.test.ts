@@ -1,9 +1,10 @@
 import { test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { readResource, resourceDigest } from '../bin/standalone-resources.ts';
+import { standaloneDiscoveryFiles } from '../bin/cli-metadata.ts';
 import { verifyStandalone } from '../tooling/build-standalone.ts';
 import { expectedJavascriptFiles, standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
 
@@ -51,6 +52,7 @@ import { expectedJavascriptFiles, standaloneBuildInputInventory } from '../tooli
           'instructions/a',
         ])
           write(file, 'fixture');
+        for (const file of standaloneDiscoveryFiles) if (!existsSync(path.join(root, file))) write(file, 'fixture');
         for (const file of expectedJavascriptFiles) write('dist/src/' + file, 'fixture');
         write('dist/schemas/source.json', 'fixture');
         const inputs = standaloneBuildInputInventory(root).map((file) => {

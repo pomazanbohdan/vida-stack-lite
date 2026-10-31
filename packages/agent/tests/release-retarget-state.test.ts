@@ -1,3 +1,4 @@
+import type { executeMutationCommand } from '../tooling/mutation-evidence.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
@@ -23,6 +24,7 @@ import { createDeflateRaw } from 'node:zlib';
 import { afterEach, test as baseTest } from 'bun:test';
 import type JSZipConstructor from 'jszip';
 import { pinnedEnvironment, readPin } from '../bin/bun.ts';
+import { discoveryResourceIdentity } from '../bin/standalone-resources.ts';
 import {
   releaseDigest as sha,
   releaseJSON as json,
@@ -86,10 +88,12 @@ import {
   validateNativeCICommandDenialInventory,
   nativeCIDenialDiagnostics,
   createNativeCICommandRunner,
+  smokeNativeInstruction,
   nativeCIUnadmittedWorkflowDenial,
   validateCIArtifactMemberSizes,
 } from '../../../tooling/agent/native-ci-delivery.ts';
 import { cliCommandNames } from '../bin/cli-command-contracts.ts';
+import { standaloneDiscoveryFiles } from '../bin/cli-metadata.ts';
 import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
 import { withWorkspaceDatabaseClose } from '../src/config/workspace-database-raw.ts';
 import { standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
@@ -593,6 +597,10 @@ async function fixture({ success = false }: { success?: boolean } = {}): Promise
     'bunfig.toml': '[install]\n',
   };
   for (const [file, contents] of Object.entries(sourceFiles)) write(root, 'packages/agent/' + file, contents);
+  for (const file of standaloneDiscoveryFiles) {
+    const relative = 'packages/agent/' + file;
+    if (!existsSync(path.join(root, relative))) write(root, relative, '// inert discovery fixture\n');
+  }
   for (const file of [
     'package.json',
     'agent-runtime.config.v1.yaml',
@@ -3728,5 +3736,109 @@ test('prepare then formation-only pack and two target stages retain CI install g
       rmSync(value.root, { recursive: true, force: true });
       roots.delete(value.root);
     }
+  }
+});
+
+test('native formation instruction smoke requires typed payload and complete owned execution', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-native-instruction-'));
+  const target = process.platform === 'win32' ? 'bun-windows-x64' : 'bun-linux-x64';
+  const version = '1.2.3';
+  const instruction = Buffer.from('declared lifecycle');
+  const inputs = [
+    {
+      path: 'instructions/development-lifecycle.md',
+      bytes: instruction.length,
+      sha256: createHash('sha256').update(instruction).digest('hex'),
+    },
+  ];
+  const payload = createHash('sha256').update(JSON.stringify(inputs)).digest('hex');
+  assert.deepEqual(discoveryResourceIdentity(inputs), { index: inputs, payloadId: payload });
+  const mixed = [{ path: 'other/file', bytes: 1, sha256: sha('x') }, ...inputs];
+  assert.deepEqual(discoveryResourceIdentity(mixed), { index: inputs, payloadId: payload });
+  const custody: NonNullable<Awaited<ReturnType<typeof executeMutationCommand>>['processCustody']> = {
+    pid: 1,
+    scope: 'owned-process-group',
+    terminationObserved: true,
+    processGroupTerminationObserved: true,
+    unrefCalled: false,
+    attempts: [],
+  };
+  const cases = [
+    'valid',
+    'invalid-json',
+    'wrong-version',
+    'outside',
+    'capture-timeout',
+    'group-unknown',
+    'capture-mismatch',
+    'source-workspace',
+    'source-executable',
+  ] as const;
+  for (const scenario of cases) {
+    const caseRoot = path.join(root, scenario);
+    mkdirSync(caseRoot);
+    const execute: typeof executeMutationCommand = async (command, cwd, timeout, limits) => {
+      assert.deepEqual(command, [
+        path.join(caseRoot, 'formed-executable'),
+        'instructions',
+        '--path',
+        'development-lifecycle',
+      ]);
+      assert.equal(timeout, 5_000);
+      assert.equal(cwd, path.join(caseRoot, 'native-instruction'));
+      assert.equal(limits?.ownedProcessGroup, true);
+      const file = path.join(
+        cwd,
+        'home',
+        '.vida-agent',
+        'runtime',
+        version + '-' + payload,
+        'instructions',
+        'development-lifecycle.md',
+      );
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, instruction);
+      const receipt = {
+        schema: 'VidaAgentInstruction/v1',
+        package: 'vida-agent',
+        version: scenario === 'wrong-version' ? '9.9.9' : version,
+        path: scenario === 'outside' ? path.join(caseRoot, 'outside.md') : file,
+      };
+      const stdout = Buffer.from(scenario === 'invalid-json' ? '{' : JSON.stringify(receipt));
+      const stderr = Buffer.from('');
+      writeFileSync(limits!.stdoutFile!, stdout);
+      writeFileSync(limits!.stderrFile!, stderr);
+      const capture = (bytes: Buffer) => ({
+        bytes: bytes.length,
+        sha256: sha(bytes),
+        retained_bytes: bytes.length,
+        truncated: false,
+      });
+      const good: Awaited<ReturnType<typeof executeMutationCommand>> = {
+        exitCode: 0,
+        signal: null,
+        spawnError: null,
+        timedOut: false,
+        processCustody: custody,
+        output_capture: { complete: true, stdout: capture(stdout), stderr: capture(stderr) },
+      };
+      if (scenario === 'capture-timeout') return { ...good, output_capture: { complete: false } };
+      if (scenario === 'group-unknown')
+        return { ...good, processCustody: { ...custody, processGroupTerminationObserved: false } };
+      if (scenario === 'capture-mismatch')
+        return {
+          ...good,
+          output_capture: { complete: true, stdout: capture(Buffer.from('wrong')), stderr: capture(stderr) },
+        };
+      return good;
+    };
+    const source = scenario === 'source-workspace' ? caseRoot : path.join(root, 'source');
+    const executable =
+      scenario === 'source-executable'
+        ? path.join(source, 'formed-executable')
+        : path.join(caseRoot, 'formed-executable');
+    const run = smokeNativeInstruction({ root: caseRoot, source, executable, target, version, inputs, execute });
+    if (scenario === 'valid') await run;
+    else await assert.rejects(run);
   }
 });

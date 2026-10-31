@@ -1,7 +1,7 @@
 import { fsSafeArchiveEntry } from '../../packages/agent/tooling/fs-safe-archive-entry.ts';
 import type { AgentExtractArchiveModule } from '../../packages/agent/tooling/release-dependency-types.ts';
 // Repository-owned CI producer. Importing this module never builds or installs.
-import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -12,6 +12,8 @@ import {
   releaseSourceBinding,
 } from '../../packages/agent/bin/local-release-artifacts.ts';
 import { runCommand } from './release-local.ts';
+import { executeMutationCommand } from '../../packages/agent/tooling/mutation-evidence.ts';
+import { discoveryResourceIdentity } from '../../packages/agent/bin/standalone-resources.ts';
 import { checkManifest, readPin } from '../../packages/agent/bin/bun.ts';
 import { readBunPackMetadata } from '../../packages/agent/tooling/bun-pack-metadata.ts';
 import {
@@ -756,6 +758,119 @@ export function createNativeCICommandRunner(
 function runner(ctx: NativeCIContext, phase: string): NativeCICommandRunner {
   return createNativeCICommandRunner(ctx, phase);
 }
+// A formed executable must resolve the ordinary installed instruction from its own payload.
+export async function smokeNativeInstruction({
+  root,
+  source,
+  executable,
+  target,
+  version,
+  inputs,
+  execute = executeMutationCommand,
+}: {
+  root: string;
+  source: string;
+  executable: string;
+  target: string;
+  version: string;
+  inputs: NativeManifestInput[];
+  execute?: typeof executeMutationCommand;
+}): Promise<void> {
+  requireCI(
+    process.arch === 'x64' &&
+      ((process.platform === 'win32' && target === 'bun-windows-x64') ||
+        (process.platform === 'linux' && target === 'bun-linux-x64')),
+    'native instruction target is not the host',
+  );
+  const { index: selected, payloadId } = discoveryResourceIdentity(inputs);
+  const instruction = selected.filter((entry) => entry.path === 'instructions/development-lifecycle.md');
+  requireCI(instruction.length === 1, 'declared native instruction missing or ambiguous');
+  const workspace = path.join(root, 'native-instruction');
+  for (const candidate of [workspace, executable]) {
+    const relative = path.relative(source, candidate);
+    requireCI(
+      path.isAbsolute(source) &&
+        path.isAbsolute(candidate) &&
+        relative !== '' &&
+        (relative === '..' || relative.startsWith('..' + path.sep) || path.isAbsolute(relative)),
+      'native instruction workspace or executable is inside Source',
+    );
+  }
+  mkdirSync(workspace, { mode: 0o700 });
+  const home = path.join(workspace, 'home');
+  mkdirSync(home, { mode: 0o700 });
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, USERPROFILE: home };
+  for (const key of Object.keys(env))
+    if (
+      [
+        'NODE_OPTIONS',
+        'NODE_PATH',
+        'BUN_OPTIONS',
+        'BUN_BE_BUN',
+        'VIDA_STANDALONE_ROOT',
+        'VIDA_STANDALONE_EXECUTABLE',
+      ].includes(key.toUpperCase())
+    )
+      delete env[key];
+  const stdout = path.join(workspace, 'stdout.log');
+  const stderr = path.join(workspace, 'stderr.log');
+  const result = await execute([executable, 'instructions', '--path', 'development-lifecycle'], workspace, 5_000, {
+    ownedProcessGroup: true,
+    stdoutFile: stdout,
+    stderrFile: stderr,
+    outputByteLimit: 1024 * 1024,
+    env,
+  });
+  exclusive(root, 'native-instruction/execution.json', result);
+  requireCI(
+    result.exitCode === 0 &&
+      result.signal === null &&
+      result.spawnError === null &&
+      !result.timedOut &&
+      result.processCustody?.scope === 'owned-process-group' &&
+      result.processCustody.terminationObserved &&
+      result.processCustody.processGroupTerminationObserved === true &&
+      result.output_capture?.complete === true &&
+      !result.output_capture.stdout.truncated &&
+      !result.output_capture.stderr.truncated,
+    'native instruction execution failed or remains UNKNOWN',
+  );
+  const stdoutBytes = physical(root, 'native-instruction/stdout.log', 1024 * 1024);
+  const stderrBytes = physical(root, 'native-instruction/stderr.log', 1024 * 1024);
+  for (const [bytes, capture] of [
+    [stdoutBytes, result.output_capture.stdout],
+    [stderrBytes, result.output_capture.stderr],
+  ] as const)
+    requireCI(
+      bytes.length === capture.bytes && bytes.length === capture.retained_bytes && sha(bytes) === capture.sha256,
+      'native instruction capture differs from retained bytes',
+    );
+  const receipt = parseUnknownJSON(stdoutBytes.toString('utf8'));
+  const expected = path.join(
+    home,
+    '.vida-agent',
+    'runtime',
+    version + '-' + payloadId,
+    'instructions',
+    'development-lifecycle.md',
+  );
+  requireCI(
+    isRecord(receipt) &&
+      receipt.schema === 'VidaAgentInstruction/v1' &&
+      receipt.package === 'vida-agent' &&
+      receipt.version === version &&
+      typeof receipt.path === 'string' &&
+      path.isAbsolute(receipt.path) &&
+      receipt.path === expected,
+    'native instruction receipt differs from declared payload',
+  );
+  const bytes = physical(home, path.relative(home, expected).split(path.sep).join('/'), 8 * 1024 * 1024);
+  requireCI(
+    bytes.length === instruction[0]!.bytes && sha(bytes) === instruction[0]!.sha256,
+    'native instruction payload bytes differ',
+  );
+}
+
 async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner): Promise<void> {
   requireCI((await invoke(process.execPath, ['--version'])).trim() === ctx.manifest.engines.bun, 'CI Bun pin differs');
   try {
@@ -834,6 +949,14 @@ async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner):
       asset.equals(physical(ctx.source, 'packages/agent/dist/standalone/' + manifest.asset.file)),
     'packed native bytes differ',
   );
+  await smokeNativeInstruction({
+    root: ctx.root,
+    source: ctx.source,
+    executable: path.join(ctx.root, 'package/dist/standalone', manifest.asset.file),
+    target: ctx.request.target,
+    version: ctx.request.version,
+    inputs: manifest.inputs,
+  });
   exclusive(ctx.root, 'candidate.json', {
     operation_id: ctx.request.operation_id,
     version: ctx.request.version,

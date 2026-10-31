@@ -2,6 +2,30 @@ import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.js';
 
+export const installerProtectedFiles = [
+  'package.json',
+  'bun.lock',
+  '.bun-version',
+  'bin/bun.ts',
+  'bin/init.ts',
+  'bin/install.ts',
+];
+
+/** Dispatcher/install-check local modules; the same exact set selects index and archive members. */
+export const standaloneDiscoveryFiles = [
+  ...installerProtectedFiles,
+  'bin/vida-agent.ts',
+  'bin/cli-metadata.ts',
+  'bin/cli-command-contracts.ts',
+  'bin/run-cli-options.ts',
+  'bin/reconcile-cli-contracts.ts',
+  'bin/cli-error-properties.ts',
+  'tooling/owned-cleanup-completion.ts',
+  'bin/project-mapping-contract.ts',
+  'bunfig.toml',
+  'tooling/maintained-source-inventory.ts',
+];
+
 type InventoryAccess = Pick<SafeRepositoryAccess, 'fileExists' | 'listFiles' | 'readBytes'>;
 type InventoryManifest = { files: unknown[]; bin?: Record<string, unknown> };
 
@@ -115,6 +139,7 @@ function standaloneResourcePaths(root: string, relative: string, files: string[]
 export function standaloneBuildInputInventory(root: string): string[] {
   const files = [
     ...runtimeExecutableInventory(root, 'dist'),
+    ...standaloneDiscoveryFiles,
     'TESTING.md',
     '.bun-version',
     'bun.lock',

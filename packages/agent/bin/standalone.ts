@@ -3,7 +3,12 @@ import { homedir } from 'node:os';
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { standaloneDiscoveryFiles } from './cli-metadata.ts';
-import { materializeResources, resourceDigest, type ResourceIndexEntry } from './standalone-resources.ts';
+import {
+  discoveryResourceIdentity,
+  materializeResources,
+  resourceDigest,
+  type ResourceIndexEntry,
+} from './standalone-resources.ts';
 import { cliMetadataResult, cliErrorResult } from './cli-metadata.ts';
 
 // The build injects only its owned payload and inventory. These are not approval markers.
@@ -81,10 +86,9 @@ async function runStandaloneExecution({ payload, index, payloadId, version }: St
   const argv = process.argv.slice(2);
   const discovery = argv[0] === 'instructions' || (argv.length === 2 && argv[0] === 'install' && argv[1] === '--check');
   const owned = new Set(standaloneDiscoveryFiles);
-  const selectedIndex = discovery
-    ? index.filter((entry) => owned.has(entry.path) || entry.path.startsWith('instructions/'))
-    : index;
-  const selectedPayloadId = discovery ? resourceDigest(JSON.stringify(selectedIndex)) : payloadId;
+  const selected = discovery ? discoveryResourceIdentity(index) : { index, payloadId };
+  const selectedIndex = selected.index;
+  const selectedPayloadId = selected.payloadId;
   const root = await materializeResources({
     cache: path.join(homedir(), '.vida-agent', 'runtime'),
     privateRoot: path.join(homedir(), '.vida-agent'),

@@ -1,4 +1,6 @@
 import path from 'node:path';
+import { installerProtectedFiles, standaloneDiscoveryFiles } from '../tooling/maintained-source-inventory.ts';
+export { installerProtectedFiles, standaloneDiscoveryFiles };
 import {
   runScalarOptionFields,
   runSpecialSelectors,
@@ -50,29 +52,6 @@ interface HelpRequest {
   nested: string | undefined;
   modes: string[];
 }
-
-export const installerProtectedFiles = [
-  'package.json',
-  'bun.lock',
-  '.bun-version',
-  'bin/bun.ts',
-  'bin/init.ts',
-  'bin/install.ts',
-];
-
-/** Dispatcher/install-check local modules; the same exact set selects index and archive members. */
-export const standaloneDiscoveryFiles = [
-  ...installerProtectedFiles,
-  'bin/vida-agent.ts',
-  'bin/cli-metadata.ts',
-  'bin/cli-command-contracts.ts',
-  'bin/run-cli-options.ts',
-  'bin/reconcile-cli-contracts.ts',
-  'bin/cli-error-properties.ts',
-  'tooling/owned-cleanup-completion.ts',
-  'bin/project-mapping-contract.ts',
-  'bunfig.toml',
-];
 
 export const commands = cliCommandSet;
 

@@ -108,6 +108,7 @@ test('runtime executable inventory excludes lock reclaim metadata while retainin
     write('tooling/build-standalone.ts', 'export {};\n');
     write('tooling/pack-sdk.ts', 'export {};\n');
     write('tooling/owned-staging.ts', 'export {};\n');
+    write('tooling/owned-cleanup-completion.ts', 'export {};\n');
     write('instructions/runtime.md', 'runtime instruction\n');
     write('templates/agent.md', 'agent template\n');
     for (const file of ['documentation/transition-proof.js', 'index.js', 'runtime.js', 'trusted-host.js'])
@@ -158,6 +159,8 @@ test('runtime executable inventory excludes lock reclaim metadata while retainin
     expect(inventory).toContain('schemas/foo.schema.json.lock.reclaim.extra/owner.json');
     for (const file of metadata) expect(inventory).not.toContain(file);
     const standaloneInputs = standaloneBuildInputInventory(root);
+    // bin/bun.ts imports this leaf directly; it must reach the native payload.
+    expect(standaloneInputs).toContain('tooling/owned-cleanup-completion.ts');
     expect(standaloneInputs).toContain('src/host.ts');
     expect(standaloneInputs).toContain('schemas/.x.schema.json');
     expect(standaloneInputs).toContain('schemas/.ordinary-hidden/kept.schema.json');

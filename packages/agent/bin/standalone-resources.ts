@@ -22,6 +22,7 @@ import {
   type OwnedDirectoryIdentity,
 } from '../tooling/owned-staging.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
+import { standaloneDiscoveryFiles } from './cli-metadata.ts';
 
 export interface ResourceIndexEntry {
   readonly path: string;
@@ -37,6 +38,14 @@ interface ResourceDirectoryEntry {
 }
 
 export const resourceDigest = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+export function discoveryResourceIdentity(index: readonly ResourceIndexEntry[]) {
+  const owned = new Set(standaloneDiscoveryFiles);
+  const selected = index
+    .filter((entry) => owned.has(entry.path) || entry.path.startsWith('instructions/'))
+    .map(({ path, bytes, sha256 }) => ({ path, bytes, sha256 }))
+    .sort((a, b) => a.path.localeCompare(b.path, 'en'));
+  return { index: selected, payloadId: resourceDigest(JSON.stringify(selected)) };
+}
 export const resourceEntryExists = (file: string) => lstatSync(file, { throwIfNoEntry: false }) !== undefined;
 const unsafeResourceComponents = Object.freeze(['', '.', '..']);
 
