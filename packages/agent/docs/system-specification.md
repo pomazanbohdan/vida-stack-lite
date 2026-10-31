@@ -1142,7 +1142,7 @@ start/completion interval and selected published commit. It accepts only a
 qualified exact HTTPS storage host redirect, with no forwarded API credential,
 and reserves transport exclusively before fetching storage bytes. Stream, digest,
 failed and partial observations retain the file; existing custody refuses another
-download. Transport ZIP is bounded to256MiB, nested TGZ to240MiB and result JSON
+download. Transport ZIP is bounded to512MiB, nested TGZ to240MiB and result JSON
 to8MiB. The observer reuses the existing fs-safe archive reader and exact Source
 lock bindings; unavailable or drifting optional jszip is a GAP, not an implicit
 installation or alternative parser. No current v1 request/result/release/Host

@@ -31,8 +31,10 @@ const hex = /^[a-f0-9]{64}$/;
 const targetPattern = /^bun-(windows|linux|darwin)-(x64|arm64)(-baseline)?$/;
 const projectIdPattern = /^[a-z0-9][a-z0-9-]{0,63}$/;
 
-export const ciTransportLimit = 256 * 1024 * 1024;
 export const ciArchiveLimit = 240 * 1024 * 1024;
+// ZIP contains archive + executable (240 MiB each), manifest + candidate
+// (8 MiB each), receipt + Windows installer (1 MiB each), plus ZIP overhead.
+export const ciTransportLimit = 512 * 1024 * 1024;
 export const minimumNativeDeliveryChecks = Object.freeze(['native-build']);
 export const nativeDeliveryChecks = Object.freeze([
   'native-build',
@@ -2121,7 +2123,7 @@ export async function readCIProducerFormationMembers(args: {
   const candidate_bytes = await read('candidate.json', 8 * 1024 * 1024);
   const archive_bytes = await read(`vida-agent-${request.version}.tgz`, ciArchiveLimit);
   const manifest_bytes = await read('manifest.json', 8 * 1024 * 1024);
-  const asset_bytes = await read(`vida-agent-${target}${target === 'bun-windows-x64' ? '.exe' : ''}`, ciTransportLimit);
+  const asset_bytes = await read(`vida-agent-${target}${target === 'bun-windows-x64' ? '.exe' : ''}`, ciArchiveLimit);
   const native_build_result_bytes = await read('native-build.result.json', 1024 * 1024);
   let selectedInstaller = installer_bytes;
   if (target === 'bun-windows-x64') {

@@ -18,6 +18,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
+import { createDeflateRaw } from 'node:zlib';
 import { afterEach, test as baseTest } from 'bun:test';
 import type JSZipConstructor from 'jszip';
 import { pinnedEnvironment, readPin } from '../bin/bun.ts';
@@ -69,6 +71,8 @@ import {
   validateCIArtifactAttempt,
   validateCIDownloadLocation,
   ciTransportLimit,
+  ciArchiveLimit,
+  readCIProducerFormationMembers,
   validateCIZIPReaderVersions,
   observeGitHubCIDelivery,
 } from '../../../tooling/agent/release-ci-evidence.ts';
@@ -83,6 +87,7 @@ import {
   nativeCIDenialDiagnostics,
   createNativeCICommandRunner,
   nativeCIUnadmittedWorkflowDenial,
+  validateCIArtifactMemberSizes,
 } from '../../../tooling/agent/native-ci-delivery.ts';
 import { cliCommandNames } from '../bin/cli-command-contracts.ts';
 import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
@@ -201,16 +206,20 @@ type ZIPPinMutation = (value: {
   fsSafe: { name: string; version: string };
   zip: { name: string; version: string };
 }) => void;
-function test(name: string, execute: () => Promise<void> | void): void {
-  return baseTest(name, async () => {
-    assert.equal(outcomeUnknown, false, 'Prior fixture outcome is UNKNOWN; no reuse');
-    activeCases++;
-    try {
-      await execute();
-    } finally {
-      activeCases--;
-    }
-  });
+function test(name: string, execute: () => Promise<void> | void, timeout?: number): void {
+  return baseTest(
+    name,
+    async () => {
+      assert.equal(outcomeUnknown, false, 'Prior fixture outcome is UNKNOWN; no reuse');
+      activeCases++;
+      try {
+        await execute();
+      } finally {
+        activeCases--;
+      }
+    },
+    timeout,
+  );
 }
 afterEach(() => {
   if (activeCases > 0) {
@@ -1196,6 +1205,90 @@ test('CI archive capability rejects installed or transitive lock drift before re
   }
 });
 
+test('CI ZIP executable member bound rejects a compressed member above the archive limit', async () => {
+  const root = path.resolve(process.env.VIDA_CI_READER_ROOT ?? path.resolve(import.meta.dir, '../../..'));
+  const archiveEntry = createRequire(path.join(root, 'packages/agent/package.json')).resolve(
+    '@openclaw/fs-safe/archive',
+  );
+  const zipRequire = createRequire(archiveEntry);
+  const JSZip = zipRequire('jszip') as typeof JSZipConstructor;
+  const crc32 = zipRequire('jszip/lib/crc32') as (data: Buffer, previous?: number) => number;
+  const value = await fixture();
+  const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' });
+  const name = 'vida-agent-bun-windows-x64.exe';
+  const size = ciArchiveLimit + 1;
+  const chunk = Buffer.alloc(1024 * 1024);
+  let crc = 0;
+  async function* payload() {
+    for (let remaining = size; remaining > 0; remaining -= chunk.length) {
+      const part = chunk.subarray(0, Math.min(remaining, chunk.length));
+      crc = crc32(part, crc);
+      yield part;
+    }
+  }
+  const compressedParts: Buffer[] = [];
+  for await (const part of Readable.from(payload()).pipe(createDeflateRaw())) {
+    const chunk: unknown = part;
+    if (!(chunk instanceof Uint8Array)) throw new Error('deflate stream emitted non-byte chunk');
+    compressedParts.push(Buffer.from(chunk));
+  }
+  const compressed = Buffer.concat(compressedParts);
+  const original = await new JSZip()
+    .file('candidate.json', '{}')
+    .file(`vida-agent-${request.version}.tgz`, 'archive')
+    .file('manifest.json', '{}')
+    .file(name, Buffer.alloc(0))
+    .generateAsync({ type: 'nodebuffer', compression: 'STORE' });
+  const nameBytes = Buffer.from(name);
+  const localName = original.indexOf(nameBytes);
+  const centralName = original.indexOf(nameBytes, localName + nameBytes.length);
+  const local = localName - 30;
+  const central = centralName - 46;
+  const end = original.length - 22;
+  assert.equal(original.readUInt32LE(local), 0x04034b50);
+  assert.equal(original.readUInt32LE(central), 0x02014b50);
+  assert.equal(original.readUInt32LE(end), 0x06054b50);
+  assert.equal(original.readUInt16LE(local + 28), 0);
+  const dataOffset = localName + nameBytes.length;
+  const bytes = Buffer.concat([original.subarray(0, dataOffset), compressed, original.subarray(dataOffset)]);
+  const shiftedCentral = central + compressed.length;
+  const shiftedEnd = end + compressed.length;
+  for (const [header, method, crcOffset, compressedOffset, sizeOffset] of [
+    [local, 8, 14, 18, 22],
+    [shiftedCentral, 10, 16, 20, 24],
+  ]) {
+    bytes.writeUInt16LE(8, header! + method!);
+    bytes.writeUInt32LE(crc >>> 0, header! + crcOffset!);
+    bytes.writeUInt32LE(compressed.length, header! + compressedOffset!);
+    bytes.writeUInt32LE(size, header! + sizeOffset!);
+  }
+  bytes.writeUInt32LE(original.readUInt32LE(end + 16) + compressed.length, shiftedEnd + 16);
+  assert.ok(bytes.length < ciTransportLimit);
+  const parent = path.join(root, '.tmp');
+  mkdirSync(parent, { recursive: true });
+  const directory = mkdtempSync(path.join(parent, 'vida-ci-member-bound-'));
+  const transport = path.join(directory, 'formation.zip');
+  const originalMode = process.env.FS_SAFE_NATIVE_MODE;
+  try {
+    writeFileSync(transport, bytes, { flag: 'wx' });
+    process.env.FS_SAFE_NATIVE_MODE = 'off';
+    await assert.rejects(
+      readCIProducerFormationMembers({
+        root,
+        request,
+        transport_path: path.relative(root, transport).split(path.sep).join('/'),
+        installer_bytes: read(root, 'packages/agent/tooling/install-windows.ps1'),
+      }),
+      /archive entry extracted size exceeds limit/,
+    );
+    assert.deepEqual(readFileSync(transport), bytes);
+  } finally {
+    if (originalMode === undefined) delete process.env.FS_SAFE_NATIVE_MODE;
+    else process.env.FS_SAFE_NATIVE_MODE = originalMode;
+    if (!outcomeUnknown) rmSync(directory, { recursive: true, force: true });
+  }
+}, 30000);
+
 test('CI public observer rejects duplicate physical ZIP names before accepting result bytes', async () => {
   const repositoryRoot = path.resolve(import.meta.dir, '../../..');
   const readerRoot = path.resolve(process.env.VIDA_CI_READER_ROOT ?? repositoryRoot);
@@ -1397,7 +1490,31 @@ test('provider-bound formation ZIP returns candidate only after the actual run a
   }
 });
 
-for (const kind of ['complete', 'unrelated-malformed', 'partial', 'oversized', 'wrong-digest', 'wrong-commit'])
+test('CI build member sizes admit combined large artifacts and enforce each member bound', () => {
+  const mib = 1024 * 1024;
+  const members = [
+    { name: 'package.tgz', size: 200 * mib, limit: 240 * mib },
+    { name: 'executable', size: 200 * mib, limit: 240 * mib },
+    { name: 'manifest', size: 8 * mib, limit: 8 * mib },
+    { name: 'candidate', size: 8 * mib, limit: 8 * mib },
+    { name: 'receipt', size: mib, limit: mib },
+  ];
+  assert.doesNotThrow(() => validateCIArtifactMemberSizes(members));
+  assert.throws(() => validateCIArtifactMemberSizes([members[0]!, members[1]!, members[0]!]));
+  assert.throws(() => validateCIArtifactMemberSizes([{ ...members[0]!, size: 240 * mib + 1 }]));
+  assert.throws(() => validateCIArtifactMemberSizes([{ ...members[0]!, size: NaN }]));
+});
+
+for (const kind of [
+  'complete',
+  'large-declared',
+  'unrelated-malformed',
+  'partial',
+  'oversized',
+  'malformed-length',
+  'wrong-digest',
+  'wrong-commit',
+])
   test('CI explicit mocked transport ' + kind + ' keeps bounded custody and never forwards credentials', async () => {
     const value = await fixture(),
       request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' }),
@@ -1435,7 +1552,14 @@ for (const kind of ['complete', 'unrelated-malformed', 'partial', 'oversized', '
           }),
         );
       return new Response(bytes, {
-        headers: kind === 'oversized' ? { 'content-length': String(ciTransportLimit + 1) } : {},
+        headers:
+          kind === 'oversized'
+            ? { 'content-length': String(ciTransportLimit + 1) }
+            : kind === 'malformed-length'
+              ? { 'content-length': 'invalid' }
+              : kind === 'large-declared'
+                ? { 'content-length': String(257 * 1024 * 1024) }
+                : {},
       });
     });
     const options = {
@@ -1449,7 +1573,7 @@ for (const kind of ['complete', 'unrelated-malformed', 'partial', 'oversized', '
     };
     const relative = '.tmp/ci-delivery/' + request.request_id + '/17-2-19.zip';
     try {
-      if (kind === 'complete' || kind === 'unrelated-malformed') {
+      if (kind === 'complete' || kind === 'large-declared' || kind === 'unrelated-malformed') {
         assert.equal((await downloadGitHubCIDelivery(options)).transport_path, relative);
         assert.deepEqual(read(value.root, relative), bytes);
         const count = calls.length;

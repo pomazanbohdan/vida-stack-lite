@@ -845,6 +845,17 @@ async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner):
   });
 }
 
+export function validateCIArtifactMemberSizes(files: Array<{ name: string; size: number; limit: number }>): void {
+  const total = files.reduce((sum, { size, limit }) => {
+    requireCI(Number.isSafeInteger(size) && size > 0 && size <= limit, 'CI build artifact member exceeds its bound');
+    return sum + size;
+  }, 0);
+  requireCI(
+    total <= ciTransportLimit,
+    `CI build artifact exceeds transport bound: ${JSON.stringify(files)}, total=${total}`,
+  );
+}
+
 async function emitBuild(ctx: NativeCIContext): Promise<void> {
   const phaseName = 'emit-build';
   const intent = 'phases/' + phaseName + '.intent.json';
@@ -938,11 +949,7 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
       names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)),
     'CI build artifact inventory differs',
   );
-  const totalBytes = files.reduce((total, [, bytes, limit]) => {
-    requireCI(bytes.length > 0 && bytes.length <= limit, 'CI build artifact member exceeds its bound');
-    return total + bytes.length;
-  }, 0);
-  requireCI(totalBytes <= ciTransportLimit, 'CI build artifact exceeds transport bound');
+  validateCIArtifactMemberSizes(files.map(([name, bytes, limit]) => ({ name, size: bytes.length, limit })));
   exclusive(ctx.root, intent, {
     request_id: ctx.request.request_id,
     run_id: ctx.run_id,
@@ -957,6 +964,8 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
       request_id: ctx.request.request_id,
       run_id: ctx.run_id,
       run_attempt: ctx.run_attempt,
+      members: files.map(([name, bytes]) => ({ name, bytes: bytes.length })),
+      total_bytes: files.reduce((total, [, bytes]) => total + bytes.length, 0),
     }).trim(),
   );
   releaseDirectory(ctx.root, 'publication');
