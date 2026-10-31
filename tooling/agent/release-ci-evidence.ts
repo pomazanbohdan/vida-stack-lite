@@ -1642,12 +1642,14 @@ export function validateCIZIPReaderVersions(args: {
 interface QualifiedZipReader {
   readArchiveEntry: AgentReadArchiveEntry;
   loadZipArchiveWithPreflight: AgentLoadZipArchiveWithPreflight;
+  extractArchive: AgentFsSafeArchiveModule['extractArchive'];
 }
 function isQualifiedArchiveModule(value: unknown): value is AgentFsSafeArchiveModule {
   return (
     isRecord(value) &&
     typeof value.readArchiveEntry === 'function' &&
-    typeof value.loadZipArchiveWithPreflight === 'function'
+    typeof value.loadZipArchiveWithPreflight === 'function' &&
+    typeof value.extractArchive === 'function'
   );
 }
 async function qualifiedZIPReader(root: string): Promise<QualifiedZipReader> {
@@ -1661,8 +1663,8 @@ async function qualifiedZIPReader(root: string): Promise<QualifiedZipReader> {
     validateCIZIPReaderVersions({ declared, lock, fsSafe, zip });
     const loaded: unknown = await import(pathToFileURL(archiveEntry).href);
     check(isQualifiedArchiveModule(loaded), 'qualified archive entry or preflight capability unavailable');
-    const { readArchiveEntry, loadZipArchiveWithPreflight } = loaded;
-    return { readArchiveEntry, loadZipArchiveWithPreflight };
+    const { readArchiveEntry, loadZipArchiveWithPreflight, extractArchive } = loaded;
+    return { readArchiveEntry, loadZipArchiveWithPreflight, extractArchive };
   } catch {
     throw new Error('GAP-VIDA-CI-DELIVERY-001: qualified ZIP reader unavailable or dependency drift; no installation');
   }
@@ -2151,36 +2153,126 @@ export async function readCIProducerFormationMembers(args: {
     1024 * 1024,
   );
   check(currentInstaller.equals(installer_bytes), 'supplied installer differs from current Source');
-  const transport = regularBytes(root, transport_path, ciTransportLimit);
-  const { readArchiveEntry, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root);
-  const zip = releasePath(root, transport_path);
-  await loadZipArchiveWithPreflight(transport, {
-    maxArchiveBytes: ciTransportLimit,
-  });
-  const read = (name: string, maxBytes: number): Promise<Buffer> =>
-    readArchiveEntry(zip, name, { kind: 'zip', maxBytes });
-  const candidate_bytes = await read('candidate.json', 8 * 1024 * 1024);
-  const archive_bytes = await read(`vida-agent-${request.version}.tgz`, ciArchiveLimit);
-  const manifest_bytes = await read('manifest.json', 8 * 1024 * 1024);
-  const asset_bytes = await read(`vida-agent-${target}${target === 'bun-windows-x64' ? '.exe' : ''}`, ciArchiveLimit);
-  const native_build_result_bytes = await read('native-build.result.json', 1024 * 1024);
-  let selectedInstaller = installer_bytes;
-  if (target === 'bun-windows-x64') {
-    selectedInstaller = await read('install-windows.ps1', 1024 * 1024);
-    check(selectedInstaller.equals(installer_bytes), 'formation Windows installer differs from current Source');
-  }
+  const transportInfo = lstatSync(releasePath(root, transport_path));
   check(
-    regularBytes(root, transport_path, ciTransportLimit).equals(transport),
-    'producer transport changed during reads',
+    transportInfo.isFile() && !transportInfo.isSymbolicLink() && transportInfo.nlink === 1,
+    'producer transport identity invalid',
   );
-  return {
-    candidate_bytes,
-    archive_bytes,
-    manifest_bytes,
-    asset_bytes,
-    native_build_result_bytes,
-    installer_bytes: selectedInstaller,
+  const transportIdentity = JSON.stringify([
+    transportInfo.dev,
+    transportInfo.ino,
+    transportInfo.size,
+    transportInfo.mtimeMs,
+    transportInfo.ctimeMs,
+  ]);
+  const transport = regularBytes(root, transport_path, ciTransportLimit);
+  const { extractArchive, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root);
+  const archiveName = `vida-agent-${request.version}.tgz`;
+  const assetName = `vida-agent-${target}${target === 'bun-windows-x64' ? '.exe' : ''}`;
+  const names = ['candidate.json', archiveName, 'manifest.json', assetName, 'native-build.result.json'];
+  if (target === 'bun-windows-x64') names.push('install-windows.ps1');
+  const allowed = new Set(names);
+  const limits = {
+    maxArchiveBytes: ciTransportLimit,
+    maxEntries: names.length,
+    maxEntryBytes: ciArchiveLimit,
+    maxExtractedBytes: 2 * ciArchiveLimit + 18 * 1024 * 1024,
   };
+  const inventory = await loadZipArchiveWithPreflight(transport, limits);
+  check(equal(Object.keys(inventory.files).sort(), [...names].sort()), 'producer ZIP member set differs');
+  const snapshot = ownedTempWorkspace('vida-ci-producer-');
+  let result: FormationMembers | undefined;
+  let failure: unknown;
+  let cleanupFailure: Error | undefined;
+  try {
+    const workspaceInfo = lstatSync(snapshot.dir, { bigint: true });
+    check(
+      workspaceInfo.isDirectory() &&
+        !workspaceInfo.isSymbolicLink() &&
+        snapshot.exactIdentity !== undefined &&
+        workspaceInfo.dev === snapshot.exactIdentity.dev &&
+        workspaceInfo.ino === snapshot.exactIdentity.ino,
+      'producer workspace identity invalid',
+    );
+    snapshot.store.write('formation.zip', transport, { maxBytes: ciTransportLimit });
+    const zip = snapshot.path('formation.zip');
+    const info = lstatSync(zip);
+    check(info.isFile() && !info.isSymbolicLink() && info.nlink === 1, 'producer snapshot identity invalid');
+    const identity = JSON.stringify([info.dev, info.ino, info.size, info.mtimeMs, info.ctimeMs]);
+    check(snapshot.read('formation.zip').equals(transport), 'producer snapshot differs');
+    const directory = snapshot.dir;
+    await extractArchive({
+      archivePath: zip,
+      destDir: directory,
+      kind: 'zip',
+      timeoutMs: 0,
+      limits,
+      entryFilter: (entry) =>
+        entry.kind === 'file' &&
+        allowed.has(entry.path) &&
+        entry.size <=
+          (entry.path === archiveName || entry.path === assetName
+            ? ciArchiveLimit
+            : entry.path === 'candidate.json' || entry.path === 'manifest.json'
+              ? 8 * 1024 * 1024
+              : 1024 * 1024)
+          ? 'extract'
+          : 'skip',
+      onFiltered: 'reject-archive',
+    });
+    const after = lstatSync(zip);
+    const workspaceAfter = lstatSync(snapshot.dir, { bigint: true });
+    check(
+      workspaceAfter.isDirectory() &&
+        !workspaceAfter.isSymbolicLink() &&
+        snapshot.exactIdentity !== undefined &&
+        workspaceAfter.dev === snapshot.exactIdentity.dev &&
+        workspaceAfter.ino === snapshot.exactIdentity.ino &&
+        after.isFile() &&
+        !after.isSymbolicLink() &&
+        after.nlink === 1 &&
+        JSON.stringify([after.dev, after.ino, after.size, after.mtimeMs, after.ctimeMs]) === identity &&
+        snapshot.read('formation.zip').equals(transport),
+      'producer snapshot changed',
+    );
+    const selectedInstaller =
+      target === 'bun-windows-x64' ? regularBytes(directory, 'install-windows.ps1', 1024 * 1024) : installer_bytes;
+    check(selectedInstaller.equals(installer_bytes), 'formation Windows installer differs from current Source');
+    result = {
+      candidate_bytes: regularBytes(directory, 'candidate.json'),
+      archive_bytes: regularBytes(directory, archiveName, ciArchiveLimit),
+      manifest_bytes: regularBytes(directory, 'manifest.json'),
+      asset_bytes: regularBytes(directory, assetName, ciArchiveLimit),
+      native_build_result_bytes: regularBytes(directory, 'native-build.result.json', 1024 * 1024),
+      installer_bytes: selectedInstaller,
+    };
+    const transportAfter = lstatSync(releasePath(root, transport_path));
+    check(
+      transportAfter.isFile() &&
+        !transportAfter.isSymbolicLink() &&
+        transportAfter.nlink === 1 &&
+        JSON.stringify([
+          transportAfter.dev,
+          transportAfter.ino,
+          transportAfter.size,
+          transportAfter.mtimeMs,
+          transportAfter.ctimeMs,
+        ]) === transportIdentity &&
+        regularBytes(root, transport_path, ciTransportLimit).equals(transport),
+      'producer transport changed during reads',
+    );
+  } catch (error) {
+    failure = error;
+  } finally {
+    if (cleanupOwnedWorkspace(snapshot) !== 'removed')
+      cleanupFailure = Error('GAP-VIDA-CI-DELIVERY-001: producer snapshot cleanup incomplete');
+  }
+  if (failure && cleanupFailure)
+    throw new AggregateError([failure, cleanupFailure], 'Producer read and cleanup failed');
+  if (failure) throw failure;
+  if (cleanupFailure) throw cleanupFailure;
+  check(result !== undefined, 'producer members missing');
+  return result;
 }
 async function observeGitHubCIDeliveryInternal(
   options: ObserveGitHubFormationOptions & { candidate?: CIDeliveryCandidate },

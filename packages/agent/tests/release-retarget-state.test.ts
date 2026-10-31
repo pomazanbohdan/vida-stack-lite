@@ -1205,6 +1205,61 @@ test('CI archive capability rejects installed or transitive lock drift before re
   }
 });
 
+test('CI producer ZIP extracts only the exact bounded member set', async () => {
+  const root = path.resolve(process.env.VIDA_CI_READER_ROOT ?? path.resolve(import.meta.dir, '../../..'));
+  const archiveEntry = createRequire(path.join(root, 'packages/agent/package.json')).resolve(
+    '@openclaw/fs-safe/archive',
+  );
+  const JSZip = createRequire(archiveEntry)('jszip') as typeof JSZipConstructor;
+  const value = await fixture();
+  const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' });
+  const installer = read(root, 'packages/agent/tooling/install-windows.ps1');
+  const files: Record<string, Buffer> = {
+    'candidate.json': Buffer.from('{}'),
+    [`vida-agent-${request.version}.tgz`]: Buffer.from('archive'),
+    'manifest.json': Buffer.from('{}'),
+    'vida-agent-bun-windows-x64.exe': Buffer.from('executable'),
+    'native-build.result.json': Buffer.from('{}'),
+    'install-windows.ps1': installer,
+  };
+  const parent = path.join(root, '.tmp');
+  mkdirSync(parent, { recursive: true });
+  const directory = mkdtempSync(path.join(parent, 'vida-ci-producer-members-'));
+  try {
+    for (const variant of ['valid', 'missing', 'extra', 'oversized', 'candidate', 'manifest', 'installer'] as const) {
+      const members = { ...files };
+      if (variant === 'missing') delete members['manifest.json'];
+      if (variant === 'extra') members['unexpected'] = Buffer.from('extra');
+      if (variant === 'oversized') members['native-build.result.json'] = Buffer.alloc(1024 * 1024 + 1);
+      if (variant === 'candidate') members['candidate.json'] = Buffer.alloc(8 * 1024 * 1024 + 1);
+      if (variant === 'manifest') members['manifest.json'] = Buffer.alloc(8 * 1024 * 1024 + 1);
+      if (variant === 'installer') members['install-windows.ps1'] = Buffer.alloc(1024 * 1024 + 1);
+      const zip = new JSZip();
+      for (const [name, bytes] of Object.entries(members)) zip.file(name, bytes);
+      const bytes = await zip.generateAsync({ type: 'nodebuffer' });
+      const transport = path.join(directory, `${variant}.zip`);
+      writeFileSync(transport, bytes, { flag: 'wx' });
+      const readMembers = () =>
+        readCIProducerFormationMembers({
+          root,
+          request,
+          transport_path: path.relative(root, transport).split(path.sep).join('/'),
+          installer_bytes: installer,
+        });
+      if (variant === 'valid') {
+        const result = await readMembers();
+        assert.deepEqual(result.asset_bytes, files['vida-agent-bun-windows-x64.exe']);
+        assert.deepEqual(result.installer_bytes, installer);
+      } else if (variant !== 'missing' && variant !== 'extra')
+        await assert.rejects(readMembers(), /archive entry rejected by filter/);
+      else await assert.rejects(readMembers());
+      assert.deepEqual(readFileSync(transport), bytes);
+    }
+  } finally {
+    if (!outcomeUnknown) rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 test('CI ZIP executable member bound rejects a compressed member above the archive limit', async () => {
   const root = path.resolve(process.env.VIDA_CI_READER_ROOT ?? path.resolve(import.meta.dir, '../../..'));
   const archiveEntry = createRequire(path.join(root, 'packages/agent/package.json')).resolve(
@@ -1237,19 +1292,31 @@ test('CI ZIP executable member bound rejects a compressed member above the archi
     .file('candidate.json', '{}')
     .file(`vida-agent-${request.version}.tgz`, 'archive')
     .file('manifest.json', '{}')
+    .file('native-build.result.json', '{}')
+    .file('install-windows.ps1', read(root, 'packages/agent/tooling/install-windows.ps1'))
     .file(name, Buffer.alloc(0))
     .generateAsync({ type: 'nodebuffer', compression: 'STORE' });
   const nameBytes = Buffer.from(name);
-  const localName = original.indexOf(nameBytes);
-  const centralName = original.indexOf(nameBytes, localName + nameBytes.length);
-  const local = localName - 30;
+  const centralName = original.lastIndexOf(nameBytes);
   const central = centralName - 46;
   const end = original.length - 22;
-  assert.equal(original.readUInt32LE(local), 0x04034b50);
-  assert.equal(original.readUInt32LE(central), 0x02014b50);
   assert.equal(original.readUInt32LE(end), 0x06054b50);
+  assert.ok(central >= original.readUInt32LE(end + 16));
+  assert.equal(original.readUInt32LE(central), 0x02014b50);
+  assert.equal(original.readUInt16LE(central + 28), nameBytes.length);
+  assert.equal(
+    centralName + nameBytes.length + original.readUInt16LE(central + 30) + original.readUInt16LE(central + 32),
+    end,
+  );
+  assert.deepEqual(original.subarray(centralName, centralName + nameBytes.length), nameBytes);
+  const local = original.readUInt32LE(central + 42);
+  assert.equal(original.readUInt32LE(local), 0x04034b50);
+  assert.equal(original.readUInt16LE(local + 26), nameBytes.length);
   assert.equal(original.readUInt16LE(local + 28), 0);
+  const localName = local + 30;
+  assert.deepEqual(original.subarray(localName, localName + nameBytes.length), nameBytes);
   const dataOffset = localName + nameBytes.length;
+  assert.equal(dataOffset, original.readUInt32LE(end + 16));
   const bytes = Buffer.concat([original.subarray(0, dataOffset), compressed, original.subarray(dataOffset)]);
   const shiftedCentral = central + compressed.length;
   const shiftedEnd = end + compressed.length;
@@ -1279,7 +1346,11 @@ test('CI ZIP executable member bound rejects a compressed member above the archi
         transport_path: path.relative(root, transport).split(path.sep).join('/'),
         installer_bytes: read(root, 'packages/agent/tooling/install-windows.ps1'),
       }),
-      /archive entry extracted size exceeds limit/,
+      {
+        name: 'ArchiveSecurityError',
+        code: 'entry-filtered',
+        message: 'archive entry rejected by filter: vida-agent-bun-windows-x64.exe',
+      },
     );
     assert.deepEqual(readFileSync(transport), bytes);
   } finally {
