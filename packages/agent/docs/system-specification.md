@@ -78,6 +78,28 @@ rendering. Default rendering and explicitly selected copied bundles retain their
 existing routes. These package observations do not establish executable artifact
 identity; delivery evidence supplies that separate binding.
 
+Windows clean-plan capture observes the current custom integration outputs,
+opaque work history and explicitly declared project moves without creating a
+gate, journal, destination or consumer output. It binds the physical root and
+executing package, inventories complete directory membership and current file
+identities, sizes and fresh hashes, then rechecks those observations before
+returning a frozen candidate. Ordinary Unicode names, internal spaces and nested
+history names remain payload; Win32 path aliases and unsupported leaf names are
+rejected. The legacy project relocation grammar remains unchanged.
+The aggregate entry and byte allowances apply across all selected roots. Each
+tree receives only the remaining allowance and retains that allowance during
+recapture. Entry exhaustion prevents another file observation. A positive byte
+remainder may require observing one bounded file before rejecting its size;
+rejected observations are not added to the inventory.
+Read-only metadata may reuse the already-qualified live Windows native binding,
+with current configuration, module-cache, getter, binding and method checks before
+use and after asynchronous hashing. File content is read afresh. Ordinary
+custody and mutation APIs retain full package-tree attestation. File identity
+alone does not prove single-link custody; the complete file observation rejects
+hardlinks. These best-effort observations are not an atomic snapshot, quiescence
+proof, apply authorization or Runtime acceptance. The future effect owner must
+rebind the candidate to actual project configuration and exclusive admission.
+
 Local execution assumes a trusted orchestrating session and its observed
 built-in tool results. Before authoring `LocalSourceWriteAuthorization/v1`,
 the controller establishes actual user authorization from the current

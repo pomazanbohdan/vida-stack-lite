@@ -2941,6 +2941,18 @@ Use deterministic seeds. Record platform skips as GAPs. A descriptor simulation 
 
 ## Process, timeout and fixture safety
 
+Run `tests/windows-readonly-metadata.test.ts` in a fresh serial Bun process. Its
+scoped filesystem fault injection verifies qualified read-only metadata and
+full-attestation mutation routes separately. The controls retain their ordinary
+5s case deadlines, restore fault state and preserve fixtures for the parent
+process's terminal observation. `tests/consumer-clean-inventory.test.ts` and
+`tests/consumer-clean-planning.test.ts` exercise the Windows candidate inventory,
+opaque history names, global allowances, collision refusal and unchanged consumer
+outputs. Independent limit cases use separate fixtures; dependent calls within a
+scenario keep one deadline. Their non-Windows skips do not qualify that target.
+These Source checks do not establish a connected clean-init effect, installed
+executable, real-repository archive or Runtime acceptance.
+
 Before profiling native tests, qualify the exact command on a private two-case
 fixture. Require the intended case filter, no package-script dispatch and a
 nonempty profile artifact. Global profiler flags before `test` can select the

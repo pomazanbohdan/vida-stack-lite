@@ -65,6 +65,22 @@ function validRoot(value: string): boolean {
   );
 }
 
+// Clean inventory accepts opaque names while excluding Win32 path aliases.
+function validCleanLeaf(name: string): boolean {
+  for (let index = 0; index < name.length; index++) {
+    const code = name.charCodeAt(index);
+    if (code < 32 || code === 127) return false;
+  }
+  return (
+    name.length > 0 &&
+    name !== '.' &&
+    name !== '..' &&
+    !/[\\/<>:"|?*]/.test(name) &&
+    !/[. ]$/.test(name) &&
+    !/^(?:con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(name)
+  );
+}
+
 function overlaps(left: string, right: string): boolean {
   const a = left.toLowerCase();
   const b = right.toLowerCase();
@@ -149,6 +165,75 @@ export interface ConsumerProjectMoveInventory {
 }
 
 type FrozenMove = NonNullable<ConsumerConfigurationOperation['relocation']>['inventory'][number];
+
+function inventoryDevice(identity: string): string {
+  const value = JSON.parse(identity) as { dev?: string; ino?: string; birthtime_ns?: string };
+  if (
+    !value.dev ||
+    value.dev === '0' ||
+    !value.ino ||
+    value.ino === '0' ||
+    !value.birthtime_ns ||
+    value.birthtime_ns === '0'
+  )
+    throw new Error('Native relocation identity is unavailable');
+  return value.dev;
+}
+
+type InventoryAccess = ReturnType<typeof requireSafeRepositoryAccess>;
+function* inventoryTree(
+  access: InventoryAccess,
+  sourceRoot: string,
+  expectedDevice: string,
+  directories: InventoryDirectory[],
+  cleanLimits?: Readonly<{ maxEntries: number; maxBytes: number }>,
+): Generator<string> {
+  const view = repositoryReadOnlyObservation(access);
+  let fileCount = 0;
+  function* walk(directory: string): Generator<string> {
+    if (directories.length + fileCount >= (cleanLimits?.maxEntries ?? 10000))
+      throw new Error('Relocation inventory exceeds entry limit');
+    const identity = access.directoryIdentity(directory, 'relocation directory');
+    if (inventoryDevice(identity) !== expectedDevice) throw new Error('Cross-volume relocation is unsupported');
+    const entries = [...view.listFiles(directory, 'relocation directory')].sort();
+    if (new Set(entries.map((entry) => entry.toLowerCase())).size !== entries.length)
+      throw new Error('Relocation entries collide on Windows');
+    directories.push({ path: directory, identity, entries });
+    for (const name of entries) {
+      if (cleanLimits ? !validCleanLeaf(name) : !validRoot(name) || name.includes('/'))
+        throw new Error('Relocation entry name is unsupported');
+      const source = `${directory}/${name}`;
+      let isDirectory = false;
+      try {
+        access.directoryIdentity(source, 'relocation directory');
+        isDirectory = true;
+      } catch {
+        /* verified file observation follows */
+      }
+      if (isDirectory) yield* walk(source);
+      else {
+        if (cleanLimits && directories.length + fileCount >= cleanLimits.maxEntries)
+          throw new Error('Relocation inventory exceeds entry limit');
+        if (cleanLimits) fileCount++;
+        yield source;
+        if (!cleanLimits) fileCount++;
+      }
+    }
+  }
+  yield* walk(sourceRoot);
+}
+
+function assertInventoryDirectories(access: InventoryAccess, directories: readonly InventoryDirectory[]): void {
+  const view = repositoryReadOnlyObservation(access);
+  for (const directory of directories) {
+    if (
+      access.directoryIdentity(directory.path, 'relocation directory') !== directory.identity ||
+      JSON.stringify([...view.listFiles(directory.path, 'relocation directory')].sort()) !==
+        JSON.stringify(directory.entries)
+    )
+      throw new Error('Relocation directory changed during inventory');
+  }
+}
 
 /** Reconstruct the original inventory only from the positively observed original objects. */
 export function observeFrozenProjectMove(root: string, frozen: FrozenMove): ConsumerProjectMoveInventory {
@@ -243,19 +328,7 @@ export function captureConsumerProjectMoveInventory(
   if (!identify || !capture) throw new Error('Verified relocation observation is unavailable');
   const destinationIdentity = access.directoryIdentity(move.newRoot, 'relocation destination');
   const rootIdentity = access.directoryIdentity('.', 'repository root');
-  const device = (identity: string): string => {
-    const value = JSON.parse(identity) as { dev?: string; ino?: string; birthtime_ns?: string };
-    if (
-      !value.dev ||
-      value.dev === '0' ||
-      !value.ino ||
-      value.ino === '0' ||
-      !value.birthtime_ns ||
-      value.birthtime_ns === '0'
-    )
-      throw new Error('Native relocation identity is unavailable');
-    return value.dev;
-  };
+  const device = inventoryDevice;
   const expectedDevice = device(destinationIdentity);
   if (
     device(access.directoryIdentity(move.oldRoot, 'relocation source')) !== expectedDevice ||
@@ -267,54 +340,24 @@ export function captureConsumerProjectMoveInventory(
   const directories: InventoryDirectory[] = [];
   const files: InventoryFile[] = [];
   let total = 0;
-  const walk = (directory: string): void => {
-    if (directories.length + files.length >= 10000) throw new Error('Relocation inventory exceeds entry limit');
-    const identity = access.directoryIdentity(directory, 'relocation directory');
-    if (device(identity) !== expectedDevice) throw new Error('Cross-volume relocation is unsupported');
-    const entries = [...view.listFiles(directory, 'relocation directory')].sort();
-    if (new Set(entries.map((entry) => entry.toLowerCase())).size !== entries.length)
-      throw new Error('Relocation entries collide on Windows');
-    directories.push({ path: directory, identity, entries });
-    for (const name of entries) {
-      if (!validRoot(name) || name.includes('/')) throw new Error('Relocation entry name is unsupported');
-      const source = `${directory}/${name}`;
-      let isDirectory = false;
-      try {
-        access.directoryIdentity(source, 'relocation directory');
-        isDirectory = true;
-      } catch {
-        /* checked as a file below */
-      }
-      if (isDirectory) {
-        walk(source);
-        continue;
-      }
-      const identityBefore = identify(source, 'relocation file');
-      if (device(identityBefore) !== expectedDevice) throw new Error('Cross-volume relocation is unsupported');
-      const bytes = capture(source, 'relocation file');
-      const identityAfter = identify(source, 'relocation file');
-      if (identityBefore !== identityAfter) throw new Error('Relocation file identity changed');
-      total += bytes.length;
-      if (total > 32 * 1024 * 1024 || directories.length + files.length >= 10000)
-        throw new Error('Relocation inventory exceeds limit');
-      files.push({
-        source,
-        destination: move.newRoot + source.slice(move.oldRoot.length),
-        identity: identityBefore,
-        sha256: createHash('sha256').update(bytes).digest('hex'),
-        bytes,
-      });
-    }
-  };
-  walk(move.oldRoot);
-  for (const directory of directories) {
-    if (
-      access.directoryIdentity(directory.path, 'relocation directory') !== directory.identity ||
-      JSON.stringify([...view.listFiles(directory.path, 'relocation directory')].sort()) !==
-        JSON.stringify(directory.entries)
-    )
-      throw new Error('Relocation directory changed during inventory');
+  for (const source of inventoryTree(access, move.oldRoot, expectedDevice, directories)) {
+    const identityBefore = identify(source, 'relocation file');
+    if (device(identityBefore) !== expectedDevice) throw new Error('Cross-volume relocation is unsupported');
+    const bytes = capture(source, 'relocation file');
+    const identityAfter = identify(source, 'relocation file');
+    if (identityBefore !== identityAfter) throw new Error('Relocation file identity changed');
+    total += bytes.length;
+    if (total > 32 * 1024 * 1024 || directories.length + files.length >= 10000)
+      throw new Error('Relocation inventory exceeds limit');
+    files.push({
+      source,
+      destination: move.newRoot + source.slice(move.oldRoot.length),
+      identity: identityBefore,
+      sha256: createHash('sha256').update(bytes).digest('hex'),
+      bytes,
+    });
   }
+  assertInventoryDirectories(access, directories);
   for (const file of files) {
     if (
       identify(file.source, 'relocation file') !== file.identity ||
@@ -329,4 +372,79 @@ export function captureConsumerProjectMoveInventory(
   )
     throw new Error('Relocation destination changed during inventory');
   return { move, rootIdentity, destinationIdentity, directories, files };
+}
+
+/** Best-effort observations, not an atomic snapshot or destination qualification. */
+export async function captureCleanSourceDirectoryInventory(
+  root: string,
+  sourceRoot: string,
+  limits: Readonly<{ maxEntries: number; maxBytes: number }> = { maxEntries: 10000, maxBytes: 512 * 1024 * 1024 },
+) {
+  limits = Object.freeze({ maxEntries: limits?.maxEntries, maxBytes: limits?.maxBytes });
+  if (
+    !limits ||
+    !Number.isInteger(limits.maxEntries) ||
+    limits.maxEntries < 0 ||
+    limits.maxEntries > 10000 ||
+    !Number.isInteger(limits.maxBytes) ||
+    limits.maxBytes < 0 ||
+    limits.maxBytes > 512 * 1024 * 1024
+  )
+    throw new Error('Invalid clean inventory limits');
+  const access = requireSafeRepositoryAccess(root);
+  const view = repositoryReadOnlyObservation(access);
+  const identify = view.observeFileIdentity;
+  const observe = view.observeLargeFile;
+  if (access.provider !== 'fs-safe-windows' || !identify || !observe)
+    throw new Error('Windows verified large-file observation is unavailable');
+  const rootIdentity = access.directoryIdentity('.', 'repository root');
+  const sourceIdentity = access.directoryIdentity(sourceRoot, 'relocation source');
+  const expectedDevice = inventoryDevice(rootIdentity);
+  if (inventoryDevice(sourceIdentity) !== expectedDevice) throw new Error('Cross-volume relocation is unsupported');
+  const directories: InventoryDirectory[] = [];
+  const files: { source: string; identity: string; size: number; sha256: string }[] = [];
+  let totalBytes = 0;
+  for (const source of inventoryTree(access, sourceRoot, expectedDevice, directories, limits)) {
+    // Size is unavailable before observation: one leaf may exceed a positive remainder.
+    if (totalBytes >= limits.maxBytes) throw new Error('Relocation inventory exceeds limit');
+    const identity = identify(source, 'relocation file');
+    if (inventoryDevice(identity) !== expectedDevice) throw new Error('Cross-volume relocation is unsupported');
+    const observed = await observe(source, 'relocation file');
+    if (observed.identity !== identity || identify(source, 'relocation file') !== identity)
+      throw new Error('Relocation file identity changed');
+    totalBytes += observed.size;
+    if (observed.size > 64 * 1024 * 1024 || totalBytes > limits.maxBytes)
+      throw new Error('Relocation inventory exceeds limit');
+    files.push({ source, identity, size: observed.size, sha256: observed.sha256 });
+  }
+  assertInventoryDirectories(access, directories);
+  for (const file of files) {
+    if (identify(file.source, 'relocation file') !== file.identity)
+      throw new Error('Relocation file changed during inventory');
+    const observed = await observe(file.source, 'relocation file');
+    if (
+      observed.identity !== file.identity ||
+      observed.size !== file.size ||
+      observed.sha256 !== file.sha256 ||
+      identify(file.source, 'relocation file') !== file.identity
+    )
+      throw new Error('Relocation file changed during inventory');
+  }
+  // Fresh directory checks follow all asynchronous hashes; they do not make the observations atomic.
+  assertInventoryDirectories(access, directories);
+  if (
+    access.directoryIdentity('.', 'repository root') !== rootIdentity ||
+    access.directoryIdentity(sourceRoot, 'relocation source') !== sourceIdentity
+  )
+    throw new Error('Relocation source changed during inventory');
+  return Object.freeze({
+    rootIdentity,
+    sourceIdentity,
+    directories: Object.freeze(
+      directories.map((dir) => Object.freeze({ ...dir, entries: Object.freeze([...dir.entries]) })),
+    ),
+    files: Object.freeze(files.map((file) => Object.freeze({ ...file }))),
+    totalBytes,
+    entryCount: directories.length + files.length,
+  });
 }

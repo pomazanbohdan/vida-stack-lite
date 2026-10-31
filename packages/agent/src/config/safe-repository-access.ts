@@ -492,6 +492,9 @@ export interface SafeRepositoryAccess {
   readonly readStableBytes?: (target: string, label: string) => Buffer | null;
   /** Windows best-effort, single-file observation; fixed 64 MiB maximum. */
   readonly observeLargeFile?: (target: string, label: string) => Promise<LargeFileObservation>;
+  /** Qualified no-write metadata observations for the read-only view. */
+  readonly observeReadOnlyLargeFile?: (target: string, label: string) => Promise<LargeFileObservation>;
+  readonly observeReadOnlyFileIdentity?: (target: string, label: string) => string;
   /** Windows no-replace custody; caller owns recovery from UNKNOWN. */
   readonly moveLargeFileNoReplace?: (
     source: string,
@@ -539,6 +542,8 @@ export interface SafeRepositoryAccess {
 /** Read-only repository view. It cannot create or modify repository state. */
 export interface SafeRepositoryObservation {
   readonly repository_root: string;
+  readonly observeLargeFile?: (target: string, label: string) => Promise<LargeFileObservation>;
+  readonly observeFileIdentity?: (target: string, label: string) => string;
   readonly fileExists: (target: string, label: string) => boolean;
   readonly listFiles: (target: string, label: string) => readonly string[];
   readonly readText: (target: string, label: string) => string;
@@ -555,6 +560,8 @@ export function repositoryReadOnlyObservation(access: SafeRepositoryAccess): Saf
   const readBytes = (target: string, label: string) => verifiedCapture(target, label);
   return Object.freeze({
     repository_root: access.repository_root,
+    ...(access.observeReadOnlyLargeFile ? { observeLargeFile: access.observeReadOnlyLargeFile } : {}),
+    ...(access.observeReadOnlyFileIdentity ? { observeFileIdentity: access.observeReadOnlyFileIdentity } : {}),
     fileExists: observeFileExists,
     listFiles: observeListFiles,
     readBytes,
@@ -2494,6 +2501,14 @@ function windowsLargeProvider(label: string): WindowsNativeBinding {
   return binding;
 }
 
+function windowsReadOnlyMetadataProvider(label: string): WindowsNativeBinding {
+  assertFsSafeNativeCreateEnabled(label);
+  const binding = liveQualifiedWindowsBinding();
+  if (!binding || binding !== windowsNativeBinding)
+    fail(label + ' requires the live qualified Windows native provider');
+  return binding;
+}
+
 function windowsLargeChain(root: string, target: string, label: string): readonly string[] {
   const segments = safeRelative(root, target, label);
   const directories: string[] = [];
@@ -2766,8 +2781,9 @@ async function windowsWithLargeFile<T>(
     stats: BigIntStats,
     chain: readonly string[],
   ) => T,
+  provider: (label: string) => WindowsNativeBinding = windowsLargeProvider,
 ): Promise<T> {
-  const binding = windowsLargeProvider(label);
+  const binding = provider(label);
   const absolute = fsSafeAbsolute(root, target, label);
   const chain = windowsLargeChain(root, target, label);
   const parent = windowsOpenParent(root, target, label);
@@ -2798,7 +2814,7 @@ async function windowsWithLargeFile<T>(
       label + ' native file metadata mismatch',
     );
     const digest = await binding.sha256File(fd, maxLargeFileBytes, undefined, true);
-    reject(windowsLargeProvider(label) !== binding, label + ' provider changed during hashing');
+    reject(provider(label) !== binding, label + ' provider changed during hashing');
     const after = fstatSync(fd, { bigint: true });
     const pathAfter = lstatSync(absolute, { bigint: true });
     regularFile(after, label);
@@ -2935,14 +2951,13 @@ async function windowsMoveLargeFileNoReplace(
     );
   }
 }
-function windowsObserveFileIdentity(root: string, target: string, label: string): string {
-  const assertProvider = () => {
-    assertFsSafeNativeCreateEnabled(label);
-    reject(
-      !windowsNativeBinding || loadWindowsNativeBinding() !== windowsNativeBinding,
-      label + ' requires the currently attested Windows native provider',
-    );
-  };
+function windowsObserveFileIdentity(
+  root: string,
+  target: string,
+  label: string,
+  provider: (label: string) => WindowsNativeBinding = windowsLargeProvider,
+): string {
+  const binding = provider(label);
   const absolute = fsSafeAbsolute(root, target, label);
   const checkParents = () => {
     assertAncestorChain(root, label);
@@ -2961,7 +2976,6 @@ function windowsObserveFileIdentity(root: string, target: string, label: string)
     );
     return JSON.stringify([String(stats.dev), String(stats.ino), String(stats.birthtimeNs)]);
   };
-  assertProvider();
   checkParents();
   const opened = windowsOpenParent(root, target, label);
   let fd: number | undefined;
@@ -2973,11 +2987,7 @@ function windowsObserveFileIdentity(root: string, target: string, label: string)
         parentKey !== directoryKey(lstatSync(path.dirname(absolute), { bigint: true })),
       label + ' root or parent changed',
     );
-    fd = windowsNativeBinding!.openBeneath(
-      opened.parentFd,
-      opened.basename,
-      windowsNativeOpenFlags(fsConstants.O_RDONLY),
-    ).fd;
+    fd = binding.openBeneath(opened.parentFd, opened.basename, windowsNativeOpenFlags(fsConstants.O_RDONLY)).fd;
     const identity = observedFileIdentity(fstatSync(fd, { bigint: true }), label);
     assertObservedFileIdentity(identity, lstatSync(absolute, { bigint: true }), label);
     assertObservedFileIdentity(identity, fstatSync(fd, { bigint: true }), label);
@@ -2990,7 +3000,7 @@ function windowsObserveFileIdentity(root: string, target: string, label: string)
         parentKey !== directoryKey(lstatSync(path.dirname(absolute), { bigint: true })),
       label + ' root or parent changed',
     );
-    assertProvider();
+    reject(provider(label) !== binding, label + ' provider changed during identity observation');
     return identity;
   } finally {
     try {
@@ -3386,7 +3396,8 @@ function fsSafeFileExists(root: string, target: string, label: string): boolean 
   }
 }
 function fsSafeListFiles(root: string, target: string, label: string): readonly string[] {
-  const absolutePath = fsSafeAbsolute(root, target, label);
+  // The already-qualified repository root is a valid read-only listing target.
+  const absolutePath = target === '.' ? root : fsSafeAbsolute(root, target, label);
   assertNoSymlinkParentsSync({
     rootDir: root,
     targetPath: absolutePath,
@@ -3785,6 +3796,10 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     readVerifiedCaptureBytes: (target, label, limit = maxRepositoryReadBytes) =>
       windowsReadBytes(root, target, label, captureReadLimit(limit)),
     observeLargeFile: (target, label) => windowsWithLargeFile(root, target, label, (observation) => observation),
+    observeReadOnlyLargeFile: (target, label) =>
+      windowsWithLargeFile(root, target, label, (observation) => observation, windowsReadOnlyMetadataProvider),
+    observeReadOnlyFileIdentity: (target, label) =>
+      windowsObserveFileIdentity(root, target, label, windowsReadOnlyMetadataProvider),
     moveLargeFileNoReplace: (source, target, expected, label) =>
       windowsMoveLargeFileNoReplace(root, source, target, expected, label),
     ...(windowsDirectoryRename

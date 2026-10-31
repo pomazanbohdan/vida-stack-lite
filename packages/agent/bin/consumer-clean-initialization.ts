@@ -6,6 +6,11 @@ import schema from '../schemas/consumer-clean-initialization-operation.v1.schema
 import { canonicalJsonImageWithNodeLimit } from '../src/contracts/canonical-json-core.js';
 import { freezeJsonValue } from '../src/contracts/public-ingress.js';
 import { projectMappings } from './project-mapping-contract.ts';
+import { captureInitializationRuntimeBinding } from './init-core.ts';
+import { captureCleanSourceDirectoryInventory, parseConsumerProjectMoves } from './consumer-project-relocation.ts';
+import { repositoryReadOnlyObservation, requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH } from '../src/config/project-paths.ts';
+import { canonicalRepositoryRoot, deriveWorkspaceId } from '../src/workspace-identity.ts';
 
 type EffectState = 'not-started' | 'issued' | 'completed';
 type CleanInventoryEntry =
@@ -329,4 +334,236 @@ export function sealCleanInitializationOperation(value: unknown): ConsumerCleanI
 export function decodeCleanInitializationOperation(bytes: Uint8Array): ConsumerCleanInitializationOperation {
   if (bytes.byteLength > MAX_BYTES) fail('serialized size');
   return validateCleanInitializationOperation(JSON.parse(decoder.decode(bytes)) as unknown);
+}
+
+/** Observe candidate facts only. Publication, admission, custody, and host quiescence belong to apply. */
+export async function captureCleanInitializationPlan(
+  inputRequest: {
+    readonly projectRoot: string;
+    readonly repository: string;
+    readonly projectMappings: readonly string[];
+    readonly reconcileExisting?: false;
+  },
+  inputOptions: { readonly operationId: string; readonly projectMoves?: readonly string[] },
+): Promise<ConsumerCleanInitializationOperation> {
+  const image = capture({ request: inputRequest, options: inputOptions }).image as {
+    request: typeof inputRequest;
+    options: typeof inputOptions;
+  };
+  const request = image.request;
+  const options = image.options;
+  if (
+    !request ||
+    typeof request !== 'object' ||
+    Array.isArray(request) ||
+    Object.keys(request).some(
+      (key) => !['projectRoot', 'repository', 'projectMappings', 'reconcileExisting'].includes(key),
+    ) ||
+    typeof request.projectRoot !== 'string' ||
+    typeof request.repository !== 'string' ||
+    (request.reconcileExisting !== undefined && request.reconcileExisting !== false) ||
+    !options ||
+    typeof options !== 'object' ||
+    Array.isArray(options) ||
+    Object.keys(options).some((key) => !['operationId', 'projectMoves'].includes(key)) ||
+    typeof options.operationId !== 'string' ||
+    hasControlCharacters(options.operationId) ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(options.operationId) ||
+    (options.projectMoves !== undefined &&
+      (!Array.isArray(options.projectMoves) || options.projectMoves.some((item) => typeof item !== 'string')))
+  )
+    fail('invalid plan request');
+  const mappings = projectMappings(request.projectMappings);
+  const root = canonicalRepositoryRoot(request.projectRoot);
+  const workspace = deriveWorkspaceId(request.repository, root);
+  const runtime = captureInitializationRuntimeBinding();
+  const access = requireSafeRepositoryAccess(root);
+  const view = repositoryReadOnlyObservation(access);
+  const identify = view.observeFileIdentity;
+  const observe = view.observeLargeFile;
+  if (access.provider !== 'fs-safe-windows' || !identify || !observe)
+    fail('Windows verified file observation is unavailable');
+  const rootIdentity = access.directoryIdentity('.', 'clean plan root');
+  const agentIdentity = access.directoryIdentity('.agent', 'existing agent directory');
+
+  // Directory listings establish absence for either files or directories without creating parents.
+  const exists = (relative: string): boolean => {
+    safePath(relative);
+    let parent = '.';
+    const parts = relative.split('/');
+    for (let index = 0; index < parts.length; index++) {
+      const part = parts[index]!;
+      const names = view.listFiles(parent, 'clean plan path parent');
+      const matches = names.filter((name) => folded(name) === folded(part));
+      if (matches.length > 1 || (matches.length === 1 && matches[0] !== part)) fail('path case collision');
+      if (!matches.length) return false;
+      parent = parent === '.' ? part : `${parent}/${part}`;
+      if (index < parts.length - 1) access.directoryIdentity(parent, 'clean plan path parent');
+    }
+    return true;
+  };
+  const operationRoot = `.agent/clean-initialization-history/${options.operationId}`;
+  const archiveRoot = `${operationRoot}/payload`;
+  const pending = [CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH, '.agent/runtime-initialization.pending.v1.json'];
+  const absent = (relative: string) => {
+    if (exists(relative)) fail('occupied plan path: ' + relative);
+  };
+  for (const item of [...pending, operationRoot]) absent(item);
+  const oldRoots = new Map<string, string>();
+  for (const text of options.projectMoves ?? []) {
+    if (typeof text !== 'string') fail('invalid explicit project move');
+    const match = /^([^=]+)=([^:]+):([^:]+)$/u.exec(text);
+    if (!match || oldRoots.has(match[1]!)) fail('invalid explicit project move');
+    oldRoots.set(match[1]!, match[2]!);
+  }
+  const projectMoves = parseConsumerProjectMoves(options.projectMoves, oldRoots, mappings);
+  const targetIdentities = new Map<string, string>();
+  for (const mapping of mappings) {
+    if (projectMoves.some((move) => move.id === mapping.id)) continue;
+    targetIdentities.set(mapping.root, access.directoryIdentity(mapping.root, 'existing project root'));
+  }
+  for (const move of projectMoves) absent(move.newRoot);
+
+  const inventory: CleanInventoryEntry[] = [];
+  const moves: CleanMove[] = [];
+  const directorySnapshots: {
+    source: string;
+    snapshot: Awaited<ReturnType<typeof captureCleanSourceDirectoryInventory>>;
+    allowance: { maxEntries: number; maxBytes: number };
+  }[] = [];
+  const fileSnapshots: {
+    source: string;
+    observed: Awaited<ReturnType<NonNullable<typeof view.observeLargeFile>>>;
+  }[] = [];
+  let remainingEntries = 10000;
+  let remainingBytes = 512 * 1024 * 1024;
+  const reserve = (entries: number, bytes: number) => {
+    if (
+      !Number.isSafeInteger(entries) ||
+      entries < 0 ||
+      entries > remainingEntries ||
+      !Number.isSafeInteger(bytes) ||
+      bytes < 0 ||
+      bytes > remainingBytes
+    )
+      fail('aggregate inventory limit');
+    remainingEntries -= entries;
+    remainingBytes -= bytes;
+  };
+  const requireEntry = () => {
+    if (remainingEntries === 0) fail('aggregate inventory limit');
+  };
+  const observeFile = async (source: string) => {
+    const identity = identify(source, 'clean plan file');
+    const result = await observe(source, 'clean plan file');
+    if (result.identity !== identity || identify(source, 'clean plan file') !== identity) fail('file identity changed');
+    return result;
+  };
+  const addDirectory = async (source: string, target: string, kind: 'archive' | 'project') => {
+    requireEntry();
+    const allowance = { maxEntries: remainingEntries, maxBytes: remainingBytes };
+    const snapshot = await captureCleanSourceDirectoryInventory(root, source, allowance);
+    if (snapshot.rootIdentity !== rootIdentity) fail('repository identity changed');
+    reserve(snapshot.entryCount, snapshot.totalBytes);
+    directorySnapshots.push({ source, snapshot, allowance });
+    for (const directory of snapshot.directories)
+      inventory.push({
+        type: 'directory',
+        path: directory.path,
+        identity: directory.identity,
+        children: directory.entries,
+      });
+    for (const file of snapshot.files)
+      inventory.push({
+        type: 'file',
+        path: file.source,
+        identity: file.identity,
+        size: file.size,
+        sha256: file.sha256,
+      });
+    moves.push({
+      kind,
+      source,
+      target,
+      source_identity: snapshot.sourceIdentity,
+      type: 'directory',
+      state: 'not-started',
+    });
+  };
+  const present = new Map<string, boolean>();
+  for (const [source, type] of outputs) {
+    const found = exists(source);
+    present.set(source, found);
+    if (!found) continue;
+    const target = `${archiveRoot}/${source}`;
+    if (type === 'directory') await addDirectory(source, target, 'archive');
+    else {
+      requireEntry();
+      const observed = await observeFile(source);
+      reserve(1, observed.size);
+      fileSnapshots.push({ source, observed });
+      inventory.push({
+        type: 'file',
+        path: source,
+        identity: observed.identity,
+        size: observed.size,
+        sha256: observed.sha256,
+      });
+      moves.push({
+        kind: 'archive',
+        source,
+        target,
+        source_identity: observed.identity,
+        type: 'file',
+        state: 'not-started',
+      });
+    }
+  }
+  for (const move of projectMoves) await addDirectory(move.oldRoot, move.newRoot, 'project');
+  const containers = new Set<string>();
+  for (const move of moves) {
+    const parts = move.target.split('/');
+    for (let count = 1; count < parts.length; count++) {
+      const ancestor = parts.slice(0, count).join('/');
+      if (ancestor !== '.agent') containers.add(ancestor);
+    }
+  }
+  const sortPaths = <T>(items: T[], key: (item: T) => string) =>
+    items.sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+  const result = sealCleanInitializationOperation({
+    schema: 'ConsumerCleanInitializationOperation/v1',
+    version: 1,
+    operation_id: options.operationId,
+    root,
+    root_identity: rootIdentity,
+    workspace_id: workspace,
+    request: { ...request, projectRoot: root },
+    runtime,
+    archive_root: archiveRoot,
+    inventory: sortPaths(inventory, (entry) => entry.path),
+    moves: sortPaths(moves, (entry) => entry.source),
+    containers: [...containers]
+      .sort()
+      .map((containerPath) => ({ path: containerPath, state: 'not-started', identity: null })),
+    phase: 'intent',
+    prepared: null,
+    initialization: 'not-started',
+  });
+  for (const [target, identity] of targetIdentities)
+    if (access.directoryIdentity(target, 'existing project root') !== identity) fail('project root changed');
+  for (const { source, observed } of fileSnapshots)
+    if (capture(await observeFile(source)).json !== capture(observed).json) fail('archive file changed');
+  for (const { source, snapshot, allowance } of directorySnapshots)
+    if (capture(await captureCleanSourceDirectoryInventory(root, source, allowance)).json !== capture(snapshot).json)
+      fail('source inventory changed');
+  for (const item of [...pending, operationRoot, ...projectMoves.map((move) => move.newRoot)]) absent(item);
+  for (const [source, wasPresent] of present)
+    if (exists(source) !== wasPresent) fail('archive source presence changed');
+  if (
+    access.directoryIdentity('.agent', 'existing agent directory') !== agentIdentity ||
+    access.directoryIdentity('.', 'clean plan root') !== rootIdentity ||
+    capture(captureInitializationRuntimeBinding()).json !== capture(runtime).json
+  )
+    fail('root or package changed');
+  return result;
 }
