@@ -3,6 +3,25 @@
 Owner: repository maintainer. Class: derived map; canonical behavior is not
 duplicated here.
 
+## Products
+
+| Product | Stable project ID | Actual root | Registration |
+| --- | --- | --- | --- |
+| VIDA Agent | `agent` | `packages/agent` | Registered |
+| VIDA Codex | `plugin` | `packages/plugin` | Registered |
+| Vida Powers | `powers` | `packages/powers` | Not registered |
+
+The product documentation identifies three products; the
+sidecar and root cfg still describe/register only `agent` and `plugin`. Codex
+product docs remain a setup GAP. The requested Codex root `packages/codex` is
+not in place; relocation is unsupported by the current public CLI. No project
+IDs have changed.
+
+Powers canonical sources: [index](../packages/powers/docs/index.md),
+[business requirements](../packages/powers/docs/business-requirements.md),
+[system specification](../packages/powers/docs/system-specification.md), and
+[acceptance](../packages/powers/docs/acceptance.md).
+
 - Agent system behavior: `packages/agent/docs/system-specification.md`.
 - Audit-state and successor qualification evidence: `packages/agent/docs/research/audit-36-validation-20261001.md` (supporting research, not acceptance).
 - Supporting execution-backend research: `packages/agent/docs/research/openai-execution-backends.md`.

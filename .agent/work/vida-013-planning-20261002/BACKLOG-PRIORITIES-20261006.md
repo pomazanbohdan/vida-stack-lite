@@ -48,6 +48,30 @@ producer gaps; this does not close the complete contour or native delivery.
 | Bun migration             | Existing Bun migration scope                                                                                  | Maintained Source migration is complete. Qualify supported native flows and option matrix. Generated SDK output remains a separate boundary.                                                                                                                   |
 | `.vida` upgrade           | `WF05`, `WF06`, `WF09`, `WF10`, `WF11`                                                                        | Plan/apply/resume and last-file/activation-death Source cases have focused proof. Active init and loader cutover need a ready repair and a fresh native matrix.                                                                                                |
 
+## Consumer initialization follow-up
+
+One installed native 0.1.7 `init --reconcile-existing` attempt with the three
+actual product roots remains **UNKNOWN** at Root's 30,000 ms observational
+ceiling; the CLI declared no time budget. Exit 143 followed SIGTERM. The owned
+Windows Job was assigned before resume; active 0, total 2, direct and group
+terminal, and capture complete were observed; stdout and stderr were empty.
+The four named integration inputs retained their hashes and bytes, and the
+receipt and pending intent were absent before and after. These are bounded
+observations, not whole-process no-effect proof, guard refusal, or a known cause.
+The 30 seconds is not a performance contract. Do not retry automatically.
+Evidence is retained outside Source. The local work record
+`.agent/work/project-initialization-20261031/WORK.md` owns the detailed evidence
+and custody.
+
+Follow up without assigning new IDs or priority: diagnose and qualify native
+init terminal behavior with useful stage/failure diagnostics; add a public
+generic existing-repository project registry add/change/relocate route that
+preserves human-owned files and handles CAS, UNKNOWN and recovery; and provide an
+explicit installed-bundle adoption/rebind route for the current cfg Source bundle
+`packages/agent` versus external identity `vida-agent`. The requested Codex
+relocation to `packages/codex` remains unmet. Unsupported public capabilities
+are new work pending prioritization; this timeout alone is not a confirmed P0 bug.
+
 ## Test acceptance boundary
 
 The owner's 2026-10-19 directive selects the sequential
