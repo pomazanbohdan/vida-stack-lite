@@ -63,14 +63,74 @@ Evidence is retained outside Source. The local work record
 `.agent/work/project-initialization-20261031/WORK.md` owns the detailed evidence
 and custody.
 
-Follow up without assigning new IDs or priority: diagnose and qualify native
-init terminal behavior with useful stage/failure diagnostics; add a public
-generic existing-repository project registry add/change/relocate route that
-preserves human-owned files and handles CAS, UNKNOWN and recovery; and provide an
-explicit installed-bundle adoption/rebind route for the current cfg Source bundle
-`packages/agent` versus external identity `vida-agent`. The requested Codex
-relocation to `packages/codex` remains unmet. Unsupported public capabilities
-are new work pending prioritization; this timeout alone is not a confirmed P0 bug.
+B: current consumer request to initialize and manage the existing repository
+through the installed public VIDA Agent CLI. S: [initialized project layout
+and upgrades](../../../packages/agent/docs/system-specification.md#initialized-project-layout-and-upgrades);
+existing [lifecycle](../../../packages/agent/instructions/development-lifecycle.md),
+[initialization](../../../packages/agent/src/runtime-initialization.ts),
+[configuration](../../../packages/agent/src/config/project-configuration.ts) and
+[rebind](../../../packages/agent/src/config/project-configuration-rebind.ts) owners.
+The following work is OPEN and pending prioritization; no Source fix is claimed.
+
+### BL-INIT001: Diagnose and qualify installed native init
+
+- Status: OPEN; priority: TBD. Dependencies: none; investigate first.
+- Find the actual phase and cause of the retained UNKNOWN above; record findings.
+  Use the existing owner to qualify stage/failure observability, capture integrity
+  and a typed terminal success or bounded refusal. Make a minimal causal fix only
+  after proof. Do not retry the old UNKNOWN, raise test budgets to pass, infer a
+  30-second SLA, or treat the observation ceiling as a confirmed defect.
+- Acceptance: fresh native Windows init via the installed public CLI, from a cwd
+  outside Source with only Windows system tools in PATH, without external Bun or
+  Source overrides, has complete
+  Job and stream capture and a typed terminal result. Preserve the retained
+  UNKNOWN. Focused negative cases prove denial and unchanged inputs.
+
+### BL-PROJECT-REGISTRY001: Manage existing repository projects
+
+- Status: OPEN; priority: TBD. Depends on BL-INIT001. Live end-to-end
+  acceptance also depends on BL-BUNDLE-REBIND001.
+- Provide a public CLI route to configure, add, change and relocate projects
+  in an existing repository. Configure agent at `packages/agent`, preserve
+  stable ID plugin for the existing `packages/plugin` project and relocate it
+  to `packages/codex` only on explicit request; add powers at `packages/powers`.
+  Preserve VP work IDs and canonical documents. Do not assume existing flags
+  or current availability.
+- Reuse the existing init/config/reconcile owner with one configuration writer
+  and journal. Require explicit user intent and exact before-image CAS; enforce
+  canonical, nonoverlapping paths and reparse guards. Preserve project IDs,
+  custom AGENTS, sidecar, documentation policy, unrelated settings and data.
+  Recover interrupted updates or moves from exact before/after images without
+  duplicate effects; deny collisions, UNKNOWN, foreign state and stale digests
+  without clobbering. Do not claim filesystem and SQL are atomic together.
+- Acceptance: all three projects are configured through the published CLI only;
+  explicit Codex relocation is safe; supported repeat and restart work, and
+  negative cases show no overwrite.
+
+### BL-BUNDLE-REBIND001: Adopt the installed bundle
+
+- Status: OPEN; priority: TBD. Depends on BL-INIT001. Coordinate the shared
+  owner with BL-PROJECT-REGISTRY001; no independent parallel writers.
+- Provide a documented public CLI adoption/rebind for existing Source-selected
+  `packages/agent` configuration to the actual installed package identity and
+  bytes. Reuse the existing owner and receipt binding; preserve IDs, projects,
+  custom fields and UNKNOWN history. Validate the executing bundle, version,
+  hash and manifest, approved binding before-image, current config and output
+  hashes; guard receipt refresh and recovery.
+- Acceptance: the actual external installed CLI adopts the existing consumer
+  repository; mismatched, untrusted, stale, bundle-disabled and UNKNOWN states
+  deny. Exact retry/restart preserves its own operation; current readers verify
+  receipt and artifact. Caller JSON is not attestation; do not equate Source and
+  installed bytes, edit extracted payloads or copy runtime Source. Only user
+  testing establishes Runtime acceptance.
+
+Shared completion after implementation: reconcile the maintained system spec,
+CLI help and docs; run focused checks and independent review. Deliver one
+coherent PATCH through the maintained Actions workflow with Source, version,
+manifest and hash matched. Qualify the external Windows installer update and
+the combined native three-project consumer flow, receipt and safe unchanged-data
+observations. Linux qualification is CI only; no WSL, admin, symlink fixtures or
+manual consumer configuration edits. No separate release per task is required.
 
 ## Test acceptance boundary
 
@@ -154,6 +214,7 @@ This compact index keeps IDs visible while avoiding repeated daily status narrat
 - Governance and delivery IDs: `G01`, `G02`, `SA08`, `BL-RUNTIME-PATCH-VERSION-001`, `BL-DELIVERY-RELEASE-001`, `BL-DEPENDENCY-UPGRADE-001`.
 - Existing P0 IDs: `P0-01`, `P0-02`, `P0-03`, `P0-04`.
 - Testing IDs: `TEST013`, `TEST-013-01` through `TEST-013-07`.
+- Consumer initialization IDs: `BL-INIT001`, `BL-PROJECT-REGISTRY001`, `BL-BUNDLE-REBIND001`.
 - Configurable-agent epic: `EPIC-CONFIGURABLE-AGENT-SYSTEM-001`.
 
 ## Provenance

@@ -26,6 +26,26 @@ and use the existing tools without claiming that tool's check. Syntax findings
 remain review candidates; all validation and evidence gates stay with their
 current owners.
 
+## Instruction retrieval for development steps
+
+Every development step of the main runtime — intake, research, planning,
+implementation, verification, review, documentation, release and installation —
+first resolves the reusable instructions that apply to that step with
+[vp-mode](packages/powers/skills/vp-mode/SKILL.md). Run its catalog CLI with the
+selected catalog and effective profile:
+
+```sh
+bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts search --for "<3-6 terms>" --profile <effective-profile.json> --catalog packages/powers/catalog.json
+```
+
+Without a profile the run is discovery only. `packages/powers` remains a separate
+product (D9); this reference does not register it in `agent-runtime.config.v1.yaml`
+and does not create a second lifecycle. Project mechanics stay with
+`packages/agent/instructions/development-lifecycle.md`,
+`packages/agent/TESTING.md` and `packages/agent/docs/installation.md`; vp-mode
+supplies reusable practice, and a retrieved instruction grants no Source, review,
+delivery or Runtime acceptance authority.
+
 ## Source and ownership map
 
 | Layer or concern                                                    | Authoritative source                                                                                                               | Owner            |
