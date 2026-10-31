@@ -22,6 +22,7 @@ import {
   PROJECT_ACTIVATION_PATH,
   PROJECT_WORKSPACE_DATABASE_PATH,
   STORAGE_ADMISSION_GATE_FILE,
+  assertConsumerCleanInitializationInactive,
   bindLoadedConfigurationSource,
   projectUpgradeHistoryPath,
   type RuntimeConfigurationSource,
@@ -1692,6 +1693,7 @@ export function assertLoadedRuntimeConfig(config: AgentRuntimeConfig, repository
   const boundRoot = authorizedRuntimeConfigRoots.get(config);
   assertCondition(boundRoot !== undefined, 'runtime config repository binding is missing');
   const access = requireSafeRepositoryAccess(boundRoot!);
+  assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
   assertProjectUpgradeInactive(access);
   assertConsumerConfigurationInactive(access);
   if (repositoryRoot !== undefined) {

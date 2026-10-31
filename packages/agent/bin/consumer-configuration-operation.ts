@@ -10,7 +10,7 @@ import { canonicalRepositoryRoot, deriveWorkspaceId } from '../src/workspace-ide
 import { withExclusiveInitConfigAdmission } from '../src/config/storage-read-admission.ts';
 import { captureConsumerConfiguration, captureConsumerConfigurationForRecovery } from './init-configuration.ts';
 import type { ConsumerConfigurationRequest } from './init-configuration.ts';
-import { RUNTIME_INITIALIZATION_PATH } from '../src/config/project-paths.ts';
+import { RUNTIME_INITIALIZATION_PATH, assertConsumerCleanInitializationInactive } from '../src/config/project-paths.ts';
 import { derivePendingConfigurationReceipt } from './init-core.ts';
 import { parseConsumerProjectMoves, rebaseDocumentationPolicy } from './consumer-project-relocation.ts';
 import { parseRuntimeConfigYaml } from '../src/config/runtime-config.ts';
@@ -363,6 +363,7 @@ export async function applyConsumerConfiguration(
     proof.assertActive();
     if (rootIdentity(root) !== initialIdentity) throw new Error('Root identity changed');
     const access = requireSafeRepositoryAccess(root);
+    assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
     if (access.fileExists(archivePath(operationId), 'configuration archive'))
       throw new Error('Configuration archive already exists');
     const capture = captureConsumerConfiguration(frozenRequest);
@@ -429,6 +430,7 @@ export async function resumeConsumerConfiguration(
     proof.assertActive();
     const access = requireSafeRepositoryAccess(root);
     const view = repositoryReadOnlyObservation(access);
+    assertConsumerCleanInitializationInactive(view);
     const hasPending = view.fileExists(pending, 'configuration intent');
     const archive = archivePath(operationId);
     const hasArchive = view.fileExists(archive, 'configuration archive');

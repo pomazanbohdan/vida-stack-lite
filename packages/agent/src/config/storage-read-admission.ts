@@ -2,8 +2,17 @@
 import { Database } from 'bun:sqlite';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
-import { repositoryReadOnlyObservation, requireSafeRepositoryAccess } from './safe-repository-access.js';
-import { STORAGE_ADMISSION_GATE_FILE } from './project-paths.js';
+import {
+  repositoryReadOnlyObservation,
+  requireSafeRepositoryAccess,
+  SafeRepositoryLockContentionError,
+} from './safe-repository-access.js';
+import {
+  STORAGE_ADMISSION_GATE_FILE,
+  RUNTIME_INITIALIZATION_PATH,
+  PROJECT_INITIALIZATION_PATH,
+  assertConsumerCleanInitializationInactive,
+} from './project-paths.js';
 import {
   assertWorkspaceDatabaseRelativePath,
   closeNativeWorkspaceDatabase,
@@ -446,6 +455,7 @@ export function openDatabaseWithStorageAdmission<T extends Database>(
   requireAdmission(typeof open === 'function', 'database opener callback is required');
   const admission = acquireStorageReadAdmission(root, workspaceId, relative);
   try {
+    assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(requireSafeRepositoryAccess(root)));
     if (validateBeforeOpen !== undefined) {
       requireAdmission(typeof validateBeforeOpen === 'function', 'pre-open validation must be a function');
       const validation: unknown = validateBeforeOpen();
@@ -480,6 +490,7 @@ function openAndBindWorkspaceDatabase<T extends Database>(
   requireAdmission(leaseState(admission).sourceDatabase === null, 'admission already owns a database');
   let database: T | undefined;
   try {
+    assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(requireSafeRepositoryAccess(root)));
     const capture = (opened: T) => {
       database = opened;
       bindWorkspaceStorageAdmission(opened, admission, root, relative, workspaceId);
@@ -680,17 +691,100 @@ const withExclusiveStorageAdmissionOwner = async <T, A>(
   return result as T;
 };
 
+export type InitConfigAdmissionProof = { readonly assertActive: () => void };
+const initConfigProofs = new WeakMap<InitConfigAdmissionProof, { root: string; workspaceId: string }>();
+
+/** Check object identity, binding, and the still-held native gate. */
+export function assertInitConfigAdmission(proof: InitConfigAdmissionProof, root: string, workspaceId: string): void {
+  const binding = proof && initConfigProofs.get(proof);
+  requireAdmission(
+    binding !== undefined && binding.root === root && binding.workspaceId === workspaceId,
+    'invalid init/config admission proof',
+  );
+  proof.assertActive();
+}
+
+/** Check only directory contents; the live proof already validates the open gate. */
+export function assertGateOnlyUnderInitAdmission(
+  proof: InitConfigAdmissionProof,
+  root: string,
+  workspaceId: string,
+): void {
+  assertInitConfigAdmission(proof, root, workspaceId);
+  const access = requireSafeRepositoryAccess(root);
+  const observation = repositoryReadOnlyObservation(access);
+  access.assertDirectory('.vida', gateLabel);
+  const entries = [...observation.listFiles('.vida', gateLabel)].sort();
+  requireAdmission(
+    entries.length === 1 && entries[0] === STORAGE_ADMISSION_GATE_FILE,
+    'VIDA product data already exists',
+  );
+  assertInitConfigAdmission(proof, root, workspaceId);
+}
+
+/** Hold both receipt locks only for the initial journal publication interval. */
+export async function withCleanInitializationPublicationLocks<T>(
+  proof: InitConfigAdmissionProof,
+  root: string,
+  workspaceId: string,
+  publish: () => Promise<T>,
+): Promise<T> {
+  assertGateOnlyUnderInitAdmission(proof, root, workspaceId);
+  const access = requireSafeRepositoryAccess(root);
+  access.assertDirectory('.agent', 'clean initialization namespace');
+  const observation = repositoryReadOnlyObservation(access);
+  assertConsumerCleanInitializationInactive(observation);
+  const deadline = Date.now() + 5_000;
+  const acquire = async <R>(target: string, operation: () => Promise<R>): Promise<R> => {
+    let entered = false;
+    try {
+      return await access.withExclusiveLockAsync(target, 'clean initialization publication', async () => {
+        entered = true;
+        assertInitConfigAdmission(proof, root, workspaceId);
+        return operation();
+      });
+    } catch (error) {
+      const code = error !== null && typeof error === 'object' && 'code' in error ? error.code : undefined;
+      if (
+        entered ||
+        (!(error instanceof SafeRepositoryLockContentionError) && code !== 'file_lock_timeout' && code !== 'EEXIST') ||
+        Date.now() >= deadline
+      )
+        throw error;
+      assertInitConfigAdmission(proof, root, workspaceId);
+      await Bun.sleep(25);
+      assertInitConfigAdmission(proof, root, workspaceId);
+      return acquire(target, operation);
+    }
+  };
+  return acquire(RUNTIME_INITIALIZATION_PATH, () =>
+    acquire(PROJECT_INITIALIZATION_PATH, async () => {
+      assertConsumerCleanInitializationInactive(observation);
+      assertInitConfigAdmission(proof, root, workspaceId);
+      return publish();
+    }),
+  );
+}
+
 /** Internal init/config serialization only; this capability grants no source-write authority. */
 export function withExclusiveInitConfigAdmission<T>(
   root: string,
   workspaceId: string,
-  operation: (proof: { readonly assertActive: () => void }) => Promise<T>,
+  operation: (proof: InitConfigAdmissionProof) => Promise<T>,
 ): Promise<T> {
   return withExclusiveStorageAdmissionOwner(
     root,
     workspaceId,
     () => undefined,
-    ({ assertActive }) => operation(Object.freeze({ assertActive })),
+    async ({ assertActive }) => {
+      const proof = Object.freeze({ assertActive });
+      initConfigProofs.set(proof, { root, workspaceId });
+      try {
+        return await operation(proof);
+      } finally {
+        initConfigProofs.delete(proof);
+      }
+    },
   );
 }
 

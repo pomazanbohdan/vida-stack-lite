@@ -37,6 +37,14 @@ export const INITIALIZED_PROJECT_PATHS = Object.freeze({
 });
 
 export const RUNTIME_INITIALIZATION_PENDING_PATH = '.agent/runtime-initialization.pending.v1.json';
+export const CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH = '.agent/consumer-clean-initialization.pending.v1.json';
+/** Presence alone fences ordinary consumers, including unreadable or foreign journals. */
+export function assertConsumerCleanInitializationInactive(access: {
+  fileExists(target: string, label: string): boolean;
+}): void {
+  if (access.fileExists(CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH, 'clean initialization intent'))
+    throw new Error('Clean initialization is pending');
+}
 export const RUNTIME_INITIALIZATION_PATH = '.agent/runtime-initialization.v1.json';
 /** Current upgrade intent is a reader barrier until its owner retires the active slot. */
 export const PROJECT_UPGRADE_OPERATION_PATH = '.vida/project-upgrade.v1.json';

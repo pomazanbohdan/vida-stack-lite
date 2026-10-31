@@ -37,6 +37,22 @@ lifecycle authority. Human business intent constrains system behavior; code,
 tests and local receipts provide separate evidence. Caller JSON and tool
 reports do not authenticate approval, native execution or user acceptance.
 
+An active consumer clean-initialization journal fences ordinary configuration
+authorization, initialization and workspace database opens until its owner
+verifies the exact fresh outputs, receipt and legacy intent archive and retires
+the journal without replacement. The existing initializer may finish the exact
+prepared legacy intent while the same exclusive admission is held and the
+active journal witness remains unchanged. This fence does not activate `.vida`
+or establish delivery or Runtime acceptance.
+Initial journal publication requires the existing exclusive init/config gate
+and both receipt locks in legacy-v1 then project-v2 order through fresh binding
+verification and journal creation. Receipt binders retain their existing locks
+and recheck journal presence before binding effects; they do not acquire an
+exclusive gate. Gate-only inspection under a live proof lists the directory
+without opening another SQLite connection. Its owner checks outside receipt-lock
+sidecars and retains the journal after an issued callback failure. These
+primitives do not constitute a connected clean-init command or its recovery owner.
+
 Local execution assumes a trusted orchestrating session and its observed
 built-in tool results. Before authoring `LocalSourceWriteAuthorization/v1`,
 the controller establishes actual user authorization from the current

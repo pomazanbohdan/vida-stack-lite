@@ -8,6 +8,7 @@ import {
 } from './config/runtime-config.js';
 import {
   requireSafeRepositoryAccess,
+  repositoryReadOnlyObservation,
   SafeRepositoryLockContentionError,
   type SafeRepositoryAccess,
 } from './config/safe-repository-access.js';
@@ -18,6 +19,7 @@ import {
   LEGACY_RUNTIME_CONFIGURATION_PATH,
   PROJECT_CONFIGURATION_PATHS,
   RUNTIME_INITIALIZATION_PATH,
+  assertConsumerCleanInitializationInactive,
   runtimeConfigurationSourceFor,
 } from './config/project-paths.js';
 import { bindProjectInitialization } from './config/project-initialization-binding.js';
@@ -153,6 +155,7 @@ export async function bindRuntimeInitialization(repositoryRoot: string, store: H
   const deadline = Date.now() + 5_000;
   try {
     const selected = await readInitializationWithAdmission(() => {
+      assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
       assertProjectUpgradeInactive(access);
       return activeRuntimeConfigurationSource(access);
     }, deadline);
@@ -163,6 +166,7 @@ export async function bindRuntimeInitialization(repositoryRoot: string, store: H
       receiptPath,
       async () => {
         const { receipt, rawBytes } = await readInitializationWithAdmission(() => {
+          assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
           if (!access.fileExists(receiptPath, 'runtime initialization receipt'))
             fail('runtime initialization receipt is unavailable');
           const { receipt, bytes: rawBytes } = readRuntimeInitializationReceipt(access);
@@ -187,6 +191,7 @@ export async function bindRuntimeInitialization(repositoryRoot: string, store: H
           return receipt;
         }
         const next = { ...receipt, workspace_binding_status: 'bound' };
+        assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
         await access.replaceAtomicAsync(
           receiptPath,
           new Bun.CryptoHasher('sha256').update(rawBytes).digest('hex'),

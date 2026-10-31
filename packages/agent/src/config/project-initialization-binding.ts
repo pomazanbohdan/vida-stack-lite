@@ -1,8 +1,16 @@
 import { HostStateStore } from '../host-state.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { canonicalRepositoryRoot, deriveWorkspaceId } from '../workspace-identity.js';
-import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
-import { PROJECT_CONFIGURATION_PATHS, PROJECT_INITIALIZATION_PATH } from './project-paths.js';
+import {
+  requireSafeRepositoryAccess,
+  repositoryReadOnlyObservation,
+  type SafeRepositoryAccess,
+} from './safe-repository-access.js';
+import {
+  PROJECT_CONFIGURATION_PATHS,
+  PROJECT_INITIALIZATION_PATH,
+  assertConsumerCleanInitializationInactive,
+} from './project-paths.js';
 import { parseProjectConfiguration } from './project-configuration.js';
 import { assertCurrentProjectConfigurationBinding } from './project-configuration-rebind.js';
 import {
@@ -48,12 +56,15 @@ export async function bindProjectInitialization(
   if (!HostStateStore.isHostStateStore(store)) throw new Error('Project initialization requires a trusted Host.');
   const root = canonicalRepositoryRoot(repositoryRoot);
   const access = requireSafeRepositoryAccess(root);
+  assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
   return access.withExclusiveLockAsync(PROJECT_INITIALIZATION_PATH, 'bind project initialization', async () => {
+    assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
     const { receipt, bytes } = readProjectInitializationReceipt(access);
     assertProjectReceiptConfiguration(access, receipt);
     assertProjectInitializationUpgradeOwner(root, store, receipt);
     if (receipt.workspace_binding_status === 'bound') return receipt;
     const bound = validateProjectInitializationReceipt({ ...receipt, workspace_binding_status: 'bound' });
+    assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
     await access.replaceAtomicAsync(
       PROJECT_INITIALIZATION_PATH,
       new Bun.CryptoHasher('sha256').update(bytes).digest('hex'),

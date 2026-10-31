@@ -997,7 +997,12 @@ function prepareNewInitialization(
     );
   const existing = existingInitialization(observation);
   if (existing) return { existing };
-  const createdAt = new Date().toISOString();
+  return { existing: null, ...renderFreshInitialization(request, context, new Date().toISOString()) };
+}
+
+function renderFreshInitialization(request: InitializationRequest, context: InitializationContext, createdAt: string) {
+  const { access, packageAccess, bundle, canonicalRoot, selectedProjects } = context;
+  const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
   const rendered = renderTemplates(packageAccess, bundle, request.repository, selectedProjects, createdAt);
   const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects);
   validateGeneratedBindings(validatedConfig, bundle, request.repository, selectedProjects);
@@ -1023,7 +1028,7 @@ function prepareNewInitialization(
     createdAt,
   );
   validateReceipt(rawSchema, receipt);
-  return { existing: null, rendered, receipt };
+  return { rendered, receipt };
 }
 
 async function initializeProjectUnderAdmission(
@@ -1056,6 +1061,242 @@ async function initializeProjectUnderAdmission(
   return publishInitialization(access, request.projectRoot, prepared.rendered, prepared.receipt, assertActive);
 }
 
+type InitConfigAdmissionProof = import('../src/config/storage-read-admission.ts').InitConfigAdmissionProof;
+export type PreparedInitialization = Readonly<{
+  intent: string;
+  rootIdentity: string;
+  bundleIdentity: string;
+  projectIdentities: readonly string[];
+  resourceDigest: string;
+}>;
+
+function snapshotInitializationRequest(input: InitializationRequest): InitializationRequest {
+  const { projectRoot, repository, projectMappings, reconcileExisting } = input;
+  return Object.freeze({
+    projectRoot,
+    repository,
+    projectMappings: Object.freeze([...projectMappings]),
+    ...(reconcileExisting === undefined ? {} : { reconcileExisting }),
+  });
+}
+
+function snapshotPreparedInitialization(input: PreparedInitialization): PreparedInitialization {
+  const { intent, rootIdentity, bundleIdentity, projectIdentities, resourceDigest } = input;
+  return Object.freeze({
+    intent,
+    rootIdentity,
+    bundleIdentity,
+    projectIdentities: Object.freeze([...projectIdentities]),
+    resourceDigest,
+  });
+}
+
+function samePreparedInitialization(left: PreparedInitialization, right: PreparedInitialization): boolean {
+  return (
+    left.intent === right.intent &&
+    left.rootIdentity === right.rootIdentity &&
+    left.bundleIdentity === right.bundleIdentity &&
+    left.resourceDigest === right.resourceDigest &&
+    left.projectIdentities.length === right.projectIdentities.length &&
+    left.projectIdentities.every((identity, index) => identity === right.projectIdentities[index])
+  );
+}
+
+/** Bind the inputs that the initializer reads, using uncached package observations. */
+function preparedInputs(request: InitializationRequest, createdAt: string): PreparedInitialization {
+  if (request.reconcileExisting) throw new Error('Prepared initialization requires a fresh request');
+  const context = initializationContext({
+    projectRoot: request.projectRoot,
+    repository: request.repository,
+    mappings: request.projectMappings,
+    bundleRoot: executingPackageRoot,
+  });
+  const livePackage = requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(executingPackageRoot);
+  const liveObservation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(livePackage);
+  const resources = [
+    'package.json',
+    'schemas/runtime-initialization.v1.schema.json',
+    'schemas/documentation-policy.v1.schema.json',
+    ...outputs.map(([template]) => `templates/${template}`),
+    ...requiredInstructions.map((instruction) => `instructions/${instruction}`),
+  ];
+  const resourceDigest = hash(
+    JSON.stringify(
+      resources.map((name) => {
+        const digest = hash(liveObservation.readBytes(name, 'live initialization resource'));
+        if (digest !== hash(context.packageAccess.readBytes(name, 'initialization resource')))
+          throw new Error('Executing initialization resource changed');
+        return [name, digest];
+      }),
+    ),
+  );
+  const { receipt } = renderFreshInitialization(request, context, createdAt);
+  const projectIdentities = context.selectedProjects.map(({ id, root }) =>
+    JSON.stringify([id, root, context.access.directoryIdentity(root, 'configured project root')]),
+  );
+  return Object.freeze({
+    intent: JSON.stringify(receipt, null, 2) + '\n',
+    rootIdentity: context.access.directoryIdentity('.', 'project root'),
+    bundleIdentity: livePackage.directoryIdentity('.', 'runtime package'),
+    projectIdentities: Object.freeze(projectIdentities),
+    resourceDigest,
+  });
+}
+
+function assertPreparedAdmission(proof: InitConfigAdmissionProof, request: InitializationRequest): void {
+  const workspace = requireRuntimeModule(workspaceIdentity).deriveWorkspaceId(request.repository, request.projectRoot);
+  requireRuntimeModule(storageAdmission).assertInitConfigAdmission(proof, request.projectRoot, workspace);
+}
+
+function assertCleanWitness(
+  access: SafeRepositoryObservation,
+  expectedHash: string,
+  request: InitializationRequest,
+): Buffer {
+  if (!/^[a-f0-9]{64}$/u.test(expectedHash)) throw new Error('Invalid clean pending witness');
+  const bytes = access.readBytes(
+    requireRuntimeModule(projectPaths).CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH,
+    'clean initialization intent',
+  );
+  const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  if (
+    hash(bytes) !== expectedHash ||
+    typeof value !== 'object' ||
+    value === null ||
+    !('schema' in value) ||
+    value.schema !== 'ConsumerCleanInitializationOperation/v1' ||
+    !('version' in value) ||
+    value.version !== 1 ||
+    !('phase' in value) ||
+    value.phase !== 'initializing' ||
+    !('root' in value) ||
+    value.root !== request.projectRoot ||
+    !('workspace_id' in value) ||
+    value.workspace_id !==
+      requireRuntimeModule(workspaceIdentity).deriveWorkspaceId(request.repository, request.projectRoot)
+  )
+    throw new Error('Clean initialization pending witness differs');
+  return bytes;
+}
+
+/** Read-only. The caller owns the clean journal and must supply its current pending-byte hash. */
+export function prepareInitializationUnderAdmission(
+  proof: InitConfigAdmissionProof,
+  inputRequest: InitializationRequest,
+  cleanPendingHash: string,
+): PreparedInitialization {
+  const request = snapshotInitializationRequest(inputRequest);
+  assertPreparedAdmission(proof, request);
+  const access = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(
+    requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(request.projectRoot),
+  );
+  const bytes = assertCleanWitness(access, cleanPendingHash, request);
+  if (access.fileExists(pendingReceiptPath, 'pending initialization intent'))
+    throw new Error('Legacy initialization intent already exists');
+  for (const [, output] of outputs)
+    if (access.fileExists(output, 'initialization output'))
+      throw new Error('Fresh initialization output already exists');
+  if (access.fileExists(initializationReceiptPath(), 'initialization receipt'))
+    throw new Error('Fresh initialization receipt already exists');
+  const prepared = preparedInputs(request, new Date().toISOString());
+  assertPreparedAdmission(proof, request);
+  if (
+    !assertCleanWitness(access, cleanPendingHash, request).equals(bytes) ||
+    access.fileExists(pendingReceiptPath, 'pending initialization intent')
+  )
+    throw new Error('Clean initialization pending witness changed');
+  return prepared;
+}
+
+/** Resume only the exact journaled legacy intent; a matching archived receipt is a read-only lost-ack result. */
+export async function finishPreparedInitializationUnderAdmission(
+  proof: InitConfigAdmissionProof,
+  inputRequest: InitializationRequest,
+  inputPrepared: PreparedInitialization,
+  cleanPendingHash: string,
+): Promise<{ status: string; receipt: string; config_digest: string }> {
+  const request = snapshotInitializationRequest(inputRequest);
+  assertPreparedAdmission(proof, request);
+  const prepared = snapshotPreparedInitialization(inputPrepared);
+  const parsed: unknown = JSON.parse(prepared.intent);
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !('created_at' in parsed) ||
+    typeof parsed.created_at !== 'string'
+  )
+    throw new Error('Invalid prepared initialization intent');
+  const createdAt = parsed.created_at;
+  const assertCurrent = () => {
+    assertPreparedAdmission(proof, request);
+    const current = preparedInputs(request, createdAt);
+    if (!samePreparedInitialization(current, prepared)) throw new Error('Prepared initialization inputs changed');
+    const expected = JSON.parse(current.intent) as RuntimeInitializationReceipt;
+    const access = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(
+      requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(request.projectRoot),
+    );
+    assertCleanWitness(access, cleanPendingHash, request);
+    for (const entry of expected.templates)
+      if (
+        access.fileExists(entry.output, 'initialization output') &&
+        hash(access.readBytes(entry.output, 'initialization output')) !== entry.output_sha256
+      )
+        throw new Error('Prepared initialization output differs');
+    if (
+      access.fileExists(initializationReceiptPath(), 'initialization receipt') &&
+      !access.readBytes(initializationReceiptPath(), 'initialization receipt').equals(Buffer.from(current.intent))
+    )
+      throw new Error('Prepared initialization receipt differs');
+  };
+  assertCurrent();
+  const context = initializationContext({
+    projectRoot: request.projectRoot,
+    repository: request.repository,
+    mappings: request.projectMappings,
+    bundleRoot: executingPackageRoot,
+  });
+  const access = context.access;
+  if (!access.fileExists(pendingReceiptPath, 'pending initialization intent')) {
+    const archive = `.agent/initialization-provenance/${parsed.created_at.replace(/[^0-9]/g, '')}.v1.json`;
+    if (
+      !access.fileExists(archive, 'archived initialization intent') ||
+      !access.readBytes(archive, 'archived initialization intent').equals(Buffer.from(prepared.intent)) ||
+      !access.fileExists(initializationReceiptPath(), 'initialization receipt') ||
+      !access.readBytes(initializationReceiptPath(), 'initialization receipt').equals(Buffer.from(prepared.intent))
+    )
+      throw new Error('Prepared initialization completion is unknown');
+    const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
+    const receipt = validateExistingReceipt(
+      { ...observation, assertDirectory: access.assertDirectory },
+      request.projectRoot,
+      context.bundle,
+      context.canonicalRoot,
+      request.repository,
+      context.selectedProjects,
+      context.packageAccess,
+    );
+    assertCurrent();
+    return { status: 'already_completed', receipt: initializationReceiptPath(), config_digest: receipt.config_digest };
+  }
+  if (!access.readBytes(pendingReceiptPath, 'pending initialization intent').equals(Buffer.from(prepared.intent)))
+    throw new Error('Pending initialization intent differs from prepared bytes');
+  const archive = `.agent/initialization-provenance/${parsed.created_at.replace(/[^0-9]/g, '')}.v1.json`;
+  if (access.fileExists(archive, 'archived initialization intent'))
+    throw new Error('Pending and archived initialization intents conflict');
+  const result = await resumePendingInitialization(
+    access,
+    request.projectRoot,
+    context.bundle,
+    context.canonicalRoot,
+    request.repository,
+    context.selectedProjects,
+    context.packageAccess,
+    assertCurrent,
+  );
+  assertCurrent();
+  return result;
+}
+
 /** All legacy initialization effects share the configuration admission gate. */
 export async function initializeProjectFromBundle(
   request: InitializationRequest,
@@ -1067,6 +1308,9 @@ export async function initializeProjectFromBundle(
     mappings: request.projectMappings,
     bundleRoot,
   });
+  requireRuntimeModule(projectPaths).assertConsumerCleanInitializationInactive(
+    requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(initial.access),
+  );
   if (request.reconcileExisting) {
     const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(initial.access);
     if (observation.fileExists(pendingReceiptPath, 'pending initialization intent'))
@@ -1110,6 +1354,9 @@ export async function initializeProjectFromBundle(
     workspaceId,
     async ({ assertActive }) => {
       assertActive();
+      requireRuntimeModule(projectPaths).assertConsumerCleanInitializationInactive(
+        requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(initial.access),
+      );
       const current = initializationContext({
         projectRoot: request.projectRoot,
         repository: request.repository,
