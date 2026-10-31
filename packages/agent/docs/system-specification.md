@@ -284,6 +284,17 @@ destination, and leaves uncertain effects to caller-owned reconciliation.
 This is Windows best-effort containment, not a multi-file snapshot or a Linux
 capability. Existing 8 MiB read and move limits and the 32 MiB relocation
 aggregate limit remain unchanged. ADS preservation requires native qualification.
+The optional Windows directory custody capability moves the exact observed
+directory with the pinned native identity-bound no-replace rename. It retains
+source and parent handles and checks root, ancestor, pathname and directory
+identity before and after the effect. Recovery reports `already_moved` only
+when the source is absent and the destination has the expected identity.
+`NOT_APPLIED` requires proof that no rename was issued, the original source
+remains and the destination is absent; ambiguous effects remain `UNKNOWN`.
+The caller owns recursive inventory, content and stream verification, provenance
+and its recovery journal. The capability grants no creator or deletion rights
+and never archives the live admission gate. It retains Windows best-effort
+containment and adds no Linux capability, tree snapshot or durability claim.
 Only the frozen parsing/validation result for one exact original YAML string may
 be reused. Each decoded operation still validates its complete plan and progress;
 live dependencies, bundle, output and ownership checks are never memoized.

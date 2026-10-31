@@ -514,6 +514,12 @@ export interface SafeRepositoryAccess {
   ) => Promise<'moved' | 'already_moved'>;
   readonly assertDirectory: (target: string, label: string) => void;
   readonly directoryIdentity: (target: string, label: string) => string;
+  readonly moveDirectoryNoReplaceAsync?: (
+    source: string,
+    target: string,
+    expectedDirectoryIdentity: string,
+    label: string,
+  ) => Promise<'moved' | 'already_moved'>;
   /** Native file identity observation; absence or incomplete identity is a denial. */
   readonly observeFileIdentity?: (target: string, label: string) => string;
   readonly ensureDirectory: (target: string, label: string) => string;
@@ -592,6 +598,21 @@ const rawNonBlockingFlag = Number((fsConstants as { O_NONBLOCK?: number }).O_NON
 const nonBlockingFlag = [0, rawNonBlockingFlag][Number(Number.isFinite(rawNonBlockingFlag))]!;
 const linuxNativeBinding = loadLinuxNativeBinding();
 const windowsNativeBinding = loadWindowsNativeBinding();
+type WindowsDirectoryRename = (
+  sourceParentFd: number,
+  sourceRel: string,
+  targetParentFd: number,
+  targetRel: string,
+  dev: bigint,
+  ino: bigint,
+) => void;
+const windowsDirectoryRenameDescriptor =
+  windowsNativeBinding && Object.getOwnPropertyDescriptor(windowsNativeBinding, 'renameNoReplaceWithIdentity');
+const windowsDirectoryRenameValue: unknown = windowsDirectoryRenameDescriptor?.value;
+const windowsDirectoryRename: WindowsDirectoryRename | undefined =
+  typeof windowsDirectoryRenameValue === 'function'
+    ? (windowsDirectoryRenameValue as WindowsDirectoryRename)
+    : undefined;
 const linuxHandleProvider = all(
   process.platform === 'linux',
   fsSafePackageAttested,
@@ -2508,6 +2529,232 @@ function sameLargeChain(left: readonly string[], right: readonly string[]): bool
   return left.length === right.length && left.every((item, index) => item === right[index]);
 }
 
+function windowsDirectoryProvider(label: string): { binding: WindowsNativeBinding; rename: WindowsDirectoryRename } {
+  const binding = windowsLargeProvider(label);
+  const descriptor = Object.getOwnPropertyDescriptor(binding, 'renameNoReplaceWithIdentity');
+  if (!windowsDirectoryRename || !descriptor || descriptor.value !== windowsDirectoryRename)
+    fail(label + ' requires the original qualified directory rename capability');
+  return { binding, rename: windowsDirectoryRename };
+}
+
+function windowsDirectoryStatIdentity(stats: BigIntStats, label: string): string {
+  reject(
+    !stats.isDirectory() || stats.isSymbolicLink() || stats.dev === 0n || stats.ino === 0n || stats.birthtimeNs <= 0n,
+    label + ' directory identity unavailable',
+  );
+  return JSON.stringify({
+    birthtime_ns: String(stats.birthtimeNs),
+    dev: String(stats.dev),
+    ino: String(stats.ino),
+    mode: String(stats.mode),
+  });
+}
+
+function windowsDirectoryEntry(root: string, target: string, label: string): string | null {
+  const absolute = fsSafeAbsolute(root, target, label);
+  try {
+    lstatSync(absolute, { bigint: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+  return windowsDirectoryIdentity(root, target, label);
+}
+
+async function windowsMoveDirectoryNoReplace(
+  root: string,
+  source: string,
+  target: string,
+  expected: string,
+  label: string,
+): Promise<'moved' | 'already_moved'> {
+  const provider = windowsDirectoryProvider(label);
+  reject(typeof expected !== 'string' || expected.length === 0, label + ' expected identity is invalid');
+  const fromPath = windowsNativeRelative(root, source, label);
+  const toPath = windowsNativeRelative(root, target, label);
+  const fromFolded = fromPath.toLowerCase();
+  const toFolded = toPath.toLowerCase();
+  reject(
+    !fromPath ||
+      !toPath ||
+      fromFolded === toFolded ||
+      fromFolded.startsWith(toFolded + '/') ||
+      toFolded.startsWith(fromFolded + '/'),
+    label + ' source and target overlap',
+  );
+  let attempted = false;
+  let completed = false;
+  try {
+    const sourceBefore = windowsDirectoryEntry(root, fromPath, label);
+    const targetBefore = windowsDirectoryEntry(root, toPath, label);
+    if (sourceBefore === null && targetBefore === expected) {
+      const sourceChain = windowsLargeChain(root, fromPath, label);
+      const targetChain = windowsLargeChain(root, toPath, label);
+      const parent = windowsOpenParent(root, toPath, label);
+      let recoveryFd: number | undefined;
+      try {
+        const rootStat = fstatSync(parent.rootFd, { bigint: true });
+        const parentStat = fstatSync(parent.parentFd, { bigint: true });
+        recoveryFd = provider.binding.openBeneath(
+          parent.parentFd,
+          parent.basename,
+          windowsNativeOpenFlags(fsConstants.O_RDONLY),
+        ).fd;
+        const native = provider.binding.fstatIdentity(recoveryFd);
+        reject(
+          !native.isDirectory ||
+            native.isSymbolicLink ||
+            windowsDirectoryStatIdentity(fstatSync(recoveryFd, { bigint: true }), label) !== expected ||
+            windowsDirectoryEntry(root, fromPath, label) !== null ||
+            windowsDirectoryEntry(root, toPath, label) !== expected ||
+            !sameLargeChain(sourceChain, windowsLargeChain(root, fromPath, label)) ||
+            !sameLargeChain(targetChain, windowsLargeChain(root, toPath, label)) ||
+            !sameFileIdentity(rootStat, lstatSync(root, { bigint: true })) ||
+            !sameFileIdentity(
+              parentStat,
+              lstatSync(path.dirname(fsSafeAbsolute(root, toPath, label)), { bigint: true }),
+            ),
+          label + ' recovery changed',
+        );
+        windowsDirectoryProvider(label);
+        return 'already_moved';
+      } finally {
+        try {
+          if (recoveryFd !== undefined) closeQuietly(recoveryFd);
+        } finally {
+          windowsCloseParent(parent);
+        }
+      }
+    }
+    reject(sourceBefore !== expected || targetBefore !== null, label + ' source/target conflict');
+    const fromChain = windowsLargeChain(root, fromPath, label);
+    const toChain = windowsLargeChain(root, toPath, label);
+    const from = windowsOpenParent(root, fromPath, label);
+    let to: ReturnType<typeof windowsOpenParent> | undefined;
+    let fd: number | undefined;
+    let targetFd: number | undefined;
+    try {
+      to = windowsOpenParent(root, toPath, label);
+      const fromRoot = fstatSync(from.rootFd, { bigint: true });
+      const fromParent = fstatSync(from.parentFd, { bigint: true });
+      const toRoot = fstatSync(to.rootFd, { bigint: true });
+      const toParent = fstatSync(to.parentFd, { bigint: true });
+      fd = provider.binding.openBeneath(from.parentFd, from.basename, windowsNativeOpenFlags(fsConstants.O_RDONLY)).fd;
+      const stat = fstatSync(fd, { bigint: true });
+      const native = provider.binding.fstatIdentity(fd);
+      const check = (): void => {
+        reject(
+          !native.isDirectory ||
+            native.isSymbolicLink ||
+            windowsDirectoryStatIdentity(stat, label) !== expected ||
+            windowsDirectoryStatIdentity(fstatSync(fd!, { bigint: true }), label) !== expected ||
+            windowsDirectoryEntry(root, fromPath, label) !== expected ||
+            !sameLargeChain(fromChain, windowsLargeChain(root, fromPath, label)) ||
+            !sameLargeChain(toChain, windowsLargeChain(root, toPath, label)) ||
+            !sameFileIdentity(fromRoot, fstatSync(from.rootFd, { bigint: true })) ||
+            !sameFileIdentity(toRoot, fstatSync(to!.rootFd, { bigint: true })) ||
+            !sameFileIdentity(fromParent, fstatSync(from.parentFd, { bigint: true })) ||
+            !sameFileIdentity(toParent, fstatSync(to!.parentFd, { bigint: true })) ||
+            !sameFileIdentity(fromRoot, lstatSync(root, { bigint: true })) ||
+            !sameFileIdentity(toRoot, lstatSync(root, { bigint: true })) ||
+            !sameFileIdentity(
+              fromParent,
+              lstatSync(path.dirname(fsSafeAbsolute(root, fromPath, label)), { bigint: true }),
+            ) ||
+            !sameFileIdentity(
+              toParent,
+              lstatSync(path.dirname(fsSafeAbsolute(root, toPath, label)), { bigint: true }),
+            ) ||
+            stat.dev !== toParent.dev ||
+            windowsDirectoryEntry(root, toPath, label) !== null,
+          label + ' directory or parent changed',
+        );
+      };
+      check();
+      const current = windowsDirectoryProvider(label);
+      reject(current.binding !== provider.binding || current.rename !== provider.rename, label + ' provider changed');
+      check();
+      attempted = true;
+      await Promise.resolve(
+        provider.rename.call(
+          provider.binding,
+          from.parentFd,
+          from.basename,
+          to.parentFd,
+          to.basename,
+          stat.dev,
+          stat.ino,
+        ),
+      );
+      completed = true;
+      windowsDirectoryProvider(label);
+      targetFd = provider.binding.openBeneath(
+        to.parentFd,
+        to.basename,
+        windowsNativeOpenFlags(fsConstants.O_RDONLY),
+      ).fd;
+      reject(
+        !sameLargeChain(fromChain, windowsLargeChain(root, fromPath, label)) ||
+          !sameLargeChain(toChain, windowsLargeChain(root, toPath, label)) ||
+          !sameFileIdentity(fromParent, fstatSync(from.parentFd, { bigint: true })) ||
+          !sameFileIdentity(toParent, fstatSync(to.parentFd, { bigint: true })) ||
+          !sameFileIdentity(fromRoot, fstatSync(from.rootFd, { bigint: true })) ||
+          !sameFileIdentity(toRoot, fstatSync(to.rootFd, { bigint: true })) ||
+          windowsDirectoryEntry(root, fromPath, label) !== null ||
+          windowsDirectoryEntry(root, toPath, label) !== expected ||
+          windowsDirectoryStatIdentity(fstatSync(targetFd, { bigint: true }), label) !== expected ||
+          windowsDirectoryStatIdentity(fstatSync(fd, { bigint: true }), label) !== expected,
+        label + ' post-move proof failed',
+      );
+      windowsDirectoryProvider(label);
+      return 'moved';
+    } finally {
+      try {
+        if (targetFd !== undefined) closeQuietly(targetFd);
+      } finally {
+        try {
+          if (fd !== undefined) closeQuietly(fd);
+        } finally {
+          try {
+            if (to) windowsCloseParent(to);
+          } finally {
+            windowsCloseParent(from);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    if (!attempted) {
+      try {
+        windowsDirectoryProvider(label);
+        const fromChain = windowsLargeChain(root, fromPath, label);
+        const toChain = windowsLargeChain(root, toPath, label);
+        if (
+          windowsDirectoryEntry(root, fromPath, label) === expected &&
+          windowsDirectoryEntry(root, toPath, label) === null &&
+          sameLargeChain(fromChain, windowsLargeChain(root, fromPath, label)) &&
+          sameLargeChain(toChain, windowsLargeChain(root, toPath, label)) &&
+          windowsDirectoryEntry(root, fromPath, label) === expected &&
+          windowsDirectoryEntry(root, toPath, label) === null
+        )
+          throw new SafeRepositoryMoveError(
+            'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
+            label + ' rename was not issued; revalidate before retry',
+            { cause: error },
+          );
+      } catch (probeError) {
+        if (probeError instanceof SafeRepositoryMoveError && probeError.code === 'SAFE_REPOSITORY_MOVE_NOT_APPLIED')
+          throw probeError;
+      }
+    }
+    throw new SafeRepositoryMoveError(
+      'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+      label + (attempted || completed ? ' move requires reconciliation' : ' state requires reconciliation'),
+      { cause: error },
+    );
+  }
+}
+
 async function windowsWithLargeFile<T>(
   root: string,
   target: string,
@@ -3540,6 +3787,12 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     observeLargeFile: (target, label) => windowsWithLargeFile(root, target, label, (observation) => observation),
     moveLargeFileNoReplace: (source, target, expected, label) =>
       windowsMoveLargeFileNoReplace(root, source, target, expected, label),
+    ...(windowsDirectoryRename
+      ? {
+          moveDirectoryNoReplaceAsync: (source: string, target: string, expected: string, label: string) =>
+            windowsMoveDirectoryNoReplace(root, source, target, expected, label),
+        }
+      : {}),
     fileExists: (target, label) => fsSafeFileExists(root, target, label),
     listFiles: (target, label) => fsSafeListFiles(root, target, label),
     observeFileExists: (target, label) => fsSafeFileExists(root, target, label),
