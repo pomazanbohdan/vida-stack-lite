@@ -1,5 +1,5 @@
 ﻿import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -9,6 +9,7 @@ import {
   validateCIDeliveryRequest,
   validateCIDownloadLocation,
   type CIDeliveryRequest,
+  type ProducerDownloadEvent,
 } from './release-ci-evidence.ts';
 import { publishGitHubRelease, type PublicationAPI, type PublicationProducer } from './release-github-publication.ts';
 import { releaseSourceBinding, releaseJSON, releasePath } from '../../packages/agent/bin/local-release-artifacts.ts';
@@ -17,9 +18,15 @@ import { checkManifest, readPin } from '../../packages/agent/bin/bun.ts';
 const repo = 'pomazanbohdan/vida-stack-lite';
 const apiBase = `https://api.github.com/repos/${repo}`;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+type Fetch = (...args: Parameters<typeof fetch>) => ReturnType<typeof fetch>;
+const guardErrors = new WeakSet<Error>();
 const good = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object' && !Array.isArray(v);
 function need(ok: unknown, why: string): asserts ok {
-  if (!ok) throw new Error(why);
+  if (!ok) {
+    const error = new Error(why);
+    guardErrors.add(error);
+    throw error;
+  }
 }
 const sha = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 const controlled = (v: unknown): v is string => typeof v === 'string' && v.length > 0 && !/[\p{Cc}]/u.test(v);
@@ -52,11 +59,12 @@ function request(
   return value;
 }
 async function response(
+  fetcher: Fetch,
   url: string,
   init: RequestInit,
   redirect: RequestInit['redirect'] = 'error',
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const res = await fetcher(url, {
     ...init,
     redirect,
     signal: AbortSignal.timeout(300000),
@@ -101,7 +109,173 @@ async function jsonResponse(res: Response): Promise<unknown> {
     throw new Error('GitHub JSON invalid');
   }
 }
+type Stage =
+  | 'startup'
+  | 'source'
+  | 'publication'
+  | 'producer-linux'
+  | 'producer-windows'
+  | 'members'
+  | 'validation'
+  | 'receipt';
+
+export function diagnosticRoute(input: string): string {
+  try {
+    const url = new URL(input);
+    if (url.hostname !== 'api.github.com' && url.hostname !== 'uploads.github.com') return 'storage';
+    const p = url.pathname;
+    if (/\/actions\/runs\/\d+\/attempts\/\d+\/jobs$/.test(p)) return 'producer-jobs';
+    if (/\/actions\/runs\//.test(p)) return 'producer-run';
+    if (/\/contents\//.test(p)) return 'producer-workflow';
+    if (/\/actions\/artifacts\/\d+\/zip$/.test(p)) return 'producer-redirect';
+    if (/\/actions\/artifacts\//.test(p)) return 'producer-artifact';
+    if (/\/git\/commits\//.test(p)) return 'commit';
+    if (/\/git\/refs?\//.test(p)) return 'tag-ref';
+    if (/\/git\/tags/.test(p)) return 'tag';
+    if (/\/assets(?:\/|$)/.test(p)) return 'asset';
+    if (/\/releases(?:\/|$)/.test(p)) return 'release';
+  } catch {
+    /* Retain only a fixed route class. */
+  }
+  return 'other';
+}
+
+export class PublicationDiagnostic {
+  private fd: number;
+  private count = 0;
+  private bytes = 0;
+  private firstError = false;
+  stage: Stage = 'startup';
+  constructor(directory: string, run: string, attempt: string) {
+    if (!/^[1-9]\d*$/.test(run) || !/^[1-9]\d*$/.test(attempt)) throw new Error('invalid diagnostic identity');
+    mkdirSync(directory, { recursive: true });
+    this.fd = openSync(path.join(directory, `diagnostic-${run}-${attempt}.ndjson`), 'wx', 0o600);
+    this.event('start');
+  }
+  event(
+    event: 'start' | 'stage' | 'request' | 'response' | 'error' | 'terminal',
+    details: {
+      route?: string;
+      method?: 'GET' | 'POST' | 'PATCH' | 'OTHER';
+      status?: number;
+      error?: unknown;
+      outcome?: 'success' | 'failure';
+    } = {},
+  ): void {
+    if (event === 'error' && this.firstError) return;
+    if (event === 'error') this.firstError = true;
+    const errorCode =
+      details.error instanceof Error &&
+      'code' in details.error &&
+      typeof details.error.code === 'string' &&
+      ['EACCES', 'EEXIST', 'ENOENT', 'ENOSPC', 'ETIMEDOUT', 'ECONNRESET'].includes(details.error.code)
+        ? details.error.code
+        : undefined;
+    const row = {
+      event,
+      stage: this.stage,
+      ...(details.route &&
+      [
+        'commit',
+        'tag-ref',
+        'tag',
+        'release',
+        'asset',
+        'producer-run',
+        'producer-workflow',
+        'producer-jobs',
+        'producer-artifact',
+        'producer-redirect',
+        'storage',
+        'other',
+      ].includes(details.route)
+        ? { route: details.route }
+        : {}),
+      ...(event === 'request' && details.method ? { method: details.method } : {}),
+      ...(Number.isInteger(details.status) && details.status! >= 100 && details.status! <= 599
+        ? { status: details.status }
+        : {}),
+      ...(event === 'error'
+        ? {
+            type: details.error instanceof Error ? 'Error' : 'unknown',
+            kind: details.error instanceof Error && guardErrors.has(details.error) ? 'guard' : 'exception',
+            ...(errorCode ? { code: errorCode } : {}),
+            sites: [],
+          }
+        : {}),
+      ...(details.outcome ? { outcome: details.outcome } : {}),
+    };
+    const data = Buffer.from(JSON.stringify(row) + '\n');
+    const reserved = event === 'error' || event === 'terminal';
+    if (
+      (!reserved && (this.count >= 254 || this.bytes + data.length > 64000)) ||
+      this.count >= 256 ||
+      this.bytes + data.length > 65536
+    )
+      return;
+    for (let offset = 0; offset < data.length;) {
+      const written = writeSync(this.fd, data, offset, data.length - offset);
+      if (written <= 0) throw new Error('diagnostic write failed');
+      offset += written;
+    }
+    this.count++;
+    this.bytes += data.length;
+  }
+  close(outcome: 'success' | 'failure'): void {
+    try {
+      this.event('terminal', { outcome });
+      fsyncSync(this.fd);
+    } finally {
+      closeSync(this.fd);
+    }
+  }
+}
+
+export async function observedPublicationFetch(
+  diagnostic: PublicationDiagnostic,
+  fetcher: Fetch,
+  input: Parameters<typeof fetch>[0],
+  init?: RequestInit,
+): Promise<Response> {
+  const route = diagnosticRoute(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
+  const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase();
+  diagnostic.event('request', {
+    route,
+    method: method === 'GET' || method === 'POST' || method === 'PATCH' ? method : 'OTHER',
+  });
+  const res = await fetcher(input, init);
+  diagnostic.event('response', { route, status: res.status });
+  return res;
+}
+
 export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknown> {
+  if (!/^[1-9]\d*$/.test(env.GITHUB_RUN_ID ?? '') || !/^[1-9]\d*$/.test(env.GITHUB_RUN_ATTEMPT ?? ''))
+    return publisherMain(env);
+  const diagnostic = new PublicationDiagnostic(
+    path.join(root, '.tmp/ci-publication'),
+    env.GITHUB_RUN_ID!,
+    env.GITHUB_RUN_ATTEMPT!,
+  );
+  const originalFetch = globalThis.fetch;
+  const tracedFetch: Fetch = (input, init) => observedPublicationFetch(diagnostic, originalFetch, input, init);
+  let outcome: 'success' | 'failure' = 'failure';
+  try {
+    const result = await publisherMain(env, diagnostic, tracedFetch);
+    outcome = 'success';
+    return result;
+  } catch (error) {
+    diagnostic.event('error', { error });
+    throw error;
+  } finally {
+    diagnostic.close(outcome);
+  }
+}
+
+async function publisherMain(
+  env: NodeJS.ProcessEnv,
+  diagnostic?: PublicationDiagnostic,
+  fetcher: Fetch = globalThis.fetch,
+): Promise<unknown> {
   need(
     env.CI === 'true' &&
       env.GITHUB_ACTIONS === 'true' &&
@@ -121,6 +295,10 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
       env.GITHUB_REF === 'refs/heads/main',
     'publisher workflow ref rejected',
   );
+  if (diagnostic) {
+    diagnostic.stage = 'source';
+    diagnostic.event('stage');
+  }
   const source = env.CI_SOURCE_COMMIT;
   need(
     typeof source === 'string' && /^[a-f0-9]{40}$/.test(source) && source === env.GITHUB_SHA,
@@ -163,7 +341,7 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
         Authorization: `Bearer ${token}`,
       });
       if (data !== undefined) headers.set('Content-Type', 'application/json');
-      const res = await fetch(apiBase + suffix, {
+      const res = await fetcher(apiBase + suffix, {
         method,
         headers,
         ...(data === undefined ? {} : { body: JSON.stringify(data) }),
@@ -176,7 +354,7 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
     },
     async upload(id, file, data) {
       const url = `https://uploads.github.com/repos/${repo}/releases/${id}/assets?name=${encodeURIComponent(file)}`;
-      const res = await response(url, {
+      const res = await response(fetcher, url, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -191,7 +369,7 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
     },
     async download(id) {
       const url = `${apiBase}/releases/assets/${id}`;
-      const res = await fetch(url, {
+      const res = await fetcher(url, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/octet-stream',
@@ -208,7 +386,7 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
       const storage = new URL(location);
       need(storage.hostname === 'release-assets.githubusercontent.com', 'release asset host rejected');
       return bodyBytes(
-        await response(location, {
+        await response(fetcher, location, {
           headers: { Accept: 'application/octet-stream' },
         }),
         256 * 1024 * 1024,
@@ -228,6 +406,10 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
   const bashInstallerHash = sha(readFileSync(releasePath(root, 'install/install.sh')));
   const githubOutput = env.GITHUB_OUTPUT;
   need(controlled(githubOutput), 'publisher output context unavailable');
+  if (diagnostic) {
+    diagnostic.stage = 'publication';
+    diagnostic.event('stage');
+  }
   const receipt = await publishGitHubRelease({
     api,
     identity: {
@@ -247,6 +429,10 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
       // Establish the publication-wide Source quality proof before either target is downloaded.
       const targets: string[] = ['bun-linux-x64', 'bun-windows-x64'];
       for (const target of targets) {
+        if (diagnostic) {
+          diagnostic.stage = target === 'bun-windows-x64' ? 'producer-windows' : 'producer-linux';
+          diagnostic.event('stage');
+        }
         const selectedRequest = target === 'bun-windows-x64' ? win : lin;
         const producer = producers.find((item) => item.request.target === target);
         need(
@@ -279,17 +465,26 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
           run_id: producer.run_id,
           run_attempt: producer.run_attempt,
           artifact_id: producer.artifact_id,
+          ...(diagnostic ? { observer: (event: ProducerDownloadEvent) => diagnostic.event(event.phase, event) } : {}),
         });
         const windows = target === 'bun-windows-x64';
         const installer = readFileSync(
           path.join(root, windows ? 'packages/agent/tooling/install-windows.ps1' : 'install/install.sh'),
         );
+        if (diagnostic) {
+          diagnostic.stage = 'members';
+          diagnostic.event('stage');
+        }
         const members = await readCIProducerFormationMembers({
           root,
           request: selectedRequest,
           transport_path: downloaded.transport_path,
           installer_bytes: installer,
         });
+        if (diagnostic) {
+          diagnostic.stage = 'validation';
+          diagnostic.event('stage');
+        }
         const checked = validateCIProducerFormationMembers({
           request: selectedRequest,
           members,
@@ -352,9 +547,17 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
         file: 'publication-provenance.json',
         data: Buffer.from(releaseJSON(proof) + '\n'),
       });
+      if (diagnostic) {
+        diagnostic.stage = 'publication';
+        diagnostic.event('stage');
+      }
       return { producers, assets };
     },
   });
+  if (diagnostic) {
+    diagnostic.stage = 'receipt';
+    diagnostic.event('stage');
+  }
   const receiptDir = path.join(root, '.tmp/ci-publication');
   mkdirSync(receiptDir, { recursive: true });
   const output = path.join(receiptDir, 'receipt.json');
@@ -369,8 +572,7 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
 if (import.meta.main) {
   main().catch((error: unknown) => {
     const detail =
-      error instanceof Error &&
-      /^(?:GitHub HTTP \d{3}$|GitHub publication: |GAP-VIDA-CI-DELIVERY-001: )/.test(error.message)
+      error instanceof Error && /^GitHub HTTP \d{3}$/.test(error.message)
         ? error.message.slice(0, 512)
         : 'publisher check or transport failed; retain remote state and inspect before retry';
     process.stderr.write(`publication failed: ${detail}\n`);

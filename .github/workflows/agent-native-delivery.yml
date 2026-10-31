@@ -419,6 +419,16 @@ jobs:
       - name: publish-release
         id: publish-release
         run: bun --no-env-file --no-install tooling/agent/release-ci-publisher.ts
+      - name: upload-publication-diagnostic
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: vida-publication-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .tmp/ci-publication/diagnostic-${{ github.run_id }}-${{ github.run_attempt }}.ndjson
+          overwrite: false
+          if-no-files-found: ignore
+          retention-days: 14
+          include-hidden-files: true
       - name: upload-publication-receipt
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:

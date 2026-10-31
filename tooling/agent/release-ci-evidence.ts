@@ -1668,6 +1668,30 @@ async function qualifiedZIPReader(root: string): Promise<QualifiedZipReader> {
   }
 }
 
+export type ProducerDownloadEvent =
+  | {
+      phase: 'request';
+      route:
+        | 'producer-run'
+        | 'producer-workflow'
+        | 'producer-jobs'
+        | 'producer-artifact'
+        | 'producer-redirect'
+        | 'storage';
+      method: 'GET';
+    }
+  | {
+      phase: 'response';
+      route:
+        | 'producer-run'
+        | 'producer-workflow'
+        | 'producer-jobs'
+        | 'producer-artifact'
+        | 'producer-redirect'
+        | 'storage';
+      method: 'GET';
+      status: number;
+    };
 interface DownloadOptions {
   root: string;
   token?: string;
@@ -1677,6 +1701,7 @@ interface DownloadOptions {
   run_id: string | number;
   run_attempt: number;
   artifact_id: string | number;
+  observer?: (event: ProducerDownloadEvent) => void;
 }
 interface ObserveGitHubOptions extends DownloadOptions {
   candidate: CIDeliveryCandidate;
@@ -1928,20 +1953,28 @@ async function downloadGitHubArtifact(
     'X-GitHub-Api-Version': '2026-03-10',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
-  const get = async (suffix: string): Promise<unknown> =>
-    parseJSON(
-      (
-        await responseBytes(
-          await fetch(base + suffix, {
-            headers,
-            ...(signal === undefined ? {} : { signal }),
-            redirect: 'error',
-          }),
-          8 * 1024 * 1024,
-        )
-      ).toString('utf8'),
-    );
-  const run = githubRun(await get(`/actions/runs/${run_id}/attempts/${run_attempt}`));
+  const qualifiedFetch = globalThis.fetch;
+  const emit = (event: ProducerDownloadEvent): void => {
+    try {
+      options.observer?.(event);
+    } catch {
+      /* Observations cannot affect custody. */
+    }
+  };
+  const get = async (
+    suffix: string,
+    route: 'producer-run' | 'producer-workflow' | 'producer-jobs' | 'producer-artifact',
+  ): Promise<unknown> => {
+    emit({ phase: 'request', route, method: 'GET' });
+    const response = await qualifiedFetch(base + suffix, {
+      headers,
+      ...(signal === undefined ? {} : { signal }),
+      redirect: 'error',
+    });
+    emit({ phase: 'response', route, method: 'GET', status: response.status });
+    return parseJSON((await responseBytes(response, 8 * 1024 * 1024)).toString('utf8'));
+  };
+  const run = githubRun(await get(`/actions/runs/${run_id}/attempts/${run_attempt}`, 'producer-run'));
   check(
     run.id === Number(run_id) &&
       run.run_attempt === run_attempt &&
@@ -1956,7 +1989,7 @@ async function downloadGitHubArtifact(
     'selected download run differs',
   );
   if (!requireCompletedWorkflow) {
-    const definition = await get(`/contents/${policy.workflow_path}?ref=${run.head_sha}`);
+    const definition = await get(`/contents/${policy.workflow_path}?ref=${run.head_sha}`, 'producer-workflow');
     check(
       isRecord(definition) &&
         typeof definition.encoding === 'string' &&
@@ -1966,7 +1999,9 @@ async function downloadGitHubArtifact(
       'workflow definition differs',
     );
   }
-  const jobs = githubJobs(await get(`/actions/runs/${run_id}/attempts/${run_attempt}/jobs?per_page=100`));
+  const jobs = githubJobs(
+    await get(`/actions/runs/${run_id}/attempts/${run_attempt}/jobs?per_page=100`, 'producer-jobs'),
+  );
   check(jobs.jobs.length === jobs.total_count, 'complete bounded download job observation required');
   const selectedJobs = jobs.jobs.filter((job) => isRecord(job) && job.name === policy.job);
   check(selectedJobs.length === 1, 'selected download job differs');
@@ -1997,7 +2032,7 @@ async function downloadGitHubArtifact(
       assertLinuxPublicationQualityJob(qualityJobs[0], qualityJob, selectedJob, Number(run_id), run_attempt);
     }
   }
-  const artifact = githubArtifact(await get(`/actions/artifacts/${artifact_id}`));
+  const artifact = githubArtifact(await get(`/actions/artifacts/${artifact_id}`, 'producer-artifact'));
   check(artifact.id === Number(artifact_id), 'download artifact identity differs');
   validateCIArtifactAttempt({
     artifact,
@@ -2010,11 +2045,13 @@ async function downloadGitHubArtifact(
     artifact_kind: requireCompletedWorkflow ? 'formation' : 'native-build',
   });
   if (!requireCompletedWorkflow) assertNativeBuildJobSteps(selectedJob, Date.parse(artifact.created_at));
-  const response = await fetch(`${base}/actions/artifacts/${artifact_id}/zip`, {
+  emit({ phase: 'request', route: 'producer-redirect', method: 'GET' });
+  const response = await qualifiedFetch(`${base}/actions/artifacts/${artifact_id}/zip`, {
     headers,
     ...(signal === undefined ? {} : { signal }),
     redirect: 'manual',
   });
+  emit({ phase: 'response', route: 'producer-redirect', method: 'GET', status: response.status });
   check(response.status === 302, 'artifact download did not return its selected redirect');
   const location = requireCompletedWorkflow
     ? validateCIDownloadLocation(response.headers.get('location'), policy.artifact_hosts ?? [])
@@ -2025,10 +2062,12 @@ async function downloadGitHubArtifact(
   const descriptor = openSync(file, 'wx', 0o600);
   let size = 0;
   try {
-    const data = await fetch(location, {
+    emit({ phase: 'request', route: 'storage', method: 'GET' });
+    const data = await qualifiedFetch(location, {
       ...(signal === undefined ? {} : { signal }),
       redirect: 'error',
     });
+    emit({ phase: 'response', route: 'storage', method: 'GET', status: data.status });
     check(data.ok && data.body, 'artifact storage unavailable; retain download intent');
     const length = data.headers.get('content-length');
     check(

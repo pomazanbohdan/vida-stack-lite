@@ -1,5 +1,8 @@
 import { describe, test } from 'bun:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { releaseDigest, releaseJSON } from '../../../packages/agent/bin/local-release-artifacts.ts';
 import {
   publishGitHubRelease,
@@ -10,7 +13,11 @@ import {
   type PublicationProducer,
 } from '../../../tooling/agent/release-github-publication.ts';
 import type { CIDeliveryRequest } from '../../../tooling/agent/release-ci-evidence.ts';
-import { main as publisherMain } from '../../../tooling/agent/release-ci-publisher.ts';
+import {
+  main as publisherMain,
+  observedPublicationFetch,
+  PublicationDiagnostic,
+} from '../../../tooling/agent/release-ci-publisher.ts';
 
 const identity: PublicationIdentity = {
   operation_id: 'release-2026-10-30',
@@ -214,6 +221,92 @@ async function publish(
 }
 
 describe('GitHub release publication owner', () => {
+  test('diagnostics are exclusive, bounded, terminal, and do not retain poisoned data', async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'publication-diagnostic-'));
+    try {
+      const log = new PublicationDiagnostic(dir, '123', '1');
+      assert.throws(() => new PublicationDiagnostic(dir, '123', '1'));
+      const poison = 'secret-token-body-query\n    at check (tooling/release-ci-evidence.ts:999:1)';
+      const fetcher = async () => new Response(poison, { status: 403 });
+      await observedPublicationFetch(
+        log,
+        fetcher,
+        `https://api.github.com/repos/x/y/actions/artifacts/123?token=${poison}`,
+      );
+      log.event('error', { error: new Error(poison) });
+      log.event('error', { error: new Error('second') });
+      for (let i = 0; i < 500; i++) log.event('response', { route: poison, status: 200 });
+      log.close('failure');
+      const raw = readFileSync(path.join(dir, 'diagnostic-123-1.ndjson'), 'utf8');
+      const rows = raw
+        .trim()
+        .split('\n')
+        .map((line): Record<string, unknown> => {
+          const value: unknown = JSON.parse(line);
+          assert.ok(value !== null && typeof value === 'object' && !Array.isArray(value));
+          const row = value as Record<string, unknown>;
+          assert.equal(typeof row.event, 'string');
+          assert.ok(row.kind === undefined || typeof row.kind === 'string');
+          assert.ok(row.sites === undefined || Array.isArray(row.sites));
+          assert.ok(row.method === undefined || typeof row.method === 'string');
+          assert.ok(row.route === undefined || typeof row.route === 'string');
+          assert.ok(row.status === undefined || typeof row.status === 'number');
+          return row;
+        });
+      assert.ok(Buffer.byteLength(raw) <= 65536 && rows.length <= 256);
+      assert.equal(raw.includes(poison), false);
+      assert.equal(rows.filter((row) => row.event === 'error').length, 1);
+      const error = rows.find((row) => row.event === 'error');
+      assert.ok(error);
+      assert.equal(error.kind, 'exception');
+      assert.deepEqual(error.sites, []);
+      assert.ok(rows.some((row) => row.event === 'request' && row.method === 'GET'));
+      assert.ok(
+        rows.some((row) => row.event === 'response' && row.route === 'producer-artifact' && row.status === 403),
+      );
+      assert.deepEqual(rows.at(-1), { event: 'terminal', stage: 'startup', outcome: 'failure' });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  test('overlapping traced fetches keep their diagnostics isolated', async () => {
+    const dir = mkdtempSync(path.join(os.tmpdir(), 'publication-overlap-'));
+    try {
+      const first = new PublicationDiagnostic(dir, '123', '1');
+      const second = new PublicationDiagnostic(dir, '123', '2');
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const pending = observedPublicationFetch(
+        first,
+        async () => {
+          await gate;
+          return new Response(null, { status: 201 });
+        },
+        'https://api.github.com/repos/x/y/releases',
+        { method: 'POST' },
+      );
+      await observedPublicationFetch(
+        second,
+        async () => new Response(null, { status: 204 }),
+        'https://api.github.com/repos/x/y/git/commits/a',
+        { method: 'PATCH' },
+      );
+      release();
+      await pending;
+      first.close('success');
+      second.close('success');
+      const a = readFileSync(path.join(dir, 'diagnostic-123-1.ndjson'), 'utf8');
+      const b = readFileSync(path.join(dir, 'diagnostic-123-2.ndjson'), 'utf8');
+      assert.match(a, /"method":"POST"/);
+      assert.doesNotMatch(a, /"route":"commit"/);
+      assert.match(b, /"method":"PATCH"/);
+      assert.doesNotMatch(b, /"route":"release"/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
   test('rejects a local publisher invocation before any publication', async () => {
     await assert.rejects(() => publisherMain({}), /publisher ingress rejected/);
   });

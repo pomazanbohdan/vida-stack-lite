@@ -7,6 +7,7 @@ import {
   downloadGitHubCIDelivery,
   downloadGitHubCIProducerArtifact,
   type CIDeliveryRequest,
+  type ProducerDownloadEvent,
 } from '../../../tooling/agent/release-ci-evidence.ts';
 import { releaseDigest, releaseJSON } from '../bin/local-release-artifacts.ts';
 
@@ -14,6 +15,99 @@ const sourceCommit = 'a'.repeat(40);
 const workflowBytes = Buffer.from('workflow definition fixture');
 const transportBytes = Buffer.from('opaque selected artifact ZIP bytes');
 const storageURL = 'https://productionresults1.blob.core.windows.net/selected.zip';
+
+test('producer observer records 403 without URL or credentials before rejection', async () => {
+  const request = requestFixture();
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-observer-403-'));
+  const previous = globalThis.fetch;
+  const events: ProducerDownloadEvent[] = [];
+  let calls = 0;
+  globalThis.fetch = Object.assign(
+    async () => {
+      calls++;
+      return new Response('private body', { status: 403, headers: { 'x-private': 'secret-header' } });
+    },
+    { preconnect: previous.preconnect },
+  );
+  try {
+    await assert.rejects(
+      downloadGitHubCIProducerArtifact({
+        root,
+        token: 'secret-token',
+        request,
+        profile: profileFixture(request),
+        run_id: 123,
+        run_attempt: 1,
+        artifact_id: 456,
+        observer: (event) => {
+          events.push(event);
+        },
+      }),
+      /provider response unavailable/,
+    );
+    assert.equal(calls, 1);
+    assert.deepEqual(events, [
+      { phase: 'request', route: 'producer-run', method: 'GET' },
+      { phase: 'response', route: 'producer-run', method: 'GET', status: 403 },
+    ]);
+    assert.doesNotMatch(JSON.stringify(events), /secret|https|private/);
+  } finally {
+    globalThis.fetch = previous;
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('throwing and mutating observer cannot change download or validation', async () => {
+  const request = requestFixture();
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-observer-isolation-'));
+  const observer = (event: ProducerDownloadEvent): void => {
+    if (event.phase === 'response') event.status = 200;
+    globalThis.fetch = Object.assign(
+      async () => {
+        throw new Error('observer replaced fetch');
+      },
+      {
+        preconnect: globalThis.fetch.preconnect,
+      },
+    );
+    throw new Error('observer failure');
+  };
+  try {
+    await withStubbedFetch(providerFixture(request, { run: { head_sha: 'f'.repeat(40) } }), async (state) => {
+      await assert.rejects(
+        downloadGitHubCIProducerArtifact({
+          root,
+          token: 'explicit-api-token',
+          request,
+          profile: profileFixture(request),
+          run_id: 123,
+          run_attempt: 1,
+          artifact_id: 456,
+          observer,
+        }),
+        /selected download run differs/,
+      );
+      assert.equal(state.calls.length, 1);
+    });
+    await withStubbedFetch(providerFixture(request), async (state) => {
+      const result = await downloadGitHubCIProducerArtifact({
+        root,
+        token: 'explicit-api-token',
+        request,
+        profile: profileFixture(request),
+        run_id: 123,
+        run_attempt: 1,
+        artifact_id: 456,
+        observer,
+      });
+      assert.deepEqual(readFileSync(path.join(root, result.transport_path)), transportBytes);
+      assert.equal(state.storageAuthorization, null);
+      assert.equal(state.zipCalls, 1);
+    });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 function requestFixture(target: 'bun-windows-x64' | 'bun-linux-x64' = 'bun-windows-x64'): CIDeliveryRequest {
   const body: Omit<CIDeliveryRequest, 'request_id'> = {
