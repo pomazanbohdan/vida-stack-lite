@@ -13,6 +13,7 @@ import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '
 export { sessionHandoffDatabasePath } from '../config/project-paths.js';
 import stateSchema from '../../schemas/persistent-session-handoff-state.v1.schema.json' with { type: 'json' };
 import {
+  capturedRuntimeConfigurationBinding,
   loadRuntimeConfig,
   runtimeConfigDigest,
   type AgentRuntimeConfig,
@@ -43,6 +44,8 @@ import {
 import { loadProjectSetContext } from '../config/project-context.js';
 import { correctiveExecutionSchema, type CorrectiveExecution } from './final-assurance.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
+import { readRuntimeInitializationAuthority } from '../runtime-initialization.js';
+import { PROJECT_INITIALIZATION_PATH, RUNTIME_INITIALIZATION_PATH } from '../config/project-paths.js';
 import {
   advanceSessionWorkflowHandoffFromConfig,
   prepareSessionWorkflowHandoffFromConfig,
@@ -650,12 +653,45 @@ function taskSourceMutationPolicyResolver(
   };
 }
 
+/** Bind exact selected source and initialization receipt before entering Host admission. */
+export function configuredHostPreOpenValidator(repositoryRoot: string, config: AgentRuntimeConfig): () => undefined {
+  const binding = capturedRuntimeConfigurationBinding(config);
+  const authority = readRuntimeInitializationAuthority(repositoryRoot, config);
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  const receiptPath =
+    authority.format === 'RuntimeInitialization/v1' ? RUNTIME_INITIALIZATION_PATH : PROJECT_INITIALIZATION_PATH;
+  const receiptBytes = access.readBytes(receiptPath, 'runtime initialization receipt');
+  requireState(
+    authority.binding.repository_id === config.repository.repository_id &&
+      authority.binding.workspace_id === deriveWorkspaceId(config.repository.repository_id, repositoryRoot) &&
+      authority.binding.config_digest === runtimeConfigDigest(config) &&
+      canonicalJsonDigest(authority.binding.project_ids) ===
+        canonicalJsonDigest(config.projects.map((project) => project.project_id).sort()),
+    'runtime initialization binding is stale',
+  );
+  return () => {
+    const current = loadRuntimeConfig(repositoryRoot);
+    const currentBinding = capturedRuntimeConfigurationBinding(current);
+    requireState(
+      currentBinding.source === binding.source && currentBinding.source_digest === binding.source_digest,
+      'runtime configuration source changed before Host open',
+    );
+    requireState(
+      canonicalJsonDigest(readRuntimeInitializationAuthority(repositoryRoot, current)) ===
+        canonicalJsonDigest(authority) &&
+        access.readBytes(receiptPath, 'runtime initialization receipt').equals(receiptBytes),
+      'runtime initialization receipt changed before Host open',
+    );
+    return undefined;
+  };
+}
+
 /** Opens the same configured host SQLite file; no provider or session tool is invoked. */
 export function openConfiguredSessionHandoffStore(repositoryRoot: string): PersistentSessionHandoffStore {
   const config = loadRuntimeConfig(repositoryRoot);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  access.ensureDirectory(config.control.work_root, 'session handoff state root');
+  const validate = configuredHostPreOpenValidator(repositoryRoot, config);
   const databasePath = sessionHandoffDatabasePath(repositoryRoot, config);
   try {
     const stats = lstatSync(databasePath);
@@ -666,7 +702,16 @@ export function openConfiguredSessionHandoffStore(repositoryRoot: string): Persi
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
-  const database = openHostStateDatabase(repositoryRoot, sessionHandoffDatabaseRelativePath(config), workspaceId);
+  const database = openHostStateDatabase(
+    repositoryRoot,
+    sessionHandoffDatabaseRelativePath(config),
+    workspaceId,
+    () => {
+      validate();
+      access.ensureDirectory(config.control.work_root, 'session handoff state root');
+      return undefined;
+    },
+  );
   try {
     new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, repositoryRoot);
     return new PersistentSessionHandoffStore(database, workspaceId, config, repositoryRoot);
@@ -2416,7 +2461,7 @@ export function openConfiguredMastraSessionLedger(repositoryRoot: string): Mastr
   const config = loadRuntimeConfig(repositoryRoot);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  access.ensureDirectory(config.control.work_root, 'Mastra session ledger root');
+  const validate = configuredHostPreOpenValidator(repositoryRoot, config);
   const databasePath = sessionHandoffDatabasePath(repositoryRoot, config);
   try {
     const stats = lstatSync(databasePath);
@@ -2427,7 +2472,16 @@ export function openConfiguredMastraSessionLedger(repositoryRoot: string): Mastr
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
   }
-  const database = openHostStateDatabase(repositoryRoot, sessionHandoffDatabaseRelativePath(config), workspaceId);
+  const database = openHostStateDatabase(
+    repositoryRoot,
+    sessionHandoffDatabaseRelativePath(config),
+    workspaceId,
+    () => {
+      validate();
+      access.ensureDirectory(config.control.work_root, 'Mastra session ledger root');
+      return undefined;
+    },
+  );
   try {
     let hostState!: HostStateStore, ledger!: MastraSessionLedger;
     const approvalVerifier = createLocalSourceWriteApprovalVerifier(

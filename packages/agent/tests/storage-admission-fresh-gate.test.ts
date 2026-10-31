@@ -14,9 +14,11 @@ import {
   assertWorkspaceDatabaseAdmission,
   closeWorkspaceDatabaseWithAdmission,
   openAdmittedWorkspaceDatabase,
+  openDatabaseWithStorageAdmission,
   openExistingWorkspaceDatabaseWithAdmission,
   type StorageReadAdmission,
   withExclusiveStorageAdmission,
+  withExclusiveInitConfigAdmission,
   withExclusiveServiceOperationAdmission,
 } from '../src/config/storage-read-admission.js';
 import {
@@ -30,6 +32,125 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.js';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
+
+test('init config exclusive admission holds across await and releases after throw', async () => {
+  const fixture = openRepositoryFixture('init-config-exclusive-');
+  let passed = false;
+  let expired: (() => void) | undefined;
+  try {
+    const source = new Database(path.join(fixture.root, '.vida', 'source.sqlite'), { create: true });
+    source.close(true);
+    const failure = new Error('init operation failed');
+    await Promise.resolve(
+      expect(
+        withExclusiveInitConfigAdmission(fixture.root, fixture.workspaceId, async ({ assertActive }) => {
+          expired = assertActive;
+          await Promise.resolve();
+          assertActive();
+          expect(() =>
+            openAdmittedWorkspaceDatabase(fixture.root, '.vida/source.sqlite', fixture.workspaceId, true),
+          ).toThrow();
+          throw failure;
+        }),
+      ).rejects.toBe(failure),
+    );
+    expect(expired).toBeDefined();
+    expect(() => expired?.()).toThrow('exclusive admission capability expired');
+    const reader = openAdmittedWorkspaceDatabase(fixture.root, '.vida/source.sqlite', fixture.workspaceId, true);
+    closeWorkspaceDatabaseWithAdmission(reader);
+    passed = true;
+  } finally {
+    if (passed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed init config exclusive fixture: ' + fixture.root);
+  }
+});
+
+test('pre-open validation rereads state under admission before database construction', () => {
+  const fixture = openRepositoryFixture('init-config-preopen-');
+  let passed = false;
+  try {
+    const marker = path.join(fixture.root, '.vida', 'pending');
+    const target = path.join(fixture.root, '.vida', 'not-created.sqlite');
+    writeFileSync(marker, 'old');
+    const expected = readFileSync(marker, 'utf8');
+    writeFileSync(marker, 'new');
+    let opened = false;
+    expect(() =>
+      openDatabaseWithStorageAdmission(
+        fixture.root,
+        fixture.workspaceId,
+        '.vida/not-created.sqlite',
+        (capture) => {
+          opened = true;
+          const db = new Database(target, { create: true });
+          capture(db);
+          return db;
+        },
+        () => {
+          if (readFileSync(marker, 'utf8') !== expected) throw new Error('stale configuration');
+        },
+      ),
+    ).toThrow('stale configuration');
+    expect(opened).toBe(false);
+    expect(fs.existsSync(target)).toBe(false);
+    const lease = acquireStorageReadAdmission(fixture.root, fixture.workspaceId, '.vida/not-created.sqlite');
+    lease.close();
+    passed = true;
+  } finally {
+    if (passed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed init config pre-open fixture: ' + fixture.root);
+  }
+});
+
+test('pre-open validation rejects thenables before constructing the source database', () => {
+  const fixture = openRepositoryFixture('init-config-async-validation-');
+  let passed = false;
+  try {
+    const target = path.join(fixture.root, '.vida', 'not-created.sqlite');
+    let opened = false;
+    expect(() =>
+      openDatabaseWithStorageAdmission(
+        fixture.root,
+        fixture.workspaceId,
+        '.vida/not-created.sqlite',
+        (capture) => {
+          opened = true;
+          const db = new Database(target, { create: true });
+          capture(db);
+          return db;
+        },
+        (() => Promise.resolve()) as unknown as () => undefined,
+      ),
+    ).toThrow('pre-open validation must be synchronous');
+    expect(opened).toBe(false);
+    expect(fs.existsSync(target)).toBe(false);
+    const lease = acquireStorageReadAdmission(fixture.root, fixture.workspaceId, '.vida/not-created.sqlite');
+    lease.close();
+    passed = true;
+  } finally {
+    if (passed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed async pre-open fixture: ' + fixture.root);
+  }
+});
+
+test('init admission creates only the gate on a fresh root', async () => {
+  const fixture = openRepositoryFixture('init-config-fresh-root-');
+  let passed = false;
+  try {
+    fs.rmdirSync(path.join(fixture.root, '.vida'));
+    expect(fs.existsSync(path.join(fixture.root, '.vida'))).toBe(false);
+    await withExclusiveInitConfigAdmission(fixture.root, fixture.workspaceId, async ({ assertActive }) => {
+      await Promise.resolve();
+      assertActive();
+    });
+    expect(fs.readdirSync(path.join(fixture.root, '.vida'))).toEqual(['storage-admission.v1.sqlite']);
+    assertOnlyStorageAdmissionGate(fixture.root, fixture.workspaceId);
+    passed = true;
+  } finally {
+    if (passed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed fresh init admission fixture: ' + fixture.root);
+  }
+});
 
 test('storage sidecar observations avoid CAS writes and preserve retained contention evidence', () => {
   const deadlineAt = performance.now() + 5000;

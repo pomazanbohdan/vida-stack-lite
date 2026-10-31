@@ -5379,49 +5379,56 @@ export function openHostStateDatabase(
   repositoryRoot: string,
   databaseRelativePath: string,
   workspaceId: string,
+  validateBeforeOpen?: () => undefined,
 ): Database {
   requireState(hashPattern.test(workspaceId), 'Host workspace identity invalid');
   assertWorkspaceDatabaseRelativePath(databaseRelativePath);
   const access = requireSafeRepositoryAccess(repositoryRoot);
   assertProjectUpgradeInactive(access);
   const parentRelative = path.posix.dirname(databaseRelativePath);
-  const parentIdentity = access.directoryIdentity(parentRelative, 'Host database parent');
   const databasePath = path.join(access.repository_root, databaseRelativePath);
   requireState(
     typeof databasePath === 'string' && path.isAbsolute(databasePath),
     'host state requires an absolute file-backed database path',
   );
-  assertHostStateDatabasePathSafe(databasePath);
-  assertHostStateDatabaseSidecarsSafe(databasePath);
-  return openDatabaseWithStorageAdmission(repositoryRoot, workspaceId, databaseRelativePath, (capture) => {
-    const database = new Database(databasePath, { create: true, strict: true });
-    capture(database);
-    assertHostStateDatabasePathSafe(databasePath);
-    const opened = lstatSync(databasePath, { bigint: true });
-    const main = database
-      .query<{ name: string; file: string }, []>('PRAGMA database_list')
-      .all()
-      .find((entry) => entry.name === 'main');
-    requireState(
-      access.directoryIdentity(parentRelative, 'opened Host database parent') === parentIdentity &&
-        main?.file === databasePath,
-      'Host database path changed during open',
-    );
-    database.exec('PRAGMA journal_mode=WAL');
-    database.exec('PRAGMA synchronous=FULL');
-    database.exec('PRAGMA busy_timeout=1000');
-    const after = lstatSync(databasePath, { bigint: true });
-    assertHostStateDatabaseSidecarsSafe(databasePath);
-    requireState(
-      opened.nlink === 1n &&
-        after.nlink === 1n &&
-        opened.dev === after.dev &&
-        opened.ino === after.ino &&
-        access.directoryIdentity(parentRelative, 'initialized Host database parent') === parentIdentity,
-      'Host database identity changed during initialization',
-    );
-    return database;
-  });
+  return openDatabaseWithStorageAdmission(
+    repositoryRoot,
+    workspaceId,
+    databaseRelativePath,
+    (capture) => {
+      const parentIdentity = access.directoryIdentity(parentRelative, 'Host database parent');
+      assertHostStateDatabasePathSafe(databasePath);
+      assertHostStateDatabaseSidecarsSafe(databasePath);
+      const database = new Database(databasePath, { create: true, strict: true });
+      capture(database);
+      assertHostStateDatabasePathSafe(databasePath);
+      const opened = lstatSync(databasePath, { bigint: true });
+      const main = database
+        .query<{ name: string; file: string }, []>('PRAGMA database_list')
+        .all()
+        .find((entry) => entry.name === 'main');
+      requireState(
+        access.directoryIdentity(parentRelative, 'opened Host database parent') === parentIdentity &&
+          main?.file === databasePath,
+        'Host database path changed during open',
+      );
+      database.exec('PRAGMA journal_mode=WAL');
+      database.exec('PRAGMA synchronous=FULL');
+      database.exec('PRAGMA busy_timeout=1000');
+      const after = lstatSync(databasePath, { bigint: true });
+      assertHostStateDatabaseSidecarsSafe(databasePath);
+      requireState(
+        opened.nlink === 1n &&
+          after.nlink === 1n &&
+          opened.dev === after.dev &&
+          opened.ino === after.ino &&
+          access.directoryIdentity(parentRelative, 'initialized Host database parent') === parentIdentity,
+        'Host database identity changed during initialization',
+      );
+      return database;
+    },
+    validateBeforeOpen,
+  );
 }
 
 function assertHostStateDatabasePathSafe(databasePath: string): void {

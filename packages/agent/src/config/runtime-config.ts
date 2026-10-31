@@ -17,6 +17,7 @@ import {
   LEGACY_RUNTIME_CONFIGURATION_PATH,
   PROJECT_CONFIGURATION_PATHS,
   PROJECT_INITIALIZATION_PATH,
+  RUNTIME_INITIALIZATION_PENDING_PATH,
   PROJECT_UPGRADE_OPERATION_PATH,
   PROJECT_ACTIVATION_PATH,
   PROJECT_WORKSPACE_DATABASE_PATH,
@@ -33,6 +34,7 @@ import {
 } from './project-activation.js';
 import { composeProjectConfigurationInputs, projectConfigurationInputDigest } from './project-configuration.js';
 import { assertCurrentProjectConfigurationBinding } from './project-configuration-rebind.js';
+import { validateRuntimeInitializationReceipt } from './initialization-record.js';
 import { validateProjectInitializationReceipt } from './project-initialization-record.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
 import { isCanonicalJsonNumber } from '../contracts/canonical-json-core.js';
@@ -1689,7 +1691,9 @@ export function assertLoadedRuntimeConfig(config: AgentRuntimeConfig, repository
   assertCondition(authorizedRuntimeConfigs.has(config), 'runtime config must come from loadRuntimeConfig');
   const boundRoot = authorizedRuntimeConfigRoots.get(config);
   assertCondition(boundRoot !== undefined, 'runtime config repository binding is missing');
-  assertProjectUpgradeInactive(requireSafeRepositoryAccess(boundRoot!));
+  const access = requireSafeRepositoryAccess(boundRoot!);
+  assertProjectUpgradeInactive(access);
+  assertConsumerConfigurationInactive(access);
   if (repositoryRoot !== undefined) {
     assertCondition(path.isAbsolute(repositoryRoot), 'runtime config root must be absolute');
     assertCondition(
@@ -1703,16 +1707,30 @@ export function loadRuntimeConfig(repositoryRoot: string): AgentRuntimeConfig {
   return loadRuntimeConfigForSelectedSource(repositoryRoot);
 }
 
+/** Observe the selected configuration without granting authority to the returned copy. */
+export function readRuntimeConfigurationForObservation(repositoryRoot: string): {
+  readonly config: AgentRuntimeConfig;
+  readonly source: RuntimeConfigurationSource;
+  readonly source_digest: string;
+} {
+  assertCondition(path.isAbsolute(repositoryRoot), 'repository root must be absolute');
+  const root = path.resolve(repositoryRoot);
+  const access = repositoryReadOnlyObservation(requireSafeRepositoryAccess(root));
+  const snapshot = readRuntimeConfigSnapshot(root, access, configCache.get(root));
+  return Object.freeze({
+    config: freezeJsonValue(structuredClone(snapshot.config)),
+    source: snapshot.source,
+    source_digest: snapshot.source_digest,
+  });
+}
+
 /** Read and validate configured identity without creating repository CAS sidecars or granting config authority. */
 export function readRuntimeConfigIdentityForObservation(repositoryRoot: string): {
   readonly repository_id: string;
   readonly project_ids: string[];
   readonly bundle: string;
 } {
-  assertCondition(path.isAbsolute(repositoryRoot), 'repository root must be absolute');
-  const root = path.resolve(repositoryRoot);
-  const access = repositoryReadOnlyObservation(requireSafeRepositoryAccess(root));
-  const snapshot = readRuntimeConfigSnapshot(root, access, configCache.get(root));
+  const snapshot = readRuntimeConfigurationForObservation(repositoryRoot);
   return Object.freeze({
     repository_id: snapshot.config.repository.repository_id,
     project_ids: snapshot.config.projects.map((project) => project.project_id),
@@ -1739,6 +1757,25 @@ function loadRuntimeConfigForSelectedSource(repositoryRoot: string): AgentRuntim
   return config;
 }
 
+/** Consumer configuration owns the pending slot; only valid legacy init intents pass. */
+export function assertConsumerConfigurationInactive(access: SafeRepositoryAccess | SafeRepositoryObservation): void {
+  if (!access.fileExists(RUNTIME_INITIALIZATION_PENDING_PATH, 'pending initialization intent')) return;
+  const bytes = access.readBytes(RUNTIME_INITIALIZATION_PENDING_PATH, 'pending initialization intent');
+  const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  assertCondition(Buffer.from(text, 'utf8').equals(bytes), 'pending initialization intent UTF-8 differs');
+  const value: unknown = JSON.parse(text);
+  const schema = readRuntimePackageResourceText(
+    runtimePackageAccess(),
+    'schemas/runtime-initialization.v1.schema.json',
+    'initialization schema',
+  );
+  const intent = validateRuntimeInitializationReceipt(value, schema);
+  assertCondition(
+    intent.provenance === 'generated' && intent.workspace_binding_status === 'pending',
+    'pending initialization intent is unknown',
+  );
+}
+
 function readRuntimeConfigSnapshot(
   root: string,
   access: SafeRepositoryAccess | SafeRepositoryObservation,
@@ -1749,6 +1786,7 @@ function readRuntimeConfigSnapshot(
   readonly source_digest: string;
 } {
   assertProjectUpgradeInactive(access);
+  assertConsumerConfigurationInactive(access);
   const selection = selectRuntimeConfigurationSource(access);
   const source = selection.source;
   const loaded =
@@ -1761,6 +1799,7 @@ function readRuntimeConfigSnapshot(
     () => loaded.config,
   );
   assertProjectUpgradeInactive(access);
+  assertConsumerConfigurationInactive(access);
   assertCondition(
     recheckRuntimeConfigurationSelection(access, selection),
     'runtime configuration source changed during its read.',

@@ -75,6 +75,12 @@ The following work is OPEN and pending prioritization; no Source fix is claimed.
 ### BL-INIT001: Diagnose and qualify installed native init
 
 - Status: OPEN; priority: TBD. Dependencies: none; investigate first.
+- Implementation checkpoint: the shared pre-Host configure owner, frozen
+  relocation/recovery and bundle rebind are implemented for 0.1.8. An internal
+  Windows candidate completed the three-project TEMP configure/init/scope flow
+  with native Job and capture evidence. The WORK record owns exact artifact,
+  public delivery, external installation and remaining quality observations;
+  this checkpoint does not close the retained UNKNOWN or Runtime acceptance.
 - Find the actual phase and cause of the retained UNKNOWN above; record findings.
   Use the existing owner to qualify stage/failure observability, capture integrity
   and a typed terminal success or bounded refusal. Make a minimal causal fix only

@@ -14,9 +14,12 @@ const yaml = isBunRuntime ? await import('yaml') : null;
 const initializationRecord = isBunRuntime ? await import('../src/config/initialization-record.ts') : null;
 const projectPaths = isBunRuntime ? await import('../src/config/project-paths.ts') : null;
 const documentationPolicy = isBunRuntime ? await import('../src/documentation/policy.ts') : null;
+const storageAdmission = isBunRuntime ? await import('../src/config/storage-read-admission.ts') : null;
 
 type AgentRuntimeConfig = import('../src/config/runtime-config.ts').AgentRuntimeConfig;
 type SafeRepositoryAccess = import('../src/config/safe-repository-access.ts').SafeRepositoryAccess;
+type SafeRepositoryObservation = import('../src/config/safe-repository-access.ts').SafeRepositoryObservation;
+type InitializationReferenceAccess = Pick<SafeRepositoryAccess, 'assertDirectory' | 'fileExists' | 'readText'>;
 type RuntimeInitializationReceipt = import('../src/config/initialization-record.ts').RuntimeInitializationReceipt;
 type DocumentationPolicy = ReturnType<typeof import('../src/documentation/policy.ts').validateDocumentationPolicy>;
 type ProjectMapping = ReturnType<typeof projectMappings>[number];
@@ -28,6 +31,7 @@ type RenderedTemplate = {
   content: string;
 };
 type TemplateEvidence = Omit<RenderedTemplate, 'content'>;
+type InitializationObservation = SafeRepositoryObservation & Pick<SafeRepositoryAccess, 'assertDirectory'>;
 type InitializationRequest = {
   readonly projectRoot: string;
   readonly repository: string;
@@ -167,6 +171,10 @@ function requireInitializationRuntime(): void {
   if (!isBunRuntime) throw new Error('Project initialization requires the pinned Bun runtime.');
 }
 
+function readInitializationConfig(_access: InitializationObservation, root: string): AgentRuntimeConfig {
+  return requireRuntimeModule(runtimeConfig).readRuntimeConfigurationForObservation(root).config;
+}
+
 /** @param {{ readonly projectRoot: string; readonly repository: string; readonly mappings: readonly string[]; readonly bundleRoot: string }} request @returns {InitializationContext} */
 function initializationContext({
   projectRoot,
@@ -221,9 +229,97 @@ function initializationContext({
   return { access, packageAccess, bundle, canonicalRoot, selectedProjects };
 }
 
+/** Observation-only initialization context; the executing package is the only bundle authority. */
+export function initializationObservationContext(request: {
+  readonly projectRoot: string;
+  readonly repository: string;
+  readonly projectMappings: readonly string[];
+}) {
+  const context = initializationContext({
+    projectRoot: request.projectRoot,
+    repository: request.repository,
+    mappings: request.projectMappings,
+    bundleRoot: executingPackageRoot,
+  });
+  const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(context.access);
+  return {
+    observation,
+    bundle: context.bundle,
+    canonicalRoot: context.canonicalRoot,
+    selectedProjects: context.selectedProjects,
+    assertProjectDirectory: (root: string) => context.access.assertDirectory(root, 'configured project root'),
+    projectDirectoryIdentity: (root: string) => context.access.directoryIdentity(root, 'configured project root'),
+    readPackageBytes: (target: string) => context.packageAccess.readBytes(target, 'executing package resource'),
+    packageCodePaths: () =>
+      requireRuntimeModule(runtimeConfig)
+        .runtimePackageCodePaths('runtime-package', context.packageAccess)
+        .map((entry) => entry.slice('runtime-package/'.length)),
+    validatePolicy: (config: AgentRuntimeConfig, content: string) =>
+      validateProjectDocumentationPolicy(context.packageAccess, config, content),
+    describePolicy: (config: AgentRuntimeConfig, content: string) => {
+      const policy = validateProjectDocumentationPolicy(context.packageAccess, config, content);
+      return {
+        policy_sha256: hash(content),
+        canonical_roots: [...policy.canonical_roots],
+        map_paths: [...policy.map_paths],
+        excluded_roots: [...policy.excluded_roots],
+        changelog_path: policy.changelog_path ?? null,
+      };
+    },
+    validateReferences: (
+      config: AgentRuntimeConfig,
+      projection?: readonly {
+        readonly oldRoot: string;
+        readonly newRoot: string;
+        readonly directories: readonly { readonly path: string }[];
+        readonly files: readonly { readonly destination: string; readonly bytes: Buffer }[];
+      }[],
+    ) => {
+      const under = (value: string, root: string) => value === root || value.startsWith(root + '/');
+      const hidden = (value: string) => projection?.some((move) => under(value, move.oldRoot)) ?? false;
+      const file = (value: string) =>
+        projection?.flatMap((move) => move.files).find((entry) => entry.destination === value);
+      const directory = (value: string) =>
+        projection?.some((move) =>
+          move.directories.some((entry) => move.newRoot + entry.path.slice(move.oldRoot.length) === value),
+        ) ?? false;
+      validateGeneratedReferences(
+        {
+          fileExists: (target, label) =>
+            file(target) ? true : hidden(target) ? false : observation.fileExists(target, label),
+          readText: (target, label) => {
+            const entry = file(target);
+            if (entry) return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(entry.bytes);
+            if (hidden(target)) throw new Error('Projected source path is unavailable');
+            return observation.readText(target, label);
+          },
+          assertDirectory: (target, label) => {
+            if (directory(target)) return;
+            if (hidden(target)) throw new Error('Projected source directory is unavailable');
+            context.access.assertDirectory(target, label);
+          },
+        },
+        config,
+        [],
+        context.packageAccess,
+      );
+    },
+    defaultConfig: () => {
+      const rendered = renderTemplates(
+        context.packageAccess,
+        context.bundle,
+        request.repository,
+        context.selectedProjects,
+        '1970-01-01T00:00:00.000Z',
+      );
+      return configureRenderedTemplates(rendered, context.selectedProjects).validatedConfig;
+    },
+  };
+}
+
 /** @param {SafeRepositoryAccess} access */
 function existingInitialization(
-  access: SafeRepositoryAccess,
+  access: Pick<SafeRepositoryAccess, 'fileExists'>,
 ): { status: string; existing: string[]; next_action: string } | null {
   const required = [...outputs.map(([, output]) => output), initializationReceiptPath()];
   const existing = required.filter((output) => access.fileExists(output, 'initialization output'));
@@ -385,7 +481,7 @@ function validateExistingBindings(
 
 /** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {SafeRepositoryAccess} packageAccess */
 function requireConfiguredDirectories(
-  access: SafeRepositoryAccess,
+  access: InitializationReferenceAccess,
   validatedConfig: AgentRuntimeConfig,
   packageAccess: SafeRepositoryAccess,
 ): void {
@@ -397,7 +493,7 @@ function requireConfiguredDirectories(
 
 /** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {readonly RenderedTemplate[]} rendered @returns {Set<string>} */
 function requireConfiguredMarkers(
-  access: SafeRepositoryAccess,
+  access: InitializationReferenceAccess,
   validatedConfig: AgentRuntimeConfig,
   rendered: readonly RenderedTemplate[],
 ): Set<string> {
@@ -411,7 +507,7 @@ function requireConfiguredMarkers(
 
 /** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {ReadonlySet<string>} generatedPaths @param {SafeRepositoryAccess} packageAccess */
 function requireConfiguredKnowledge(
-  access: SafeRepositoryAccess,
+  access: InitializationReferenceAccess,
   validatedConfig: AgentRuntimeConfig,
   generatedPaths: ReadonlySet<string>,
   packageAccess: SafeRepositoryAccess,
@@ -428,7 +524,7 @@ function requireConfiguredKnowledge(
 
 /** @param {SafeRepositoryAccess} access @param {AgentRuntimeConfig} validatedConfig @param {readonly RenderedTemplate[]} rendered @param {SafeRepositoryAccess} packageAccess */
 function validateGeneratedReferences(
-  access: SafeRepositoryAccess,
+  access: InitializationReferenceAccess,
   validatedConfig: AgentRuntimeConfig,
   rendered: readonly RenderedTemplate[],
   packageAccess: SafeRepositoryAccess,
@@ -483,7 +579,10 @@ function buildReceipt(
 }
 
 /** @param {SafeRepositoryAccess} access @param {SafeRepositoryAccess} packageAccess @returns {TemplateEvidence[]} */
-function existingOutputEvidence(access: SafeRepositoryAccess, packageAccess: SafeRepositoryAccess): TemplateEvidence[] {
+function existingOutputEvidence(
+  access: Pick<SafeRepositoryAccess, 'readBytes'>,
+  packageAccess: SafeRepositoryAccess,
+): TemplateEvidence[] {
   return outputs.map(([template, output]) => {
     const templateBytes = packageAccess.readBytes(`templates/${template}`, 'initialization template');
     const outputBytes = access.readBytes(output, 'existing project integration file');
@@ -518,7 +617,7 @@ function requireUnchangedExistingOutputs(
 
 /** @param {SafeRepositoryAccess} access @param {string} projectRoot @param {string} bundle @param {string} canonicalRoot @param {string} repository @param {readonly ProjectMapping[]} selectedProjects @param {SafeRepositoryAccess} packageAccess @returns {RuntimeInitializationReceipt} */
 function validateExistingReceipt(
-  access: SafeRepositoryAccess,
+  access: InitializationObservation,
   projectRoot: string,
   bundle: string,
   canonicalRoot: string,
@@ -531,7 +630,7 @@ function validateExistingReceipt(
     rawSchema,
     JSON.parse(access.readText(initializationReceiptPath(), 'existing initialization receipt')),
   );
-  const config = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
+  const config = readInitializationConfig(access, projectRoot);
   validateExistingBindings(config, bundle, repository, selectedProjects);
   const evidence = existingOutputEvidence(access, packageAccess);
   if (
@@ -552,25 +651,42 @@ async function archivePendingIntent(
   access: SafeRepositoryAccess,
   bytes: Buffer,
   receipt: RuntimeInitializationReceipt,
+  assertActive: () => void,
 ): Promise<void> {
   const archive = `.agent/initialization-provenance/${receipt.created_at.replace(/[^0-9]/g, '')}.v1.json`;
+  assertActive();
   await access.ensureDirectoryAsync('.agent/initialization-provenance', 'inactive initialization provenance');
+  assertActive();
   await access.moveNoReplaceAsync(pendingReceiptPath, archive, hash(bytes), 'archive completed initialization intent');
+  assertActive();
 }
 
 /** @param {SafeRepositoryAccess} access @param {string} projectRoot @param {string} bundle @param {string} canonicalRoot @param {string} repository @param {readonly ProjectMapping[]} selectedProjects @param {SafeRepositoryAccess} packageAccess */
-async function resumePendingInitialization(
-  access: SafeRepositoryAccess,
-  projectRoot: string,
+function preparePendingInitialization(
+  access: InitializationObservation,
   bundle: string,
   canonicalRoot: string,
   repository: string,
   selectedProjects: readonly ProjectMapping[],
   packageAccess: SafeRepositoryAccess,
-): Promise<{ status: string; receipt: string; config_digest: string }> {
+): {
+  pendingBytes: Buffer;
+  intent: RuntimeInitializationReceipt;
+  rawSchema: string;
+  rendered: RenderedTemplate[];
+  existing: { output: string; output_sha256: string }[];
+  existingReceipt: RuntimeInitializationReceipt | null;
+} {
   const pendingBytes = access.readBytes(pendingReceiptPath, 'pending initialization intent');
   /** @type {unknown} */
   const parsedIntent: unknown = JSON.parse(pendingBytes.toString('utf8'));
+  if (
+    typeof parsedIntent === 'object' &&
+    parsedIntent !== null &&
+    'schema' in parsedIntent &&
+    parsedIntent.schema === 'ConsumerConfigurationOperation/v1'
+  )
+    throw new Error('Pending consumer configuration requires its own recovery');
   const rawSchema = packageAccess.readText('schemas/runtime-initialization.v1.schema.json', 'initialization schema');
   const intent = validateReceipt(rawSchema, parsedIntent);
   if (intent.provenance !== 'generated' || intent.workspace_binding_status !== 'pending')
@@ -589,10 +705,12 @@ async function resumePendingInitialization(
   ).receipt;
   if (JSON.stringify(intent) !== JSON.stringify(planned))
     throw new Error('Pending initialization intent differs from the requested identity or current templates');
+  if (access.fileExists('agent-runtime.config.v1.yaml', 'owner runtime configuration'))
+    requireRuntimeModule(runtimeConfig).assertProjectUpgradeInactive(access);
   if (access.fileExists(initializationReceiptPath(), 'initialization receipt')) {
     const receipt = validateExistingReceipt(
       access,
-      projectRoot,
+      canonicalRoot,
       bundle,
       canonicalRoot,
       repository,
@@ -601,12 +719,7 @@ async function resumePendingInitialization(
     );
     if (receipt.created_at !== intent.created_at)
       throw new Error('Canonical receipt belongs to a different initialization operation');
-    await archivePendingIntent(access, pendingBytes, intent);
-    return {
-      status: 'resumed_initialization',
-      receipt: initializationReceiptPath(),
-      config_digest: receipt.config_digest,
-    };
+    return { pendingBytes, intent, rawSchema, rendered, existing: [], existingReceipt: receipt };
   }
   const existing = rendered
     .filter((entry) => access.fileExists(entry.output, 'initialization output'))
@@ -620,7 +733,7 @@ async function resumePendingInitialization(
     requireEntry(outputs, 2, 'Runtime configuration output')[1],
     'owner runtime configuration',
   )
-    ? requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot)
+    ? readInitializationConfig(access, canonicalRoot)
     : validatedConfig;
   validateExistingBindings(effectiveConfig, bundle, repository, selectedProjects);
   const policyTemplate = requireEntry(rendered, 3, 'Documentation policy template');
@@ -631,6 +744,36 @@ async function resumePendingInitialization(
   validateProjectDocumentationPolicy(packageAccess, effectiveConfig, policy);
   const missing = rendered.filter((entry) => !existing.some((before) => before.output === entry.output));
   validateGeneratedReferences(access, effectiveConfig, missing, packageAccess);
+  return { pendingBytes, intent, rawSchema, rendered, existing, existingReceipt: null };
+}
+
+async function resumePendingInitialization(
+  access: SafeRepositoryAccess,
+  projectRoot: string,
+  bundle: string,
+  canonicalRoot: string,
+  repository: string,
+  selectedProjects: readonly ProjectMapping[],
+  packageAccess: SafeRepositoryAccess,
+  assertActive: () => void,
+): Promise<{ status: string; receipt: string; config_digest: string }> {
+  const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
+  const { pendingBytes, intent, rawSchema, rendered, existing, existingReceipt } = preparePendingInitialization(
+    { ...observation, assertDirectory: access.assertDirectory },
+    bundle,
+    canonicalRoot,
+    repository,
+    selectedProjects,
+    packageAccess,
+  );
+  if (existingReceipt) {
+    await archivePendingIntent(access, pendingBytes, intent, assertActive);
+    return {
+      status: 'resumed_initialization',
+      receipt: initializationReceiptPath(),
+      config_digest: existingReceipt.config_digest,
+    };
+  }
   const requireUnchanged = () => {
     if (!access.readBytes(pendingReceiptPath, 'pending initialization intent').equals(pendingBytes))
       throw new Error('Pending initialization intent changed during resume');
@@ -638,14 +781,18 @@ async function resumePendingInitialization(
       if (hash(access.readBytes(entry.output, 'owner initialization output')) !== entry.output_sha256)
         throw new Error('Owner initialization output changed during resume: ' + entry.output);
   };
+  assertActive();
   const creator = await access.prepareExclusiveCreation();
   for (const entry of rendered) {
+    assertActive();
     requireUnchanged();
     if (existing.some((before) => before.output === entry.output)) continue;
     if (entry.output === requireEntry(outputs, 3, 'Documentation policy output')[1]) {
       await creator.ensureDirectory('docs', 'documentation directory');
+      assertActive();
       await creator.ensureDirectory('docs/agent-instructions', 'documentation policy directory');
     }
+    assertActive();
     await creator.writeExclusive(entry.output, entry.content, 'known missing initialization output');
     existing.push({ output: entry.output, output_sha256: entry.output_sha256 });
   }
@@ -669,12 +816,13 @@ async function resumePendingInitialization(
   ).receipt;
   validateReceipt(rawSchema, receipt);
   requireUnchanged();
+  assertActive();
   await creator.writeExclusive(
     initializationReceiptPath(),
     JSON.stringify(receipt, null, 2) + '\n',
     'initialization receipt',
   );
-  await archivePendingIntent(access, pendingBytes, intent);
+  await archivePendingIntent(access, pendingBytes, intent, assertActive);
   return {
     status: 'resumed_initialization',
     receipt: initializationReceiptPath(),
@@ -682,29 +830,20 @@ async function resumePendingInitialization(
   };
 }
 
-/** @param {SafeRepositoryAccess} access @param {string} projectRoot @param {string} bundle @param {string} canonicalRoot @param {string} repository @param {readonly ProjectMapping[]} selectedProjects @param {SafeRepositoryAccess} packageAccess */
-async function reconcileExistingInitialization(
-  access: SafeRepositoryAccess,
+function prepareExistingReconciliation(
+  access: InitializationObservation,
   projectRoot: string,
   bundle: string,
   canonicalRoot: string,
   repository: string,
   selectedProjects: readonly ProjectMapping[],
   packageAccess: SafeRepositoryAccess,
-): Promise<{ status: string; receipt: string; config_digest: string }> {
-  if (access.fileExists(pendingReceiptPath, 'pending initialization intent'))
-    return resumePendingInitialization(
-      access,
-      projectRoot,
-      bundle,
-      canonicalRoot,
-      repository,
-      selectedProjects,
-      packageAccess,
-    );
+): { receipt: RuntimeInitializationReceipt; existing: boolean; evidence: TemplateEvidence[] } {
   const present = outputs
     .map(([, output]) => output)
     .filter((output) => access.fileExists(output, 'existing project integration file'));
+  if (access.fileExists('agent-runtime.config.v1.yaml', 'existing project configuration'))
+    requireRuntimeModule(runtimeConfig).assertProjectUpgradeInactive(access);
   if (access.fileExists(initializationReceiptPath(), 'initialization receipt')) {
     const receipt = validateExistingReceipt(
       access,
@@ -715,11 +854,11 @@ async function reconcileExistingInitialization(
       selectedProjects,
       packageAccess,
     );
-    return { status: 'existing', receipt: initializationReceiptPath(), config_digest: receipt.config_digest };
+    return { receipt, existing: true, evidence: [] };
   }
   if (present.length !== outputs.length)
     throw new Error('Reconciliation requires all existing project integration files');
-  const validatedConfig = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
+  const validatedConfig = readInitializationConfig(access, projectRoot);
   validateExistingBindings(validatedConfig, bundle, repository, selectedProjects);
   validateProjectDocumentationPolicy(
     packageAccess,
@@ -738,9 +877,48 @@ async function reconcileExistingInitialization(
     'adopted_existing',
   );
   validateReceipt(rawSchema, receipt);
+  return { receipt, existing: false, evidence };
+}
+
+async function reconcileExistingInitialization(
+  access: SafeRepositoryAccess,
+  projectRoot: string,
+  bundle: string,
+  canonicalRoot: string,
+  repository: string,
+  selectedProjects: readonly ProjectMapping[],
+  packageAccess: SafeRepositoryAccess,
+  assertActive: () => void,
+): Promise<{ status: string; receipt: string; config_digest: string }> {
+  const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
+  if (observation.fileExists(pendingReceiptPath, 'pending initialization intent'))
+    return resumePendingInitialization(
+      access,
+      projectRoot,
+      bundle,
+      canonicalRoot,
+      repository,
+      selectedProjects,
+      packageAccess,
+      assertActive,
+    );
+  const { receipt, existing, evidence } = prepareExistingReconciliation(
+    { ...observation, assertDirectory: access.assertDirectory },
+    projectRoot,
+    bundle,
+    canonicalRoot,
+    repository,
+    selectedProjects,
+    packageAccess,
+  );
+  if (existing)
+    return { status: 'existing', receipt: initializationReceiptPath(), config_digest: receipt.config_digest };
+  assertActive();
   const creator = await access.prepareExclusiveCreation();
   requireUnchangedExistingOutputs(access, evidence, receipt.config_digest, projectRoot);
+  assertActive();
   await creator.ensureDirectory('.agent', 'initialization receipt directory');
+  assertActive();
   await creator.writeExclusive(
     initializationReceiptPath(),
     JSON.stringify(receipt, null, 2) + '\n',
@@ -760,28 +938,37 @@ async function publishInitialization(
   projectRoot: string,
   rendered: readonly RenderedTemplate[],
   receipt: RuntimeInitializationReceipt,
+  assertActive: () => void,
 ): Promise<{ status: string; receipt: string; config_digest: string }> {
+  assertActive();
   const creator = await access.prepareExclusiveCreation();
+  assertActive();
   await creator.ensureDirectory('.agent', 'pending initialization directory');
   const intent = JSON.stringify(receipt, null, 2) + '\n';
+  assertActive();
   await creator.writeExclusive(pendingReceiptPath, intent, 'pending initialization intent');
   for (const entry of rendered) {
+    assertActive();
     if (entry.output === requireEntry(outputs, 3, 'Documentation policy output')[1]) {
       await creator.ensureDirectory('docs', 'documentation directory');
+      assertActive();
       await creator.ensureDirectory('docs/agent-instructions', 'documentation policy directory');
     }
+    assertActive();
     await creator.writeExclusive(entry.output, entry.content, 'project integration file');
   }
   const installed = requireRuntimeModule(runtimeConfig).loadRuntimeConfig(projectRoot);
   if (requireRuntimeModule(runtimeConfig).runtimeConfigDigest(installed) !== receipt.config_digest)
     throw new Error('Project configuration changed during initialization');
+  assertActive();
   await creator.ensureDirectory('.agent', 'initialization receipt directory');
+  assertActive();
   await creator.writeExclusive(
     initializationReceiptPath(),
     JSON.stringify(receipt, null, 2) + '\n',
     'initialization receipt',
   );
-  await archivePendingIntent(access, Buffer.from(intent), receipt);
+  await archivePendingIntent(access, Buffer.from(intent), receipt, assertActive);
   return {
     status: 'initialized',
     receipt: initializationReceiptPath(),
@@ -789,40 +976,42 @@ async function publishInitialization(
   };
 }
 
-/** @param {InitializationRequest} request @param {string} bundleRoot */
-export async function initializeProjectFromBundle(
+function prepareNewInitialization(
   request: InitializationRequest,
-  bundleRoot: string,
-): Promise<{ status: string; receipt?: string; config_digest?: string; existing?: string[]; next_action?: string }> {
-  const { projectRoot, repository, projectMappings: mappings, reconcileExisting = false } = request;
-  const { access, packageAccess, bundle, canonicalRoot, selectedProjects } = initializationContext({
-    projectRoot,
-    repository,
-    mappings,
-    bundleRoot,
-  });
-  if (reconcileExisting)
-    return reconcileExistingInitialization(
-      access,
-      projectRoot,
+  context: InitializationContext,
+): {
+  existing: ReturnType<typeof existingInitialization>;
+  rendered?: RenderedTemplate[];
+  receipt?: RuntimeInitializationReceipt;
+} {
+  const { access, packageAccess, bundle, canonicalRoot, selectedProjects } = context;
+  const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
+  if (observation.fileExists(pendingReceiptPath, 'pending initialization intent'))
+    preparePendingInitialization(
+      { ...observation, assertDirectory: access.assertDirectory },
       bundle,
       canonicalRoot,
-      repository,
+      request.repository,
       selectedProjects,
       packageAccess,
     );
-  const existing = existingInitialization(access);
-  if (existing) return existing;
+  const existing = existingInitialization(observation);
+  if (existing) return { existing };
   const createdAt = new Date().toISOString();
-  const rendered = renderTemplates(packageAccess, bundle, repository, selectedProjects, createdAt);
+  const rendered = renderTemplates(packageAccess, bundle, request.repository, selectedProjects, createdAt);
   const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects);
-  validateGeneratedBindings(validatedConfig, bundle, repository, selectedProjects);
+  validateGeneratedBindings(validatedConfig, bundle, request.repository, selectedProjects);
   validateProjectDocumentationPolicy(
     packageAccess,
     validatedConfig,
     requireEntry(rendered, 3, 'Documentation policy template').content,
   );
-  validateGeneratedReferences(access, validatedConfig, rendered, packageAccess);
+  validateGeneratedReferences(
+    { ...observation, assertDirectory: access.assertDirectory },
+    validatedConfig,
+    rendered,
+    packageAccess,
+  );
   const { rawSchema, receipt } = buildReceipt(
     packageAccess,
     bundle,
@@ -834,5 +1023,190 @@ export async function initializeProjectFromBundle(
     createdAt,
   );
   validateReceipt(rawSchema, receipt);
-  return publishInitialization(access, projectRoot, rendered, receipt);
+  return { existing: null, rendered, receipt };
+}
+
+async function initializeProjectUnderAdmission(
+  request: InitializationRequest,
+  bundleRoot: string,
+  assertActive: () => void,
+): Promise<{ status: string; receipt?: string; config_digest?: string; existing?: string[]; next_action?: string }> {
+  const context = initializationContext({
+    projectRoot: request.projectRoot,
+    repository: request.repository,
+    mappings: request.projectMappings,
+    bundleRoot,
+  });
+  const { access, packageAccess, bundle, canonicalRoot, selectedProjects } = context;
+  assertActive();
+  if (request.reconcileExisting)
+    return reconcileExistingInitialization(
+      access,
+      request.projectRoot,
+      bundle,
+      canonicalRoot,
+      request.repository,
+      selectedProjects,
+      packageAccess,
+      assertActive,
+    );
+  const prepared = prepareNewInitialization(request, context);
+  if (prepared.existing) return prepared.existing;
+  if (!prepared.rendered || !prepared.receipt) throw new Error('Initialization preparation is incomplete');
+  return publishInitialization(access, request.projectRoot, prepared.rendered, prepared.receipt, assertActive);
+}
+
+/** All legacy initialization effects share the configuration admission gate. */
+export async function initializeProjectFromBundle(
+  request: InitializationRequest,
+  bundleRoot: string,
+): Promise<{ status: string; receipt?: string; config_digest?: string; existing?: string[]; next_action?: string }> {
+  const initial = initializationContext({
+    projectRoot: request.projectRoot,
+    repository: request.repository,
+    mappings: request.projectMappings,
+    bundleRoot,
+  });
+  if (request.reconcileExisting) {
+    const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(initial.access);
+    if (observation.fileExists(pendingReceiptPath, 'pending initialization intent'))
+      preparePendingInitialization(
+        { ...observation, assertDirectory: initial.access.assertDirectory },
+        initial.bundle,
+        initial.canonicalRoot,
+        request.repository,
+        initial.selectedProjects,
+        initial.packageAccess,
+      );
+    else {
+      const prepared = prepareExistingReconciliation(
+        { ...observation, assertDirectory: initial.access.assertDirectory },
+        request.projectRoot,
+        initial.bundle,
+        initial.canonicalRoot,
+        request.repository,
+        initial.selectedProjects,
+        initial.packageAccess,
+      );
+      if (prepared.existing)
+        return {
+          status: 'existing',
+          receipt: initializationReceiptPath(),
+          config_digest: prepared.receipt.config_digest,
+        };
+    }
+  } else {
+    const prepared = prepareNewInitialization(request, initial);
+    if (prepared.existing) return prepared.existing;
+  }
+  const rootIdentity = initial.access.directoryIdentity('.', 'project root');
+  const bundleIdentity = initial.packageAccess.directoryIdentity('.', 'runtime package');
+  const workspaceId = requireRuntimeModule(workspaceIdentity).deriveWorkspaceId(
+    request.repository,
+    initial.canonicalRoot,
+  );
+  return requireRuntimeModule(storageAdmission).withExclusiveInitConfigAdmission(
+    initial.canonicalRoot,
+    workspaceId,
+    async ({ assertActive }) => {
+      assertActive();
+      const current = initializationContext({
+        projectRoot: request.projectRoot,
+        repository: request.repository,
+        mappings: request.projectMappings,
+        bundleRoot,
+      });
+      if (
+        current.canonicalRoot !== initial.canonicalRoot ||
+        current.access.directoryIdentity('.', 'project root') !== rootIdentity ||
+        current.packageAccess.directoryIdentity('.', 'runtime package') !== bundleIdentity
+      )
+        throw new Error('Initialization root or executing bundle changed before admission');
+      const result = await initializeProjectUnderAdmission(request, bundleRoot, assertActive);
+      assertActive();
+      return result;
+    },
+  );
+}
+
+/** Internal receipt preparation only; the caller owns admission, journal and CAS. */
+export async function derivePendingConfigurationReceipt(
+  request: {
+    readonly projectRoot: string;
+    readonly repository: string;
+    readonly projectMappings: readonly string[];
+    readonly teamProjectGrants?: readonly string[];
+    readonly projectMoves?: readonly string[];
+  },
+  assertActive: () => void,
+  recovery?: import('./init-configuration.ts').ConfigurationRecovery,
+): Promise<{
+  readonly plan: import('./init-configuration.ts').ConsumerConfigurationPlan;
+  readonly beforeReceipt: Buffer;
+  readonly targetReceipt: string;
+}> {
+  assertActive();
+  const { captureConsumerConfiguration, captureConsumerConfigurationForRecovery } =
+    await import('./init-configuration.ts');
+  assertActive();
+  const capture = recovery
+    ? captureConsumerConfigurationForRecovery(request, recovery)
+    : captureConsumerConfiguration(request);
+  if (!capture.receipt) throw new Error('A pending initialization receipt is required');
+  const context = initializationContext({
+    projectRoot: request.projectRoot,
+    repository: request.repository,
+    mappings: request.projectMappings,
+    bundleRoot: executingPackageRoot,
+  });
+  const currentBytes = capture.before[2];
+  const policyBytes = capture.before[3];
+  if (!currentBytes || !policyBytes) throw new Error('Existing initialization outputs are incomplete');
+  const decode = (bytes: Uint8Array) => new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
+  const oldReceipt = validateReceipt(
+    context.packageAccess.readText('schemas/runtime-initialization.v1.schema.json', 'initialization schema'),
+    JSON.parse(decode(capture.receipt)),
+  );
+  if (oldReceipt.workspace_binding_status !== 'pending') throw new Error('Initialization receipt workspace is bound');
+  const target = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(capture.targetConfig);
+  validateExistingBindings(target, context.bundle, request.repository, context.selectedProjects);
+  validateProjectDocumentationPolicy(context.packageAccess, target, capture.targetPolicy);
+  const evidence = outputs.map(([template, output], index) => ({
+    template: `templates/${template}`,
+    template_sha256: hash(context.packageAccess.readBytes(`templates/${template}`, 'initialization template')),
+    output,
+    output_sha256:
+      index === 2
+        ? hash(capture.targetConfig)
+        : index === 3
+          ? hash(capture.targetPolicy)
+          : hash(capture.before[index]!),
+  }));
+  const built = buildReceipt(
+    context.packageAccess,
+    context.bundle,
+    context.canonicalRoot,
+    target,
+    target,
+    evidence,
+    oldReceipt.provenance,
+    oldReceipt.created_at,
+  );
+  const receipt =
+    oldReceipt.provenance === undefined
+      ? Object.fromEntries(Object.entries(built.receipt).filter(([key]) => key !== 'provenance'))
+      : built.receipt;
+  validateReceipt(built.rawSchema, receipt);
+  assertActive();
+  const checked = recovery
+    ? captureConsumerConfigurationForRecovery(request, recovery)
+    : captureConsumerConfiguration(request);
+  if (
+    checked.plan.binding !== capture.plan.binding ||
+    !checked.receipt?.equals(capture.receipt) ||
+    checked.targetConfig !== capture.targetConfig ||
+    checked.targetPolicy !== capture.targetPolicy
+  )
+    throw new Error('Receipt inputs changed during derivation');
+  return { plan: capture.plan, beforeReceipt: capture.receipt, targetReceipt: JSON.stringify(receipt, null, 2) + '\n' };
 }

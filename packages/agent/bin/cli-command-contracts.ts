@@ -23,6 +23,26 @@ export const cliCommandContracts = freezeCliDeclaration({
     ] as const,
     example: 'vida-agent init --project-root /workspace/app --repository example --project app=.',
   },
+  configure: {
+    purpose: 'Plan, inspect, apply, or resume consumer configuration.',
+    syntax: 'vida-agent configure plan|inspect|apply|resume <mode options>',
+    options: [
+      { name: '--project-root', arity: 1, type: 'absolute-path', required: true },
+      { name: '--repository', arity: 1, type: 'lowercase-slug' },
+      { name: '--project', arity: 1, type: 'project-mapping', repeatable: true },
+      { name: '--allow-project', arity: 1, type: 'team-project-mapping', repeatable: true },
+      { name: '--move-project', arity: 1, type: 'project-id=old-root:new-root', repeatable: true },
+      { name: '--plan', arity: 1, type: 'public-json-plan-file' },
+      { name: '--operation', arity: 1, type: 'operation-id' },
+    ],
+    constraints: [
+      'plan requires --project-root, --repository, and one or more --project; --allow-project and --move-project may repeat.',
+      'inspect requires only --project-root.',
+      'apply requires --project-root and --plan containing the public JSON plan.',
+      'resume requires --project-root, --repository, one or more --project and --operation; repeat --allow-project and --move-project as in the applied plan. Supply project mappings, grants and moves in plan order.',
+    ],
+    example: 'vida-agent configure plan --project-root /workspace/app --repository example --project app=.',
+  },
   install: {
     purpose: 'Check installer inputs or install dependencies and initialize a project.',
     syntax:

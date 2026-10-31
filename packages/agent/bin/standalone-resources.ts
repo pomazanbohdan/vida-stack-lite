@@ -289,6 +289,10 @@ export async function materializeResources({
   assertResourceCacheRoot(cache, privateRoot);
   resourceDirectory(cache, true);
   const checkCache = () => {
+    if (process.platform === 'win32') {
+      resourceDirectory(cache);
+      return;
+    }
     for (let current = cache; ; current = path.dirname(current)) {
       privateDirectory(current);
       if (current === privateRoot) break;

@@ -84,13 +84,14 @@ if (process.platform === 'win32' && process.env.SAFE_REPOSITORY_COMPLETENESS_ISO
 const roots: string[] = [];
 const require = createRequire(import.meta.url);
 const packageReadGate: { denied: boolean } = { denied: false };
+const realOpenRootFileSync = realFsSafeAdvanced.openRootFileSync;
 if (process.platform === 'win32' && process.env.SAFE_REPOSITORY_COMPLETENESS_ISOLATED === '1')
   void mock.module('@openclaw/fs-safe/advanced', () => {
     return {
       ...realFsSafeAdvanced,
       openRootFileSync: (options: Parameters<typeof realFsSafeAdvanced.openRootFileSync>[0]) => {
         if (packageReadGate.denied && options.boundaryLabel === 'fs-safe package attestation') return { ok: false };
-        return realFsSafeAdvanced.openRootFileSync(options);
+        return realOpenRootFileSync(options);
       },
     };
   });
@@ -176,7 +177,9 @@ safeRepositorySuite('safe repository access completeness', () => {
           mode === 'write'
             ? creator.writeExclusive('target.txt', 'owned fixture', 'owned denied file')
             : creator.ensureDirectory('target', 'owned denied directory');
-        await Promise.resolve(expect(pending).rejects.toThrow(/fs-safe package file is unsafe/));
+        await Promise.resolve(
+          expect(pending).rejects.toThrow(/fs-safe package (?:file is unsafe|attestation root boundary rejected)/),
+        );
         expect(existsSync(path.join(repositoryRoot, mode === 'write' ? 'target.txt' : 'target'))).toBe(false);
       } finally {
         packageReadGate.denied = false;
@@ -204,7 +207,9 @@ safeRepositorySuite('safe repository access completeness', () => {
       packageReadGate.denied = true;
     });
     try {
-      await Promise.resolve(expect(pending).rejects.toThrow(/fs-safe package file is unsafe/));
+      await Promise.resolve(
+        expect(pending).rejects.toThrow(/fs-safe package (?:file is unsafe|attestation root boundary rejected)/),
+      );
       expect(calls).toBe(0);
       expect(readFileSync(path.join(repositoryRoot, 'payload.txt'), 'utf8')).toBe('before');
       expect(existsSync(path.join(repositoryRoot, 'resource.lock'))).toBe(false);

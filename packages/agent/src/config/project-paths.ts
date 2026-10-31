@@ -36,6 +36,7 @@ export const INITIALIZED_PROJECT_PATHS = Object.freeze({
   temporary: '.vida/tmp',
 });
 
+export const RUNTIME_INITIALIZATION_PENDING_PATH = '.agent/runtime-initialization.pending.v1.json';
 export const RUNTIME_INITIALIZATION_PATH = '.agent/runtime-initialization.v1.json';
 /** Current upgrade intent is a reader barrier until its owner retires the active slot. */
 export const PROJECT_UPGRADE_OPERATION_PATH = '.vida/project-upgrade.v1.json';

@@ -2964,6 +2964,26 @@ Keep a failed or expired root even when the body eventually settles. Opt-in phas
 timings may diagnose setup, but nested timings are part of their enclosing phase
 and must not be added twice or treated as a controlled benchmark.
 
+The readonly consumer configuration observation case in
+`tests/consumer-configuration-admission.test.ts` has a120s Source functional
+bound for fresh fixture creation, the full project-upgrade precondition, its
+plan and resume, observation assertions and terminal fixture-retention record.
+Retain this fixture inside the test even on success; a delete begun before the
+deadline could finish after expiry. The parent may retire it only after complete
+passing evidence and native termination, under the existing cleanup contract.
+One unprofiled completion
+recorded plan4.14s, resume57.22s, observation108ms and full61.59s; it exited0
+without timeout with complete capture and Job active0. The observation timing
+is diagnostic, not a performance qualification. Retain the original FAIL/UNKNOWN
+evidence and require fresh affected proof. This fixture bound does not close or
+change the separate2s product operation responsiveness requirement.
+
+Fresh consumer configuration and relocation test roots remain retained after
+success, failure or expiry, with their actual root paths in the captured output.
+Do not delete a whole fixture from a `finally` block that can run after an
+uncertain operation. This retention rule changes no case or aggregate budget;
+earlier cleanup cannot be treated as retained evidence or reconstructed proof.
+
 Stopped-source writer setup reuses the existing in-process preparation helper
 with the real Ledger, Bridge, admission and Source snapshot. Keep its public
 writer issue and capture calls, and keep readonly fixtures at synthesis-only

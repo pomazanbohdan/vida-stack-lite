@@ -1199,6 +1199,16 @@ export function inspectPlannedProjectUpgrade(repositoryRoot: string, operationId
   );
 }
 
+async function inspectPlannedProjectUpgradeAsync(
+  access: SafeRepositoryAccess,
+  operationId: string,
+  journalPath = PROJECT_UPGRADE_OPERATION_PATH,
+): Promise<ReturnType<typeof readOperation>> {
+  return access.withExclusiveLockAsync(PROJECT_UPGRADE_OPERATION_PATH, label, async () =>
+    readOperation(access, operationId, journalPath),
+  );
+}
+
 function assertUpgradeOwner(
   access: SafeRepositoryAccess,
   store: HostStateStore,
@@ -1665,7 +1675,7 @@ export async function resumeFreshProjectUpgrade(
       return retireFreshProjectUpgrade(repositoryRoot, operationId, reconcileUnknown);
     await recoverProjectUpgradeIntent(repositoryRoot, operationId);
   }
-  let operation = inspectPlannedProjectUpgrade(repositoryRoot, operationId);
+  let operation = (await inspectPlannedProjectUpgradeAsync(access, operationId)).operation;
   requireUpgrade(operation.plan.database_mode === 'fresh', 'fresh repair required');
   // A refusal from the validated same-operation journal grants no effect authority.
   assertResumeReconciliationConsent(operation, reconcileUnknown);
@@ -2177,7 +2187,8 @@ export async function resumeFreshProjectUpgradeDatabase(
   reconcileUnknown = false,
 ): Promise<ProjectUpgradeOperation> {
   requireUpgrade(typeof reconcileUnknown === 'boolean', 'explicit reconciliation flag required');
-  const retained = inspectPlannedProjectUpgrade(repositoryRoot, operationId);
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  const retained = (await inspectPlannedProjectUpgradeAsync(access, operationId)).operation;
   requireUpgrade(retained.plan.database_mode === 'fresh', 'fresh repair required');
   assertResumeReconciliationConsent(retained, reconcileUnknown);
   await assertRetainedInitialSchema(retained);
@@ -2191,9 +2202,7 @@ async function withFreshUpgradeHost<T>(
   journalPath = PROJECT_UPGRADE_OPERATION_PATH,
 ): Promise<T> {
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  const stored = access.withExclusiveLock(PROJECT_UPGRADE_OPERATION_PATH, label, () =>
-    readOperation(access, operationId, journalPath),
-  );
+  const stored = await inspectPlannedProjectUpgradeAsync(access, operationId, journalPath);
   const operation = stored.operation;
   assertBootstrapPublicationOwner(access, bootstrapVerifier(operation), operation);
   requireUpgrade(
@@ -2291,7 +2300,8 @@ export async function applyFreshProjectUpgradeFiles(
   operationId: string,
   reconcileUnknown = false,
 ): Promise<ProjectUpgradeOperation> {
-  let operation = inspectPlannedProjectUpgrade(repositoryRoot, operationId);
+  const access = requireSafeRepositoryAccess(repositoryRoot);
+  let operation = (await inspectPlannedProjectUpgradeAsync(access, operationId)).operation;
   if (operation.storage_phase !== 'published')
     operation = await resumeFreshProjectUpgradeDatabase(repositoryRoot, operationId, reconcileUnknown);
   return withFreshUpgradeHost(repositoryRoot, operationId, async (store) => {

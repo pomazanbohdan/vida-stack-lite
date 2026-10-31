@@ -203,7 +203,23 @@ function resolveFsSafeNativePackageRoot(root: string, nativeTarget: string): str
   reject(entry !== path.join(nativeRoot, 'fs-safe-native.node'), 'fs-safe native entry is invalid');
   return nativeRoot;
 }
-function fsSafePackageTreeHash(root: string, nativeTarget: string): string {
+function windowsCheckReadRoot(directory: string, fd: number, label: string): void {
+  assertAncestorChain(directory, label);
+  const byPath = lstatSync(directory, { bigint: true });
+  const byFd = fstatSync(fd, { bigint: true });
+  reject(
+    !byPath.isDirectory() ||
+      byPath.isSymbolicLink() ||
+      !byFd.isDirectory() ||
+      byPath.dev === 0n ||
+      byPath.ino === 0n ||
+      byPath.birthtimeNs <= 0n ||
+      !sameFileIdentity(byPath, byFd) ||
+      byPath.birthtimeNs !== byFd.birthtimeNs,
+    label + ' root changed',
+  );
+}
+function fsSafePackageTreeHash(root: string, nativeTarget: string, binding?: WindowsNativeBinding): string {
   const nativeRoot = resolveFsSafeNativePackageRoot(root, nativeTarget);
   const files = [
     ...fsSafePackageManifest.map((relative) => ({ root, relative, logical: relative })),
@@ -215,13 +231,40 @@ function fsSafePackageTreeHash(root: string, nativeTarget: string): string {
   ].sort((left, right) => (left.logical < right.logical ? -1 : Number(left.logical > right.logical)));
   const digest = createHash('sha256');
   let totalBytes = 0;
-  files.forEach((file) => {
-    const bytes = readFsSafePackageFile(file.root, file.relative);
-    totalBytes += bytes.byteLength;
-    reject(totalBytes > fsSafePackageMaxBytes, 'fs-safe package size bound exceeded');
-    const fileHash = createHash('sha256').update(bytes).digest('hex');
-    digest.update('file\0' + file.logical + '\0' + bytes.byteLength + '\0' + fileHash + '\0');
-  });
+  const label = 'fs-safe package attestation';
+  let packageFd: number | undefined;
+  let nativeFd: number | undefined;
+  try {
+    if (binding) {
+      assertAncestorChain(root, label);
+      assertAncestorChain(nativeRoot, label);
+      packageFd = windowsOpenRoot(root, label).fd;
+      nativeFd = windowsOpenRoot(nativeRoot, label).fd;
+    }
+    files.forEach((file) => {
+      let bytes: Buffer;
+      if (!binding) {
+        bytes = readFsSafePackageFile(file.root, file.relative);
+      } else {
+        const rootFd = file.root === root ? packageFd! : nativeFd!;
+        bytes = windowsReadPinnedFile(file.root, rootFd, file.relative, binding, label, fsSafePackageMaxBytes, false);
+      }
+      totalBytes += bytes.byteLength;
+      reject(totalBytes > fsSafePackageMaxBytes, 'fs-safe package size bound exceeded');
+      const fileHash = createHash('sha256').update(bytes).digest('hex');
+      digest.update('file\0' + file.logical + '\0' + bytes.byteLength + '\0' + fileHash + '\0');
+    });
+    if (binding) {
+      windowsCheckReadRoot(root, packageFd!, label);
+      windowsCheckReadRoot(nativeRoot, nativeFd!, label);
+    }
+  } finally {
+    try {
+      if (nativeFd !== undefined) closeSync(nativeFd);
+    } finally {
+      if (packageFd !== undefined) closeSync(packageFd);
+    }
+  }
   return digest.digest('hex');
 }
 const fsSafePackageRoot = resolveFsSafePackageRoot();
@@ -253,26 +296,139 @@ function loadLinuxNativeBinding(): LinuxNativeBinding | undefined {
   );
   return [undefined, binding][Number(available)];
 }
+let qualifiedWindowsBinding: WindowsNativeBinding | undefined;
+let qualifiedWindowsMethods: readonly unknown[] | undefined;
+let qualifiedWindowsModules:
+  | {
+      readonly jsKey: string;
+      readonly nativeKey: string;
+      readonly jsEntry: NodeModule;
+      readonly nativeEntry: NodeModule;
+      readonly exports: { getNativeBinding?: () => WindowsNativeBinding | undefined };
+      readonly getter: () => WindowsNativeBinding | undefined;
+    }
+  | undefined;
+function liveQualifiedWindowsBinding(): WindowsNativeBinding | undefined {
+  if (
+    !fsSafePackageAttested ||
+    process.platform !== 'win32' ||
+    getFsSafeNativeConfig().mode === 'off' ||
+    !qualifiedWindowsBinding ||
+    !qualifiedWindowsMethods ||
+    !qualifiedWindowsModules
+  )
+    return undefined;
+  const modules = qualifiedWindowsModules;
+  const current = () =>
+    moduleRequire.cache[modules.jsKey] === modules.jsEntry &&
+    moduleRequire.cache[modules.nativeKey] === modules.nativeEntry &&
+    modules.jsEntry.exports === modules.exports &&
+    modules.nativeEntry.exports === qualifiedWindowsBinding &&
+    Object.getOwnPropertyDescriptor(modules.exports, 'getNativeBinding')?.value === modules.getter;
+  if (!current()) return undefined;
+  const binding = modules.getter.call(modules.exports);
+  if (!binding || binding !== qualifiedWindowsBinding) return undefined;
+  const methods = [
+    binding.renameNoReplace,
+    binding.renameReplace,
+    binding.openBeneath,
+    binding.mkdirBeneath,
+    binding.fstatIdentity,
+    binding.sha256File,
+  ];
+  if (
+    methods.some((method, index) => typeof method !== 'function' || method !== qualifiedWindowsMethods![index]) ||
+    !current() ||
+    getFsSafeNativeConfig().mode === 'off' ||
+    methods.some(
+      (method, index) =>
+        method !==
+        [
+          binding.renameNoReplace,
+          binding.renameReplace,
+          binding.openBeneath,
+          binding.mkdirBeneath,
+          binding.fstatIdentity,
+          binding.sha256File,
+        ][index],
+    ) ||
+    !current() ||
+    getFsSafeNativeConfig().mode === 'off'
+  )
+    return undefined;
+  return binding;
+}
 function loadWindowsNativeBinding(): WindowsNativeBinding | undefined {
-  if (!fsSafePackageAttested || process.platform !== 'win32') return undefined;
+  if (!fsSafePackageAttested || process.platform !== 'win32' || getFsSafeNativeConfig().mode === 'off')
+    return undefined;
   const nativeModule = moduleRequire(path.join(fsSafePackageRoot, 'dist', 'native.js')) as {
     getNativeBinding?: () => WindowsNativeBinding | undefined;
   };
-  const binding = nativeModule.getNativeBinding?.();
+  const getter = nativeModule.getNativeBinding;
+  const binding = getter?.call(nativeModule);
+  const methods = [
+    binding?.renameNoReplace,
+    binding?.renameReplace,
+    binding?.openBeneath,
+    binding?.mkdirBeneath,
+    binding?.fstatIdentity,
+    binding?.sha256File,
+  ];
+  if (!binding || methods.some((method) => typeof method !== 'function')) return undefined;
+  if (
+    qualifiedWindowsBinding &&
+    (binding !== qualifiedWindowsBinding || methods.some((method, index) => method !== qualifiedWindowsMethods![index]))
+  )
+    return undefined;
+  if (qualifiedWindowsBinding && !matchesAttestedNativeBinding(binding, true)) return undefined;
   const expected = fsSafePackageTreeSha256ByNativeTarget[fsSafePackageNativeTarget];
   const packageStillAttested =
-    expected !== undefined && fsSafePackageTreeHash(fsSafePackageRoot, fsSafePackageNativeTarget) === expected;
-  const available = all(
-    packageStillAttested,
-    matchesAttestedNativeBinding(binding, packageStillAttested),
-    typeof binding?.renameNoReplace === 'function',
-    typeof binding?.renameReplace === 'function',
-    typeof binding?.openBeneath === 'function',
-    typeof binding?.mkdirBeneath === 'function',
-    typeof binding?.fstatIdentity === 'function',
-    typeof binding?.sha256File === 'function',
-  );
-  return [undefined, binding][Number(available)];
+    expected !== undefined &&
+    fsSafePackageTreeHash(
+      fsSafePackageRoot,
+      fsSafePackageNativeTarget,
+      qualifiedWindowsBinding ? binding : undefined,
+    ) === expected;
+  if (
+    !packageStillAttested ||
+    getFsSafeNativeConfig().mode === 'off' ||
+    !matchesAttestedNativeBinding(binding, true) ||
+    methods.some(
+      (method, index) =>
+        method !==
+        [
+          binding.renameNoReplace,
+          binding.renameReplace,
+          binding.openBeneath,
+          binding.mkdirBeneath,
+          binding.fstatIdentity,
+          binding.sha256File,
+        ][index],
+    )
+  )
+    return undefined;
+  if (!qualifiedWindowsBinding) {
+    // Only loaded module identities are retained; this does not attest current package bytes.
+    try {
+      const jsKey = moduleRequire.resolve(path.join(fsSafePackageRoot, 'dist', 'native.js'));
+      const nativeRoot = resolveFsSafeNativePackageRoot(fsSafePackageRoot, fsSafePackageNativeTarget);
+      const nativeKey = moduleRequire.resolve(path.join(nativeRoot, 'fs-safe-native.node'));
+      const jsEntry = moduleRequire.cache[jsKey];
+      const nativeEntry = moduleRequire.cache[nativeKey];
+      if (
+        getter &&
+        Object.getOwnPropertyDescriptor(nativeModule, 'getNativeBinding')?.value === getter &&
+        jsEntry?.exports === nativeModule &&
+        nativeEntry?.exports === binding
+      )
+        qualifiedWindowsModules = { jsKey, nativeKey, jsEntry, nativeEntry, exports: nativeModule, getter };
+    } catch {
+      // An unavailable cache identity denies read-only use without changing mutation qualification.
+    }
+  }
+  qualifiedWindowsBinding ??= binding;
+  qualifiedWindowsMethods ??= methods;
+  return binding;
 }
 function assertFsSafeNativeCreateEnabled(label: string): void {
   reject(
@@ -339,6 +495,8 @@ export interface SafeRepositoryAccess {
   ) => Promise<'moved' | 'already_moved'>;
   readonly assertDirectory: (target: string, label: string) => void;
   readonly directoryIdentity: (target: string, label: string) => string;
+  /** Native file identity observation; absence or incomplete identity is a denial. */
+  readonly observeFileIdentity?: (target: string, label: string) => string;
   readonly ensureDirectory: (target: string, label: string) => string;
   readonly ensureDirectoryAsync: (target: string, label: string) => Promise<string>;
   readonly writeExclusive: (target: string, contents: string, label: string) => void;
@@ -1235,6 +1393,55 @@ function sameCaptureMetadata<Field extends keyof BigIntStats>(
 ): boolean {
   return fields.every((field) => left[field] === right[field]);
 }
+function observedFileIdentity(stats: BigIntStats, label: string): string {
+  reject(!stats.isFile() || stats.isSymbolicLink(), label + ' must be a regular file');
+  reject(
+    typeof stats.dev !== 'bigint' || typeof stats.ino !== 'bigint' || typeof stats.birthtimeNs !== 'bigint',
+    label + ' identity is incomplete',
+  );
+  reject(
+    stats.ino === 0n || (process.platform === 'win32' && stats.dev === 0n) || stats.birthtimeNs <= 0n,
+    label + ' identity is unavailable',
+  );
+  return JSON.stringify({ birthtime_ns: String(stats.birthtimeNs), dev: String(stats.dev), ino: String(stats.ino) });
+}
+function assertObservedFileIdentity(expected: string, stats: BigIntStats, label: string): void {
+  reject(observedFileIdentity(stats, label) !== expected, label + ' file identity changed');
+}
+function linuxObserveFileIdentity(root: string, target: string, label: string): string {
+  assertFsSafeNativeCreateEnabled(label);
+  assertLinuxNativeProviderCurrent(label);
+  const segments = safeRelative(root, target, label);
+  const beforeChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+  const parent = openParent(root, segments, label);
+  let fd = -1;
+  try {
+    const parentStats = fstatSync(parent.fd, { bigint: true });
+    assertCaptureIdle(parent.fd, parent.name, label);
+    fd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+    const identity = observedFileIdentity(fstatSync(fd, { bigint: true }), label);
+    assertObservedFileIdentity(identity, lstatSync(childPath(parent.fd, parent.name), { bigint: true }), label);
+    assertObservedFileIdentity(identity, fstatSync(fd, { bigint: true }), label);
+    assertObservedFileIdentity(identity, lstatSync(childPath(parent.fd, parent.name), { bigint: true }), label);
+    assertCaptureIdle(parent.fd, parent.name, label);
+    const afterChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+    reject(
+      beforeChain.length !== afterChain.length ||
+        beforeChain.some((item, i) => !sameCaptureMetadata(item, afterChain[i]!, captureDirectoryFields)) ||
+        !sameCaptureMetadata(parentStats, afterChain.at(-1)!, captureDirectoryFields),
+      label + ' root or parent-chain identity changed',
+    );
+    assertFsSafeNativeCreateEnabled(label);
+    assertLinuxNativeProviderCurrent(label);
+    return identity;
+  } finally {
+    try {
+      if (fd >= 0) closeQuietly(fd);
+    } finally {
+      closeQuietly(parent.fd);
+    }
+  }
+}
 function captureDirectoryChain(
   root: string,
   directories: readonly string[],
@@ -2068,14 +2275,6 @@ function fsSafeOpen(
   reject(!opened.ok, `${label} fs-safe boundary rejected the target (${failure.reason})`);
   return { fd: success.fd, stat: success.stat };
 }
-function fsSafeReadText(root: string, target: string, label: string): string {
-  const opened = fsSafeOpen(root, target, label);
-  try {
-    return readBoundedText(opened.fd, label);
-  } finally {
-    closeQuietly(opened.fd);
-  }
-}
 function fsSafeReadBytes(root: string, target: string, label: string, limit = maxRepositoryReadBytes): Buffer {
   const opened = fsSafeOpen(root, target, label, limit);
   try {
@@ -2094,15 +2293,18 @@ function sameFsSafeCaptureMetadata(left: BigIntStats, right: BigIntStats): boole
     left.mtimeNs === right.mtimeNs
   );
 }
-function fsSafeReadVerifiedCaptureBytes(
+function windowsReadPinnedFile(
   root: string,
-  target: string,
+  rootFd: number,
+  relative: string,
+  binding: WindowsNativeBinding,
   label: string,
-  limit = maxRepositoryReadBytes,
+  limit: number,
+  singleLink: boolean,
 ): Buffer {
-  const maximum = captureReadLimit(limit);
-  const absolute = fsSafeAbsolute(root, target, label);
-  const checkParents = () =>
+  const absolute = path.join(root, relative);
+  const checkPath = () => {
+    windowsCheckReadRoot(root, rootFd, label);
     assertNoSymlinkParentsSync({
       rootDir: root,
       targetPath: absolute,
@@ -2110,33 +2312,70 @@ function fsSafeReadVerifiedCaptureBytes(
       requireDirectories: false,
       messagePrefix: label,
     });
-  checkParents();
-  const opened = fsSafeOpen(root, target, label, maximum);
+  };
+  checkPath();
+  let parentFd = rootFd;
+  let fileFd: number | undefined;
+  const parentRelative = path.dirname(relative);
   try {
-    const beforeFd = fstatSync(opened.fd, { bigint: true });
-    const beforePath = lstatSync(absolute, { bigint: true });
+    if (singleLink && parentRelative !== '.') {
+      parentFd = binding.openBeneath(rootFd, parentRelative, windowsNativeOpenFlags(fsConstants.O_RDONLY)).fd;
+      windowsCheckReadRoot(path.dirname(absolute), parentFd, label);
+    }
+    fileFd = binding.openBeneath(
+      parentFd,
+      parentFd === rootFd ? relative : path.basename(relative),
+      windowsNativeOpenFlags(fsConstants.O_RDONLY),
+    ).fd;
+    const before = fstatSync(fileFd, { bigint: true });
+    const byPath = lstatSync(absolute, { bigint: true });
     reject(
-      !beforeFd.isFile() ||
-        beforeFd.nlink !== 1n ||
-        !beforePath.isFile() ||
-        beforePath.isSymbolicLink() ||
-        beforePath.nlink !== 1n,
-      `${label} must be a regular single-link file`,
+      !before.isFile() ||
+        !byPath.isFile() ||
+        byPath.isSymbolicLink() ||
+        before.dev === 0n ||
+        before.ino === 0n ||
+        (singleLink && before.nlink !== 1n) ||
+        !sameFsSafeCaptureMetadata(before, byPath) ||
+        before.size < 0n ||
+        before.size > BigInt(limit),
+      label + ' file is unsafe: ' + relative,
     );
-    reject(!sameFsSafeCaptureMetadata(beforeFd, beforePath), `${label} pathname changed before capture`);
-    reject(beforeFd.size < 0n || beforeFd.size > BigInt(maximum), `${label} exceeds the bounded repository read size`);
-    const bytes = readBoundedBuffer(opened.fd, label, maximum, false, Number(beforeFd.size));
-    const afterFd = fstatSync(opened.fd, { bigint: true });
+    const bytes = readBoundedBuffer(fileFd, label, limit, false, Number(before.size));
+    const after = fstatSync(fileFd, { bigint: true });
+    checkPath();
+    if (parentFd !== rootFd) windowsCheckReadRoot(path.dirname(absolute), parentFd, label);
     const afterPath = lstatSync(absolute, { bigint: true });
     reject(
-      !sameFsSafeCaptureMetadata(beforeFd, afterFd) || !sameFsSafeCaptureMetadata(beforePath, afterPath),
-      `${label} changed during capture`,
+      !after.isFile() ||
+        !afterPath.isFile() ||
+        afterPath.isSymbolicLink() ||
+        !sameFsSafeCaptureMetadata(before, after) ||
+        !sameFsSafeCaptureMetadata(before, afterPath) ||
+        BigInt(bytes.length) !== after.size,
+      label + ' file changed: ' + relative,
     );
-    reject(BigInt(bytes.length) !== afterFd.size, `${label} did not reach the exact file EOF`);
-    checkParents();
     return bytes;
   } finally {
-    closeQuietly(opened.fd);
+    try {
+      if (fileFd !== undefined) closeSync(fileFd);
+    } finally {
+      if (parentFd !== rootFd) closeSync(parentFd);
+    }
+  }
+}
+function windowsReadBytes(root: string, target: string, label: string, limit = maxRepositoryReadBytes): Buffer {
+  const relative = safeRelative(root, target, label).join('/');
+  const binding = liveQualifiedWindowsBinding();
+  if (!binding) fail(label + ' requires the live qualified Windows native provider');
+  assertAncestorChain(root, label);
+  const rootFd = windowsOpenRoot(root, label).fd;
+  try {
+    const bytes = windowsReadPinnedFile(root, rootFd, relative, binding, label, limit, true);
+    reject(liveQualifiedWindowsBinding() !== binding, label + ' Windows native provider changed during read');
+    return bytes;
+  } finally {
+    closeSync(rootFd);
   }
 }
 function fsSafeAssertDirectory(root: string, target: string, label: string): void {
@@ -2201,6 +2440,71 @@ function windowsOpenParent(
 function windowsCloseParent(opened: { readonly rootFd: number; readonly parentFd: number }): void {
   if (opened.parentFd !== opened.rootFd) closeQuietly(opened.parentFd);
   closeQuietly(opened.rootFd);
+}
+function windowsObserveFileIdentity(root: string, target: string, label: string): string {
+  const assertProvider = () => {
+    assertFsSafeNativeCreateEnabled(label);
+    reject(
+      !windowsNativeBinding || loadWindowsNativeBinding() !== windowsNativeBinding,
+      label + ' requires the currently attested Windows native provider',
+    );
+  };
+  const absolute = fsSafeAbsolute(root, target, label);
+  const checkParents = () => {
+    assertAncestorChain(root, label);
+    assertNoSymlinkParentsSync({
+      rootDir: root,
+      targetPath: absolute,
+      allowMissing: false,
+      requireDirectories: false,
+      messagePrefix: label,
+    });
+  };
+  const directoryKey = (stats: BigIntStats): string => {
+    reject(
+      !stats.isDirectory() || stats.isSymbolicLink() || stats.dev === 0n || stats.ino === 0n || stats.birthtimeNs <= 0n,
+      label + ' directory identity is unavailable',
+    );
+    return JSON.stringify([String(stats.dev), String(stats.ino), String(stats.birthtimeNs)]);
+  };
+  assertProvider();
+  checkParents();
+  const opened = windowsOpenParent(root, target, label);
+  let fd: number | undefined;
+  try {
+    const rootKey = directoryKey(fstatSync(opened.rootFd, { bigint: true }));
+    const parentKey = directoryKey(fstatSync(opened.parentFd, { bigint: true }));
+    reject(
+      rootKey !== directoryKey(lstatSync(root, { bigint: true })) ||
+        parentKey !== directoryKey(lstatSync(path.dirname(absolute), { bigint: true })),
+      label + ' root or parent changed',
+    );
+    fd = windowsNativeBinding!.openBeneath(
+      opened.parentFd,
+      opened.basename,
+      windowsNativeOpenFlags(fsConstants.O_RDONLY),
+    ).fd;
+    const identity = observedFileIdentity(fstatSync(fd, { bigint: true }), label);
+    assertObservedFileIdentity(identity, lstatSync(absolute, { bigint: true }), label);
+    assertObservedFileIdentity(identity, fstatSync(fd, { bigint: true }), label);
+    checkParents();
+    assertObservedFileIdentity(identity, lstatSync(absolute, { bigint: true }), label);
+    reject(
+      rootKey !== directoryKey(fstatSync(opened.rootFd, { bigint: true })) ||
+        rootKey !== directoryKey(lstatSync(root, { bigint: true })) ||
+        parentKey !== directoryKey(fstatSync(opened.parentFd, { bigint: true })) ||
+        parentKey !== directoryKey(lstatSync(path.dirname(absolute), { bigint: true })),
+      label + ' root or parent changed',
+    );
+    assertProvider();
+    return identity;
+  } finally {
+    try {
+      if (fd !== undefined) closeQuietly(fd);
+    } finally {
+      windowsCloseParent(opened);
+    }
+  }
 }
 function windowsWriteAll(fd: number, bytes: Buffer): void {
   let offset = 0;
@@ -2980,12 +3284,12 @@ function windowsAccess(root: string): SafeRepositoryAccess {
         },
       });
     },
-    readText: (target, label) => fsSafeReadText(root, target, label),
-    readBytes: (target, label) => fsSafeReadBytes(root, target, label),
+    readText: (target, label) => windowsReadBytes(root, target, label).toString('utf8'),
+    readBytes: (target, label) => windowsReadBytes(root, target, label),
     readCapturedBytes: (target, label, limit = maxRepositoryReadBytes) =>
-      fsSafeReadBytes(root, target, label, captureReadLimit(limit)),
+      windowsReadBytes(root, target, label, captureReadLimit(limit)),
     readVerifiedCaptureBytes: (target, label, limit = maxRepositoryReadBytes) =>
-      fsSafeReadVerifiedCaptureBytes(root, target, label, limit),
+      windowsReadBytes(root, target, label, captureReadLimit(limit)),
     fileExists: (target, label) => fsSafeFileExists(root, target, label),
     listFiles: (target, label) => fsSafeListFiles(root, target, label),
     observeFileExists: (target, label) => fsSafeFileExists(root, target, label),
@@ -2995,6 +3299,7 @@ function windowsAccess(root: string): SafeRepositoryAccess {
       windowsMoveNoReplaceAsync(root, source, target, expectedHash, label),
     assertDirectory: (target, label) => fsSafeAssertDirectory(root, target, label),
     directoryIdentity: (target, label) => directoryIdentity(root, target, label),
+    observeFileIdentity: (target, label) => windowsObserveFileIdentity(root, target, label),
     ensureDirectory: (target, label) => windowsEnsureDirectory(root, target, label),
     ensureDirectoryAsync: async (target, label) => windowsEnsureDirectory(root, target, label),
     writeExclusive: (target, contents, label) => windowsWriteExclusive(root, target, contents, label),
@@ -3117,6 +3422,7 @@ function linuxAccess(root: string): SafeRepositoryAccess {
       linuxDirectoryIdentity(root, target, label);
     },
     directoryIdentity: (target, label) => directoryIdentity(root, target, label),
+    observeFileIdentity: (target, label) => linuxObserveFileIdentity(root, target, label),
     ensureDirectory: (target, label) => ensureDirectory(root, target, label),
     ensureDirectoryAsync: async (target, label) => ensureDirectory(root, target, label),
     writeExclusive: (target, contents, label) => writeExclusive(root, target, contents, label),

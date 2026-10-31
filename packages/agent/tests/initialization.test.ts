@@ -214,6 +214,22 @@ afterAll(async () => {
 }, 180_000);
 
 v8CoverageTest(
+  'invalid legacy pending is denied before creating admission state',
+  async (budget) => {
+    await mkdir(path.join(root, '.agent'), { recursive: true });
+    const pending = path.join(root, '.agent/runtime-initialization.pending.v1.json');
+    const bytes = '{"schema":"RuntimeInitialization/v1","version":1}';
+    await writeFile(pending, bytes);
+    const result = await init(budget, ['--reconcile-existing']);
+    expect(result.exitCode).not.toBe(0);
+    expect(await readFile(pending, 'utf8')).toBe(bytes);
+    expect((await readdir(root)).sort()).toEqual(['.agent', 'tools']);
+    expect(await readdir(path.join(root, '.agent'))).toEqual(['runtime-initialization.pending.v1.json']);
+  },
+  30_000,
+);
+
+v8CoverageTest(
   'copied bundle with reused locked dependencies initializes explicit identity and records raw template hashes',
   async (budget) => {
     const result = await init(budget, [], { AGENT_RUNTIME_CONFIG: externalConfig });

@@ -1,7 +1,7 @@
 import { lstatSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { deriveWorkspaceId } from '../workspace-identity.js';
-import { loadProjectSetContext } from '../config/project-context.js';
+import { loadProjectSetContext, validateProjectContext } from '../config/project-context.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { closeWorkspaceDatabaseWithAdmission } from '../config/storage-read-admission.js';
@@ -19,6 +19,7 @@ import {
 } from '../host-state.js';
 import { readLocalSourceWriteAuthorization } from './local-source-authorization.js';
 import {
+  configuredHostPreOpenValidator,
   openConfiguredMastraSessionLedger,
   sessionHandoffDatabasePath,
   type MastraSessionLedgerState,
@@ -327,10 +328,16 @@ export async function executeTaskSourceBindingOperation(input: {
       'Task source issue and owned ledger close both failed',
     );
   }
+  const configuredValidator = configuredHostPreOpenValidator(root, config);
   const database = openHostStateDatabase(
     root,
     sessionHandoffDatabaseRelativePath(config),
     deriveWorkspaceId(config.repository.repository_id, root),
+    () => {
+      configuredValidator();
+      validateProjectContext(project, root);
+      return undefined;
+    },
   );
   return withWorkspaceDatabaseClose(
     database,

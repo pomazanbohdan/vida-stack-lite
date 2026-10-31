@@ -310,3 +310,61 @@ test('readResource preserves primary and close failures after the native descrip
     originalFsExports.rmSync(value.cache, { recursive: true, force: true });
   }
 });
+
+test('nested cache revalidates warm resources and rejects altered inventories', async () => {
+  const value = fixture();
+  const cache = path.join(value.cache, 'nested', 'cache');
+  const options = { ...value, cache, privateRoot: value.cache };
+  try {
+    const destination = await materializeResources(options);
+    assert.equal(
+      await materializeResources({
+        ...options,
+        loadFiles: async () => {
+          throw Error('unexpected reload');
+        },
+      }),
+      destination,
+    );
+    const file = path.join(destination, 'instructions', 'owned.md');
+    const original = readFileSync(file);
+    writeFileSync(file, 'tampered');
+    await assert.rejects(materializeResources(options), /Resource payload differs/);
+    writeFileSync(file, original);
+    rmSync(file);
+    await assert.rejects(materializeResources(options), /Resource tree is partial/);
+    writeFileSync(file, original);
+    const foreign = path.join(destination, 'unmanaged.txt');
+    writeFileSync(foreign, 'foreign');
+    await assert.rejects(materializeResources(options), /Resource tree contains an unknown file/);
+    rmSync(foreign);
+    assert.equal(await materializeResources(options), destination);
+  } finally {
+    rmSync(value.cache, { recursive: true, force: true });
+  }
+});
+
+test('nested cache rejects substituted cache and ancestor at admission', async () => {
+  const value = fixture();
+  const ancestor = path.join(value.cache, 'nested');
+  const cache = path.join(ancestor, 'cache');
+  const options = { ...value, cache, privateRoot: value.cache };
+  try {
+    const destination = await materializeResources(options);
+    for (const component of [cache, ancestor]) {
+      const retained = component + '-retained';
+      renameSync(component, retained);
+      try {
+        writeFileSync(component, 'foreign replacement');
+        await assert.rejects(materializeResources(options), /Resource directory is linked or missing/);
+        assert.equal(readFileSync(component, 'utf8'), 'foreign replacement');
+      } finally {
+        rmSync(component, { force: true });
+        renameSync(retained, component);
+      }
+      assert.equal(await materializeResources(options), destination);
+    }
+  } finally {
+    rmSync(value.cache, { recursive: true, force: true });
+  }
+});

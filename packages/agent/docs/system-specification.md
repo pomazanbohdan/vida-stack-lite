@@ -142,6 +142,68 @@ instances or owner-authored additions; their maintained Source and upgrade code
 remain in `packages/agent`. Root discovery is the only integration entry outside
 `.vida`; business and product documents keep their project-owned locations.
 
+The Source initialization/configuration owner implements public plan, apply,
+inspect and resume operations. Native delivery and user Runtime acceptance
+require separate evidence. The existing strict `init --reconcile-existing` behavior and
+`RuntimeInitialization/v1` schema bytes remain unchanged. Configuration uses a
+new `ConsumerConfigurationOperation/v1` discriminator in the existing pending
+namespace. Legacy recovery remains on its existing branch; an unknown, invalid
+or already pending operation denies new work.
+
+Plan is read-only: it creates no gate, Host database, metadata or other files.
+It derives the bundle from the executing package, not an operator-supplied
+bundle. Its public result contains only a canonical request, opaque runtime
+bindings, operation ID and change summary; it contains no raw configuration,
+policy, target bytes or secrets. Apply must recapture and derive the targets
+internally and compare the frozen binding before effects. A Source plan does not
+establish the identity of a separately installed native executable.
+
+Eligibility requires no Host database and either no initialization receipt or a
+valid receipt with pending workspace binding. A bound workspace, any known
+Host database, active ownership, ambiguous ledger or unknown observation denies
+configuration. Planning reads all four existing integration outputs and preserves
+their unrelated content. Existing project IDs cannot be removed or renamed;
+new projects use the initialization template defaults. Preserve custom project
+and integration fields, unrelated providers and roles, and YAML comments where
+supported. Current bundle adoption rebases package-owned local knowledge locations
+from the previous bundle prefix to the executing bundle, preserving their suffixes
+and validating the target resources. Team project allowlists remain unchanged unless the request explicitly
+grants a named existing team access to a named desired project. Duplicate and
+unknown grants are denied; no project access is inferred from project creation.
+For a pending receipt, the current planner only supports matching template hashes
+from the executing package; changed historical templates require separate old
+bundle validation and are denied. A gate file alone is not Host database state;
+plan is preliminary and apply validates admission and refreshes observations.
+Only documented structured project-root references and selectors may
+be rebased; ambiguous transformations deny the operation.
+
+Apply and resume use the existing `.vida/storage-admission.v1.sqlite` exclusive
+gate under a structurally closed schema. Durable pending intents and a fresh
+pre-open callback under the normal shared gate fence partial operations; no gate
+state transition is required. The exclusive callback supplies `assertActive`. A new pending operation is not
+a second ledger. Filesystem and
+SQLite updates are not jointly atomic. For an uninitialized consumer, complete
+and archive the configuration intent before the caller separately invokes strict
+initialization; do not fabricate adoption provenance.
+Apply may establish an absent `.agent` directory only after validating the fresh
+plan under exclusive admission. It must recheck root identity, archive absence
+and the complete binding after directory creation before issuing the intent.
+
+Explicit project relocation preserves stable project IDs. The Source planner
+requires pre-existing empty destination containers, same-volume paths and the
+supported path profile; it denies root-dot moves, metadata paths, reparse points,
+collisions and unsupported files. Under the gate it freezes the journal and
+uses no-replace moves for regular single-link files, with native identity and
+content checks. Directory identity and entries are observed; directories remain
+unowned and are not deleted. Plan counts are projections; actual retained empty
+source directories are reported. No ADS-absence gate is claimed.
+
+Apply rederives the bound plan, moves files and CAS-updates policy and
+configuration before updating a pending receipt. Resume uses the same operation
+and frozen request, accepts only a positively observed valid prefix and handles
+an exact archived completion after a lost acknowledgement. UNKNOWN effects
+remain fenced. A plan or Source implementation does not prove native delivery,
+physical installation or attributable user Runtime acceptance.
 The configuration entry is `.vida/project.yaml`. It contains project settings
 and references `.vida/agents.yaml` and `.vida/flows.yaml`. Each component owns
 disjoint fields. One loader resolves them through the safe repository boundary,

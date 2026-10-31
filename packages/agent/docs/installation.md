@@ -82,13 +82,55 @@ Installation records the selected installed bytes, version and effective PATH. N
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
+## Configure a consumer before Host use
+
+Version 0.1.8 introduces `configure plan`, `inspect`, `apply` and `resume`.
+The public 0.1.7 installation does not provide this qualified route.
+Before using it, identify the
+actual executable with `vida-agent version` and verify its delivered command
+help and installation evidence. The running installed bundle supplies the
+configuration bundle; no operator bundle selector is passed to `configure`.
+An existing runtime selector continues to govern work admission and must select
+the installed bundle with its required cutover evidence.
+
+The configuration route is pre-Host only: no Host database and either no
+initialization receipt or a valid receipt with pending workspace binding. A
+bound receipt, active ownership, ambiguous ledger or unknown observation
+denies it. Pending-receipt adoption requires matching executing-bundle template
+hashes; changed old templates are unsupported and denied. The pending receipt
+remains owned by the initialization owner; configuration preserves its identity,
+provenance and timestamp. Existing team access remains unchanged unless an
+explicit `--allow-project TEAM=ID` grants an existing team a desired project.
+
+Run `vida-agent configure plan --project-root ABS --repository SLUG --project
+ID=ROOT` with every desired mapping in order. Optional repeated `--allow-project
+TEAM=ID` grants access; optional repeated `--move-project ID=OLD:NEW` declares
+relocation and the corresponding `--project` names the new root. Relocation
+requires an existing empty destination on the same volume and the supported path
+profile. Files move without replacement under the frozen journal; directory
+ownership is not claimed and source directories are retained. Plan counts are
+projections. Inspect the redacted JSON plan, save its exact UTF-8 bytes to a
+regular file, then use `vida-agent configure apply --project-root ABS --plan
+PLAN_FILE`. `--move-project` is accepted only by plan and resume, not apply.
+For an uninitialized consumer, complete and archive configuration before a
+separate strict `init`; do not fabricate initialization provenance.
+
+Use `vida-agent configure inspect --project-root ABS` to observe pending status.
+For recovery, use `vida-agent configure resume --project-root ABS --repository
+SLUG --project ID=ROOT --operation OPERATION_ID` with the exact planned mappings,
+grants and moves in their original order. Resume follows the frozen operation;
+unknown effects stay fenced, and an exact archived completion can resolve a
+lost acknowledgement. Do not retry an uncertain effect or edit receipts by hand.
+Configuration completion and installation remain separate observations from
+attributable user Runtime acceptance.
+
 For Source tooling, provision the exact Bun package pin before invoking commands. The default launcher qualifies its running Bun and performs no Node/npm download fallback. Explicit legacy Node-owned compatibility callers remain separately scoped. Node/npm engine declarations describe SDK consumer compatibility. Declarations use the locked TypeScript CLI under Bun. The transpiler cache stays outside the package. These development operations are not a public installation route; dependency installation can still download packages. The delivered executable supplies its own pinned Bun and qualified resources.
 
 Neutral configuration uses local integration metadata for the explicit product set. Real provider, tenant, namespace, credentials and paths remain project-owned data. They do not select identity or grant authority.
 
 `vida-agent scope --project-root /absolute/consumer --repository example-repository --project plugin --path products/plugin/docs/system-specification.md` derives a typed current source snapshot. Pass returned typed bindings through supported work operations; never calculate or invent integrity values. A snapshot is not a source-write grant or accepted scope.
 
-Existing copied-bundle consumers stay on their current binding until the package-owned installation-binding repair updates configuration, initialization, selector and generated-pointer dependencies atomically with recovery. That relocation route remains an implementation GAP; the executor-model repair below does not relocate a package or migrate old work.
+The pre-Host configuration route above can adopt the executing bundle within its eligibility and template constraints. General copied-bundle repair for an already bound consumer remains a separate capability; the executor-model repair below does not relocate a package or migrate old work.
 
 Research-record repair uses validators, Ajv/YAML dependencies and schemas from
 the executing package root. The explicit consumer root owns artifacts; a copied

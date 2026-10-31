@@ -403,11 +403,16 @@ export function openAdmittedWorkspaceDatabase(
   workspaceId: string,
   readonly: boolean,
   safeIntegers = false,
+  validateBeforeOpen?: () => undefined,
 ): Database {
   assertSupportedArguments(root, workspaceId, readonly, safeIntegers);
   assertWorkspaceDatabaseRelativePath(relative);
-  return openDatabaseWithStorageAdmission(root, workspaceId, relative, (capture) =>
-    openUnadmittedWorkspaceDatabase(root, relative, readonly, safeIntegers, capture),
+  return openDatabaseWithStorageAdmission(
+    root,
+    workspaceId,
+    relative,
+    (capture) => openUnadmittedWorkspaceDatabase(root, relative, readonly, safeIntegers, capture),
+    validateBeforeOpen,
   );
 }
 
@@ -434,12 +439,22 @@ export function openDatabaseWithStorageAdmission<T extends Database>(
   workspaceId: string,
   relative: string,
   open: (capture: (database: T) => void) => T,
+  validateBeforeOpen?: () => undefined,
 ): T {
   assertSupportedArguments(root, workspaceId);
   assertWorkspaceDatabaseRelativePath(relative);
   requireAdmission(typeof open === 'function', 'database opener callback is required');
   const admission = acquireStorageReadAdmission(root, workspaceId, relative);
   try {
+    if (validateBeforeOpen !== undefined) {
+      requireAdmission(typeof validateBeforeOpen === 'function', 'pre-open validation must be a function');
+      const validation: unknown = validateBeforeOpen();
+      requireAdmission(
+        !((typeof validation === 'object' && validation !== null) || typeof validation === 'function') ||
+          typeof Reflect.get(validation, 'then') !== 'function',
+        'pre-open validation must be synchronous',
+      );
+    }
     return openAndBindWorkspaceDatabase(root, relative, workspaceId, admission, open);
   } catch (error) {
     const state = admissionStates.get(admission);
@@ -664,6 +679,20 @@ const withExclusiveStorageAdmissionOwner = async <T, A>(
   if (errors.length > 1) throw new AggregateError(errors, 'exclusive storage operation and cleanup failed');
   return result as T;
 };
+
+/** Internal init/config serialization only; this capability grants no source-write authority. */
+export function withExclusiveInitConfigAdmission<T>(
+  root: string,
+  workspaceId: string,
+  operation: (proof: { readonly assertActive: () => void }) => Promise<T>,
+): Promise<T> {
+  return withExclusiveStorageAdmissionOwner(
+    root,
+    workspaceId,
+    () => undefined,
+    ({ assertActive }) => operation(Object.freeze({ assertActive })),
+  );
+}
 
 /** Existing Host maintenance retains its Host-fence contract and capability shape. */
 export function withExclusiveStorageAdmission<T>(

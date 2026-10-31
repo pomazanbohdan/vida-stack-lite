@@ -61,6 +61,7 @@ const typescriptCommands = new Set([
   'documentation-clear',
   'reconcile-artifacts',
   'init',
+  'configure',
   'install',
   'development-controller',
 ]);
