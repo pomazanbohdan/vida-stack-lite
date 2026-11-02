@@ -2,6 +2,17 @@
 
 ## 2026-11-02
 
+* **Multi-direction vector and change authority:** `VECTOR.md` now separates the
+  global synthesis from direction vectors (engineering, product/design,
+  operations, documentation, communication), adds the
+  `AUTO`/`DERIVED`/`REVIEW`/`OWNER`/`BLOCKED` authority matrix, and points
+  opposing instructions and defaults to D12 and the methodology profile.
+  `Direction` is appended after `Result` in the batch table; no `REPAIR.md` or
+  second status ledger is created. Luna's remaining ambiguity in the
+  product/design row was fixed: a product default applies only to
+  `user_decision: false` groups. `check-vector` remains 2 batches / 2,514
+  instructions / 2,776 map records / 1,202 baseline files.
+
 * **Instruction change vector:** added `docs/VECTOR.md`, combining the
   superpowers and matt-skills batch directions into one living document with a
   batch table and update rule. Added `scripts/vector.ts`,

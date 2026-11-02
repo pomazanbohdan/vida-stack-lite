@@ -19,7 +19,7 @@ recorded in the frontmatter of each concept.
 * [Vida Powers — system specification](system-specification.md) - S-level: instruction model, catalog operations, Decision Provider, routing, methodology profile, materialization, findings, operational rules.
 * [Vida Powers — acceptance criteria](acceptance.md) - Verifiable conditions bound to SR, with the kind of evidence, type and state; separately — what we do not prove.
 * [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1–D17 (and D4b) to normative clauses.
-* [Vida Powers — instruction change vector](VECTOR.md) - Living summary of the donor-batch direction: context-first, explicit decisions, progressive disclosure, compaction-safe state, gradual automation.
+* [Vida Powers — instruction change vector](VECTOR.md) - Living multi-direction summary of instruction and documentation changes, with the change authority matrix and donor batch table.
 * [Vida Powers — product concept and architectural baseline](research/vida-powers-product-research.md) - The finalized concept, D14/D15 accepted scope limits, product boundaries, methodology, materialization and evidence rules.
 
 # Work Items and requests
