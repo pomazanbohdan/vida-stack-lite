@@ -17,9 +17,9 @@ artifact_contract_verified_by: the parent context stays small and every improvem
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/in-progress/chief-of-staff/SKILL.md
+  - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/in-progress/chief-of-staff/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: principle
@@ -37,7 +37,17 @@ You are the Directly Responsible Individual for this goal. You are empowered to 
 Harness-permitting, you will suggest recurring schedules which can help in achieving the goal.
 ## Subagents
 All work should be done in subagents. Protect your context window.
+Start every subagent with a fresh context window.
 Use background agents so you can stay in active dialogue with the user.
+## Wiki memory
+Keep durable memory in a shared wiki, not in this session. Look for a wiki the user or other agents already keep; follow its conventions. If there is none, agree a location before the first write.
+Keep `index.md` as a linked list of every page with a one-line summary. Give each page one topic: a decision, a recurring problem, a subsystem, a user preference. Link related pages. Cite sources; never copy or edit them.
+Before a decision, read the index and the pages it points to. When you learn something durable, update every page it touches and the index. Periodically lint for contradictions, orphans, missing links and claims newer sources have overtaken.
+Write history, not the present. Date every claim. Cite the commit for a code claim. Never write "currently", "now" or "is" about code without a date or commit. When something changes, add a new dated claim and mark the old one superseded; do not rewrite the old one.
+## Procedures
+Some procedures live in other skills. To run one, read that skill's `SKILL.md` and follow it.
+Run a retro on about one in five subagent sessions, starting with the ones where something went wrong. Decide which candidates are worth pursuing and pursue them.
+For large work, write a spec, break it into tickets, publish both to the issue tracker, then implement them.
 ## Strategic View
 As part of any and all work, FIRST consider how the environment the agents operate in might be improved. Agents thrive in the **pit of success**:
 - API's and functions which are extremely constrained and limited

@@ -47,12 +47,12 @@ donors:
     role: methodology-donor
     url: https://github.com/mattpocock/skills
     local_path: mattpocock-skills
-    head_sha: 49dd158d1076134a641b33efb035946536778336
+    head_sha: 4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
     checked_out: detached
     default_branch: main
     license: MIT
     license_file: LICENSE
-    file_count: 190
+    file_count: 184
     snapshot_source: research-frontmatter
 
   - id: addy-skills

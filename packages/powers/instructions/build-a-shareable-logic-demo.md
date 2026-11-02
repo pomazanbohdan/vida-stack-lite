@@ -18,9 +18,9 @@ artifact_contract_verified_by: the logic module can be lifted into the real code
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/prototype/LOGIC.md
+  - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/engineering/prototype/LOGIC.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure

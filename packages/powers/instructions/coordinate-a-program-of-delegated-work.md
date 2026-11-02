@@ -22,9 +22,9 @@ provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/orchestrate.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/poteto-mode/playbooks/autopilot-full.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/swarm/SKILL.md
-  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/implement-spec/SKILL.md
+  - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/engineering/implement-spec/SKILL.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -39,6 +39,7 @@ Route here when the work outlives any single agent; work one agent could finish 
 Ceremony must scale with the program, and on cheap near-identical units you collapse it.
 Completions are queue events, not interrupts.
 Every spawn and every resume carries the standing orders verbatim.
+Start every subagent with a fresh context window.
 The brief is the product; a vague brief fails quietly, because a worker cannot ask you a question.
 Frame the program: state the done predicate as something countable, such as all units merged and each one ledger-verified.
 Quantify scope: units, rough effort, expected stacks, and the wall-clock budget.

@@ -17,9 +17,9 @@ artifact_contract_verified_by: each candidate is scored on the same axes and a r
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/codebase-design/DESIGN-IT-TWICE.md
+  - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/engineering/codebase-design/DESIGN-IT-TWICE.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -37,7 +37,7 @@ Before spawning sub-agents, write a user-facing explanation of the problem space
 - A rough illustrative code sketch to ground the constraints, not a proposal, just a way to make the constraints concrete
 Show this to the user, then immediately proceed to Step 2. The user reads and thinks while the sub-agents work in parallel.
 ### 2. Spawn sub-agents
-Spawn 3+ sub-agents in parallel. Each must produce a **radically different** interface for the deepened module.
+Spawn 3+ sub-agents in parallel, each with a fresh context window. Each must produce a **radically different** interface for the deepened module.
 Prompt each sub-agent with a separate technical brief (file paths, coupling details, dependency category, what sits behind the seam). The brief is independent of the user-facing problem-space explanation in Step 1. Give each agent a different design constraint:
 - Agent 1: "Minimize the interface: aim for 1–3 entry points max. Maximise leverage per entry point."
 - Agent 2: "Maximise flexibility: support many use cases and extension."

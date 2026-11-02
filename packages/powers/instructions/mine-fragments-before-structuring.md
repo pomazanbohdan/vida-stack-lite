@@ -17,9 +17,9 @@ artifact_contract_verified_by: "no structure, outline or phase is imposed while 
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/in-progress/writing-fragments/SKILL.md
+  - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/in-progress/writing-fragments/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: unclassified
 classification_reason: "The body governs freeform creative-writing exploration and fragment capture, but names no supported engineering, UX, product, business, research, or concrete operations domain."

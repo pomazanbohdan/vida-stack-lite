@@ -24,9 +24,9 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/writing-skills/references/persuasion-principles.md
   - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/writing-skills/SKILL.md
-  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/writing-for-agents/SKILL.md
+  - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/productivity/writing-for-agents/SKILL.md
 status: active
-revision: 7
+revision: 8
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule

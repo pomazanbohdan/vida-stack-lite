@@ -2,6 +2,21 @@
 
 ## 2026-11-02
 
+* **Matt-skills donor batch:** advanced `matt-skills` from `49dd158d` to
+  `4ae2317d` and processed the second donor update. All 69 existing matt-skills
+  instructions carry the new provenance revision; 8 instructions gained the
+  fresh-context subagent rule or the chief-of-staff wiki/procedure rules; 2 new
+  instructions were added (`keep-durable-memory-in-a-shared-wiki` and
+  `add-automation-triggers-gradually`). The 5 remaining `software-factory`
+  reference files were rejected as in-progress reference, 4 changeset or
+  contribution files were rejected, and 16 deleted changesets were removed from
+  the map. The corpus is 2,514 instructions, the map 2,776 records and the
+  baseline 1,202 files; all 8 donor sources are `current`, and `NOTICE` cites the
+  new matt-skills pin. Catalog revision 6248, map revision 4982. Changelog rule:
+  D6 and `write-the-change-log-newest-first-under-date-headings`; this entry is
+  newest-first. Checks: `check-corpus` 0 issues; package suite 764 pass / 4 skip /
+  0 fail / 3,804 assertions; typecheck 63 files; OKF 31 concepts / 0 failures.
+
 * **Superpowers donor batch:** advanced `superpowers` from `bb92a777` to
   `2ce8aa15` (v7.0.1) and processed the first donor update. All 87 existing
   superpowers instructions now carry the new provenance revision; 4 source paths

@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4981,
-  "updated_at": "2026-11-02T12:00:00.000Z",
+  "revision": 4982,
+  "updated_at": "2026-11-02T14:00:00.000Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -1808,7 +1808,7 @@
       }
     },
     "matt-skills": {
-      "source_revision": "49dd158d1076134a641b33efb035946536778336",
+      "source_revision": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
       "files": {
         "skills/engineering/tdd/SKILL.md": {
           "status": "split",
@@ -1845,71 +1845,7 @@
           "status": "rejected",
           "reason": "The donor repository's own docs about itself: packaging, invocation, install and documentation conventions, not a generalizable norm."
         },
-        ".changeset/ask-matt-read-skill-first.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/code-review-standards-and-subagents.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/diagnosing-bugs-prove-mutation.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/github-tracker-external-pr-list.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/grilling-yes-accepts-recommendation.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/handoff-temp-dir.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/implement-skill-tool-wording.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/implement-ticket-reference.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
         ".changeset/README.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/setup-tracker-fixes.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/tdd-seam-tradeoffs.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/teach-quiz-answer-position.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/teach-workspace-root.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/to-tickets-sub-issues.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/wayfinder-labels-refs-research-prs.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/wizard-template-fixes.md": {
-          "status": "rejected",
-          "reason": "A release note for the donor's own change; the donor's own history, not a norm."
-        },
-        ".changeset/wizard-template-fixes-2.md": {
           "status": "rejected",
           "reason": "A release note for the donor's own change; the donor's own history, not a norm."
         },
@@ -2341,9 +2277,10 @@
           ]
         },
         "skills/in-progress/chief-of-staff/SKILL.md": {
-          "status": "converted",
+          "status": "split",
           "instruction_ids": [
-            "keep-a-long-running-goal-in-subagents"
+            "keep-a-long-running-goal-in-subagents",
+            "keep-durable-memory-in-a-shared-wiki"
           ]
         },
         "skills/in-progress/writing-fragments/SKILL.md": {
@@ -2467,6 +2404,48 @@
           "instruction_ids": [
             "teach-with-a-stateful-workspace"
           ]
+        },
+        ".changeset/chief-of-staff-shared-wiki-procedures.md": {
+          "status": "rejected",
+          "reason": "Donor repository metadata or changeset; not a norm."
+        },
+        ".changeset/implementer-fresh-per-ticket.md": {
+          "status": "rejected",
+          "reason": "Donor repository metadata or changeset; not a norm."
+        },
+        ".changeset/software-factory-skill.md": {
+          "status": "rejected",
+          "reason": "Donor repository metadata or changeset; not a norm."
+        },
+        "CONTRIBUTING.md": {
+          "status": "rejected",
+          "reason": "Donor repository metadata or changeset; not a norm."
+        },
+        "skills/in-progress/software-factory/EXAMPLE-TASKS.md": {
+          "status": "rejected",
+          "reason": "In-progress reference skill; no stable norm extracted."
+        },
+        "skills/in-progress/software-factory/GIT-HOSTS.md": {
+          "status": "rejected",
+          "reason": "In-progress reference skill; no stable norm extracted."
+        },
+        "skills/in-progress/software-factory/OBSERVABILITY-PLATFORMS.md": {
+          "status": "rejected",
+          "reason": "In-progress reference skill; no stable norm extracted."
+        },
+        "skills/in-progress/software-factory/RUNNERS.md": {
+          "status": "rejected",
+          "reason": "In-progress reference skill; no stable norm extracted."
+        },
+        "skills/in-progress/software-factory/SKILL.md": {
+          "status": "converted",
+          "instruction_ids": [
+            "add-automation-triggers-gradually"
+          ]
+        },
+        "skills/in-progress/software-factory/TICKET-TRACKERS.md": {
+          "status": "rejected",
+          "reason": "In-progress reference skill; no stable norm extracted."
         }
       }
     },

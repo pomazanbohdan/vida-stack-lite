@@ -17,9 +17,9 @@ artifact_contract_verified_by: the record states why it changes what to teach ne
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/productivity/teach/LEARNING-RECORD-FORMAT.md
+  - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/productivity/teach/LEARNING-RECORD-FORMAT.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: unclassified
 classification_reason: The body governs pedagogical learner records and prior knowledge; no supported domain follows without broadening operations beyond its defined workflow sense.
