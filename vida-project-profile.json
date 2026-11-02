@@ -1,6 +1,20 @@
 {
   "schema": "VPEffectiveProfile/v1",
   "groups": {
+    "approval-policy": {
+      "active": "approval-policy-choice-gate",
+      "alternatives": [
+        "approval-policy-choice-proceed",
+        "approval-policy-choice-gate"
+      ]
+    },
+    "context-degradation-policy": {
+      "active": "context-degradation-signals",
+      "alternatives": [
+        "context-degradation-signals",
+        "context-degradation-measured"
+      ]
+    },
     "testing-sequence": {
       "active": "test-first-development",
       "alternatives": [
@@ -26,16 +40,7 @@
       ]
     }
   },
-  "unresolved_groups": {
-    "approval-policy": [
-      "approval-policy-choice-proceed",
-      "approval-policy-choice-gate"
-    ],
-    "context-degradation-policy": [
-      "context-degradation-signals",
-      "context-degradation-measured"
-    ]
-  },
+  "unresolved_groups": {},
   "verification": {
     "available_models": [
       {
