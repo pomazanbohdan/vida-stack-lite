@@ -98,6 +98,8 @@ templates/configuration and native host delivery are outside this packet.
    212 packaging/translation documents plus 22 stale map records were reconciled.
    Catalog 6,364; map 3,008; baseline 1,202. Remaining triage: none; pstack and
    ponytail have no used-file impact, and Open Knowledge Format is current.
+   Independent Codex/Luna review is READY at `d6428765` with 0 Critical /
+   0 Important / 0 Minor.
    `docs/VECTOR.md` is the living summary; update it and run `check-vector` in
    every batch.
 

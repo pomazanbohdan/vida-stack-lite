@@ -2,6 +2,13 @@
 
 ## 2026-11-02
 
+* **Addy and gsd updates validated by Luna:** Codex/Luna reviewed `77595c11`
+  and `10366858` read-only and returned CHANGES with one Minor (the
+  build-once summary omitted the OIDC-provider condition). Fixed at `d6428765`;
+  the re-check returned READY with 0 Critical / 0 Important / 0 Minor. Checks:
+  2,529 instructions, 3,008 map records, 1,202 baseline files, catalog revision
+  6,364, zero corpus issues.
+
 * **Gsd-core pin advanced:** moved gsd-core from `19f2d5e8` to `bfab8249`
   and updated provenance on 1,343 instructions. Six rules changed: a checker
   `VERIFICATION PASSED` sentinel no longer overrides BLOCKER/WARNING entries in
