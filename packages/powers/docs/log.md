@@ -142,8 +142,12 @@
   is current only when every entry is current. Staleness is derived per source as
   `current`, `pin-stale`, `stale`, `missing` or `unknown`. Author/title, license
   text/path and notice stay with the source file, donor manifest and `NOTICE`; no
-  new catalog or duplicate fields. Checks: OKF 31 concepts / 0 failures;
-  Markdown 8 docs / 83 links / 0 failures.
+  new catalog or duplicate fields. Follow-up Luna review closed two evidence
+  gaps: author/title is required metadata (an incomplete record blocks), and the
+  role-text test now pins attribution-recorded plus manual fidelity/admission.
+  Checks: bootstrap 6 pass / 135 assertions; bootstrap + skill-contract 19 pass /
+  219 assertions; OKF 31 concepts / 0 failures; Markdown 3 docs / 29 links /
+  0 failures.
 
 ## 2026-10-31
 

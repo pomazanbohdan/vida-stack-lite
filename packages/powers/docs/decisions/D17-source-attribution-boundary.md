@@ -43,9 +43,10 @@ Reuse the existing instruction `provenance` entry — `donor`, `license`,
 
 No other per-source fields are added. The donor manifest owns the license text,
 license path and donor-level attribution; the package `NOTICE` owns the rendered
-notice. Author/title is read from the source file when present; the notice is
-rendered from the donor manifest, source entry and `NOTICE`. None of these is
-duplicated per instruction.
+notice. Author/title is required source metadata. It is read from the source file
+or donor manifest; if unavailable, the record is incomplete and blocks the
+dependent unit. The notice is rendered from the donor manifest, source entry and
+`NOTICE`. None of these is duplicated per instruction.
 
 An instruction may have several source entries. A merged instruction retains
 every entry and is current only when every entry is current.
