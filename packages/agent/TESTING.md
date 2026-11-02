@@ -8,6 +8,9 @@ Use short sentences and plain terms. Keep one main idea in each paragraph. Aim f
 
 ## Evidence status
 
+Use [runtime next actions](docs/next-actions.md) for the current queue and the
+distinction between published, installed and Source-only capabilities.
+
 Read operational status from the current work and release evidence. Version
 text and passing Source checks do not prove installation or Runtime acceptance.
 Keep dated runs, failed logs and audit history in their evidence stores.
@@ -2131,8 +2134,8 @@ Reclaim only terminal, dependency-free derivatives under the existing retention 
 
 ### Rolling contour repair cycle
 
-Work on one contour at a time, subject to the blocked-contour lookahead in the root
-[sidecar](../../AGENT.sidecar.md#orchestration-and-delegation). Keep its product
+Work on one contour at a time. Apply the current
+[project ownership and check policy](../../AGENT.sidecar.md#development-policy-and-checks). Keep its product
 fixes, tests and exact coverage in its lane. A blocked contour stays open and paused
 while work on the next declared contour proceeds, including scoped implementation,
 tests and serial coverage after its own admission. Resume the blocked contour at a
@@ -2270,9 +2273,10 @@ run or temporary resource pressure does not establish objective untestability.
 Reopen the skip when the bound contract, producer or native target changes.
 This queue exception grants no frozen CC/CRAP waiver or mutation kill evidence.
 
-After each terminal handoff, Root retires the completed preparation directory
-under the [sidecar's worktree retention rule](../../AGENT.sidecar.md#orchestration-and-delegation).
-Retain pending patches and all local/staged data before removal; closure of a
+After each terminal handoff, Root checks the completed preparation directory
+for pending data and retained evidence under the
+[project preservation rules](../../AGENT.sidecar.md#development-policy-and-checks).
+Retain pending patches and all local/staged data before any permitted removal; closure of a
 worker does not release an immutable measured checkout or its evidence.
 
 Before another complete mutation attempt, reuse the latest closed diagnostic's

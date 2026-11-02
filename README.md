@@ -11,16 +11,18 @@ history separate from the reusable runtime.
 | Product        | Purpose                                                                    | Location                           |
 | -------------- | -------------------------------------------------------------------------- | ---------------------------------- |
 | **Vida Agent** | Standalone CLI and development-workflow runtime                            | [packages/agent](packages/agent)   |
-| **Vida Codex** | Codex integration for workspace tools, project views and agent interaction | [packages/plugin](packages/plugin) |
+| **Vida Codex** | Codex integration for workspace tools, project views and agent interaction | [packages/codex](packages/codex) |
+| **Vida Powers** | Project-readable role bootstrap and reusable instruction catalog | [packages/powers](packages/powers) |
 
 The visible product names differ from the stable internal project IDs:
-`agent` and `plugin`.
+`agent`, `plugin` and `powers`.
 
 ### Current status
 
-VIDA is under active development. Vida Agent has a native delivery path and a
-maintained Windows installer. The current development work includes recovery,
-task continuation and integration of checks before source-writing actions.
+VIDA is under active development. Vida Agent has native Linux and Windows
+delivery, a CI publisher and maintained system-tools installers. The
+[runtime task queue](packages/agent/docs/next-actions.md) separates available
+Source, public delivery, installed behavior and remaining acceptance.
 
 Vida Codex is being prepared for integration. Its current source workspace does
 not yet provide a complete public installation guide. Prototype or local
@@ -74,7 +76,7 @@ a document-format reference.
 
 See the [donor manifest](packages/powers/donors.yaml) for pinned revisions and
 licenses. Read the [Vida Powers package guide](packages/powers/README.md),
-[catalog design](packages/powers/docs/catalog-design.md), and [product
+[system specification](packages/powers/docs/system-specification.md), and [product
 documentation index](packages/powers/docs/index.md) for details and current
 status. The package is under development. Local fixture formation is
 implemented, but production manifest inputs and outputs, host installation,
@@ -101,19 +103,22 @@ Bun. Consumer use does not require installing Node.js, npm or Bun. npm SDK
 exports serve in-process library integrations and are not the public agent
 installation route.
 
-For Windows, use the maintained
-[PowerShell installer](packages/agent/tooling/install-windows.ps1) with the
-selected qualified executable or ZIP. From this repository's root:
+Download the platform installer from the
+[latest public release](https://github.com/pomazanbohdan/vida-stack-lite/releases/latest).
+The PowerShell and Bash installers select the latest public artifact when no
+explicit Source is supplied. The [installation guide](packages/agent/docs/installation.md)
+describes artifact verification and the supported options.
+
+From this repository's root, the maintained Windows adapter can install directly:
 
 ```powershell
-$artifact = Read-Host "Full path to the selected qualified Vida Agent EXE or ZIP"
-.\packages\agent\tooling\install-windows.ps1 -Action install -Source $artifact
+.\packages\agent\tooling\install-windows.ps1 -Action install
 ```
 
-Use `-Action update` to update an existing installation. The
-[installation guide](packages/agent/docs/installation.md) explains artifact
-selection, update, recovery and destinations. Check qualification and platform
-metadata before choosing an artifact; do not substitute an arbitrary local build.
+Use `-Action update` to update an existing installation. Pass `-Source` for a
+selected qualified EXE, ZIP or HTTPS URL. On Linux, run the downloaded `install.sh`
+with Bash and system utilities. Check qualification and platform metadata before
+choosing an explicit artifact.
 
 Open a new terminal if needed to pick up the user PATH change, then inspect the
 installed command:
@@ -159,6 +164,7 @@ resolving the cause.
 | Installation and update          | [Installation guide](packages/agent/docs/installation.md)                     |
 | Development lifecycle            | [Lifecycle instruction](packages/agent/instructions/development-lifecycle.md) |
 | Runtime verification             | [Testing policy](packages/agent/TESTING.md)                                   |
+| Current runtime tasks            | [Runtime next actions](packages/agent/docs/next-actions.md)                  |
 | Agent package details            | [Agent README](packages/agent/README.md)                                      |
 | Project source map and authority | [AGENT.sidecar.md](AGENT.sidecar.md)                                          |
 
@@ -196,7 +202,7 @@ work, stable project IDs and historical evidence.
 ```text
 packages/
   agent/       Runtime, public CLI, schemas, instructions and tests
-  plugin/      Vida Codex product workspace
+  codex/       Vida Codex product workspace; stable project ID plugin
   powers/      Vida Powers instruction catalog and package tooling
 tooling/agent/ Repository-side release and CI evidence tooling
 .github/       CI workflows

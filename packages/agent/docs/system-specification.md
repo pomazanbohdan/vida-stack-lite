@@ -194,8 +194,10 @@ integration or token/ROI benchmark lane is implied by this engine scope.
 
 ## Initialized project layout and upgrades
 
-The approved target keeps product Source in `packages/agent` and
-`packages/plugin`. An initialized consumer keeps VIDA configuration, local
+The approved target keeps product Source in its configured product roots.
+This repository maps Agent to `packages/agent`, Codex to `packages/codex` with
+stable ID `plugin`, and Powers to its separately owned `packages/powers` root.
+An initialized consumer keeps VIDA configuration, local
 instructions and operational state under `.vida`. Root `AGENTS.md` is only the
 discovery entry; it points to the project instruction and source map in `.vida`.
 Package-owned instruction Source remains in the runtime package.
@@ -204,6 +206,14 @@ schemas or maintained templates into `.vida`. Project instructions are generated
 instances or owner-authored additions; their maintained Source and upgrade code
 remain in `packages/agent`. Root discovery is the only integration entry outside
 `.vida`; business and product documents keep their project-owned locations.
+
+The split `.vida` configuration layout in this section is an approved target,
+not the current initialization output. The implemented initializer manages
+root `AGENTS.md`, `AGENT.sidecar.md`, `agent-runtime.config.v1.yaml` and the
+project documentation-policy file. Configuration plan/apply/inspect/resume
+operates on those current integration outputs. Adoption of the split target
+needs its own supported transition and active-artifact repair; ordinary use of
+the current initialized repository does not require that migration.
 
 The Source initialization/configuration owner implements public plan, apply,
 inspect and resume operations. Native delivery and user Runtime acceptance
@@ -3031,7 +3041,7 @@ preferences belong to its plugin adapter, not the generic core.
 ## Project and product skill catalogue
 
 The repository owner requires skills to be recorded for both the shared project
-and each product (`agent` and `plugin`) as official-documentation research is
+and each configured product as official-documentation research is
 completed. Attribution: the human request in Plugin owner chat
 `01a0ef6f-c387-77a1-828f-54d4e91e3648` on 2026-09-30. Each catalogue entry
 identifies its project or product owner, canonical skill source, primary-source
@@ -3044,11 +3054,17 @@ recovery, configuration and paths, skill selection, and connector contracts.
 Connector research retains the official pointers in Host integration direction;
 project-specific categories use their own current official research sources.
 The generic agent remains independent of a Codex or provider execution adapter.
-Actual `SKILL.md` authoring and catalogue verification follow in a separate
-scope after developer unblocking. The Plugin owner maintains its product
+Generic runtime `SKILL.md` authoring and catalogue verification follow in a
+separate scope after developer unblocking. VidaPowers source entries already
+exist as project-readable documents under their product owner. Their repository
+sidecar map does not register a runtime bootstrap command or instruction-registry
+dependency. The Plugin owner maintains its product
 requirements, behavior and acceptance in the three Plugin canonical documents.
 
 ## Delivery priorities and acceptance
+
+The [runtime next-action queue](next-actions.md) owns current task status.
+The requirements below retain their behavior and acceptance authority.
 
 Select dependency-ready self-development batches by one prior qualitative
 workflow/step/token estimate, with shared developer unblocking first and installed

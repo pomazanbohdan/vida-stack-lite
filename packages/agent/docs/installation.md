@@ -22,14 +22,21 @@ checks; publish the reviewed Source packet; run one `publish: true` Actions run
 for assurance, both native builds and publication; then download the public
 `install-windows.ps1` and run `-Action install` without a Source override. Reuse
 current checks and independent review, the installer's structured version/hash
-postchecks, and observe effective PATH once. After installation perform the six
-native instruction lookups requested by the user and deliver their instructions.
-Formation and installation do not establish user Runtime acceptance. The pending
-0.1.6 operation is unchanged by this documentation.
+postchecks, and observe effective PATH once. Resolve the required installed
+instructions with the public `instructions --path NAME` command.
+Formation and installation do not establish user Runtime acceptance. Historical
+pending operations retain their own journals and recovery requirements; this
+guide does not declare a particular old operation active.
 
 Publication admission uses the actual successful, Source/workflow-bound Linux
 assurance job before native formation, including recovery. Its retained assurance
 receipt and JUnit are audit evidence, not a second admission proof.
+
+Linux uses the published `install.sh` with Bash and system utilities. It verifies
+the selected release checksum and installs the native executable without jq or an
+external language runtime. CI retains its external-install result for the exact
+published release. [Runtime next actions](next-actions.md) records remaining
+native platform and workflow qualification.
 
 Windows uses one maintained PowerShell adapter and the fixed current-user
 Programs/vida-agent/bin command. It retains a previous binary only during the

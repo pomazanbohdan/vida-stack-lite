@@ -1,5 +1,11 @@
 # Core runtime reactivation work
 
+Record class: historical Source and numeric-qualification evidence. Current
+runtime work is indexed by [runtime next actions](../../../packages/agent/docs/next-actions.md).
+The dates, counts, pending work and Source fingerprints below retain their own
+meaning; they are not current release, installation or acceptance status.
+Do not replay a producer or dispose of retained state from this narrative alone.
+
 Status date:2026-10-27. Root owns Source integration, Git and final numbers.
 Historical evidence never authorizes state replay, Runtime cutover or acceptance.
 DIAG below is packages/agent/coverage/fixture-diagnostics/20261019-focused-blockers.

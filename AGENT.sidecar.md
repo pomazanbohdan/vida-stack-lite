@@ -17,7 +17,9 @@ every path below against that root, including when the caller cwd is different.
 | Plugin | `packages/codex` | Separate business/system requirements are not supplied by this work | `packages/codex/package.json` declares its own commands |
 | Powers | `packages/powers` | `packages/powers/docs/business-requirements.md`, `packages/powers/docs/system-specification.md`, `packages/powers/docs/acceptance.md`, `packages/powers/docs/decisions/index.md` | `packages/powers/AGENTS.md`, `packages/powers/tests`, `packages/powers/package.json` |
 
-Powers current scope and status belong to `packages/powers/docs/next-actions.md`;
+Agent current tasks and evidence boundaries belong to
+`packages/agent/docs/next-actions.md`; its system specification remains the
+behavior owner. Powers current scope and status belong to `packages/powers/docs/next-actions.md`;
 product history belongs to `packages/powers/docs/log.md`. D4/BR-25/SR-98 and
 AC-74–AC-78 own project-document adoption. The authorized implementation record
 is `.agent/work/vida-powers-skills-architecture-20261102/WORK.md`; it is derived

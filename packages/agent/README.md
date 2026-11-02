@@ -27,6 +27,10 @@ archived operational state from active execution.
 
 ## Development and delivery
 
+[Runtime next actions](docs/next-actions.md) is the current derived task queue.
+It separates the published release, installed artifact, newer Source and remaining
+qualification. Run history and raw receipts remain in their work evidence.
+
 [TESTING.md](TESTING.md) owns test selection, commands and numeric criteria.
 [Development lifecycle](instructions/development-lifecycle.md#self-development-protocol)
 owns execution and release sequencing. [Package scripts](package.json) own
