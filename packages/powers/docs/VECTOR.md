@@ -55,7 +55,7 @@ contract.
 | Direction | Current movement | Evidence | Derived / auto boundary | Owner decision |
 |---|---|---|---|---|
 | Engineering | Fresh context per subagent; verification; small batches; reference detail | superpowers, matt-skills | DERIVED after review: provenance, catalog/map/baseline; AUTO: links and counts | none for mechanical; review for semantic |
-| Product / design | Context first; explicit approaches; design gate | superpowers | DERIVED after review: provenance, catalog/map; AUTO: links and counts | product policy for `user_decision: false` groups; scope and priority |
+| Product / design | Context first; explicit approaches; design gate | superpowers | DERIVED after review: provenance, catalog/map; AUTO: links and counts | product policy for `user_decision: false` groups; no default for `user_decision: true`; scope and priority |
 | Operations | Wiki memory; gradual automation; loop caps | matt-skills | DERIVED after review: provenance, catalog/map; AUTO: links and counts | operational policy, automation rollout |
 | Documentation | Short contract; OKF/D6; conflict precedence; progressive disclosure | both batches | AUTO: broken local links, heading/count drift, log/vector rows | canonical scope, acceptance text |
 | Communication | Outcome / Evidence / Decision / Next; less description for user messages only | adaptive-reporting | none | channel policy, formal standard |
