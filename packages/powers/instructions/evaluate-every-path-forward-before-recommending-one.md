@@ -1,7 +1,7 @@
 ---
 instruction_id: evaluate-every-path-forward-before-recommending-one
 title: Evaluate every path forward before recommending one
-summary: "Score each way of resolving the issue on effort and risk, mark it viable or not, and then choose one and say why."
+summary: "Compare adjusting the remaining entries, rolling back built work, and cutting scope, then recommend one with the reason; the user decides."
 capability_tags:
   - assess-change-impact
 pattern_tags:
@@ -22,7 +22,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/checklist.md
 status: active
-revision: 5
+revision: 6
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -33,25 +33,8 @@ domains:
 ---
 
 # Evaluate every path forward before recommending one
-Evaluate Option 1: Direct Adjustment
-Evaluate Option 2: Potential Rollback
-Evaluate Option 3: PRD MVP Review
-Can the issue be addressed by modifying existing stories?
-Can new stories be added within the current epic structure?
-Would this approach maintain project timeline and scope?
-Would reverting recently completed stories simplify addressing this issue?
-Which stories would need to be rolled back?
-Is the rollback effort justified by the simplification gained?
-Is the original PRD MVP still achievable with this issue?
-Does MVP scope need to be reduced or redefined?
-Do core goals need modification based on new constraints?
-What would be deferred to post-MVP if scope is reduced?
-Based on analysis of all options, choose the best path
-Provide clear rationale considering:
-Implementation effort and timeline impact
-Technical risk and complexity
-Impact on team morale and momentum
-Long-term sustainability and maintainability
-Stakeholder expectations and business value
-Effort estimate: [High/Medium/Low]
-Risk level: [High/Medium/Low]
+Evaluate each way forward:
+- **Adjust remaining entries** — change the unstarted entries and tickets in place, keeping their ids.
+- **Roll back built work** — revert only what the change makes wrong, with the cost and the evidence.
+- **Cut scope** — drop what no longer belongs, record the reason, and clear what waited on it.
+Weigh each by what it costs, what it leaves true, and whether it rewrites built work. Recommend one with the reason. The user decides; the architecture or design companion is never edited from here.

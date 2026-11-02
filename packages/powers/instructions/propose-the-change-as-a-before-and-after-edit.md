@@ -1,7 +1,7 @@
 ---
 instruction_id: propose-the-change-as-a-before-and-after-edit
-title: Propose the change as a before-and-after edit
-summary: "Show the current text and the replacement text for every affected artifact, name the exact section, and give the reason for each change."
+title: Propose the change as what changes and what stays
+summary: "Show each affected line before and after, name the ticket or entry and section, and say what stays true; no separate proposal file is written."
 capability_tags:
   - assess-change-impact
 pattern_tags:
@@ -21,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -31,17 +31,8 @@ domains:
   - product
 ---
 
-# Propose the change as a before-and-after edit
-Show old → new text format
-Include story ID and section being modified
-Provide rationale for each change
-Specify exact sections to update
-Show current content and proposed changes
-Explain impact on MVP scope and requirements
-Identify affected components, patterns, or technology choices
-Describe diagram updates needed
-Note any ripple effects on other components
-Reference specific screens or components
-Show wireframe or flow changes needed
-Connect changes to user experience impact
-Ensure each change includes before/after and justification
+# Propose the change as what changes and what stays
+Show the change as before → after where text changes: the ticket or entry, the section, the current line and the proposed line, with the reason.
+Name the affected ticket, entry, companion, or plan section, and what stays true.
+Explain the effect on built work and on the tickets whose `covers` or `after` name the changed line.
+Do not write a separate proposal file: the record is the ticket tree and the dated `Decision:` line.

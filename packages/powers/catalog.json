@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6304,
+  "revision": 6316,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-02T22:00:00.000Z",
+  "updated_at": "2026-11-02T23:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -1142,7 +1142,7 @@
     {
       "instruction_id": "assess-the-impact-across-every-artifact",
       "path": "instructions/assess-the-impact-across-every-artifact.md",
-      "sha256": "06389b01148ab0af8e76482922d3865e7cfb458e7679738e7232ab63b648877b"
+      "sha256": "1bfa903f9ab13ffe85805b1e196a19f2d96614fc8678c9d8d7c7172b52630cf5"
     },
     {
       "instruction_id": "assign-a-work-item-an-id-once-and-never-reuse-it",
@@ -2192,7 +2192,7 @@
     {
       "instruction_id": "classify-the-change-scope-and-route-the-handoff",
       "path": "instructions/classify-the-change-scope-and-route-the-handoff.md",
-      "sha256": "bffe461b33db16dafdeea8c636cdaef88ef0f85eb9aae09799157274cf2341f2"
+      "sha256": "84cb1d5cb22202a9f080066816ca74d5f817fb6f45ec49cd67f8a42ce5597a15"
     },
     {
       "instruction_id": "classify-the-content-before-the-lenses-run",
@@ -3622,7 +3622,7 @@
     {
       "instruction_id": "evaluate-every-path-forward-before-recommending-one",
       "path": "instructions/evaluate-every-path-forward-before-recommending-one.md",
-      "sha256": "763e3ab6c1f3583cb9b1bf98c04adad88893462e4a4027425e72fad661f5f759"
+      "sha256": "07be512383e264ccef77cf753ab54c4e6892d24f6776e3198b10b694be2847f9"
     },
     {
       "instruction_id": "evaluate-skill-changes-blind",
@@ -4407,7 +4407,7 @@
     {
       "instruction_id": "ground-the-change-in-a-concrete-trigger-and-evidence",
       "path": "instructions/ground-the-change-in-a-concrete-trigger-and-evidence.md",
-      "sha256": "a9234ffe87d4dac3f8a214b4df57709040cdd27eecd3180af08b49f8f95ca1b7"
+      "sha256": "21895cba16a46777db719ebded50a99cda486f405d0a1f9acfef772956e4d75c"
     },
     {
       "instruction_id": "ground-the-design-in-what-the-target-stack-can-build",
@@ -4512,7 +4512,7 @@
     {
       "instruction_id": "halt-with-the-reason-when-a-precondition-is-missing",
       "path": "instructions/halt-with-the-reason-when-a-precondition-is-missing.md",
-      "sha256": "188a1d871922578ed7d5da07299e05bc8e08e3d37edb3e04b6f706b3405c95a9"
+      "sha256": "a8379c05fc985e2da23a78d69a67b29e88f3d5b4782b277a1ad1cda917823a43"
     },
     {
       "instruction_id": "hand-back-the-mirror-before-adding-connections",
@@ -4772,7 +4772,7 @@
     {
       "instruction_id": "inventory-the-evidence-before-you-analyse-it",
       "path": "instructions/inventory-the-evidence-before-you-analyse-it.md",
-      "sha256": "94fd9668bad6d80159e8806d632bed35c6c0010d8db886e83a45b60c4ecba545"
+      "sha256": "56b113d28656df7632ff62ab6ca40c5271e99736384d30216d4b273fef809d40"
     },
     {
       "instruction_id": "invert-the-verification-and-look-for-three-ways-it-is-wrong",
@@ -7812,12 +7812,12 @@
     {
       "instruction_id": "propose-the-action-items-without-applying-them",
       "path": "instructions/propose-the-action-items-without-applying-them.md",
-      "sha256": "d93b360ee1f4db8b3261d2dd1ad6ec7818c7f4ab3c6fc31cc94275c27a4c49d8"
+      "sha256": "687698b6cb431548c7bd66ff9ac72942a24024edde65c0f5c73bb95775ba79c3"
     },
     {
       "instruction_id": "propose-the-change-as-a-before-and-after-edit",
       "path": "instructions/propose-the-change-as-a-before-and-after-edit.md",
-      "sha256": "2fcb4159101173288ea908648ba2833c5377fa80133c88e7d6c0f87ba4a52c17"
+      "sha256": "a44ce02ddf33a27824ec2671a6e6f279b89ae0b1204172f21ce414479903fac6"
     },
     {
       "instruction_id": "propose-the-grouping-before-you-write-the-files",
@@ -8397,7 +8397,7 @@
     {
       "instruction_id": "reconcile-the-as-built-with-the-spec",
       "path": "instructions/reconcile-the-as-built-with-the-spec.md",
-      "sha256": "a0b2c050343aaccab2e930827b42a7b17c55c9b04b5d2bc75ae0e1a58eba1d04"
+      "sha256": "cc21cb2e85eb87b668f6316eab1d34b8ea571dd0be4f013b604e006a1b71e8ff"
     },
     {
       "instruction_id": "record-a-failed-lens-and-continue",
@@ -8877,7 +8877,7 @@
     {
       "instruction_id": "render-the-acceptance-verdict-in-three-spellings",
       "path": "instructions/render-the-acceptance-verdict-in-three-spellings.md",
-      "sha256": "3d74efab454515e368da909b2cc41e2da28851db3e5ceb3d8db3488a3d3616c3"
+      "sha256": "5795989f028d9f2af13b12978e4887c3e10dec3a3cf2fe37010e680ebbd93034"
     },
     {
       "instruction_id": "render-the-editorial-findings-as-a-table",
@@ -11407,7 +11407,7 @@
     {
       "instruction_id": "track-the-checklist-item-status-as-you-go",
       "path": "instructions/track-the-checklist-item-status-as-you-go.md",
-      "sha256": "0f2dade4e8112e3db59b83f0e5c518285e188de4cd907e453746188fabe4120a"
+      "sha256": "b79f7479ecf19bec0d7fdf0893b9d2c8d673b09d10ea6e79b5ef0e586e85933c"
     },
     {
       "instruction_id": "track-the-outcome-of-a-decision-when-it-becomes-known",
@@ -12792,7 +12792,7 @@
     {
       "instruction_id": "write-the-retrospective-document-in-a-fixed-shape",
       "path": "instructions/write-the-retrospective-document-in-a-fixed-shape.md",
-      "sha256": "70936e52048c6a3ca3c38c0b6aa2dc570039106ca9de6d3b05f3b80c22eacf1d"
+      "sha256": "a99976294ef347cac2c521f7ecde397b3b6574d89bc35a5f12ef21d99d7bb007"
     },
     {
       "instruction_id": "write-the-rollback-plan-before-deploying",

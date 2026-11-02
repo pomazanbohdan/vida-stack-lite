@@ -1,7 +1,7 @@
 ---
 instruction_id: classify-the-change-scope-and-route-the-handoff
 title: Classify the change scope and route the handoff
-summary: "Grade the change by how far it reaches, list the items that move, name who executes it and state what done looks like."
+summary: "Route the change to spec, re-slice, or drop, name the tickets and entries each touches, and say whether what is required changed or only how it is delivered."
 capability_tags:
   - assess-change-impact
 pattern_tags:
@@ -21,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -30,10 +30,8 @@ domains:
 ---
 
 # Classify the change scope and route the handoff
-Determine change scope classification:
-Critical: Needs fundamental replan with PM/Architect involvement
-Important: Requires backlog reorganization and PO/DEV coordination
-Minor: Can be implemented directly by Developer agent
-List the epic and story changes (added, removed, resequenced, or rescoped) for the user to apply
-Specify handoff recipients and their responsibilities
-Define success criteria for implementation
+Classify what changed:
+- **Required change** — the ticket's Requirements or Constraints change. Run `spec.md` on the ticket with the change as input; its lines re-render with ids kept.
+- **Delivery change** — what is required stands; only the split, order, or scope of remaining entries changes. Re-slice each affected epic per `slice.md`.
+- **Obsolete work** — a ticket or entry no longer belongs. Drop it per `board.md` and clear what waited on it.
+Name the tickets, entries, and companions each route touches, and who owns the next action. An in-progress ticket asks whether its build stops; never edit its plan.

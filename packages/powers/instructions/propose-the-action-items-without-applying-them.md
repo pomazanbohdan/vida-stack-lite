@@ -23,7 +23,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/mvp-phase.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/complexity-triggered-refactor.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -35,7 +35,7 @@ domains:
 Compile fix-now findings and process lessons into specific, owned action items. Each names what to change and who owns it.
 Two kinds are *proposed, not applied* in this version:
 - **Remediation** — code fixes are written up as action items (or story-shaped work) for the normal dev loop to execute later. The retrospective does not run the dev loop itself.
-- **Spec reconciliation** — where the as-built diverges from the spec, propose the reconciliation as an action item with the evidence attached. The human applies it to the project contract; an uncertain interpretation is never written into the spec automatically.
+- **Ticket reconciliation** — where the as-built diverges from the ticket, propose the reconciliation as an action item with the evidence attached. The human applies it to the ticket through `bmad-agent-po`; an uncertain interpretation is never written into a ticket automatically.
 
 When a split leaves further units, list them as the exact commands the user can run afterwards; do not create them - the user keeps control of the numbering.
 Advisory by default: the proposal is informational only, never edits code, and never blocks.

@@ -1,7 +1,7 @@
 ---
 instruction_id: ground-the-change-in-a-concrete-trigger-and-evidence
 title: Ground the change in a concrete trigger and evidence
-summary: "Name the event that revealed the issue, categorise the problem, and collect the examples and errors that show it before assessing anything."
+summary: "Name what changed, its source and evidence, and say whether what is required changed or only how it is delivered; ask only what the tree cannot tell you."
 capability_tags:
   - assess-change-impact
 pattern_tags:
@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/checklist.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -30,16 +30,7 @@ domains:
 ---
 
 # Ground the change in a concrete trigger and evidence
-Identify the triggering story that revealed this issue
-Document story ID and brief description
-Define the core problem precisely
-Categorize issue type:
-Technical limitation discovered during implementation
-New requirement emerged from stakeholders
-Misunderstanding of original requirements
-Strategic pivot or market change
-Failed approach requiring different solution
-Write clear problem statement
-Assess initial impact and gather supporting evidence
-Collect concrete examples, error messages, stakeholder feedback, or technical constraints
-Document evidence for later reference
+Name the change briefly: what changed, its source, and the evidence.
+Say whether what is required changed or only how it is delivered.
+Read the ticket, its `.memlog.md`, its breakdown, finished children, and any architecture or design it touches; ask only what the tree cannot tell you.
+Collect concrete examples, errors, stakeholder feedback, or technical constraints. Do not propose a fix before the change is grounded.

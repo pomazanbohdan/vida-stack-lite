@@ -21,7 +21,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/complete-milestone.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/post-execution-verification.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -32,7 +32,7 @@ domains:
 ---
 
 # Reconcile the as-built with the spec
-**Spec-to-implementation reconciliation** — where the as-built diverges from the epic file's Done when and the initiative Requirements each ticket's `covers` names, with PRD/architecture as context.
+**Spec-to-implementation reconciliation** — where the as-built diverges from the epic file's Requirements and Done when, and the tickets' own Requirements.
 Requirements silently dropped, added behavior nobody specified, intent reinterpreted between tickets.
 Each divergence is either a defect (fix), an accepted deviation (record so later runs stop re-flagging it), or a spec that should be reconciled to reality (propose in Phase 4).
 After a release, review the project description against what was actually built and update every field that drifted.

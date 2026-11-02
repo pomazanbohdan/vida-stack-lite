@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '8'
+revision: '9'
 ---
 
 # Instruction change vector
@@ -121,6 +121,7 @@ Legend: result = corpus instructions / map records / baseline files.
 | B4 | bmad-method | `bmad-code-review` + `bmad-review` ticket and triage rules | 24 | content staged; pin/provenance advance pending |
 | B5 | bmad-method | `bmad-ticket` reviewed against the new `bmad-agent-po` owner | 6 | 56 instruction source repoints to `bmad-agent-po` pending |
 | B6 | bmad-method | `bmad-build` + `bmad-build-auto` ticket context and verification | 8 | content staged; pin/provenance advance pending |
+| B7 | bmad-method | `bmad-retrospective` + `bmad-correct-course` + `bmad-project-context` | 12 | 9 correct-course sources repoint to `bmad-agent-po/references/replan.md` pending |
 
 A staged batch has changed instruction content but has not advanced the donor pin
 or provenance. It is not a completed batch and makes no admission claim.
@@ -135,6 +136,7 @@ or provenance. It is not a completed batch and makes no admission claim.
 | `skills/bmad-ticket/**` | `skills/bmad-agent-po/**` (same relative path) | bmad-ticket removed; Sofia owns the ticket workflow |
 | `skills/bmad-ticket/assets/{initiative,epic,story}-template.md` | `skills/bmad-agent-po/assets/ticket-template.md` | three container templates merged into one |
 | `skills/bmad-ticket/customize.toml` | `skills/bmad-agent-po/customize.toml` | customization moved with the skill |
+| `skills/bmad-correct-course/**` | `skills/bmad-agent-po/references/replan.md` | correct-course removed; replan owns the change path |
 
 ## Batch update rule
 

@@ -21,7 +21,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-retrospective/references/evidence-gathering.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -35,18 +35,20 @@ Enumerate what the completed epic produced, so every later analysis works from r
 Output is an inventory: what exists, what is missing, and the diff ranges the rest of the retro will read.
 Collect what the epic produced and note the source path or range of each:
 - **Epic file**
-- Description, Outcome, Done when, Boundaries, and Notes. Done when governs Phase 4; when the file has none, note that the verdict will be profiled from the diff.
-- **Initiative requirements** — the Requirements section of the initiative file in the epic folder's parent. Each ticket's `covers` names ids there.
+- read it in full: Requirements, Description, Outcome, Done when, Boundaries, and Notes. Requirements and Done when govern Phase 4; when the file has neither, note that the verdict will be profiled from the diff.
+- **Initiative requirements** — the Requirements section of the initiative file, opened only for a `covers` id the epic file does not restate. Each ticket's `covers` names ids there.
 - **Entries**
 - its `description`, `verify`, and `covers` are what the build was given. `description` and `verify` are empty once the entry was pulled: the story file holds them.
 - **Story files**
-- when it is not null: the intent of a ticket a person reviewed or refined.
+- when it is not null: the ticket itself; read each in full.
 - **Plans** — one plan for each ticket:
 - its frontmatter (`status`, `baseline_revision`),
 - the decisions it froze after approval,
 - Design Notes and Implementation Notes,
 - and the sections Review Triage Log, Verification, Plan Change Log, and the dated `### <date>` blocks under `## Code Review`, absent when no review ran.
 - These mark the boundaries between build sessions.
+- **Run folders and companions**
+- every `<type>-*/` folder in the epic folder, each main document read in full, and the files the epic file lists in `companions:`. A run document that summarizes and points at a fuller output is a claim to check: open the output it names.
 - **Previous retrospective**
 - in the previous epic's folder, if one exists,
 - so Phase 4 can check whether last epic's action items landed.

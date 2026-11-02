@@ -2,6 +2,19 @@
 
 ## 2026-11-02
 
+* **Bmad B7 staged:** updated 12 `bmad-retrospective`, `bmad-correct-course`
+  and `bmad-project-context` instructions. The retro reads the epic file in
+  full against its Requirements and Done when, opens the initiative only for a
+  `covers` id the epic does not restate, reads story files in full, inventories
+  run folders and companions, and treats reconciliation as a change to the
+  ticket through `bmad-agent-po`. Replanning now names the change and its
+  evidence, classifies it as a required or delivery change, routes to `spec.md`,
+  re-slicing, or a drop, compares adjust/rollback/cut-scope, and records the
+  reason without a separate proposal file. The 9 correct-course sources wait
+  for repointing to `bmad-agent-po/references/replan.md`. The bmad pin is
+  **not** advanced; catalog revision 6316; `check-corpus` reports 2,514
+  instructions and zero issues.
+
 * **Bmad B6 staged:** updated 8 `bmad-build` and `bmad-build-auto`
   instructions. The build reads a ticket file in full as intent, never re-reads
   its `sources:`, and opens a companion only where the ticket points. The

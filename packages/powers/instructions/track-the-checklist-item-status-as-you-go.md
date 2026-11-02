@@ -1,7 +1,7 @@
 ---
 instruction_id: track-the-checklist-item-status-as-you-go
-title: Track the checklist item status as you go
-summary: "Work the checklist section by section with the owner, mark every item, keep running notes, and show the progress after each section."
+title: Track each replan step as you go
+summary: "Work the replan in order, say which step is done and which remains, and keep running notes of what the tree could not answer."
 capability_tags:
   - execute-plan
 pattern_tags:
@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-correct-course/checklist.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -29,11 +29,7 @@ domains:
   - operations
 ---
 
-# Track the checklist item status as you go
-Work through each section systematically with the user, recording findings and impacts
-Record status for each checklist item:
-[x] Done - Item completed successfully
-[N/A] Skip - Item not applicable to this change
-[!] Action-needed - Item requires attention or follow-up
-Maintain running notes of findings and impacts discovered
-Present checklist progress after each major section
+# Track each replan step as you go
+Work the replan in order: name the change; decide whether what is required changed; run `spec.md` or re-slice; drop what no longer belongs; record the reason.
+After each step, say which step is done and which remains, and keep running notes of what the tree could not answer.
+Do not present a separate checklist as the deliverable: the record is the ticket tree and its dated `Decision:` lines.
