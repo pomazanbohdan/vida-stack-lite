@@ -62,6 +62,7 @@ revision: '19'
 | §13 phased scope and implementation boundary | BR-22 | SR-81 to SR-87 | AC-47 to AC-55; execution remains future Step H |
 | §14 sources | BR-02 | SR-07 | AC-01 |
 | Owner request 2026-10-30; retrieval architecture analysis (Terra/owner research) | BR-24 | SR-94, SR-95, SR-96, SR-97 | AC-70–AC-73 |
+| Owner request 2026-11-02; donor source update tracking | BR-02, BR-22 | SR-99 | AC-79 |
 
 **Not normative (context, not rules):** §1 "without an automatic transition to
 a new scope of work" (an operational rule of the owner, not VP behavior) and §13

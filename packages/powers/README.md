@@ -368,7 +368,7 @@ decision records (D1–D9, D4b and D10–D16), an OKF bundle with a validator, a
 with eight processed snapshots (seven methodological donors and Open Knowledge Format) plus
 Wondelai registered-not-processed. `research_status: finalized`; steps A0, A, B, C and D are
 closed; E1–E4 are implemented, the project-document bootstrap packet is complete
-(747 pass / 4 skip), and E5b production qualification remains open.
+(760 pass / 4 skip), and E5b production qualification remains open.
 
 **Deferred outside the current scope:** registration in the shared root files of the repository;
 D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover; marketplace publication; the
@@ -391,4 +391,7 @@ Open Knowledge Format v0.2. Licenses: MIT × 7, Apache-2.0 (OKF). Exact revision
 and license attributes — in `donors.yaml`; the package `NOTICE` lists each donor ID,
 license, license file and pinned revision, including the Open Knowledge Format
 attribution. Source links, license metadata and attribution are recorded in the
-donor manifest and `NOTICE`; Powers does not assess legal risk (D17).
+donor manifest and `NOTICE`; Powers does not assess legal risk (D17). The 8
+processed donors have a per-file update baseline (`source-baseline.json`, 1,193
+files / 2,510 instructions); `check-source-updates` is read-only and lists
+affected instruction IDs.

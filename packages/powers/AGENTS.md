@@ -250,6 +250,10 @@ bun run --cwd packages/agent lint:knip:pinned
 # Donor manifest (scratch tool in .tmp, ignored by Git)
 bun packages/powers/scripts/validate-donors.ts
 
+# Donor source update baseline: explicit write, read-only check (8 used donors)
+bun packages/powers/scripts/build-source-baseline.ts
+bun packages/powers/scripts/check-source-updates.ts [--json] [--donor <id>]
+
 # Corpus audit (read-only reports over the corpus)
 bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [--limit <n>] [--offset <n>] [--filter <text>] [--summary] [--all] [--json] [--out <file>]
 
@@ -261,6 +265,8 @@ bun packages/powers/scripts/review-migration-plan.ts ROOT STAGE PLAN PLAN_SHA pr
 ```
 
 The migration-plan checker accepts only the canonical product root or an unattested fixture below the product `.tmp` directory. All paths and hashes are explicit. It checks every current cohort file and up to 25 instruction targets, catalog and map; it does not re-audit prior applications' preimages. `MECHANICAL_MATCH` is not semantic approval, independent review or authorization. Missing evidence is `UNKNOWN`. Optional review binding checks an artifact against the exact plan SHA but does not establish its independence. Reads are non-atomic; concurrent replacement or transient drift can escape detection. Runtime reads/bytes/hashes, data reads/bytes, total hashes, lstat calls and cohort count are operation counters, not time or tokens. Output identifies executed and skipped checks; inspect it. It does not verify permission, classification meaning, nonce, UNKNOWN recovery or timestamp policy. Record comparable same-scope counters and output bytes after every third applied batch; the checker neither tracks nor applies batches. Token savings and timing require separate measurement.
+
+The donor baseline covers only files that produced instructions (currently 8 donors, 1,193 files, 2,510 instructions). `build-source-baseline.ts` is the only writer and refuses a clone HEAD that differs from `donors.yaml`; `check-source-updates.ts` is read-only and reports `current`, `pin-stale`, `stale`, `missing` or `unknown` with affected instruction IDs. A donor revision change alone is not a stale instruction; only a changed file hash is. Neither command admits content or changes the corpus.
 
 Packet and product-root paths must be absolute; assignments and rows packets use
 `packages/powers/instructions/<id>.md`, proposal packets use `instructions/<id>.md`,
@@ -314,12 +320,13 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D17 (and D4b) |
 | `docs/work/` | VP Work Items: stable ID, AC, evidence, relations | F |
 | `docs/requests/` | Historical Agent-runtime handoff evidence; not an active Powers surface | — |
-| `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map), `VPPluginManifestInputs/v1` (`vppluginmanifest.v1.schema.json`, E5); plus the source profile instance `config/methodology-profile.json` (`VPMethodologyProfile/v1`, D8/D10) | C, E |
+| `config/` | VP schemas: `VPCatalog/v1` (catalog manifest), `VPInstruction/v1` (instruction frontmatter), `VPEffectiveProfile/v1` (the resolved profile for `compose`; the source one is `VPMethodologyProfile/v1`, D8), `VPCorpusMap/v1` (processing map), `VPSourceBaseline/v1` (`vpsourcebaseline.v1.schema.json`, SR-99), `VPPluginManifestInputs/v1` (`vppluginmanifest.v1.schema.json`, E5); plus the source profile instance `config/methodology-profile.json` (`VPMethodologyProfile/v1`, D8/D10) | C, E |
 | `instructions/` | canonical instructions: `.md` + metadata, flat | D |
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
+| `source-baseline.json` | per-file SHA-256/byte baseline for donor files that produced instructions; update-tracking owner (SR-99) | D |
 | `skills/vida-bootstrap/`, `skills/vp-mode/`, `skills/vp-setup/` | Role bootstrap, orchestration and setup source entries with their scripts; `vida-bootstrap` is project-document only until host delivery is authorized | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | E5a selected host manifests generated from explicit package inputs; production inputs/outputs are absent | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `check-retrieval.ts` (read-only receipt validator for an intent-to-ID retrieval map), `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `review-migration-plan.ts` (read-only migration-plan mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5), `install-plugin.ts` (OpenCode/Pi skill installation and read-only check; Codex manifest validation) | C, D, E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `check-retrieval.ts` (read-only receipt validator for an intent-to-ID retrieval map), `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `source-updates.ts` with `build-source-baseline.ts` and `check-source-updates.ts` (donor update tracking, SR-99), `packet.ts` (read-only proposal mechanics), `review-migration-plan.ts` (read-only migration-plan mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5), `install-plugin.ts` (OpenCode/Pi skill installation and read-only check; Codex manifest validation) | C, D, E |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |

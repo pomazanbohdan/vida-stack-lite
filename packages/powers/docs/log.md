@@ -149,6 +149,18 @@
   219 assertions; OKF 31 concepts / 0 failures; Markdown 3 docs / 29 links /
   0 failures.
 
+* **Donor update baseline:** added `VPSourceBaseline/v1` and
+  `source-baseline.json` for the 8 corpus donors: 1,193 files that produced 2,510
+  instructions, each bound to the `donors.yaml` revision with SHA-256 and byte
+  length. `build-source-baseline.ts` is the only writer and refuses a clone HEAD
+  mismatch; `check-source-updates.ts` is read-only and reports `current`,
+  `pin-stale`, `stale`, `missing` or `unknown` with affected instruction IDs. A
+  donor revision change alone is not stale; only a changed file hash is. Live
+  check: 8 donors / 1,193 files / 2,510 covered / 0 affected. Package suite:
+  760 pass / 4 skip / 0 fail / 3,794 assertions; focused source-update tests:
+  13 pass / 33 assertions; typecheck 60 files; OKF 31 concepts / 0 failures;
+  Markdown 9 docs / 55 links / 0 failures.
+
 ## 2026-10-31
 
 * **Skill entries carved, path contract fixed:** `vp-mode` now keeps the every-run rules in `SKILL.md` and loads `references/profile.md`, `examples.md`, `bundle.md`, `findings.md` or `artifacts.md` only at the branch that needs it. Every script command uses `<skill-dir>`, the directory the host reports for the loaded skill, so an installed plugin no longer depends on the consumer cwd; the receipt path is explicit. `vp-setup` keeps five steps (detect, inventory, resolve, write/`--dry-run`, verify) without the duplicated sentence. `skill-contract.test.ts` now checks frontmatter, reference reachability, absence of cwd-relative commands, the every-run rules and the receipt report shape the validator accepts. A behavioral probe answered the bundle-limit question with no catalog call and ran one search plus one multi-ID get for the telemetry task; its receipt attempt failed on a missing report shape, which is now specified in the entry and pinned by a test. The earlier local-model attempt was partial and its log claim was removed. Package gate: 740 passed, 4 Windows skips, 0 failures, 100 % functions and lines.

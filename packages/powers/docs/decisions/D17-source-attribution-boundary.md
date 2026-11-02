@@ -62,8 +62,9 @@ opinion.
 The stored `sha256` is the update signal. When a donor advances:
 
 - **current** — the source file hash and pin both match.
-- **pin-stale** — the hash matches but the donor revision advanced; the text is
-  unchanged and the pin can be updated after verification.
+- **pin-stale** — the hash matches the baseline but the donor revision advanced;
+  update the clone and pin, then re-check. This does not prove the new revision
+  is unchanged until the clone is at that revision.
 - **stale** — the file hash differs; the locator and instruction must be
   re-reviewed before publication.
 - **missing** — the source path no longer exists; the dependent instruction is
@@ -72,7 +73,8 @@ The stored `sha256` is the update signal. When a donor advances:
   backfilled.
 
 Status is derived at check time, not stored. A donor update alone does not make
-an instruction stale; only a changed source file does.
+an instruction stale; only a changed source file does. `pin-stale` is the state
+before that comparison is complete.
 
 ## Consequences
 

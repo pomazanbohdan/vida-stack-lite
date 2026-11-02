@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "basis", "donors"],
+  "properties": {
+    "schema": { "const": "VPSourceBaseline/v1" },
+    "basis": { "const": "pinned-donor-files" },
+    "donors": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["revision", "files"],
+        "properties": {
+          "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+          "files": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["sha256", "bytes"],
+              "properties": {
+                "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "bytes": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

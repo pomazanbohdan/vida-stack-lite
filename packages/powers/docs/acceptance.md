@@ -182,6 +182,12 @@ binds the current sources and raw local CLI observations.
 | AC-77 | The actual explicit host-shim project profile is consumed; missing/invalid required profiles never substitute an instruction-file marker, and unresolved choices remain explicit | SR-25, SR-59, SR-98 | Real host-shim setup and foreign-cwd retrieval exit 0; missing/invalid explicit profile exit 1 with empty stdout despite a valid marker fixture. Approval/context groups stay unresolved; profile and root AGENTS hashes stay unchanged | mixed | verified (bounded project use) |
 | AC-78 | Each applicable stage, child and resumed context uses current source/profile references and truthful retrieval evidence; documentation use grants no host activation or runtime authority | SR-53, SR-61, SR-98 | Sidecar defines stage/child/resume bindings; the 8-ID map passes the receipt and current-source reread. Independent Luna child read base+validation, consumed the explicit profile and retrieved the same applicable bundle with a valid receipt; source review ACCEPT (0 Critical / 0 Important / 1 ledger Minor, corrected by Root). This verifies bounded project use and the contract, not forced harness compaction or universal future compliance | mixed | verified (bounded project/contract) |
 
+## Donor source update tracking
+
+| ID | Condition | SR | Evidence | Type | State |
+|---|---|---|---|---|---|
+| AC-79 | A stored per-file baseline covers every donor file that produced an instruction; the read-only check reports current, pin-stale, stale, missing or unknown, maps non-current files to affected instruction IDs, and writes nothing; baseline generation refuses a clone HEAD or corpus revision mismatch and includes only files with at least one instruction ID | SR-99 | `source-updates.test.ts`: baseline determinism/schema, current, pin-stale, stale, missing, unknown, unrelated clone revision, path escape, corpus/donor revision mismatch, baseline/map revision mismatch, clone HEAD mismatch and CLI exit 0/1/2 (13 pass / 33 assertions); live run: 8 donors / 1,193 files / 2,510 instructions covered / 0 affected | auto | verified (component) |
+
 ## What we do not prove
 
 | Topic | Why | State |
