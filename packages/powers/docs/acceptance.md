@@ -187,6 +187,7 @@ binds the current sources and raw local CLI observations.
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|
 | AC-79 | A stored per-file baseline covers every donor file that produced an instruction; the read-only check reports current, pin-stale, stale, missing or unknown, maps non-current files to affected instruction IDs, and writes nothing; baseline generation refuses a clone HEAD or corpus revision mismatch and includes only files with at least one instruction ID | SR-99 | `source-updates.test.ts`: baseline determinism/schema, current, pin-stale, stale, missing, unknown, unrelated clone revision, path escape, corpus/donor revision mismatch, baseline/map revision mismatch, clone HEAD mismatch and CLI exit 0/1/2 (13 pass / 33 assertions); live run: 8 donors / 1,193 files / 2,510 instructions covered / 0 affected | auto | verified (component) |
+| AC-80 | The read-only triage reports added, modified, deleted and renamed donor files against the baseline; new Markdown files receive a candidate or rejected disposition with reason; changed or deleted used files list affected instruction IDs; no corpus file is written | SR-99 | `donor-updates.test.ts`: name-status parsing, new-file classification, active prefixes and a real git-diff fixture (4 pass / 10 assertions); live report: 8 donors / 1,526 added / 974 modified / 83 deleted / 291 used modified / 16 used deleted / 1,234 affected instructions / 61 new candidates / 1,465 rejected | auto | verified (component) |
 
 ## What we do not prove
 

@@ -368,7 +368,7 @@ decision records (D1–D9, D4b and D10–D16), an OKF bundle with a validator, a
 with eight processed snapshots (seven methodological donors and Open Knowledge Format) plus
 Wondelai registered-not-processed. `research_status: finalized`; steps A0, A, B, C and D are
 closed; E1–E4 are implemented, the project-document bootstrap packet is complete
-(760 pass / 4 skip), and E5b production qualification remains open.
+(764 pass / 4 skip), and E5b production qualification remains open.
 
 **Deferred outside the current scope:** registration in the shared root files of the repository;
 D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover; marketplace publication; the
@@ -394,4 +394,6 @@ attribution. Source links, license metadata and attribution are recorded in the
 donor manifest and `NOTICE`; Powers does not assess legal risk (D17). The 8
 processed donors have a per-file update baseline (`source-baseline.json`, 1,193
 files / 2,510 instructions); `check-source-updates` is read-only and lists
-affected instruction IDs.
+affected instruction IDs. Upstream triage on 2026-11-02 found 1,234 affected
+instructions and 61 new Markdown candidates across 7 updated donors; corpus
+conversion remains a reviewed batch.

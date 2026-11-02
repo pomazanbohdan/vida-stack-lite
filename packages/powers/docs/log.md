@@ -2,6 +2,20 @@
 
 ## 2026-11-02
 
+* **Donor update triage:** checked the 8 corpus donors against upstream on
+  2026-11-02. Seven have newer revisions; Open Knowledge Format is current.
+  Read-only triage against `source-baseline.json`: 1,526 added, 974 modified,
+  83 deleted; 291 modified and 16 deleted used files affect 1,234 instructions;
+  61 new Markdown candidates (superpowers 10, BMAD 18, matt 6, GSD 27) and 1,465
+  rejected new files (non-Markdown, changesets, tests/evals, harness). No corpus
+  instruction was changed; conversion remains a reviewed batch. Added
+  `donor-updates.ts`, `triage-donor-updates.ts`, the SR-99 triage clause and
+  AC-80. Changelog rule: D6 and corpus instruction
+  `write-the-change-log-newest-first-under-date-headings`; this entry is
+  newest-first under the 2026-11-02 heading. Package suite 764 pass / 4 skip /
+  0 fail / 3,804 assertions; focused tests 4 pass / 10 assertions; typecheck 63
+  files; OKF 31 concepts / 0 failures; Markdown 7 docs / 53 links / 0 failures.
+
 * **Project-document bootstrap implemented:** added the self-contained
   `vida-bootstrap` source entry, nine role texts, registry/schema and composer;
   sixteen roles map to seven families, with base-only use limited to inspection.
