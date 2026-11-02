@@ -2,6 +2,14 @@
 
 ## 2026-11-02
 
+* **Bmad B3 staged:** reviewed the 17 `bmad-spec` instructions against the new
+  owner. `give-every-capability-an-intent-and-a-testable-success` now covers
+  requirements as well as capabilities, and `keep-the-capability-ids-stable`
+  applies to ticket `R<n>` ids. The removed `bmad-spec` sources are mapped to
+  `bmad-agent-po/references/spec.md`; the 17 repoints wait for the final pin
+  batch. The bmad pin is **not** advanced; catalog revision 6266;
+  `check-corpus` reports 2,514 instructions and zero issues.
+
 * **Bmad B2 staged:** updated 10 architecture and UX instructions for ticket-first
   work: read the epic ticket in full, trust its Requirements, open sources and
   companions only where the ticket points, bind architecture decisions to ticket

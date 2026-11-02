@@ -21,7 +21,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/insert-phase.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/how-to/take-over-a-capability-or-eos.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -33,6 +33,7 @@ domains:
 # Keep the capability ids stable
 Capability IDs are stable and unique. Never reused, never renumbered.
 new capabilities get the next unused `CAP-N`; never reuse retired IDs.
+The same rule applies to a ticket's requirement ids: never reuse or renumber `R<n>`; a new requirement takes the next unused id.
 A second invocation with the same
 slug
 lands at the existing spec folder and updates in place, preserving capability IDs.

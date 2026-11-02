@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '4'
+revision: '5'
 ---
 
 # Instruction change vector
@@ -116,9 +116,18 @@ Legend: result = corpus instructions / map records / baseline files.
 |---|---|---|---:|---|
 | B1 | bmad-method | `bmad-prd` + `bmad-qa-generate-e2e-tests` ticket awareness | 6 | content staged; pin/provenance advance pending |
 | B2 | bmad-method | `bmad-architecture` + `bmad-ux` ticket-first | 10 | content staged; pin/provenance advance pending |
+| B3 | bmad-method | `bmad-spec` reviewed against the new ticket owner | 2 | 17 instruction repoints to `bmad-agent-po/references/spec.md` pending |
 
 A staged batch has changed instruction content but has not advanced the donor pin
 or provenance. It is not a completed batch and makes no admission claim.
+
+## Pending provenance moves
+
+| From | To | Reason |
+|---|---|---|
+| `skills/bmad-spec/SKILL.md` | `skills/bmad-agent-po/references/spec.md` | bmad-spec removed; Sofia owns ticket requirements |
+| `skills/bmad-spec/assets/spec-template.md` | `skills/bmad-agent-po/references/spec.md` | template replaced by the ticket template |
+| `skills/bmad-spec/assets/headless-schemas.md` | `skills/bmad-agent-po/references/spec.md` | headless requirements now live in the ticket workflow |
 
 ## Batch update rule
 

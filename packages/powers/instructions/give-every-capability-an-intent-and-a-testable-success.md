@@ -1,18 +1,18 @@
 ---
 instruction_id: give-every-capability-an-intent-and-a-testable-success
-title: Give every capability an intent and a testable success
-summary: A capability states what it enables and what would show that it works; an intent that prescribes the implementation is not an intent.
+title: Give every capability or requirement an intent and a testable success
+summary: A capability or requirement states what it enables and what would show that it works; an intent that prescribes the implementation is not an intent.
 capability_tags:
   - plan-implementation
 pattern_tags:
   - testable-criteria
-conditions_applies_when: A specification lists capabilities.
-conditions_does_not_apply_when: The document carries no capabilities.
+conditions_applies_when: A specification lists capabilities or requirements.
+conditions_does_not_apply_when: The document carries no capabilities or requirements.
 artifact_contract_output_type: capability-list
 artifact_contract_required_data:
-  - the intent of each capability
-  - the success criterion of each capability
-artifact_contract_verified_by: every capability has both an intent and a success a test or a demonstration can decide
+  - the intent of each capability or requirement
+  - the success criterion of each capability or requirement
+artifact_contract_verified_by: every capability or requirement has both an intent and a success a test or a demonstration can decide
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,7 +22,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/agent/assets/sample-capability.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/memory-agent/assets/CREED-template.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -30,8 +30,9 @@ domains:
   - product
 ---
 
-# Give every capability an intent and a testable success
-Each capability has both `intent` and `success`. Missing either = not a capability.
+# Give every capability or requirement an intent and a testable success
+Each capability or requirement has both `intent` and `success`. Missing either = not a capability or requirement.
+For a ticket, the requirement line carries its stable `R<n>` and the success signal the ticket's `Done when` checks.
 Intents describe WHAT, not HOW. Implementation prescription belongs in a companion (stack, conventions).
 Success signal is concrete enough to test or demonstrate against. "Users love it" doesn't qualify.
 One sentence. "User or system can do X to achieve Y." WHAT, not HOW.

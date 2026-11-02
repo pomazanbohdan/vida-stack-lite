@@ -80,10 +80,11 @@ templates/configuration and native host delivery are outside this packet.
    instructions added (shared wiki and gradual automation), 5 in-progress
    reference files rejected. Bmad-method is in staged batches: B1 updated 6
    instructions for ticket-aware PRD/QA; B2 updated 10 for ticket-first
-   architecture/UX; the pin/provenance advance is pending. Remaining bmad
-   batches: spec, code-review/build, ticket/build-auto, discovery/retro,
-   review/walkthrough, agents/tooling/docs and the new `bmad-agent-po` skill.
-   Remaining triage:
+   architecture/UX; B3 reviewed 17 spec instructions and updated 2, with repoints
+   to `bmad-agent-po/references/spec.md` pending. The pin/provenance advance is
+   pending. Remaining bmad batches: code-review/build, ticket/build-auto,
+   discovery/retro, review/walkthrough, agents/tooling/docs and the new
+   `bmad-agent-po` skill. Remaining triage:
    1,184 affected instructions and 45 new candidates across the other donors;
    conversion remains a reviewed batch. `docs/VECTOR.md` is the living summary;
    update it and run `check-vector` in every batch.
