@@ -410,7 +410,7 @@ for a resolved session bundle.
 | D14 | One bounded engineering/UX, product and business instruction pack; individual source gates remain mandatory |
 | D15 | Selected typed resources use exact-ID retrieval through the same catalog in a later phase |
 | D16 | Stable canonical IDs/files with independent form/domain metadata, generated browse and a separately verified rollout |
-| D17 | Source attribution, not legal risk: Powers records the exact source link, pinned revision, locator and attribution as metadata; it does not assess legal risk, grant rights or clear content. Owner admission remains separate |
+| D17 | Source attribution, not legal risk: reuse provenance (`donor`, `license`, `revision`, `path`) and add only SHA-256 + locator per source; one instruction may have several source entries; staleness is derived from the hash. Powers does not assess legal risk. Owner admission remains separate |
 
 ## 8. Known risks and GAPs
 

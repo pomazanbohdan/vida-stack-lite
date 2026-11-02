@@ -136,6 +136,15 @@
   19 pass / 216 assertions; typecheck 56 files; OKF 31 concepts / 0 failures;
   Markdown 19 docs / 106 links / 0 failures.
 
+* **D17 minimal record:** reduced per-source attribution to the existing
+  `provenance` entry (`donor`, `license`, `revision`, `path`) plus only `sha256`
+  and `locator`. One instruction may have several entries; a merged instruction
+  is current only when every entry is current. Staleness is derived per source as
+  `current`, `pin-stale`, `stale`, `missing` or `unknown`. Author/title, license
+  text/path and notice stay with the source file, donor manifest and `NOTICE`; no
+  new catalog or duplicate fields. Checks: OKF 31 concepts / 0 failures;
+  Markdown 8 docs / 83 links / 0 failures.
+
 ## 2026-10-31
 
 * **Skill entries carved, path contract fixed:** `vp-mode` now keeps the every-run rules in `SKILL.md` and loads `references/profile.md`, `examples.md`, `bundle.md`, `findings.md` or `artifacts.md` only at the branch that needs it. Every script command uses `<skill-dir>`, the directory the host reports for the loaded skill, so an installed plugin no longer depends on the consumer cwd; the receipt path is explicit. `vp-setup` keeps five steps (detect, inventory, resolve, write/`--dry-run`, verify) without the duplicated sentence. `skill-contract.test.ts` now checks frontmatter, reference reachability, absence of cwd-relative commands, the every-run rules and the receipt report shape the validator accepts. A behavioral probe answered the bundle-limit question with no catalog call and ran one search plus one multi-ID get for the telemetry task; its receipt attempt failed on a missing report shape, which is now specified in the entry and pinned by a test. The earlier local-model attempt was partial and its log claim was removed. Package gate: 740 passed, 4 Windows skips, 0 failures, 100 % functions and lines.

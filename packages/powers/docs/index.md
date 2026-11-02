@@ -51,7 +51,7 @@ recorded in the frontmatter of each concept.
 * [D14 — Bounded engineering and UX guidance](decisions/D14-bounded-engineering-ux-guidance.md) - Accepted bounded engineering/UX instruction scope; other unresearched domains remain out of scope.
 * [D15 — Selected typed reference resources](decisions/D15-selected-typed-reference-resources.md) - Accepted typed resource families with exact-ID retrieval through the same catalog in a separate phase.
 * [D16 — Instruction form and domain facets](decisions/D16-faceted-instruction-browse.md) - Stable canonical IDs and files with independent form/domain metadata, generated browse and a separately verified rollout.
-* [D17 — Source attribution boundary: no Powers legal-risk assessment](decisions/D17-source-attribution-boundary.md) - Powers records the exact source link, pinned revision, locator and attribution as metadata; it does not assess legal risk, grant rights or clear content. Owner admission remains separate.
+* [D17 — Source attribution boundary: no Powers legal-risk assessment](decisions/D17-source-attribution-boundary.md) - Reuse provenance (`donor`, `license`, `revision`, `path`) and add only SHA-256 + locator per source; one instruction may have several source entries; staleness is derived from the hash. Powers does not assess legal risk. Owner admission remains separate.
 
 # Outside the bundle
 

@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 'D17 — Source attribution boundary: no Powers legal-risk assessment'
-description: 'Powers records exact source attribution and links; it does not assess legal risk, grant rights or clear content.'
+description: 'Powers records a minimal per-source link, digest and locator; it does not assess legal risk.'
 status: stable
 stale_after: '2027-11-02T00:00:00Z'
 tags:
@@ -21,7 +21,7 @@ sources:
   title: Step H source-admission plan
 generated: { by: human:repository-owner, at: '2026-11-02T00:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T00:00:00Z' }
-revision: '1'
+revision: '2'
 ---
 
 # Decision
@@ -35,21 +35,43 @@ remains a separate product decision.
 
 ## Boundary
 
-For every selected source or unit, Powers records:
+Reuse the existing instruction `provenance` entry — `donor`, `license`,
+`revision`, `path` — and add only two fields per source:
 
-- the canonical source path or URL;
-- the pinned revision, or the retrieval date and content digest for an
-  unpinned web source;
-- the author/title and the applicable license label as metadata;
-- the license file/path and its digest where one exists;
-- the exact source locator for the selected text;
-- the attribution/notice text that must accompany the content.
+- `sha256` — the exact source file at that revision;
+- `locator` — the exact selected line/codepoint/byte span or row/cell.
 
-A missing, stale or contradictory source link/attribution blocks the dependent
-source action. An ambiguous link/attribution asks the decision owner. Powers does
-not decide whether the consumer's use is lawful; legal review and any permission
-for a particular use remain outside the Powers product. The record is source
-metadata, not a legal opinion.
+No other per-source fields are added. The donor manifest owns the license text,
+license path and donor-level attribution; the package `NOTICE` owns the rendered
+notice. Author/title is read from the source file when present; the notice is
+rendered from the donor manifest, source entry and `NOTICE`. None of these is
+duplicated per instruction.
+
+An instruction may have several source entries. A merged instruction retains
+every entry and is current only when every entry is current.
+
+A missing, stale or contradictory entry blocks the dependent source action. An
+ambiguous entry asks the decision owner. Powers does not decide whether the
+consumer's use is lawful; legal review and any permission for a particular use
+remain outside the Powers product. The record is source metadata, not a legal
+opinion.
+
+## Source update tracking
+
+The stored `sha256` is the update signal. When a donor advances:
+
+- **current** — the source file hash and pin both match.
+- **pin-stale** — the hash matches but the donor revision advanced; the text is
+  unchanged and the pin can be updated after verification.
+- **stale** — the file hash differs; the locator and instruction must be
+  re-reviewed before publication.
+- **missing** — the source path no longer exists; the dependent instruction is
+  blocked or replaced.
+- **unknown** — a legacy entry has no hash; it is not claimed current until
+  backfilled.
+
+Status is derived at check time, not stored. A donor update alone does not make
+an instruction stale; only a changed source file does.
 
 ## Consequences
 
@@ -57,6 +79,10 @@ metadata, not a legal opinion.
   owner-admitted** content.
 - Source attribution/link, human fidelity review and owner admission are the
   required H1 gates.
+- A merged instruction keeps one provenance entry per source; staleness is
+  evaluated per source, not per donor.
+- Existing legacy entries remain readable; an entry without `sha256` reports
+  `unknown` until it is backfilled, not current.
 - A license label is recorded, not interpreted as legal clearance.
 - Historical rights dossiers and HOLD decisions remain historical evidence; they
   are not a current legal gate and are not rewritten.
