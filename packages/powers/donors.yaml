@@ -81,7 +81,8 @@ donors:
     content_file_count: 169
     snapshot_source: research-frontmatter
     note: >
-      a monorepository; the source is the pstack directory (169 tracked files),
+      a monorepository; the source is the pstack directory at
+      https://github.com/cursor/plugins/tree/main/pstack (169 tracked files),
       file_count 947 — the size of the whole clone; the separate license file pstack/LICENSE (MIT)
 
   - id: gsd-core
