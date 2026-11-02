@@ -1,16 +1,17 @@
 # Vida Powers
 
-## Project-document use in this repository
+## Hybrid use in this repository
 
-Read the repository sidecar for the explicit project root, bootstrap role and
-document paths. Bootstrap is source documentation, independent of host skill
-discovery. From the project root, run the local composer with
+VidaPowers is a portable plugin/skill product. In this repository, hybrid use is
+defined by the root `AGENT.sidecar.md`; the sidecar selects the project mode,
+bootstrap role and exact document paths. Reading product source documents is not
+host activation. From the project root, run the local composer with
 `bun packages/powers/skills/vida-bootstrap/scripts/bootstrap.ts --role orchestrator`
 or select an agent with `--role agent --role-name code-researcher`. Read the
 agent base and one family delta for an assignment. The sidecar's explicit
 `vida-project-profile.json` is required for profile-aware retrieval; a missing
 or invalid explicit profile is not replaced by marker data. Host-native plugin
-delivery and activation remain separate future work.
+delivery and Agent runtime integration remain separate, non-Powers tracks.
 
 From the project root, these are local development tools; use root-derived
 absolute paths when running from another directory:
@@ -22,12 +23,18 @@ bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts get --id <id...> --cat
 bun packages/powers/scripts/check-retrieval.ts --catalog packages/powers/catalog.json --report <work-report.json>
 ```
 
-**A portable agent plugin with a canonical instruction corpus, a single
-orchestration skill and materialization of results.**
+**A portable agent plugin with a canonical instruction corpus, role bootstrap,
+orchestration and setup skills, and materialization of results.**
 
-It lives in `packages/powers/` alongside the repository's two registered product
-roots: `packages/agent` (Vida Agent, runtime) and `packages/plugin` (Vida Codex,
+It lives in `packages/powers/` alongside the repository's other registered product
+roots: `packages/agent` (Vida Agent, runtime) and `packages/codex` (Vida Codex,
 the layer between the Codex host and the agent).
+
+**Scope boundary:** Powers owns the plugin/skill source, instruction behavior,
+catalog and profile schemas. Agent runtime registry, configuration, activation,
+runtime state, `WorkItem/v1`, runtime findings/artifacts and runtime acceptance
+are Agent-owned. This repository's hybrid mode is defined by
+`AGENT.sidecar.md`; Powers does not decide runtime consumption.
 
 D14 and D15 accept a bounded engineering/UX pack and selected typed reference data
 for phased work. No new content is admitted or implemented by those scope decisions;
@@ -37,7 +44,7 @@ donor rights review and Runtime acceptance remain separate gates.
 |---|---|
 | [Research — product concept](docs/research/vida-powers-product-research.md) | B-level: why the product exists, which boundaries it has, which behavior rules it follows |
 | [Step H plan](docs/task-plan-step-h.md) | H0–H3 gates for the accepted D14/D15 scope; implementation has not started |
-| [Next actions](docs/next-actions.md) | Single owner of delivery status, order and gates: A0 → A → B → C → D → E → F → G → H, plus the E5 target status and the remaining forward stages |
+| [Next actions](docs/next-actions.md) | Single owner of delivery status, order and gates: A0 → A → B → C → D → E → F → H, plus the E5 target status and the remaining forward stages; G is historical Agent-runtime handoff evidence outside Powers |
 | [Decisions D1–D16 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
 | [AGENTS.md](AGENTS.md) | Instructions for the agents developing VP |
 | [Donor manifest](donors.yaml) | Eight processed donors plus Wondelai registered-not-processed; rights review remains open |

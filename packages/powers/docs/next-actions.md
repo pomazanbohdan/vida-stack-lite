@@ -44,14 +44,33 @@ The 8-ID applied map passes its receipt. Independent Luna source review ACCEPT:
 AC-74–AC-78 carry bounded component/project/contract evidence. This packet's
 implementation and adoption are complete; host delivery and runtime work remain
 separate. Actual forced compaction was not tested.
-Pinned Knip returns exit 1 despite `issues: []`: the symbols diagnostic reports
-one pre-existing redundant `knip.config.ts` entry in the Agent workspace.
-No Agent config was changed and the gate is not claimed PASS.
+Pinned Knip remains exit 1 despite `issues: []`: the config hint targets the
+Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but
+breaks the pre-commit hook's unused-file check, so the entry is retained. This is
+an external Agent/config conflict; no Powers gate was weakened and the gate is
+not claimed PASS.
 
 The Powers writer stays within `packages/powers/` (D9). The current owner
 instruction separately authorizes Root to adopt the documents through
 `AGENT.sidecar.md` and `vida-project-profile.json`. Root AGENTS, runtime
 templates/configuration and native host delivery are outside this packet.
+
+## Current Powers task list after scope actualization (2026-11-02)
+
+1. **F closure decision** — Powers Standalone only; F remains open until a real
+   finding event and semantic/equivalence evidence exist, or the owner explicitly
+   accepts component-only closure.
+2. **H1 rights/admission** — review the rights dossier, select the exact source
+   subset, complete human fidelity review and owner admission before any conversion.
+3. **Host qualification** — production manifest inputs/outputs, native host
+   installation and portable/host acceptance remain deferred.
+4. **External Knip conflict** — Agent/config owner must resolve the
+   `knip.config.ts` pre-commit versus pinned-gate conflict; Powers does not own it.
+
+Out of Powers scope: Agent runtime integration, D3/D8, VP-7/G, Agent
+`WorkItem/v1`, runtime findings/artifacts, and the runtime effective-profile
+carrier. Product instructions and current status live in
+`packages/powers/AGENTS.md`.
 
 The goal of this queue: **a provable pipeline with the corpus and the skills**, suitable for
 the Standalone environment, with checks that are executed rather than declared.

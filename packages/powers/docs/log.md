@@ -69,6 +69,13 @@
   runtime findings/artifacts and Runtime acceptance are Agent-owned read-only
   references outside F closure. AC-20–AC-24 are scoped to Powers Standalone.
 
+* **Product instruction ownership:** product-specific source map, role bootstrap,
+  explicit-profile procedure and project-local commands moved from the root
+  `AGENT.sidecar.md` into `packages/powers/AGENTS.md`. The root sidecar now owns
+  only project roots, shared policy and pointers. Agent runtime integration
+  remains outside Powers; the current Powers task list is recorded in
+  `docs/next-actions.md`.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.
