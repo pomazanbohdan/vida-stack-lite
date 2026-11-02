@@ -2,6 +2,15 @@
 
 ## 2026-11-02
 
+* **H1 25-file pilot proposed:** prepared a balanced candidate set of 25
+  Wondelai `SKILL.md` files (8 engineering, 9 product-UX, 8 business-marketing),
+  all outside the 14 guided-journey directories, with pinned paths, byte sizes
+  and SHA-256 values. The set is proposed preparation only, not admission. A
+  read-only Codex/Luna review checked all 25 paths at `c17299649`, the journey
+  exclusions, the owner scope, the group balance and the hashes, and returned
+  READY with 0 Critical / 0 Important / 0 Minor. Stored under the existing H1
+  evidence directory.
+
 * **H1 owner decisions recorded:** the owner allowed Wondelai for general
   methods plus selected product/business methods; set the first pilot at 25
   candidate files; moved the 1,434 CSV rows to H2 after H1; admitted no typed
