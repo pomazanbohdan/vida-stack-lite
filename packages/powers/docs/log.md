@@ -2,6 +2,15 @@
 
 ## 2026-11-02
 
+* **Bmad update validated by Luna:** the independent review at `50bdd652`
+  returned CHANGES with one Important finding (the rendered-agent shape source
+  was used but not tracked in provenance, map or baseline) and one Minor
+  (stale live counts in owner guidance). Both were fixed at `56ebc15e`; the
+  re-check returned READY with 0 Critical / 0 Important / 0 Minor. The final
+  checks report 2,524 instructions, 2,777 map records, 1,200 baseline files,
+  765 pass / 4 skip / 0 fail, typecheck 66 files, OKF 32 concepts, and no
+  Markdown failures.
+
 * **Bmad pin advanced:** moved bmad-method from `cfba3ff5` to `bd70c643`,
   updated provenance on 752 instructions, and applied the deletion map:
   `bmad-spec` → `bmad-agent-po/references/spec.md`, `bmad-ticket` →

@@ -88,7 +88,8 @@ templates/configuration and native host delivery are outside this packet.
    product brief and method help; B10 added 10 new `bmad-agent-po` instructions.
    The pin advanced `cfba3ff5` → `bd70c643`; provenance on 752 existing instructions
    was updated, the deletion map was applied, and the baseline was rebuilt at
-   1,200 files.
+   1,200 files. Independent Luna review is READY at `56ebc15e` with 0 Critical /
+   0 Important / 0 Minor.
    Remaining triage: addy-skills (280 affected instructions) and gsd-core
    (525 affected, 27 new candidates); pstack and ponytail have no used-file
    impact. Conversion remains a reviewed batch. `docs/VECTOR.md` is the living
