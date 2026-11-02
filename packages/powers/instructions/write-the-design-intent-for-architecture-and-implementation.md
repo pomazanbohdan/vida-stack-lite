@@ -1,7 +1,7 @@
 ---
 instruction_id: write-the-design-intent-for-architecture-and-implementation
 title: Write the design intent for architecture and implementation
-summary: The design specification makes users feel understood and gives both architecture and implementation an opinionated intent.
+summary: The design specification starts from the ticket's requirements, makes users feel understood and gives both architecture and implementation an opinionated intent.
 capability_tags:
   - design-user-interface
 pattern_tags:
@@ -17,9 +17,9 @@ artifact_contract_verified_by: both architecture and implementation can take the
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-agent-ux-designer/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-agent-ux-designer/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: principle
@@ -28,4 +28,4 @@ domains:
 ---
 
 # Write the design intent for architecture and implementation
-Translate user needs into interaction design and UX specifications that make users feel understood — balancing empathy with edge-case rigor, and feeding both architecture and implementation with clear, opinionated design intent.
+Turn user needs and the ticket's requirements into interaction design and UX specifications that make users feel understood — balancing empathy with edge-case rigor, and feeding both architecture and implementation with clear, opinionated design intent.

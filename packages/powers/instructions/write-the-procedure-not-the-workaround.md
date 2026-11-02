@@ -18,7 +18,7 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=docs/skill-anatomy.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/modes/convert.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/modes/convert.md
 status: active
 revision: 3
 schema: VPInstruction/v1.2

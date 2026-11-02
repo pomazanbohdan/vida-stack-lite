@@ -16,9 +16,9 @@ artifact_contract_verified_by: "every claim in the spec traces to the market, co
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-agent-analyst/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-agent-analyst/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: principle
@@ -30,3 +30,4 @@ domains:
 
 # Elicit the needs into an actionable spec grounded in evidence
 Bring deep expertise in market research, competitive analysis, requirements elicitation, and domain knowledge — translating vague needs into actionable specs while staying grounded in evidence-based analysis.
+When a ticket exists for the work, read it first and in full; its `sources:` are already distilled into it.

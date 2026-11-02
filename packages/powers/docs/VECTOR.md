@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '10'
+revision: '11'
 ---
 
 # Instruction change vector
@@ -108,6 +108,7 @@ product-owner default and cannot override `user_decision: true`.
 |---|---:|---:|---:|---:|---:|---:|---|---|
 | 1 | superpowers | `bb92a77741419a4ab5f06e711a283343f1ada0c3` → `2ce8aa15d05bd57213e6f746f953aafb7ded7a8b` | 87 | 8 | 2 | 18 deleted; 2 rejected; 1 duplicate removed | 2,512 / 2,782 / 1,201 | product/design; engineering; documentation |
 | 2 | matt-skills | `49dd158d1076134a641b33efb035946536778336` → `4ae2317ddb22b046e26455e4f9c9b3aaaf62212d` | 69 | 8 | 2 | 16 deleted; 9 rejected | 2,514 / 2,776 / 1,202 | engineering; operations; documentation |
+| 3 | bmad-method | `cfba3ff5f982c1809e060606e399f55ebd7bce5e` → `bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41` | 752 | 96 | 10 | 16 deleted used files; 18 new candidates reviewed | 2,524 / 2,777 / 1,199 | product/design; engineering; operations; documentation |
 
 Legend: result = corpus instructions / map records / baseline files.
 
@@ -115,19 +116,24 @@ Legend: result = corpus instructions / map records / baseline files.
 
 | Stage | Donor | Scope | Content updates | Status |
 |---|---|---|---:|---|
-| B1 | bmad-method | `bmad-prd` + `bmad-qa-generate-e2e-tests` ticket awareness | 6 | content staged; pin/provenance advance pending |
-| B2 | bmad-method | `bmad-architecture` + `bmad-ux` ticket-first | 10 | content staged; pin/provenance advance pending |
-| B3 | bmad-method | `bmad-spec` reviewed against the new ticket owner | 2 | 17 instruction repoints to `bmad-agent-po/references/spec.md` pending |
-| B4 | bmad-method | `bmad-code-review` + `bmad-review` ticket and triage rules | 24 | content staged; pin/provenance advance pending |
-| B5 | bmad-method | `bmad-ticket` reviewed against the new `bmad-agent-po` owner | 6 | 56 instruction source repoints to `bmad-agent-po` pending |
-| B6 | bmad-method | `bmad-build` + `bmad-build-auto` ticket context and verification | 8 | content staged; pin/provenance advance pending |
-| B7 | bmad-method | `bmad-retrospective` + `bmad-correct-course` + `bmad-project-context` | 12 | 9 correct-course sources repoint to `bmad-agent-po/references/replan.md` pending |
-| B8 | bmad-method | `bmad-walkthrough` + `bmad-prfaq` + `bmad-forge-idea` | 12 | content staged; pin/provenance advance pending |
+| B1 | bmad-method | `bmad-prd` + `bmad-qa-generate-e2e-tests` ticket awareness | 6 | folded into batch 3 |
+| B2 | bmad-method | `bmad-architecture` + `bmad-ux` ticket-first | 10 | folded into batch 3 |
+| B3 | bmad-method | `bmad-spec` reviewed against the new ticket owner | 2 | folded into batch 3; 17 repoints applied |
+| B4 | bmad-method | `bmad-code-review` + `bmad-review` ticket and triage rules | 24 | folded into batch 3 |
+| B5 | bmad-method | `bmad-ticket` reviewed against the new `bmad-agent-po` owner | 6 | folded into batch 3; 56 source repoints applied |
+| B6 | bmad-method | `bmad-build` + `bmad-build-auto` ticket context and verification | 8 | folded into batch 3 |
+| B7 | bmad-method | `bmad-retrospective` + `bmad-correct-course` + `bmad-project-context` | 12 | folded into batch 3; 9 correct-course repoints applied |
+| B8 | bmad-method | `bmad-walkthrough` + `bmad-prfaq` + `bmad-forge-idea` | 12 | folded into batch 3 |
+| B9 | bmad-method | `bmad-agent-*`, `bmad-toolsmith`, `bmad-deep-recon`, `bmad-product-brief`, method help | 16 | folded into batch 3 |
+| B10 | bmad-method | new `bmad-agent-po` workflow, ticket, spec and slice rules | 10 new | folded into batch 3 |
 
-A staged batch has changed instruction content but has not advanced the donor pin
-or provenance. It is not a completed batch and makes no admission claim.
+The bmad-method B1–B10 content batches are folded into batch 3; no staged batch remains.
+A staged batch changed instruction content before the pin and provenance advanced.
+It was not a completed batch and made no admission claim.
 
-## Pending provenance moves
+## Applied provenance moves
+
+The moves below were applied in batch 3.
 
 | From | To | Reason |
 |---|---|---|

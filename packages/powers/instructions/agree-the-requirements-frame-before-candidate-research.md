@@ -17,9 +17,9 @@ artifact_contract_verified_by: the frame is agreed before any candidate research
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/selection.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-deep-recon/references/selection.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -31,5 +31,5 @@ domains:
 
 # Agree the requirements frame before candidate research
 - What must the winner do, under what constraints — scale, compliance, budget, team skills, existing stack, exit-cost tolerance? Split hard gates from weighted preferences and set the weights.
-- web research does not set requirements.
+- Sources: the ticket for this work, read in full, then the companions it names; with no ticket, the brief, PRD, architecture document and codebase. The user decides; web research does not set requirements.
 - **Agree the frame before any candidate research runs**; interactive runs confirm it even though the plan gate approved the dimension list.

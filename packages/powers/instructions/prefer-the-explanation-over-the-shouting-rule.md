@@ -18,7 +18,7 @@ compatibility_excludes:
   - write-directive-rules
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-eval/references/self-improvement.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-eval/references/self-improvement.md
 status: active
 revision: 3
 schema: VPInstruction/v1.2

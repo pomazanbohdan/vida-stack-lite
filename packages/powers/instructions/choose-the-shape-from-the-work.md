@@ -16,15 +16,15 @@ artifact_contract_verified_by: the chosen shape names the signal from the reques
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/plain-skill/shape.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/script-utility/shape.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/rendered-skill/shape.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/agent/shape.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/memory-agent/shape.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/single-skill-module/shape.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-toolsmith/shapes/multi-skill-module/shape.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/shapes/plain-skill/shape.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/shapes/script-utility/shape.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/shapes/rendered-skill/shape.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/shapes/agent/shape.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/shapes/memory-agent/shape.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/shapes/single-skill-module/shape.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-toolsmith/shapes/multi-skill-module/shape.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -42,6 +42,7 @@ The prose only tells the agent how to run the script and what to do with the res
 The conversation has reached it when teams must change what the skill does (not only add facts), when a selector chooses between routes, or when the body is long enough to split into steps loaded one at a time.
 An agent is a persona with a menu: one character the user talks to, whose capabilities are installed skills or prompts inside it.
 Reach it when the user wants someone to talk to (a name, a role, a way of working) who does several related things.
+When teams must also change what that agent does without forking, it is a rendered agent: its sources are rendered from the declared customization.
 One job, no persona: a plain skill.
 Must remember between sessions.
 The memory itself is many small, well-named files it reads as a conversation reaches them, so it is one continuous self across sessions and the waking cost does not grow with what it knows.

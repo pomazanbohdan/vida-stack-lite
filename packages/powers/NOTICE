@@ -9,7 +9,7 @@ packages/powers/donors.yaml.
   donor id               license      license file      pinned revision (head_sha)
   ---------------------  -----------  ----------------  ------------------------------------------
   superpowers            MIT          LICENSE           2ce8aa15d05bd57213e6f746f953aafb7ded7a8b
-  bmad-method            MIT          LICENSE           cfba3ff5f982c1809e060606e399f55ebd7bce5e
+  bmad-method            MIT          LICENSE           bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41
   matt-skills            MIT          LICENSE           4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
   addy-skills            MIT          LICENSE           aeac41d4d005999432bb7312f7ff06383a91d59d
   pstack                 MIT          pstack/LICENSE    2f8377461fd533f5af782e1fd643783b1067b847

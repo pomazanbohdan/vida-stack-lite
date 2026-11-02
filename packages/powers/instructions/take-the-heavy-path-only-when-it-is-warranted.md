@@ -16,9 +16,9 @@ artifact_contract_verified_by: the heavy path was chosen because one of its grou
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmod-method/help/working-in-an-organization.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmod-method/help/working-in-an-organization.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -30,7 +30,7 @@ domains:
 ---
 
 # Take the heavy path only when it is warranted
-Recommend the full path (PRD, architecture, one spec per epic, tracking) only when one of these is true
+Recommend the full path (PRD, architecture, one requirements set per epic, tracking) only when one of these is true
 People who did not do the thinking must approve what the product is.
 Several epics, teams, or agents build against the same decisions and must not diverge.
 A regulator, steering committee, or company process requires named documents.

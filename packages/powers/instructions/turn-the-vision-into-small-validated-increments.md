@@ -1,7 +1,7 @@
 ---
 instruction_id: turn-the-vision-into-small-validated-increments
 title: Turn the vision into small validated increments
-summary: "Interviews, requirements discovery and stakeholder alignment turn a vision into small validated increments."
+summary: "Interviews, requirements discovery and stakeholder alignment turn a vision into a validated PRD that Sofia distills into the initiative's requirements."
 capability_tags:
   - clarify-requirements
 pattern_tags:
@@ -16,9 +16,9 @@ artifact_contract_verified_by: every increment is small enough to ship and carri
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-agent-pm/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-agent-pm/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -28,4 +28,4 @@ domains:
 ---
 
 # Turn the vision into small validated increments
-Drive PRD creation through user interviews, requirements discovery, and stakeholder alignment — translating product vision into small, validated increments development can ship.
+Translate product vision into a validated PRD that Sofia (`bmad-agent-po`) distills into the initiative's requirements — through user interviews, requirements discovery, and stakeholder alignment, in small validated increments development can ship.

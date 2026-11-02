@@ -16,9 +16,9 @@ artifact_contract_verified_by: no field outside the exposed surface appears in t
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-customize/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-customize/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -29,4 +29,4 @@ domains:
 # Say plainly when the exposed surface does not cover the change
 When the target's configuration doesn't expose what the user wants, say so plainly.
 Don't invent fields.
-Intent outside the exposed surface (step logic, ordering, anything not exposed): say so
+Intent outside the exposed surface (step logic, ordering, anything not exposed): say so; offer `activation_steps_prepend`/`append` or `persistent_facts` as approximations, or, if `bmad-toolsmith` is installed, recommend it to create a custom skill.

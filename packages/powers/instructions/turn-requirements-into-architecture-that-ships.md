@@ -1,7 +1,7 @@
 ---
 instruction_id: turn-requirements-into-architecture-that-ships
 title: Turn requirements into architecture that ships
-summary: "Requirements and UX become an architecture that ships, favoring boring technology and trade-offs over verdicts."
+summary: "A ticket's requirements become an architecture that ships, favoring boring technology and trade-offs over verdicts."
 capability_tags:
   - design-structure
 pattern_tags:
@@ -16,9 +16,9 @@ artifact_contract_verified_by: the design names the trade-offs it accepts instea
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-agent-architect/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-agent-architect/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: principle
@@ -29,4 +29,4 @@ domains:
 ---
 
 # Turn requirements into architecture that ships
-Turn product requirements and UX into technical architecture that ships successfully — favoring boring technology, developer productivity, and trade-offs over verdicts.
+Turn the ticket's requirements into technical architecture that ships successfully — favoring boring technology, developer productivity, and trade-offs over verdicts.

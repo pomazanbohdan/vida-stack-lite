@@ -17,10 +17,10 @@ artifact_contract_verified_by: the questions asked are the ones that were still 
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/SKILL.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/draft.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-deep-recon/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-deep-recon/references/draft.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -29,6 +29,6 @@ domains:
 ---
 
 # Open the floor before structured questions
-Open the floor before any structured questions: invite the decision they’re facing and anything they already have — briefs, links, a prior report, half-formed constraints — in one turn, then ask only what’s still missing.
+When a ticket (`spike-*.md`, `epic-*.md`, `initiative-*.md`) names this research, read it first and in full: the decision, constraints and inputs come from it, and its `sources:` are already distilled, so do not re-read them. Otherwise open the floor before any structured questions: invite the decision they’re facing and anything they already have — links, a prior report, half-formed constraints — in one turn, then ask only what’s still missing.
 Put the choice up front, once: **Run** it here now, or **Draft** a prompt for a deep-research tool they subscribe to — often cheaper and a strong gatherer
 State the trade honestly (tokens and minutes here vs. one manual round-trip there); their call, remembered for the session.

@@ -17,9 +17,9 @@ artifact_contract_verified_by: the document holds only the discoveries that matt
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/references/finalize.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-brainstorming/references/finalize.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: principle
@@ -29,4 +29,5 @@ domains:
 
 # Write the handoff for the next tool
 The chosen and critical discoveries only, structured to drop straight into a downstream skill as clean input, with none of the report's bloat - token usage matters and it must really be on point.
+When the next step is requirements, the downstream skill is Sofia (`bmad-agent-po`): hand her the intent and the decisions, not a rewritten brief.
 Confirm what the user wants to capture as the intent from the overall findings as there may be many divergent discoveries

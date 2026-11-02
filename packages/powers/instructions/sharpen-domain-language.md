@@ -18,7 +18,7 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/engineering/domain-modeling/SKILL.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-forge-idea/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-forge-idea/SKILL.md
 status: active
 revision: 4
 schema: VPInstruction/v1.2

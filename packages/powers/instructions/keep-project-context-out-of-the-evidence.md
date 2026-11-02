@@ -16,11 +16,11 @@ artifact_contract_verified_by: "no claim in the artifact rests on project contex
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/SKILL.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/run.md
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/codebase.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-deep-recon/SKILL.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-deep-recon/references/run.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-deep-recon/references/codebase.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -29,6 +29,7 @@ domains:
 ---
 
 # Keep project context out of the evidence
+Project context — tickets, briefs, PRDs, code, memory, `{workflow.persistent_facts}` — shapes what to ask, never what is true.
 It is inadmissible as evidence: every claim in a research artifact traces to a digest or import file with a source.
 Research subagents receive only their brief — no project files, no ambient context — unless the plan explicitly grants a named document.
 Each assistant runs behind the **research firewall**: it gets its brief and nothing else — no project files, no ambient context.

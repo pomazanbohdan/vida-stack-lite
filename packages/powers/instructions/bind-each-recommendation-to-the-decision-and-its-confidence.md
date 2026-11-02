@@ -17,9 +17,9 @@ artifact_contract_verified_by: every recommendation names its confidence basis a
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-deep-recon/references/synthesis.md
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-deep-recon/references/synthesis.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -28,4 +28,4 @@ domains:
 ---
 
 # Bind each recommendation to the decision and its confidence
-**Recommendations** — each bound to the decision and, where the project has them, to the downstream artifact that consumes it (per the pack’s `Feeds` entries: brief section, PRD input, architecture constraint). Each recommendation names its confidence basis; a recommendation resting on low-confidence or disputed claims says so in the same sentence.
+**Recommendations** — each bound to the decision and, where the project has them, to what consumes it: the ticket whose Requirements it feeds, or the artifact per the pack’s `Feeds` entries (brief section, PRD input, architecture constraint). Each recommendation names its confidence basis; a recommendation resting on low-confidence or disputed claims says so in the same sentence.

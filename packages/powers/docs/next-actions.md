@@ -78,19 +78,20 @@ templates/configuration and native host delivery are outside this packet.
    reference files, 2 new instructions added. Matt-skills was processed second:
    pin advanced, 69 provenance revisions updated, 8 content updates, 2 new
    instructions added (shared wiki and gradual automation), 5 in-progress
-   reference files rejected. Bmad-method is in staged batches: B1 updated 6
-   instructions for ticket-aware PRD/QA; B2 updated 10 for ticket-first
-   architecture/UX; B3 reviewed 17 spec instructions and updated 2, with repoints
-   to `bmad-agent-po/references/spec.md` pending; B4 updated 24 review
-   instructions for ticket-first review, four verification-gap shapes including
-   stale tests, and file-backed triage; B5 reviewed 56 ticket instructions and
-   updated 6, with repoints to `bmad-agent-po` pending; B6 updated 8 build
-   instructions for ticket-first context and a runnable `## Verification`
-   section. The pin/provenance advance is pending. Remaining bmad batches:
-   agents/tooling/docs and the new `bmad-agent-po` skill. Remaining triage:
-   1,184 affected instructions and 45 new candidates across the other donors;
-   conversion remains a reviewed batch. `docs/VECTOR.md` is the living summary;
-   update it and run `check-vector` in every batch.
+   reference files rejected. Bmad-method was processed third in ten content
+   batches and one pin batch: B1–B2 covered ticket-aware PRD, QA, architecture
+   and UX; B3 moved `bmad-spec` to `bmad-agent-po`; B4 gave review a ticket
+   content class, four verification-gap shapes and file-backed triage; B5
+   reviewed 56 ticket instructions; B6 made build read the ticket and run its
+   `## Verification`; B7 moved retro and replan to the ticket model; B8 updated
+   walkthrough, PRFAQ and forge; B9 updated agents, toolsmith, deep recon,
+   product brief and method help; B10 added 10 new `bmad-agent-po` instructions.
+   The pin advanced `cfba3ff5` → `bd70c643`, 752 provenance entries were updated,
+   the deletion map was applied, and the baseline was rebuilt at 1,199 files.
+   Remaining triage: addy-skills (280 affected instructions) and gsd-core
+   (525 affected, 27 new candidates); pstack and ponytail have no used-file
+   impact. Conversion remains a reviewed batch. `docs/VECTOR.md` is the living
+   summary; update it and run `check-vector` in every batch.
 
 Out of Powers scope: Agent runtime integration, D3/D8, VP-7/G, Agent
 `WorkItem/v1`, runtime findings/artifacts, and the runtime effective-profile

@@ -2,6 +2,34 @@
 
 ## 2026-11-02
 
+* **Bmad pin advanced:** moved bmad-method from `cfba3ff5` to `bd70c643`,
+  updated provenance on 752 instructions, and applied the deletion map:
+  `bmad-spec` → `bmad-agent-po/references/spec.md`, `bmad-ticket` →
+  `bmad-agent-po` (with the three container templates merged into
+  `ticket-template.md`), `bmad-correct-course` →
+  `bmad-agent-po/references/replan.md`, and `step-04-present.md` →
+  `step-05-present.md`. The source baseline was rebuilt with 1,199 files; the
+  corpus map has 2,777 records; the catalog revision is 6,355; NOTICE carries
+  the new pin. `check-corpus` reports 2,524 instructions and zero issues;
+  `check-source-updates` reports 0 affected files.
+
+* **Bmad B10 staged:** added 10 new `bmad-agent-po` instructions for the
+  owner's dispatch, ticket reading and status answers, the `tickets/` tree
+  layout, entry refine flags, leaf pulling, source-conflict refinement,
+  load-bearing companions, epic refinement, and parent initiatives. The
+  remaining new candidates were merged into existing ticket, review, shape
+  and override instructions or rejected with a reason. Catalog revision 6,354;
+  `check-corpus` reports 2,524 instructions and zero issues.
+
+* **Bmad B9 staged:** updated 16 `bmad-agent-*`, `bmad-toolsmith`,
+  `bmad-deep-recon`, `bmad-product-brief` and method-help instructions. Agents
+  now read the ticket first and work from its Requirements; the PM hands a PRD
+  to Sofia; deep research takes its requirements frame from the ticket; product
+  brief reads a ticket in full; customization points to `bmad-toolsmith`; and
+  the toolsmith shape rules recognize a rendered agent and its renderer-owned
+  overrides. Catalog revision 6,344; `check-corpus` reports 2,514 instructions
+  and zero issues.
+
 * **Bmad B8 staged:** updated 12 `bmad-walkthrough`, `bmad-prfaq` and
   `bmad-forge-idea` instructions. A walkthrough reads the target's ticket first
   and trusts it, opens on the ticket's intent, lists the move repertoire on
