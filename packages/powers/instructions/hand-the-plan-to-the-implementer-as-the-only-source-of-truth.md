@@ -20,7 +20,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-03-implement.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-02-plan.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -40,6 +40,7 @@ Do not add goal restatements, file lists, ownership boundaries, investigation de
 One line of sanctioned hedging belongs in the plan at planning time, not in the dispatch.
 
 The handoff directs the subagent to load the plan's `context:` files itself, so never pre-load and paste those files into the dispatch.
+The plan's `context:` carries the companions the ticket names that this work needs, plus project-wide standards; keep it to what is not already distilled into the plan body.
 
 Only when you implement directly (no subagent available) do you load a non-empty `context:` list yourself before starting.
 

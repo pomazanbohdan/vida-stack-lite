@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-02-plan.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-03-implement.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -34,6 +34,8 @@ domains:
 `<frozen-after-approval reason="human-owned intent — do not modify unless human renegotiates">`
 
 Content inside `<frozen-after-approval>` in `{plan_file}` is read-only. Do not modify.
+
+The ticket's Description and Requirements are that human-owned intent; copy them in as read, never re-derive them from its `sources:`.
 
 Never write an intent gap into the frozen block as an assumption.
 

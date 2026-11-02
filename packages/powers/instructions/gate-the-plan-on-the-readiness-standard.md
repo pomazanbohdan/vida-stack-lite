@@ -20,7 +20,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/workflow.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-02-plan.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -38,6 +38,8 @@ A plan is "Ready for Development" when:
 **Logical**: Tasks ordered by dependency.
 
 **Testable**: All ACs use Given/When/Then, and each is a check the implementer can prove it met without pointing at code.
+
+**Verifiable**: `## Verification` runs every test file a loaded ticket companion lists, and each command names the result that makes it pass.
 
 **Complete**: No placeholders or TBDs.
 

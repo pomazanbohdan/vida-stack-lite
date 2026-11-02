@@ -1,7 +1,7 @@
 ---
 instruction_id: load-the-planning-documents-that-constrain-the-intent
 title: Load the planning documents that constrain the intent
-summary: The documents that carry the requirements are loaded selectively; requirements are not guessed from the code alone.
+summary: "When a ticket exists, read it first and in full and open only what it points at; with no ticket, load the planning documents that fit the intent rather than guessing from code."
 capability_tags:
   - curate-context
 pattern_tags:
@@ -20,7 +20,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-01-clarify-and-route.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/start-in-an-existing-codebase.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -31,6 +31,7 @@ domains:
 
 # Load the planning documents that constrain the intent
 Planning documents sit in folders by type, main file named after the folder.
-Scan the listing for folders matching these patterns. If any look relevant to the current intent, load them selectively — you don't need all of them, but you need the right constraints and requirements rather than guessing from code alone.
+When the listing holds a ticket file for this work (`initiative-*/initiative-*.md`, or `tickets/epic-*/epic-*.md` under it), read it first and in full: it distills its `sources:`, so do not re-read them. Open a file its References or `companions:` name only for a need the ticket points at.
+With no ticket, scan the listing for folders matching these patterns and load the ones that fit the intent — you need the right constraints and requirements rather than guessing from code alone.
 When a change needs a PRD, make the agent find and read the existing project documentation before it writes requirements.
 If the PRD cites nothing the repository already does, expect to rework the design once the implementation meets the real code.

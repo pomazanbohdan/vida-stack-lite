@@ -23,7 +23,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/step-02-plan.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/plan-template.md
 status: active
-revision: 10
+revision: 11
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -68,3 +68,4 @@ The subagent should be able to work from the plan without being told any of it a
 Target 900–1300 tokens. Above 1600 = high risk of context rot.
 How the agent confirms its own work. Prefer CLI commands. When no CLI check applies, state what to inspect manually.
 Each verification command states the result that makes it pass: `COMMAND -- expected: SUCCESS_CRITERIA`.
+The plan carries a `## Verification` section that runs every test file a loaded ticket companion lists. Run those commands before finishing; a failing command is unfinished work.

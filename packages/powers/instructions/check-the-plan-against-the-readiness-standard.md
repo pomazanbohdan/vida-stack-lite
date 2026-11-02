@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build-auto/workflow.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -29,5 +29,6 @@ domains:
 
 # Check the plan against the readiness standard
 **Actionable**: Every task has a file path and specific action.
+**Verifiable**: `## Verification` runs every test file a loaded ticket companion lists, and each command names the result that makes it pass.
 **Sufficient**: No known requirement, acceptance, dependency, or implementation gaps remain unresolved.
 **Coherent**: No unresolved ambiguities or internal contradictions.

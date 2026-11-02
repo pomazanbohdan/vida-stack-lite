@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6296,
+  "revision": 6304,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-02T21:00:00.000Z",
+  "updated_at": "2026-11-02T22:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -1962,7 +1962,7 @@
     {
       "instruction_id": "check-the-plan-against-the-readiness-standard",
       "path": "instructions/check-the-plan-against-the-readiness-standard.md",
-      "sha256": "785704e951aabb387cd4280b143a57b2386424172e3942577d1baef2ef56322e"
+      "sha256": "ddac5c021d4d86b49f8dd2f0a059e09a52ac05a220fed2e48da7f3288aecdf39"
     },
     {
       "instruction_id": "check-the-recurring-mistakes-and-workflow-learnings-before-writing",
@@ -4072,7 +4072,7 @@
     {
       "instruction_id": "freeze-the-human-owned-intent-in-the-plan",
       "path": "instructions/freeze-the-human-owned-intent-in-the-plan.md",
-      "sha256": "bc52ec044b32ef1a2083f604c4957c7c5a9a33a4dc1b117bb5b48cff50effca1"
+      "sha256": "308d0778fb86b907b11efe66dce8eed02be7cc3b2e8286d3823878868fe5807a"
     },
     {
       "instruction_id": "gate-imported-records-by-status",
@@ -4107,7 +4107,7 @@
     {
       "instruction_id": "gate-the-plan-on-the-readiness-standard",
       "path": "instructions/gate-the-plan-on-the-readiness-standard.md",
-      "sha256": "2cf7b9f13406da4b6f97384b03dc0442c2b09d2d101ab3e334a6273d5191e159"
+      "sha256": "b79815e5d04ecf99c160a4592f0c565e333b124bb037c15e1b267c23fa0fde8a"
     },
     {
       "instruction_id": "gate-the-plan-on-the-three-facts-of-the-settled-design",
@@ -4542,7 +4542,7 @@
     {
       "instruction_id": "hand-the-plan-to-the-implementer-as-the-only-source-of-truth",
       "path": "instructions/hand-the-plan-to-the-implementer-as-the-only-source-of-truth.md",
-      "sha256": "bf189ee58efedb679302d83a4e222c06a7392806f72ef72aa5a1fa8bf0e1d58d"
+      "sha256": "d3ba7ce9b94d7e97d9343496dcd00f6229640f481ace5e4c1b15a651a6f37355"
     },
     {
       "instruction_id": "hand-the-review-prompt-to-a-separate-session-when-no-subagent-exists",
@@ -4852,7 +4852,7 @@
     {
       "instruction_id": "judge-the-change-from-the-diff-since-the-baseline",
       "path": "instructions/judge-the-change-from-the-diff-since-the-baseline.md",
-      "sha256": "dec0492e21ecd2b728ff9a96287ff221d06e3cfe1f1de33ab4503c0ab6a390fd"
+      "sha256": "1f2912c0cab6c7016b357a748d04670d766739041d38cb11ef63a13333fbe0b1"
     },
     {
       "instruction_id": "judge-the-document-against-the-matching-structure-model",
@@ -5897,7 +5897,7 @@
     {
       "instruction_id": "load-the-planning-documents-that-constrain-the-intent",
       "path": "instructions/load-the-planning-documents-that-constrain-the-intent.md",
-      "sha256": "87df69414b13aea4f0c0ed7d7c959efba363424784444a94a6e4d6f8d61547ee"
+      "sha256": "fa26641189e1d7c682bfaffb01a9a2fc1a6764cbfc3b7aa7e667ba8b009061db"
     },
     {
       "instruction_id": "load-the-reference-that-matches-the-request",
@@ -11762,7 +11762,7 @@
     {
       "instruction_id": "trust-a-pre-verified-finding-as-filed",
       "path": "instructions/trust-a-pre-verified-finding-as-filed.md",
-      "sha256": "981cf35d81178ebf5f9749a12111a05905b531b7e690a781ab42c5e160e7be0f"
+      "sha256": "fd4b13cd2b2d63eac07cc2aef3077806b71679d57088f4fcd8a42118dade6ac9"
     },
     {
       "instruction_id": "trust-the-authoritative-record-not-the-secondary-note",
@@ -12482,7 +12482,7 @@
     {
       "instruction_id": "write-implementation-plan",
       "path": "instructions/write-implementation-plan.md",
-      "sha256": "5b8211828c13940bb81bb902ce31bd74a944474bd7911bcdbf7c663000fd9056"
+      "sha256": "2129a0f924bd71c61c27221e376845c6ae4618e81bf50e00c8a55dc8abd6ebaa"
     },
     {
       "instruction_id": "write-machine-parseable-intel-with-a-file-path-on-every-claim",

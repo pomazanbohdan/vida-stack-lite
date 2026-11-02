@@ -2,6 +2,19 @@
 
 ## 2026-11-02
 
+* **Bmad B6 staged:** updated 8 `bmad-build` and `bmad-build-auto`
+  instructions. The build reads a ticket file in full as intent, never re-reads
+  its `sources:`, and opens a companion only where the ticket points. The
+  plan's `context:` carries the companions the work needs, the frozen block
+  holds the ticket's Description and Requirements as read, and readiness now
+  requires a `## Verification` section that runs every test file a loaded
+  companion lists. Implementation runs those commands before judging the diff,
+  and a failing command is unfinished work. A pre-verified gap finding is
+  accepted as filed: code-review triage fixes it at `Important`, while build
+  review renders its verdict from the filed evidence. The bmad pin is **not**
+  advanced; catalog revision 6304; `check-corpus` reports 2,514 instructions
+  and zero issues.
+
 * **Bmad B5 staged:** reviewed the 56 `bmad-ticket` instructions against the new
   `bmad-agent-po` owner. Updated 6: slicing now cuts epics by capability and
   deployment boundary rather than owner, a parent initiative may own child
