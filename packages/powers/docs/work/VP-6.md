@@ -159,7 +159,9 @@ package suite is 747 pass / 4 skip / 0 fail. No `docs/work/findings.jsonl` or
 partial, and AC-24 remains component-only. A real content operation/store,
 semantic acceptance review, host installation and Runtime acceptance remain
 open. VP-7 and G are historical Agent-runtime evidence and are not F
-dependencies. Step F remains open.
+dependencies. The owner closed the F task on 2026-11-02 for Powers Standalone
+component evidence; AC-22 remains partial/deferred, and no real finding event or
+semantic/equivalence acceptance is claimed.
 
 ## Links and handoff
 

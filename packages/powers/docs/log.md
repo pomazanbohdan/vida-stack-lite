@@ -76,6 +76,11 @@
   remains outside Powers; the current Powers task list is recorded in
   `docs/next-actions.md`.
 
+* **F closure decision:** on 2026-11-02 the owner closed the F workstream for
+  Powers Standalone component evidence. AC-22 remains partial/deferred; no real
+  finding event, semantic equivalence, real store, host or Runtime acceptance is
+  claimed. The F task ledger and acceptance document record this bounded closure.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.

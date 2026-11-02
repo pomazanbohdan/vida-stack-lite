@@ -77,6 +77,8 @@ separate; they are not conditions for these criteria.
 | AC-23 | A finding that goes beyond the Work Scope is recorded as a blocker with a permission request; the scope is not expanded | SR-53, SR-54 | The writer accepts an optional `scope` decision: `beyond` requires a non-empty permission request and `within` forbids one, so a scope expansion cannot be recorded silently; the event keeps the caller-supplied blocker text and grants no fix authority. Out-of-scope detection itself remains caller judgment | auto | verified (component) |
 | AC-24 | Creating a finding does not authorize a fix | SR-43 | `.35/findings-green-final.txt`: `preserves an out-of-scope blocker and its permission request without authorizing a fix` passes | auto | verified (component) |
 
+F workstream closure (2026-11-02) is **Powers Standalone component-only**: AC-20/21/23/24 are component evidence, while AC-22 remains partial and a real finding event plus semantic/equivalence acceptance remain deferred. The closure does not claim operational or Runtime acceptance.
+
 ## Operational rules and formats
 
 | ID | Condition | SR | Evidence | Type | State |

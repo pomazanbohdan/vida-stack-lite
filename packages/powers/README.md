@@ -375,8 +375,9 @@ D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover; marketplace 
 Runtime mode of VP in general; and Runtime Stage 7b behind the storage GAP.
 
 **Open gates that no document may shortcut:** E5b production qualification and host installation,
-Step F AC-22 equivalence and a real finding/artifact store, Step H0–H3, the v1.2
-re-binding of the frozen 40-ID trial, legal clearance, and Runtime acceptance. The
+AC-22 equivalence and a real finding/artifact store remain deferred after the F
+component-only closure; Step H0–H3, the v1.2 re-binding of the frozen 40-ID trial,
+legal clearance, and Runtime acceptance remain open. The
 D3/D8 Agent-runtime request is owned by the Agent runtime developer and is not a
 Powers active gate. Package gate state,
 including the currently red repository Knip gate, is recorded in

@@ -199,4 +199,6 @@ Read-only F reconciliation after the project-document packet: focused
 0 fail. No real `findings.jsonl` or `artifacts.jsonl` exists. AC-20/21/23 stay
 component, AC-22 stays partial, and AC-24 stays component-only. VP-7/G are
 outside F; no send, admission, host acceptance or Runtime acceptance is claimed.
-Step F remains open.
+Owner decision 2026-11-02: the F task is closed for Powers Standalone component
+evidence; AC-22 and a real finding event/semantic-equivalence acceptance remain
+partial/deferred.
