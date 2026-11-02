@@ -19,7 +19,17 @@ every path below against that root, including when the caller cwd is different.
 
 Agent current tasks and evidence boundaries belong to
 `packages/agent/docs/next-actions.md`; its system specification remains the
-behavior owner. Powers product instructions, current scope and history belong to
+behavior owner. Agent wiki navigation belongs to `packages/agent/docs/index.md`.
+Agent active thematic research is indexed by
+`packages/agent/docs/research/index.md`; current decisions are indexed by
+`packages/agent/docs/decisions/index.md`. Their current-state/update policy is
+`packages/agent/docs/decisions/documentation/current-state-records.md`:
+update the existing topic research and linked decision immediately on each
+clarification, record approved decisions immediately, and keep version history
+in Git. Research lanes read the base/research delta and applicable research
+instructions; Root publishes their read-only findings to the product locations.
+Retained raw custody evidence and UNKNOWN remain fenced in the work store.
+Powers product instructions, current scope and history belong to
 `packages/powers/AGENTS.md`, `packages/powers/docs/next-actions.md` and
 `packages/powers/docs/log.md`. The authorized implementation record is
 `.agent/work/vida-powers-skills-architecture-20261102/WORK.md`; it is derived

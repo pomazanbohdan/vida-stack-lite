@@ -194,9 +194,24 @@ integration or token/ROI benchmark lane is implied by this engine scope.
 
 ## Initialized project layout and upgrades
 
+The approved product-model change is specified by
+[the current model decision](decisions/configuration/runtime-project-model.md)
+and [its implementation plan](plans/runtime-project-model.md). User annotations
+require the target Codex identity `codex`, a runtime-owned work-type catalog,
+generic product-configured parent/child combinations, type-visible keys with
+number preservation, and user prompts for missing material init/config choices.
+The actual current Source and installed runtime do not acquire these capabilities
+merely from this specification. Strict artifact changes require their supported
+repair/adoption owner before activation. The approved delivery includes temporary
+CLI acceptance, PATCH release/external update and the repository-bound
+[clean-init authorization](decisions/configuration/clean-init-authorization.md).
+
+
 The approved target keeps product Source in its configured product roots.
 This repository maps Agent to `packages/agent`, Codex to `packages/codex` with
-stable ID `plugin`, and Powers to its separately owned `packages/powers` root.
+target ID `codex`, and Powers to its separately owned `packages/powers` root.
+The current initialized consumer's legacy Codex identity requires explicit
+conversion or clean adoption; this target is not a claim of completed migration.
 An initialized consumer keeps VIDA configuration, local
 instructions and operational state under `.vida`. Root `AGENTS.md` is only the
 discovery entry; it points to the project instruction and source map in `.vida`.

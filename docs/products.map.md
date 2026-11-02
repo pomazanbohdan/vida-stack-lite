@@ -20,6 +20,9 @@ Powers canonical sources: [index](../packages/powers/docs/index.md),
 [acceptance](../packages/powers/docs/acceptance.md).
 
 - Agent system behavior: `packages/agent/docs/system-specification.md`.
+- Agent wiki navigation: [index](../packages/agent/docs/index.md).
+- Agent current thematic research: [index](../packages/agent/docs/research/index.md).
+- Agent current design decisions: [index](../packages/agent/docs/decisions/index.md).
 - Audit-state and successor qualification evidence: `packages/agent/docs/research/audit-36-validation-20261001.md` (supporting research, not acceptance).
 - Supporting execution-backend research: `packages/agent/docs/research/openai-execution-backends.md`.
 - Official framework reference registry and case applicability: `packages/agent/docs/research/agent-framework-reference-registry.md` (supporting research; lifecycle policy remains in the lifecycle instruction).

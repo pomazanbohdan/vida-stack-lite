@@ -1,0 +1,112 @@
+# Current design proposal, not an active or complete runtime configuration.
+# Existing schema does not accept this new wiki/prefix/work_items model.
+# Approved values plus annotations; implementation shape is being reconciled.
+# Contract and acceptance: runtime-project-model.md in this directory.
+# Paths are repository-relative; documents can overlap code and other products.
+# Wiki/requirements destinations are proposed; folders are not created or migrated.
+# index.md follows the existing standard verified by the topical research.
+# Required/optional policy and migration remain open design points.
+# Type codes come from a fixed runtime catalog, never from a project definition.
+
+repository:
+  repository_id: vida-agent
+  prefix: VIDA
+
+projects:
+  - project_id: agent
+    title: VIDA Agent
+    prefix: AGENT
+    project_root: packages/agent
+    code_selectors:
+      - packages/agent/src/**
+      - packages/agent/bin/**
+      - packages/agent/schemas/**
+      - packages/agent/templates/**
+      - packages/agent/instructions/**
+      - packages/agent/tooling/**
+      - packages/agent/tests/**
+      - packages/agent/package.json
+    documents:
+      root: packages/agent/docs
+      index: packages/agent/docs/index.md
+      requirements:
+        root: packages/agent/docs/requirements
+        areas:
+          runtime:
+            business: packages/agent/docs/requirements/runtime/business
+            system: packages/agent/docs/requirements/runtime/system
+            acceptance: packages/agent/docs/requirements/runtime/acceptance
+            test_cases: packages/agent/docs/requirements/runtime/test-cases
+          delivery:
+            business: packages/agent/docs/requirements/delivery/business
+            system: packages/agent/docs/requirements/delivery/system
+            acceptance: packages/agent/docs/requirements/delivery/acceptance
+            test_cases: packages/agent/docs/requirements/delivery/test-cases
+      research: packages/agent/docs/research
+      decisions: packages/agent/docs/decisions
+    work_items:
+      enabled_types: [TASK, BUG, PBI]
+      storage_root: packages/agent/backlogs # Configured path; existence not implied.
+
+  - project_id: codex
+    title: VIDA Codex
+    prefix: CODEX
+    project_root: packages/codex
+    code_selectors: [packages/codex/package.json] # Actual Source; src does not exist.
+    documents:
+      root: packages/codex/docs
+      index: packages/codex/docs/index.md
+      requirements:
+        root: packages/codex/docs/requirements
+        areas:
+          integration:
+            business: packages/codex/docs/requirements/integration/business
+            system: packages/codex/docs/requirements/integration/system
+            acceptance: packages/codex/docs/requirements/integration/acceptance
+            test_cases: packages/codex/docs/requirements/integration/test-cases
+      research: packages/codex/docs/research
+      decisions: packages/codex/docs/decisions
+    work_items:
+      enabled_types: [TASK, BUG, PBI]
+      storage_root: packages/codex/backlogs # Configured path; existence not implied.
+
+  - project_id: powers
+    title: VidaPowers
+    prefix: POWERS
+    project_root: packages/powers
+    code_selectors:
+      - packages/powers/skills/**
+      - packages/powers/scripts/**
+      - packages/powers/instructions/**
+      - packages/powers/config/**
+      - packages/powers/tests/**
+      - packages/powers/catalog.json
+      - packages/powers/package.json
+      - packages/powers/plugin.json
+      - packages/powers/.codex-plugin/**
+      - packages/powers/.agents/**
+    documents:
+      root: packages/powers/docs
+      index: packages/powers/docs/index.md
+      requirements:
+        root: packages/powers/docs/requirements
+        areas:
+          methodology:
+            business: packages/powers/docs/requirements/methodology/business
+            system: packages/powers/docs/requirements/methodology/system
+            acceptance: packages/powers/docs/requirements/methodology/acceptance
+            test_cases: packages/powers/docs/requirements/methodology/test-cases
+      research: packages/powers/docs/research
+      decisions: packages/powers/docs/decisions
+    work_items:
+      enabled_types: [TASK, BUG, PBI]
+      storage_root: packages/powers/docs/work # Product D2; no migration performed.
+
+# No per-project task_prefix or type-code override.
+# No global source_catalog: documents are nested in the product.
+# No separate wiki_output/internal/generated-documents corpus.
+# Area names/destinations are recommendations; canonical docs remain owners until adoption.
+# Work-item keys include their fixed type code, e.g. VIDA-AGENT-BUG-43.
+# Containment combinations are generic and configured by each product.
+# Initial per-product hierarchy choice has been requested from the user.
+# Root AGENTS/sidecar integration is not removed by the wiki navigation index.
