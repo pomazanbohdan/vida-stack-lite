@@ -31,7 +31,7 @@ Actionable rules belong in instructions; reference records retain typed data and
 
 ## Boundary
 
-D15 does not authorize a broad knowledge base, whole-file or automatic asset injection, BM25/Python dependencies, a second activation path, donor admission, rights clearance, a schema migration, implementation, or Runtime acceptance. Use the existing catalog and portable shipped reader.
+D15 does not authorize a broad knowledge base, whole-file or automatic asset injection, BM25/Python dependencies, a second activation path, donor admission, a schema migration, implementation, or Runtime acceptance. Use the existing catalog and portable shipped reader.
 
 ## Rationale and trace
 

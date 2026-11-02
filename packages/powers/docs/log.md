@@ -119,6 +119,23 @@
   fresh tests and project usage are not yet claimed. Prior dirty source and
   historical receipts are preserved.
 
+* **D17 source-attribution boundary:** the owner directed on 2026-11-02 that
+  Powers does not perform a legal-risk assessment. D17 replaces the former
+  rights-cleared gate with exact source attribution/link plus owner admission:
+  canonical path/URL, pinned revision (or retrieval date and digest), author/title,
+  license label and license path as metadata, exact locator and required notice
+  text. A missing, stale or contradictory record blocks the dependent unit;
+  ambiguity asks the owner; a complete record needs no question. BR-22,
+  SR-81/SR-89, AC-47/AC-57/AC-74, Step H H1–H3, next-actions, traceability,
+  README/index and the bootstrap clarification text now use attribution language.
+  Historical rights dossiers remain evidence, not a current gate. Independent
+  Luna review returned CHANGES on four wording gaps (attribution described as
+  undecided or manual, a NOTICE legal-clearance line, and a missing H3 fidelity
+  receipt); all four were corrected. Package suite 747 pass / 4 skip / 0 fail /
+  3,757 assertions; bootstrap 6 pass / 132 assertions; bootstrap + skill-contract
+  19 pass / 216 assertions; typecheck 56 files; OKF 31 concepts / 0 failures;
+  Markdown 19 docs / 106 links / 0 failures.
+
 ## 2026-10-31
 
 * **Skill entries carved, path contract fixed:** `vp-mode` now keeps the every-run rules in `SKILL.md` and loads `references/profile.md`, `examples.md`, `bundle.md`, `findings.md` or `artifacts.md` only at the branch that needs it. Every script command uses `<skill-dir>`, the directory the host reports for the loaded skill, so an installed plugin no longer depends on the consumer cwd; the receipt path is explicit. `vp-setup` keeps five steps (detect, inventory, resolve, write/`--dry-run`, verify) without the duplicated sentence. `skill-contract.test.ts` now checks frontmatter, reference reachability, absence of cwd-relative commands, the every-run rules and the receipt report shape the validator accepts. A behavioral probe answered the bundle-limit question with no catalog call and ran one search plus one multi-ID get for the telemetry task; its receipt attempt failed on a missing report shape, which is now specified in the entry and pinned by a test. The earlier local-model attempt was partial and its log claim was removed. Package gate: 740 passed, 4 Windows skips, 0 failures, 100 % functions and lines.

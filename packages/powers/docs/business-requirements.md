@@ -14,7 +14,7 @@ sources:
   title: Vida Powers — product concept and architectural baseline
 - id: decisions
   resource: /decisions/index.md
-  title: Accepted decisions D1–D16 (and D4b)
+  title: Accepted decisions D1–D17 (and D4b)
 generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:10:10Z' }
 revision: '10'
 ---
@@ -156,8 +156,10 @@ The agent's instruction-discovery workflow is explicit and economical: derive ta
 
 - **BR-22.** The accepted scope includes the bounded engineering/UX, product and business
   instruction pack in D14 and the selected typed reference families in D15. Product/business
-  source families require individual research, fidelity, rights and owner-admission decisions;
-  inclusion of a domain never promotes historical exclusions automatically. A general-purpose
+  source families require individual research, fidelity, exact source attribution/link and
+  owner-admission decisions; inclusion of a domain never promotes historical exclusions
+  automatically. Powers records the source link and attribution as metadata and does not
+  assess legal risk (D17). A general-purpose
   knowledge platform, unselected domains, the future UI over the VIDA API (§9.3), external
   issue-tracker synchronization (§8.3), and unselected reference data remain out of scope.
 - **BR-23.** VP Runtime mode requires registration of the product in the repository and

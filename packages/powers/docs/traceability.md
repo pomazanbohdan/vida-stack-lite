@@ -88,6 +88,7 @@ the list of technically open questions (closed by stages, not by the specificati
 | D14 bounded engineering/UX, product and business guidance | BR-22; SR-81, SR-82, SR-84, SR-85, SR-88–SR-91; AC-47 to AC-51, AC-53, AC-56–AC-59; Step H |
 | D15 selected typed reference resources | BR-22; SR-83, SR-86, SR-87; AC-52, AC-54, AC-55; Step H |
 | D16 stable files with form/domain facets | BR-24; SR-06, SR-10, SR-70, SR-92; AC-60–AC-64 |
+| D17 source attribution, not legal-risk assessment | BR-22; SR-81, SR-89; AC-47, AC-57; Step H H1–H3 |
 
 ## Deferred decisions (CAT-D) → SR/AC
 
@@ -126,7 +127,7 @@ handoff evidence outside Powers. These evidence routes do not add AC definitions
 or imply Runtime acceptance.
 
 **Open coverage gaps:** runtime acceptance (AC gap), qualification on
-hosts other than Codex (AC-27, gap), marketplace installation (gap), a legal opinion
-on licenses (gap).
+hosts other than Codex (AC-27, gap), marketplace installation (gap), and the
+H1–H3 source-attribution/admission gates.
 
 Compact task-to-instruction refinement: BR-24 -> SR-93 together with existing SR-10/11/12/13/14/25/26/58/70/92 -> AC-65–AC-69. The existing catalog/CLI/profile/compose owners and vp-mode/README carry Source implementation; catalog/CLI/skill-contract tests, fresh 24-query parity and real-corpus CLI exercises supply current evidence. Task 2, the combined delta and the four subsequent Minor corrections have independent READY reviews; Root reconciled all five acceptance rows as verified for Source. Exact evidence is retained under the existing instruction-organization work directory with retrieval-batch and retrieval-review-minor receipt prefixes. The existing dependency-substitution Minor stays deferred in next-actions. D12 declared conflicts, D14/D15 source gates, installation/Runtime acceptance and the separately frozen SR-92 classification trial are not closed by this trace.

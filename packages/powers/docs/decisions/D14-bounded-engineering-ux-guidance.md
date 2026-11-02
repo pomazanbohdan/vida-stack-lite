@@ -30,7 +30,7 @@ On 2026-10-22 the product owner accepted a bounded engineering and UX guidance p
 
 ## Boundary
 
-Domain inclusion permits per-source research and selection; it is not blanket approval of the content in a named source family. Preserve the journey exclusions. Former product/business exclusions become candidates for reconsideration with the historical reason retained; they remain excluded from canonical publication until their individual gates close. Unselected domains, execution engines and unreviewed third-party passages remain outside the pack. D14 does not admit a donor, clear rights, approve individual source content or a schema, or establish Runtime acceptance. The owner's separate implementation request authorizes the migration tooling and its qualification, while source admission remains separate.
+Domain inclusion permits per-source research and selection; it is not blanket approval of the content in a named source family. Preserve the journey exclusions. Former product/business exclusions become candidates for reconsideration with the historical reason retained; they remain excluded from canonical publication until their individual gates close. Unselected domains, execution engines and unreviewed third-party passages remain outside the pack. D14 does not admit a donor, approve individual source content or a schema, or establish Runtime acceptance. The owner's separate implementation request authorizes the migration tooling and its qualification, while source admission remains separate.
 
 ## Rationale and trace
 

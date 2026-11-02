@@ -23,11 +23,11 @@ an irreversible action.
 Apply the sidecar, assignment, applicable instructions, applicable approved
 decisions and declared conflicts before asking. The envelope defines scope, not
 a higher policy authority. Retrieve a retrievable fact when allowed; reject or
-block deterministic missing or invalid data; do not infer rights, fidelity or
-admission. If a material ambiguity, conflict, permission or human-owned decision
-remains, return `status: blocked` with reason `needs_input` and the exact
-question to the orchestrator. Do not ask the user directly outside the envelope.
-Only affected work blocks; independent assigned work may continue.
+block deterministic missing or invalid data; do not infer permission, source
+attribution, fidelity or admission. If a material ambiguity, conflict, permission
+or human-owned decision remains, return `status: blocked` with reason `needs_input`
+and the exact question to the orchestrator. Do not ask the user directly outside
+the envelope. Only affected work blocks; independent assigned work may continue.
 
 ## Start
 
@@ -41,7 +41,8 @@ Only affected work blocks; independent assigned work may continue.
 4. Apply instruction-first clarification: retrieve allowed missing facts; reject
    or block deterministic missing or invalid data; route unresolved material
    ambiguity, conflict, permission or human-owned decision to the orchestrator as
-   `blocked`/`needs_input`. Do not infer manual rights, fidelity or admission.
+   `blocked`/`needs_input`. Do not infer manual permission, attribution, fidelity
+   or admission; legal-risk assessment is outside Powers.
 5. Read only the named sources and reuse the existing owner.
 6. Change only the assigned paths.
 7. Run the assigned checks. If a check fails because of your change, repair it

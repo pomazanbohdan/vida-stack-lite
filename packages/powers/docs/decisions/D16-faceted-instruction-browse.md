@@ -24,7 +24,7 @@ Accepted choice: On 2026-10-26 the owner requested implementation of a structure
 
 Alternatives: topic folders require a placement decision for cross-domain instructions. Form folders expose form but still need domain metadata. Stable files with independent facets support several views from one canonical record. D16 chooses the third option. Prototype and query measurements are required evidence; this choice makes no speed or retrieval-quality claim.
 
-Boundaries: capability and pattern tags keep their existing meanings. Products identify target products; donors remain provenance. Metadata classification does not admit sources or replace rights, fidelity, applicability, compatibility, policy or Runtime acceptance. D14/D15 gates remain independent. SR-92 owns the classification, filtering and migration contract. The accepted text-discovery field map does not establish full SR-73 implementation.
+Boundaries: capability and pattern tags keep their existing meanings. Products identify target products; donors remain provenance. Metadata classification does not admit sources or replace source attribution, fidelity, applicability, compatibility, policy or Runtime acceptance. D14/D15 gates remain independent. SR-92 owns the classification, filtering and migration contract. The accepted text-discovery field map does not establish full SR-73 implementation.
 
 Version allocation: VPInstruction/v1.2 is the approved clean-cutover target for facets and descriptive approach assessments under SR-92. Future H2 VPInstruction/v2 preserves v1.2 metadata. This decision makes no dual-runtime or backward-compatibility commitment. Formation, delivery, installation and observed acceptance retain their owners.
 

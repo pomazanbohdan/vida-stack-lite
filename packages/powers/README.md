@@ -38,16 +38,16 @@ are Agent-owned. This repository's hybrid mode is defined by
 
 D14 and D15 accept a bounded engineering/UX pack and selected typed reference data
 for phased work. No new content is admitted or implemented by those scope decisions;
-donor rights review and Runtime acceptance remain separate gates.
+source admission and Runtime acceptance remain separate gates.
 
 | Document | What it is about |
 |---|---|
 | [Research — product concept](docs/research/vida-powers-product-research.md) | B-level: why the product exists, which boundaries it has, which behavior rules it follows |
 | [Step H plan](docs/task-plan-step-h.md) | H0–H3 gates for the accepted D14/D15 scope; implementation has not started |
 | [Next actions](docs/next-actions.md) | Single owner of delivery status, order and gates: A0 → A → B → C → D → E → F → H, plus the E5 target status and the remaining forward stages; G is historical Agent-runtime handoff evidence outside Powers |
-| [Decisions D1–D16 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
+| [Decisions D1–D17 (and D4b)](docs/decisions/index.md) | Accepted decisions with grounds and consequences |
 | [AGENTS.md](AGENTS.md) | Instructions for the agents developing VP |
-| [Donor manifest](donors.yaml) | Eight processed donors plus Wondelai registered-not-processed; rights review remains open |
+| [Donor manifest](donors.yaml) | Eight processed donors plus Wondelai registered-not-processed; source admission remains open |
 
 ---
 
@@ -377,7 +377,7 @@ Runtime mode of VP in general; and Runtime Stage 7b behind the storage GAP.
 **Open gates that no document may shortcut:** E5b production qualification and host installation,
 AC-22 equivalence and a real finding/artifact store remain deferred after the F
 component-only closure; Step H0–H3, the v1.2 re-binding of the frozen 40-ID trial,
-legal clearance, and Runtime acceptance remain open. The
+source admission and Runtime acceptance remain open. The
 D3/D8 Agent-runtime request is owned by the Agent runtime developer and is not a
 Powers active gate. Package gate state,
 including the currently red repository Knip gate, is recorded in
@@ -390,4 +390,5 @@ Pocock Skills, Addy Osmani Agent Skills, Cursor pstack, GSD Core, Ponytail) and
 Open Knowledge Format v0.2. Licenses: MIT × 7, Apache-2.0 (OKF). Exact revisions
 and license attributes — in `donors.yaml`; the package `NOTICE` lists each donor ID,
 license, license file and pinned revision, including the Open Knowledge Format
-attribution. Legal review of all donor-license obligations remains open.
+attribution. Source links, license metadata and attribution are recorded in the
+donor manifest and `NOTICE`; Powers does not assess legal risk (D17).

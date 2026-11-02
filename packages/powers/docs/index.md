@@ -13,12 +13,12 @@ recorded in the frontmatter of each concept.
 
 * [Vida Powers - task-level plan for step F: Work Items and findings](task-plan-step-f.md) - Three product Work Items and the bounded Standalone findings writer, with open acceptance gates.
 * [Vida Powers - task-level plan for step G: D3 and D8 Runtime request](task-plan-step-g.md) - Historical Agent-runtime handoff evidence; not an active Powers task.
-* [Vida Powers - task-level plan for step H: D14 and D15 content extension](task-plan-step-h.md) - H0-H3 phases for baseline closeout, rights-cleared methodology, engineering/UX applicability and later typed resources.
+* [Vida Powers - task-level plan for step H: D14 and D15 content extension](task-plan-step-h.md) - H0-H3 phases for baseline closeout, source-attributed methodology, engineering/UX applicability and later typed resources.
 * [Vida Powers — next actions within packages/powers](next-actions.md) - The single owner of delivery status, order and gates: the A-G sequence, the E5a/E5b host target status, the forward stages, deferred product questions and separately gated Step H.
 * [Vida Powers — business requirements](business-requirements.md) - B-level: goals, boundaries of responsibility, autonomy constraints, methodology policy, delivery, non-functional requirements.
 * [Vida Powers — system specification](system-specification.md) - S-level: instruction model, catalog operations, Decision Provider, routing, methodology profile, materialization, findings, operational rules.
 * [Vida Powers — acceptance criteria](acceptance.md) - Verifiable conditions bound to SR, with the kind of evidence, type and state; separately — what we do not prove.
-* [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1–D16 (and D4b) to normative clauses.
+* [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1–D17 (and D4b) to normative clauses.
 * [Vida Powers — product concept and architectural baseline](research/vida-powers-product-research.md) - The finalized concept, D14/D15 accepted scope limits, product boundaries, methodology, materialization and evidence rules.
 
 # Work Items and requests
@@ -51,6 +51,7 @@ recorded in the frontmatter of each concept.
 * [D14 — Bounded engineering and UX guidance](decisions/D14-bounded-engineering-ux-guidance.md) - Accepted bounded engineering/UX instruction scope; other unresearched domains remain out of scope.
 * [D15 — Selected typed reference resources](decisions/D15-selected-typed-reference-resources.md) - Accepted typed resource families with exact-ID retrieval through the same catalog in a separate phase.
 * [D16 — Instruction form and domain facets](decisions/D16-faceted-instruction-browse.md) - Stable canonical IDs and files with independent form/domain metadata, generated browse and a separately verified rollout.
+* [D17 — Source attribution boundary: no Powers legal-risk assessment](decisions/D17-source-attribution-boundary.md) - Powers records the exact source link, pinned revision, locator and attribution as metadata; it does not assess legal risk, grant rights or clear content. Owner admission remains separate.
 
 # Outside the bundle
 

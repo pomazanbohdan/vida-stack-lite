@@ -38,8 +38,8 @@ manual decision that the higher sources do not resolve. Record the exact source,
 question and decision. Silence, a timeout or a model guess never resolves it.
 Only the dependent action blocks; independent authorized work continues.
 
-Rights, fidelity and admission decisions remain manual; automation cannot infer
-or substitute them.
+Permission, human-fidelity and admission decisions remain manual; source
+attribution is recorded, not inferred. Powers does not assess legal risk.
 
 ## Start
 

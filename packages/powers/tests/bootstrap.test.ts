@@ -77,12 +77,14 @@ test('role texts assign wait/join to the orchestrator and blocked needs_input to
   expect(orchestrator).toContain('human-owned intent');
   expect(orchestrator).toContain('declared conflict');
   expect(orchestrator).toContain('envelope defines scope, not a higher policy authority');
+  expect(orchestrator).toContain('Powers does not assess legal');
   expect(agent).toContain('The orchestrator owns the delegation decision, host wait/completion, join and');
   expect(agent).toContain('`status: blocked` with reason `needs_input`');
   expect(agent).toContain('silently pause or wait');
   expect(agent).toContain('Instruction-first clarification');
-  expect(agent).toContain('Do not ask the user directly outside the envelope.');
-  expect(agent).toContain('do not infer rights, fidelity or');
+  expect(agent).toContain('Do not ask the user directly outside');
+  expect(agent).toContain('do not infer permission, source');
+  expect(agent).toContain('legal-risk assessment is outside Powers');
 });
 
 test('CLI works from foreign cwd and rejects invalid selectors without stdout', () => {
