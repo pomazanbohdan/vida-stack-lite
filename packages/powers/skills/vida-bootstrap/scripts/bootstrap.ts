@@ -40,6 +40,7 @@ export interface BootstrapOptions {
   readonly tags?: readonly string[];
   readonly list?: boolean;
   readonly json?: boolean;
+  readonly requireComplete?: boolean;
 }
 
 export interface BootstrapResult {
@@ -325,6 +326,8 @@ export function composeBootstrap(root: string, options: BootstrapOptions): Boots
   const complete = role === 'orchestrator' || instructions.length === 2;
   const defaulted = !explicitSelection;
   const requiresRoleOrFamily = role === 'agent' && !complete;
+  if (options.requireComplete === true && !complete)
+    throw new BootstrapError('BOOTSTRAP_ASSIGNMENT_INCOMPLETE', 'agent base-only is inspection; provide --role-name or --kind');
   return {
     schema: 'VidaBootstrap/v1',
     role,
@@ -366,7 +369,7 @@ export function listBootstrap(root: string): {
 }
 
 function parseArgs(argv: readonly string[]): BootstrapOptions {
-  const options: { role?: BootstrapRole; kind?: Exclude<BootstrapKind, 'base'>; roleName?: string; tags?: string[]; list?: boolean; json?: boolean } = {};
+  const options: { role?: BootstrapRole; kind?: Exclude<BootstrapKind, 'base'>; roleName?: string; tags?: string[]; list?: boolean; json?: boolean; requireComplete?: boolean } = {};
   const tags: string[] = [];
   for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index];
@@ -405,11 +408,16 @@ function parseArgs(argv: readonly string[]): BootstrapOptions {
     } else if (flag === '--json') {
       if (options.json === true) throw new BootstrapError('BOOTSTRAP_ARGUMENT_INVALID', '--json may appear once');
       options.json = true;
+    } else if (flag === '--require-complete') {
+      if (options.requireComplete === true) throw new BootstrapError('BOOTSTRAP_ARGUMENT_INVALID', '--require-complete may appear once');
+      options.requireComplete = true;
     } else {
       throw new BootstrapError('BOOTSTRAP_ARGUMENT_INVALID', `unknown option ${flag}`);
     }
   }
   if (tags.length > 0) options.tags = tags;
+  if (options.list === true && options.requireComplete === true)
+    throw new BootstrapError('BOOTSTRAP_ARGUMENT_INVALID', '--list cannot be combined with --require-complete');
   if (options.list === true && (options.role !== undefined || options.kind !== undefined || options.roleName !== undefined || tags.length > 0))
     throw new BootstrapError('BOOTSTRAP_ARGUMENT_INVALID', '--list cannot be combined with a selector');
   return options;

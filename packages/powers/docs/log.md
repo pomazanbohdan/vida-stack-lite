@@ -22,10 +22,12 @@
   orchestrator bootstrap, a complete agent base+family bootstrap, and an
   agent base-only inspection. Text mode remains unchanged. Tests cover the
   no-selector default, explicit orchestrator, agent base-only and agent
-  base+delta states, including CLI `--json` parity (bootstrap 5 pass / 108
-  assertions; full package suite 746 pass / 4 skip / 0 fail). The documented
-  init rule allows the advisory default only for direct orchestrator requests
-  and requires a complete agent result before a delegated agent proceeds.
+  base+delta states, including CLI `--json` parity (bootstrap 5 pass / 118
+  assertions; full package suite 746 pass / 4 skip / 0 fail). `--require-complete`
+  rejects an incomplete agent bootstrap with empty stdout and
+  `BOOTSTRAP_ASSIGNMENT_INCOMPLETE`. The documented init rule allows the advisory
+  default only for direct orchestrator requests and requires a complete agent
+  result before a delegated agent proceeds.
   Luna design review returned CHANGES Minor: the final contract reuses `role`
   and `tags` instead of adding redundant mode/base/delta fields.
 

@@ -44,6 +44,14 @@ test('base-only, family tags, text and digest are consistent', () => {
   expect(baseOnly.complete).toBe(false);
   expect(baseOnly.defaulted).toBe(false);
   expect(baseOnly.requiresRoleOrFamily).toBe(true);
+  try {
+    composeBootstrap(root, { role: 'agent', requireComplete: true });
+    throw new Error('expected incomplete bootstrap to fail');
+  } catch (error) {
+    expect((error as { code?: string }).code).toBe('BOOTSTRAP_ASSIGNMENT_INCOMPLETE');
+  }
+  expect(composeBootstrap(root, { role: 'agent', roleName: 'tester', requireComplete: true }).complete).toBe(true);
+  expect(composeBootstrap(root, { role: 'orchestrator', requireComplete: true }).complete).toBe(true);
 
   expect(composeBootstrap(root, { tags: ['bootstrap-agent'] }).kind).toBe('base');
   for (const family of ['research', 'synthesis', 'prewrite', 'implementation', 'validation', 'testing', 'delivery']) {
@@ -92,7 +100,16 @@ test('CLI works from foreign cwd and rejects invalid selectors without stdout', 
   expect(explicitOrchestratorJson.defaulted).toBe(false);
   expect(explicitOrchestratorJson.requiresRoleOrFamily).toBe(false);
 
+  const incomplete = run('--role', 'agent', '--require-complete', '--json');
+  expect(incomplete.status).toBe(1);
+  expect(incomplete.stdout).toBe('');
+  expect(incomplete.stderr).toContain('BOOTSTRAP_ASSIGNMENT_INCOMPLETE');
+  const complete = run('--role', 'agent', '--role-name', 'tester', '--require-complete', '--json');
+  expect(complete.status).toBe(0);
+  expect(JSON.parse(complete.stdout).complete).toBe(true);
+
   for (const args of [
+    ['--list', '--require-complete'],
     ['--role', 'agent', '--role-name', 'missing'],
     ['--role', 'orchestrator', '--kind', 'testing'],
     ['--role', 'agent', '--role-name', 'tester', '--kind', 'research'],

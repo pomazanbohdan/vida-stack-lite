@@ -225,8 +225,10 @@ the existing numbering.
   `requiresRoleOrFamily`: complete means an orchestrator base or an agent base
   plus exactly one family; defaulted means the no-selector advisory orchestrator;
   requiresRoleOrFamily means agent base-only inspection. Text output remains the
-  composed documents only. The composer validates local registry paths and
-  rejects invalid selectors without partial text. It needs no Agent executable,
+  composed documents only. `--require-complete` rejects an incomplete result with
+  empty stdout and `BOOTSTRAP_ASSIGNMENT_INCOMPLETE`. The composer validates
+  local registry paths and rejects invalid selectors without partial text. It
+  needs no Agent executable,
   catalog, profile or universal
   lifecycle owner; project-mandated policies still apply. The explicit project
   `vida-project-profile.json` is read first; a missing or invalid explicit path

@@ -26,11 +26,14 @@ authority, scope and stop rules and record the limitation.
 The source-local composer may return the same texts; reading or composing does
 not launch an agent. From the project root, use `bun packages/powers/skills/vida-bootstrap/scripts/bootstrap.ts --role agent --role-name code-researcher`.
 For automated initialization use `--json` and inspect `role`, `complete`,
-`defaulted`, `requiresRoleOrFamily`, `tags` and `instructions`. A direct request
-may accept a defaulted orchestrator result. A delegated agent may proceed only
-when `role` is `agent`, `complete` is `true`, and `requiresRoleOrFamily` is
-`false`; otherwise stop and request the role/family. `tags` and `instructions`
-keep base-first order; text mode remains the composed documents only.
+`defaulted`, `requiresRoleOrFamily`, `tags` and `instructions`. Use
+`--require-complete` when the launcher must reject an incomplete bootstrap; the
+composer then exits 1 with empty stdout and `BOOTSTRAP_ASSIGNMENT_INCOMPLETE`.
+A direct request may accept a defaulted orchestrator result. A delegated agent
+may proceed only when `role` is `agent`, `complete` is `true`, and
+`requiresRoleOrFamily` is `false`; otherwise stop and request the role/family.
+`tags` and `instructions` keep base-first order; text mode remains the composed
+documents only.
 The lead owns plan, join, integration and final verification. A child receives a
 bounded assignment, exact source paths and an inline contract; it must not claim
 to have read unavailable sources.
