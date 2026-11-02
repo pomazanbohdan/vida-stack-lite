@@ -1,7 +1,7 @@
 ---
 instruction_id: size-and-gate-the-work
 title: Size and gate the work
-summary: Name the size of the work in plain words and build only after the human approves the full description.
+summary: "Name the size of the work in plain words and build only after the human approves the design doc: short for a small change, full for a project."
 capability_tags:
   - clarify-requirements
 pattern_tags:
@@ -9,19 +9,19 @@ pattern_tags:
   - approval-policy
   - approval-policy-gate
   - approval-policy-choice-gate
-conditions_applies_when: "The need could be a quick task, a small change, or a project with a design."
-conditions_does_not_apply_when: The owner has already approved the size and the full description of the result.
+conditions_applies_when: "The need is a small change or a project that needs a design doc."
+conditions_does_not_apply_when: The owner has already approved the size and the design doc.
 artifact_contract_output_type: work-size-decision
 artifact_contract_required_data:
   - size
-  - agreed description
+  - approved design doc
   - work boundary
-artifact_contract_verified_by: owner confirms the stated size and description
+artifact_contract_verified_by: owner confirms the stated size and approves the design doc
 compatibility_excludes:
   - proceed-without-waiting-for-confirmation
 compatibility_requires: []
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/brainstorming/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/plan/choose-a-planning-path.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/index.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=docs/existing-codebases/start-in-an-existing-codebase.md
@@ -30,7 +30,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/the-phase-loop.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/context-engineering.md
 status: active
-revision: 8
+revision: 9
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -40,20 +40,20 @@ domains:
 ---
 
 # Size and gate the work
-Once you understand what the user wants, pick a size and say it in plain words. They can override it.
-A quick, clear task: the request itself is the full description. Do it.
-A small change: describe it in chat, then build it through the normal workflow.
-A project with a written design: write a design document, then make a full plan.
+Once you understand what they want and they've picked an approach, say how big the work is in plain words. They can override it.
+A small change: write a short design doc covering what you already covered together, then build it through the normal workflow.
+A project: write the full design doc, then make a full plan.
+Short or full, the design doc has an Approaches part: the two or three ways you considered, what each trades off, which one they picked, and why.
 If the work grows mid-task, stop, say so, and step up a size.
 If this is really several independent projects, say so, agree on an order, and take them one at a time.
-Nothing gets built until the human approves the full description: in chat for a small change, the document for a project.
+Nothing gets built until the human approves the design doc: the short one for a small change, the full one for a project.
 Building includes writing product code, scaffolding, installing dependencies, creating projects, and invoking an implementation skill.
 Reading and exploring are fine before approval.
 Two exceptions: the human opted out of the questions, or they approved a spike. A spike stays labeled throwaway, and keeping what it produced is a new request that comes back through the gate.
-After a project's document is approved, the next step is the plan.
+After the design doc is approved, the next step is the plan.
 The written design must let a talented builder in the domain plan without going back to the human partner.
-Cover intent and the why, goals, non-goals, anti-goals, constraints, the parts of the how the human decided, and what is left to the builder.
-Mark anything you are guessing as your guess; only what the human said goes in as theirs.
+Cover intent and the why, goals, non-goals, anti-goals, constraints, approaches, the parts of the how the human decided, and what is left to the builder.
+Only what they said goes in as theirs; anything you filled in goes in as your proposal with your reason.
 Bring only the questions that the human alone can answer, most important first, and update the document with their answers.
 A typical session is one goal: about 500 lines of code added or changed (not counting tests) in a small handful of files.
 The size of the intent decides how many implementation sessions follow.

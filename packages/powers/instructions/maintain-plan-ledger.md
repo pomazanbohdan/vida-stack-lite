@@ -18,10 +18,11 @@ artifact_contract_verified_by: ledger entries match commits and test results
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/subagent-driven-development/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/subagent-driven-development/references/resuming.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/step-03-implement.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -33,7 +34,9 @@ domains:
 Each plan owns a workspace, home to every artifact for THIS plan: ledger, briefs, reports, review packages.
 Create the ledger with its identity as the first line: `# SDD ledger — plan: <plan file path>`.
 Check for this plan's ledger at `<workspace>/progress.md`.
-A ledger whose first line names a different plan file is another plan's progress: leave it in place and start your own, fresh.
+If its first line names your plan file, tasks with a `Task <N>: complete` line are DONE — do not re-dispatch them; resume at the first task without one.
+A task whose last line is a fix round is mid-loop: resume the loop at the next round.
+A ledger whose first line names a different plan file — or a stray ledger at the old flat path `.superpowers/sdd/progress.md` — is another plan's progress: leave it in place and start your own, fresh.
 Record BASE (`git rev-parse HEAD`) before dispatching — the review package and fix-round diffs need it. If the recorded base already holds a value (resumed run), preserve it — never overwrite it.
 Append the completion line to the ledger in the same message as your other bookkeeping: `Task <N>: complete (commits <base7>..<head7>, review clean)`.
 After each round, append to the ledger: `Task <N>: fix round <R>/5 (<X> addressed, <Y> open — <finding one-liners>; commits <a7>..<b7>)`.

@@ -19,10 +19,10 @@ compatibility_excludes:
   - run-each-check-only-when-the-code-changed
 compatibility_requires: []
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/verification-before-completion/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/verification-before-completion/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-prove-it-works/SKILL.md
 status: active
-revision: 7
+revision: 8
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure

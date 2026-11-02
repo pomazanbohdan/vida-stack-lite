@@ -6,7 +6,7 @@ capability_tags:
   - clarify-requirements
 pattern_tags:
   - requirements-clarification
-conditions_applies_when: The brief or design document is ready to hand to a builder.
+conditions_applies_when: A project-scale brief or design document is ready to hand to a builder.
 conditions_does_not_apply_when: "There is no brief yet, or it has already been checked and approved."
 artifact_contract_output_type: design-brief
 artifact_contract_required_data:
@@ -18,10 +18,10 @@ artifact_contract_verified_by: every important builder question is answered in t
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/builder-check-prompt.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/brainstorming/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/brainstorming/builder-check-prompt.md
 status: active
-revision: 5
+revision: 6
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -32,6 +32,7 @@ domains:
 
 # Check the brief through the builder's eyes
 Dispatch a fresh builder with the design document and its domain.
+For a small change, the short design goes straight to the owner without this builder check.
 The builder has been handed a design document and asked to put together a plan to build what it describes.
 The builder will not be able to talk to the person who wrote it.
 Report only the questions the builder would still need answered before planning this well.

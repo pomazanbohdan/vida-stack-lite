@@ -68,15 +68,16 @@ templates/configuration and native host delivery are outside this packet.
 4. **External Knip conflict** — Agent/config owner must resolve the
    `knip.config.ts` pre-commit versus pinned-gate conflict; Powers does not own it.
 5. **Donor update tracking** — the 8 corpus donors have a per-file baseline
-   (`source-baseline.json`, 1,193 files / 2,510 instructions). The read-only
+   (`source-baseline.json`, 1,201 files / 2,512 instructions). The read-only
    `check-source-updates` reports `current`, `pin-stale`, `stale`, `missing` or
    `unknown` and lists affected instruction IDs; `build-source-baseline` is the
    explicit refresh. `triage-donor-updates` reports added/modified/deleted files
    and new-file dispositions. Upstream check 2026-11-02: 7 of 8 used donors have
-   newer revisions (Open Knowledge Format is current). Triage: 1,526 added /
-   974 modified / 83 deleted; 291 modified and 16 deleted used files, 1,234
-   affected instructions; 61 new Markdown candidates and 1,465 rejected. Corpus
-   conversion remains a reviewed batch; no instruction was changed by the triage.
+   newer revisions (Open Knowledge Format is current). Superpowers was processed
+   first: pin advanced, 87 provenance revisions updated, 4 source paths moved to
+   reference files, 2 new instructions added. Remaining triage: 1,196 affected
+   instructions and 51 new candidates across the other donors; conversion remains
+   a reviewed batch.
 
 Out of Powers scope: Agent runtime integration, D3/D8, VP-7/G, Agent
 `WorkItem/v1`, runtime findings/artifacts, and the runtime effective-profile
@@ -219,7 +220,7 @@ Until those answers exist, AC-47 to AC-59 stay open outside the active queue. Th
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-11-02):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 764 passed, four expected Windows skips, zero failures and native exit 0; the earlier 740-test coverage receipt remains historical for its inputs. Strict typecheck passes 63 files; the corpus check reports 2,510 instructions and zero issues; OKF reports 31 concepts with no failures or warnings. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-11-02):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 764 passed, four expected Windows skips, zero failures and native exit 0; the earlier 740-test coverage receipt remains historical for its inputs. Strict typecheck passes 63 files; the corpus check reports 2,512 instructions and zero issues; OKF reports 31 concepts with no failures or warnings. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.
@@ -287,7 +288,7 @@ Until those answers exist, AC-47 to AC-59 stay open outside the active queue. Th
 # Definition of done for the queue
 
 The original A-G queue is considered closed when: (1) the eight existing donors have been
-processed, the corpus contains 2510 instructions and the map contains 2790 file records
+processed, the corpus contains 2512 instructions and the map contains 2782 file records
 (`check-corpus.ts` → exit 0); (2) `catalog.*` and `decision.evaluate` have tests and work
 without Runtime; (3) `vp-mode` and `vp-setup` install locally and idempotently, while `vida-bootstrap` remains a project-document entry until host delivery is authorized; (4) a VP
 Work Item has AC and evidence; (5) `check-okf.ts` and repository documentation checks
@@ -303,7 +304,7 @@ The owner authorized stable canonical files with independent form/domain facets.
 1. Frozen 40-ID sample, 24 selectors and relevance judgments: captured. Old-code baseline: 30 fresh-process runs and 2,400 warm queries; same-input three-structure prototype: captured. Beam accepted the exact evidence as READY_AS_OLD_CODE_BASELINE_AND_STRUCTURE_PROTOTYPE. Retained evidence: packages/powers/.tmp/panel/donor-migration-architecture-20261025/instruction-organization-20261026/implementation-r1/baseline-prototype-root-r3/. These results establish no speedup or full-corpus recall.
 2. The historical v1.1 schema/reader, optional filters, generated browse, opt-in strict corpus check and converter-owned metadata staging were Root-qualified and independently reviewed by Beam for their bound inputs. The historical converter milestone passed 564 tests with one expected Windows skip and zero failures, with 100% functions/lines. Luna's isolated trial tools were prepared, but Root's static preflight review was NOT_READY: one inherited D16 binding was stale, await expressions occurred in parameter defaults, and the before-state check compared legacy classification with future assignments. No tool mode, fixture or trial batch was executed in that attempt. The frozen measurement that did run keeps its v1.1 binding and reports INCONCLUSIVE timings; current v1.2 Source and migration require a fresh binding before any new performance or quality claim.
 3. The prepared 40-ID treatment is retained with its query, label, judgment and timing bindings (AC-64, component). A v1.2 re-binding runs only before a new matched-comparison claim; it is not a prerequisite for the migrated corpus or the compact CLI.
-4. Corpus classification is complete: all 2,510 IDs are v1.2, 2,420 are classified with form and at least one domain, and 90 carry an explicit unclassified reason. AC-60–AC-63 carry component evidence; the strict corpus check reports zero issues.
+4. Corpus classification is complete: all 2,512 IDs are v1.2, 2,422 are classified with form and at least one domain, and 90 carry an explicit unclassified reason. AC-60–AC-63 carry component evidence; the strict corpus check reports zero issues.
 5. Root publishes only the qualified reviewed Source. Formation, installation and attributable Runtime acceptance remain separate. H1 source-attribution, fidelity, admission and pilot gates remain unchanged.
 
 ## Owner-requested retrieval workflow refinement

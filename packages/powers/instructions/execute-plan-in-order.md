@@ -19,11 +19,11 @@ compatibility_excludes: []
 compatibility_requires:
   - write-implementation-plan
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/executing-plans/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/executing-plans/SKILL.md
   - donor=matt-skills; license=MIT; revision=49dd158d1076134a641b33efb035946536778336; path=skills/engineering/implement/SKILL.md
   - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=.claude/commands/build.md
 status: active
-revision: 5
+revision: 6
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure

@@ -14,7 +14,7 @@ schema: vida-powers-donors/v1
 product: vida-powers
 kind: donor-source-manifest
 status: current
-updated_at: '2026-10-19'
+updated_at: '2026-11-02'
 local_root: packages/powers/.tmp/donors
 reproduce: git clone <url> && git checkout --detach <head_sha>
 
@@ -23,12 +23,12 @@ donors:
     role: methodology-donor
     url: https://github.com/obra/superpowers
     local_path: obra-superpowers
-    head_sha: bb92a77741419a4ab5f06e711a283343f1ada0c3
+    head_sha: 2ce8aa15d05bd57213e6f746f953aafb7ded7a8b
     checked_out: detached
     default_branch: main
     license: MIT
     license_file: LICENSE
-    file_count: 238
+    file_count: 231
     snapshot_source: research-frontmatter
 
   - id: bmad-method

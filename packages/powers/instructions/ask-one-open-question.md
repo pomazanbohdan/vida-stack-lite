@@ -1,7 +1,7 @@
 ---
 instruction_id: ask-one-open-question
 title: Ask one open question at a time
-summary: "Open the conversation with an offer to skip, then ask one concrete open question per message and let the owner's own words carry the intent."
+summary: "Open by moving the work forward: echo a supplied request in about 200 words or ask one concrete open question, then ask only what the context leaves open."
 capability_tags:
   - clarify-requirements
 pattern_tags:
@@ -17,11 +17,11 @@ artifact_contract_verified_by: owner answer that resolves the uncertainty
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/brainstorming/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-brainstorming/SKILL.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/explore.md
 status: active
-revision: 5
+revision: 6
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -31,13 +31,18 @@ domains:
 ---
 
 # Ask one open question at a time
-Your first message lets them know that if they'd rather skip the questions and have you just start, they can say so.
-If they take you up on it, state any significant how-it-gets-made choice in one plain line.
-Then do what they asked through the normal workflow.
+Open the conversation by moving the work forward.
+If they already said what they want — a spec, a plan, a detailed request — aim for about 200 words for the whole message.
+Echo their request back in your own words: what they want, who it's for, and why, as far as they've said.
+Add what you found that bears on it: how the relevant parts work today and what the change would touch.
+If you found a constraint, conflict, or cheaper path they may not have considered, say so plainly.
+End with one line inviting corrections, then one open question about what they want: the thing their request leaves open whose answer would most change what gets built.
+If they haven't described what they want, ask one open question in their own terms about the biggest thing their request leaves unsettled.
+Say why you're asking: what the answer would change about what you build.
+If they asked for brainstorming, end with your question.
+If they didn't, add a light one-line offer to just get going instead.
+If they take you up on it, state any significant how-it-gets-made choice (platform, language, medium) in one plain line, then do what they asked through the normal workflow.
 Each message ends with one question: a single sentence with no list of example answers hanging off it.
-Ask about a real moment or a concrete picture.
-"What's the moment you find yourself wishing this existed?"
-"Tell me about the people who'll be in the room."
 Use plain language, pitched just a little above where your human partner is.
 Match their vocabulary; never use process jargon.
 Get them describing.

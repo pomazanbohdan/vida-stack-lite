@@ -19,11 +19,11 @@ compatibility_excludes: []
 compatibility_requires:
   - protect-sensitive-artifacts
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/SKILL.md
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/prompts/scrub.md
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/prompts/scrub-audit.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/diagnosing-superpowers/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/diagnosing-superpowers/prompts/scrub.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/diagnosing-superpowers/prompts/scrub-audit.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -48,3 +48,5 @@ Otherwise return each miss with file, line, category, and a non-sensitive descri
 Never include the original sensitive value.
 CLEAN addresses privacy only; it does not establish that exported findings remain supported.
 No archive before your partner has seen the scrub log and file list.
+No issue or comment before your partner approves the exact text, and none with a placeholder summary.
+A human-authored summary is required before filing; do not substitute your own.

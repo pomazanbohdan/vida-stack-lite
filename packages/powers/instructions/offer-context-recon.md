@@ -1,7 +1,7 @@
 ---
 instruction_id: offer-context-recon
 title: Offer context recon
-summary: "When looking would help, offer to check the code, documents, or data and name what you would search for, then reuse the recovered context instead of asking again."
+summary: "When the owner supplied context, read the referenced material and connected code before asking; when further looking would help, offer to check the code, documents, or data and reuse the recovered context."
 capability_tags:
   - clarify-requirements
 pattern_tags:
@@ -18,10 +18,10 @@ artifact_contract_verified_by: owner approves the recon scope
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/brainstorming/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/recall/SKILL.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -31,7 +31,10 @@ domains:
 ---
 
 # Offer context recon
-Once you have a little grounding and looking would help, offer to go look: the codebase or project, the user's own files and data, or the web.
+When the project or the owner already provides context — a spec, a plan, a handoff, referenced files, connected code, or earlier conversation — read it before the first message.
+Keep reading until you can explain how the relevant parts work today and what the change would touch.
+Never ask what the project or their context already answers.
+Once you have that grounding and looking further would help, offer to go look: the codebase or project, the user's own files and data, or the web.
 Say what you would look for. The user decides whether you go.
 Before acting or resuming work, rebuild the user's recent working context from their own history, live state, and the shared record of reports, fixes, and incidents.
 Read only what the in-scope threads need, then stop.

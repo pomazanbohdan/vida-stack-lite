@@ -1,7 +1,7 @@
 ---
 instruction_id: play-back-understanding-in-chunks
 title: Play back understanding in chunks
-summary: "Describe each understood part back in about 200-300 words, mark guesses as guesses, and ask what is wrong or missing before moving on."
+summary: "Describe each understood part back in about 200-300 words, keep the owner's words separate from your proposals, and ask what is wrong or missing before moving on."
 capability_tags:
   - clarify-requirements
 pattern_tags:
@@ -11,15 +11,15 @@ conditions_does_not_apply_when: The need fits in one short sentence and has no p
 artifact_contract_output_type: understanding-playback
 artifact_contract_required_data:
   - chunk playback
-  - marked guesses
+  - owner words separated from proposals
   - owner correction
 artifact_contract_verified_by: owner correction of each playback
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/brainstorming/SKILL.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/brainstorming/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -34,8 +34,8 @@ Describe what it's for and who it serves, or how one piece behaves.
 Then return to questions about the next part.
 Playback and questions alternate through the whole conversation.
 The last chunk covers whatever is left.
-Mark anything you're guessing as your guess.
 Only what they said goes in as theirs.
+Anything you filled in goes in as your proposal, with your reason.
 End each chunk by asking what's wrong or missing.
 Before you send a chunk, check it: does it describe something they'll look at?
 If so, and they haven't seen the visual companion offer yet, send the offer instead.

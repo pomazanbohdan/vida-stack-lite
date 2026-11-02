@@ -22,9 +22,9 @@ compatibility_excludes: []
 compatibility_requires:
   - cite-evidence-lines
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/diagnosing-superpowers/templates/report.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/diagnosing-superpowers/templates/report.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist

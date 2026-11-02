@@ -18,10 +18,10 @@ compatibility_excludes: []
 compatibility_requires:
   - delegate-subagent-work
 provenance:
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/SKILL.md
-  - donor=superpowers; license=MIT; revision=bb92a77741419a4ab5f06e711a283343f1ada0c3; path=skills/subagent-driven-development/implementer-prompt.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/subagent-driven-development/references/handling-reports.md
+  - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/subagent-driven-development/implementer-prompt.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule

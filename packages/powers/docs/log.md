@@ -2,6 +2,24 @@
 
 ## 2026-11-02
 
+* **Superpowers donor batch:** advanced `superpowers` from `bb92a777` to
+  `2ce8aa15` (v7.0.1) and processed the first donor update. All 87 existing
+  superpowers instructions now carry the new provenance revision; 4 source paths
+  moved to the new reference files (`batching`, `handling-reports`, `fix-loop`,
+  `preflight`); 6 instructions gained reference provenance; 9 instructions
+  followed renamed reference files; 2 new instructions were added
+  (`lay-out-approaches-before-design`,
+  `require-human-authored-issue-summary`); 18 deleted files were removed from the
+  map and 2 unused reference files were rejected. The corpus is 2,512
+  instructions, the map 2,782 records and the baseline 1,201 files; all 8 donor
+  sources are `current`. Content was updated for the new first-message/approach
+  and design-gate rules, playback wording, ledger resume rules and the required
+  human-authored issue summary. Catalog revision 6177, map revision 4981.
+  Changelog rule: D6 and corpus instruction
+  `write-the-change-log-newest-first-under-date-headings`; this entry is
+  newest-first. Checks: `check-corpus` 0 issues; package suite 764 pass / 4 skip /
+  0 fail / 3,804 assertions; typecheck 63 files; OKF 31 concepts / 0 failures.
+
 * **Donor update triage:** checked the 8 corpus donors against upstream on
   2026-11-02. Seven have newer revisions; Open Knowledge Format is current.
   Read-only triage against `source-baseline.json`: 1,526 added, 974 modified,

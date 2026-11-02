@@ -392,8 +392,8 @@ and license attributes — in `donors.yaml`; the package `NOTICE` lists each don
 license, license file and pinned revision, including the Open Knowledge Format
 attribution. Source links, license metadata and attribution are recorded in the
 donor manifest and `NOTICE`; Powers does not assess legal risk (D17). The 8
-processed donors have a per-file update baseline (`source-baseline.json`, 1,193
-files / 2,510 instructions); `check-source-updates` is read-only and lists
+processed donors have a per-file update baseline (`source-baseline.json`, 1,201
+files / 2,512 instructions); `check-source-updates` is read-only and lists
 affected instruction IDs. Upstream triage on 2026-11-02 found 1,234 affected
-instructions and 61 new Markdown candidates across 7 updated donors; corpus
-conversion remains a reviewed batch.
+instructions and 61 new Markdown candidates across 7 updated donors; the
+superpowers batch is processed and the rest remains a reviewed batch.
