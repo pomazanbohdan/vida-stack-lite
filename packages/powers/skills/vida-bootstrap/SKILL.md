@@ -41,6 +41,12 @@ pause only through a host-provided wait/completion mechanism. An agent returns
 `blocked` with `needs_input` instead of waiting on its orchestrator unless its
 envelope explicitly permits sub-delegation.
 
+Before asking, apply instruction-first clarification: consult the sidecar,
+applicable instructions, approved decisions and declared conflicts; retrieve or
+block deterministic gaps; ask only for unresolved material ambiguity, conflict,
+permission or a human-owned decision. Only dependent work blocks; an agent routes
+the question to its orchestrator.
+
 The lead owns plan, join, integration and final verification. A child receives a
 bounded assignment, exact source paths and an inline contract; it must not claim
 to have read unavailable sources.

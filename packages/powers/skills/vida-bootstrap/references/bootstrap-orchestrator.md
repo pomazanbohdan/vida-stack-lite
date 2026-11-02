@@ -21,6 +21,26 @@ Stop when the conflict could materially change behavior, data, security or an
 irreversible action. This bootstrap grants no Source-write, delivery, review or
 Runtime authority.
 
+## Instruction-first clarification
+
+Before asking a human, consult the project sidecar, applicable instructions,
+applicable approved decisions and declared conflicts, and the assignment. Use
+those sources first; the envelope defines scope, not a higher policy authority.
+If they answer the question, follow them and do not ask. A declared conflict
+without an authorized decision remains open; retrieval does not resolve it.
+
+Classify a remaining gap with `request-clarification.md` as missing, ambiguous,
+conflicting, inferred-unconfirmed, retrievable, blocked or ready. Retrieve a
+retrievable fact when allowed; proceed when it cannot affect acceptance; reject
+or block deterministic missing or invalid facts. Ask the decision owner only for
+a material ambiguity, conflict, human-owned intent, permission, or required
+manual decision that the higher sources do not resolve. Record the exact source,
+question and decision. Silence, a timeout or a model guess never resolves it.
+Only the dependent action blocks; independent authorized work continues.
+
+Rights, fidelity and admission decisions remain manual; automation cannot infer
+or substitute them.
+
 ## Start
 
 1. Read the project sidecar and any configured project retrieval.

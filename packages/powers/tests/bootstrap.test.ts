@@ -73,9 +73,16 @@ test('role texts assign wait/join to the orchestrator and blocked needs_input to
   const agent = readFileSync(path.join(root, 'references/bootstrap-agent.md'), 'utf8');
   expect(orchestrator).toContain('A turn may pause only through a host-provided wait/completion mechanism.');
   expect(orchestrator).toContain('Never silently pause, poll task status, sleep, or busy-wait.');
+  expect(orchestrator).toContain('Instruction-first clarification');
+  expect(orchestrator).toContain('human-owned intent');
+  expect(orchestrator).toContain('declared conflict');
+  expect(orchestrator).toContain('envelope defines scope, not a higher policy authority');
   expect(agent).toContain('The orchestrator owns the delegation decision, host wait/completion, join and');
   expect(agent).toContain('`status: blocked` with reason `needs_input`');
   expect(agent).toContain('silently pause or wait');
+  expect(agent).toContain('Instruction-first clarification');
+  expect(agent).toContain('Do not ask the user directly outside the envelope.');
+  expect(agent).toContain('do not infer rights, fidelity or');
 });
 
 test('CLI works from foreign cwd and rejects invalid selectors without stdout', () => {

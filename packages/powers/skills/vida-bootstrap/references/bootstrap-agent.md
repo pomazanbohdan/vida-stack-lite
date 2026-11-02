@@ -18,6 +18,17 @@ resolves it; otherwise choose the safest reversible interpretation and record
 it. Stop when the conflict could materially change behavior, data, security or
 an irreversible action.
 
+## Instruction-first clarification
+
+Apply the sidecar, assignment, applicable instructions, applicable approved
+decisions and declared conflicts before asking. The envelope defines scope, not
+a higher policy authority. Retrieve a retrievable fact when allowed; reject or
+block deterministic missing or invalid data; do not infer rights, fidelity or
+admission. If a material ambiguity, conflict, permission or human-owned decision
+remains, return `status: blocked` with reason `needs_input` and the exact
+question to the orchestrator. Do not ask the user directly outside the envelope.
+Only affected work blocks; independent assigned work may continue.
+
 ## Start
 
 1. Validate the assignment digest if the host binds one; stop on mismatch.
@@ -27,7 +38,10 @@ an irreversible action.
    `bootstrap_command` points to the source-local composer. Read configured
    lifecycle and allocation owners when project policy requires them.
 3. Restate scope, owned paths, invariants and checks in one short plan.
-4. Stop and ask if a required field, permission or source is missing.
+4. Apply instruction-first clarification: retrieve allowed missing facts; reject
+   or block deterministic missing or invalid data; route unresolved material
+   ambiguity, conflict, permission or human-owned decision to the orchestrator as
+   `blocked`/`needs_input`. Do not infer manual rights, fidelity or admission.
 5. Read only the named sources and reuse the existing owner.
 6. Change only the assigned paths.
 7. Run the assigned checks. If a check fails because of your change, repair it

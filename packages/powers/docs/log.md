@@ -87,6 +87,15 @@
   remain manual. Only dependent work blocks; independent H1 preparation may
   continue.
 
+* **Instruction-first clarification:** orchestrator and agent bootstrap texts now
+  consult sidecar, instructions, approved decisions and declared conflicts before
+  asking; retrieve or block deterministic gaps; ask only for unresolved material
+  ambiguity/conflict, permission or a human-owned/manual decision. Agents route
+  questions to the orchestrator and do not infer rights, fidelity or admission.
+  Luna review returned CHANGES; the final text includes human-owned decisions,
+  declared-conflict handling and agent routing. Role-text test: bootstrap 6 pass /
+  130 assertions; bootstrap + skill-contract 19 pass / 214 assertions.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.

@@ -173,6 +173,12 @@ but cannot establish composer/receipt execution when that proof is required.
 - **Project-specific mode is external.** Hybrid use, exact paths and activation
   mode are read from `AGENT.sidecar.md`; Powers does not hardcode project mode or
   decide how the Agent consumes its instructions.
+- **Instruction-first clarification.** Before asking, read the sidecar, applicable
+  instructions, approved decisions and declared conflicts. If they answer, follow
+  them and do not ask. Deterministic missing or invalid data is an automatic
+  block/reject; only unresolved material ambiguity, conflict, permission or a
+  human-owned/manual decision goes to the decision owner. Only dependent work
+  blocks; independent work may continue.
 - **Every change in the product** has an owner (D2): `Vida Powers owner`. The agent
   implements the work but does not make product decisions instead of the owner.
 - **No change without prior agreement with the owner.** The plan, `docs/next-actions.md`

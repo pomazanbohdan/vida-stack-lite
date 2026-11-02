@@ -245,6 +245,14 @@ the existing numbering.
   Runtime acceptance are distinct claims. Powers adds no execution engine or
   Agent runtime/template/config integration in this mode.
 
+  Bootstrap roles apply `request-clarification.md` instruction-first: consult the
+  sidecar, applicable instructions, approved decisions and declared conflicts
+  before asking; retrieve allowed facts or block/reject deterministic missing or
+  invalid data; ask the decision owner only for unresolved material ambiguity,
+  conflict, permission or a required manual decision. A declared conflict remains
+  open until an authorized decision resolves it. Only dependent work blocks;
+  rights, fidelity and admission remain manual.
+
 ## 14. Accepted phased content scope (D14, D15)
 
 The clauses below define future work. They do not change current E4 behavior or prove donor admission, rights clearance, implementation, or Runtime acceptance.
