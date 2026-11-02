@@ -127,3 +127,5 @@ The draft request uses OKF frontmatter with a non-empty type, draft status, ISO 
 ---
 
 **Plan implementation gate, 2026-10-23:** Local request preparation and input binding are complete. The draft is prepared for owner review and remains unsent and unaccepted. No attributable handoff or admission evidence is recorded, so the G phase remains open. Runtime implementation and acceptance remain separate owner gates; the request owns the detailed hashes.
+
+**Rebind addendum, 2026-11-02:** The request now binds current local Source `ac5a70da96cee838023af139b83227227dbb9334` and its 12 current inputs. That commit is not published; `origin/main` remains `68d948f329167c67d80e8457d7f8f90cda7311f1`. The historical `fafb401` binding is retained as history. No send, handoff, admission, Runtime implementation or acceptance occurred.

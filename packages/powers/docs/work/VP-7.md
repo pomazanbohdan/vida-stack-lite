@@ -52,7 +52,7 @@ Integrate the VP extended instruction registry and VP-owned methodology profile 
 - D8 has one VP-owned profile schema. The Agent currently reads `agent-runtime.config.v1.yaml`, which has no VP profile section. D8 ties appearance of the Runtime profile section to the `.vida/project.yaml` cutover. The Agent maintainer must resolve the transition/read policy; no existing support is claimed in either carrier.
 - No approved required/optional policy exists for the VP registry/profile. Missing-input behavior and any requiredness must receive explicit owner approval; silent defaults are forbidden.
 - Stage 7b storage migration remains gated by the separate storage-admission GAP and runtime owner. It is outside this request and must not be implemented as a second database.
-- One request, `REQ-D3-D8`, carries both D3 and D8. It is separate from VP-7 and binds the current published base plus relevant VP inputs; rebind if an input changes before handoff. E5a manifest work is not a prerequisite.
+- One request, `REQ-D3-D8`, carries both D3 and D8. It is separate from VP-7 and binds the current local base plus relevant VP inputs; the binding is unpublished until Source publication. Rebind if an input changes before handoff. E5a manifest work is not a prerequisite.
 
 ## Acceptance references
 
@@ -60,9 +60,10 @@ Relevant canonical criteria include AC-19 through AC-24, AC-38, and AC-40, plus 
 
 ## Implementation status addendum — 2026-10-23
 
-The `REQ-D3-D8` request is bound to the current published Source commit and the listed
-VP input hashes; see the request for the exact values. It is prepared for owner review,
-unsent and unaccepted. D8 keeps `.vida/project.yaml` as the approved post-cutover target.
+The `REQ-D3-D8` request is bound to the current local Source commit and the listed
+VP input hashes; see the request for the exact values. The binding is unpublished and
+is not evidence of a published Source. It is prepared for owner review, unsent and
+unaccepted. D8 keeps `.vida/project.yaml` as the approved post-cutover target.
 The Agent currently reads `agent-runtime.config.v1.yaml`; `vp-setup` JSON outputs remain
 bridge materializations and are not Runtime reads. Required/optional policy and the
 current-to-cutover migration remain open. No attributable handoff or admission evidence

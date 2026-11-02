@@ -114,24 +114,24 @@ AC-15 keeps conflicting profile choices unresolved until the owner decides. AC-2
 
 ## Current Source binding
 
-The request is bound to the published Source commit `fafb40158d20a2a10155d6ef984dfd55c36be23d`, observed as the local `HEAD` during preparation. The table lists the current VP schema, catalog, profile, and reader inputs at that commit. Each value is SHA-256 over exact file bytes.
+The request is bound to the current local Source commit `ac5a70da96cee838023af139b83227227dbb9334`, which is not published; `origin/main` remains `68d948f329167c67d80e8457d7f8f90cda7311f1`. The table lists the current VP schema, catalog, profile, and reader inputs in this worktree. Each value is SHA-256 over exact file bytes. This is a local preparation binding; it does not establish a published Source, handoff, admission, delivery or Runtime acceptance.
 
 | Current VP input | Role | SHA-256 |
 |---|---|---|
-| `packages/powers/catalog.json` | Canonical catalog listing and per-instruction content digests | `5b0e9baf5f98bce8dea17fff426991b196ed5c57faca00817d913bd72a92c119` |
+| `packages/powers/catalog.json` | Canonical catalog listing and per-instruction content digests | `e462b47accb281251ba90a1073803164ce006e77e8c9dc1451ba5e71132a5668` |
 | `packages/powers/config/vpcatalog.v1.schema.json` | Catalog schema | `a66519d7e79e94a1000812b04a116d3527c9db3f85227e06f274a7c06ccf259c` |
 | `packages/powers/config/vpinstruction.v1.schema.json` | Instruction frontmatter schema | `9013cdff5605103ef0a595880e92abaadef2747dd6d70acc323bc441ada6bda3` |
 | `packages/powers/config/vpmethodologyprofile.v1.schema.json` | Source profile schema | `e7bc8866245eb90361335137a89a0a464a110e8a52c7664ade4f68c0977fe193` |
-| `packages/powers/config/methodology-profile.json` | Source profile instance | `4b852bdd6332a2d6e7b1a726778d148b31d7fed8335e318558f63e4cc5048690` |
-| `packages/powers/config/vpeffectiveprofile.v1.schema.json` | Resolved profile schema | `52a73c423eb1d6bf0f79192d3a6bdad24308ccac3a092bb56592191f2631c1ab` |
-| `packages/powers/skills/vp-mode/scripts/catalog.ts` | Catalog loading, digest checks, and composition | `186dccc21d860a18a25471273f6246dd4b8af0cc4c725143944ca721fe0adf5d` |
-| `packages/powers/skills/vp-mode/scripts/catalog-cli.ts` | Catalog CLI and error materialization | `38d19759d2cb1eec2129822b3537954673c457f4ea9f00ec2f73ceb7615b1833` |
+| `packages/powers/config/methodology-profile.json` | Source profile instance | `1dd7ff0c7a5bc6e37274d9a15d48ec6b9d0434d44171e71ecd11a631cd93ba49` |
+| `packages/powers/config/vpeffectiveprofile.v1.schema.json` | Resolved profile schema | `9c41b711bc018e91efbb265400464de4d3ae00f85d0290295e4343f2556edd65` |
+| `packages/powers/skills/vp-mode/scripts/catalog.ts` | Catalog loading, digest checks, and composition | `7f516efccea2ad340149dba45accb27ea9970a674a4e26f434616681ed83960a` |
+| `packages/powers/skills/vp-mode/scripts/catalog-cli.ts` | Catalog CLI and error materialization | `8a70ac62603f690aec02b6175c3b692e6e212d6b509ee612fe2d07f4529dec95` |
 | `packages/powers/skills/vp-mode/scripts/frontmatter.ts` | Instruction frontmatter reader | `20fa39b3a4779c4af19b9503088e932f1a515e8ae0239491b20f7c7f54757c9e` |
-| `packages/powers/skills/vp-mode/scripts/schema.ts` | VP JSON schema validation | `9c49067f1977e966d59d07a2ececa71eddf42d43674248a24937ed78100d5b25` |
-| `packages/powers/skills/vp-setup/scripts/setup.ts` | Profile setup and carrier materialization | `886fb83acf1fe8f1d9477aa575c17878e46a0a1625dc4d45420017f1437a485a` |
+| `packages/powers/skills/vp-mode/scripts/schema.ts` | VP JSON schema validation | `ff19aabad5c80e33b606fb79232dba78b11eb8a431c3b86373b060b5488547e4` |
+| `packages/powers/skills/vp-setup/scripts/setup.ts` | Profile setup and carrier materialization | `8fdb3789b605bfecb64fedc1f85febb2d1f0dcbba1b912c7a247d476b9b9662e` |
 | `packages/powers/skills/vp-setup/scripts/cli.ts` | Profile setup CLI entry | `8878ae7cd0d1a5fee18554d027c930367e28a7f916a3727b6a870464a9bc014d` |
 
-The immutable commit also binds D3/D8 and the observed Agent sources. This table excludes the request, Step G plan, VP-7, queue, and log so status edits cannot create a hash cycle. A change to any listed input requires a new binding before handoff. This binding proves local input identity only; it does not prove artifact formation, delivery, source admission, or Runtime acceptance.
+The bound commit also records D3/D8 and the observed Agent sources. This table excludes the request, Step G plan, VP-7, queue, and log so status edits cannot create a hash cycle. A change to any listed input requires a new binding before handoff. This binding proves local input identity only; it does not prove artifact formation, delivery, source admission, or Runtime acceptance.
 
 ## Requested scope
 

@@ -24,6 +24,13 @@
   the 12 `REQ-D3-D8` source-binding inputs require rebind before handoff. Step F
   remains open; no host or Runtime acceptance is claimed.
 
+* **G rebind:** `REQ-D3-D8` now binds the current local Source
+  `ac5a70da96cee838023af139b83227227dbb9334` and rehashed 12 current inputs;
+  `origin/main` remains `68d948f329167c67d80e8457d7f8f90cda7311f1`, so the
+  binding is explicitly local and unpublished. The historical `fafb401` binding
+  is retained. The request remains unsent and unaccepted; no handoff, admission
+  or Runtime acceptance is claimed.
+
 * **Project-document bootstrap authorized; B/S before code:** the repository
   owner selected direct project-document adoption and required Powers-owned
   orchestrator/agent bootstrap. D4, BR-25, SR-98, AC-74–AC-78, the local entry,
