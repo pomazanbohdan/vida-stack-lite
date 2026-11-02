@@ -45,6 +45,9 @@ import {
 } from '../orchestration/scoped-source-snapshot.js';
 import researchResultSchema from '../../schemas/research-result.v1.schema.json' with { type: 'json' };
 import researchSynthesisSchema from '../../schemas/research-synthesis.v1.schema.json' with { type: 'json' };
+import type { WorkItemKind } from '../work-items/catalog.js';
+
+export type { WorkItemKind } from '../work-items/catalog.js';
 
 export {
   detectNativeNoFollowCapability,
@@ -189,7 +192,6 @@ export const PATH_PROFILE_KEYS = [
 export type PathProfileKey = (typeof PATH_PROFILE_KEYS)[number];
 export type RepositoryMode = 'monorepo';
 export type ProcessingScope = 'whole_repository' | 'selected_project';
-export type WorkItemKind = 'epic' | 'feature' | 'pbi' | 'story' | 'bug' | 'task' | 'research';
 export type FlowIntent =
   | 'information_research'
   | 'implementation_new'

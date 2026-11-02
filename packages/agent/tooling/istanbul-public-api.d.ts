@@ -1,6 +1,10 @@
 // Public API shapes used from istanbul-lib-instrument@6.0.3 and
 // istanbul-lib-coverage@3.2.2. These packages publish no declarations.
 declare module 'istanbul-lib-instrument' {
+  export type ProgramPath = import('@babel/core').NodePath<
+    Extract<import('@babel/core').NodePath['node'], { type: 'Program' }>
+  >;
+
   export interface InstrumenterOptions {
     compact?: boolean;
     coverageVariable?: string;
@@ -28,10 +32,8 @@ declare module 'istanbul-lib-instrument' {
     filename: string,
     options?: { coverageVariable?: string },
   ): {
-    enter(path: import('@babel/core').NodePath<import('@babel/core').types.Program>): void;
-    exit(
-      path: import('@babel/core').NodePath<import('@babel/core').types.Program>,
-    ): { fileCoverage: FileCoverageData; sourceMappingURL?: string } | undefined;
+    enter(path: ProgramPath): void;
+    exit(path: ProgramPath): { fileCoverage: FileCoverageData; sourceMappingURL?: string } | undefined;
   };
 }
 

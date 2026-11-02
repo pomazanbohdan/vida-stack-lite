@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.invalid/schemas/product-model.v1.schema.json",
+  "$comment": "Consumers must also apply productModelSchema semantics: project ID/prefix uniqueness and hierarchy enabled-set references are not established by this declarative schema alone.",
+  "title": "VIDA Product Model v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "version", "repository", "projects"],
+  "properties": {
+    "schema": { "const": "ProductModel/v1" },
+    "version": { "const": 1 },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository_id", "prefix"],
+      "properties": {
+        "repository_id": { "$ref": "#/$defs/id" },
+        "prefix": { "$ref": "#/$defs/prefix" }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/product" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "prefix": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*$" },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "anyOf": [
+        { "const": "." },
+        {
+          "allOf": [
+            { "pattern": "^[^/]+(?:/[^/]+)*$" },
+            { "not": { "pattern": "[\\\\:\\u0000-\\u001F\\u007F-\\u009F<>\"|?*]" } },
+            { "not": { "pattern": "(^|/)(\\.\\.?|\\.[gG][iI][tT])(/|$)" } },
+            { "not": { "pattern": "[. ](/|$)|~[0-9]+(?:[.][^/]*)?(/|$)" } },
+            { "not": { "pattern": "(^|/)(?:[cC][oO][nN]|[pP][rR][nN]|[aA][uU][xX]|[nN][uU][lL]|[cC][lL][oO][cC][kK]\\$|[cC][oO][nN][iI][nN]\\$|[cC][oO][nN][oO][uU][tT]\\$|[cC][oO][mM][1-9¹²³]|[lL][pP][tT][1-9¹²³])(?:\\.[^/]*)?(/|$)" } }
+          ]
+        }
+      ]
+    },
+    "workItemCode": { "enum": ["EPIC", "FEATURE", "PBI", "STORY", "BUG", "TASK", "RESEARCH"] },
+    "hierarchy": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": { "mode": { "const": "any" } }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "allowed_children"],
+          "properties": {
+            "mode": { "const": "custom" },
+            "allowed_children": {
+              "type": "object",
+              "propertyNames": { "$ref": "#/$defs/workItemCode" },
+              "additionalProperties": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": { "$ref": "#/$defs/workItemCode" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "requirementsArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["business", "system", "acceptance", "test_cases"],
+      "properties": {
+        "business": { "$ref": "#/$defs/path" },
+        "system": { "$ref": "#/$defs/path" },
+        "acceptance": { "$ref": "#/$defs/path" },
+        "test_cases": { "$ref": "#/$defs/path" }
+      }
+    },
+    "product": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_id", "title", "prefix", "project_root", "code_selectors", "documents", "work_items"],
+      "properties": {
+        "project_id": { "$ref": "#/$defs/id" },
+        "title": { "type": "string", "minLength": 1 },
+        "prefix": { "$ref": "#/$defs/prefix" },
+        "project_root": { "$ref": "#/$defs/path" },
+        "code_selectors": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "documents": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root", "index", "requirements", "research", "decisions"],
+          "properties": {
+            "root": { "$ref": "#/$defs/path" },
+            "index": { "$ref": "#/$defs/path" },
+            "requirements": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["root", "areas"],
+              "properties": {
+                "root": { "$ref": "#/$defs/path" },
+                "areas": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/requirementsArea" } }
+              }
+            },
+            "research": { "$ref": "#/$defs/path" },
+            "decisions": { "$ref": "#/$defs/path" }
+          }
+        },
+        "work_items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["storage_root", "enabled_types", "hierarchy"],
+          "properties": {
+            "storage_root": { "$ref": "#/$defs/path" },
+            "enabled_types": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/workItemCode" } },
+            "hierarchy": { "$ref": "#/$defs/hierarchy" }
+          }
+        }
+      }
+    }
+  }
+}

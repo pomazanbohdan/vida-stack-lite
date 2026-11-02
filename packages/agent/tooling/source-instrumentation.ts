@@ -1,9 +1,14 @@
-import { transformSync, type NodePath, type types } from '@babel/core';
-import { programVisitor, type FileCoverageData } from 'istanbul-lib-instrument';
+import { transformSync } from '@babel/core';
+import { programVisitor, type FileCoverageData, type ProgramPath } from 'istanbul-lib-instrument';
+
+type MutablePrivateMethodPath = {
+  node: { type: 'ClassPrivateMethod' | 'ClassMethod' };
+  type: 'ClassPrivateMethod' | 'ClassMethod';
+};
 
 /** Adapt private methods only during Istanbul's synchronous public visitor. */
-function enterWithPrivateMethods(path: NodePath<types.Program>, visitor: ReturnType<typeof programVisitor>): void {
-  const methods: NodePath<types.Node>[] = [];
+function enterWithPrivateMethods(path: ProgramPath, visitor: ReturnType<typeof programVisitor>): void {
+  const methods: MutablePrivateMethodPath[] = [];
   path.traverse({
     ClassPrivateMethod(method) {
       methods.push(method);
@@ -42,16 +47,16 @@ export function instrumentSource(
       plugins: ['typescript'],
     },
     plugins: [
-      (api: { types: typeof types }) => {
+      (api) => {
         const visitor = programVisitor(api.types, file, { coverageVariable: '__vidaAgentCoverage__' });
         return {
           visitor: {
             Program: {
-              enter(path: NodePath<types.Program>) {
+              enter(path: ProgramPath) {
                 observeOriginalAst?.(path.node);
                 enterWithPrivateMethods(path, visitor);
               },
-              exit(path: NodePath<types.Program>) {
+              exit(path: ProgramPath) {
                 fileCoverage = visitor.exit(path)?.fileCoverage;
               },
             },
