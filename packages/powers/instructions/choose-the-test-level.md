@@ -19,8 +19,8 @@ compatibility_excludes:
   - choose-the-highest-test-seam
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=agents/test-engineer.md
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/test-driven-development/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=agents/test-engineer.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/test-driven-development/SKILL.md
 status: active
 revision: 5
 schema: VPInstruction/v1.2

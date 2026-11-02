@@ -18,7 +18,7 @@ artifact_contract_verified_by: every number in the document names a command that
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/constraint-driven-development/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/constraint-driven-development/SKILL.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -42,12 +42,15 @@ Add each one to the project's own script so it's reproducible without an agent:
 ```json
 {
   "scripts": {
-    "check:fast": "tsc --noEmit && eslint . && gitleaks detect --redact --no-banner",
+    "check:fast": "tsc --noEmit && eslint . && gitleaks dir . --redact --no-banner",
     "check:task": "npm run check:fast && vitest run --coverage",
-    "check:full": "npm run check:task && semgrep scan --config p/default && osv-scanner scan source -r ."
+    "check:security": "semgrep scan --config p/default --strict --json > semgrep-results.json && node scripts/quality-gate.mjs semgrep semgrep-results.json",
+    "check:full": "npm run check:task && npm run check:security && osv-scanner scan source -r ."
   }
 }
 ```
+
+`semgrep scan` and `axe` can exit 0 on findings; wrap them in a gate script that enforces the threshold. Keep the scanner before `&&` so a failed scan stops the command.
 
 **Sane Defaults.** When the user has no opinion, use these. They're chosen to be met by most codebases on day one.
 

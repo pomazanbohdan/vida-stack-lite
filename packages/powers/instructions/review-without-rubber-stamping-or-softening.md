@@ -17,7 +17,7 @@ artifact_contract_verified_by: no approval is given without evidence and no real
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/code-review-and-quality/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/code-review-and-quality/SKILL.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -32,6 +32,7 @@ domains:
 When reviewing code — whether written by you, another agent, or a human:
 
 - **Don't rubber-stamp.** "LGTM" without evidence of review helps no one.
+- **Verify the finding before reporting it.** Check the callers, guards and tests that reach the changed code; drop the finding if they rule it out. Label a defect that already exists in the base separately from a regression this change introduces. Zero findings is a valid result; do not invent one.
 - **Don't soften real issues.** "This might be a minor concern" when it's a bug that will hit production is dishonest.
 - **Quantify problems when possible.** "This N+1 query will add ~50ms per item in the list" is better than "this could be slow."
 - **Push back on approaches with clear problems.** Sycophancy is a failure mode in reviews. If the implementation has issues, say so directly and propose alternatives.

@@ -18,7 +18,7 @@ artifact_contract_verified_by: every framework-specific pattern carries a citati
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/source-driven-development/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/source-driven-development/SKILL.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -51,8 +51,9 @@ form submission state. React 19 replaced the manual
 isPending/setIsPending pattern with this hook.
 
 Source: https://react.dev/blog/2024/12/05/react-19#actions
-"useTransition now supports async functions [...] to handle
-pending states automatically"
+"In React 19, we're adding support for using async functions in
+transitions to handle pending states, errors, forms, and optimistic
+updates automatically."
 ```
 
 **Citation rules:**

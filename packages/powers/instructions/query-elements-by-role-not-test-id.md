@@ -16,7 +16,7 @@ artifact_contract_verified_by: no element is located by a test id or by a genera
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/testing-patterns.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=references/testing-patterns.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -28,8 +28,9 @@ domains:
 ---
 
 # Query elements by role and label, not by test id
-Find elements by accessible role/label (not test IDs)
+Find elements by accessible role/label (not test IDs).
 ```
 await screen.findByRole('textbox', { name: /title/i });
 await page.getByRole('button', { name: /log in/i }).click();
 ```
+A role that takes its name from content (`listitem`, `generic`) has no accessible name; filter by text instead: `page.getByRole('listitem').filter({ hasText: /buy groceries/i })`.

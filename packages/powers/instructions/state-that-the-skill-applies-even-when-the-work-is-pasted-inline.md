@@ -17,7 +17,7 @@ compatibility_excludes: []
 compatibility_requires:
   - optimize-guidance-triggers
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=evals/README.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=evals/README.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -30,5 +30,6 @@ domains:
 
 # State that the skill applies even when the work is pasted inline
 Describing what the skill adds did not help, and neither did naming diffs and pull requests on their own; what made the difference was saying that the skill applies even when the diff is pasted inline, which is the case the model was treating as "I can just do this myself".
+The same clause works for simplify, write a commit message or changelog from a pasted diff, and split a pasted change into commits: name those requests and say the skill applies even when the work is pasted inline.
 Here the tail alone was not enough; what worked was naming the three requests and saying the skill applies even when the code is pasted inline and the request does not mention tests. That clause took the four prompts from 6 of 24 to 19 of 24 (add tests 6 of 6, fix a bug 6 of 6, change behavior 1 of 6), and left eight adjacent must-not-fire prompts at 0 of 24 under every variant tried.
 The one-line behavior change is the floor: the trace shows a single-turn edit with no tool call, the model does not consider a procedure for it.

@@ -18,7 +18,7 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/engineering/tdd/mocking.md
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/testing-patterns.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=references/testing-patterns.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=TESTING-STANDARDS.md
 status: active
 revision: 5
@@ -50,3 +50,4 @@ When mocking a dependency, mock only the dependency — not the SUT behavior its
 A mock that returns a hardcoded value from inside the function under test is a pass-always test in disguise.
 External I/O (filesystem, network, clock) is the appropriate scope for mocking.
 Business logic inside the SUT is not mocked; it is exercised.
+For crash or rollback behavior, exercise the real boundary: an injected exception is not process termination, and a mocked transaction call is not a database rollback.

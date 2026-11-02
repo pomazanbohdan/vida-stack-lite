@@ -16,7 +16,7 @@ artifact_contract_verified_by: every failure of the surface uses the same shape
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/api-and-interface-design/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/api-and-interface-design/SKILL.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -27,6 +27,6 @@ domains:
 ---
 
 # Use one error format across an interface
-Pick one error strategy and use it everywhere:
+Pick one error strategy and use it everywhere. An error carries a stable machine-readable `code` and a human-readable `message`, not a bare string: `{ error: { code: 'IDEMPOTENCY_KEY_REUSED', message: 'Idempotency key reused with a different payload' } }`.
 
 **Don't mix patterns.** If some endpoints throw, others return null, and others return `{ error }` — the consumer can't predict behavior.

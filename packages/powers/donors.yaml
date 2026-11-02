@@ -59,12 +59,12 @@ donors:
     role: methodology-donor
     url: https://github.com/addyosmani/agent-skills
     local_path: addyosmani-agent-skills
-    head_sha: aeac41d4d005999432bb7312f7ff06383a91d59d
+    head_sha: 301b02b12bff98e4688e6984af6556802322bbde
     checked_out: detached
     default_branch: main
     license: MIT
     license_file: LICENSE
-    file_count: 217
+    file_count: 240
     snapshot_source: research-frontmatter
 
   - id: pstack

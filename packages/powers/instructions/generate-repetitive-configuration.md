@@ -17,7 +17,7 @@ artifact_contract_verified_by: the generated copies come from the generator and 
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=docs/advanced-per-agent-configuration.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=docs/advanced-per-agent-configuration.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

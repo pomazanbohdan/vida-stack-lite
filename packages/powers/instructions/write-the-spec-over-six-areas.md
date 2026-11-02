@@ -21,7 +21,7 @@ compatibility_excludes: []
 compatibility_requires:
   - elicit-the-goal-users-and-boundaries-before-writing-the-spec
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=.claude/commands/spec.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=.claude/commands/spec.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

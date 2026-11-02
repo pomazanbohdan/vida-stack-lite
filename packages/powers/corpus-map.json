@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4986,
-  "updated_at": "2026-11-03T03:10:00.000Z",
+  "revision": 4988,
+  "updated_at": "2026-11-03T04:10:00.000Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -2450,7 +2450,7 @@
       }
     },
     "addy-skills": {
-      "source_revision": "aeac41d4d005999432bb7312f7ff06383a91d59d",
+      "source_revision": "301b02b12bff98e4688e6984af6556802322bbde",
       "files": {
         "skills/api-and-interface-design/SKILL.md": {
           "status": "split",
@@ -3402,6 +3402,62 @@
         "hooks/SIMPLIFY-IGNORE.md": {
           "status": "rejected",
           "reason": "description of a session hook for one host, including its block annotation syntax"
+        },
+        "evals/fixtures/context-budget/budget-notes.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/fixtures/review-evidence/CONTRACT.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/fixtures/test-driven-development-persistence/BUG.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/fixtures/test-driven-development-persistence/README.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/gitflow-fires-on-commit-message/graders/skill-fired.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/gitflow-fires-on-commit-message/graders/typed-why-and-split.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/gitflow-fires-on-commit-message/prompt.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/gitflow-stays-quiet-on-what-broke/graders/not-fired.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/gitflow-stays-quiet-on-what-broke/prompt.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/simplify-fires-on-pasted-function/graders/behavior-kept-and-explained.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/simplify-fires-on-pasted-function/graders/skill-fired.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/simplify-fires-on-pasted-function/prompt.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/simplify-stays-quiet-on-make-it-fast/graders/not-fired.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
+        },
+        "evals/plugin/simplify-stays-quiet-on-make-it-fast/prompt.md": {
+          "status": "rejected",
+          "reason": "Eval fixture, grader or prompt; harness material, not methodology."
         }
       }
     },

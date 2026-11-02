@@ -16,7 +16,7 @@ artifact_contract_verified_by: no positive prompt copies the description it is m
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=evals/README.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=evals/README.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

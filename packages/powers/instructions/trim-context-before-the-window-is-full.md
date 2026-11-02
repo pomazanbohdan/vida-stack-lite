@@ -17,7 +17,7 @@ artifact_contract_verified_by: the trim started before the window was full and t
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/context-engineering/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/context-engineering/SKILL.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -31,7 +31,7 @@ domains:
 
 The context window is not a filing cabinet — it's a working desk. As a session runs, conversation history, tool output, and exploration accumulate. Most of it becomes deadweight. Budget proactively: waiting until the window is full causes abrupt quality drops; managing regularly keeps the agent coherent through long tasks.
 
-**Start trimming at 75% capacity, not 100%.** By the time the window is genuinely full, the model's attention is already fragmented across too many signals. The 75% threshold gives room to compress gracefully rather than cut desperately mid-task.
+**Compact well before the host's limit; the threshold varies by host.** By the time the window is genuinely full, the model's attention is already fragmented across too many signals. The margin gives room to compress gracefully rather than cut desperately mid-task.
 
 **What to cut first:**
 
@@ -49,4 +49,4 @@ The context window is not a filing cabinet — it's a working desk. As a session
 - The file currently being edited, or its most recent version
 - Any hard constraints the agent has been asked to enforce (auth rules, naming conventions, etc.)
 
-Context cliff | Waiting until the window is full before managing it — attention fragments and output quality drops abruptly at the limit | Start trimming at 75% capacity; compress rather than cut
+Context cliff | Waiting until the window is full before managing it — attention fragments and output quality drops abruptly at the limit | Compact well before the host's limit; compress rather than cut

@@ -19,7 +19,7 @@ artifact_contract_verified_by: the retention limit and a working deletion path e
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/security-checklist.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=references/security-checklist.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

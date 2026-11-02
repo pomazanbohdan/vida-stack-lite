@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '11'
+revision: '12'
 ---
 
 # Instruction change vector
@@ -109,6 +109,7 @@ product-owner default and cannot override `user_decision: true`.
 | 1 | superpowers | `bb92a77741419a4ab5f06e711a283343f1ada0c3` → `2ce8aa15d05bd57213e6f746f953aafb7ded7a8b` | 87 | 8 | 2 | 18 deleted; 2 rejected; 1 duplicate removed | 2,512 / 2,782 / 1,201 | product/design; engineering; documentation |
 | 2 | matt-skills | `49dd158d1076134a641b33efb035946536778336` → `4ae2317ddb22b046e26455e4f9c9b3aaaf62212d` | 69 | 8 | 2 | 16 deleted; 9 rejected | 2,514 / 2,776 / 1,202 | engineering; operations; documentation |
 | 3 | bmad-method | `cfba3ff5f982c1809e060606e399f55ebd7bce5e` → `bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41` | 752 | 96 | 10 | 16 deleted used files; 18 new candidates reviewed | 2,524 / 2,777 / 1,200 | product/design; engineering; operations; documentation |
+| 4 | addy-skills | `aeac41d4d005999432bb7312f7ff06383a91d59d` → `301b02b12bff98e4688e6984af6556802322bbde` | 392 | 10 | 0 | 14 eval files rejected | 2,524 / 2,791 / 1,200 | engineering; documentation |
 
 Legend: result = corpus instructions / map records / baseline files.
 

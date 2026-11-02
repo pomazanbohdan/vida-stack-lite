@@ -89,11 +89,14 @@ templates/configuration and native host delivery are outside this packet.
    The pin advanced `cfba3ff5` → `bd70c643`; provenance on 752 existing instructions
    was updated, the deletion map was applied, and the baseline was rebuilt at
    1,200 files. Independent Luna review is READY at `56ebc15e` with 0 Critical /
-   0 Important / 0 Minor.
-   Remaining triage: addy-skills (280 affected instructions) and gsd-core
-   (525 affected, 27 new candidates); pstack and ponytail have no used-file
-   impact. Conversion remains a reviewed batch. `docs/VECTOR.md` is the living
-   summary; update it and run `check-vector` in every batch.
+   0 Important / 0 Minor. Addy-skills followed: pin advanced `aeac41d4` →
+   `301b02b1`, provenance on 392 instructions updated, 10 content updates, and
+   14 eval files rejected as harness material. Catalog revision 6,357; map
+   2,791; baseline 1,200.
+   Remaining triage: gsd-core (525 affected, 27 new candidates); pstack and
+   ponytail have no used-file impact. Conversion remains a reviewed batch.
+   `docs/VECTOR.md` is the living summary; update it and run `check-vector` in
+   every batch.
 
 Out of Powers scope: Agent runtime integration, D3/D8, VP-7/G, Agent
 `WorkItem/v1`, runtime findings/artifacts, and the runtime effective-profile

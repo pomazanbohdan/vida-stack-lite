@@ -21,7 +21,7 @@ artifact_contract_verified_by: "the constraints file exists, the agent instructi
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/constraint-driven-development/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/constraint-driven-development/SKILL.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -61,5 +61,7 @@ One file at the repo root. Any agent on any harness can read it, and a change to
 |----|------|------|--------|-------|---------|
 
 Then add one line to the agent instructions file: read the constraints file before writing code, and do not weaken it to make a change pass.
+
+Before calling a row enforced, run its actual CI command against a known violation and a clean control. The violation must fail, the control must pass, and a scanner error must fail. For a severity threshold, a below-threshold finding must still pass. Generating a report is not enforcement.
 
 The commands now live in two places — the `Checked by` column in the constraints file and these scripts. The constraints file is the canonical source: it carries the reason alongside each command and it shows up in review. The scripts are convenience wrappers that must mirror it, not a second source of truth; if they drift, the file wins.

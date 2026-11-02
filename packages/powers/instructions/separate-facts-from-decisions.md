@@ -17,7 +17,7 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=matt-skills; license=MIT; revision=4ae2317ddb22b046e26455e4f9c9b3aaaf62212d; path=skills/productivity/grilling/SKILL.md
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=skills/constraint-driven-development/SKILL.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=skills/constraint-driven-development/SKILL.md
 status: active
 revision: 4
 schema: VPInstruction/v1.2

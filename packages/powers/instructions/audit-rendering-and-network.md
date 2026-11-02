@@ -18,7 +18,7 @@ artifact_contract_verified_by: each finding names a location and a recommendatio
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=agents/web-performance-auditor.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=agents/web-performance-auditor.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

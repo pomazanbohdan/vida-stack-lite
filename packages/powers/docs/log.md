@@ -2,6 +2,20 @@
 
 ## 2026-11-02
 
+* **Addy-skills pin advanced:** moved addy-skills from `aeac41d4` to
+  `301b02b1` and updated provenance on 392 instructions. Ten rules changed:
+  API errors carry a stable code and message; context compaction follows the
+  host limit rather than a fixed 75%; the pre-commit secret scan lists file
+  names without printing values; review checks each finding against callers,
+  guards and tests and separates regressions from pre-existing defects; every
+  enforced gate is proven against a known violation and a clean control; the
+  quality script uses the current gitleaks/Semgrep wrappers; crash and
+  rollback tests exercise the real boundary; the React quote is corrected;
+  inline-paste triggers cover simplify and commit messages; and role queries
+  filter by text when the role has no accessible name. Fourteen new eval
+  fixtures/graders/prompts were rejected as harness material. Catalog revision
+  6,357; corpus 2,524; map 2,791; baseline 1,200.
+
 * **Bmad update validated by Luna:** the independent review at `50bdd652`
   returned CHANGES with one Important finding (the rendered-agent shape source
   was used but not tracked in provenance, map or baseline) and one Minor

@@ -18,7 +18,7 @@ artifact_contract_verified_by: no heavy computation runs inside the request hand
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=addy-skills; license=MIT; revision=aeac41d4d005999432bb7312f7ff06383a91d59d; path=references/performance-checklist.md
+  - donor=addy-skills; license=MIT; revision=301b02b12bff98e4688e6984af6556802322bbde; path=references/performance-checklist.md
 status: active
 revision: 3
 schema: VPInstruction/v1.2
