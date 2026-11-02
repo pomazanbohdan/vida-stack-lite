@@ -10,6 +10,8 @@ import runtimeSchema from '../schemas/agent-runtime-config.v1.schema.json' with 
 import {
   assertLoadedRuntimeConfig,
   parseRuntimeConfigDocument,
+  readRuntimePackageResourceText,
+  runtimePackageAccess,
   validateRuntimeConfig,
 } from '../src/config/runtime-config.js';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.js';
@@ -102,7 +104,16 @@ describe('project configuration component contracts', () => {
     );
     expect(roundTrip.project.knowledge).toEqual(original.knowledge);
     for (const source of original.knowledge.sources.filter((entry) => entry.kind === 'local')) {
-      expect(existsSync(path.resolve(repositoryRoot, source.location))).toBe(true);
+      const packagePrefix = original.runtime.bundle + '/';
+      if (source.location.startsWith(packagePrefix)) {
+        readRuntimePackageResourceText(
+          runtimePackageAccess(),
+          source.location.slice(packagePrefix.length),
+          'required package reference ' + source.location,
+        );
+      } else {
+        expect(existsSync(path.resolve(repositoryRoot, source.location))).toBe(true);
+      }
     }
     expect(Object.isFrozen(roundTrip)).toBe(true);
     expect(Object.isFrozen(roundTrip.project)).toBe(true);
