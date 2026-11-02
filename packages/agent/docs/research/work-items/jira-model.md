@@ -30,7 +30,7 @@ Local code pin дослідника: repository `vida-agent`, branch `main`, HEA
 - Продукт вказує перелік enabled types. Потрібно підтримати вибрані типи на кшталт Task, Bug, PBI.
 - Ключ VIDA явно містить тип: `REPO-PRODUCT-TYPE-NUMBER`.
 - Вкладеність generic; продукт задає довільні дозволені parent/child type combinations із підтримуваного runtime catalog.
-- Початковий режим для Agent/Codex/Powers — окремий `custom` map. Користувач визначив PBI як верхньорівневий опис функціоналу з дочірніми TASK/BUG та дозволив standalone TASK для всіх трьох. Чи BUG може мати TASK — окреме поставлене питання; відповідь не припускається.
+- Початковий режим для Agent/Codex/Powers — окремі `custom` maps з однаковими значеннями `PBI → TASK, BUG; BUG → []; TASK → []`. Користувач визначив PBI як верхньорівневий опис функціоналу з дочірніми TASK/BUG, дозволив standalone TASK і явно визначив BUG як кінцевий елемент для всіх трьох.
 
 Це вимоги користувача до VIDA, а не властивості, доведені документацією Jira.
 
@@ -38,22 +38,19 @@ Local code pin дослідника: repository `vida-agent`, branch `main`, HEA
 
 Використати type-visible key згідно з вимогою користувача, наприклад `VIDA-AGENT-BUG-43`. Комбінації визначає product configuration; runtime не hardcode-ить PBI/BUG/TASK matrix або TASK leaf. Number зберігається при зміні типу, змінюється type prefix; relation checks використовують product policy.
 
-Рекомендація для цілісності: незмінна внутрішня identity і явне правило old-key aliases при зміні типу чи prefixes. Точний контракт ще не прийнятий. Продукт не перевизначає fixed type codes; він обирає enabled types.
+Для цілісності затверджено незмінну внутрішню UUID identity і old-key aliases при зміні типу; номер спільний для типів у продукті й зберігається при reclassification. Продукт не перевизначає fixed type codes; він обирає enabled types. Джерело рішення — [затверджена модель](../../decisions/configuration/runtime-project-model.md), а не Jira defaults.
 
 ## Невирішене
 
-- Scope лічильника: repository чи product.
-- Reclassification, old-key aliases та зміна prefix при type-visible canonical key.
-- Single-parent/cycle invariants і cross-product links для вкладених робіт.
-- Конкретні prefix values, повний fixed catalog і product enabled lists.
-- Правила зміни prefixes, перенесення work item і збереження старих references.
+- Конкретні prefix values для фактичної ініціалізації.
+- Деталі підтриманої migration/repair operation при зміні prefixes чи ownership зі збереженням старих references.
 - Сумісність із поточними team-level kinds та existing `task_prefix`: [runtime paths](../configuration/runtime-paths.md).
 
 Немає тестів інтеграції з Jira або виконаної міграції VIDA IDs. Джерела не встановлюють гарантію immutable ID саме для всіх Jira Cloud операцій; така гарантія для VIDA має бути окремим власним контрактом.
 
 Рішення: [ідентифікація і типи](../../decisions/work-items/identity-and-types.md).
 
-Поточні приклади typed keys і PBI/BUG/TASK containment наведені в цьому рішенні. Numbering scope, prefix values, решта hierarchy invariants та семантика enabled list відкриті; їх не можна трактувати як реалізований runtime або Jira defaults.
+Поточні приклади typed keys і погодженого containment наведені в рішенні. Затверджено product counter, stable identity/aliases, single parent без циклів, окремі cross-product links та початкові enabled lists/maps. Prefix values і фактична реалізація/adoption залишаються окремими питаннями; дизайн не є доказом підтримки installed runtime або Jira defaults.
 
 ## Застосовані research-інструкції
 

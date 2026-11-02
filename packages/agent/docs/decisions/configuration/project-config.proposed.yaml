@@ -47,6 +47,12 @@ projects:
     work_items:
       enabled_types: [TASK, BUG, PBI]
       storage_root: packages/agent/backlogs # Configured path; existence not implied.
+      hierarchy:
+        mode: custom
+        allowed_children:
+          PBI: [TASK, BUG]
+          BUG: []
+          TASK: []
 
   - project_id: codex
     title: VIDA Codex
@@ -69,6 +75,12 @@ projects:
     work_items:
       enabled_types: [TASK, BUG, PBI]
       storage_root: packages/codex/backlogs # Configured path; existence not implied.
+      hierarchy:
+        mode: custom
+        allowed_children:
+          PBI: [TASK, BUG]
+          BUG: []
+          TASK: []
 
   - project_id: powers
     title: VidaPowers
@@ -101,6 +113,12 @@ projects:
     work_items:
       enabled_types: [TASK, BUG, PBI]
       storage_root: packages/powers/docs/work # Product D2; no migration performed.
+      hierarchy:
+        mode: custom
+        allowed_children:
+          PBI: [TASK, BUG]
+          BUG: []
+          TASK: []
 
 # No per-project task_prefix or type-code override.
 # No global source_catalog: documents are nested in the product.
@@ -108,5 +126,6 @@ projects:
 # Area names/destinations are recommendations; canonical docs remain owners until adoption.
 # Work-item keys include their fixed type code, e.g. VIDA-AGENT-BUG-43.
 # Containment combinations are generic and configured by each product.
-# Initial per-product hierarchy choice has been requested from the user.
+# User-selected initial hierarchy: PBI contains TASK/BUG; BUG/TASK are leaves.
+# Standalone TASK is allowed. These are per-product values, not runtime constants.
 # Root AGENTS/sidecar integration is not removed by the wiki navigation index.

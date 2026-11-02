@@ -8,7 +8,7 @@ title: Продукти, wiki та роботи — пропозиція для 
 
 ## Результат для користувача
 
-У репозиторії є продукти з незалежними прив’язками Source та документації. Кожен продукт має одну актуальну Markdown wiki з `index.md`, напрямки вимог і власне місце робіт. Ключ роботи показує repository, продукт і тип; PBI та BUG містять підпорядковані роботи. Користувач працює звичайними запитами, без обов’язкового знання внутрішніх workflow-команд.
+Цільова модель має продукти з незалежними прив’язками Source та документації. Кожен продукт має одну актуальну Markdown wiki з `index.md`, напрямки вимог і власне місце робіт. Ключ роботи показує repository, продукт і тип; підпорядкованість визначає product policy. Для початкового налаштування всіх трьох продуктів PBI містить TASK і BUG; BUG та TASK є кінцевими елементами, окремі TASK дозволені. Користувач працює звичайними запитами, без обов’язкового знання внутрішніх workflow-команд.
 
 ## Погоджені обмеження
 
@@ -40,6 +40,7 @@ title: Продукти, wiki та роботи — пропозиція для 
 | Reclassification | Зберігає `internal_id` і номер; змінює type та key; попередній key назавжди стає alias тієї самої роботи. Усі parent/child edges перевіряються повторно |
 | Prefix/ownership change | Для store з даними — лише підтримана явна migration operation; редагування cfg не переписує ключі або ownership автоматично |
 | Вкладеність | Нуль або один parent; без циклів; type combinations перевіряються за налаштуванням продукту. Будь-який enabled тип може бути parent/child, якщо налаштування це дозволяє; жоден тип не є leaf безумовно |
+| Початкова policy трьох продуктів | Окремі `custom` maps з однаковими обраними значеннями: `PBI → TASK, BUG; BUG → []; TASK → []`; окремі TASK дозволені. BUG terminal підтверджено користувачем |
 | Міжпродуктові зв’язки | Явні related/dependency references, окремі від parent. Перенесення ownership роботи між продуктами не додається як мовчазний ефект |
 | Документи | Root і `index.md` плюс каталогова карта напрямків. Paths не виводяться з code root; явно задані mappings можуть перетинатися |
 
@@ -90,18 +91,20 @@ internal_id: b8c04006-5bf6-4348-97a1-5cf90b6e4872
 key: VIDA-AGENT-TASK-44
 kind: TASK
 project_id: agent
-parent_id: <internal-id-of-bug-43>
+parent_id: <internal-id-of-pbi-42>
 aliases: []
 ```
 
 ```text
 VIDA-AGENT-PBI-42
 ├── VIDA-AGENT-BUG-43
-│   └── VIDA-AGENT-TASK-44
+├── VIDA-AGENT-TASK-44
 └── VIDA-AGENT-TASK-45
+
+VIDA-AGENT-TASK-46 (окрема робота)
 ```
 
-Reparent в межах продукту зберігає key. `TASK → BUG` змінює key на `VIDA-AGENT-BUG-44`, додає old key в aliases й зберігає stable file/ID та number. Операція перевіряє всі зв’язки за чинною product hierarchy policy: `BUG → BUG` дозволений або відхиляється саме нею, а не hardcoded runtime rule. Canonical key та alias resolving до одного internal ID.
+Reparent в межах продукту зберігає key. `TASK → BUG` змінює key на `VIDA-AGENT-BUG-44`, додає old key в aliases й зберігає stable file/ID та number. Операція перевіряє всі зв’язки за чинною product hierarchy policy: у початковій policy `BUG → BUG` заборонений через terminal BUG; інша явно обрана policy може дозволити цю комбінацію. Canonical key та alias resolving до одного internal ID.
 
 Продуктовий enabled list та чинні team/provider policies перевіряються разом; product list не розширює team rights. Existing provider IDs, mappings та старі record types не видаляються через початковий каталог цієї моделі. Непідтримані legacy records потребують явного mapping/adoption, а не silent rewrite.
 
