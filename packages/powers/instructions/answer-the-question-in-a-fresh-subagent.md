@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/step-03-walkthrough.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -27,4 +27,4 @@ domains:
 ---
 
 # Answer the question in a fresh subagent
-Second opinion: The same question, in a fresh subagent that does not have this review's conversation. Do not use any formal review skills.
+Second opinion: Put a question to a fresh subagent that does not have this review's conversation. Do not use any formal review skills. Suggest it when your own read may be anchored by the review so far.

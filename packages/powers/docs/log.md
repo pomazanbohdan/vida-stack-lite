@@ -2,6 +2,17 @@
 
 ## 2026-11-02
 
+* **Bmad B8 staged:** updated 12 `bmad-walkthrough`, `bmad-prfaq` and
+  `bmad-forge-idea` instructions. A walkthrough reads the target's ticket first
+  and trusts it, opens on the ticket's intent, lists the move repertoire on
+  block 1, prefers moves not yet suggested, answers a question in-session, and
+  gains `Demo` and `Draw` moves that save their artifact in the walkthrough
+  folder. The PRFAQ reads a ticket in full itself and keeps it out of the
+  artifact scanner, and its distillate hands off to Sofia (`bmad-agent-po`).
+  The forge offers a hardened idea to Sofia as the input for the initiative's
+  requirements. The bmad pin is **not** advanced; catalog revision 6328;
+  `check-corpus` reports 2,514 instructions and zero issues.
+
 * **Bmad B7 staged:** updated 12 `bmad-retrospective`, `bmad-correct-course`
   and `bmad-project-context` instructions. The retro reads the epic file in
   full against its Requirements and Done when, opens the initiative only for a

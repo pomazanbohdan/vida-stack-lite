@@ -23,7 +23,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/add-todo.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/check-todos.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -54,3 +54,4 @@ The Verdict findings (especially "needs more heat" and "cracks") as actionable i
 If it reads like a document, it is too long.
 The captured item carries enough context to be understood weeks later, without the original conversation.
 Replace the rendered section wholesale with the literal value; do not reformat, re-wrap, re-order, or hand-edit the bullets.
+End with the recommended next step: ask Sofia (`bmad-agent-po`) to write the initiative's requirements from the PRFAQ and detail pack, or update them if the initiative file exists; go through `bmad-prd` first only when the requirements still need drawing out.

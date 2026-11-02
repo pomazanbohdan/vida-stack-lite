@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/step-03-walkthrough.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: principle
@@ -29,3 +29,4 @@ domains:
 
 # Record what was actually tested
 Record what was actually tested, the results, and anything still unverified.
+For a Demo or Draw move, save the artifact in the walkthrough folder and link it from the log.

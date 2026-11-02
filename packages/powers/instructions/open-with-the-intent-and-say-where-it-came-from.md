@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/workflow.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -28,4 +28,4 @@ domains:
 
 # Open with the intent and say where it came from
 What the change is for and why it exists now.
-If you found a target plan file with an intent section, paste it verbatim. Otherwise generate from what you know about the target, no more than 300 tokens. Include a short note on where you got it from.
+If the target's ticket states the intent, paste it verbatim; failing that, a target plan file's intent section. Otherwise generate from what you know about the target, no more than 300 tokens. Include a short note on where you got it from.

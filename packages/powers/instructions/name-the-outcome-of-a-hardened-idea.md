@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-forge-idea/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: unclassified
 classification_reason: "The body governs outcomes of an unspecified idea-hardening conversation and names no supported product, business, research, engineering, UX, or concrete operational subject."
@@ -29,6 +29,7 @@ classification_reason: "The body governs outcomes of an unspecified idea-hardeni
 The main goal is better thinking, not producing an artifact.
 Strengthening an idea, rejecting it, or thinking it through more clearly are all complete outcomes.
 Writing the forged idea to hand off to another workflow is optional.
+If planning or dev skills are installed (`bmad-agent-po`, `bmad-prd`, `bmad-prfaq`, `bmad-build`), offer the forged idea to Sofia (`bmad-agent-po`) as the input she writes the initiative's requirements from; if none are, the file stands on its own.
 Do not steer the conversation toward "shall we build it?"
 The session can end in three valid states:
 Hardened — the idea is stronger and specific enough to use.

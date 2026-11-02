@@ -87,8 +87,7 @@ templates/configuration and native host delivery are outside this packet.
    updated 6, with repoints to `bmad-agent-po` pending; B6 updated 8 build
    instructions for ticket-first context and a runnable `## Verification`
    section. The pin/provenance advance is pending. Remaining bmad batches:
-   walkthrough/PRFAQ/forge, agents/tooling/docs and the new
-   `bmad-agent-po` skill. Remaining triage:
+   agents/tooling/docs and the new `bmad-agent-po` skill. Remaining triage:
    1,184 affected instructions and 45 new candidates across the other donors;
    conversion remains a reviewed batch. `docs/VECTOR.md` is the living summary;
    update it and run `check-vector` in every batch.

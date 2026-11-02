@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '9'
+revision: '10'
 ---
 
 # Instruction change vector
@@ -122,6 +122,7 @@ Legend: result = corpus instructions / map records / baseline files.
 | B5 | bmad-method | `bmad-ticket` reviewed against the new `bmad-agent-po` owner | 6 | 56 instruction source repoints to `bmad-agent-po` pending |
 | B6 | bmad-method | `bmad-build` + `bmad-build-auto` ticket context and verification | 8 | content staged; pin/provenance advance pending |
 | B7 | bmad-method | `bmad-retrospective` + `bmad-correct-course` + `bmad-project-context` | 12 | 9 correct-course sources repoint to `bmad-agent-po/references/replan.md` pending |
+| B8 | bmad-method | `bmad-walkthrough` + `bmad-prfaq` + `bmad-forge-idea` | 12 | content staged; pin/provenance advance pending |
 
 A staged batch has changed instruction content but has not advanced the donor pin
 or provenance. It is not a completed batch and makes no admission claim.

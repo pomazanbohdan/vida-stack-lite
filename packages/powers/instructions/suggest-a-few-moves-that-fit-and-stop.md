@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/step-03-walkthrough.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -28,5 +28,6 @@ domains:
 
 # Suggest a few moves that fit, then stop
 Give the block's link into the narrative, its content in that block's shape.
-Suggest 1-3 moves that fit. Then stop. The named moves are not exhaustive; if something else is more obvious, suggest that instead.
-The user may choose something you did not suggest. Do what the user says. Stay with the current block until the user explicitly says it is done.
+On block 1, list the moves in one line so the user knows the repertoire; past seven, name seven at random and say how many more there are.
+On every block, suggest 1-3 moves that fit; when more fit than you will name, prefer ones not yet suggested in this review. Then stop. The named moves are not exhaustive; if something else is more obvious, suggest that instead.
+The user may choose something you did not suggest, or just ask a question: answer it in this session with clickable references, without any formal review skill. Do what the user says. Stay with the current block until the user explicitly says it is done.

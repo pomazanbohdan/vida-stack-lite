@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6316,
+  "revision": 6328,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-02T23:00:00.000Z",
+  "updated_at": "2026-11-03T00:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -812,7 +812,7 @@
     {
       "instruction_id": "answer-in-the-session-with-concrete-findings",
       "path": "instructions/answer-in-the-session-with-concrete-findings.md",
-      "sha256": "365c6ed7f69749e9684d5ca657ea01b2b53d4e0dfcc443b912722c0426cd3ea3"
+      "sha256": "ceaa7c65776bce6e26922b1ec03fcea0e7e2dc6ec48eb6a0ef8a744402598b38"
     },
     {
       "instruction_id": "answer-one-question-per-section-with-inline-citations",
@@ -842,7 +842,7 @@
     {
       "instruction_id": "answer-the-question-in-a-fresh-subagent",
       "path": "instructions/answer-the-question-in-a-fresh-subagent.md",
-      "sha256": "8edc43ad03bd209565e4951e5569190feb51a9e05784ff3867fe15ecf805749a"
+      "sha256": "d8fce9734fd3300ac1ca9389fe4e0b39f4cba423e90e7f72b340dbbc39bfb68f"
     },
     {
       "instruction_id": "answer-the-three-questions-before-you-pass-a-blocking-anti-pattern",
@@ -1057,7 +1057,7 @@
     {
       "instruction_id": "ask-until-you-know-what-the-target-is-and-what-it-is-for",
       "path": "instructions/ask-until-you-know-what-the-target-is-and-what-it-is-for.md",
-      "sha256": "1e3a6dda44d952738e3d417cf76b061c18acc47583151c20fe381cb482b3b9d6"
+      "sha256": "fe629b3c9c3550ac25e3c887e7e272d5dfbcb31dfb483725980546fea3c6e78f"
     },
     {
       "instruction_id": "ask-what-runtime-state-still-holds-the-old-name",
@@ -2897,7 +2897,7 @@
     {
       "instruction_id": "delegate-the-input-scanning-and-merge-the-findings",
       "path": "instructions/delegate-the-input-scanning-and-merge-the-findings.md",
-      "sha256": "60292af3f2d1853cd4465a074ab91f047e8f182241e282d562946feaefc57861"
+      "sha256": "837fb30e8cba177620e16c0268cd4d4e1099ac238b632dffc9e06bb381df7f6a"
     },
     {
       "instruction_id": "delete-a-plan-section-that-has-nothing-to-say",
@@ -4592,7 +4592,7 @@
     {
       "instruction_id": "help-the-reviewer-test-and-drive-the-target",
       "path": "instructions/help-the-reviewer-test-and-drive-the-target.md",
-      "sha256": "2fc19927d6028e71a7a9df780dd017ebd628575f8434cc43f3e5ec1b68c53970"
+      "sha256": "afbfca16ba17d0e606d7f4e657b53620d953ecf53e0d03bac85889b317adcf41"
     },
     {
       "instruction_id": "hillclimb-one-metric",
@@ -6742,7 +6742,7 @@
     {
       "instruction_id": "name-the-outcome-of-a-hardened-idea",
       "path": "instructions/name-the-outcome-of-a-hardened-idea.md",
-      "sha256": "9260443c41db2654a5be3e3564421aff3621fdb218784dffa182f86a231982ed"
+      "sha256": "e22be8347239e67663a25efc7ce99cdc8f52070584f8a15dda571dfc2f370595"
     },
     {
       "instruction_id": "name-the-plan-file-after-the-intent",
@@ -7352,7 +7352,7 @@
     {
       "instruction_id": "open-with-the-intent-and-say-where-it-came-from",
       "path": "instructions/open-with-the-intent-and-say-where-it-came-from.md",
-      "sha256": "d14f8208f04d80372fc9e37fc125a4703412c90473b5564210a03242006dc907"
+      "sha256": "ea07d9ae882f9c534bc788a0f012df43aacd7665122b951bf19e900db1e34bff"
     },
     {
       "instruction_id": "open-with-the-one-sentence-read-of-purpose-and-audience",
@@ -8642,7 +8642,7 @@
     {
       "instruction_id": "record-what-was-actually-tested",
       "path": "instructions/record-what-was-actually-tested.md",
-      "sha256": "f2620fd1b0946d985210f9023f3c5f9a464c452bd673d7dadfe471b462a393bc"
+      "sha256": "1c9e2580f269e3e35e7fb633037aa2868255af37b225c98190b02b4a1356b48b"
     },
     {
       "instruction_id": "record-where-the-answers-meet",
@@ -9947,7 +9947,7 @@
     {
       "instruction_id": "scan-a-document-set-for-what-is-relevant",
       "path": "instructions/scan-a-document-set-for-what-is-relevant.md",
-      "sha256": "b3a474c5d261c2300657aba5f03de9e01cdfe6ee35beb181cbfc933647f63e67"
+      "sha256": "c91855eff80bb035fc70a1e0c62353ee6a9a97255e766f6bbffa581ecdeb117c"
     },
     {
       "instruction_id": "scan-every-phase-for-unfinished-work-before-routing",
@@ -11057,7 +11057,7 @@
     {
       "instruction_id": "suggest-a-few-moves-that-fit-and-stop",
       "path": "instructions/suggest-a-few-moves-that-fit-and-stop.md",
-      "sha256": "de47aca2c8b4acba2645c15cfaf9341cd2d37c456109fbf504a8b20bacf3e952"
+      "sha256": "782f4326d4c26adde733242ea079bf518a2438956c7eb56c8790c4d50f46e578"
     },
     {
       "instruction_id": "suggest-a-standalone-capability-without-making-it-required",
@@ -11867,7 +11867,7 @@
     {
       "instruction_id": "use-the-formal-review-skill-for-the-formal-review-move",
       "path": "instructions/use-the-formal-review-skill-for-the-formal-review-move.md",
-      "sha256": "a150a00b68123b2c07747a92cd992fbba34710c1c76338a3014607c34b01f5bc"
+      "sha256": "25f19137a34c5613788484b16d86847a25685941c65bf415140b782ae6270362"
     },
     {
       "instruction_id": "use-the-platforms-native-mechanism-not-an-undocumented-cache",
@@ -12657,7 +12657,7 @@
     {
       "instruction_id": "write-the-distillate-for-the-next-stage",
       "path": "instructions/write-the-distillate-for-the-next-stage.md",
-      "sha256": "ef375bab58094e7e047146e1629a049770a4a3e974846885697f4b405e5469fe"
+      "sha256": "c6b8f1cd8c56f737a77754559e9bc13e9fe4f3c2314db823c53b134ba8675ffe"
     },
     {
       "instruction_id": "write-the-done-when-as-three-to-six-checks",

@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prfaq/agents/artifact-analyzer.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -35,6 +35,7 @@ Research documents (`*research*`, `*analysis*`, `*findings*`)
 Project context (`*context*`, `*overview*`, `*background*`)
 Existing briefs or summaries (`*brief*`, `*summary*`)
 Any markdown, text, or structured documents that look relevant
+Skip ticket files (`initiative-*.md`, `tickets/epic-*/epic-*.md`, older `SPEC*.md`): the parent reads those itself, in full.
 For sharded documents (a folder with `index.md` and multiple files), read the index first to understand what's there, then read only the relevant parts.
 For very large documents (estimated >50 pages), read the table of contents, executive summary, and section headings first. Read only sections directly relevant to the stated product intent. Note which sections were skimmed vs read fully.
 Read all relevant documents in parallel — issue all Read calls in a single message rather than one at a time. Extract:

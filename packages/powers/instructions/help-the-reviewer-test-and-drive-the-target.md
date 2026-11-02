@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-walkthrough/step-03-walkthrough.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -28,5 +28,7 @@ domains:
 ---
 
 # Help the reviewer test and drive the target
-Help test the part under discussion. Identify useful checks and expected behavior, run what you can, and guide the user through observations that need them.
-Drive: Start the app and tell the user which buttons to push to see the target do its thing.
+Test: Help test the part under discussion. Identify useful checks and expected behavior, run what you can, and guide the user through observations that need them. Suggest it when behavior is easier to check than to reason out, or the tests do not cover it.
+Drive: Start the app and tell the user which buttons to push to see the target do its thing. Suggest it when the target is observable and the user has the app at hand.
+Demo: Exercise the change yourself and show the user what happened — screenshots or a transcript, in a rendered view the host offers; say which. Save them in the walkthrough folder and link them from the log. Suggest it when the target is observable and the user would rather watch than drive.
+Draw: Diagram the block's mechanism, showing only what the linked code does, in a rendered view the host offers; say which. Save the source in the walkthrough folder and link it from the log. Suggest it when the mechanism has several moving parts.
