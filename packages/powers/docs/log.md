@@ -2,6 +2,14 @@
 
 ## 2026-11-02
 
+* **Current-state reconciliation:** updated `acceptance.md` live corpus evidence
+  to 2,529 instructions, 2,439 classified / 90 unclassified, 1,522 engineering,
+  803 multi-domain, 1,202 baseline files and 6,364 catalog revision; the
+  2026-11-02 triage report remains labelled as historical. Closed the
+  donor-update item in `next-actions.md`: all 8 donors are current and no donor
+  batch remains. `check-corpus`, `check-vector`, `check-source-updates`, OKF and
+  Markdown checks report clean.
+
 * **Addy and gsd updates validated by Luna:** Codex/Luna reviewed `77595c11`
   and `10366858` read-only and returned CHANGES with one Minor (the
   build-once summary omitted the OIDC-provider condition). Fixed at `d6428765`;

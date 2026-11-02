@@ -67,7 +67,7 @@ templates/configuration and native host delivery are outside this packet.
    installation and portable/host acceptance remain deferred.
 4. **External Knip conflict** — Agent/config owner must resolve the
    `knip.config.ts` pre-commit versus pinned-gate conflict; Powers does not own it.
-5. **Donor update tracking** — the 8 corpus donors have a per-file baseline
+5. **Donor update tracking — closed 2026-11-03** — the 8 corpus donors have a per-file baseline
    (`source-baseline.json`, 1,202 files / 2,529 instructions). The read-only
    `check-source-updates` reports `current`, `pin-stale`, `stale`, `missing` or
    `unknown` and lists affected instruction IDs; `build-source-baseline` is the
@@ -100,6 +100,7 @@ templates/configuration and native host delivery are outside this packet.
    ponytail have no used-file impact, and Open Knowledge Format is current.
    Independent Codex/Luna review is READY at `d6428765` with 0 Critical /
    0 Important / 0 Minor.
+   **Closed 2026-11-03:** all 8 donors are current and no donor batch remains.
    `docs/VECTOR.md` is the living summary; update it and run `check-vector` in
    every batch.
 
