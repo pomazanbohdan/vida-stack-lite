@@ -17,6 +17,13 @@
   evidence. Pinned Knip exits 1 on an unchanged Agent config hint, with
   `issues: []`; no gate was weakened.
 
+* **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
+  tests pass 141 / 0 fail / 1,255 assertions; the current package suite remains
+  746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.
+  AC-20/21/23 remain component evidence, AC-22 partial and AC-24 component-only;
+  the 12 `REQ-D3-D8` source-binding inputs require rebind before handoff. Step F
+  remains open; no host or Runtime acceptance is claimed.
+
 * **Project-document bootstrap authorized; B/S before code:** the repository
   owner selected direct project-document adoption and required Powers-owned
   orchestrator/agent bootstrap. D4, BR-25, SR-98, AC-74–AC-78, the local entry,

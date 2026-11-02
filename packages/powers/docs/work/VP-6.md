@@ -148,6 +148,17 @@ typecheck passes 46 files. AC-20, AC-21 and AC-23 now carry component evidence. 
 content operation, a real store, semantic acceptance review, AC-22 equivalence, host
 installation and Runtime acceptance remain open.
 
+## Implementation status addendum — 2026-11-02
+
+Read-only F reconciliation: focused `findings.test.ts`, `artifacts.test.ts` and
+`catalog-cli.test.ts` report 141 pass / 0 fail / 1,255 assertions; the current
+package suite is 746 pass / 4 skip / 0 fail. No `docs/work/findings.jsonl` or
+`artifacts.jsonl` exists. AC-20/21/23 remain component evidence, AC-22 remains
+partial, and AC-24 remains component-only. A real content operation/store,
+semantic acceptance review, host installation and Runtime acceptance remain
+open. G rebind inputs are the 12 paths in the `REQ-D3-D8` source-binding table;
+rebind before handoff without sending or claiming admission. Step F remains open.
+
 ## Links and handoff
 
 - [Next actions](../next-actions.md)

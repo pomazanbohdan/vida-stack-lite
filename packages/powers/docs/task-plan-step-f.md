@@ -187,3 +187,13 @@ and a writer-level scope gate for AC-23. This widens the revision-5 allowlist by
    and lines with 684 passed and four Windows skips, and a 46-file typecheck. AC-20/21/23 move
    to component evidence; AC-22 stays partial; a real store, host acceptance and Runtime
    acceptance remain open.
+
+## Implementation status addendum — 2026-11-02
+
+Read-only F reconciliation after the project-document packet: focused
+`findings.test.ts`, `artifacts.test.ts` and `catalog-cli.test.ts` pass 141 /
+0 fail / 1,255 assertions; the current package suite is 746 pass / 4 skip /
+0 fail. No real `findings.jsonl` or `artifacts.jsonl` exists. AC-20/21/23 stay
+component, AC-22 stays partial, and AC-24 stays component-only. G rebind remains
+before handoff; no send, admission, host acceptance or Runtime acceptance is
+claimed. Step F remains open.
