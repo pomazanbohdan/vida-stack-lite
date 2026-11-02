@@ -22,7 +22,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/references/reviewer-gate.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -33,6 +33,7 @@ domains:
 
 # Run the reviewer gate as independent lenses
 settles the mechanical misses (placeholders, duplicate `AD` IDs, missing Binds/Prevents/Rule, unpinned Stack versions), so reviewers spend judgment on the semantic half.
+If a ticket drove the run, the rubric walker also checks that the spine covers every requirement in that ticket.
 Dispatch every entry as a **parallel subagent against the spine**
 Each writes its full review to
 a subfolder, so the gate's scratch stays out of the deliverable folder

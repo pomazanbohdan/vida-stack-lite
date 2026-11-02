@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '3'
+revision: '4'
 ---
 
 # Instruction change vector
@@ -115,6 +115,7 @@ Legend: result = corpus instructions / map records / baseline files.
 | Stage | Donor | Scope | Content updates | Status |
 |---|---|---|---:|---|
 | B1 | bmad-method | `bmad-prd` + `bmad-qa-generate-e2e-tests` ticket awareness | 6 | content staged; pin/provenance advance pending |
+| B2 | bmad-method | `bmad-architecture` + `bmad-ux` ticket-first | 10 | content staged; pin/provenance advance pending |
 
 A staged batch has changed instruction content but has not advanced the donor pin
 or provenance. It is not a completed batch and makes no admission claim.

@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/assets/spine-template.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -34,4 +34,5 @@ Each surviving decision becomes an `AD-n`
 (stable ID, `Binds`/`Prevents`/`Rule`, `[ADOPTED]` when the user or existing reality already settled it)
 a decision that lives only in a diagram still gets logged
 for a decision, capture what it binds and the divergence it prevents
+When a ticket drove the run, `Binds` cites the ticket's `R` ids or unit ids; at epic altitude it also cites the inherited parent `AD` ids.
 Include a dependency-direction diagram (who may depend on whom) — it IS a rule; author it as valid mermaid, never an empty graph.

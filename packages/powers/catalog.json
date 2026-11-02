@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6254,
+  "revision": 6264,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-02T17:00:00.000Z",
+  "updated_at": "2026-11-02T18:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -1937,12 +1937,12 @@
     {
       "instruction_id": "check-the-design-coverage-mechanically-before-judging-it",
       "path": "instructions/check-the-design-coverage-mechanically-before-judging-it.md",
-      "sha256": "281f62365678850bca9c4c331a0f0e334b19981be85cb675b56f2d47c91025c0"
+      "sha256": "c22d7fc3213df3883e3a0f182e66fa879ddfd20a5ff862db441cf9c76c6a23ee"
     },
     {
       "instruction_id": "check-the-design-for-bloat-inheritance-and-shape",
       "path": "instructions/check-the-design-for-bloat-inheritance-and-shape.md",
-      "sha256": "8b28310d8ab50f6a1fd5dfacb464870e84ba599daa0ffbf07531f6dd007ee176"
+      "sha256": "6b83ec6024e851c9881a5ec9f9bc984b0b0060cbf0a854a80d2bc4f49c64dba1"
     },
     {
       "instruction_id": "check-the-five-quality-axes",
@@ -2307,7 +2307,7 @@
     {
       "instruction_id": "close-the-information-architecture-with-every-need-and-surface",
       "path": "instructions/close-the-information-architecture-with-every-need-and-surface.md",
-      "sha256": "ef0712fb81ec14647bd621f93f81cdfe80e0af7392ece0df8e5abc871a906f40"
+      "sha256": "901ec28a34a2dfdf2ba8ff841fa0288024ab3e400c32194b9c60c732a9be9030"
     },
     {
       "instruction_id": "close-with-a-short-completion-summary",
@@ -4232,7 +4232,7 @@
     {
       "instruction_id": "give-every-decision-an-id-a-binding-and-a-prevented-divergence",
       "path": "instructions/give-every-decision-an-id-a-binding-and-a-prevented-divergence.md",
-      "sha256": "15eb5ebfad3a36453ce1b16f12839a54a699b50a8aec7d10fd4b39d21207b303"
+      "sha256": "77631c8c3943cebb674ece4bdce28d8a46c8ba4e6740156412c6adf6fe091a8e"
     },
     {
       "instruction_id": "give-every-finding-a-disposition",
@@ -4712,7 +4712,7 @@
     {
       "instruction_id": "inherit-the-parent-invariants-as-binding",
       "path": "instructions/inherit-the-parent-invariants-as-binding.md",
-      "sha256": "936001c20227f2a40512fab5639b8aca5028f54b005b52d1e9b78e9241cb7e40"
+      "sha256": "e760636dc066911e6bb7feba85b498aec8ae81c780358e575595587be2dfe93c"
     },
     {
       "instruction_id": "inject-a-cold-start-smoke-test-when-the-entry-paths-changed",
@@ -5207,7 +5207,7 @@
     {
       "instruction_id": "keep-the-architecture-document-a-build-substrate",
       "path": "instructions/keep-the-architecture-document-a-build-substrate.md",
-      "sha256": "97b76f7333bb82385d773010be74449d792e9a83f26aa6a54dfa064b68c5aa19"
+      "sha256": "851a8785ad04258d622a344d679e7666fbad6029ff828075d0a0ffd8a18ade36"
     },
     {
       "instruction_id": "keep-the-architecture-document-conceptual",
@@ -9817,7 +9817,7 @@
     {
       "instruction_id": "run-the-reviewer-gate-as-independent-lenses",
       "path": "instructions/run-the-reviewer-gate-as-independent-lenses.md",
-      "sha256": "cdb3fdbdcc9610b6f31428285eedfb85a62aced4f6687e6c2bddffb8add6afef"
+      "sha256": "33af3fc0e681959f58a911f0b13fb50fdd42aa0bd6764186e30db41df7d4ee68"
     },
     {
       "instruction_id": "run-the-set-check-on-every-draft",
@@ -9852,7 +9852,7 @@
     {
       "instruction_id": "run-without-asking-and-record-the-gaps",
       "path": "instructions/run-without-asking-and-record-the-gaps.md",
-      "sha256": "8c714ae5ebd71c66d8b3b81028baa825fe8286e0ce504c20cbe2bc4c492c1157"
+      "sha256": "b35663c7332f9c4fbaea03ab31ba851006a0f7cc62f736dae286c5abce30588e"
     },
     {
       "instruction_id": "sample-the-suite-fast-after-every-change",
@@ -11117,7 +11117,7 @@
     {
       "instruction_id": "surface-the-input-paths-and-let-the-user-confirm",
       "path": "instructions/surface-the-input-paths-and-let-the-user-confirm.md",
-      "sha256": "5b3626822c4e47ad71df83bfc1e41884e2ce772c4dd1ac93c255b1cd43892a15"
+      "sha256": "01f3b0eb48dccf912f8e0fb0d89fd13c6de39ef50fe617636066cbaf5b1c842e"
     },
     {
       "instruction_id": "surface-the-omitted-edge-in-the-spec-not-in-the-verifier",
@@ -12727,7 +12727,7 @@
     {
       "instruction_id": "write-the-journey-with-a-named-protagonist-and-a-climax",
       "path": "instructions/write-the-journey-with-a-named-protagonist-and-a-climax.md",
-      "sha256": "50c3dccabdf640e2801dce75e7dee0f99daa87a89bd79bc38682e9f965b6b77f"
+      "sha256": "965b26640c81a64ae0c5826d51d99639e9c0b65be9529c4f19d6a0a4ebdefa68"
     },
     {
       "instruction_id": "write-the-list-as-a-list-not-as-a-joined-string",

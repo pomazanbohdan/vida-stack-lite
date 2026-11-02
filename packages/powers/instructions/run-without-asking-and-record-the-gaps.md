@@ -26,7 +26,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project/steps/auto-mode-config.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -42,7 +42,8 @@ first message is an automation context pre-supplying inputs
 Ambiguous → default interactive.
 Do not ask. Do not greet.
 Validate the input schema only
-— do not read any referenced files or documents yourself.
+— except a ticket under `{output_folder}/{active_initiative}/`, which you read in full.
+— do not read any other referenced files or documents yourself.
 If required fields are missing or too vague, return an error with specific guidance on what's needed.
 Complete the intent from what's provided, what exists in the workspace, or what you can discover.
 If intent stays ambiguous after inference, halt with `status: "blocked"` and a one-sentence `reason`.

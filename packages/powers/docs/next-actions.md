@@ -79,10 +79,11 @@ templates/configuration and native host delivery are outside this packet.
    pin advanced, 69 provenance revisions updated, 8 content updates, 2 new
    instructions added (shared wiki and gradual automation), 5 in-progress
    reference files rejected. Bmad-method is in staged batches: B1 updated 6
-   instructions for ticket-aware PRD/QA; the pin/provenance advance is pending.
-   Remaining bmad batches: architecture/spec/UX, code-review/build,
-   ticket/build-auto, discovery/retro, review/walkthrough, agents/tooling/docs
-   and the new `bmad-agent-po` skill. Remaining triage:
+   instructions for ticket-aware PRD/QA; B2 updated 10 for ticket-first
+   architecture/UX; the pin/provenance advance is pending. Remaining bmad
+   batches: spec, code-review/build, ticket/build-auto, discovery/retro,
+   review/walkthrough, agents/tooling/docs and the new `bmad-agent-po` skill.
+   Remaining triage:
    1,184 affected instructions and 45 new candidates across the other donors;
    conversion remains a reviewed batch. `docs/VECTOR.md` is the living summary;
    update it and run `check-vector` in every batch.

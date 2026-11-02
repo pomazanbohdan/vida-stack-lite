@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ux/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -28,7 +28,7 @@ domains:
 ---
 
 # Close the information architecture with every need and surface
-Surface closure: stated needs become screens through journeys. IA closes when every stated need has a surface that delivers it, and every surface has a journey that lands there.
+Surface closure: stated needs become screens through journeys. IA closes when every need in the ticket's Requirements has a surface that delivers it, and every surface has a journey that lands there. With no ticket, the stated needs come from the confirmed sources.
 When closure fails, probe — never invent the missing piece.
 Form-factor: mobile / web / desktop / multi-surface must resolve before IA closes.
 Named-protagonist journeys often derive it (Pary on iPad implies an iPad surface; Skeeter on Android adds a multi-surface need); when journeys don't disambiguate, probe.

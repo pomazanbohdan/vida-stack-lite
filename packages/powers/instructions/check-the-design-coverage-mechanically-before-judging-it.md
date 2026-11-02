@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ux/references/validate.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -28,7 +28,7 @@ domains:
 
 # Check the design coverage mechanically before judging it
 Pass 1 — mechanical coverage. Per category: extract, then list misses with location citations. No misses = strong.
-Flow coverage (EXPERIENCE.md). Sources frontmatter → extract every UJ / requirement name. Verify each has a Key Flow with named protagonist, numbered steps, a climax beat, and a failure path where applicable.
+Flow coverage (EXPERIENCE.md). The ticket's Requirements when one exists, else the sources frontmatter → extract every journey / requirement name. Verify each has a Key Flow with named protagonist, numbered steps, a climax beat, and a failure path where applicable.
 Token completeness (DESIGN.md). Extract every token in the YAML frontmatter and every `{path.to.token}` reference in the prose. Verify each defined
 Color tokens missing hex (or light/dark pairs where applicable) are Critical — downstream code mirrors the spine.
 Platform conventions (native dynamic type, 8pt grid) may stay semantic. Contrast targets stated for load-bearing combinations.

@@ -1,7 +1,7 @@
 ---
 instruction_id: write-the-journey-with-a-named-protagonist-and-a-climax
 title: Write the journey with a named protagonist and a climax
-summary: "The journey is a real session narrated by a named person, structured into numbered steps with a climax beat, and the source names are mirrored verbatim when they are defined."
+summary: "The journey is a real session narrated by a named person, structured into numbered steps with a climax beat, and ticket or source names are mirrored verbatim when they are defined."
 capability_tags:
   - design-user-interface
 pattern_tags:
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ux/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -29,4 +29,4 @@ domains:
 
 # Write the journey with a named protagonist and a climax
 User narrates a real session with a named protagonist (Mary, mom of three, kids asleep — not "the user"); structure into numbered steps with a climax beat.
-Mirror source-spec names verbatim when defined.
+Mirror the ticket's journey and requirement names verbatim when they are defined; with no ticket, mirror the source names.

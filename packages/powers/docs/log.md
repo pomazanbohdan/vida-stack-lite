@@ -2,6 +2,15 @@
 
 ## 2026-11-02
 
+* **Bmad B2 staged:** updated 10 architecture and UX instructions for ticket-first
+  work: read the epic ticket in full, trust its Requirements, open sources and
+  companions only where the ticket points, bind architecture decisions to ticket
+  `R` ids, make the reviewer gate cover every ticket requirement, mirror ticket
+  names in journeys, close IA against ticket needs, and read the ticket even in
+  headless runs. The bmad pin is **not** advanced; this is a staged content
+  batch, not an admission or fidelity claim. Catalog revision 6264;
+  `check-corpus` reports 2,514 instructions and zero issues.
+
 * **Bmad B1 staged:** updated 6 instructions for ticket-aware PRD and QA work:
   read the initiative/epic first, treat its Requirements as settled, read the
   ticket file in full, scan the epic folder for resume, hand off to Sofia

@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -29,6 +29,7 @@ domains:
 ---
 
 # Inherit the parent invariants as binding
+Read the epic ticket in full first.
 load the parent spine first and treat its `AD`s, conventions, and paradigm as **binding, read-only** constraints
 log each as a `constraint` entry, list them under the spine's *Inherited Invariants* (parent `AD` IDs, never renumbered), and don't re-derive them.
 Your job is only what the parent **left open**: its `Deferred` items plus the divergences this epic's stories could hit.

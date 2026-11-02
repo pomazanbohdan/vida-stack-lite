@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-architecture/assets/spine-template.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -31,6 +31,8 @@ domains:
 
 # Keep the architecture document a build substrate
 Default output is a **build substrate** — terse and convergent, so small agents and humans on small intents don't drift.
+A ticket file (the initiative's or epic's `<type>-<slug>.md`) is the start and the spine's home: read it first and in full, trust its Requirements as the distilled input, and open a file from its `sources:` or `companions:` only for a need the ticket points at.
+The finished spine is adopted as a companion of that ticket.
 Record decisions, not rationale (rationale lives in the memlog).
 Carry shape in diagrams, not prose.
 The template's `<!-- -->` notes are guidance — act on them, then strip them; the finished spine carries no template comment, and only the diagrams that convey the structure (as many as the altitude needs, valid mermaid).
