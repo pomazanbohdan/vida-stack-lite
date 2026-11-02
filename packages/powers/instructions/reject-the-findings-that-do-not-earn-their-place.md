@@ -1,7 +1,7 @@
 ---
 instruction_id: reject-the-findings-that-do-not-earn-their-place
 title: Reject the findings that do not earn their place
-summary: "Drop the findings the verification refuted, the negligible ones whose fix costs more than a correction, and the ones whose fix is to edit the plan under review."
+summary: "Drop the findings the verification refuted, the negligible ones whose fix costs more than a correction, and the ones whose fix is to edit the plan under review; every rejection keeps its reason in the triage file."
 capability_tags:
   - review-code
 pattern_tags:
@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-03-triage.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -30,3 +30,4 @@ domains:
 Reject `false` findings on their refutation.
 Reject `Minor` findings when it is unlikely that users or developers would meet the defect in everyday use (judged plainly -- no proof needed) and the fix is more than a direct correction or deletion -- adding guards, branches, parameters, or other complexity.
 Reject any finding whose fix is to edit the plan under review.
+A rejected finding stays in `{triage_file}`, marked rejected, with the reason; later steps never silently drop one.

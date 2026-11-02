@@ -1,7 +1,7 @@
 ---
 instruction_id: stop-the-gap-analysis-at-the-inference-boundary
 title: Stop the gap analysis at the inference boundary
-summary: "For behavior that ends in a model call, the demand for verification stops at the inference boundary; the deterministic part around it still has to be verified."
+summary: "For behavior that ends in a model call, the demand for verification stops at the inference boundary; LLM output is not worth a test, while the deterministic construction and response handling around it still have to be verified."
 capability_tags:
   - review-code
 pattern_tags:
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/references/lens-verification-gap.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -29,4 +29,5 @@ domains:
 
 # Stop the gap analysis at the inference boundary
 For LLM-backed behavior, stop at the inference boundary: do not require invoking a model or judging its semantic response.
-Deterministic request construction and response handling remain eligible without live inference; existing inference tests are not precedent for more.
+LLM output is not worth a test.
+Deterministic request construction and response handling remain eligible without live inference; existing tests that call a model are not precedent for more.

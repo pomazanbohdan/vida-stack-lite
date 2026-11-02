@@ -11,9 +11,9 @@ conditions_does_not_apply_when: The finding was not verified by the lane that pr
 artifact_contract_output_type: pre-verified-finding
 artifact_contract_required_data:
   - the finding as filed
-  - the verdict rendered from the filed evidence
+  - the fixed verdict it carries
   - the disposition it carries
-artifact_contract_verified_by: the verdict was rendered from the filed evidence without a second verification
+artifact_contract_verified_by: the finding was accepted from the filed evidence without a second verification or a severity grade
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -22,7 +22,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/review-prompts/verification-gap.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/review-prompts/verification-gap.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -33,6 +33,6 @@ domains:
 
 # Trust a pre-verified finding as filed
 A gap finding from the verification-gap lens arrives pre-verified — that lens's evidence rules made it read the tests and run the searches it cites, and triage trusts the claim as filed.
-Skip verification, render the verdict from the filed evidence, and weigh its filed disposition when routing.
-Its `Other findings` are verified like everything else.
+Skip verification and skip grading: the gap finding is `Important`.
+Its `Other findings` are verified and graded like everything else.
 Triage trusts a gap finding as filed and does not re-verify it, so each block must stand on its own evidence.

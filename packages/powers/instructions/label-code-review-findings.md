@@ -27,7 +27,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/contexts/review.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/reference/plan-md.md
 status: active
-revision: 9
+revision: 10
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -48,7 +48,8 @@ Every Critical and Important finding should include a specific fix recommendatio
 
 Don't approve code with Critical issues
 
-`Critical` (intolerable), `Important` (tolerable), `Minor` (cosmetic or negligible) — the bad outcome is real. Assign severity by how much it hurts end users or developers. For developer-only problems (inconsistent design, eroded invariants, duplicated sources of truth), name where it will cause trouble — which caller will diverge, which rule will break. A vague "this is messy" with no named harm is not a severity grade; use `false` or `maybe-false` instead. When the harm is real but you cannot tell how bad, pick the higher grade.
+`Critical` (intolerable), `Important` (tolerable), `Minor` (cosmetic or negligible) — the bad outcome is real. Assign severity by how much it hurts end users or developers. A `Critical` finding is data loss or corruption, a security exposure, a silently wrong result, or a path broken with no workaround. An `Important` finding is broken or wrong, but noticed and worked around, or limited in reach. A `Minor` finding is cosmetic or a minor inconvenience. For developer-only problems (inconsistent design, eroded invariants, duplicated sources of truth), name where it will cause trouble — which caller will diverge, which rule will break. A vague "this is messy" with no named harm is not a severity grade; use `false` or `maybe-false` instead. When the harm is real but you cannot tell how bad, pick the higher grade.
+Severity is the impact of a single occurrence; it does not depend on how rare the outcome is, how hard it is to fix, or whether the defect predates the change. A gap finding from the verification-gap lens is `Important`.
 
 `false` — you checked, and the bad outcome does not happen at the cited location. Write what disproves this specific claim. A true fact about nearby code that does not disprove the claim does not count.
 

@@ -1,7 +1,7 @@
 ---
 instruction_id: ask-would-verification-fail-if-the-behavior-broke
 title: Ask whether verification would fail if the behavior broke
-summary: "One question drives the gap analysis: if the behavior the change should produce broke where it is used, would the verification fail?"
+summary: "One question drives the gap analysis: if this behavior broke where it is used, would any test fail? A gap is filed only as a request to add or change one test."
 capability_tags:
   - review-code
 pattern_tags:
@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/review-prompts/verification-gap.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/review-prompts/verification-gap.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -30,6 +30,7 @@ domains:
 ---
 
 # Ask whether verification would fail if the behavior broke
-Find changed behavior that could break without reliable verification catching it.
-Ask one question — "if the behavior this change is supposed to produce broke where it's actually used, would verification fail?"
-Do not hunt for correctness bugs, but report genuine problems you notice while tracing verification.
+Find changed behavior that could break later without any test failing.
+Ask one question — "if this behavior broke where it is actually used, would any test fail?"
+A gap finding is a request to add or change one test. File it only when you can name a specific regression that test would catch; if no such test is worth writing, there is nothing to file.
+Do not hunt for correctness bugs; report the genuine problems you run into while tracing.

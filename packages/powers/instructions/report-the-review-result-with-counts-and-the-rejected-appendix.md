@@ -1,7 +1,7 @@
 ---
 instruction_id: report-the-review-result-with-counts-and-the-rejected-appendix
 title: Report the review result with counts and the rejected appendix
-summary: "State the counts by bucket, list every rejected finding with its reason, and say where the findings were written."
+summary: "Render from the triage file, state the counts by bucket, list every rejected finding with its reason, and say where the findings were written."
 capability_tags:
   - review-code
 pattern_tags:
@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-04-present.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/code-review-pipeline.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -31,9 +31,10 @@ domains:
 ---
 
 # Report the review result with counts and the rejected appendix
-If `failed_layers` is non-empty, report which layers failed before announcing results.
+`{triage_file}` is the source for every finding: its verdict, evidence, route, options and rejection reason. Render from it, not from memory.
+If `failed_layers` is non-empty, report which lenses failed before announcing results.
 If zero entries remain after rejections AND `failed_layers` is non-empty, warn the user that the review may be incomplete rather than announcing a clean review.
-If zero entries remain after triage (all rejected or none raised): state "✅ Clean review — all layers passed."
+If zero entries remain after triage (all rejected or none raised): state "✅ Clean review — all lenses passed."
 Code review complete. <D> `decision-needed`, <P> `patch`, <W> `defer`, <R> rejected.
 The `Rejected` appendix is one line per rejected finding: `false` with its refutation, `Minor` with why it was not worth fixing.
 Without `plan_file`, it ends the chat listing.

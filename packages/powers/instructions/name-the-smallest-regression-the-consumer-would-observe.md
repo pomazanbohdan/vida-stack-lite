@@ -1,7 +1,7 @@
 ---
 instruction_id: name-the-smallest-regression-the-consumer-would-observe
 title: Name the smallest regression the consumer would observe
-summary: Every consumer is qualified by the smallest realistic regression it would show; a consumer with no such regression is dropped.
+summary: Every consumer is qualified by the smallest realistic regression it would show; 'this line could be removed without a test failing' is not a regression, and a consumer with no such regression is dropped.
 capability_tags:
   - review-code
 pattern_tags:
@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/review-prompts/verification-gap.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/review-prompts/verification-gap.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -30,5 +30,7 @@ domains:
 ---
 
 # Name the smallest regression the consumer would observe
-For each consumer, name the smallest realistic regression this consumer would observe: invert the branch, drop the default, omit the field, return the old error code, skip the integration call, etc. This is the Demonstration.
-If no such regression exists, drop the path; untested downstream code is not a finding.
+For each consumer, name the smallest realistic regression this consumer would observe: invert the branch, drop the default, omit the field, return the old error code, skip the integration call, etc. This is the Demonstration; it describes what goes wrong for the consumer.
+"This line could be removed without a test failing" is not a regression.
+If there is no regression — the state is unreachable, the branch is defensive, or the code repeats what another line already guarantees — drop the path; there is no finding and nowhere else to file it.
+Untested downstream code the change did not affect is not a finding.

@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '5'
+revision: '6'
 ---
 
 # Instruction change vector
@@ -43,6 +43,7 @@ contract.
 
 - **Context before questions** — read the available material, then ask only the gap.
 - **Ticket-first requirements** — read the initiative or epic first and treat its Requirements as settled.
+- **Evidence-bound review** — the ticket's Requirements define intent, findings and verdicts live in a triage file, and a verification gap names the test that would catch it.
 - **Explicit decisions** — approaches, design doc, approval gate before build.
 - **Progressive disclosure** — short `SKILL.md` routes to `references/`.
 - **Compaction-safe state** — ledger, wiki or reference, not session memory.
@@ -55,7 +56,7 @@ contract.
 
 | Direction | Current movement | Evidence | Derived / auto boundary | Owner decision |
 |---|---|---|---|---|
-| Engineering | Fresh context per subagent; verification; small batches; reference detail | superpowers, matt-skills | DERIVED after review: provenance, catalog/map/baseline; AUTO: links and counts | none for mechanical; review for semantic |
+| Engineering | Fresh context per subagent; four verification-gap shapes; file-backed triage; small batches; reference detail | superpowers, matt-skills, bmad-method | DERIVED after review: provenance, catalog/map/baseline; AUTO: links and counts | none for mechanical; review for semantic |
 | Product / design | Context first; explicit approaches; design gate; ticket-aware handoff | superpowers, bmad-method | DERIVED after review: provenance, catalog/map; AUTO: links and counts | product policy for `user_decision: false` groups; no default for `user_decision: true`; scope and priority |
 | Operations | Wiki memory; gradual automation; loop caps | matt-skills | DERIVED after review: provenance, catalog/map; AUTO: links and counts | operational policy, automation rollout |
 | Documentation | Short contract; OKF/D6; conflict precedence; progressive disclosure | both batches | AUTO: broken local links, heading/count drift, log/vector rows | canonical scope, acceptance text |
@@ -117,6 +118,7 @@ Legend: result = corpus instructions / map records / baseline files.
 | B1 | bmad-method | `bmad-prd` + `bmad-qa-generate-e2e-tests` ticket awareness | 6 | content staged; pin/provenance advance pending |
 | B2 | bmad-method | `bmad-architecture` + `bmad-ux` ticket-first | 10 | content staged; pin/provenance advance pending |
 | B3 | bmad-method | `bmad-spec` reviewed against the new ticket owner | 2 | 17 instruction repoints to `bmad-agent-po/references/spec.md` pending |
+| B4 | bmad-method | `bmad-code-review` + `bmad-review` ticket and triage rules | 24 | content staged; pin/provenance advance pending |
 
 A staged batch has changed instruction content but has not advanced the donor pin
 or provenance. It is not a completed batch and makes no admission claim.

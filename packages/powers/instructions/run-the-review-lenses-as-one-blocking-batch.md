@@ -1,7 +1,7 @@
 ---
 instruction_id: run-the-review-lenses-as-one-blocking-batch
 title: Run the review lenses as one blocking batch
-summary: "Launch every active lens together as blocking calls at the same capability, spawn them all before reading any output, and collect only once the last one is launched."
+summary: "Launch every active lens together as blocking calls at the same capability, spawn them all before reading any output, and start triage only after the last one reports."
 capability_tags:
   - review-code
 pattern_tags:
@@ -22,7 +22,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-02-review.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/workflow.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -33,4 +33,5 @@ domains:
 # Run the review lenses as one blocking batch
 Run subagents synchronously: launch them together as blocking calls awaited in this turn — never backgrounded or detached, never ending the turn to await results.
 When running lenses as subagents, spawn every reviewer before reading or reacting to any of their output; begin collection only once all are launched.
+Triage starts only after the last lens has reported. Do not triage findings as they arrive.
 Subagents are an important part of this workflow. Use them wherever a step calls for them, if you can. If you need the user's permission to run them, ask once now for the whole run.

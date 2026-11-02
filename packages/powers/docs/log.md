@@ -2,6 +2,18 @@
 
 ## 2026-11-02
 
+* **Bmad B4 staged:** updated 24 `bmad-code-review` and `bmad-review`
+  instructions. Review content now includes a ticket; the review target carries
+  the story or epic file; the launch prompt passes the ticket path and takes
+  intent from its Requirements; the verification-gap lens has four shapes,
+  including a stale test; screening is per part, test-only parts are kept,
+  build/CI-checked changes are skipped, and static text and LLM output are not
+  worth a test. Triage now normalizes raw findings as `R` ids in a triage file,
+  grades them with the Critical/Important/Minor rubric, groups them into `F`
+  findings without deduplicating first, routes separately, and renders the
+  report from the triage file. The bmad pin is **not** advanced; catalog
+  revision 6290; `check-corpus` reports 2,514 instructions and zero issues.
+
 * **Bmad B3 staged:** reviewed the 17 `bmad-spec` instructions against the new
   owner. `give-every-capability-an-intent-and-a-testable-success` now covers
   requirements as well as capabilities, and `keep-the-capability-ids-stable`

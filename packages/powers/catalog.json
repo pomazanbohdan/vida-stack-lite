@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6266,
+  "revision": 6290,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-02T19:00:00.000Z",
+  "updated_at": "2026-11-02T20:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -1082,7 +1082,7 @@
     {
       "instruction_id": "ask-would-verification-fail-if-the-behavior-broke",
       "path": "instructions/ask-would-verification-fail-if-the-behavior-broke.md",
-      "sha256": "103979972235c2a36315221fd8bc4ef3ecf30d77fb51a57bf898d4fb9c1391c1"
+      "sha256": "41c4b05eeaba3ef04cb279f531e238e3961065351a7abee0c731797f597d9bff"
     },
     {
       "instruction_id": "assemble-the-report-decision-first-and-succinct",
@@ -2197,7 +2197,7 @@
     {
       "instruction_id": "classify-the-content-before-the-lenses-run",
       "path": "instructions/classify-the-content-before-the-lenses-run.md",
-      "sha256": "f0d3f81e85b30669b5c4c4db5eda05c969f325fc84044f818cc8a4a1b30b6397"
+      "sha256": "25c0fbe009f248aefe2207f80a0d059249e4aa82265b43a5d16222c75a24bbe9"
     },
     {
       "instruction_id": "classify-the-coverage-of-every-deliverable",
@@ -2407,7 +2407,7 @@
     {
       "instruction_id": "compose-the-review-prompt-from-paths-and-intent",
       "path": "instructions/compose-the-review-prompt-from-paths-and-intent.md",
-      "sha256": "45965e28ecbfe8df107db97641d2175042263f5ee5961c507298995673587603"
+      "sha256": "d28ddfb74a980e7a5cb79f7dbb2ee1e49b8c811fa1c6790fb6ffefaf6b590ee4"
     },
     {
       "instruction_id": "compose-through-one-builder-so-the-views-cannot-diverge",
@@ -2582,7 +2582,7 @@
     {
       "instruction_id": "count-a-test-only-when-it-runs-and-asserts",
       "path": "instructions/count-a-test-only-when-it-runs-and-asserts.md",
-      "sha256": "f63e74b80c2564f429d42399aeb1c40b4ffa6857c6ae6300b54c55af58d09d43"
+      "sha256": "e22d56f878989fb0e4f79af734faea32f304fbac8f5b604a39b4af0e6ae483c6"
     },
     {
       "instruction_id": "count-an-unclassified-severity-as-critical",
@@ -3382,7 +3382,7 @@
     {
       "instruction_id": "do-not-report-what-the-gap-analysis-must-not-report",
       "path": "instructions/do-not-report-what-the-gap-analysis-must-not-report.md",
-      "sha256": "9fb4d151f19a2f0ccad745c5b8e4c0e4fbf966ad5eedd5531c18ba9222c01b01"
+      "sha256": "cf4c57ca24d289aa68c2ffaf9ec8604dd5e54f7d940b2d0e12899dc00fe7b757"
     },
     {
       "instruction_id": "do-not-rerun-checks-without-a-change",
@@ -4437,7 +4437,7 @@
     {
       "instruction_id": "group-findings-by-shared-root-cause",
       "path": "instructions/group-findings-by-shared-root-cause.md",
-      "sha256": "96a579bdaccfbf59b4213a1c8720919114c37849227b650f0b87270960dca8a5"
+      "sha256": "725a1d4cd7e8aa161396aff43f99f76171c4b57d18231e29b9500336f85a890e"
     },
     {
       "instruction_id": "group-the-change-by-concern-not-by-file",
@@ -5557,7 +5557,7 @@
     {
       "instruction_id": "keep-the-verification-gap-findings-shaped-by-their-kind",
       "path": "instructions/keep-the-verification-gap-findings-shaped-by-their-kind.md",
-      "sha256": "3c59de1cbf231a9755f0328262127d23bb600060da63158ad22a74bfa603873a"
+      "sha256": "2ed9722b0bd01cab33d879b39ff7870d205c8ba9abe8c4c0db73435d5c9f13ac"
     },
     {
       "instruction_id": "keep-the-verification-sequence-in-one-canonical-place",
@@ -5617,7 +5617,7 @@
     {
       "instruction_id": "label-code-review-findings",
       "path": "instructions/label-code-review-findings.md",
-      "sha256": "969615d371638402029d77add723da4f93263ec450bed75803326ac7ebd9bf0c"
+      "sha256": "285f0205ffb190ca3db9740e60a1c48b4a6057245a4d3cb45de8916464963c44"
     },
     {
       "instruction_id": "label-every-citation-as-preprint-or-peer-reviewed",
@@ -6787,7 +6787,7 @@
     {
       "instruction_id": "name-the-smallest-regression-the-consumer-would-observe",
       "path": "instructions/name-the-smallest-regression-the-consumer-would-observe.md",
-      "sha256": "2e2fb86de93e1a07cb8d6e5cba14a053b2e09fa8ab67b08a914cf526d095e0a5"
+      "sha256": "1ec766f57d0ae436dd5c35e50bed17567c0cecefb0da21fb5ffec2e6151a7c05"
     },
     {
       "instruction_id": "name-the-stub-signatures-that-mark-a-placeholder",
@@ -6802,7 +6802,7 @@
     {
       "instruction_id": "name-the-three-shapes-of-a-verification-gap",
       "path": "instructions/name-the-three-shapes-of-a-verification-gap.md",
-      "sha256": "8cc622cad3c0870e14f04b147b1112e23cc9b68945388c0e65d4c3d89ba4737f"
+      "sha256": "15dcd999aef254771b8ea6a41b13ae43aa0e98e2eda28595a00321af29db46d8"
     },
     {
       "instruction_id": "name-the-trust-boundaries-before-hardening",
@@ -8492,7 +8492,7 @@
     {
       "instruction_id": "record-review-findings-in-the-plan",
       "path": "instructions/record-review-findings-in-the-plan.md",
-      "sha256": "f455fc8cbf0a6b285b683ab82ad81a13c37f8b31600d6a4c6e4d47d3b48d5f35"
+      "sha256": "ba5557e40aeb9e07ea267475bf54e4fd3bd29772598b2f62b7c59dd22a96522b"
     },
     {
       "instruction_id": "record-risks-and-open-questions-in-the-plan",
@@ -8807,7 +8807,7 @@
     {
       "instruction_id": "reject-the-findings-that-do-not-earn-their-place",
       "path": "instructions/reject-the-findings-that-do-not-earn-their-place.md",
-      "sha256": "1e431c325377b8015b291b8b67ddd239eedb0c2fdd0ee868a815c8aa308fbf09"
+      "sha256": "dc9d80486e2cf5a47affdfd0691e1adc6be99a4132fa5749e653dae0b51c78e7"
     },
     {
       "instruction_id": "reject-unexamined-unknowns",
@@ -8867,7 +8867,7 @@
     {
       "instruction_id": "render-one-verdict-per-finding",
       "path": "instructions/render-one-verdict-per-finding.md",
-      "sha256": "71e527b7ebea038c2ed9e5e24d36ebd8b5631f32bc7fee037a642977125dc419"
+      "sha256": "f07dcfbb42ce034ee69f190760c024d7f59cf127ca2b7816b1bca3ccc43511ec"
     },
     {
       "instruction_id": "render-options-when-seeing-helps-decide",
@@ -9062,7 +9062,7 @@
     {
       "instruction_id": "report-the-review-result-with-counts-and-the-rejected-appendix",
       "path": "instructions/report-the-review-result-with-counts-and-the-rejected-appendix.md",
-      "sha256": "18fbfe44c4fe41dd0866956c2ffb2e428fd8470239f022cc23389c1c7152899e"
+      "sha256": "dcb747018710ccc3f55b32cdb7116394cf29abd7ebb00d30b52ea9d2d01d3b7e"
     },
     {
       "instruction_id": "report-the-run-outcome-assumptions-and-open-questions",
@@ -9197,7 +9197,7 @@
     {
       "instruction_id": "require-concrete-failure-case",
       "path": "instructions/require-concrete-failure-case.md",
-      "sha256": "52e39045f8a60a5901ea4e121d138fb98397d0f7d75daa6a38b56ebae4076538"
+      "sha256": "9eb6e79b349767bcec23b806ad5659dc0be4821daa89e15d09a8933c1b76bd36"
     },
     {
       "instruction_id": "require-confirmation-before-running-a-manifest-command",
@@ -9327,7 +9327,7 @@
     {
       "instruction_id": "resolve-the-review-target-from-the-context",
       "path": "instructions/resolve-the-review-target-from-the-context.md",
-      "sha256": "ed95497d1651d42044034f4826be620a61b3a12741b8f911d28466aec04a2fd3"
+      "sha256": "7ef984fb7d944469f89cdbefb67a9799faabc770f94349651dd3fa4396da38e1"
     },
     {
       "instruction_id": "resolve-the-update-target-through-one-owner",
@@ -9602,7 +9602,7 @@
     {
       "instruction_id": "route-each-finding-to-decide-patch-or-defer",
       "path": "instructions/route-each-finding-to-decide-patch-or-defer.md",
-      "sha256": "323624f9d4d37c5ed1565661d135180079f81f8a90946d1716b310cec1a26406"
+      "sha256": "4ddf2a3fb170f366bed47067494bc7e3124e760db2ed818c04d8460867b2b47d"
     },
     {
       "instruction_id": "route-every-unselected-item-to-later-or-out-of-scope",
@@ -9807,7 +9807,7 @@
     {
       "instruction_id": "run-the-review-lenses-as-one-blocking-batch",
       "path": "instructions/run-the-review-lenses-as-one-blocking-batch.md",
-      "sha256": "d502c25a4bf9ae51102270826418fdfc594cc2b888b12ce9346a4cddab4d794b"
+      "sha256": "1024001e19b879bfab6ab1bc8c2999e636f87a1993876e2094270483094500d7"
     },
     {
       "instruction_id": "run-the-review-lenses-over-the-whole-diff",
@@ -10082,7 +10082,7 @@
     {
       "instruction_id": "screen-each-part-of-the-change-for-behavioral-change",
       "path": "instructions/screen-each-part-of-the-change-for-behavioral-change.md",
-      "sha256": "f75f566cf7b19cc85ed1e2aa8b56826b76f338b3c8b8e7ac12bee7e21599483d"
+      "sha256": "6a2996322edd56a463ed6817256e8dceb4a2f72e1fc64c36be8baeb8a3047060"
     },
     {
       "instruction_id": "screen-the-candidate-field-and-record-the-cuts",
@@ -10122,7 +10122,7 @@
     {
       "instruction_id": "seek-verification-of-behavior-not-of-literal-text",
       "path": "instructions/seek-verification-of-behavior-not-of-literal-text.md",
-      "sha256": "387d446e9a8c936b5f47bef23d8be3c6cc02ddae244995e5f1fe6352dbcac75f"
+      "sha256": "c0dcf916982c6c34f86659442e2663402ddc779f37dacde1bb802e6a327d0514"
     },
     {
       "instruction_id": "select-commits-by-the-declared-scope-not-by-a-substring",
@@ -10532,7 +10532,7 @@
     {
       "instruction_id": "skip-and-announce-the-lenses-that-do-not-apply",
       "path": "instructions/skip-and-announce-the-lenses-that-do-not-apply.md",
-      "sha256": "6359869217b34c7c17a3d1e853e5e4ad4f9b41520dd068228586f87b84358fa6"
+      "sha256": "d07902535e786a9711721104072df85e1342843175c66b33aa9b364cccc36de5"
     },
     {
       "instruction_id": "skip-silently-when-there-is-not-enough-data",
@@ -10947,7 +10947,7 @@
     {
       "instruction_id": "stop-the-gap-analysis-at-the-inference-boundary",
       "path": "instructions/stop-the-gap-analysis-at-the-inference-boundary.md",
-      "sha256": "783f9a552407363c826339481a4208ae204db037914f2f7afed7bb634911a772"
+      "sha256": "73154f297f27e76224c75ce2a2caf56262bee3c64d801c57269053acf36bfe7c"
     },
     {
       "instruction_id": "stop-the-line-on-an-unexpected-failure",
@@ -11432,7 +11432,7 @@
     {
       "instruction_id": "treat-a-broad-impact-change-as-behavioral",
       "path": "instructions/treat-a-broad-impact-change-as-behavioral.md",
-      "sha256": "c0950c31753108309eb83ad4daa1965a3c03fac1ac2fbd7e756e55609cf024b0"
+      "sha256": "10260229e8ffe0f7ccbf482ffed17c3dd3a38ef2b83b77d1c66e6b48f0519643"
     },
     {
       "instruction_id": "treat-a-broken-cross-link-as-not-yet-written-knowledge",
@@ -11762,7 +11762,7 @@
     {
       "instruction_id": "trust-a-pre-verified-finding-as-filed",
       "path": "instructions/trust-a-pre-verified-finding-as-filed.md",
-      "sha256": "ccf16c7ff7a292d22da0f12afbb9cc68cd03dc0b52d322b4882ba5ee5e2506cd"
+      "sha256": "981cf35d81178ebf5f9749a12111a05905b531b7e690a781ab42c5e160e7be0f"
     },
     {
       "instruction_id": "trust-the-authoritative-record-not-the-secondary-note",

@@ -1,7 +1,7 @@
 ---
 instruction_id: require-concrete-failure-case
 title: Require a concrete case for every finding
-summary: "A finding without an input or situation that leads to a wrong result does not enter the report: the claim is verified at the cited location before it is graded."
+summary: "A finding without an input or situation that leads to a wrong result does not enter the report: the claim is verified at the cited location, and a similar rejected finding does not settle it."
 capability_tags:
   - review-code
 pattern_tags:
@@ -26,7 +26,7 @@ provenance:
   - donor=ponytail; license=MIT; revision=6f1c2bfff0c837d268929a7c4e490918eb4fab29; path=skills/ponytail-review/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-03-triage.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -41,6 +41,8 @@ Re-read the lines and confirm: the caller exists, the value can really be empty,
 Verify the finding's claim. At the cited file and line, does the bad outcome the reviewer describes actually occur?
 Read beyond the changed lines -- follow callers, guards upstream, etc -- until you can answer yes or no.
 A different finding about nearby code does not settle this one.
+Do not reject finding B because it looks similar to a finding A you already rejected: that shortcut only works when both cite the exact same behavior at the exact same file and line.
+Do not let rarity, fix effort or whether the defect predates the change decide whether the claim is real; those are not part of verification.
 Judge whether the problem is real, not whether the proposed fix is plausible.
 Code that loudly fails on a situation you never showed the program can reach is correct behavior, not a defect.
 Be specific: a file and line, not a vague area.

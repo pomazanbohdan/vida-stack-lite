@@ -1,7 +1,7 @@
 ---
 instruction_id: count-a-test-only-when-it-runs-and-asserts
 title: Count a test only when it runs and asserts
-summary: "A test counts as verification only when it runs normally and an assertion observes the changed output, branch or contract."
+summary: "A test counts as verification only when it runs normally and an assertion observes the changed output, branch or contract; a stale test is itself a gap."
 capability_tags:
   - verify-work-results
 pattern_tags:
@@ -22,7 +22,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-build/review-prompts/verification-gap.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/review-prompts/verification-gap.md
 status: active
-revision: 4
+revision: 5
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -33,6 +33,7 @@ domains:
 # Count a test only when it runs and asserts
 A test counts only if it runs normally and an assertion observes the changed output, branch, or contract.
 These do not count: no execution; source-text assertions that match a file's wording instead of running it; success/no-throw/snapshot-only checks; mock/log-call checks; human-only checks; tests that mock away the integration; e2e tests that pass through without checking the changed output; stale assertions or fixtures.
+A test this change made wrong or moot is itself a stale-verification gap, not merely excluded: say what it should assert instead, or that it should go.
 For example, `expect(x ?? DEFAULT).toBe(DEFAULT)` passes when `x` is missing.
 A test that passes regardless of whether the feature it describes is implemented is worse than no test: it inflates the count while providing false confidence.
 The test must be capable of failing if the feature is absent or broken.

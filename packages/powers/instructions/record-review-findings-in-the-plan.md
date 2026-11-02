@@ -1,7 +1,7 @@
 ---
 instruction_id: record-review-findings-in-the-plan
 title: Record the review findings in the plan
-summary: "Append a dated block to the plan's code-review section — decision-needed first, then patch, then defer — and never change the plan's status."
+summary: "Append a dated block to the plan's code-review section — decision-needed first, then patch, then defer — rendered from the triage file, and never change the plan's status."
 capability_tags:
   - review-code
 pattern_tags:
@@ -20,7 +20,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-code-review/step-04-present.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=tools/ticket-tree-rules.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -34,7 +34,7 @@ When `{plan_file}` is set, always write findings to it before offering action ch
 Never change a plan's `status`. The build leaves it at `built`; only the user marks a ticket done.
 If `{plan_file}` is set, append a block to its `## Code Review` section, creating that section at the end of the file when it is absent.
 The block opens with `### {date}` and the summary line from section 3, then the findings below, then the `Rejected` appendix.
-Write all findings in this order:
+Write all findings from `{triage_file}` in this order, using its verdict, route, evidence and rejection reason:
 `decision-needed` findings (unchecked): `- [ ] [Review][Decision] <Title> — <Detail> Options: <each option, one line>. Recommended: <option> — <reason>.`
 `patch` findings (unchecked): `- [ ] [Review][Patch] <Title> [<file>:<line>]`
 `defer` findings (checked off, marked deferred): `- [x] [Review][Defer] <Title> [<file>:<line>] — deferred: <pre-existing, or for maybe-false the evidence that would settle it>`

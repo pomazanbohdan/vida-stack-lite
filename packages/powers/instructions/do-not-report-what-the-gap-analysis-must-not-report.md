@@ -1,7 +1,7 @@
 ---
 instruction_id: do-not-report-what-the-gap-analysis-must-not-report
 title: Do not report what the gap analysis must not report
-summary: "A gap is not reported for a compiler-enforced case, for behavior an integration test already covers, for a mock-only test, for low coverage alone, or for legacy code the change never touched."
+summary: "A gap is not reported for a compiler-enforced case, for behavior an integration test already covers, for low coverage alone, or for untested code the change never touched; a mock-only test does not count as coverage."
 capability_tags:
   - review-code
 pattern_tags:
@@ -19,7 +19,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-review/references/lens-verification-gap.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -28,4 +28,5 @@ domains:
 ---
 
 # Do not report what the gap analysis must not report
-Do not report: compiler/type-checker-enforced cases; behavior already verified by an integration, contract, or e2e test; implementation-detail or mock-only tests; low coverage or a missing test file by itself; legacy untested code the change did not affect.
+Do not report: cases the compiler or type checker enforces; behavior an integration, contract, or end-to-end test already verifies; low coverage or a missing test file by itself; untested code the change did not touch.
+A mock-only or log-call test does not count as verification, so a real regression behind one is a gap rather than a reason to stay silent.
