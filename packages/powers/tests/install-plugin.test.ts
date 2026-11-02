@@ -17,7 +17,7 @@ async function temp(prefix: string): Promise<string> {
 
 async function packageFixture(): Promise<string> {
   const root = await temp('vp-plugin-package-');
-  for (const name of ['vp-mode', 'vp-setup']) {
+  for (const name of ['vida-bootstrap', 'vp-mode', 'vp-setup']) {
     await mkdir(join(root, 'skills', name), { recursive: true });
     await writeFile(join(root, 'skills', name, 'SKILL.md'), `---\nname: ${name}\ndescription: test skill.\n---\n`);
   }
@@ -33,7 +33,7 @@ afterAll(async () => {
   await Promise.all(directories.map((directory) => rm(directory, { recursive: true, force: true })));
 });
 
-test('installs both skills for OpenCode and Pi into their discovery paths', async () => {
+test('installs all three skills for OpenCode and Pi into their discovery paths', async () => {
   const root = await packageFixture();
   const project = await temp('vp-plugin-project-');
   const home = await temp('vp-plugin-home-');
@@ -41,6 +41,7 @@ test('installs both skills for OpenCode and Pi into their discovery paths', asyn
   const opencode = await installPlugin({ packageRoot: root, host: 'opencode', scope: 'project', projectRoot: project });
   expect(opencode.issues).toEqual([]);
   expect(opencode.target).toBe(join(project, '.opencode', 'skills'));
+  expect(await readFile(join(project, '.opencode', 'skills', 'vida-bootstrap', 'SKILL.md'), 'utf8')).toContain('name: vida-bootstrap');
   expect(await readFile(join(project, '.opencode', 'skills', 'vp-mode', 'SKILL.md'), 'utf8')).toContain('name: vp-mode');
 
   const pi = await installPlugin({ packageRoot: root, host: 'pi', scope: 'user', projectRoot: project, home });

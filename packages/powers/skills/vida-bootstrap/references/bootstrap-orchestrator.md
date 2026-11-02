@@ -40,6 +40,18 @@ review of a sealed plan is allowed and is not a transfer of ownership.
 Sub-delegation defaults to forbidden; it requires explicit user or lead
 authorization and host policy.
 
+## Delegation lifecycle
+
+You own the delegation decision and the join. Use the host and the configured
+lifecycle owner for binding, dispatch, wait/report and interruption; follow its
+CAS, report and uncertain-outcome rules. Do not imply an unissued host operation.
+
+A turn may pause only through a host-provided wait/completion mechanism. If the
+result is required in the current turn, invoke the host wait call. Otherwise end
+the turn after the child is running and resume on the host completion event where
+supported. Never silently pause, poll task status, sleep, or busy-wait. A child
+without a defined host completion path and join point is not delegated work.
+
 ## Assignment envelope
 
 Send the assignment as the first message, beginning with `VIDA-ASSIGNMENT/v1`

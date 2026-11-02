@@ -30,14 +30,14 @@ test('the portable, Codex and Pi payloads share one identity and version', async
   expect(inputs.targets).toEqual(['portable', 'codex']);
 });
 
-test('Pi metadata points at both shipped skills and keeps the package discoverable', async () => {
+test('Pi metadata points at all shipped skills and keeps the package discoverable', async () => {
   const pkg = await json('package.json');
   expect(pkg.keywords).toContain('pi-package');
   const pi = pkg.pi as Record<string, unknown>;
   const skills = pi.skills as string[];
   expect(skills).toContain('./skills');
 
-  for (const name of ['vp-mode', 'vp-setup']) {
+  for (const name of ['vida-bootstrap', 'vp-mode', 'vp-setup']) {
     const body = await readFile(join(root, 'skills', name, 'SKILL.md'), 'utf8');
     expect(body).toMatch(new RegExp(`^---\\nname: ${name}\\n`, 'u'));
     expect(body).toMatch(/\ndescription: .+/u);

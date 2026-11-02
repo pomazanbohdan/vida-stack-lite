@@ -23,7 +23,7 @@
   agent base-only inspection. Text mode remains unchanged. Tests cover the
   no-selector default, explicit orchestrator, agent base-only and agent
   base+delta states, including CLI `--json` parity (bootstrap 5 pass / 118
-  assertions; full package suite 746 pass / 4 skip / 0 fail). `--require-complete`
+  assertions; full package suite 747 pass / 4 skip / 0 fail). `--require-complete`
   rejects an incomplete agent bootstrap with empty stdout and
   `BOOTSTRAP_ASSIGNMENT_INCOMPLETE`. The documented init rule allows the advisory
   default only for direct orchestrator requests and requires a complete agent
@@ -31,8 +31,24 @@
   Luna design review returned CHANGES Minor: the final contract reuses `role`
   and `tags` instead of adding redundant mode/base/delta fields.
 
+* **Delegation wait/join contract:** the orchestrator role now owns the
+  delegation decision and join, and may pause only through a host-provided
+  wait/completion mechanism; silent pause, polling, sleep and busy-wait are
+  forbidden. The agent role leaves wait/join with its orchestrator and returns
+  `status: blocked` with reason `needs_input` instead of waiting, unless the
+  envelope explicitly permits sub-delegation. The bootstrap entry cross-references
+  the rule, and the role-text test pins it (bootstrap file 6 pass / 123 assertions).
+
+* **Host delivery: third skill:** `vida-bootstrap` is now in the installer
+  inventory, explicit Claude/Cursor manifest skill lists, Muse capabilities and
+  the manifest schema. Directory-based Codex/Pi selectors already include the
+  complete `skills/` tree. Tests cover all three skills in installer, payload and
+  manifest generation (installer/payload 7 pass; build-manifests 64 pass / 1 skip).
+  Host qualification, production manifest inputs/outputs and native installation
+  acceptance remain open.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
-  tests pass 141 / 0 fail / 1,255 assertions; the current package suite remains
+  tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.
   AC-20/21/23 remain component evidence, AC-22 partial and AC-24 component-only;
   the 12 `REQ-D3-D8` source-binding inputs require rebind before handoff. Step F

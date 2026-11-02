@@ -127,8 +127,8 @@
         "license": { "type": "string", "minLength": 1 },
         "skills": {
           "type": "array",
-          "minItems": 2,
-          "items": { "type": "string", "enum": ["./skills/vp-mode/", "./skills/vp-setup/"] }
+          "minItems": 3,
+          "items": { "type": "string", "enum": ["./skills/vida-bootstrap/", "./skills/vp-mode/", "./skills/vp-setup/"] }
         }
       }
     },
@@ -170,8 +170,8 @@
         "license": { "type": "string", "minLength": 1 },
         "skills": {
           "type": "array",
-          "minItems": 2,
-          "items": { "type": "string", "enum": ["./skills/vp-mode/", "./skills/vp-setup/"] }
+          "minItems": 3,
+          "items": { "type": "string", "enum": ["./skills/vida-bootstrap/", "./skills/vp-mode/", "./skills/vp-setup/"] }
         }
       }
     },
@@ -222,14 +222,14 @@
           "properties": {
             "skills": {
               "type": "array",
-              "minItems": 2,
+              "minItems": 3,
               "items": {
                 "type": "object",
                 "required": ["id", "path"],
                 "additionalProperties": false,
                 "properties": {
-                  "id": { "enum": ["vp-mode", "vp-setup"] },
-                  "path": { "enum": ["skills/vp-mode/SKILL.md", "skills/vp-setup/SKILL.md"] }
+                  "id": { "enum": ["vida-bootstrap", "vp-mode", "vp-setup"] },
+                  "path": { "enum": ["skills/vida-bootstrap/SKILL.md", "skills/vp-mode/SKILL.md", "skills/vp-setup/SKILL.md"] }
                 }
               }
             }

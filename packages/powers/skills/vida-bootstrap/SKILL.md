@@ -34,6 +34,13 @@ may proceed only when `role` is `agent`, `complete` is `true`, and
 `requiresRoleOrFamily` is `false`; otherwise stop and request the role/family.
 `tags` and `instructions` keep base-first order; text mode remains the composed
 documents only.
+
+The orchestrator owns the delegation decision and join; the host and configured
+lifecycle owner own binding, dispatch, wait/report and interruption. A turn may
+pause only through a host-provided wait/completion mechanism. An agent returns
+`blocked` with `needs_input` instead of waiting on its orchestrator unless its
+envelope explicitly permits sub-delegation.
+
 The lead owns plan, join, integration and final verification. A child receives a
 bounded assignment, exact source paths and an inline contract; it must not claim
 to have read unavailable sources.

@@ -7,6 +7,7 @@
   "license": "FIXTURE-ONLY",
   "name": "fixture-plugin",
   "skills": [
+    "./skills/vida-bootstrap/",
     "./skills/vp-mode/",
     "./skills/vp-setup/"
   ],

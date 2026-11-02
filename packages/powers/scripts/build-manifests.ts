@@ -52,8 +52,9 @@ const antigravityRoot = `${formationOutputRoot}/antigravity`;
 const antigravityManifestPath = `${antigravityRoot}/plugin.json`;
 const formationReceiptPath = `${formationOutputRoot}/receipts/source-payload.v1.json`;
 const canonicalPluginSchema = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
-const nativeSkillDirectories = ['./skills/vp-mode/', './skills/vp-setup/'] as const;
+const nativeSkillDirectories = ['./skills/vida-bootstrap/', './skills/vp-mode/', './skills/vp-setup/'] as const;
 const museSkillCapabilities = [
+  { id: 'vida-bootstrap', path: 'skills/vida-bootstrap/SKILL.md' },
   { id: 'vp-mode', path: 'skills/vp-mode/SKILL.md' },
   { id: 'vp-setup', path: 'skills/vp-setup/SKILL.md' },
 ] as const;

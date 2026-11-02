@@ -185,12 +185,12 @@ the existing numbering.
   instruction — `instruction_id`, `path` and the `sha256` of the content. A file in `instructions/` that is
   not in the manifest, a file in the manifest that is not on disk, and a digest mismatch —
   errors. The manifest is written only by the converter (the single writer); runtime scripts only read.
-- **SR-79.** Delivery manifests declare the shipped `vp-mode` and `vp-setup` skills through each selected
-  host's supported field shape: Codex compatibility `plugin.json` uses `skills: "./skills/"`; Claude and
-  Cursor list `./skills/vp-mode/` and `./skills/vp-setup/`; Claude marketplace output includes the package
-  description at top level. Before a host write or successful check, the
-  builder verifies both `SKILL.md` resources are regular files rooted in the package and rejects missing
-  paths or symlink traversal. The portable root manifest has no `skills` field and relies on standard
+- **SR-79.** Delivery manifests declare the shipped `vida-bootstrap`, `vp-mode` and `vp-setup` skills
+  through each selected host's supported field shape: Codex compatibility `plugin.json` uses
+  `skills: "./skills/"`; Claude and Cursor list `./skills/vida-bootstrap/`, `./skills/vp-mode/` and
+  `./skills/vp-setup/`; Claude marketplace output includes the package description at top level.
+  Before a host write or successful check, the builder verifies all three `SKILL.md` resources are
+  regular files rooted in the package and rejects missing paths or symlink traversal. The portable root manifest has no `skills` field and relies on standard
   `skills/` discovery. The `catalog.json` remains the canonical corpus listing, accessed through the CLI
   and skill; manifests do not copy the catalog or add a vendor-specific catalog field. Local generation
   requires only metadata required by selected host formats and never fabricates missing values. D4b's
@@ -220,6 +220,10 @@ the existing numbering.
   The bootstrap has one orchestrator base, one agent base and seven family
   deltas for the existing sixteen role mappings. A delegated assignment loads
   the agent base plus exactly one family; a base-only selector is inspection.
+  The orchestrator role owns the delegation decision and join; it may pause only
+  through a host-provided wait/completion mechanism. An agent returns a blocked
+  needs-input handoff instead of waiting on its orchestrator, unless
+  sub-delegation is explicitly allowed.
   The local bootstrap composer preserves role/name/kind/tag/list and text/JSON
   forms. JSON additionally reports `complete`, `defaulted` and
   `requiresRoleOrFamily`: complete means an orchestrator base or an agent base

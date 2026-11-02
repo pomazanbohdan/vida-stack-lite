@@ -24,7 +24,7 @@ export type InstallResult = {
   issues: string[];
 };
 
-const skillNames = ['vp-mode', 'vp-setup'] as const;
+const skillNames = ['vida-bootstrap', 'vp-mode', 'vp-setup'] as const;
 
 function targetFor(host: InstallHost, scope: InstallScope, projectRoot: string, home: string): string {
   if (host === 'codex') return projectRoot;

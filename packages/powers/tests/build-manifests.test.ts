@@ -32,7 +32,7 @@ const outputPaths = [
 ];
 const ownershipLedgerPath = '.tmp/vp-manifest-ownership.json';
 const transactionPath = '.tmp/vp-manifest-build.transaction';
-const skillDirectories = ['./skills/vp-mode/', './skills/vp-setup/'];
+const skillDirectories = ['./skills/vida-bootstrap/', './skills/vp-mode/', './skills/vp-setup/'];
 const temporaryRoots: string[] = [];
 
 function forwardNative<T extends (...args: never[]) => unknown>(
@@ -1342,6 +1342,7 @@ describe('manifest input and output boundaries', () => {
       compat: { manifestDir: '.muse-plugin' },
       capabilities: {
         skills: [
+          { id: 'vida-bootstrap', path: 'skills/vida-bootstrap/SKILL.md' },
           { id: 'vp-mode', path: 'skills/vp-mode/SKILL.md' },
           { id: 'vp-setup', path: 'skills/vp-setup/SKILL.md' },
         ],
@@ -1371,6 +1372,7 @@ describe('manifest input and output boundaries', () => {
       'config/vppluginmanifest.v1.schema.json',
       'instructions/runtime.md',
       'scripts/runtime.ts',
+      'skills/vida-bootstrap/SKILL.md',
       'skills/vp-mode/SKILL.md',
       'skills/vp-setup/SKILL.md',
       'assets/raw.bin',
@@ -1448,6 +1450,7 @@ describe('manifest input and output boundaries', () => {
       'instructions',
       'scripts/build-manifests.ts',
       'scripts/formation-payload.ts',
+      'skills/vida-bootstrap/SKILL.md',
       'skills/vp-mode/SKILL.md',
       'skills/vp-setup/SKILL.md',
       'tests/build-manifests.test.ts',
@@ -1649,6 +1652,7 @@ describe('manifest input and output boundaries', () => {
       description: 'Shape only; never used as production metadata.',
       compat: { manifestDir: '.muse-plugin' },
       capabilities: { skills: [
+        { id: 'vida-bootstrap', path: 'skills/vida-bootstrap/SKILL.md' },
         { id: 'vp-mode', path: 'skills/vp-mode/SKILL.md' },
         { id: 'vp-setup', path: 'skills/vp-setup/SKILL.md' },
       ] },

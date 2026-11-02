@@ -68,6 +68,16 @@ test('base-only, family tags, text and digest are consistent', () => {
   expect(completeAgent.requiresRoleOrFamily).toBe(false);
 });
 
+test('role texts assign wait/join to the orchestrator and blocked needs_input to agents', () => {
+  const orchestrator = readFileSync(path.join(root, 'references/bootstrap-orchestrator.md'), 'utf8');
+  const agent = readFileSync(path.join(root, 'references/bootstrap-agent.md'), 'utf8');
+  expect(orchestrator).toContain('A turn may pause only through a host-provided wait/completion mechanism.');
+  expect(orchestrator).toContain('Never silently pause, poll task status, sleep, or busy-wait.');
+  expect(agent).toContain('The orchestrator owns the delegation decision, host wait/completion, join and');
+  expect(agent).toContain('`status: blocked` with reason `needs_input`');
+  expect(agent).toContain('silently pause or wait');
+});
+
 test('CLI works from foreign cwd and rejects invalid selectors without stdout', () => {
   const cli = path.join(root, 'scripts/bootstrap.ts');
   const run = (...args: string[]) => spawnSync(process.execPath, [cli, ...args], { cwd: os.tmpdir(), encoding: 'utf8', timeout: 5000 });

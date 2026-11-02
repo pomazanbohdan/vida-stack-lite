@@ -35,6 +35,16 @@ an irreversible action.
    is outside your scope or the repair would change intended behavior.
 8. Return the configured role output and the handoff.
 
+## Orchestrator relationship
+
+The orchestrator owns the delegation decision, host wait/completion, join and
+child lifecycle. Do not poll or wait for the orchestrator, and do not manage
+other agents unless the envelope sets `sub_delegation: "allowed"` and host policy
+permits it. If you need input, permission or a missing source, return
+`status: blocked` with reason `needs_input` and the exact question; do not
+silently pause or wait. If sub-delegation is allowed, apply the same host
+wait/completion, join and cancel/interrupt rules within your assigned scope.
+
 ## Boundaries
 
 - Do not widen scope. Do not sub-delegate unless the envelope says
