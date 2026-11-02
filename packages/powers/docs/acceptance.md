@@ -62,7 +62,12 @@ the current scope (recorded as a GAP, not as passed).
 | AC-18 | The `Light` level does not skip mandatory AC, materialization and mandatory gates | SR-31 | `resolveProfile` with `flowLevel: 'light'` returns exactly the same policy groups, unresolved set and verification block as `full`; the depth level changes ceremony, never mandatory policy, materialization or gates. SKILL states the same rule | auto | verified (component) |
 | AC-19 | The same profile section is read with the same semantics from the Runtime target `.vida/project.yaml` after cutover, the Standalone managed block, and the host-shim project config | SR-33 | `readProfileBlock` parses the standalone managed block and the test proves it equals the runtime `.vida/vp-profile.json` and the host-shim `vida-project-profile.json` written from the same inputs, with the result schema-valid. The `.vida/project.yaml` target does not exist until the cutover and is not claimed | auto | verified (component) |
 
-## Materialization, findings, scope
+## Powers Standalone materialization, findings, scope
+
+The AC-20–AC-24 conditions below apply only to the Powers Standalone data plane:
+local `docs/work/` planning records and local `findings.jsonl`/`artifacts.jsonl`.
+Agent-owned `WorkItem/v1`, runtime findings/artifacts and Runtime acceptance are
+separate; they are not conditions for these criteria.
 
 | ID | Condition | SR | Evidence | Type | State |
 |---|---|---|---|---|---|

@@ -64,6 +64,11 @@
   Powers queue and closure conditions; `REQ-D3-D8`, `VP-7` and the Step G plan
   remain as historical handoff evidence only.
 
+* **F data-plane separation:** F is now explicitly Powers Standalone only. VP-5
+  and VP-6 are the active planning records; VP-7, D3+D8, Agent `WorkItem/v1`,
+  runtime findings/artifacts and Runtime acceptance are Agent-owned read-only
+  references outside F closure. AC-20–AC-24 are scoped to Powers Standalone.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.

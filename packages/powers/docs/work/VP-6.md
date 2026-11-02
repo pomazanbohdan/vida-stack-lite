@@ -39,7 +39,9 @@ revision: '8'
 
 ## Owner and state
 
-Owner: Vida Powers owner. State: draft. This Markdown record and the VP-5/VP-7 documents are human planning records; they are not machine-admitted `WorkItem/v1` records.
+Owner: Vida Powers owner. State: draft. This Markdown record and VP-5 are Powers Standalone human planning records; VP-7 is historical Agent-runtime handoff evidence. None is a machine-admitted `WorkItem/v1` record.
+
+**Data-plane boundary:** VP-6 owns only Powers Standalone data: local planning records, `findings.jsonl` and `artifacts.jsonl`. Agent runtime `WorkItem/v1`, runtime findings/artifacts, runtime state and Runtime acceptance are Agent-owned and outside VP-6.
 
 The Agent-owned validator and runtime configuration require eleven machine fields: `schema`, `id`, `provider`, `provider_type`, `canonical_kind`, `intent`, `project_id`, `title`, `description`, `labels`, and `risk_flags`. The current project/provider registration does not provide a validated binding for these records. Do not invent those values or treat these documents as Runtime state.
 
@@ -59,7 +61,7 @@ Materialize content through existing artifact contracts and create the smallest 
 
 ## Acceptance references
 
-Relevant canonical criteria include AC-20 through AC-24, AC-38, and AC-39. Only portions proven against their complete contracts may close; AC-22 remains open for semantic candidate generation and equivalence wherever attributable evidence is absent. The trace includes BR-03, BR-04, BR-07, BR-10, BR-11, BR-16, BR-17, SR-37 through SR-54, SR-55, SR-72, and sections 8 through 10 of [product research](../research/vida-powers-product-research.md).
+Relevant canonical criteria include AC-20 through AC-24, AC-38, and AC-39, scoped to Powers Standalone. Only portions proven against their complete contracts may close; AC-22 remains open for semantic candidate generation and equivalence wherever attributable evidence is absent. VP-7/Agent runtime is not a VP-6 acceptance dependency. The trace includes BR-03, BR-04, BR-07, BR-10, BR-11, BR-16, BR-17, SR-37 through SR-54, SR-55, SR-72, and sections 8 through 10 of [product research](../research/vida-powers-product-research.md).
 
 ## Current implementation evidence
 
@@ -89,8 +91,8 @@ Candidate evidence from `.104` on 2026-10-23: `findings.ts` returns append/repla
 
 - `implements` → the materialization, Work Item and findings stage in the [next actions](../next-actions.md).
 - `derived-from` → BR-03/BR-04/BR-07/BR-10/BR-11/BR-16/BR-17 and research sections 8-10.
-- `blocks` → VP-7, which depends on Stages 5 and 6.
-- Related Work Items: VP-5 and VP-7.
+- VP-7 is historical Agent-runtime handoff evidence; it is not a VP-6 dependency.
+- Related active Work Item: VP-5.
 
 ## Expected evidence
 
@@ -104,7 +106,7 @@ Candidate evidence from `.104` on 2026-10-23: `findings.ts` returns append/repla
 
 - **Output kind:** Human Markdown Work Items plus the Standalone findings writer and append-only JSONL events when real events exist.
 - **Required data:** Work Item identity, goal, Work Scope, acceptance, typed relations, evidence and artifact contract; findings carry problem/evidence/source/product/scope/impact data, replay identity, candidate-query identity (`event_id`, `finding_id`, and fingerprint), and an explicit caller decision before merge. A failed rollback reports `FINDING_STORE_RECOVERY_REQUIRED` for owner recovery.
-- **Materialization location:** `packages/powers/docs/work/VP-5.md`, `VP-6.md`, `VP-7.md`, `packages/powers/skills/vp-mode/scripts/findings.ts`, `artifacts.ts`, `catalog-cli.ts`, `skills/vp-mode/SKILL.md`, focused tests, and conditionally `packages/powers/docs/work/findings.jsonl` and `artifacts.jsonl`. The caller derives the explicit absolute store path from this contract; it is never derived from CWD.
+- **Materialization location:** `packages/powers/docs/work/VP-5.md`, `VP-6.md`, `packages/powers/skills/vp-mode/scripts/findings.ts`, `artifacts.ts`, `catalog-cli.ts`, `skills/vp-mode/SKILL.md`, focused tests, and conditionally `packages/powers/docs/work/findings.jsonl` and `artifacts.jsonl`. VP-7 is historical Agent-runtime evidence and is not a VP-6 materialization target. The caller derives the explicit absolute store path from this contract; it is never derived from CWD.
 - **Presence/format/digest verification:** OKF and focused document checks for the Markdown records; CLI JSON lines and stable exit/error framing; JSONL line parsing, event identity, exact append-byte checks, partial-write rollback checks, and query read-only checks for test stores and any actual event; `artifacts verify` reports presence, format and digest separately from a supplied semantic judgment.
 - **Semantic verification:** separate acceptance review establishes scope/classification and any claimed equivalence from reproduction, context, and evidence. Deterministic equality alone does not prove semantic equivalence.
 
@@ -152,12 +154,12 @@ installation and Runtime acceptance remain open.
 
 Read-only F reconciliation: focused `findings.test.ts`, `artifacts.test.ts` and
 `catalog-cli.test.ts` report 141 pass / 0 fail / 1,255 assertions; the current
-package suite is 746 pass / 4 skip / 0 fail. No `docs/work/findings.jsonl` or
+package suite is 747 pass / 4 skip / 0 fail. No `docs/work/findings.jsonl` or
 `artifacts.jsonl` exists. AC-20/21/23 remain component evidence, AC-22 remains
 partial, and AC-24 remains component-only. A real content operation/store,
 semantic acceptance review, host installation and Runtime acceptance remain
-open. G rebind inputs are the 12 paths in the `REQ-D3-D8` source-binding table;
-rebind before handoff without sending or claiming admission. Step F remains open.
+open. VP-7 and G are historical Agent-runtime evidence and are not F
+dependencies. Step F remains open.
 
 ## Links and handoff
 

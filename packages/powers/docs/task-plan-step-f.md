@@ -32,22 +32,25 @@ generated: { by: vida-agent/gpt-6-luna, at: '2026-10-23T00:33:38Z' }
 revision: '9'
 ---
 
-**Goal:** keep VP-5, VP-6, and VP-7 separate; implement the bounded Standalone findings store API, existing CLI caller, caller procedure, and proof cases.
+**Goal:** keep VP-5 and VP-6 as Powers Standalone records; implement the bounded Standalone findings store API, existing CLI caller, caller procedure, and proof cases. VP-7 is Agent-runtime-owned historical handoff evidence and is not an F dependency.
 
-**The specification this plan follows from:** B: `docs/business-requirements.md` BR-07, BR-11, BR-16, BR-17 and `docs/research/vida-powers-product-research.md` sections 8-10. S: `docs/system-specification.md` SR-37-SR-54, SR-55, and SR-72. C: the delivery status in `docs/next-actions.md` and the existing runtime WorkItem/v1 owner. Relevant acceptance criteria are AC-20 through AC-24; only proven portions may close, and AC-22 remains open wherever semantic candidate generation or equivalence is not proven. AC-23 traces through both SR-53 and SR-54.
+**Data-plane boundary:** F owns only the Powers Standalone data plane: `docs/work/VP-5.md`, `docs/work/VP-6.md`, local `findings.jsonl` and `artifacts.jsonl`. Agent-owned `WorkItem/v1`, runtime findings/artifacts, runtime state and Runtime acceptance are read-only references and outside F closure.
+
+**The specification this plan follows from:** B: `docs/business-requirements.md` BR-07, BR-11, BR-16, BR-17 and `docs/research/vida-powers-product-research.md` sections 8-10. S: `docs/system-specification.md` SR-37-SR-54, SR-55, and SR-72. C: the delivery status in `docs/next-actions.md`; the Agent-owned `WorkItem/v1` owner is a read-only reference, not an acceptance owner. Relevant acceptance criteria are AC-20 through AC-24, scoped to Powers Standalone; only proven portions may close, and AC-22 remains open wherever semantic candidate generation or equivalence is not proven. AC-23 traces through both SR-53 and SR-54.
 
 ## Global constraints
 
-- Keep VP-5, VP-6, and VP-7 as three separate product Markdown Work Items. Their IDs already map to implementation-plan Stages 5, 6, and 7.
-- Keep the D3+D8 request ID `REQ-D3-D8` separate from VP-7. Never reuse VP-7 as the request ID.
-- Reuse the Agent-owned `workflowWorkItemSchema` in `packages/agent/src/orchestration/workflow-session-reservation-contract.ts` and the existing `WorkItem/v1` field list in `agent-runtime.config.v1.yaml` around line 1135. The current required fields are `schema`, `id`, `provider`, `provider_type`, `canonical_kind`, `intent`, `project_id`, `title`, `description`, `labels`, and `risk_flags`.
-- Treat the VP Markdown Work Items as human planning records. Their goal, Work Scope, acceptance, relations, and evidence sections follow SR-40. They are not machine WorkItem/v1 records and do not establish Runtime admission.
+- Keep VP-5 and VP-6 as separate Powers Standalone Markdown Work Items. VP-7 is Agent-runtime-owned historical handoff evidence, not an active F item or dependency.
+- The D3+D8 request `REQ-D3-D8` is Agent-runtime-owned historical evidence. It is not part of F scope, F closure or F acceptance.
+- Reuse the Agent-owned `workflowWorkItemSchema` in `packages/agent/src/orchestration/workflow-session-reservation-contract.ts` and the existing `WorkItem/v1` field list in `agent-runtime.config.v1.yaml` around line 1135 only as read-only references. The current required fields are `schema`, `id`, `provider`, `provider_type`, `canonical_kind`, `intent`, `project_id`, `title`, `description`, `labels`, and `risk_flags`. F does not validate, create or close Agent WorkItem/v1 records. Their goal, Work Scope, acceptance, relations, and evidence sections follow SR-40. They are not machine WorkItem/v1 records and do not establish Runtime admission.
 - Each Work Item carries a human-readable `artifact_contract`: output kind, required data, materialization location, and verification method. Record presence/format/digest checks separately from semantic validity, reusing SR-41 terms without defining a new schema.
+- Treat VP-5 and VP-6 as Powers Standalone human planning records. Their goal, Work Scope, acceptance, relations, and evidence sections follow SR-40. They are not machine WorkItem/v1 records and do not establish Runtime admission.
 - Do not invent `provider`, `provider_type`, or `project_id` values. A machine record requires validated project/provider registration and its owner; this step creates none.
 - Do not add a parallel WorkItem schema or claim the Markdown files satisfy the runtime validator.
 - Use checker-supported Work Item frontmatter: non-empty `type`, `status` (`draft|stable|deprecated`), ISO `stale_after`, `sources[].resource`, and actor-valid `generated.by` plus ISO `generated.at`. New docs contain no BR/SR/AC definition markers; cite canonical definitions in prose or links.
 - Put AC references in prose or links. Do not use AC IDs as the first column of a table, which would duplicate canonical AC definitions in the OKF checker.
-- `skills/vp-mode/scripts/findings.ts` is the sole Standalone findings writer. It owns append operations to `docs/work/findings.jsonl`; no other module writes that path.
+- `skills/vp-mode/scripts/findings.ts` is the sole Powers Standalone findings writer. It owns append operations to `docs/work/findings.jsonl`; no other module writes that path.
+- Powers Standalone findings/artifacts are product-local data. Agent runtime findings, artifacts and `WorkItem/v1` state remain with their Agent owner; F neither creates nor validates them.
 - Keep findings source identity and provenance explicit and validated at the input boundary. Preserve observed versus reported origin; do not infer attribution or create a production event from test data.
 - Create `findings.jsonl` only when a real finding event is recorded. Keep the path absent when there is no event. Do not add a database, search service, queue service, or semantic model.
 - Append primary observations and merge events. Never rewrite or delete earlier JSONL lines. A finding does not authorize a fix.
@@ -63,7 +66,7 @@ Review inputs: `.102` accepted the corrected caller contract without a new produ
 |---|---|
 | Read `docs/work/VP-5.md` | Existing human Work Item for implementation-plan Stage 5; no edit in this round |
 | Reconcile `docs/work/VP-6.md` after proof | Existing human Work Item for implementation-plan Stage 6; this round adds caller and writer evidence |
-| Read `docs/work/VP-7.md` | Existing human Work Item for implementation-plan Stage 7; no edit in this round |
+| Read `docs/work/VP-7.md` | Historical Agent-runtime handoff evidence only; read-only and not an F closure dependency |
 | Modify `skills/vp-mode/scripts/findings.ts` | Sole validated JSONL read/write owner and candidate query |
 | Modify `tests/findings.test.ts` | Findings API behavior evidence |
 | Modify `skills/vp-mode/scripts/catalog-cli.ts` | Existing CLI nested findings adapter and JSON protocol |
@@ -74,18 +77,18 @@ Review inputs: `.102` accepted the corrected caller contract without a new produ
 | `docs/work/findings.jsonl` | Conditional data output only for a real event; keep absent otherwise |
 
 No file under `packages/agent/` is modified. Runtime findings remain owned by the existing Agent state owner and are outside this Standalone writer.
-This bounded implementation owns only the nine named paths above. It does not duplicate VP-5/VP-6/VP-7, modify Agent or Runtime owners, or modify B/S/AC sources, schemas, catalog, corpus, notices, dependency manifests, or other evidence lanes. After the final F bytes are frozen, the owner rebinds the affected G inputs before actual handoff or admission. Preserve the published `.103` audit and `.106` correction; do not rewrite historical evidence or require all twelve unchanged-input bindings before code integration.
+This bounded implementation owns only the nine named paths above. It does not duplicate VP-5/VP-6, modify Agent or Runtime owners, or modify B/S/AC sources, schemas, catalog, corpus, notices, dependency manifests, or other evidence lanes. VP-7 and G are historical Agent-runtime handoff evidence and require no F rebind. Preserve the published `.103` audit and `.106` correction; do not rewrite historical evidence.
 
 ## Task F1 - Reconcile the existing product Work Items
 
-**Files:** read existing `docs/work/VP-5.md` and `docs/work/VP-7.md`; reconcile existing `docs/work/VP-6.md` after proof.
+**Files:** read existing `docs/work/VP-5.md`; reconcile existing `docs/work/VP-6.md` after proof. `VP-7` is historical Agent-runtime evidence and is not an F input.
 
-1. Verify the existing VP-5, VP-6, and VP-7 IDs map to implementation-plan Stages 5, 6, and 7. Keep the three Markdown records distinct.
+1. Verify the existing VP-5 and VP-6 IDs map to Powers Standalone implementation-plan Stages 5 and 6. Keep the two active records distinct; do not add VP-7 to F closure.
 2. Preserve their current owner, goal, frozen Work Scope, acceptance prose, typed relations, evidence, and human-readable `artifact_contract` sections. Do not create replacement or duplicate Work Items.
 3. Reconcile VP-6 after proof so its artifact contract and evidence name the existing findings CLI, caller procedure, rollback behavior, and error boundary.
 4. Keep the Agent-owned `workflowWorkItemSchema` and eleven-field WorkItem/v1 contract authoritative. The Markdown records do not establish Runtime admission or supply guessed provider/project values.
 
-**Acceptance:** the three existing Work Items retain their distinct IDs and Stages; VP-6 reflects the proved caller contract; no duplicate Work Item, machine record, fabricated project/provider value, or Runtime admission claim is added.
+**Acceptance:** VP-5 and VP-6 retain their distinct Powers Standalone IDs and Stages; VP-6 reflects the proved caller contract; VP-7 remains historical Agent-runtime evidence outside F; no duplicate Work Item, machine record, fabricated project/provider value, or Runtime admission claim is added.
 
 ## Task F2 - Implement the findings API and caller
 
@@ -105,16 +108,16 @@ This bounded implementation owns only the nine named paths above. It does not du
 2. Queue full package test, coverage with configured thresholds 1.0, typecheck, and Agent Knip until all writers freeze; do not duplicate these final-integration gates. Run corpus checks only if corpus inputs change.
 3. Run selected candidate OKF/documentation checks only where checker contract allows out-of-root paths; otherwise record the exact checker limitation for root. Require no failures and nonzero selected count to claim a pass.
 4. Reconcile VP-6 after proof: artifact contract names the store, findings CLI, and caller procedure; separate artifact presence/format/digest from semantic validity. Keep AC-20/21/23 open, AC-22 partial until semantic/equivalence evidence exists, and AC-24 component-only. No Runtime or host acceptance claim.
-5. Record actual status in the F-owned log and next-actions only. Hand off canonical index, acceptance, shared WORK and G rebinding to their owners; do not edit those inputs here.
+5. Record actual status in the F-owned log and next-actions only. Hand off canonical index, acceptance and shared WORK to their owners; do not edit those inputs here. VP-7/G are outside F.
 
 ## Definition of done
 
-1. VP-5, VP-6, and VP-7 remain separate Markdown Work Items and link to their existing stages.
+1. VP-5 and VP-6 remain separate Powers Standalone Markdown Work Items; VP-7 remains historical Agent-runtime evidence and is not an F closure dependency.
 2. WorkItem/v1 stays Agent-owned; no parallel schema or guessed Runtime identifiers appear.
 3. The findings writer is the only Standalone JSONL writer, and no store exists without a real event.
 4. Red evidence predates the first code edit. Focused candidate Bun tests, an isolated Bun CLI smoke, candidate TypeScript checking, the changed-script API scan, and Markdown checks pass or have their exact checker limitation reported. Do not run a separate Node smoke or duplicate final integration gates in this candidate lane.
 5. Replay, confirmed-duplicate evidence, conflict, and ambiguity cases have distinct assertions. AC-22 remains open wherever real semantic/equivalence proof is absent.
-6. VP-6, log, and the F-specific next-actions status are reconciled to candidate evidence. The index, acceptance, shared WORK, G rebind, independent review, and final integration gates remain with their owners. No Runtime acceptance or final F closure is claimed before those gates.
+6. VP-6, log, and the F-specific next-actions status are reconciled to candidate evidence. The index, acceptance, shared WORK, independent review, and final integration gates remain with their owners. VP-7/G and Runtime acceptance are outside F. No final F closure is claimed before those gates.
 
 ## Implementation status addendum — 2026-10-22
 
@@ -141,12 +144,12 @@ The implementation remains under independent output review, not accepted. AC-20/
 
 ---
 
-**Plan implementation gate:** the corrected plan is READY for implementation. Routine file creation and the three existing VP IDs need no further product choice. Any request to create a machine WorkItem/v1 or close AC-22 without semantic/equivalence evidence remains blocked. Final F closure still requires independent output review, canonical reconciliation, and final integration gates.
+**Plan implementation gate:** the corrected plan is READY for implementation. Routine file creation and the VP-5/VP-6 Powers Standalone records need no further product choice; VP-7 is historical Agent-runtime evidence. Any request to create a machine WorkItem/v1 or close AC-22 without semantic/equivalence evidence remains blocked. Final F closure still requires independent output review, canonical reconciliation, and final integration gates.
 
 ## Revision 5 implementation constraints
 
 - Exact owned patch allowlist: `skills/vp-mode/scripts/findings.ts`, `tests/findings.test.ts`, `skills/vp-mode/scripts/catalog-cli.ts`, `tests/catalog-cli.test.ts`, `skills/vp-mode/SKILL.md`, `docs/task-plan-step-f.md`, `docs/work/VP-6.md`, `docs/log.md`, and F-specific status in `docs/next-actions.md`.
-- No production event exists; keep `docs/work/findings.jsonl` absent. Do not modify B/S/AC, schema, catalog/corpus, `REQ-D3-D8`, VP-5/VP-7, Agent, Runtime, or G-bound files.
+- No production event exists; keep `docs/work/findings.jsonl` absent. Do not modify B/S/AC, schema, catalog/corpus, Agent/Runtime owners, or historical `REQ-D3-D8`/VP-7 evidence.
 - `--store` is explicit and caller-resolved from VP-6, never defaulted from CWD. Exact-path symlink validation is point-in-time. Error framing hides event text and low-level exceptions. No process lock/concurrency guarantee.
 - Deliver exact relative patch paths and per-file before/current-base/candidate SHA-256; candidate checks and receipts remain inside `.104`. No Git metadata write, staging, commit, push, or canonical source mutation.
 
@@ -192,8 +195,8 @@ and a writer-level scope gate for AC-23. This widens the revision-5 allowlist by
 
 Read-only F reconciliation after the project-document packet: focused
 `findings.test.ts`, `artifacts.test.ts` and `catalog-cli.test.ts` pass 141 /
-0 fail / 1,255 assertions; the current package suite is 746 pass / 4 skip /
+0 fail / 1,255 assertions; the current package suite is 747 pass / 4 skip /
 0 fail. No real `findings.jsonl` or `artifacts.jsonl` exists. AC-20/21/23 stay
-component, AC-22 stays partial, and AC-24 stays component-only. G rebind remains
-before handoff; no send, admission, host acceptance or Runtime acceptance is
-claimed. Step F remains open.
+component, AC-22 stays partial, and AC-24 stays component-only. VP-7/G are
+outside F; no send, admission, host acceptance or Runtime acceptance is claimed.
+Step F remains open.

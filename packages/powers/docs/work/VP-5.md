@@ -70,8 +70,8 @@ algorithm or vector. Production outputs, host acceptance and release remain open
 
 - `implements` → the skills and delivery stage in the [next actions](../next-actions.md).
 - `derived-from` → BR-01/BR-05/BR-07/BR-19/BR-20, D5, and D7.
-- `blocks` → VP-7, which depends on Stages 5 and 6.
-- Related Work Items: VP-6 and VP-7.
+- VP-7 is historical Agent-runtime handoff evidence; it is not a VP-5 dependency.
+- Related active Work Item: VP-6.
 
 ## Expected evidence
 

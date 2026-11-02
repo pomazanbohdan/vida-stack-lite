@@ -119,10 +119,11 @@ of configuration, schemas, runtime requests or semantic conditions that are clos
 of stages Stage 2/4/5/7 or by human review, not by an automated test.
 
 Current implementation evidence follows the canonical owners: E4/E5 in
-[next actions](next-actions.md) and [VP-5](work/VP-5.md), F in [task plan F](task-plan-step-f.md) and
-[VP-6](work/VP-6.md), and G in [task plan G](task-plan-step-g.md),
-[VP-7](work/VP-7.md), and [REQ-D3-D8](requests/REQ-D3-D8-runtime-request.md).
-These evidence routes do not add AC definitions or imply Runtime acceptance.
+[next actions](next-actions.md) and [VP-5](work/VP-5.md); F in [task plan F](task-plan-step-f.md)
+and [VP-6](work/VP-6.md), scoped to Powers Standalone. G, [VP-7](work/VP-7.md) and
+[REQ-D3-D8](requests/REQ-D3-D8-runtime-request.md) are historical Agent-runtime
+handoff evidence outside Powers. These evidence routes do not add AC definitions
+or imply Runtime acceptance.
 
 **Open coverage gaps:** runtime acceptance (AC gap), qualification on
 hosts other than Codex (AC-27, gap), marketplace installation (gap), a legal opinion
