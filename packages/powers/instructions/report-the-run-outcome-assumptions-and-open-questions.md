@@ -24,7 +24,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/assets/headless-schemas.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-spec/assets/headless-schemas.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -42,3 +42,4 @@ Always include the intent (best-guess if not certain) and a one-sentence `reason
 The `intent` field must match the detected intent. Omit keys for artifacts not produced.
 The contract is intentionally tiny — return the outcome and the files touched. Anything else a caller needs is inside those files
 `files` lists every file written or modified in this run, in any order.
+Close with the common next step: ask Sofia (`bmad-agent-po`) to write or update the initiative's requirements from the PRD; `bmad-ux` can run before or after; `bmad-architecture` reads the initiative, so Sofia goes first.

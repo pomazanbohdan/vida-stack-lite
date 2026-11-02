@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6248,
+  "revision": 6254,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-02T15:00:00.000Z",
+  "updated_at": "2026-11-02T17:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -3757,7 +3757,7 @@
     {
       "instruction_id": "extract-the-sources-instead-of-ingesting-them",
       "path": "instructions/extract-the-sources-instead-of-ingesting-them.md",
-      "sha256": "324786630c848bae9758b0c422ec5fa8989d93fc5d838467243b429f26f02ae8"
+      "sha256": "f9214d0f3a6459236b8dc44855fabe04d8c02ac87a0381ad269478180526597f"
     },
     {
       "instruction_id": "facilitate-the-breakdown-and-let-the-user-decide",
@@ -5847,7 +5847,7 @@
     {
       "instruction_id": "list-the-scenarios-before-touching-the-harness",
       "path": "instructions/list-the-scenarios-before-touching-the-harness.md",
-      "sha256": "c98361bb44a6fd122a9a1e63975c0404e96d2647225e3950d76a8bcb901cef77"
+      "sha256": "0dd5058bb762ab6b0e2ba4eada50cc1b77a28e23c40324b85440296c7898da4b"
     },
     {
       "instruction_id": "list-the-things-that-look-done-but-are-not",
@@ -7287,7 +7287,7 @@
     {
       "instruction_id": "offer-to-resume-an-in-progress-run",
       "path": "instructions/offer-to-resume-an-in-progress-run.md",
-      "sha256": "263c2d178afa955a30db5bfa9ed3a9809f185ee2d28d89e797982dda0805fb9b"
+      "sha256": "3cd2e1ff9e35d08bc1cf3e13eda7abb4a3b3fb449e2dc5d160fbab434225d05f"
     },
     {
       "instruction_id": "offer-to-resume-existing-work-instead-of-duplicating-it",
@@ -7347,7 +7347,7 @@
     {
       "instruction_id": "open-with-a-brain-dump",
       "path": "instructions/open-with-a-brain-dump.md",
-      "sha256": "837bcc9f1bd1f578cc2ace21ffb61980983658f3d802659a801fa86419748171"
+      "sha256": "d4b7fadeae956dac44774ac5b56bc24a1c72e101cc1bae62bca8600ceb91314d"
     },
     {
       "instruction_id": "open-with-the-intent-and-say-where-it-came-from",
@@ -9067,7 +9067,7 @@
     {
       "instruction_id": "report-the-run-outcome-assumptions-and-open-questions",
       "path": "instructions/report-the-run-outcome-assumptions-and-open-questions.md",
-      "sha256": "0e8671198640bb85f5189ac80a26cec32a741a7027222a1900a4579e820d9314"
+      "sha256": "be599c736c83bd946eed2b84f909625d084b3250cd3fcd6a04e6fa1368dcedf0"
     },
     {
       "instruction_id": "report-the-split-instead-of-forcing-one-rating",
@@ -9462,7 +9462,7 @@
     {
       "instruction_id": "review-a-requirements-document-dimension-by-dimension",
       "path": "instructions/review-a-requirements-document-dimension-by-dimension.md",
-      "sha256": "48ee2ab789c682fac358f1ad489c7b1e1b0b448e6d9bcda2e7356e9dc701bd6e"
+      "sha256": "6b1797fc238f8545bca2df6dbd3613563906381e364587543469bb355eb7bde8"
     },
     {
       "instruction_id": "review-a-skill-with-parallel-readers-over-every-file",

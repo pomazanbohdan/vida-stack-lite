@@ -2,6 +2,15 @@
 
 ## 2026-11-02
 
+* **Bmad B1 staged:** updated 6 instructions for ticket-aware PRD and QA work:
+  read the initiative/epic first, treat its Requirements as settled, read the
+  ticket file in full, scan the epic folder for resume, hand off to Sofia
+  (`bmad-agent-po`), let the PRD feed ticket Requirements, and make QA read the
+  epic/story before listing scenarios. The bmad pin is **not** advanced and
+  provenance remains at `cfba3ff5`; this is a staged content batch, not an
+  admission or fidelity claim. Catalog revision 6254; `check-corpus` reports
+  2,514 instructions and zero issues.
+
 * **Multi-direction vector and change authority:** `VECTOR.md` now separates the
   global synthesis from direction vectors (engineering, product/design,
   operations, documentation, communication), adds the

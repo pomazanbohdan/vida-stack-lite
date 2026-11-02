@@ -19,7 +19,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-product-brief/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -30,6 +30,7 @@ domains:
 # Extract the sources instead of ingesting them
 Extract, don't ingest. Source documents go to subagents for extraction; the parent assembles from extracts.
 Only load source documents into the parent context wholesale when no subagents are available.
+The ticket file is the exception: the parent reads it in full, never as an extract.
 Source artifacts (provided by the user or discovered during the run — transcripts, brainstorms, research reports, code, web results, prior briefs) enter the parent conversation as relevance-filtered extracts, not loaded wholesale.
 Subagents do the extraction against the user's stated focus; the parent context stays lean.
 Research subagents (default). During Discovery, spawn web-research subagents to ground the picture: what exists in the space, how comparables position themselves, current landscape. Subagent does the search; parent receives a digest.

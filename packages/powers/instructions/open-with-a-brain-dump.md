@@ -20,7 +20,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-product-brief/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -30,7 +30,8 @@ domains:
 
 # Open with a brain dump
 Always the first move, even when the user opens with paragraphs of context (that is intake, not the dump).
-Ask for verbal context *and* any existing inputs they want you to read — product brief, research, customer transcripts, competitive analysis, prior PRD draft, design docs.
+When a ticket exists for this work (`initiative-*.md`, `tickets/epic-*/epic-*.md`; older projects `SPEC*.md`), read it yourself, first and in full, and treat its Requirements as settled.
+Ask for verbal context *and* any other existing inputs they want you to read — product brief, research, customer transcripts, competitive analysis, prior PRD draft, design docs.
 Paths or paste; big docs are fine, you will subagent-extract.
 A simple "anything else?" surfaces what they almost forgot.
 Open with space for the full picture: invite a brain dump and ask up front for any source material they already have (memo, deck, transcript, prior brief, slack thread).

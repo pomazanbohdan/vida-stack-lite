@@ -20,7 +20,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/assets/prd-validation-checklist.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: checklist
@@ -69,7 +69,7 @@ Look for:
 - `[NOTE FOR PM]` callouts at deferred decisions and unresolved tensions.
 - De-scoping proposed honestly, not done silently.
 ## Downstream usability
-If this PRD feeds UX, architecture, or story creation, can those workflows source-extract from it cleanly?
+If this PRD feeds UX, architecture, or the ticket's Requirements (Sofia cites FR ids as sources), can those workflows source-extract from it cleanly?
 Look for:
 - Glossary present; every domain noun used identically across FRs, UJs, SM definitions.
 - FR / UJ / SM IDs contiguous, unique, and cross-references that resolve.

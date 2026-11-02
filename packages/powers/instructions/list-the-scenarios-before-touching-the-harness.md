@@ -18,7 +18,7 @@ compatibility_requires: []
 provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-qa-generate-e2e-tests/workflow.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -29,6 +29,7 @@ domains:
 
 # List the scenarios before touching the harness
 Then list the scenarios the tests must cover, before touching the harness.
+For a ticket, read the epic file, and the story file when there is one, first and in full and trust them; the scenarios come from their Requirements and acceptance criteria, the find result's `description` and `verify`, and the plan's I/O & Edge-Case Matrix when the plan exists. Open a companion only where the ticket points at it. Never write to a ticket file, and never run `tickets.py pull` or `tickets.py mark`.
 Each scenario is one sentence a product person would recognize: who does what, and what they see.
 Mark the scenarios an existing test already covers.
 Present the list and HALT for the user's confirmation before writing tests.

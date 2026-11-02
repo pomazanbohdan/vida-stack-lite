@@ -19,7 +19,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-prd/SKILL.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-product-brief/SKILL.md
 status: active
-revision: 2
+revision: 3
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -32,6 +32,8 @@ Before binding a fresh workspace, scan
 for prior in-progress runs
 whose status is not final;
 if any exist, offer to resume rather than starting over.
+When the ticket is an epic, scan the epic's folder as well.
+The run lands in `prd-{slug}`; on an epic, use the epic's slug without `epic-`.
 Continuity across sessions. If a prior in-progress draft for this project exists, the user is offered to resume.
 Set the document's status to final so future invocations distinguish it from in-progress drafts.
 The workspace persists; stop and resume freely.

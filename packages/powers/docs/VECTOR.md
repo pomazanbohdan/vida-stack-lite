@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '2'
+revision: '3'
 ---
 
 # Instruction change vector
@@ -42,6 +42,7 @@ The global synthesis: instructions move from descriptive prose to an executable
 contract.
 
 - **Context before questions** — read the available material, then ask only the gap.
+- **Ticket-first requirements** — read the initiative or epic first and treat its Requirements as settled.
 - **Explicit decisions** — approaches, design doc, approval gate before build.
 - **Progressive disclosure** — short `SKILL.md` routes to `references/`.
 - **Compaction-safe state** — ledger, wiki or reference, not session memory.
@@ -55,7 +56,7 @@ contract.
 | Direction | Current movement | Evidence | Derived / auto boundary | Owner decision |
 |---|---|---|---|---|
 | Engineering | Fresh context per subagent; verification; small batches; reference detail | superpowers, matt-skills | DERIVED after review: provenance, catalog/map/baseline; AUTO: links and counts | none for mechanical; review for semantic |
-| Product / design | Context first; explicit approaches; design gate | superpowers | DERIVED after review: provenance, catalog/map; AUTO: links and counts | product policy for `user_decision: false` groups; no default for `user_decision: true`; scope and priority |
+| Product / design | Context first; explicit approaches; design gate; ticket-aware handoff | superpowers, bmad-method | DERIVED after review: provenance, catalog/map; AUTO: links and counts | product policy for `user_decision: false` groups; no default for `user_decision: true`; scope and priority |
 | Operations | Wiki memory; gradual automation; loop caps | matt-skills | DERIVED after review: provenance, catalog/map; AUTO: links and counts | operational policy, automation rollout |
 | Documentation | Short contract; OKF/D6; conflict precedence; progressive disclosure | both batches | AUTO: broken local links, heading/count drift, log/vector rows | canonical scope, acceptance text |
 | Communication | Outcome / Evidence / Decision / Next; less description for user messages only | adaptive-reporting | none | channel policy, formal standard |
@@ -108,6 +109,15 @@ product-owner default and cannot override `user_decision: true`.
 | 2 | matt-skills | `49dd158d1076134a641b33efb035946536778336` → `4ae2317ddb22b046e26455e4f9c9b3aaaf62212d` | 69 | 8 | 2 | 16 deleted; 9 rejected | 2,514 / 2,776 / 1,202 | engineering; operations; documentation |
 
 Legend: result = corpus instructions / map records / baseline files.
+
+## Staged batches
+
+| Stage | Donor | Scope | Content updates | Status |
+|---|---|---|---:|---|
+| B1 | bmad-method | `bmad-prd` + `bmad-qa-generate-e2e-tests` ticket awareness | 6 | content staged; pin/provenance advance pending |
+
+A staged batch has changed instruction content but has not advanced the donor pin
+or provenance. It is not a completed batch and makes no admission claim.
 
 ## Batch update rule
 
