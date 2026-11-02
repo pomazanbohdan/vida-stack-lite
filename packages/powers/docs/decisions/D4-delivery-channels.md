@@ -107,8 +107,10 @@ marketplace.
 > made. Channel 1 (separate plugin) and channel 2 (build into the agent package) do not
 > depend on publication.
 
-1. **Stage 5** delivers: the skills `vp-mode` and `vp-setup`, the hook, its own `catalog.*`
-   scripts, per-host VP plugin manifests and the marketplace definition.
+1. **Stage 5** delivers: the source entries `vida-bootstrap`, `vp-mode` and `vp-setup`;
+   the hook; its own `catalog.*` scripts; per-host VP plugin manifests for the two
+   host-delivered skills; and the marketplace definition. Host delivery of
+   `vida-bootstrap` remains a separate, unauthorized extension.
 2. **Stage 9** no longer contains the marketplace as "out of scope": channel 3 moves into the
    working scope (together with it — the marketplace infrastructure that the repo lacks).
    D14 and D15 supersede the blanket domain-pack exclusion for the selected instruction

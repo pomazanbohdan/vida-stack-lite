@@ -107,14 +107,12 @@ read these pointers and the current work record again; restore source/profile
 bindings rather than repeating completed side effects. Reuse a bundle only while
 its intents, scope, source/profile digests and applicability remain current.
 
-For this packet the user requested Terra `gpt-6.1-terra` xhigh implementation
-and Luna `gpt-6-luna` bounded research/review; Root coordinates. Profile model
-inventory is a dated availability observation, not quota, permission or provider
-independence proof. Refresh it when availability changes. The profile's
-`approval-policy` and `context-degradation-policy` remain unresolved until the
-user actually selects them; a bundle needing such a choice stops for resolution.
-The current explicit implementation grant is scoped to its work record and does
-not silently select a permanent approval policy.
+Profile model inventory is a dated availability observation, not quota,
+permission or provider independence proof. Refresh it when availability changes.
+The profile's `approval-policy` and `context-degradation-policy` remain unresolved
+until the user actually selects them; a bundle needing such a choice stops for
+resolution. A task-specific implementation grant belongs in its work record and
+does not select a permanent approval policy.
 
 ## Explicit profile and local commands
 

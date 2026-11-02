@@ -56,9 +56,10 @@ VP provides:
 - **a canonical corpus of atomic instructions** — techniques converted from verified
   sources, each with application conditions, a semantic contract, tags,
   provenance and compatibility rules;
-- **a single entry** — the skill `vp-mode` (orchestration): the user describes the desired
-  outcome in ordinary language, then VP itself selects the needed instructions, forms
-  a bundle and launches execution or delegation;
+- **a required entry chain** — `vida-bootstrap` supplies the role contract, then
+  `vp-mode` (orchestration): the user describes the desired outcome in ordinary
+  language, then VP selects the needed instructions, forms a bundle and launches
+  execution or delegation;
 - **product methodology policy** — choice groups (testing, review,
   architecture, delivery), explicit inheritance between products, temporary exceptions;
 - **materialization** — a readable and verifiable result instead of a report in
@@ -193,7 +194,8 @@ metadata and execution context are excluded. Overflow rejects the whole bundle w
 
 | Skill | Role |
 |---|---|
-| `vp-mode` | **The main orchestration skill.** The single working entry point: request → instruction selection → bundle → execution or delegation |
+| `vida-bootstrap` | **Required project-document role entry.** Selects the orchestrator or an agent base plus exactly one family delta; reading it is not host activation |
+| `vp-mode` | **The main orchestration skill.** The working entry point: request → instruction selection → bundle → execution or delegation |
 | `vp-setup` | **Auxiliary setup skill.** Detects projects, idempotently writes the configuration (managed block holds a JSON payload), verifies activation; setup hooks are deferred (D10) |
 
 `vp-setup` initializes by environment:
@@ -204,7 +206,7 @@ metadata and execution context are excluded. Overflow rejects the whole bundle w
 | Agent delivery without host systems | The config file of the agent runtime |
 | Host layer (e.g. Codex) | The project config file assembled from the layer templates |
 
-`vp-mode` keeps every-run rules in `SKILL.md` and loads `references/...` only at the branch that needs it. Commands use `<skill-dir>`, the directory the host reports for the loaded skill, so an installed plugin works from any consumer cwd. `vp-setup` runs five steps: detect carrier, read inventory, resolve choices, write or `--dry-run`, verify the managed block.
+`vp-mode` keeps every-run rules in `SKILL.md` and loads `references/...` only at the branch that needs it. Commands use `<skill-dir>` resolved from the sidecar-mapped project path; from another working directory, pass root-derived explicit paths. `vp-setup` runs five steps: detect carrier, read inventory, resolve choices, write or `--dry-run`, verify the managed block.
 
 ## 7. Delivery channels
 
@@ -278,7 +280,7 @@ packages/powers/
   docs/                         OKF bundle (index.md, log.md, research/, decisions/, work/, requests/)
   config/                       VP schemas (VPCatalog/v1, VPInstruction/v1, VPMethodologyProfile/v1, VPEffectiveProfile/v1, VPCorpusMap/v1, VPPluginManifestInputs/v1); source profile: `config/methodology-profile.json`
   instructions/                 canonical instructions: .md + metadata, flat
-  skills/                       vp-mode, vp-setup (+ their scripts/)
+  skills/                       vida-bootstrap, vp-mode, vp-setup (+ their scripts/)
   (.codex-plugin/ .claude-plugin/ .cursor-plugin/ .agents/plugins/)     selected E5a host outputs; none generated from production inputs
   E5b target roots (planned production outputs): Muse root `marketplace.json` with `plugins/vida-powers/`; separate Antigravity plugin root. The Muse package manifest/payload and Antigravity root `plugin.json`/payload fixtures are formed; the Muse marketplace output is withheld and production inputs/outputs remain absent
   scripts/                      product support, including build-manifests.ts, check-okf.ts, check-corpus.ts, convert.ts, validate-donors.ts, audit.ts, audit-report.ts, definitions.ts
@@ -358,7 +360,8 @@ product questions, the quality gates and the risks. This README does not restate
 decision records (D1–D9, D4b and D10–D16), an OKF bundle with a validator, and a donor manifest
 with eight processed snapshots (seven methodological donors and Open Knowledge Format) plus
 Wondelai registered-not-processed. `research_status: finalized`; steps A0, A, B, C and D are
-closed; E1–E4 are implemented and E5b production qualification remains open.
+closed; E1–E4 are implemented, the project-document bootstrap packet is complete
+(746 pass / 4 skip), and E5b production qualification remains open.
 
 **Deferred outside the current scope:** registration in the shared root files of the repository;
 D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover; marketplace publication; the
