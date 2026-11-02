@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6290,
+  "revision": 6296,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-02T20:00:00.000Z",
+  "updated_at": "2026-11-02T21:00:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -947,7 +947,7 @@
     {
       "instruction_id": "approve-publish-and-start-are-three-separate-steps",
       "path": "instructions/approve-publish-and-start-are-three-separate-steps.md",
-      "sha256": "968e963c679ceb441d1d8695357b649c7d40653bcd528a796288ee26eb5bbd0e"
+      "sha256": "94e8b14bd94d82bb50523cadc545e9959b620e2c933ac3c0eacf6d18fd1ccb6a"
     },
     {
       "instruction_id": "archive-the-old-artifacts-before-you-reuse-the-identifier",
@@ -1147,7 +1147,7 @@
     {
       "instruction_id": "assign-a-work-item-an-id-once-and-never-reuse-it",
       "path": "instructions/assign-a-work-item-an-id-once-and-never-reuse-it.md",
-      "sha256": "57fd3fee5d0cca9d3d819e80488421d5050069a32cc5f5399dfe3a98696f6444"
+      "sha256": "22ec9529ea49e5ba76fed8016f8d0f5a95a98656465c2ef6df9e10733029b637"
     },
     {
       "instruction_id": "assign-each-capability-to-a-tier-before-the-research",
@@ -2687,7 +2687,7 @@
     {
       "instruction_id": "cut-the-work-into-epics-by-capability-and-owner",
       "path": "instructions/cut-the-work-into-epics-by-capability-and-owner.md",
-      "sha256": "5071bed73d361d8e5bf6f7ef5674fcbba8f8b28339027542187c2f9913455f89"
+      "sha256": "1ae58ff52e67aed3ecb680f8d6e7f5a63c2157f791d1b9d16a1feba911f8700b"
     },
     {
       "instruction_id": "date-the-repeated-report-so-it-does-not-overwrite",
@@ -3642,7 +3642,7 @@
     {
       "instruction_id": "every-requirement-has-an-accountable-epic",
       "path": "instructions/every-requirement-has-an-accountable-epic.md",
-      "sha256": "9cee111d9e2444e9f368d5cf65da68092e26d3e7cd27ce6387c16de7cea79f09"
+      "sha256": "32bb565ca3e431b8bc21e2644a24178e8423ab7d1f089ad2354ca5ca74d4e900"
     },
     {
       "instruction_id": "every-skill-ships-with-its-own-case-file",
@@ -7167,7 +7167,7 @@
     {
       "instruction_id": "nothing-in-the-ticket-contradicts-its-source",
       "path": "instructions/nothing-in-the-ticket-contradicts-its-source.md",
-      "sha256": "4bb12e20192ed8c4713b8c0a130bc72aabaec6153e22bc398179c0516a555b00"
+      "sha256": "3402638c9a86f37c7773bbc23d9375ad68e1cbd2f7507a99cfaed441d900c6b9"
     },
     {
       "instruction_id": "number-every-source-and-resolve-every-inline-marker",
@@ -10622,7 +10622,7 @@
     {
       "instruction_id": "split-only-for-a-distinct-outcome-or-owner",
       "path": "instructions/split-only-for-a-distinct-outcome-or-owner.md",
-      "sha256": "aee6e8b3f15943878899b86bfa5180852c4dbe4e9abb3ef45d31ef9478e2af4e"
+      "sha256": "de59c7128c90eaea63b1ceec1b7a11fbbbaf8ac8ed1b599bd15b1c43e384355b"
     },
     {
       "instruction_id": "split-only-on-a-size-signal-and-one-axis-at-a-time",

@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '6'
+revision: '7'
 ---
 
 # Instruction change vector
@@ -119,6 +119,7 @@ Legend: result = corpus instructions / map records / baseline files.
 | B2 | bmad-method | `bmad-architecture` + `bmad-ux` ticket-first | 10 | content staged; pin/provenance advance pending |
 | B3 | bmad-method | `bmad-spec` reviewed against the new ticket owner | 2 | 17 instruction repoints to `bmad-agent-po/references/spec.md` pending |
 | B4 | bmad-method | `bmad-code-review` + `bmad-review` ticket and triage rules | 24 | content staged; pin/provenance advance pending |
+| B5 | bmad-method | `bmad-ticket` reviewed against the new `bmad-agent-po` owner | 6 | 56 instruction source repoints to `bmad-agent-po` pending |
 
 A staged batch has changed instruction content but has not advanced the donor pin
 or provenance. It is not a completed batch and makes no admission claim.
@@ -130,6 +131,9 @@ or provenance. It is not a completed batch and makes no admission claim.
 | `skills/bmad-spec/SKILL.md` | `skills/bmad-agent-po/references/spec.md` | bmad-spec removed; Sofia owns ticket requirements |
 | `skills/bmad-spec/assets/spec-template.md` | `skills/bmad-agent-po/references/spec.md` | template replaced by the ticket template |
 | `skills/bmad-spec/assets/headless-schemas.md` | `skills/bmad-agent-po/references/spec.md` | headless requirements now live in the ticket workflow |
+| `skills/bmad-ticket/**` | `skills/bmad-agent-po/**` (same relative path) | bmad-ticket removed; Sofia owns the ticket workflow |
+| `skills/bmad-ticket/assets/{initiative,epic,story}-template.md` | `skills/bmad-agent-po/assets/ticket-template.md` | three container templates merged into one |
+| `skills/bmad-ticket/customize.toml` | `skills/bmad-agent-po/customize.toml` | customization moved with the skill |
 
 ## Batch update rule
 

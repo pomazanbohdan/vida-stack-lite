@@ -1,7 +1,7 @@
 ---
 instruction_id: assign-a-work-item-an-id-once-and-never-reuse-it
 title: Assign a work item an id once and never reuse it
-summary: "An item's id is assigned once, is its only name, and is never given to another item — not even after the item is dropped or moved."
+summary: "An item's id is assigned once, is its only name, and is never given to another item — a move retires the old id, and neither a drop nor a move frees it for reuse."
 capability_tags:
   - plan-implementation
 pattern_tags:
@@ -21,7 +21,7 @@ provenance:
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=skills/bmad-ticket/references/board.md
   - donor=bmad-method; license=MIT; revision=cfba3ff5f982c1809e060606e399f55ebd7bce5e; path=tools/ticket-tree-rules.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -30,7 +30,8 @@ domains:
 ---
 
 # Assign a work item an id once and never reuse it
-An entry's `id` is a number (or letters and digits, such as `6a`, when the work already has that id), assigned once and never reused
+An entry's `id` is a number (or letters and digits, such as `6a`, when the work already has that id), assigned once and never reused.
 It is the ticket's only name on the repo store: `3` inside its epic, `2.3` from another epic.
+`tickets.py move` renumbers an entry when it moves to another parent; the old id is retired and never given out again, and every `after` naming it is rewritten.
 An entry is never deleted from an approved `tickets.toml`, so its id is never reused.
 That field joins the plan to its entry, so a title change that renames the plan never breaks the link.

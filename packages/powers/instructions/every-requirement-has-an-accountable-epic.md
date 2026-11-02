@@ -1,7 +1,7 @@
 ---
 instruction_id: every-requirement-has-an-accountable-epic
 title: Every requirement has an accountable container
-summary: "Every requirement of the whole body of work has a container that owns it or an agreed deferral, and every unit the work touches is a container, a touch point or named out of scope."
+summary: "Every requirement of the whole body of work has a container that owns it, a child initiative on a parent, or an agreed deferral; every unit the work touches is a container, a touch point or named out of scope."
 capability_tags:
   - coordinate-program
 pattern_tags:
@@ -21,7 +21,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-project.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/new-milestone.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: procedure
@@ -31,7 +31,5 @@ domains:
 ---
 
 # Every requirement has an accountable container
-Every initiative requirement has an accountable epic or an agreed deferral. Shared requirements say which part each epic delivers; no unexplained overlap.
+Every initiative requirement has an accountable epic, a child initiative when this is a parent initiative, or an agreed deferral. Shared requirements say which part each accountable unit delivers; no unexplained overlap.
 Every unit the source touches is an epic, a touch point (a unit the work only consumes or configures, named in the initiative's Boundaries with the epic that owns the work there), or named out of scope.
-
-Map every requirement to exactly one phase, derive two to five success criteria per phase as observable behaviours, and validate the full coverage before the plan is accepted.

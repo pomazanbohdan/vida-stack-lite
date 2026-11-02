@@ -2,6 +2,17 @@
 
 ## 2026-11-02
 
+* **Bmad B5 staged:** reviewed the 56 `bmad-ticket` instructions against the new
+  `bmad-agent-po` owner. Updated 6: slicing now cuts epics by capability and
+  deployment boundary rather than owner, a parent initiative may own child
+  initiatives instead of epics, approval means a repo commit while tracker
+  publication stays separate, `tickets.py move` retires the old entry id, a
+  requirement may be owned by a child initiative on a parent, and a source
+  conflict offers its correction through `spec.md`. The remaining 50 rules
+  still hold; their 56 bmad-ticket source entries wait for the final repoint to
+  `bmad-agent-po`. The bmad pin is **not** advanced; catalog revision 6296;
+  `check-corpus` reports 2,514 instructions and zero issues.
+
 * **Bmad B4 staged:** updated 24 `bmad-code-review` and `bmad-review`
   instructions. Review content now includes a ticket; the review target carries
   the story or epic file; the launch prompt passes the ticket path and takes

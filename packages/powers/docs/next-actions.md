@@ -83,8 +83,9 @@ templates/configuration and native host delivery are outside this packet.
    architecture/UX; B3 reviewed 17 spec instructions and updated 2, with repoints
    to `bmad-agent-po/references/spec.md` pending; B4 updated 24 review
    instructions for ticket-first review, four verification-gap shapes including
-   stale tests, and file-backed triage. The pin/provenance advance is
-   pending. Remaining bmad batches: build/build-auto, ticket, discovery/retro,
+   stale tests, and file-backed triage; B5 reviewed 56 ticket instructions and
+   updated 6, with repoints to `bmad-agent-po` pending. The pin/provenance
+   advance is pending. Remaining bmad batches: build/build-auto, discovery/retro,
    walkthrough/PRFAQ/forge, agents/tooling/docs and the new
    `bmad-agent-po` skill. Remaining triage:
    1,184 affected instructions and 45 new candidates across the other donors;

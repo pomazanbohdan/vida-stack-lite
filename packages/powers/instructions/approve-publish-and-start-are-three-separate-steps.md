@@ -1,7 +1,7 @@
 ---
 instruction_id: approve-publish-and-start-are-three-separate-steps
 title: "Approve, publish, and start as three separate steps"
-summary: "Approving a set of work items records it; publishing it and starting the work are approved separately, and none of them moves the status or the assignee."
+summary: "On the repo store, approval is the commit; on a tracker, publication is a separate approval, and starting the work is separate from both. None of them moves the status or the assignee."
 capability_tags:
   - clarify-requirements
 pattern_tags:
@@ -13,7 +13,7 @@ artifact_contract_required_data:
   - what was approved
   - the separate approvals still owed
   - the identity and status that were preserved
-artifact_contract_verified_by: publication and the start each carry their own approval
+artifact_contract_verified_by: "the repo commit or the tracker publication and the start each carry their own approval"
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
@@ -23,7 +23,7 @@ provenance:
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/complete-milestone/steps/git-tag.md
   - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/cleanup.md
 status: active
-revision: 3
+revision: 4
 schema: VPInstruction/v1.2
 classification_status: classified
 instruction_form: decision-rule
@@ -33,9 +33,9 @@ domains:
 
 # Approve, publish, and start as three separate steps
 Before publish, ask once which other validations to run unless already said, and still get a yes to publish unless they said to publish too.
-A reply approves what was presented; publication and starting work are approved separately unless the user asks for them together.
+A reply approves what was presented. On the repo store that yes is the commit to the tree; on a tracker the ticket stays in the tree until it is published, a separate approval per `board.md`.
+Starting work is a separate yes from both, unless the user asks for them together.
 None of these changes status or assignee: preserve identity and any existing `status`, `tracker_status`, and assignee.
 Approving a breakdown records it in the epic's `tickets.toml`; it does not start work.
-On a tracker the ticket stays in the tree until it is published, a separate approval, per `board.md`.
 Creating the tag locally and pushing it to the remote are two separate steps: the push carries its own question.
 A distinct action gets its own explicit question and must not be silently folded into another approval.
