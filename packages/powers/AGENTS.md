@@ -257,6 +257,9 @@ bun packages/powers/scripts/check-source-updates.ts [--json] [--donor <id>]
 # Read-only donor update triage: fetched revision vs baseline, new-file disposition
 bun packages/powers/scripts/triage-donor-updates.ts [--donor <id>] [--target <sha>] [--json] [--out <path>]
 
+# Read-only check that docs/VECTOR.md matches processed donor pins and live counts
+bun packages/powers/scripts/check-vector.ts
+
 # Corpus audit (read-only reports over the corpus)
 bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [--limit <n>] [--offset <n>] [--filter <text>] [--summary] [--all] [--json] [--out <file>]
 
@@ -319,7 +322,7 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 
 | Path | Responsibility | Step |
 |---|---|---|
-| `docs/` | The product OKF bundle: research, canonical documents, decision records, next-actions, Work Items, historical Agent-runtime handoff evidence | B, F, historical G |
+| `docs/` | The product OKF bundle: research, canonical documents, decision records, next-actions, Work Items, historical Agent-runtime handoff evidence, and the living instruction change vector in `VECTOR.md` | B, F, historical G |
 | `docs/decisions/` | Accepted decisions (one decision — one concept) | D1–D17 (and D4b) |
 | `docs/work/` | VP Work Items: stable ID, AC, evidence, relations | F |
 | `docs/requests/` | Historical Agent-runtime handoff evidence; not an active Powers surface | — |
@@ -459,6 +462,7 @@ for a resolved session bundle.
    one document and effectively makes the check empty.
 5. A record in `docs/log.md` (OKF §9): the date, the kind of change, what exactly changed.
 6. For product decisions — a separate concept in `docs/decisions/` with grounds.
+7. For a donor batch — update `docs/VECTOR.md` with the batch row and vector, then run `bun packages/powers/scripts/check-vector.ts` before commit.
 
 ## 10. Forbidden
 

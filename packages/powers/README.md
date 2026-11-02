@@ -368,7 +368,7 @@ decision records (D1–D9, D4b and D10–D16), an OKF bundle with a validator, a
 with eight processed snapshots (seven methodological donors and Open Knowledge Format) plus
 Wondelai registered-not-processed. `research_status: finalized`; steps A0, A, B, C and D are
 closed; E1–E4 are implemented, the project-document bootstrap packet is complete
-(764 pass / 4 skip), and E5b production qualification remains open.
+(765 pass / 4 skip), and E5b production qualification remains open.
 
 **Deferred outside the current scope:** registration in the shared root files of the repository;
 D3+D8 Runtime implementation and acceptance; the `.vida/*` cutover; marketplace publication; the
@@ -397,4 +397,5 @@ files / 2,514 instructions); `check-source-updates` is read-only and lists
 affected instruction IDs. Upstream triage on 2026-11-02 found 1,234 affected
 instructions and 61 new Markdown candidates across 7 updated donors; the
 superpowers and matt-skills batches are processed, with 1,184 affected
-instructions and 45 candidates remaining.
+instructions and 45 candidates remaining. The direction of these changes is
+summarized in [docs/VECTOR.md](docs/VECTOR.md).

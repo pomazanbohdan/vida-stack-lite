@@ -37,7 +37,7 @@ the Powers-owned role bootstrap, adapts document procedures, and lets Root
 wire the project sidecar/profile. Native installer/manifests, harness activation
 and Agent runtime/template/config changes are not part of this packet.
 Bootstrap source, project-owned sidecar/profile and bounded local usage are
-implemented. Current component evidence is 764 pass, 4 skip, 0 fail, with
+implemented. Current component evidence is 765 pass, 4 skip, 0 fail, with
 typecheck and OKF passing; focused bootstrap/contract evidence is 19 pass.
 The 8-ID applied map passes its receipt. Independent Luna source review ACCEPT:
 0 Critical / 0 Important / 1 Minor, with the ledger Minor corrected by Root.
@@ -80,7 +80,8 @@ templates/configuration and native host delivery are outside this packet.
    instructions added (shared wiki and gradual automation), 5 in-progress
    reference files rejected. Remaining triage:
    1,184 affected instructions and 45 new candidates across the other donors;
-   conversion remains a reviewed batch.
+   conversion remains a reviewed batch. `docs/VECTOR.md` is the living summary;
+   update it and run `check-vector` in every batch.
 
 Out of Powers scope: Agent runtime integration, D3/D8, VP-7/G, Agent
 `WorkItem/v1`, runtime findings/artifacts, and the runtime effective-profile
@@ -223,7 +224,7 @@ Until those answers exist, AC-47 to AC-59 stay open outside the active queue. Th
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-11-02):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 764 passed, four expected Windows skips, zero failures and native exit 0; the earlier 740-test coverage receipt remains historical for its inputs. Strict typecheck passes 63 files; the corpus check reports 2,514 instructions and zero issues; OKF reports 31 concepts with no failures or warnings. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-11-02):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 765 passed, four expected Windows skips, zero failures and native exit 0; the earlier 740-test coverage receipt remains historical for its inputs. Strict typecheck passes 66 files; the corpus check reports 2,514 instructions and zero issues; OKF reports 32 concepts with no failures or warnings. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.

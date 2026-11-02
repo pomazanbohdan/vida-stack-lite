@@ -2,6 +2,15 @@
 
 ## 2026-11-02
 
+* **Instruction change vector:** added `docs/VECTOR.md`, combining the
+  superpowers and matt-skills batch directions into one living document with a
+  batch table and update rule. Added `scripts/vector.ts`,
+  `scripts/check-vector.ts` and `tests/vector.test.ts`; the check fails when a
+  processed donor pin or the latest corpus, map or baseline count is stale. The
+  batch workflow now updates `VECTOR.md` before commit. Package suite: 765 pass /
+  4 skip / 0 fail / 3,806 assertions; typecheck 66 files; OKF 32 concepts / 0
+  failures; Markdown 7 docs / 79 links / 0 failures.
+
 * **Matt-skills donor batch:** advanced `matt-skills` from `49dd158d` to
   `4ae2317d` and processed the second donor update. All 69 existing matt-skills
   instructions carry the new provenance revision; 8 instructions gained the
