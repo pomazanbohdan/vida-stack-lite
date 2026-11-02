@@ -99,6 +99,17 @@ The prospective H2 VPInstruction/v2 contract preserves approved v1.2 facet and a
 
 **H1 acceptance:** all 421 Markdown carrier paths are accounted for; the 30 journey files are explicitly excluded; the 391 candidates each have a disposition; the 14 carrier journey directories and 60 excluded out-of-carrier copies are explicitly accounted for, with byte-identity receipts for all 60 copies and no unresolved additional-location finding; no unreviewed or uncleared content is admitted; corpus, map and digests agree; duplicate and fidelity reviews have receipts. Copy accounting grants no rights, source selection or admission. H1 does not authorize H2 CSV sources.
 
+### H1 gap routing and defaults
+
+Apply the existing clarification policy in
+`packages/agent/instructions/request-clarification.md`:
+
+- Missing file, hash, schema or required evidence: retrieve it from an allowed source when possible; if not retrievable, block only the dependent H1 action and record the gap. This is an automatic block, not a human question.
+- Ambiguous or conflicting rights, provenance, meaning or fidelity: ask the decision owner and keep the dependent action blocked.
+- Rights clearance, human fidelity review and owner admission are manual by definition; model output, a matching digest or fixture approval cannot substitute.
+- Do not infer an answer for a rights, fidelity or admission gap. Independent authorized H1 preparation may continue while the dependent decision remains open.
+- A ready, unambiguous item proceeds; a deterministic invalid item is rejected or blocked without a human question.
+
 The owner-selected boundary resolves the former literal zero-outside-carrier wording; it does not delete donor files or admit their content. The bounded path inventory and both copy-identity reviews are retained in the existing donor-migration WORK/evidence directory. Their original policy bindings remain historical: this clarification does not rewrite frozen receipts or make old transitive checks fresh under the amended plan. Reconcile current policy bindings before constructing any source packet or publication eligibility.
 
 ### Source-packet and publication qualification

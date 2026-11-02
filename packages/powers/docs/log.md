@@ -81,6 +81,12 @@
   finding event, semantic equivalence, real store, host or Runtime acceptance is
   claimed. The F task ledger and acceptance document record this bounded closure.
 
+* **H1 gap routing:** H1 now applies the existing `request-clarification.md`
+  policy. Missing or technically invalid evidence is an automatic block/reject;
+  ambiguity or conflict asks the decision owner; rights, fidelity and admission
+  remain manual. Only dependent work blocks; independent H1 preparation may
+  continue.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.
