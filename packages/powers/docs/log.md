@@ -14,7 +14,7 @@
   pipeline steps, deploy concurrency/timeouts, and build-once promotion.
   Twenty-five new candidates were reviewed and rejected as donor docs, and 212
   packaging/translation documents plus 22 stale map records were reconciled so
-  map coverage is complete. Catalog revision 6,363; corpus 2,529; map 3,008;
+  map coverage is complete. Catalog revision 6,364; corpus 2,529; map 3,008;
   baseline 1,202.
 
 * **Addy-skills pin advanced:** moved addy-skills from `aeac41d4` to

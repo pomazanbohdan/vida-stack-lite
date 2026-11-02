@@ -96,7 +96,7 @@ templates/configuration and native host delivery are outside this packet.
    `bfab8249`, provenance on 1,343 instructions updated, 6 content updates and
    5 new review instructions; 25 candidates were rejected as donor docs, and
    212 packaging/translation documents plus 22 stale map records were reconciled.
-   Catalog 6,363; map 3,008; baseline 1,202. Remaining triage: none; pstack and
+   Catalog 6,364; map 3,008; baseline 1,202. Remaining triage: none; pstack and
    ponytail have no used-file impact, and Open Knowledge Format is current.
    `docs/VECTOR.md` is the living summary; update it and run `check-vector` in
    every batch.

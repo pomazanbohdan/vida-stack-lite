@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6363,
+  "revision": 6364,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-03T02:45:00.000Z",
+  "updated_at": "2026-11-03T05:30:00.000Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -1572,7 +1572,7 @@
     {
       "instruction_id": "build-once-and-promote-the-same-artifact",
       "path": "instructions/build-once-and-promote-the-same-artifact.md",
-      "sha256": "5a2077dfaa84d90b8ad93d5eb9b3f3f7e07b37fe38048c2d86602d573f4801dd"
+      "sha256": "ff34b32f50132ea1d87b34ffd0399422b6cf71518b1c3093629762b4f671d449"
     },
     {
       "instruction_id": "build-the-fault-tree-before-you-test-a-hypothesis",

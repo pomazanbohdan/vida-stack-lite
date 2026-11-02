@@ -1,7 +1,7 @@
 ---
 instruction_id: build-once-and-promote-the-same-artifact
 title: Build once and promote the same artifact
-summary: "Build the artifact once and promote that same artifact through environments; a per-environment rebuild, a deploy without a health check or rollback, and static cloud credentials are warnings."
+summary: "Build the artifact once and promote that same artifact through environments; a per-environment rebuild, a deploy without a health check or rollback, and static cloud credentials for a provider that supports OIDC are warnings."
 capability_tags:
   - review-code
 pattern_tags:
