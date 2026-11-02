@@ -12,7 +12,8 @@
   `require-human-authored-issue-summary`); 18 deleted files were removed from the
   map and 2 unused reference files were rejected. The corpus is 2,512
   instructions, the map 2,782 records and the baseline 1,201 files; all 8 donor
-  sources are `current`. Content was updated for the new first-message/approach
+  sources are `current`, and the package `NOTICE` cites the new superpowers pin.
+  Content was updated for the new first-message/approach
   and design-gate rules, playback wording, ledger resume rules and the required
   human-authored issue summary. Catalog revision 6177, map revision 4981.
   Changelog rule: D6 and corpus instruction
