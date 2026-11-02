@@ -12,7 +12,7 @@ recorded in the frontmatter of each concept.
 # Concepts
 
 * [Vida Powers - task-level plan for step F: Work Items and findings](task-plan-step-f.md) - Three product Work Items and the bounded Standalone findings writer, with open acceptance gates.
-* [Vida Powers - task-level plan for step G: D3 and D8 Runtime request](task-plan-step-g.md) - One draft request for the Agent maintainer, separate from VP-7.
+* [Vida Powers - task-level plan for step G: D3 and D8 Runtime request](task-plan-step-g.md) - Historical Agent-runtime handoff evidence; not an active Powers task.
 * [Vida Powers - task-level plan for step H: D14 and D15 content extension](task-plan-step-h.md) - H0-H3 phases for baseline closeout, rights-cleared methodology, engineering/UX applicability and later typed resources.
 * [Vida Powers — next actions within packages/powers](next-actions.md) - The single owner of delivery status, order and gates: the A-G sequence, the E5a/E5b host target status, the forward stages, deferred product questions and separately gated Step H.
 * [Vida Powers — business requirements](business-requirements.md) - B-level: goals, boundaries of responsibility, autonomy constraints, methodology policy, delivery, non-functional requirements.
@@ -25,8 +25,8 @@ recorded in the frontmatter of each concept.
 
 * [VP-5 — vp-mode, vp-setup, package, and delivery channels](work/VP-5.md) - Stage 5 human Work Item.
 * [VP-6 — materialization, Work Items, and findings](work/VP-6.md) - Stage 6 human Work Item; implementation evidence and open proof are recorded separately.
-* [VP-7 — Runtime integration](work/VP-7.md) - Stage 7 human Work Item.
-* [REQ-D3-D8 — VP instruction registry and methodology profile](requests/REQ-D3-D8-runtime-request.md) - Draft request; not delivered, accepted, or bound to final Source/schema hashes.
+* [VP-7 — Runtime integration](work/VP-7.md) - Historical Agent-runtime handoff Work Item; owned by the Agent runtime developer.
+* [REQ-D3-D8 — VP instruction registry and methodology profile](requests/REQ-D3-D8-runtime-request.md) - Historical Agent-runtime request; not delivered, accepted, or an active Powers task.
 
 # Log
 

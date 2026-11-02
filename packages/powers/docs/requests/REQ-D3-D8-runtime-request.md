@@ -88,7 +88,7 @@ revision: '4'
 
 ## Request status
 
-**Draft; prepared for owner review; unsent and unaccepted.** This packet requests an owner response and a future implementation plan. It does not authorize Agent Source writes, delivery, installation, Runtime acceptance, or user acceptance. It is separate from Work Item VP-7. The source-binding table pins the current inputs and does not prove source admission or a handoff.
+**Historical Agent-runtime handoff evidence; not an active Powers task.** It is owned by the Agent runtime developer; Powers retains it for provenance only. **Draft; prepared for owner review; unsent and unaccepted.** This packet requests an owner response and a future implementation plan. It does not authorize Agent Source writes, delivery, installation, Runtime acceptance, or user acceptance. It is separate from Work Item VP-7. The source-binding table pins the current inputs and does not prove source admission or a handoff.
 
 ## Intent and contract trace
 

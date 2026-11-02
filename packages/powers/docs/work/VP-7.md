@@ -37,6 +37,8 @@ revision: '4'
 
 # VP-7 — Runtime integration
 
+Status: historical Agent-runtime handoff evidence; not an active Powers task.
+
 ## Owner and state
 
 Owner: Agent maintainer for Runtime registry/config/reader code; Vida Powers owner for VP schemas, source profile, canonical content, and generated artifact. State: draft. The Work Item is a human planning record, not a Runtime-admitted machine record or evidence of integration.

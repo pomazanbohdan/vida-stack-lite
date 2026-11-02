@@ -39,6 +39,8 @@ generated: { by: vida-agent/gpt-6-luna, at: '2026-10-22T21:24:38Z' }
 revision: '5'
 ---
 
+**Status:** historical Agent-runtime handoff evidence; not an active Powers task.
+
 **Goal:** prepare one reviewable, hash-bound draft Runtime request for D3 and D8 with an Agent owner, VP schema ownership, measurable acceptance, evidence, and explicit unresolved carrier-policy questions.
 
 **The specification this plan follows from:** B: `docs/research/vida-powers-product-research.md` sections 4 and 10, plus decisions D3 and D8. S: D3's separate extended Agent registry and D8's VP-owned methodology profile with carriers by environment; `docs/system-specification.md` SR-33-SR-41, AC-15, AC-19, and AC-26/SR-58. C: current Agent owners in `packages/agent/src/research-decision.ts` and `packages/agent/src/config/runtime-config.ts`, plus the current VP profile, catalog, and setup readers. Acceptance for this request is request-level and adds no canonical AC definitions.

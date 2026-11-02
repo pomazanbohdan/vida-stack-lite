@@ -59,6 +59,11 @@
   send/admission channel. H1 remains blocked by missing rights-cleared source
   admission and human fidelity evidence. No closure or acceptance is claimed.
 
+* **G ownership correction:** the D3/D8 Agent-runtime request and its handoff are
+  owned by the Agent runtime developer, not Powers. G was removed from the active
+  Powers queue and closure conditions; `REQ-D3-D8`, `VP-7` and the Step G plan
+  remain as historical handoff evidence only.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.
