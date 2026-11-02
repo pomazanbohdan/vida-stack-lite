@@ -2,6 +2,16 @@
 
 ## 2026-11-02
 
+* **H1 owner decisions recorded:** the owner allowed Wondelai for general
+  methods plus selected product/business methods; set the first pilot at 25
+  candidate files; moved the 1,434 CSV rows to H2 after H1; admitted no typed
+  reference family now; and defined admission as a recorded repository-owner
+  decision with full human fidelity review (a named human reads the full source
+  against the instruction and records per-line or per-section decisions). SR-91
+  and AC-59 now carry the 25-file pilot; Step H H1, next-actions and the H1
+  proposal record the decisions. These decisions set scope, not per-source
+  admission; AC-47–AC-59 remain open.
+
 * **Current-state reconciliation:** updated `acceptance.md` live corpus evidence
   to 2,529 instructions, 2,439 classified / 90 unclassified, 1,522 engineering,
   803 multi-domain, 1,202 baseline files and 6,364 catalog revision; the
