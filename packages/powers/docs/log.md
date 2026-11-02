@@ -17,6 +17,18 @@
   evidence. Pinned Knip exits 1 on an unchanged Agent config hint, with
   `issues: []`; no gate was weakened.
 
+* **Bootstrap init audit:** the JSON result now exposes `complete`, `defaulted`
+  and `requiresRoleOrFamily`, so a launcher can distinguish a complete
+  orchestrator bootstrap, a complete agent base+family bootstrap, and an
+  agent base-only inspection. Text mode remains unchanged. Tests cover the
+  no-selector default, explicit orchestrator, agent base-only and agent
+  base+delta states, including CLI `--json` parity (bootstrap 5 pass / 108
+  assertions; full package suite 746 pass / 4 skip / 0 fail). The documented
+  init rule allows the advisory default only for direct orchestrator requests
+  and requires a complete agent result before a delegated agent proceeds.
+  Luna design review returned CHANGES Minor: the final contract reuses `role`
+  and `tags` instead of adding redundant mode/base/delta fields.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the current package suite remains
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.

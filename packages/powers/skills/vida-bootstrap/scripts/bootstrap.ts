@@ -47,6 +47,9 @@ export interface BootstrapResult {
   readonly role: BootstrapRole;
   readonly roleName: string | null;
   readonly kind: BootstrapKind;
+  readonly complete: boolean;
+  readonly defaulted: boolean;
+  readonly requiresRoleOrFamily: boolean;
   readonly tags: readonly string[];
   readonly registryRevision: number;
   readonly instructions: readonly {
@@ -315,11 +318,21 @@ export function composeBootstrap(root: string, options: BootstrapOptions): Boots
   if (role === undefined) throw new BootstrapError('BOOTSTRAP_SELECTION_INVALID', 'no instructions selected');
   const roleName = options.roleName ?? null;
   const kind = instructions.length === 1 ? 'base' : instructions[1]!.entry.kind;
+  const explicitSelection = options.role !== undefined
+    || options.kind !== undefined
+    || options.roleName !== undefined
+    || (options.tags !== undefined && options.tags.length > 0);
+  const complete = role === 'orchestrator' || instructions.length === 2;
+  const defaulted = !explicitSelection;
+  const requiresRoleOrFamily = role === 'agent' && !complete;
   return {
     schema: 'VidaBootstrap/v1',
     role,
     roleName,
     kind,
+    complete,
+    defaulted,
+    requiresRoleOrFamily,
     tags: instructions.map((item) => item.entry.tag),
     registryRevision: registry.revision,
     instructions: instructions.map((item) => ({

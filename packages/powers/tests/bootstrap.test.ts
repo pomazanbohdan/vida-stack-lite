@@ -28,14 +28,36 @@ test('all configured roles compose exactly their base and family', () => {
 });
 
 test('base-only, family tags, text and digest are consistent', () => {
-  expect(composeBootstrap(root, { role: 'agent' }).tags).toEqual(['bootstrap-agent']);
+  const defaultResult = composeBootstrap(root, {});
+  expect(defaultResult.role).toBe('orchestrator');
+  expect(defaultResult.complete).toBe(true);
+  expect(defaultResult.defaulted).toBe(true);
+  expect(defaultResult.requiresRoleOrFamily).toBe(false);
+
+  const explicitOrchestrator = composeBootstrap(root, { role: 'orchestrator' });
+  expect(explicitOrchestrator.complete).toBe(true);
+  expect(explicitOrchestrator.defaulted).toBe(false);
+  expect(explicitOrchestrator.requiresRoleOrFamily).toBe(false);
+
+  const baseOnly = composeBootstrap(root, { role: 'agent' });
+  expect(baseOnly.tags).toEqual(['bootstrap-agent']);
+  expect(baseOnly.complete).toBe(false);
+  expect(baseOnly.defaulted).toBe(false);
+  expect(baseOnly.requiresRoleOrFamily).toBe(true);
+
   expect(composeBootstrap(root, { tags: ['bootstrap-agent'] }).kind).toBe('base');
   for (const family of ['research', 'synthesis', 'prewrite', 'implementation', 'validation', 'testing', 'delivery']) {
     const result = composeBootstrap(root, { tags: [`bootstrap-agent-${family}`] });
     expect(result.tags).toEqual(['bootstrap-agent', `bootstrap-agent-${family}`]);
+    expect(result.complete).toBe(true);
+    expect(result.requiresRoleOrFamily).toBe(false);
     expect(result.digest).toBe(createHash('sha256').update(result.text).digest('hex'));
     expect(result.textBytes).toBe(Buffer.byteLength(result.text));
   }
+
+  const completeAgent = composeBootstrap(root, { role: 'agent', roleName: 'tester' });
+  expect(completeAgent.complete).toBe(true);
+  expect(completeAgent.requiresRoleOrFamily).toBe(false);
 });
 
 test('CLI works from foreign cwd and rejects invalid selectors without stdout', () => {
@@ -48,6 +70,28 @@ test('CLI works from foreign cwd and rejects invalid selectors without stdout', 
   expect(json.status).toBe(0);
   const parsed = JSON.parse(json.stdout);
   expect(parsed.digest).toBe(createHash('sha256').update(parsed.text).digest('hex'));
+  expect(parsed.role).toBe('agent');
+  expect(parsed.complete).toBe(true);
+  expect(parsed.defaulted).toBe(false);
+  expect(parsed.requiresRoleOrFamily).toBe(false);
+
+  const defaultJson = JSON.parse(run('--json').stdout);
+  expect(defaultJson.role).toBe('orchestrator');
+  expect(defaultJson.complete).toBe(true);
+  expect(defaultJson.defaulted).toBe(true);
+  expect(defaultJson.requiresRoleOrFamily).toBe(false);
+
+  const baseJson = JSON.parse(run('--role', 'agent', '--json').stdout);
+  expect(baseJson.role).toBe('agent');
+  expect(baseJson.complete).toBe(false);
+  expect(baseJson.defaulted).toBe(false);
+  expect(baseJson.requiresRoleOrFamily).toBe(true);
+
+  const explicitOrchestratorJson = JSON.parse(run('--role', 'orchestrator', '--json').stdout);
+  expect(explicitOrchestratorJson.complete).toBe(true);
+  expect(explicitOrchestratorJson.defaulted).toBe(false);
+  expect(explicitOrchestratorJson.requiresRoleOrFamily).toBe(false);
+
   for (const args of [
     ['--role', 'agent', '--role-name', 'missing'],
     ['--role', 'orchestrator', '--kind', 'testing'],

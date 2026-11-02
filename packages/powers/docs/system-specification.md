@@ -221,8 +221,13 @@ the existing numbering.
   deltas for the existing sixteen role mappings. A delegated assignment loads
   the agent base plus exactly one family; a base-only selector is inspection.
   The local bootstrap composer preserves role/name/kind/tag/list and text/JSON
-  forms, validates local registry paths and rejects invalid selectors without
-  partial text. It needs no Agent executable, catalog, profile or universal
+  forms. JSON additionally reports `complete`, `defaulted` and
+  `requiresRoleOrFamily`: complete means an orchestrator base or an agent base
+  plus exactly one family; defaulted means the no-selector advisory orchestrator;
+  requiresRoleOrFamily means agent base-only inspection. Text output remains the
+  composed documents only. The composer validates local registry paths and
+  rejects invalid selectors without partial text. It needs no Agent executable,
+  catalog, profile or universal
   lifecycle owner; project-mandated policies still apply. The explicit project
   `vida-project-profile.json` is read first; a missing or invalid explicit path
   never falls back to an AGENTS/CLAUDE marker block. Marker compatibility is
