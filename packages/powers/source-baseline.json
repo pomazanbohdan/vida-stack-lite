@@ -1058,6 +1058,10 @@
           "sha256": "c44372ff1c131484c74ee8cf0ffa25405658fbe1b77047321ec443c400c4e13f",
           "bytes": 3116
         },
+        "skills/bmad-toolsmith/shapes/rendered-agent/shape.md": {
+          "sha256": "5eb410e1831a2c090c212e91a9be3875b0ad4ffd60370e1549b199c61ee564ea",
+          "bytes": 4302
+        },
         "skills/bmad-toolsmith/shapes/rendered-skill/assets/SKILL-template.md": {
           "sha256": "5f64d8b94aa13c35dbb500550e21b22224b7b4c503a16fa32eb5b6e987337d4a",
           "bytes": 1052

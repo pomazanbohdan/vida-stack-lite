@@ -68,7 +68,7 @@ templates/configuration and native host delivery are outside this packet.
 4. **External Knip conflict** — Agent/config owner must resolve the
    `knip.config.ts` pre-commit versus pinned-gate conflict; Powers does not own it.
 5. **Donor update tracking** — the 8 corpus donors have a per-file baseline
-   (`source-baseline.json`, 1,202 files / 2,514 instructions). The read-only
+   (`source-baseline.json`, 1,200 files / 2,524 instructions). The read-only
    `check-source-updates` reports `current`, `pin-stale`, `stale`, `missing` or
    `unknown` and lists affected instruction IDs; `build-source-baseline` is the
    explicit refresh. `triage-donor-updates` reports added/modified/deleted files
@@ -86,8 +86,9 @@ templates/configuration and native host delivery are outside this packet.
    `## Verification`; B7 moved retro and replan to the ticket model; B8 updated
    walkthrough, PRFAQ and forge; B9 updated agents, toolsmith, deep recon,
    product brief and method help; B10 added 10 new `bmad-agent-po` instructions.
-   The pin advanced `cfba3ff5` → `bd70c643`, 752 provenance entries were updated,
-   the deletion map was applied, and the baseline was rebuilt at 1,199 files.
+   The pin advanced `cfba3ff5` → `bd70c643`; provenance on 752 existing instructions
+   was updated, the deletion map was applied, and the baseline was rebuilt at
+   1,200 files.
    Remaining triage: addy-skills (280 affected instructions) and gsd-core
    (525 affected, 27 new candidates); pstack and ponytail have no used-file
    impact. Conversion remains a reviewed batch. `docs/VECTOR.md` is the living
@@ -234,7 +235,7 @@ Until those answers exist, AC-47 to AC-59 stay open outside the active queue. Th
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-11-02):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 765 passed, four expected Windows skips, zero failures and native exit 0; the earlier 740-test coverage receipt remains historical for its inputs. Strict typecheck passes 66 files; the corpus check reports 2,514 instructions and zero issues; OKF reports 32 concepts with no failures or warnings. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-11-02):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 765 passed, four expected Windows skips, zero failures and native exit 0; the earlier 740-test coverage receipt remains historical for its inputs. Strict typecheck passes 66 files; the corpus check reports 2,524 instructions and zero issues; OKF reports 32 concepts with no failures or warnings. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.
@@ -318,7 +319,7 @@ The owner authorized stable canonical files with independent form/domain facets.
 1. Frozen 40-ID sample, 24 selectors and relevance judgments: captured. Old-code baseline: 30 fresh-process runs and 2,400 warm queries; same-input three-structure prototype: captured. Beam accepted the exact evidence as READY_AS_OLD_CODE_BASELINE_AND_STRUCTURE_PROTOTYPE. Retained evidence: packages/powers/.tmp/panel/donor-migration-architecture-20261025/instruction-organization-20261026/implementation-r1/baseline-prototype-root-r3/. These results establish no speedup or full-corpus recall.
 2. The historical v1.1 schema/reader, optional filters, generated browse, opt-in strict corpus check and converter-owned metadata staging were Root-qualified and independently reviewed by Beam for their bound inputs. The historical converter milestone passed 564 tests with one expected Windows skip and zero failures, with 100% functions/lines. Luna's isolated trial tools were prepared, but Root's static preflight review was NOT_READY: one inherited D16 binding was stale, await expressions occurred in parameter defaults, and the before-state check compared legacy classification with future assignments. No tool mode, fixture or trial batch was executed in that attempt. The frozen measurement that did run keeps its v1.1 binding and reports INCONCLUSIVE timings; current v1.2 Source and migration require a fresh binding before any new performance or quality claim.
 3. The prepared 40-ID treatment is retained with its query, label, judgment and timing bindings (AC-64, component). A v1.2 re-binding runs only before a new matched-comparison claim; it is not a prerequisite for the migrated corpus or the compact CLI.
-4. Corpus classification is complete: all 2,514 IDs are v1.2, 2,424 are classified with form and at least one domain, and 90 carry an explicit unclassified reason. AC-60–AC-63 carry component evidence; the strict corpus check reports zero issues.
+4. Corpus classification is complete: all 2,524 IDs are v1.2, 2,434 are classified with form and at least one domain, and 90 carry an explicit unclassified reason. AC-60–AC-63 carry component evidence; the strict corpus check reports zero issues.
 5. Root publishes only the qualified reviewed Source. Formation, installation and attributable Runtime acceptance remain separate. H1 source-attribution, fidelity, admission and pilot gates remain unchanged.
 
 ## Owner-requested retrieval workflow refinement

@@ -8,8 +8,8 @@
   `bmad-agent-po` (with the three container templates merged into
   `ticket-template.md`), `bmad-correct-course` →
   `bmad-agent-po/references/replan.md`, and `step-04-present.md` →
-  `step-05-present.md`. The source baseline was rebuilt with 1,199 files; the
-  corpus map has 2,777 records; the catalog revision is 6,355; NOTICE carries
+  `step-05-present.md`. The source baseline was rebuilt with 1,200 files; the
+  corpus map has 2,777 records; the catalog revision is 6,356; NOTICE carries
   the new pin. `check-corpus` reports 2,524 instructions and zero issues;
   `check-source-updates` reports 0 affected files.
 

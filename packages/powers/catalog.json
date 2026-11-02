@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6355,
+  "revision": 6356,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T02:45:00.000Z",
   "tag_dictionary": {
@@ -2057,7 +2057,7 @@
     {
       "instruction_id": "choose-the-shape-from-the-work",
       "path": "instructions/choose-the-shape-from-the-work.md",
-      "sha256": "16ba6b787f0371a589b9de5fdcc081d8d37c9e0f2864a2d02ef41b14f3df30af"
+      "sha256": "581dd9a0cc3936172e8eecdb9db4f055311ad23200d5583d2e6fe8fbaf6153e8"
     },
     {
       "instruction_id": "choose-the-signal-that-answers-the-question",

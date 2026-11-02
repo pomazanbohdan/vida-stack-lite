@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4985,
-  "updated_at": "2026-11-03T02:50:00.000Z",
+  "revision": 4986,
+  "updated_at": "2026-11-03T03:10:00.000Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -6161,8 +6161,13 @@
           ]
         },
         "skills/bmad-toolsmith/shapes/rendered-agent/shape.md": {
-          "status": "rejected",
-          "reason": "Rendered-agent shape merged into choose-the-shape-from-the-work and let-the-shape-surface-from-the-answers."
+          "status": "merged",
+          "instruction_ids": [
+            "choose-the-shape-from-the-work"
+          ],
+          "contributed_sources": [
+            "bmad-method:skills/bmad-toolsmith/shapes/rendered-agent/shape.md"
+          ]
         },
         "skills/bmad-toolsmith/shapes/rendered-agent/assets/SKILL-template.md": {
           "status": "rejected",
