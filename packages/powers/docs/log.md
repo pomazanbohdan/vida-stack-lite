@@ -47,6 +47,18 @@
   Host qualification, production manifest inputs/outputs and native installation
   acceptance remain open.
 
+* **Knip gate remains open:** the pinned `lint:knip:pinned` gate exits 1 with
+  `{"issues":[]}` and a config hint for the Agent `knip.config.ts` self-entry.
+  Removing that entry fixes the pinned gate but makes the pre-commit hook report
+  the config file as unused; the entry is restored. This is an unresolved Agent
+  config conflict, not a Powers PASS.
+
+* **F/G/H closure assessment:** F remains open because AC-22 needs a real finding
+  event and semantic/equivalence evidence; AC-20/21/23/24 remain component-only.
+  The G handoff packet is ready but unsent and unaccepted; this lane has no
+  send/admission channel. H1 remains blocked by missing rights-cleared source
+  admission and human fidelity evidence. No closure or acceptance is claimed.
+
 * **Step F reconciliation:** focused `findings`, `artifacts` and `catalog-cli`
   tests pass 141 / 0 fail / 1,255 assertions; the then-current package suite was
   746 pass / 4 skip / 0 fail. No real findings or artifacts store exists.
