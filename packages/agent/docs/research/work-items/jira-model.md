@@ -30,6 +30,7 @@ Local code pin дослідника: repository `vida-agent`, branch `main`, HEA
 - Продукт вказує перелік enabled types. Потрібно підтримати вибрані типи на кшталт Task, Bug, PBI.
 - Ключ VIDA явно містить тип: `REPO-PRODUCT-TYPE-NUMBER`.
 - Вкладеність generic; продукт задає довільні дозволені parent/child type combinations із підтримуваного runtime catalog.
+- Початковий режим для Agent/Codex/Powers — окремий `custom` map. Користувач визначив PBI як верхньорівневий опис функціоналу з дочірніми TASK/BUG та дозволив standalone TASK для всіх трьох. Чи BUG може мати TASK — окреме поставлене питання; відповідь не припускається.
 
 Це вимоги користувача до VIDA, а не властивості, доведені документацією Jira.
 

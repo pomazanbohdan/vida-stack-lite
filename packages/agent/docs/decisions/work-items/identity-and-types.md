@@ -27,7 +27,8 @@ title: Ідентифікація робіт і фіксований катал�
 
 - [Затверджений пакет з анотаціями](../configuration/runtime-project-model.md) визначає prefixes, counter, identity та aliases; схема generic product hierarchy уточнюється планом.
 - [Поточна cfg-пропозиція](../configuration/project-config.proposed.yaml) містить лише приклади prefixes та enabled lists; вони ще не обрані користувачем.
-- Початкова product hierarchy policy запитана в користувача; відповідь не припускається за elapsed time.
+- Початкова hierarchy policy для Agent, Codex і Powers — `custom`, окремий перелік дозволених комбінацій для кожного продукту. Користувач надасть конкретні maps; до цього вони не заповнюються припущенням.
+- Для всіх трьох підтверджено: PBI — верхньорівневий функціонал, `PBI → TASK, BUG`, standalone TASK. Уточнення `BUG → TASK` запитане користувачу й ще не отримане.
 - Конкретні prefix values і повний каталог/ієрархія робіт.
 - Узгодження product enabled types з чинними team-level kinds.
 - Migration existing `task_prefix`, IDs і references без втрати зв’язків.
