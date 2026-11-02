@@ -17,8 +17,8 @@ artifact_contract_verified_by: an uncertain directive was applied with a hedge a
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/templates/dev-preferences.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/templates/user-profile.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/templates/dev-preferences.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/templates/user-profile.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

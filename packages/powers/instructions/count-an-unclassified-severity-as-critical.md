@@ -17,7 +17,7 @@ artifact_contract_verified_by: a finding without a usable severity was counted a
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/plan-phase.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -33,7 +33,9 @@ Parse issue count from checker return:
 
 an entry whose severity is missing or unrecognized counts as a Critical (fail closed)
 
-If the checker's return contains no YAML issues block (i.e., the plan was approved with no issues), treat `issue_count` as 0 and skip the stall check — the plan passed.
+A `## VERIFICATION PASSED` return that lists a BLOCKER or WARNING entry in prose — in its YAML issues block or in the surrounding text — counts those entries the same way; a mention such as "no warnings" or a zero count is not an entry. The sentinel never decides alone.
+
+If the checker's return contains no YAML issues block and lists no BLOCKER or WARNING entry in prose, treat `issue_count` as 0 and skip the stall check — the plan passed.
 
 every entry in the block is explicitly Minor
 

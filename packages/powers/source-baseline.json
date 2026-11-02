@@ -1353,15 +1353,15 @@
       }
     },
     "gsd-core": {
-      "revision": "19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005",
+      "revision": "bfab82492374a847a01417707a1a38e9e7cf097e",
       "files": {
         "agents/gsd-advisor-researcher.compact.md": {
-          "sha256": "4a39981c745d3e837c6490d76080bc348009e0018b3c5763fc50bd53885f29ad",
-          "bytes": 3595
+          "sha256": "589c37f24b9d4fea51a46e3a1ea6cfb6e935fbecaf09cb2a8881b79bbff62015",
+          "bytes": 3634
         },
         "agents/gsd-advisor-researcher.md": {
-          "sha256": "21727fd6664fa4af64de8b1c2371dfa895bc55f6699d31558541518e2c6cff16",
-          "bytes": 4727
+          "sha256": "57367f9b3ac4dd41f8b6acb242cb3c8d303b90125acd3569cd2de6cb677f0f71",
+          "bytes": 4766
         },
         "agents/gsd-ai-researcher.compact.md": {
           "sha256": "54f46ba5bc0c9184e6b56a0231ddf57172f7bf432f0167e50c1f462bc9af6125",
@@ -1372,36 +1372,36 @@
           "bytes": 5943
         },
         "agents/gsd-assumptions-analyzer.compact.md": {
-          "sha256": "d851f4ba77fb370398fa690d928add276426863d1aa02abbf5928a58debd36c2",
-          "bytes": 3457
+          "sha256": "69cb987d83c3876d7f0b05f11025d3d0bba036bd9a7cd3a1f2bba54c2c78f602",
+          "bytes": 3498
         },
         "agents/gsd-assumptions-analyzer.md": {
-          "sha256": "d5647dc9dcaac6ece0c06ba202e8b0ff6e9b4bfaae5d62391c83b7671e01cd65",
-          "bytes": 4646
+          "sha256": "63aa71ac4b49f3005d4c36f2e320ff497daae4a22314601beb7f8a278c9305a9",
+          "bytes": 4687
         },
         "agents/gsd-code-fixer.compact.md": {
-          "sha256": "f6f785d933e350acd3697eaf70ac4a600d1b046cae750eb3e1a6262b4f71d231",
-          "bytes": 25775
+          "sha256": "eb860d32b830ad8b793d26e21111697a66cfbd67f193d88c8d54922c0d82e908",
+          "bytes": 27514
         },
         "agents/gsd-code-fixer.md": {
-          "sha256": "bf731ad75030de77f09cd3594f9ecdab4e550b355b83f114ef9840ee832edfc2",
-          "bytes": 42719
+          "sha256": "fcef2dd88d8024fcceb695ffa0005f3c9578913cfe3981889b2bd7e635ad79fe",
+          "bytes": 45079
         },
         "agents/gsd-code-reviewer.compact.md": {
-          "sha256": "a4c2ddaa723e2b9158f32f666814ebc3a074014dc164819c5cba09893693680d",
-          "bytes": 17905
+          "sha256": "ac9fa633f6dde279845d351a7e92fc411dea934508755c68cfb58ea9b9403ba5",
+          "bytes": 20689
         },
         "agents/gsd-code-reviewer.md": {
-          "sha256": "7cb900ef23bf373d46499baef051822a057354b2ed72aec228b91b33902cc963",
-          "bytes": 21775
+          "sha256": "d7d6853c0bdfde5e6db463b2b93c931ae2c6eb3c3f2f7932ad31a5f48577899f",
+          "bytes": 24539
         },
         "agents/gsd-codebase-mapper.compact.md": {
-          "sha256": "5dfe86a5f3b6c627d029018cdd7b8b8eb2a93e140192dc051e64a3169733e6b4",
-          "bytes": 19141
+          "sha256": "b3246b25fdc8450e5df61ee3913095d5a6ae3639a332cc01eb92d04c0a5a6729",
+          "bytes": 19177
         },
         "agents/gsd-codebase-mapper.md": {
-          "sha256": "b79ab4ad778d3d7fe73f390de9af1e63efe641918bf1e706b1190d4510fd4ab5",
-          "bytes": 21614
+          "sha256": "ed2fc9c5e56725d762047f7d79ea01cba74247e23817be3ce07bcd2ace86b10e",
+          "bytes": 21650
         },
         "agents/gsd-debug-session-manager.compact.md": {
           "sha256": "ccc20aa3de0d72536ee09c67d15159a8b90b7e647e75722f5059f455aa9d46df",
@@ -1412,8 +1412,8 @@
           "bytes": 20213
         },
         "agents/gsd-debugger.md": {
-          "sha256": "6c2cf4e0cc2ca001281d515af00b371897e1072b4cb0db9698892bc454110da5",
-          "bytes": 46935
+          "sha256": "c4a770d8a54f9173bbb44c69ea9076364e27035cf2813a8be78fdeccfbf26cbd",
+          "bytes": 46964
         },
         "agents/gsd-doc-classifier.compact.md": {
           "sha256": "7b38df7600303458ecaaeae36021ab905480c7bb55ae8b196ace0171238cf839",
@@ -1440,12 +1440,12 @@
           "bytes": 12534
         },
         "agents/gsd-doc-writer.compact.md": {
-          "sha256": "5cc4ec0aea8152f3dc4d627d89e4e599bb73e1a8a643217cd1c994e65ff1955f",
-          "bytes": 24982
+          "sha256": "2a245d665e2f713eac233f09e769a2298ca4d9a9190bdf42c43da060c7647c3c",
+          "bytes": 25013
         },
         "agents/gsd-doc-writer.md": {
-          "sha256": "de18e85c06e0820652ca55aa43a55464654b277a1ff16329752b2f8f59100615",
-          "bytes": 41194
+          "sha256": "c096b12b5ff305edd0f513c574593f0d2f075bedd5f3468281c3ac1f87813d96",
+          "bytes": 41225
         },
         "agents/gsd-dom-verifier.compact.md": {
           "sha256": "e06762939e23fe314e2c7d838f391162c444478bdc27ea0b3a236e14f2d27b96",
@@ -1464,12 +1464,12 @@
           "bytes": 7032
         },
         "agents/gsd-eval-auditor.compact.md": {
-          "sha256": "002be6c8fd072dd9fde664e93391c90136380f094c9c023a382f00da4352dd88",
-          "bytes": 9971
+          "sha256": "10420e05f13d5fa9a017e1c93abf339c2a8c326391f951c247cb1a001a476080",
+          "bytes": 10004
         },
         "agents/gsd-eval-auditor.md": {
-          "sha256": "7f7dbdf52aa4a2ea01550131d27adef6c5195ec36179fa3fbaab47d8eeeb1aea",
-          "bytes": 10556
+          "sha256": "e9443b9f2825f03061f3c60fc134ab99db2c1a8ddfa1b9e5c89e21484f2619fa",
+          "bytes": 10589
         },
         "agents/gsd-eval-planner.compact.md": {
           "sha256": "91ae9adf045f96e449e1872b7c997829fbf7d5f3e68a91503d9d1d394dd5ef05",
@@ -1480,8 +1480,8 @@
           "bytes": 7008
         },
         "agents/gsd-executor.md": {
-          "sha256": "df50cade7cf6eb06025cc413f1efea86d10419ac766ac07aa3e5d35e44311bd6",
-          "bytes": 47117
+          "sha256": "f0a275806df829cf3956ef1c51333883c255be691bd75979a42c69ff3507ed0a",
+          "bytes": 47792
         },
         "agents/gsd-framework-selector.compact.md": {
           "sha256": "8441b80298008fcbbaaf0c2112fffc62d630a24ac58f1bfcd601f920d0f9645f",
@@ -1492,12 +1492,12 @@
           "bytes": 6461
         },
         "agents/gsd-integration-checker.compact.md": {
-          "sha256": "5f7a3d77559def48c3e4cf7e3bf3e9765d4516f9d2441eea47027e8789f5e045",
-          "bytes": 10066
+          "sha256": "d2d3cf71357c5a6b07b2fd6eddb8ff9aa409acdf2120aa009a2191e576daafe7",
+          "bytes": 10106
         },
         "agents/gsd-integration-checker.md": {
-          "sha256": "ef5f851743fe5995adfc0fac96a1816350bc0da13e87b1ca9822fb7e66f3d4fe",
-          "bytes": 15409
+          "sha256": "81924f6a674e57fefcb8b81e14fe9472f8e334d4c62a5f14ac09f415fc77a644",
+          "bytes": 15449
         },
         "agents/gsd-intel-updater.compact.md": {
           "sha256": "e90bd557e6c750388f05a22f94a8ab09b471d8a97548f563304f19285e7e1350",
@@ -1516,12 +1516,12 @@
           "bytes": 4650
         },
         "agents/gsd-nyquist-auditor.compact.md": {
-          "sha256": "bf162ec39534dc83d96e8b06ef734dc465de3f6e612f04cb43c050cf043af2ef",
-          "bytes": 6799
+          "sha256": "a72ec3de4c3bc0d6aa096bdde8f97ccafb0994af3a2754d8275a11de1c03e82d",
+          "bytes": 6835
         },
         "agents/gsd-nyquist-auditor.md": {
-          "sha256": "d958cd39df805c1e907f9a38cd515697b52b066e6d944a1d10a1549836ec8760",
-          "bytes": 7345
+          "sha256": "7ad1d7495440f96f75d15d3f269c1e2bc1f56f36fe0302d8e956789ea7c7b9d6",
+          "bytes": 7381
         },
         "agents/gsd-pattern-mapper.compact.md": {
           "sha256": "33ccf05d1f6e9548aa85f6a072a3089e9bf237651e29aa844953dd8bc82b8c7a",
@@ -1532,72 +1532,72 @@
           "bytes": 13249
         },
         "agents/gsd-phase-researcher.md": {
-          "sha256": "92e78f3f91c06b59796f12d638777581cce595f24ff70d726e0a35961a660120",
-          "bytes": 46050
+          "sha256": "96a2bc436a9760842e55159e09c2eef1307f24006141d29c47be9a504fee2eca",
+          "bytes": 46087
         },
         "agents/gsd-plan-checker.md": {
-          "sha256": "6271bdee3117f0bae0c63bb78f5047821359e03691370969de73bdf126ae76c1",
-          "bytes": 47594
+          "sha256": "a571c3382c5c100b8ec94ba65d3dc9d00bc9a09f2dcc1f7e5f12366d7ae61f7d",
+          "bytes": 47627
         },
         "agents/gsd-planner.md": {
-          "sha256": "b0984beffa02a7646a687c32570221e50e1fc168b23de12ff69a409ce0da447e",
-          "bytes": 47873
+          "sha256": "00211447cc92bdbfa9400facfa62e84ebf0e89c1b71bbbfcd0f7e9072af48c4a",
+          "bytes": 47901
         },
         "agents/gsd-project-researcher.compact.md": {
-          "sha256": "267a21af0c41467257baeae629b546daec255e247279a48261cc1f2d1bccba4d",
-          "bytes": 18968
+          "sha256": "e0c19737a338dd061dd79ff1509e162a814b1ca56ab28b398486b684b8bc9da0",
+          "bytes": 19007
         },
         "agents/gsd-project-researcher.md": {
-          "sha256": "0259b480f0e81023280f830231b2dcec484c439fa162a2409f986072089d5be3",
-          "bytes": 20296
+          "sha256": "599127fced005419c1154f67c1ad12c5652592e45ba37100fb375bbd09b81573",
+          "bytes": 20335
         },
         "agents/gsd-research-synthesizer.compact.md": {
-          "sha256": "65fa19feb1bf5cde6173ebced97f3bf40589b740bb457d7346bf1f74c9d03077",
-          "bytes": 11986
+          "sha256": "2414ec835ed190ee39d065495af72880bd48e554585b3e3f8eeb05f20e717e69",
+          "bytes": 12027
         },
         "agents/gsd-research-synthesizer.md": {
-          "sha256": "4ae716b4d5b05d35cb0ff8a96c7eb6a55706a61cc1fb7e1feb7e28055e76492c",
-          "bytes": 12867
+          "sha256": "785d809ea15aa3526732aa801ab739243fd214f6eef415980292141e01dd12d9",
+          "bytes": 12908
         },
         "agents/gsd-roadmapper.compact.md": {
-          "sha256": "a48da45fc474aac48e61b72cc16bc41099e0e57967b3cf3fa9b30277155f2344",
-          "bytes": 19770
+          "sha256": "edc085ec7fb7e3e4e981b3108acb3c664f0d7cee62dee79fe26a3656e48c511e",
+          "bytes": 19801
         },
         "agents/gsd-roadmapper.md": {
-          "sha256": "c4ad7cc8dcebed09cb48d46d012a952a66e831f04dce83b4ce23427c7bed99c0",
-          "bytes": 24477
+          "sha256": "65bfd790e32f51e28879b9e5d175253822f26be161c4371f36ade8e546ec1c39",
+          "bytes": 24508
         },
         "agents/gsd-security-auditor.compact.md": {
-          "sha256": "5b5f5ee5f6054e67ede9ac1e72d9ae76e6da0a6e2568733ddd0aa767af46e70b",
-          "bytes": 8177
+          "sha256": "7b9d83288d6ec1014a87469347480da3304f9917f5757766e0e4213e9ee64582",
+          "bytes": 8214
         },
         "agents/gsd-security-auditor.md": {
-          "sha256": "4637702d0d0171bda47bf3d35f33c490f4de94780a82cf49ef2a30a79873a9a6",
-          "bytes": 9431
+          "sha256": "3399f81791d4579138dd77ccc232cb267e5e6f1419aaebbb8f374627019e3872",
+          "bytes": 9468
         },
         "agents/gsd-ui-auditor.compact.md": {
-          "sha256": "5e88d0ed0e73c9fa8163b19165d503cb5bdf1c0a8b779ec8839182508f8121b2",
-          "bytes": 15086
+          "sha256": "51e5dc04565b2b80e3e39007e2717fb31620f5585c7f02140e2ac6c6bab4f52b",
+          "bytes": 15117
         },
         "agents/gsd-ui-auditor.md": {
-          "sha256": "e513e425b83e78ff120b35327521b0e908b0ab248f5c91b3c28598913fd2a19f",
-          "bytes": 24464
+          "sha256": "bb37349a8dfa5481a0bfa324508dd7c51c83d8521df1773317a9462d14744ff6",
+          "bytes": 24495
         },
         "agents/gsd-ui-checker.compact.md": {
-          "sha256": "7cf61862ac8801fdc1a4a3685ecd088c2e292d6c8daa4394533d6cfc0003e6c9",
-          "bytes": 12897
+          "sha256": "7a0f1ab2443b2088117931246f22cc0404557b99e4ab96f6fd079b2c9569da44",
+          "bytes": 12928
         },
         "agents/gsd-ui-checker.md": {
-          "sha256": "004c221097ae574bd3ae616fe6ae8bc77c1dbfc284f5b878391c0edbb4d553ce",
-          "bytes": 19403
+          "sha256": "9f0f023d39ecf58a9df123832f4d803e08367e1e5e93e997039b7e0eb18d4d31",
+          "bytes": 19434
         },
         "agents/gsd-ui-researcher.compact.md": {
-          "sha256": "b780a928ba24849a7d17a0b5510dcb731a317e7d1b928006af912f55f8c9f83b",
-          "bytes": 19613
+          "sha256": "68fdc24dfba763aa25f10995954446347a9aaab0ed34e2bfe17f8f9bf7d228bb",
+          "bytes": 19647
         },
         "agents/gsd-ui-researcher.md": {
-          "sha256": "1acdc92686a67af818aa8028f6f181a958379949aaef0ba37446603131754819",
-          "bytes": 22426
+          "sha256": "07a5862849e5fc44e3d788f4b23eb55e15c2da34bb9e624be8cec41ef8a30eff",
+          "bytes": 22460
         },
         "agents/gsd-user-profiler.compact.md": {
           "sha256": "e2d5b4209610b60f50cc5afa02b878a396eea689ee958c5b91b7bdebbf65c87a",
@@ -1608,8 +1608,8 @@
           "bytes": 8735
         },
         "agents/gsd-verifier.md": {
-          "sha256": "c303f26f3ab5892e2d4558341dd7ecc3232b8373fc9c78d448cc0890cce9991e",
-          "bytes": 49080
+          "sha256": "b2c3623dbd2001369024f27b04a1cac10f6287115c4700586a6877c6480e8acd",
+          "bytes": 49109
         },
         "capabilities/ai-integration/fragments/api-coverage-plan-pre.md": {
           "sha256": "4a8fa9815c6bde7e58ce78e70ad3233a57f065c021f135f1ca1707311dbbb09b",
@@ -1788,8 +1788,8 @@
           "bytes": 928
         },
         "commands/gsd/update.md": {
-          "sha256": "c009de60568956c4a89d9bcb83527e1d12edc9f486356ca869a4d71fae043af4",
-          "bytes": 2402
+          "sha256": "e584d54959291e2246943949b2c679b94a758d71943a163dd782a2bbca4be68d",
+          "bytes": 3126
         },
         "commands/gsd/validate-phase.md": {
           "sha256": "47da3f45f5fb517864921413d06e824dda19ba9272e34192d5c7d5ca1eea73d1",
@@ -1824,8 +1824,8 @@
           "bytes": 15876
         },
         "docs/adr/README.md": {
-          "sha256": "287a0a7d8f5dcf6cfbde9860b2a96ad91ef14202be72160d22e085a0fec8e18c",
-          "bytes": 34362
+          "sha256": "dadcf68e81c17b2f7144f2e8b42c782f9c5ccd996910ba3a5ae5d34a3346fd87",
+          "bytes": 34837
         },
         "docs/agents/domain.md": {
           "sha256": "c1982e4b432cd47771d21e61fdf680f378baad9bcb12a7e016e502d992568900",
@@ -1848,8 +1848,8 @@
           "bytes": 20359
         },
         "docs/contributing/docs-guard-registration.md": {
-          "sha256": "cb79f35f7d70115c169ae2e24ac38ece882c1e278b1fbcf0aa51e8a1b8736196",
-          "bytes": 4930
+          "sha256": "429435760fa176a0eb7ea45bde9af1c7f68e9e9ce3c17d59d8b9b531583e746d",
+          "bytes": 4940
         },
         "docs/contributing/response-language-coverage.md": {
           "sha256": "de6e5e36f0c7af646e7fcc42bbcab1832b77d77b14b6dca756b37eba7fd3d9e2",
@@ -1892,8 +1892,8 @@
           "bytes": 11049
         },
         "docs/explanation/security-model.md": {
-          "sha256": "899f5b24d9a573be2b8253e986d2eb289dc1f6d92f5a7336c52ee4d847ef263a",
-          "bytes": 26052
+          "sha256": "fcbccc8e8e811dccd12a1a28e72080caf46dcc5e3fa4f42dd7ff24720deb98eb",
+          "bytes": 26661
         },
         "docs/explanation/the-phase-loop.md": {
           "sha256": "4b82eb65d7583e634d7efffee9a711809411d0d36e3d587bbae2374281ebb6de",
@@ -1912,8 +1912,8 @@
           "bytes": 786
         },
         "docs/features/code-review-pipeline.md": {
-          "sha256": "fec9c5d9535df0bbec612e53f7dea720a0ec98bcae654a42307799ed2541419d",
-          "bytes": 16113
+          "sha256": "152b18d3df377287ab880650ff1825630c5bd1994c8d4c4f7a82bbf6ab6e7fe0",
+          "bytes": 18621
         },
         "docs/features/complexity-triggered-refactor.md": {
           "sha256": "e826ba2be964a04b2f048e29421df7adb4a48eda68cb4d27827da418b64f658e",
@@ -1924,8 +1924,8 @@
           "bytes": 619
         },
         "docs/features/cross-ai-peer-review.md": {
-          "sha256": "0d6a01b52b5fd5fdf9a404c9e90a0c2696814381556580b7a968cf06d35cdc4e",
-          "bytes": 3397
+          "sha256": "138938363dff5542c93b874a5cf8d2571a3395a77d0328ab21f709abbc507acc",
+          "bytes": 4374
         },
         "docs/features/cross-phase-regression-gate.md": {
           "sha256": "396b53528e0fff7ba8908060ccc2e32130bc3a8eb6eeb09468db273eec9e4c3e",
@@ -1964,12 +1964,12 @@
           "bytes": 929
         },
         "docs/features/live-dom-uat-capability.md": {
-          "sha256": "3146757a7cce39e05b1fca544fe68c2ecdbae7f841edff76272343a68e17d186",
-          "bytes": 3222
+          "sha256": "ff77a345e64a8a41fd6bb655db727ea137cd832399098dfc5371ec0ccafb5c59",
+          "bytes": 3232
         },
         "docs/features/machine-readable-state-contract-planningstatejson.md": {
-          "sha256": "0834e5d3d66523e08fc1245a3c463d29327b7b0f8b4123060cb612a99e57f021",
-          "bytes": 4634
+          "sha256": "15d8affd18495601769c38774fd59987c60e9e23b9e35f97c8d46de389725057",
+          "bytes": 4662
         },
         "docs/features/no-silent-swallow-no-verdict-from-dropped-data.md": {
           "sha256": "b39aa35572b38c064be572fec9d24ee8c802096a0576e7d1f3c5f5d8adee75df",
@@ -2004,8 +2004,8 @@
           "bytes": 496
         },
         "docs/features/post-merge-hunk-verification.md": {
-          "sha256": "53cdf716efdcd1f1fcaa4c622c458150b52b89813ab04685361f5046e88120ba",
-          "bytes": 684
+          "sha256": "f691a9e48fa3f5dd90adcd97701176f02a9a814b265fa02a8f0ac186d3747bb0",
+          "bytes": 2136
         },
         "docs/features/quota-and-rate-limit-failure-classification.md": {
           "sha256": "0cf6f856c0edd8223248e9ae27665ce5d75c3d6a5c5e547c80e4693e1a03587b",
@@ -2088,8 +2088,8 @@
           "bytes": 3729
         },
         "docs/how-to/acknowledge-emitted-drift.md": {
-          "sha256": "f9673d08eeab3de6df838946bd2ca597d2c11556b78a5d7bfd452919ebffe59d",
-          "bytes": 4445
+          "sha256": "b15d24945b11a323d8de9ffddda7d97a5bfd0504b65fcf5e5d56dfbed2ebc257",
+          "bytes": 4638
         },
         "docs/how-to/act-on-a-refactor-proposal.md": {
           "sha256": "2630d5544827e64ad22ec6862e8cff247c953cbaeeab2b42db33b1275763d7f6",
@@ -2180,8 +2180,8 @@
           "bytes": 4877
         },
         "docs/how-to/enable-parallel-reviewer-lanes.md": {
-          "sha256": "afb4d7235f2fba71f9706d6fbc2f4f2447054126e6f4d76b5d07cee4c8b614b9",
-          "bytes": 6666
+          "sha256": "e50e403daef4b322f8732404c03e1076dfde8566605528b55767d26165405d72",
+          "bytes": 6751
         },
         "docs/how-to/enable-ui-interaction-capture.md": {
           "sha256": "f803f46941ae1b314fde20618cae640a61a9a912b06c8a8f6664689fd53d6998",
@@ -2204,8 +2204,8 @@
           "bytes": 7441
         },
         "docs/how-to/install-on-your-runtime.md": {
-          "sha256": "146c409349302542197378a8afb68c82a00461658c9a7ffe55b047881fe8f8f7",
-          "bytes": 42777
+          "sha256": "35267681c479844aed4c4a6fe2784508f5a17bac8ede0a1b24170a4e8457d2d5",
+          "bytes": 44500
         },
         "docs/how-to/interpret-install-shadow-warnings.md": {
           "sha256": "5ca11859bdc2c643d61981572f29a05e73fa41077c85824f5cbb9ab8ede93f2a",
@@ -2244,16 +2244,16 @@
           "bytes": 4805
         },
         "docs/how-to/read-ci-timeout-signals.md": {
-          "sha256": "77373f196a2cecd1f3b36519c01b44421f9fc0d9f8da01dd6bcac963cd3350e6",
-          "bytes": 7092
+          "sha256": "3b9b84e2c4db4b02d9c2e005a89b916beb5f69770c58e5fe3cb21d09d8f56207",
+          "bytes": 8393
         },
         "docs/how-to/read-the-statusline-freshness-marker.md": {
           "sha256": "5fda5be2b47aacf93127cfd94cf1d0bd7882e41bac1d51c27d7031b961224fb4",
           "bytes": 5553
         },
         "docs/how-to/recover-and-troubleshoot.md": {
-          "sha256": "797a35192ee593ea86977a922dafc2d3b3ce5c1f8b13ecbb345f18d19183baea",
-          "bytes": 14987
+          "sha256": "1ba76011ed5ab7077c123e2b7e92bdb2fa73c979c020173e5690c3a1bad6ced7",
+          "bytes": 16137
         },
         "docs/how-to/recover-from-an-invalid-verification-status.md": {
           "sha256": "1b58b7ff11898bc6cc513ea99c766fcf7ba428b7311b8e946ab6c05f34622855",
@@ -2316,8 +2316,8 @@
           "bytes": 7354
         },
         "docs/how-to/ship-a-reviewer-lane.md": {
-          "sha256": "203dedd8ccffe1dd3791b793cf121c2a6d5ec1ec41777816a84c242324307860",
-          "bytes": 17093
+          "sha256": "69fc85343c5880276bab8cff7a66618c86f830a7725ff659c0f4fb51ca6d1289",
+          "bytes": 17686
         },
         "docs/how-to/spike-and-sketch.md": {
           "sha256": "e4596beed3d9365c105574e102a9768540a7956cd7f8760338607f58bdde0106",
@@ -2340,16 +2340,16 @@
           "bytes": 7847
         },
         "docs/how-to/update-gsd.md": {
-          "sha256": "4444c9f3ddde2c1016b05a1fb7e41aedef2949902fcb7a6f3fdef99e1051aa65",
-          "bytes": 9474
+          "sha256": "7287ed6e87976a1a35b8486c709b51cd32747542a4b88277deed53f378e20222",
+          "bytes": 9637
         },
         "docs/how-to/vendor-a-dependency.md": {
           "sha256": "8f139e570ecb32b76bb5502db169325b33b788bc97823c3cd11e7085e823d51f",
           "bytes": 9591
         },
         "docs/how-to/verify-a-dependency-compatibility-claim.md": {
-          "sha256": "16b6fc9fca1b13e3674220f8cb4ed3538ae4b7c7622dd76fe5c515d1e92204dc",
-          "bytes": 8365
+          "sha256": "af5006efbed74ebc2f8bb1e6f877e1103f48b1d7dad531c4257768050ffae482",
+          "bytes": 8375
         },
         "docs/how-to/verify-and-ship.md": {
           "sha256": "fce834d702a6bcc67a9052e60a88e1d2ae455206642c2a091313b0b0bb9ab50f",
@@ -2364,8 +2364,8 @@
           "bytes": 5940
         },
         "docs/reference/capability-manifest.md": {
-          "sha256": "f8df8c07378e0422d0908307f5f0196e89849654301324727b43f7e7e144da52",
-          "bytes": 38285
+          "sha256": "0a2ce116284615190d17e5c47d90ee9d7606c454ea72eb1683a188df510acc2f",
+          "bytes": 39466
         },
         "docs/reference/capability-matrix.md": {
           "sha256": "1468fd8eda24c7137a9401626c78bf295adcbc2f694d4461652582506026aabe",
@@ -2380,16 +2380,16 @@
           "bytes": 4748
         },
         "docs/reference/gate-predicates.md": {
-          "sha256": "e4b0e02292709c24b53da288f12404347b5f34fc81f783eaea50da36d357cafc",
-          "bytes": 6806
+          "sha256": "95e7794df2ee9b7d3c885d618190b012504dca28b190f46910ceafc2d0d7cf74",
+          "bytes": 7368
         },
         "docs/reference/gsd-capability-command.md": {
           "sha256": "f9f52788552c242accbaf38c861655f43ae6a1306ea2f1562270211b238b3fc8",
           "bytes": 26527
         },
         "docs/reference/host-integration-capability-matrix.md": {
-          "sha256": "bbf4af3d9d689b79d65c5e3504276b1162b45508e9acc1e9ee79a5b9a81d467c",
-          "bytes": 147052
+          "sha256": "02a9b8ebbdea1724f0982b3a25b0ae3dfb30c4edb91fd5db73bdca8185a32373",
+          "bytes": 151804
         },
         "docs/reference/host-integration-interface.md": {
           "sha256": "f4fe9586e14e535dee8dd637c18696976e3377417f27698942123fa3fc35d437",
@@ -2460,8 +2460,8 @@
           "bytes": 13372
         },
         "gsd-core/references/agent-skills-bootstrap.md": {
-          "sha256": "5ab875054b1adda957fe5678ea91e5fb7f17d74ec336a9c545efbd6f7face39f",
-          "bytes": 3230
+          "sha256": "0ad5db82dd8bda51bdb367c3abba2a360846a3f1bcfc3efbc8d546b7b38a879b",
+          "bytes": 4562
         },
         "gsd-core/references/ai-evals.md": {
           "sha256": "b5afa786b938671e4535e67c8e7fa118e4f3067749aa5e2f82f65f803889fc9a",
@@ -2486,6 +2486,10 @@
         "gsd-core/references/checkpoints.md": {
           "sha256": "dc5f1f03e9fc812538dd257f620c74fadc7213b6fcd871323d797137bf6c5eb2",
           "bytes": 35833
+        },
+        "gsd-core/references/cicd-review-patterns.md": {
+          "sha256": "6707c5168b25a0c66ac449f0dff0605684f4d22f40eb234a08ee71d33dadbde4",
+          "bytes": 4319
         },
         "gsd-core/references/common-bug-patterns.md": {
           "sha256": "a4cfea8954dede294ac5de0d5fa192558385eaa7a99683de041fb55f42bed374",
@@ -2604,16 +2608,16 @@
           "bytes": 3907
         },
         "gsd-core/references/git-integration.md": {
-          "sha256": "77819d672e67c81b90951f0bc57ce4e0943609e6846d199c901a7a9727c6a2ab",
-          "bytes": 9053
+          "sha256": "b1ea613171c3262ee7cb4b948f086998a051484592a5c069c423cff635725470",
+          "bytes": 10315
         },
         "gsd-core/references/honest-verifier.md": {
           "sha256": "601aab061a9d5a3260b44e62ee6a5fb8918ddc8a665a4b24b0b83c8e578c878b",
           "bytes": 7333
         },
         "gsd-core/references/loop-hook-dispatch.md": {
-          "sha256": "b23dd942640b4fc52e01cec2af086363073d9917d323116bc09613fa6d270b34",
-          "bytes": 8548
+          "sha256": "5e2e840337db4b5d083f8ff9e60ad50a99d049977747c0a1c54cffb690385dff",
+          "bytes": 9206
         },
         "gsd-core/references/mandatory-initial-read.md": {
           "sha256": "fe59abce693717cf4e55c2050d28c9976c5d9e0499ac5a4f73c7979599c3b443",
@@ -2622,6 +2626,10 @@
         "gsd-core/references/model-profile-resolution.md": {
           "sha256": "d503cd3575b8a5becc6799ea7f351af732ff4b196bdacfab2a11a105b7355521",
           "bytes": 3404
+        },
+        "gsd-core/references/necessity-review.md": {
+          "sha256": "0446edd9d36431f0e9393126df6726755d38a7e53be2e264bb2a6f795ab75b07",
+          "bytes": 3921
         },
         "gsd-core/references/nyquist-compliance.md": {
           "sha256": "513417f4095b4e75d1c0b903e6fab20704faa103ca095b32c3f3d4d7b81612c4",
@@ -2772,8 +2780,8 @@
           "bytes": 3772
         },
         "gsd-core/references/tdd.md": {
-          "sha256": "304be980cea7bb6bf6a16b1d239ae6e3b59c4ca1221066e7e0735077cbfa907e",
-          "bytes": 18660
+          "sha256": "506ee9acbf7cebbcb8c23279906e81a85f967115946e52bce838197951c5ffe4",
+          "bytes": 19304
         },
         "gsd-core/references/thinking-models-debug.md": {
           "sha256": "2da61022b16c4e7c7f329fa7d571aca8bfea493abf75a4fcdd42c717739f6c03",
@@ -2836,8 +2844,8 @@
           "bytes": 8267
         },
         "gsd-core/references/verifier-phase-gates.md": {
-          "sha256": "25aa23522158f077408489dad99f0474ab9c012cb397d1111bc46f2662dd9346",
-          "bytes": 11816
+          "sha256": "0e922a8c361b2aadf637ef5e3692b02505eb8b966b80719470e67345ec372a0e",
+          "bytes": 12298
         },
         "gsd-core/references/verifier-wiring-patterns.md": {
           "sha256": "9f0d2405f4cf6dca66fcd2e28c711bfd7fb3e565a181d9ebbf8bf923e25917de",
@@ -2888,8 +2896,8 @@
           "bytes": 639
         },
         "gsd-core/templates/DEBUG.md": {
-          "sha256": "c8768312f4c1e4380fa57c5a0d105f54f4d0b875fac3dc1788d99e9a0b0080a8",
-          "bytes": 6051
+          "sha256": "6135555805d5a046c13f92b4871f7dc311e986e9d4275601262f47cac61e84f6",
+          "bytes": 6936
         },
         "gsd-core/templates/dev-preferences.md": {
           "sha256": "88d0a65ec0993a3a2d278ef36d756190a28eda3f35095ce667af674d50d8dab2",
@@ -3012,108 +3020,108 @@
           "bytes": 2393
         },
         "gsd-core/templates/verification-report.md": {
-          "sha256": "930e2f288db2429375e97e14334545a85ec9bf2fc493147c817da11abc4b2488",
+          "sha256": "49d7842d10aa378a71491720bd1fbda593e8f9aa47b8d38876094901ab33bc76",
           "bytes": 13563
         },
         "gsd-core/workflows/add-backlog.md": {
-          "sha256": "698735a7532949dc4fb75886445b944a81df9d012369b80e34764a77d92a8e8b",
-          "bytes": 5299
+          "sha256": "9477db248e37052ed0e0f194cc3de40a59c1b1b9d02339ffeef565e6de6f29b9",
+          "bytes": 5501
         },
         "gsd-core/workflows/add-phase.md": {
-          "sha256": "4b4f23cc05efd5b6d8461db2daad2d82c6bb26ddb83c887b478ba90fcd141c68",
-          "bytes": 5814
+          "sha256": "465e623dfbb167ac9b650a564e2aa7366b287dce33c965c0e999e5d89d349b94",
+          "bytes": 5915
         },
         "gsd-core/workflows/add-tests.md": {
-          "sha256": "3dbb027a56f341fb9f3a87dfd4c304fdeafe627438dadcc268b2eb73d22b6df3",
-          "bytes": 14895
+          "sha256": "7b4e1f2ec34c7c25158870ca7508344ac6ceb70b7221b089cb8c2e598fa33e45",
+          "bytes": 14996
         },
         "gsd-core/workflows/add-todo.md": {
-          "sha256": "ac059a6504f536d23f864ed7f91ec7e38aea8529ca152dafc4de9506527b35c1",
-          "bytes": 10162
+          "sha256": "4cefb2be3bc7e9e24ca041c170aa6fef4d2709dc676c2cab07f22d7edefc25ea",
+          "bytes": 10263
         },
         "gsd-core/workflows/ai-integration-phase.md": {
-          "sha256": "e2978b66c3fc76fcc4b588486bb30bb55d768e1c53c1cab939322aba63727dc2",
-          "bytes": 13405
+          "sha256": "25288097d13a5dba1128000b747bc12055b35ebbfa9afd852537c7c0a567538c",
+          "bytes": 13506
         },
         "gsd-core/workflows/analyze-dependencies.md": {
           "sha256": "26af3b5ebdd423206db01491ef09fee429ce24fb96ad7b209a8062d3ab6ae2f9",
           "bytes": 3950
         },
         "gsd-core/workflows/audit-fix.md": {
-          "sha256": "694a24c97deec8f26f7d24ea73f4b84b3990e1ae7f608bf641271a6c3fde1d24",
-          "bytes": 10944
+          "sha256": "a1f634ab080d762d6487b761da988bff945e6fdc8513744b7617572f30b6c4c2",
+          "bytes": 11076
         },
         "gsd-core/workflows/audit-milestone.md": {
-          "sha256": "b3907da46307bed86de8b3595ce17bebbbe84a6b67abfa4043e0d63ed22a0b72",
-          "bytes": 16571
+          "sha256": "b16abf6ae3137c05502a02ed579df7e431459ebfec7224575ec7b28bcc061f7e",
+          "bytes": 17148
         },
         "gsd-core/workflows/audit-uat.md": {
           "sha256": "22b7973b45449828a99c993270f50e105922eee1fd43365e6a0a4dd0747d0492",
           "bytes": 7134
         },
         "gsd-core/workflows/autonomous.md": {
-          "sha256": "6bb06ab44a2b57f9bf254fb33d07ff528db58e9168d44cead61297effded4abc",
-          "bytes": 41013
+          "sha256": "60404df809dc593868c053e622c7d508c43c7ff78fcf445c2b416b7fbf31c91a",
+          "bytes": 41099
         },
         "gsd-core/workflows/autonomous/steps/converge-fail-fast.md": {
           "sha256": "724b870339135c19f53b9a8e32e552c8659755ebfb9c2631f2e71162b0670908",
           "bytes": 1052
         },
         "gsd-core/workflows/check-todos.md": {
-          "sha256": "72f807d6bf6afb7999d3333f34cfd1e3916c6a6f1c1e390c9531df471940e933",
-          "bytes": 8935
+          "sha256": "3af75165acf9caa72500abb9f830de13275af0addc9a4ffb11e4aa3b84958101",
+          "bytes": 9036
         },
         "gsd-core/workflows/cleanup.md": {
           "sha256": "bfe182adb6623a2f8f6441aa8947d597937c952ae5089ad9912465c02e1197e7",
           "bytes": 13519
         },
         "gsd-core/workflows/code-review-fix.md": {
-          "sha256": "b5c90dca187bf467bfab75d3088ffe6cde3b1512f2bf50586d265858a5614546",
-          "bytes": 31991
+          "sha256": "ab4ff5e05c44bea02825004fda72d04667bad982263cc539cc38e77c2d6a3a77",
+          "bytes": 34359
         },
         "gsd-core/workflows/code-review.md": {
-          "sha256": "ab82faed2cff7b1314cc85968a7c4b043379d05c3c7aae2ca2150bd39d238f28",
-          "bytes": 51572
+          "sha256": "ce08ad933ede3aa86d8ee32c05ea264c39932775bd5b685a3bf36e14386e39c5",
+          "bytes": 57791
         },
         "gsd-core/workflows/code-review/steps/dispatch-fix.md": {
           "sha256": "f24a5044936fc82e7fab3a6113850066a14f4b54c6bf83e3496884ef7f1bfb36",
           "bytes": 1986
         },
         "gsd-core/workflows/code-review/steps/structural-pre-pass.md": {
-          "sha256": "91998b4b2b9002818d74fd7470650369d7fd46f287329fde8e2df9493bfe0516",
-          "bytes": 8925
+          "sha256": "53db516f480bb2b988c9e9099c67850607b771c6cdffccf61a7939bb115fe3e9",
+          "bytes": 10006
         },
         "gsd-core/workflows/complete-milestone.md": {
-          "sha256": "8915971f44eb72e8f10eac98b7adf9712dbe794c7a0c2f71bef2a57489594cee",
-          "bytes": 33185
+          "sha256": "c1aaf01cbd3aaf87019f170d52f3393e5e8a330991478dc93333ddb934665244",
+          "bytes": 34511
         },
         "gsd-core/workflows/complete-milestone/detail/elaboration.md": {
-          "sha256": "bc11a5cf16ed29cf289d2c76d655675017a990710b386fdd4eb1c0475fbc3051",
-          "bytes": 17303
+          "sha256": "8298a3a9fe43cba23e9d518cf65b165c57574d83cc73c9c6a8a753ba1aea1261",
+          "bytes": 17403
         },
         "gsd-core/workflows/complete-milestone/steps/git-tag.md": {
           "sha256": "651ed29ec56dff1a7e0746b06cd9e61120c9d1a00c6feda188e10a12fb96ea8a",
           "bytes": 510
         },
         "gsd-core/workflows/debug.md": {
-          "sha256": "bbb6338317f702984b880d4ea09520ff52e07e7c626e9250c9172514cdc17e4f",
-          "bytes": 22236
+          "sha256": "e50ac215a58af0c104a4a2a89df2fbb1fb21a387df46b197fb5fa8fbdb9435d6",
+          "bytes": 22337
         },
         "gsd-core/workflows/diagnose-issues.md": {
-          "sha256": "cf33cf30c115055243c4a2034953a3e4d67c77dc9003ff756c7b380eb238eeef",
-          "bytes": 15338
+          "sha256": "71510c99a61ea36f0eee899c9b2d30263ca8b9f7c9fa9f9ea6b3b2c353afe427",
+          "bytes": 15786
         },
         "gsd-core/workflows/discuss-phase-assumptions.md": {
-          "sha256": "886090b6bfe7cbf8d51e1000d3993f69d7ae6018c558024d9f3a5fe4a6947bd0",
-          "bytes": 26955
+          "sha256": "28184311a201291a02a6684a6b57d2e8347500ecffadee53859f01b3feb572b9",
+          "bytes": 29319
         },
         "gsd-core/workflows/discuss-phase-power.md": {
-          "sha256": "f26697a5c55c39033f27738f7f500e2789a7d3023e7360ceddc22e9fbf35ed5c",
-          "bytes": 11336
+          "sha256": "60157b753a368d7715d9ab6167703b89120d7e79d02014270a96cdba01876312",
+          "bytes": 12833
         },
         "gsd-core/workflows/discuss-phase.md": {
-          "sha256": "f090b6555cc7d4d37ef7a01c33e0f7dd3f98d141ca650298e5f0bea5501bea2b",
-          "bytes": 30287
+          "sha256": "1b3e5faf07c4f63e7b5c579b77f5edf311d1aa0b2eb5cd14d6b837a21975bc13",
+          "bytes": 30604
         },
         "gsd-core/workflows/discuss-phase/modes/advisor.md": {
           "sha256": "cc6638b7b8ffb539afc71cfeec39e639f5902d8bc4138476b17b65c268eac514",
@@ -3132,8 +3140,8 @@
           "bytes": 2222
         },
         "gsd-core/workflows/discuss-phase/modes/chain.md": {
-          "sha256": "6d03112e8de2d72f6fdd5362ba6fc7f81947cf827effe617da2c764cd012bd58",
-          "bytes": 6240
+          "sha256": "2545b5572db84f9f5567d5f33246931eebdd195f63597473c572161d2ce10437",
+          "bytes": 6340
         },
         "gsd-core/workflows/discuss-phase/modes/default.md": {
           "sha256": "d096bdc99b042ed336a7a937650d18cc498e74f19ddc3dd265c38b216a107ad4",
@@ -3156,24 +3164,24 @@
           "bytes": 11628
         },
         "gsd-core/workflows/docs-update.md": {
-          "sha256": "95ac079631ec6e924922adfedc18595bec59047d466c87e835e485003b9909af",
-          "bytes": 50449
+          "sha256": "fd7c4bc635766c483379554cb6c8b5b51a1d0a18786d8ec3cbc69a743213138b",
+          "bytes": 50550
         },
         "gsd-core/workflows/docs-update/detail/elaboration.md": {
           "sha256": "32db398e4c0db7a2fc0c3f43cf028a582d3ecddb0d7faf80bebb74cf58705fa2",
           "bytes": 10344
         },
         "gsd-core/workflows/edit-phase.md": {
-          "sha256": "6168a2a947625e5640c7f7b41547194afd9245198f3053dc6628ce8271ecf579",
-          "bytes": 12573
+          "sha256": "51611182882714a60fd98c28dad42e245985d34c4152cabc86053624527d17e6",
+          "bytes": 12674
         },
         "gsd-core/workflows/eval-review.md": {
-          "sha256": "0059159953d6a660e17736f82a976d5ccbd87ba99b0fc83255e78a5b3b184d9c",
-          "bytes": 8462
+          "sha256": "1ac9ff22eea5674a9385b4ff5edf7b235a87b1aeab6f5290a65b521d60dace7e",
+          "bytes": 8663
         },
         "gsd-core/workflows/execute-phase.md": {
-          "sha256": "5045ca4c672daf21395b9b8a56112856f6f6243d6b8721e81dff248dd0a40924",
-          "bytes": 89785
+          "sha256": "7bded1a9b530c14bac5e967b3617a6c4dca574e329af7709560a95a6a921e70f",
+          "bytes": 91561
         },
         "gsd-core/workflows/execute-phase/detail/elaboration.md": {
           "sha256": "6e414bf165124160134f99e2e585898be6252d573248be0d55b645e2d9817e66",
@@ -3184,8 +3192,8 @@
           "bytes": 79630
         },
         "gsd-core/workflows/execute-phase/steps/codebase-drift-gate.md": {
-          "sha256": "b20277e46e23865251a3d6df617118b47734a75a5a63c4354b98b678159a42e1",
-          "bytes": 9137
+          "sha256": "20216656225493d695102aec801bea749a16c386e3705aab56067308b65c1608",
+          "bytes": 9238
         },
         "gsd-core/workflows/execute-phase/steps/completion-reconciliation.md": {
           "sha256": "87ffd2a105aea8254b83e7687146b5b79437665fde3c67d8b4f0beb989115909",
@@ -3208,12 +3216,12 @@
           "bytes": 6555
         },
         "gsd-core/workflows/execute-phase/steps/per-plan-worktree-gate.md": {
-          "sha256": "b371f5d62d54a9946e45e7bc8dc807b6e194fca38866dd04a6636d916d424356",
-          "bytes": 11197
+          "sha256": "099d72a3ea69839c31a62854dffdfb597f288816dae0dc4dbb190933b7829781",
+          "bytes": 13101
         },
         "gsd-core/workflows/execute-phase/steps/post-merge-gate.md": {
-          "sha256": "665840aea60d8d86be9ae820874c4d6fd63b609ad77e646a25648046bba3a2fc",
-          "bytes": 12213
+          "sha256": "f182ae0f4138dceedff536512248726cb2a23be1ee89b8a19fa0418f0cfe6a3d",
+          "bytes": 12750
         },
         "gsd-core/workflows/execute-phase/steps/protected-branch.md": {
           "sha256": "19289f31d53b876c24a989aec2e1a20b0d01be566274dd535cf56b4ce7a6e862",
@@ -3224,8 +3232,8 @@
           "bytes": 2088
         },
         "gsd-core/workflows/execute-phase/steps/regression-gate-run.md": {
-          "sha256": "5fe18424069df11b0b0eb362bcac7b765ea253ef43b196510d4cbdde0b55c376",
-          "bytes": 5863
+          "sha256": "68cbb6a6c8bc7054cc39be89c9b59ee0f695619a0a08ab39d6bf3e437d4eae78",
+          "bytes": 5991
         },
         "gsd-core/workflows/execute-phase/steps/regression-gate.md": {
           "sha256": "a788acd6b87c6643684498c6edfdf60c43386915c38434669a4450725bc6928d",
@@ -3244,12 +3252,12 @@
           "bytes": 1483
         },
         "gsd-core/workflows/execute-phase/steps/verify-phase-goal.md": {
-          "sha256": "96d9839407be58b8fb4ef773402bb64bcadab2af189ec6de59e14198b23caf82",
-          "bytes": 14275
+          "sha256": "c2a1f656c3a0dad4dba51bd8f110b165fac6863601771041bf4bfb0b52126527",
+          "bytes": 14620
         },
         "gsd-core/workflows/execute-phase/steps/wave-post-gate-hooks.md": {
-          "sha256": "fe38ced810fbedabfa8034abd997437abc6ed40555888ba775f3cd4dbf3d0a72",
-          "bytes": 5067
+          "sha256": "8ae1ce68ae95ae1fa5dbcb9aff48d89cb9d094e91768923191e7b4446491ba21",
+          "bytes": 5679
         },
         "gsd-core/workflows/execute-phase/steps/worktree-base-check.md": {
           "sha256": "3df47249c0c69982ed4b9328b3ebff3e90a9eb17c25fe5868162f35c9a9d8dbe",
@@ -3260,32 +3268,32 @@
           "bytes": 1839
         },
         "gsd-core/workflows/execute-plan.md": {
-          "sha256": "4d600f1dd8e912bccc1124fd46596a0cde4d8c8a59b336c665acb290347507f7",
-          "bytes": 39490
+          "sha256": "9d889f90b33a353eceb174520831e78cbc66ed39eafe0f836c35c54d77e7211f",
+          "bytes": 39904
         },
         "gsd-core/workflows/explore.md": {
           "sha256": "fa47ed146ecf9a345d745977720c76c145a8d2aad4e507ec73361357bef76787",
           "bytes": 19959
         },
         "gsd-core/workflows/extract-learnings.md": {
-          "sha256": "105b87652d6264a902b589534c6ac5bc05d20067901eba38649d240e5c8e70cf",
-          "bytes": 12107
+          "sha256": "a9281400d064bab6e3e4013c02f9d5e26cb509bb83ed6e9d7429f5fb7faa057d",
+          "bytes": 12207
         },
         "gsd-core/workflows/fast.md": {
           "sha256": "0f3d8981eeaee0d0b9eb5e290d63e95707635ada2a90607186609b0531acdb4c",
           "bytes": 6418
         },
         "gsd-core/workflows/forensics.md": {
-          "sha256": "fc640e5f7c2e7bcf769918bbefb1c84b4fbbbab8b4c7519a93306fabdde4a969",
-          "bytes": 10654
+          "sha256": "0d415f4cf9ff1bc3f0745f411bd4d36bfa7826749562539dd3c50031181d1c6f",
+          "bytes": 10755
         },
         "gsd-core/workflows/graduation.md": {
           "sha256": "cefba34d6b17d2bafbaabd3dacaeac9e1e2fd90585f21f7fcb50888b6e06d3b0",
           "bytes": 10158
         },
         "gsd-core/workflows/health.md": {
-          "sha256": "4914e96ba45875c3c19f82bbba9fd6757f9cd475edcdf072b98787eaf6f9877e",
-          "bytes": 18716
+          "sha256": "0149be560e0c13ae8d5ec2da053dea051aac2eff6f737202357af2a6feaa152a",
+          "bytes": 18975
         },
         "gsd-core/workflows/help.md": {
           "sha256": "af49becccc374298758cb37e417533d4687f256ac55b54fc7d61f5c12bcda788",
@@ -3312,8 +3320,8 @@
           "bytes": 6316
         },
         "gsd-core/workflows/import.md": {
-          "sha256": "0ef2fabdc6331af3897eac6890fdbfa794bfe710213402d88bc610bc5e249161",
-          "bytes": 13791
+          "sha256": "5b17998a7b8d0ddf134179b8823c7997cfa3973283223bf0a36af299e7590bb1",
+          "bytes": 14208
         },
         "gsd-core/workflows/inbox.md": {
           "sha256": "fa5658f18737228bb4630443be208114f239391b8a2a585c9a9999a321e7540e",
@@ -3324,8 +3332,8 @@
           "bytes": 20251
         },
         "gsd-core/workflows/insert-phase.md": {
-          "sha256": "a74a7fa0f153d0cbc848927ef1217c4e8e016f6e6a882c52805b86770e5f2956",
-          "bytes": 7234
+          "sha256": "4afe95ba87f3f2d472ff9b3f03168a28e806d216f35b92730dd8101723aa855a",
+          "bytes": 7335
         },
         "gsd-core/workflows/list-phase-assumptions.md": {
           "sha256": "db6946da4d25256a4bfb016b1465101f553aa0a8f7918f9078d76492e6ee20ee",
@@ -3336,24 +3344,24 @@
           "bytes": 4704
         },
         "gsd-core/workflows/manager.md": {
-          "sha256": "e44689f345f63018890b82b543cbec045aac7019bdcee6dabe7b9c4f5b5ff36d",
-          "bytes": 24080
+          "sha256": "a615e6c5b7eb2e395bc21a3fb427864d4a59b256b0b842d1ec229bb394c0e26e",
+          "bytes": 24282
         },
         "gsd-core/workflows/map-codebase.md": {
-          "sha256": "8ed5adce95bd2de7fe14bf237889ba727f3a44ea56a5e10ec4b271605539e727",
-          "bytes": 22783
+          "sha256": "6bfe6298c37b1be76e07d5b1aab7be96e5c410e841900e25367c4b0b7dffe41a",
+          "bytes": 22884
         },
         "gsd-core/workflows/milestone-summary.md": {
-          "sha256": "a81e31cb6def694ce752211b6f18cdd3d8be0ecb409b83418e482db8c6aebdf8",
-          "bytes": 10100
+          "sha256": "3feb033825b2f3df58c61e6962da15470e1d5abfd5ce77a83b7d83d7710bcd2a",
+          "bytes": 10302
         },
         "gsd-core/workflows/mvp-phase.md": {
           "sha256": "b2d7e923b9ede748efb3a36e06603aa780557819e4ffa8f8dfa97dfa68526442",
           "bytes": 12385
         },
         "gsd-core/workflows/new-milestone.md": {
-          "sha256": "7ad9e2e9779bc820868c6baced726c395a07a58897fb8e0eaaa4c10ee862f491",
-          "bytes": 40045
+          "sha256": "d2300de5139fe176a4a7172cab5d1f65384caa267e46de1afb7a0a8009bbca68",
+          "bytes": 40245
         },
         "gsd-core/workflows/new-milestone/steps/project-md-milestone-write.md": {
           "sha256": "7fbacae20957818a907edffb07f7552de2a9a023add2463f237a9173e3db4414",
@@ -3364,8 +3372,8 @@
           "bytes": 922
         },
         "gsd-core/workflows/new-project.md": {
-          "sha256": "4625a2c1c83768e2c061819410598e64c3b38c36d93a9777c1eeed4bcce03eb5",
-          "bytes": 50573
+          "sha256": "7d104af278f9bbcb6c0b9ee0ee91e1056346b770ddf406a89bb5b652df3ecc9c",
+          "bytes": 50674
         },
         "gsd-core/workflows/new-project/detail/elaboration.md": {
           "sha256": "31d2072b17423737395afcba4794d79f2077b52f2b8917470ee57b5cd53bd25f",
@@ -3388,8 +3396,8 @@
           "bytes": 9732
         },
         "gsd-core/workflows/next.md": {
-          "sha256": "e1b27fcad2772666a337ac77ac129b28b5eee4b9b18dd1a736ebe2f71de3ed75",
-          "bytes": 19479
+          "sha256": "a7194150cb75d0a85e458c2412b85b1b24e595dd2e604cd341a70f3c2964662e",
+          "bytes": 19577
         },
         "gsd-core/workflows/node-repair.md": {
           "sha256": "c26de5bd187767a7a52f690c656cab77aebb48ada7a3c861f771a1c37d86a543",
@@ -3404,12 +3412,12 @@
           "bytes": 8965
         },
         "gsd-core/workflows/pause-work.md": {
-          "sha256": "31f9d75352a769f179708438489397425dbb10a11f0dc0f7c7cea5f53a78cda0",
-          "bytes": 13138
+          "sha256": "47195b230b0915f7629578a500795026e06079a232c5239dad2378e8290c68e6",
+          "bytes": 13148
         },
         "gsd-core/workflows/plan-phase.md": {
-          "sha256": "00fe0bcff7ae6184cac5cb8f055bd60257413abc6725dcdbed39badaa051dee6",
-          "bytes": 97857
+          "sha256": "835048af149c1a57c75c6ef6050b63f45974196e9c46a0e45da2473c20294c7f",
+          "bytes": 97932
         },
         "gsd-core/workflows/plan-phase/detail/elaboration.md": {
           "sha256": "1185427996718e6b91eb3fb19ff16a6761d8960a45eee3a8dd5c2063acfa981f",
@@ -3420,12 +3428,12 @@
           "bytes": 1267
         },
         "gsd-core/workflows/plan-phase/steps/chunked-planning-mode.md": {
-          "sha256": "ab1b38894fc0b658b28456b283cb750c197180652077d60fbda1557e3c1c6e1d",
-          "bytes": 13800
+          "sha256": "3f4b4deed4cc8c6ca245571a0f7ab7009baa0049b9297655d405f539c192210e",
+          "bytes": 14054
         },
         "gsd-core/workflows/plan-phase/steps/closed-phase-gate.md": {
-          "sha256": "2b9222d0acbcda40eeb837ce79b841a4db72f0bdbb6ff9f69f63816a1876e387",
-          "bytes": 2339
+          "sha256": "3cbe49ebeb202bfa596977264cffb912930d0073fd684b8a66c329a4318c5009",
+          "bytes": 2439
         },
         "gsd-core/workflows/plan-phase/steps/prd-express-path.md": {
           "sha256": "9b08c5995db64a3160a54c688e1f8eb1b594d648023ae8ef80741012e92afa92",
@@ -3444,28 +3452,28 @@
           "bytes": 422
         },
         "gsd-core/workflows/plan-phase/steps/stall-detection-helpers.md": {
-          "sha256": "9b9d040fa38e35ce147ba712268fede1f4df3367d414d5380bb66d61dae1915e",
-          "bytes": 13245
+          "sha256": "aa317476bfffc655a4f488b452ef949bd19c84bd01d8706f7b2cfe1d1c8970fe",
+          "bytes": 13576
         },
         "gsd-core/workflows/plan-review-convergence.md": {
-          "sha256": "56035c45746085d032065c1aaccf9102aab9ccde2de57ccf3d97da86d2eb8bf9",
-          "bytes": 37403
+          "sha256": "0ffef2e4ae27966f485326f017312a42ed153d8da0f29cf49abb81ac32393798",
+          "bytes": 37703
         },
         "gsd-core/workflows/plant-seed.md": {
-          "sha256": "340402569f8e323e75deadb6f212241bf1d5541ca777060c2900004506152952",
-          "bytes": 12745
+          "sha256": "d54e172615372278b3bb0775e066f2320f56dda897b6f8f358a1a167c98dd88f",
+          "bytes": 12843
         },
         "gsd-core/workflows/pr-branch.md": {
-          "sha256": "63c1482ecea847da620e8310ca2a7854a229f31a74caa8b4709a22b46bb1193e",
-          "bytes": 29329
+          "sha256": "2c1f4ff02ff417afea59e3362d81cbbede07beaae840262e1fe9d490d52483f7",
+          "bytes": 29650
         },
         "gsd-core/workflows/profile-user.md": {
           "sha256": "f8b75c1e1e87756e6bb3d82cd9984b3eb23d50b74d2a6e65a67284c15f7c9547",
           "bytes": 19618
         },
         "gsd-core/workflows/progress.md": {
-          "sha256": "7083e061867b34ec9474dfb1b89a4ce6d971199abc4f21b4be02665813c5fea1",
-          "bytes": 28120
+          "sha256": "cc444c146336dd9eb2512710258f4b0b173069576207a83aee9db682a3919d5a",
+          "bytes": 28220
         },
         "gsd-core/workflows/progress/steps/forensic-audit.md": {
           "sha256": "18a8259b34cf9ac88d11915af7163bff3a5ee3ac7eb50bde7bc5ea13668dcfb1",
@@ -3476,8 +3484,8 @@
           "bytes": 1851
         },
         "gsd-core/workflows/quick-batch.md": {
-          "sha256": "642cd746ab156b318d9928502e77c2d4524d400380e8d0d2abe4f28628ac00ad",
-          "bytes": 13410
+          "sha256": "fc523a1008727bc5ba17229a019a4a0379b816c40110041d579c105d7de451ae",
+          "bytes": 13511
         },
         "gsd-core/workflows/quick-batch/steps/batch-init.md": {
           "sha256": "ae78b383ccf94c96a8c3e0f11fa4c7a6ab0f181becd98520c8818f2c02588f02",
@@ -3492,8 +3500,8 @@
           "bytes": 7879
         },
         "gsd-core/workflows/quick-batch/steps/plan-checker-loop.md": {
-          "sha256": "3447c34b1cd2c9a55d4aa0d39863d06ef3045ae1c03bef435c210a4d02b69d53",
-          "bytes": 6229
+          "sha256": "5dd0c0b8f2e1eef85c2997b6726f483d45400880f25c5021cf0d6bfaf16bb62c",
+          "bytes": 6601
         },
         "gsd-core/workflows/quick-batch/steps/planner-wave.md": {
           "sha256": "d985460359821d90a193f2613eb9060ff8e1e6fef008c2b9fa3257c017088678",
@@ -3516,16 +3524,16 @@
           "bytes": 11545
         },
         "gsd-core/workflows/quick.md": {
-          "sha256": "e4c9e8bad8dee54bdd04f5c2c6fa773e1d5b3d000214b234a539071d49d9e11a",
-          "bytes": 44360
+          "sha256": "e38335251722c65bcb760075518f44b69c17d54420fa023ddcb295910575e17f",
+          "bytes": 44474
         },
         "gsd-core/workflows/quick/steps/discussion-phase.md": {
           "sha256": "ff7a0c851f0b4a3c5ceb26d0aa125897e9a572522c9761a0962279ef46744d7f",
           "bytes": 3668
         },
         "gsd-core/workflows/quick/steps/plan-checker-loop.md": {
-          "sha256": "83ab28e3776266a48d343e88cc3132d96d2090d085f378eb04d2d2b42a7e1ae1",
-          "bytes": 10500
+          "sha256": "e6375ff05a25c70f8a10be8a2aa90fd4c46220d451702d915fa4877b472652fa",
+          "bytes": 10897
         },
         "gsd-core/workflows/quick/steps/quick-verification.md": {
           "sha256": "84cd6b07a1378f3d27a1d5dc2a168c8260339d2062e433b6a4dd5e48906f6f04",
@@ -3536,28 +3544,28 @@
           "bytes": 3558
         },
         "gsd-core/workflows/quick/steps/worktree-pre-dispatch-commit.md": {
-          "sha256": "a0c8774cffba8ab38c8ea9deb6ec92d0851af477b6cde353b82c35ce49276ecb",
-          "bytes": 5701
+          "sha256": "e2387a582bb3f74d4622cbcf31b65eb7e78630c6c1f770c070021d4131115e2f",
+          "bytes": 6209
         },
         "gsd-core/workflows/reapply-patches.md": {
-          "sha256": "3348990d139ddd3f764db9975400cb803c4a22c43ca05f7ebc9d60c8eaf93b95",
-          "bytes": 26279
+          "sha256": "d7b0561f7d456ea0bf0fe3a53600fa555a626a6fb7e10d10aed498435d9be3ed",
+          "bytes": 32713
         },
         "gsd-core/workflows/remove-phase.md": {
-          "sha256": "4f796908c23efbb2d521e8e5b555b06e9c12f7bca51b3e179158ff7067dae3e9",
-          "bytes": 6753
+          "sha256": "1b0c343aad87b4a4385f4cb3a2a52b5da8e151551152a90b51ba0f76a6457d03",
+          "bytes": 6854
         },
         "gsd-core/workflows/remove-workspace.md": {
           "sha256": "d9cc19a118a68c81d436a698d9f803fed4152b439afc7c2aa27024d4db7da109",
           "bytes": 6070
         },
         "gsd-core/workflows/resume-project.md": {
-          "sha256": "8dee0422849ee6dd4a1c53e3cb862cd7337838d8c5cd75ce8e16398ea64ec081",
-          "bytes": 15741
+          "sha256": "bfaa76506389f8b10efdde14b08c27eff0d98cf7433b6a4fd2de822555aafcda",
+          "bytes": 15842
         },
         "gsd-core/workflows/review.md": {
-          "sha256": "d644c96671d1c2dc72940a14b3a3549a4a0a6924786c25f1ea8051796b987832",
-          "bytes": 51937
+          "sha256": "a3353bcbe59d1b0f66aa3ef0de9890943b2528875294e744540f71b76151687f",
+          "bytes": 49144
         },
         "gsd-core/workflows/review/steps/reviewer-instances-note-1.md": {
           "sha256": "8e99eab70c786614de4cee08bea6ab3522361dcacb11a54cf3561caee52b524f",
@@ -3568,32 +3576,32 @@
           "bytes": 277
         },
         "gsd-core/workflows/scan.md": {
-          "sha256": "65fe24ecb71a8fc8139317784f675349e2b36fb3b55982e1697435cb38be86a5",
-          "bytes": 7138
+          "sha256": "f1567823b57ed6f20f84671e684e672ae1a4e2c35dd9cb403445b52433407d7b",
+          "bytes": 7239
         },
         "gsd-core/workflows/secure-phase.md": {
-          "sha256": "8ec2034332c770c75dc18964a74c23f5f8d1a3557a5b560dc92874783ceb3488",
-          "bytes": 13730
+          "sha256": "8f2a8853a41ac45413817f76119885d7dcf45f1f4a9b662eed2bac71e6e8fa40",
+          "bytes": 13994
         },
         "gsd-core/workflows/session-report.md": {
           "sha256": "0a8ed74c950a4d5b34b4d1847f059f5a7d95a5bf9584f86289a3c3995f39067e",
           "bytes": 4165
         },
         "gsd-core/workflows/settings-advanced.md": {
-          "sha256": "c9cc02bf5f7c7c1c1155a839e7408aa54eb3749d441a435cbb0360773e54fcac",
-          "bytes": 39055
+          "sha256": "1f784fc15bc47b782dc1ef2df0c93ba50ff5af3ff1b70a127d48f4748cc5c660",
+          "bytes": 40808
         },
         "gsd-core/workflows/settings-integrations.md": {
           "sha256": "eb4634671256c7e567bb278ba96e8fcb41cb541c0f9c7c3f23e9ad8b586b6fb1",
           "bytes": 16027
         },
         "gsd-core/workflows/settings.md": {
-          "sha256": "fa67c5d22142d81ec0ffdd05ec81bebf50ff9b85ee2ed2960635c87ed9c458dc",
-          "bytes": 39124
+          "sha256": "6b1525bb801e323cb4786cb1def7ceec38480ab55cfc0843d1499ae0fe54ea1f",
+          "bytes": 39376
         },
         "gsd-core/workflows/ship.md": {
-          "sha256": "7b584d574a43ae759de071e9fc5733e8bae646241024fb8e3c2f488ec07e04b4",
-          "bytes": 35470
+          "sha256": "a58c2a1db25cfa6556af6231fc00cb7f8d9622fa842869b41041f855478c8217",
+          "bytes": 38408
         },
         "gsd-core/workflows/sketch-wrap-up.md": {
           "sha256": "b1d9101a732926ba88d799a23fcf426c156815b063cf2ddf156e4365c469201d",
@@ -3608,8 +3616,8 @@
           "bytes": 9324
         },
         "gsd-core/workflows/spec-phase.md": {
-          "sha256": "9a05d48ae07f40f373c2bf02321094b9d64e66329d63310851accebc7e16dd00",
-          "bytes": 35450
+          "sha256": "cd6f348f7d5e1648fac0051e83bc682ab3920258ab570f6198c2c025eaa38447",
+          "bytes": 35550
         },
         "gsd-core/workflows/spike-wrap-up.md": {
           "sha256": "9748155b4624bba2400bb078499a94b800c4ae8f5f1f4c6c5f60cc51b6fd9e63",
@@ -3628,60 +3636,60 @@
           "bytes": 16171
         },
         "gsd-core/workflows/thread.md": {
-          "sha256": "4d5be7a447db045ef558b6d5958c0da41344aeda456d019dd9d3d1b4427f6e79",
-          "bytes": 10067
+          "sha256": "3f1b0b9a8104ab887881938bf0ba12cc4596d414e78d529ad2ec88dc6460d44f",
+          "bytes": 10269
         },
         "gsd-core/workflows/transition.md": {
-          "sha256": "5fd2134e7d2c3f63f62dd24bd939c77a58f88839a1a71e1540e3dad1eab70d2d",
-          "bytes": 21553
+          "sha256": "9b8a135f54ddbc9de3e48a69686e2e46ed5a8e49517b33251dcdb00c90119041",
+          "bytes": 21654
         },
         "gsd-core/workflows/transition/steps/workstream-collision-check.md": {
           "sha256": "ddf53acd9512bd2b6caab2c45bff4da585f8a2976bba3d4fe7e6092265e7824c",
           "bytes": 948
         },
         "gsd-core/workflows/ui-phase.md": {
-          "sha256": "6034c62cf2a5561c24d7a3963aa44b809bcf421cd92dd1d6935e7d5cd3675d4e",
-          "bytes": 29569
+          "sha256": "df72e45c08130c1987ae9fc3e7de69d8c4db5e1f19ea5745fcea10814bb90356",
+          "bytes": 29670
         },
         "gsd-core/workflows/ui-review.md": {
-          "sha256": "b15dbeed08390e102d610aacf413771d3ef2a83cc7fe9d1cf6f8488cf2402e1a",
-          "bytes": 10937
+          "sha256": "8004c53f711635bc6641e483e33db04f0143cc85571819cf5037e15d45704760",
+          "bytes": 11037
         },
         "gsd-core/workflows/ultraplan-phase.md": {
-          "sha256": "b204242144db9ab1b2b22cc5c3319ad6c47bdf6a07e154b81b8f240d98f02782",
-          "bytes": 7383
+          "sha256": "58512036c7dc6a70f1612854e5a9929cfa22c33039d5242133147daf744c2521",
+          "bytes": 7484
         },
         "gsd-core/workflows/undo.md": {
           "sha256": "0812391ee95fb221d360dd22c7b97721200be536dc5b8c6a9c4740970be7ac73",
           "bytes": 32225
         },
         "gsd-core/workflows/update.md": {
-          "sha256": "0acbd72963318bbd29c2b31846255548181f1904dd67bade05663dad8e0ccea7",
-          "bytes": 26613
+          "sha256": "745433f4c267a82214ae14e433653a38498b4494866a26d0f9f08fa21fe4b1b2",
+          "bytes": 26714
         },
         "gsd-core/workflows/update/steps/channel-banner.md": {
           "sha256": "37dbc6493aeff2a6c220a8aa562a1c84b5fff52d46d954ebdf8ec91f585e3260",
           "bytes": 716
         },
         "gsd-core/workflows/validate-phase.md": {
-          "sha256": "5159bc121d7607932e63d044ebc9a3aaada48624b6b74423d5158519a5e9705e",
-          "bytes": 11068
+          "sha256": "113db27abc3a6b8db0026a35429da15982092280b838a1bc602a08e1c69751a7",
+          "bytes": 11168
         },
         "gsd-core/workflows/verify-work.md": {
-          "sha256": "2f144d1f418643387adba2db08a766bb07de936a27d83ad836540d86741180a2",
-          "bytes": 48719
+          "sha256": "c979c67666355752c7a594ecdc2652a12dbd7f31fe973253c4d03c37ca49aefc",
+          "bytes": 49541
         },
         "gsd-core/workflows/verify-work/detail/elaboration.md": {
-          "sha256": "f0e3a3daea3a46a5d8e6f839f7cbf9a967f1fd1f907b99f19caac8b21178e787",
-          "bytes": 10896
+          "sha256": "43cf5c123ca24a4394e5c3624d96ccf093438aba8dc4cb090d8bfc7206baa267",
+          "bytes": 10895
         },
         "gsd-core/workflows/verify-work/steps/automated-ui-verification.md": {
           "sha256": "6a2313603645606042261bbfc2af597eebb79ae6c638c10978e806e0e5921045",
           "bytes": 5253
         },
         "gsd-core/workflows/verify-work/steps/mvp-uat-framing.md": {
-          "sha256": "80fc043f852cad51815bb0cfdc969a082f16de0e5ab7a8df73cefd4b49728d9e",
-          "bytes": 4590
+          "sha256": "e540ff57945535fa64b5267ab32f09c1fda59442752514b18476a66da7a34558",
+          "bytes": 4691
         },
         "scripts/changeset/README.md": {
           "sha256": "86ff89331dfd94b2afd9ff9974883f137f3f0c3652e4687fecb216c0eee9e9ea",
@@ -3764,8 +3772,8 @@
           "bytes": 6266
         },
         "skills/gsd-update/SKILL.md": {
-          "sha256": "9fd95e4ba43d8529d4825834e11b1bf07f06abfd91dd2fbe20e1ee0dcb5dd59e",
-          "bytes": 2405
+          "sha256": "9012e9cc70b558a5c1b41384cf0d436295f6be2b1d34feb16353a4a4518e4c8f",
+          "bytes": 3129
         },
         "skills/gsd-workspace/SKILL.md": {
           "sha256": "504ab43a9f1110f60a98017cc56a9712c838681980ef3b2d55d38a9dfebab79a",

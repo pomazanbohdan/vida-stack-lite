@@ -16,8 +16,8 @@ artifact_contract_verified_by: the unreadable check was reported as a warning an
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-phase.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/plan-review-convergence.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/plan-phase.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/plan-review-convergence.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
@@ -31,3 +31,4 @@ domains:
 A gate that failed to run
 is a check that could not look, not "nothing to compare":
 the warning above is its signal, and planning continues (the check is advisory).
+A caller error about the phase directory — not found, not a directory, unreadable, or holding no plans — returns `total` and `honored` as `null` and `not_honored` as an empty list. Pass the nulls through; never coerce them to `0`, and never report a count for evidence that was not read.

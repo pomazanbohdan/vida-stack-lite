@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '12'
+revision: '13'
 ---
 
 # Instruction change vector
@@ -110,6 +110,7 @@ product-owner default and cannot override `user_decision: true`.
 | 2 | matt-skills | `49dd158d1076134a641b33efb035946536778336` → `4ae2317ddb22b046e26455e4f9c9b3aaaf62212d` | 69 | 8 | 2 | 16 deleted; 9 rejected | 2,514 / 2,776 / 1,202 | engineering; operations; documentation |
 | 3 | bmad-method | `cfba3ff5f982c1809e060606e399f55ebd7bce5e` → `bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41` | 752 | 96 | 10 | 16 deleted used files; 18 new candidates reviewed | 2,524 / 2,777 / 1,200 | product/design; engineering; operations; documentation |
 | 4 | addy-skills | `aeac41d4d005999432bb7312f7ff06383a91d59d` → `301b02b12bff98e4688e6984af6556802322bbde` | 392 | 10 | 0 | 14 eval files rejected | 2,524 / 2,791 / 1,200 | engineering; documentation |
+| 5 | gsd-core | `19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005` → `bfab82492374a847a01417707a1a38e9e7cf097e` | 1,343 | 6 | 5 | 25 new candidates; 212 packaging/translation docs rejected; 22 stale map records removed | 2,529 / 3,008 / 1,202 | engineering; operations; documentation |
 
 Legend: result = corpus instructions / map records / baseline files.
 

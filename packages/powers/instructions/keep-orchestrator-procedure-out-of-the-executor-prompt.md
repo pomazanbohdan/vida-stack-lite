@@ -17,9 +17,9 @@ artifact_contract_verified_by: "no orchestrator procedure reaches the executor's
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=capabilities/claude-orchestration/docs/workflow-backend-dispatch.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/multi-agent-orchestration.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/claude-orchestration-capability.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=capabilities/claude-orchestration/docs/workflow-backend-dispatch.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=docs/explanation/multi-agent-orchestration.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=docs/explanation/claude-orchestration-capability.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

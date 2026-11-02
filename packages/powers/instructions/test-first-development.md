@@ -20,8 +20,8 @@ compatibility_requires: []
 provenance:
   - donor=superpowers; license=MIT; revision=2ce8aa15d05bd57213e6f746f953aafb7ded7a8b; path=skills/test-driven-development/SKILL.md
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/tdd/SKILL.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/execute-phase.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/references/execute-mvp-tdd.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/execute-phase.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/references/execute-mvp-tdd.md
 status: active
 revision: 8
 schema: VPInstruction/v1.2
@@ -77,3 +77,4 @@ Pure documentation, configuration, or test-only tasks are skipped by this gate e
 The executor MUST halt before running the task's implementation step.
 Do NOT roll back any prior commits in the same wave.
 Under TDD mode, if any TDD plan is missing a RED or GREEN commit, the executor MUST refuse to mark the phase complete.
+A GREEN commit counts only when it descends from a RED commit of the same plan; commit order is ancestry, not log position or commit date. A plan with both kinds but no GREEN after a RED is a `green_before_red` violation. If git cannot answer the ancestry question, keep the GREEN's credit rather than inventing a violation.

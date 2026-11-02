@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4988,
-  "updated_at": "2026-11-03T04:10:00.000Z",
+  "revision": 4992,
+  "updated_at": "2026-11-03T05:20:00.000Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -6240,7 +6240,7 @@
       }
     },
     "gsd-core": {
-      "source_revision": "19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005",
+      "source_revision": "bfab82492374a847a01417707a1a38e9e7cf097e",
       "files": {
         "gsd-core/workflows/add-backlog.md": {
           "status": "split",
@@ -12610,10 +12610,6 @@
           "status": "rejected",
           "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
         },
-        ".changeset/agile-jaguars-dance.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
         ".changeset/archived/105-no-auto-switch-worktrees-false.md": {
           "status": "rejected",
           "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
@@ -14470,74 +14466,6 @@
           "status": "rejected",
           "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
         },
-        ".changeset/bold-badgers-purr.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/brave-koalas-bark.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/calm-seals-climb.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/daring-wasps-swim.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/fierce-elks-march.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/kind-lynx-wander.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/lucky-birds-frolic.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/nimble-koalas-greet.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/patient-foxes-wander.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/proud-pandas-sing.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/serene-voles-chatter.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/sharp-jaguars-run.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/sharp-wolves-glide.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/steady-voles-purr.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/sunny-orcas-dance.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/wise-tigers-forage.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
-        ".changeset/zesty-geese-purr.md": {
-          "status": "rejected",
-          "reason": "the release note of one version of the donor; it records what shipped, not a rule that is in force"
-        },
         ".github/PULL_REQUEST_TEMPLATE/enhancement.md": {
           "status": "rejected",
           "reason": "the pull request and issue form of the donor repository"
@@ -14706,10 +14634,6 @@
           "status": "rejected",
           "reason": "the examples of the donor own test suite"
         },
-        "docs/AGENTS.md": {
-          "status": "rejected",
-          "reason": "the file states no rule that is in force"
-        },
         "docs/ARCHITECTURE.md": {
           "status": "rejected",
           "reason": "the file states no rule that is in force"
@@ -14797,10 +14721,6 @@
         "docs/issueevidence/1192-adr-test-audit-2026-06-13.md": {
           "status": "rejected",
           "reason": "the evidence of one issue of the donor repository"
-        },
-        "docs/ja-JP/AGENTS.md": {
-          "status": "rejected",
-          "reason": "a translation of the donor own documentation into another language; the same content is covered by the English original"
         },
         "docs/ja-JP/ARCHITECTURE.md": {
           "status": "rejected",
@@ -14969,10 +14889,6 @@
         "docs/json-errors.md": {
           "status": "rejected",
           "reason": "the file states no rule that is in force"
-        },
-        "docs/ko-KR/AGENTS.md": {
-          "status": "rejected",
-          "reason": "a translation of the donor own documentation into another language; the same content is covered by the English original"
         },
         "docs/ko-KR/ARCHITECTURE.md": {
           "status": "rejected",
@@ -15165,10 +15081,6 @@
         "docs/proposals/mempalace-capability-prd-adr.md": {
           "status": "rejected",
           "reason": "the proposal of a feature of the donor product"
-        },
-        "docs/pt-BR/AGENTS.md": {
-          "status": "rejected",
-          "reason": "a translation of the donor own documentation into another language; the same content is covered by the English original"
         },
         "docs/pt-BR/ARCHITECTURE.md": {
           "status": "rejected",
@@ -16005,6 +15917,969 @@
         "tests/qa/smell-acks/README.md": {
           "status": "rejected",
           "reason": "the test fixture or the expected output of the donor own test suite"
+        },
+        "gsd-core/references/necessity-review.md": {
+          "status": "split",
+          "instruction_ids": [
+            "prove-the-guarded-state-cannot-occur",
+            "keep-a-trust-boundary-guard-out-of-necessity"
+          ]
+        },
+        "gsd-core/references/cicd-review-patterns.md": {
+          "status": "split",
+          "instruction_ids": [
+            "make-every-pipeline-step-idempotent",
+            "guard-a-deploy-workflow-with-concurrency-and-timeout",
+            "build-once-and-promote-the-same-artifact"
+          ]
+        },
+        "docs/adr/3628-milestone-release-mapping.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/adr/5559-pi-agent-role-dispatch.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/adr/5812-worktree-residue-removal-guards.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/explanation/how-gsd-runs-on-pi.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/features/per-repository-release-mapping.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/features/planner-stall-watchdog.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/check-gsd-guards-on-pi.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/fix-a-refused-reviewer-lane.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/install-gsd-as-a-pi-package.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/resolve-cicd-pipeline-findings.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/resolve-necessity-findings.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/review-reapplied-patches.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/start-a-gsd-workflow-from-pi.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/how-to/tag-a-multi-repo-milestone.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/reference/pi-hook-parity.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/reference/pi-parity-matrix.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/reference/roadmap-phase-entry.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/research/main-vs-next-branch-model.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/research/merge-queue-on-next-rollout.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/research/merge-queue-red-next-recovery.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "docs/research/time-boxed-bugfix-train.md": {
+          "status": "rejected",
+          "reason": "Donor project documentation; no new methodology instruction."
+        },
+        "gsd-core/workflows/autonomous/templates/minimal-context.md": {
+          "status": "rejected",
+          "reason": "Template asset; its context rules are carried by existing instructions."
+        },
+        "gsd-core/workflows/complete-milestone/steps/project-md-evolution-review.md": {
+          "status": "rejected",
+          "reason": "Operational workflow step; no new methodology instruction."
+        },
+        "gsd-core/workflows/complete-milestone/steps/release-map.md": {
+          "status": "rejected",
+          "reason": "Operational workflow step; no new methodology instruction."
+        },
+        "gsd-core/workflows/plan-phase/steps/auto-advance-check.md": {
+          "status": "rejected",
+          "reason": "Operational workflow step; no new methodology instruction."
+        },
+        ".changeset/5296-markdown-linting-registry-entry.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/5302-sota-numerics-registry-entry.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/5305-pr-workflow-registry-entry.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/5321-annotate-deps-replan.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/agile-sloths-frolic.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/agile-zebras-cheer.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/bold-wolves-squeak.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/brave-koalas-howl.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/brave-owls-sentinel.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/brisk-owls-hand-off.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-heron-checks.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-ibex-purr.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-lane-probe.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-owls-agree.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-owls-anchor.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-owls-name.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-owls-verdict.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-pandas-wake.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-pumas-guard.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/calm-yaks-dart.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/clear-herons-stall.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/clever-dogs-romp.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/clever-finches-leap.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/daring-ibex-cheer.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/eager-eagles-snooze.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/eager-jaguars-tumble.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/eager-tunas-munch.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/even-owls-gates.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/graceful-hawks-greet.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/graceful-ibex-click.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/graceful-jays-snooze.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/happy-jays-wake.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/happy-wasps-march.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/humble-quails-romp.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/humble-seals-roam.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/humble-sloths-squeak.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/humble-yaks-leap.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/jolly-hawks-caper.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/jolly-ibex-travel.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/kind-lynx-run.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/lively-hawks-hum.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/lively-tunas-bark.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/lively-tunas-jump.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/lucky-deer-travel.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/lucky-hawks-forage.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/lucky-otters-wander.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/lucky-zebras-wake.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/merge-queue-red-next-recovery.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/merry-koalas-parade.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/nimble-dogs-squeak.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/nimble-pandas-bark.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/plain-owls-continue.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/plucky-hawks-munch.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/proud-moles-squeak.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quick-koalas-glide.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quiet-archives-stay-put.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quiet-foxes-fence.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quiet-moles-guard.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quiet-otters-keep.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quiet-owls-agree.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quiet-owls-restore.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/quiet-pandas-resolve.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/rapid-jaguars-swim.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/serene-bears-chatter.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/serene-cats-hum.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/serene-elks-bark.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/serene-koalas-cheer.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/serene-sloths-hum.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/serene-voles-romp.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/serene-wasps-roar.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sharp-jaguars-romp.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sharp-lemurs-sing.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sharp-owls-ledger.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sharp-pandas-squeak.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sharp-sloths-sprint.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/silly-jaguars-forage.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/steady-foxes-sprint.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/steady-hawks-zip.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/steady-otters-bracket.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/steady-otters-probe.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/steady-owls-keep-reach.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/steady-owls-path.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/steady-owls-subdir.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sturdy-ibex-squeak.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sturdy-jays-wave.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sturdy-lemurs-tumble.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sturdy-quails-sprint.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sunny-birds-travel.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/sunny-quails-leap.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/swift-owls-predicate.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/swift-owls-sandbox.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/tidy-foxes-frolic.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/tracker-held-decision-coverage.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/wise-sloths-frolic.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/zesty-geese-frolic.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/zesty-sloths-snooze.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".changeset/zesty-wasps-gather.md": {
+          "status": "rejected",
+          "reason": "Changeset metadata; not methodology."
+        },
+        ".out-of-scope/agent-model-guard-scope-widening.md": {
+          "status": "rejected",
+          "reason": "Donor documentation or packaging; not methodology."
+        },
+        ".out-of-scope/defaults-json-opt-out-for-agent-files.md": {
+          "status": "rejected",
+          "reason": "Donor documentation or packaging; not methodology."
+        },
+        ".out-of-scope/github-projects-plan-level-mirror-in-core.md": {
+          "status": "rejected",
+          "reason": "Donor documentation or packaging; not methodology."
+        },
+        ".out-of-scope/record-post-work-changes-quick-fast.md": {
+          "status": "rejected",
+          "reason": "Donor documentation or packaging; not methodology."
+        },
+        "docs/ja-JP/reference/agents.md": {
+          "status": "rejected",
+          "reason": "Translation of donor documentation; not methodology."
+        },
+        "docs/ko-KR/reference/agents.md": {
+          "status": "rejected",
+          "reason": "Translation of donor documentation; not methodology."
+        },
+        "docs/pt-BR/reference/agents.md": {
+          "status": "rejected",
+          "reason": "Translation of donor documentation; not methodology."
+        },
+        "docs/reference/agents.md": {
+          "status": "rejected",
+          "reason": "Donor documentation; no new methodology instruction."
+        },
+        "pi/package-agents/gsd-advisor-researcher.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-ai-researcher.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-assumptions-analyzer.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-code-fixer.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-code-reviewer.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-codebase-mapper.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-debug-session-manager.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-debugger.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-doc-classifier.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-doc-synthesizer.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-doc-verifier.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-doc-writer.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-dom-verifier.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-domain-researcher.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-eval-auditor.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-eval-planner.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-executor.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-framework-selector.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-integration-checker.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-intel-updater.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-mempalace-curator.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-nyquist-auditor.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-pattern-mapper.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-phase-researcher.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-plan-checker.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-planner.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-project-researcher.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-research-synthesizer.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-roadmapper.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-security-auditor.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-ui-auditor.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-ui-checker.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-ui-researcher.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-user-profiler.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-agents/gsd-verifier.md": {
+          "status": "rejected",
+          "reason": "Pi package agent mirror; its rules are carried by the gsd-core agent instructions."
+        },
+        "pi/package-skills/gsd-add-tests/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ai-integration-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-audit-fix/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-audit-milestone/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-audit-uat/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-autonomous/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-capture/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-cleanup/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-code-review/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-complete-milestone/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-config/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-debug/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-discuss-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-docs-update/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-eval-review/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-execute-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-explore/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-extract-learnings/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-fast/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-forensics/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-graphify/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-health/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-help/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-import/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-inbox/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ingest-docs/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-manager/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-map-codebase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-mempalace-capture/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-mempalace-recall/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-milestone-summary/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-mvp-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-new-milestone/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-new-project/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-next/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ns-context/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ns-ideate/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ns-manage/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ns-project/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ns-review/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ns-workflow/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-onboard/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-pause-work/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-plan-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-plan-review-convergence/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-pr-branch/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-profile-user/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-progress/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-quick-batch/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-quick/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-resume-work/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-review-backlog/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-review/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-secure-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-settings/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ship/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-sketch/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-spec-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-spike/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-stats/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-surface/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-thread/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ui-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ui-review/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-ultraplan-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-undo/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-update/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-validate-phase/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-verify-work/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-workspace/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
+        },
+        "pi/package-skills/gsd-workstreams/SKILL.md": {
+          "status": "rejected",
+          "reason": "Pi package skill mirror; its rules are carried by the gsd-core workflow instructions."
         }
       }
     },

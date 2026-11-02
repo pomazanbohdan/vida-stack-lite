@@ -16,8 +16,8 @@ artifact_contract_verified_by: "no dependency, cache, lock or system file travel
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/sketch-wrap-up.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/spike-wrap-up.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/sketch-wrap-up.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/spike-wrap-up.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

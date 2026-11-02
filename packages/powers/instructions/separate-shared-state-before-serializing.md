@@ -19,7 +19,7 @@ compatibility_excludes: []
 compatibility_requires: []
 provenance:
   - donor=pstack; license=MIT; revision=2f8377461fd533f5af782e1fd643783b1067b847; path=skills/principle-separate-before-serializing-shared-state/SKILL.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/explanation/multi-agent-orchestration.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=docs/explanation/multi-agent-orchestration.md
 status: active
 revision: 3
 schema: VPInstruction/v1.2

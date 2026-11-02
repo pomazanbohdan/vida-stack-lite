@@ -17,7 +17,7 @@ artifact_contract_verified_by: a decision is carried forward only while the iden
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/code-review-pipeline.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=docs/features/code-review-pipeline.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

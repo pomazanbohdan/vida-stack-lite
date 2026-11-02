@@ -88,12 +88,12 @@ donors:
     role: methodology-donor
     url: https://github.com/open-gsd/gsd-core
     local_path: open-gsd-gsd-core
-    head_sha: 19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005
+    head_sha: bfab82492374a847a01417707a1a38e9e7cf097e
     checked_out: detached
     default_branch: next
     license: MIT
     license_file: LICENSE
-    file_count: 3987
+    file_count: 4302
     snapshot_source: research-frontmatter
     note: the snapshot was taken from the next branch recorded in the research frontmatter
 

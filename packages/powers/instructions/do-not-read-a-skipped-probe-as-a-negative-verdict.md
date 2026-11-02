@@ -17,8 +17,8 @@ artifact_contract_verified_by: a skipped status was checked before the verdict w
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=capabilities/ai-integration/fragments/api-coverage-plan-pre.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=capabilities/assumption-delta/fragments/plan-pre.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=capabilities/ai-integration/fragments/api-coverage-plan-pre.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=capabilities/assumption-delta/fragments/plan-pre.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

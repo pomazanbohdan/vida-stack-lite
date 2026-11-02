@@ -17,7 +17,7 @@ artifact_contract_verified_by: every changed file carries a class that was confi
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/add-tests.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/add-tests.md
 status: active
 revision: 3
 schema: VPInstruction/v1.2

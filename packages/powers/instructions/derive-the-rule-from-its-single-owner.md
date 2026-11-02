@@ -17,8 +17,8 @@ artifact_contract_verified_by: the copy is gone and the outcome names the tier t
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/runtime-marker-codex-sandbox-derivation-and-short-form-deps.md
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=docs/features/tdd-applicability-predicate.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=docs/features/runtime-marker-codex-sandbox-derivation-and-short-form-deps.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=docs/features/tdd-applicability-predicate.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

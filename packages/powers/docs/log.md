@@ -2,6 +2,21 @@
 
 ## 2026-11-02
 
+* **Gsd-core pin advanced:** moved gsd-core from `19f2d5e8` to `bfab8249`
+  and updated provenance on 1,343 instructions. Six rules changed: a checker
+  `VERIFICATION PASSED` sentinel no longer overrides BLOCKER/WARNING entries in
+  prose and an unclassified severity is Critical; a gate caller error reports
+  null counts rather than zero; a pause commit uses `docs(pause):`, not `wip:`;
+  dotted manifest query ids are normalized to hyphens before validation; a
+  GREEN commit counts only when it descends from a RED commit; and a review
+  lane over its prompt cap is refused rather than trimmed. Five new review
+  instructions cover necessity evidence, trust-boundary guards, idempotent
+  pipeline steps, deploy concurrency/timeouts, and build-once promotion.
+  Twenty-five new candidates were reviewed and rejected as donor docs, and 212
+  packaging/translation documents plus 22 stale map records were reconciled so
+  map coverage is complete. Catalog revision 6,363; corpus 2,529; map 3,008;
+  baseline 1,202.
+
 * **Addy-skills pin advanced:** moved addy-skills from `aeac41d4` to
   `301b02b1` and updated provenance on 392 instructions. Ten rules changed:
   API errors carry a stable code and message; context compaction follows the

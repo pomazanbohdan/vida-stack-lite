@@ -16,7 +16,7 @@ artifact_contract_verified_by: the parser error was shown and no worker was disp
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/workflows/quick-batch/steps/batch-init.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/workflows/quick-batch/steps/batch-init.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2

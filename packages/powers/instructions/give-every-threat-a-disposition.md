@@ -17,7 +17,7 @@ artifact_contract_verified_by: every threat carries a disposition and the contro
 compatibility_excludes: []
 compatibility_requires: []
 provenance:
-  - donor=gsd-core; license=MIT; revision=19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005; path=gsd-core/templates/SECURITY.md
+  - donor=gsd-core; license=MIT; revision=bfab82492374a847a01417707a1a38e9e7cf097e; path=gsd-core/templates/SECURITY.md
 status: active
 revision: 2
 schema: VPInstruction/v1.2
