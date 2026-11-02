@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 'D4 — VP delivery channels: separate plugin, build into the agent package, marketplace'
-description: 'The current scope includes three VP delivery channels — a separate plugin, a build into the agent delivery package, and a public marketplace channel; the VP skill surface: vp-mode (the main orchestration skill) and vp-setup (the auxiliary setup one).'
+description: 'Three delivery channels remain in product scope; current project adoption reads the canonical vida-bootstrap, vp-mode and vp-setup documents through a project sidecar without harness installation or Runtime integration.'
 status: stable
 stale_after: '2027-10-19T00:00:00Z'
 tags:
@@ -26,12 +26,23 @@ sources:
 - id: cloud-pstack-setup
   resource: /../../tooling/agent/cloud-pstack-setup.ts
   title: Cloud Pstack setup — installing plugins through a Git marketplace
-generated: { by: vida-agent/minimax-m3.1-flash-free, at: '2026-10-19T14:11:01Z' }
+generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:10:10Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '4'
+revision: '5'
 ---
 
 # Decision
+
+**Current project adoption (owner decision, 2026-11-02):** consume the canonical
+Powers source as project documentation through `AGENT.sidecar.md`. The required
+role entry is `skills/vida-bootstrap/`; `vp-mode` supplies the instruction
+retrieval procedure and `vp-setup` supplies the project-profile procedure.
+`SKILL.md` is a source format, not evidence of host registration or activation.
+The project profile is an explicit `vida-project-profile.json` record. Native
+plugin installation, manifests, marketplace delivery and Agent runtime
+integration are separate future work, not prerequisites for this adoption.
+The three delivery channels below remain the product's delivery direction;
+this project-document phase neither qualifies nor implements those channels.
 
 **The current scope includes three VP delivery channels:**
 
@@ -45,6 +56,9 @@ revision: '4'
 
 **The VP skill surface:**
 
+- **`vida-bootstrap`** — required project-document role contracts for the
+  orchestrator and delegated agents; a local composer preserves tags and
+  base-plus-family loading without an installed Agent or catalog.
 - **`vp-mode`** — the **main orchestration skill**: a request in ordinary language → selection of
   instructions → bundle → delegation or execution. This is that same "single working entry
   point" that research calls the Router Skill.
@@ -127,3 +141,6 @@ marketplace.
 # Authority
 
 Decision of the repository owner dated 2026-10-19, recorded in the current conversation.
+The repository owner's 2026-11-02 instruction selects project-document adoption,
+requires the Powers-owned orchestrator/agent bootstrap, and authorizes its
+implementation. It grants no host installation, publication or Runtime acceptance.

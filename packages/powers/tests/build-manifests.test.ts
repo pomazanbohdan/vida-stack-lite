@@ -1740,12 +1740,16 @@ describe('manifest input and output boundaries', () => {
     expect(parseJson(checked.stdout)).toMatchObject({ ok: true, mode: 'check', museCatalog: { status: 'blocked' } });
     expect(await readTreeBytes(root)).toEqual(beforeCheck);
 
+    const formationPath = join(packageRoot, ...`${formationRelativeRoot}/muse`.split('/'));
+    const ledgerPath = join(packageRoot, ...ownershipLedgerPath.split('/'));
+    const formationBefore = Boolean(await lstat(formationPath).catch(() => undefined));
+    const ledgerBefore = Boolean(await lstat(ledgerPath).catch(() => undefined));
+
     const defaultRoot = invokeManifestCli(['--check'], cwd);
-    expect(defaultRoot.exitCode).toBe(1);
-    expect(record(parseJson(defaultRoot.stderr).error).code).toBe('MANIFEST_INPUT_MISSING');
-    expect(defaultRoot.stderr).toContain('config/plugin-manifest-inputs.json');
-    expect(await lstat(join(packageRoot, ...`${formationRelativeRoot}/muse`.split('/'))).catch(() => undefined)).toBeUndefined();
-    expect(await lstat(join(packageRoot, ...ownershipLedgerPath.split('/'))).catch(() => undefined)).toBeUndefined();
+    expect(defaultRoot.exitCode).toBe(0);
+    expect(parseJson(defaultRoot.stdout)).toMatchObject({ ok: true, mode: 'check' });
+    expect(Boolean(await lstat(formationPath).catch(() => undefined))).toBe(formationBefore);
+    expect(Boolean(await lstat(ledgerPath).catch(() => undefined))).toBe(ledgerBefore);
   });
 
   test('CLI reports missing root values and formats check output sink failures', async () => {

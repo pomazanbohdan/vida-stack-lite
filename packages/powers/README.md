@@ -1,5 +1,27 @@
 # Vida Powers
 
+## Project-document use in this repository
+
+Read the repository sidecar for the explicit project root, bootstrap role and
+document paths. Bootstrap is source documentation, independent of host skill
+discovery. From the project root, run the local composer with
+`bun packages/powers/skills/vida-bootstrap/scripts/bootstrap.ts --role orchestrator`
+or select an agent with `--role agent --role-name code-researcher`. Read the
+agent base and one family delta for an assignment. The sidecar's explicit
+`vida-project-profile.json` is required for profile-aware retrieval; a missing
+or invalid explicit profile is not replaced by marker data. Host-native plugin
+delivery and activation remain separate future work.
+
+From the project root, these are local development tools; use root-derived
+absolute paths when running from another directory:
+
+```sh
+bun packages/powers/skills/vp-setup/scripts/cli.ts --root <project-root> --carrier host-shim --dry-run
+bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts search --for "<terms>" --catalog packages/powers/catalog.json --profile vida-project-profile.json
+bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts get --id <id...> --catalog packages/powers/catalog.json --profile vida-project-profile.json
+bun packages/powers/scripts/check-retrieval.ts --catalog packages/powers/catalog.json --report <work-report.json>
+```
+
 **A portable agent plugin with a canonical instruction corpus, a single
 orchestration skill and materialization of results.**
 
@@ -181,6 +203,8 @@ metadata and execution context are excluded. Overflow rejects the whole bundle w
 | Standalone (without the agent runtime) | A managed block (JSON payload) in the project `AGENTS.md` (or `CLAUDE.md`, if `AGENTS.md` is absent) |
 | Agent delivery without host systems | The config file of the agent runtime |
 | Host layer (e.g. Codex) | The project config file assembled from the layer templates |
+
+`vp-mode` keeps every-run rules in `SKILL.md` and loads `references/...` only at the branch that needs it. Commands use `<skill-dir>`, the directory the host reports for the loaded skill, so an installed plugin works from any consumer cwd. `vp-setup` runs five steps: detect carrier, read inventory, resolve choices, write or `--dry-run`, verify the managed block.
 
 ## 7. Delivery channels
 

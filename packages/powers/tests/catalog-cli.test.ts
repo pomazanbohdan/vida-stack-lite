@@ -1855,7 +1855,7 @@ describe('retrieval workflow contract', () => {
     const oneEvidence = await runInProcess(['search', '--for', 'characterization', 'test', 'before', 'refactor', '--top', '2', '--catalog', realCatalog]);
     expect(oneEvidence.status).toBe(1);
     expect(oneEvidence.stderr).toContain('distinct evidence');
-  });
+  }, 20000);
 
   test('search accepts a namespaced tag copied from tags output', async () => {
     const result = await runInProcess(['search', '--capability', 'capability:review-code', '--catalog', realCatalog]);

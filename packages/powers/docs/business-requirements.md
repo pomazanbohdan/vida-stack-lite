@@ -15,8 +15,8 @@ sources:
 - id: decisions
   resource: /decisions/index.md
   title: Accepted decisions D1–D16 (and D4b)
-generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '9'
+generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:10:10Z' }
+revision: '10'
 ---
 
 # 1. Purpose
@@ -56,6 +56,13 @@ rules, instructions and boundaries.
 - **BR-06.** Methodology is a product policy, not a situational choice of the agent;
   genuine variability of choice is resolved with the user once and
   recorded.
+
+- **BR-25.** A project can use Powers immediately as canonical repository
+  documentation, with required orchestrator/agent bootstrap and applicable
+  instructions at every substantive development stage. A project-owned source
+  map and explicit profile provide the context; neither harness plugin
+  installation nor VIDA Agent runtime integration is a prerequisite. The
+  documentation does not grant execution, write, delivery or acceptance authority.
 
 - **BR-24.** Users can organize and find canonical instructions by their form and topic domain without duplicate instruction files or changes to stable IDs. Existing capability, methodology, role and product selection remains available. A cross-domain instruction can appear in several generated views with one canonical record. Classification uncertainty is explicit. Metadata organization grants no source admission, applicability or execution authority; D14/D15 and existing owner gates remain unchanged.
 

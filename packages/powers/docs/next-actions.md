@@ -22,15 +22,36 @@ sources:
 - id: agent-package-conventions
   resource: /../../agent/package.json
   title: Vida Agent package — Bun package conventions
-generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:16:58Z' }
+generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:40:29Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '26'
+revision: '28'
 ---
 
 # Goal and boundaries
 
-The scope of work is limited to the `packages/powers/` directory (D9). The shared root files
-of the repository are not changed; registration of the product in them — a deferred dependency.
+## Current project-document rollout
+
+Owner instruction dated 2026-11-02 authorizes BR-25 / SR-98 / AC-74–AC-78.
+The B/S/AC update is recorded before implementation. The active packet creates
+the Powers-owned role bootstrap, adapts document procedures, and lets Root
+wire the project sidecar/profile. Native installer/manifests, harness activation
+and Agent runtime/template/config changes are not part of this packet.
+Bootstrap source, project-owned sidecar/profile and bounded local usage are
+implemented. Current component evidence is 746 pass, 4 skip, 0 fail, with
+typecheck and OKF passing; focused bootstrap/contract evidence is 18 pass.
+The 8-ID applied map passes its receipt. Independent Luna source review ACCEPT:
+0 Critical / 0 Important / 1 Minor, with the ledger Minor corrected by Root.
+AC-74–AC-78 carry bounded component/project/contract evidence. This packet's
+implementation and adoption are complete; host delivery and runtime work remain
+separate. Actual forced compaction was not tested.
+Pinned Knip returns exit 1 despite `issues: []`: the symbols diagnostic reports
+one pre-existing redundant `knip.config.ts` entry in the Agent workspace.
+No Agent config was changed and the gate is not claimed PASS.
+
+The Powers writer stays within `packages/powers/` (D9). The current owner
+instruction separately authorizes Root to adopt the documents through
+`AGENT.sidecar.md` and `vida-project-profile.json`. Root AGENTS, runtime
+templates/configuration and native host delivery are outside this packet.
 
 The goal of this queue: **a provable pipeline with the corpus and the skills**, suitable for
 the Standalone environment, with checks that are executed rather than declared.
@@ -164,7 +185,7 @@ Until those answers exist, AC-47 to AC-59 stay open outside the active queue. Th
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-10-31):** the owner-selected Powers pin is Bun 1.4.4. On the migrated v1.2 corpus the canonical `test:coverage` run records 730 passed, four expected Windows skips, zero failures and native exit 0 across the package suite, with 100 % functions and lines under unchanged 1.0 thresholds. Statement and branch counters are not separately claimed. Strict typecheck passes 51 files; the corpus check reports 2,510 instructions and zero issues; OKF reports 30 concepts with no failures or warnings. The repository `lint:knip:pinned` gate is **not** green: it returns four issues, all in `packages/agent/docs/research/bun-1.4.4-api/*.ts`, which D9 places outside this scope and which therefore need a separate owner request. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, rights, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-10-31):** the owner-selected Powers pin is Bun 1.4.4. On the migrated v1.2 corpus the canonical `test:coverage` run records 740 passed, four expected Windows skips, zero failures and native exit 0 across the package suite, with 100 % functions and lines under unchanged 1.0 thresholds. Statement and branch counters are not separately claimed. Strict typecheck passes 51 files; the corpus check reports 2,510 instructions and zero issues; OKF reports 30 concepts with no failures or warnings. The repository `lint:knip:pinned` gate is **not** green: it returns four issues, all in `packages/agent/docs/research/bun-1.4.4-api/*.ts`, which D9 places outside this scope and which therefore need a separate owner request. The `.117` Bun 1.4.3, `.144` Bun 1.4.4 and earlier 533-test results are historical receipts, not current package coverage. F caller qualification, real donor admission, rights, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.
@@ -272,3 +293,5 @@ On 2026-10-30 the same Source state records 659 passed with four expected Window
 Inactive-alternative dependency substitution uses the declared instruction mapping instead of the first tag carrier. Historical focused tests and corpus audit remain bound to their inputs; the audit observed 21 dependency edges, none activating substitution between then-current declared alternatives. Follow-ups remain open: define cross-group substitution semantics before expanding it and qualify current checker/profile integration. Package-wide qualification and Runtime acceptance remain separate.
 
 The owner explicitly authorized execution: complete CLI, library and skill improvements first, then continue donor work. Preserve Luna implementation / Root integration and native checks. For every new independent validation, first try an approved free model (DeepSeek V4.1 Flash Free, Beam Free or Nemotron 3 Ultra Free); on availability/quota refusal make at most one DeepSeek V4.1 Flash fallback. The owner connected OpenCode Go and enabled Global; its verified route is opencode-go/deepseek-v4.1-flash, distinct from the opencode route that rejected insufficient balance. The next validation starts free again. A substantive NOT_READY finding requires repair, not fallback bypass. Keep measured snapshots immutable and requalify changed inputs without relabeling historical proof.
+
+* **Gate count after skill-contract tests:** The README §6 test gating note directs to docs/log.md for the current gate state. After running , the gate count reflects the latest test results and contract verification status.

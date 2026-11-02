@@ -1,0 +1,20 @@
+{
+  "name": "vida-powers",
+  "plugins": [
+    {
+      "category": "Developer Tools",
+      "description": "Portable agent plugin: canonical instruction corpus, one orchestration skill, artifact-first materialization.",
+      "license": "MIT",
+      "name": "vida-powers",
+      "policy": {
+        "authentication": "ON_INSTALL",
+        "installation": "AVAILABLE"
+      },
+      "source": {
+        "path": "./",
+        "source": "local"
+      },
+      "version": "0.1.0"
+    }
+  ]
+}

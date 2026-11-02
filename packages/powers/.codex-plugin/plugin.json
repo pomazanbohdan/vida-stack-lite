@@ -1,0 +1,14 @@
+{
+  "author": {
+    "name": "Vida Powers maintainers"
+  },
+  "description": "Portable agent plugin: canonical instruction corpus, one orchestration skill, artifact-first materialization.",
+  "interface": {
+    "category": "Developer Tools",
+    "developerName": "Vida Powers maintainers"
+  },
+  "license": "MIT",
+  "name": "vida-powers",
+  "skills": "./skills/",
+  "version": "0.1.0"
+}

@@ -1,0 +1,88 @@
+{
+  "schema": "VPEffectiveProfile/v1",
+  "groups": {
+    "testing-sequence": {
+      "active": "test-first-development",
+      "alternatives": [
+        "test-first-development"
+      ]
+    },
+    "review-strategy": {
+      "active": "code-review",
+      "alternatives": [
+        "code-review"
+      ]
+    },
+    "architecture": {
+      "active": "structural-design",
+      "alternatives": [
+        "structural-design"
+      ]
+    },
+    "delivery": {
+      "active": "plan-execution",
+      "alternatives": [
+        "plan-execution"
+      ]
+    }
+  },
+  "unresolved_groups": {
+    "approval-policy": [
+      "approval-policy-choice-proceed",
+      "approval-policy-choice-gate"
+    ],
+    "context-degradation-policy": [
+      "context-degradation-signals",
+      "context-degradation-measured"
+    ]
+  },
+  "verification": {
+    "available_models": [
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-terra",
+        "family": "openai-gpt-6",
+        "roles": [
+          "main",
+          "agent"
+        ],
+        "available": true
+      },
+      {
+        "provider": "codex",
+        "model": "gpt-6-luna",
+        "family": "openai-gpt-6",
+        "roles": [
+          "agent"
+        ],
+        "available": true
+      },
+      {
+        "provider": "codex",
+        "model": "gpt-6.1-sol",
+        "family": "openai-gpt-6",
+        "roles": [
+          "main",
+          "agent"
+        ],
+        "available": true
+      }
+    ],
+    "lane_assignment": [
+      {
+        "lane": "execute",
+        "provider": "codex",
+        "model": "gpt-6.1-terra",
+        "blind": false
+      },
+      {
+        "lane": "verify",
+        "provider": "codex",
+        "model": "gpt-6-luna",
+        "blind": false
+      }
+    ],
+    "lane_policy": "independent-model",
+    "limitations": "Verification uses another model from the same provider; provider-level independence is unavailable."
+  }
+}

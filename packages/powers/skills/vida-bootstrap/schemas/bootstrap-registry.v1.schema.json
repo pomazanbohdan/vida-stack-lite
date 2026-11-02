@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-agent.invalid/schemas/bootstrap-registry.v1.schema.json",
+  "title": "Vida bootstrap registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "revision", "role_families", "entries"],
+  "properties": {
+    "schema": { "const": "VidaBootstrapRegistry/v1" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "role_families": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+      "additionalProperties": {
+        "enum": [
+          "research",
+          "synthesis",
+          "prewrite",
+          "implementation",
+          "validation",
+          "testing",
+          "delivery"
+        ]
+      }
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tag", "role", "kind", "title", "path", "order", "requires", "version"],
+        "properties": {
+          "tag": { "type": "string", "pattern": "^bootstrap-[a-z0-9]+(?:-[a-z0-9]+)*$" },
+          "role": { "enum": ["orchestrator", "agent"] },
+          "kind": {
+            "enum": [
+              "base",
+              "research",
+              "synthesis",
+              "prewrite",
+              "implementation",
+              "validation",
+              "testing",
+              "delivery"
+            ]
+          },
+          "title": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "path": {
+            "type": "string",
+            "pattern": "^references/bootstrap-[a-z0-9]+(?:-[a-z0-9]+)*\\.md$"
+          },
+          "order": { "type": "integer", "minimum": 0, "maximum": 1000 },
+          "requires": {
+            "type": "array",
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^bootstrap-[a-z0-9]+(?:-[a-z0-9]+)*$" }
+          },
+          "version": { "const": 1 }
+        }
+      }
+    }
+  }
+}

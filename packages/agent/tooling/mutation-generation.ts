@@ -52,7 +52,8 @@ type Instrumenter = {
 
 /** Attribute consumption of an instrumented immutable string without reloading its module. */
 function trackModuleConstantReads(content: string, file: string, mutantIds: ReadonlySet<string>): string {
-  const tree = parse(content, { sourceType: 'unambiguous', plugins: typescriptSyntaxPlugins(file) });
+  const parsed = parse(content, { sourceType: 'unambiguous', plugins: typescriptSyntaxPlugins(file) });
+  const tree = { ...parsed, comments: parsed.comments ?? null };
   const edits: { start: number; end: number; text: string }[] = [];
   traverse(tree, {
     VariableDeclarator(declaration) {

@@ -1,0 +1,114 @@
+{
+  "schema": "VidaBootstrapRegistry/v1",
+  "revision": 1,
+  "role_families": {
+    "code-researcher": "research",
+    "diagnostics-researcher": "research",
+    "documentation-researcher": "research",
+    "platform-researcher": "research",
+    "requirements-researcher": "research",
+    "security-data-researcher": "research",
+    "research-synthesizer": "synthesis",
+    "source-planner": "prewrite",
+    "security-prewriter": "prewrite",
+    "developer-orchestrator": "implementation",
+    "correctness-validator": "validation",
+    "regression-validator": "validation",
+    "requirements-validator": "validation",
+    "security-data-validator": "validation",
+    "tester": "testing",
+    "delivery-agent": "delivery"
+  },
+  "entries": [
+    {
+      "tag": "bootstrap-orchestrator",
+      "role": "orchestrator",
+      "kind": "base",
+      "title": "Orchestrator bootstrap",
+      "path": "references/bootstrap-orchestrator.md",
+      "order": 10,
+      "requires": [],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent",
+      "role": "agent",
+      "kind": "base",
+      "title": "Agent bootstrap",
+      "path": "references/bootstrap-agent.md",
+      "order": 10,
+      "requires": [],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent-research",
+      "role": "agent",
+      "kind": "research",
+      "title": "Research agent delta",
+      "path": "references/bootstrap-agent-research.md",
+      "order": 20,
+      "requires": ["bootstrap-agent"],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent-synthesis",
+      "role": "agent",
+      "kind": "synthesis",
+      "title": "Synthesis agent delta",
+      "path": "references/bootstrap-agent-synthesis.md",
+      "order": 30,
+      "requires": ["bootstrap-agent"],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent-prewrite",
+      "role": "agent",
+      "kind": "prewrite",
+      "title": "Pre-write observation agent delta",
+      "path": "references/bootstrap-agent-prewrite.md",
+      "order": 40,
+      "requires": ["bootstrap-agent"],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent-implementation",
+      "role": "agent",
+      "kind": "implementation",
+      "title": "Implementation agent delta",
+      "path": "references/bootstrap-agent-implementation.md",
+      "order": 50,
+      "requires": ["bootstrap-agent"],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent-validation",
+      "role": "agent",
+      "kind": "validation",
+      "title": "Validation agent delta",
+      "path": "references/bootstrap-agent-validation.md",
+      "order": 60,
+      "requires": ["bootstrap-agent"],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent-testing",
+      "role": "agent",
+      "kind": "testing",
+      "title": "Testing agent delta",
+      "path": "references/bootstrap-agent-testing.md",
+      "order": 70,
+      "requires": ["bootstrap-agent"],
+      "version": 1
+    },
+    {
+      "tag": "bootstrap-agent-delivery",
+      "role": "agent",
+      "kind": "delivery",
+      "title": "Delivery agent delta",
+      "path": "references/bootstrap-agent-delivery.md",
+      "order": 80,
+      "requires": ["bootstrap-agent"],
+      "version": 1
+    }
+  ]
+}

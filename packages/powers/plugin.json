@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "author": {
+    "name": "Vida Powers maintainers"
+  },
+  "description": "Portable agent plugin: canonical instruction corpus, one orchestration skill, artifact-first materialization.",
+  "license": "MIT",
+  "name": "vida-powers",
+  "version": "0.1.0"
+}

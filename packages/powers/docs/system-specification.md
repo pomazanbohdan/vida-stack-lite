@@ -18,8 +18,8 @@ sources:
 - id: decisions
   resource: /decisions/index.md
   title: Accepted decisions D1–D13 (and D4b)
-generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '16'
+generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:10:10Z' }
+revision: '17'
 ---
 
 S-level: **what VP does, observably**. The B-level — `business-requirements.md`,
@@ -196,6 +196,8 @@ the existing numbering.
   requires only metadata required by selected host formats and never fabricates missing values. D4b's
   owner-supplied public-release metadata remains a separate publication gate. Current target status and
   deferred E5b gaps are recorded in [next actions](next-actions.md#delivery-target-status-e5ae5b).
+  This delivery contract does not imply host readiness for the project-document
+  bootstrap in SR-98; adding that source entry does not qualify a delivery channel.
 - **SR-80.** Manifest generation owns only files recorded in its package-local ownership ledger and
   whose current SHA-256 matches the recorded digest. It regenerates or prunes only proven-owned files;
   foreign or modified targets conflict before writes. Check mode reconciles ledger digests against present
@@ -209,6 +211,28 @@ the existing numbering.
 ---
 
 **Synchronization with research.** An S change that changes the intent entails an update of research (§7.1) and an impact assessment on decisions, requirements, tasks and checks (§7.6).
+
+## Project-document bootstrap
+
+- **SR-98.** Project-document adoption reads the single source at
+  `skills/vida-bootstrap/`, `skills/vp-mode/` and `skills/vp-setup/` through the
+  project sidecar's exact document, corpus, schema and local-tool paths.
+  The bootstrap has one orchestrator base, one agent base and seven family
+  deltas for the existing sixteen role mappings. A delegated assignment loads
+  the agent base plus exactly one family; a base-only selector is inspection.
+  The local bootstrap composer preserves role/name/kind/tag/list and text/JSON
+  forms, validates local registry paths and rejects invalid selectors without
+  partial text. It needs no Agent executable, catalog, profile or universal
+  lifecycle owner; project-mandated policies still apply. The explicit project
+  `vida-project-profile.json` is read first; a missing or invalid explicit path
+  never falls back to an AGENTS/CLAUDE marker block. Marker compatibility is
+  limited to projects without an explicit profile path. Missing required
+  documents/family or an operation-required profile stops the dependent action.
+  Missing harness skill inventory is not a blocker. Stage outputs and child/
+  resumed contexts retain current source/profile and retrieval references;
+  document reading, script execution, receipt validation, host activation and
+  Runtime acceptance are distinct claims. Powers adds no execution engine or
+  Agent runtime/template/config integration in this mode.
 
 ## 14. Accepted phased content scope (D14, D15)
 

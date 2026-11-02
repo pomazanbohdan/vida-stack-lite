@@ -4,13 +4,21 @@ Product-local instructions for agents developing **Vida Powers** in this
 repository. These are the product instructions; the repository root `AGENTS.md`
 is a generated discovery entry, and its rules apply in full.
 
-**Product:** Vida Powers — a portable agent plugin with a canonical instruction
-corpus, a single orchestration skill `vp-mode`, an auxiliary `vp-setup` and
-materialization of results in two modes (Standalone / Runtime).
+**Product:** Vida Powers — canonical instructions and portable source entries
+`vida-bootstrap`, `vp-mode` and `vp-setup`. Current repository adoption uses
+these as project documentation through the root sidecar. Plugin delivery and
+Runtime integration remain separate tracks; reading `SKILL.md` proves neither.
 
 ---
 
 ## 1. Bootstrap: what to read and in what order
+
+For this owner-authorized project-document rollout, follow the root sidecar's
+exact source map and role bootstrap before the applicable stage instructions.
+The bootstrap source remains in Powers; no host installation or skill inventory
+is required. Missing mandatory documents or an operation-required profile
+blocks only the dependent action. The current user instruction authorizes the
+bounded implementation; it does not authorize runtime integration or publishing.
 
 | # | File | Why |
 |---|---|---|
@@ -172,7 +180,7 @@ After step **C** — catalog operations: `catalog.tags`, `catalog.search`,
 | `corpus-map.json` | corpus processing map: donor + file → converted/split/merged/rejected | D |
 | `skills/vp-mode/`, `skills/vp-setup/` | Skills (orchestration, setup) together with their `scripts/` — catalog and setup tooling; shipped in the plugin | C, D, E |
 | `.codex-plugin/`, `.claude-plugin/`, `.cursor-plugin/`, `.agents/plugins/` | E5a selected host manifests generated from explicit package inputs; production inputs/outputs are absent | E |
-| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `check-retrieval.ts` (read-only receipt validator for an intent-to-ID retrieval map), `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `review-migration-plan.ts` (read-only migration-plan mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5) | C, D, E |
+| `scripts/` | Product support scripts: `check-okf.ts`, `check-corpus.ts`, `check-retrieval.ts` (read-only receipt validator for an intent-to-ID retrieval map), `convert.ts`, `validate-donors.ts`, `audit.ts`, `audit-report.ts` (the report engine the audit CLI drives), `packet.ts` (read-only proposal mechanics), `review-migration-plan.ts` (read-only migration-plan mechanics), `definitions.ts` (the duplicate BR/SR/AC/NFR definition checker), `build-manifests.ts` (selected per-host manifest generation and read-only check, E5), `install-plugin.ts` (OpenCode/Pi skill installation and read-only check; Codex manifest validation) | C, D, E |
 | `skills/*/scripts/` | Tooling shipped in the skills (catalog, setup) | C, D, E |
 | `tests/` | Tests of the VP harness | A–F |
 | `donors.yaml` | Donor manifest: exact revisions, licenses, counters | existing |
@@ -249,13 +257,13 @@ for a resolved session bundle.
 | D1 | VP lives in `packages/powers` as the third product; `packages/plugin` — the Codex layer |
 | D2 | Monorepo of products: each plugin has an owner, documentation, tasks, a work space; VP Work Items — in the product |
 | D3 | VP is standalone: its own `VPCatalog/v1` and its own scripts; in the agent package — an extended instruction registry (runtime request) |
-| D4 | Three delivery channels; skills: `vp-mode` (orchestration) + `vp-setup` (setup) |
+| D4 | Three future delivery channels; current project-document adoption uses required `vida-bootstrap`, `vp-mode` and `vp-setup` without harness installation |
 | D4b | `packages/powers` is itself the marketplace owner; Codex — the verified host, the rest — declared support |
 | D5 | Provider-neutral `decision.evaluate`; routing = LLM selection + agent formation + flow level |
 | D6 | Change log — the bundle log `docs/log.md` (OKF §9) |
 | D7 | `vp-setup` — environment-driven initialization: instruction file / runtime config / project config |
 | D8 | `VPMethodologyProfile/v1` — a VP schema; the carrier depends on the environment |
-| D9 | Current scope — only `packages/powers`; root registration is deferred |
+| D9 | Product writer stays within `packages/powers`; the current owner instruction separately authorizes Root's project sidecar/profile adoption |
 | D10 | Policy choices, executor ladder, managed block: opposing approval policies are alternatives of one group the user chooses at setup; the verification ladder is other provider family → other model of the same provider → blind agent on the same model (setup records available models); the managed block carries a JSON payload so no YAML parser is needed; setup hooks are deferred with a condition |
 | D11 | Product language: documentation in English, instructions from the donor originals |
 | D12 | Opposing instructions are declared, not narrowed away |
@@ -265,6 +273,11 @@ for a resolved session bundle.
 | D16 | Stable canonical IDs/files with independent form/domain metadata, generated browse and a separately verified rollout |
 
 ## 8. Known risks and GAPs
+
+- Current project-document packet (2026-11-02): pinned Knip exits 1 with
+  `issues: []` because the symbols reporter identifies one pre-existing redundant
+  `knip.config.ts` entry in the Agent workspace. The Agent config is unchanged;
+  historical A0 success below does not close this current gate.
 
 - **A0 gate (before the first TS file):** the agent knip scans the repository as a whole and has no
   workspace for `packages/powers` → possible "unlisted files" and a failure of

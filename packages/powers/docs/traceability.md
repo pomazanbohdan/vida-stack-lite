@@ -21,14 +21,15 @@ sources:
 - id: acceptance
   resource: /acceptance.md
   title: Vida Powers — acceptance criteria
-generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '18'
+generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:10:10Z' }
+revision: '19'
 ---
 
 ## Research → BR → SR → AC
 
 | Research § | BR | SR | AC |
 |---|---|---|---|
+| §3 project-document adoption, D4 owner clarification 2026-11-02 | BR-25 | SR-79, SR-98 | AC-74, AC-75, AC-76, AC-77, AC-78 |
 | §1 purpose, Router, `vp-setup` | BR-01, BR-05, BR-19, BR-20 | SR-22, SR-56, SR-58 | AC-13, AC-25, AC-26 |
 | §2 boundaries of VP and Runtime, modes | BR-07 | SR-24, SR-52, SR-62 | AC-14 |
 | §2.1 hybrid agents, role contracts | BR-01 | SR-23, SR-32 | AC-13 |

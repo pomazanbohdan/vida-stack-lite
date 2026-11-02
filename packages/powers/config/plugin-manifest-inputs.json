@@ -1,0 +1,11 @@
+{
+  "schema": "VPPluginManifestInputs/v1",
+  "targets": ["portable", "codex"],
+  "metadata": {
+    "contact": {
+      "name": "Vida Powers maintainers"
+    },
+    "license": "MIT",
+    "category": "Developer Tools"
+  }
+}

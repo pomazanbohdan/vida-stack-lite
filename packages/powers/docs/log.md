@@ -1,6 +1,38 @@
 # Directory Update Log
 
+## 2026-11-02
+
+* **Project-document bootstrap implemented:** added the self-contained
+  `vida-bootstrap` source entry, nine role texts, registry/schema and composer;
+  sixteen roles map to seven families, with base-only use limited to inspection.
+  Adapted vp-mode/vp-setup and README for explicit project paths and the host-shim
+  profile. Root adopted the source map/profile without runtime/template or host
+  installer edits. Focused checks: 18 pass; package: 746 pass, 4 skip, 0 fail;
+  typecheck: 56 files; OKF: 30 concepts. Foreign-cwd bootstrap/retrieval and
+  missing/invalid explicit-profile refusal passed; the 8-ID map passed its
+  receipt. Independent Luna source review ACCEPT: 0 Critical / 0 Important /
+  1 Minor; Root corrected the stale implementation/adoption checkbox state.
+  The fresh child context consumed the actual bootstrap/profile/bundle and
+  checked the receipt. AC-74–AC-78 now carry bounded component/project/contract
+  evidence. Pinned Knip exits 1 on an unchanged Agent config hint, with
+  `issues: []`; no gate was weakened.
+
+* **Project-document bootstrap authorized; B/S before code:** the repository
+  owner selected direct project-document adoption and required Powers-owned
+  orchestrator/agent bootstrap. D4, BR-25, SR-98, AC-74–AC-78, the local entry,
+  traceability and active queue now record this contract. The sidecar/profile
+  remain project-owned; native harness installation and Agent integration stay
+  separate. This entry records the requirement update only: implementation,
+  fresh tests and project usage are not yet claimed. Prior dirty source and
+  historical receipts are preserved.
+
 ## 2026-10-31
+
+* **Skill entries carved, path contract fixed:** `vp-mode` now keeps the every-run rules in `SKILL.md` and loads `references/profile.md`, `examples.md`, `bundle.md`, `findings.md` or `artifacts.md` only at the branch that needs it. Every script command uses `<skill-dir>`, the directory the host reports for the loaded skill, so an installed plugin no longer depends on the consumer cwd; the receipt path is explicit. `vp-setup` keeps five steps (detect, inventory, resolve, write/`--dry-run`, verify) without the duplicated sentence. `skill-contract.test.ts` now checks frontmatter, reference reachability, absence of cwd-relative commands, the every-run rules and the receipt report shape the validator accepts. A behavioral probe answered the bundle-limit question with no catalog call and ran one search plus one multi-ID get for the telemetry task; its receipt attempt failed on a missing report shape, which is now specified in the entry and pinned by a test. The earlier local-model attempt was partial and its log claim was removed. Package gate: 740 passed, 4 Windows skips, 0 failures, 100 % functions and lines.
+
+* **Agent Skills frontmatter added to both shipped skills:** The installer/payload test exposed a real discovery defect: `vp-mode/SKILL.md` and `vp-setup/SKILL.md` started with a heading and carried no YAML frontmatter, so Codex, OpenCode and Pi could not route them as Agent Skills. Both files now declare `name` and `description`, matching their directory names and staying inside the length limit. A new `plugin-payload.test.ts` pins identity/version parity across `package.json`, `plugin.json`, the Codex manifest and the marketplace entry, plus the Pi package metadata and both skill headers. The Codex sandbox was reinstalled and its cached copy shows the frontmatter; OpenCode junctions and the Pi local package read the same source. Package gate: 737 passed, 4 Windows skips, 0 failures, 100 % functions and lines.
+
+* **Portable plugin payload and per-host installation:** The package now ships the generic payload the research selected: root `plugin.json` (Agent Plugins 1.0.0), the existing `skills/` tree, a Codex compatibility manifest, a repo marketplace entry, and Pi package metadata (`pi.skills`, keyword `pi-package`). `config/plugin-manifest-inputs.json` selects `portable` and `codex`; `build-manifests --check` is green. A new `scripts/install-plugin.ts` links both skills into OpenCode's `.opencode/skills` (project) or the shared `.agents/skills` (Pi/user) with junction/symlink, refuses a conflicting target, and verifies an existing installation without writing. Isolated tests: Codex accepted the package as a local marketplace in a sandbox `CODEX_HOME`, Pi installed the local package in a sandbox home, OpenCode received both junctions and `--check` passed. OpenCode host startup itself was not run; installation is structural plus documented discovery. Package gate: 735 passed, 4 Windows skips, 0 failures, 100 % functions and lines.
 
 * **`--top N` for one compound intent:** `search --for … --top 2` now returns the union of two capabilities instead of forcing the caller to split one intent into two searches. A rank is accepted only when it contributes a matched token the higher ranks did not already cover, so `architecture testing` yields `design-structure,write-tests-first` while `characterization test before refactor` is refused because both candidates match only `test`. The branch keeps the weak-match warning, rejects `--top` without `--for`, outside 1–3, or combined with explicit tags, and reports the requested count. The benchmark's stage set grew by eight recorded phrases to 28 cases. Package gate: 730 passed, 4 Windows skips, 0 failures, 100 % functions and lines.
 

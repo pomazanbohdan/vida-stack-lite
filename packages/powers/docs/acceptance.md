@@ -15,8 +15,8 @@ sources:
 - id: research
   resource: /research/vida-powers-product-research.md
   title: Vida Powers — product concept and architectural baseline
-generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '17'
+generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:40:29Z' }
+revision: '20'
 ---
 
 Each criterion: **ID**, condition, **binding to an SR**, **evidence**, **type**, **state**.
@@ -159,6 +159,21 @@ These criteria do not close AC-57/AC-59, legal clearance or Runtime acceptance.
 | AC-73 | A JSON intent-to-ID map is validated by receipt: unknown ID, reused ID, empty intent, unresolved intent, an ID outside the intent and an unknown declared tag are findings; exit 0/1/2 distinguishes valid, findings and unreadable input, and the receipt claims nothing about task completion | SR-97 | `check-retrieval.test.ts`: accepted map, declared-tag fallback, unknown/reused/misplaced ID, unresolved intent, empty and malformed reports, usage and failure exit codes, stdin input, entry-point guard | auto | verified (component) |
 
 The earlier 598-test coverage gate, 24-query parity, corpus checks and real-corpus CLI exercises are historical evidence for their bound inputs. AC-63 to AC-73 now carry component evidence from the current 717-test suite, the 2,510-instruction strict corpus check and the executed CLI examples; the frozen trial keeps its v1.1 binding and does not claim a v1.2 re-run. The substitution mapping follow-up remains in next-actions. These criteria do not establish rights, donor admission, installation or Runtime acceptance.
+
+## Project-document bootstrap
+
+The current component and bounded project evidence is recorded below. Earlier
+package and host receipts do not establish these criteria. The
+[implementation record](../../../.agent/work/vida-powers-skills-architecture-20261102/WORK.md)
+binds the current sources and raw local CLI observations.
+
+| ID | Criterion | System trace | Evidence | Kind | State |
+|---|---|---|---|---|---|
+| AC-74 | Canonical project documents and the sidecar map provide orchestrator/agent bootstrap, all sixteen role mappings and seven base-plus-family routes without a host skill inventory | BR-25, SR-98 | `bootstrap.test.ts` checks the exact 16/7 registry; `project-document-usage/result.json` binds every required mapped file and actual local orchestrator/validation commands | mixed | verified (component/project) |
+| AC-75 | The local composer expands family tags with their base, returns stable text/JSON bindings, labels base-only use as inspection, and rejects invalid, conflicting or unsafe paths without partial output | SR-98 | Focused bootstrap/skill-contract run: 18 pass; real CLI negative selectors have empty stdout; traversal, path/tag mismatch and Windows junction refusal are covered. Digest binds current composed text, not an independent authentication of mutable references | auto | verified (component) |
+| AC-76 | Bootstrap operates from an explicit source root and foreign cwd without Agent, catalog, profile or universal lifecycle files; a project-mandated missing policy owner still stops dependent work | SR-98 | Self-contained copied-source fixture runs the CLI from a foreign cwd; SKILL/base contracts condition policy owners on the project and stop when a mandated owner is unavailable | mixed | verified (component/contract) |
+| AC-77 | The actual explicit host-shim project profile is consumed; missing/invalid required profiles never substitute an instruction-file marker, and unresolved choices remain explicit | SR-25, SR-59, SR-98 | Real host-shim setup and foreign-cwd retrieval exit 0; missing/invalid explicit profile exit 1 with empty stdout despite a valid marker fixture. Approval/context groups stay unresolved; profile and root AGENTS hashes stay unchanged | mixed | verified (bounded project use) |
+| AC-78 | Each applicable stage, child and resumed context uses current source/profile references and truthful retrieval evidence; documentation use grants no host activation or runtime authority | SR-53, SR-61, SR-98 | Sidecar defines stage/child/resume bindings; the 8-ID map passes the receipt and current-source reread. Independent Luna child read base+validation, consumed the explicit profile and retrieved the same applicable bundle with a valid receipt; source review ACCEPT (0 Critical / 0 Important / 1 ledger Minor, corrected by Root). This verifies bounded project use and the contract, not forced harness compaction or universal future compliance | mixed | verified (bounded project/contract) |
 
 ## What we do not prove
 

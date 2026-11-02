@@ -158,6 +158,14 @@ Independent subtasks can work in parallel; shared changes are coordinated accord
 **Work Scope** defines the allowed extent and actions, **Lifecycle Scope** — the lifetime and responsibility. No lifecycle model extends the Work Scope. In Standalone these rules do not create an own durable execution infrastructure; in Runtime its existing management mechanisms are used.
 ## 3. Installation, bootstrap, compatibility
 
+**Owner clarification, 2026-11-02:** current repository adoption uses the one
+canonical Powers source as project documentation, including required
+orchestrator/agent bootstrap. The project sidecar maps readable documents and
+the external project profile; no harness installation or Agent runtime
+integration is required. D4 owns this adoption decision and SR-98 owns its
+observable contract. The host/plugin mechanics below remain delivery directions,
+not evidence or prerequisites for the current document-mode rollout.
+
 **`vp-mode`** — the main Vida Powers orchestration skill: it accepts a request in ordinary language, selects the needed instructions, forms a bundle (role, task contract, effective methodology, scope, materialization requirements, references to artifacts) and launches execution or delegation. This is the single main working entry point; donor skills do not become separate entry points.
 
 **`vp-setup`** — an auxiliary skill for the initial setup of a project for Vida Powers. `vp` is the Vida Powers prefix. `vp-setup` is not the main orchestration skill and must not run on every request.

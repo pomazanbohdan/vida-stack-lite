@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises'; import { existsSync } from 'node:fs';
 
 const skillPath = new URL('../skills/vp-mode/SKILL.md', import.meta.url);
 const setupSkillPath = new URL('../skills/vp-setup/SKILL.md', import.meta.url);
@@ -16,10 +16,19 @@ test('defines the session bundle limit over selected instruction content', async
   const skill = await readSkill();
   expect(skill).toMatch(/at most 20 instructions/u);
   expect(skill).toMatch(/64,000 UTF-8 bytes/u);
-  expect(skill).toMatch(/sum of the UTF-8 byte lengths of each selected instruction's `content`/u);
-  expect(skill).toMatch(/limit excludes `tag_dictionary`, JSON syntax, instruction metadata, execution context, and text-rendered obligation prose/u);
-  expect(skill).toContain('SR-58');
-  expect(skill).toContain('AC-26');
+  expect(skill).toContain('Read `references/bundle.md` fully');
+  const bundle = await readFile(new URL('../skills/vp-mode/references/bundle.md', import.meta.url), 'utf8');
+  expect(bundle).toMatch(/sum of the UTF-8 byte lengths of each selected instruction's `content`/u);
+  expect(bundle).toMatch(/limit excludes `tag_dictionary`, JSON syntax, instruction metadata, execution context, and text-rendered obligation prose/u);
+  expect(bundle).toContain('SR-58');
+  expect(bundle).toContain('AC-26');
+});
+
+test('documents the receipt report shape the validator accepts', async () => {
+  const skill = await readSkill();
+  expect(skill).toContain('"intents":[{"name":"<short intent>","terms":["<search terms>"],"ids":["<chosen ID>"],"rows":["<ID seen in a row>"],"capability":"<declared tag>"}]');
+  expect(skill).toContain('`name`, `terms` and `ids` are required');
+  expect(skill).toContain('check-retrieval.ts --catalog <snapshot> --report <report.json>');
 });
 
 test('routes final retrieval through one compose-backed multi-ID get', async () => {
@@ -93,4 +102,49 @@ test('documents Agent Fallback and artifact materialization requirements', async
     'AC-13',
     'AC-14',
   ]) expect(skill).toContain(clause);
+});
+
+test('keeps every-run rules and the skill-dir command form', async () => {
+  const skill = await readSkill();
+  for (const clause of [
+    'Always supply the effective profile',
+    'weak match',
+    'Never reconstruct an ID',
+    'Search rows are instruction IDs',
+    'Do not issue one get per ID',
+    '64,000 UTF-8 bytes',
+    'receipt rejects an ID',
+    'capability and pattern tags are filters',
+    'no write, merge or approval authority',
+    'never repeat the identical failing command',
+  ]) expect(skill).toContain(clause);
+  for (const line of skill.split('\n').filter((entry) => entry.includes('`bun '))) expect(line).toContain('<skill-dir>');
+  const setup = await readSetupSkill();
+  for (const line of setup.split('\n').filter((entry) => entry.includes('`bun '))) expect(line).toContain('<skill-dir>');
+});
+
+test('declares Agent Skills frontmatter and reachable references', async () => {
+  for (const [path, name] of [[skillPath, 'vp-mode'], [setupSkillPath, 'vp-setup']] as const) {
+    const text = await readFile(path, 'utf8');
+    expect(text).toMatch(new RegExp(`^---\\nname: ${name}\\ndescription: .+\\n---`, 'u'));
+  }
+
+  const skill = await readSkill();
+  for (const reference of ['profile', 'examples', 'bundle', 'findings', 'artifacts']) {
+    expect(skill).toContain(`references/${reference}.md`);
+    expect(existsSync(new URL(`../skills/vp-mode/references/${reference}.md`, import.meta.url))).toBe(true);
+  }
+  expect(skill).not.toContain('bun skills/');
+  expect(await readSetupSkill()).not.toContain('bun skills/');
+});
+
+test('project documents use explicit sources and never substitute a missing profile', async () => {
+  const bootstrap = await readFile(new URL('../skills/vida-bootstrap/SKILL.md', import.meta.url), 'utf8');
+  const mode = await readSkill();
+  const setup = await readSetupSkill();
+  expect(bootstrap).toContain('exactly one family delta');
+  expect(bootstrap).toContain('base-only');
+  expect(mode).toContain('never substitute a marker block');
+  for (const entry of ['vida-bootstrap', 'vp-mode', 'vp-setup']) expect(setup).toContain(entry);
+  expect(setup).toContain('does not prove host activation');
 });
