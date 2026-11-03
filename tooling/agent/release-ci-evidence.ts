@@ -586,7 +586,7 @@ export function issueApprovedNativePair(args: { root: string; operation: string 
   const identity = readRuntimeConfigIdentityForObservation(args.root);
   check(
     identity.repository_id === 'vida-agent' &&
-      identity.bundle === 'packages/agent' &&
+      (identity.bundle === 'vida-agent' || identity.bundle === 'packages/agent') &&
       identity.project_ids.includes('agent'),
     'approved repository project identity differs',
   );
