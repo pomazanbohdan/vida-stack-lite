@@ -2,6 +2,30 @@
 
 ## 2026-11-03
 
+* **H1 lean-startup pilot applied:** 21 `InstructionSpec` drafts from the
+  lean-startup panel decisions (spec manifest SHA-256
+  `9959560a4fafa766ad883faa48160f054cc092f82297b012301589087035e5a7`).
+  Every provenance entry carries the content-relative source path
+  `skills/lean-startup/SKILL.md`, the source SHA-256 and the full supporting
+  per-unit locator. The decision artifact has a known punctuation-encoding
+  defect; the spec body repairs only the encoding and strips source markdown,
+  as recorded in `h1-pilot-25/DECISION-ENCODING-REPAIR.md`. Packet SHA-256
+  `5d23dd3d0bcf71487b0032d42bc8abb3d65dea3b4d24c727babc36188ffea7c8`;
+  committee (normalized selection) SHA-256
+  `15f4cac8efbfb20d752aff370733a6af3da6d56a34f9d39bc461a2c9846fc639`;
+  reviewed plan SHA-256
+  `f63bf9b589fb9175ae63cccf3477e63ce0e947cc4d15951e0ec50ac2d728f5c5`;
+  applied plan SHA-256
+  `4976595ae77e7a3a4f1897ce11cb049950ca638b2bb9c6cfa208af6cd985dd4b`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 23 targets observed as
+  `intended`; apply receipt SHA-256
+  `011cb785483a986849bc51dcbb217d6344974236274e20a9e8106fb5b48f7ba7`.
+  Applied: 21 instructions, catalog, map; baseline rebuilt to 9 donors / 1,215
+  files; corpus 2,673; catalog revision 6,508; map revision 5,137. The other 12
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 mom-test pilot applied:** 10 `InstructionSpec` drafts from the mom-test
   panel decisions (spec manifest SHA-256
   `415c1f79cb6427fbf0ded8e26e997fb07f37080941feacf97ab51bc0e2f04f75`).

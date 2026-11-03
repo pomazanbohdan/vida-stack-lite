@@ -4877,6 +4877,10 @@
           "sha256": "cc227aa837bda4ae0910324e52a90d338354501d005f7ef2fbd0cff9fd73aaf1",
           "bytes": 16493
         },
+        "skills/lean-startup/SKILL.md": {
+          "sha256": "109bf176baf1c56f0d02f6a8a2d59d7969b64768a760bc7624516a8b42b5bf53",
+          "bytes": 17078
+        },
         "skills/mom-test/SKILL.md": {
           "sha256": "fbf036f31e5932e68adc6d26abe8d75f2213b3c50ea345f7dffa2f235b0ce0ae",
           "bytes": 16817

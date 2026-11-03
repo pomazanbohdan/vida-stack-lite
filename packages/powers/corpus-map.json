@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5116,
+  "revision": 5137,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18299,8 +18299,30 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/lean-startup/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "lean-startup-entrepreneurship-as-management",
+            "lean-startup-score",
+            "lean-startup-build-measure-learn",
+            "lean-startup-validated-learning",
+            "lean-startup-mvp",
+            "lean-startup-leap-of-faith",
+            "lean-startup-innovation-accounting",
+            "lean-startup-establish-baseline",
+            "lean-startup-tune-the-engine",
+            "lean-startup-pivot-or-persevere",
+            "lean-startup-actionable-metrics",
+            "lean-startup-pivot-criteria",
+            "lean-startup-growth-engine",
+            "lean-startup-sticky-engine",
+            "lean-startup-viral-engine",
+            "lean-startup-paid-engine",
+            "lean-startup-five-whys",
+            "lean-startup-small-batches",
+            "lean-startup-stages",
+            "lean-startup-common-mistakes",
+            "lean-startup-risk-plan"
+          ]
         },
         "skills/lean-startup/references/applications.md": {
           "status": "rejected",
