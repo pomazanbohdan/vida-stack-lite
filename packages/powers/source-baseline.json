@@ -4929,6 +4929,10 @@
           "sha256": "d5971fdfc51e6a6f729856a9c3874d56628bb6802fdd31eb1c97adbfa4b51a73",
           "bytes": 16318
         },
+        "skills/storybrand-messaging/SKILL.md": {
+          "sha256": "a11d015c33e6d5e66c68f6d4da98e4bd0fda6ca32efc805ff4882d0ce0ab6e1c",
+          "bytes": 14858
+        },
         "skills/system-design/SKILL.md": {
           "sha256": "57548bbec281e73fed47ed8f2e16394ece68129342d04047f44c8c5b9ef64c38",
           "bytes": 16051

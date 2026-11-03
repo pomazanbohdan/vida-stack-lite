@@ -55,6 +55,9 @@ Add a bounded set of business pattern tags with explicit definitions to
 | `message-stickiness` | A message is made simple, unexpected, concrete, credible, emotional and story-driven so it is remembered. |
 | `persuasion-principle` | A decision shortcut is used truthfully to help a user see real value. |
 | `persuasion-ethics` | Persuasion is distinguished from manipulation and checked for truthfulness, reversibility and vulnerable users. |
+| `scoring-rubric` | An artifact is scored against a stated rubric with named bands and failed rows. |
+| `mistake-list` | A known list of mistakes is checked against an artifact and each item is corrected. |
+| `diagnostic-questions` | A fixed set of diagnostic questions is applied to an artifact and each failed answer gets a corrective action. |
 
 The tags are pattern metadata only. They do not grant permission, acceptance or
 admission; D18 review remains required for every file.

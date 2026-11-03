@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6635,
+  "revision": 6651,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -261,7 +261,10 @@
       "message-stickiness": "An approach in which a message is made simple, unexpected, concrete, credible, emotional and story-driven so it is remembered.",
       "persuasion-principle": "An approach in which a decision shortcut is used truthfully to help a user see real value.",
       "persuasion-ethics": "An approach in which persuasion is distinguished from manipulation and checked for truthfulness, reversibility and vulnerable users.",
-      "marketing-plan": "An approach in which marketing is planned as one process across prospect, lead and customer stages."
+      "marketing-plan": "An approach in which marketing is planned as one process across prospect, lead and customer stages.",
+      "scoring-rubric": "An approach in which an artifact is scored against a stated rubric with named bands and failed rows.",
+      "mistake-list": "An approach in which a known list of mistakes is checked against an artifact and each item is corrected.",
+      "diagnostic-questions": "An approach in which a fixed set of diagnostic questions is applied to an artifact and each failed answer gets a corrective action."
     }
   },
   "tag_aliases": {
@@ -12278,6 +12281,76 @@
       "instruction_id": "stop-working-on-the-task-while-the-dispatched-agent-is-active",
       "path": "instructions/stop-working-on-the-task-while-the-dispatched-agent-is-active.md",
       "sha256": "dbb6d832a48bf9831116785e34f0ab7e463281b3160ab378e21b2db29bd6121e"
+    },
+    {
+      "instruction_id": "storybrand-calls-to-action",
+      "path": "instructions/storybrand-calls-to-action.md",
+      "sha256": "ba0ec5e631d863116cfbc686b230f548dcfb74fb1f9b1dcfaabd0f93f4129b0e"
+    },
+    {
+      "instruction_id": "storybrand-character-desire",
+      "path": "instructions/storybrand-character-desire.md",
+      "sha256": "119b8640a61a6f7248d28dcce4a5eabf6f32f0f377928d750e75521dff082734"
+    },
+    {
+      "instruction_id": "storybrand-common-mistakes",
+      "path": "instructions/storybrand-common-mistakes.md",
+      "sha256": "6c6c271369d9c6bd1b5fb0a1189b42531f44f424374278694ee49a08c5b26c02"
+    },
+    {
+      "instruction_id": "storybrand-customer-hero",
+      "path": "instructions/storybrand-customer-hero.md",
+      "sha256": "74ee46dfa3c6270fb762008b71c68dd4c76bc2404412d41653123e529888a8d5"
+    },
+    {
+      "instruction_id": "storybrand-diagnostic",
+      "path": "instructions/storybrand-diagnostic.md",
+      "sha256": "91e57621967d1fbb79dafe06da93ecb39b76bfaed9a4a5c5475b6f4d02ee85cc"
+    },
+    {
+      "instruction_id": "storybrand-failure-stakes",
+      "path": "instructions/storybrand-failure-stakes.md",
+      "sha256": "53b0f392234493c1e82d1f0dfcd4b83869df4289d9a523df78322c9404a19811"
+    },
+    {
+      "instruction_id": "storybrand-guide",
+      "path": "instructions/storybrand-guide.md",
+      "sha256": "cc77175ae0968f2e072c1c4a53bcd340b3e9f8266e26c40f80c0293ac923224e"
+    },
+    {
+      "instruction_id": "storybrand-one-liner",
+      "path": "instructions/storybrand-one-liner.md",
+      "sha256": "fb3a127c149f40803596cf305921be3712c74164fac11b785ecd9f278f49d21c"
+    },
+    {
+      "instruction_id": "storybrand-plan",
+      "path": "instructions/storybrand-plan.md",
+      "sha256": "6d7ca446cf6dca296143807aea371976a9b0582e6a44c4e9f69cbb6e22ca6bcf"
+    },
+    {
+      "instruction_id": "storybrand-problem-and-villain",
+      "path": "instructions/storybrand-problem-and-villain.md",
+      "sha256": "eca3d9614ef2dbf41987a37cbd960aadc8cfc8a53007239e138b24b07d1dfe2e"
+    },
+    {
+      "instruction_id": "storybrand-sb7",
+      "path": "instructions/storybrand-sb7.md",
+      "sha256": "3e04a9c35c32b240d50267e53584a3030ba397765e39faa552f42f16e2b7cdb5"
+    },
+    {
+      "instruction_id": "storybrand-score",
+      "path": "instructions/storybrand-score.md",
+      "sha256": "e62a0da292b2fbed70850c872cc720d2190f5112b26941a2bae93e7a0633735e"
+    },
+    {
+      "instruction_id": "storybrand-success-picture",
+      "path": "instructions/storybrand-success-picture.md",
+      "sha256": "b77bfa0f03690bd1f0e91e69ca76e08bdb70ddcb08f18121f361d692f6752179"
+    },
+    {
+      "instruction_id": "storybrand-tone",
+      "path": "instructions/storybrand-tone.md",
+      "sha256": "f603344cace420feb23690e487809db45b8bb829bfe1cb289770ceec72073837"
     },
     {
       "instruction_id": "strip-a-high-confidence-hallucinated-package-before-it-reaches-the-planner",

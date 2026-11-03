@@ -2,6 +2,32 @@
 
 ## 2026-11-03
 
+* **H1 storybrand-messaging pilot applied:** 14 `InstructionSpec` drafts from the
+  storybrand-messaging panel decisions (spec manifest SHA-256
+  `11450bbf4519a81433d910c169a3fcd08992228f873ac60f1c147d9fa6612a21`).
+  Every provenance entry carries the content-relative source path
+  `skills/storybrand-messaging/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. The score body names the 9–10/5–6/≤3 bands and
+  requires failed rows; the common-mistakes body lists each correction. The
+  packet carries `panel-evidence.json` with the B2 aggregation entry; its
+  hash-bound reference is in the committee's per-file `check.panelEvidence`.
+  Packet SHA-256
+  `52d64fac1dd77b7bba5ee659623a3bd84bc8ba40151f98038493e12606f6c5e8`;
+  committee SHA-256
+  `d2ef2a2651e17b346822e319b640f2c4c4e159ea23d99cba63e1c6ad20ebae38`;
+  reviewed plan SHA-256
+  `fb5c59bc8d9af722003f4c3db1db1b896d5a6b47f4c1053780005ce9a27ca454`;
+  applied plan SHA-256
+  `64c449fddc59b1b400bb419cd022b42a70d3df9b2efecdcbe4915f1e0ebb11b3`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor. Apply returned `applied` with all 16 targets observed as `intended`;
+  apply receipt SHA-256
+  `8086dc953f370ff4447ea63a6ac249f5738288218bc8d4593a7f17f0219d055c`.
+  Applied: 14 instructions, catalog, map; baseline rebuilt to 9 donors / 1,225
+  files; corpus 2,811; catalog revision 6,651; map revision 5,275. The other 2
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 one-page-marketing pilot applied:** 15 `InstructionSpec` drafts from the
   one-page-marketing panel decisions (spec manifest SHA-256
   `09dfcafb1665b7259f6b8d933bdc72e22590894cf21d2d37233a2f34143fb27f`).

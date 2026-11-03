@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5261,
+  "revision": 5275,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18983,8 +18983,23 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/storybrand-messaging/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "storybrand-customer-hero",
+            "storybrand-score",
+            "storybrand-sb7",
+            "storybrand-character-desire",
+            "storybrand-problem-and-villain",
+            "storybrand-guide",
+            "storybrand-plan",
+            "storybrand-calls-to-action",
+            "storybrand-failure-stakes",
+            "storybrand-success-picture",
+            "storybrand-one-liner",
+            "storybrand-tone",
+            "storybrand-common-mistakes",
+            "storybrand-diagnostic"
+          ]
         },
         "skills/storybrand-messaging/references/brand-script.md": {
           "status": "rejected",
