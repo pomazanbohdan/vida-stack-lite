@@ -1,5 +1,23 @@
 # Directory Update Log
 
+## 2026-11-03
+
+* **D18 blind three-protocol H1 review:** the owner directed that the H1 human
+  fidelity/owner-admission loop is replaced by three blind Codex Luna reviewers
+  (V3 Delphi, V2 Adversarial, V4 Party chat) plus orchestrator aggregation. The
+  decision is recorded in D18; SR-100, Step H H1, AC-47/AC-57/AC-59,
+  next-actions and the H1 evidence record carry it. The panel review is
+  delegated model review, not human fidelity. The current
+  `VPHumanSourceGate/v1` API still requires `human:` actors; a delegated gate
+  path must be implemented, tested and reviewed before a packet can become
+  eligible. No donor content is admitted by the decision.
+
+* **H1 review-algorithm evaluation:** compared five protocols on a three-file,
+  41-unit sample through T3 Codex Luna. The T3 blind judge ranked V3 Delphi
+  4.10, V2 Adversarial 3.90, V4 Party chat 3.90, V1 Panel 3.60 and V5 Judge
+  panel 2.90. V1 and V5 are unsafe as-is; V4 needs corrections before use. The
+  report is at `.tmp/donor-updates/consilium-eval/REPORT.md`.
+
 ## 2026-11-02
 
 * **H1 mechanical preparation batch complete:** mechanically decomposed all 25

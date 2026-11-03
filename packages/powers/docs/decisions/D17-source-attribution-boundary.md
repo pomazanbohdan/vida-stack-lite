@@ -82,6 +82,10 @@ before that comparison is complete.
   owner-admitted** content.
 - Source attribution/link, human fidelity review and owner admission are the
   required H1 gates.
+- For the H1 25-file pilot, D18 replaces the human fidelity review and owner
+  admission loop with three blind Codex Luna reviewers and orchestrator
+  aggregation. The source-attribution and legal-risk boundaries in this decision
+  remain binding.
 - A merged instruction keeps one provenance entry per source; staleness is
   evaluated per source, not per donor.
 - Existing legacy entries remain readable; an entry without `sha256` reports

@@ -18,7 +18,7 @@ recorded in the frontmatter of each concept.
 * [Vida Powers — business requirements](business-requirements.md) - B-level: goals, boundaries of responsibility, autonomy constraints, methodology policy, delivery, non-functional requirements.
 * [Vida Powers — system specification](system-specification.md) - S-level: instruction model, catalog operations, Decision Provider, routing, methodology profile, materialization, findings, operational rules.
 * [Vida Powers — acceptance criteria](acceptance.md) - Verifiable conditions bound to SR, with the kind of evidence, type and state; separately — what we do not prove.
-* [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1–D17 (and D4b) to normative clauses.
+* [Vida Powers — traceability matrix](traceability.md) - The link research § → BR → SR → AC and of decisions D1-D18 (and D4b) to normative clauses.
 * [Vida Powers — instruction change vector](VECTOR.md) - Living multi-direction summary of instruction and documentation changes, with the change authority matrix and donor batch table.
 * [Vida Powers — product concept and architectural baseline](research/vida-powers-product-research.md) - The finalized concept, D14/D15 accepted scope limits, product boundaries, methodology, materialization and evidence rules.
 
@@ -52,7 +52,8 @@ recorded in the frontmatter of each concept.
 * [D14 — Bounded engineering and UX guidance](decisions/D14-bounded-engineering-ux-guidance.md) - Accepted bounded engineering/UX instruction scope; other unresearched domains remain out of scope.
 * [D15 — Selected typed reference resources](decisions/D15-selected-typed-reference-resources.md) - Accepted typed resource families with exact-ID retrieval through the same catalog in a separate phase.
 * [D16 — Instruction form and domain facets](decisions/D16-faceted-instruction-browse.md) - Stable canonical IDs and files with independent form/domain metadata, generated browse and a separately verified rollout.
-* [D17 — Source attribution boundary: no Powers legal-risk assessment](decisions/D17-source-attribution-boundary.md) - Reuse provenance (`donor`, `license`, `revision`, `path`) and add only SHA-256 + locator per source; one instruction may have several source entries; staleness is derived from the hash. Powers does not assess legal risk. Owner admission remains separate.
+* [D17 - Source attribution boundary: no Powers legal-risk assessment](decisions/D17-source-attribution-boundary.md) - Reuse provenance (`donor`, `license`, `revision`, `path`) and add only SHA-256 + locator per source; one instruction may have several source entries; staleness is derived from the hash. Powers does not assess legal risk. Owner admission remains separate.
+* [D18 - Blind three-protocol panel for H1 source review and admission](decisions/D18-blind-three-protocol-source-review.md) - The H1 25-file pilot uses three blind Codex Luna agents (Delphi, adversarial, party chat) plus orchestrator aggregation instead of a human review loop; H2/H3 and corpus publication remain separately gated.
 
 # Outside the bundle
 

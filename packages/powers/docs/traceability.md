@@ -89,7 +89,8 @@ the list of technically open questions (closed by stages, not by the specificati
 | D14 bounded engineering/UX, product and business guidance | BR-22; SR-81, SR-82, SR-84, SR-85, SR-88–SR-91; AC-47 to AC-51, AC-53, AC-56–AC-59; Step H |
 | D15 selected typed reference resources | BR-22; SR-83, SR-86, SR-87; AC-52, AC-54, AC-55; Step H |
 | D16 stable files with form/domain facets | BR-24; SR-06, SR-10, SR-70, SR-92; AC-60–AC-64 |
-| D17 source attribution, not legal-risk assessment | BR-22; SR-81, SR-89; AC-47, AC-57; Step H H1–H3 |
+| D17 source attribution, not legal-risk assessment | BR-22; SR-81, SR-89; AC-47, AC-57; Step H H1-H3 |
+| D18 blind three-protocol H1 review and aggregation | BR-22; SR-81, SR-89, SR-100; AC-47, AC-57, AC-59; Step H H1 |
 
 ## Deferred decisions (CAT-D) → SR/AC
 
