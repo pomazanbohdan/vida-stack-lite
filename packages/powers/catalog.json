@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6374,
+  "revision": 6385,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -7718,6 +7718,61 @@
       "instruction_id": "polish-the-structure-before-the-prose",
       "path": "instructions/polish-the-structure-before-the-prose.md",
       "sha256": "40ca0e83990d9f7f79e4e58e2f3e84bd68b167b2b980716e187d34c6b15d9674"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-broken-windows",
+      "path": "instructions/pragmatic-programmer-broken-windows.md",
+      "sha256": "28529edcbefe0e4977dc40b7a19dfe36698be7e303507ffa6e93e7772f16b0ac"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-common-mistakes",
+      "path": "instructions/pragmatic-programmer-common-mistakes.md",
+      "sha256": "7bebc069bafc123a7dc5a370c6e3177614e4e0a310f7a8c3b81d55d715f21d84"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-contracts",
+      "path": "instructions/pragmatic-programmer-contracts.md",
+      "sha256": "c71fb6cfcfc5589d75c432b29f758f1ff966709b4070f11e6c8c164df2361a77"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-craft",
+      "path": "instructions/pragmatic-programmer-craft.md",
+      "sha256": "648054d1871790eeb16c7c843904756d8c826f818afbfe60d21ed3e3867d32d2"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-diagnostic",
+      "path": "instructions/pragmatic-programmer-diagnostic.md",
+      "sha256": "fd7e1ae311672545cbebcc507f065b0d78a7c5fc0d1821f748570eb2e9a0995f"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-dry",
+      "path": "instructions/pragmatic-programmer-dry.md",
+      "sha256": "f8dda5902ec47c320e51f0017caed59e4e567f29c2c190114231072e36dc0f44"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-estimation",
+      "path": "instructions/pragmatic-programmer-estimation.md",
+      "sha256": "4d7d9b468e7f713e37b8ada4596911d9719014d6771744083190a50c0c41d4b1"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-orthogonality",
+      "path": "instructions/pragmatic-programmer-orthogonality.md",
+      "sha256": "8f4dbdca94f8ffa1af1e32f1824a92e226c7f13e2f74fc410925bdfd557be62d"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-reversibility",
+      "path": "instructions/pragmatic-programmer-reversibility.md",
+      "sha256": "28d22a7204d0c795f0d33d46ddbe1ab13d4df582d8be761a32257878617fd47a"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-score",
+      "path": "instructions/pragmatic-programmer-score.md",
+      "sha256": "2d1a98e2c5e30374ee3d93c1afb41fe3666f891c0e3d7e63d497efbdc97254bb"
+    },
+    {
+      "instruction_id": "pragmatic-programmer-tracer-bullets",
+      "path": "instructions/pragmatic-programmer-tracer-bullets.md",
+      "sha256": "088c8b4c73e344a71316f14d90cb5f17ed5ef90a540af652418b27a8386ad65e"
     },
     {
       "instruction_id": "prefer-a-command-that-does-not-depend-on-the-working-directory",

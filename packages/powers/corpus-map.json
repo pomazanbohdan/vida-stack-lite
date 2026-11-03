@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5003,
+  "revision": 5014,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18526,8 +18526,20 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/pragmatic-programmer/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "pragmatic-programmer-craft",
+            "pragmatic-programmer-score",
+            "pragmatic-programmer-dry",
+            "pragmatic-programmer-orthogonality",
+            "pragmatic-programmer-tracer-bullets",
+            "pragmatic-programmer-contracts",
+            "pragmatic-programmer-broken-windows",
+            "pragmatic-programmer-reversibility",
+            "pragmatic-programmer-estimation",
+            "pragmatic-programmer-common-mistakes",
+            "pragmatic-programmer-diagnostic"
+          ]
         },
         "skills/pragmatic-programmer/references/broken-windows.md": {
           "status": "rejected",

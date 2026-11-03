@@ -2,6 +2,26 @@
 
 ## 2026-11-03
 
+* **H1 pragmatic-programmer pilot applied:** 11 `InstructionSpec` drafts from
+  the pragmatic-programmer panel decisions (spec manifest SHA-256
+  `dc604fd8c55fc4e400cb619026e4aef9ab35a9de7e758f8adfd329537d6c1758`).
+  Every provenance entry carries the content-relative source path
+  `skills/pragmatic-programmer/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. Packet SHA-256
+  `3210489acdbe77488e70ba2dfc3cc578bbf9fab307803ebeb32a0082388e2308`;
+  committee (normalized selection) SHA-256
+  `416705e4f20deb183a6277ba18bc003674192da52341f668efa168043fb65db5`;
+  reviewed plan SHA-256
+  `84eeb202a2b12ee73114ad6633719c2be335c582ebaed147edd21562cdbc8d6b`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 13 targets observed as
+  `intended`; apply receipt SHA-256
+  `e4a5bdc2a91f22ef7f28a0ca3d8948aa836fbd09b9f2eaee87dc2de2744d7572`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,204
+  files; corpus 2,550; catalog revision 6,385; map revision 5,014. The other 23
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 clean-code pilot applied:** 10 `InstructionSpec` drafts from the
   clean-code panel decisions (spec manifest SHA-256
   `42b976e9e3c2b405dc7a207b5aaa59636231342bcd6fdbb8f7eaf9ab61d294f4`).
