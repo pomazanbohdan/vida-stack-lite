@@ -206,7 +206,6 @@ repair/adoption owner before activation. The approved delivery includes temporar
 CLI acceptance, PATCH release/external update and the repository-bound
 [clean-init authorization](decisions/configuration/clean-init-authorization.md).
 
-
 The approved target keeps product Source in its configured product roots.
 This repository maps Agent to `packages/agent`, Codex to `packages/codex` with
 target ID `codex`, and Powers to its separately owned `packages/powers` root.
@@ -1038,6 +1037,19 @@ readonly owner. Current configuration, original-engine completion evidence,
 owner identity and Work/Ledger/Journal CAS checks still apply. Release changes
 no source outcome, grants no write rights and establishes no Runtime acceptance.
 Fresh writer execution requires ordinary FIFO ownership and current authority.
+
+The suspended engine frontier may also be the exact read-only wave whose final
+native observations were committed to the Host journal before engine advance
+stopped. Release requires a complete one-to-one match between every original
+frontier request and its uniquely issued, `reported_complete` journal observation,
+including issue identity, full request binding and output digest. Successful
+engine-prefix waves retain their existing completion proof. A wholly inert
+frontier and a wholly observed frontier are distinct cases; mixed, missing,
+duplicate, failed, unobserved or writer-bound frontier items deny release.
+Disposing this owner never consumes the observation in the engine, advances a
+wave, turns a preparation GAP into a pass, renews an expired lease or closes the
+task. Inspect uses existing-file read-only storage without schema initialization;
+plan/apply/resume retain their exact frozen-request, owner, FIFO and CAS checks.
 
 `run --retire-interrupted-source-owner true` provides `inspect` and `apply` for
 one exact started Source writer whose provider result is unknown. Inspection
