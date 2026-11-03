@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6436,
+  "revision": 6446,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -11608,6 +11608,56 @@
       "instruction_id": "synthesize-the-tag-view-at-consumption-time",
       "path": "instructions/synthesize-the-tag-view-at-consumption-time.md",
       "sha256": "941bd1dd7854ff30b80e25d3c51e0d1807d88b15977368fe4e8d3e906b774fcf"
+    },
+    {
+      "instruction_id": "system-design-building-blocks",
+      "path": "instructions/system-design-building-blocks.md",
+      "sha256": "e3b8901fc6a1bdd1b6da932972d8832a6f8e61e28006421be4b04e2e4e13e31e"
+    },
+    {
+      "instruction_id": "system-design-common-mistakes",
+      "path": "instructions/system-design-common-mistakes.md",
+      "sha256": "5ee83a0253bac0f62e2d256821fb78257b8dc5354e9b5b569cfb29f8db28702d"
+    },
+    {
+      "instruction_id": "system-design-database-scaling",
+      "path": "instructions/system-design-database-scaling.md",
+      "sha256": "e567756a359622feb020460439d964b74599d2012bc98f7ef0f8298b1c962627"
+    },
+    {
+      "instruction_id": "system-design-diagnostic",
+      "path": "instructions/system-design-diagnostic.md",
+      "sha256": "d8b206f8050837a77c0fdc12138c90f1b57387b2736a13f67e55fff11885722d"
+    },
+    {
+      "instruction_id": "system-design-estimate",
+      "path": "instructions/system-design-estimate.md",
+      "sha256": "c3c31dbc2cb75d3e24d97f4a6f6e7b0e55df5c97ab6aa6cad8f0a952874ee50d"
+    },
+    {
+      "instruction_id": "system-design-four-step-process",
+      "path": "instructions/system-design-four-step-process.md",
+      "sha256": "7bd334835778797ca4683091747c84a27285e47613f8e8c2e45c35b761f56381"
+    },
+    {
+      "instruction_id": "system-design-known-patterns",
+      "path": "instructions/system-design-known-patterns.md",
+      "sha256": "7d8d9b48da7dfcba0bf6a8f5b9c0dd88dfd2deb9da4eaab54ce2338ecbe7a372"
+    },
+    {
+      "instruction_id": "system-design-operations",
+      "path": "instructions/system-design-operations.md",
+      "sha256": "c8b0c8e0290d1361c053a87857b83a5bf8944ea8717c9e0b0399964e28d8fd8b"
+    },
+    {
+      "instruction_id": "system-design-requirements-first",
+      "path": "instructions/system-design-requirements-first.md",
+      "sha256": "8ae8dd0627fed53646840dac54dd211a47a15baa6d2fd96dba6e95dfe0225c6d"
+    },
+    {
+      "instruction_id": "system-design-score",
+      "path": "instructions/system-design-score.md",
+      "sha256": "3fd2bbf22a71e95304edc5be1d50b389d822cab24392735d3ea6804a1e14c1af"
     },
     {
       "instruction_id": "tag-each-structural-finding-with-a-disposition",

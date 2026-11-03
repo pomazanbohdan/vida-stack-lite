@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5065,
+  "revision": 5075,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18835,8 +18835,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/system-design/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "system-design-requirements-first",
+            "system-design-score",
+            "system-design-four-step-process",
+            "system-design-estimate",
+            "system-design-building-blocks",
+            "system-design-database-scaling",
+            "system-design-known-patterns",
+            "system-design-operations",
+            "system-design-common-mistakes",
+            "system-design-diagnostic"
+          ]
         },
         "skills/system-design/references/building-blocks.md": {
           "status": "rejected",
