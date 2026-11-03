@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6396,
+  "revision": 6406,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -2753,6 +2753,56 @@
       "instruction_id": "date-the-repeated-report-so-it-does-not-overwrite",
       "path": "instructions/date-the-repeated-report-so-it-does-not-overwrite.md",
       "sha256": "5302c0c79b5ed47cc941fc80ee15263394517fc9e120fb63dd0d02a33696043a"
+    },
+    {
+      "instruction_id": "ddd-aggregates-and-value-objects",
+      "path": "instructions/ddd-aggregates-and-value-objects.md",
+      "sha256": "dfc1d5742525509d9ac00786c89e926d0201c1c83181d2cd6727db9e0d496d16"
+    },
+    {
+      "instruction_id": "ddd-bounded-contexts",
+      "path": "instructions/ddd-bounded-contexts.md",
+      "sha256": "c890929103e807dce8b134a1bc6ba4658ae2128e4af3993b2903c197d5100c2a"
+    },
+    {
+      "instruction_id": "ddd-common-mistakes",
+      "path": "instructions/ddd-common-mistakes.md",
+      "sha256": "055605371179b024d9e47fbb464e99ba0bb5d6520b5e4e8441e6a3fc12951fd2"
+    },
+    {
+      "instruction_id": "ddd-core-domain",
+      "path": "instructions/ddd-core-domain.md",
+      "sha256": "03d529e2844d536bad82d3970ea0ea8e00789e95cc40dd0c474a11c3c26b3f80"
+    },
+    {
+      "instruction_id": "ddd-diagnostic",
+      "path": "instructions/ddd-diagnostic.md",
+      "sha256": "c05150fa2c3278e1ab676426941faa9a2c5f94bee49e483df253180a649a9ec2"
+    },
+    {
+      "instruction_id": "ddd-domain-events",
+      "path": "instructions/ddd-domain-events.md",
+      "sha256": "ac251242436925b76153ffd7d1c1e164ce256be4a8fceace9c7c7951a61f23e9"
+    },
+    {
+      "instruction_id": "ddd-model-the-business-domain",
+      "path": "instructions/ddd-model-the-business-domain.md",
+      "sha256": "07f4cffb0cd7e7aea782c82803292496d22e2e648a0e46a6dc3056d76ec75f63"
+    },
+    {
+      "instruction_id": "ddd-repositories-and-factories",
+      "path": "instructions/ddd-repositories-and-factories.md",
+      "sha256": "4853187f1e705b1632b62661f818ea3ccd4a0a82f659897658186ee650243ecf"
+    },
+    {
+      "instruction_id": "ddd-score-domain-model",
+      "path": "instructions/ddd-score-domain-model.md",
+      "sha256": "7f79d2eb08ee3af5d297a203bc3f1ee393dc252480aa11a5ce5ff1307a89bff4"
+    },
+    {
+      "instruction_id": "ddd-ubiquitous-language",
+      "path": "instructions/ddd-ubiquitous-language.md",
+      "sha256": "9cbc38ab250a4d20283f17375b8bd9ef9586c1a9a52eedec34a1f4b2c1904d65"
     },
     {
       "instruction_id": "ddia-choose-data-model",

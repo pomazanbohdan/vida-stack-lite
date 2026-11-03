@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5025,
+  "revision": 5035,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17786,8 +17786,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/domain-driven-design/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "ddd-model-the-business-domain",
+            "ddd-score-domain-model",
+            "ddd-ubiquitous-language",
+            "ddd-bounded-contexts",
+            "ddd-aggregates-and-value-objects",
+            "ddd-domain-events",
+            "ddd-repositories-and-factories",
+            "ddd-core-domain",
+            "ddd-common-mistakes",
+            "ddd-diagnostic"
+          ]
         },
         "skills/domain-driven-design/references/bounded-contexts.md": {
           "status": "rejected",
