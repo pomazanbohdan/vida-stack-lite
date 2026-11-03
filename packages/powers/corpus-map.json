@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5045,
+  "revision": 5055,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18625,8 +18625,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/refactoring-patterns/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "refactoring-small-behavior-preserving-steps",
+            "refactoring-score-structure",
+            "refactoring-map-smells",
+            "refactoring-compose-methods",
+            "refactoring-move-features",
+            "refactoring-organize-data",
+            "refactoring-simplify-conditionals",
+            "refactoring-safe-workflow",
+            "refactoring-common-mistakes",
+            "refactoring-diagnostic"
+          ]
         },
         "skills/refactoring-patterns/references/composing-methods.md": {
           "status": "rejected",

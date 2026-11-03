@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6416,
+  "revision": 6426,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -8948,6 +8948,56 @@
       "instruction_id": "redesign-as-if-foundational",
       "path": "instructions/redesign-as-if-foundational.md",
       "sha256": "03aba8146fd9a09121d4354f4fb4196a96c202d7999767bf1bea0d11bf3773fa"
+    },
+    {
+      "instruction_id": "refactoring-common-mistakes",
+      "path": "instructions/refactoring-common-mistakes.md",
+      "sha256": "a31f981ae2d0922ba375f7ab0a52362d9e5f3dc64d5be26934f424bd4a3ceb79"
+    },
+    {
+      "instruction_id": "refactoring-compose-methods",
+      "path": "instructions/refactoring-compose-methods.md",
+      "sha256": "6356d3199dd0547caefd0159894d4744df340453bbe38b4f4496ae7abed794da"
+    },
+    {
+      "instruction_id": "refactoring-diagnostic",
+      "path": "instructions/refactoring-diagnostic.md",
+      "sha256": "b8ce7e6351a558514578ac9f7eb81af6ecc98f0640046f200ccea5800e0414fb"
+    },
+    {
+      "instruction_id": "refactoring-map-smells",
+      "path": "instructions/refactoring-map-smells.md",
+      "sha256": "8a2dd2c98423491316a143c7465a3dd1a2cc151807f2b54e36d388fdf0e0ab2f"
+    },
+    {
+      "instruction_id": "refactoring-move-features",
+      "path": "instructions/refactoring-move-features.md",
+      "sha256": "62e9436cf65015ce13d7bcd83a60cadb3f942861815bc9a91aa5eec0b376c56e"
+    },
+    {
+      "instruction_id": "refactoring-organize-data",
+      "path": "instructions/refactoring-organize-data.md",
+      "sha256": "e5c24eb7f03dd4ed472a0b142d8b927a709266257fc486ffa7fed5cbbe34d815"
+    },
+    {
+      "instruction_id": "refactoring-safe-workflow",
+      "path": "instructions/refactoring-safe-workflow.md",
+      "sha256": "4ce903fa15de9e13867117a373eadd9fcfbc93a223999a01b70d368a897a19e4"
+    },
+    {
+      "instruction_id": "refactoring-score-structure",
+      "path": "instructions/refactoring-score-structure.md",
+      "sha256": "3b3fdb635147521ba939b4b518fb959c9e8172bf092fbad40e48e9a8d30a7768"
+    },
+    {
+      "instruction_id": "refactoring-simplify-conditionals",
+      "path": "instructions/refactoring-simplify-conditionals.md",
+      "sha256": "cf5f5da7137a9df97fa86ef8ef947044c4e84c436e6c70c50df60f706655ee1b"
+    },
+    {
+      "instruction_id": "refactoring-small-behavior-preserving-steps",
+      "path": "instructions/refactoring-small-behavior-preserving-steps.md",
+      "sha256": "af698d9e83ed3c4eb63d5d1c2478d97beb84fd3fd90cac315610b456f83ccd47"
     },
     {
       "instruction_id": "refer-a-canon-control-instead-of-minting-a-duplicate",
