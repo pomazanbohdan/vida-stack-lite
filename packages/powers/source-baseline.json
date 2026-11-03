@@ -4857,6 +4857,10 @@
           "sha256": "072b309df4ea3e271232f281d8a98d759f6f27a310a74b1fd6e8f70ec3a9b04f",
           "bytes": 14923
         },
+        "skills/ddia-systems/SKILL.md": {
+          "sha256": "cdcd71bc1ce854f04921c5ff1a63b06872f96b09ef2f0576c91a33ffc8297012",
+          "bytes": 16784
+        },
         "skills/pragmatic-programmer/SKILL.md": {
           "sha256": "7bd0a042aa2dd559f0327916f8d4f2dcf7d21e5f2343a193eaafee932f0f85a3",
           "bytes": 16557

@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5014,
+  "revision": 5025,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17650,8 +17650,20 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/ddia-systems/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "ddia-data-outlives-code",
+            "ddia-score-data-architecture",
+            "ddia-choose-data-model",
+            "ddia-choose-storage-engine",
+            "ddia-choose-replication",
+            "ddia-choose-partitioning",
+            "ddia-use-transactions-deliberately",
+            "ddia-separate-derived-data",
+            "ddia-design-for-faults",
+            "ddia-common-mistakes",
+            "ddia-diagnostic"
+          ]
         },
         "skills/ddia-systems/references/batch-stream.md": {
           "status": "rejected",

@@ -2,6 +2,29 @@
 
 ## 2026-11-03
 
+* **H1 ddia-systems pilot applied:** 11 `InstructionSpec` drafts from the
+  ddia-systems panel decisions (spec manifest SHA-256
+  `1e53723ab1529a7d924a8e09820527f5123eb4b7cb77b8a66a38274658ed9eb1`).
+  Every provenance entry carries the content-relative source path
+  `skills/ddia-systems/SKILL.md`, the source SHA-256 and the full supporting
+  per-unit locator. Packet SHA-256
+  `4588f07ed46bbe8fb47cff47e6ef21d524e021060514cbef158f5141e5ffabb2`;
+  committee (normalized selection) SHA-256
+  `fea69273b7ab84c309c03abc45a8383279de4bda697558c26e26759e936572bb`;
+  reviewed plan SHA-256
+  `bc85e913ff243ca21f4ed0713c3b076d25fc82a448f8c2f99d0a7486c900deb6`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 13 targets observed as
+  `intended`; apply receipt SHA-256
+  `602e2628698c0ba9420e419db52077bb7b5f0d75405bc29154f1176c15034faf`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,205
+  files; corpus 2,561; catalog revision 6,396; map revision 5,025. The other 22
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+  The apply-time plan artifact was overwritten by a tooling defect; the applied
+  plan was verified to normalize exactly to the reviewed plan SHA-256. See
+  `h1-pilot-25/PLAN-RECONCILIATION.md`.
+
 * **H1 pragmatic-programmer pilot applied:** 11 `InstructionSpec` drafts from
   the pragmatic-programmer panel decisions (spec manifest SHA-256
   `dc604fd8c55fc4e400cb619026e4aef9ab35a9de7e758f8adfd329537d6c1758`).

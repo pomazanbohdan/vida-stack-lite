@@ -147,7 +147,7 @@ donors:
       mirrors - those copies are not carriers. The material is derived from published books
       (Nielsen, Krug, HIG, The Pragmatic Programmer, DDIA, DDD, Clean Architecture); the guided
       journeys and the case-study files state no norm of their own and are not carried into the
-      corpus. The clean-code and pragmatic-programmer pilots contributed 21 instructions; 389 candidates remain pending H1
+      corpus. The clean-code, pragmatic-programmer and ddia-systems pilots contributed 32 instructions; 378 candidates remain pending H1
       selection and 30 journey files are excluded.
 
 not_cloned:

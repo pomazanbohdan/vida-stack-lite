@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6385,
+  "revision": 6396,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -2753,6 +2753,61 @@
       "instruction_id": "date-the-repeated-report-so-it-does-not-overwrite",
       "path": "instructions/date-the-repeated-report-so-it-does-not-overwrite.md",
       "sha256": "5302c0c79b5ed47cc941fc80ee15263394517fc9e120fb63dd0d02a33696043a"
+    },
+    {
+      "instruction_id": "ddia-choose-data-model",
+      "path": "instructions/ddia-choose-data-model.md",
+      "sha256": "6f94eaba08f1a5348b94d685933ec45b4bd13b6291f67aa885988410ec26b3ed"
+    },
+    {
+      "instruction_id": "ddia-choose-partitioning",
+      "path": "instructions/ddia-choose-partitioning.md",
+      "sha256": "bbf9ce34dd9489f4fc2a660e851905b5eb1fb02567f46284ab158152d326bb0c"
+    },
+    {
+      "instruction_id": "ddia-choose-replication",
+      "path": "instructions/ddia-choose-replication.md",
+      "sha256": "a5c3646e7ffed270d839848fb11ac35385b772a2877ec2cd8bedbaacc01cbf7d"
+    },
+    {
+      "instruction_id": "ddia-choose-storage-engine",
+      "path": "instructions/ddia-choose-storage-engine.md",
+      "sha256": "2e01541a91d75a6ee41362ce62ec8d5cf3c5b45a08afb23c867e17a696ed0a3a"
+    },
+    {
+      "instruction_id": "ddia-common-mistakes",
+      "path": "instructions/ddia-common-mistakes.md",
+      "sha256": "89e963a0f187379ec77f6ec7f3380305c42a0732b153bb4fd735af1cf43a57f7"
+    },
+    {
+      "instruction_id": "ddia-data-outlives-code",
+      "path": "instructions/ddia-data-outlives-code.md",
+      "sha256": "b8c639ba30ade47b12866bb421e2ac0c0db2f9572ed4004ce457cfe36175a545"
+    },
+    {
+      "instruction_id": "ddia-design-for-faults",
+      "path": "instructions/ddia-design-for-faults.md",
+      "sha256": "2c3f6bc9cafbe00c1cac4e06688f8a07127849ea94cdf7d93c4b820f7969f577"
+    },
+    {
+      "instruction_id": "ddia-diagnostic",
+      "path": "instructions/ddia-diagnostic.md",
+      "sha256": "0186ab02cac72b27bfa3c3849550ca564c09bdc361bf437e1f16e82ebfb96256"
+    },
+    {
+      "instruction_id": "ddia-score-data-architecture",
+      "path": "instructions/ddia-score-data-architecture.md",
+      "sha256": "4e163db6507b8d32ab1c6de0d11e2155dc2e16b09ba8ba9ce94d65912305045d"
+    },
+    {
+      "instruction_id": "ddia-separate-derived-data",
+      "path": "instructions/ddia-separate-derived-data.md",
+      "sha256": "ba520bd9f44302504cf2d4e27bd48e8357be0f620321f95c8e3371b600dbf700"
+    },
+    {
+      "instruction_id": "ddia-use-transactions-deliberately",
+      "path": "instructions/ddia-use-transactions-deliberately.md",
+      "sha256": "9115f4935868198431d4861e253e11d2f5a9e48de55172466af9d9679a3d1c2b"
     },
     {
       "instruction_id": "debug-systematically",
