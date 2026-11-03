@@ -2,6 +2,34 @@
 
 ## 2026-11-03
 
+* **H1 influence-psychology pilot applied:** 13 `InstructionSpec` drafts from the
+  influence-psychology panel decisions (spec manifest SHA-256
+  `501692f99216dbb3145bd0841d2600c0e07ce65347b6907644d214d1d7e06335`).
+  Every provenance entry carries the content-relative source path
+  `skills/influence-psychology/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. The score body states the 9–10/7–8/5–6/≤3 bands
+  and the ethics cap; the common-mistakes and diagnostic bodies list each
+  correction. The packet carries `panel-evidence.json` with the B6 aggregation
+  entry; its hash-bound reference is in the committee's per-file
+  `check.panelEvidence`. Packet SHA-256
+  `fdb0d0aee114aa8389f7fcafb4706777389ff0e5f0fed7f724d62d8ebc5beec7`;
+  committee SHA-256
+  `55aa21f4d851145500112cf891d5ba1ca2fb6ddf3211275db65da6a35c0b1632`;
+  reviewed plan SHA-256
+  `336a5f80a00827bff21ece2465e934d2c3c377ba76c5f5081f8049e7b3addde7`;
+  applied plan SHA-256
+  `0bc95fca12ce305246a61b8747a99629a05be0d986fc8d3f58206e847d29dfbb`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 15 targets observed as
+  `intended`; apply receipt SHA-256
+  `a517e2006e4c908f1520417b450a234e0484937b3d925de6d91bc58e311944d8`.
+  Applied: 13 instructions, catalog, map; baseline rebuilt to 9 donors / 1,227
+  files; corpus 2,839; catalog revision 6,679; map revision 5,303. This completes
+  the 25-file H1 pilot: 310 instructions from 25 files. Matched measurement,
+  classification of the new instructions, H2/H3 and Runtime acceptance remain
+  open; this is not H1 closure.
+
 * **H1 made-to-stick pilot applied:** 15 `InstructionSpec` drafts from the
   made-to-stick panel decisions (spec manifest SHA-256
   `d8ba9527c715949b598434fe1ddcf1bc1bc2ed906dc95da91822153259b59528`).

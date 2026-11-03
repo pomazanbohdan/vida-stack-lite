@@ -4885,6 +4885,10 @@
           "sha256": "7adebf248a5aa40ef6bc34d3f379a9cd22663b8ca8086fc350c95cee6d4d2035",
           "bytes": 19456
         },
+        "skills/influence-psychology/SKILL.md": {
+          "sha256": "e7cd3142a11a631c56be159374a42341b370efb26cc3adc25a9f5e6627b84994",
+          "bytes": 17148
+        },
         "skills/inspired-product/SKILL.md": {
           "sha256": "482ab6a32bb59b087a06812711959624e9afec1b73c34d5d6774c565cc2bdb14",
           "bytes": 15860

@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5290,
+  "revision": 5303,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18164,8 +18164,22 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/influence-psychology/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "influence-decision-heuristics",
+            "influence-score",
+            "influence-reciprocity",
+            "influence-commitment",
+            "influence-social-proof",
+            "influence-authority",
+            "influence-liking",
+            "influence-scarcity",
+            "influence-unity",
+            "influence-combining-principles",
+            "influence-ethical-line",
+            "influence-common-mistakes",
+            "influence-diagnostic"
+          ]
         },
         "skills/influence-psychology/references/authority.md": {
           "status": "rejected",

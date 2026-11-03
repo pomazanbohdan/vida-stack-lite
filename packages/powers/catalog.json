@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6666,
+  "revision": 6679,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -5201,6 +5201,71 @@
       "instruction_id": "infer-trust-from-objective-signals-not-from-a-stored-score",
       "path": "instructions/infer-trust-from-objective-signals-not-from-a-stored-score.md",
       "sha256": "baa09d6dea7fc10d576b219f5559937daeb7cc52a154ad37f6fce56a8cd32e34"
+    },
+    {
+      "instruction_id": "influence-authority",
+      "path": "instructions/influence-authority.md",
+      "sha256": "3cd72cd64619517a3527c2bbaae027e3c697b1b4dc061643bf177d18e74906af"
+    },
+    {
+      "instruction_id": "influence-combining-principles",
+      "path": "instructions/influence-combining-principles.md",
+      "sha256": "25a47f198e6ca0cf0423762eab6e4e7f278edbc58aa2ef4e50cbf9d1a6a415bc"
+    },
+    {
+      "instruction_id": "influence-commitment",
+      "path": "instructions/influence-commitment.md",
+      "sha256": "ab28441d86331f76ff5e530c190925091869aae01b03296975f979570ac3247c"
+    },
+    {
+      "instruction_id": "influence-common-mistakes",
+      "path": "instructions/influence-common-mistakes.md",
+      "sha256": "ab7310016b5fa76412299a2e9f851f9012207a1f698962192af04fec1b2efb10"
+    },
+    {
+      "instruction_id": "influence-decision-heuristics",
+      "path": "instructions/influence-decision-heuristics.md",
+      "sha256": "45d19af93bacf3f04d7a5f47b99904a98e5060286fab8eb3e1391deb75a4f42c"
+    },
+    {
+      "instruction_id": "influence-diagnostic",
+      "path": "instructions/influence-diagnostic.md",
+      "sha256": "685084d2c818e564df497434dd551d50742b079a0dccb2e164268c8298d5ded7"
+    },
+    {
+      "instruction_id": "influence-ethical-line",
+      "path": "instructions/influence-ethical-line.md",
+      "sha256": "1e8a73c912bec59a89e8c5cb07b5e13019bfa76260a2e3038be5d024aaa6952e"
+    },
+    {
+      "instruction_id": "influence-liking",
+      "path": "instructions/influence-liking.md",
+      "sha256": "030c762369fd364a1dbf2091281fb365bf3b7973a2a17d0ac9f78ce77ce4bd5b"
+    },
+    {
+      "instruction_id": "influence-reciprocity",
+      "path": "instructions/influence-reciprocity.md",
+      "sha256": "a66b06ecd525cdc206cf1d9cd3536c8a196c7140f0d077e0488125bfda268731"
+    },
+    {
+      "instruction_id": "influence-scarcity",
+      "path": "instructions/influence-scarcity.md",
+      "sha256": "28112f624e369d1b1a0d57b49bf5e09666f637fcd5d0463bf76c673189a9b9b2"
+    },
+    {
+      "instruction_id": "influence-score",
+      "path": "instructions/influence-score.md",
+      "sha256": "050d339b3b88895a16e92fca705a40578d87e10696b0aabfc42fb2378f8b1323"
+    },
+    {
+      "instruction_id": "influence-social-proof",
+      "path": "instructions/influence-social-proof.md",
+      "sha256": "c9a1d44d990b8306e04fa75b25ce63432a731a26c48f4188fa1373a316dfef72"
+    },
+    {
+      "instruction_id": "influence-unity",
+      "path": "instructions/influence-unity.md",
+      "sha256": "256ad41160611101a43f1a8ba8ee92c17ed33ce21fb6d1e0a3ddae4b8217bded"
     },
     {
       "instruction_id": "inherit-from-a-ui-system-and-specify-only-the-deltas",
