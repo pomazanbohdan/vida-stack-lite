@@ -109,6 +109,29 @@ test('SDK compatibility manifest keeps only the SDK prepack hook and payload', (
     expect(value.files).toContain(file);
 });
 
+test('SDK package publication inventories contain every captured schema at source and dist paths', async () => {
+  const inputs = await captureSdkFormationInputs(packageRoot);
+  const sourceSchemas = [...inputs.keys()]
+    .filter((file) => file.startsWith('schemas/') && file.endsWith('.schema.json'))
+    .sort();
+  expect(sourceSchemas.length).toBeGreaterThan(0);
+  expect(new Set(sourceSchemas).size).toBe(sourceSchemas.length);
+
+  const { value } = sdkCompatibilityManifest({ root: packageRoot });
+  const rawSchemas = value.files.filter((file) => file.startsWith('schemas/') && file.endsWith('.schema.json')).sort();
+  const distSchemas = value.files
+    .filter((file) => file.startsWith('dist/schemas/') && file.endsWith('.schema.json'))
+    .sort();
+  expect(new Set(rawSchemas).size).toBe(rawSchemas.length);
+  expect(new Set(distSchemas).size).toBe(distSchemas.length);
+  expect(rawSchemas).toEqual(sourceSchemas);
+  expect(distSchemas).toEqual(sourceSchemas.map((file) => `dist/${file}`).sort());
+  expect(value.files).toContain('schemas/consumer-clean-initialization-operation.v1.schema.json');
+  expect(value.files).toContain('dist/schemas/consumer-clean-initialization-operation.v1.schema.json');
+  expect(value.files).toContain('dist/schemas/product-model.v1.schema.json');
+  expect(value.files).toContain('dist/schemas/local-work-item.v1.schema.json');
+});
+
 test('SDK compatibility manifest omits root bun.lock while retaining the portable lock', () => {
   const temporary = mkdtempSync(path.join(tmpdir(), 'vida-sdk-lock-projection-'));
   try {
