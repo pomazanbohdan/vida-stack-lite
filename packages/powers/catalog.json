@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6560,
+  "revision": 6572,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -9503,6 +9503,66 @@
       "instruction_id": "refactoring-small-behavior-preserving-steps",
       "path": "instructions/refactoring-small-behavior-preserving-steps.md",
       "sha256": "af698d9e83ed3c4eb63d5d1c2478d97beb84fd3fd90cac315610b456f83ccd47"
+    },
+    {
+      "instruction_id": "refactoring-ui-color-contrast",
+      "path": "instructions/refactoring-ui-color-contrast.md",
+      "sha256": "f485a515359d679a1c15de50237c745557da546eb6f605f46806ef3881db876e"
+    },
+    {
+      "instruction_id": "refactoring-ui-common-mistakes",
+      "path": "instructions/refactoring-ui-common-mistakes.md",
+      "sha256": "d6c63ecfab688f865599d139293c25eda76a4ba5434c9b6a8d90c61d084f00ad"
+    },
+    {
+      "instruction_id": "refactoring-ui-depth",
+      "path": "instructions/refactoring-ui-depth.md",
+      "sha256": "fea31a6644251f0860f5e61bfb4d93d59bc4196811ed3c91fd09d7e9d3968c83"
+    },
+    {
+      "instruction_id": "refactoring-ui-diagnostic",
+      "path": "instructions/refactoring-ui-diagnostic.md",
+      "sha256": "2f038d7328d22cf16fa1f9f6cda7aa6dac73a1eac11bbb3a9f5c1aa287fb83a3"
+    },
+    {
+      "instruction_id": "refactoring-ui-grayscale-first",
+      "path": "instructions/refactoring-ui-grayscale-first.md",
+      "sha256": "aed49c09dbaf4664847be1e967f40fbfdb5406d484663dd2ab2e8e6e5294dcab"
+    },
+    {
+      "instruction_id": "refactoring-ui-hierarchy",
+      "path": "instructions/refactoring-ui-hierarchy.md",
+      "sha256": "3c8134f5080b0b42e5e4f4ca59f9998fb3db8ec8a86e4252376c7ba9d991fb55"
+    },
+    {
+      "instruction_id": "refactoring-ui-images-and-icons",
+      "path": "instructions/refactoring-ui-images-and-icons.md",
+      "sha256": "289d0fb285d643d23ba183ff60926f262f25a4c8df3d038cdd520cfbd01f9cbd"
+    },
+    {
+      "instruction_id": "refactoring-ui-layout",
+      "path": "instructions/refactoring-ui-layout.md",
+      "sha256": "94c8bba1a282f3ee71ac4f27f73e22621e82ff47cfab7401e7fce0fdeebac2a9"
+    },
+    {
+      "instruction_id": "refactoring-ui-score",
+      "path": "instructions/refactoring-ui-score.md",
+      "sha256": "8e84c13fcc8c3765322b9ba66e391da79e50b97f0d2bc9a59db206910e7c6d6c"
+    },
+    {
+      "instruction_id": "refactoring-ui-seven-principles",
+      "path": "instructions/refactoring-ui-seven-principles.md",
+      "sha256": "d671abb09245d9e5ec2e366ac0ab3699242da574583508d8105d25cbaac539a9"
+    },
+    {
+      "instruction_id": "refactoring-ui-spacing",
+      "path": "instructions/refactoring-ui-spacing.md",
+      "sha256": "df2233a721a8f6424e141a24e182e19b50e60898fcf6a298402f05839b2dbcb9"
+    },
+    {
+      "instruction_id": "refactoring-ui-typography",
+      "path": "instructions/refactoring-ui-typography.md",
+      "sha256": "d9d45937459d189edf91662a67f3ad73910afe5078000d7dbbe397589fed58f4"
     },
     {
       "instruction_id": "refer-a-canon-control-instead-of-minting-a-duplicate",

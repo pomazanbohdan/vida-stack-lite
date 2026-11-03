@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5189,
+  "revision": 5201,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18762,8 +18762,21 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/refactoring-ui/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "refactoring-ui-grayscale-first",
+            "refactoring-ui-score",
+            "refactoring-ui-seven-principles",
+            "refactoring-ui-hierarchy",
+            "refactoring-ui-spacing",
+            "refactoring-ui-typography",
+            "refactoring-ui-color-contrast",
+            "refactoring-ui-depth",
+            "refactoring-ui-images-and-icons",
+            "refactoring-ui-layout",
+            "refactoring-ui-common-mistakes",
+            "refactoring-ui-diagnostic"
+          ]
         },
         "skills/refactoring-ui/references/accessibility-depth.md": {
           "status": "rejected",

@@ -4901,6 +4901,10 @@
           "sha256": "e09d21bcca98b575df0014b3288df75afb556f2dd1d05135e6714d4c413d55d4",
           "bytes": 16007
         },
+        "skills/refactoring-ui/SKILL.md": {
+          "sha256": "d10d15b81aa00f427811741d83ac2bb918aabfae3d4489c751615bdf85e1674c",
+          "bytes": 15635
+        },
         "skills/software-design-philosophy/SKILL.md": {
           "sha256": "d5971fdfc51e6a6f729856a9c3874d56628bb6802fdd31eb1c97adbfa4b51a73",
           "bytes": 16318

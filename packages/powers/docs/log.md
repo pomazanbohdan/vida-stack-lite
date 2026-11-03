@@ -2,6 +2,33 @@
 
 ## 2026-11-03
 
+* **H1 refactoring-ui pilot applied:** 12 `InstructionSpec` drafts from the
+  refactoring-ui panel decisions (spec manifest SHA-256
+  `d34e9c890f6b798e98ecb9de3c8969054332396133823f38b6f1aa1abae069f3`).
+  Every provenance entry carries the content-relative source path
+  `skills/refactoring-ui/SKILL.md`, the source SHA-256 and the full supporting
+  per-unit locator. The u4 locator is the explicit `L24-L211`, covering the
+  framework intro and all seven principle subsections after review found the
+  generated `L24-L27` too narrow. The packet carries `panel-evidence.json` with
+  the B4 aggregation entry, including the u4/u12 manual resolutions; its
+  hash-bound reference is in the committee's per-file `check.panelEvidence`.
+  Packet SHA-256
+  `2c99cb0244a9cde7c004b73be3e4050340fed7c0d423cfb3e8a7b1ff3767eb8a`;
+  committee SHA-256
+  `f3a746f7bbac850f79ae999327626210c623ba3a9672535fb228952dfd782a04`;
+  reviewed plan SHA-256
+  `a4122435ead9be2f4e13dff71d19fdf0ed039ac81c99be5b97066e836fb039f1`;
+  applied plan SHA-256
+  `99be53e5080a4ab17b49e7dfe51f61870acec32d6d31c6aa649493fc601027e3`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor. Apply returned `applied` with all 14 targets observed as `intended`;
+  apply receipt SHA-256
+  `3c29a944da43d5db4618f1d733985640bab9558d0c658fecdf038ef61f71460e`.
+  Applied: 12 instructions, catalog, map; baseline rebuilt to 9 donors / 1,219
+  files; corpus 2,737; catalog revision 6,572; map revision 5,201. The other 8
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 design-everyday-things pilot applied:** 19 `InstructionSpec` drafts from
   the design-everyday-things panel decisions (spec manifest SHA-256
   `d1b35582aaca9392833611ee72748648727846b5890857e8ff0873d52a3a5a6b`).
