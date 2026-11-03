@@ -2,6 +2,32 @@
 
 ## 2026-11-03
 
+* **H1 ux-heuristics pilot applied:** 23 `InstructionSpec` drafts from the
+  ux-heuristics panel decisions (spec manifest SHA-256
+  `164b0381ba0ac5d0d874318adc57061939860b385217cb582ade59d920e0f7be`).
+  Every provenance entry carries the content-relative source path
+  `skills/ux-heuristics/SKILL.md`, the source SHA-256 and the full supporting
+  per-unit locator. The packet carries `panel-evidence.json` with the B4
+  aggregation entry for ux-heuristics, including the u4/u20/u24 manual
+  resolutions; its hash-bound reference is recorded in the committee's
+  per-file `check.panelEvidence`, and the admission gate binds that committee.
+  Packet SHA-256
+  `9c55c04bb603712624e012c05c7ba1004d15f5675ff5eedcf01a6109ababcbcd`;
+  committee SHA-256
+  `f3af971d8a68b8c08c57f1ebf7fbc3883871291e63d71037a7e36f5b96cec60c`;
+  reviewed plan SHA-256
+  `4f75058191064ed80c89c09d9d539c2342731aad95a0ddeddbd067b4c6cfa902`;
+  applied plan SHA-256
+  `bd02868b0dfa7886cf30a7f6a61822dc8fb269c19363f1a23939f92c3e4026f5`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 25 targets observed as
+  `intended`; apply receipt SHA-256
+  `52c276c8ab417688ce4f34dcf546c28eac3e40c7f834ac3262fe8c66d42d5d60`.
+  Applied: 23 instructions, catalog, map; baseline rebuilt to 9 donors / 1,217
+  files; corpus 2,706; catalog revision 6,541; map revision 5,170. The other 10
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 lean-ux pilot applied:** 10 `InstructionSpec` drafts from the lean-ux panel
   decisions (spec manifest SHA-256
   `85b2d1141f5d7cdda91146d90a7d88b8b6f02015945906744592207493b86cf4`).

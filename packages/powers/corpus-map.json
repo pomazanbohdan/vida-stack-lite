@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5147,
+  "revision": 5170,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19072,8 +19072,32 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/ux-heuristics/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "ux-heuristics-dont-make-me-think",
+            "ux-heuristics-score",
+            "ux-heuristics-krug-laws",
+            "ux-heuristics-labels",
+            "ux-heuristics-clicks",
+            "ux-heuristics-cut-words",
+            "ux-heuristics-trunk-test",
+            "ux-heuristics-system-status",
+            "ux-heuristics-real-world-language",
+            "ux-heuristics-user-control",
+            "ux-heuristics-consistency",
+            "ux-heuristics-error-prevention",
+            "ux-heuristics-recognition",
+            "ux-heuristics-flexibility",
+            "ux-heuristics-minimalist-design",
+            "ux-heuristics-error-messages",
+            "ux-heuristics-help",
+            "ux-heuristics-severity-scale",
+            "ux-heuristics-common-mistakes",
+            "ux-heuristics-diagnostic",
+            "ux-heuristics-conflicts",
+            "ux-heuristics-dark-patterns",
+            "ux-heuristics-method-selection"
+          ]
         },
         "skills/ux-heuristics/references/audit-template.md": {
           "status": "rejected",

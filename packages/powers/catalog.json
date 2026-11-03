@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6518,
+  "revision": 6541,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -12733,6 +12733,121 @@
       "instruction_id": "use-version-history-to-find-the-regression",
       "path": "instructions/use-version-history-to-find-the-regression.md",
       "sha256": "c343972d9b5b8d290e4b069dde0b5d46a43435b52e2b51219c14c57b6d6861d3"
+    },
+    {
+      "instruction_id": "ux-heuristics-clicks",
+      "path": "instructions/ux-heuristics-clicks.md",
+      "sha256": "3aa2798b545424fefd9a5d40a0ee660728c9066bbc2a978fbe61da6e4ef09fae"
+    },
+    {
+      "instruction_id": "ux-heuristics-common-mistakes",
+      "path": "instructions/ux-heuristics-common-mistakes.md",
+      "sha256": "4cefdd83978afd1645b3cf9bf156cd9380ae48dee4e498394b310b1fbac3ff32"
+    },
+    {
+      "instruction_id": "ux-heuristics-conflicts",
+      "path": "instructions/ux-heuristics-conflicts.md",
+      "sha256": "155594473da3482fbbbc568550b1eca7bae77311682f48b8da982cc4666c3d52"
+    },
+    {
+      "instruction_id": "ux-heuristics-consistency",
+      "path": "instructions/ux-heuristics-consistency.md",
+      "sha256": "8f4f20cec1caab2d4020e9c1ecd1ddd1590229c9f0581d64200f7f966fbf8d60"
+    },
+    {
+      "instruction_id": "ux-heuristics-cut-words",
+      "path": "instructions/ux-heuristics-cut-words.md",
+      "sha256": "0cb971b0f1c0a34b0018ec9b7ab49bdef6afd80fd71fbae7b0bcd681377d46de"
+    },
+    {
+      "instruction_id": "ux-heuristics-dark-patterns",
+      "path": "instructions/ux-heuristics-dark-patterns.md",
+      "sha256": "464260307585bdcc24a222fee709353cdce81d0b8eb6ff0b992184a71e184579"
+    },
+    {
+      "instruction_id": "ux-heuristics-diagnostic",
+      "path": "instructions/ux-heuristics-diagnostic.md",
+      "sha256": "7227c4afedcdcfa32f900343f3817414aa42b9d0671269079256f60008486c0f"
+    },
+    {
+      "instruction_id": "ux-heuristics-dont-make-me-think",
+      "path": "instructions/ux-heuristics-dont-make-me-think.md",
+      "sha256": "25618cd7969b563a47afdba5985eef0eab05d14f9db243e50a5d2b9e624649da"
+    },
+    {
+      "instruction_id": "ux-heuristics-error-messages",
+      "path": "instructions/ux-heuristics-error-messages.md",
+      "sha256": "f8f34bb11e520d6a503b5ce841ab77e10f4a4ea925b1de9741122469da09f581"
+    },
+    {
+      "instruction_id": "ux-heuristics-error-prevention",
+      "path": "instructions/ux-heuristics-error-prevention.md",
+      "sha256": "a69996640fc811faea0c98e6436d27f771d6e50aee9eedd328f5172185df7f70"
+    },
+    {
+      "instruction_id": "ux-heuristics-flexibility",
+      "path": "instructions/ux-heuristics-flexibility.md",
+      "sha256": "9fb05e4870260fca44c9364db54b36266458e97c603eb122469571c2f0623a8c"
+    },
+    {
+      "instruction_id": "ux-heuristics-help",
+      "path": "instructions/ux-heuristics-help.md",
+      "sha256": "b0a7e4078458a4b5367edf72cc19c4760902961fa14efc1f3ef1872c8497d8c2"
+    },
+    {
+      "instruction_id": "ux-heuristics-krug-laws",
+      "path": "instructions/ux-heuristics-krug-laws.md",
+      "sha256": "5233fffd521e0f17c4cf8ac73f9ac766704a3d7e5b0224ef44d38b4879adb8bc"
+    },
+    {
+      "instruction_id": "ux-heuristics-labels",
+      "path": "instructions/ux-heuristics-labels.md",
+      "sha256": "cb63cf506c1705364df0ca6201d7a3e4b3dcdf633da44b064841365cbe45fb0c"
+    },
+    {
+      "instruction_id": "ux-heuristics-method-selection",
+      "path": "instructions/ux-heuristics-method-selection.md",
+      "sha256": "41baa162a2c4d6043bef0739a525a1da4c73e77779dc0f78b74f73c51873ec65"
+    },
+    {
+      "instruction_id": "ux-heuristics-minimalist-design",
+      "path": "instructions/ux-heuristics-minimalist-design.md",
+      "sha256": "cdfea5cc12c67258fe3cb0cebca4e4e07f5afffa1a410903bc06713682ce572e"
+    },
+    {
+      "instruction_id": "ux-heuristics-real-world-language",
+      "path": "instructions/ux-heuristics-real-world-language.md",
+      "sha256": "e8d332379756122bd108f890b132e34728751a4013e69f83f57a80d404efb400"
+    },
+    {
+      "instruction_id": "ux-heuristics-recognition",
+      "path": "instructions/ux-heuristics-recognition.md",
+      "sha256": "27eae664016baf8a4cf015f21b97b5c933b269123f1839473585b3378c4cf43a"
+    },
+    {
+      "instruction_id": "ux-heuristics-score",
+      "path": "instructions/ux-heuristics-score.md",
+      "sha256": "d7cd013b61933bcd7741ba2c7975e9463241769c6b83843b7c02493d7476fda2"
+    },
+    {
+      "instruction_id": "ux-heuristics-severity-scale",
+      "path": "instructions/ux-heuristics-severity-scale.md",
+      "sha256": "cac4569328f5cccfb34df55d27d0a718fc47737cedeaf4b702e2a64f0224135e"
+    },
+    {
+      "instruction_id": "ux-heuristics-system-status",
+      "path": "instructions/ux-heuristics-system-status.md",
+      "sha256": "0034ef3530d14f1cb8cfee6a34e162073c5ea78a6da35d2e0134b323e6d2fa0b"
+    },
+    {
+      "instruction_id": "ux-heuristics-trunk-test",
+      "path": "instructions/ux-heuristics-trunk-test.md",
+      "sha256": "73fbd943f9313501ea33e007a11315445c908ee05f25146a0a6d1c2368097a4c"
+    },
+    {
+      "instruction_id": "ux-heuristics-user-control",
+      "path": "instructions/ux-heuristics-user-control.md",
+      "sha256": "fc832d032b3c4b41aa7ae1e5467e6b5c2fd60697e77cc9fb79384c7406120985"
     },
     {
       "instruction_id": "validate-a-manifest-command-in-context-before-you-run-it",
