@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5085,
+  "revision": 5095,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18152,8 +18152,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/inspired-product/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "inspired-empowered-teams",
+            "inspired-score-product-organization",
+            "inspired-discovery-and-delivery",
+            "inspired-durable-team",
+            "inspired-test-four-risks",
+            "inspired-assess-opportunity",
+            "inspired-vision-and-strategy",
+            "inspired-continuous-delivery",
+            "inspired-common-mistakes",
+            "inspired-diagnostic"
+          ]
         },
         "skills/inspired-product/references/case-studies.md": {
           "status": "rejected",
