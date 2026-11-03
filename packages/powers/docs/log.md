@@ -2,6 +2,19 @@
 
 ## 2026-11-02
 
+* **H1 mechanical preparation batch complete:** mechanically decomposed all 25
+  approved files into 391 draft units and 4,039 spans, produced 25
+  `VPSourceSelection/v1` selections and 25 `PASS_MECHANICAL_ONLY` receipts with
+  `semanticReview: PENDING` and `admission: false`, and sealed a preparation
+  manifest (`h1-pilot-25/preparation-manifest.json`, SHA-256
+  `2caddcd18f9a616b7c65649ced312a4aa276784ebee8b90f726813c8532777dc`).
+  Every decisions artifact passed `checkDecomposition`: no duplicate units, no
+  unlinked unit, and all non-empty text covered. Units are section headings, not
+  accepted norms, and no `VPSourceSpec`/`InstructionSpec`, model fidelity review,
+  rights gate or admission exists. A read-only Codex/Luna validation returned
+  READY with 0 Critical / 0 Important / 0 Minor; `STATUS.md` records the
+  preparation-only boundary and the human review required next.
+
 * **H1 pilot captures sealed:** captured all 25 approved Wondelai files with the
   existing `capturePacket` policy (strict UTF-8, BOM/CRLF/codepoint spans) and
   sealed a manifest under the existing H1 evidence directory
