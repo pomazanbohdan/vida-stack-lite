@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "LocalWorkItem/v1",
+  "title": "LocalWorkItem/v1 Markdown frontmatter",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "type",
+    "schema",
+    "version",
+    "internal_id",
+    "repository_id",
+    "project_id",
+    "number",
+    "canonical_kind",
+    "type_code",
+    "key",
+    "aliases",
+    "parent_id",
+    "revision",
+    "title",
+    "provider_refs"
+  ],
+  "properties": {
+    "type": { "const": "Work Item" },
+    "schema": { "const": "LocalWorkItem/v1" },
+    "version": { "const": 1 },
+    "internal_id": { "type": "string", "format": "uuid" },
+    "repository_id": { "type": "string", "minLength": 1 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "number": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "canonical_kind": { "type": "string", "enum": ["epic", "feature", "pbi", "story", "bug", "task", "research"] },
+    "type_code": { "type": "string", "enum": ["EPIC", "FEATURE", "PBI", "STORY", "BUG", "TASK", "RESEARCH"] },
+    "key": { "type": "string", "minLength": 1 },
+    "aliases": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "parent_id": { "anyOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }] },
+    "revision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "title": { "type": "string", "minLength": 1 },
+    "provider_refs": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

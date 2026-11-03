@@ -3075,6 +3075,72 @@ export function requireOneReadonlyReleaseMatch<T>(values: readonly T[]): T {
   return values[0];
 }
 
+type ReadonlyReleaseObservedFrontierEntry = {
+  item: {
+    issue_id: string | null;
+    observation: unknown;
+    host_reservation?: unknown;
+    research_activation?: unknown;
+    research_normalization?: unknown;
+  };
+  issued: { action_id: string };
+  observed: {
+    status: string;
+    action_id: string;
+    issue_id: string;
+    output_digest: string;
+    summary: string;
+  };
+};
+
+/** @param {readonly {action_id: string}[]} expected @param {readonly ReadonlyReleaseObservedFrontierEntry[]} journal
+ * @param {number} inertCount @param {(left: unknown, right: unknown) => boolean} equal
+ * @param {(summary: string) => string} digest
+ */
+export function assertReadonlyReleaseObservedFrontier(
+  expected: readonly { action_id: string }[],
+  journal: readonly ReadonlyReleaseObservedFrontierEntry[],
+  inertCount: number,
+  equal: (left: unknown, right: unknown) => boolean,
+  digest: (summary: string) => string,
+): void {
+  const refuse = () => {
+    throw Error('Readonly release actual engine frontier differs');
+  };
+  const actionIds = journal.map((entry) => entry.issued.action_id),
+    issueIds = journal.map((entry) => entry.item.issue_id),
+    expectedActionIds = expected.map((entry) => entry.action_id);
+  if (
+    inertCount !== 0 ||
+    expected.length === 0 ||
+    journal.length !== expected.length ||
+    new Set(expectedActionIds).size !== expectedActionIds.length ||
+    new Set(actionIds).size !== actionIds.length ||
+    new Set(issueIds).size !== issueIds.length ||
+    !equal([...actionIds].sort(), [...expectedActionIds].sort())
+  )
+    refuse();
+  for (const request of expected) {
+    const match = requireOneReadonlyReleaseMatch(
+      journal.filter((entry) => entry.issued.action_id === request.action_id),
+    );
+    if (
+      !equal(match.issued, request) ||
+      match.item.issue_id === null ||
+      match.item.observation === null ||
+      match.item.observation === undefined ||
+      match.item.host_reservation ||
+      match.item.research_activation ||
+      match.item.research_normalization ||
+      match.observed.status !== 'reported_complete' ||
+      match.observed.action_id !== request.action_id ||
+      match.observed.issue_id !== match.item.issue_id ||
+      match.observed.output_digest !== digest(match.observed.summary)
+    )
+      refuse();
+  }
+}
+
 /** @param {string} text @returns {unknown} */
 function parseReadonlyReleaseEngineSnapshot(text: string): unknown {
   return JSON.parse(text);
@@ -5439,6 +5505,13 @@ async function releaseCompletedReadonly(args: string[]) {
       group.push({ item, issued, observed });
       groupedItems.set(issued.wave_index, group);
     }
+    const observedIssueIds = items.map((item) => item.issue_id),
+      observedActionIds = [...groupedItems.values()].flatMap((group) => group.map((entry) => entry.issued.action_id));
+    if (
+      new Set(observedIssueIds).size !== observedIssueIds.length ||
+      new Set(observedActionIds).size !== observedActionIds.length
+    )
+      throw Error('Readonly release actual accepted readonly action differs');
     let priorState = input;
     const verifiedWaves = new Set();
     for (const { waveIndex, value: step } of engineWaves.filter(isReadonlyReleaseSuccessfulWave)) {
@@ -5519,8 +5592,6 @@ async function releaseCompletedReadonly(args: string[]) {
       verifiedWaves.add(waveIndex);
       priorState = output;
     }
-    if (verifiedWaves.size !== groupedItems.size || inertItems.length !== frontierRequests.length)
-      throw Error('Readonly release actual engine completion differs');
     const frontierInput = parseRunState(frontierStep.payload);
     if (
       !equal(frontierInput, priorState) ||
@@ -5579,10 +5650,27 @@ async function releaseCompletedReadonly(args: string[]) {
     });
     if (
       !expectedFrontier.length ||
-      !equal(frontierRequests, expectedFrontier) ||
-      !equal(inertRequests, expectedFrontier)
+      new Set(expectedFrontier.map((entry) => entry.action_id)).size !== expectedFrontier.length ||
+      !equal(frontierRequests, expectedFrontier)
     )
       throw Error('Readonly release actual engine frontier differs');
+    const frontierJournalItems = groupedItems.get(frontier.waveIndex) ?? [],
+      inertFrontier = inertItems.length === expectedFrontier.length && equal(inertRequests, expectedFrontier);
+    let observedFrontier = false;
+    if (inertFrontier) {
+      if (frontierJournalItems.length !== 0) throw Error('Readonly release actual engine frontier differs');
+    } else {
+      assertReadonlyReleaseObservedFrontier(
+        expectedFrontier,
+        frontierJournalItems,
+        inertItems.length,
+        equal,
+        canonicalJsonDigest,
+      );
+      observedFrontier = true;
+    }
+    if (groupedItems.size !== verifiedWaves.size + (observedFrontier ? 1 : 0))
+      throw Error('Readonly release actual engine completion differs');
   } finally {
     closeWorkspaceDatabaseWithAdmission(engine);
   }
@@ -5590,18 +5678,40 @@ async function releaseCompletedReadonly(args: string[]) {
     path.dirname(path.resolve(root, requestPath)),
     'readonly-release-plan-' + request.identity.work_id + '.json',
   );
+  const projectId = request.identity.project_ids[0];
+  if (!projectId) throw Error('Readonly release identity differs');
+  if (mode === 'inspect') {
+    const database = openCliWorkspaceDatabase(root, databasePath, request.workspace_id, true);
+    try {
+      const store = createCliHostStateStore(database, request.workspace_id),
+        intake = readAdmittedSessionIntake(root, store, request.identity);
+      if (
+        intake.native_session_handle !== request.nativeSessionHandle ||
+        (readonlyReleaseThreadId(work.binding) !== request.identity.thread_id &&
+          request.identity.thread_id !== undefined)
+      )
+        throw Error('Readonly release original owner differs');
+      if (!equal(selected.version, request.expectedWork) || !equal(workspace.ledger_version, request.expectedLedger))
+        throw Error('Readonly release work/ledger CAS differs');
+      return {
+        status: 'readonly_release_inspected',
+        plan_ref: path.relative(root, planPath).replaceAll(path.sep, '/'),
+        rights_granted: false,
+      };
+    } finally {
+      closeWorkspaceDatabaseWithAdmission(database);
+    }
+  }
   const database = openCliHostStateDatabase(root, databasePath, request.workspace_id);
   try {
     const store = createCliHostStateStore(database, request.workspace_id),
       intake = readAdmittedSessionIntake(root, store, request.identity);
-    const projectId = request.identity.project_ids[0];
-    if (!projectId) throw Error('Readonly release identity differs');
     if (
       intake.native_session_handle !== request.nativeSessionHandle ||
       (readonlyReleaseThreadId(work.binding) !== request.identity.thread_id && request.identity.thread_id !== undefined)
     )
       throw Error('Readonly release original owner differs');
-    if (['inspect', 'plan'].includes(mode)) {
+    if (mode === 'plan') {
       if (!equal(selected.version, request.expectedWork) || !equal(workspace.ledger_version, request.expectedLedger))
         throw Error('Readonly release work/ledger CAS differs');
       const plan = {
@@ -5611,9 +5721,9 @@ async function releaseCompletedReadonly(args: string[]) {
         rights_granted: false,
         canonical_acceptance: false,
       };
-      if (mode === 'plan') writeFileSync(planPath, controllerJson(plan), { flag: 'wx' });
+      writeFileSync(planPath, controllerJson(plan), { flag: 'wx' });
       return {
-        status: mode === 'plan' ? 'readonly_release_planned' : 'readonly_release_inspected',
+        status: 'readonly_release_planned',
         plan_ref: path.relative(root, planPath).replaceAll(path.sep, '/'),
         rights_granted: false,
       };

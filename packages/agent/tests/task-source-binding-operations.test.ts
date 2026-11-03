@@ -121,8 +121,9 @@ function requireFixtureHostSnapshot(snapshot: HostStateSnapshot): FixtureHostSna
   };
 }
 function openFixtureDatabase(repositoryRoot: string, databasePath: string, workspaceId: string): Database {
-  const databaseRelativePath = path.relative(repositoryRoot, databasePath);
+  const databaseRelativePath = path.relative(repositoryRoot, databasePath).replaceAll('\\', '/');
   assert.ok(databaseRelativePath && !path.isAbsolute(databaseRelativePath));
+  assert.ok(!databaseRelativePath.includes('\\'));
   return openHostStateDatabase(repositoryRoot, databaseRelativePath, workspaceId);
 }
 interface TaskSourceHostIdentityFixture {
@@ -405,6 +406,30 @@ function makeConfiguredFixtureRoot() {
   const project = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
     configuredProject.project_id,
   ]);
+  const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot),
+    initializationSchema = readRuntimePackageResourceBytes(
+      runtimePackageAccess(),
+      'schemas/runtime-initialization.v1.schema.json',
+      'TaskSource configured fixture initialization schema',
+    );
+  mkdirSync(path.join(repositoryRoot, '.agent'), { recursive: true });
+  writeFileSync(
+    path.join(repositoryRoot, '.agent', 'runtime-initialization.v1.json'),
+    canonicalJson({
+      schema: 'RuntimeInitialization/v1',
+      version: 1,
+      repository_id: config.repository.repository_id,
+      project_ids: [...project.project_ids],
+      integrations_digest: canonicalJsonDigest(config.integrations),
+      workspace_id: workspaceId,
+      workspace_binding_status: 'pending',
+      bundle: config.runtime.bundle,
+      config_digest: runtimeConfigDigest(config),
+      schema_sha256: createHash('sha256').update(initializationSchema).digest('hex'),
+      templates: fixtureInitializationTemplates(repositoryRoot, packageRoot),
+      created_at: new Date().toISOString(),
+    }),
+  );
   return { repositoryRoot, config, project };
 }
 
@@ -796,7 +821,7 @@ function makePrewriterHostFixture({
     close({ retainRoot = false, deadline }: { readonly retainRoot?: boolean; readonly deadline?: number } = {}) {
       try {
         ledger.close();
-        configuredDatabase.close();
+        closeWorkspaceDatabaseWithAdmission(configuredDatabase);
         if (retainRoot || (deadline !== undefined && performance.now() >= deadline))
           console.warn(`Retained task-source fixture root after incomplete case: ${repositoryRoot}`);
         else rmSync(repositoryRoot, { recursive: true, force: true });
@@ -1403,6 +1428,7 @@ describe('persisted TaskSource binding operations', () => {
       path.join(emptyRoot, 'empty.sqlite'),
       deriveWorkspaceId(identity.repository_id, emptyRoot),
     );
+    let failure: { error: unknown } | undefined;
     try {
       const emptyStore = new HostStateStore(emptyDatabase, workspace);
       expect(() =>
@@ -1419,9 +1445,19 @@ describe('persisted TaskSource binding operations', () => {
           )
           .get(),
       ).toBeNull();
+    } catch (error) {
+      failure = { error };
+      throw error;
     } finally {
-      emptyDatabase.close();
-      rmSync(emptyRoot, { recursive: true, force: true });
+      completeOwnedCleanup(
+        [
+          () => {
+            closeWorkspaceDatabaseWithAdmission(emptyDatabase);
+            rmSync(emptyRoot, { recursive: true, force: true });
+          },
+        ],
+        failure,
+      );
     }
   });
 
@@ -1669,6 +1705,7 @@ describe('persisted TaskSource binding operations', () => {
       const historyRoot = mkdtempSync(path.join(tmpdir(), 'vida-historical-task-source-')),
         historyWorkspace = deriveWorkspaceId(identity.repository_id, historyRoot),
         historyDatabase = openFixtureDatabase(historyRoot, path.join(historyRoot, 'host.sqlite'), historyWorkspace);
+      let failure: { error: unknown } | undefined;
       try {
         const alternate = path.join(historyRoot, 'task-tree');
         mkdirSync(path.join(historyRoot, '.git'));
@@ -1770,7 +1807,26 @@ describe('persisted TaskSource binding operations', () => {
         writeFileSync(path.join(historyRoot, 'src/task.ts'), 'Different canonical-root source.\n');
         writeFileSync(path.join(alternate, 'src/task.ts'), 'Observed alternate-tree postimage.\n');
         const before = historyStore.readWorkspaceSnapshot(),
-          expected = snapshotDeclaredSources(requireSafeRepositoryAccess(alternate), ['src/task.ts']);
+          expected = snapshotDeclaredSources(requireSafeRepositoryAccess(alternate), ['src/task.ts']),
+          stateRowsBefore = historyDatabase
+            .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
+            .all(historyWorkspace),
+          journalRowsBefore = historyDatabase
+            .query(
+              'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
+            )
+            .all(historyWorkspace),
+          actionRowsBefore = historyDatabase
+            .query(
+              'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? ORDER BY operation_id',
+            )
+            .all(historyWorkspace),
+          transitionRowsBefore = historyDatabase
+            .query(
+              'SELECT work_id,operation_id,successor_work_revision,payload,digest FROM agent_host_task_source_resource_transition WHERE workspace_id=? ORDER BY work_id,successor_work_revision',
+            )
+            .all(historyWorkspace);
+        expect(transitionRowsBefore.length).toBeGreaterThan(0);
         expect(historyStore.snapshotHistoricalTaskSourceSources(readInput)).toEqual(expected);
         expect(() => historyStore.snapshotHistoricalTaskSourceSources({ ...readInput, threadId: 'foreign' })).toThrow(
           /owner/,
@@ -1789,13 +1845,56 @@ describe('persisted TaskSource binding operations', () => {
           historyDatabase
             .query('DELETE FROM agent_host_task_source_binding_action WHERE workspace_id=? AND operation_id=?')
             .run(historyWorkspace, historyRequest.operation_id);
-        expect(() => historyStore.snapshotHistoricalTaskSourceSources(readInput)).toThrow(
-          /orphan|preparation storage|effect record/,
-        );
-        expect(historyStore.readWorkspaceSnapshot()).toEqual(before);
+        const expectedFault =
+          fault === 'missing_preparation_table'
+            ? /no such table: agent_host_task_source_binding_operation|preparation storage/
+            : fault === 'orphan_action'
+              ? /joined prepared payload is missing/
+              : /orphan|preparation storage|effect record/;
+        expect(() => historyStore.snapshotHistoricalTaskSourceSources(readInput)).toThrow(expectedFault);
+        if (fault === 'missing_preparation_table' || fault === 'orphan_action') {
+          expect(
+            historyDatabase
+              .query(
+                'SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id',
+              )
+              .all(historyWorkspace),
+          ).toEqual(stateRowsBefore);
+          expect(
+            historyDatabase
+              .query(
+                'SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? ORDER BY work_id,attempt',
+              )
+              .all(historyWorkspace),
+          ).toEqual(journalRowsBefore);
+          expect(
+            historyDatabase
+              .query(
+                'SELECT operation_id,request_id,revision,payload,digest FROM agent_host_task_source_binding_action WHERE workspace_id=? ORDER BY operation_id',
+              )
+              .all(historyWorkspace),
+          ).toEqual(actionRowsBefore);
+          expect(
+            historyDatabase
+              .query(
+                'SELECT work_id,operation_id,successor_work_revision,payload,digest FROM agent_host_task_source_resource_transition WHERE workspace_id=? ORDER BY work_id,successor_work_revision',
+              )
+              .all(historyWorkspace),
+          ).toEqual(transitionRowsBefore);
+        } else expect(historyStore.readWorkspaceSnapshot()).toEqual(before);
+      } catch (error) {
+        failure = { error };
+        throw error;
       } finally {
-        historyDatabase.close();
-        rmSync(historyRoot, { recursive: true, force: true });
+        completeOwnedCleanup(
+          [
+            () => {
+              closeWorkspaceDatabaseWithAdmission(historyDatabase);
+              rmSync(historyRoot, { recursive: true, force: true });
+            },
+          ],
+          failure,
+        );
       }
     },
   );
@@ -1871,6 +1970,8 @@ test('configured inspect and admitted packet/result read current TaskSource byte
   assert.ok(workflow);
   let configuredDatabase: Database | undefined;
   let sessionLedger: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
+  let bodyFailure: { error: unknown } | undefined;
+  let databaseClosesComplete = true;
   try {
     mkdirSync(path.dirname(hostSourcePath), { recursive: true });
     mkdirSync(path.dirname(taskSourcePath), { recursive: true });
@@ -2618,11 +2719,44 @@ test('configured inspect and admitted packet/result read current TaskSource byte
         report: sourceReport,
       }),
     ).toThrow(/action\/preparation/);
+  } catch (error) {
+    bodyFailure = { error };
+    throw error;
   } finally {
-    sessionLedger?.close();
-    configuredDatabase?.close();
-    if (path.basename(hostRoot).startsWith('vida-task-source-real-host-') && path.dirname(hostRoot) === tmpdir())
-      rmSync(hostRoot, { recursive: true, force: true });
+    completeOwnedCleanup(
+      [
+        () => {
+          try {
+            sessionLedger?.close();
+          } catch (error) {
+            databaseClosesComplete = false;
+            throw error;
+          }
+        },
+        () => {
+          try {
+            if (configuredDatabase) closeWorkspaceDatabaseWithAdmission(configuredDatabase);
+          } catch (error) {
+            databaseClosesComplete = false;
+            throw error;
+          }
+        },
+        () => {
+          if (bodyFailure !== undefined || !databaseClosesComplete) {
+            console.warn(`Retained task-source fixture root after failed or uncertain case: ${hostRoot}`);
+            return databaseClosesComplete ? undefined : 'indeterminate';
+          }
+          if (
+            path.basename(hostRoot).startsWith('vida-task-source-real-host-') &&
+            path.dirname(hostRoot) === tmpdir()
+          ) {
+            rmSync(hostRoot, { recursive: true, force: true });
+            return 'removed';
+          }
+        },
+      ],
+      bodyFailure,
+    );
   }
 });
 
@@ -2633,7 +2767,7 @@ test.each(['prepare', 'issue'] as const)(
       { repositoryRoot, config, project } = fixture,
       workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot),
       databasePath = sessionHandoffDatabasePath(repositoryRoot, config),
-      databaseRelativePath = path.relative(repositoryRoot, databasePath),
+      databaseRelativePath = path.relative(repositoryRoot, databasePath).replaceAll('\\', '/'),
       requestPath = '.agent/work/task-source-close-fault-request.json';
     let closeSpy: { mockRestore(): void } | undefined;
     let execSpy: { mockRestore(): void } | undefined;

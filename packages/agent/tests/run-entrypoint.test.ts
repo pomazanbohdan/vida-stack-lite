@@ -60,6 +60,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   addObservationForAction,
+  assertReadonlyReleaseObservedFrontier,
   advanceCutoff,
   assertNoActiveCutoverMaintenance,
   checkedDirectory,
@@ -111,6 +112,7 @@ import {
 import { prepareNativeUnnormalizedSynthesis } from './helpers/native-synthesis-correction-fixture.ts';
 import type { RuntimeInitializationReceipt } from '../src/config/initialization-record.js';
 import { readRuntimeInitializationReceipt } from '../src/config/initialization-record.js';
+import { bindRuntimeInitialization } from '../src/runtime-initialization.ts';
 import { parseForwardJournal } from '../src/documentation/forward-journal.ts';
 import { executeDocumentationClearFromWork } from '../src/documentation/clear.ts';
 import { preparedFixture } from './helpers/documentation-policy-fixture.ts';
@@ -1001,6 +1003,148 @@ test('readonly release validators preserve plans, unique matches, arrays and CLI
     'request.json',
   ];
   await assert.rejects(run(args), { message: 'Readonly release requires mode, exact root and request' });
+});
+
+test('observed readonly frontier rejects the exact finite negative matrix', () => {
+  const makeFixture = (): {
+    expected: { action_id: string; binding: string }[];
+    journal: {
+      item: {
+        issue_id: string | null;
+        observation: unknown;
+        host_reservation?: unknown;
+        research_activation?: unknown;
+        research_normalization?: unknown;
+      };
+      issued: { action_id: string; binding: string };
+      observed: {
+        status: string;
+        action_id: string;
+        issue_id: string;
+        output_digest: string;
+        summary: string;
+      };
+    }[];
+    inertCount: number;
+  } => {
+    const expected = [
+      { action_id: 'action-a', binding: 'request-a' },
+      { action_id: 'action-b', binding: 'request-b' },
+    ];
+    const journal = expected.map((issued, index) => {
+      const summary = `summary-${index}`;
+      return {
+        item: {
+          issue_id: `issue-${index}`,
+          observation: { status: 'reported_complete' },
+        },
+        issued: structuredClone(issued),
+        observed: {
+          status: 'reported_complete',
+          action_id: issued.action_id,
+          issue_id: `issue-${index}`,
+          output_digest: `digest:${summary}`,
+          summary,
+        },
+      };
+    });
+    return { expected, journal, inertCount: 0 };
+  };
+  const equal = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right),
+    digest = (summary: string) => `digest:${summary}`,
+    verify = (fixture: ReturnType<typeof makeFixture>) =>
+      assertReadonlyReleaseObservedFrontier(fixture.expected, fixture.journal, fixture.inertCount, equal, digest);
+  const positive = makeFixture(),
+    positiveBefore = structuredClone(positive);
+  expect(() => verify(positive)).not.toThrow();
+  expect(positive).toEqual(positiveBefore);
+
+  const mutations: readonly [string, (fixture: ReturnType<typeof makeFixture>) => void][] = [
+    [
+      'duplicate issued issue ID',
+      (fixture) => {
+        fixture.journal[1]!.item.issue_id = fixture.journal[0]!.item.issue_id;
+      },
+    ],
+    [
+      'duplicate action ID',
+      (fixture) => {
+        fixture.journal[1]!.issued.action_id = fixture.journal[0]!.issued.action_id;
+      },
+    ],
+    [
+      'missing/null observation for current frontier item',
+      (fixture) => {
+        fixture.journal[1]!.item.observation = undefined;
+      },
+    ],
+    [
+      'reported_failed observation',
+      (fixture) => {
+        fixture.journal[1]!.observed.status = 'reported_failed';
+      },
+    ],
+    [
+      'missing frontier journal item',
+      (fixture) => {
+        fixture.journal.pop();
+      },
+    ],
+    [
+      'extra frontier journal item',
+      (fixture) => {
+        const extra = structuredClone(fixture.journal[1]!);
+        extra.issued.action_id = 'action-extra';
+        extra.item.issue_id = 'issue-extra';
+        fixture.journal.push(extra);
+      },
+    ],
+    [
+      'host_reservation flag',
+      (fixture) => {
+        fixture.journal[1]!.item.host_reservation = true;
+      },
+    ],
+    [
+      'research_activation flag',
+      (fixture) => {
+        fixture.journal[1]!.item.research_activation = true;
+      },
+    ],
+    [
+      'research_normalization flag',
+      (fixture) => {
+        fixture.journal[1]!.item.research_normalization = true;
+      },
+    ],
+    [
+      'mixed inert and observed current frontier',
+      (fixture) => {
+        fixture.inertCount = 1;
+      },
+    ],
+    [
+      'mismatched observation issue ID',
+      (fixture) => {
+        fixture.journal[1]!.observed.issue_id = 'issue-foreign';
+      },
+    ],
+    [
+      'mismatched observation output digest',
+      (fixture) => {
+        fixture.journal[1]!.observed.output_digest = 'digest:wrong';
+      },
+    ],
+  ];
+  expect(mutations).toHaveLength(12);
+  expect(new Set(mutations.map(([name]) => name)).size).toBe(12);
+  for (const [name, mutate] of mutations) {
+    const fixture = makeFixture();
+    mutate(fixture);
+    const before = structuredClone(fixture);
+    expect(() => verify(fixture), name).toThrow('Readonly release actual engine frontier differs');
+    expect(fixture, `${name} preserves predicate input`).toEqual(before);
+  }
 });
 
 test('run action helpers preserve packet-only, observation, and non-research decisions', () => {
@@ -9578,7 +9722,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     }, 60_000);
 
-    const inspectCompletedReadonlyOwner = async (sourceProject: boolean) => {
+    const inspectCompletedReadonlyOwner = async (sourceProject: boolean, missingCurrentHostTable = false) => {
       let root: string | undefined;
       let completed = false;
       let pendingIssue = false;
@@ -9589,7 +9733,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           configure: (config) => {
             const task = config.workflows.task_execution;
             assert.ok(task);
-            return {
+            const configured = {
               ...config,
               workflows: {
                 ...config.workflows,
@@ -9603,6 +9747,28 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
                 },
               },
             };
+            if (!sourceProject && root) {
+              const schema = readFileSync(path.join(packageRoot, 'schemas/runtime-initialization.v1.schema.json'));
+              const initializationPath = path.join(root, '.agent', 'runtime-initialization.v1.json');
+              const initialization: RuntimeInitializationReceipt = {
+                schema: 'RuntimeInitialization/v1',
+                version: 1,
+                provenance: 'generated',
+                repository_id: configured.repository.repository_id,
+                project_ids: configured.projects.map((project) => project.project_id).sort(),
+                integrations_digest: canonicalJsonDigest(configured.integrations),
+                workspace_id: deriveWorkspaceId(configured.repository.repository_id, root),
+                workspace_binding_status: 'pending',
+                bundle: configured.runtime.bundle,
+                config_digest: runtimeConfigDigest(configured),
+                schema_sha256: createHash('sha256').update(schema).digest('hex'),
+                templates: fixtureInitializationTemplates(root, packageRoot),
+                created_at: new Date().toISOString(),
+              };
+              mkdirSync(path.dirname(initializationPath), { recursive: true });
+              writeFileSync(initializationPath, record(initialization), { flag: 'wx' });
+            }
+            return configured;
           },
         });
         const f = fixture;
@@ -9611,7 +9777,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
           async () => {
             assert.ok(f.store && f.ledger && f.bridge);
             const input = admittedInput(f);
-            if (!sourceProject) await bindControlledRuntimeInitialization(f.root, f.config, f.store);
+            if (!sourceProject) await bindRuntimeInitialization(f.root, f.store);
             const args = initialSourceRunArguments(f);
             const originalHistory = parseTestRunPayload(await runSuccessfully(args));
             expect(historicalConfiguredContexts(originalHistory.next_actions as unknown[])).toHaveLength(1);
@@ -9664,7 +9830,135 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             );
             expect(reported.resume_status).toBe('ready');
             pendingIssue = false;
-            const databaseRelative = path.relative(f.root, sessionHandoffDatabasePath(f.root, f.config));
+            if (!sourceProject) {
+              const frontierJournal = f.ledger.resume(f.identity.work_id, 1);
+              assert.ok(frontierJournal);
+              const expectedFrontier = (version: StateVersion) => [
+                '--expected-revision',
+                String(version.revision),
+                '--expected-digest',
+                version.digest,
+              ];
+              const issuedFrontier = parseTestRunPayload(
+                await runSuccessfully([...args, ...expectedFrontier(frontierJournal.version), '--issue-wave', 'true']),
+              );
+              expect(issuedFrontier.status).toBe('wave_issued');
+              const frontierActions = requireIssuedActions(issuedFrontier);
+              expect(frontierActions.length).toBeGreaterThan(0);
+              let frontierVersion = requireStateVersion(issuedFrontier.state_version);
+              const frontierReportPath = path.join(f.root, 'readonly-frontier-report.json');
+              const expiredAt = expiredOwnerTime(f);
+              try {
+                for (const [index, item] of frontierActions.entries()) {
+                  assert.ok(typeof item.issue_id === 'string');
+                  const work = requireFixtureWorkState(f.store, f.identity);
+                  const preparationKind =
+                    item.action.role === 'source-planner' ? 'source_plan' : 'implementation_policy';
+                  const mechanic = preparationKind === 'source_plan' ? 'scope_acceptance_trace' : 'root_cause_owner';
+                  const evidenceRef = preparationKind === 'source_plan' ? 'source-plan.md' : 'security-review.md';
+                  const agentId = `fixture:${item.action.role}`;
+                  const summary = JSON.stringify({
+                    schema: 'LifecyclePreparationObservation/v1',
+                    record_id: `fixture:preparation-gap-${index}`,
+                    kind: preparationKind,
+                    work_id: f.identity.work_id,
+                    attempt: 1,
+                    source_revision: work.binding.work_source_revision,
+                    scope_id: work.binding.scope_id,
+                    config_digest: work.binding.config_digest,
+                    ac_ids: work.binding.ac_ids,
+                    observed_at: new Date().toISOString(),
+                    observer_id: agentId,
+                    status: 'gap',
+                    evidence_refs: [evidenceRef],
+                    observations: [
+                      {
+                        mechanic,
+                        actual: 'The available evidence leaves preparation as a GAP.',
+                        evidence_ref: evidenceRef,
+                      },
+                    ],
+                    gaps: ['Preparation remains a GAP.'],
+                  });
+                  writeFileSync(
+                    frontierReportPath,
+                    JSON.stringify({
+                      schema: 'VidaSessionObservation/v1',
+                      action_id: item.request.action_id,
+                      issue_id: item.issue_id,
+                      agent_id: agentId,
+                      tool_call_ref: `fixture:readonly-frontier-call-${index}`,
+                      status: 'reported_complete',
+                      summary,
+                      output_digest: canonicalJsonDigest(summary),
+                      evidence_refs: [evidenceRef],
+                    } satisfies SessionBridgeObservation),
+                    { flag: index === 0 ? 'wx' : 'w' },
+                  );
+                  const reportArgs = [...args, ...expectedFrontier(frontierVersion), '--report', frontierReportPath];
+                  if (index === frontierActions.length - 1) {
+                    const originalOpen = MastraSessionBridge.open.bind(MastraSessionBridge);
+                    const openSpy = spyOn(MastraSessionBridge, 'open').mockImplementation(async (...openArgs) => {
+                      const opened = await originalOpen(...openArgs);
+                      const originalResume = opened.resume.bind(opened);
+                      opened.resume = async (...resumeArgs) => {
+                        setSystemTime(new Date(expiredAt));
+                        return await originalResume(...resumeArgs);
+                      };
+                      return opened;
+                    });
+                    try {
+                      let reportFailure: unknown;
+                      try {
+                        await run(reportArgs);
+                      } catch (error) {
+                        reportFailure = error;
+                      }
+                      expect(reportFailure).toBeDefined();
+                      process.stderr.write(
+                        `Expired-frontier report terminal error: ${reportFailure instanceof Error ? reportFailure.message : String(reportFailure)}\n`,
+                      );
+                    } finally {
+                      openSpy.mockRestore();
+                    }
+                  } else {
+                    const result = parseTestRunPayload(await runSuccessfully(reportArgs));
+                    frontierVersion = requireStateVersion(result.state_version);
+                  }
+                }
+              } finally {
+                setSystemTime();
+              }
+              const reportedFrontier = f.ledger.resume(f.identity.work_id, 1);
+              assert.ok(reportedFrontier);
+              expect(reportedFrontier.state.items.map((item) => item.observation?.status)).toEqual(
+                frontierActions.map(() => 'reported_complete'),
+              );
+              expect(reportedFrontier.state.items.map((item) => item.request.action_id).sort()).toEqual(
+                frontierActions.map((item) => item.request.action_id).sort(),
+              );
+              expect(reportedFrontier.state.items.every((item) => item.issue_id !== null)).toBe(true);
+              expect(new Set(reportedFrontier.state.items.map((item) => item.issue_id)).size).toBe(
+                frontierActions.length,
+              );
+              expect(
+                reportedFrontier.state.items.map((item) => {
+                  assert.ok(item.observation);
+                  return requireRecord(JSON.parse(item.observation.summary), 'Preparation observation').status;
+                }),
+              ).toEqual(frontierActions.map(() => 'gap'));
+              const suspendedFrontier = await f.bridge.snapshot();
+              assert.ok(suspendedFrontier);
+              expect(suspendedFrontier.status).toBe('suspended');
+              expect(suspendedFrontier.step_id).toBe(reportedFrontier.state.step_id);
+              expect(suspendedFrontier.requests.map((item) => item.action_id)).toEqual(
+                frontierActions.map((item) => item.request.action_id),
+              );
+            }
+            const databaseRelative = path
+              .relative(f.root, sessionHandoffDatabasePath(f.root, f.config))
+              .split(path.sep)
+              .join('/');
             const workspaceId = deriveWorkspaceId(f.config.repository.repository_id, f.root);
             const before = inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId);
             expect(before.work).toHaveLength(1);
@@ -9680,7 +9974,24 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             expect(observed[0]!.research_normalization).toBeUndefined();
             expect(selected.state.execution.assignment_attempts).toEqual([]);
             expect(journal.state.items.length).toBeGreaterThan(0);
-            expect(journal.state.items.every((item) => item.issue_id === null && item.observation === null)).toBe(true);
+            expect(
+              journal.state.items.every(
+                (item) =>
+                  item.host_reservation === undefined &&
+                  item.research_activation === undefined &&
+                  item.research_normalization === undefined,
+              ),
+            ).toBe(true);
+            if (sourceProject)
+              expect(journal.state.items.every((item) => item.issue_id === null && item.observation === null)).toBe(
+                true,
+              );
+            else
+              expect(
+                journal.state.items.every(
+                  (item) => item.issue_id !== null && item.observation?.status === 'reported_complete',
+                ),
+              ).toBe(true);
             const engineBefore = await f.bridge.snapshot();
             assert.ok(engineBefore);
             expect(engineBefore.status).toBe('suspended');
@@ -9712,6 +10023,28 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               '--request',
               'readonly-release-request.json',
             ];
+            if (missingCurrentHostTable) {
+              const fixtureDatabase = f.database;
+              assert.ok(fixtureDatabase);
+              fixtureDatabase.exec('DROP TABLE agent_host_final_assurance');
+              await assert.rejects(run(inspectArgs), {
+                message: 'read-only Host inspection requires the existing current schema',
+              });
+              expect(
+                Boolean(
+                  fixtureDatabase
+                    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_final_assurance'")
+                    .get(),
+                ),
+              ).toBe(false);
+              expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
+              expect(await f.bridge.snapshot()).toEqual(engineBefore);
+              expect(readFileSync(requestPath)).toEqual(requestBytes);
+              expect(
+                existsSync(path.join(f.root, 'readonly-release-plan-' + selected.identity.work_id + '.json')),
+              ).toBe(false);
+              return;
+            }
             const result = requireRecord(await runSuccessfully(inspectArgs), 'Readonly release inspection');
             expect(result.status).toBe('readonly_release_inspected');
             expect(result.rights_granted).toBe(false);
@@ -9776,8 +10109,14 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             const preservedPaths = [
               historicalRequestPath,
               baselinePath,
+              requestPath,
               path.join(f.root, 'agent-runtime.config.v1.yaml'),
               path.join(f.root, '.agent/runtime-initialization.v1.json'),
+              path.join(f.root, f.scopePath),
+              path.join(f.root, f.acceptancePath),
+              path.join(f.root, f.sourceAuthorizationPath),
+              path.join(f.root, f.intakePath),
+              path.join(f.root, f.rawIntakePath),
             ];
             const preservedBytes = preservedPaths.map((file) => readFileSync(file));
             const assertHistoricalInputsUnchanged = () => {
@@ -9850,6 +10189,167 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
               writeFileSync(requestPath, requestBytes);
             }
             expect(readFileSync(requestPath)).toEqual(requestBytes);
+            if (!sourceProject) {
+              const modeArgs = (mode: string) => [...inspectArgs.slice(0, 3), mode, ...inspectArgs.slice(4)];
+              const planned = requireRecord(await runSuccessfully(modeArgs('plan')), 'Readonly release plan');
+              expect(planned.status).toBe('readonly_release_planned');
+              expect(planned.rights_granted).toBe(false);
+              expect(planned.plan_ref).toBe(result.plan_ref);
+              const planBytes = readFileSync(path.join(f.root, result.plan_ref));
+              const plan = requireRecord(JSON.parse(planBytes.toString('utf8')), 'Readonly release plan record');
+              expect(plan).toMatchObject({
+                schema: 'CompletedReadonlyReleasePlan/v1',
+                request_digest: canonicalJsonDigest(request),
+                request,
+                rights_granted: false,
+                canonical_acceptance: false,
+              });
+              expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(before);
+              expect(await f.bridge.snapshot()).toEqual(engineBefore);
+
+              const ownerBeforeRelease = f.store.readHostStateSnapshot(f.identity);
+              assert.ok(ownerBeforeRelease.work && ownerBeforeRelease.ledger);
+              const lease = ownerBeforeRelease.work.lease;
+              assert.ok(lease);
+              const releaseResult = requireRecord(
+                await runSuccessfully(modeArgs('apply')),
+                'Readonly release apply result',
+              );
+              expect(releaseResult).toMatchObject({
+                status: 'completed_readonly_owner_released',
+                rights_granted: false,
+                canonical_acceptance: false,
+                runtime_acceptance: false,
+              });
+              const ownerAfterRelease = f.store.readHostStateSnapshot(f.identity);
+              assert.ok(ownerAfterRelease.work && ownerAfterRelease.ledger);
+              expect(ownerAfterRelease.work).toEqual({
+                ...ownerBeforeRelease.work,
+                revision: ownerBeforeRelease.work.revision + 1,
+                lease: null,
+                execution: { ...ownerBeforeRelease.work.execution, status: 'suspended' },
+                lifecycle: {
+                  ...ownerBeforeRelease.work.lifecycle,
+                  revision: ownerBeforeRelease.work.revision + 1,
+                  next_action: 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.',
+                },
+              });
+              expect(ownerAfterRelease.work.lifecycle.phase).toBe(ownerBeforeRelease.work.lifecycle.phase);
+              expect(ownerAfterRelease.work.lifecycle.assurance).toEqual(ownerBeforeRelease.work.lifecycle.assurance);
+              expect(ownerAfterRelease.work.execution.assignment_attempts).toEqual(
+                ownerBeforeRelease.work.execution.assignment_attempts,
+              );
+              const ledgerBeforeRelease = ownerBeforeRelease.ledger,
+                ledgerAfterRelease = ownerAfterRelease.ledger,
+                releaseOperations = ledgerAfterRelease.operations.slice(ledgerBeforeRelease.operations.length),
+                releasedTicketIds = new Set(releaseOperations.map((operation) => operation.ticket_id));
+              const activeLeaseClaims = ledgerBeforeRelease.claims.filter(
+                (claim) => claim.ticket_id === lease.ticket_id && claim.status === 'active',
+              );
+              expect(activeLeaseClaims).toHaveLength(1);
+              expect(ledgerAfterRelease.revision).toBe(ledgerBeforeRelease.revision + 1);
+              expect(ledgerAfterRelease.tickets).toHaveLength(ledgerBeforeRelease.tickets.length);
+              expect(ledgerAfterRelease.claims).toHaveLength(ledgerBeforeRelease.claims.length);
+              expect(ledgerAfterRelease.operations.slice(0, ledgerBeforeRelease.operations.length)).toEqual([
+                ...ledgerBeforeRelease.operations,
+              ]);
+              expect(releasedTicketIds.has(lease.ticket_id)).toBe(true);
+              expect(new Set(releaseOperations.map((operation) => operation.ticket_id)).size).toBe(
+                releaseOperations.length,
+              );
+              for (const operation of releaseOperations) {
+                const priorTicket = ledgerBeforeRelease.tickets.find((item) => item.ticket_id === operation.ticket_id);
+                assert.ok(priorTicket);
+                expect(operation).toMatchObject({
+                  kind: 'release',
+                  ticket_id: priorTicket.ticket_id,
+                  work_id: priorTicket.work_id,
+                  thread_id: priorTicket.thread_id,
+                  source_revision: priorTicket.source_revision,
+                  resources: priorTicket.exclusive_resources,
+                  from_ledger_revision: ledgerBeforeRelease.revision,
+                  to_ledger_revision: ledgerBeforeRelease.revision + 1,
+                  decided_by: input.nativeSessionHandle,
+                  decision_pointer: request.userRequestPointer,
+                });
+              }
+              for (const previousTicket of ledgerBeforeRelease.tickets) {
+                const currentTicket = ledgerAfterRelease.tickets.find(
+                  (item) => item.ticket_id === previousTicket.ticket_id,
+                );
+                assert.ok(currentTicket);
+                if (releasedTicketIds.has(previousTicket.ticket_id))
+                  expect(currentTicket).toEqual({
+                    ...previousTicket,
+                    status: 'released',
+                    active_resources: [],
+                    blocked_resources: [],
+                    expires_at: null,
+                  });
+                else expect(currentTicket).toEqual(previousTicket);
+              }
+              for (const [index, previousClaim] of ledgerBeforeRelease.claims.entries()) {
+                const currentClaim = ledgerAfterRelease.claims[index];
+                assert.ok(currentClaim);
+                if (previousClaim.ticket_id === lease.ticket_id && previousClaim.status === 'active') {
+                  expect(currentClaim.status).toBe('released');
+                  const restoredClaim: typeof previousClaim = {
+                    ...currentClaim,
+                    status: previousClaim.status,
+                    renewed_at: previousClaim.renewed_at,
+                  };
+                  expect(restoredClaim).toEqual(previousClaim);
+                } else expect(currentClaim).toEqual(previousClaim);
+              }
+              const restoredLedger: typeof ledgerBeforeRelease = {
+                ...ledgerAfterRelease,
+                revision: ledgerBeforeRelease.revision,
+                tickets: ledgerAfterRelease.tickets.map((ticket) => {
+                  if (!releasedTicketIds.has(ticket.ticket_id)) return ticket;
+                  const previous = ledgerBeforeRelease.tickets.find((entry) => entry.ticket_id === ticket.ticket_id);
+                  assert.ok(previous);
+                  return previous;
+                }),
+                claims: ledgerAfterRelease.claims.map((claim, index) => {
+                  const previous = ledgerBeforeRelease.claims[index];
+                  assert.ok(previous);
+                  return previous.ticket_id === lease.ticket_id && previous.status === 'active'
+                    ? { ...claim, status: previous.status, renewed_at: previous.renewed_at }
+                    : claim;
+                }),
+                operations: ledgerBeforeRelease.operations,
+              };
+              expect(restoredLedger).toEqual(ledgerBeforeRelease);
+              const afterRelease = inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId);
+              expect(afterRelease.work[0]!.state).toEqual(ownerAfterRelease.work);
+              expect(afterRelease.journals).toEqual(before.journals);
+              expect(afterRelease.ledger_version?.revision).toBe(before.ledger_version!.revision + 1);
+              expect(await f.bridge.snapshot()).toEqual(engineBefore);
+              expect(readFileSync(path.join(f.root, result.plan_ref))).toEqual(planBytes);
+              expect(readFileSync(requestPath)).toEqual(requestBytes);
+              expect(preservedPaths.map((file) => readFileSync(file))).toEqual(preservedBytes);
+              assertHistoricalInputsUnchanged();
+
+              const resumed = requireRecord(
+                await runSuccessfully(modeArgs('resume')),
+                'Readonly release resume result',
+              );
+              expect(resumed).toEqual(releaseResult);
+              expect(f.store.readHostStateSnapshot(f.identity)).toEqual(ownerAfterRelease);
+              expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(afterRelease);
+              expect(await f.bridge.snapshot()).toEqual(engineBefore);
+              expect(preservedPaths.map((file) => readFileSync(file))).toEqual(preservedBytes);
+              const retried = requireRecord(
+                await runSuccessfully(modeArgs('resume')),
+                'Readonly release idempotent retry result',
+              );
+              expect(retried).toEqual(resumed);
+              expect(f.store.readHostStateSnapshot(f.identity)).toEqual(ownerAfterRelease);
+              expect(inspectHostWorkspaceDatabase(f.root, databaseRelative, workspaceId)).toEqual(afterRelease);
+              expect(await f.bridge.snapshot()).toEqual(engineBefore);
+              expect(preservedPaths.map((file) => readFileSync(file))).toEqual(preservedBytes);
+              assertHistoricalInputsUnchanged();
+            }
           },
           (owner) => owner.close(),
           'Readonly inspection operation and fixture close failed',
@@ -9861,11 +10361,10 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       }
     };
 
-    test(
-      'inspects completed task_execution readonly owner against the suspended configured frontier',
-      () => inspectCompletedReadonlyOwner(false),
-      60_000,
-    );
+    test('inspects completed task_execution readonly owner against the suspended configured frontier', async () => {
+      await inspectCompletedReadonlyOwner(false);
+      await inspectCompletedReadonlyOwner(false, true);
+    }, 60_000);
     test(
       'inspects completed task_execution readonly owner in the Source project',
       () => inspectCompletedReadonlyOwner(true),

@@ -2116,7 +2116,11 @@ test('work-state repair inspects canonical state readonly and selects the defaul
     const before = snapshot();
     const inspected = runWorkStateRepair(['--kind', 'work-state', '--mode', 'inspect', '--project-root', f.root]);
     expect(inspected).toEqual(
-      inspectHostWorkspaceDatabase(f.root, path.relative(f.root, f.database.filename), f.store.workspaceId),
+      inspectHostWorkspaceDatabase(
+        f.root,
+        path.relative(f.root, f.database.filename).replaceAll('\\', '/'),
+        f.store.workspaceId,
+      ),
     );
     expect(snapshot()).toEqual(before);
     const workspace = f.store.readWorkspaceSnapshot();
@@ -2725,7 +2729,7 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
     expect(() =>
       inspectHostWorkspaceDatabase(
         f.root,
-        path.relative(f.root, persistedDatabasePath),
+        path.relative(f.root, persistedDatabasePath).replaceAll('\\', '/'),
         deriveWorkspaceId(f.config.repository.repository_id, f.root),
       ),
     ).toThrow(/admission metadata missing/);
@@ -4002,7 +4006,11 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             );
             expect(
               requireInspectedWork(
-                inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
+                inspectHostWorkspaceDatabase(
+                  f.root,
+                  path.relative(f.root, databasePath).replaceAll('\\', '/'),
+                  f.store.workspaceId,
+                ),
                 id,
               ).execution.assignment_attempts,
             ).toEqual(oldAttempts);
@@ -4040,7 +4048,11 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
               'runtime binding history authority differs',
             );
             expect(() =>
-              inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
+              inspectHostWorkspaceDatabase(
+                f.root,
+                path.relative(f.root, databasePath).replaceAll('\\', '/'),
+                f.store.workspaceId,
+              ),
             ).toThrow('runtime binding history authority differs');
             f.database
               .query(
@@ -4052,7 +4064,11 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             );
             expect(
               requireInspectedWork(
-                inspectHostWorkspaceDatabase(f.root, path.relative(f.root, databasePath), f.store.workspaceId),
+                inspectHostWorkspaceDatabase(
+                  f.root,
+                  path.relative(f.root, databasePath).replaceAll('\\', '/'),
+                  f.store.workspaceId,
+                ),
                 id,
               ).binding.runtime_code_digest,
             ).toBe(request.newRuntimeCodeDigest);

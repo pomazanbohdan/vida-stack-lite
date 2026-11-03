@@ -4025,3 +4025,55 @@ invalidate or numerically promote any historical triple. Conflicting retained
 digests are rejected; a newly captured digest may only enrich an otherwise
 identical observation. Do not launch an older strict projection controller after
 the new applicability observations have been published.
+
+## LocalWorkItem native integration cases
+
+These named exceptions authorize the current LocalWorkItem test implementation. Execution and full acceptance remain pending. They apply only to `tests/local-work-item-store.test.ts` and `tests/local-work-item-recovery.test.ts`. Use the same explicit `timeout_ms` in the fixture case and Bun test. The5000ms default, unrelated tests, production budgets and frozen numeric walls stay unchanged.
+
+A fresh native create completed in5247.0734ms (case5260.6117ms) after the raw-journal CAS correction. Multi-operation cases have finite counts in the task plan. The original5s failures remain retained; these behavior ceilings do not establish5s performance.
+
+| Exact case name                                                                     | Timeout |
+| ----------------------------------------------------------------------------------- | ------- |
+| native creates strict records with provider refs in independent products            | 15000ms |
+| native shares numbering and preserves reclassification aliases                      | 45000ms |
+| native applies arbitrary and equal-type hierarchy without fixed leaves              | 60000ms |
+| native rejects invalid topology and stale revision without effects                  | 45000ms |
+| native refuses unsafe and no-follow store paths                                     | 15000ms |
+| native serializes concurrent allocation without number reuse                        | 30000ms |
+| native preserves disabled records and explicit root storage                         | 30000ms |
+| native rejects exhaustion and alias collision without effects                       | 45000ms |
+| native recovers create interrupted before counter reservation                       | 30000ms |
+| native recovers create interrupted after counter reservation                        | 30000ms |
+| native recovers create interrupted after record publication                         | 30000ms |
+| native recovers create interrupted after derived index publication                  | 30000ms |
+| native refuses policy and owner drift during recovery                               | 30000ms |
+| native retries completed operations after later mutations without reverting history | 45000ms |
+| native transitions reordered and whitespace journal preimages                       | 15000ms |
+| native refuses journal byte drift at CAS without overwrite                          | 15000ms |
+| native fences pending and ambiguous publication without replay                      | 30000ms |
+| native retains post-effect lock-release uncertainty                                 | 30000ms |
+| native retry digest ignores live capabilities and unrelated mappings                | 30000ms |
+| native invalid requests leave an absent store uninitialized                         | 15000ms |
+| native exact retry is idempotent and changed payload conflicts                      | 15000ms |
+| native diagnoses unowned legacy data without adoption                               | 15000ms |
+
+Keep pure key and the six fixture-custody controls at5000ms. Replace the old uncommitted one-record diagnostic test with the strict-record case while preserving phase/target/key/UUID assertions. Replace the old lost-publication-ack test with the after-record-publication case, preserving same UUID/number, ready/no-pending and exact-retry assertions. Historical reports retain their old names/results.
+
+Retain all new Task2 fixture roots, including passing negative controls. Check finite monotonic completion after the body and after awaited owned cleanup. Timeout or a termination request is not quiescence. Real native positives/recovery and one-shot real-IO fault wrappers remain required; do not substitute mocks or remove assertions. Stop on new failure or timeout, preserve evidence and fix its cause instead of increasing the ceiling.
+
+A case split retains its aggregate mutation/read/preparation/fault allowances and may not increase the sum of its ceilings. Ordinary behavior runs record whole-command and per-case timing under a finite selected-case-sum plus30000ms outer reserve. This is not coverage admission: the named ceiling sum exceeds300000ms, so the frozen coverage producer stays unadmitted until measured stable selection fits or an independently reviewed existing-owner partition/counter-union plan exists. Do not increase the numeric wall or claim100% from focused behavior.
+
+### LocalWorkItem hardening controls
+
+Root's full-review Minor disposition adds the following finite controls in `tests/local-work-item-hardening.test.ts`. Existing22case allowances, the5000ms default and the300000ms numeric wall remain unchanged. These are ordinary behavior ceilings, not numeric admission.
+
+| Exact case                                             | M/R/W/F maxima | Fixture/test ceiling |
+| ------------------------------------------------------ | -------------- | -------------------- |
+| native inspection fences invalid owned counters        | 2/3/3/0        | 30000ms              |
+| native inspection fences a missing items directory     | 1/1/2/0        | 15000ms              |
+| native index titles stay literal on one line           | 1/1/1/0        | 15000ms              |
+| native reparents an existing child to root             | 3/1/0/0        | 30000ms              |
+| native preserves foreign entries in an owned store     | 2/1/1/0        | 15000ms              |
+| native preserves a foreign root index without adoption | 1/1/1/0        | 15000ms              |
+
+The schema/catalog consistency case remains at5000ms. Each new fixture has at most2records, at most16explicit authoritative paths per snapshot and at most4observation groups. The missing-directory control moves only its NEW owned items tree to a retained sibling after resolved containment checks; it removes nothing. Foreign/counter/index preparation is explicit controlled input, not natural history. All roots remain retained. New native ceiling sum120000ms plus pure5000ms; a whole30case ordinary selection is775000ms plus30000ms reserve, and still does not admit a numeric selection.
