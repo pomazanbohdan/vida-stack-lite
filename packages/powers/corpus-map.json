@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5314,
+  "revision": 5325,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19107,8 +19107,20 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/team-topologies/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "team-topologies-apply",
+            "team-topologies-core-principle",
+            "team-topologies-score",
+            "team-topologies-inverse-conway",
+            "team-topologies-team-types",
+            "team-topologies-interaction-modes",
+            "team-topologies-cognitive-load",
+            "team-topologies-fracture-planes",
+            "team-topologies-platform-as-product",
+            "team-topologies-common-mistakes",
+            "team-topologies-diagnostic"
+          ]
         },
         "skills/team-topologies/references/case-studies.md": {
           "status": "rejected",

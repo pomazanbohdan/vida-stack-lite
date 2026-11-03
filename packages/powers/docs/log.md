@@ -2,6 +2,40 @@
 
 ## 2026-11-03
 
+* **H1 next-2 team-topologies applied:** 11 `InstructionSpec` drafts from the
+  next-2 D18 aggregation (spec manifest SHA-256
+  `97e12cd9daa627c398bf254bfa174cf888aa461845d27eda2c2a3490f0fe2208`).
+  The batch was captured and mechanically decomposed, reviewed by three blind
+  protocols (V3 Delphi, V2 Adversarial, V4 Party chat), and aggregated as
+  11 amend / 3 reject / 0 unresolved. Rejected units are the Framework parent
+  heading, Further Reading and About the Authors. Every provenance entry
+  carries the content-relative source path
+  `skills/team-topologies/SKILL.md`, the source SHA-256
+  `b62a65eee8f0fc170f4223540a0ba6f2bf9248db9de028bccce32cdce41060e4` and the
+  full supporting per-unit locator. Packet SHA-256
+  `3e851db0f7af66c7284be4d898d73edf829392eed88c7393181e8d182890813d`;
+  committee SHA-256
+  `6c7684e48a684910a9915d4cfcc1fc1528e08f0175f61e96599eb830aaf1b5f7`;
+  reviewed plan SHA-256
+  `a7685d8a84d61ac208f55d0366c5edf263bfaadd673102c54206a2b45c81d5d0`;
+  applied plan SHA-256
+  `ff6535d2878e00ab156b546363d449197bf91cdae207b60b38dd91cd577089f8`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. The first plan review returned one Important tag finding; D21
+  added the organization-design vocabulary and the re-review returned READY
+  0 Critical / 0 Important / 0 Minor. Apply returned `applied` with all 13
+  targets observed as `intended`; apply receipt SHA-256
+  `ba4a3479b0b2ae37b881e66464dde807699061052ebcd8fa7d7076f93a495451`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,229
+  files; corpus 2,861; catalog revision 6,704; map revision 5,325.
+
+* **D21 organization design tags accepted:** `catalog.json` gains the
+  `design-team-organization` capability and the `team-topology-design` and
+  `internal-platform-product` patterns. The definitions cover organizational
+  design, team interaction modes and internal platform product practice; the
+  existing code-structure tags did not. Catalog revision 6,693. The tags are
+  metadata only and do not admit any source.
+
 * **H1 next-1 clean-architecture applied:** 11 `InstructionSpec` drafts from the
   next-1 D18 aggregation (spec manifest SHA-256
   `fd11e247d2642a1315dd1d729c701e03965ab88763b98aff7dec48173fbdc563`).

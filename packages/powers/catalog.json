@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6690,
+  "revision": 6704,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -83,7 +83,8 @@
       "profile-the-working-style": "Derives a profile of how the user works from observed sessions and states the confidence of each dimension.",
       "automate-what-can-be-automated": "Set up and run everything the agent can do itself — commands, servers, databases, environment variables, tools, credentials — and leave only human judgement to the human.",
       "scope-tool-reach": "Keeps a powerful capability in the role that needs it and out of the role that does not.",
-      "write-knowledge-documents": "Writes the documents of a knowledge corpus: the metadata, the body, the provenance, the links and the history that go with them."
+      "write-knowledge-documents": "Writes the documents of a knowledge corpus: the metadata, the body, the provenance, the links and the history that go with them.",
+      "design-team-organization": "Ability to choose team boundaries, team types and interaction modes before assigning work."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -264,7 +265,9 @@
       "marketing-plan": "An approach in which marketing is planned as one process across prospect, lead and customer stages.",
       "scoring-rubric": "An approach in which an artifact is scored against a stated rubric with named bands and failed rows.",
       "mistake-list": "An approach in which a known list of mistakes is checked against an artifact and each item is corrected.",
-      "diagnostic-questions": "An approach in which a fixed set of diagnostic questions is applied to an artifact and each failed answer gets a corrective action."
+      "diagnostic-questions": "An approach in which a fixed set of diagnostic questions is applied to an artifact and each failed answer gets a corrective action.",
+      "team-topology-design": "An approach in which team boundaries, team types and interaction modes are designed deliberately so the organization produces the intended architecture.",
+      "internal-platform-product": "An approach in which an internal platform is run as a product for its stream-aligned customers: optional adoption, cognitive load removed as the measure, and sensing signals."
     }
   },
   "tag_aliases": {
@@ -12816,6 +12819,61 @@
       "instruction_id": "teach-with-a-stateful-workspace",
       "path": "instructions/teach-with-a-stateful-workspace.md",
       "sha256": "91d681a8875bd75f2186fac32d2505fb93b6f79f4e11dbe5fb3111de4927c1f9"
+    },
+    {
+      "instruction_id": "team-topologies-apply",
+      "path": "instructions/team-topologies-apply.md",
+      "sha256": "5c09a3f12ff62f5ad95acf7921f94ad1ea88a75b70c21f5a5978150c02a34cc3"
+    },
+    {
+      "instruction_id": "team-topologies-cognitive-load",
+      "path": "instructions/team-topologies-cognitive-load.md",
+      "sha256": "1d75be7cd1a062bb75862ab4e174806a6e437ff062c2a96c9a039f76d36d9011"
+    },
+    {
+      "instruction_id": "team-topologies-common-mistakes",
+      "path": "instructions/team-topologies-common-mistakes.md",
+      "sha256": "5a36004c12d81d83796fc1513f5eceed78bcddfaaf348dd16130b7b3a3032c4a"
+    },
+    {
+      "instruction_id": "team-topologies-core-principle",
+      "path": "instructions/team-topologies-core-principle.md",
+      "sha256": "199a25a7baa1fc8855bdce0f8540a79441af73f7d2dd6b1b64a20e5b3f0f34ea"
+    },
+    {
+      "instruction_id": "team-topologies-diagnostic",
+      "path": "instructions/team-topologies-diagnostic.md",
+      "sha256": "61ded9bce8232410d0c06b87f2e849ed303096638f08ddc55154b983e01a132e"
+    },
+    {
+      "instruction_id": "team-topologies-fracture-planes",
+      "path": "instructions/team-topologies-fracture-planes.md",
+      "sha256": "b13a182bd630634b904fd64718fff221e6abac53a51ada933a73ef6ed05b64c4"
+    },
+    {
+      "instruction_id": "team-topologies-interaction-modes",
+      "path": "instructions/team-topologies-interaction-modes.md",
+      "sha256": "c99edf20de0a69340194a92aa5159fdb1a032bccbf9764d5e218abe8ffb82e6b"
+    },
+    {
+      "instruction_id": "team-topologies-inverse-conway",
+      "path": "instructions/team-topologies-inverse-conway.md",
+      "sha256": "2e794695aa58685954400a9196af34d88d0cfd754936c093c50a248e3391d1bb"
+    },
+    {
+      "instruction_id": "team-topologies-platform-as-product",
+      "path": "instructions/team-topologies-platform-as-product.md",
+      "sha256": "42a7e054773f6468fc69922746f8ca9de783d120063bfdc78d6909447ad897f6"
+    },
+    {
+      "instruction_id": "team-topologies-score",
+      "path": "instructions/team-topologies-score.md",
+      "sha256": "97c10c04d7a08d6f536447a6877cc2bf665d2fe766ccc1936724895d735c5706"
+    },
+    {
+      "instruction_id": "team-topologies-team-types",
+      "path": "instructions/team-topologies-team-types.md",
+      "sha256": "205a4515e384817c758349b569518a8318c70fbb7117be2b92c627cd5b6eac76"
     },
     {
       "instruction_id": "tear-down-a-named-competitor",
