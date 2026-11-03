@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5235,
+  "revision": 5246,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17370,8 +17370,20 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/blue-ocean-strategy/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "blue-ocean-uncontested-space",
+            "blue-ocean-score",
+            "blue-ocean-red-vs-blue",
+            "blue-ocean-value-innovation",
+            "blue-ocean-strategy-canvas",
+            "blue-ocean-errc",
+            "blue-ocean-six-paths",
+            "blue-ocean-non-customers",
+            "blue-ocean-strategic-sequence",
+            "blue-ocean-common-mistakes",
+            "blue-ocean-diagnostic"
+          ]
         },
         "skills/blue-ocean-strategy/references/blue-ocean-examples.md": {
           "status": "rejected",

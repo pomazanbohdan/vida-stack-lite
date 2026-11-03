@@ -2,6 +2,35 @@
 
 ## 2026-11-03
 
+* **H1 blue-ocean-strategy pilot applied:** 11 `InstructionSpec` drafts from the
+  blue-ocean-strategy panel decisions (spec manifest SHA-256
+  `b6386ef4eba200bd4fdabdae11c841d9a6d018432dca04cd7b1389846f048efa`).
+  Every provenance entry carries the content-relative source path
+  `skills/blue-ocean-strategy/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. The u3 body explicitly maps five satisfied rows
+  to 9–10, four to 7–8, two or three to 5–6 and zero or one to ≤3, and bars
+  scores outside those bands. Five strategy-framing units use
+  `design-structure`/`research-primary-sources` rather than the overloaded
+  `stress-test-a-product-concept`, preserving the live retrieval benchmark. The
+  packet carries `panel-evidence.json` with the batch aggregation entry; its
+  hash-bound reference is in the committee's per-file `check.panelEvidence`.
+  Packet SHA-256
+  `fb305fa9781ffee9bccaedb66cc40ab2d2e70cf0773e53fcb31a2f9553582172`;
+  committee SHA-256
+  `bd2d61bfee0be91fe68542d9473105949f3aac657ac65dc6be0ea6f3f0b885cc`;
+  reviewed plan SHA-256
+  `f945355694be6edf3c5e551531395911c95114b4e4ae3ba49591127d1c671e3e`;
+  applied plan SHA-256
+  `7e570a6c401940fe98d8175552e9231c3e3e25afdf37d0063b14ee4aa44f2516`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 13 targets observed as
+  `intended`; apply receipt SHA-256
+  `657ae90cdb7f77300ef6e989eafdc5c4e42130b08ccdb696923b7f2381bc804c`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,223
+  files; corpus 2,782; catalog revision 6,617; map revision 5,246. The other 4
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 good-strategy-bad-strategy pilot applied:** 9 `InstructionSpec` drafts
   from the good-strategy-bad-strategy panel decisions (spec manifest SHA-256
   `73115f0ccca69535de58b785e1cf825ec20f4f6f1fb13e09e9c655d8b85b42fd`).
