@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5246,
+  "revision": 5261,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18652,8 +18652,24 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/one-page-marketing/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "one-page-marketing-process",
+            "one-page-marketing-score",
+            "one-page-marketing-grid",
+            "one-page-marketing-niche",
+            "one-page-marketing-usp",
+            "one-page-marketing-media",
+            "one-page-marketing-capture",
+            "one-page-marketing-nurture",
+            "one-page-marketing-conversion",
+            "one-page-marketing-customer-experience",
+            "one-page-marketing-lifetime-value",
+            "one-page-marketing-referrals",
+            "one-page-marketing-direct-response",
+            "one-page-marketing-common-mistakes",
+            "one-page-marketing-diagnostic"
+          ]
         },
         "skills/one-page-marketing/references/advertising-media.md": {
           "status": "rejected",

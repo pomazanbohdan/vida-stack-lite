@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6617,
+  "revision": 6635,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -246,7 +246,22 @@
       "finding-shape-policy": "An approach in which a finding carries one canonical shape, against the rule that the findings are labelled by their own leverage.",
       "revision-round-continuity-policy": "An approach in which a revision round resumes the same implementer, against the rule that every round runs in a fresh agent.",
       "delegation-requirement-policy": "An approach in which a required delegation that cannot run is done inline, against the rule that a missing capability halts the run.",
-      "working-copy-authority-policy": "An approach in which the local tree is the working copy and the remote is its copy, against the rule that the version-controlled copy is the authority."
+      "working-copy-authority-policy": "An approach in which the local tree is the working copy and the remote is its copy, against the rule that the version-controlled copy is the authority.",
+      "customer-avatar": "An approach in which a target customer is defined by circumstances, pains and gains before the message is designed.",
+      "value-proposition": "An approach in which a defensible reason to choose an offer over its alternative is stated and supported by proof.",
+      "channel-measurement": "An approach in which acquisition channels are chosen and their cost and value are tracked.",
+      "lead-capture": "An approach in which genuine value is exchanged for contact data with explicit consent and only the needed fields.",
+      "nurture-sequence": "An approach in which a recurring value-first sequence educates, segments by behavior and honors unsubscribe.",
+      "sales-conversion": "An approach in which objections are addressed with real proof, risk reversal and genuine urgency.",
+      "customer-experience": "An approach in which post-purchase touchpoints are designed as a continuous relationship.",
+      "lifetime-value": "An approach in which retention, expansion and reactivation are measured by segment and cohort.",
+      "referral-program": "An approach in which referrals are systematized, disclosed and rewarded for both parties.",
+      "direct-response": "An approach in which a campaign has a trackable outcome, a specific action and a backend offer path.",
+      "message-framework": "An approach in which a message is built as a structured narrative that orders the customer, problem, guide, plan and outcome.",
+      "message-stickiness": "An approach in which a message is made simple, unexpected, concrete, credible, emotional and story-driven so it is remembered.",
+      "persuasion-principle": "An approach in which a decision shortcut is used truthfully to help a user see real value.",
+      "persuasion-ethics": "An approach in which persuasion is distinguished from manipulation and checked for truthfulness, reversibility and vulnerable users.",
+      "marketing-plan": "An approach in which marketing is planned as one process across prospect, lead and customer stages."
     }
   },
   "tag_aliases": {
@@ -8243,6 +8258,81 @@
       "instruction_id": "one-owner-writes-the-shared-state",
       "path": "instructions/one-owner-writes-the-shared-state.md",
       "sha256": "c1bad7c8a29492961b85beeb0a0b3815b8fec576d98f603735bd514905cf82d6"
+    },
+    {
+      "instruction_id": "one-page-marketing-capture",
+      "path": "instructions/one-page-marketing-capture.md",
+      "sha256": "9a5acf65ef20511477c8bc4f6fb80fb526619118f348aea024e502341a839cea"
+    },
+    {
+      "instruction_id": "one-page-marketing-common-mistakes",
+      "path": "instructions/one-page-marketing-common-mistakes.md",
+      "sha256": "2366ca0eba2e9c98c53faab0bb8ca4a23d4914c01fc5566f9ee0b279774e8597"
+    },
+    {
+      "instruction_id": "one-page-marketing-conversion",
+      "path": "instructions/one-page-marketing-conversion.md",
+      "sha256": "1cef7e6c19398388db5a9ceb4c33d5ec5fe0ff383dcb7082306e8becdfeac726"
+    },
+    {
+      "instruction_id": "one-page-marketing-customer-experience",
+      "path": "instructions/one-page-marketing-customer-experience.md",
+      "sha256": "378d2dc5f73c838f0ba250c71f8ff8ff51e0e633d153ed07120e4b9b8929ead3"
+    },
+    {
+      "instruction_id": "one-page-marketing-diagnostic",
+      "path": "instructions/one-page-marketing-diagnostic.md",
+      "sha256": "4244e1aa777ce4e8829c10bf204e30eed06cf71ec37a9edfd5cabb4212d0ad55"
+    },
+    {
+      "instruction_id": "one-page-marketing-direct-response",
+      "path": "instructions/one-page-marketing-direct-response.md",
+      "sha256": "6fb66fb7c081a50aefd439b00b448981036c907847b8c8bff7b1c2aa26526724"
+    },
+    {
+      "instruction_id": "one-page-marketing-grid",
+      "path": "instructions/one-page-marketing-grid.md",
+      "sha256": "2cb15a027bc8fdb5969274513b2caa310d8ed21e92b03685ede166804273c22a"
+    },
+    {
+      "instruction_id": "one-page-marketing-lifetime-value",
+      "path": "instructions/one-page-marketing-lifetime-value.md",
+      "sha256": "4e261c4d3cef3e941b62b8249dbe3ad69a93b319547f176fb57c8add06c779ab"
+    },
+    {
+      "instruction_id": "one-page-marketing-media",
+      "path": "instructions/one-page-marketing-media.md",
+      "sha256": "5e2aa0151110facc80f27dd86681daf1fe46f75bd26ecf30a5f3910b04377799"
+    },
+    {
+      "instruction_id": "one-page-marketing-niche",
+      "path": "instructions/one-page-marketing-niche.md",
+      "sha256": "488e4091f99bd633e83908a03be9892b69ba6938b5d5c77e0102472782c1c860"
+    },
+    {
+      "instruction_id": "one-page-marketing-nurture",
+      "path": "instructions/one-page-marketing-nurture.md",
+      "sha256": "0a97690edb1c05de0fd8f12c00a64d533690c216432f0da501fcb8574d078ce1"
+    },
+    {
+      "instruction_id": "one-page-marketing-process",
+      "path": "instructions/one-page-marketing-process.md",
+      "sha256": "46be264586872c5b67a0d05e643666492be61fd1e6988b40ab0f239de2558a5a"
+    },
+    {
+      "instruction_id": "one-page-marketing-referrals",
+      "path": "instructions/one-page-marketing-referrals.md",
+      "sha256": "1f2b48d315136a6ebe543b2d1f68a056fd09af755eae70ae39e335aad950d0e5"
+    },
+    {
+      "instruction_id": "one-page-marketing-score",
+      "path": "instructions/one-page-marketing-score.md",
+      "sha256": "34934d33580a146f7a221c4fa60ad979623c631b484838491d07c697cf3f4bfc"
+    },
+    {
+      "instruction_id": "one-page-marketing-usp",
+      "path": "instructions/one-page-marketing-usp.md",
+      "sha256": "5cdc5fe046c64aa279e6bf62d99b90a33a33e3abd5187f8b2ebcd307ad1cf73e"
     },
     {
       "instruction_id": "one-primary-next-action-with-the-alternatives-secondary",

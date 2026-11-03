@@ -2,6 +2,39 @@
 
 ## 2026-11-03
 
+* **H1 one-page-marketing pilot applied:** 15 `InstructionSpec` drafts from the
+  one-page-marketing panel decisions (spec manifest SHA-256
+  `09dfcafb1665b7259f6b8d933bdc72e22590894cf21d2d37233a2f34143fb27f`).
+  Every provenance entry carries the content-relative source path
+  `skills/one-page-marketing/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. A focused three-protocol D18 reconsideration of
+  u3 returned 3/3 amend; the V2 base now says: apply the six diagnostic
+  questions to their six squares, check the referenced nine-square
+  template/exercise for the other three, do not invent criteria, and report
+  either a defensible score or the unresolved squares. The result is recorded
+  in the B5 aggregation, decisions file, panel evidence, committee and
+  admission. Packet SHA-256
+  `971025236ad6e6915a8a011ca18ad7a48b4a0ca266f7da8fa1cae8f6caa80957`;
+  committee SHA-256
+  `ca1ee7e15af5282ac971de73ed4728eb00664a56a3d1eadd8e33db12f6c601bb`;
+  reviewed plan SHA-256
+  `a869d15849e71f98179a0088adfecff10021a6756f7d59511c0671c50ba72c6e`;
+  applied plan SHA-256
+  `ddd57b3dfec87cd4dc3978822b6d8cf099b9fbd5dbfb0b88d28b67a0092ec8ca`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor. Apply returned `applied` with all 17 targets observed as `intended`;
+  apply receipt SHA-256
+  `1bebcd15bf0b0c5e5a7e91a93e904f62c68781981772ab7ae0ba85525d0d4aee`.
+  Applied: 15 instructions, catalog, map; baseline rebuilt to 9 donors / 1,224
+  files; corpus 2,797; catalog revision 6,635; map revision 5,261. The other 3
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+  D20 records the new business pattern vocabulary. A post-apply rename changed
+  `marketing-process` to `marketing-plan` to avoid the generic `process` token
+  colliding with the retrieval benchmark; the two affected instructions were
+  revised to revision 2 and their catalog hashes refreshed (catalog revision
+  6,635).
+
 * **H1 blue-ocean-strategy pilot applied:** 11 `InstructionSpec` drafts from the
   blue-ocean-strategy panel decisions (spec manifest SHA-256
   `b6386ef4eba200bd4fdabdae11c841d9a6d018432dca04cd7b1389846f048efa`).
