@@ -2,6 +2,18 @@
 
 ## 2026-11-03
 
+* **D19 algorithm delegation policy:** every declared human-loop decision offers
+  the D18 three-protocol algorithm; a user who delegates is asked about a
+  scoped, revocable standing preference for that decision type. Legal/rights,
+  BR-09 authorization, security/secrets, destructive operations, Runtime/user
+  acceptance and other reserved decisions remain human. The offer/preference
+  path is policy only; implementation is a separate open task. SR-101, AC-81,
+  D19, next-actions and traceability carry the decision. T3 Codex/Luna review
+  returned READY 0 Critical / 0 Important / 0 Minor after three Important fixes:
+  no default automatic mode, prompt/configuration identity with re-consent, and
+  exclusions-first exact matching with ambiguity/ stale-preference escalation to
+  the human.
+
 * **D18 blind three-protocol H1 review:** the owner directed that the H1 human
   fidelity/owner-admission loop is replaced by three blind Codex Luna reviewers
   (V3 Delphi, V2 Adversarial, V4 Party chat) plus orchestrator aggregation. The

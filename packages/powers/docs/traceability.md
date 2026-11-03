@@ -91,6 +91,7 @@ the list of technically open questions (closed by stages, not by the specificati
 | D16 stable files with form/domain facets | BR-24; SR-06, SR-10, SR-70, SR-92; AC-60–AC-64 |
 | D17 source attribution, not legal-risk assessment | BR-22; SR-81, SR-89; AC-47, AC-57; Step H H1-H3 |
 | D18 blind three-protocol H1 review and aggregation | BR-22; SR-81, SR-89, SR-100; AC-47, AC-57, AC-59; Step H H1 |
+| D19 algorithm delegation for human-loop decisions | BR-09, BR-12; SR-71, SR-101; AC-81; all declared human-loop decision points |
 
 ## Deferred decisions (CAT-D) → SR/AC
 

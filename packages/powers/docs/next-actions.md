@@ -103,6 +103,12 @@ templates/configuration and native host delivery are outside this packet.
    **Closed 2026-11-03:** all 8 donors are current and no donor batch remains.
    `docs/VECTOR.md` is the living summary; update it and run `check-vector` in
    every batch.
+6. **Algorithm delegation offer (D19) — policy READY; implementation open** —
+   every declared human-loop decision must offer the D18 three-protocol
+   algorithm. A user who delegates is asked about a scoped, revocable standing
+   preference for that decision type; excluded decisions remain human. T3
+   Codex/Luna policy review is READY 0/0/0. The offer/preference path is not
+   implemented; existing human gates remain until it is tested and reviewed.
 
 Out of Powers scope: Agent runtime integration, D3/D8, VP-7/G, Agent
 `WorkItem/v1`, runtime findings/artifacts, and the runtime effective-profile

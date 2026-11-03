@@ -110,4 +110,6 @@ signal-to-output ratio, not as the sole reviewer.
 - The panel's output is model evidence; it is not human fidelity and must not be
   labeled as such.
 - A delegated gate implementation is required before publication.
+- D19 generalizes the offer/standing-preference pattern for other human-loop
+  decisions; H1 remains the first declared decision type.
 - The owner can revoke or narrow this decision in writing.

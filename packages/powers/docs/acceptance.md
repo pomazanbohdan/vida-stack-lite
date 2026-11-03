@@ -139,6 +139,12 @@ The criteria below are future gates. They do not change the current E4 acceptanc
 | AC-58 | Prepared conversion preflights the entire batch and both directions of source/spec provenance before writes, stages reviewed bytes, preserves unrelated files and merge contribution locators, detects stale preimages and changed donor revisions, and classifies interrupted changed/no-op/absent targets without automatic retry; existing callers retain sequential results | SR-90 | Converter fixtures for conflict, missing source contribution, retained merged/split locators, interruption after each target, all-old/all-intended/mixed/unexpected states, readback and legacy compatibility | auto | open |
 | AC-59 | Comparable pre-treatment and treatment receipts account for 25 distinct source files admitted through the D18 aggregation, quality, failures, rework and elapsed time before scaling or claiming donor speedup | SR-91 | Bound baseline, D18 panel/aggregation receipts and matched treatment receipts; component-only fixture timing is insufficient | manual | open |
 
+## Human-loop algorithm delegation (D19)
+
+| ID | Condition | SR | Evidence | Type | State |
+|---|---|---|---|---|---|
+| AC-81 | Every declared human-loop decision offers the D18 algorithm with its type, scope, evidence, algorithm version, prompt/configuration identity and limits; exclusions are evaluated first; a delegated decision records the three outputs and aggregation; after delegation the user is asked about a scoped, revocable standing preference; only an exact type/scope match with current identity runs automatically, with the same evidence; zero, multiple or stale preferences and excluded decisions go to the human; revocation and identity changes require re-consent | SR-101 | Offer/delegation/preference fixtures, exclusion precedence, exact-match/ambiguity/stale-identity refusal, revocation and automatic-path tests; model output remains distinct from human fidelity | mixed | open |
+
 ## Instruction organization (D16)
 
 | ID | Condition | SR | Evidence | Type | State |
