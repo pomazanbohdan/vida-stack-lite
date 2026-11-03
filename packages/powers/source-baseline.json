@@ -4873,6 +4873,10 @@
           "sha256": "482ab6a32bb59b087a06812711959624e9afec1b73c34d5d6774c565cc2bdb14",
           "bytes": 15860
         },
+        "skills/jobs-to-be-done/SKILL.md": {
+          "sha256": "cc227aa837bda4ae0910324e52a90d338354501d005f7ef2fbd0cff9fd73aaf1",
+          "bytes": 16493
+        },
         "skills/pragmatic-programmer/SKILL.md": {
           "sha256": "7bd0a042aa2dd559f0327916f8d4f2dcf7d21e5f2343a193eaafee932f0f85a3",
           "bytes": 16557

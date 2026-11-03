@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6466,
+  "revision": 6477,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -5093,6 +5093,61 @@
       "instruction_id": "join-every-review-lane-before-you-aggregate",
       "path": "instructions/join-every-review-lane-before-you-aggregate.md",
       "sha256": "cbbf99b7539c719bf16df1f8bf8e6e7f254a1ba8686699e3621cbbfa0c457aba"
+    },
+    {
+      "instruction_id": "jtbd-big-and-little-hire",
+      "path": "instructions/jtbd-big-and-little-hire.md",
+      "sha256": "6b12bfcd1d611f635b422be553844c4b6519e916d5d805e0ee2973a4aa6c779f"
+    },
+    {
+      "instruction_id": "jtbd-common-mistakes",
+      "path": "instructions/jtbd-common-mistakes.md",
+      "sha256": "275f20b055dff369e51f9c6c6f314e73e0aacdc85418c44fde3f9e346ebe7055"
+    },
+    {
+      "instruction_id": "jtbd-competitive-landscape",
+      "path": "instructions/jtbd-competitive-landscape.md",
+      "sha256": "049bab068c091b8817427f4f857c1753f5e6406f092aaeb463547d7a5c4124d3"
+    },
+    {
+      "instruction_id": "jtbd-design-for-the-job",
+      "path": "instructions/jtbd-design-for-the-job.md",
+      "sha256": "44087c4fbefc39a29c339d4516e2389140565c767e02f7fcfd2ffcb770913fd1"
+    },
+    {
+      "instruction_id": "jtbd-diagnostic",
+      "path": "instructions/jtbd-diagnostic.md",
+      "sha256": "1fa6bd87daed2fb417d9857badc8c3bf89070bca6ac77121c3c19ed0722c3973"
+    },
+    {
+      "instruction_id": "jtbd-four-forces",
+      "path": "instructions/jtbd-four-forces.md",
+      "sha256": "b921cbb0ffbfd8ecdcea3280de7ef665900a4871804433eae1851b64da9eceac"
+    },
+    {
+      "instruction_id": "jtbd-job-as-progress",
+      "path": "instructions/jtbd-job-as-progress.md",
+      "sha256": "a56192dfceb94b3309f7559b7282529ff8a152d5ca39efbfe82e8e010ca3d6da"
+    },
+    {
+      "instruction_id": "jtbd-job-statement",
+      "path": "instructions/jtbd-job-statement.md",
+      "sha256": "1c4925a758aeabcf69ff02f5fdc4ffb03354ee5090c4a7826347fd0f80c4ea41"
+    },
+    {
+      "instruction_id": "jtbd-purchase-timeline",
+      "path": "instructions/jtbd-purchase-timeline.md",
+      "sha256": "279090068d3207c17573dbff1b4e2e56d83e8ac6e4fab2b7d5997b6abe013764"
+    },
+    {
+      "instruction_id": "jtbd-score",
+      "path": "instructions/jtbd-score.md",
+      "sha256": "36d3bc1037c59bfb1749db035b9d356aa8a795c2d97b99c72e0e659fc8781975"
+    },
+    {
+      "instruction_id": "jtbd-three-dimensions",
+      "path": "instructions/jtbd-three-dimensions.md",
+      "sha256": "b5f653daeb436693e1bfb4fdad7db175745a509b6e2e800d3a6f3e44e7edc61e"
     },
     {
       "instruction_id": "judge-a-check-for-circularity",

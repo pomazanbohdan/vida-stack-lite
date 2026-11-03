@@ -2,6 +2,29 @@
 
 ## 2026-11-03
 
+* **H1 jobs-to-be-done pilot applied:** 11 `InstructionSpec` drafts from the
+  jobs-to-be-done panel decisions (spec manifest SHA-256
+  `49f26be117981234f8674419c068d95eae47f49a9cf7da07d8626d3f93bf0cdb`).
+  Every provenance entry carries the content-relative source path
+  `skills/jobs-to-be-done/SKILL.md`, the source SHA-256 and the full supporting
+  per-unit locator. Packet SHA-256
+  `2fc3f0cb950949c1f09500c6c582fba9f820b3f3a57d79a156f4e7a3510de78c`;
+  committee (normalized selection) SHA-256
+  `bde37fbf440b6102ba7df574a5a4280685e69701d2c07af32b57f3017052ae31`;
+  reviewed plan SHA-256
+  `49c7dfaef59485d3bde5a2d61cc384e024caba66df2fd00843fb64d4bc74bbeb`;
+  applied plan SHA-256
+  `cd31cca20d2652b9b9e41802af0a22585c4d1b86055147d313a40b991e573bb0`.
+  The reviewed plan is the re-review after correcting the full-source rights
+  locator from `L231` to `L230`. Rights are a `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`, not legal clearance. T3 Codex/Luna plan review returned
+  READY 0 Critical / 0 Important / 0 Minor. Apply returned `applied` with all 13
+  targets observed as `intended`; apply receipt SHA-256
+  `bee12da88df827c02d54f658ef752ce3da8c5373de7046fb0dbe0508689a3e07`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,213
+  files; corpus 2,642; catalog revision 6,477; map revision 5,106. The other 14
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 inspired-product pilot applied:** 10 `InstructionSpec` drafts from the
   inspired-product panel decisions (spec manifest SHA-256
   `9b91a84ea60f2a3d2dff589986cef5e3e565235c557fcc3cc81f31789315caf0`).

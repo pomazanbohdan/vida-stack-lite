@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5095,
+  "revision": 5106,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18239,8 +18239,20 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/jobs-to-be-done/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "jtbd-job-as-progress",
+            "jtbd-score",
+            "jtbd-three-dimensions",
+            "jtbd-job-statement",
+            "jtbd-four-forces",
+            "jtbd-big-and-little-hire",
+            "jtbd-competitive-landscape",
+            "jtbd-purchase-timeline",
+            "jtbd-design-for-the-job",
+            "jtbd-common-mistakes",
+            "jtbd-diagnostic"
+          ]
         },
         "skills/jobs-to-be-done/references/case-studies.md": {
           "status": "rejected",
