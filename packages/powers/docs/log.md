@@ -2,6 +2,32 @@
 
 ## 2026-11-03
 
+* **H1 lean-ux pilot applied:** 10 `InstructionSpec` drafts from the lean-ux panel
+  decisions (spec manifest SHA-256
+  `85b2d1141f5d7cdda91146d90a7d88b8b6f02015945906744592207493b86cf4`).
+  Every provenance entry carries the content-relative source path
+  `skills/lean-ux/SKILL.md`, the source SHA-256 and the full supporting
+  per-unit locator. The packet now carries `panel-evidence.json` with the B4
+  aggregation entry for lean-ux: every unit's v3/v2/v4 decision, meaning,
+  agreement, dissent, source lines and the u10 manual resolution. Its
+  hash-bound reference is recorded in the committee's per-file
+  `check.panelEvidence`, and the admission gate binds that committee. Packet
+  SHA-256 `796d105d56820f85e5e980abc24c4c38476189dfcdca2e7ef8b46426c6d2a82d`;
+  committee SHA-256
+  `a6a073981ff1350fb173429ce66f22d841760ac834b76b234d418ab977026170`;
+  reviewed plan SHA-256
+  `3a46464033542b97bc98d34f924dd90fc26fed70c01b658a9a24b6ccdd1662f3`;
+  applied plan SHA-256
+  `bc38f7f1f37ff56e23a8851c58bb8b5e60ce5fa98907bc662a06c6ebef8c8315`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor. Apply returned `applied` with all 12 targets observed as `intended`;
+  apply receipt SHA-256
+  `ce089572d40f63120838611845c14a54482638519dbc0fc690a6f23cb9092d92`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,216
+  files; corpus 2,683; catalog revision 6,518; map revision 5,147. The other 11
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 lean-startup pilot applied:** 21 `InstructionSpec` drafts from the
   lean-startup panel decisions (spec manifest SHA-256
   `9959560a4fafa766ad883faa48160f054cc092f82297b012301589087035e5a7`).

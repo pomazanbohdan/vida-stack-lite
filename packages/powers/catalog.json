@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6508,
+  "revision": 6518,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -6108,6 +6108,56 @@
       "instruction_id": "lean-startup-viral-engine",
       "path": "instructions/lean-startup-viral-engine.md",
       "sha256": "94dbc6dcde3a181894441ddefd189dd59fb82ed0330abf16439cc05c41b18805"
+    },
+    {
+      "instruction_id": "lean-ux-agile-integration",
+      "path": "instructions/lean-ux-agile-integration.md",
+      "sha256": "bb04e67fe5927ca4aa5210ecec7a77533d03dca03bb0c65d72dc6385f084158b"
+    },
+    {
+      "instruction_id": "lean-ux-behavior-over-deliverables",
+      "path": "instructions/lean-ux-behavior-over-deliverables.md",
+      "sha256": "fdd1640b4690789fe2ed2021eb5d497cfe67387347645319a0bb3a2c6eb70961"
+    },
+    {
+      "instruction_id": "lean-ux-collaborative-design",
+      "path": "instructions/lean-ux-collaborative-design.md",
+      "sha256": "25ed0734b439108f588cdefec9fd973464cf36fc84ee11b413e98920051b2a97"
+    },
+    {
+      "instruction_id": "lean-ux-common-mistakes",
+      "path": "instructions/lean-ux-common-mistakes.md",
+      "sha256": "c960f33c06240b862065a407d32176b33a5d6f4a67954c1c2ce7c6edb68731c3"
+    },
+    {
+      "instruction_id": "lean-ux-declare-assumptions",
+      "path": "instructions/lean-ux-declare-assumptions.md",
+      "sha256": "e7ba6f8bf92dcf69ea3dc2e58544b36e0e5f239b65985d1c68e974579e8b1d19"
+    },
+    {
+      "instruction_id": "lean-ux-diagnostic",
+      "path": "instructions/lean-ux-diagnostic.md",
+      "sha256": "b0ae5ef50fd25eab13677722e3f37630a916d5f0258aa5d2c4009a4cc55e5aa0"
+    },
+    {
+      "instruction_id": "lean-ux-embedded-research",
+      "path": "instructions/lean-ux-embedded-research.md",
+      "sha256": "731cd905356afe58bed8898db8e1d239ead5f0242799041dd25adf156386898e"
+    },
+    {
+      "instruction_id": "lean-ux-hypothesis-statements",
+      "path": "instructions/lean-ux-hypothesis-statements.md",
+      "sha256": "976f4a91c30cd33e781c99c215af93b6728e9555731e26e80fe3bccb9593bf2e"
+    },
+    {
+      "instruction_id": "lean-ux-score",
+      "path": "instructions/lean-ux-score.md",
+      "sha256": "49502df7fc5da07a7a3f4290667693a4bdcf0b50be3475f956c15007e8c17f0e"
+    },
+    {
+      "instruction_id": "lean-ux-smallest-experiment",
+      "path": "instructions/lean-ux-smallest-experiment.md",
+      "sha256": "9d4677f2e2a16c6c8f59c6c1a7e8c42589afe9c740304262aaa29df734854d86"
     },
     {
       "instruction_id": "leave-a-runtime-choice-in-the-text",

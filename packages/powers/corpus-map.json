@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5137,
+  "revision": 5147,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18369,8 +18369,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/lean-ux/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "lean-ux-behavior-over-deliverables",
+            "lean-ux-score",
+            "lean-ux-declare-assumptions",
+            "lean-ux-hypothesis-statements",
+            "lean-ux-smallest-experiment",
+            "lean-ux-collaborative-design",
+            "lean-ux-embedded-research",
+            "lean-ux-agile-integration",
+            "lean-ux-common-mistakes",
+            "lean-ux-diagnostic"
+          ]
         },
         "skills/lean-ux/references/agile-integration.md": {
           "status": "rejected",
