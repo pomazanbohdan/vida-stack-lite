@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5335,
+  "revision": 5345,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18368,8 +18368,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/lean-analytics/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "lean-analytics-apply",
+            "lean-analytics-omtm-focus",
+            "lean-analytics-score",
+            "lean-analytics-good-metrics",
+            "lean-analytics-omtm",
+            "lean-analytics-business-model-metrics",
+            "lean-analytics-stage-gates",
+            "lean-analytics-baselines",
+            "lean-analytics-common-mistakes",
+            "lean-analytics-diagnostic"
+          ]
         },
         "skills/lean-analytics/references/business-model-metrics.md": {
           "status": "rejected",

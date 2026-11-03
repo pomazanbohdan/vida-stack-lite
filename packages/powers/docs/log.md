@@ -2,6 +2,33 @@
 
 ## 2026-11-03
 
+* **H1 next-4 lean-analytics applied:** 10 `InstructionSpec` drafts from the
+  next-4 D18 aggregation (spec manifest SHA-256
+  `5da7c271ced30ac999f5a23c05f2f8241111f069247647a4dd23a5eda8f0de44`).
+  The batch was captured and mechanically decomposed, reviewed by three blind
+  protocols (V3 Delphi, V2 Adversarial, V4 Party chat), and aggregated as
+  10 amend / 3 reject / 0 unresolved. Rejected units are the Framework parent
+  heading, Further Reading and About the Authors. Every provenance entry carries
+  the content-relative source path `skills/lean-analytics/SKILL.md`, the source
+  SHA-256 `ed66ef399bdfeb2ab56583940b47d58b516162826bb81a40d121c9a17c0c8006`
+  and the full supporting per-unit locator. The first review found that the
+  apply locator omitted the frontmatter span; it was widened to `#L1-L13` and
+  the plan re-reviewed READY. Packet SHA-256
+  `849b924bf208e062ece17b2257d01c0f159a44bddf41f2d57dd1dab3bf5102a0`;
+  committee SHA-256
+  `f444780937c78e76aa1b4d613ee6b62838216a533f59bc5e84fbc689992f0b15`;
+  reviewed plan SHA-256
+  `ea1264c579dbae538aa74df4db9edaef58ab22a5f17b712aa8a23836d7fd55a3`;
+  applied plan SHA-256
+  `265a7cd83fc2302f8611d669a28776d3815fe1d205458ca5f0238b28c15d050f`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor. Apply returned `applied` with all 12 targets observed as `intended`;
+  apply receipt SHA-256
+  `05453e81d413d9731bc1878e46f40cfaac38cbb137addeaae998e38eb653533c`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,231
+  files; corpus 2,881; catalog revision 6,732; map revision 5,345.
+
 * **H1 next-3 37signals-way applied:** 10 `InstructionSpec` drafts from the
   next-3 D18 aggregation (spec manifest SHA-256
   `4b1100192350092439d39e65baba22614d38b1a05b2273edb213de43aefdaff7`).

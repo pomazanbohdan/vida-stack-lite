@@ -4905,6 +4905,10 @@
           "sha256": "cc227aa837bda4ae0910324e52a90d338354501d005f7ef2fbd0cff9fd73aaf1",
           "bytes": 16493
         },
+        "skills/lean-analytics/SKILL.md": {
+          "sha256": "ed66ef399bdfeb2ab56583940b47d58b516162826bb81a40d121c9a17c0c8006",
+          "bytes": 17047
+        },
         "skills/lean-startup/SKILL.md": {
           "sha256": "109bf176baf1c56f0d02f6a8a2d59d7969b64768a760bc7624516a8b42b5bf53",
           "bytes": 17078
