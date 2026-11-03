@@ -2,6 +2,17 @@
 
 ## 2026-11-03
 
+* **D18 panel complete:** six batches × three blind Codex Luna protocols on all
+  25 Wondelai files. The panel covered 391 mechanical units: 219 unanimous,
+  164 two-of-three, 8 manual resolutions, 0 unresolved; final decisions were
+  230 accept, 80 amend, 0 merge and 81 reject. The decisions artifacts contain
+  310 final units with 25 selections and 25 `PASS_MECHANICAL_ONLY` checks;
+  every file passed `checkDecomposition` (manifest SHA-256
+  `1b479b597436406b5dce4d26749d0795a435ba4a2bf0edc0f976ce040e000a28`). The main
+  defect is mechanical span width: many units cover only the section heading or
+  first line, so the specs must use full-section locators. The panel is
+  delegated model review under D18, not admission or human fidelity.
+
 * **D19 algorithm delegation policy:** every declared human-loop decision offers
   the D18 three-protocol algorithm; a user who delegates is asked about a
   scoped, revocable standing preference for that decision type. Legal/rights,
