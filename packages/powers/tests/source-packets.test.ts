@@ -4,9 +4,11 @@ import { mkdtemp, readFile, rm, symlink, truncate, writeFile } from 'node:fs/pro
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { capturePacket, checkDecomposition, locateSpan, sourceInputDigest, verifyArtifact, sealArtifact, verifyPreparedPacket, evaluateAdmission, reconcileAdmissionAtRoot, readEligibleSource, type PacketContext } from '../scripts/source-packets.ts';
+import { fixtureEligibility, fixtureSpec } from './source-packet-fixture.ts';
 
 const roots: string[] = [];
 const hash = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+async function tempRoot(prefix: string) { const root = await mkdtemp(join(tmpdir(), prefix)); roots.push(root); return root; }
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
 async function fixture(bytes: Uint8Array = Buffer.from('\uFEFFa😀e\u0301\r\nb\rc\n')) {
   const root = await mkdtemp(join(tmpdir(), 'vp-packet-')); roots.push(root);
@@ -87,6 +89,49 @@ test('hash-bound gate files alone cannot grant authority; Root must observe ever
   await expect(readEligibleSource(JSON.parse(JSON.stringify(allowed.source)))).rejects.toThrow();
   await writeFile(join(f.root, 'spec.json'), '{}');
   await expect(readEligibleSource(allowed.source)).rejects.toThrow();
+});
+test('delegated three-protocol authority requires an active human delegation and matching committee', async () => {
+  const root = await tempRoot('vp-delegated-');
+  const eligible = await fixtureEligibility(root, fixtureSpec(0), 0, { authority: 'delegated' });
+  expect(eligible.source.canonicalCarrierPath).toBe('source-0.md');
+});
+test('revoked delegation blocks delegated admission', async () => {
+  const root = await tempRoot('vp-delegated-revoked-');
+  await expect(fixtureEligibility(root, fixtureSpec(1), 1, { authority: 'delegated', delegationState: 'revoked' })).rejects.toThrow('revoked');
+});
+test('non-admitted or duplicate committee entries block delegated admission', async () => {
+  const nonAdmitted = await tempRoot('vp-delegated-nonadmitted-');
+  await expect(fixtureEligibility(nonAdmitted, fixtureSpec(0), 0, { authority: 'delegated', committeeStatus: 'panel-reviewed-not-admitted' })).rejects.toThrow();
+  const rejected = await tempRoot('vp-delegated-rejected-');
+  await expect(fixtureEligibility(rejected, fixtureSpec(0), 0, { authority: 'delegated', committeeStatus: 'rejected' })).rejects.toThrow();
+  const duplicateSkill = await tempRoot('vp-delegated-duplicate-skill-');
+  await expect(fixtureEligibility(duplicateSkill, fixtureSpec(0), 0, { authority: 'delegated', committeeDuplicateKind: 'skill' })).rejects.toThrow('duplicate skill');
+  const duplicateDecisions = await tempRoot('vp-delegated-duplicate-decisions-');
+  await expect(fixtureEligibility(duplicateDecisions, fixtureSpec(0), 0, { authority: 'delegated', committeeDuplicateKind: 'decisions' })).rejects.toThrow('duplicate decisions');
+  const duplicateSelections = await tempRoot('vp-delegated-duplicate-selections-');
+  await expect(fixtureEligibility(duplicateSelections, fixtureSpec(0), 0, { authority: 'delegated', committeeDuplicateKind: 'selection' })).rejects.toThrow('duplicate selections');
+});
+test('model rights gate blocks delegated admission', async () => {
+  const root = await tempRoot('vp-delegated-model-rights-');
+  await expect(fixtureEligibility(root, fixtureSpec(0), 0, { authority: 'delegated', modelRights: true })).rejects.toThrow();
+});
+test('delegation algorithm metadata mismatches block delegated admission', async () => {
+  const algorithmName = await tempRoot('vp-delegated-algorithm-name-');
+  await expect(fixtureEligibility(algorithmName, fixtureSpec(0), 0, { authority: 'delegated', algorithmName: 'wrong-algorithm' })).rejects.toThrow('delegation algorithm');
+  const aggregation = await tempRoot('vp-delegated-aggregation-');
+  await expect(fixtureEligibility(aggregation, fixtureSpec(0), 0, { authority: 'delegated', aggregation: 'wrong-aggregation' })).rejects.toThrow('delegation aggregation');
+  const protocols = await tempRoot('vp-delegated-protocols-');
+  await expect(fixtureEligibility(protocols, fixtureSpec(0), 0, { authority: 'delegated', protocols: ['V2-adversarial', 'V3-delphi', 'V4-party-chat'] })).rejects.toThrow('delegation protocols');
+  const protocolContent = await tempRoot('vp-delegated-protocol-content-');
+  await expect(fixtureEligibility(protocolContent, fixtureSpec(0), 0, { authority: 'delegated', protocols: ['V3-delphi', 'V2-adversarial', 'V4-wrong'] })).rejects.toThrow('delegation protocols');
+  const reviewers = await tempRoot('vp-delegated-reviewers-');
+  await expect(fixtureEligibility(reviewers, fixtureSpec(0), 0, { authority: 'delegated', reviewers: ['model:wrong', 'model:wrong-2', 'model:wrong-3'] })).rejects.toThrow('delegation reviewers');
+});
+test('missing delegation and stale committee block delegated admission', async () => {
+  const missing = await tempRoot('vp-delegated-missing-');
+  await expect(fixtureEligibility(missing, fixtureSpec(0), 0, { authority: 'delegated', missingDelegation: true })).rejects.toThrow();
+  const stale = await tempRoot('vp-delegated-stale-');
+  await expect(fixtureEligibility(stale, fixtureSpec(0), 0, { authority: 'delegated', committeeDecisionsMismatch: true })).rejects.toThrow('committee packet binding');
 });
 test('stale tool, omitted review scope and unknown allowlist block preparation', async () => {
   const f = await preparedFixture();

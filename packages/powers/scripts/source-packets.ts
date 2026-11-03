@@ -149,22 +149,105 @@ type Review = { schema: 'VPSourceReview/v1'; source: SourceRef; inputSha256: str
 type GateKind = 'fidelity' | 'rights' | 'admission';
 export type HumanGateRefs = Readonly<Record<GateKind, ArtifactRef>>;
 type Gate = { schema: 'VPHumanSourceGate/v1'; kind: GateKind; verdict: 'human-approved' | 'cleared' | 'owner-admitted'; source: SourceRef; inputSha256: string; decisionsSha256: string; scopeSha256: string; unitIds: string[]; specs: ArtifactRef[]; actor: string; pointer: string };
+type Delegation = {
+  schema: 'VPAlgorithmDelegation/v1';
+  owner: string;
+  decisionType: string;
+  scope: { donor: string; pinnedRevision: string; pilot: string; files: number };
+  algorithm: { name: string; protocols: string[]; aggregation: string; reviewers: string[] };
+  evidencePolicy: string;
+  standing: boolean;
+  grantedAt: string;
+  reviewCadence: string;
+  revocation: { state: 'active' | 'revoked'; pointer: string };
+  pointer: string;
+};
+type DelegatedGate = {
+  schema: 'VPDelegatedSourceGate/v1';
+  kind: GateKind;
+  verdict: 'model-approved' | 'cleared' | 'delegated-admitted';
+  source: SourceRef;
+  inputSha256: string;
+  decisionsSha256: string;
+  scopeSha256: string;
+  unitIds: string[];
+  specs: ArtifactRef[];
+  actor: string;
+  pointer: string;
+  delegation: ArtifactRef;
+  committee: ArtifactRef;
+};
+type Committee = {
+  schema: 'H1PanelDecisions/v1';
+  donor: string;
+  pinnedRevision: string;
+  status: string;
+  totals: { files: number; finalUnits: number; rejectedUnits: number };
+  files: Array<{ skill: string; units: number; rejected: number; decisions: ArtifactRef; selection: ArtifactRef; check: unknown }>;
+};
+type AnyGate = Gate | DelegatedGate;
+export type AdmissionAuthority =
+  | Readonly<{ mode: 'human' }>
+  | Readonly<{ mode: 'delegated'; delegation: ArtifactRef; committee: ArtifactRef }>;
 export type CandidateSource = Readonly<{ kind: 'candidate'; source: SourceRef; evidence: ArtifactRef }>;
 export type AdmissionAssessment = Readonly<{ kind: 'assessed'; candidate: CandidateSource }> | Readonly<{ kind: 'assessment-blocked'; candidate: CandidateSource; reasons: readonly string[] }>;
 export type EligibleSource = Readonly<{ kind: 'eligible'; source: SourceRef; evidence: ArtifactRef }>;
 export type Eligibility = Readonly<{ kind: 'eligible'; source: EligibleSource }> | Readonly<{ kind: 'blocked'; reasons: readonly string[] }>;
 export type AuthorityObserver = (request: Readonly<{ kind: GateKind; record: ArtifactRef; actor: string; pointer: string }>) => Promise<Readonly<{ kind: 'observed'; actor: string; pointer: string }> | Readonly<{ kind: 'unconfirmed' }>>;
 type CandidateState = { packet: Packet; context: PacketContext; capture: CapturedSource; selection: Selection };
-type AssessmentState = { candidate: CandidateSource; refs: HumanGateRefs; records: Record<GateKind, Gate> };
+type AssessmentState = {
+  candidate: CandidateSource;
+  refs: HumanGateRefs;
+  records: Record<GateKind, AnyGate>;
+  authority: AdmissionAuthority;
+  delegation?: Delegation;
+  committee?: Committee;
+};
 const candidates = new WeakMap<CandidateSource, CandidateState>();
 const assessments = new WeakMap<AdmissionAssessment, AssessmentState>();
-const eligible = new WeakMap<EligibleSource, { assessment: AssessmentState; observer: AuthorityObserver }>();
+const eligible = new WeakMap<EligibleSource, { assessment: AssessmentState; observer: AuthorityObserver; authority: AdmissionAuthority }>();
 const artifactListSchema = { type: 'array', items: artifactSchema } satisfies Schema;
 const packetSchema = objectSchema({ schema: { const: 'VPSourcePacket/v1' }, capture: artifactSchema, decisions: artifactSchema, selection: artifactSchema, check: artifactSchema, reviews: { ...artifactListSchema, minItems: 1 }, specs: { type: 'array', minItems: 1, items: objectSchema({ artifact: artifactSchema, unitIds: { ...stringsSchema, minItems: 1 } }) } });
 const selectionSchema = objectSchema({ schema: { const: 'VPSourceSelection/v1' }, source: sourceSchema, scope: artifactSchema, domain: { enum: ['methodology', 'engineering', 'ux', 'product', 'business', 'marketing', 'sales', 'growth', 'analytics', 'organization'] }, disposition: { enum: ['selected', 'excluded', 'pending-reconsideration'] }, rationale: textSchema, previousDisposition: textSchema, previousReason: textSchema, exclusion: { enum: ['none', 'journey'] }, unitIds: { ...stringsSchema, minItems: 1 } });
 const checkSchema = objectSchema({ schema: { const: 'VPSourceCheck/v1' }, captureSha256: shaSchema, decisionsSha256: shaSchema, checker: artifactSchema, runtimeSha256: shaSchema, configuration: artifactSchema, command: { ...stringsSchema, minItems: 4 }, exitCode: { const: 0 }, stdout: artifactSchema, stderr: artifactSchema });
 const reviewSchema = objectSchema({ schema: { const: 'VPSourceReview/v1' }, source: sourceSchema, inputSha256: shaSchema, decisionsSha256: shaSchema, scopeSha256: shaSchema, scope: { enum: ['full', 'delta'] }, unitIds: { ...stringsSchema, minItems: 1 }, verdict: { const: 'READY' }, actor: textSchema, pointer: textSchema });
 const gateSchema = objectSchema({ schema: { const: 'VPHumanSourceGate/v1' }, kind: { enum: ['fidelity', 'rights', 'admission'] }, verdict: { enum: ['human-approved', 'cleared', 'owner-admitted'] }, source: sourceSchema, inputSha256: shaSchema, decisionsSha256: shaSchema, scopeSha256: shaSchema, unitIds: { ...stringsSchema, minItems: 1 }, specs: { ...artifactListSchema, minItems: 1 }, actor: textSchema, pointer: textSchema });
+const delegationSchema = objectSchema({
+  schema: { const: 'VPAlgorithmDelegation/v1' },
+  owner: textSchema,
+  decisionType: textSchema,
+  scope: objectSchema({ donor: textSchema, pinnedRevision: { type: 'string', pattern: '^[0-9a-f]{40}$' }, pilot: textSchema, files: { type: 'integer', minimum: 1 } }),
+  algorithm: objectSchema({ name: textSchema, protocols: stringsSchema, aggregation: textSchema, reviewers: stringsSchema }),
+  evidencePolicy: textSchema,
+  standing: { type: 'boolean' },
+  grantedAt: textSchema,
+  reviewCadence: textSchema,
+  revocation: objectSchema({ state: { enum: ['active', 'revoked'] }, pointer: textSchema }),
+  pointer: textSchema,
+});
+const delegatedGateSchema = objectSchema({
+  schema: { const: 'VPDelegatedSourceGate/v1' },
+  kind: { enum: ['fidelity', 'rights', 'admission'] },
+  verdict: { enum: ['model-approved', 'cleared', 'delegated-admitted'] },
+  source: sourceSchema,
+  inputSha256: shaSchema,
+  decisionsSha256: shaSchema,
+  scopeSha256: shaSchema,
+  unitIds: { ...stringsSchema, minItems: 1 },
+  specs: { ...artifactListSchema, minItems: 1 },
+  actor: textSchema,
+  pointer: textSchema,
+  delegation: artifactSchema,
+  committee: artifactSchema,
+});
+const committeeSchema = objectSchema({
+  schema: { const: 'H1PanelDecisions/v1' },
+  donor: textSchema,
+  pinnedRevision: { type: 'string', pattern: '^[0-9a-f]{40}$' },
+  status: { const: 'panel-admitted' },
+  totals: objectSchema({ files: { type: 'integer', minimum: 1 }, finalUnits: { type: 'integer', minimum: 1 }, rejectedUnits: { type: 'integer', minimum: 0 } }),
+  files: { type: 'array', minItems: 1, items: objectSchema({ skill: textSchema, units: { type: 'integer', minimum: 1 }, rejected: { type: 'integer', minimum: 0 }, decisions: artifactSchema, selection: artifactSchema, check: { type: 'object' } }) },
+});
 async function readValue(root: string, ref: ArtifactRef, schema: Schema): Promise<unknown> {
   const bytes = await verifyArtifact(root, ref);
   const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
@@ -225,25 +308,66 @@ export async function verifyPreparedPacket(ref: ArtifactRef, inputContext: Packe
   candidates.set(candidate, { packet, context, capture, selection });
   return candidate;
 }
-export async function evaluateAdmission(candidate: CandidateSource, refs: HumanGateRefs): Promise<AdmissionAssessment> {
+export async function evaluateAdmission(candidate: CandidateSource, refs: HumanGateRefs, authority: AdmissionAuthority = { mode: 'human' }): Promise<AdmissionAssessment> {
   const state = candidates.get(candidate);
   check(state !== undefined, 'candidate lacks verified packet');
+  const root = state.context.evidenceRoot;
   try {
     check(state.selection.disposition === 'selected' && state.selection.exclusion === 'none', 'source remains excluded or pending');
-    const records: Partial<Record<GateKind, Gate>> = {};
+    const records: Partial<Record<GateKind, AnyGate>> = {};
     const snapshots: Partial<Record<GateKind, ArtifactRef>> = {};
+    let delegation: Delegation | undefined;
+    let committee: Committee | undefined;
+    if (authority.mode === 'delegated') {
+      delegation = await readValue(root, authority.delegation, delegationSchema) as Delegation;
+      committee = await readValue(root, authority.committee, committeeSchema) as Committee;
+      check(/^human:.+/u.test(delegation.owner), 'delegation owner is not human');
+      check(delegation.decisionType === 'H1-source-admission', 'delegation decision type');
+      check(delegation.standing === true && delegation.revocation.state === 'active', 'delegation is inactive or revoked');
+      check(delegation.algorithm.name === 'D18-blind-three-protocol', 'delegation algorithm');
+      check(delegation.algorithm.aggregation === 'orchestrator', 'delegation aggregation');
+      check(JSON.stringify(delegation.algorithm.protocols) === JSON.stringify(['V3-delphi', 'V2-adversarial', 'V4-party-chat']), 'delegation protocols');
+      check(JSON.stringify(delegation.algorithm.reviewers) === JSON.stringify(['model:luna-v3-delphi', 'model:luna-v2-adversarial', 'model:luna-v4-party-chat']), 'delegation reviewers');
+      check(delegation.scope.donor === state.capture.source.donor && delegation.scope.pinnedRevision === state.capture.source.pinnedRevision, 'delegation source binding');
+      check(delegation.scope.pilot === 'h1-pilot-25' && delegation.scope.files === 25, 'delegation pilot scope');
+      check(committee.schema === 'H1PanelDecisions/v1' && committee.donor === delegation.scope.donor && committee.pinnedRevision === delegation.scope.pinnedRevision, 'committee binding');
+      check(committee.totals.files === delegation.scope.files && committee.files.length === committee.totals.files, 'committee file count');
+      check(new Set(committee.files.map(file => file.skill)).size === committee.files.length, 'committee duplicate skill');
+      check(new Set(committee.files.map(file => file.decisions.sha256)).size === committee.files.length, 'committee duplicate decisions');
+      check(new Set(committee.files.map(file => file.selection.sha256)).size === committee.files.length, 'committee duplicate selections');
+      const entry = committee.files.find(file => sameRef(file.decisions, state.packet.decisions));
+      check(entry !== undefined && sameRef(entry.selection, state.packet.selection), 'committee packet binding');
+    }
     for (const kind of ['fidelity', 'rights', 'admission'] as const) {
       const ref = refs[kind];
-      const gate = await readValue(state.context.evidenceRoot, ref, gateSchema) as Gate;
-      const verdict = kind === 'fidelity' ? 'human-approved' : kind === 'rights' ? 'cleared' : 'owner-admitted';
-      check(gate.kind === kind && gate.verdict === verdict && /^human:.+/u.test(gate.actor), `invalid ${kind} attribution`);
-      check(sourceKey(gate.source) === sourceKey(state.capture.source) && gate.inputSha256 === sourceInputDigest(state.capture) && gate.decisionsSha256 === state.packet.decisions.sha256 && gate.scopeSha256 === state.context.scope.sha256 && sameMembers(gate.unitIds, state.selection.unitIds), `${kind} scope binding`);
-      check(sameMembers(gate.specs.map(ref => JSON.stringify([ref.path, ref.sha256])), state.packet.specs.map(spec => JSON.stringify([spec.artifact.path, spec.artifact.sha256]))), `${kind} proposed text binding`);
-      records[kind] = gate; snapshots[kind] = Object.freeze({ ...ref });
+      if (authority.mode === 'delegated' && kind !== 'rights') {
+        const gate = await readValue(root, ref, delegatedGateSchema) as DelegatedGate;
+        const verdict = kind === 'fidelity' ? 'model-approved' : 'delegated-admitted';
+        check(gate.kind === kind && gate.verdict === verdict && /^model:.+/u.test(gate.actor), `invalid delegated ${kind} attribution`);
+        check(sameRef(gate.delegation, authority.delegation) && sameRef(gate.committee, authority.committee), `${kind} delegated authority binding`);
+        check(sourceKey(gate.source) === sourceKey(state.capture.source) && gate.inputSha256 === sourceInputDigest(state.capture) && gate.decisionsSha256 === state.packet.decisions.sha256 && gate.scopeSha256 === state.context.scope.sha256 && sameMembers(gate.unitIds, state.selection.unitIds), `${kind} scope binding`);
+        check(sameMembers(gate.specs.map(ref => JSON.stringify([ref.path, ref.sha256])), state.packet.specs.map(spec => JSON.stringify([spec.artifact.path, spec.artifact.sha256]))), `${kind} proposed text binding`);
+        records[kind] = gate; snapshots[kind] = Object.freeze({ ...ref });
+      } else {
+        const gate = await readValue(root, ref, gateSchema) as Gate;
+        const verdict = kind === 'fidelity' ? 'human-approved' : kind === 'rights' ? 'cleared' : 'owner-admitted';
+        check(gate.kind === kind && gate.verdict === verdict && /^human:.+/u.test(gate.actor), `invalid ${kind} attribution`);
+        check(sourceKey(gate.source) === sourceKey(state.capture.source) && gate.inputSha256 === sourceInputDigest(state.capture) && gate.decisionsSha256 === state.packet.decisions.sha256 && gate.scopeSha256 === state.context.scope.sha256 && sameMembers(gate.unitIds, state.selection.unitIds), `${kind} scope binding`);
+        check(sameMembers(gate.specs.map(ref => JSON.stringify([ref.path, ref.sha256])), state.packet.specs.map(spec => JSON.stringify([spec.artifact.path, spec.artifact.sha256]))), `${kind} proposed text binding`);
+        records[kind] = gate; snapshots[kind] = Object.freeze({ ...ref });
+      }
     }
-    check(records.fidelity && records.rights && records.admission && snapshots.fidelity && snapshots.rights && snapshots.admission, 'incomplete human gates');
+    check(records.fidelity && records.rights && records.admission && snapshots.fidelity && snapshots.rights && snapshots.admission, 'incomplete admission gates');
     const assessment: AdmissionAssessment = Object.freeze({ kind: 'assessed', candidate });
-    assessments.set(assessment, { candidate, refs: { fidelity: snapshots.fidelity, rights: snapshots.rights, admission: snapshots.admission }, records: { fidelity: records.fidelity, rights: records.rights, admission: records.admission } });
+    const nextState: AssessmentState = {
+      candidate,
+      refs: { fidelity: snapshots.fidelity, rights: snapshots.rights, admission: snapshots.admission },
+      records: records as Record<GateKind, AnyGate>,
+      authority,
+    };
+    if (delegation) nextState.delegation = delegation;
+    if (committee) nextState.committee = committee;
+    assessments.set(assessment, nextState);
     return assessment;
   } catch (error) {
     return Object.freeze({ kind: 'assessment-blocked', candidate, reasons: Object.freeze([error instanceof Error ? error.message : String(error)]) });
@@ -254,16 +378,26 @@ export async function reconcileAdmissionAtRoot(assessment: AdmissionAssessment, 
   if (state === undefined) return Object.freeze({ kind: 'blocked', reasons: ['Unverified or blocked admission assessment.'] });
   const candidate = candidates.get(state.candidate);
   check(candidate !== undefined, 'missing candidate');
+  const root = candidate.context.evidenceRoot;
   try {
     await verifyPreparedPacket(state.candidate.evidence, candidate.context);
+    if (state.authority.mode === 'delegated') {
+      const delegation = state.delegation;
+      const committee = state.committee;
+      check(delegation !== undefined && committee !== undefined, 'missing delegated authority records');
+      await verifyArtifact(root, state.authority.delegation);
+      await verifyArtifact(root, state.authority.committee);
+      const observation = await observer(Object.freeze({ kind: 'admission', record: state.authority.delegation, actor: delegation.owner, pointer: delegation.pointer }));
+      check(observation.kind === 'observed' && observation.actor === delegation.owner && observation.pointer === delegation.pointer, 'Root has not observed delegation authority');
+    }
     for (const kind of ['fidelity', 'rights', 'admission'] as const) {
-      await verifyArtifact(candidate.context.evidenceRoot, state.refs[kind]);
+      await verifyArtifact(root, state.refs[kind]);
       const record = state.records[kind];
       const observation = await observer(Object.freeze({ kind, record: state.refs[kind], actor: record.actor, pointer: record.pointer }));
       check(observation.kind === 'observed' && observation.actor === record.actor && observation.pointer === record.pointer, `Root has not observed ${kind} authority`);
     }
     const source: EligibleSource = Object.freeze({ kind: 'eligible', source: state.candidate.source, evidence: state.candidate.evidence });
-    eligible.set(source, { assessment: state, observer });
+    eligible.set(source, { assessment: state, observer, authority: state.authority });
     return Object.freeze({ kind: 'eligible', source });
   } catch (error) {
     return Object.freeze({ kind: 'blocked', reasons: [error instanceof Error ? error.message : String(error)] });
@@ -274,7 +408,7 @@ export async function readEligibleSource(source: EligibleSource): Promise<{ sour
   check(state !== undefined, 'eligibility is not a live Root observation');
   const candidate = candidates.get(state.assessment.candidate);
   check(candidate !== undefined, 'missing candidate');
-  const assessment = await evaluateAdmission(state.assessment.candidate, state.assessment.refs);
+  const assessment = await evaluateAdmission(state.assessment.candidate, state.assessment.refs, state.authority);
   const reconciled = await reconcileAdmissionAtRoot(assessment, state.observer);
   check(reconciled.kind === 'eligible', 'eligibility became stale or unconfirmed');
   return { source: candidate.capture.source, specs: candidate.packet.specs.map(spec => ({ path: resolve(candidate.context.evidenceRoot, spec.artifact.path), ref: { ...spec.artifact }, unitIds: [...spec.unitIds] })), evidence: source.evidence, context: snapshotContext(candidate.context) };

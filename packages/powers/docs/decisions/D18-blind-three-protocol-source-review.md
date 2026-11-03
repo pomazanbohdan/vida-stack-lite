@@ -75,9 +75,10 @@ review or owner ratification is required for this pilot.
 
 The current `scripts/source-packets.ts` admission API validates
 `VPHumanSourceGate/v1` records with `human:` actors. This decision authorizes a
-delegated gate path for model/panel admission. Until that path is implemented,
-tested and reviewed, the panel review can be recorded as H1 review evidence,
-but a source packet cannot become `eligible` for corpus publication.
+delegated gate path for model/panel admission. The delegated path is now
+implemented, covered by tests and independently reviewed by T3 Codex/Luna
+(READY, 0 Critical / 0 Important / 0 Minor). A packet still needs spec drafts,
+per-source attribution and the exact packet evidence before corpus publication.
 
 ## Evidence
 
@@ -109,7 +110,8 @@ signal-to-output ratio, not as the sole reviewer.
 - H1 no longer waits for a named human fidelity review or owner admission.
 - The panel's output is model evidence; it is not human fidelity and must not be
   labeled as such.
-- A delegated gate implementation is required before publication.
+- The delegated gate is implemented, tested and independently reviewed; spec
+  drafts, per-source attribution and the packet remain.
 - D19 generalizes the offer/standing-preference pattern for other human-loop
   decisions; H1 remains the first declared decision type.
 - The owner can revoke or narrow this decision in writing.

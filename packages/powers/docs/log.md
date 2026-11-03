@@ -2,13 +2,22 @@
 
 ## 2026-11-03
 
+* **D18 delegated gate implemented:** `source-packets.ts` now supports
+  `VPAlgorithmDelegation/v1`, `VPDelegatedSourceGate/v1` and
+  `H1PanelDecisions/v1` committee binding. `evaluateAdmission` accepts an
+  explicit delegated authority, requires a human owner, active standing, exact
+  committee decisions and `model:` gate actors; the human path is unchanged.
+  Tests cover active and revoked delegation; the package suite reports 771
+  passed, 4 expected Windows skips and 0 failures. T3 Codex/Luna review is READY
+  0 Critical / 0 Important / 0 Minor; no packet is eligible yet.
+
 * **D18 panel complete:** six batches × three blind Codex Luna protocols on all
   25 Wondelai files. The panel covered 391 mechanical units: 219 unanimous,
   164 two-of-three, 8 manual resolutions, 0 unresolved; final decisions were
   230 accept, 80 amend, 0 merge and 81 reject. The decisions artifacts contain
   310 final units with 25 selections and 25 `PASS_MECHANICAL_ONLY` checks;
   every file passed `checkDecomposition` (manifest SHA-256
-  `1b479b597436406b5dce4d26749d0795a435ba4a2bf0edc0f976ce040e000a28`). The main
+  `f0c323a1ee57d8408efe6c27d06421ffe38c199c1651a8bc1a218d4dcb70c366`). The main
   defect is mechanical span width: many units cover only the section heading or
   first line, so the specs must use full-section locators. The panel is
   delegated model review under D18, not admission or human fidelity.

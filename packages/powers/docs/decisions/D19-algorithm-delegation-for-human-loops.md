@@ -137,9 +137,12 @@ not a permission, a legal clearance or a Runtime acceptance.
 ## Implementation boundary
 
 This decision defines the product policy. It does not implement the offer,
-preference store or automatic path. Existing human gates remain in force until
-an offer/preference path is implemented, tested and reviewed. The D18 delegated
-gate for H1 source publication remains a separate implementation dependency.
+preference store or automatic path. For decision types outside H1, existing
+human gates remain in force until an offer/preference path is implemented,
+tested and reviewed. The D18 delegated gate for H1 source publication is
+implemented, tested and independently reviewed by T3 Codex/Luna (READY,
+0 Critical / 0 Important / 0 Minor). The D19 offer/preference path itself
+remains unimplemented.
 
 ## Review evidence
 
