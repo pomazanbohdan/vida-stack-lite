@@ -2,6 +2,30 @@
 
 ## 2026-11-03
 
+* **H1 crossing-the-chasm pilot applied:** 13 `InstructionSpec` drafts from the
+  crossing-the-chasm panel decisions (spec manifest SHA-256
+  `4c033f31923668f7753bb082e05430eb6e1f94304355a046ea51d1e2965fea71`).
+  Every provenance entry carries the content-relative source path
+  `skills/crossing-the-chasm/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. The packet carries `panel-evidence.json` with the
+  B2 aggregation entry; its hash-bound reference is in the committee's per-file
+  `check.panelEvidence`. Packet SHA-256
+  `b9b3e9bba485e99fa36f5a7fdf32753ce7a92085b68edb5c888da95325bafc89`;
+  committee SHA-256
+  `f66629b3840ac5946c15de29aac78e36b94d5097f14aad9b8b4a6809efa1064d`;
+  reviewed plan SHA-256
+  `54d07559149f6280129f8b139661dd4e7fb13996b093791cd9980d1d1a36b96e`;
+  applied plan SHA-256
+  `2f3db0691f661bdefd79f87d23d04d5695520411b2a1733be3a13f116484a82f`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor after the staged-path query was resolved. Apply returned `applied`
+  with all 15 targets observed as `intended`; apply receipt SHA-256
+  `9ab2563bc7eb30ca767dc8cc4a354c59c2c9cf4b577bdbf61e8526f33966d682`.
+  Applied: 13 instructions, catalog, map; baseline rebuilt to 9 donors / 1,221
+  files; corpus 2,762; catalog revision 6,597; map revision 5,226. The other 6
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 obviously-awesome pilot applied:** 12 `InstructionSpec` drafts from the
   obviously-awesome panel decisions (spec manifest SHA-256
   `d557af48f394cbdf99b2d2e06483291d8218392313c40fd677b3f5136509fd75`).

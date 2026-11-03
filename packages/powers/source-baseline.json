@@ -4861,6 +4861,10 @@
           "sha256": "44260b572a050417ba3733021eaa1694318fda80794c3e07800c66b4bc4a0c9e",
           "bytes": 15246
         },
+        "skills/crossing-the-chasm/SKILL.md": {
+          "sha256": "93c266a4aaa2f95b0682e66ce4450d1eb2bbf64a271942f9cec9ecb59b8fde7c",
+          "bytes": 14505
+        },
         "skills/ddia-systems/SKILL.md": {
           "sha256": "cdcd71bc1ce854f04921c5ff1a63b06872f96b09ef2f0576c91a33ffc8297012",
           "bytes": 16784

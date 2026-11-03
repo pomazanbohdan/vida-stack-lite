@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5213,
+  "revision": 5226,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17625,8 +17625,22 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/crossing-the-chasm/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "crossing-the-chasm-strategic-gap",
+            "crossing-the-chasm-score",
+            "crossing-the-chasm-adoption-lifecycle",
+            "crossing-the-chasm-buyer-groups",
+            "crossing-the-chasm-beachhead",
+            "crossing-the-chasm-select-beachhead",
+            "crossing-the-chasm-whole-product",
+            "crossing-the-chasm-positioning",
+            "crossing-the-chasm-go-to-market",
+            "crossing-the-chasm-adjacent-expansion",
+            "crossing-the-chasm-tornado",
+            "crossing-the-chasm-common-mistakes",
+            "crossing-the-chasm-diagnostic"
+          ]
         },
         "skills/crossing-the-chasm/references/b2b-saas.md": {
           "status": "rejected",
