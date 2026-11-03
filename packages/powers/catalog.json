@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6597,
+  "revision": 6606,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -4748,6 +4748,51 @@
       "instruction_id": "go-to-the-upstream-documentation-when-the-local-help-runs-out",
       "path": "instructions/go-to-the-upstream-documentation-when-the-local-help-runs-out.md",
       "sha256": "0c1822edc88661b0783be2cea43b48d01f0c48cc012b37d18bf9d0d479e62d19"
+    },
+    {
+      "instruction_id": "good-strategy-common-mistakes",
+      "path": "instructions/good-strategy-common-mistakes.md",
+      "sha256": "9f7e522f66efa8da99b882aadef8f6ec1044bf576398cef00bffba55bb5e8ff5"
+    },
+    {
+      "instruction_id": "good-strategy-detect-bad-strategy",
+      "path": "instructions/good-strategy-detect-bad-strategy.md",
+      "sha256": "9e3738e87afca2ee312dc02f8615bd2a11e2bc015669c7a9c9f79e6ebb4f87a3"
+    },
+    {
+      "instruction_id": "good-strategy-diagnostic",
+      "path": "instructions/good-strategy-diagnostic.md",
+      "sha256": "03eac3e5475990b9aae96a8379fa1314f7999b6f299cedad81f6cd7f8033fa90"
+    },
+    {
+      "instruction_id": "good-strategy-explains-achievement",
+      "path": "instructions/good-strategy-explains-achievement.md",
+      "sha256": "ca5e8681c704fc8418089889d347c0e9293412f018c36b4935571b4b289476b1"
+    },
+    {
+      "instruction_id": "good-strategy-hypothesis",
+      "path": "instructions/good-strategy-hypothesis.md",
+      "sha256": "8eefed4266544120de26a1fdb682a3b98295c2b7fdb2e56891ad9028ae049477"
+    },
+    {
+      "instruction_id": "good-strategy-kernel",
+      "path": "instructions/good-strategy-kernel.md",
+      "sha256": "b44599c2763a756476a5a84c63befe2f32377ed89710e6a73431a75ca004051a"
+    },
+    {
+      "instruction_id": "good-strategy-score",
+      "path": "instructions/good-strategy-score.md",
+      "sha256": "a110a6dd2a60a9da094a7c25eb91612642676e5873b1958bade2bd9902463bb5"
+    },
+    {
+      "instruction_id": "good-strategy-sources-of-power",
+      "path": "instructions/good-strategy-sources-of-power.md",
+      "sha256": "139618a1562dba0a4ec2cb6f70c9225ee0433f0fd773d1bde856ce1f2745c653"
+    },
+    {
+      "instruction_id": "good-strategy-waves-and-inertia",
+      "path": "instructions/good-strategy-waves-and-inertia.md",
+      "sha256": "a746a3d846ce8b125a025c718d2811517544f8b349e00010a317e3f59b4aeeaa"
     },
     {
       "instruction_id": "grade-against-the-explicit-predicates-never-a-restated-goal",

@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5226,
+  "revision": 5235,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17902,8 +17902,18 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/good-strategy-bad-strategy/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "good-strategy-explains-achievement",
+            "good-strategy-score",
+            "good-strategy-kernel",
+            "good-strategy-detect-bad-strategy",
+            "good-strategy-sources-of-power",
+            "good-strategy-waves-and-inertia",
+            "good-strategy-hypothesis",
+            "good-strategy-common-mistakes",
+            "good-strategy-diagnostic"
+          ]
         },
         "skills/good-strategy-bad-strategy/references/bad-strategy.md": {
           "status": "rejected",
