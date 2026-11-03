@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5325,
+  "revision": 5335,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17326,8 +17326,19 @@
           ]
         },
         "skills/37signals-way/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "37signals-way-apply",
+            "37signals-way-build-less",
+            "37signals-way-score",
+            "37signals-way-deliberate-omission",
+            "37signals-way-shaping",
+            "37signals-way-betting-cycles",
+            "37signals-way-small-teams",
+            "37signals-way-opinionated-defaults",
+            "37signals-way-common-mistakes",
+            "37signals-way-diagnostic"
+          ]
         },
         "skills/37signals-way/references/betting-cycles.md": {
           "status": "rejected",

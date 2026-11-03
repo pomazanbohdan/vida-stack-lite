@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6704,
+  "revision": 6722,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -84,7 +84,8 @@
       "automate-what-can-be-automated": "Set up and run everything the agent can do itself — commands, servers, databases, environment variables, tools, credentials — and leave only human judgement to the human.",
       "scope-tool-reach": "Keeps a powerful capability in the role that needs it and out of the role that does not.",
       "write-knowledge-documents": "Writes the documents of a knowledge corpus: the metadata, the body, the provenance, the links and the history that go with them.",
-      "design-team-organization": "Ability to choose team boundaries, team types and interaction modes before assigning work."
+      "design-team-organization": "Ability to choose team boundaries, team types and interaction modes before assigning work.",
+      "bound-product-pitch": "Ability to bound a product problem into a pitch before a team commits to it."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -267,7 +268,9 @@
       "mistake-list": "An approach in which a known list of mistakes is checked against an artifact and each item is corrected.",
       "diagnostic-questions": "An approach in which a fixed set of diagnostic questions is applied to an artifact and each failed answer gets a corrective action.",
       "team-topology-design": "An approach in which team boundaries, team types and interaction modes are designed deliberately so the organization produces the intended architecture.",
-      "internal-platform-product": "An approach in which an internal platform is run as a product for its stream-aligned customers: optional adoption, cognitive load removed as the measure, and sensing signals."
+      "internal-platform-product": "An approach in which an internal platform is run as a product for its stream-aligned customers: optional adoption, cognitive load removed as the measure, and sensing signals.",
+      "fixed-time-variable-scope": "An approach in which the time box is fixed and scope flexes to fit the appetite.",
+      "opinionated-defaults": "An approach in which the product makes the choice instead of exposing a preference, and revisits the default only on evidence."
     }
   },
   "tag_aliases": {
@@ -315,6 +318,56 @@
   },
   "tag_exemptions": [],
   "instructions": [
+    {
+      "instruction_id": "37signals-way-apply",
+      "path": "instructions/37signals-way-apply.md",
+      "sha256": "a15e036bce96b29b0a922c67cea554975f56667e38ae9b35e116814671af31c6"
+    },
+    {
+      "instruction_id": "37signals-way-betting-cycles",
+      "path": "instructions/37signals-way-betting-cycles.md",
+      "sha256": "8ef42e6ce9231f3d905227726f4b48bfe64688a0db8e2ecc64bd058ecb20ecc2"
+    },
+    {
+      "instruction_id": "37signals-way-build-less",
+      "path": "instructions/37signals-way-build-less.md",
+      "sha256": "09bb9e9efa7f760fa8d240a8d38cfcd5cf7d33191f3bfd8e8592c4cbbd570151"
+    },
+    {
+      "instruction_id": "37signals-way-common-mistakes",
+      "path": "instructions/37signals-way-common-mistakes.md",
+      "sha256": "c6dc69896309f13d50f01b83e10caca544571b40346d4767c31ff6fa841eade6"
+    },
+    {
+      "instruction_id": "37signals-way-deliberate-omission",
+      "path": "instructions/37signals-way-deliberate-omission.md",
+      "sha256": "13f66d124e2e519e1e4c6ef7c7788b7f4f52e012c945361e079e222cd663aec6"
+    },
+    {
+      "instruction_id": "37signals-way-diagnostic",
+      "path": "instructions/37signals-way-diagnostic.md",
+      "sha256": "70ed398adbc997581bcb5dba8448c466c3bb507be167b65f415a74893dc8bd4f"
+    },
+    {
+      "instruction_id": "37signals-way-opinionated-defaults",
+      "path": "instructions/37signals-way-opinionated-defaults.md",
+      "sha256": "b5c411df424e126aca8bef854caa973d5558e7a1baf68eb3c2784db98e4937c9"
+    },
+    {
+      "instruction_id": "37signals-way-score",
+      "path": "instructions/37signals-way-score.md",
+      "sha256": "3f2ad62ea8548e249bcccdefadaff585adb3c1c4bf6290c47e0592c05e58ed81"
+    },
+    {
+      "instruction_id": "37signals-way-shaping",
+      "path": "instructions/37signals-way-shaping.md",
+      "sha256": "b609b4529e88bc735b1e377e15f3fe6a21da199d36435e9e6dc81da77c7c2b41"
+    },
+    {
+      "instruction_id": "37signals-way-small-teams",
+      "path": "instructions/37signals-way-small-teams.md",
+      "sha256": "ee8a2f9b8b4c5f086f8422d1816793c6746f43017d105088e61dac1ea91cb7f2"
+    },
     {
       "instruction_id": "a-blocker-cannot-be-accepted",
       "path": "instructions/a-blocker-cannot-be-accepted.md",

@@ -4853,6 +4853,10 @@
     "wondelai-skills": {
       "revision": "c172996495bed0fcd26896a9416b2093fd7073f0",
       "files": {
+        "skills/37signals-way/SKILL.md": {
+          "sha256": "b6882f6f197ed4eee0bfe71518f7aa16a2bf30a3bf6446b7738e6f04d39b08b4",
+          "bytes": 14905
+        },
         "skills/blue-ocean-strategy/SKILL.md": {
           "sha256": "6fefda23f1673390476244db624ff0fe9c115a445d0a43728d5d5d310a8ae896",
           "bytes": 13341

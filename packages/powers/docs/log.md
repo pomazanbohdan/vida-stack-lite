@@ -2,6 +2,41 @@
 
 ## 2026-11-03
 
+* **H1 next-3 37signals-way applied:** 10 `InstructionSpec` drafts from the
+  next-3 D18 aggregation (spec manifest SHA-256
+  `4b1100192350092439d39e65baba22614d38b1a05b2273edb213de43aefdaff7`).
+  The batch was captured and mechanically decomposed, reviewed by three blind
+  protocols (V3 Delphi, V2 Adversarial, V4 Party chat), and aggregated as
+  10 amend / 2 reject / 0 unresolved. Rejected units are Further Reading and
+  About the Authors. Every provenance entry carries the content-relative source
+  path `skills/37signals-way/SKILL.md`, the source SHA-256
+  `b6882f6f197ed4eee0bfe71518f7aa16a2bf30a3bf6446b7738e6f04d39b08b4` and the
+  full supporting per-unit locator. D22 added the shaping vocabulary. Packet
+  SHA-256
+  `642302cf6983f78c935c90a9a04f0b22e10d7a588dcf22801c3b43a456e23e06`;
+  committee SHA-256
+  `ca298f0c2f700a4bc4aa9d3e4894003ac64231ce81e05c0df3656f334bf5b796`;
+  reviewed plan SHA-256
+  `a65f3400818d0270cc3e6d337216e278533c3f8b93ca8faaa7ade5311895f39a`;
+  applied plan SHA-256
+  `77b11a8dafb266cc6de6fa59330a362e650b9280f2232542b603bb049436bad3`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna review returned READY 0 Critical / 0 Important /
+  0 Minor. The first apply exposed a retrieval-benchmark regression from the
+  original capability name; the tag was renamed to `bound-product-pitch`, the
+  plan was re-reviewed READY, and the final apply returned `applied` with all
+  12 targets observed as `intended`; apply receipt SHA-256
+  `4f34535c35a0860c45ea258989887e4b8c8272c3ca0469e94afd03c1a7563bf0`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,230
+  files; corpus 2,871; catalog revision 6,722; map revision 5,335.
+
+* **D22 product shaping tags accepted:** `catalog.json` gains the
+  `bound-product-pitch` capability and the `fixed-time-variable-scope` and
+  `opinionated-defaults` patterns. The definitions cover shaping a bounded
+  pitch, a fixed time box with variable scope, and product-chosen defaults; no
+  existing tag described them. Catalog revision 6,707. The tags are metadata
+  only and do not admit any source.
+
 * **H1 next-2 team-topologies applied:** 11 `InstructionSpec` drafts from the
   next-2 D18 aggregation (spec manifest SHA-256
   `97e12cd9daa627c398bf254bfa174cf888aa461845d27eda2c2a3490f0fe2208`).
