@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5035,
+  "revision": 5045,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18733,8 +18733,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/software-design-philosophy/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "software-design-complexity-budget",
+            "software-design-score",
+            "software-design-reduce-complexity",
+            "software-design-deep-modules",
+            "software-design-information-hiding",
+            "software-design-general-interfaces",
+            "software-design-comments",
+            "software-design-strategic-programming",
+            "software-design-common-mistakes",
+            "software-design-diagnostic"
+          ]
         },
         "skills/software-design-philosophy/references/comments-as-design.md": {
           "status": "rejected",

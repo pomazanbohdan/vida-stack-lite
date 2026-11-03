@@ -2,6 +2,28 @@
 
 ## 2026-11-03
 
+* **H1 software-design-philosophy pilot applied:** 10 `InstructionSpec` drafts
+  from the software-design-philosophy panel decisions (spec manifest SHA-256
+  `6d99a49defa5a8bd1d6bf791c89f8244153f2e20019dcd2844ea67bfc5ea906c`).
+  Every provenance entry carries the content-relative source path
+  `skills/software-design-philosophy/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. Packet SHA-256
+  `bf75252a1ed2d8db7b43c39964b8f0b8b2bf32b1a637018fd263121fdb693a0b`;
+  committee (normalized selection) SHA-256
+  `685d275175aa64d399e6c711afb9aa37d17ec9ccdaff4257f68fc594279782b0`;
+  reviewed plan SHA-256
+  `f0fc169adcde842bb5d5119149dc1823d0a29b72b42ac3aba7636ab3fa5db9bb`;
+  applied plan SHA-256
+  `11d718a592631cfb0ef3ff37e978656defad398842949105aeb7ba38299567be`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 12 targets observed as
+  `intended`; apply receipt SHA-256
+  `b40efb3524675ec3b5616da3a5882ffe78ad81ed562b3094e791e494e93adff5`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,207
+  files; corpus 2,581; catalog revision 6,416; map revision 5,045. The other 20
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 domain-driven-design pilot applied:** 10 `InstructionSpec` drafts from the
   domain-driven-design panel decisions (spec manifest SHA-256
   `44353a847f370e1f12e280e67426d82ab68540c57efbe11bade63c7253838969`).

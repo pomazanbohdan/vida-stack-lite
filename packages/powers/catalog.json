@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6406,
+  "revision": 6416,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -10853,6 +10853,56 @@
       "instruction_id": "slice-the-riskiest-piece-first",
       "path": "instructions/slice-the-riskiest-piece-first.md",
       "sha256": "18ace7fb65d8a563544060ecbb06792e97980eee7dd9ead3c20e420fff19e061"
+    },
+    {
+      "instruction_id": "software-design-comments",
+      "path": "instructions/software-design-comments.md",
+      "sha256": "bd6b75adea9bd9c4f8d4814e6a29ae5aab320a5201e217ba2b7ebb169804e383"
+    },
+    {
+      "instruction_id": "software-design-common-mistakes",
+      "path": "instructions/software-design-common-mistakes.md",
+      "sha256": "61697040138b93c74f348b05f2fee95f8864ae9bad783abc5358b36dc07371a2"
+    },
+    {
+      "instruction_id": "software-design-complexity-budget",
+      "path": "instructions/software-design-complexity-budget.md",
+      "sha256": "8fe9e7bb5f6320b9159ed75e4e1de9c9d26f9281935368518a789dcf59488f0d"
+    },
+    {
+      "instruction_id": "software-design-deep-modules",
+      "path": "instructions/software-design-deep-modules.md",
+      "sha256": "30b8f6ef8ede7723c74628b61227028647663fb37c0d4b17be096dd609517a89"
+    },
+    {
+      "instruction_id": "software-design-diagnostic",
+      "path": "instructions/software-design-diagnostic.md",
+      "sha256": "1a1eaa5caca8106ba200ca7eddd21050cce74f7b8e0d9435bd01654011c6d2e6"
+    },
+    {
+      "instruction_id": "software-design-general-interfaces",
+      "path": "instructions/software-design-general-interfaces.md",
+      "sha256": "8b55f02f84af3976dc5f2ff3a1d0f8bd299ae29ad9ed08947164d22ebea4712c"
+    },
+    {
+      "instruction_id": "software-design-information-hiding",
+      "path": "instructions/software-design-information-hiding.md",
+      "sha256": "47dc7a35ad592aa48668ea537e0b731e47f87a345ac2bfbc681971e84b09158f"
+    },
+    {
+      "instruction_id": "software-design-reduce-complexity",
+      "path": "instructions/software-design-reduce-complexity.md",
+      "sha256": "984f5d109e0cc6f04eff795038cf36b79a23659509c8cae7883f00fa93a2bc4f"
+    },
+    {
+      "instruction_id": "software-design-score",
+      "path": "instructions/software-design-score.md",
+      "sha256": "40d6b8e614747746de776fb763f0fbed13b259c9137114c19c977813d98fd7c0"
+    },
+    {
+      "instruction_id": "software-design-strategic-programming",
+      "path": "instructions/software-design-strategic-programming.md",
+      "sha256": "78679971d4ae4e4fe2933f13384f05997ef7d8416fe6ffa7314603163f9cfaef"
     },
     {
       "instruction_id": "source-the-reason-in-a-decision-record",
