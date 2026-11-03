@@ -2,6 +2,31 @@
 
 ## 2026-11-03
 
+* **H1 design-everyday-things pilot applied:** 19 `InstructionSpec` drafts from
+  the design-everyday-things panel decisions (spec manifest SHA-256
+  `d1b35582aaca9392833611ee72748648727846b5890857e8ff0873d52a3a5a6b`).
+  Every provenance entry carries the content-relative source path
+  `skills/design-everyday-things/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. The packet carries `panel-evidence.json` with the
+  B4 aggregation entry, including the u19 manual resolution; its hash-bound
+  reference is in the committee's per-file `check.panelEvidence`, and the
+  admission gate binds that committee. Packet SHA-256
+  `130a8c05105633732b104e321a68bf96884ac72fa7e55cbb2f22863b5d1ee5e5`;
+  committee SHA-256
+  `4ae8ad8e17f6ba5a8b97a124ae9a955c314cddc459d3526092e4cb3753684ee2`;
+  reviewed plan SHA-256
+  `69bbaec7847505954e57b5a56b03b1ffc3c3e145af805d452bdff81cef9ebfbc`;
+  applied plan SHA-256
+  `67d100c348b00982fca6767087fa76cbaeeebc790f2373f56d71e5c9a245ab79`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 21 targets observed as
+  `intended`; apply receipt SHA-256
+  `ef5e915e0b03b74cb73a13eac59781915e0e506b1f7ef42ab37de6f9da3fffdc`.
+  Applied: 19 instructions, catalog, map; baseline rebuilt to 9 donors / 1,218
+  files; corpus 2,725; catalog revision 6,560; map revision 5,189. The other 9
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 ux-heuristics pilot applied:** 23 `InstructionSpec` drafts from the
   ux-heuristics panel decisions (spec manifest SHA-256
   `164b0381ba0ac5d0d874318adc57061939860b385217cb582ade59d920e0f7be`).

@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6541,
+  "revision": 6560,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -3293,6 +3293,101 @@
       "instruction_id": "design-deep-modules",
       "path": "instructions/design-deep-modules.md",
       "sha256": "9ae7a9cd00b3a65e2e4736324459121d3502a800325d0f2c7ebc46849265d78d"
+    },
+    {
+      "instruction_id": "design-everyday-things-affordances",
+      "path": "instructions/design-everyday-things-affordances.md",
+      "sha256": "c2789a2244c540956e2b971cabaa838358f4c32c19c7f8f92c111dc755042d51"
+    },
+    {
+      "instruction_id": "design-everyday-things-blame-design",
+      "path": "instructions/design-everyday-things-blame-design.md",
+      "sha256": "344a0eb50ce0d8cc3287451a038f7d494ae0a3377feeacf9e2e79939db00455c"
+    },
+    {
+      "instruction_id": "design-everyday-things-common-mistakes",
+      "path": "instructions/design-everyday-things-common-mistakes.md",
+      "sha256": "cf4fdd16069612aa8be2a9ec900d8dd394e8a37b2cbad6e0b34200e4eb989398"
+    },
+    {
+      "instruction_id": "design-everyday-things-conceptual-models",
+      "path": "instructions/design-everyday-things-conceptual-models.md",
+      "sha256": "d5252af84ba34fe65e0d48d8aa0f7b9cefd84d38ce3dc94f51a0a1b7898a8098"
+    },
+    {
+      "instruction_id": "design-everyday-things-constraints",
+      "path": "instructions/design-everyday-things-constraints.md",
+      "sha256": "ba717d359394650822640dacb618ec0e5a1e9fb1c623ea64597cb309ac77aa77"
+    },
+    {
+      "instruction_id": "design-everyday-things-design-for-use",
+      "path": "instructions/design-everyday-things-design-for-use.md",
+      "sha256": "e5d834ca932fc3432d3c2774b3d77548d51c4dd12d8a2a42b3105118f063ad42"
+    },
+    {
+      "instruction_id": "design-everyday-things-diagnostic",
+      "path": "instructions/design-everyday-things-diagnostic.md",
+      "sha256": "a851a60b905470ca5d49d5449d62e23d909fc7c981923c46ebb17da9e7f2099c"
+    },
+    {
+      "instruction_id": "design-everyday-things-discoverability",
+      "path": "instructions/design-everyday-things-discoverability.md",
+      "sha256": "a15eefdbdea7dda682c5e46b2fa34b497a3c3bfb3e8340554e52306e6d962f5e"
+    },
+    {
+      "instruction_id": "design-everyday-things-evaluation",
+      "path": "instructions/design-everyday-things-evaluation.md",
+      "sha256": "101cd9f51fbf81fddab0a6c1c83f7bea258453a7a67bbf9a6a43a0f16f4be4d6"
+    },
+    {
+      "instruction_id": "design-everyday-things-execution",
+      "path": "instructions/design-everyday-things-execution.md",
+      "sha256": "201c044c2ce11e1201f5b9dc3c1d3775028651da64c25dcd5d5f10ea78af8fc7"
+    },
+    {
+      "instruction_id": "design-everyday-things-feedback",
+      "path": "instructions/design-everyday-things-feedback.md",
+      "sha256": "573f2c9cfde29813cfc419139b74d4a2886d835092e53b37bce07bcb493942b1"
+    },
+    {
+      "instruction_id": "design-everyday-things-hcd",
+      "path": "instructions/design-everyday-things-hcd.md",
+      "sha256": "9eb3c51ee6f0290177b6d924c6ad0fe667f6d639932f60b3a21965b771fecc4e"
+    },
+    {
+      "instruction_id": "design-everyday-things-mappings",
+      "path": "instructions/design-everyday-things-mappings.md",
+      "sha256": "3ae325cf7fd007744bd04e2537a99e0eb8ec2d489bf24ebb23910976562d85f9"
+    },
+    {
+      "instruction_id": "design-everyday-things-prevent-and-recover",
+      "path": "instructions/design-everyday-things-prevent-and-recover.md",
+      "sha256": "d116d54142850c3d43e8850c0dcc7d669b018e5115960d02c4233c9f1ff00758"
+    },
+    {
+      "instruction_id": "design-everyday-things-score",
+      "path": "instructions/design-everyday-things-score.md",
+      "sha256": "83aba57750632648e1ed835f7c88493d5d3725649aa0d239ca184d86c17b7b0a"
+    },
+    {
+      "instruction_id": "design-everyday-things-seven-stages",
+      "path": "instructions/design-everyday-things-seven-stages.md",
+      "sha256": "50ba89b5a883e7feb9c6a21b002286a8587dcb6789155f83e5cf8764ec7e42fa"
+    },
+    {
+      "instruction_id": "design-everyday-things-signifiers",
+      "path": "instructions/design-everyday-things-signifiers.md",
+      "sha256": "af8dfad7873c215e24059e72dd89034e7be9f813b3d2fa5975ba80298edcb106"
+    },
+    {
+      "instruction_id": "design-everyday-things-slips-and-mistakes",
+      "path": "instructions/design-everyday-things-slips-and-mistakes.md",
+      "sha256": "237db0d71c9269e4add9abd83cbbde99b883fb996d5882b75e9c527fa23ea13d"
+    },
+    {
+      "instruction_id": "design-everyday-things-two-gulfs",
+      "path": "instructions/design-everyday-things-two-gulfs.md",
+      "sha256": "f06e4efae4c490ea600cba6e8712be15bcad7163d17e2a4be1a2449b3c0ddf97"
     },
     {
       "instruction_id": "design-for-mockability",

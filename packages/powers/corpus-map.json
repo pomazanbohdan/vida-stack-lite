@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5170,
+  "revision": 5189,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17713,8 +17713,28 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/design-everyday-things/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "design-everyday-things-design-for-use",
+            "design-everyday-things-score",
+            "design-everyday-things-two-gulfs",
+            "design-everyday-things-execution",
+            "design-everyday-things-evaluation",
+            "design-everyday-things-discoverability",
+            "design-everyday-things-affordances",
+            "design-everyday-things-signifiers",
+            "design-everyday-things-mappings",
+            "design-everyday-things-constraints",
+            "design-everyday-things-feedback",
+            "design-everyday-things-conceptual-models",
+            "design-everyday-things-blame-design",
+            "design-everyday-things-slips-and-mistakes",
+            "design-everyday-things-prevent-and-recover",
+            "design-everyday-things-seven-stages",
+            "design-everyday-things-hcd",
+            "design-everyday-things-common-mistakes",
+            "design-everyday-things-diagnostic"
+          ]
         },
         "skills/design-everyday-things/references/affordances.md": {
           "status": "rejected",

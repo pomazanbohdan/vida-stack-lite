@@ -4865,6 +4865,10 @@
           "sha256": "cdcd71bc1ce854f04921c5ff1a63b06872f96b09ef2f0576c91a33ffc8297012",
           "bytes": 16784
         },
+        "skills/design-everyday-things/SKILL.md": {
+          "sha256": "cd14143973b32c84583e8d94175410188c255f24169e78826f5b4dbf11fa4fa6",
+          "bytes": 15994
+        },
         "skills/domain-driven-design/SKILL.md": {
           "sha256": "14f80bc0c209e8500f52813158afb8b6b819b47a54b92576f0c0586acac38668",
           "bytes": 15388
