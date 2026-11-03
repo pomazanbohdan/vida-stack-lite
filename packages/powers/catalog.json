@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6651,
+  "revision": 6666,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -6801,6 +6801,81 @@
       "instruction_id": "look-on-disk-before-you-call-a-run-empty",
       "path": "instructions/look-on-disk-before-you-call-a-run-empty.md",
       "sha256": "13002ab60052671229428b967cbd0f339ff826bdf1098431eae7c11559b369c6"
+    },
+    {
+      "instruction_id": "made-to-stick-common-mistakes",
+      "path": "instructions/made-to-stick-common-mistakes.md",
+      "sha256": "8fd17e67b1928885b6cccc3531d55ed57c796f96842357d2dca0c6eee54fad1b"
+    },
+    {
+      "instruction_id": "made-to-stick-concrete",
+      "path": "instructions/made-to-stick-concrete.md",
+      "sha256": "b0ac7b9490c2c5a60f3d10b37c617b4a30e8998e106403bee759fc01616f4d8d"
+    },
+    {
+      "instruction_id": "made-to-stick-credible",
+      "path": "instructions/made-to-stick-credible.md",
+      "sha256": "88c1a0a59c60f0671e32c31ef258ce6756fd017c7f1a635523139f09fb808718"
+    },
+    {
+      "instruction_id": "made-to-stick-curse-of-knowledge",
+      "path": "instructions/made-to-stick-curse-of-knowledge.md",
+      "sha256": "f08590e847dc5cd3257e1cc4043613419735df8fbb3762a6f6e29a6092563f92"
+    },
+    {
+      "instruction_id": "made-to-stick-demos",
+      "path": "instructions/made-to-stick-demos.md",
+      "sha256": "4163c329bee4402609b0594e77434e8d2c5b32040e80d608f3469f7d94fc81c6"
+    },
+    {
+      "instruction_id": "made-to-stick-diagnostic",
+      "path": "instructions/made-to-stick-diagnostic.md",
+      "sha256": "6ab7141b9f1058b816bbdf896d49c8821323246f5b5e61e6ba98f37269f49c02"
+    },
+    {
+      "instruction_id": "made-to-stick-emotional",
+      "path": "instructions/made-to-stick-emotional.md",
+      "sha256": "8fe7840f1fda64bc46a4d47860f0fa096dd8cfa3d018fd9a8419c7978b26160f"
+    },
+    {
+      "instruction_id": "made-to-stick-landing-pages",
+      "path": "instructions/made-to-stick-landing-pages.md",
+      "sha256": "a306dbde23d350238ae9684a639edeb078a33c031fd7099a4f2bf071921ea4d7"
+    },
+    {
+      "instruction_id": "made-to-stick-onboarding",
+      "path": "instructions/made-to-stick-onboarding.md",
+      "sha256": "1976a6db0ecbf08c230355c62535e580481c05f64471bc712d76c64394ee211f"
+    },
+    {
+      "instruction_id": "made-to-stick-score",
+      "path": "instructions/made-to-stick-score.md",
+      "sha256": "e80a96aa19316d5ce6d02df56d6c43a10a9a1d09ff6d466465078ea22824ee73"
+    },
+    {
+      "instruction_id": "made-to-stick-simple",
+      "path": "instructions/made-to-stick-simple.md",
+      "sha256": "7c8aeb4a54e4fd7683c024a7b23e5f68f38fffbb775895be4bea98d1302337ee"
+    },
+    {
+      "instruction_id": "made-to-stick-stories",
+      "path": "instructions/made-to-stick-stories.md",
+      "sha256": "8437cf30cea246d0e1a93d5fd842bb530e7c6fea719c985dc1bf2b719a4c064e"
+    },
+    {
+      "instruction_id": "made-to-stick-succes",
+      "path": "instructions/made-to-stick-succes.md",
+      "sha256": "182eb8cff6d5112fa74da10af5d73d6aa9dd8c16a9f450991e7a093e02e6162d"
+    },
+    {
+      "instruction_id": "made-to-stick-toolkit",
+      "path": "instructions/made-to-stick-toolkit.md",
+      "sha256": "261e061857fb27970fcb02bc517a8ecb24fce6615743f50907f68df14d464c1d"
+    },
+    {
+      "instruction_id": "made-to-stick-unexpected",
+      "path": "instructions/made-to-stick-unexpected.md",
+      "sha256": "9c1fdf85d66ddba1d528d79eaa82431607fab226bd8057b32bde6b30ac9683d2"
     },
     {
       "instruction_id": "maintain-diagnosis-case-file",

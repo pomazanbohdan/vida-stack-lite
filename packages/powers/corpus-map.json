@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5275,
+  "revision": 5290,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18464,8 +18464,24 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/made-to-stick/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "made-to-stick-succes",
+            "made-to-stick-score",
+            "made-to-stick-toolkit",
+            "made-to-stick-simple",
+            "made-to-stick-unexpected",
+            "made-to-stick-concrete",
+            "made-to-stick-credible",
+            "made-to-stick-emotional",
+            "made-to-stick-stories",
+            "made-to-stick-curse-of-knowledge",
+            "made-to-stick-landing-pages",
+            "made-to-stick-demos",
+            "made-to-stick-onboarding",
+            "made-to-stick-common-mistakes",
+            "made-to-stick-diagnostic"
+          ]
         },
         "skills/made-to-stick/references/applications.md": {
           "status": "rejected",

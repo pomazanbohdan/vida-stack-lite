@@ -4901,6 +4901,10 @@
           "sha256": "4fe0a10132650ad36bc79676b12c8f58b19035a40ac6587c864387d0f808cf04",
           "bytes": 16079
         },
+        "skills/made-to-stick/SKILL.md": {
+          "sha256": "6eb330f403882d8f944590772170de48847f7025b942ee56f564717229d3965e",
+          "bytes": 16025
+        },
         "skills/mom-test/SKILL.md": {
           "sha256": "fbf036f31e5932e68adc6d26abe8d75f2213b3c50ea345f7dffa2f235b0ce0ae",
           "bytes": 16817
