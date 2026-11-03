@@ -2,6 +2,33 @@
 
 ## 2026-11-03
 
+* **H1 obviously-awesome pilot applied:** 12 `InstructionSpec` drafts from the
+  obviously-awesome panel decisions (spec manifest SHA-256
+  `d557af48f394cbdf99b2d2e06483291d8218392313c40fd677b3f5136509fd75`).
+  Every provenance entry carries the content-relative source path
+  `skills/obviously-awesome/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. Required-data labels use two-part names
+  (`quality-score`, `improvement-list`, `positioning-canvas`,
+  `diagnostic-findings`, `corrective-actions`) after review flagged the original
+  single-word labels. The packet carries `panel-evidence.json` with the B4
+  aggregation entry; its hash-bound reference is in the committee's per-file
+  `check.panelEvidence`. Packet SHA-256
+  `a6e4b559899501c034fc0f0481e049a7ea07cb261c8dd67cf695f8e1f8d658b1`;
+  committee SHA-256
+  `4fac3f99443a26094ffa708beeae898109e2f823d5efc662c9babf01987f1fe6`;
+  reviewed plan SHA-256
+  `87c15a52899085c1b7955ccfd07bdc73486535347b960f34a85f68bd37ed9d17`;
+  applied plan SHA-256
+  `da2218d7b28a3a7864903c42fe5269f3f1986009ec55baeca4b75319ef78d1f5`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor. Apply returned `applied` with all 14 targets observed as `intended`;
+  apply receipt SHA-256
+  `976beee4196e2b64cdec6add7c11e037a4712ced0055d449355d8ff12ab5e050`.
+  Applied: 12 instructions, catalog, map; baseline rebuilt to 9 donors / 1,220
+  files; corpus 2,749; catalog revision 6,584; map revision 5,213. The other 7
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 refactoring-ui pilot applied:** 12 `InstructionSpec` drafts from the
   refactoring-ui panel decisions (spec manifest SHA-256
   `d34e9c890f6b798e98ecb9de3c8969054332396133823f38b6f1aa1abae069f3`).

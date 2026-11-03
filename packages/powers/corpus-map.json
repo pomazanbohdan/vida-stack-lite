@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5201,
+  "revision": 5213,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18567,8 +18567,21 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/obviously-awesome/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "obviously-awesome-positioning-context",
+            "obviously-awesome-score",
+            "obviously-awesome-canvas",
+            "obviously-awesome-alternatives",
+            "obviously-awesome-unique-attributes",
+            "obviously-awesome-value-mapping",
+            "obviously-awesome-best-fit",
+            "obviously-awesome-market-category",
+            "obviously-awesome-trends",
+            "obviously-awesome-team-alignment",
+            "obviously-awesome-common-mistakes",
+            "obviously-awesome-diagnostic"
+          ]
         },
         "skills/obviously-awesome/references/case-studies.md": {
           "status": "rejected",

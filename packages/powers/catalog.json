@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6572,
+  "revision": 6584,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -7893,6 +7893,66 @@
       "instruction_id": "observe-the-guard-ran-rather-than-infer-it",
       "path": "instructions/observe-the-guard-ran-rather-than-infer-it.md",
       "sha256": "70791449d3b74bf6d15482b61c8983865ab981b1a9665e6c66fb97220fa49fb3"
+    },
+    {
+      "instruction_id": "obviously-awesome-alternatives",
+      "path": "instructions/obviously-awesome-alternatives.md",
+      "sha256": "2874d31d24cbf55e7894dcd7df4a66ebc7b66d4b693931e0bce91842f2f9b35a"
+    },
+    {
+      "instruction_id": "obviously-awesome-best-fit",
+      "path": "instructions/obviously-awesome-best-fit.md",
+      "sha256": "885557c042d9cc34ca284e0b68a5ee93fa4d07bca645c2ccc3b15943124066f3"
+    },
+    {
+      "instruction_id": "obviously-awesome-canvas",
+      "path": "instructions/obviously-awesome-canvas.md",
+      "sha256": "69da56e9b4047709190d9eda333b7a8976bc856a5ee7fbdb9c5bcb55389f9be5"
+    },
+    {
+      "instruction_id": "obviously-awesome-common-mistakes",
+      "path": "instructions/obviously-awesome-common-mistakes.md",
+      "sha256": "f192c0692b266ccbf49f91908664e03f58cbb744204f817fe744b04b277058af"
+    },
+    {
+      "instruction_id": "obviously-awesome-diagnostic",
+      "path": "instructions/obviously-awesome-diagnostic.md",
+      "sha256": "af2b1215d38d29f7d3a27e1c4c31dc0e878f1fec1685ba9f3828323cfb96c40e"
+    },
+    {
+      "instruction_id": "obviously-awesome-market-category",
+      "path": "instructions/obviously-awesome-market-category.md",
+      "sha256": "2a7af18a2360d82fff8b599d429795e3c441572e321bc18af4d700388ec3db02"
+    },
+    {
+      "instruction_id": "obviously-awesome-positioning-context",
+      "path": "instructions/obviously-awesome-positioning-context.md",
+      "sha256": "42cce2666d4383425ebdbb002afc447204df752b7c22b26dde29e386672c31f6"
+    },
+    {
+      "instruction_id": "obviously-awesome-score",
+      "path": "instructions/obviously-awesome-score.md",
+      "sha256": "eda706d4e41db13ecbc96214e77ce80ba3d426b8cdbd5da0a9597097e7151d5e"
+    },
+    {
+      "instruction_id": "obviously-awesome-team-alignment",
+      "path": "instructions/obviously-awesome-team-alignment.md",
+      "sha256": "e20cabb139ebb33a85f02b7b923134d2bf020a964230350cebcc43f56ac9d11c"
+    },
+    {
+      "instruction_id": "obviously-awesome-trends",
+      "path": "instructions/obviously-awesome-trends.md",
+      "sha256": "23a926b9aec86f75ca89cca49e8682e47c5c9aaaa190382ffa411d60b7fd7c56"
+    },
+    {
+      "instruction_id": "obviously-awesome-unique-attributes",
+      "path": "instructions/obviously-awesome-unique-attributes.md",
+      "sha256": "9eb194c873db074f3e3072e3dde3efc1f0279a99458f20db1eb328154e7dd356"
+    },
+    {
+      "instruction_id": "obviously-awesome-value-mapping",
+      "path": "instructions/obviously-awesome-value-mapping.md",
+      "sha256": "c299899b59439c123d8d9ad27a16bd6b7642975bbc5e2293050a6d875bf98ac6"
     },
     {
       "instruction_id": "offer-a-cross-model-second-opinion",
