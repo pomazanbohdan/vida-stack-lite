@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5075,
+  "revision": 5085,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17522,8 +17522,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/continuous-discovery/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "continuous-discovery-weekly-cadence",
+            "continuous-discovery-score",
+            "continuous-discovery-opportunity-tree",
+            "continuous-discovery-experience-map",
+            "continuous-discovery-story-interviews",
+            "continuous-discovery-test-assumptions",
+            "continuous-discovery-prioritize-opportunities",
+            "continuous-discovery-build-the-habit",
+            "continuous-discovery-common-mistakes",
+            "continuous-discovery-diagnostic"
+          ]
         },
         "skills/continuous-discovery/references/assumption-mapping.md": {
           "status": "rejected",
