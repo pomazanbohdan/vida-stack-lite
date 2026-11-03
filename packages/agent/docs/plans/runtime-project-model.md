@@ -2,6 +2,7 @@
 type: Implementation Plan
 title: Runtime product model implementation
 ---
+
 # Runtime product model implementation plan
 
 > For agentic workers: use subagent-driven development task by task. Luna implements; OpenCode DeepSeek V4.1 Flash validates; Root owns Git and native/publication effects. User already authorized execution; do not ask again for a routine plan/execution choice.
@@ -13,6 +14,12 @@ title: Runtime product model implementation
 **Tech stack:** pinned Bun 1.4.4, existing TypeScript/Zod/Ajv/YAML/fs-safe dependencies; native Linux/Windows release workflow; Bash/PowerShell external installers.
 
 **Spec:** [approved model with annotations](../decisions/configuration/runtime-project-model.md), [clean-init authorization](../decisions/configuration/clean-init-authorization.md). Derived execution record: `.agent/work/runtime-project-model-implementation-20261102/WORK.md`.
+
+## Execution cycles
+
+Follow the [one-task runtime-first delivery cycle](../decisions/work-items/runtime-first-development.md). This plan describes the full program; it is not one release batch. Start one task through the installed runtime. If a demonstrated runtime defect blocks it, fix only that defect and finish the same task outside runtime. Qualify, deliver a new PATCH build, update the system runtime, and reconcile Markdown before starting the next task through that updated runtime.
+
+The current cycle is Task 2 (`runtime-work-records`) plus the causal runtime blocker, once established. Task 1 is an integrated dependency. Tasks 3–6 remain queued; do not implement them to enlarge this delivery. Preserve mandatory release gates. An unrelated gate is a reported delivery blocker, not permission to skip checks or silently add other tasks. Track Source completion, the retained runtime attempt, and actual delivery separately.
 
 ## Global constraints
 
@@ -105,6 +112,8 @@ Record includes schema, internal_id, key, kind/code, product ID, number, parent_
 - [ ] GREEN: focused CLI tests, package exports/resources/standalone regression checks; OpenCode review.
 
 ## Task 6 — temporary end-to-end acceptance and delivery
+
+This task owns final acceptance and adoption of the complete product model. Its full-model scenarios wait for their feature dependencies. They do not postpone each earlier task's scoped PATCH delivery. Repeat the applicable existing release/install checks for each one-task cycle; do not claim unimplemented init/configuration/reset scenarios in a Task 2 release.
 
 - [ ] Build a qualified candidate in an isolated temp consumer; use actual CLI init/config to cover every approved field and work operation, invalid inputs, interrupted clean-init recovery and help examples. Record actual receipts/exit/hash/config bindings.
 - [ ] Fresh whole-change OpenCode review, required test/static/resource checks; preserve failures and fix through assigned Luna writer.
