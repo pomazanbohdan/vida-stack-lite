@@ -2,6 +2,28 @@
 
 ## 2026-11-03
 
+* **H1 working-with-legacy-code pilot applied:** 10 `InstructionSpec` drafts
+  from the working-with-legacy-code panel decisions (spec manifest SHA-256
+  `24a5f6ba4b64e482ef937552fdcda3a31e36cc058e5119bca58c8201619eb66e`).
+  Every provenance entry carries the content-relative source path
+  `skills/working-with-legacy-code/SKILL.md`, the source SHA-256 and the full
+  supporting per-unit locator. Packet SHA-256
+  `9e9dff989a9c9b4bbb1f30c41a89303f396c721af045f9c25c904488b8e4782e`;
+  committee (normalized selection) SHA-256
+  `e2ff391b7de9d5ad72c451862a30d8fed82333fe7ec1390a978502b4a6b66a1d`;
+  reviewed plan SHA-256
+  `f4710815f03f41bf59d1b702afd70a88cfbd80c6fa85389e4f109db4e72f6f86`;
+  applied plan SHA-256
+  `bfd56b7d4b53d9dd2bf39d39361b0c23c2c386a80e44c3b220653bbd0dd676a3`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 12 targets observed as
+  `intended`; apply receipt SHA-256
+  `83349ad65e75f3f5bd5a5f93c99de75f6fe38ab571b31d382fd2cd9573060a1c`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,209
+  files; corpus 2,601; catalog revision 6,436; map revision 5,065. The other 18
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 refactoring-patterns pilot applied:** 10 `InstructionSpec` drafts from the
   refactoring-patterns panel decisions (spec manifest SHA-256
   `016e3545b13dcb8bb85d7dec539a012748f4d57919bf92ece4b3b2414577f61a`).

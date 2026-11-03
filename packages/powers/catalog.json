@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6426,
+  "revision": 6436,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -5868,6 +5868,56 @@
       "instruction_id": "leave-the-working-copy-clean-after-the-run",
       "path": "instructions/leave-the-working-copy-clean-after-the-run.md",
       "sha256": "221dc87d2a29fe5981a72f167754f6194eee4e4b277d74881db0138772afdb7a"
+    },
+    {
+      "instruction_id": "legacy-code-break-dependencies",
+      "path": "instructions/legacy-code-break-dependencies.md",
+      "sha256": "e8ed3e68ec903167ff19a21f1cdb73a39996b2e1e8b608f33e0e56e5afb22013"
+    },
+    {
+      "instruction_id": "legacy-code-change-algorithm",
+      "path": "instructions/legacy-code-change-algorithm.md",
+      "sha256": "1b995890560f20302a08dcb1b1af10b5f2bdb9910c48d624969493eea0d32936"
+    },
+    {
+      "instruction_id": "legacy-code-characterization-tests",
+      "path": "instructions/legacy-code-characterization-tests.md",
+      "sha256": "bc36744a0420bb70cbe8a7bf6bacd569621d14c3ea813332c85f4ae2c5548882"
+    },
+    {
+      "instruction_id": "legacy-code-common-mistakes",
+      "path": "instructions/legacy-code-common-mistakes.md",
+      "sha256": "f3d295ab608dc57fd770fca8d0aa346258d74163992c0be5dddfa119d2354e4f"
+    },
+    {
+      "instruction_id": "legacy-code-diagnostic",
+      "path": "instructions/legacy-code-diagnostic.md",
+      "sha256": "8afe2fe450bf3bbf1e647b43afb2e040000f424ccee6d2bfcb8266c1b9c97576"
+    },
+    {
+      "instruction_id": "legacy-code-find-seams",
+      "path": "instructions/legacy-code-find-seams.md",
+      "sha256": "35c4cdfda3d72b82b28d2ea9273851bd6f9794620fae0fac895d2e2a6b58389b"
+    },
+    {
+      "instruction_id": "legacy-code-score-change-readiness",
+      "path": "instructions/legacy-code-score-change-readiness.md",
+      "sha256": "431c5c44d6734414f42cb35b1a3a66fc5173498c486cc99c151b895f7ed61f81"
+    },
+    {
+      "instruction_id": "legacy-code-sprout-and-wrap",
+      "path": "instructions/legacy-code-sprout-and-wrap.md",
+      "sha256": "b500e8ab3fd40d8f57a2482cc9a265da5cd6d2079ba3cce41ac241b1f744fc4f"
+    },
+    {
+      "instruction_id": "legacy-code-treat-as-untested",
+      "path": "instructions/legacy-code-treat-as-untested.md",
+      "sha256": "1c643e6bca0acf59fccbda54bc9e6f90b9c1b4ad022a438853cf73f905ae1a8b"
+    },
+    {
+      "instruction_id": "legacy-code-understand-and-untangle",
+      "path": "instructions/legacy-code-understand-and-untangle.md",
+      "sha256": "6e636303ed7373e8420d8ed70a2f7eb42028b921fe4aa5fa3f981231feea70ee"
     },
     {
       "instruction_id": "let-another-agent-write-the-reproduction-test",

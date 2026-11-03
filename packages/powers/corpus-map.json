@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5055,
+  "revision": 5065,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19039,8 +19039,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/working-with-legacy-code/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "legacy-code-treat-as-untested",
+            "legacy-code-score-change-readiness",
+            "legacy-code-change-algorithm",
+            "legacy-code-find-seams",
+            "legacy-code-characterization-tests",
+            "legacy-code-sprout-and-wrap",
+            "legacy-code-break-dependencies",
+            "legacy-code-understand-and-untangle",
+            "legacy-code-common-mistakes",
+            "legacy-code-diagnostic"
+          ]
         },
         "skills/working-with-legacy-code/references/case-studies.md": {
           "status": "rejected",

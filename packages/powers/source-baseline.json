@@ -4876,6 +4876,10 @@
         "skills/software-design-philosophy/SKILL.md": {
           "sha256": "d5971fdfc51e6a6f729856a9c3874d56628bb6802fdd31eb1c97adbfa4b51a73",
           "bytes": 16318
+        },
+        "skills/working-with-legacy-code/SKILL.md": {
+          "sha256": "4a621798f9a51ad1438f5b25b168615b7caeb540378c8f4d70ab733523135e21",
+          "bytes": 19511
         }
       }
     }
