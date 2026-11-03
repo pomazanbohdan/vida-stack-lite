@@ -2,6 +2,21 @@
 
 ## 2026-11-02
 
+* **H1 pilot captures sealed:** captured all 25 approved Wondelai files with the
+  existing `capturePacket` policy (strict UTF-8, BOM/CRLF/codepoint spans) and
+  sealed a manifest under the existing H1 evidence directory
+  (`h1-pilot-25/manifest.json`, SHA-256
+  `e23514e03b4fb5bd8d4af21751f8b21fc22379ade73c0df5a2ce134e60cbb5bb`).
+  The manifest records 25 files, 8/9/8 groups, pinned paths, byte sizes and
+  SHA-256 values; the set remains unadmitted. Next: draft units/spans for human
+  fidelity review.
+
+* **H1 pilot set approved:** the owner approved the proposed 25-file set
+  (8 engineering / 9 product-UX / 8 business-marketing) for preparation on
+  2026-11-03. The set remains unadmitted; per-source provenance, full human
+  fidelity review and owner admission are still required. Step H H1,
+  next-actions and the pilot record carry the approval.
+
 * **H1 25-file pilot proposed:** prepared a balanced candidate set of 25
   Wondelai `SKILL.md` files (8 engineering, 9 product-UX, 8 business-marketing),
   all outside the 14 guided-journey directories, with pinned paths, byte sizes
