@@ -4877,6 +4877,10 @@
           "sha256": "cc227aa837bda4ae0910324e52a90d338354501d005f7ef2fbd0cff9fd73aaf1",
           "bytes": 16493
         },
+        "skills/mom-test/SKILL.md": {
+          "sha256": "fbf036f31e5932e68adc6d26abe8d75f2213b3c50ea345f7dffa2f235b0ce0ae",
+          "bytes": 16817
+        },
         "skills/pragmatic-programmer/SKILL.md": {
           "sha256": "7bd0a042aa2dd559f0327916f8d4f2dcf7d21e5f2343a193eaafee932f0f85a3",
           "bytes": 16557

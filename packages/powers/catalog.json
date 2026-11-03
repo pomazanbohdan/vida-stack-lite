@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6477,
+  "revision": 6487,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -6943,6 +6943,56 @@
       "instruction_id": "model-threats-before-adding-controls",
       "path": "instructions/model-threats-before-adding-controls.md",
       "sha256": "32fb3fb76df24728a51d04850f70e8f2614ac4220e411c182dda8d238c5380d7"
+    },
+    {
+      "instruction_id": "mom-test-avoid-bad-data",
+      "path": "instructions/mom-test-avoid-bad-data.md",
+      "sha256": "363e018abafde697672667318e089fb9480888228b5d661a54fdd6a75f48b5bd"
+    },
+    {
+      "instruction_id": "mom-test-commitment",
+      "path": "instructions/mom-test-commitment.md",
+      "sha256": "504c40e48156d7544eb6a56950b9212c58afb7d20c9babd47e07495c1e338c3a"
+    },
+    {
+      "instruction_id": "mom-test-common-mistakes",
+      "path": "instructions/mom-test-common-mistakes.md",
+      "sha256": "685976968a5677b31131ebaa8b3f24472d2023a9340de8abc901b0afb46e73e8"
+    },
+    {
+      "instruction_id": "mom-test-diagnostic",
+      "path": "instructions/mom-test-diagnostic.md",
+      "sha256": "056d138784e7c4461f6cfe52c205ba827b4a4bbda97bad1bbcb7bb5c0cc92576"
+    },
+    {
+      "instruction_id": "mom-test-find-conversations",
+      "path": "instructions/mom-test-find-conversations.md",
+      "sha256": "9ef474ffa7b60cace8fb5e8cb2c295a2ddfcebe39e79108f0df5ab0014c698cf"
+    },
+    {
+      "instruction_id": "mom-test-good-questions",
+      "path": "instructions/mom-test-good-questions.md",
+      "sha256": "1221dd94b2e7ef6d003d28e67e0f30639d4762fd4655d91a3805ae2b611447ff"
+    },
+    {
+      "instruction_id": "mom-test-process-notes",
+      "path": "instructions/mom-test-process-notes.md",
+      "sha256": "efc5b948c69134d119099c63c1f939a2a8bc55e01d14d481620cc92d305e3087"
+    },
+    {
+      "instruction_id": "mom-test-score",
+      "path": "instructions/mom-test-score.md",
+      "sha256": "a5ec21ed3edaa0d45fc7a19e1de78d6187e17d0d10629e0679686e9866696bdb"
+    },
+    {
+      "instruction_id": "mom-test-talk-about-them",
+      "path": "instructions/mom-test-talk-about-them.md",
+      "sha256": "e56196623341204fc3e51be2a48f750d735146abbee1f4abebace2a959b3ebe8"
+    },
+    {
+      "instruction_id": "mom-test-three-rules",
+      "path": "instructions/mom-test-three-rules.md",
+      "sha256": "be8f7bc863f538981b863a89d50737b7fc474243cb1925e5b4182e414b39a535"
     },
     {
       "instruction_id": "move-only-the-platform-signal-not-the-house-idioms",

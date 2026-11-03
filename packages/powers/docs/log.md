@@ -2,6 +2,28 @@
 
 ## 2026-11-03
 
+* **H1 mom-test pilot applied:** 10 `InstructionSpec` drafts from the mom-test
+  panel decisions (spec manifest SHA-256
+  `415c1f79cb6427fbf0ded8e26e997fb07f37080941feacf97ab51bc0e2f04f75`).
+  Every provenance entry carries the content-relative source path
+  `skills/mom-test/SKILL.md`, the source SHA-256 and the full supporting
+  per-unit locator. Packet SHA-256
+  `f2361520714f0ff79aa80636d83c04530968dd366a7173879c99137662905a02`;
+  committee (normalized selection) SHA-256
+  `d4d311524de97317fa07ecfcbba885fa2e6322eaec0d8f689667a6b357faedb7`;
+  reviewed plan SHA-256
+  `4df2d645910dbe024846bdf4af4feb15f0b3199d585046b21da66e3dc203e5dd`;
+  applied plan SHA-256
+  `c0c51dfd6c414e81196a65a255e966974ba1eb1bc4d45f6eedbfc925e3575567`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna plan review returned READY 0 Critical / 0 Important
+  / 0 Minor. Apply returned `applied` with all 12 targets observed as
+  `intended`; apply receipt SHA-256
+  `4db1a1b4639a3ad7168eb8f94e0c9b6e5fc844e605c933edc4f0a545b19297a2`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,214
+  files; corpus 2,652; catalog revision 6,487; map revision 5,116. The other 13
+  pilot files remain unapplied; this is a pilot subset, not H1 completion.
+
 * **H1 jobs-to-be-done pilot applied:** 11 `InstructionSpec` drafts from the
   jobs-to-be-done panel decisions (spec manifest SHA-256
   `49f26be117981234f8674419c068d95eae47f49a9cf7da07d8626d3f93bf0cdb`).

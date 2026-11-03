@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5106,
+  "revision": 5116,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18443,8 +18443,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/mom-test/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "mom-test-talk-about-them",
+            "mom-test-score",
+            "mom-test-three-rules",
+            "mom-test-good-questions",
+            "mom-test-avoid-bad-data",
+            "mom-test-commitment",
+            "mom-test-find-conversations",
+            "mom-test-process-notes",
+            "mom-test-common-mistakes",
+            "mom-test-diagnostic"
+          ]
         },
         "skills/mom-test/references/avoiding-bad-data.md": {
           "status": "rejected",
