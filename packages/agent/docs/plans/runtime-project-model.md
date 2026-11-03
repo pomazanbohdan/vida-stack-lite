@@ -19,7 +19,7 @@ title: Runtime product model implementation
 
 Follow the [one-task runtime-first delivery cycle](../decisions/work-items/runtime-first-development.md). This plan describes the full program; it is not one release batch. Start one task through the installed runtime. If a demonstrated runtime defect blocks it, fix only that defect and finish the same task outside runtime. Qualify, deliver a new PATCH build, update the system runtime, and reconcile Markdown before starting the next task through that updated runtime.
 
-The current cycle is Task 2 (`runtime-work-records`) plus the causal runtime blocker, once established. Task 1 is an integrated dependency. Tasks 3–6 remain queued; do not implement them to enlarge this delivery. Preserve mandatory release gates. An unrelated gate is a reported delivery blocker, not permission to skip checks or silently add other tasks. Track Source completion, the retained runtime attempt, and actual delivery separately.
+Task 2 (`runtime-work-records`) Source and the demonstrated readonly-frontier repair are delivered in v0.1.9; its original runtime attempt has the supported suspended disposition described below. Task 1 is an integrated dependency. Tasks 3–6 remain queued; Task 3 has not started. Preserve mandatory release gates. An unrelated gate is a reported delivery blocker, not permission to skip checks or silently add other tasks. Track Source completion, the retained runtime attempt, and actual delivery separately.
 
 ## Global constraints
 
@@ -29,9 +29,10 @@ The current cycle is Task 2 (`runtime-work-records`) plus the causal runtime blo
 - Stable internal UUID and number on type change; human key changes type prefix; old keys resolve to the same identity. Counter spans kinds within product, monotonic, no reuse; crash gaps allowed.
 - One OKF wiki with index.md, topic research/decisions and per-area requirements; no duplicate internal/output corpus. Code/docs mappings independent and may overlap.
 - Missing material init choices go to user via injected prompt boundary. Complete explicit noninteractive inputs are allowed; absent answers are not implied approval.
+- This repository's clean-init prefixes are explicitly confirmed: repository `VIDA`, Agent `AGENT`, Codex `CODEX`, Powers `POWERS`. Carry them into the supported setup owner without asking again; do not activate new cfg fields before their implementation/adoption gates.
 - Published strict-v1 active-artifact formats must not be silently widened before a supported atomic repair/adoption owner. Preserve CAS, safe filesystem, UNKNOWN, native evidence and installed-vs-Source boundaries.
 - Root alone uses Git, dispatches/releases workflows, installs or resets the real repository. Workers never commit, publish, update real installed files or clean real state.
-- No new external runtime for installers; Linux Bash/system tools, Windows PowerShell/system tools. Software version increments PATCH, normal candidate 0.1.9 from observed 0.1.8.
+- No new external runtime for installers; Linux Bash/system tools, Windows PowerShell/system tools. Software version increments PATCH. Published and system-installed runtime version is 0.1.9; the next candidate is selected by the existing owner from live state, normally 0.1.10.
 
 ## Review focus
 
@@ -65,6 +66,12 @@ Path validation follows the existing pure rules at `src/config/project-context.t
 
 ## Task 2 — local work records, keys and hierarchy
 
+**Status:** Source implementation and the causal readonly-frontier repair are delivered in [v0.1.9](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.9), bound to Source `b637686fe0fb41e4f9da8556eecf51ef28e3615f`. [Native delivery run 41709823990, attempt 2](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/41709823990) is completed/success: release assurance, both native targets, publisher and external Linux installation. Nine published assets match the retained publication claim. System Windows update through the public PowerShell installer has version 0.1.9 and executable SHA-256 `8c35ae9db49943053543b59b8e6711fadc3e3d1162a5c0646a792456014161d6`; version/help/resource commands pass with external runtimes unavailable. The Linux Bash/system-tools installation has the matching version and binary SHA-256 `6b78bc749be80a6893284f3a81a43673c061e6a91e2fe41bf74fee50f3dc2f7b`.
+
+**Original runtime attempt:** the installed 0.1.9 public `--release-completed-readonly` owner completes inspect/plan/apply. Fresh public inspection of `runtime-work-records`, attempt 1, reports `INTAKE`, `execution_status:suspended`, no lease, no pending actions and `recovery_required:false`. Work revision is 2 and ledger revision is 9; journal revision 6/digest `0e2a9c831e4cf466a41cc6d2dc5a5ccd117896be91fa80b24c47c40d812749ef` is preserved. No old report is replayed, Source right granted, private state edited or Runtime acceptance inferred. This is a supported owner disposition, not a retroactive task completion.
+
+**Check limits:** retained bounded library proof is 30 cases/332 assertions. The separately bound 76-case regression receipt is 75 pass/1 unwaived Windows file-symlink `EPERM`/888 assertions; subsequent targeted corrections have separate receipts. Scoped independent Source reviews pass. Whole-product numeric coverage/AST/CRAP/mutation, timeout causality/quiescence, main SDK-lock custody and attributable user Runtime acceptance remain open. These records do not claim an all-green regression or acceptance result. Exact receipts, the retained failed publisher attempt and its reconciled same-claim resume are under `.agent/work/runtime-project-model-implementation-20261102/resume-20261103/integration-r4/`; original public-operation receipts 17–20 are under `.agent/work/runtime-task-registration-20261103/runtime-work-records/session/`.
+
 **Files:** create `src/work-items/key.ts`, `src/work-items/store.ts`, narrowly scoped storage/journal helpers and `schemas/local-work-item.v1.schema.json`; extend only explicit public exports/inventories needed for a real consumer. Tests: `tests/local-work-item-store.test.ts`, `tests/local-work-item-recovery.test.ts`.
 
 **Consumes:** Task 1 catalog and `ProductDefinition`. **Produces:** `formatWorkItemKey({repository_prefix, project_prefix, type_code, number})`, async `createLocalWorkItem`, `reclassifyLocalWorkItem`, `reparentLocalWorkItem`, `resolveLocalWorkItem`. Each operation accepts explicit repository/product/store binding and returns a typed record or explicit error; no process-global product selection.
@@ -74,7 +81,7 @@ Record includes schema, internal_id, key, kind/code, product ID, number, parent_
 - [ ] RED: creation/lookup/typed keys, per-product shared counter and disabled-type creation; legacy provider IDs retained.
 - [ ] RED: arbitrary configured edges, cycle/self/multi-parent/cross-product rejection; reclassification checks both parent and children.
 - [ ] RED: parallel creates plus injected faults around counter reservation/record/index; assert unique non-reused numbers, exact retry and recoverable gaps.
-- [ ] Implement store and typed operations with UUID identity, alias uniqueness and preserved record on invalid reclassification. No actual user-store effects.
+- [x] Implement store and typed operations with UUID identity, alias uniqueness and preserved record on invalid reclassification. No actual user-store effects.
 - [ ] GREEN: new focused tests and existing work-admission/provider-binding regressions; OpenCode review.
 
 ## Task 3 — clean-init/archive/repair effect owner
@@ -125,4 +132,4 @@ This task owns final acceptance and adoption of the complete product model. Its 
 
 ## Preflight boundaries
 
-Root observed clean-init is planner-only, schema v1 strict, seven canonical kinds, no general typed local work store and no prompt port. Those are implementation gaps, not passing evidence. The schema integration decision in Task 4 is intentionally a gated future brief, not authorization to guess now; Task 1 is self-contained and executable without it. Each task gets a fresh scoped Luna writer and fresh OpenCode reviewer; only Root integrates commits and updates the ledger.
+Clean-init remains planner-only, active schema v1 remains strict, the catalog retains seven canonical kinds and an interactive prompt port is not implemented. The reusable product model and typed local work store are implemented Source; their active configuration/CLI adoption remains in Tasks 4–5. The schema integration decision in Task 4 is intentionally a gated future brief, not authorization to guess now. Each task gets a fresh scoped Luna writer and fresh OpenCode reviewer; only Root integrates commits and updates the ledger. Preserve the next-cycle publication-preparation guard gap in [next actions](../next-actions.md#remaining-work-outside-the-implementation-plan) before using that route.

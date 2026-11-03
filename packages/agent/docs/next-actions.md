@@ -13,9 +13,17 @@ clean initialization, interactive CLI/help, temporary acceptance, build/release,
 external update and repository reinitialization. Its implementation and
 verification tasks are maintained in that plan.
 
-Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-first-development.md). The current cycle covers Task 2 (`runtime-work-records`) and only its demonstrated causal runtime defect. Deliver and verify the updated system runtime, then reconcile Markdown before starting the next task. The full plan and the remaining queue are not one release batch.
+Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-first-development.md). Task 2 (`runtime-work-records`) Source and its causal readonly-frontier repair are delivered in [v0.1.9](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.9). Linux external installation and the system Windows update are verified. The original Task2 attempt is suspended through the delivered public owner, with no lease, no pending actions and `recovery_required:false`; it is not retroactively completed or accepted. The [implementation plan](plans/runtime-project-model.md#task-2--local-work-records-keys-and-hierarchy) records scoped checks and remaining gaps. Task 3 is the next queued cycle and has not started; begin it through the updated runtime after its admission prerequisites. The full plan and the remaining queue are not one release batch.
 
 ## Remaining work outside the implementation plan
+
+Before the next PATCH cycle, reconcile the logical-bundle guard in
+`tooling/agent/release-local.ts#publishedPreparationSnapshot`. It still accepts
+only legacy `packages/agent`, while the current configuration uses logical
+`vida-agent`. The independent CI-identity review records this as Important I-1.
+It fails closed and does not affect the published 0.1.9 pair, but the supported
+`--prepare-after-publication` route needs its own bounded correction before use.
+Preserve the current operation and all publication/UNKNOWN evidence.
 
 ### 1. Qualify a governed installed-runtime work session
 
