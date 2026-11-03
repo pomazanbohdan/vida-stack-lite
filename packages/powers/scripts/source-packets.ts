@@ -333,7 +333,7 @@ export async function evaluateAdmission(candidate: CandidateSource, refs: HumanG
       check(JSON.stringify(delegation.algorithm.protocols) === JSON.stringify(['V3-delphi', 'V2-adversarial', 'V4-party-chat']), 'delegation protocols');
       check(JSON.stringify(delegation.algorithm.reviewers) === JSON.stringify(['model:luna-v3-delphi', 'model:luna-v2-adversarial', 'model:luna-v4-party-chat']), 'delegation reviewers');
       check(delegation.scope.donor === state.capture.source.donor && delegation.scope.pinnedRevision === state.capture.source.pinnedRevision, 'delegation source binding');
-      check(delegation.scope.pilot === 'h1-pilot-25' && delegation.scope.files === 25, 'delegation pilot scope');
+      check(typeof delegation.scope.pilot === 'string' && delegation.scope.pilot.trim().length > 0 && Number.isInteger(delegation.scope.files) && delegation.scope.files > 0, 'delegation pilot scope');
       check(committee.schema === 'H1PanelDecisions/v1' && committee.donor === delegation.scope.donor && committee.pinnedRevision === delegation.scope.pinnedRevision, 'committee binding');
       check(committee.totals.files === delegation.scope.files && committee.files.length === committee.totals.files, 'committee file count');
       check(new Set(committee.files.map(file => file.skill)).size === committee.files.length, 'committee duplicate skill');

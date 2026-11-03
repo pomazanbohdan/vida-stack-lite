@@ -4857,6 +4857,10 @@
           "sha256": "6fefda23f1673390476244db624ff0fe9c115a445d0a43728d5d5d310a8ae896",
           "bytes": 13341
         },
+        "skills/clean-architecture/SKILL.md": {
+          "sha256": "fc9fe201ae040df80164bc7a407507882783e2c8cdbc0379a1fbdcf3719e4446",
+          "bytes": 16371
+        },
         "skills/clean-code/SKILL.md": {
           "sha256": "072b309df4ea3e271232f281d8a98d759f6f27a310a74b1fd6e8f70ec3a9b04f",
           "bytes": 14923

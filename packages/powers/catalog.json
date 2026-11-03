@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6679,
+  "revision": 6690,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -2316,6 +2316,61 @@
       "instruction_id": "classify-the-work-before-parallelizing",
       "path": "instructions/classify-the-work-before-parallelizing.md",
       "sha256": "f7cb32ccab6813d029b60b9eb708eb49b35f5a754b040b349ec26fa9ce45f99c"
+    },
+    {
+      "instruction_id": "clean-architecture-adapters-and-frameworks",
+      "path": "instructions/clean-architecture-adapters-and-frameworks.md",
+      "sha256": "7e1ca71c0fd5bea3afc4aaee922dc9875c71b8c998189b522cd0791014e38cf6"
+    },
+    {
+      "instruction_id": "clean-architecture-apply",
+      "path": "instructions/clean-architecture-apply.md",
+      "sha256": "6870980ecc7d70a43ab11c90350151bdebe323db2332e18c95f7b0517646544f"
+    },
+    {
+      "instruction_id": "clean-architecture-boundaries",
+      "path": "instructions/clean-architecture-boundaries.md",
+      "sha256": "0e841c875dcd8d982ef071f13a66275551c0427ce69434380e41dd58b919e1ce"
+    },
+    {
+      "instruction_id": "clean-architecture-common-mistakes",
+      "path": "instructions/clean-architecture-common-mistakes.md",
+      "sha256": "e76de4a8f4870a5216f575b5dcee41bd05995f645baeb3fdd63f1ebecb4c6758"
+    },
+    {
+      "instruction_id": "clean-architecture-component-principles",
+      "path": "instructions/clean-architecture-component-principles.md",
+      "sha256": "b0d20265c6ad92a2c90666c4b423e49e1dc15528dffbc581f25590122cc841f8"
+    },
+    {
+      "instruction_id": "clean-architecture-concentric-circles",
+      "path": "instructions/clean-architecture-concentric-circles.md",
+      "sha256": "452f45141dd1dd4cf560eaf8a3745a7e4cd2f26b0fa4596ead30fced2296f0ee"
+    },
+    {
+      "instruction_id": "clean-architecture-dependency-rule",
+      "path": "instructions/clean-architecture-dependency-rule.md",
+      "sha256": "c5a287116df5d2f3964dbbd4927f6473e19e068ad4e9c8f2fc11eb6c9e0111c7"
+    },
+    {
+      "instruction_id": "clean-architecture-diagnostic",
+      "path": "instructions/clean-architecture-diagnostic.md",
+      "sha256": "5964595f8c011394be6bbbce2c77f844693138c57ff32607d2ed0c2f913196dd"
+    },
+    {
+      "instruction_id": "clean-architecture-entities-and-use-cases",
+      "path": "instructions/clean-architecture-entities-and-use-cases.md",
+      "sha256": "e915eaaf91c0f275ce399ccefa5ecca691c40b512bf192c90ad06e3d5da4b41f"
+    },
+    {
+      "instruction_id": "clean-architecture-score",
+      "path": "instructions/clean-architecture-score.md",
+      "sha256": "e4286b1e002a575ae4ce0973602be0734971507fbd7eaffcb657bcf5a1932b45"
+    },
+    {
+      "instruction_id": "clean-architecture-solid",
+      "path": "instructions/clean-architecture-solid.md",
+      "sha256": "d59ea921c48e4c0bd70ca726d44e4219439836f426f2a67d9edcee460d954aca"
     },
     {
       "instruction_id": "clean-code-comment-discipline",

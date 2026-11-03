@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5303,
+  "revision": 5314,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17418,8 +17418,20 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/clean-architecture/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "clean-architecture-apply",
+            "clean-architecture-dependency-rule",
+            "clean-architecture-score",
+            "clean-architecture-concentric-circles",
+            "clean-architecture-entities-and-use-cases",
+            "clean-architecture-adapters-and-frameworks",
+            "clean-architecture-component-principles",
+            "clean-architecture-solid",
+            "clean-architecture-boundaries",
+            "clean-architecture-common-mistakes",
+            "clean-architecture-diagnostic"
+          ]
         },
         "skills/clean-architecture/references/adapters-frameworks.md": {
           "status": "rejected",

@@ -2,6 +2,31 @@
 
 ## 2026-11-03
 
+* **H1 next-1 clean-architecture applied:** 11 `InstructionSpec` drafts from the
+  next-1 D18 aggregation (spec manifest SHA-256
+  `fd11e247d2642a1315dd1d729c701e03965ab88763b98aff7dec48173fbdc563`).
+  The batch was captured and mechanically decomposed, reviewed by three blind
+  protocols (V3 Delphi, V2 Adversarial, V4 Party chat), and aggregated as
+  11 amend / 2 reject / 0 unresolved. Every provenance entry carries the
+  content-relative source path `skills/clean-architecture/SKILL.md`, the source
+  SHA-256 and the full supporting per-unit locator. Packet SHA-256
+  `a66bcc7880beb587f01ce9ce827ec36ec7f67046c44080dea9ac487014d6af24`;
+  committee SHA-256
+  `aa4b287c8930abf3f2841549b6d14d59a214a52573e66d44157a0b316c3cdffc`;
+  reviewed plan SHA-256
+  `b2505d2643ff1f80612015031a75a87fb07c14b54d83ecf776694581be977fa8`;
+  applied plan SHA-256
+  `a94311e689acc6562478a0c76cdae534af82fa79248cbad9b60edae3800dda90`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. T3 Codex/Luna re-review returned READY 0 Critical / 0 Important /
+  0 Minor. Apply returned `applied` with all 13 targets observed as `intended`;
+  apply receipt SHA-256
+  `94316d07a363ddf02b3138bc9a6a16dfd6a39d44787276945a7fa824ee888df8`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,228
+  files; corpus 2,850; catalog revision 6,690; map revision 5,314. This is the
+  first batch beyond the 25-file pilot; matched measurement and classification
+  remain open.
+
 * **H1 influence-psychology pilot applied:** 13 `InstructionSpec` drafts from the
   influence-psychology panel decisions (spec manifest SHA-256
   `501692f99216dbb3145bd0841d2600c0e07ce65347b6907644d214d1d7e06335`).
