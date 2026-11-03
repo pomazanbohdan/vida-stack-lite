@@ -35,7 +35,7 @@ export class CatalogError extends Error {
   }
 }
 
-export type Provenance = { donor: string; license: string; revision: string; path: string };
+export type Provenance = { donor: string; license: string; revision: string; path: string; sha256?: string; locator?: string };
 export type Instruction = {
   instruction_id: string; title: string; summary: string;
   capability_tags: string[]; pattern_tags: string[]; roles: string[]; products: string[];

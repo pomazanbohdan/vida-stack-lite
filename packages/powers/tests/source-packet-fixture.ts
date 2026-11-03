@@ -9,7 +9,7 @@ export function fixtureSpec(index: number): InstructionSpec {
 }
 export const fixtureCatalog = { schema: 'VPCatalog/v1', catalog_id: 'vida-powers', revision: 1, source_revision: 'seed-v1', updated_at: '2026-01-01T00:00:00Z', tag_dictionary: { capability: { 'release-note': 'Release note' }, pattern: { 'delivery-review': 'Delivery review' } }, tag_aliases: {}, tag_exemptions: [], instructions: [] };
 
-export async function fixtureEligibility(root: string, spec: InstructionSpec, index: number, options: { carrierPath?: string; sharedSpec?: ArtifactRef; authority?: 'human' | 'delegated'; delegationState?: 'active' | 'revoked'; committeeStatus?: 'panel-admitted' | 'panel-reviewed-not-admitted' | 'rejected'; committeeDuplicate?: boolean; committeeDuplicateKind?: 'skill' | 'decisions' | 'selection'; committeeDecisionsMismatch?: boolean; missingDelegation?: boolean; modelRights?: boolean; algorithmName?: string; aggregation?: string; protocols?: string[]; reviewers?: string[] } = {}): Promise<EligibleSource> {
+export async function fixtureEligibility(root: string, spec: InstructionSpec, index: number, options: { carrierPath?: string; sharedSpec?: ArtifactRef; authority?: 'human' | 'delegated'; delegationState?: 'active' | 'revoked'; committeeStatus?: 'panel-admitted' | 'panel-reviewed-not-admitted' | 'rejected'; committeeDuplicate?: boolean; committeeDuplicateKind?: 'skill' | 'decisions' | 'selection'; committeeDecisionsMismatch?: boolean; missingDelegation?: boolean; modelRights?: boolean; rightsAttributionState?: 'HOLD' | 'CLEARED'; algorithmName?: string; aggregation?: string; protocols?: string[]; reviewers?: string[] } = {}): Promise<EligibleSource> {
   const prefix = `p${index}`;
   const path = options.carrierPath ?? spec.provenance[0]?.path;
   if (!path) throw new Error('Fixture needs provenance');
@@ -58,8 +58,8 @@ export async function fixtureEligibility(root: string, spec: InstructionSpec, in
       selection: await sealArtifact(root, `${prefix}/committee-selection-${item}.json`, { dummy: item }),
     })));
     const committeeFiles = [
-      { skill: 'fixture', units: 1, rejected: 0, decisions, selection, check: receipt },
-      ...dummies.map((dummy, item) => ({ skill: `fixture-${item + 1}`, units: 1, rejected: 0, decisions: dummy.decisions, selection: dummy.selection, check: receipt })),
+      { batch: 'B1', skill: 'fixture', units: 1, rejected: 0, decisions, selection, check: receipt },
+      ...dummies.map((dummy, item) => ({ batch: 'B1', skill: `fixture-${item + 1}`, units: 1, rejected: 0, decisions: dummy.decisions, selection: dummy.selection, check: receipt })),
     ];
     const duplicateKind = options.committeeDuplicateKind ?? (options.committeeDuplicate ? 'skill' : undefined);
     if (duplicateKind === 'skill') committeeFiles[1]!.skill = committeeFiles[0]!.skill;
@@ -89,22 +89,17 @@ export async function fixtureEligibility(root: string, spec: InstructionSpec, in
       delegation,
       committee,
     });
-    const humanGate = async (kind: 'rights', verdict: string) => sealArtifact(root, `${prefix}/human-${kind}.json`, {
-      schema: 'VPHumanSourceGate/v1',
-      kind,
-      verdict,
+    const rightsAttribution = await sealArtifact(root, `${prefix}/rights-attribution.json`, {
+      schema: 'VPSourceAttribution/v1',
       source,
-      inputSha256: sourceInputDigest(captured),
-      decisionsSha256: decisions.sha256,
-      scopeSha256: scope.sha256,
-      unitIds: ['u1'],
-      specs: [specRef],
-      actor: 'human:fixture-owner',
-      pointer: `fixture:${kind}`,
+      license: 'MIT',
+      locator: `${path}#L1-L1`,
+      rightsLineage: options.rightsAttributionState ?? 'HOLD',
+      pointer: 'fixture:attribution',
     });
     gates = {
       fidelity: await delegatedGate('fidelity', 'model-approved'),
-      rights: options.modelRights ? await delegatedGate('rights', 'cleared') : await humanGate('rights', 'cleared'),
+      rights: options.modelRights ? await delegatedGate('rights', 'cleared') : rightsAttribution,
       admission: await delegatedGate('admission', 'delegated-admitted'),
     };
     authority = { mode: 'delegated', delegation, committee };

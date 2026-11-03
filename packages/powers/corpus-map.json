@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 4992,
-  "updated_at": "2026-11-03T05:20:00.000Z",
+  "revision": 5003,
+  "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -17304,6 +17304,1706 @@
         "LICENSE.md": {
           "status": "rejected",
           "reason": "the licence text of the donor repository"
+        }
+      }
+    },
+    "wondelai-skills": {
+      "source_revision": "c172996495bed0fcd26896a9416b2093fd7073f0",
+      "files": {
+        "skills/clean-code/SKILL.md": {
+          "status": "split",
+          "instruction_ids": [
+            "clean-code-reader-first",
+            "clean-code-score-quality",
+            "clean-code-meaningful-names",
+            "clean-code-small-functions",
+            "clean-code-comment-discipline",
+            "clean-code-error-handling",
+            "clean-code-tests-first-class",
+            "clean-code-smell-refactoring",
+            "clean-code-common-mistakes",
+            "clean-code-diagnostic"
+          ]
+        },
+        "skills/37signals-way/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/37signals-way/references/betting-cycles.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/37signals-way/references/build-less.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/37signals-way/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/37signals-way/references/opinionated-software.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/37signals-way/references/shaping-work.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/37signals-way/references/small-teams-execution.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/37signals-way/references/ux-ui-copy.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/architecture-optimization/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/architecture-optimization/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/architecture-optimization/references/methods.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/blue-ocean-strategy/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/blue-ocean-examples.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/errc-grid.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/implementation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/non-customers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/sequence.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/six-paths.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/strategy-canvas.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/blue-ocean-strategy/references/value-innovation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-architecture/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-architecture/references/adapters-frameworks.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-architecture/references/boundaries.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-architecture/references/component-principles.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-architecture/references/dependency-rule.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-architecture/references/entities-use-cases.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-architecture/references/solid-principles.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-code/references/code-smells.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-code/references/comments-formatting.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-code/references/error-handling.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-code/references/functions-and-methods.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-code/references/naming-conventions.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/clean-code/references/testing-principles.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cold-start-problem/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cold-start-problem/references/atomic-networks.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cold-start-problem/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cold-start-problem/references/hard-side.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cold-start-problem/references/scale-ceiling-moat.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cold-start-problem/references/tipping-playbooks.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/emotion.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/practical-value.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/public-visibility.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/social-currency.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/stories-trojan-horse.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/triggers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/viral-content-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/contagious/references/word-of-mouth.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/continuous-discovery/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/continuous-discovery/references/assumption-mapping.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/continuous-discovery/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/continuous-discovery/references/experience-mapping.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/continuous-discovery/references/interview-snapshots.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/continuous-discovery/references/opportunity-trees.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/continuous-discovery/references/prioritization-methods.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/conversion-optimization/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/conversion-optimization/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/conversion-optimization/references/methods.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/create-app/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/create-app/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/create-business/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/create-business/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/create-website/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/create-website/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/cro-methodology/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cro-methodology/references/COPYWRITING.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cro-methodology/references/OBJECTIONS.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cro-methodology/references/PERSUASION.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cro-methodology/references/RESEARCH.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cro-methodology/references/funnel-analysis.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/cro-methodology/references/testing-methodology.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/b2b-saas.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/beachhead-selection.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/buyer-segments.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/expansion.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/go-to-market.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/positioning.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/crossing-the-chasm/references/whole-product.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/references/batch-stream.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/references/data-models.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/references/fault-tolerance.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/references/partitioning.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/references/replication.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/references/storage-engines.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ddia-systems/references/transactions.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-code-architecture/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/design-code-architecture/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/design-everyday-things/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/affordances.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/conceptual-models.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/constraints.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/feedback.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/human-error.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/mappings.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/seven-stages.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/signifiers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-everyday-things/references/two-gulfs.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/facilitation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/friday.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/monday.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/recruiting.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/remote-sprints.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/thursday.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/tuesday.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/design-sprint/references/wednesday.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/domain-driven-design/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/domain-driven-design/references/bounded-contexts.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/domain-driven-design/references/building-blocks.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/domain-driven-design/references/domain-events.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/domain-driven-design/references/repositories-factories.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/domain-driven-design/references/strategic-design.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/domain-driven-design/references/ubiquitous-language.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/references/applications.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/references/autonomy.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/references/extrinsic-rewards.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/references/mastery.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/references/purpose.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/drive-motivation/references/type-i.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/good-strategy-bad-strategy/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/good-strategy-bad-strategy/references/bad-strategy.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/good-strategy-bad-strategy/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/good-strategy-bad-strategy/references/dynamics-inertia.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/good-strategy-bad-strategy/references/kernel.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/good-strategy-bad-strategy/references/sources-of-power.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/grow-app/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/grow-app/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/grow-business/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/grow-business/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/grow-website/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/grow-website/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/high-output-management/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-output-management/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-output-management/references/decisions-planning-okrs.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-output-management/references/indicators-and-production.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-output-management/references/leverage-and-calendar.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-output-management/references/meetings-and-one-on-ones.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-perf-browser/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-perf-browser/references/caching-strategies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-perf-browser/references/core-web-vitals.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-perf-browser/references/http-protocols.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-perf-browser/references/network-fundamentals.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-perf-browser/references/real-time-communication.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/high-perf-browser/references/resource-loading.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/references/ethical-boundaries.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/references/habit-testing.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/references/neuroscience-foundations.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/references/product-applications.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/references/rewards.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hooked-ux/references/triggers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/bonuses-stacking.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/grand-slam-offers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/guarantees.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/naming-offers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/offer-creation-checklist.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/pricing-strategy.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/scarcity-urgency.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/starving-crowd.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/hundred-million-offers/references/value-equation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-app/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/improve-app/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/improve-business/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/improve-business/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/improve-code-quality/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/improve-code-quality/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/improve-retention/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-retention/references/ability-chain.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-retention/references/behavior-model.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-retention/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-retention/references/motivation-waves.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-retention/references/product-applications.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-retention/references/prompt-design.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-retention/references/tiny-habits.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/improve-website/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/improve-website/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/influence-psychology/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/authority.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/commitment-consistency.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/copywriting.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/ethics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/liking.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/reciprocity.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/scarcity.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/social-proof.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/influence-psychology/references/unity.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/inspired-product/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/inspired-product/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/inspired-product/references/discovery-techniques.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/inspired-product/references/empowered-teams.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/inspired-product/references/opportunity-assessment.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/inspired-product/references/product-vision.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/inspired-product/references/stakeholder-management.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/accessibility.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/app-icons.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/colors-depth.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/components.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/gestures.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/keyboard-input.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/navigation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/privacy-permissions.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/system-integration.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/typography.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ios-hig-design/references/widgets-extensions.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/jobs-to-be-done/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/jobs-to-be-done/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/jobs-to-be-done/references/competitive-strategy.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/jobs-to-be-done/references/diagnostics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/jobs-to-be-done/references/innovation-process.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/jobs-to-be-done/references/organizational-change.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-analytics/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-analytics/references/business-model-metrics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-analytics/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-analytics/references/five-stages.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-analytics/references/good-metrics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-analytics/references/omtm.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/applications.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/assumptions.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/build-measure-learn.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/five-whys.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/growth-engines.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/innovation-accounting.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/metrics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/mvp-design.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/pivots.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-startup/references/small-batches.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-ux/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-ux/references/agile-integration.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-ux/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-ux/references/collaborative-design.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-ux/references/experiment-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-ux/references/hypothesis-canvas.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/lean-ux/references/outcome-metrics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/applications.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/concrete.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/credible.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/curse-of-knowledge.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/emotional.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/simple.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/stories.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/made-to-stick/references/unexpected.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/microinteractions/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/microinteractions/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/microinteractions/references/feedback-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/microinteractions/references/loops-modes.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/microinteractions/references/rules-and-state.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/microinteractions/references/signature-moments.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/microinteractions/references/trigger-design.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/mom-test/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/mom-test/references/avoiding-bad-data.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/mom-test/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/mom-test/references/commitment-advancement.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/mom-test/references/finding-conversations.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/mom-test/references/processing-learning.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/mom-test/references/question-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/monetizing-innovation/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/monetizing-innovation/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/monetizing-innovation/references/four-failures.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/monetizing-innovation/references/monetization-models.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/monetizing-innovation/references/packaging-tiers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/monetizing-innovation/references/wtp-conversations.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/negotiation/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/negotiation/references/techniques.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/competitive-alternatives.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/market-category.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/positioning-canvas.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/target-customers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/team-exercise.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/unique-attributes.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/obviously-awesome/references/value-mapping.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/advertising-media.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/capture-leads.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/craft-message.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/customer-experience.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/lifetime-value.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/nurture-leads.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/one-page-plan-template.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/referral-systems.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/sales-conversion.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/one-page-marketing/references/target-market.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/pragmatic-programmer/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/pragmatic-programmer/references/broken-windows.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/pragmatic-programmer/references/contracts-assertions.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/pragmatic-programmer/references/dry-orthogonality.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/pragmatic-programmer/references/estimation-portfolio.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/pragmatic-programmer/references/reversibility.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/pragmatic-programmer/references/tracer-bullets.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/cold-calling-2.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/lead-types.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/metrics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/pipeline-math.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/qualification.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/roles.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/predictable-revenue/references/team-building.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-patterns/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-patterns/references/composing-methods.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-patterns/references/moving-features.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-patterns/references/organizing-data.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-patterns/references/refactoring-workflow.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-patterns/references/simplifying-conditionals.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-patterns/references/smell-catalog.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-ui/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-ui/references/accessibility-depth.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-ui/references/advanced-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-ui/references/animation-microinteractions.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-ui/references/data-visualization.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/refactoring-ui/references/theming-dark-mode.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/release-it/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/release-it/references/anti-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/release-it/references/capacity-planning.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/release-it/references/chaos-engineering.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/release-it/references/deployment-strategies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/release-it/references/observability.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/release-it/references/stability-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/remove-technical-debt/SKILL.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/remove-technical-debt/references/artifact-templates.md": {
+          "status": "rejected",
+          "reason": "guided journey/metaskill orchestration; excluded by H1"
+        },
+        "skills/scorecard-marketing/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/scorecard-marketing/references/analytics-optimization.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/scorecard-marketing/references/industry-examples.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/scorecard-marketing/references/psychology.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/scorecard-marketing/references/technical-implementation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/software-design-philosophy/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/software-design-philosophy/references/comments-as-design.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/software-design-philosophy/references/complexity-symptoms.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/software-design-philosophy/references/deep-modules.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/software-design-philosophy/references/general-vs-special.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/software-design-philosophy/references/information-hiding.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/software-design-philosophy/references/strategic-programming.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/steve-jobs-design-review/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/steve-jobs-design-review/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/steve-jobs-design-review/references/demo-culture.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/steve-jobs-design-review/references/end-to-end-experience.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/steve-jobs-design-review/references/review-protocol.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/steve-jobs-design-review/references/simplicity-and-focus.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/storybrand-messaging/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/storybrand-messaging/references/brand-script.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/storybrand-messaging/references/email-sequences.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/storybrand-messaging/references/multi-channel-consistency.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/storybrand-messaging/references/one-liners.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/storybrand-messaging/references/sales-conversations.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/storybrand-messaging/references/website-wireframe.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/system-design/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/system-design/references/building-blocks.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/system-design/references/common-designs.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/system-design/references/database-scaling.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/system-design/references/estimation-numbers.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/system-design/references/four-step-process.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/system-design/references/reliability-operations.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/team-topologies/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/team-topologies/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/team-topologies/references/cognitive-load.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/team-topologies/references/fracture-planes.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/team-topologies/references/interaction-modes.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/team-topologies/references/team-types.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/references/api-reference.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/references/audit-checklist.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/references/document-types.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/references/procedures-and-code.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/references/release-notes.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/references/structure-and-formatting.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/technical-documentation/references/voice-and-words.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/top-design/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/top-design/references/animation-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/top-design/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/top-design/references/layout-systems.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/top-design/references/technical-stack.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/top-design/references/typography.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/data.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/implementation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/issues.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/level-10.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/people.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/process.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/rocks.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/traction-eos/references/vto.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/references/audit-template.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/references/cultural-ux.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/references/dark-patterns.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/references/heuristic-conflicts.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/references/krug-principles.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/references/nielsen-heuristics.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/ux-heuristics/references/wcag-checklist.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/web-typography/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/web-typography/references/css-implementation.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/web-typography/references/evaluating-typefaces.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/web-typography/references/pairing-strategies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/web-typography/references/responsive-typography.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/web-typography/references/typeface-anatomy.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/working-with-legacy-code/SKILL.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/working-with-legacy-code/references/case-studies.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/working-with-legacy-code/references/change-algorithm.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/working-with-legacy-code/references/characterization-tests.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/working-with-legacy-code/references/dependency-breaking.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
+        },
+        "skills/working-with-legacy-code/references/seams.md": {
+          "status": "rejected",
+          "reason": "not selected in the clean-code pilot; H1 selection pending"
         }
       }
     }

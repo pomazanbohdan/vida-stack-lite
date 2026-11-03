@@ -64,6 +64,9 @@ review or owner ratification is required for this pilot.
   421/30/391 carrier accounting.
 - Every admitted unit still needs source attribution: donor, path, revision,
   license, SHA-256 and locator. D17 remains binding.
+- The H1 rights state is a `VPSourceAttribution/v1` record with
+  `rightsLineage: HOLD`. It records the license/path/locator and is not a legal
+  clearance or a human rights gate.
 - Powers does not assess legal risk; a license label is not legal clearance.
 - The final decisions must pass `checkDecomposition` and retain exact source
   hashes and locators.

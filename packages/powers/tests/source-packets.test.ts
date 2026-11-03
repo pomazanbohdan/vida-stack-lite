@@ -115,6 +115,10 @@ test('model rights gate blocks delegated admission', async () => {
   const root = await tempRoot('vp-delegated-model-rights-');
   await expect(fixtureEligibility(root, fixtureSpec(0), 0, { authority: 'delegated', modelRights: true })).rejects.toThrow();
 });
+test('rights attribution must remain HOLD rather than cleared', async () => {
+  const root = await tempRoot('vp-delegated-rights-hold-');
+  await expect(fixtureEligibility(root, fixtureSpec(0), 0, { authority: 'delegated', rightsAttributionState: 'CLEARED' })).rejects.toThrow();
+});
 test('delegation algorithm metadata mismatches block delegated admission', async () => {
   const algorithmName = await tempRoot('vp-delegated-algorithm-name-');
   await expect(fixtureEligibility(algorithmName, fixtureSpec(0), 0, { authority: 'delegated', algorithmName: 'wrong-algorithm' })).rejects.toThrow('delegation algorithm');

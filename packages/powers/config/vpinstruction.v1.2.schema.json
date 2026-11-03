@@ -41,7 +41,7 @@
       "minItems": 1,
       "items": {
         "type": "string",
-        "pattern": "^donor=[^;]+; license=[^;]+; revision=[0-9a-f]{40}; path=.+$"
+        "pattern": "^donor=[^;]+; license=[^;]+; revision=[0-9a-f]{40}; path=[^;]+(?:; sha256=[0-9a-f]{64})?(?:; locator=[^;]+)?$"
       }
     },
     "status": { "enum": ["active", "disabled"] },

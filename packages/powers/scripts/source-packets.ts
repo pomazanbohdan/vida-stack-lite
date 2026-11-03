@@ -149,6 +149,7 @@ type Review = { schema: 'VPSourceReview/v1'; source: SourceRef; inputSha256: str
 type GateKind = 'fidelity' | 'rights' | 'admission';
 export type HumanGateRefs = Readonly<Record<GateKind, ArtifactRef>>;
 type Gate = { schema: 'VPHumanSourceGate/v1'; kind: GateKind; verdict: 'human-approved' | 'cleared' | 'owner-admitted'; source: SourceRef; inputSha256: string; decisionsSha256: string; scopeSha256: string; unitIds: string[]; specs: ArtifactRef[]; actor: string; pointer: string };
+type SourceAttribution = { schema: 'VPSourceAttribution/v1'; source: SourceRef; license: string; locator: string; rightsLineage: 'HOLD'; pointer: string };
 type Delegation = {
   schema: 'VPAlgorithmDelegation/v1';
   owner: string;
@@ -183,7 +184,7 @@ type Committee = {
   pinnedRevision: string;
   status: string;
   totals: { files: number; finalUnits: number; rejectedUnits: number };
-  files: Array<{ skill: string; units: number; rejected: number; decisions: ArtifactRef; selection: ArtifactRef; check: unknown }>;
+  files: Array<{ batch: string; skill: string; units: number; rejected: number; decisions: ArtifactRef; selection: ArtifactRef; check: unknown }>;
 };
 type AnyGate = Gate | DelegatedGate;
 export type AdmissionAuthority =
@@ -202,6 +203,7 @@ type AssessmentState = {
   authority: AdmissionAuthority;
   delegation?: Delegation;
   committee?: Committee;
+  rightsAttribution?: SourceAttribution;
 };
 const candidates = new WeakMap<CandidateSource, CandidateState>();
 const assessments = new WeakMap<AdmissionAssessment, AssessmentState>();
@@ -212,6 +214,7 @@ const selectionSchema = objectSchema({ schema: { const: 'VPSourceSelection/v1' }
 const checkSchema = objectSchema({ schema: { const: 'VPSourceCheck/v1' }, captureSha256: shaSchema, decisionsSha256: shaSchema, checker: artifactSchema, runtimeSha256: shaSchema, configuration: artifactSchema, command: { ...stringsSchema, minItems: 4 }, exitCode: { const: 0 }, stdout: artifactSchema, stderr: artifactSchema });
 const reviewSchema = objectSchema({ schema: { const: 'VPSourceReview/v1' }, source: sourceSchema, inputSha256: shaSchema, decisionsSha256: shaSchema, scopeSha256: shaSchema, scope: { enum: ['full', 'delta'] }, unitIds: { ...stringsSchema, minItems: 1 }, verdict: { const: 'READY' }, actor: textSchema, pointer: textSchema });
 const gateSchema = objectSchema({ schema: { const: 'VPHumanSourceGate/v1' }, kind: { enum: ['fidelity', 'rights', 'admission'] }, verdict: { enum: ['human-approved', 'cleared', 'owner-admitted'] }, source: sourceSchema, inputSha256: shaSchema, decisionsSha256: shaSchema, scopeSha256: shaSchema, unitIds: { ...stringsSchema, minItems: 1 }, specs: { ...artifactListSchema, minItems: 1 }, actor: textSchema, pointer: textSchema });
+const attributionSchema = objectSchema({ schema: { const: 'VPSourceAttribution/v1' }, source: sourceSchema, license: textSchema, locator: textSchema, rightsLineage: { const: 'HOLD' }, pointer: textSchema });
 const delegationSchema = objectSchema({
   schema: { const: 'VPAlgorithmDelegation/v1' },
   owner: textSchema,
@@ -246,7 +249,7 @@ const committeeSchema = objectSchema({
   pinnedRevision: { type: 'string', pattern: '^[0-9a-f]{40}$' },
   status: { const: 'panel-admitted' },
   totals: objectSchema({ files: { type: 'integer', minimum: 1 }, finalUnits: { type: 'integer', minimum: 1 }, rejectedUnits: { type: 'integer', minimum: 0 } }),
-  files: { type: 'array', minItems: 1, items: objectSchema({ skill: textSchema, units: { type: 'integer', minimum: 1 }, rejected: { type: 'integer', minimum: 0 }, decisions: artifactSchema, selection: artifactSchema, check: { type: 'object' } }) },
+  files: { type: 'array', minItems: 1, items: objectSchema({ batch: textSchema, skill: textSchema, units: { type: 'integer', minimum: 1 }, rejected: { type: 'integer', minimum: 0 }, decisions: artifactSchema, selection: artifactSchema, check: { type: 'object' } }) },
 });
 async function readValue(root: string, ref: ArtifactRef, schema: Schema): Promise<unknown> {
   const bytes = await verifyArtifact(root, ref);
@@ -318,6 +321,7 @@ export async function evaluateAdmission(candidate: CandidateSource, refs: HumanG
     const snapshots: Partial<Record<GateKind, ArtifactRef>> = {};
     let delegation: Delegation | undefined;
     let committee: Committee | undefined;
+    let rightsAttribution: SourceAttribution | undefined;
     if (authority.mode === 'delegated') {
       delegation = await readValue(root, authority.delegation, delegationSchema) as Delegation;
       committee = await readValue(root, authority.committee, committeeSchema) as Committee;
@@ -340,6 +344,12 @@ export async function evaluateAdmission(candidate: CandidateSource, refs: HumanG
     }
     for (const kind of ['fidelity', 'rights', 'admission'] as const) {
       const ref = refs[kind];
+      if (authority.mode === 'delegated' && kind === 'rights') {
+        rightsAttribution = await readValue(root, ref, attributionSchema) as SourceAttribution;
+        check(sourceKey(rightsAttribution.source) === sourceKey(state.capture.source) && rightsAttribution.rightsLineage === 'HOLD' && rightsAttribution.license.trim().length > 0 && rightsAttribution.locator.trim().length > 0, 'rights attribution binding');
+        snapshots[kind] = Object.freeze({ ...ref });
+        continue;
+      }
       if (authority.mode === 'delegated' && kind !== 'rights') {
         const gate = await readValue(root, ref, delegatedGateSchema) as DelegatedGate;
         const verdict = kind === 'fidelity' ? 'model-approved' : 'delegated-admitted';
@@ -357,7 +367,7 @@ export async function evaluateAdmission(candidate: CandidateSource, refs: HumanG
         records[kind] = gate; snapshots[kind] = Object.freeze({ ...ref });
       }
     }
-    check(records.fidelity && records.rights && records.admission && snapshots.fidelity && snapshots.rights && snapshots.admission, 'incomplete admission gates');
+    check(records.fidelity && records.admission && snapshots.fidelity && snapshots.rights && snapshots.admission && (authority.mode === 'delegated' ? rightsAttribution !== undefined : records.rights !== undefined), 'incomplete admission gates');
     const assessment: AdmissionAssessment = Object.freeze({ kind: 'assessed', candidate });
     const nextState: AssessmentState = {
       candidate,
@@ -367,6 +377,7 @@ export async function evaluateAdmission(candidate: CandidateSource, refs: HumanG
     };
     if (delegation) nextState.delegation = delegation;
     if (committee) nextState.committee = committee;
+    if (rightsAttribution) nextState.rightsAttribution = rightsAttribution;
     assessments.set(assessment, nextState);
     return assessment;
   } catch (error) {
@@ -384,13 +395,17 @@ export async function reconcileAdmissionAtRoot(assessment: AdmissionAssessment, 
     if (state.authority.mode === 'delegated') {
       const delegation = state.delegation;
       const committee = state.committee;
+      const rightsAttribution = state.rightsAttribution;
       check(delegation !== undefined && committee !== undefined, 'missing delegated authority records');
+      check(rightsAttribution !== undefined, 'missing rights attribution');
       await verifyArtifact(root, state.authority.delegation);
       await verifyArtifact(root, state.authority.committee);
+      await verifyArtifact(root, state.refs.rights);
       const observation = await observer(Object.freeze({ kind: 'admission', record: state.authority.delegation, actor: delegation.owner, pointer: delegation.pointer }));
       check(observation.kind === 'observed' && observation.actor === delegation.owner && observation.pointer === delegation.pointer, 'Root has not observed delegation authority');
     }
-    for (const kind of ['fidelity', 'rights', 'admission'] as const) {
+    const kinds = state.authority.mode === 'delegated' ? ['fidelity', 'admission'] as const : ['fidelity', 'rights', 'admission'] as const;
+    for (const kind of kinds) {
       await verifyArtifact(root, state.refs[kind]);
       const record = state.records[kind];
       const observation = await observer(Object.freeze({ kind, record: state.refs[kind], actor: record.actor, pointer: record.pointer }));

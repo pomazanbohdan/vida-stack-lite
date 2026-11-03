@@ -127,7 +127,10 @@ function yamlList(key: string, values: string[]): string[] {
 }
 
 function provenanceText(item: Provenance): string {
-  return `donor=${item.donor}; license=${item.license}; revision=${item.revision}; path=${item.path}`;
+  const parts = [`donor=${item.donor}`, `license=${item.license}`, `revision=${item.revision}`, `path=${item.path}`];
+  if (item.sha256 !== undefined) parts.push(`sha256=${item.sha256}`);
+  if (item.locator !== undefined) parts.push(`locator=${item.locator}`);
+  return parts.join('; ');
 }
 
 function yamlString(key: string, value: string): string {
@@ -176,13 +179,18 @@ export function parseInstructionSpec(value: unknown, source: string): Instructio
     const license = nonEmpty(item.license, `provenance[${index}].license`, source);
     const revision = nonEmpty(item.revision, `provenance[${index}].revision`, source);
     const path = nonEmpty(item.path, `provenance[${index}].path`, source);
-    for (const [field, text] of [['donor', donor], ['license', license], ['path', path]] as const) {
+    const sha256 = item.sha256 === undefined ? undefined : nonEmpty(item.sha256, `provenance[${index}].sha256`, source);
+    const locator = item.locator === undefined ? undefined : nonEmpty(item.locator, `provenance[${index}].locator`, source);
+    for (const [field, text] of [['donor', donor], ['license', license], ['path', path], ['locator', locator]] as const) {
+      if (text === undefined) continue;
       if (/[\u0000-\u001f\u007f-\u009f]/.test(text)) fail(`provenance[${index}].${field}`, source, `control character in provenance[${index}].${field}`);
     }
     if (!/^[0-9a-f]{40}$/.test(revision) || /[;=]/.test(donor) || /[;=]/.test(license) || /[;=]/.test(path)) fail(`provenance[${index}]`, source);
-    const extra = Object.keys(item).find((key) => !['donor', 'license', 'revision', 'path'].includes(key));
+    if (sha256 !== undefined && !/^[0-9a-f]{64}$/.test(sha256)) fail(`provenance[${index}].sha256`, source);
+    if (locator !== undefined && /[;=]/.test(locator)) fail(`provenance[${index}].locator`, source);
+    const extra = Object.keys(item).find((key) => !['donor', 'license', 'revision', 'path', 'sha256', 'locator'].includes(key));
     if (extra !== undefined) fail(`provenance[${index}].${extra}`, source, `unknown instruction spec field: provenance[${index}].${extra}`);
-    return { donor, license, revision, path };
+    return { donor, license, revision, path, ...(sha256 === undefined ? {} : { sha256 }), ...(locator === undefined ? {} : { locator }) };
   });
   const provenanceKeys = new Set<string>();
   provenance.forEach((item, index) => {

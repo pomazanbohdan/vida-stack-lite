@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6364,
+  "revision": 6374,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-03T05:30:00.000Z",
+  "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -2243,6 +2243,56 @@
       "instruction_id": "classify-the-work-before-parallelizing",
       "path": "instructions/classify-the-work-before-parallelizing.md",
       "sha256": "f7cb32ccab6813d029b60b9eb708eb49b35f5a754b040b349ec26fa9ce45f99c"
+    },
+    {
+      "instruction_id": "clean-code-comment-discipline",
+      "path": "instructions/clean-code-comment-discipline.md",
+      "sha256": "3dd15256f544fd8580e7b9b9e51f845adc5bb9c30271b522a2f2900404b475d3"
+    },
+    {
+      "instruction_id": "clean-code-common-mistakes",
+      "path": "instructions/clean-code-common-mistakes.md",
+      "sha256": "3f558d21358dc39addea8f3bec7269d55cd1882e9658981dffb3466d7212d6ce"
+    },
+    {
+      "instruction_id": "clean-code-diagnostic",
+      "path": "instructions/clean-code-diagnostic.md",
+      "sha256": "0d8eb359048245c0aa975a049740a92213e279e4bedaa373c550c0d24daa055a"
+    },
+    {
+      "instruction_id": "clean-code-error-handling",
+      "path": "instructions/clean-code-error-handling.md",
+      "sha256": "6aad347e4b14928d0af068d180c68336c57135c91a91a5687c9aced22f8ac3be"
+    },
+    {
+      "instruction_id": "clean-code-meaningful-names",
+      "path": "instructions/clean-code-meaningful-names.md",
+      "sha256": "a546135b1d10ac5263802ec6505c84257740fc6b735b7d7a59e795ab733b1e76"
+    },
+    {
+      "instruction_id": "clean-code-reader-first",
+      "path": "instructions/clean-code-reader-first.md",
+      "sha256": "cf311dc233a55f39905e1b66902075f84c10f6b39e3a28f6515d15fe74080698"
+    },
+    {
+      "instruction_id": "clean-code-score-quality",
+      "path": "instructions/clean-code-score-quality.md",
+      "sha256": "9d51dfd279a107a3fbfb128a69d209c5418f89b2d911fffdc36e1f01bb1fa081"
+    },
+    {
+      "instruction_id": "clean-code-small-functions",
+      "path": "instructions/clean-code-small-functions.md",
+      "sha256": "614b477e848bbce6eba17efe9a957d7764e8764ed16a080356dd6f30c2ee7947"
+    },
+    {
+      "instruction_id": "clean-code-smell-refactoring",
+      "path": "instructions/clean-code-smell-refactoring.md",
+      "sha256": "b9d70cca36408ae9ec9e258c368edbfcfd8ffe254413197e096b8be79cec2cc9"
+    },
+    {
+      "instruction_id": "clean-code-tests-first-class",
+      "path": "instructions/clean-code-tests-first-class.md",
+      "sha256": "ee7c974f9f272f5eb708ac63a4b55dbc883ad3e9ce2f99c464590617f24b2c05"
     },
     {
       "instruction_id": "clean-up-integration-workspace",

@@ -2,12 +2,34 @@
 
 ## 2026-11-03
 
+* **H1 clean-code pilot applied:** 10 `InstructionSpec` drafts from the
+  clean-code panel decisions (spec manifest SHA-256
+  `42b976e9e3c2b405dc7a207b5aaa59636231342bcd6fdbb8f7eaf9ab61d294f4`).
+  Every provenance entry carries the source SHA-256 and the full supporting
+  per-unit locator. Packet SHA-256
+  `d767ced9d925142c158a23603853e82774c1e627a03a9018dc2a61bcacf0d5f9`;
+  delegation SHA-256
+  `52ef1409c35c43160c1a5b695b009f51c88df3bda58d250aca9e51a34f8cc1af`;
+  committee manifest SHA-256
+  `2fa8ec4628430883f19fde1849e3b17fda2cc0f1f94f242e43cb040d28e40420`.
+  Rights are a `VPSourceAttribution/v1` with `rightsLineage: HOLD`, not legal
+  clearance. Apply was `partial-or-unknown`: all 12 targets were observed as
+  intended, but the post-write check used a repo-relative provenance path. The
+  path was reconciled to content-relative `skills/clean-code/SKILL.md`, catalog
+  hashes and the corpus-map key were corrected, and the strict corpus check now
+  reports 2,539 instructions with zero issues. Applied: 10 instructions,
+  catalog, map; baseline rebuilt to 9 donors / 1,203 files; catalog revision
+  6,374; map revision 5,003. The retained converter lock was released only after
+  its writer PID was observed not running; the target state was all-intended.
+  The other 24 pilot files remain unapplied; this is a pilot subset, not H1
+  completion.
+
 * **D18 delegated gate implemented:** `source-packets.ts` now supports
   `VPAlgorithmDelegation/v1`, `VPDelegatedSourceGate/v1` and
   `H1PanelDecisions/v1` committee binding. `evaluateAdmission` accepts an
   explicit delegated authority, requires a human owner, active standing, exact
   committee decisions and `model:` gate actors; the human path is unchanged.
-  Tests cover active and revoked delegation; the package suite reports 771
+  Tests cover active and revoked delegation; the package suite reports 772
   passed, 4 expected Windows skips and 0 failures. T3 Codex/Luna review is READY
   0 Critical / 0 Important / 0 Minor; no packet is eligible yet.
 
@@ -17,7 +39,7 @@
   230 accept, 80 amend, 0 merge and 81 reject. The decisions artifacts contain
   310 final units with 25 selections and 25 `PASS_MECHANICAL_ONLY` checks;
   every file passed `checkDecomposition` (manifest SHA-256
-  `f0c323a1ee57d8408efe6c27d06421ffe38c199c1651a8bc1a218d4dcb70c366`). The main
+  `2fa8ec4628430883f19fde1849e3b17fda2cc0f1f94f242e43cb040d28e40420`). The main
   defect is mechanical span width: many units cover only the section heading or
   first line, so the specs must use full-section locators. The panel is
   delegated model review under D18, not admission or human fidelity.
