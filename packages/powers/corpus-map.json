@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5500,
+  "revision": 5520,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18260,8 +18260,29 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/improve-retention/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "improve-retention-apply",
+            "improve-retention-core",
+            "improve-retention-score",
+            "improve-retention-motivation",
+            "improve-retention-ability",
+            "improve-retention-prompt",
+            "improve-retention-tiny-habits",
+            "improve-retention-recipe",
+            "improve-retention-starter-step",
+            "improve-retention-scaling",
+            "improve-retention-process",
+            "improve-retention-aspiration",
+            "improve-retention-behavior-options",
+            "improve-retention-match",
+            "improve-retention-start-tiny",
+            "improve-retention-optimize",
+            "improve-retention-action-line",
+            "improve-retention-diagnostics",
+            "improve-retention-common-mistakes",
+            "improve-retention-quick-diagnostic"
+          ]
         },
         "skills/improve-retention/references/ability-chain.md": {
           "status": "rejected",

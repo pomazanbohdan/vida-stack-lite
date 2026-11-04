@@ -2,6 +2,38 @@
 
 ## 2026-11-04
 
+* **H1 next-14 improve-retention applied:** 20 `InstructionSpec` drafts from
+  the next-14 D18 aggregation (3 accept / 17 amend / 2 reject / 2 merge / 0
+  unresolved; spec manifest
+  `cb648f748f10fd8f10fbe927ba27c56b13ce4c09e38abe151a519225dc4f947f`).
+  Rejected units are Further Reading and About the Author; The Three Elements
+  and the Action Line heading were merged into their owning units. D37 added
+  the behavior-change vocabulary; eight exemptions (3 capability + 5 pattern)
+  cover score, mistakes, quick diagnostic, the framework scope, natural
+  scaling, two individual process steps and the optimize body. The source's
+  missing score bands 4 and 7-8 were retained as a gap, not invented. Packet
+  SHA-256
+  `11115a664892541604989576956f33e14141b76e568698b1d52bb111eb8c70f6`;
+  committee SHA-256
+  `b5b878b4e8ab2f46a413d72e6cad699c98c5785c8cc804959ac0d9ef1610b050`;
+  reviewed plan SHA-256
+  `476210f060a6e2569518885ca8f3a0571ab2a2ebc6c49bfe684dd8e8a18c206b`;
+  applied plan SHA-256
+  `9c22732237206bbe13774300264a169247ac953dc51c6edf52c937107463331e`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0 after two tag-fix rounds; apply
+  returned `applied` with all 22 targets observed as `intended`; receipt
+  `dc0df09e1075521c28a0dcfc0d7081b86ae41286d2faa826e49c8d75ab7fb8b6`.
+  Applied: 20 instructions, catalog, map; baseline rebuilt to 9 donors / 1,242
+  files; corpus 3,056; catalog revision 6,983; map revision 5,520.
+
+* **D37 behavior-change tags accepted:** `catalog.json` gains the
+  `design-behavior-change` capability and the `bmap-model`, `action-line`,
+  `ability-chain`, `prompt-timing`, `motivation-wave`, `tiny-habit-recipe`,
+  `starter-step`, `focus-mapping`, `behavior-design-steps` and
+  `retention-diagnostic` patterns for `improve-retention`. Catalog revision
+  6,963. The tags are metadata only and do not admit any source.
+
 * **H1 next-13 cold-start-problem applied:** 10 `InstructionSpec` drafts from
   the next-13 D18 aggregation (10 amend / 3 reject / 0 unresolved; spec manifest
   `0f799ecd95f75231b32c27a1b3ebe2b8bb703f477d74fe14c559c7057c40359e`).

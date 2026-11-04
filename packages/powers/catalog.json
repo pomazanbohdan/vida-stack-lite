@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6952,
+  "revision": 6983,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -96,7 +96,8 @@
       "design-managerial-system": "Ability to design a manager's operating system: output, leverage, indicators and meetings.",
       "run-eos-operating-system": "Ability to run an EOS operating system: vision, people, data, issues, process and traction.",
       "design-scorecard-funnel": "Ability to design a scorecard funnel from hook to segmented follow-up.",
-      "design-network-effects": "Ability to design a networked product from one atomic network to a defended network."
+      "design-network-effects": "Ability to design a networked product from one atomic network to a defended network.",
+      "design-behavior-change": "Ability to design a behavior change that survives low motivation by shifting ability, prompt and celebration."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -333,7 +334,17 @@
       "network-tipping": "An approach in which a repeatable playbook tips one network after another.",
       "network-ceiling": "An approach in which growth stalls are met by starting a new network or extending the moat.",
       "network-moat": "An approach in which density and switching costs create a durable defense.",
-      "network-growth-loop": "An approach in which acquisition, engagement and economic network effects reinforce each other."
+      "network-growth-loop": "An approach in which acquisition, engagement and economic network effects reinforce each other.",
+      "bmap-model": "An approach in which behavior occurs only when motivation, ability and a prompt converge at the same moment.",
+      "action-line": "An approach in which a threshold separates behavior that occurs from behavior that does not.",
+      "ability-chain": "An approach in which the scarcest of six ability factors is found and fixed.",
+      "prompt-timing": "An approach in which prompts are sent only above the action line and tied to events or routines.",
+      "motivation-wave": "An approach in which design targets low-motivation troughs rather than motivation spikes.",
+      "tiny-habit-recipe": "An approach in which a tiny behavior is anchored to a routine and followed by immediate celebration.",
+      "starter-step": "An approach in which a target behavior is shrunk to its tiniest meaningful version.",
+      "focus-mapping": "An approach in which candidate behaviors are plotted by impact against feasibility.",
+      "behavior-design-steps": "An approach in which aspiration, options, matching, tiny start and optimization are worked in order.",
+      "retention-diagnostic": "An approach in which a retention metric is mapped to a behavior-model cause and action."
     }
   },
   "tag_aliases": {
@@ -584,6 +595,46 @@
       "instruction_id": "cold-start-problem-effects",
       "dimension": "pattern",
       "reason": "The instruction analyzes three effects that may vary independently; no pattern definition fits without requiring reinforcement."
+    },
+    {
+      "instruction_id": "improve-retention-score",
+      "dimension": "capability",
+      "reason": "The instruction scores six diagnostic rows against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "improve-retention-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "improve-retention-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "improve-retention-apply",
+      "dimension": "pattern",
+      "reason": "The instruction states the framework scope; no pattern definition fits without inventing a model statement."
+    },
+    {
+      "instruction_id": "improve-retention-scaling",
+      "dimension": "pattern",
+      "reason": "The instruction covers natural growth after wiring; the recipe pattern requires an anchor and celebration that the body does not state."
+    },
+    {
+      "instruction_id": "improve-retention-aspiration",
+      "dimension": "pattern",
+      "reason": "The instruction is one step of the five-step sequence; the pattern requires all five steps in order."
+    },
+    {
+      "instruction_id": "improve-retention-behavior-options",
+      "dimension": "pattern",
+      "reason": "The instruction is one step of the five-step sequence; the pattern requires all five steps in order."
+    },
+    {
+      "instruction_id": "improve-retention-optimize",
+      "dimension": "pattern",
+      "reason": "The instruction says to fix bottlenecks with the Ability Chain; the pattern requires finding and fixing the scarcest of six factors, which the body does not state."
     }
   ],
   "instructions": [
@@ -6091,6 +6142,106 @@
       "instruction_id": "impose-a-constraint-to-force-solutions",
       "path": "instructions/impose-a-constraint-to-force-solutions.md",
       "sha256": "1b04992ea99d06709c32ca72481d1afa878ff7bd0c02315d7e088aace0521a5e"
+    },
+    {
+      "instruction_id": "improve-retention-ability",
+      "path": "instructions/improve-retention-ability.md",
+      "sha256": "07a063faa7a07fb98ca0cd861d32236ca49d8cc29f607d39375a8fd95e0c9ecc"
+    },
+    {
+      "instruction_id": "improve-retention-action-line",
+      "path": "instructions/improve-retention-action-line.md",
+      "sha256": "8b1d9e5cdee393c2ef5e8231e0c69db9ba75fe91c0c258d6632e2956a756ded8"
+    },
+    {
+      "instruction_id": "improve-retention-apply",
+      "path": "instructions/improve-retention-apply.md",
+      "sha256": "e3d6cd76a3d5bab02c8426c63296ff96bf3b276b9c90f50fc42a0aee50fcfe3a"
+    },
+    {
+      "instruction_id": "improve-retention-aspiration",
+      "path": "instructions/improve-retention-aspiration.md",
+      "sha256": "89f0d546fa2768b1e0f1cf9421420ab27d618ed66230603f25061b876ce15fd7"
+    },
+    {
+      "instruction_id": "improve-retention-behavior-options",
+      "path": "instructions/improve-retention-behavior-options.md",
+      "sha256": "70146e1eed82ce8a0c81d3a3145c6b54cd39c183e14f1c5ac86c23696e42313f"
+    },
+    {
+      "instruction_id": "improve-retention-common-mistakes",
+      "path": "instructions/improve-retention-common-mistakes.md",
+      "sha256": "408a4b345bc6dfb881ed20453dec68619aec43f1c3a4a2f619541c1a15d43054"
+    },
+    {
+      "instruction_id": "improve-retention-core",
+      "path": "instructions/improve-retention-core.md",
+      "sha256": "326c1507e6f51048ba4a0395c60f52fe3fb9d53d037c491623595410d37dd412"
+    },
+    {
+      "instruction_id": "improve-retention-diagnostics",
+      "path": "instructions/improve-retention-diagnostics.md",
+      "sha256": "57c32a2cbc523f68dac5960b64f6647e6aef61bc6e72dc6a5c33576398e2af05"
+    },
+    {
+      "instruction_id": "improve-retention-match",
+      "path": "instructions/improve-retention-match.md",
+      "sha256": "3816e01a230f6226535034052a91fb0c36a3c86150354fbd5d0f7845a0ce8b52"
+    },
+    {
+      "instruction_id": "improve-retention-motivation",
+      "path": "instructions/improve-retention-motivation.md",
+      "sha256": "d53b3071dbe9944b54d12474c54fe36d55ea5109f0269998d44eeacbdc47ba0f"
+    },
+    {
+      "instruction_id": "improve-retention-optimize",
+      "path": "instructions/improve-retention-optimize.md",
+      "sha256": "655e63f15a976100af0e69a34b743ca0c6572caa736b0015f15a95efcb0bebbf"
+    },
+    {
+      "instruction_id": "improve-retention-process",
+      "path": "instructions/improve-retention-process.md",
+      "sha256": "e7456a743233c380c88954b022a182715cf3e6538a88c6e25ada2986bdd64d2b"
+    },
+    {
+      "instruction_id": "improve-retention-prompt",
+      "path": "instructions/improve-retention-prompt.md",
+      "sha256": "f5a5c86a7b87cd6dea605a7e7f1f528dc1e8bf1c1b1e1c109df6465573b2bcbc"
+    },
+    {
+      "instruction_id": "improve-retention-quick-diagnostic",
+      "path": "instructions/improve-retention-quick-diagnostic.md",
+      "sha256": "99aa8369fd3f59a87673aa5bba805a1cfa50221e86176dd9efd5b24ec85f24cc"
+    },
+    {
+      "instruction_id": "improve-retention-recipe",
+      "path": "instructions/improve-retention-recipe.md",
+      "sha256": "d4da8fe802811184d62c1c564bf23ec14790bb4b30478a68d1b3b493e8b270a1"
+    },
+    {
+      "instruction_id": "improve-retention-scaling",
+      "path": "instructions/improve-retention-scaling.md",
+      "sha256": "9480be27b82343ee4b4eca0e690792bf7f09baa68e8718c85040639ddb419f18"
+    },
+    {
+      "instruction_id": "improve-retention-score",
+      "path": "instructions/improve-retention-score.md",
+      "sha256": "c8b87846663745850a8a8c22322fe9a697dda951596b31732767efdfd768cfae"
+    },
+    {
+      "instruction_id": "improve-retention-start-tiny",
+      "path": "instructions/improve-retention-start-tiny.md",
+      "sha256": "acc4c071f1a223d3da639b0642fa1d1cb84ba2e857b719cfb41036c1c3cb14c2"
+    },
+    {
+      "instruction_id": "improve-retention-starter-step",
+      "path": "instructions/improve-retention-starter-step.md",
+      "sha256": "d3c7588a3b5015eb4abe7c50db87a2435daae110f34a1732f7169a0ef5ba0529"
+    },
+    {
+      "instruction_id": "improve-retention-tiny-habits",
+      "path": "instructions/improve-retention-tiny-habits.md",
+      "sha256": "55b966ebc9de7cc550703cb7c2c02e9a621b1fb42861d9679ed757e5aabf81da"
     },
     {
       "instruction_id": "include-only-what-the-task-needs",
