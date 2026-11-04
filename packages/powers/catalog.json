@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6935,
+  "revision": 6952,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -95,7 +95,8 @@
       "design-intrinsic-motivation": "Ability to design autonomy, mastery and purpose into a product, team or reward system.",
       "design-managerial-system": "Ability to design a manager's operating system: output, leverage, indicators and meetings.",
       "run-eos-operating-system": "Ability to run an EOS operating system: vision, people, data, issues, process and traction.",
-      "design-scorecard-funnel": "Ability to design a scorecard funnel from hook to segmented follow-up."
+      "design-scorecard-funnel": "Ability to design a scorecard funnel from hook to segmented follow-up.",
+      "design-network-effects": "Ability to design a networked product from one atomic network to a defended network."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -326,7 +327,13 @@
       "scorecard-questionnaire": "An approach in which contact capture precedes scored questions grouped into 2-7 categories.",
       "scorecard-tiers": "An approach in which results are split into tiers with dynamic content and a tier-specific CTA.",
       "scorecard-nurture": "An approach in which follow-up is segmented by score tier and abandonment is recovered.",
-      "scorecard-benchmark": "An approach in which published conversion ranges are used as benchmarks, not guarantees."
+      "scorecard-benchmark": "An approach in which published conversion ranges are used as benchmarks, not guarantees.",
+      "atomic-network": "An approach in which the first network is small, complete and self-sustaining.",
+      "hard-side": "An approach in which the side that is hardest to acquire is solved first.",
+      "network-tipping": "An approach in which a repeatable playbook tips one network after another.",
+      "network-ceiling": "An approach in which growth stalls are met by starting a new network or extending the moat.",
+      "network-moat": "An approach in which density and switching costs create a durable defense.",
+      "network-growth-loop": "An approach in which acquisition, engagement and economic network effects reinforce each other."
     }
   },
   "tag_aliases": {
@@ -552,6 +559,31 @@
       "instruction_id": "scorecard-marketing-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "cold-start-problem-score",
+      "dimension": "capability",
+      "reason": "The instruction scores a launch plan against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "cold-start-problem-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "cold-start-problem-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "cold-start-problem-apply",
+      "dimension": "pattern",
+      "reason": "The instruction states the framework scope; no pattern definition fits without inventing a reinforcement loop."
+    },
+    {
+      "instruction_id": "cold-start-problem-effects",
+      "dimension": "pattern",
+      "reason": "The instruction analyzes three effects that may vary independently; no pattern definition fits without requiring reinforcement."
     }
   ],
   "instructions": [
@@ -2804,6 +2836,56 @@
       "instruction_id": "cluster-raw-data-by-what-differentiates-behavior",
       "path": "instructions/cluster-raw-data-by-what-differentiates-behavior.md",
       "sha256": "f5d2818482c44f9b94787eb1e33b351c402dcf44e3c91ff78fe87a945a0a6e3e"
+    },
+    {
+      "instruction_id": "cold-start-problem-apply",
+      "path": "instructions/cold-start-problem-apply.md",
+      "sha256": "755b52e7dc05363d65c314f18051dfac65ffe881c63376e0c9b76016d0f608d4"
+    },
+    {
+      "instruction_id": "cold-start-problem-atomic-network",
+      "path": "instructions/cold-start-problem-atomic-network.md",
+      "sha256": "52df09ec2a689ceb5612a32ce004a7c3e902215245069b6a90fe505fa6fa21b8"
+    },
+    {
+      "instruction_id": "cold-start-problem-ceiling",
+      "path": "instructions/cold-start-problem-ceiling.md",
+      "sha256": "c4623c84de7a1239d65a476cf49fa34ab88929c4b9f0c1c7ea0d6a00eb9c3e5e"
+    },
+    {
+      "instruction_id": "cold-start-problem-common-mistakes",
+      "path": "instructions/cold-start-problem-common-mistakes.md",
+      "sha256": "c966b7605187b9f6aa8817f450db6058a70b422c5640930dee353361ff0136b7"
+    },
+    {
+      "instruction_id": "cold-start-problem-core",
+      "path": "instructions/cold-start-problem-core.md",
+      "sha256": "310ca6e797ca0219226e3f8b18dda5797aa920a48b5920c7ba84839d00d1f41c"
+    },
+    {
+      "instruction_id": "cold-start-problem-diagnostic",
+      "path": "instructions/cold-start-problem-diagnostic.md",
+      "sha256": "f4e96fe849763eb0658bcf8dbe38d2727a91516438eac10c4b92ef702835f357"
+    },
+    {
+      "instruction_id": "cold-start-problem-effects",
+      "path": "instructions/cold-start-problem-effects.md",
+      "sha256": "4eaf7418df7ce98d5637a28bde68b2fa6b9dcb810fe4f92308ae59254f9b6960"
+    },
+    {
+      "instruction_id": "cold-start-problem-hard-side",
+      "path": "instructions/cold-start-problem-hard-side.md",
+      "sha256": "e432918c0defc8251af4e7a10562a282faf9ee16dea1ede0beff095ed69fefa7"
+    },
+    {
+      "instruction_id": "cold-start-problem-score",
+      "path": "instructions/cold-start-problem-score.md",
+      "sha256": "6a5d4744c7458337710334cac586515cf04b275c80a70d3cf4e071a0d770eef6"
+    },
+    {
+      "instruction_id": "cold-start-problem-tipping",
+      "path": "instructions/cold-start-problem-tipping.md",
+      "sha256": "57c78142e7d98b482dbc39f50e917c0925f1fb9b19927d12274100cd505476b4"
     },
     {
       "instruction_id": "collect-personal-data-only-against-a-stated-purpose",
