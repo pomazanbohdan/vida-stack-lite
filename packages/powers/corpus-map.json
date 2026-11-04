@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5345,
+  "revision": 5372,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17517,8 +17517,25 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/contagious/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "contagious-apply",
+            "contagious-shareability",
+            "contagious-score",
+            "contagious-stepps",
+            "contagious-social-currency",
+            "contagious-triggers",
+            "contagious-emotion",
+            "contagious-public",
+            "contagious-practical-value",
+            "contagious-stories",
+            "contagious-combine",
+            "contagious-launch",
+            "contagious-content",
+            "contagious-feature-design",
+            "contagious-common-mistakes",
+            "contagious-diagnostic"
+          ]
         },
         "skills/contagious/references/case-studies.md": {
           "status": "rejected",
@@ -17632,8 +17649,20 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/cro-methodology/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "cro-methodology-apply",
+            "cro-methodology-evidence",
+            "cro-methodology-score",
+            "cro-methodology-process",
+            "cro-methodology-research",
+            "cro-methodology-persuasion-assets",
+            "cro-methodology-objection-table",
+            "cro-methodology-hypothesis",
+            "cro-methodology-ab-test",
+            "cro-methodology-common-mistakes",
+            "cro-methodology-diagnostic"
+          ]
         },
         "skills/cro-methodology/references/COPYWRITING.md": {
           "status": "rejected",

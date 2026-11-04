@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6732,
+  "revision": 6765,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -85,7 +85,9 @@
       "scope-tool-reach": "Keeps a powerful capability in the role that needs it and out of the role that does not.",
       "write-knowledge-documents": "Writes the documents of a knowledge corpus: the metadata, the body, the provenance, the links and the history that go with them.",
       "design-team-organization": "Ability to choose team boundaries, team types and interaction modes before assigning work.",
-      "bound-product-pitch": "Ability to bound a product problem into a pitch before a team commits to it."
+      "bound-product-pitch": "Ability to bound a product problem into a pitch before a team commits to it.",
+      "assemble-persuasion-proof": "Ability to assemble genuine proof assets and objection counters for a claim.",
+      "design-shareability": "Ability to design sharing into a product, campaign or content through predictable social drivers."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -270,7 +272,11 @@
       "team-topology-design": "An approach in which team boundaries, team types and interaction modes are designed deliberately so the organization produces the intended architecture.",
       "internal-platform-product": "An approach in which an internal platform is run as a product for its stream-aligned customers: optional adoption, cognitive load removed as the measure, and sensing signals.",
       "fixed-time-variable-scope": "An approach in which the time box is fixed and scope flexes to fit the appetite.",
-      "opinionated-defaults": "An approach in which the product makes the choice instead of exposing a preference, and revisits the default only on evidence."
+      "opinionated-defaults": "An approach in which the product makes the choice instead of exposing a preference, and revisits the default only on evidence.",
+      "proof-inventory": "An approach in which proof assets are inventoried, acquired and placed where a claim needs support.",
+      "objection-handling": "An approach in which each researched objection is answered with specific, verifiable proof at the point of friction.",
+      "word-of-mouth-shareability": "An approach in which sharing is designed into a product, campaign or content through predictable social and psychological drivers.",
+      "shareability-fit": "An approach in which a sharing driver is matched to a launch phase, content format or feature by its stated fit."
     }
   },
   "tag_aliases": {
@@ -2764,6 +2770,86 @@
       "sha256": "2cd24a177f1a5c6823ed63944b2bd38c21c520a5717ecb5b8c0ce3d58e54c79a"
     },
     {
+      "instruction_id": "contagious-apply",
+      "path": "instructions/contagious-apply.md",
+      "sha256": "612aaa5dcfff9bf801daa66c0c3048baf9ad99cd8fb66d992bfbaf22fc2a3c4a"
+    },
+    {
+      "instruction_id": "contagious-combine",
+      "path": "instructions/contagious-combine.md",
+      "sha256": "7acc5e908753cd115f1adb3adbcdbb509d6d91cb37cedd3d308940f8efc70d56"
+    },
+    {
+      "instruction_id": "contagious-common-mistakes",
+      "path": "instructions/contagious-common-mistakes.md",
+      "sha256": "735afb7235fd98e188e225226c84bfa79ee1dedbc69db730d74cbf2e4def1ef3"
+    },
+    {
+      "instruction_id": "contagious-content",
+      "path": "instructions/contagious-content.md",
+      "sha256": "dc618a8c595f48723920aa4c6a375fc8c16da5485d5170e2fb02f11d9785ff4c"
+    },
+    {
+      "instruction_id": "contagious-diagnostic",
+      "path": "instructions/contagious-diagnostic.md",
+      "sha256": "abed5b8e04b9f689dce2aea8f6bd3cc726888dd33ed24d07ceb37a1730cfed1f"
+    },
+    {
+      "instruction_id": "contagious-emotion",
+      "path": "instructions/contagious-emotion.md",
+      "sha256": "08b74e791184d9d87841ed905a56b4a1b84580188f36f2a025f362d1db1ebdd0"
+    },
+    {
+      "instruction_id": "contagious-feature-design",
+      "path": "instructions/contagious-feature-design.md",
+      "sha256": "0e8abf936ef983ce69f822cd00802e82f6193cfd568b45358557c648616dd3c6"
+    },
+    {
+      "instruction_id": "contagious-launch",
+      "path": "instructions/contagious-launch.md",
+      "sha256": "4aea80eaac8b529a7cd4754bb713dc1a15bfb36bae3c777cf510ac41ea8615db"
+    },
+    {
+      "instruction_id": "contagious-practical-value",
+      "path": "instructions/contagious-practical-value.md",
+      "sha256": "f4bd66f1bf317ac6209b5973d18940a30b84a183cf483b8a4631a92425f52e85"
+    },
+    {
+      "instruction_id": "contagious-public",
+      "path": "instructions/contagious-public.md",
+      "sha256": "1f3f161adf8f7411c78a9efe3f47ec53debf0edd73d93ab03e9b26cd1de0f02b"
+    },
+    {
+      "instruction_id": "contagious-score",
+      "path": "instructions/contagious-score.md",
+      "sha256": "d73173bfd1662dc63be313820cd647ff8dae63f6983c9d9b768d14f40fde974a"
+    },
+    {
+      "instruction_id": "contagious-shareability",
+      "path": "instructions/contagious-shareability.md",
+      "sha256": "40568a3416cb27855dc7ff2d90e41e66529de7ff3cf87c4f8069e9c8f737c1fb"
+    },
+    {
+      "instruction_id": "contagious-social-currency",
+      "path": "instructions/contagious-social-currency.md",
+      "sha256": "3346ddb25c1c1f38ef2bbd6c3fa68698b7de283cc87822b50185c17c801e23d9"
+    },
+    {
+      "instruction_id": "contagious-stepps",
+      "path": "instructions/contagious-stepps.md",
+      "sha256": "a9c1dec5222d8dc5d9540b37f9ed3aaadaece4e3f71769d2eec4d4ab775f6ea7"
+    },
+    {
+      "instruction_id": "contagious-stories",
+      "path": "instructions/contagious-stories.md",
+      "sha256": "42a532a1eef0bc99b739467627db0e8ad31da3e8b9b06e07ab98eb41225ac4f7"
+    },
+    {
+      "instruction_id": "contagious-triggers",
+      "path": "instructions/contagious-triggers.md",
+      "sha256": "afba2aaa25e1f74683b026f28392427ed4583a8b706f1c817c249236b7025f76"
+    },
+    {
       "instruction_id": "contain-destructive-path-operations",
       "path": "instructions/contain-destructive-path-operations.md",
       "sha256": "22bf77aa9ac0a5738a20b4d5819bf196fd7c2b82db3f1cc91394a3742ca62dd4"
@@ -2932,6 +3018,61 @@
       "instruction_id": "critique-the-rubric-alongside-the-grade",
       "path": "instructions/critique-the-rubric-alongside-the-grade.md",
       "sha256": "8964f8b4b461424356dd6ebd911c001dca204ebaded431529e97bed083a95864"
+    },
+    {
+      "instruction_id": "cro-methodology-ab-test",
+      "path": "instructions/cro-methodology-ab-test.md",
+      "sha256": "ead3331a27724ffb25887dde94f2e84475b31336aefe489f74e2f35aaf24783d"
+    },
+    {
+      "instruction_id": "cro-methodology-apply",
+      "path": "instructions/cro-methodology-apply.md",
+      "sha256": "c391c71a40080984357fe1083526d75db971a70ac1c080addf7ae543266a8cdb"
+    },
+    {
+      "instruction_id": "cro-methodology-common-mistakes",
+      "path": "instructions/cro-methodology-common-mistakes.md",
+      "sha256": "4834840d87a183a59d7ab7c9c6abd2ead1f5d5a2fc9f56ce405a143848e33767"
+    },
+    {
+      "instruction_id": "cro-methodology-diagnostic",
+      "path": "instructions/cro-methodology-diagnostic.md",
+      "sha256": "a2dcbabe1e4e6cde4b705b84f0cfcc72b6a39b14697a5a919d7553078568c4a9"
+    },
+    {
+      "instruction_id": "cro-methodology-evidence",
+      "path": "instructions/cro-methodology-evidence.md",
+      "sha256": "fb480127ef90e9715c5a3cd70016b21458e56c98ad82458a82ea162839224be6"
+    },
+    {
+      "instruction_id": "cro-methodology-hypothesis",
+      "path": "instructions/cro-methodology-hypothesis.md",
+      "sha256": "215994cb91b0129e8d373a1a80bd58b3e4d0e88a00c37229cfc351c4bb7cd606"
+    },
+    {
+      "instruction_id": "cro-methodology-objection-table",
+      "path": "instructions/cro-methodology-objection-table.md",
+      "sha256": "91d987be1f0a86cffda270c5402122065ff4b6c8e4df41b767d40213752c333b"
+    },
+    {
+      "instruction_id": "cro-methodology-persuasion-assets",
+      "path": "instructions/cro-methodology-persuasion-assets.md",
+      "sha256": "78cad783dc493a72b06d944e55dbeedfc9e38534f7e5a378c5fba0e834124df5"
+    },
+    {
+      "instruction_id": "cro-methodology-process",
+      "path": "instructions/cro-methodology-process.md",
+      "sha256": "b8e0860518d4e50e155a84458a04c8cc2d16e7b7f3838722101aeaecb2fcec9f"
+    },
+    {
+      "instruction_id": "cro-methodology-research",
+      "path": "instructions/cro-methodology-research.md",
+      "sha256": "c840ed6648df3207218fe54f351776d1777446700b2e8182f044cf9fb82107fe"
+    },
+    {
+      "instruction_id": "cro-methodology-score",
+      "path": "instructions/cro-methodology-score.md",
+      "sha256": "5e154f2bb8c351a194515b4d0af6c94d0422fd5cc07dab45c10b6f985e23a823"
     },
     {
       "instruction_id": "cross-check-the-record-against-the-artifacts",

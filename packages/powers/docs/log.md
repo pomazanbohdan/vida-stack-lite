@@ -1,5 +1,53 @@
 # Directory Update Log
 
+## 2026-11-04
+
+* **H1 next-5 cro-methodology and contagious applied:** 27 `InstructionSpec`
+  drafts from the next-5 D18 aggregation. `cro-methodology` contributed 11
+  instructions (11 amend / 3 reject / 0 unresolved; spec manifest
+  `485ff992b4d9be598db99982ae468977d9b9ecd312cfeb79461c042c616a330b`;
+  packet `67453f14b43461c6c09e733ffee0e08ecc4a396afd6ae4aacfd67d213b56887e`;
+  committee `2e1d63e3f8bbe137a5bc707997c0528c8bd1da7384bca85ddb328fa39ebee0f3`;
+  reviewed plan `44a2fee6c7400ca58396faa91305dc366eef00c310740fb03b8f7951e34f0653`;
+  applied plan `b41851e7692050ab2eaac90502a7de5bd2a29a70edf418967710d0341781227b`;
+  apply receipt `9c2b1ccc4084bfc1ca03ab1343d01f9b4f9106f30c27428e1a919067491a3029`).
+  `contagious` contributed 16 instructions (16 amend / 3 reject / 0 unresolved;
+  spec manifest
+  `2d29115305d6daf798a4383fa4a41d5a8d32fe207e10ee014d7ca91af22e6704`;
+  packet `3382d6a031452dbf005155a652b57b95f7d44f9222f7deea493d28ed259fd633`;
+  committee `85ef5f283bafeeec4476b1fe9987c16aeb278d00110491ab86c876731cbdc9bf`;
+  reviewed plan `8ac2b6f642c32b777b0e3ea7e66b67056b03e41e0394521718f33ee074130754`;
+  applied plan `493cc36ab634c6fcce8c7f0f0ddb586e3946fe60cee07fa177a3bbebbf4d73da`;
+  apply receipt `08f531a479b3d080fc126138daa3bf46b73fd0f07355eec124275add847cb84f`).
+  D23 added conversion proof/objection tags, D24 word-of-mouth patterns and D25
+  the `design-shareability` capability. The first reviews found tag and plan
+  path defects; all were fixed and both plans re-reviewed READY 0/0/0.
+  The retrieval benchmark now accepts `VP_RETRIEVAL_CATALOG` and passed 5/5
+  against each staged catalog. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. Applied: 27 instructions, catalog, map; baseline
+  rebuilt to 9 donors / 1,233 files; corpus 2,908; catalog revision 6,765; map
+  revision 5,372.
+
+* **D25 shareability capability accepted:** `catalog.json` gains the
+  `design-shareability` capability for the `contagious` batch. The STEPPS
+  instructions direct business sharing work, and `write-technical-prose` did not
+  describe it. Catalog revision 6,738. The tag is metadata only and does not
+  admit any source.
+
+* **D24 word-of-mouth tags accepted:** `catalog.json` gains the
+  `word-of-mouth-shareability` and `shareability-fit` patterns for the
+  `contagious` batch. STEPPS is a distinct word-of-mouth framework, and the
+  launch/content/feature tables match drivers to an artifact type; the existing
+  message, marketing and referral tags did not fit. Catalog revision 6,737. The
+  tags are metadata only and do not admit any source.
+
+* **D23 conversion proof tags accepted:** `catalog.json` gains the
+  `assemble-persuasion-proof` capability and the `proof-inventory` and
+  `objection-handling` patterns for the `cro-methodology` batch. The definitions
+  cover verifiable proof assets and researched objection counters; the existing
+  prose, message and persuasion tags did not. Catalog revision 6,735. The tags
+  are metadata only and do not admit any source.
+
 ## 2026-11-03
 
 * **H1 next-4 lean-analytics applied:** 10 `InstructionSpec` drafts from the

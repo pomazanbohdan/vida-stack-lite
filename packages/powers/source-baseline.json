@@ -4869,9 +4869,17 @@
           "sha256": "072b309df4ea3e271232f281d8a98d759f6f27a310a74b1fd6e8f70ec3a9b04f",
           "bytes": 14923
         },
+        "skills/contagious/SKILL.md": {
+          "sha256": "cbebc68767b7e2e2ec881e7e08dd7241f5e50134368c3867eba2646d8fababbe",
+          "bytes": 17762
+        },
         "skills/continuous-discovery/SKILL.md": {
           "sha256": "44260b572a050417ba3733021eaa1694318fda80794c3e07800c66b4bc4a0c9e",
           "bytes": 15246
+        },
+        "skills/cro-methodology/SKILL.md": {
+          "sha256": "52bfedca17750ad117d838bfdcb5c5db190fb8a7c6e9b82abe44f939830e3897",
+          "bytes": 17070
         },
         "skills/crossing-the-chasm/SKILL.md": {
           "sha256": "93c266a4aaa2f95b0682e66ce4450d1eb2bbf64a271942f9cec9ecb59b8fde7c",

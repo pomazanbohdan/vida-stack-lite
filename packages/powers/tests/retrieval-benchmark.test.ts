@@ -6,7 +6,7 @@ import type { LoadedInstruction } from '../skills/vp-mode/scripts/catalog.ts';
 import { resolveIntent } from '../skills/vp-mode/scripts/retrieval.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const catalogPath = join(here, '../catalog.json');
+const catalogPath = process.env.VP_RETRIEVAL_CATALOG ?? join(here, '../catalog.json');
 
 let instructions: Map<string, LoadedInstruction>;
 let aliases: Map<string, string>;
