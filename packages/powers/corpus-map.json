@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5490,
+  "revision": 5500,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17493,8 +17493,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/cold-start-problem/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "cold-start-problem-apply",
+            "cold-start-problem-core",
+            "cold-start-problem-score",
+            "cold-start-problem-effects",
+            "cold-start-problem-atomic-network",
+            "cold-start-problem-hard-side",
+            "cold-start-problem-tipping",
+            "cold-start-problem-ceiling",
+            "cold-start-problem-common-mistakes",
+            "cold-start-problem-diagnostic"
+          ]
         },
         "skills/cold-start-problem/references/atomic-networks.md": {
           "status": "rejected",

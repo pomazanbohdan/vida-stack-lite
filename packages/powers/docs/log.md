@@ -2,6 +2,33 @@
 
 ## 2026-11-04
 
+* **H1 next-13 cold-start-problem applied:** 10 `InstructionSpec` drafts from
+  the next-13 D18 aggregation (10 amend / 3 reject / 0 unresolved; spec manifest
+  `0f799ecd95f75231b32c27a1b3ebe2b8bb703f477d74fe14c559c7057c40359e`).
+  Rejected units are the Framework heading, Further Reading and About the
+  Author. D36 added the network-effects vocabulary; five exemptions (3
+  capability + 2 pattern) cover score, mistakes, diagnostic and the two
+  non-reinforcing analyses. Packet SHA-256
+  `5e129fc665620286dee64fed9fcff2263eeb0d3bbddfe600c3ef7c2b9f1721e5`;
+  committee SHA-256
+  `103c11efb107efb101e8544598c71dab5c0d0c98e374063717f947d16ceca1ac`;
+  reviewed plan SHA-256
+  `8b6ace00521fc05473d86c7ea08bbe3e47ab11269f9ec8236d0cd9406ef80eb1`;
+  applied plan SHA-256
+  `5acc1bd232dac150a5cc56dac79a6faddf360f3fb7e360b1f5b96e2e58795641`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 12
+  targets observed as `intended`; receipt
+  `f3b9004420265124e03e4a35840ceb3f7fa836e320083a82cee025f82d55cb5a`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,241
+  files; corpus 3,036; catalog revision 6,952; map revision 5,500.
+
+* **D36 network-effects tags accepted:** `catalog.json` gains the
+  `design-network-effects` capability and the `atomic-network`, `hard-side`,
+  `network-tipping`, `network-ceiling`, `network-moat` and `network-growth-loop`
+  patterns for `cold-start-problem`. Catalog revision 6,942. The tags are
+  metadata only and do not admit any source.
+
 * **H1 next-12 scorecard-marketing applied:** 11 `InstructionSpec` drafts from
   the next-12 D18 aggregation (8 accept / 3 amend / 5 reject / 0 unresolved;
   spec manifest
