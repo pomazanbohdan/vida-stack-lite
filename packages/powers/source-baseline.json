@@ -4921,6 +4921,10 @@
           "sha256": "775ae946b15f03d787077c35d166a9addb1e241cb9ffea03ceee3a1be198175e",
           "bytes": 14064
         },
+        "skills/improve-retention/SKILL.md": {
+          "sha256": "f25f70aed02080dc62a90ed107623bad3f32d4a79866941cf1b5f7e4a7a77051",
+          "bytes": 15225
+        },
         "skills/influence-psychology/SKILL.md": {
           "sha256": "e7cd3142a11a631c56be159374a42341b370efb26cc3adc25a9f5e6627b84994",
           "bytes": 17148
