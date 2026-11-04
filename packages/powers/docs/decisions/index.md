@@ -38,3 +38,4 @@ log `../log.md`.
 * [D30 — Habit-loop tags for the H1 hooked-ux batch](D30-habit-loop-tags.md) - One capability and six pattern tags with catalog definitions let the Hook Model and its ethics boundaries carry accurate metadata.
 * [D31 — Regulatory watch tag for the H1 hooked-ux batch](D31-regulatory-watch-tag.md) - One pattern tag with a catalog definition lets the regulatory monitoring instruction carry accurate metadata.
 * [D32 — Intrinsic motivation tags for the H1 drive-motivation batch](D32-intrinsic-motivation-tags.md) - One capability and six pattern tags with catalog definitions let autonomy, mastery, purpose and reward design carry accurate metadata.
+* [D33 — Managerial system tags for the H1 high-output-management batch](D33-managerial-system-tags.md) - One capability and seven pattern tags with catalog definitions let managerial output, leverage, indicators, meetings and OKRs carry accurate metadata.

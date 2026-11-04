@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5453,
+  "revision": 5463,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18066,8 +18066,19 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/high-output-management/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "high-output-management-apply",
+            "high-output-management-score",
+            "high-output-management-production-line",
+            "high-output-management-output-indicators",
+            "high-output-management-leverage",
+            "high-output-management-meetings",
+            "high-output-management-decisions",
+            "high-output-management-trm",
+            "high-output-management-common-mistakes",
+            "high-output-management-diagnostic"
+          ]
         },
         "skills/high-output-management/references/case-studies.md": {
           "status": "rejected",

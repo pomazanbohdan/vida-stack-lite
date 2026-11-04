@@ -2,6 +2,37 @@
 
 ## 2026-11-04
 
+* **H1 next-10 high-output-management applied:** 10 `InstructionSpec` drafts
+  from the next-10 D18 aggregation (10 accept / 1 merge / 3 reject / 0
+  unresolved; spec manifest
+  `90bdd5a9c291e06aa44b35eabbcabd93734d52b38b5639bd3aabfb14c46ddd0c`).
+  `u1` merged into `u2`; rejected units are the Framework heading, Further
+  Reading and About the Author. D33 added the managerial-system vocabulary;
+  three capability exemptions cover score, common-mistakes and diagnostic. The
+  staged benchmark receipt is bound in the committee with catalog SHA-256
+  `a77ed9584cdddbd6eec3072638d8b9a1654752e7d45eed3cc7e6cdb1e0e76483`, 5/0.
+  Packet SHA-256
+  `bb07d3d93e83bdff17addd3dc5994af4f8533a82d0adf2026b2a6e5a147fbc05`;
+  committee SHA-256
+  `18fd991d49ee09a10883d29c495ca8bee32bcf677dbd03ff2ca57e925f331a35`;
+  reviewed plan SHA-256
+  `2786417181f17891dbcfd4f0fbc75165eaec3b4496a513d9063139d5a31ad121`;
+  applied plan SHA-256
+  `23f3650b7e3bcfd9b0ada2f5be2ec690c9fa5dec68800b832cb6a6946af70ebc`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 12
+  targets observed as `intended`; receipt
+  `43433efd20ddcd4698a349715f582f97545d5dbb36013569f9cc436a651c760f`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,238
+  files; corpus 2,999; catalog revision 6,893; map revision 5,463.
+
+* **D33 managerial system tags accepted:** `catalog.json` gains the
+  `design-managerial-system` capability and the `managerial-leverage`,
+  `output-indicator`, `production-line-management`, `task-relevant-maturity`,
+  `decision-roles`, `meeting-cadence` and `okr-stretch` patterns for
+  `high-output-management`. Catalog revision 6,883. The tags are metadata only
+  and do not admit any source.
+
 * **H1 next-9 drive-motivation applied:** 14 `InstructionSpec` drafts from the
   next-9 D18 aggregation (14 accept / 4 reject / 0 unresolved; spec manifest
   `ba2b8e8cf599ff52dfac7bc53a1465fdc9738bba6ef3b877a2a08891dde2c0e3`).

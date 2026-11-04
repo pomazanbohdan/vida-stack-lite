@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6874,
+  "revision": 6893,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -92,7 +92,8 @@
       "run-sales-metrics": "Ability to track sales activity, result and efficiency metrics on a stated review cadence.",
       "generate-divergent-sketches": "Ability to generate multiple independent sketches before any selection.",
       "design-habit-loop": "Ability to design a four-phase habit loop from trigger to investment.",
-      "design-intrinsic-motivation": "Ability to design autonomy, mastery and purpose into a product, team or reward system."
+      "design-intrinsic-motivation": "Ability to design autonomy, mastery and purpose into a product, team or reward system.",
+      "design-managerial-system": "Ability to design a manager's operating system: output, leverage, indicators and meetings."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -303,7 +304,14 @@
       "mastery-path": "An approach in which ability is treated as developable and challenge is matched to skill.",
       "purpose-connection": "An approach in which work is connected to a larger mission and visible user impact.",
       "now-that-reward": "An approach in which an unexpected reward follows the work instead of being promised for a target.",
-      "gamification-ethics": "An approach in which gamification is opt-in, skill-based and meaningful rather than points for everything."
+      "gamification-ethics": "An approach in which gamification is opt-in, skill-based and meaningful rather than points for everything.",
+      "managerial-leverage": "An approach in which managerial work is chosen by output per unit of managerial time.",
+      "output-indicator": "An approach in which indicators measure shipped output that survives and pair each quantity with quality.",
+      "production-line-management": "An approach in which a team is managed as a production line around its limiting step.",
+      "task-relevant-maturity": "An approach in which management style is matched to the person's maturity on the specific task.",
+      "decision-roles": "An approach in which a decision names who decides, consults, ratifies, vetoes and is informed.",
+      "meeting-cadence": "An approach in which process meetings carry most managerial work and are scheduled by task-relevant maturity.",
+      "okr-stretch": "An approach in which objectives and key results set stretch direction and are not tied to pay."
     }
   },
   "tag_aliases": {
@@ -457,6 +465,21 @@
     },
     {
       "instruction_id": "drive-motivation-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "high-output-management-score",
+      "dimension": "capability",
+      "reason": "The instruction scores management practices against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "high-output-management-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "high-output-management-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
@@ -5686,6 +5709,56 @@
       "instruction_id": "help-the-reviewer-test-and-drive-the-target",
       "path": "instructions/help-the-reviewer-test-and-drive-the-target.md",
       "sha256": "65f364cf899cbb6752b5bc9ce6ccee78dfaa8ba03c4d14b72430233c7afa45fd"
+    },
+    {
+      "instruction_id": "high-output-management-apply",
+      "path": "instructions/high-output-management-apply.md",
+      "sha256": "ed0eb73bf1287773d008cb0d5274ec7fea9f3f1eda8542967c2a364173aabdff"
+    },
+    {
+      "instruction_id": "high-output-management-common-mistakes",
+      "path": "instructions/high-output-management-common-mistakes.md",
+      "sha256": "433636947847127067fb54d6128925cb3363ae43ed6bb2c2e171936061e95eb1"
+    },
+    {
+      "instruction_id": "high-output-management-decisions",
+      "path": "instructions/high-output-management-decisions.md",
+      "sha256": "6e7509cbd9939b0dc08997bf41c24d865af64c65abc1e907f7c6f1d68bf9a54d"
+    },
+    {
+      "instruction_id": "high-output-management-diagnostic",
+      "path": "instructions/high-output-management-diagnostic.md",
+      "sha256": "413688d52238973f8bb5fae413fdba90c712e4ee4d62fdb82e9f215a716ee241"
+    },
+    {
+      "instruction_id": "high-output-management-leverage",
+      "path": "instructions/high-output-management-leverage.md",
+      "sha256": "5f0ca0ea7b5180dad7aa4d601d809d63e006a1ef376f8bd86993b536afc801e8"
+    },
+    {
+      "instruction_id": "high-output-management-meetings",
+      "path": "instructions/high-output-management-meetings.md",
+      "sha256": "e37180aad4ed5623c9a810020aad8bfdf519796a8e0353f9094aa8451ce3cb33"
+    },
+    {
+      "instruction_id": "high-output-management-output-indicators",
+      "path": "instructions/high-output-management-output-indicators.md",
+      "sha256": "dfd84fdaa0215dca50e4f09243e1c9d71428c372a9b913b15ad21a6f34a2dfc6"
+    },
+    {
+      "instruction_id": "high-output-management-production-line",
+      "path": "instructions/high-output-management-production-line.md",
+      "sha256": "00838f45df9a5aa57cdb386936210fd0f06d89ba867a25cbff80e8571bc9de6b"
+    },
+    {
+      "instruction_id": "high-output-management-score",
+      "path": "instructions/high-output-management-score.md",
+      "sha256": "06fbf183b8fbb5f58e3065b0cdf27f2e1c995b57549bfd0cabac2b3b1d81728d"
+    },
+    {
+      "instruction_id": "high-output-management-trm",
+      "path": "instructions/high-output-management-trm.md",
+      "sha256": "92383cd1c83949bc9e228c4f5c1dfdd6404de1954897d1c03ddb762b939eb569"
     },
     {
       "instruction_id": "hillclimb-one-metric",
