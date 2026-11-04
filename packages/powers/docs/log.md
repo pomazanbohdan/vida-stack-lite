@@ -2,6 +2,42 @@
 
 ## 2026-11-04
 
+* **H1 next-22 grow-website applied:** 16 `InstructionSpec` drafts from the
+  next-22 D18 aggregation (16 accept / 1 reject / 0 merge / 0 unresolved; spec
+  manifest
+  `7da0e528c84658d7c454af510c9ad7630043ecf5a94fe593da27b839f782baec`).
+  Rejected unit is the Phases heading. D45 added the website-growth vocabulary;
+  four exemptions (1 capability + 3 pattern) cover the mistake list, journey
+  map, optional-phase list and closure instruction. The plan review removed
+  `scorecard-tiers`, restored the phase-confirmation verifier and aligned
+  `delegation.json` with the actual Devin reviewers. D46 records the reviewer
+  substitution. Packet SHA-256
+  `a7b9c78b426c00691a80d73430a28c349380c619005282ef3b7c3790d16943c1`;
+  committee SHA-256
+  `961d9bc744d1e8dae245e69c8b968c433b737317de6718b06015c027ea9e01a7`;
+  reviewed plan SHA-256
+  `a4d79e0c940e8fdd2fdcd4093202a89f8bb7694728dcfa79d9706c6d498ab0bf`;
+  applied plan SHA-256
+  `b14728fce344d425a04e6a7b28598c0bfd7281dd1e2889bd0d206a03626d52f2`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. All three D18
+  protocols and the plan review ran on Devin `swe-2-flash-medium`; the review
+  returned READY 0/0/0. Apply returned `applied` with all 18 targets observed as
+  `intended`; receipt
+  `4727482256228373e3b1820726953333c37f5fc49b38f0318d889383ada2673d`.
+  Applied: 16 instructions, catalog, map; baseline rebuilt to 9 donors / 1,250
+  files; corpus 3,180; catalog revision 7,175; map revision 5,644.
+
+* **D46 Devin reviewer substitution accepted:** remaining H1 plan reviews and
+  D18 protocols run on Devin `swe-2-flash-medium` (mode `ask` for read-only,
+  `accept-edits` only to write the protocol result). Aggregation records the
+  actual reviewer and model; D18 rules are unchanged and prior Luna reviews are
+  not relabelled. `swe2flash` is not a model ID.
+
+* **D45 website-growth tags accepted:** `catalog.json` gains the
+  `design-website-growth` capability and the `traffic-conversion` pattern for
+  `grow-website`. Catalog revision 7,159. The tags are metadata only and do not
+  admit any source.
+
 * **H1 next-21 grow-business applied:** 18 `InstructionSpec` drafts from the
   next-21 D18 aggregation (18 accept / 0 reject / 0 merge / 0 unresolved; spec
   manifest

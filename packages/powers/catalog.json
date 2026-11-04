@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7157,
+  "revision": 7175,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -104,7 +104,8 @@
       "build-validated-business": "Ability to take a raw idea to a validated, positioned and priced business.",
       "negotiate-agreements": "Ability to prepare and conduct a negotiation with tactical empathy and calibrated questions.",
       "design-retention-engine": "Ability to turn signups into habitual users by fixing habit, activation and retention before acquisition.",
-      "build-growth-engine": "Ability to turn lumpy revenue into a repeatable growth engine with ordered assets."
+      "build-growth-engine": "Ability to turn lumpy revenue into a repeatable growth engine with ordered assets.",
+      "design-website-growth": "Ability to turn existing website traffic into more leads, buyers and referrals."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -409,7 +410,8 @@
       "microinteraction-feedback": "An approach in which trigger, rules, feedback and loops are specified for each frequent interaction.",
       "manipulation-matrix": "An approach in which a habit feature is checked against maker use, user benefit and honest belief.",
       "growth-engine-sequence": "An approach in which each growth phase produces an asset the next phase consumes.",
-      "marketing-machine": "An approach in which the full marketing process is mapped as a scored grid before tactics."
+      "marketing-machine": "An approach in which the full marketing process is mapped as a scored grid before tactics.",
+      "traffic-conversion": "An approach in which existing visitors are captured and converted before more traffic is bought."
     }
   },
   "tag_aliases": {
@@ -820,6 +822,26 @@
       "instruction_id": "grow-business-complete",
       "dimension": "pattern",
       "reason": "The instruction closes the journey and verifies artifacts; its stickiness check does not require a specific acquisition lock."
+    },
+    {
+      "instruction_id": "grow-website-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "grow-website-journey-map",
+      "dimension": "pattern",
+      "reason": "The instruction maps phases to skills and artifacts; no single pattern definition fits the map."
+    },
+    {
+      "instruction_id": "grow-website-optional-phases",
+      "dimension": "pattern",
+      "reason": "The instruction lists optional phases and their conditions; no pattern definition fits the list itself."
+    },
+    {
+      "instruction_id": "grow-website-complete",
+      "dimension": "pattern",
+      "reason": "The instruction closes the journey and verifies artifacts; its checklist does not require a specific pattern action."
     }
   ],
   "instructions": [
@@ -6297,6 +6319,86 @@
       "instruction_id": "grow-business-word-of-mouth",
       "path": "instructions/grow-business-word-of-mouth.md",
       "sha256": "8450b4f715729d1ea5ff3540410569cd246cb321fe1774b461b0cfba4c822dd8"
+    },
+    {
+      "instruction_id": "grow-website-apply",
+      "path": "instructions/grow-website-apply.md",
+      "sha256": "13df370e275626a91ed0591fd88ca3e549f2d188c981b3cd6e565b1b862deab4"
+    },
+    {
+      "instruction_id": "grow-website-common-mistakes",
+      "path": "instructions/grow-website-common-mistakes.md",
+      "sha256": "8316f8f0a2d9969439dfef1866151525c66128a686305c68463bcdf4065a1d68"
+    },
+    {
+      "instruction_id": "grow-website-complete",
+      "path": "instructions/grow-website-complete.md",
+      "sha256": "cc8c1f7862ffc387729e4037fe2a43883d996cf9641e1399d3f7b1614b9a5c5c"
+    },
+    {
+      "instruction_id": "grow-website-core",
+      "path": "instructions/grow-website-core.md",
+      "sha256": "0d2a456040e823a0a5f7aaac94682755a51d456e4dd3c7573082c39713485930"
+    },
+    {
+      "instruction_id": "grow-website-intake",
+      "path": "instructions/grow-website-intake.md",
+      "sha256": "15e103222cc49e794ee2c7a14c5e5b05b8af0a5f94e739db25eb4dd2098d0ea9"
+    },
+    {
+      "instruction_id": "grow-website-journey-map",
+      "path": "instructions/grow-website-journey-map.md",
+      "sha256": "7eebe5e37f0bbced5fd900f7e7c79d43795baf02cfcbeb34b3143af0a2a1c1ea"
+    },
+    {
+      "instruction_id": "grow-website-lifecycle",
+      "path": "instructions/grow-website-lifecycle.md",
+      "sha256": "03e4d24c7afcd9be8eea3bdcbb48ccae79c8b751a12ae399f903002e0883db69"
+    },
+    {
+      "instruction_id": "grow-website-message",
+      "path": "instructions/grow-website-message.md",
+      "sha256": "62377b72014cea99ecdaee517d3b8f59eb782b090195f425bcb2d8ee9eed3b18"
+    },
+    {
+      "instruction_id": "grow-website-offer",
+      "path": "instructions/grow-website-offer.md",
+      "sha256": "14a0ef4f351c1f4581a056aebb670ba0d3041cea8a137e0cc492169b20698ed0"
+    },
+    {
+      "instruction_id": "grow-website-operating-rules",
+      "path": "instructions/grow-website-operating-rules.md",
+      "sha256": "f13ca63e8b0e06802a5329d5d23d3e04c445b4f2bf41309893098f253c930233"
+    },
+    {
+      "instruction_id": "grow-website-optional-phases",
+      "path": "instructions/grow-website-optional-phases.md",
+      "sha256": "948f716c228774735b39b6403d74ea367bf06d2a4a1c28920bdb934d9e78cc3f"
+    },
+    {
+      "instruction_id": "grow-website-proof",
+      "path": "instructions/grow-website-proof.md",
+      "sha256": "bd7ba5deb47af3cb476c0309a875b7753161357c8513d53389a71784207eae18"
+    },
+    {
+      "instruction_id": "grow-website-research",
+      "path": "instructions/grow-website-research.md",
+      "sha256": "8b1cbcf3200cd3acd5cd71f2e7c7934a6679b0ecef3e6013e6eebe6663526f7f"
+    },
+    {
+      "instruction_id": "grow-website-scorecard",
+      "path": "instructions/grow-website-scorecard.md",
+      "sha256": "3d257f43ef03ca296a7d19b379f374e2d2bdca212ddb24d7df0d289e5ef30eed"
+    },
+    {
+      "instruction_id": "grow-website-shareability",
+      "path": "instructions/grow-website-shareability.md",
+      "sha256": "e99a14b589a3a43ae9df77aa5ce1ce2214bc26d485e6ac51994a8b2a1e271864"
+    },
+    {
+      "instruction_id": "grow-website-stick",
+      "path": "instructions/grow-website-stick.md",
+      "sha256": "077ada563bbc01eb38d9f109e25dc86409095a1a08778889dc8398ef91aa30ba"
     },
     {
       "instruction_id": "guard-a-deploy-workflow-with-concurrency-and-timeout",

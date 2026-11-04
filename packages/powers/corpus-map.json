@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5628,
+  "revision": 5644,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18141,8 +18141,25 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/grow-website/SKILL.md": {
-          "status": "rejected",
-          "reason": "guided journey/metaskill orchestration; excluded by H1"
+          "status": "split",
+          "instruction_ids": [
+            "grow-website-apply",
+            "grow-website-core",
+            "grow-website-journey-map",
+            "grow-website-operating-rules",
+            "grow-website-intake",
+            "grow-website-research",
+            "grow-website-scorecard",
+            "grow-website-message",
+            "grow-website-stick",
+            "grow-website-proof",
+            "grow-website-offer",
+            "grow-website-shareability",
+            "grow-website-lifecycle",
+            "grow-website-optional-phases",
+            "grow-website-common-mistakes",
+            "grow-website-complete"
+          ]
         },
         "skills/grow-website/references/artifact-templates.md": {
           "status": "rejected",
