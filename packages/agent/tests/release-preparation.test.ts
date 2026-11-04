@@ -12,6 +12,7 @@ import {
 } from '../bin/release-preparation.ts';
 import { releaseJSON, withReleaseAdmission } from '../bin/local-release-artifacts.ts';
 import { prepareReleaseAfterPublication } from '../../../tooling/agent/release-local.ts';
+import { readRuntimeConfigurationForObservation } from '../src/config/runtime-config.ts';
 
 type PreparedRelease = Parameters<typeof publishReleasePreparation>[1];
 type PreparationTarget = { path: string; before: string | null; after: string };
@@ -439,6 +440,80 @@ function assertTargetImage(root: string, target: PreparationTarget, expected: st
     return;
   }
   assert.deepEqual(readFileSync(file), Buffer.from(expected, 'base64'), target.path);
+}
+
+for (const bundle of ['vida-agent', 'packages/agent', 'vida-agent-extra']) {
+  test(`published preparation checks bundle compatibility before request discovery: ${bundle}`, async () => {
+    const root = ownedRoot();
+    const throwingFetch = () => {
+      throw new Error('Unexpected remote observation');
+    };
+    const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+      Object.assign(throwingFetch, { preconnect: throwingFetch }),
+    );
+    let passed = false;
+    try {
+      const predecessor = makePrepared('published-bundle-alias', '0.1.2');
+      const manifest = Buffer.from(releaseJSON(makeManifest(predecessor.version)));
+      const pending = Buffer.from(releaseJSON(predecessor));
+      const observed = readRuntimeConfigurationForObservation(path.resolve(import.meta.dir, '../../..')).config;
+      const config = {
+        ...observed,
+        runtime: {
+          ...observed.runtime,
+          bundle,
+          schema_root: bundle + '/schemas',
+          instruction_root: bundle + '/instructions',
+          tooling_root: bundle + '/tooling',
+        },
+        knowledge: {
+          ...observed.knowledge,
+          sources: observed.knowledge.sources.map((source) =>
+            source.kind === 'local' ? { ...source, location: 'AGENT.sidecar.md' } : source,
+          ),
+        },
+      };
+      const files = new Map([
+        [manifestPath, manifest],
+        [pendingPath, pending],
+        [operationJournalPath(predecessor), pending],
+        [
+          `.agent/work/agent-local-release/${predecessor.operation_id}/preparation.json`,
+          Buffer.from(releaseJSON(makeIntent(predecessor, manifest, predecessor.version))),
+        ],
+        ['packages/agent/.bun-version', Buffer.from('1.4.2\n')],
+        ['agent-runtime.config.v1.yaml', Buffer.from(releaseJSON(config))],
+        ['AGENTS.md', Buffer.from('Synthetic release compatibility fixture\n')],
+        ['AGENT.sidecar.md', Buffer.from('Synthetic release compatibility fixture\n')],
+      ]);
+      for (const [relative, bytes] of files) writeBytes(root, relative, bytes);
+      writeBytes(
+        root,
+        `.agent/work/agent-local-release/${predecessor.operation_id}/ci/unexpected.json`,
+        Buffer.from('{}\n'),
+      );
+      await assert.rejects(
+        prepareReleaseAfterPublication(root, predecessor.operation_id),
+        bundle === 'vida-agent-extra'
+          ? /Approved repository project identity differs/
+          : /Published predecessor request namespace is unknown/,
+      );
+      assert.equal(fetchSpy.mock.calls.length, 0);
+      for (const [relative, bytes] of files) assert.deepEqual(readFileSync(path.join(root, relative)), bytes, relative);
+      for (const relative of [
+        intentPath,
+        '.agent/work/agent-local-release/successful.json',
+        '.agent/work/agent-local-release/formed.json',
+      ])
+        assert.equal(existsSync(path.join(root, relative)), false);
+      passed = true;
+    } finally {
+      fetchSpy.mockRestore();
+      assert.ok(path.basename(root).startsWith('vida-release-preparation-v465-'));
+      if (passed) rmSync(root, { recursive: true, force: true });
+      else console.warn('Failed release compatibility fixture retained: ' + root);
+    }
+  });
 }
 
 test('published baseline recovery returns the same successor after a lost preparation ACK', async () => {

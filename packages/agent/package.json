@@ -1,6 +1,6 @@
 {
   "name": "vida-agent",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "description": "Configurable clean-v1 development-team runtime governed by one repository YAML authority.",
   "bin": {
@@ -100,6 +100,7 @@
     "dist/schemas/config-rebind-operation.v1.schema.json",
     "dist/schemas/consumer-configuration-operation.v1.schema.json",
     "dist/schemas/consumer-clean-initialization-operation.v1.schema.json",
+    "dist/schemas/consumer-clean-initialization-operation.v2.schema.json",
     "dist/schemas/documentation-policy-transition.v1.schema.json",
     "dist/schemas/runtime-envelope.v1.schema.json",
     "dist/schemas/runtime-initialization.v1.schema.json",
@@ -142,6 +143,7 @@
     "schemas/config-rebind-operation.v1.schema.json",
     "schemas/consumer-configuration-operation.v1.schema.json",
     "schemas/consumer-clean-initialization-operation.v1.schema.json",
+    "schemas/consumer-clean-initialization-operation.v2.schema.json",
     "schemas/documentation-policy-transition.v1.schema.json",
     "schemas/runtime-envelope.v1.schema.json",
     "schemas/runtime-initialization.v1.schema.json",
