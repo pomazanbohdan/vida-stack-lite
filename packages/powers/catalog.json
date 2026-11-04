@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7136,
+  "revision": 7157,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -103,7 +103,8 @@
       "design-grand-slam-offer": "Ability to assemble an offer with value, bonuses, guarantee, scarcity and a name.",
       "build-validated-business": "Ability to take a raw idea to a validated, positioned and priced business.",
       "negotiate-agreements": "Ability to prepare and conduct a negotiation with tactical empathy and calibrated questions.",
-      "design-retention-engine": "Ability to turn signups into habitual users by fixing habit, activation and retention before acquisition."
+      "design-retention-engine": "Ability to turn signups into habitual users by fixing habit, activation and retention before acquisition.",
+      "build-growth-engine": "Ability to turn lumpy revenue into a repeatable growth engine with ordered assets."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -406,7 +407,9 @@
       "empowered-product-team": "An approach in which a team owns problems and outcomes instead of a feature backlog.",
       "stickiness-stage": "An approach in which retention is the OMTM while retention is weak.",
       "microinteraction-feedback": "An approach in which trigger, rules, feedback and loops are specified for each frequent interaction.",
-      "manipulation-matrix": "An approach in which a habit feature is checked against maker use, user benefit and honest belief."
+      "manipulation-matrix": "An approach in which a habit feature is checked against maker use, user benefit and honest belief.",
+      "growth-engine-sequence": "An approach in which each growth phase produces an asset the next phase consumes.",
+      "marketing-machine": "An approach in which the full marketing process is mapped as a scored grid before tactics."
     }
   },
   "tag_aliases": {
@@ -797,6 +800,26 @@
       "instruction_id": "grow-app-complete",
       "dimension": "pattern",
       "reason": "The instruction closes the journey and routes forward; its checks do not require a specific pattern action."
+    },
+    {
+      "instruction_id": "grow-business-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "grow-business-optional-phases",
+      "dimension": "pattern",
+      "reason": "The instruction lists optional phases and their conditions; no pattern definition fits the list itself."
+    },
+    {
+      "instruction_id": "grow-business-phases",
+      "dimension": "pattern",
+      "reason": "The instruction states phase order and missing-input handling; it does not require an asset handoff between phases."
+    },
+    {
+      "instruction_id": "grow-business-complete",
+      "dimension": "pattern",
+      "reason": "The instruction closes the journey and verifies artifacts; its stickiness check does not require a specific acquisition lock."
     }
   ],
   "instructions": [
@@ -6184,6 +6207,96 @@
       "instruction_id": "grow-app-team",
       "path": "instructions/grow-app-team.md",
       "sha256": "a43936a271b5a771a0e308ab8928561b3189b45560f5d6bd9d0990dbd0b7fdc1"
+    },
+    {
+      "instruction_id": "grow-business-apply",
+      "path": "instructions/grow-business-apply.md",
+      "sha256": "b41e08bb5f7235fb64e732c5b7a519310606e227319ef615af38b9df7ab86caa"
+    },
+    {
+      "instruction_id": "grow-business-chasm",
+      "path": "instructions/grow-business-chasm.md",
+      "sha256": "3a1ed3b0d26dbe57744f4b810fafe47aac4caac3dfef4fe596a8a8372bd16c38"
+    },
+    {
+      "instruction_id": "grow-business-common-mistakes",
+      "path": "instructions/grow-business-common-mistakes.md",
+      "sha256": "c7d93a71e2d1bc9dda26b95b9f6a92963ef50700e93e25dbf9d24ff32f470fe7"
+    },
+    {
+      "instruction_id": "grow-business-complete",
+      "path": "instructions/grow-business-complete.md",
+      "sha256": "fb70042d2a61767316d642511efce585ba1543f2552f3be1bbd52cbcae911af0"
+    },
+    {
+      "instruction_id": "grow-business-core",
+      "path": "instructions/grow-business-core.md",
+      "sha256": "03a8fda8b096a69020c407c315e9dcb4c0b18b6e51f86d974d5c961a4960bd25"
+    },
+    {
+      "instruction_id": "grow-business-intake",
+      "path": "instructions/grow-business-intake.md",
+      "sha256": "c3407491d4fc48e43917778af7dfd5360ccd4d7c8579c044ae74460833dde9f6"
+    },
+    {
+      "instruction_id": "grow-business-journey-map",
+      "path": "instructions/grow-business-journey-map.md",
+      "sha256": "9fb8e20e373e9b905c6c8f4729ff82a12687307bcc6901e64ab3f29055db166c"
+    },
+    {
+      "instruction_id": "grow-business-marketing",
+      "path": "instructions/grow-business-marketing.md",
+      "sha256": "487756d4ae8e77a729a5611f887e5ade56f3204984b1200ecd00af35ee8a28c4"
+    },
+    {
+      "instruction_id": "grow-business-metrics",
+      "path": "instructions/grow-business-metrics.md",
+      "sha256": "3ff42e4d07d55964acc76d90f8dbe28c5abd839c0a952f0d6456d748fca2a3fa"
+    },
+    {
+      "instruction_id": "grow-business-negotiation",
+      "path": "instructions/grow-business-negotiation.md",
+      "sha256": "c3d50e5af6e99b9aed9e5cf647f05a5ef41630e669a1917793b5a1ee4846e460"
+    },
+    {
+      "instruction_id": "grow-business-network",
+      "path": "instructions/grow-business-network.md",
+      "sha256": "f77608713387673c8de21bd7021d9a1007e8051afabc649832ee7c76dd8f8d9e"
+    },
+    {
+      "instruction_id": "grow-business-offer",
+      "path": "instructions/grow-business-offer.md",
+      "sha256": "8dc3cbc4c4cd5c9a4405ed7c9abf639cabfc011280f227c79db3d54a66c95480"
+    },
+    {
+      "instruction_id": "grow-business-operating-rules",
+      "path": "instructions/grow-business-operating-rules.md",
+      "sha256": "45d5d3a77717c5d7847c4077d12b13ad00c5fee437cb8eb9c9303fdeedd037e5"
+    },
+    {
+      "instruction_id": "grow-business-optional-phases",
+      "path": "instructions/grow-business-optional-phases.md",
+      "sha256": "b2de603607717ba3d1e97b765e4a3cbb62a58a3ccfe20915a04c30ff5db46406"
+    },
+    {
+      "instruction_id": "grow-business-outbound",
+      "path": "instructions/grow-business-outbound.md",
+      "sha256": "ffd30c3bd3328fde3f4366bad83e074d763f26c58672b145b7f978494b93f3df"
+    },
+    {
+      "instruction_id": "grow-business-persuasion",
+      "path": "instructions/grow-business-persuasion.md",
+      "sha256": "72fbb738b1a46096a988d639435194d3f4d3d01dfacf9eced8ed08e2a39ca660"
+    },
+    {
+      "instruction_id": "grow-business-phases",
+      "path": "instructions/grow-business-phases.md",
+      "sha256": "d0b598bd8984ada700e5bf31946a74ec3d773115b8090c806cd986ed7e819b68"
+    },
+    {
+      "instruction_id": "grow-business-word-of-mouth",
+      "path": "instructions/grow-business-word-of-mouth.md",
+      "sha256": "8450b4f715729d1ea5ff3540410569cd246cb321fe1774b461b0cfba4c822dd8"
     },
     {
       "instruction_id": "guard-a-deploy-workflow-with-concurrency-and-timeout",

@@ -2,6 +2,35 @@
 
 ## 2026-11-04
 
+* **H1 next-21 grow-business applied:** 18 `InstructionSpec` drafts from the
+  next-21 D18 aggregation (18 accept / 0 reject / 0 merge / 0 unresolved; spec
+  manifest
+  `a53aef8e5978f145bf14cf2f650a2d77f78014949aef5fa1ce3a342086f8678d`).
+  D44 added the growth-engine vocabulary; four exemptions (1 capability + 3
+  pattern) cover the mistake list, optional-phase list, phases instruction and
+  closure instruction. One review round removed six unsupported tags and
+  corrected the selection wording; D44's Application paragraph was then aligned
+  to the final tag set. Packet SHA-256
+  `5b036ec38773052e30841b49856b39c6f89343257bd2eb99e9e98f374e38200a`;
+  committee SHA-256
+  `4047fb8fb86dbf5adcb3dd735b4188e16485e213df76b272f0b3fbf244a777c0`;
+  reviewed plan SHA-256
+  `84b16aa81fd49b6e7917bb099d14d37d71c0bfd285962f3dca071c3cbfd100c8`;
+  applied plan SHA-256
+  `025a196d1854ae36aae2270e054bb46731c10dc08dcaa5699e871a4dac02c562`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. The plan
+  review ran on Devin `swe-2-flash-medium` (mode `ask`) per the current owner
+  instruction; it returned READY 0/0/0. Apply returned `applied` with all 20
+  targets observed as `intended`; receipt
+  `ac55b2844da5335fabf1032dfa4e808455cbc53650cf8bf3a7d5b2173195056a`.
+  Applied: 18 instructions, catalog, map; baseline rebuilt to 9 donors / 1,249
+  files; corpus 3,164; catalog revision 7,157; map revision 5,628.
+
+* **D44 growth-engine tags accepted:** `catalog.json` gains the
+  `build-growth-engine` capability and the `growth-engine-sequence` and
+  `marketing-machine` patterns for `grow-business`. Catalog revision 7,139. The
+  tags are metadata only and do not admit any source.
+
 * **H1 next-20 grow-app applied:** 16 `InstructionSpec` drafts from the next-20
   D18 aggregation (2 accept / 14 amend / 1 reject / 0 merge / 0 unresolved;
   spec manifest
