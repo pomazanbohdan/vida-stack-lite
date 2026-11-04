@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6893,
+  "revision": 6918,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -93,7 +93,8 @@
       "generate-divergent-sketches": "Ability to generate multiple independent sketches before any selection.",
       "design-habit-loop": "Ability to design a four-phase habit loop from trigger to investment.",
       "design-intrinsic-motivation": "Ability to design autonomy, mastery and purpose into a product, team or reward system.",
-      "design-managerial-system": "Ability to design a manager's operating system: output, leverage, indicators and meetings."
+      "design-managerial-system": "Ability to design a manager's operating system: output, leverage, indicators and meetings.",
+      "run-eos-operating-system": "Ability to run an EOS operating system: vision, people, data, issues, process and traction."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -311,7 +312,15 @@
       "task-relevant-maturity": "An approach in which management style is matched to the person's maturity on the specific task.",
       "decision-roles": "An approach in which a decision names who decides, consults, ratifies, vetoes and is informed.",
       "meeting-cadence": "An approach in which process meetings carry most managerial work and are scheduled by task-relevant maturity.",
-      "okr-stretch": "An approach in which objectives and key results set stretch direction and are not tied to pay."
+      "okr-stretch": "An approach in which objectives and key results set stretch direction and are not tied to pay.",
+      "eos-vision": "An approach in which a two-page V/TO aligns core values, focus, goals and issues.",
+      "accountability-chart": "An approach in which an accountability chart assigns seats and ownership rather than titles.",
+      "scorecard-indicators": "An approach in which a weekly scorecard of leading numbers shows business performance.",
+      "ids-issues": "An approach in which issues are identified, discussed and solved by root cause.",
+      "operating-procedure-map": "An approach in which the core 20% of operating procedures is documented for 80% consistency.",
+      "ninety-day-rocks": "An approach in which 3-7 company rocks and individual rocks are set for the next 90 days.",
+      "level-10-meeting": "An approach in which a fixed weekly 90-minute Level 10 meeting follows the same agenda.",
+      "eos-implementation": "An approach in which EOS is installed in a staged two-year sequence."
     }
   },
   "tag_aliases": {
@@ -482,6 +491,46 @@
       "instruction_id": "high-output-management-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "traction-eos-score",
+      "dimension": "capability",
+      "reason": "The instruction scores business components against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "traction-eos-organizational-checkup",
+      "dimension": "capability",
+      "reason": "The instruction rates six statements on a 1-5 scale; the scoring-rubric pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "traction-eos-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "traction-eos-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "traction-eos-apply",
+      "dimension": "pattern",
+      "reason": "The instruction states the EOS fit and purpose; no pattern definition fits without inventing a component sequence."
+    },
+    {
+      "instruction_id": "traction-eos-core",
+      "dimension": "pattern",
+      "reason": "The instruction balances vision and traction; no pattern definition fits without inventing a V/TO or sequence."
+    },
+    {
+      "instruction_id": "traction-eos-components",
+      "dimension": "pattern",
+      "reason": "The instruction lists the six components; no pattern definition fits without inventing a tool or sequence."
+    },
+    {
+      "instruction_id": "traction-eos-traction",
+      "dimension": "pattern",
+      "reason": "The instruction asks whether the vision is executed daily; no pattern definition fits without inventing an implementation sequence."
     }
   ],
   "instructions": [
@@ -13914,6 +13963,86 @@
       "instruction_id": "track-the-outcome-of-a-decision-when-it-becomes-known",
       "path": "instructions/track-the-outcome-of-a-decision-when-it-becomes-known.md",
       "sha256": "63d01c701065b21bb05c9283f545f76efd0e7846f613751063046ba4ce904afa"
+    },
+    {
+      "instruction_id": "traction-eos-accountability",
+      "path": "instructions/traction-eos-accountability.md",
+      "sha256": "d4c934a9b34e852edd57336ff26e4826f5d856717ab1da5876f8b5c802875150"
+    },
+    {
+      "instruction_id": "traction-eos-apply",
+      "path": "instructions/traction-eos-apply.md",
+      "sha256": "6decd239397c50faf8e914fde004f0c329958e9a10eedfc2852baf0967352295"
+    },
+    {
+      "instruction_id": "traction-eos-common-mistakes",
+      "path": "instructions/traction-eos-common-mistakes.md",
+      "sha256": "880eb9d7ec2d0d3c58c4e3889521038940a6b2e69a29693979844296451d4752"
+    },
+    {
+      "instruction_id": "traction-eos-components",
+      "path": "instructions/traction-eos-components.md",
+      "sha256": "fbdd7fbfea808b202f51bf05ee511c46dd7f71b5882546c640cd48f58cd461d0"
+    },
+    {
+      "instruction_id": "traction-eos-core",
+      "path": "instructions/traction-eos-core.md",
+      "sha256": "b898c778b6ff8c960d6209605147d1591da1539be08e1437c18bfea7e8162580"
+    },
+    {
+      "instruction_id": "traction-eos-diagnostic",
+      "path": "instructions/traction-eos-diagnostic.md",
+      "sha256": "80939b8902a2dc03df95a42bbf6bb5d65e57142dc1abde66cd54ef228ca224e1"
+    },
+    {
+      "instruction_id": "traction-eos-ids",
+      "path": "instructions/traction-eos-ids.md",
+      "sha256": "9bcc8a899a5a1b8f61876ab5b9176c175f9db0fc074c5b0d4d5f6b16b7d6d88b"
+    },
+    {
+      "instruction_id": "traction-eos-implementation",
+      "path": "instructions/traction-eos-implementation.md",
+      "sha256": "38acb0a7ac811cd63314b950c6792de4f4ca20555be7ce84b62cdaa09f4c878e"
+    },
+    {
+      "instruction_id": "traction-eos-level-10",
+      "path": "instructions/traction-eos-level-10.md",
+      "sha256": "583a7925aa123465ea0e04912f6143ab80107c3a02ba2eb473a293cbfe9ac8db"
+    },
+    {
+      "instruction_id": "traction-eos-organizational-checkup",
+      "path": "instructions/traction-eos-organizational-checkup.md",
+      "sha256": "99b5781445e4577659ea19bd2135a958841c761881d87935e948985629cd373d"
+    },
+    {
+      "instruction_id": "traction-eos-processes",
+      "path": "instructions/traction-eos-processes.md",
+      "sha256": "74ed1b74c0543cbfad7dbe238abb409283b90ce75066b637c27862ddd86f2235"
+    },
+    {
+      "instruction_id": "traction-eos-rocks",
+      "path": "instructions/traction-eos-rocks.md",
+      "sha256": "e80472f230abc10433549adda3496fceee0954270db4c6cd34c789e4843e8edf"
+    },
+    {
+      "instruction_id": "traction-eos-score",
+      "path": "instructions/traction-eos-score.md",
+      "sha256": "4b359058a733895fd217fe36164511ddd0a53536820f9a0fdebb00aa95a057a7"
+    },
+    {
+      "instruction_id": "traction-eos-scorecard",
+      "path": "instructions/traction-eos-scorecard.md",
+      "sha256": "971589544bebb95fd8d754835582d2e82f5911f7b3f5da7af8fde37f01a0736c"
+    },
+    {
+      "instruction_id": "traction-eos-traction",
+      "path": "instructions/traction-eos-traction.md",
+      "sha256": "6e1c6cde2d30c569817dac01cceb253003cf2b50060b25a7eab83bbc6865227f"
+    },
+    {
+      "instruction_id": "traction-eos-vto",
+      "path": "instructions/traction-eos-vto.md",
+      "sha256": "c55ec5078487d3b1c2fe53dc729d8cc290adbe15507faa22f8aff70ef7b8cdf8"
     },
     {
       "instruction_id": "transform-an-idea-with-seven-operations",

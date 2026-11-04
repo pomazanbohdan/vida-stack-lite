@@ -39,3 +39,4 @@ log `../log.md`.
 * [D31 — Regulatory watch tag for the H1 hooked-ux batch](D31-regulatory-watch-tag.md) - One pattern tag with a catalog definition lets the regulatory monitoring instruction carry accurate metadata.
 * [D32 — Intrinsic motivation tags for the H1 drive-motivation batch](D32-intrinsic-motivation-tags.md) - One capability and six pattern tags with catalog definitions let autonomy, mastery, purpose and reward design carry accurate metadata.
 * [D33 — Managerial system tags for the H1 high-output-management batch](D33-managerial-system-tags.md) - One capability and seven pattern tags with catalog definitions let managerial output, leverage, indicators, meetings and OKRs carry accurate metadata.
+* [D34 — EOS operating-system tags for the H1 traction-eos batch](D34-eos-operating-system-tags.md) - One capability and eight pattern tags with catalog definitions let the EOS components, scorecard, rocks and Level 10 meeting carry accurate metadata.

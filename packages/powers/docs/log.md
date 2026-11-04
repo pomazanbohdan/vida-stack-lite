@@ -2,6 +2,32 @@
 
 ## 2026-11-04
 
+* **H1 next-11 traction-eos applied:** 16 `InstructionSpec` drafts from the
+  next-11 D18 aggregation (16 accept / 2 reject / 0 unresolved; spec manifest
+  `cb56cb373816a2e5f1e7c895f7b404b4fa44ec14644bc4605505ea467e850da4`).
+  Rejected units are Further Reading and About the Author. D34 added the EOS
+  operating-system vocabulary; eight exemptions (4 capability + 4 pattern) cover
+  the scored, checklist and no-pattern instructions. The score body states the
+  source row-to-band mapping. Packet SHA-256
+  `caf8efea8d6a0801a03aee6579fd5a055e518da6749c4a6ac718e9d2f6aab098`;
+  committee SHA-256
+  `3e5f504408a60ebc35b8b08bbeb714d8e753b7137c41a13b4f622251b89cfe8a`;
+  reviewed plan SHA-256
+  `d16957469c55efe721f370401aae89da4dc54830ee7f1cf8fda437c4684c071a`;
+  applied plan SHA-256
+  `fe292fd26b8a769e9622335fe55a21dd036d55c4114929c6812b53d78a1eccf8`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 18
+  targets observed as `intended`; receipt
+  `77ef4200b9e0114075c27755746d5c96e6c84dc82eb8023e5bb95d0326d88269`.
+  Applied: 16 instructions, catalog, map; baseline rebuilt to 9 donors / 1,239
+  files; corpus 3,015; catalog revision 6,918; map revision 5,479.
+
+* **D34 EOS operating-system tags accepted:** `catalog.json` gains the
+  `run-eos-operating-system` capability and eight EOS patterns for
+  `traction-eos`. Catalog revision 6,902. The tags are metadata only and do not
+  admit any source.
+
 * **H1 next-10 high-output-management applied:** 10 `InstructionSpec` drafts
   from the next-10 D18 aggregation (10 accept / 1 merge / 3 reject / 0
   unresolved; spec manifest

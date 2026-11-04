@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5463,
+  "revision": 5479,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19346,8 +19346,25 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/traction-eos/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "traction-eos-apply",
+            "traction-eos-core",
+            "traction-eos-score",
+            "traction-eos-components",
+            "traction-eos-vto",
+            "traction-eos-accountability",
+            "traction-eos-scorecard",
+            "traction-eos-ids",
+            "traction-eos-processes",
+            "traction-eos-traction",
+            "traction-eos-rocks",
+            "traction-eos-level-10",
+            "traction-eos-implementation",
+            "traction-eos-organizational-checkup",
+            "traction-eos-common-mistakes",
+            "traction-eos-diagnostic"
+          ]
         },
         "skills/traction-eos/references/case-studies.md": {
           "status": "rejected",

@@ -4989,6 +4989,10 @@
           "sha256": "b62a65eee8f0fc170f4223540a0ba6f2bf9248db9de028bccce32cdce41060e4",
           "bytes": 18913
         },
+        "skills/traction-eos/SKILL.md": {
+          "sha256": "1d58e30d368779e98823324434df5bb31eccb76897737a880c3e855edccdc96a",
+          "bytes": 14259
+        },
         "skills/ux-heuristics/SKILL.md": {
           "sha256": "cb1ea3de8b6e605614cc59b21d41830d2d82af22e51069bb4c5bb53790cd622b",
           "bytes": 16518
