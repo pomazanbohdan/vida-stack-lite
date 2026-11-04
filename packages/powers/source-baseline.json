@@ -4885,6 +4885,10 @@
           "sha256": "fbf2102e39441b4ea6d5177c52e09fcfaa10ad72cf3beee6b484ea659412324c",
           "bytes": 26651
         },
+        "skills/create-business/SKILL.md": {
+          "sha256": "2da65aaa976f03e43c638d3d140c44fd9e270f38f8221e7fee495d52d800c925",
+          "bytes": 24584
+        },
         "skills/cro-methodology/SKILL.md": {
           "sha256": "52bfedca17750ad117d838bfdcb5c5db190fb8a7c6e9b82abe44f939830e3897",
           "bytes": 17070
