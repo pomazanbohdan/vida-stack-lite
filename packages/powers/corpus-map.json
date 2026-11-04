@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5547,
+  "revision": 5561,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18209,8 +18209,23 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/hundred-million-offers/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "hundred-million-offers-apply",
+            "hundred-million-offers-core",
+            "hundred-million-offers-score",
+            "hundred-million-offers-value-equation",
+            "hundred-million-offers-package",
+            "hundred-million-offers-starving-crowd",
+            "hundred-million-offers-value-pricing",
+            "hundred-million-offers-bonuses",
+            "hundred-million-offers-guarantees",
+            "hundred-million-offers-scarcity",
+            "hundred-million-offers-naming",
+            "hundred-million-offers-process",
+            "hundred-million-offers-common-mistakes",
+            "hundred-million-offers-quick-diagnostic"
+          ]
         },
         "skills/hundred-million-offers/references/bonuses-stacking.md": {
           "status": "rejected",
