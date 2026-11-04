@@ -2,6 +2,35 @@
 
 ## 2026-11-04
 
+* **H1 next-15 conversion-optimization applied:** 16 `InstructionSpec` drafts
+  from the next-15 D18 aggregation (16 amend / 0 reject / 0 merge / 0
+  unresolved; spec manifest
+  `0af8f37caa6c9f18f9d26e7cad398dbad9e135605a37231245ad296bb46ed3ea`).
+  All three protocols agreed on every unit. D38 added the
+  conversion-journey vocabulary; one capability exemption covers the mistake
+  list. Packet SHA-256
+  `45d7bc818cd5f343919aaedbfd3fafde10904a7c2c39fd07e3e4209fc674b621`;
+  committee SHA-256
+  `88abeb103a58b2a07c07eb816b897497271786d931e7cd516f795ca0aa265145`;
+  reviewed plan SHA-256
+  `159df74d5d0e05b8dfa46eb0478ab8f5dc27b180007479d5aa141e60f14a6cf1`;
+  applied plan SHA-256
+  `75d4a6ada79bd4a01a746568b372d0d5f279d5f6b292686793d324a0d53d5e03`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 18
+  targets observed as `intended`; receipt
+  `672cd9b96ed3c2ceea47d343f65e76d3c6ac8157cb1f4730ece80eb3a1d28995`.
+  Applied: 16 instructions, catalog, map; baseline rebuilt to 9 donors / 1,243
+  files; corpus 3,072; catalog revision 7,011; map revision 5,536.
+
+* **D38 conversion-journey tags accepted:** `catalog.json` gains the
+  `run-conversion-journey` capability and the `conversion-sequence`,
+  `resumable-journey`, `phase-gate`, `leak-diagnosis`, `one-metric`,
+  `voice-of-customer`, `value-equation`, `risk-reversal`, `form-friction`,
+  `experiment-precommit` and `journey-loop` patterns for
+  `conversion-optimization`. Catalog revision 6,995. The tags are metadata only
+  and do not admit any source.
+
 * **H1 next-14 improve-retention applied:** 20 `InstructionSpec` drafts from
   the next-14 D18 aggregation (3 accept / 17 amend / 2 reject / 2 merge / 0
   unresolved; spec manifest

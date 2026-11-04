@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5520,
+  "revision": 5536,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17624,8 +17624,25 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/conversion-optimization/SKILL.md": {
-          "status": "rejected",
-          "reason": "guided journey/metaskill orchestration; excluded by H1"
+          "status": "split",
+          "instruction_ids": [
+            "conversion-optimization-apply",
+            "conversion-optimization-core",
+            "conversion-optimization-journey-map",
+            "conversion-optimization-operating-rules",
+            "conversion-optimization-intake",
+            "conversion-optimization-phases",
+            "conversion-optimization-find-leak",
+            "conversion-optimization-research",
+            "conversion-optimization-message",
+            "conversion-optimization-offer",
+            "conversion-optimization-proof",
+            "conversion-optimization-friction",
+            "conversion-optimization-experiments",
+            "conversion-optimization-optional-phases",
+            "conversion-optimization-common-mistakes",
+            "conversion-optimization-complete"
+          ]
         },
         "skills/conversion-optimization/references/artifact-templates.md": {
           "status": "rejected",

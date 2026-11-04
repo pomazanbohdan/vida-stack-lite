@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6983,
+  "revision": 7011,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -97,7 +97,8 @@
       "run-eos-operating-system": "Ability to run an EOS operating system: vision, people, data, issues, process and traction.",
       "design-scorecard-funnel": "Ability to design a scorecard funnel from hook to segmented follow-up.",
       "design-network-effects": "Ability to design a networked product from one atomic network to a defended network.",
-      "design-behavior-change": "Ability to design a behavior change that survives low motivation by shifting ability, prompt and celebration."
+      "design-behavior-change": "Ability to design a behavior change that survives low motivation by shifting ability, prompt and celebration.",
+      "run-conversion-journey": "Ability to run a resumable conversion-optimization journey from a measured leak to a tested fix."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -344,7 +345,18 @@
       "starter-step": "An approach in which a target behavior is shrunk to its tiniest meaningful version.",
       "focus-mapping": "An approach in which candidate behaviors are plotted by impact against feasibility.",
       "behavior-design-steps": "An approach in which aspiration, options, matching, tiny start and optimization are worked in order.",
-      "retention-diagnostic": "An approach in which a retention metric is mapped to a behavior-model cause and action."
+      "retention-diagnostic": "An approach in which a retention metric is mapped to a behavior-model cause and action.",
+      "conversion-sequence": "An approach in which a measured leak, researched reason, message, offer, proof and friction are addressed in that order, each with a pre-committed test.",
+      "resumable-journey": "An approach in which a tracker and artifacts let a multi-phase journey resume without restarting.",
+      "phase-gate": "An approach in which mandatory phases unlock downstream work only after their artifact and decision exist.",
+      "leak-diagnosis": "An approach in which the largest absolute drop on the highest-value path is located from measured step conversions.",
+      "one-metric": "An approach in which one primary metric is paired with a counter-metric and a pre-committed target.",
+      "voice-of-customer": "An approach in which objections are drawn from customers' own words in primary and secondary sources.",
+      "value-equation": "An approach in which value rises with dream outcome and perceived likelihood and falls with delay and effort.",
+      "risk-reversal": "An approach in which a guarantee aimed at the top researched objection lowers perceived risk.",
+      "form-friction": "An approach in which fields are cut to the minimum and all costs are shown before the final step.",
+      "experiment-precommit": "An approach in which metric, sample size, duration and decision rule are fixed before a test starts.",
+      "journey-loop": "An approach in which a finished funnel re-enters leak diagnosis with fresh numbers until the target line is met."
     }
   },
   "tag_aliases": {
@@ -635,6 +647,11 @@
       "instruction_id": "improve-retention-optimize",
       "dimension": "pattern",
       "reason": "The instruction says to fix bottlenecks with the Ability Chain; the pattern requires finding and fixing the scarcest of six factors, which the body does not state."
+    },
+    {
+      "instruction_id": "conversion-optimization-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
     }
   ],
   "instructions": [
@@ -3277,6 +3294,86 @@
       "instruction_id": "converge-on-target-architecture",
       "path": "instructions/converge-on-target-architecture.md",
       "sha256": "8ed14ca5db285a597fddc1a28a2fc292d5ae7d73493bc0ce8f952ad2a343a40c"
+    },
+    {
+      "instruction_id": "conversion-optimization-apply",
+      "path": "instructions/conversion-optimization-apply.md",
+      "sha256": "90e6f7147ed50fb541730fe92a2fe0b10c80aef4e7fa04acd6e7b78f362b2c20"
+    },
+    {
+      "instruction_id": "conversion-optimization-common-mistakes",
+      "path": "instructions/conversion-optimization-common-mistakes.md",
+      "sha256": "9b717fc13e6be959fc72e8215c79ed5c91997897fdcc371ea5032753a796cf15"
+    },
+    {
+      "instruction_id": "conversion-optimization-complete",
+      "path": "instructions/conversion-optimization-complete.md",
+      "sha256": "f75d4ed2331f99ab38a34966ce675b5db38f71d73f02ec354ed28245e6829a26"
+    },
+    {
+      "instruction_id": "conversion-optimization-core",
+      "path": "instructions/conversion-optimization-core.md",
+      "sha256": "d984658e4ed795bab154fa7009d1698bcf1a18836d0e9a8b1e2a939371b8ebd6"
+    },
+    {
+      "instruction_id": "conversion-optimization-experiments",
+      "path": "instructions/conversion-optimization-experiments.md",
+      "sha256": "e5dfe19514132b9668f12ec0164d7c3ad66ae40ef0817d6ea4db868f5d73ecb0"
+    },
+    {
+      "instruction_id": "conversion-optimization-find-leak",
+      "path": "instructions/conversion-optimization-find-leak.md",
+      "sha256": "a920a93d4f337861e0c575e3d4ce5a4a09059810f524e78c6044e07652a0711f"
+    },
+    {
+      "instruction_id": "conversion-optimization-friction",
+      "path": "instructions/conversion-optimization-friction.md",
+      "sha256": "7b3492ee0f518ac0941a8dedaa40ec12ee07d8c2d979fd467b590d8a4375ca94"
+    },
+    {
+      "instruction_id": "conversion-optimization-intake",
+      "path": "instructions/conversion-optimization-intake.md",
+      "sha256": "cde23b8cbe02e56e68a7075134bd7e05f9cdd36c9bc22505fe51d0f38dc77f3b"
+    },
+    {
+      "instruction_id": "conversion-optimization-journey-map",
+      "path": "instructions/conversion-optimization-journey-map.md",
+      "sha256": "e300e898b2dab735936ed6bd3a519113a894ebf24c59110f1225aea378aca376"
+    },
+    {
+      "instruction_id": "conversion-optimization-message",
+      "path": "instructions/conversion-optimization-message.md",
+      "sha256": "5e99bf87a4e510dfc168155ff83a2d127f68d6258b5684589fe126e445e39542"
+    },
+    {
+      "instruction_id": "conversion-optimization-offer",
+      "path": "instructions/conversion-optimization-offer.md",
+      "sha256": "9f48c90f3497230baae6d5c2ad94a56e53fa56bf8bbf4e1b6de8a269d6954ea7"
+    },
+    {
+      "instruction_id": "conversion-optimization-operating-rules",
+      "path": "instructions/conversion-optimization-operating-rules.md",
+      "sha256": "f51710216e013f61b85ae2a188642425bbeb17e3cb14bd7e1290f41560e07f47"
+    },
+    {
+      "instruction_id": "conversion-optimization-optional-phases",
+      "path": "instructions/conversion-optimization-optional-phases.md",
+      "sha256": "f9df6e0c4f2c5e61d129fb20d299f4e6ce1250b4475e179d6c6d5ccbc5bae2fc"
+    },
+    {
+      "instruction_id": "conversion-optimization-phases",
+      "path": "instructions/conversion-optimization-phases.md",
+      "sha256": "e517d3a3bde32a1f7c0bf542b722fd614b9c40db0c453d045578bd63c2fd5d6f"
+    },
+    {
+      "instruction_id": "conversion-optimization-proof",
+      "path": "instructions/conversion-optimization-proof.md",
+      "sha256": "2d631805fdf552aa116e1ad6370c7ad350ab2d3ae11bec438629fd49f9696fd8"
+    },
+    {
+      "instruction_id": "conversion-optimization-research",
+      "path": "instructions/conversion-optimization-research.md",
+      "sha256": "be40580781905bfed0e80b27b5d8a8ece2d3aed9980d4251c28d7ae31fe16e73"
     },
     {
       "instruction_id": "convert-in-place-and-leave-the-source-untouched",

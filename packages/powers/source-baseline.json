@@ -4881,6 +4881,10 @@
           "sha256": "44260b572a050417ba3733021eaa1694318fda80794c3e07800c66b4bc4a0c9e",
           "bytes": 15246
         },
+        "skills/conversion-optimization/SKILL.md": {
+          "sha256": "fbf2102e39441b4ea6d5177c52e09fcfaa10ad72cf3beee6b484ea659412324c",
+          "bytes": 26651
+        },
         "skills/cro-methodology/SKILL.md": {
           "sha256": "52bfedca17750ad117d838bfdcb5c5db190fb8a7c6e9b82abe44f939830e3897",
           "bytes": 17070
