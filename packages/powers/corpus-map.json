@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5610,
+  "revision": 5628,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18114,8 +18114,27 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/grow-business/SKILL.md": {
-          "status": "rejected",
-          "reason": "guided journey/metaskill orchestration; excluded by H1"
+          "status": "split",
+          "instruction_ids": [
+            "grow-business-apply",
+            "grow-business-core",
+            "grow-business-journey-map",
+            "grow-business-operating-rules",
+            "grow-business-intake",
+            "grow-business-phases",
+            "grow-business-marketing",
+            "grow-business-offer",
+            "grow-business-outbound",
+            "grow-business-word-of-mouth",
+            "grow-business-persuasion",
+            "grow-business-chasm",
+            "grow-business-network",
+            "grow-business-metrics",
+            "grow-business-negotiation",
+            "grow-business-optional-phases",
+            "grow-business-common-mistakes",
+            "grow-business-complete"
+          ]
         },
         "skills/grow-business/references/artifact-templates.md": {
           "status": "rejected",
