@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5561,
+  "revision": 5579,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17661,8 +17661,27 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/create-business/SKILL.md": {
-          "status": "rejected",
-          "reason": "guided journey/metaskill orchestration; excluded by H1"
+          "status": "split",
+          "instruction_ids": [
+            "create-business-apply",
+            "create-business-core",
+            "create-business-journey-map",
+            "create-business-operating-rules",
+            "create-business-intake",
+            "create-business-job",
+            "create-business-validate-job",
+            "create-business-design-sprint",
+            "create-business-mvp",
+            "create-business-strategy",
+            "create-business-blue-ocean",
+            "create-business-positioning",
+            "create-business-offer",
+            "create-business-pricing",
+            "create-business-beachhead",
+            "create-business-optional-phases",
+            "create-business-common-mistakes",
+            "create-business-complete"
+          ]
         },
         "skills/create-business/references/artifact-templates.md": {
           "status": "rejected",

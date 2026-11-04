@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7057,
+  "revision": 7085,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -100,7 +100,8 @@
       "design-behavior-change": "Ability to design a behavior change that survives low motivation by shifting ability, prompt and celebration.",
       "run-conversion-journey": "Ability to run a resumable conversion-optimization journey from a measured leak to a tested fix.",
       "design-monetization": "Ability to design price, packaging and monetization model around validated willingness to pay.",
-      "design-grand-slam-offer": "Ability to assemble an offer with value, bonuses, guarantee, scarcity and a name."
+      "design-grand-slam-offer": "Ability to assemble an offer with value, bonuses, guarantee, scarcity and a name.",
+      "build-validated-business": "Ability to take a raw idea to a validated, positioned and priced business."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -376,7 +377,16 @@
       "ethical-scarcity": "An approach in which quantity and time limits are used only when they are real.",
       "magic-name": "An approach in which the offer name states avatar, goal, timeframe and container.",
       "trim-and-stack": "An approach in which low-value high-cost components are cut and high-value low-cost ones stacked.",
-      "offer-creation-sequence": "An approach in which crowd, outcome, obstacles, solutions, trim, price, bonuses, guarantee, scarcity and name are worked in order."
+      "offer-creation-sequence": "An approach in which crowd, outcome, obstacles, solutions, trim, price, bonuses, guarantee, scarcity and name are worked in order.",
+      "business-creation-sequence": "An approach in which demand, strategy and price are validated in that order before building or scaling.",
+      "job-to-be-done": "An approach in which the idea is reframed as progress a customer seeks in a situation.",
+      "customer-interview-evidence": "An approach in which past-behavior interviews and real commitments replace opinions and compliments.",
+      "design-sprint-test": "An approach in which the riskiest assumption is tested in five days with five target customers.",
+      "minimum-viable-product": "An approach in which the smallest build tests the riskiest leap-of-faith assumption.",
+      "strategy-kernel": "An approach in which a diagnosis, guiding policy and coherent actions replace goals.",
+      "blue-ocean-err": "An approach in which an ERRC grid and strategy canvas create uncontested space.",
+      "market-positioning": "An approach in which alternatives, attributes, value, customer and category set the comparison context.",
+      "beachhead-segment": "An approach in which one narrow segment is chosen to dominate before expansion."
     }
   },
   "tag_aliases": {
@@ -712,6 +722,16 @@
       "instruction_id": "hundred-million-offers-apply",
       "dimension": "capability",
       "reason": "The instruction prioritizes the offer over marketing; it does not teach assembling an offer's components."
+    },
+    {
+      "instruction_id": "create-business-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "create-business-journey-map",
+      "dimension": "pattern",
+      "reason": "The instruction maps phases to artifacts; it does not itself require a tracker or resumption."
     }
   ],
   "instructions": [
@@ -3534,6 +3554,96 @@
       "instruction_id": "cover-the-scenario-classes",
       "path": "instructions/cover-the-scenario-classes.md",
       "sha256": "64afefb4ec645906afb3388bb66cb3a913427b5a3a0507ff046b184f2e6d90e8"
+    },
+    {
+      "instruction_id": "create-business-apply",
+      "path": "instructions/create-business-apply.md",
+      "sha256": "b49e40ec65f385bfd1d1fb569ce9cbf8b50c0874df879828235d6fc0b1fcac77"
+    },
+    {
+      "instruction_id": "create-business-beachhead",
+      "path": "instructions/create-business-beachhead.md",
+      "sha256": "9e5f2cc83e66b39b2e13ad4ab4e2b12536594171d3c93f876d4f4b3cfa8f6950"
+    },
+    {
+      "instruction_id": "create-business-blue-ocean",
+      "path": "instructions/create-business-blue-ocean.md",
+      "sha256": "62aab9a170ebb91ef45488a74a99fc9a359f8a00c50881a4d108e1c98dadc43d"
+    },
+    {
+      "instruction_id": "create-business-common-mistakes",
+      "path": "instructions/create-business-common-mistakes.md",
+      "sha256": "0c4c1618cabaa316eca96934fd128e2c6e3546fcb9220c4f57cf6e21a3d89f30"
+    },
+    {
+      "instruction_id": "create-business-complete",
+      "path": "instructions/create-business-complete.md",
+      "sha256": "52fb89ba500d7d3156dca4227b0452648db7a45ed9009bab40cc261a650c9acc"
+    },
+    {
+      "instruction_id": "create-business-core",
+      "path": "instructions/create-business-core.md",
+      "sha256": "166934e1e560ab723b79017f6da43707d6af7a73b5ac402707bbfbcb632056ad"
+    },
+    {
+      "instruction_id": "create-business-design-sprint",
+      "path": "instructions/create-business-design-sprint.md",
+      "sha256": "79989eec152720b4cdafb545537cfbace7446e683f88afc6eb8f0c7d22f130f9"
+    },
+    {
+      "instruction_id": "create-business-intake",
+      "path": "instructions/create-business-intake.md",
+      "sha256": "e3d34aac16b24ad68a59d960321b10f73f7ec544417dccccbeaf2f2c5410fdd2"
+    },
+    {
+      "instruction_id": "create-business-job",
+      "path": "instructions/create-business-job.md",
+      "sha256": "59fb4c8d1767776631824aa8ec42c1b34f14281e410c210faafca51a2d3d6cd3"
+    },
+    {
+      "instruction_id": "create-business-journey-map",
+      "path": "instructions/create-business-journey-map.md",
+      "sha256": "c8ce206e3d1ccbfa91fe123700fc2f0f160e6757edafb1483618c62db39f0850"
+    },
+    {
+      "instruction_id": "create-business-mvp",
+      "path": "instructions/create-business-mvp.md",
+      "sha256": "b8951b4e04138889b58bed9ceb5f8be4385d586be5b3fe8edfaf65c6b834a4ca"
+    },
+    {
+      "instruction_id": "create-business-offer",
+      "path": "instructions/create-business-offer.md",
+      "sha256": "eb64aa4b30356cd69e0d1077f25772570bf94a45f68c54261ded1b40bf7c80f6"
+    },
+    {
+      "instruction_id": "create-business-operating-rules",
+      "path": "instructions/create-business-operating-rules.md",
+      "sha256": "9c7472f656e031a4fd0b818df29c586545f2c94f3509634dbfe5da30444cacc9"
+    },
+    {
+      "instruction_id": "create-business-optional-phases",
+      "path": "instructions/create-business-optional-phases.md",
+      "sha256": "1896b77aed1d50fbaedfd32440e798f004ac9e71b42aac844d82a23510cc40f9"
+    },
+    {
+      "instruction_id": "create-business-positioning",
+      "path": "instructions/create-business-positioning.md",
+      "sha256": "77fbdcb45b844506c10a57af097a9fe65c8e53321c35e88c91698faac3ef71a3"
+    },
+    {
+      "instruction_id": "create-business-pricing",
+      "path": "instructions/create-business-pricing.md",
+      "sha256": "2495bd0ee3c1a9cdc6e698e4d8453323f19c04912540da9b72145bdffc50fac8"
+    },
+    {
+      "instruction_id": "create-business-strategy",
+      "path": "instructions/create-business-strategy.md",
+      "sha256": "726de215ec4593353de8837586c1d31eb399c276fe41a8da0622feec5ac7c442"
+    },
+    {
+      "instruction_id": "create-business-validate-job",
+      "path": "instructions/create-business-validate-job.md",
+      "sha256": "ff018d1e6872a8ef10cf13ad0f99fc2e68d745774662263cf4472a7fd2d4aff9"
     },
     {
       "instruction_id": "critique-the-rubric-alongside-the-grade",

@@ -2,6 +2,36 @@
 
 ## 2026-11-04
 
+* **H1 next-18 create-business applied:** 18 `InstructionSpec` drafts from the
+  next-18 D18 aggregation (18 accept / 1 reject / 0 merge / 0 unresolved; spec
+  manifest
+  `1a720fda6ed23c15695dc2095843fee43c6dafc7e67662f32cf8b486ad2cb5e9`).
+  Rejected unit is the Phases heading. D41 added the business-creation
+  vocabulary; two exemptions (1 capability + 1 pattern) cover the mistake list
+  and the journey-map instruction. One tag round removed `resumable-journey`
+  from the journey map. Packet SHA-256
+  `4fe3594a4c62ee334e14b18e4391e490eac1f3a665b7ece50e2c0dc2fac10400`;
+  committee SHA-256
+  `a1261ce9d09794f5f76b42b9df158b761a4a01c2e33ea8a4cfed71286e9b335a`;
+  reviewed plan SHA-256
+  `bfc284e23cdc5ebe04b35736624f648952e4ca814ac30a71299b0ac1208a0164`;
+  applied plan SHA-256
+  `ef79c7e464cb58ec761093fc5f687cd81bd01bbf720f9ed93df531d85298d66e`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 20
+  targets observed as `intended`; receipt
+  `88ea7f923912f11c257e94145b6766ef9cd56785c16bfda85c96b8d759df6023`.
+  Applied: 18 instructions, catalog, map; baseline rebuilt to 9 donors / 1,246
+  files; corpus 3,115; catalog revision 7,085; map revision 5,579.
+
+* **D41 business-creation tags accepted:** `catalog.json` gains the
+  `build-validated-business` capability and the `business-creation-sequence`,
+  `job-to-be-done`, `customer-interview-evidence`, `design-sprint-test`,
+  `minimum-viable-product`, `strategy-kernel`, `blue-ocean-err`,
+  `market-positioning` and `beachhead-segment` patterns for `create-business`.
+  Catalog revision 7,067. The tags are metadata only and do not admit any
+  source.
+
 * **H1 next-17 hundred-million-offers applied:** 14 `InstructionSpec` drafts
   from the next-17 D18 aggregation (14 amend / 3 reject / 0 merge / 0
   unresolved; spec manifest
