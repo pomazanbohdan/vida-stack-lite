@@ -331,7 +331,9 @@ export async function evaluateAdmission(candidate: CandidateSource, refs: HumanG
       check(delegation.algorithm.name === 'D18-blind-three-protocol', 'delegation algorithm');
       check(delegation.algorithm.aggregation === 'orchestrator', 'delegation aggregation');
       check(JSON.stringify(delegation.algorithm.protocols) === JSON.stringify(['V3-delphi', 'V2-adversarial', 'V4-party-chat']), 'delegation protocols');
-      check(JSON.stringify(delegation.algorithm.reviewers) === JSON.stringify(['model:luna-v3-delphi', 'model:luna-v2-adversarial', 'model:luna-v4-party-chat']), 'delegation reviewers');
+      const lunaReviewers = JSON.stringify(['model:luna-v3-delphi', 'model:luna-v2-adversarial', 'model:luna-v4-party-chat']);
+      const devinReviewers = JSON.stringify(['model:devin-v3-delphi', 'model:devin-v2-adversarial', 'model:devin-v4-party-chat']);
+      check(JSON.stringify(delegation.algorithm.reviewers) === lunaReviewers || JSON.stringify(delegation.algorithm.reviewers) === devinReviewers, 'delegation reviewers');
       check(delegation.scope.donor === state.capture.source.donor && delegation.scope.pinnedRevision === state.capture.source.pinnedRevision, 'delegation source binding');
       check(typeof delegation.scope.pilot === 'string' && delegation.scope.pilot.trim().length > 0 && Number.isInteger(delegation.scope.files) && delegation.scope.files > 0, 'delegation pilot scope');
       check(committee.schema === 'H1PanelDecisions/v1' && committee.donor === delegation.scope.donor && committee.pinnedRevision === delegation.scope.pinnedRevision, 'committee binding');
