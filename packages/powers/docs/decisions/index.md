@@ -35,3 +35,5 @@ log `../log.md`.
 * [D27 — Sales qualification and lead-mix tags for the H1 predictable-revenue batch](D27-sales-qualification-tags.md) - Four pattern tags with catalog definitions let lead mix, follow-up cadence, ANUM qualification and ICP carry accurate metadata.
 * [D28 — Sales metric cadence tags for the H1 predictable-revenue batch](D28-sales-metric-cadence-tags.md) - One capability and one pattern tag with catalog definitions let sales activity, result and efficiency tracking carry accurate metadata.
 * [D29 — Divergent sketching tags for the H1 design-sprint batch](D29-divergent-sketching-tags.md) - One capability and one pattern tag with catalog definitions let independent solution sketching carry accurate metadata.
+* [D30 — Habit-loop tags for the H1 hooked-ux batch](D30-habit-loop-tags.md) - One capability and six pattern tags with catalog definitions let the Hook Model and its ethics boundaries carry accurate metadata.
+* [D31 — Regulatory watch tag for the H1 hooked-ux batch](D31-regulatory-watch-tag.md) - One pattern tag with a catalog definition lets the regulatory monitoring instruction carry accurate metadata.

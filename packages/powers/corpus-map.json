@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5420,
+  "revision": 5439,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18103,8 +18103,28 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/hooked-ux/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "hooked-ux-apply",
+            "hooked-ux-loop",
+            "hooked-ux-score",
+            "hooked-ux-trigger",
+            "hooked-ux-action",
+            "hooked-ux-variable-reward",
+            "hooked-ux-investment",
+            "hooked-ux-habit-zone",
+            "hooked-ux-habit-testing",
+            "hooked-ux-manipulation-matrix",
+            "hooked-ux-when-not-to-use",
+            "hooked-ux-regulatory",
+            "hooked-ux-onboarding-trigger",
+            "hooked-ux-onboarding-action",
+            "hooked-ux-onboarding-reward",
+            "hooked-ux-onboarding-investment",
+            "hooked-ux-onboarding-loop",
+            "hooked-ux-common-mistakes",
+            "hooked-ux-diagnostic"
+          ]
         },
         "skills/hooked-ux/references/case-studies.md": {
           "status": "rejected",

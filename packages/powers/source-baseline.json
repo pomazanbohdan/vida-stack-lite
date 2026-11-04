@@ -4905,6 +4905,10 @@
           "sha256": "7adebf248a5aa40ef6bc34d3f379a9cd22663b8ca8086fc350c95cee6d4d2035",
           "bytes": 19456
         },
+        "skills/hooked-ux/SKILL.md": {
+          "sha256": "775ae946b15f03d787077c35d166a9addb1e241cb9ffea03ceee3a1be198175e",
+          "bytes": 14064
+        },
         "skills/influence-psychology/SKILL.md": {
           "sha256": "e7cd3142a11a631c56be159374a42341b370efb26cc3adc25a9f5e6627b84994",
           "bytes": 17148

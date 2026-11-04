@@ -2,6 +2,41 @@
 
 ## 2026-11-04
 
+* **H1 next-8 hooked-ux applied:** 19 `InstructionSpec` drafts from the next-8
+  D18 aggregation (19 amend / 4 reject / 0 unresolved; spec manifest
+  `1cca55b1c202738bf54193c12f39aca2b70f6967383968d2cc315efd68d4aa06`).
+  Rejected units are The Four Phases and Manipulation Matrix parent headings,
+  Further Reading and About the Author. D30 added the habit-loop vocabulary and
+  D31 the regulatory-watch pattern; 19 explicit capability/pattern exemptions
+  cover phases, assessments and checklists with no fitting capability. The
+  staged benchmark receipt is bound in the committee with catalog SHA-256
+  `87fb4d6d5e36cf0b1d5a0201f3f24b9a143ab37cbaf70543d85b0594921eaeb2`, 5/0.
+  Packet SHA-256
+  `dbeecafe669ae568ab6808a1d0fabadec59e5b4252c3228ba2f6f8e91fce7109`;
+  committee SHA-256
+  `0010760a84d892ca99060f6cd511b71985e41c4c4127f039ff3778cbdba6a2c2`;
+  reviewed plan SHA-256
+  `7185f8742396afe52456c12d8cf61a56a72e233e9ce486dca702f03012802989`;
+  applied plan SHA-256
+  `2daa2d2de2d81160512d51ea9e753b5fe40a73dc8eb22634479018814ba261c6`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0 Critical / 0 Important / 0 Minor; apply
+  returned `applied` with all 21 targets observed as `intended`; receipt
+  `cde277b4da5fd73968b18f6cbc30421ccfe3dc325efeb765ec1bee086f0077ff`.
+  Applied: 19 instructions, catalog, map; baseline rebuilt to 9 donors / 1,236
+  files; corpus 2,975; catalog revision 6,853; map revision 5,439.
+
+* **D31 regulatory watch tag accepted:** `catalog.json` gains the
+  `regulatory-watch` pattern for the `hooked-ux` regulatory monitoring
+  instruction. `habit-ethics` describes ethics review, not regulatory watching.
+  Catalog revision 6,833. The tag is metadata only and does not admit any source.
+
+* **D30 habit-loop tags accepted:** `catalog.json` gains the
+  `design-habit-loop` capability and the `habit-loop`, `variable-reward`,
+  `internal-trigger`, `habit-ethics`, `onboarding-hook` and `friction-reduction`
+  patterns for the `hooked-ux` batch. Catalog revision 6,832. The tags are
+  metadata only and do not admit any source.
+
 * **H1 next-7 design-sprint applied:** 26 `InstructionSpec` drafts from the
   next-7 D18 aggregation (26 accept / 3 reject / 0 unresolved; spec manifest
   `97dc55d3960eff6527a2afd496126bc421ca4888ccf08fab5914bf36f03eba79`).

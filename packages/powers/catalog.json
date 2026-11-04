@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6825,
+  "revision": 6853,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -90,7 +90,8 @@
       "design-shareability": "Ability to design sharing into a product, campaign or content through predictable social drivers.",
       "design-sales-motion": "Ability to design a repeatable sales motion with separated roles, lead types and handoffs.",
       "run-sales-metrics": "Ability to track sales activity, result and efficiency metrics on a stated review cadence.",
-      "generate-divergent-sketches": "Ability to generate multiple independent sketches before any selection."
+      "generate-divergent-sketches": "Ability to generate multiple independent sketches before any selection.",
+      "design-habit-loop": "Ability to design a four-phase habit loop from trigger to investment."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -288,7 +289,14 @@
       "sales-qualification": "An approach in which an opportunity is qualified on authority, need, urgency and money before handoff.",
       "ideal-customer-profile": "An approach in which the target account profile is defined by firmographics and pain before list building.",
       "sales-metric-cadence": "An approach in which sales activity, result and efficiency metrics are tracked on a stated review cadence.",
-      "divergent-sketching": "An approach in which individuals sketch multiple independent solutions before any group discussion."
+      "divergent-sketching": "An approach in which individuals sketch multiple independent solutions before any group discussion.",
+      "habit-loop": "An approach in which a trigger, an action, a variable reward and an investment form a repeating cycle.",
+      "variable-reward": "An approach in which an uncertain reward sustains anticipation across repeat use.",
+      "internal-trigger": "An approach in which an external cue is replaced by an internal emotional trigger over time.",
+      "habit-ethics": "An approach in which habit-forming design is checked against user benefit, vulnerable users and manipulation.",
+      "onboarding-hook": "An approach in which the first cycle is completed during onboarding: trigger, action, reward and investment.",
+      "friction-reduction": "An approach in which the simplest action is made easier by removing steps and choices.",
+      "regulatory-watch": "An approach in which applicable regulation is monitored for a product."
     }
   },
   "tag_aliases": {
@@ -344,6 +352,91 @@
       "instruction_id": "predictable-revenue-common-mistakes",
       "dimension": "capability",
       "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-manipulation-matrix",
+      "dimension": "capability",
+      "reason": "The instruction assesses ethics; the habit-ethics pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-when-not-to-use",
+      "dimension": "capability",
+      "reason": "The instruction defines an ethical exclusion; the habit-ethics pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-regulatory",
+      "dimension": "capability",
+      "reason": "The instruction monitors regulation; the regulatory-watch pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-trigger",
+      "dimension": "capability",
+      "reason": "The instruction designs one loop phase; the internal-trigger pattern carries the meaning and no full-loop capability fits."
+    },
+    {
+      "instruction_id": "hooked-ux-variable-reward",
+      "dimension": "capability",
+      "reason": "The instruction designs one loop phase; the variable-reward pattern carries the meaning and no full-loop capability fits."
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-trigger",
+      "dimension": "capability",
+      "reason": "The instruction designs one onboarding stage; the onboarding-hook pattern carries the meaning and no full-loop capability fits."
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-action",
+      "dimension": "capability",
+      "reason": "The instruction designs one onboarding stage; the onboarding-hook pattern carries the meaning and no full-loop capability fits."
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-reward",
+      "dimension": "capability",
+      "reason": "The instruction designs one onboarding stage; the onboarding-hook pattern carries the meaning and no full-loop capability fits."
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-investment",
+      "dimension": "capability",
+      "reason": "The instruction designs one onboarding stage; the onboarding-hook pattern carries the meaning and no full-loop capability fits."
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-loop",
+      "dimension": "capability",
+      "reason": "The instruction closes one onboarding stage; the onboarding-hook pattern carries the meaning and no full-loop capability fits."
+    },
+    {
+      "instruction_id": "hooked-ux-score",
+      "dimension": "capability",
+      "reason": "The instruction scores a product against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "hooked-ux-habit-zone",
+      "dimension": "capability",
+      "reason": "The instruction assesses value and frequency; the diagnostic-questions pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-habit-testing",
+      "dimension": "capability",
+      "reason": "The instruction tests a habit threshold; no capability definition fits without inventing baseline and variance reporting."
+    },
+    {
+      "instruction_id": "hooked-ux-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-action",
+      "dimension": "capability",
+      "reason": "The instruction simplifies a behavior by removing friction; the friction-reduction pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hooked-ux-habit-zone",
+      "dimension": "pattern",
+      "reason": "The instruction classifies value and frequency; no pattern definition fits without inventing a corrective action."
     }
   ],
   "instructions": [
@@ -5546,6 +5639,101 @@
       "instruction_id": "honour-an-idempotency-key",
       "path": "instructions/honour-an-idempotency-key.md",
       "sha256": "10e84d13e7ae275858578ccfa2014d51467cb867944d148c798ebc54f1bdaff1"
+    },
+    {
+      "instruction_id": "hooked-ux-action",
+      "path": "instructions/hooked-ux-action.md",
+      "sha256": "b18400e4e7920cc7f6336cd65a93343ea75d1314abb147b5a0b926b874257a66"
+    },
+    {
+      "instruction_id": "hooked-ux-apply",
+      "path": "instructions/hooked-ux-apply.md",
+      "sha256": "5b3ad2a3421f4edf9627f8f3025e49e932b79ecf5f45eae6590e0b8384f93ae2"
+    },
+    {
+      "instruction_id": "hooked-ux-common-mistakes",
+      "path": "instructions/hooked-ux-common-mistakes.md",
+      "sha256": "63a59bc8622840eca5f371a3ca33901b011319ed3e2ca82de3a26ebebf27fa99"
+    },
+    {
+      "instruction_id": "hooked-ux-diagnostic",
+      "path": "instructions/hooked-ux-diagnostic.md",
+      "sha256": "201e74291df06a237d32839286bf38b0bff00202f1049ed34425eec28bb7e079"
+    },
+    {
+      "instruction_id": "hooked-ux-habit-testing",
+      "path": "instructions/hooked-ux-habit-testing.md",
+      "sha256": "b1c24494fce344a88fabc22ee6534094b0dc959e8a77f3e797960455459b25ef"
+    },
+    {
+      "instruction_id": "hooked-ux-habit-zone",
+      "path": "instructions/hooked-ux-habit-zone.md",
+      "sha256": "874ed7c9b4ab2362f9ca453aa3efcac3b1269567a14b308900d45b93979c7935"
+    },
+    {
+      "instruction_id": "hooked-ux-investment",
+      "path": "instructions/hooked-ux-investment.md",
+      "sha256": "bd8b0f26dbe61e0a574d741ebfac495b060a69c6d5fb1bbfb13ff45a54a30622"
+    },
+    {
+      "instruction_id": "hooked-ux-loop",
+      "path": "instructions/hooked-ux-loop.md",
+      "sha256": "274c90c0434f5a39f28eb8c45cf652444b80cce2272becf0d75e93d058ad847d"
+    },
+    {
+      "instruction_id": "hooked-ux-manipulation-matrix",
+      "path": "instructions/hooked-ux-manipulation-matrix.md",
+      "sha256": "a2efc6f29204e438c27b072dd0faf07117b4d4dd55e84683d2ac6dc643409ff4"
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-action",
+      "path": "instructions/hooked-ux-onboarding-action.md",
+      "sha256": "b1707351687902c93d83ba6ae55a7eb8d7077623b9a2ba5402cc3d0d8f1a96f4"
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-investment",
+      "path": "instructions/hooked-ux-onboarding-investment.md",
+      "sha256": "12f2e3b5b7f0c0908daccd24a187445b997c4b3a62e9f01a3e5c2cfedc283e9b"
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-loop",
+      "path": "instructions/hooked-ux-onboarding-loop.md",
+      "sha256": "b80e3e7781a733ea5b5033bc07145a570794a415c169ceb7c7bf2afcaa477fdd"
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-reward",
+      "path": "instructions/hooked-ux-onboarding-reward.md",
+      "sha256": "21bc83739695f3ee144f1045867cfac7fd9fbd235b6d297a123fd02a4af72648"
+    },
+    {
+      "instruction_id": "hooked-ux-onboarding-trigger",
+      "path": "instructions/hooked-ux-onboarding-trigger.md",
+      "sha256": "bd5c5b7bee653b0cd0d130b61f1e63038cf7bb2a831eee47695813a596fbf814"
+    },
+    {
+      "instruction_id": "hooked-ux-regulatory",
+      "path": "instructions/hooked-ux-regulatory.md",
+      "sha256": "598795e96eb1d6455a101506f8a3c43c4ffaef37d8170049eb09f2cdb2694234"
+    },
+    {
+      "instruction_id": "hooked-ux-score",
+      "path": "instructions/hooked-ux-score.md",
+      "sha256": "7607a2f4d54ee668d01b0a0b9c84dca512265e668c710a7780fbb1128dc98bf2"
+    },
+    {
+      "instruction_id": "hooked-ux-trigger",
+      "path": "instructions/hooked-ux-trigger.md",
+      "sha256": "679be4e3d63235278f4af59ac407e585892ffd0fc05622435f4af57b8b92b253"
+    },
+    {
+      "instruction_id": "hooked-ux-variable-reward",
+      "path": "instructions/hooked-ux-variable-reward.md",
+      "sha256": "c84e55ead13c9728cf55bdb879e256a1b8e72f2dec677507242f596846e26fb4"
+    },
+    {
+      "instruction_id": "hooked-ux-when-not-to-use",
+      "path": "instructions/hooked-ux-when-not-to-use.md",
+      "sha256": "323de7f171d05abc43582bfffe479dca2a4098773bdbcc36ffa1b3af6e507d2f"
     },
     {
       "instruction_id": "identify-a-skill-by-its-manifest-not-by-its-folder",
