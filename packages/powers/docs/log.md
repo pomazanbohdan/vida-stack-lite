@@ -2,6 +2,37 @@
 
 ## 2026-11-04
 
+* **H1 next-17 hundred-million-offers applied:** 14 `InstructionSpec` drafts
+  from the next-17 D18 aggregation (14 amend / 3 reject / 0 merge / 0
+  unresolved; spec manifest
+  `05bfc8dfc27ebafc00e75c79efe5a9a9ffad01f1ee0ced4af200529275efeff7`).
+  Rejected units are the framework heading, Further Reading and About the
+  Author. D40 added the Grand Slam Offer vocabulary; five exemptions (4
+  capability + 1 pattern) cover score, mistakes, quick diagnostic and the
+  framework-scope instruction. Three source ambiguities were preserved without
+  invention; two tag rounds narrowed `category-of-one`, `grand-slam-offer` and
+  the apply/core verifiers. Packet SHA-256
+  `0bb461ac7b18338b4dbfe33f215059f5f7453612c0d090c882538b1415d062cf`;
+  committee SHA-256
+  `b8efc3ace8f0c01aed143e46c4d05552fd03bf7614422f22aa17c0db201c38f7`;
+  reviewed plan SHA-256
+  `dce6bf39fb0e8a4664fcc2d2753614a350209a5769a754a35b70d944f444e6c7`;
+  applied plan SHA-256
+  `0014b8511048e88fd1399562f13561f70830ccedd84c1e839349f10d6b0727ec`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 16
+  targets observed as `intended`; receipt
+  `8650c00fa02007e42154be1512870886e637fee926b7aa9418dbf62d199bc415`.
+  Applied: 14 instructions, catalog, map; baseline rebuilt to 9 donors / 1,245
+  files; corpus 3,097; catalog revision 7,057; map revision 5,561.
+
+* **D40 Grand Slam Offer tags accepted:** `catalog.json` gains the
+  `design-grand-slam-offer` capability and the `grand-slam-offer`,
+  `category-of-one`, `starving-crowd`, `value-based-pricing`, `bonus-stacking`,
+  `ethical-scarcity`, `magic-name`, `trim-and-stack` and
+  `offer-creation-sequence` patterns for `hundred-million-offers`. Catalog
+  revision 7,043. The tags are metadata only and do not admit any source.
+
 * **H1 next-16 monetizing-innovation applied:** 11 `InstructionSpec` drafts
   from the next-16 D18 aggregation (11 accept / 4 reject / 0 merge / 0
   unresolved; spec manifest

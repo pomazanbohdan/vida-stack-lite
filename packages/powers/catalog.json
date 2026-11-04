@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7033,
+  "revision": 7057,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -99,7 +99,8 @@
       "design-network-effects": "Ability to design a networked product from one atomic network to a defended network.",
       "design-behavior-change": "Ability to design a behavior change that survives low motivation by shifting ability, prompt and celebration.",
       "run-conversion-journey": "Ability to run a resumable conversion-optimization journey from a measured leak to a tested fix.",
-      "design-monetization": "Ability to design price, packaging and monetization model around validated willingness to pay."
+      "design-monetization": "Ability to design price, packaging and monetization model around validated willingness to pay.",
+      "design-grand-slam-offer": "Ability to assemble an offer with value, bonuses, guarantee, scarcity and a name."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -367,7 +368,15 @@
       "price-metric": "An approach in which the unit of charging is chosen to grow with delivered value.",
       "freemium-acquisition": "An approach in which the free tier is treated as acquisition spend rather than the pricing model.",
       "price-framing": "An approach in which anchors, decoys, the compromise effect and price endings frame perceived value.",
-      "launch-price-trigger": "An approach in which day-30/60/90 thresholds and responses are fixed before launch."
+      "launch-price-trigger": "An approach in which day-30/60/90 thresholds and responses are fixed before launch.",
+      "grand-slam-offer": "An approach in which core offer, bonuses, guarantee, scarcity and name form one complete package.",
+      "starving-crowd": "An approach in which a market is chosen for pain, purchasing power, targetability and growth before the offer is built.",
+      "value-based-pricing": "An approach in which price is set from delivered value rather than cost.",
+      "bonus-stacking": "An approach in which each bonus answers one objection and carries an honest standalone value.",
+      "ethical-scarcity": "An approach in which quantity and time limits are used only when they are real.",
+      "magic-name": "An approach in which the offer name states avatar, goal, timeframe and container.",
+      "trim-and-stack": "An approach in which low-value high-cost components are cut and high-value low-cost ones stacked.",
+      "offer-creation-sequence": "An approach in which crowd, outcome, obstacles, solutions, trim, price, bonuses, guarantee, scarcity and name are worked in order."
     }
   },
   "tag_aliases": {
@@ -678,6 +687,31 @@
       "instruction_id": "monetizing-innovation-quick-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hundred-million-offers-score",
+      "dimension": "capability",
+      "reason": "The instruction scores an offer against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "hundred-million-offers-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hundred-million-offers-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "hundred-million-offers-apply",
+      "dimension": "pattern",
+      "reason": "The instruction states the offer's priority over marketing; no pattern definition fits without inventing a package statement."
+    },
+    {
+      "instruction_id": "hundred-million-offers-apply",
+      "dimension": "capability",
+      "reason": "The instruction prioritizes the offer over marketing; it does not teach assembling an offer's components."
     }
   ],
   "instructions": [
@@ -6225,6 +6259,76 @@
       "instruction_id": "hooked-ux-when-not-to-use",
       "path": "instructions/hooked-ux-when-not-to-use.md",
       "sha256": "323de7f171d05abc43582bfffe479dca2a4098773bdbcc36ffa1b3af6e507d2f"
+    },
+    {
+      "instruction_id": "hundred-million-offers-apply",
+      "path": "instructions/hundred-million-offers-apply.md",
+      "sha256": "9318f4bdaf5e6a9b2c9c45ce019ab18e14d80d525aaf4725a8875f0cd0667a92"
+    },
+    {
+      "instruction_id": "hundred-million-offers-bonuses",
+      "path": "instructions/hundred-million-offers-bonuses.md",
+      "sha256": "d6719fda11448753a7ca8f44510f5c000364a1fe563e10c2c32d40dc4caae26e"
+    },
+    {
+      "instruction_id": "hundred-million-offers-common-mistakes",
+      "path": "instructions/hundred-million-offers-common-mistakes.md",
+      "sha256": "c3dfa646d5aecf5816acdeb494fd708e2aba3e4548a39e179edfeb0456e060f2"
+    },
+    {
+      "instruction_id": "hundred-million-offers-core",
+      "path": "instructions/hundred-million-offers-core.md",
+      "sha256": "ef25e4b7b7c855d7d7a33903aa47fb0cef8e097c80331d33a585f896d63d363b"
+    },
+    {
+      "instruction_id": "hundred-million-offers-guarantees",
+      "path": "instructions/hundred-million-offers-guarantees.md",
+      "sha256": "ee2e75a1899a131dfd282ac59794a6d3037d6f5baa11be18cfac396b94de577d"
+    },
+    {
+      "instruction_id": "hundred-million-offers-naming",
+      "path": "instructions/hundred-million-offers-naming.md",
+      "sha256": "a20a36c9daa6b958198924d4445024c7b3dae79a6cf2535102c8cf7b99bbbf15"
+    },
+    {
+      "instruction_id": "hundred-million-offers-package",
+      "path": "instructions/hundred-million-offers-package.md",
+      "sha256": "8b102cdd802bcdc26b86bff8dd7f2abd8a867048a794d7897a97f1e23b50421d"
+    },
+    {
+      "instruction_id": "hundred-million-offers-process",
+      "path": "instructions/hundred-million-offers-process.md",
+      "sha256": "7f4e815926a5b6ffbd92cd3b0d3ca36d587a28b6a78e5cc49b8b003f2f6e9bb7"
+    },
+    {
+      "instruction_id": "hundred-million-offers-quick-diagnostic",
+      "path": "instructions/hundred-million-offers-quick-diagnostic.md",
+      "sha256": "3b524a0fc17b9e2cd422ac8483d60396de49cde74caded18c8e718e9daf2e06e"
+    },
+    {
+      "instruction_id": "hundred-million-offers-scarcity",
+      "path": "instructions/hundred-million-offers-scarcity.md",
+      "sha256": "c4866689af96a683a455b3cb614bc034082b77ce99ac8bacff67a855b7ee2b12"
+    },
+    {
+      "instruction_id": "hundred-million-offers-score",
+      "path": "instructions/hundred-million-offers-score.md",
+      "sha256": "a741affb66f2e68b319e3b647ff03602a2c3dff25cf220dd7fce7bb6553a3e84"
+    },
+    {
+      "instruction_id": "hundred-million-offers-starving-crowd",
+      "path": "instructions/hundred-million-offers-starving-crowd.md",
+      "sha256": "500d51e6d7287571ae12ba0e3c439350c93d074d93edff690ba4faa3ef3cd331"
+    },
+    {
+      "instruction_id": "hundred-million-offers-value-equation",
+      "path": "instructions/hundred-million-offers-value-equation.md",
+      "sha256": "85465a000f880f266e6779c381eb191bab246fd9817d2de7275139dbe50d46f9"
+    },
+    {
+      "instruction_id": "hundred-million-offers-value-pricing",
+      "path": "instructions/hundred-million-offers-value-pricing.md",
+      "sha256": "a7c80957efd51a4bc761ab5597ab84a84c015ddf99b307e84f90069ccf1bf620"
     },
     {
       "instruction_id": "identify-a-skill-by-its-manifest-not-by-its-folder",
