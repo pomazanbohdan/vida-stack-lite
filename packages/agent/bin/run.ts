@@ -3627,13 +3627,29 @@ function isStoppedSourceCaptureEntry(value: unknown): value is StoppedSourceCapt
   return isRecord(value) && isString(value.path) && isString(value.sha256) && typeof value.size === 'number';
 }
 
+/** @param {unknown} value @returns {value is StoppedSourceCaptureEntry} */
+function isStoppedSourceCapturePresenceEntry(value: unknown): value is StoppedSourceCaptureEntry {
+  if (!isRecord(value) || !isString(value.path)) return false;
+  const keys = Object.keys(value).sort();
+  if (keys.join('\0') !== ['path', 'presence', 'sha256', 'size'].sort().join('\0')) return false;
+  if (value.presence === 'absent') return value.sha256 === null && value.size === null;
+  return (
+    value.presence === 'present' &&
+    typeof value.sha256 === 'string' &&
+    /^[0-9a-f]{64}$/.test(value.sha256) &&
+    Number.isSafeInteger(value.size) &&
+    (value.size as number) >= 0
+  );
+}
+
 /** @param {unknown} value @returns {value is StoppedSourceCaptureSnapshot} */
 function isStoppedSourceCaptureSnapshot(value: unknown): value is StoppedSourceCaptureSnapshot {
+  if (!isRecord(value) || !Array.isArray(value.entries)) return false;
+  if (value.schema === 'UnverifiedSourceSnapshot/v1') return value.entries.every(isStoppedSourceCaptureEntry);
   return (
-    isRecord(value) &&
-    value.schema === 'UnverifiedSourceSnapshot/v1' &&
-    Array.isArray(value.entries) &&
-    value.entries.every(isStoppedSourceCaptureEntry)
+    value.schema === 'StoppedSourceCandidatePresence/v1' &&
+    Object.keys(value).sort().join('\0') === ['entries', 'schema'].join('\0') &&
+    value.entries.every(isStoppedSourceCapturePresenceEntry)
   );
 }
 
@@ -3768,6 +3784,8 @@ async function captureStoppedSource(args: string[]) {
   const { readFileSync, writeFileSync, realpathSync } = await import('node:fs');
   const { createHash } = await import('node:crypto');
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+  const { snapshotDeclaredSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
@@ -3835,14 +3853,31 @@ async function captureStoppedSource(args: string[]) {
       terminal.observation_ref !== input.terminalEvidence.observation_ref
     )
       throw Error('actual terminal fixture evidence differs');
-    for (const entry of input.candidateSnapshot.entries) {
-      const absolute = path.resolve(root, entry.path),
-        relative = path.relative(root, absolute);
-      if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(absolute) !== absolute)
-        throw Error('candidate source path differs');
-      const data = readFileSync(absolute);
-      if (data.length !== entry.size || createHash('sha256').update(data).digest('hex') !== entry.sha256)
+    if (input.candidateSnapshot.schema === 'StoppedSourceCandidatePresence/v1') {
+      const current = snapshotDeclaredSources(
+        requireSafeRepositoryAccess(root),
+        input.candidateSnapshot.entries.map((entry) => entry.path),
+      );
+      const actual = current.entries.map((entry) =>
+        entry.exists
+          ? { path: entry.path, presence: 'present', sha256: entry.sha256, size: entry.bytes }
+          : { path: entry.path, presence: 'absent', sha256: null, size: null },
+      );
+      const expected = [...input.candidateSnapshot.entries].sort((left, right) =>
+        left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+      );
+      if (canonicalJsonDigest(actual) !== canonicalJsonDigest(expected))
         throw Error('candidate source changed after frozen request');
+    } else {
+      for (const entry of input.candidateSnapshot.entries) {
+        const absolute = path.resolve(root, entry.path),
+          relative = path.relative(root, absolute);
+        if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(absolute) !== absolute)
+          throw Error('candidate source path differs');
+        const data = readFileSync(absolute);
+        if (data.length !== entry.size || createHash('sha256').update(data).digest('hex') !== entry.sha256)
+          throw Error('candidate source changed after frozen request');
+      }
     }
   }
   verifyCurrent();
