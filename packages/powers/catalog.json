@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7112,
+  "revision": 7136,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -102,7 +102,8 @@
       "design-monetization": "Ability to design price, packaging and monetization model around validated willingness to pay.",
       "design-grand-slam-offer": "Ability to assemble an offer with value, bonuses, guarantee, scarcity and a name.",
       "build-validated-business": "Ability to take a raw idea to a validated, positioned and priced business.",
-      "negotiate-agreements": "Ability to prepare and conduct a negotiation with tactical empathy and calibrated questions."
+      "negotiate-agreements": "Ability to prepare and conduct a negotiation with tactical empathy and calibrated questions.",
+      "design-retention-engine": "Ability to turn signups into habitual users by fixing habit, activation and retention before acquisition."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -398,7 +399,14 @@
       "black-swan": "An approach in which hidden constraints, motivations or context are hunted and surfaced.",
       "stalled-negotiation": "An approach in which a stall is met with a specific question or label rather than a concession.",
       "negotiation-style": "An approach in which the counterpart is read as analyst, accommodator or assertive and the method adapts.",
-      "negotiation-voice": "An approach in which voice, pause and nonverbals are controlled for calm delivery."
+      "negotiation-voice": "An approach in which voice, pause and nonverbals are controlled for calm delivery.",
+      "retention-before-acquisition": "An approach in which acquisition stays locked until activation and retention clear a pre-set bar.",
+      "opportunity-tree": "An approach in which outcomes branch into customer opportunities before candidate solutions.",
+      "outcome-over-output": "An approach in which success is a behavior change rather than a shipped deliverable.",
+      "empowered-product-team": "An approach in which a team owns problems and outcomes instead of a feature backlog.",
+      "stickiness-stage": "An approach in which retention is the OMTM while retention is weak.",
+      "microinteraction-feedback": "An approach in which trigger, rules, feedback and loops are specified for each frequent interaction.",
+      "manipulation-matrix": "An approach in which a habit feature is checked against maker use, user benefit and honest belief."
     }
   },
   "tag_aliases": {
@@ -769,6 +777,26 @@
       "instruction_id": "negotiation-core",
       "dimension": "capability",
       "reason": "The instruction states general empathy principles; it does not cover calibrated questions or the full negotiation method."
+    },
+    {
+      "instruction_id": "grow-app-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "grow-app-journey-map",
+      "dimension": "pattern",
+      "reason": "The instruction maps phases to artifacts; it does not itself require a tracker or resumption."
+    },
+    {
+      "instruction_id": "grow-app-optional-phases",
+      "dimension": "pattern",
+      "reason": "The instruction lists optional phases and their conditions; no pattern definition fits the list itself."
+    },
+    {
+      "instruction_id": "grow-app-complete",
+      "dimension": "pattern",
+      "reason": "The instruction closes the journey and routes forward; its checks do not require a specific pattern action."
     }
   ],
   "instructions": [
@@ -6076,6 +6104,86 @@
       "instruction_id": "group-tools-and-ask-once-per-setting",
       "path": "instructions/group-tools-and-ask-once-per-setting.md",
       "sha256": "7785ab3222742c10126d6b911adcbaca9743932fe8772770ab686653ed2b4fab"
+    },
+    {
+      "instruction_id": "grow-app-activation",
+      "path": "instructions/grow-app-activation.md",
+      "sha256": "dafef46cfd6031ca4c265ae9d167b89886ffedc6064f7e6488968f01b432a33e"
+    },
+    {
+      "instruction_id": "grow-app-apply",
+      "path": "instructions/grow-app-apply.md",
+      "sha256": "baf1687c828afa6cd38212b96268093110073ee05886e10d88036ff0052c60de"
+    },
+    {
+      "instruction_id": "grow-app-common-mistakes",
+      "path": "instructions/grow-app-common-mistakes.md",
+      "sha256": "148b4098c564f50bb0e1eb38b0f1977f5e4a9dd9c169dfc5da1b14f13c5b3350"
+    },
+    {
+      "instruction_id": "grow-app-complete",
+      "path": "instructions/grow-app-complete.md",
+      "sha256": "d8aff82bc74e284afc6a72fa57ac1866cc628a27de8d2d7797f2c85ebbd25d24"
+    },
+    {
+      "instruction_id": "grow-app-core",
+      "path": "instructions/grow-app-core.md",
+      "sha256": "e339c3f0462cfc6936064d05b16f191f6ae699d397afa1d99a84fdb7ba91f6c6"
+    },
+    {
+      "instruction_id": "grow-app-discovery",
+      "path": "instructions/grow-app-discovery.md",
+      "sha256": "f582bb4d2793af72190b74b92c1490c188b186b55b2f772462d50470b7a19247"
+    },
+    {
+      "instruction_id": "grow-app-experiments",
+      "path": "instructions/grow-app-experiments.md",
+      "sha256": "efa8619192c73357f9e1791755d4bc6b0a55b7921e2a545a4b289d8fbbf35a07"
+    },
+    {
+      "instruction_id": "grow-app-hook",
+      "path": "instructions/grow-app-hook.md",
+      "sha256": "6e3895070649ca0cc29d86dbf076b46524a97e3ee9602aed5d1f64a4b95766c3"
+    },
+    {
+      "instruction_id": "grow-app-intake",
+      "path": "instructions/grow-app-intake.md",
+      "sha256": "f614c3271aa125ed5ec1ad7e79bca965d8292996c1357996f468bf18fea60cd1"
+    },
+    {
+      "instruction_id": "grow-app-journey-map",
+      "path": "instructions/grow-app-journey-map.md",
+      "sha256": "a61483acbe4c99327423040dda954c65529ebef3312065294029847e0d47a255"
+    },
+    {
+      "instruction_id": "grow-app-metrics",
+      "path": "instructions/grow-app-metrics.md",
+      "sha256": "40fd130be0e390e11efcbeed97f67b3b205e51801cb6a77bd79f000970040499"
+    },
+    {
+      "instruction_id": "grow-app-microinteractions",
+      "path": "instructions/grow-app-microinteractions.md",
+      "sha256": "b69892f65bcd7de397c29ceb1eb42a7faf6531aeda7f7ffc4ea2edb80fc609fe"
+    },
+    {
+      "instruction_id": "grow-app-motivation",
+      "path": "instructions/grow-app-motivation.md",
+      "sha256": "fed8d1ce1db1956c227f3af6b98947a4a90b0669d8fb5f414c9690defb1f4124"
+    },
+    {
+      "instruction_id": "grow-app-operating-rules",
+      "path": "instructions/grow-app-operating-rules.md",
+      "sha256": "c11eb17853ecbe1abcd5b20fb3d85e21f229c64a5c8aa564c4489d47d0f66ad5"
+    },
+    {
+      "instruction_id": "grow-app-optional-phases",
+      "path": "instructions/grow-app-optional-phases.md",
+      "sha256": "01f30add5c05c8c009754b5606f69863e894b89974e92c7c5e5cd847e8ec55fd"
+    },
+    {
+      "instruction_id": "grow-app-team",
+      "path": "instructions/grow-app-team.md",
+      "sha256": "a43936a271b5a771a0e308ab8928561b3189b45560f5d6bd9d0990dbd0b7fdc1"
     },
     {
       "instruction_id": "guard-a-deploy-workflow-with-concurrency-and-timeout",

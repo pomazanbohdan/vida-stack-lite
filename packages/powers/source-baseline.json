@@ -4921,6 +4921,10 @@
           "sha256": "7adebf248a5aa40ef6bc34d3f379a9cd22663b8ca8086fc350c95cee6d4d2035",
           "bytes": 19456
         },
+        "skills/grow-app/SKILL.md": {
+          "sha256": "b4c840ff8ae77ebedd97748307658216afeb51277c5655b5a1daf5e179171051",
+          "bytes": 22464
+        },
         "skills/high-output-management/SKILL.md": {
           "sha256": "335edd108bc13a9fdaa994200af901bae97671b3f8a50011c752e3fa94bddbb9",
           "bytes": 20628

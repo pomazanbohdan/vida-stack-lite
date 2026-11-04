@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5594,
+  "revision": 5610,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18089,8 +18089,25 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/grow-app/SKILL.md": {
-          "status": "rejected",
-          "reason": "guided journey/metaskill orchestration; excluded by H1"
+          "status": "split",
+          "instruction_ids": [
+            "grow-app-apply",
+            "grow-app-core",
+            "grow-app-journey-map",
+            "grow-app-operating-rules",
+            "grow-app-intake",
+            "grow-app-hook",
+            "grow-app-activation",
+            "grow-app-discovery",
+            "grow-app-experiments",
+            "grow-app-team",
+            "grow-app-metrics",
+            "grow-app-microinteractions",
+            "grow-app-motivation",
+            "grow-app-optional-phases",
+            "grow-app-common-mistakes",
+            "grow-app-complete"
+          ]
         },
         "skills/grow-app/references/artifact-templates.md": {
           "status": "rejected",
