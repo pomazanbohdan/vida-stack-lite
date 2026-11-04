@@ -4893,6 +4893,10 @@
           "sha256": "cd14143973b32c84583e8d94175410188c255f24169e78826f5b4dbf11fa4fa6",
           "bytes": 15994
         },
+        "skills/design-sprint/SKILL.md": {
+          "sha256": "2da4890a338abf865e627dbc23af4d5beafb0d66c50a9c79ac3def67a188a7a6",
+          "bytes": 15357
+        },
         "skills/domain-driven-design/SKILL.md": {
           "sha256": "14f80bc0c209e8500f52813158afb8b6b819b47a54b92576f0c0586acac38668",
           "bytes": 15388

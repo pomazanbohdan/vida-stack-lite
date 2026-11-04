@@ -34,3 +34,4 @@ log `../log.md`.
 * [D26 — Sales process tags for the H1 predictable-revenue batch](D26-sales-process-tags.md) - One capability and three pattern tags with catalog definitions let predictable-revenue carry accurate sales-process, role and pipeline metadata.
 * [D27 — Sales qualification and lead-mix tags for the H1 predictable-revenue batch](D27-sales-qualification-tags.md) - Four pattern tags with catalog definitions let lead mix, follow-up cadence, ANUM qualification and ICP carry accurate metadata.
 * [D28 — Sales metric cadence tags for the H1 predictable-revenue batch](D28-sales-metric-cadence-tags.md) - One capability and one pattern tag with catalog definitions let sales activity, result and efficiency tracking carry accurate metadata.
+* [D29 — Divergent sketching tags for the H1 design-sprint batch](D29-divergent-sketching-tags.md) - One capability and one pattern tag with catalog definitions let independent solution sketching carry accurate metadata.

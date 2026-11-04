@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5394,
+  "revision": 5420,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17855,8 +17855,35 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/design-sprint/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "design-sprint-apply",
+            "design-sprint-score",
+            "design-sprint-five-day-sequence",
+            "design-sprint-monday",
+            "design-sprint-long-term-goal",
+            "design-sprint-journey-map",
+            "design-sprint-target",
+            "design-sprint-tuesday",
+            "design-sprint-lightning-demos",
+            "design-sprint-four-step-sketch",
+            "design-sprint-wednesday",
+            "design-sprint-sticky-decision",
+            "design-sprint-rumble-or-all-in-one",
+            "design-sprint-prototype-fidelity",
+            "design-sprint-prototype-roles",
+            "design-sprint-prototype-tools",
+            "design-sprint-friday",
+            "design-sprint-interview-setup",
+            "design-sprint-five-act-interview",
+            "design-sprint-five-users",
+            "design-sprint-note-grid",
+            "design-sprint-debrief",
+            "design-sprint-when-to-run",
+            "design-sprint-variations",
+            "design-sprint-common-mistakes",
+            "design-sprint-diagnostic"
+          ]
         },
         "skills/design-sprint/references/case-studies.md": {
           "status": "rejected",

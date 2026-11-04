@@ -2,6 +2,34 @@
 
 ## 2026-11-04
 
+* **H1 next-7 design-sprint applied:** 26 `InstructionSpec` drafts from the
+  next-7 D18 aggregation (26 accept / 3 reject / 0 unresolved; spec manifest
+  `97dc55d3960eff6527a2afd496126bc421ca4888ccf08fab5914bf36f03eba79`).
+  Rejected units are the title/frontmatter, Further Reading and About the Author.
+  D29 added `generate-divergent-sketches` and `divergent-sketching` for the
+  Tuesday sketching steps; the other specs use existing planning, research,
+  discussion and verification tags. The Monday locator covers L46-L67. Packet
+  SHA-256
+  `9e15adb35d707be7fea2c6f7cd14d7babc4461eeecacb5ab4d292711c4d937ac`;
+  committee SHA-256
+  `42c14c616911854bde29c866aa22a80c8e26bfec38aeba33c259dc225d05d9f6`;
+  reviewed plan SHA-256
+  `8a549448e1f4daaf599f5bb3393b99a183d0509a85ab0070780b267db329472c`;
+  applied plan SHA-256
+  `18a377a014d0fa876cb576aacf2b9266ef750ba711949b51521c8c80ba0ef728`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0 Critical / 0 Important / 0 Minor; apply
+  returned `applied` with all 28 targets observed as `intended`; receipt
+  `3414e8c2096efc4f5bf48ed52e1a8b90b680500e80b6e197bf97932875074562`.
+  Applied: 26 instructions, catalog, map; baseline rebuilt to 9 donors / 1,235
+  files; corpus 2,956; catalog revision 6,825; map revision 5,420.
+
+* **D29 divergent sketching tags accepted:** `catalog.json` gains the
+  `generate-divergent-sketches` capability and the `divergent-sketching` pattern
+  for the `design-sprint` Tuesday instructions. `generate-idea-variations`
+  requires comparison before choice, which those bodies do not contain. Catalog
+  revision 6,799. The tags are metadata only and do not admit any source.
+
 * **H1 next-6 predictable-revenue applied:** 22 `InstructionSpec` drafts from
   the next-6 D18 aggregation (22 accept / 5 reject / 0 unresolved; spec manifest
   `430830efbc2ba8d1753c35b4a7270d0464bb6f6b9255800625b7a30d862e6f0a`).

@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6797,
+  "revision": 6825,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -89,7 +89,8 @@
       "assemble-persuasion-proof": "Ability to assemble genuine proof assets and objection counters for a claim.",
       "design-shareability": "Ability to design sharing into a product, campaign or content through predictable social drivers.",
       "design-sales-motion": "Ability to design a repeatable sales motion with separated roles, lead types and handoffs.",
-      "run-sales-metrics": "Ability to track sales activity, result and efficiency metrics on a stated review cadence."
+      "run-sales-metrics": "Ability to track sales activity, result and efficiency metrics on a stated review cadence.",
+      "generate-divergent-sketches": "Ability to generate multiple independent sketches before any selection."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -286,7 +287,8 @@
       "follow-up-cadence": "An approach in which an outbound sequence follows a fixed day-by-day cadence with a break-up and re-engagement step.",
       "sales-qualification": "An approach in which an opportunity is qualified on authority, need, urgency and money before handoff.",
       "ideal-customer-profile": "An approach in which the target account profile is defined by firmographics and pain before list building.",
-      "sales-metric-cadence": "An approach in which sales activity, result and efficiency metrics are tracked on a stated review cadence."
+      "sales-metric-cadence": "An approach in which sales activity, result and efficiency metrics are tracked on a stated review cadence.",
+      "divergent-sketching": "An approach in which individuals sketch multiple independent solutions before any group discussion."
     }
   },
   "tag_aliases": {
@@ -3834,6 +3836,136 @@
       "instruction_id": "design-mobile-first-and-check-the-breakpoints",
       "path": "instructions/design-mobile-first-and-check-the-breakpoints.md",
       "sha256": "5a327cc8b0b703e6c63fa3e31d2ec355ab7d612249087f744774b8b9fb4df2c9"
+    },
+    {
+      "instruction_id": "design-sprint-apply",
+      "path": "instructions/design-sprint-apply.md",
+      "sha256": "898f32d372898f45698198c7f4115aed725b66006627c07686c5db8b48a6ebe8"
+    },
+    {
+      "instruction_id": "design-sprint-common-mistakes",
+      "path": "instructions/design-sprint-common-mistakes.md",
+      "sha256": "f88ef10e78f7706475c8c0686296f2daf2225e90d4652a6cf0c727146b0819ae"
+    },
+    {
+      "instruction_id": "design-sprint-debrief",
+      "path": "instructions/design-sprint-debrief.md",
+      "sha256": "4780eda7321745131fa810a48ea66725dffc7c0f378cb6a8242eb2caa7eb8ad5"
+    },
+    {
+      "instruction_id": "design-sprint-diagnostic",
+      "path": "instructions/design-sprint-diagnostic.md",
+      "sha256": "2ef9b465f909d69b972c249187bd32ed51c1f371502a8cabb3fda698b41bf87a"
+    },
+    {
+      "instruction_id": "design-sprint-five-act-interview",
+      "path": "instructions/design-sprint-five-act-interview.md",
+      "sha256": "b5d3056610d89cf7fae953eb2089f72ed7415a2a6f5271fdacf1a3f02f781576"
+    },
+    {
+      "instruction_id": "design-sprint-five-day-sequence",
+      "path": "instructions/design-sprint-five-day-sequence.md",
+      "sha256": "f4cf16f1f02ff8dee122028950f82f272eaeeafef5070721f746c6f2605b574a"
+    },
+    {
+      "instruction_id": "design-sprint-five-users",
+      "path": "instructions/design-sprint-five-users.md",
+      "sha256": "6535dbfcb0d47625be6c35ae5bc7808918cd45fcfcf69eb1d0459571540f0210"
+    },
+    {
+      "instruction_id": "design-sprint-four-step-sketch",
+      "path": "instructions/design-sprint-four-step-sketch.md",
+      "sha256": "784e6a46d57606691005ca68594ccd2e149764a54cb79f52c647ccb2854d747d"
+    },
+    {
+      "instruction_id": "design-sprint-friday",
+      "path": "instructions/design-sprint-friday.md",
+      "sha256": "65b71ea2f9ad5fa7ff7621aceb5481bf15d167ab149ae38b5b1f065ebb3396d5"
+    },
+    {
+      "instruction_id": "design-sprint-interview-setup",
+      "path": "instructions/design-sprint-interview-setup.md",
+      "sha256": "b7d72584d94e0069a5bcda065958fde6efdc59a57f513068662bf2a638b97fea"
+    },
+    {
+      "instruction_id": "design-sprint-journey-map",
+      "path": "instructions/design-sprint-journey-map.md",
+      "sha256": "40bdf0e4710704319ef84468864de948042a6fe580f71cd756fbdb3c4294ff12"
+    },
+    {
+      "instruction_id": "design-sprint-lightning-demos",
+      "path": "instructions/design-sprint-lightning-demos.md",
+      "sha256": "65aa3a291117273289e7ab0bebfcb65089ba17f8d788ad3c54c20127fed08c4d"
+    },
+    {
+      "instruction_id": "design-sprint-long-term-goal",
+      "path": "instructions/design-sprint-long-term-goal.md",
+      "sha256": "1aefa67136964974a3add5a6d52f01f01b21137af710a477d6b05fe581abb4d0"
+    },
+    {
+      "instruction_id": "design-sprint-monday",
+      "path": "instructions/design-sprint-monday.md",
+      "sha256": "11c62bbc65aca3f1e6bd4f6ae41ff50c2e6a65600d545b062679cbbfcde7fe23"
+    },
+    {
+      "instruction_id": "design-sprint-note-grid",
+      "path": "instructions/design-sprint-note-grid.md",
+      "sha256": "925e71aa447fa6c4712e09fd460e8d905159b0aacea18e64bc08a05f3ff91056"
+    },
+    {
+      "instruction_id": "design-sprint-prototype-fidelity",
+      "path": "instructions/design-sprint-prototype-fidelity.md",
+      "sha256": "95349da3a13f851602251381605a41c4967898d95395108accfdeb0ec81d8c14"
+    },
+    {
+      "instruction_id": "design-sprint-prototype-roles",
+      "path": "instructions/design-sprint-prototype-roles.md",
+      "sha256": "60f43195d4a254295e0044b68569ce9181a980a2b43107a9919030f4c4dd7361"
+    },
+    {
+      "instruction_id": "design-sprint-prototype-tools",
+      "path": "instructions/design-sprint-prototype-tools.md",
+      "sha256": "0e5291e4a10ccf82a31a432e0f3321f64cf1d79704c1de09382695f9d28fe31a"
+    },
+    {
+      "instruction_id": "design-sprint-rumble-or-all-in-one",
+      "path": "instructions/design-sprint-rumble-or-all-in-one.md",
+      "sha256": "87a02e6832d95f3ee99ef80ec7acbc075c9d63703b18bf790f52247880e4f246"
+    },
+    {
+      "instruction_id": "design-sprint-score",
+      "path": "instructions/design-sprint-score.md",
+      "sha256": "ebe265623d1b64e3885fb0e620d332d8f21b00d691eac148e45c8d3e949f88fd"
+    },
+    {
+      "instruction_id": "design-sprint-sticky-decision",
+      "path": "instructions/design-sprint-sticky-decision.md",
+      "sha256": "256c45d0f69b90ab968d2c7dac11c4c00c99f6fd2c0817b5e072633fd25a99b9"
+    },
+    {
+      "instruction_id": "design-sprint-target",
+      "path": "instructions/design-sprint-target.md",
+      "sha256": "d696e7056adfc312e5b0698c4675304cd8750d1342233426b6c5bf130768f244"
+    },
+    {
+      "instruction_id": "design-sprint-tuesday",
+      "path": "instructions/design-sprint-tuesday.md",
+      "sha256": "a796176e06b4ecac3b73f35dd8a54a4129bbb68acbb02d6777b5f95c7a04523e"
+    },
+    {
+      "instruction_id": "design-sprint-variations",
+      "path": "instructions/design-sprint-variations.md",
+      "sha256": "307864d6fd2e62ab900143359347e1bcc066559a8078cb1cee56100b4fd1f243"
+    },
+    {
+      "instruction_id": "design-sprint-wednesday",
+      "path": "instructions/design-sprint-wednesday.md",
+      "sha256": "f36470084819ff7736c96a0e300de1150bed5ba7cb0a243438ea7716ee457fd4"
+    },
+    {
+      "instruction_id": "design-sprint-when-to-run",
+      "path": "instructions/design-sprint-when-to-run.md",
+      "sha256": "fbdef823afd5250314f1fa46c2c2bd0bec41f811094849923d55d8388303c050"
     },
     {
       "instruction_id": "design-testable-interfaces",
