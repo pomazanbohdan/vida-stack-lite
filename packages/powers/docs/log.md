@@ -2,6 +2,38 @@
 
 ## 2026-11-04
 
+* **H1 next-16 monetizing-innovation applied:** 11 `InstructionSpec` drafts
+  from the next-16 D18 aggregation (11 accept / 4 reject / 0 merge / 0
+  unresolved; spec manifest
+  `4d01ffda1000036d334ffaa7785f9da2eaae5bc12d4c88b18cd031994e7257a3`).
+  Rejected units are the Framework heading, Worked Examples, Further Reading
+  and About the Authors. D39 added the monetization vocabulary; three
+  capability exemptions cover score, mistakes and quick diagnostic. The first
+  plan review found `freemium-conversion` and `price-anchor` broader than their
+  bodies; they were renamed `freemium-acquisition` and `price-framing` so the
+  definitions match. Packet SHA-256
+  `d9935891c805f4e02e50f7a1ca71501412fd9f989828d5a425a0b946a76ba89c`;
+  committee SHA-256
+  `64c68b20019fa43017e2bb870384f9a8f6ad3f06a42102b61a0c580a020bc9f8`;
+  reviewed plan SHA-256
+  `12119866e06cd8460ba66cfabfcc2b76028d8a2f07eab51e5eec78814210d8fe`;
+  applied plan SHA-256
+  `2f633529e24c564fe9b19bb9e50acdaa555b26b844bd5dc357ae7befe3f33826`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0 after one retag round; apply returned
+  `applied` with all 13 targets observed as `intended`; receipt
+  `13ddb5dcade988c27fface2e675c9d2f71a5ce2e2e0e60cc4615427cabdd9c8f`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,244
+  files; corpus 3,083; catalog revision 7,033; map revision 5,547.
+
+* **D39 monetization tags accepted:** `catalog.json` gains the
+  `design-monetization` capability and the `price-before-product`,
+  `wtp-research`, `monetization-failure`, `wtp-segmentation`,
+  `leader-filler-killer`, `good-better-best`, `price-metric`,
+  `freemium-conversion`, `price-anchor` and `launch-price-trigger` patterns for
+  `monetizing-innovation`. Catalog revision 7,022. The tags are metadata only
+  and do not admit any source.
+
 * **H1 next-15 conversion-optimization applied:** 16 `InstructionSpec` drafts
   from the next-15 D18 aggregation (16 amend / 0 reject / 0 merge / 0
   unresolved; spec manifest

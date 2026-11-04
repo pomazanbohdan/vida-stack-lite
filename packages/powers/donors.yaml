@@ -147,7 +147,7 @@ donors:
       mirrors - those copies are not carriers. The material is derived from published books
       (Nielsen, Krug, HIG, The Pragmatic Programmer, DDIA, DDD, Clean Architecture); the guided
       journeys and the case-study files state no norm of their own and are not carried into the
-      corpus. The 25-file H1 pilot + 16 next-batch files contributed 543 instructions; 0 candidates remain pending H1 selection
+      corpus. The 25-file H1 pilot + 17 next-batch files contributed 554 instructions; 0 candidates remain pending H1 selection
       selection and 30 journey files are excluded.
 
 not_cloned:
