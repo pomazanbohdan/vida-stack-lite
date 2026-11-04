@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5536,
+  "revision": 5547,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18786,8 +18786,20 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/monetizing-innovation/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "monetizing-innovation-apply",
+            "monetizing-innovation-core",
+            "monetizing-innovation-score",
+            "monetizing-innovation-price-before-product",
+            "monetizing-innovation-four-failures",
+            "monetizing-innovation-segments",
+            "monetizing-innovation-packaging",
+            "monetizing-innovation-model",
+            "monetizing-innovation-behavioral-pricing",
+            "monetizing-innovation-common-mistakes",
+            "monetizing-innovation-quick-diagnostic"
+          ]
         },
         "skills/monetizing-innovation/references/case-studies.md": {
           "status": "rejected",
