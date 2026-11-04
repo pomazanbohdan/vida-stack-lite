@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7085,
+  "revision": 7112,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -101,7 +101,8 @@
       "run-conversion-journey": "Ability to run a resumable conversion-optimization journey from a measured leak to a tested fix.",
       "design-monetization": "Ability to design price, packaging and monetization model around validated willingness to pay.",
       "design-grand-slam-offer": "Ability to assemble an offer with value, bonuses, guarantee, scarcity and a name.",
-      "build-validated-business": "Ability to take a raw idea to a validated, positioned and priced business."
+      "build-validated-business": "Ability to take a raw idea to a validated, positioned and priced business.",
+      "negotiate-agreements": "Ability to prepare and conduct a negotiation with tactical empathy and calibrated questions."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -386,7 +387,18 @@
       "strategy-kernel": "An approach in which a diagnosis, guiding policy and coherent actions replace goals.",
       "blue-ocean-err": "An approach in which an ERRC grid and strategy canvas create uncontested space.",
       "market-positioning": "An approach in which alternatives, attributes, value, customer and category set the comparison context.",
-      "beachhead-segment": "An approach in which one narrow segment is chosen to dominate before expansion."
+      "beachhead-segment": "An approach in which one narrow segment is chosen to dominate before expansion.",
+      "tactical-empathy": "An approach in which the counterpart's situation is voiced before a position is stated.",
+      "mirroring-words": "An approach in which the last critical words are repeated and followed by silence.",
+      "emotion-labeling": "An approach in which the counterpart's emotion is named tentatively and followed by silence.",
+      "calibrated-question": "An approach in which How and What questions steer without triggering defensiveness.",
+      "accusation-audit": "An approach in which every negative the counterpart may think is named before they raise it.",
+      "thats-right": "An approach in which a summary earns 'that's right' rather than 'you're right'.",
+      "ackerman-bargaining": "An approach in which offers rise in decreasing increments to a precise final number with a non-monetary bonus.",
+      "black-swan": "An approach in which hidden constraints, motivations or context are hunted and surfaced.",
+      "stalled-negotiation": "An approach in which a stall is met with a specific question or label rather than a concession.",
+      "negotiation-style": "An approach in which the counterpart is read as analyst, accommodator or assertive and the method adapts.",
+      "negotiation-voice": "An approach in which voice, pause and nonverbals are controlled for calm delivery."
     }
   },
   "tag_aliases": {
@@ -732,6 +744,31 @@
       "instruction_id": "create-business-journey-map",
       "dimension": "pattern",
       "reason": "The instruction maps phases to artifacts; it does not itself require a tracker or resumption."
+    },
+    {
+      "instruction_id": "negotiation-score",
+      "dimension": "capability",
+      "reason": "The instruction scores a negotiation against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "negotiation-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "negotiation-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "negotiation-core",
+      "dimension": "pattern",
+      "reason": "The instruction states general empathy principles; it does not require voicing the counterpart's situation before a position."
+    },
+    {
+      "instruction_id": "negotiation-core",
+      "dimension": "capability",
+      "reason": "The instruction states general empathy principles; it does not cover calibrated questions or the full negotiation method."
     }
   ],
   "instructions": [
@@ -9349,6 +9386,81 @@
       "instruction_id": "name-your-own-artifacts-with-your-own-prefix",
       "path": "instructions/name-your-own-artifacts-with-your-own-prefix.md",
       "sha256": "f10c00bcbaaf611e16a0483c6723d1becf379bc53072ca6d5640efdba692c4f7"
+    },
+    {
+      "instruction_id": "negotiation-accusation-audit",
+      "path": "instructions/negotiation-accusation-audit.md",
+      "sha256": "ef67c863e21e4a97aa21ee0d8780e2dcac082569c4ad4fa8cb24ca4c949a7d41"
+    },
+    {
+      "instruction_id": "negotiation-ackerman",
+      "path": "instructions/negotiation-ackerman.md",
+      "sha256": "62da13dba845c03f52e1768b4e4692b87b5f227c56d4bf15b0d88979caecf146"
+    },
+    {
+      "instruction_id": "negotiation-black-swans",
+      "path": "instructions/negotiation-black-swans.md",
+      "sha256": "d596d24c3f4dc52b3b663744105ea427ad3f5190715bad94d62305b6836aee7e"
+    },
+    {
+      "instruction_id": "negotiation-calibrated-questions",
+      "path": "instructions/negotiation-calibrated-questions.md",
+      "sha256": "965d7cee075a7bd7862045103bc190a7506d62e3efcbdaae85c10dae4391b9d7"
+    },
+    {
+      "instruction_id": "negotiation-common-mistakes",
+      "path": "instructions/negotiation-common-mistakes.md",
+      "sha256": "6bee75e25d7bd656645c7ee85da26d52767fe1e3ee21b455bbaede1c86cced2d"
+    },
+    {
+      "instruction_id": "negotiation-core",
+      "path": "instructions/negotiation-core.md",
+      "sha256": "0a9b5988816cf70bc99fa2d5d260e1ececf2897cc21e5d98addb41a729068cfa"
+    },
+    {
+      "instruction_id": "negotiation-labeling",
+      "path": "instructions/negotiation-labeling.md",
+      "sha256": "4be7f8e8caab4470e3b7d2682cba81348566766ef7d390055dd2d4122be8f2bc"
+    },
+    {
+      "instruction_id": "negotiation-mirroring",
+      "path": "instructions/negotiation-mirroring.md",
+      "sha256": "7a3eb4780ae64a19e169fdb3dd494e1ba95e702b0de41c4568facedff6d6e5d4"
+    },
+    {
+      "instruction_id": "negotiation-quick-diagnostic",
+      "path": "instructions/negotiation-quick-diagnostic.md",
+      "sha256": "c6e3980c2ad06be842ee3f01d26705b343e854659193f113690d2c3847199a57"
+    },
+    {
+      "instruction_id": "negotiation-score",
+      "path": "instructions/negotiation-score.md",
+      "sha256": "c3057feff0d34dfc276da06a3a78d70d9bbaa24074f1ab3c69c317b273fa6ab7"
+    },
+    {
+      "instruction_id": "negotiation-situations",
+      "path": "instructions/negotiation-situations.md",
+      "sha256": "bb96743eb90f0d6f6b54689dc49526f6f21417bf4a877f9fcbd4c3397670c84a"
+    },
+    {
+      "instruction_id": "negotiation-styles",
+      "path": "instructions/negotiation-styles.md",
+      "sha256": "f964ca85c3e0938c428f638bbe92469e741a0412f4e554c4eaa2872f30a2711c"
+    },
+    {
+      "instruction_id": "negotiation-tactical-empathy",
+      "path": "instructions/negotiation-tactical-empathy.md",
+      "sha256": "3265838808c3e0560ee29b33b0b4fc845b71d2041b80cbacd73868c65f033d95"
+    },
+    {
+      "instruction_id": "negotiation-thats-right",
+      "path": "instructions/negotiation-thats-right.md",
+      "sha256": "e28648c754ea1c39ce2050568848f63aeaa2dcc4b8c1b470562130b709e665a4"
+    },
+    {
+      "instruction_id": "negotiation-voice",
+      "path": "instructions/negotiation-voice.md",
+      "sha256": "adf591fc0e4fc3a0520ca04e4441d0855a4af104bd3884412f0fc1b56d437ec6"
     },
     {
       "instruction_id": "never-ask-the-human-to-do-what-you-can-automate",

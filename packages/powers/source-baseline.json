@@ -4973,6 +4973,10 @@
           "sha256": "690c57380a24a34f41069d3915366160be8d4db08fa7a643ff5c3751dad14375",
           "bytes": 21035
         },
+        "skills/negotiation/SKILL.md": {
+          "sha256": "f808051fc0c50b551de44f66006af298662209d8f39c22cc5600385da45a5e04",
+          "bytes": 18922
+        },
         "skills/obviously-awesome/SKILL.md": {
           "sha256": "403b215c80ce3b124947598e9547c11f6eff142cc18a4f7fe508e15ac8ec35e0",
           "bytes": 18598

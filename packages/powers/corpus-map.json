@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5579,
+  "revision": 5594,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18856,8 +18856,24 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/negotiation/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "negotiation-core",
+            "negotiation-score",
+            "negotiation-tactical-empathy",
+            "negotiation-mirroring",
+            "negotiation-labeling",
+            "negotiation-calibrated-questions",
+            "negotiation-accusation-audit",
+            "negotiation-thats-right",
+            "negotiation-ackerman",
+            "negotiation-black-swans",
+            "negotiation-situations",
+            "negotiation-styles",
+            "negotiation-voice",
+            "negotiation-common-mistakes",
+            "negotiation-quick-diagnostic"
+          ]
         },
         "skills/negotiation/references/techniques.md": {
           "status": "rejected",

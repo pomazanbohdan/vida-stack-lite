@@ -2,6 +2,38 @@
 
 ## 2026-11-04
 
+* **H1 next-19 negotiation applied:** 15 `InstructionSpec` drafts from the
+  next-19 D18 aggregation (13 accept / 2 amend / 4 reject / 0 merge / 0
+  unresolved; spec manifest
+  `ab9ff0570414bbdaa7c409eb379460f3b3cda3ae5775b7d91e452d5e23ee4165`).
+  Rejected units are the title, Framework heading, Further Reading and About the
+  Author. D42 added the negotiation vocabulary; five exemptions (3 capability +
+  2 pattern) cover score, mistakes, quick diagnostic and both dimensions of the
+  core instruction. Two source ambiguities were preserved without invention; the
+  benchmark receipt uses an absolute catalog path and was rerun at 5/5. Packet
+  SHA-256
+  `4f0473f4156310388180748c3b29e3e07f85b199e568830a6fc261ffc148cd98`;
+  committee SHA-256
+  `8ac620898a2755daf08cca0814822d3c04ba5c64a6c95629ab8579d8f45ae13c`;
+  reviewed plan SHA-256
+  `d3d2b6c8b8e716d0243974d16cd53d6372c654a27e84ef34eb3d8971a489a3b8`;
+  applied plan SHA-256
+  `117c9f030e9cbb4e40270ad44688396ea09ebead14b4a82efc56b74cf7c39bd9`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0 after three tag/evidence rounds; apply
+  returned `applied` with all 17 targets observed as `intended`; receipt
+  `5f1c19395df1583fa10a3b3d4ca6bbe6f8439383281aae84701a4c50fecac333`.
+  Applied: 15 instructions, catalog, map; baseline rebuilt to 9 donors / 1,247
+  files; corpus 3,130; catalog revision 7,112; map revision 5,594.
+
+* **D42 negotiation tags accepted:** `catalog.json` gains the
+  `negotiate-agreements` capability and the `tactical-empathy`,
+  `mirroring-words`, `emotion-labeling`, `calibrated-question`,
+  `accusation-audit`, `thats-right`, `ackerman-bargaining`, `black-swan`,
+  `stalled-negotiation`, `negotiation-style` and `negotiation-voice` patterns
+  for `negotiation`. Catalog revision 7,097. The tags are metadata only and do
+  not admit any source.
+
 * **H1 next-18 create-business applied:** 18 `InstructionSpec` drafts from the
   next-18 D18 aggregation (18 accept / 1 reject / 0 merge / 0 unresolved; spec
   manifest
