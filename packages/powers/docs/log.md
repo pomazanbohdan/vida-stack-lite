@@ -2,6 +2,36 @@
 
 ## 2026-11-04
 
+* **H1 next-12 scorecard-marketing applied:** 11 `InstructionSpec` drafts from
+  the next-12 D18 aggregation (8 accept / 3 amend / 5 reject / 0 unresolved;
+  spec manifest
+  `19776d5144205c8a3c157d232906941990ec10e1794315246091c1fd2bac1125`).
+  Rejected units are the title, the 4-Step System and psychology headings,
+  Further Reading and About the Author. D35 added the scorecard funnel
+  vocabulary; three capability exemptions cover score, mistakes and diagnostic.
+  The staged benchmark receipt is bound in the committee with catalog SHA-256
+  `2465930dced58ad9f65877585686213d65e2014653d2434163d239147204c2de`, 5/0.
+  Packet SHA-256
+  `288b0f82080716bd6c547ee6c3f4f6661ad9d4ee49a7fbcf53aee0f8456f37ff`;
+  committee SHA-256
+  `9aeb7145abb4aed350be9d1fe860b3e5c386b9bdc265c76bbdec746ca8cd6af1`;
+  reviewed plan SHA-256
+  `89b75822314301fb5bd77bb8958a0f7014554f8ec286ee9c8494f7aab18f7234`;
+  applied plan SHA-256
+  `a54e0bc58e7f2b49667462d4d392d199d345deb1abfbd975bb7eac59f66fcaf0`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 13
+  targets observed as `intended`; receipt
+  `e294b2ad45176d50cf0590a003e74a400548d91e1af32aafd7905e1f043d43f9`.
+  Applied: 11 instructions, catalog, map; baseline rebuilt to 9 donors / 1,240
+  files; corpus 3,026; catalog revision 6,935; map revision 5,490.
+
+* **D35 scorecard funnel tags accepted:** `catalog.json` gains the
+  `design-scorecard-funnel` capability and the `scorecard-hook`,
+  `scorecard-questionnaire`, `scorecard-tiers`, `scorecard-nurture` and
+  `scorecard-benchmark` patterns for `scorecard-marketing`. Catalog revision
+  6,924. The tags are metadata only and do not admit any source.
+
 * **H1 next-11 traction-eos applied:** 16 `InstructionSpec` drafts from the
   next-11 D18 aggregation (16 accept / 2 reject / 0 unresolved; spec manifest
   `cb56cb373816a2e5f1e7c895f7b404b4fa44ec14644bc4605505ea467e850da4`).

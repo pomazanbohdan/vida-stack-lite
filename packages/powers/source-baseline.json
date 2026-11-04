@@ -4973,6 +4973,10 @@
           "sha256": "d10d15b81aa00f427811741d83ac2bb918aabfae3d4489c751615bdf85e1674c",
           "bytes": 15635
         },
+        "skills/scorecard-marketing/SKILL.md": {
+          "sha256": "bb8aa862f93ef1004844e0947f3b196db5d8e758617e977b2d90e6c23be506bd",
+          "bytes": 14167
+        },
         "skills/software-design-philosophy/SKILL.md": {
           "sha256": "d5971fdfc51e6a6f729856a9c3874d56628bb6802fdd31eb1c97adbfa4b51a73",
           "bytes": 16318

@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5479,
+  "revision": 5490,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19089,8 +19089,20 @@
           "reason": "guided journey/metaskill orchestration; excluded by H1"
         },
         "skills/scorecard-marketing/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "scorecard-marketing-apply",
+            "scorecard-marketing-score",
+            "scorecard-marketing-landing",
+            "scorecard-marketing-questionnaire",
+            "scorecard-marketing-results",
+            "scorecard-marketing-nurture",
+            "scorecard-marketing-naming",
+            "scorecard-marketing-benchmarks",
+            "scorecard-marketing-launch",
+            "scorecard-marketing-common-mistakes",
+            "scorecard-marketing-diagnostic"
+          ]
         },
         "skills/scorecard-marketing/references/analytics-optimization.md": {
           "status": "rejected",
