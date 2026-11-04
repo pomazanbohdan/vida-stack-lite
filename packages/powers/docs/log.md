@@ -2,6 +2,48 @@
 
 ## 2026-11-04
 
+* **H1 next-6 predictable-revenue applied:** 22 `InstructionSpec` drafts from
+  the next-6 D18 aggregation (22 accept / 5 reject / 0 unresolved; spec manifest
+  `430830efbc2ba8d1753c35b4a7270d0464bb6f6b9255800625b7a30d862e6f0a`).
+  Rejected units are the title, two parent headings, Further Reading and About
+  the Author. D26 added the sales-motion vocabulary, D27 the lead-mix,
+  follow-up, ANUM and ICP patterns, and D28 the sales-metric cadence tags; the
+  two instructions without a fitting capability carry explicit
+  `tag_exemptions`. The lead-types meaning was corrected to distinguish low cost
+  from slow generation. Packet SHA-256
+  `c00d46da04ad634cc2e1eb8cf9e2425990e45e71dac61264d903a02d4929f56a`;
+  committee SHA-256
+  `c19954ae738aac1c7331df2ede8f29c7e07899cb0e66fc4e53cb74ba04f1095f`;
+  reviewed plan SHA-256
+  `49d1a0dfa76e21a41b451a5bdcd1a4cb1bd6d82fc98e4e64e06a018c65d86f86`;
+  applied plan SHA-256
+  `04484ce2a3ee4a141c5785209a893baad31765d9663e13f67335b6e2492f0523`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0 Critical / 0 Important / 0 Minor; apply
+  returned `applied` with all 24 targets observed as `intended`; receipt
+  `09a6b4056f78b1c75844c40e22150d7fe8b6fe83773ff760291a46d4b0fa3659`.
+  Applied: 22 instructions, catalog, map; baseline rebuilt to 9 donors / 1,234
+  files; corpus 2,930; catalog revision 6,797; map revision 5,394.
+
+* **D28 sales metric cadence tags accepted:** `catalog.json` gains the
+  `run-sales-metrics` capability and the `sales-metric-cadence` pattern for the
+  `predictable-revenue` leading, lagging and efficiency instructions. Catalog
+  revision 6,775. The tags are metadata only and do not admit any source.
+
+* **D27 sales qualification tags accepted:** `catalog.json` gains
+  `lead-type-mix`, `follow-up-cadence`, `sales-qualification` and
+  `ideal-customer-profile` for the `predictable-revenue` batch. The existing
+  channel, nurture, conversion, lifetime and avatar patterns required content
+  the instruction bodies do not contain. Catalog revision 6,773. The tags are
+  metadata only and do not admit any source.
+
+* **D26 sales process tags accepted:** `catalog.json` gains the
+  `design-sales-motion` capability and the `sales-role-specialization`,
+  `outbound-prospecting` and `pipeline-math` patterns for the
+  `predictable-revenue` batch. The existing business patterns covered marketing
+  and persuasion, not sales-role design or outbound pipeline generation. Catalog
+  revision 6,769. The tags are metadata only and do not admit any source.
+
 * **H1 next-5 cro-methodology and contagious applied:** 27 `InstructionSpec`
   drafts from the next-5 D18 aggregation. `cro-methodology` contributed 11
   instructions (11 amend / 3 reject / 0 unresolved; spec manifest

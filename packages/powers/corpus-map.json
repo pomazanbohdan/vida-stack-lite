@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5372,
+  "revision": 5394,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18845,8 +18845,31 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/predictable-revenue/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "predictable-revenue-apply",
+            "predictable-revenue-score",
+            "predictable-revenue-lead-types",
+            "predictable-revenue-role-separation",
+            "predictable-revenue-sdr",
+            "predictable-revenue-ae",
+            "predictable-revenue-csm",
+            "predictable-revenue-cold-calling",
+            "predictable-revenue-icp",
+            "predictable-revenue-referral-email",
+            "predictable-revenue-follow-up",
+            "predictable-revenue-anum",
+            "predictable-revenue-handoff",
+            "predictable-revenue-pipeline-math",
+            "predictable-revenue-hiring",
+            "predictable-revenue-ramp",
+            "predictable-revenue-compensation",
+            "predictable-revenue-leading-indicators",
+            "predictable-revenue-lagging-indicators",
+            "predictable-revenue-efficiency",
+            "predictable-revenue-common-mistakes",
+            "predictable-revenue-diagnostic"
+          ]
         },
         "skills/predictable-revenue/references/case-studies.md": {
           "status": "rejected",
