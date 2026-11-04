@@ -2,6 +2,37 @@
 
 ## 2026-11-04
 
+* **H1 next-20 grow-app applied:** 16 `InstructionSpec` drafts from the next-20
+  D18 aggregation (2 accept / 14 amend / 1 reject / 0 merge / 0 unresolved;
+  spec manifest
+  `53c37706c3f7b5a87b8958b0251fcd62e1a69ac0dfc5b7bf424123c4fee39ca9`).
+  Rejected unit is the Phases heading. D43 added the app-retention vocabulary;
+  four exemptions (1 capability + 3 pattern) cover the mistake list, journey
+  map, optional-phase list and closure instruction. One review round removed
+  `retention-before-acquisition` from apply and complete,
+  `manipulation-matrix` from complete, and narrowed `stickiness-stage`. Packet
+  SHA-256
+  `0675bac122daf476c34b2fa57385cd4cfbdb4fd451b99e1a0838d5b0b94e43e2`;
+  committee SHA-256
+  `5d5911f80630208d3a530fbb45b6432edfd214367a5cd4e3f5ba75952c4090da`;
+  reviewed plan SHA-256
+  `3b70c1209e947a1d1934adb931c161c155952235d2c372d5b0d03f42663c0bc0`;
+  applied plan SHA-256
+  `9026e7ea12311bace0a846b5b9e826c09a1a9b14e067522c9c9ffef03f9444d3`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 18
+  targets observed as `intended`; receipt
+  `ea732888dd8365af5f4509a9c4cdb43e9af778f0ea71929875e4a1a890e6cf2c`.
+  Applied: 16 instructions, catalog, map; baseline rebuilt to 9 donors / 1,248
+  files; corpus 3,146; catalog revision 7,136; map revision 5,610.
+
+* **D43 app-retention tags accepted:** `catalog.json` gains the
+  `design-retention-engine` capability and the `retention-before-acquisition`,
+  `opportunity-tree`, `outcome-over-output`, `empowered-product-team`,
+  `stickiness-stage`, `microinteraction-feedback` and `manipulation-matrix`
+  patterns for `grow-app`. Catalog revision 7,120. The tags are metadata only
+  and do not admit any source.
+
 * **H1 next-19 negotiation applied:** 15 `InstructionSpec` drafts from the
   next-19 D18 aggregation (13 accept / 2 amend / 4 reject / 0 merge / 0
   unresolved; spec manifest
