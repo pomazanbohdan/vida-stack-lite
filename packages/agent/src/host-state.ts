@@ -630,6 +630,13 @@ export interface RetiredSourceCaptureResult {
   readonly snapshot: HostStateSnapshot;
   readonly request_digest: string;
 }
+export type StoppedSourceCandidatePresenceEntry =
+  | Readonly<{ path: string; presence: 'present'; sha256: string; size: number }>
+  | Readonly<{ path: string; presence: 'absent'; sha256: null; size: null }>;
+export interface StoppedSourceCandidatePresence {
+  readonly schema: 'StoppedSourceCandidatePresence/v1';
+  readonly entries: readonly StoppedSourceCandidatePresenceEntry[];
+}
 export interface HistoricalTerminalSynthesisProvenance {
   readonly schema: 'HistoricalTerminalSynthesisProvenance/v1';
   readonly body_ref: string;
@@ -1543,6 +1550,9 @@ export class HostStateError extends Error {
 }
 function requireState(condition: unknown, message: string): asserts condition {
   if (!condition) throw new HostStateError(message);
+}
+function hasExactSourceCandidateKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  return Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 }
 function historicalCapturedPendingRequestMatches(
   item: MastraLedgerItem,
@@ -15714,10 +15724,12 @@ export class HostStateStore {
       owner_decision_ref: string;
       terminal: 'partial_stopped';
     };
-    candidateSnapshot: {
-      schema: 'UnverifiedSourceSnapshot/v1';
-      entries: { path: string; sha256: string; size: number }[];
-    };
+    candidateSnapshot:
+      | {
+          schema: 'UnverifiedSourceSnapshot/v1';
+          entries: { path: string; sha256: string; size: number }[];
+        }
+      | StoppedSourceCandidatePresence;
     verifyCurrent: () => void;
     fault?: () => void;
   }): HostStateSnapshot {
@@ -15751,10 +15763,32 @@ export class HostStateStore {
       'stopped-source partial observation required',
     );
     requireState(
-      input.candidateSnapshot?.schema === 'UnverifiedSourceSnapshot/v1' &&
+      (input.candidateSnapshot?.schema === 'UnverifiedSourceSnapshot/v1' ||
+        input.candidateSnapshot?.schema === 'StoppedSourceCandidatePresence/v1') &&
         Array.isArray(input.candidateSnapshot.entries),
       'unverified candidate inventory required',
     );
+    const presenceCandidate = input.candidateSnapshot.schema === 'StoppedSourceCandidatePresence/v1';
+    if (presenceCandidate) {
+      const candidate = input.candidateSnapshot as StoppedSourceCandidatePresence;
+      requireState(
+        isPlainRecord(candidate) &&
+          hasExactSourceCandidateKeys(candidate, ['entries', 'schema']) &&
+          candidate.entries.every(
+            (entry) =>
+              isPlainRecord(entry) &&
+              hasExactSourceCandidateKeys(entry, ['path', 'presence', 'sha256', 'size']) &&
+              typeof entry.path === 'string' &&
+              ((entry.presence === 'present' &&
+                typeof entry.sha256 === 'string' &&
+                hashPattern.test(entry.sha256) &&
+                Number.isSafeInteger(entry.size) &&
+                (entry.size as number) >= 0) ||
+                (entry.presence === 'absent' && entry.sha256 === null && entry.size === null)),
+          ),
+        'presence candidate inventory invalid',
+      );
+    }
     const requestDigest = createHash('sha256').update(sourceCaptureRequestJson(request)).digest('hex');
     return this.#transactionWithProducerFence(() => {
       this.#database.exec(
@@ -15772,7 +15806,12 @@ export class HostStateStore {
       if (existing) {
         const record = parseStoredRecord(existing.payload, 'stopped-source capture receipt');
         requireState(
-          sourceCaptureRecord(record).digest === existing.digest && record.request_digest === requestDigest,
+          record.schema === (presenceCandidate ? 'StoppedSourceCaptureReceipt/v2' : 'StoppedSourceCaptureReceipt/v1') &&
+            sourceCaptureRecord(record).digest === existing.digest &&
+            record.request_digest === requestDigest &&
+            (!presenceCandidate ||
+              (sameJson(record.request, request, sourceCaptureRequestJson) &&
+                sameJson(record.candidate_snapshot, input.candidateSnapshot, coordinationComponentJson))),
           'stopped-source capture retry differs',
         );
         requireSynchronousVerification(verifyCurrent(), 'stopped Source proof must finish synchronously');
@@ -15934,11 +15973,19 @@ export class HostStateStore {
       const changes = input.candidateSnapshot.entries
         .filter((entry) => {
           const old = original.entries.find((source) => source.path === entry.path);
+          if (presenceCandidate) {
+            const candidate = entry as StoppedSourceCandidatePresenceEntry;
+            requireState(old, 'candidate inventory path differs from original scope');
+            return candidate.presence === 'present'
+              ? !old.exists || old.bytes !== candidate.size || old.sha256 !== candidate.sha256
+              : old.exists;
+          }
+          const candidate = entry as { readonly path: string; readonly sha256: string; readonly size: number };
           requireState(
-            old && hashPattern.test(entry.sha256) && Number.isSafeInteger(entry.size) && entry.size >= 0,
+            old && hashPattern.test(candidate.sha256) && Number.isSafeInteger(candidate.size) && candidate.size >= 0,
             'candidate inventory invalid',
           );
-          return old.sha256 !== entry.sha256;
+          return old.sha256 !== candidate.sha256;
         })
         .map((entry) => entry.path)
         .sort();
@@ -16021,7 +16068,7 @@ export class HostStateStore {
         'producer-fenced',
       );
       const record = {
-        schema: 'StoppedSourceCaptureReceipt/v1',
+        schema: presenceCandidate ? 'StoppedSourceCaptureReceipt/v2' : 'StoppedSourceCaptureReceipt/v1',
         request_digest: requestDigest,
         request,
         original_work: before.work,

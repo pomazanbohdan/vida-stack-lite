@@ -906,19 +906,34 @@ parsed values and raw payload text while preserving deterministic row order.
 Task outcome, effect certainty and lease ownership are independent. A known
 terminal partial Source invocation may be captured as `reported_failed` and its
 Host invocation completed with that same failed observation. One Host transaction
-settles the exact matching local source approval, records the unchanged issued
-journal and an unverified candidate inventory, then releases only the old owner's
-ticket, claim and lease. It preserves lifecycle phase, assurance, original issue,
-configured stage/index, generation and immutable history. This is neither task
-success, no-effect proof, acceptance nor a new grant. Unknown or still running
-writer effects require reconciliation; expiry alone never proves a terminal
-outcome. Cooperative local native evidence is consistency evidence, not a
-cryptographic authentication or physical isolation claim.
+settles the exact matching local source approval, updates only the matching
+issued Journal observation, records the candidate and release receipt, then
+releases only the old owner's ticket, claim and lease. It preserves lifecycle
+phase, assurance, original issue, configured stage/index, generation and
+immutable history. This is neither task success, no-effect proof, acceptance nor
+a new grant. Unknown or still running writer effects require reconciliation;
+expiry alone never proves a terminal outcome. Cooperative local native evidence
+is consistency evidence, not a cryptographic authentication or physical
+isolation claim.
+
+Legacy `UnverifiedSourceSnapshot/v1` candidates retain their
+`StoppedSourceCaptureReceipt/v1` encoding. New stopped-source candidates may use
+the separately versioned `StoppedSourceCandidatePresence/v1` shape with exact
+`{path,presence,sha256,size}` entries. Present entries bind lowercase SHA-256
+and safe nonnegative byte size; absent entries use null digest and size. The
+original Source snapshot supplies the exact unique path set and prior presence
+and content. The public route rechecks the complete candidate with the existing
+safe declared-source observer; absent paths are not read as files, and unsafe
+paths or reader errors deny. Presence candidates persist
+`StoppedSourceCaptureReceipt/v2`; same-version retries require exact candidate,
+request and released lineage, while altered or cross-version retries deny.
+Retired-source capture remains separately versioned and v1-only.
 
 The public `run --capture-stopped-source true` surface has explicit inspect,
 plan, apply and resume modes. An exact approved manifest binds the original
-owner/work/attempt/issue/reservation, terminal observation and candidate bytes.
-Commit rechecks these bindings and current CAS atomically. Exact retry tolerates
+owner/work/attempt/issue/reservation, terminal observation and complete
+candidate presence/content image. Commit rechecks these bindings and current CAS
+atomically. Exact retry tolerates
 unrelated disjoint coordination, but denies dependent work/journal changes or a
 new overlapping grant even if that later grant has been released. Original
 expiry remains in recovery evidence; ordinary released-ticket normalization does
