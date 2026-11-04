@@ -37,3 +37,4 @@ log `../log.md`.
 * [D29 — Divergent sketching tags for the H1 design-sprint batch](D29-divergent-sketching-tags.md) - One capability and one pattern tag with catalog definitions let independent solution sketching carry accurate metadata.
 * [D30 — Habit-loop tags for the H1 hooked-ux batch](D30-habit-loop-tags.md) - One capability and six pattern tags with catalog definitions let the Hook Model and its ethics boundaries carry accurate metadata.
 * [D31 — Regulatory watch tag for the H1 hooked-ux batch](D31-regulatory-watch-tag.md) - One pattern tag with a catalog definition lets the regulatory monitoring instruction carry accurate metadata.
+* [D32 — Intrinsic motivation tags for the H1 drive-motivation batch](D32-intrinsic-motivation-tags.md) - One capability and six pattern tags with catalog definitions let autonomy, mastery, purpose and reward design carry accurate metadata.

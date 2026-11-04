@@ -4901,6 +4901,10 @@
           "sha256": "14f80bc0c209e8500f52813158afb8b6b819b47a54b92576f0c0586acac38668",
           "bytes": 15388
         },
+        "skills/drive-motivation/SKILL.md": {
+          "sha256": "f4683c7ab6846f168272a6905cea24ebfa56218c07f1168230f0991ae3eb6c5b",
+          "bytes": 12441
+        },
         "skills/good-strategy-bad-strategy/SKILL.md": {
           "sha256": "7adebf248a5aa40ef6bc34d3f379a9cd22663b8ca8086fc350c95cee6d4d2035",
           "bytes": 19456

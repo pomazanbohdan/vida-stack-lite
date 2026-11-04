@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 6853,
+  "revision": 6874,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -91,7 +91,8 @@
       "design-sales-motion": "Ability to design a repeatable sales motion with separated roles, lead types and handoffs.",
       "run-sales-metrics": "Ability to track sales activity, result and efficiency metrics on a stated review cadence.",
       "generate-divergent-sketches": "Ability to generate multiple independent sketches before any selection.",
-      "design-habit-loop": "Ability to design a four-phase habit loop from trigger to investment."
+      "design-habit-loop": "Ability to design a four-phase habit loop from trigger to investment.",
+      "design-intrinsic-motivation": "Ability to design autonomy, mastery and purpose into a product, team or reward system."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -296,7 +297,13 @@
       "habit-ethics": "An approach in which habit-forming design is checked against user benefit, vulnerable users and manipulation.",
       "onboarding-hook": "An approach in which the first cycle is completed during onboarding: trigger, action, reward and investment.",
       "friction-reduction": "An approach in which the simplest action is made easier by removing steps and choices.",
-      "regulatory-watch": "An approach in which applicable regulation is monitored for a product."
+      "regulatory-watch": "An approach in which applicable regulation is monitored for a product.",
+      "intrinsic-motivation": "An approach in which autonomy, mastery and purpose drive engagement instead of external rewards.",
+      "autonomy-support": "An approach in which people choose what, when, how and with whom they work.",
+      "mastery-path": "An approach in which ability is treated as developable and challenge is matched to skill.",
+      "purpose-connection": "An approach in which work is connected to a larger mission and visible user impact.",
+      "now-that-reward": "An approach in which an unexpected reward follows the work instead of being promised for a target.",
+      "gamification-ethics": "An approach in which gamification is opt-in, skill-based and meaningful rather than points for everything."
     }
   },
   "tag_aliases": {
@@ -437,6 +444,21 @@
       "instruction_id": "hooked-ux-habit-zone",
       "dimension": "pattern",
       "reason": "The instruction classifies value and frequency; no pattern definition fits without inventing a corrective action."
+    },
+    {
+      "instruction_id": "drive-motivation-score",
+      "dimension": "capability",
+      "reason": "The instruction scores a motivation system against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "drive-motivation-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "drive-motivation-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
   ],
   "instructions": [
@@ -4404,6 +4426,76 @@
       "instruction_id": "draw-the-flow-not-the-file-list",
       "path": "instructions/draw-the-flow-not-the-file-list.md",
       "sha256": "f38ed79b9b3b149b1250e3c8a35035c714a4d80d66a7960c0091205838fba8b9"
+    },
+    {
+      "instruction_id": "drive-motivation-apply",
+      "path": "instructions/drive-motivation-apply.md",
+      "sha256": "5918f1394db6a3edcc071bef6b22381c7f17344885d0d682ffdcbebdb573f3b1"
+    },
+    {
+      "instruction_id": "drive-motivation-autonomy",
+      "path": "instructions/drive-motivation-autonomy.md",
+      "sha256": "dbdcba42f22eb4a498b43fc782844f95d9a2612ed8f62300e15fbe9b6c0e98eb"
+    },
+    {
+      "instruction_id": "drive-motivation-common-mistakes",
+      "path": "instructions/drive-motivation-common-mistakes.md",
+      "sha256": "eaedb4440988a4a996690b966efcff2152fcddc368bf067c87893183d1d668c1"
+    },
+    {
+      "instruction_id": "drive-motivation-diagnostic",
+      "path": "instructions/drive-motivation-diagnostic.md",
+      "sha256": "908bdf2158ed5855250126f1a1ac7e33d129bedfd5d18ad8c272d786901ebc4a"
+    },
+    {
+      "instruction_id": "drive-motivation-gamification",
+      "path": "instructions/drive-motivation-gamification.md",
+      "sha256": "b9d6153fa0f31d35812b80c00dd9298cc8d74d49400da01b503dc669ddbb581b"
+    },
+    {
+      "instruction_id": "drive-motivation-ifthen-rewards",
+      "path": "instructions/drive-motivation-ifthen-rewards.md",
+      "sha256": "bbdeb8f003dabd48d7ac3ce237cebb919c63a1a4a25836be6c9b2132b77f1d4c"
+    },
+    {
+      "instruction_id": "drive-motivation-intrinsic",
+      "path": "instructions/drive-motivation-intrinsic.md",
+      "sha256": "433fc679689d46ba38f2e2880da4b132e50b6fd5cc0b78af4e0158921678b27f"
+    },
+    {
+      "instruction_id": "drive-motivation-mastery",
+      "path": "instructions/drive-motivation-mastery.md",
+      "sha256": "136f5ece44a19a680f0146604e34baeb8cebe24067a313508bd8f4ba04f1c5dd"
+    },
+    {
+      "instruction_id": "drive-motivation-pay",
+      "path": "instructions/drive-motivation-pay.md",
+      "sha256": "f5b7fae9e7480c294486432572772a8d296aec2c0e68c96dea45ff36537c1531"
+    },
+    {
+      "instruction_id": "drive-motivation-pillars",
+      "path": "instructions/drive-motivation-pillars.md",
+      "sha256": "f19668918767ab4fb463d1009d3cebf3d0927ceed0d0683b1fdca7f1acb3c427"
+    },
+    {
+      "instruction_id": "drive-motivation-purpose",
+      "path": "instructions/drive-motivation-purpose.md",
+      "sha256": "27fad9ed785c3e6a2c3e8bc20ca25a037b8c92c079f3af586191795e36bf3e1a"
+    },
+    {
+      "instruction_id": "drive-motivation-score",
+      "path": "instructions/drive-motivation-score.md",
+      "sha256": "31c5a18e2c09c5aa58c83790c6eec9d3f17551204ac57ed5a7301421df5de306"
+    },
+    {
+      "instruction_id": "drive-motivation-teams",
+      "path": "instructions/drive-motivation-teams.md",
+      "sha256": "d5977979feefa19c6a80aed46b343ab5662366db4e4f672d4012b38e727921eb"
+    },
+    {
+      "instruction_id": "drive-motivation-type-i",
+      "path": "instructions/drive-motivation-type-i.md",
+      "sha256": "8c612191061fcb8aba5c6b33c382ab1203eef9246b90ebf75508fa473afe61bd"
     },
     {
       "instruction_id": "drop-a-phase-that-is-project-management-theater",

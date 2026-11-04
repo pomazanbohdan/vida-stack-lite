@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5439,
+  "revision": 5453,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -17961,8 +17961,23 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/drive-motivation/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "drive-motivation-apply",
+            "drive-motivation-intrinsic",
+            "drive-motivation-score",
+            "drive-motivation-ifthen-rewards",
+            "drive-motivation-pillars",
+            "drive-motivation-autonomy",
+            "drive-motivation-mastery",
+            "drive-motivation-purpose",
+            "drive-motivation-gamification",
+            "drive-motivation-teams",
+            "drive-motivation-pay",
+            "drive-motivation-type-i",
+            "drive-motivation-common-mistakes",
+            "drive-motivation-diagnostic"
+          ]
         },
         "skills/drive-motivation/references/applications.md": {
           "status": "rejected",

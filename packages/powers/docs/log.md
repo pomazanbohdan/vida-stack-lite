@@ -2,6 +2,36 @@
 
 ## 2026-11-04
 
+* **H1 next-9 drive-motivation applied:** 14 `InstructionSpec` drafts from the
+  next-9 D18 aggregation (14 accept / 4 reject / 0 unresolved; spec manifest
+  `ba2b8e8cf599ff52dfac7bc53a1465fdc9738bba6ef3b877a2a08891dde2c0e3`).
+  Rejected units are the Motivation 1.0/2.0/3.0 and AMP Applied headings,
+  Further Reading and About the Author. D32 added the intrinsic-motivation
+  vocabulary; three capability exemptions cover score, common-mistakes and
+  diagnostic. The staged benchmark receipt is bound in the committee with
+  catalog SHA-256
+  `d3b5797c44570e42b469b4e5575e3830a34d9f44a0da307b99651b1f70de7a51`, 5/0.
+  Packet SHA-256
+  `af4d6b82f0df58f5f21821d09d154f5f448f6e03133019eb7fbb7c17d8445b19`;
+  committee SHA-256
+  `b19c7527f6f2fb15bd5478224ee2cab0f7c89421ae1ee228c017ba4be3b35f4a`;
+  reviewed plan SHA-256
+  `b8c396d0aab52b193b2d258b23b8d0d5645a831b8a1ce3b20d0d514da7ddf322`;
+  applied plan SHA-256
+  `b236a9e043d02d08631832b1ea14402a76b08d6152b3b261a73b50c647be8633`.
+  Rights are `VPSourceAttribution/v1` with `rightsLineage: HOLD`. T3
+  Codex/Luna review returned READY 0/0/0; apply returned `applied` with all 16
+  targets observed as `intended`; receipt
+  `0bd77afac62c7d559837cd4091e54ff8afea5fbcd7b23785dd650385cabc8690`.
+  Applied: 14 instructions, catalog, map; baseline rebuilt to 9 donors / 1,237
+  files; corpus 2,989; catalog revision 6,874; map revision 5,453.
+
+* **D32 intrinsic motivation tags accepted:** `catalog.json` gains the
+  `design-intrinsic-motivation` capability and the `intrinsic-motivation`,
+  `autonomy-support`, `mastery-path`, `purpose-connection`, `now-that-reward`
+  and `gamification-ethics` patterns for `drive-motivation`. Catalog revision
+  6,860. The tags are metadata only and do not admit any source.
+
 * **H1 next-8 hooked-ux applied:** 19 `InstructionSpec` drafts from the next-8
   D18 aggregation (19 amend / 4 reject / 0 unresolved; spec manifest
   `1cca55b1c202738bf54193c12f39aca2b70f6967383968d2cc315efd68d4aa06`).
