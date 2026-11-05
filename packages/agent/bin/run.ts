@@ -5529,7 +5529,7 @@ async function releaseCompletedReadonly(args: string[]) {
         item.host_reservation ||
         item.research_activation ||
         item.research_normalization ||
-        !configuredReadonlyAssignment(config, issued) ||
+        !configuredReadonlyAssignment(config, issued, 'completed-readonly') ||
         issued.run_id !== state.run_id ||
         issued.config_digest !== input.config_digest ||
         issued.scope_digest !== input.scope_digest ||
