@@ -5069,6 +5069,10 @@
           "sha256": "cb1ea3de8b6e605614cc59b21d41830d2d82af22e51069bb4c5bb53790cd622b",
           "bytes": 16518
         },
+        "skills/web-typography/SKILL.md": {
+          "sha256": "53fa4e5ef426bced13c56ca13d9e47151d89033f934318dc34f7a8eeb44ce75b",
+          "bytes": 18110
+        },
         "skills/working-with-legacy-code/SKILL.md": {
           "sha256": "4a621798f9a51ad1438f5b25b168615b7caeb540378c8f4d70ab733523135e21",
           "bytes": 19511

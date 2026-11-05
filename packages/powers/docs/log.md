@@ -2,6 +2,45 @@
 
 ## 2026-11-05
 
+* **H2 h2-8 web-typography source admitted:** 12 `InstructionSpec` drafts from
+  the h2-8 D18 aggregation (12 admitted / 4 reject / 0 merge / 0 unresolved;
+  spec manifest
+  `5fdfcb1a980dc033d944d3e0384fffa2b3c0a4532866d6c93d3c9e7530a8b0fa`).
+  Rejected units are the title/introduction, the Typography Framework container
+  heading, Further Reading and About the Author; the seven framework sections
+  are admitted as `u6`-`u12`. D55 added `set-web-type` and nine patterns;
+  `scoring-rubric`, `mistake-list` and `diagnostic-questions` are reused, and
+  D54 `typographic-hierarchy` is not reused. Three capability exemptions cover
+  score, common mistakes and quick diagnostic. Packet SHA-256
+  `8d9db40b9633b5f896e214f40747f7c52fc94aeaf36e4239c7a557d5ebcbcabd`;
+  committee SHA-256
+  `56dab6f046e618919088cfe5d19596984162e767954ab17d6fc130bed3ab4bb4`;
+  reviewed plan SHA-256
+  `fce53732a4cc7484a55c5d0775258c2ecc782129771a05a83625e43d97e39225`;
+  applied plan SHA-256
+  `dddb8643aa40ac5c28679391ac8fbc0223761215e00b1407d6733e0dc227104e`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols and the plan review ran on
+  Devin `swe-2-flash-medium`; the review returned READY with three Minor notes
+  (trailing-newline line counter, preserved source-internal heading-spacing
+  contradiction, differing sha-pinned selection rationale strings), none
+  requiring a plan change. Apply returned `applied` with all 14 targets observed
+  as `intended`; receipt
+  `e114367d64106f6ee1cba6569d00714c73afa34c1b9ec515620199398f570c00`.
+  Baseline rebuilt to 9 donors / 1,258 files; corpus 3,278; catalog revision
+  7,343; map revision 5,742. This closes source admission for all eight H2
+  families (`release-it`, `technical-documentation`, `high-perf-browser`,
+  `ios-hig-design`, `microinteractions`, `steve-jobs-design-review`,
+  `top-design`, `web-typography`).
+
+* **D55 web typography tags accepted:** `catalog.json` gains the `set-web-type`
+  capability and the `invisible-typography`, `type-context`,
+  `reading-mechanics`, `typeface-evaluation`, `purposeful-type-choice`,
+  `type-pairing-contrast`, `readable-measure`, `type-level-contrast` and
+  `fluid-type` patterns for `web-typography`. Catalog revision 7,331 before the
+  instruction apply. The tags are metadata only and do not admit any source.
+
 * **H2 h2-7 top-design source admitted:** 17 `InstructionSpec` drafts from the
   h2-7 D18 aggregation (17 admitted / 3 reject / 0 merge / 0 unresolved; spec
   manifest
