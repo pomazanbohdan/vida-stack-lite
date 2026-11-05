@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5730,
+  "revision": 5742,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19728,8 +19728,21 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/web-typography/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "web-typography-core",
+            "web-typography-score",
+            "web-typography-contexts",
+            "web-typography-reading",
+            "web-typography-evaluation",
+            "web-typography-choosing",
+            "web-typography-pairing",
+            "web-typography-measurements",
+            "web-typography-hierarchy",
+            "web-typography-responsive",
+            "web-typography-common-mistakes",
+            "web-typography-quick-diagnostic"
+          ]
         },
         "skills/web-typography/references/css-implementation.md": {
           "status": "rejected",

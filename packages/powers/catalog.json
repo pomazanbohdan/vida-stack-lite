@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7321,
+  "revision": 7343,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -111,6 +111,7 @@
       "design-microinteraction": "Ability to design and audit a frequent product interaction's trigger, rules, feedback and loop.",
       "review-product-design": "Ability to judge a product's design against customer experience, simplicity, focus and end-to-end quality.",
       "art-direct-web-experience": "Ability to art-direct an immersive web experience through typography, composition, motion, color and craft.",
+      "set-web-type": "Ability to select, pair and implement readable web typography.",
       "design-production-readiness": "Ability to design, deploy and operate a production-ready system that degrades gracefully."
     },
     "pattern": {
@@ -466,6 +467,15 @@
       "craft-detail": "An approach in which selection, focus, loading, error and micro-typography receive deliberate design.",
       "signature-first-order": "An approach in which the signature moment and display type are designed before layout and build.",
       "responsive-build-order": "An approach in which the experience is conceptualized desktop-first and built mobile-first.",
+      "invisible-typography": "An approach in which typography stays clear and invisible so the content carries the voice.",
+      "type-context": "An approach in which display type and reading type are chosen for different purposes.",
+      "reading-mechanics": "An approach in which saccades, fixations and word shapes inform line length and spacing.",
+      "typeface-evaluation": "An approach in which technical, structural and practical checks gate a typeface.",
+      "purposeful-type-choice": "An approach in which the content's tone and reading context choose the typeface.",
+      "type-pairing-contrast": "An approach in which one or two typefaces pair through clear structural contrast.",
+      "readable-measure": "An approach in which body size, line length and line height are fixed for comfortable reading.",
+      "type-level-contrast": "An approach in which adjacent type levels differ by one or two levers and never skip levels.",
+      "fluid-type": "An approach in which clamp-based sizes and font-loading budgets adapt type to every viewport.",
       "stability-anti-pattern": "An approach in which every integration point is audited for the failure pattern it enables.",
       "stability-pattern": "An approach in which breakers, bulkheads and timeouts cap the blast radius of one failure.",
       "capacity-model": "An approach in which the first bottleneck and its load are measured before capacity is promised.",
@@ -1030,6 +1040,21 @@
     },
     {
       "instruction_id": "top-design-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "web-typography-score",
+      "dimension": "capability",
+      "reason": "The instruction scores type implementation against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "web-typography-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "web-typography-quick-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
@@ -16754,6 +16779,66 @@
       "instruction_id": "weave-the-answers-into-one-conversation",
       "path": "instructions/weave-the-answers-into-one-conversation.md",
       "sha256": "6846b3561951af39230e55c8fee8828602fe021eecf0a2cb114be0aa0a1d0d5e"
+    },
+    {
+      "instruction_id": "web-typography-choosing",
+      "path": "instructions/web-typography-choosing.md",
+      "sha256": "cd5e229ce32eb14111db2b996012e65fa24fbcf06723af186c9baa6b3447995c"
+    },
+    {
+      "instruction_id": "web-typography-common-mistakes",
+      "path": "instructions/web-typography-common-mistakes.md",
+      "sha256": "ce45996ae29dcf6cc561ee49430d7adbdd12e6d0d9c4d7cee0a68fad2c6fdd27"
+    },
+    {
+      "instruction_id": "web-typography-contexts",
+      "path": "instructions/web-typography-contexts.md",
+      "sha256": "24d0a6f27db251adc3e355df595ec3210e303f8a9620bf9be18f4a46faa4bf77"
+    },
+    {
+      "instruction_id": "web-typography-core",
+      "path": "instructions/web-typography-core.md",
+      "sha256": "f70a734b255d824f82f436e2f3914684de94fc55d70f19a12c2d0acc38c84093"
+    },
+    {
+      "instruction_id": "web-typography-evaluation",
+      "path": "instructions/web-typography-evaluation.md",
+      "sha256": "9e73d1ed1f4a34efc8fdc4d95ff73d3f6843d0d774c120a24420a5ea64ceed88"
+    },
+    {
+      "instruction_id": "web-typography-hierarchy",
+      "path": "instructions/web-typography-hierarchy.md",
+      "sha256": "54ba749b64ddd473dca7d766ded6172114689ead2af6580ee91e35e296d6d664"
+    },
+    {
+      "instruction_id": "web-typography-measurements",
+      "path": "instructions/web-typography-measurements.md",
+      "sha256": "fa3cb2d2df042c1319d6d545304ef353119419a9901630999278114d9b9ceb5f"
+    },
+    {
+      "instruction_id": "web-typography-pairing",
+      "path": "instructions/web-typography-pairing.md",
+      "sha256": "98e2e3c0296d513e384b2c37107e03dd3ccec412b354153d1b82dad470d40005"
+    },
+    {
+      "instruction_id": "web-typography-quick-diagnostic",
+      "path": "instructions/web-typography-quick-diagnostic.md",
+      "sha256": "7dea7baddadef2f63766e79861fcad57835a6f9524cabc5497c66b4017e8b463"
+    },
+    {
+      "instruction_id": "web-typography-reading",
+      "path": "instructions/web-typography-reading.md",
+      "sha256": "8f760f5481161d0efe6181c630278265746b18aa7ef72eccae8a1e225ee35110"
+    },
+    {
+      "instruction_id": "web-typography-responsive",
+      "path": "instructions/web-typography-responsive.md",
+      "sha256": "5c370f0d64dcbd421c0cda2dd62b1aa830bb0d7b6af050b6e4c3292c1f1344cf"
+    },
+    {
+      "instruction_id": "web-typography-score",
+      "path": "instructions/web-typography-score.md",
+      "sha256": "3d6b41f79c1a3952cf9973611f8b3b50c7a9600430085798861b45a3a2ebde6f"
     },
     {
       "instruction_id": "weigh-an-empirical-claim-before-relying-on-it",
