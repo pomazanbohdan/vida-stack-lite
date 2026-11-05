@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5713,
+  "revision": 5730,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19573,8 +19573,26 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/top-design/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "top-design-core",
+            "top-design-principle",
+            "top-design-score",
+            "top-design-bands",
+            "top-design-categories",
+            "top-design-formula",
+            "top-design-typography",
+            "top-design-layout",
+            "top-design-motion",
+            "top-design-color",
+            "top-design-scroll",
+            "top-design-performance",
+            "top-design-micro-interactions",
+            "top-design-process",
+            "top-design-implementation",
+            "top-design-common-mistakes",
+            "top-design-quick-diagnostic"
+          ]
         },
         "skills/top-design/references/animation-patterns.md": {
           "status": "rejected",

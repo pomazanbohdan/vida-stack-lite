@@ -2,6 +2,42 @@
 
 ## 2026-11-05
 
+* **H2 h2-7 top-design source admitted:** 17 `InstructionSpec` drafts from the
+  h2-7 D18 aggregation (17 admitted / 3 reject / 0 merge / 0 unresolved; spec
+  manifest
+  `9568641f61552bb8b9afe816515b9e82ed0a7d7e50de04b8280fcb2b155740c0`).
+  Rejected units are the Seven Pillars container heading, Further Reading and
+  About the Author; the seven pillar sections are admitted as `u8`-`u14`. D54
+  added `art-direct-web-experience` and ten patterns; `scoring-rubric`,
+  `mistake-list` and `diagnostic-questions` are reused. Six capability
+  exemptions cover score, bands, categories, formula, common mistakes and quick
+  diagnostic. Packet SHA-256
+  `46d9a855765ef267925b757591147486b16547ea68e6279c203f88344235aa9d`;
+  committee SHA-256
+  `c2b0fb3db1bb980b86a1e14c2adad20801e4b6f31d52481e3c0b566dc4c41af8`;
+  reviewed plan SHA-256
+  `33e10f088a37903a26b094fa56d3f043c2193be4402f7cbf018355d47ae225a3`;
+  applied plan SHA-256
+  `3cd8bb48209284711e9ee3f4325a50de6a188dbc0a3a2613f259fde04587f7b1`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols and both plan reviews ran on
+  Devin `swe-2-flash-medium`; the first review returned CHANGES on the dangling
+  `u10` animation-patterns pointer, which was removed, and the re-review
+  returned READY 0/0/0. Apply returned `applied` with all 19 targets observed as
+  `intended`; receipt
+  `7414d24841329e8bb3bbf77d02cd602721d7e34d1d7e0d6461ed31611db94728`.
+  Baseline rebuilt to 9 donors / 1,257 files; corpus 3,266; catalog revision
+  7,321; map revision 5,730.
+
+* **D54 high-craft web experience tags accepted:** `catalog.json` gains the
+  `art-direct-web-experience` capability and the `award-winning-craft`,
+  `typographic-hierarchy`, `compositional-tension`, `choreographed-motion`,
+  `invented-palette`, `scroll-narrative`, `performance-as-design`,
+  `craft-detail`, `signature-first-order` and `responsive-build-order`
+  patterns for `top-design`. Catalog revision 7,304 before the instruction
+  apply. The tags are metadata only and do not admit any source.
+
 * **H2 h2-5 microinteractions source admitted:** 10 `InstructionSpec` drafts
   from the h2-5 D18 aggregation (10 admitted / 4 reject / 0 merge / 1 manually
   resolved split; spec manifest

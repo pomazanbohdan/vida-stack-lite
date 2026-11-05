@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7293,
+  "revision": 7321,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -110,6 +110,7 @@
       "design-ios-interface": "Ability to design native iOS interfaces that respect platform conventions and accessibility.",
       "design-microinteraction": "Ability to design and audit a frequent product interaction's trigger, rules, feedback and loop.",
       "review-product-design": "Ability to judge a product's design against customer experience, simplicity, focus and end-to-end quality.",
+      "art-direct-web-experience": "Ability to art-direct an immersive web experience through typography, composition, motion, color and craft.",
       "design-production-readiness": "Ability to design, deploy and operate a production-ready system that degrades gracefully."
     },
     "pattern": {
@@ -455,6 +456,16 @@
       "back-of-fence-standard": "An approach in which unseen surfaces are held to the same quality bar as the demo path.",
       "binary-design-verdict": "An approach in which a review ends with insanely great or not done, plus a ranked cut and fix list.",
       "design-review-method": "An approach in which a product review follows a fixed order from cold experience to a binary verdict.",
+      "award-winning-craft": "An approach in which a digital experience is built to a competition-grade craft standard.",
+      "typographic-hierarchy": "An approach in which display type carries the design through extreme scale contrast and deliberate tracking.",
+      "compositional-tension": "An approach in which asymmetry, negative space and intentional grid breaks create visual energy.",
+      "choreographed-motion": "An approach in which custom easing and orchestrated sequences give movement purpose and narrative.",
+      "invented-palette": "An approach in which color is built for the project rather than taken from a generic palette.",
+      "scroll-narrative": "An approach in which scroll position drives pacing, reveals and signature moments.",
+      "performance-as-design": "An approach in which load and frame budgets are treated as design constraints from the start.",
+      "craft-detail": "An approach in which selection, focus, loading, error and micro-typography receive deliberate design.",
+      "signature-first-order": "An approach in which the signature moment and display type are designed before layout and build.",
+      "responsive-build-order": "An approach in which the experience is conceptualized desktop-first and built mobile-first.",
       "stability-anti-pattern": "An approach in which every integration point is audited for the failure pattern it enables.",
       "stability-pattern": "An approach in which breakers, bulkheads and timeouts cap the blast radius of one failure.",
       "capacity-model": "An approach in which the first bottleneck and its load are measured before capacity is promised.",
@@ -989,6 +1000,36 @@
     },
     {
       "instruction_id": "microinteractions-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "top-design-score",
+      "dimension": "capability",
+      "reason": "The instruction states the scoring goal; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "top-design-bands",
+      "dimension": "capability",
+      "reason": "The instruction defines the score bands; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "top-design-categories",
+      "dimension": "capability",
+      "reason": "The instruction scores five weighted categories; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "top-design-formula",
+      "dimension": "capability",
+      "reason": "The instruction is a score formula; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "top-design-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "top-design-quick-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
@@ -15563,6 +15604,91 @@
       "instruction_id": "tool-presence-is-not-consent-to-drive-it",
       "path": "instructions/tool-presence-is-not-consent-to-drive-it.md",
       "sha256": "c5e66c5d4d4d176fcb0cac9f69c2528246a8a74797de55696d3f8c59b4d6dc3b"
+    },
+    {
+      "instruction_id": "top-design-bands",
+      "path": "instructions/top-design-bands.md",
+      "sha256": "9a12538afd639ba9a08f5cb5ebaea8ccb72ef14f2b86703fd1331bac85ef3160"
+    },
+    {
+      "instruction_id": "top-design-categories",
+      "path": "instructions/top-design-categories.md",
+      "sha256": "0a12426116fead5df82eb2becf4574a3769e5bc37dee95117fd0f20d4bbb70be"
+    },
+    {
+      "instruction_id": "top-design-color",
+      "path": "instructions/top-design-color.md",
+      "sha256": "3382114926f43a522a2971477984882183b45d477d870f7b342b3aa40a35f71b"
+    },
+    {
+      "instruction_id": "top-design-common-mistakes",
+      "path": "instructions/top-design-common-mistakes.md",
+      "sha256": "20979e861a690131782e98ec539c7169ed44047143d676771a707073cdaaac5b"
+    },
+    {
+      "instruction_id": "top-design-core",
+      "path": "instructions/top-design-core.md",
+      "sha256": "401e7af99fa759b6365c3d46a9501ea87a23ec1f0b512701fc1de162fc142f04"
+    },
+    {
+      "instruction_id": "top-design-formula",
+      "path": "instructions/top-design-formula.md",
+      "sha256": "a000159852348b0e49e0f0d1013261de5ef0c27f7071172c8e0c26b7730042c0"
+    },
+    {
+      "instruction_id": "top-design-implementation",
+      "path": "instructions/top-design-implementation.md",
+      "sha256": "df2cb6f938d10493ef8a55d25bf59261553932b3919d866f0a0e6be0f75c8f1d"
+    },
+    {
+      "instruction_id": "top-design-layout",
+      "path": "instructions/top-design-layout.md",
+      "sha256": "503fca024ef33538978d6cae3c9e521824afb52d9a72411383eafff87d6f43e8"
+    },
+    {
+      "instruction_id": "top-design-micro-interactions",
+      "path": "instructions/top-design-micro-interactions.md",
+      "sha256": "1f390a106ec779713c1a8c841c57fcda965c4063d78fa83ed5edabcfa12cdfdd"
+    },
+    {
+      "instruction_id": "top-design-motion",
+      "path": "instructions/top-design-motion.md",
+      "sha256": "44f22c57b5833a2f92601d4cc35e01b3b9ecc552812620c6689298dbe218401b"
+    },
+    {
+      "instruction_id": "top-design-performance",
+      "path": "instructions/top-design-performance.md",
+      "sha256": "f7001b4af1518e79220824bbe806118b74f6e9d442786948b5e311b007398f42"
+    },
+    {
+      "instruction_id": "top-design-principle",
+      "path": "instructions/top-design-principle.md",
+      "sha256": "16cd7ad42f095c35ac2a1a478d9bdee78ac5d52d4e665afc5887de178583d05e"
+    },
+    {
+      "instruction_id": "top-design-process",
+      "path": "instructions/top-design-process.md",
+      "sha256": "6379df2fa5f6eeb352ad519a924d8c4a65e350a03d50cabb0e9b7d6150f3d8d8"
+    },
+    {
+      "instruction_id": "top-design-quick-diagnostic",
+      "path": "instructions/top-design-quick-diagnostic.md",
+      "sha256": "e602488c341231c7ce32890cde1460590d34b3c3f3d4a6b3a6a547abcfdf9012"
+    },
+    {
+      "instruction_id": "top-design-score",
+      "path": "instructions/top-design-score.md",
+      "sha256": "f50638b068c7efa6c920c31bd07dc592c9779c07f4d24d80c31fe6e47aacc6d3"
+    },
+    {
+      "instruction_id": "top-design-scroll",
+      "path": "instructions/top-design-scroll.md",
+      "sha256": "5fe2584c9c70688ca92d458458c7c2ef8d3e7ecaef82140fd5c5fad3c2fde84b"
+    },
+    {
+      "instruction_id": "top-design-typography",
+      "path": "instructions/top-design-typography.md",
+      "sha256": "6b30eb83d0e4638c69b9e3f101dc2470dae03781c3efb373190edf9b95287ed8"
     },
     {
       "instruction_id": "trace-the-changed-behavior-to-the-nearest-observable-boundary",
