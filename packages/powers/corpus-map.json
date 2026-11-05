@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5691,
+  "revision": 5703,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19361,8 +19361,21 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/steve-jobs-design-review/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "steve-jobs-design-review-core",
+            "steve-jobs-design-review-principle",
+            "steve-jobs-design-review-score",
+            "steve-jobs-design-review-simplicity",
+            "steve-jobs-design-review-focus",
+            "steve-jobs-design-review-behavior",
+            "steve-jobs-design-review-whole-experience",
+            "steve-jobs-design-review-demo",
+            "steve-jobs-design-review-back-of-fence",
+            "steve-jobs-design-review-running",
+            "steve-jobs-design-review-common-mistakes",
+            "steve-jobs-design-review-quick-diagnostic"
+          ]
         },
         "skills/steve-jobs-design-review/references/case-studies.md": {
           "status": "rejected",

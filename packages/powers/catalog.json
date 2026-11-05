@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7254,
+  "revision": 7283,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -108,6 +108,8 @@
       "design-website-growth": "Ability to turn existing website traffic into more leads, buyers and referrals.",
       "optimize-web-performance": "Ability to reduce browser round trips and improve field performance metrics.",
       "design-ios-interface": "Ability to design native iOS interfaces that respect platform conventions and accessibility.",
+      "design-microinteraction": "Ability to design and audit a frequent product interaction's trigger, rules, feedback and loop.",
+      "review-product-design": "Ability to judge a product's design against customer experience, simplicity, focus and end-to-end quality.",
       "design-production-readiness": "Ability to design, deploy and operate a production-ready system that degrades gracefully."
     },
     "pattern": {
@@ -438,6 +440,21 @@
       "ios-accessibility": "An approach in which VoiceOver, Dynamic Type and assistive technologies are first-class requirements.",
       "sf-symbols": "An approach in which SF Symbols carry standard iconography and scale with text.",
       "ios-gesture-haptic": "An approach in which standard gestures are preserved and haptics confirm meaningful actions.",
+      "trigger-state": "An approach in which a trigger signals its existence, action and current state, with a visible alternative for hidden gestures.",
+      "predictable-rules": "An approach in which interaction rules derive from the goal, match conventions and cover inputs and edge cases.",
+      "response-timing": "An approach in which direct-manipulation feedback arrives within 100ms and scales to event significance.",
+      "loop-mode": "An approach in which loops mature over time and modes are minimized and kept visible.",
+      "signature-moment": "An approach in which one or two frequent actions carry a distinctive, functional brand moment.",
+      "interaction-simplification": "An approach in which options, steps and rules are reduced until the interaction needs no instructions.",
+      "experience-backwards": "An approach in which the review starts from what the customer sees and works backwards to the technology.",
+      "subtractive-simplicity": "An approach in which complexity is conquered by removing elements until one more removal would break the purpose.",
+      "ruthless-focus": "An approach in which the work not done is chosen explicitly and the roadmap is cut to the few bets that matter.",
+      "behavioral-design": "An approach in which design is judged by flows, latency and failure states rather than static appearance.",
+      "end-to-end-ownership": "An approach in which every touchpoint from discovery to offboarding is treated as one product surface.",
+      "demo-driven-review": "An approach in which decisions are made from working demos on the target device, not from specs or slides.",
+      "back-of-fence-standard": "An approach in which unseen surfaces are held to the same quality bar as the demo path.",
+      "binary-design-verdict": "An approach in which a review ends with insanely great or not done, plus a ranked cut and fix list.",
+      "design-review-method": "An approach in which a product review follows a fixed order from cold experience to a binary verdict.",
       "stability-anti-pattern": "An approach in which every integration point is audited for the failure pattern it enables.",
       "stability-pattern": "An approach in which breakers, bulkheads and timeouts cap the blast radius of one failure.",
       "capacity-model": "An approach in which the first bottleneck and its load are measured before capacity is promised.",
@@ -942,6 +959,21 @@
     },
     {
       "instruction_id": "ios-hig-design-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-score",
+      "dimension": "capability",
+      "reason": "The instruction scores a product against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-quick-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
@@ -14651,6 +14683,66 @@
       "instruction_id": "steel-man-the-alternative-before-you-recommend-against-it",
       "path": "instructions/steel-man-the-alternative-before-you-recommend-against-it.md",
       "sha256": "efdac0bf93a61e474b314625663e5a033463fe699c098878dcc4826e8920403c"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-back-of-fence",
+      "path": "instructions/steve-jobs-design-review-back-of-fence.md",
+      "sha256": "72198643f85f5fd54674bb9e5642e23bf206b085d38aaede3a8b9ee0c09d2f23"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-behavior",
+      "path": "instructions/steve-jobs-design-review-behavior.md",
+      "sha256": "6c6952bf1afdd01ee07a595cfd1bb92d80230ae2a7cf77b7ab60a7e71f6d4e66"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-common-mistakes",
+      "path": "instructions/steve-jobs-design-review-common-mistakes.md",
+      "sha256": "3f714bf8a0fcf220c97c0163f3fcbca2f5b111c8f82522549d869c121c9a6417"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-core",
+      "path": "instructions/steve-jobs-design-review-core.md",
+      "sha256": "b1de07ae2e1fb8179451687886050df32d57acb59e39099710967fb40c6f9af9"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-demo",
+      "path": "instructions/steve-jobs-design-review-demo.md",
+      "sha256": "b2382dda0400f693f4b08e542d006ae09fe09e71335c7561fc264984c799ac16"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-focus",
+      "path": "instructions/steve-jobs-design-review-focus.md",
+      "sha256": "f092abc38731555477185f2a9051502beda0412f924fa677652375438a3a3efb"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-principle",
+      "path": "instructions/steve-jobs-design-review-principle.md",
+      "sha256": "9f2fcfbaff2bb5f24f599f2afe7d1040cb46277c2ae6e0c19326083feb99a51c"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-quick-diagnostic",
+      "path": "instructions/steve-jobs-design-review-quick-diagnostic.md",
+      "sha256": "41a52413c375c5db5fdb5d28e340e68a199e33695052467fb7bc81a6b92faac6"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-running",
+      "path": "instructions/steve-jobs-design-review-running.md",
+      "sha256": "1b6f88c860811e36abf4b719699d8e38040b29055d189fad3d1c9ded6468f30c"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-score",
+      "path": "instructions/steve-jobs-design-review-score.md",
+      "sha256": "1348ed3f1218613bc1eb65b701bb3891bac9830adf96c880e4b973c48ae41fe5"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-simplicity",
+      "path": "instructions/steve-jobs-design-review-simplicity.md",
+      "sha256": "832ae03710746c0f158d0234e6403165868758edd548cb548293e6c0b5a1eec5"
+    },
+    {
+      "instruction_id": "steve-jobs-design-review-whole-experience",
+      "path": "instructions/steve-jobs-design-review-whole-experience.md",
+      "sha256": "c15f3592f6891d9f2d076a62bfe8e71e86e9464d0bf5c1c9a86f5bc739f327b9"
     },
     {
       "instruction_id": "stop-a-dimension-on-coverage-or-novelty-exhaustion",

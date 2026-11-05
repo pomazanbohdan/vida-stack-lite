@@ -2,6 +2,54 @@
 
 ## 2026-11-05
 
+* **H2 h2-6 steve-jobs-design-review source admitted:** 12 `InstructionSpec`
+  drafts from the h2-6 D18 aggregation (12 admitted / 3 reject / 1 merge / 0
+  unresolved; spec manifest
+  `bfadda2bdc627de26942105c8e64699d482de6b85640c6268bce8f6185744d29`).
+  `u12`, the required review template, merged into `u11` Running the Review by
+  V3 and V4; rejected units are the framework heading, About the Author and
+  Further Reading. D53 added `review-product-design` and nine patterns;
+  `customer-experience` is not redefined. D52 microinteraction tags are present
+  in the same catalog revision, but their instruction batch is not yet admitted.
+  Packet SHA-256
+  `3560727d06fa913f4759fa6a8e53102d6e1954f6a1bc08b0151da9b44a43ebf4`;
+  committee SHA-256
+  `36a6a56fd1499851684153a87b5227f5084c1035637ec57a19b2e0c36c58caf8`;
+  reviewed plan SHA-256
+  `e279ace8dc8efd1248e43ac69c9064ac11865c20af13ccf639a85271548c20fe`;
+  applied plan SHA-256
+  `8eed09c5a9eb132bc715f81722207c3440cd249c92de89346a276ae010ab22c1`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols and both plan reviews ran on
+  Devin `swe-2-flash-medium`; the first review returned CHANGES on two Important
+  and three Minor findings, all fixed, and the re-review returned READY 0/0/0.
+  Apply observed all 14 targets as `intended` but reported
+  `partial-or-unknown` because the post-publish corpus check rejected three
+  `microinteractions-*` exemptions carried ahead of the h2-5 batch.
+  Reconciliation removed only those three premature exemptions; the 12 h2-6
+  instruction targets still match the plan, and `check-corpus` returned 0 issues
+  for 3,239 instructions. Receipt
+  `96bbcc70edbcd7b0f03b8b7b783b0c019b8bf2648feeb611cbbd2eeab39a5637`.
+  Baseline rebuilt to 9 donors / 1,255 files; catalog revision 7,283; map
+  revision 5,703.
+
+* **D53 product design review tags accepted:** `catalog.json` gains the
+  `review-product-design` capability and the `design-review-method`,
+  `experience-backwards`, `subtractive-simplicity`, `ruthless-focus`,
+  `behavioral-design`, `end-to-end-ownership`, `demo-driven-review`,
+  `back-of-fence-standard` and `binary-design-verdict` patterns for
+  `steve-jobs-design-review`. Catalog revision 7,271 before the h2-6
+  instruction apply. The tags are metadata only and do not admit any source.
+
+* **D52 microinteraction tags accepted:** `catalog.json` gains the
+  `design-microinteraction` capability and the `trigger-state`,
+  `predictable-rules`, `response-timing`, `loop-mode`, `signature-moment` and
+  `interaction-simplification` patterns for `microinteractions`.
+  `microinteraction-feedback` is reused unchanged from D43. Catalog revision
+  7,261 before the h2-6 tag additions. The tags are metadata only; the
+  microinteractions instruction batch is not yet admitted.
+
 * **H2 h2-4 ios-hig-design source admitted:** 12 `InstructionSpec` drafts from
   the h2-4 D18 aggregation (12 admitted / 5 reject / 0 merge / 1 manually
   resolved three-way split; spec manifest
