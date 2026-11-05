@@ -2,6 +2,40 @@
 
 ## 2026-11-05
 
+* **H2 h2-4 ios-hig-design source admitted:** 12 `InstructionSpec` drafts from
+  the h2-4 D18 aggregation (12 admitted / 5 reject / 0 merge / 1 manually
+  resolved three-way split; spec manifest
+  `c4a1dce91c82dbaa00e97d27c8994a347ecb35000494c911651a86df8492a25d`).
+  Rejected units are the title, the framework heading, Beyond Core UI, Further
+  Reading and About the Author; `u15` was resolved as reject by the orchestrator
+  with the three protocol rationales recorded. D51 added
+  `design-ios-interface` and nine iOS patterns; three capability exemptions
+  cover score, common mistakes and quick diagnostic. Packet SHA-256
+  `ef975d2ed0249a3f73c07d99b4362fb86a16ee60c46208b670ee79ada1a13457`;
+  committee SHA-256
+  `fd50c1d4b9a9e7fbf2970f8c454464645cb16522e2e236db5441d9493596a2c5`;
+  reviewed plan SHA-256
+  `e50d5f5762d966eead8210e5c66e6a9e50ff055877e19915f7163686f0cbcb3f`;
+  applied plan SHA-256
+  `5f69877d0a8648200558ce9fffa4684da87ddbaa87dde297b778bdda7eaf08b8`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols and the plan review ran on
+  Devin `swe-2-flash-medium`; review returned READY 0/0/1 (a paraphrased
+  touch-target wording, accepted as faithful). Apply returned `applied` with
+  all 14 targets observed as `intended`; receipt
+  `9bfb90c8a7b7d7459dcd198775bed67af714ce0cecf89fd54fe0a383250e11a0`.
+  Applied: 12 instructions, catalog, map; baseline rebuilt to 9 donors / 1,254
+  files; corpus 3,227; catalog revision 7,254; map revision 5,691.
+
+* **D51 iOS interface tags accepted:** `catalog.json` gains the
+  `design-ios-interface` capability and the `ios-platform-idiom`,
+  `ios-safe-area`, `dynamic-type`, `semantic-color`, `ios-navigation`,
+  `native-control`, `ios-accessibility`, `sf-symbols` and `ios-gesture-haptic`
+  patterns for `ios-hig-design`. Catalog revision 7,242. The tags are metadata
+  only and do not admit any source. This is H2 source admission; structured
+  applicability under the H2 v2 contract remains pending.
+
 * **H2 h2-3 high-perf-browser source admitted:** 12 `InstructionSpec` drafts
   from the h2-3 D18 aggregation (12 admitted / 2 reject / 0 merge / 0
   unresolved; spec manifest

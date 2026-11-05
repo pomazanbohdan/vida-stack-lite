@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7232,
+  "revision": 7254,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -107,6 +107,7 @@
       "build-growth-engine": "Ability to turn lumpy revenue into a repeatable growth engine with ordered assets.",
       "design-website-growth": "Ability to turn existing website traffic into more leads, buyers and referrals.",
       "optimize-web-performance": "Ability to reduce browser round trips and improve field performance metrics.",
+      "design-ios-interface": "Ability to design native iOS interfaces that respect platform conventions and accessibility.",
       "design-production-readiness": "Ability to design, deploy and operate a production-ready system that degrades gracefully."
     },
     "pattern": {
@@ -428,6 +429,15 @@
       "cache-layering": "An approach in which browser, service-worker, CDN and origin caches eliminate repeat requests.",
       "core-web-vitals": "An approach in which LCP, INP and CLS are optimized as the user-facing milestones.",
       "realtime-transport": "An approach in which WebSocket, SSE or polling is chosen by data direction and frequency.",
+      "ios-platform-idiom": "An approach in which clarity, deference and depth guide an iOS interface.",
+      "ios-safe-area": "An approach in which content and controls respect safe-area insets on every device.",
+      "dynamic-type": "An approach in which semantic text styles scale with the user's preferred size.",
+      "semantic-color": "An approach in which system semantic colors adapt between light and dark appearances.",
+      "ios-navigation": "An approach in which tab bars, navigation stacks and modals follow iOS conventions.",
+      "native-control": "An approach in which system controls are preferred over custom reimplementations.",
+      "ios-accessibility": "An approach in which VoiceOver, Dynamic Type and assistive technologies are first-class requirements.",
+      "sf-symbols": "An approach in which SF Symbols carry standard iconography and scale with text.",
+      "ios-gesture-haptic": "An approach in which standard gestures are preserved and haptics confirm meaningful actions.",
       "stability-anti-pattern": "An approach in which every integration point is audited for the failure pattern it enables.",
       "stability-pattern": "An approach in which breakers, bulkheads and timeouts cap the blast radius of one failure.",
       "capacity-model": "An approach in which the first bottleneck and its load are measured before capacity is promised.",
@@ -919,6 +929,21 @@
       "instruction_id": "high-perf-browser-framework",
       "dimension": "pattern",
       "reason": "The instruction lists the six domains; no single pattern definition fits the overview."
+    },
+    {
+      "instruction_id": "ios-hig-design-score",
+      "dimension": "capability",
+      "reason": "The instruction scores an iOS interface against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "ios-hig-design-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "ios-hig-design-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
   ],
   "instructions": [
@@ -7306,6 +7331,66 @@
       "instruction_id": "invoke-the-other-unit-instead-of-reaching-into-its-files",
       "path": "instructions/invoke-the-other-unit-instead-of-reaching-into-its-files.md",
       "sha256": "777947b83f364439610a3bf3193d56827310770c0b1a991daf49ad135526bd01"
+    },
+    {
+      "instruction_id": "ios-hig-design-accessibility",
+      "path": "instructions/ios-hig-design-accessibility.md",
+      "sha256": "e932b03ccde546c0292d59b395d2ddda9bc50868e947bff247c9d61fe534df07"
+    },
+    {
+      "instruction_id": "ios-hig-design-color",
+      "path": "instructions/ios-hig-design-color.md",
+      "sha256": "881f963458b7c8543cf3299194dc026945834bf6763ab9a25177f2957e8f64d7"
+    },
+    {
+      "instruction_id": "ios-hig-design-common-mistakes",
+      "path": "instructions/ios-hig-design-common-mistakes.md",
+      "sha256": "6b002dd6325a8f14f458f81beaf488c99667c065e322c6a5545fb5e1d630802a"
+    },
+    {
+      "instruction_id": "ios-hig-design-controls",
+      "path": "instructions/ios-hig-design-controls.md",
+      "sha256": "50a7617583134819c8b630dfe9cd0703650a72efd282903b0aad0f3c569c4390"
+    },
+    {
+      "instruction_id": "ios-hig-design-core",
+      "path": "instructions/ios-hig-design-core.md",
+      "sha256": "e0bf8fa9c74706fc72fc3ed9b72ea88475559a78355e585a97cce9a9c5d67865"
+    },
+    {
+      "instruction_id": "ios-hig-design-gestures",
+      "path": "instructions/ios-hig-design-gestures.md",
+      "sha256": "41d0824e934bb7a5cfe3ca719edb213e8a39589279544d65ee570ba5a3a7ee99"
+    },
+    {
+      "instruction_id": "ios-hig-design-icons",
+      "path": "instructions/ios-hig-design-icons.md",
+      "sha256": "156455c9d998beb359254970c5e0c59befe5a71c1bf3aef1c3ea5f4db23a46a3"
+    },
+    {
+      "instruction_id": "ios-hig-design-layout",
+      "path": "instructions/ios-hig-design-layout.md",
+      "sha256": "fd68e83146b1323f1081b513ee315a5d7d4466421ea494ae4cc17601320ac0a2"
+    },
+    {
+      "instruction_id": "ios-hig-design-navigation",
+      "path": "instructions/ios-hig-design-navigation.md",
+      "sha256": "bcd29a84fc36bdc37f50f02b9f0e7e58915ac747f9b4dbcb312ee52f9f42735d"
+    },
+    {
+      "instruction_id": "ios-hig-design-quick-diagnostic",
+      "path": "instructions/ios-hig-design-quick-diagnostic.md",
+      "sha256": "0f2d1859f7b07489cf380efc405d3152e6a2da51df728d53a461524d272a2d8c"
+    },
+    {
+      "instruction_id": "ios-hig-design-score",
+      "path": "instructions/ios-hig-design-score.md",
+      "sha256": "e807598d54672896407eeb15d94612970835b834958f5ddcc5f7b1115d905f29"
+    },
+    {
+      "instruction_id": "ios-hig-design-typography",
+      "path": "instructions/ios-hig-design-typography.md",
+      "sha256": "3548618d26082d68b0d6e2ae7465b7368e418aea5d4e1b08bbf20ea0f9549a81"
     },
     {
       "instruction_id": "isolate-the-test-profile-from-personal-sessions",
