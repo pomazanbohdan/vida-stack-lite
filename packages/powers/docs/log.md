@@ -2,6 +2,38 @@
 
 ## 2026-11-05
 
+* **H2 h2-3 high-perf-browser source admitted:** 12 `InstructionSpec` drafts
+  from the h2-3 D18 aggregation (12 admitted / 2 reject / 0 merge / 0
+  unresolved; spec manifest
+  `3aff505734c172322742361442e2c6afdb2c4e63a560bc245264017e22705349`).
+  Rejected units are Further Reading and About the Author. D50 added
+  `optimize-web-performance` and six performance patterns; five exemptions (3
+  capability + 2 pattern) cover score, mistakes, quick diagnostic, apply and the
+  framework overview. Packet SHA-256
+  `4c65f62d890347c67d010d8c60552e16ef61fa61cbd5c04791a2cb84d4ef2fb1`;
+  committee SHA-256
+  `f7b5f0167aab7199e7b7b5a4f3e4448d331e7f5fb8bb541930d62bbdddc7cdb8`;
+  reviewed plan SHA-256
+  `0fc9e912fb61fca5603a2287be67c268c8205988d9344d8478d121eb339795b5`;
+  applied plan SHA-256
+  `05eda4eaac41e31a923b9575f69e748040b178f014324b501e9b6689ba6a6b9f`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols and the plan review ran on
+  Devin `swe-2-flash-medium`; review returned READY 0/0/0. Apply returned
+  `applied` with all 14 targets observed as `intended`; receipt
+  `ab4e4a2f243744da34347d01d072d54d62429f7461c918d4ffb3f3422cf7aeac`.
+  Applied: 12 instructions, catalog, map; baseline rebuilt to 9 donors / 1,253
+  files; corpus 3,215; catalog revision 7,232; map revision 5,679.
+
+* **D50 browser-performance tags accepted:** `catalog.json` gains the
+  `optimize-web-performance` capability and the `latency-budget`,
+  `protocol-version-choice`, `critical-render-path`, `cache-layering`,
+  `core-web-vitals` and `realtime-transport` patterns for `high-perf-browser`.
+  Catalog revision 7,220. The tags are metadata only and do not admit any
+  source. This is H2 source admission; structured applicability under the H2 v2
+  contract remains pending.
+
 * **H2 h2-2 technical-documentation source admitted:** 13 `InstructionSpec`
   drafts from the h2-2 D18 aggregation (13 admitted / 1 merge / 3 reject / 0
   unresolved; spec manifest

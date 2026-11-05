@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5667,
+  "revision": 5679,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18201,8 +18201,21 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/high-perf-browser/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "high-perf-browser-apply",
+            "high-perf-browser-core",
+            "high-perf-browser-score",
+            "high-perf-browser-framework",
+            "high-perf-browser-network",
+            "high-perf-browser-http",
+            "high-perf-browser-render",
+            "high-perf-browser-cache",
+            "high-perf-browser-vitals",
+            "high-perf-browser-realtime",
+            "high-perf-browser-common-mistakes",
+            "high-perf-browser-quick-diagnostic"
+          ]
         },
         "skills/high-perf-browser/references/caching-strategies.md": {
           "status": "rejected",

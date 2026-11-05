@@ -4937,6 +4937,10 @@
           "sha256": "335edd108bc13a9fdaa994200af901bae97671b3f8a50011c752e3fa94bddbb9",
           "bytes": 20628
         },
+        "skills/high-perf-browser/SKILL.md": {
+          "sha256": "fed643149198165eadf1bb3bf8b6bfb173e18ba29c886e7f3d6a7681ad03a57d",
+          "bytes": 16061
+        },
         "skills/hooked-ux/SKILL.md": {
           "sha256": "775ae946b15f03d787077c35d166a9addb1e241cb9ffea03ceee3a1be198175e",
           "bytes": 14064
