@@ -1,0 +1,8 @@
+{
+  "frameworks": {
+    "reactjs": "react"
+  },
+  "standards": {
+    "wcag2": "WCAG"
+  }
+}

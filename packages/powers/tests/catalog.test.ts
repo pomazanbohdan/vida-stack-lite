@@ -14,6 +14,7 @@ import {
   catalogSearch,
   catalogSearchWithProfile,
   catalogTags,
+  decisionEvaluate,
   loadCatalog,
   loadInstructions,
   readSchema,
@@ -1724,4 +1725,42 @@ test.each(['methodology-profile.json', 'vpmethodologyprofile.v1.schema.json'])('
   } }));
   try { expect(() => catalogCompose(catalog, instructions, { instruction_ids: ['alpha'] })).toThrow('cannot read canonical methodology profile or schema'); }
   finally { io.mockRestore(); }
+});
+
+test('loads v2 applicability, annotates search and returns get results', async () => {
+  const copy = await copyFixture();
+  const v2Schema = fileURLToPath(new URL('../config/vpinstruction.v2.schema.json', import.meta.url));
+  await writeFile(join(copy.dir, 'config/vpinstruction.v2.schema.json'), await readFile(v2Schema));
+  const catalog = await readManifest(copy.catalogPath);
+  const entry = catalog.instructions.find((item) => item.instruction_id === 'alpha');
+  if (entry === undefined) throw new Error('missing alpha');
+  const path = join(copy.dir, entry.path);
+  const source = await readFile(path, 'utf8');
+  const encoded = JSON.stringify(JSON.stringify({ runtimes: [{ value: 'node' }] }));
+  const next = source.replace('schema: VPInstruction/v1.2', 'schema: VPInstruction/v2\napplicability: ' + encoded);
+  await writeFile(path, next);
+  await updateInstructionDigest(copy.dir, catalog, 'alpha');
+  await writeManifest(copy.catalogPath, catalog);
+  const loaded = await loadCatalog(copy.catalogPath);
+  const instructions = await loadInstructions(loaded, copy.dir);
+  const without = catalogSearch(loaded, instructions, { instruction_ids: ['alpha'] });
+  expect(without[0]?.applicability?.state).toBe('unresolved');
+  const matching = catalogSearch(loaded, instructions, { instruction_ids: ['alpha'], applicabilityContext: { runtimes: ['node'] } });
+  expect(matching[0]?.applicability?.state).toBe('applicable');
+  const mismatching = catalogGet(loaded, instructions, 'alpha', { runtimes: ['bun'] });
+  expect(mismatching.applicability?.state).toBe('inapplicable');
+  const filtered = catalogCompose(loaded, instructions, { instruction_ids: ['alpha'], applicabilityContext: { runtimes: ['bun'] } });
+  expect(filtered.instructions).toHaveLength(0);
+  expect(filtered.omitted.inapplicable).toContain('alpha');
+  const included = catalogCompose(loaded, instructions, { instruction_ids: ['alpha'], applicabilityContext: { runtimes: ['node'] } });
+  expect(included.instructions.map((item) => item.instruction_id)).toContain('alpha');
+  expect(() => catalogCompose(loaded, instructions, { required_ids: ['alpha'], applicabilityContext: { runtimes: ['bun'] } })).toThrow(CatalogError);
+  const unresolved = decisionEvaluate(loaded, instructions, { operation: 'pick', candidates: ['alpha'] });
+  expect(unresolved.fallbackReason).toBe('applicability-unresolved');
+  expect(unresolved.diagnostics?.applicability[0]?.applicability).toBe('unresolved');
+  const inapplicable = decisionEvaluate(loaded, instructions, { operation: 'pick', candidates: ['alpha'], applicabilityContext: { runtimes: ['bun'] } });
+  expect(inapplicable.fallbackReason).toBe('candidate-not-allowed');
+  expect(inapplicable.diagnostics?.applicability[0]?.applicability).toBe('inapplicable');
+  const selectedDecision = decisionEvaluate(loaded, instructions, { operation: 'pick', candidates: ['alpha'], applicabilityContext: { runtimes: ['node'] } });
+  expect(selectedDecision.selected).toEqual(['alpha']);
 });

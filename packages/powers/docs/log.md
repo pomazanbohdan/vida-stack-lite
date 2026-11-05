@@ -2,6 +2,24 @@
 
 ## 2026-11-05
 
+* **H2 v2 applicability implementation started:** added
+  `config/vpinstruction.v2.schema.json`, `config/vpcorpusmap.v2.schema.json`,
+  `config/h2-applicability-vocab.json`,
+  `config/h2-applicability-aliases.json` and
+  `config/h2-csv-allowlist.json`. Added the applicability parser, version
+  parser and evaluator in `skills/vp-mode/scripts/applicability.ts`; the catalog
+  now loads `VPInstruction/v2` lazily, exposes applicability on search/get,
+  filters optional compose selections, blocks required selections with
+  `CATALOG_REQUIRED_SELECTION_UNAVAILABLE`, and partitions
+  `decision.evaluate` with `applicability-unresolved`. `check-corpus` accepts
+  v2 instruction and map markers, validates the decoded applicability, and
+  keeps unknown markers failing closed. The approved contract is
+  `.tmp/panel/donor-migration-architecture-20261025/h1-pilot-25/H2-CONTRACT-DRAFT.md`;
+  the six-session council record is
+  `consilium-h2-approval/APPROVAL-RECORD.md`. CSV intake, CLI flags, the
+  converter v2 path and full H2 acceptance remain open. Tests: 794 pass,
+  4 skip, 0 fail; typecheck 68 files; corpus 3,278; vector/source/OKF pass.
+
 * **H2 h2-8 web-typography source admitted:** 12 `InstructionSpec` drafts from
   the h2-8 D18 aggregation (12 admitted / 4 reject / 0 merge / 0 unresolved;
   spec manifest
