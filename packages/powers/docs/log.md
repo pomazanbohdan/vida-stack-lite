@@ -2,6 +2,13 @@
 
 ## 2026-11-05
 
+* **H2 converter v2 preservation:** `convert.ts` now dispatches the corpus-map
+  schema by marker, validates `VPCorpusMap/v2` with the v2 schema and preserves
+  existing `csvSources` while adding Markdown file records. Metadata preparation
+  accepts v2 maps and still rejects unknown markers. Instruction rendering keeps
+  `VPInstruction/v1.2`; H2 applicability remains an applicator step. Tests:
+  804 pass, 4 skip, 0 fail; typecheck 72 files.
+
 * **H2 CLI `get` exact-ID mode:** `catalog-cli.ts get` now returns exact
   instruction rows with the applicability result when `--profile` is omitted;
   supplying `--profile` preserves the compose-backed batch behavior. This

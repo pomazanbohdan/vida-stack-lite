@@ -253,6 +253,10 @@ function json(value: unknown): string {
   return JSON.stringify(value, null, 2) + '\n';
 }
 
+function mapSchemaName(map: Record<string, unknown>): string {
+  return map.schema === 'VPCorpusMap/v2' ? 'vpcorpusmap.v2.schema.json' : 'vpcorpusmap.v1.schema.json';
+}
+
 function target(root: string, path: string | undefined, fallback: string): string {
   const value = path ?? fallback;
   return resolve(isAbsolute(value) ? value : join(root, value));
@@ -403,7 +407,7 @@ async function compileInstruction(specPath: string, options: ConvertOptions, io:
   if (mapValue === undefined) map = { schema: 'VPCorpusMap/v1', revision: 1, updated_at: '', donors: {} };
   else {
     if (!record(mapValue)) throw new CatalogError('CATALOG_INVALID', 'corpus map must be an object', { path: mapPath });
-    const mapSchema = await schema('vpcorpusmap.v1.schema.json');
+    const mapSchema = await schema(mapSchemaName(mapValue as Record<string, unknown>));
     const errors = validateAgainstSchema(mapValue, mapSchema);
     if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
     map = mapValue;
@@ -428,7 +432,7 @@ async function compileInstruction(specPath: string, options: ConvertOptions, io:
   }
   const mapWasMissing = (await readJson(mapPath, 'corpus map', io)) === undefined;
   if (mapWasMissing) map.updated_at = (options.now ?? (() => new Date().toISOString()))();
-  const mapSchema = await schema('vpcorpusmap.v1.schema.json');
+  const mapSchema = await schema(mapSchemaName(map));
   const mapErrors = validateAgainstSchema(map, mapSchema);
   if (mapErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: mapErrors });
   const oldMapValue = mapWasMissing ? undefined : await readJson(mapPath, 'corpus map', io);
@@ -467,7 +471,7 @@ async function compileMapRecord(recordPath: string, options: ConvertOptions, io:
   }
   const oldComparable = mapValue === undefined ? undefined : JSON.parse(JSON.stringify(mapValue)) as Record<string, unknown>;
   if (oldComparable !== undefined) delete oldComparable.updated_at;
-  const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+  const mapSchema = await readSchema(packageRoot, mapSchemaName(map));
   const initialErrors = validateAgainstSchema(map, mapSchema);
   if (initialErrors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: initialErrors });
   const donors = map.donors as Record<string, unknown>; const existingDonor = donors[spec.donor];
@@ -513,7 +517,7 @@ async function compileRemoval(instructionId: string, options: ConvertOptions, io
   let mapUpdated = false;
   if (mapValue !== undefined) {
     if (!record(mapValue)) throw new CatalogError('CATALOG_INVALID', 'corpus map must be an object', { path: mapPath });
-    const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+    const mapSchema = await readSchema(packageRoot, mapSchemaName(mapValue));
     const errors = validateAgainstSchema(mapValue, mapSchema);
     if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
     map = mapValue;
@@ -543,7 +547,7 @@ async function compileRemoval(instructionId: string, options: ConvertOptions, io
   if (map !== undefined && mapUpdated) {
     map.revision = Number(map.revision) + 1;
     map.updated_at = (options.now ?? (() => new Date().toISOString()))();
-    const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+    const mapSchema = await readSchema(packageRoot, mapSchemaName(map));
     const errors = validateAgainstSchema(map, mapSchema);
     if (errors.length > 0) throw new CatalogError('CATALOG_INVALID', 'corpus map schema validation failed', { schemaErrors: errors });
   }
@@ -896,7 +900,8 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
     catch (error) { throw new Error(`${label} is malformed: ${error instanceof Error ? error.message : String(error)}`); }
   };
   const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
-  const mapSchema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+  const mapV1Schema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
+  const mapV2Schema = await readSchema(packageRoot, 'vpcorpusmap.v2.schema.json');
   const legacySchema = await readSchema(packageRoot, 'vpinstruction.v1.schema.json');
   const oldFacetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.1.schema.json');
   const facetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.2.schema.json');
@@ -915,6 +920,7 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
   }
   const mapValue = parseJsonBytes(mapBefore, 'corpus map');
   if (!record(mapValue)) throw new Error('corpus map must be an object');
+  const mapSchema = mapValue.schema === 'VPCorpusMap/v2' ? mapV2Schema : mapV1Schema;
   const mapErrors = validateAgainstSchema(mapValue, mapSchema);
   if (mapErrors.length > 0) throw new Error(`corpus map schema validation failed: ${mapErrors.join('; ')}`);
 

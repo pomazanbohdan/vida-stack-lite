@@ -487,7 +487,7 @@ test('metadata preparation requires existing schema-valid catalog and map and re
   const badMapSeed = await seedFacetInstruction(badMap, 0);
   const mapPath = join(badMap.root, 'corpus-map.json');
   const wrongMap = JSON.parse(await readFile(mapPath, 'utf8'));
-  wrongMap.schema = 'VPCorpusMap/v2';
+  wrongMap.schema = 'VPCorpusMap/v9';
   await writeFile(mapPath, JSON.stringify(wrongMap));
   const wrongMapBytes = await readFile(mapPath);
   await expect(prepareInstructionFacetBatch([{ instruction_id: badMapSeed.entry.instruction_id, expected_sha256: digest(badMapSeed.bytes), classification: { classification_status: 'unclassified', classification_reason: 'Review pending.' } }], await facetOptions(badMap))).rejects.toThrow('corpus map schema');

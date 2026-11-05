@@ -579,3 +579,29 @@ test('the default native CLI exit sink records successful execution', async () =
     expect(JSON.parse(stdout)).toHaveLength(1);
   } finally { process.exitCode = previous ?? 0; }
 });
+
+test('preserves a VPCorpusMap/v2 csvSources entry', async () => {
+  const root = await makeRoot();
+  await writeFile(join(root, 'config/vpcorpusmap.v2.schema.json'), await readFile(join(packageRoot, 'config/vpcorpusmap.v2.schema.json')));
+  const map = {
+    schema: 'VPCorpusMap/v2', revision: 1, updated_at: '2026-01-01T00:00:00.000Z',
+    donors: {
+      'sample-donor': {
+        source_revision: 'a'.repeat(40),
+        files: {},
+        csvSources: {
+          'source.csv': {
+            rawSha256: '0'.repeat(64), headersDigest: '0'.repeat(64),
+            columns: [{ index: 0, header: 'Title', role: 'normative-title' }],
+            rows: [],
+          },
+        },
+      },
+    },
+  };
+  await writeFile(join(root, 'corpus-map.json'), JSON.stringify(map));
+  await convert(await writeSpec(root, validSpec()), { root });
+  const converted = JSON.parse(await readFile(join(root, 'corpus-map.json'), 'utf8')) as Record<string, any>;
+  expect(converted.schema).toBe('VPCorpusMap/v2');
+  expect(converted.donors['sample-donor'].csvSources['source.csv'].columns[0].role).toBe('normative-title');
+});
