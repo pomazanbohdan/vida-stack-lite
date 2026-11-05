@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5644,
+  "revision": 5654,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19217,8 +19217,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/release-it/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "release-it-core",
+            "release-it-score",
+            "release-it-anti-patterns",
+            "release-it-stability-patterns",
+            "release-it-capacity",
+            "release-it-deployment",
+            "release-it-observability",
+            "release-it-chaos",
+            "release-it-common-mistakes",
+            "release-it-quick-diagnostic"
+          ]
         },
         "skills/release-it/references/anti-patterns.md": {
           "status": "rejected",

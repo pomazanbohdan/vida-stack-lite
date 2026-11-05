@@ -1,6 +1,40 @@
 # Directory Update Log
 
-## 2026-11-04
+## 2026-11-05
+
+* **H2 h2-1 release-it source admitted:** 10 `InstructionSpec` drafts from the
+  h2-1 D18 aggregation (10 admitted / 1 merge / 3 reject / 0 unresolved; spec
+  manifest
+  `14e3d60079230470ca249dec68766ade7acd32bfa47fb3b4a18be0106d530540`).
+  Rejected units are the framework heading, Further Reading and About the
+  Author; u1 merged into u2. D48 added the production-readiness vocabulary and
+  reused the existing `graceful-degradation` definition unchanged. Three
+  capability exemptions cover score, mistakes and quick diagnostic. Packet
+  SHA-256
+  `1ebac653560ef53bf47d11c9674e9457f6440386c96f666dca4cb7777e508210`;
+  committee SHA-256
+  `6b07ef04368194241fe32712838b4c645a71d22dd0497460e7f6d65488c508b7`;
+  reviewed plan SHA-256
+  `8e7171a7463c5a4c077554c05e669c53c8eeefcf01457277a6f69870395f1c36`;
+  applied plan SHA-256
+  `f845eefdfd0402092575e01d187c77d243532abb3b72906e1bdfa5c38da8b6d7`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols and the plan review ran on
+  Devin `swe-2-flash-medium`; review returned READY 0/0/0. Apply returned
+  `applied` with all 12 targets observed as `intended`; receipt
+  `3b4a0c6132bc6013a218025127f7f5d0af00edb5bb5e61543a05ba69a9b03b23`.
+  Applied: 10 instructions, catalog, map; baseline rebuilt to 9 donors / 1,251
+  files; corpus 3,190; catalog revision 7,192; map revision 5,654.
+
+* **D48 production-readiness tags accepted:** `catalog.json` gains the
+  `design-production-readiness` capability and the `stability-anti-pattern`,
+  `stability-pattern`, `capacity-model`, `release-decoupling`,
+  `observability-first` and `chaos-safety` patterns for `release-it`; the
+  existing `graceful-degradation` definition is reused unchanged. Catalog
+  revision 7,182. The tags are metadata only and do not admit any source. This
+  is H2 source admission; structured applicability under the H2 v2 contract
+  remains pending.
 
 * **H1 next-22 grow-website applied:** 16 `InstructionSpec` drafts from the
   next-22 D18 aggregation (16 accept / 1 reject / 0 merge / 0 unresolved; spec

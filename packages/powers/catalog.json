@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7175,
+  "revision": 7192,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -105,7 +105,8 @@
       "negotiate-agreements": "Ability to prepare and conduct a negotiation with tactical empathy and calibrated questions.",
       "design-retention-engine": "Ability to turn signups into habitual users by fixing habit, activation and retention before acquisition.",
       "build-growth-engine": "Ability to turn lumpy revenue into a repeatable growth engine with ordered assets.",
-      "design-website-growth": "Ability to turn existing website traffic into more leads, buyers and referrals."
+      "design-website-growth": "Ability to turn existing website traffic into more leads, buyers and referrals.",
+      "design-production-readiness": "Ability to design, deploy and operate a production-ready system that degrades gracefully."
     },
     "pattern": {
       "approval-policy-proceed": "Approval policy: do the agreed work and stop only at an irreversible step.",
@@ -411,7 +412,13 @@
       "manipulation-matrix": "An approach in which a habit feature is checked against maker use, user benefit and honest belief.",
       "growth-engine-sequence": "An approach in which each growth phase produces an asset the next phase consumes.",
       "marketing-machine": "An approach in which the full marketing process is mapped as a scored grid before tactics.",
-      "traffic-conversion": "An approach in which existing visitors are captured and converted before more traffic is bought."
+      "traffic-conversion": "An approach in which existing visitors are captured and converted before more traffic is bought.",
+      "stability-anti-pattern": "An approach in which every integration point is audited for the failure pattern it enables.",
+      "stability-pattern": "An approach in which breakers, bulkheads and timeouts cap the blast radius of one failure.",
+      "capacity-model": "An approach in which the first bottleneck and its load are measured before capacity is promised.",
+      "release-decoupling": "An approach in which deployment and user release are independent operations.",
+      "observability-first": "An approach in which deep health, correlated telemetry and user-facing SLOs are designed before operation.",
+      "chaos-safety": "An approach in which failure injection is planned with authorization, approvals and rollback."
     }
   },
   "tag_aliases": {
@@ -842,6 +849,21 @@
       "instruction_id": "grow-website-complete",
       "dimension": "pattern",
       "reason": "The instruction closes the journey and verifies artifacts; its checklist does not require a specific pattern action."
+    },
+    {
+      "instruction_id": "release-it-score",
+      "dimension": "capability",
+      "reason": "The instruction scores a production system against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "release-it-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "release-it-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
   ],
   "instructions": [
@@ -12219,6 +12241,56 @@
       "instruction_id": "reject-unexamined-unknowns",
       "path": "instructions/reject-unexamined-unknowns.md",
       "sha256": "2252ac8e5ccf1441dbfa8dcfc021604dd502211f328f46d40b009da8e26faab1"
+    },
+    {
+      "instruction_id": "release-it-anti-patterns",
+      "path": "instructions/release-it-anti-patterns.md",
+      "sha256": "0ffb2ffe625362f8c0643192de8713e3371f12dc86a8437c4ba3d407ceaf0c88"
+    },
+    {
+      "instruction_id": "release-it-capacity",
+      "path": "instructions/release-it-capacity.md",
+      "sha256": "53d75fa4681a1431b6de4ae5aff4005c079b7fa69b70d29493a1f9785311a505"
+    },
+    {
+      "instruction_id": "release-it-chaos",
+      "path": "instructions/release-it-chaos.md",
+      "sha256": "61d90de5de6c205e9dfd265985f9e9822f035dbc2efa2a44d1aae6d0f88a0998"
+    },
+    {
+      "instruction_id": "release-it-common-mistakes",
+      "path": "instructions/release-it-common-mistakes.md",
+      "sha256": "6d0cbb6913f860dfb7e054e021a854f3a3c3109ffa4b6bfc95776ff0e5432328"
+    },
+    {
+      "instruction_id": "release-it-core",
+      "path": "instructions/release-it-core.md",
+      "sha256": "01f6afd540cc15a2560721e529841d9cdb6d740a2676ec82545719c002673ba2"
+    },
+    {
+      "instruction_id": "release-it-deployment",
+      "path": "instructions/release-it-deployment.md",
+      "sha256": "16c9e25932b730be6855c4855a0add2ab6d52f518932386244744726847efdf9"
+    },
+    {
+      "instruction_id": "release-it-observability",
+      "path": "instructions/release-it-observability.md",
+      "sha256": "3efba3fcda348ec0782ec26660baee38248276077ce0552522ba78dca5100567"
+    },
+    {
+      "instruction_id": "release-it-quick-diagnostic",
+      "path": "instructions/release-it-quick-diagnostic.md",
+      "sha256": "67f585cc3b57ba9de4ca5186476df386626e75435da7e5b70f84792ffeb159e6"
+    },
+    {
+      "instruction_id": "release-it-score",
+      "path": "instructions/release-it-score.md",
+      "sha256": "107d74dc71dc897fcd6e6071c1e1aef4eb13d07fd817ef423af9d398377500b4"
+    },
+    {
+      "instruction_id": "release-it-stability-patterns",
+      "path": "instructions/release-it-stability-patterns.md",
+      "sha256": "c15520a5030501be0cd04a404751b1ce9e404f0b03a3a068fb3be3440d7d7588"
     },
     {
       "instruction_id": "remember-the-outcomes-of-a-session-not-the-transcript",
