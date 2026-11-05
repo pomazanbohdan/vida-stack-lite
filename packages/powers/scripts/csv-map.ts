@@ -9,6 +9,7 @@ export type CsvSourceInput = {
   source: Record<string, unknown>;
   allowlistEntry: Record<string, unknown> | undefined;
   instructionIds: Set<string>;
+  receipts?: Map<string, { sha256: string; value: Record<string, unknown> }>;
 };
 
 const identityRoles = new Set(['identity-entity-id', 'identity-source-key']);
@@ -45,6 +46,34 @@ function rowKeyFor(input: {
   if (input.entityId !== undefined) return `entityId=${encode(input.entityId)}`;
   if (input.sourceKey !== undefined) return `sourceKey=${encode(input.sourceKey)}`;
   return `path=${encodePath(input.path)}&headers=${input.headersDigest}&cells=${input.cellsDigest}`;
+}
+
+export function verifyFidelityReceipt(receipt: Record<string, unknown>, expected: {
+  donor: string;
+  path: string;
+  rowKey: string;
+  instructionId: string;
+  cells: Array<{ columnIndex: number; cellHash: string; locator: Record<string, unknown> }>;
+}): CsvIssue[] {
+  const issues: CsvIssue[] = [];
+  const issue = (code: string, message: string, details?: Record<string, unknown>): void => { issues.push(details === undefined ? { code, message } : { code, message, details }); };
+  if (receipt.schema !== 'H2FidelityReceipt/v1') issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt schema marker is not H2FidelityReceipt/v1');
+  if (receipt.instructionId !== expected.instructionId) issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt instruction id does not match the binding', { expected: expected.instructionId, actual: receipt.instructionId });
+  const reviewer = isRecord(receipt.reviewer) ? receipt.reviewer : {};
+  if (reviewer.kind !== 'human') issue('CORPUS_CSV_FIDELITY_INVALID', 'H2 fidelity requires reviewer.kind=human under SR-89');
+  if (receipt.verdict !== 'READY') issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt verdict must be READY');
+  const source = isRecord(receipt.source) ? receipt.source : {};
+  if (source.donor !== expected.donor || source.path !== expected.path || source.rowKey !== expected.rowKey) issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt source does not match the binding');
+  const cells = Array.isArray(source.cells) ? source.cells.filter(isRecord) : [];
+  if (cells.length !== expected.cells.length) issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt cell count does not match the binding');
+  for (const [index, cell] of expected.cells.entries()) {
+    const actual = cells[index];
+    if (actual === undefined) continue;
+    if (actual.columnIndex !== cell.columnIndex || actual.cellHash !== cell.cellHash) issue('CORPUS_CSV_FIDELITY_INVALID', `fidelity receipt cell ${index} does not match the binding`);
+    const locator = isRecord(actual.locator) ? actual.locator : {};
+    if (locator.line !== cell.locator.line || locator.row !== cell.locator.row || locator.column !== cell.locator.column) issue('CORPUS_CSV_FIDELITY_INVALID', `fidelity receipt cell ${index} locator does not match the binding`);
+  }
+  return issues;
 }
 
 export function checkCsvSource(input: CsvSourceInput): CsvIssue[] {
@@ -126,6 +155,27 @@ export function checkCsvSource(input: CsvSourceInput): CsvIssue[] {
           if (cell.cellHash !== hashes[columnIndex]) issue('CORPUS_CSV_HASH_MISMATCH', `CSV ${input.donor}:${input.path} row ${key} cell ${columnIndex} hash does not match`, { donor: input.donor, path: input.path, rowKey: key, column: columnIndex });
           const locator = isRecord(cell.locator) ? cell.locator : undefined;
           if (locator === undefined || !group.locators.some((item) => item.line === locator.line && item.row === locator.row)) issue('CORPUS_CSV_LOCATOR_MISSING', `CSV ${input.donor}:${input.path} row ${key} cell ${columnIndex} locator does not resolve`, { donor: input.donor, path: input.path, rowKey: key, column: columnIndex });
+        }
+        const fidelity = isRecord(binding.fidelity) ? binding.fidelity : {};
+        const receiptPath = typeof fidelity.path === 'string' ? fidelity.path : '';
+        const receiptSha = typeof fidelity.sha256 === 'string' ? fidelity.sha256 : '';
+        const artifact = input.receipts?.get(receiptPath);
+        if (artifact === undefined) {
+          issue('CORPUS_CSV_FIDELITY_MISSING', `CSV ${input.donor}:${input.path} row ${key} binding ${instructionId} has no readable fidelity receipt`, { donor: input.donor, path: input.path, rowKey: key, instruction_id: instructionId, receipt: receiptPath });
+        } else if (artifact.sha256 !== receiptSha) {
+          issue('CORPUS_CSV_FIDELITY_INVALID', `CSV ${input.donor}:${input.path} row ${key} binding ${instructionId} fidelity hash does not match`, { donor: input.donor, path: input.path, rowKey: key, instruction_id: instructionId });
+        } else {
+          issues.push(...verifyFidelityReceipt(artifact.value, {
+            donor: input.donor,
+            path: input.path,
+            rowKey: key,
+            instructionId,
+            cells: cells.map((cell) => ({
+              columnIndex: Number(cell.columnIndex),
+              cellHash: String(cell.cellHash),
+              locator: isRecord(cell.locator) ? cell.locator : {},
+            })),
+          }));
         }
       }
       for (const column of normative) if (!covered.has(column)) issue('CORPUS_CSV_BINDING', `CSV ${input.donor}:${input.path} admitted row ${key} leaves normative column ${column} unbound`, { donor: input.donor, path: input.path, rowKey: key, column });

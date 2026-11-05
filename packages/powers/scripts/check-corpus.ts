@@ -327,7 +327,7 @@ function checkMethodologyProfile(base: string, catalog: Dict, frontmatterById: M
   }
 }
 
-function checkCsvSources(map: Dict, donors: DonorSet, instructionIds: Set<string>, issues: CorpusIssue[]): void {
+function checkCsvSources(base: string, map: Dict, donors: DonorSet, instructionIds: Set<string>, issues: CorpusIssue[]): void {
   const allowlistPath = join(packageRoot, 'config/h2-csv-allowlist.json');
   let allowlist: Dict[] = [];
   if (existsSync(allowlistPath)) {
@@ -335,6 +335,37 @@ function checkCsvSources(map: Dict, donors: DonorSet, instructionIds: Set<string
     if (Array.isArray(raw)) allowlist = raw.filter(isRecord);
   }
   const donorMaps = isRecord(map.donors) ? map.donors : {};
+  const receipts = new Map<string, { sha256: string; value: Dict }>();
+  for (const rawDonor of Object.values(donorMaps)) {
+    const donorMap = isRecord(rawDonor) ? rawDonor : {};
+    const csvSources = isRecord(donorMap.csvSources) ? donorMap.csvSources : {};
+    for (const rawSource of Object.values(csvSources)) {
+      const source = isRecord(rawSource) ? rawSource : {};
+      const rows = Array.isArray(source.rows) ? source.rows.filter(isRecord) : [];
+      for (const row of rows) {
+        const bindings = Array.isArray(row.bindings) ? row.bindings.filter(isRecord) : [];
+        for (const binding of bindings) {
+          const fidelity = isRecord(binding.fidelity) ? binding.fidelity : {};
+          const path = typeof fidelity.path === 'string' ? fidelity.path : '';
+          if (path === '' || receipts.has(path)) continue;
+          const resolved = resolve(base, path);
+          const rel = relative(base, resolved);
+          if (rel.startsWith('..') || isAbsolute(rel)) {
+            issue(issues, 'CORPUS_CSV_FIDELITY_INVALID', `fidelity receipt ${path} escapes the corpus root`, { path });
+            continue;
+          }
+          try {
+            const bytes = readFileSync(resolved);
+            const value = JSON.parse(bytes.toString('utf8')) as unknown;
+            if (!isRecord(value)) throw new Error('receipt must be an object');
+            receipts.set(path, { sha256: createHash('sha256').update(bytes).digest('hex'), value });
+          } catch (error) {
+            issue(issues, 'CORPUS_CSV_FIDELITY_MISSING', `cannot read fidelity receipt ${path}: ${String(error)}`, { path });
+          }
+        }
+      }
+    }
+  }
   for (const [donorId, rawDonor] of Object.entries(donorMaps)) {
     const donor = donors.donors.get(donorId);
     if (donor === undefined) continue;
@@ -353,7 +384,7 @@ function checkCsvSources(map: Dict, donors: DonorSet, instructionIds: Set<string
         issue(issues, 'CORPUS_CSV_MISSING', `cannot read CSV ${donorId}:${path}`, { donor: donorId, path, error: String(error) });
         continue;
       }
-      for (const problem of checkCsvSource({ donor: donorId, path, bytes, source, allowlistEntry, instructionIds })) {
+      for (const problem of checkCsvSource({ donor: donorId, path, bytes, source, allowlistEntry, instructionIds, receipts })) {
         issue(issues, problem.code, problem.message, problem.details);
       }
     }
@@ -439,7 +470,7 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
     }
   }
   checkMap(map, donorSet, instructionIds, issues);
-  checkCsvSources(map, donorSet, instructionIds, issues);
+  checkCsvSources(base, map, donorSet, instructionIds, issues);
   checkDonorCoverage(map, donorSet, issues);
   checkMethodologyProfile(base, catalog, frontmatterById, issues);
 }
