@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7192,
+  "revision": 7213,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -413,6 +413,14 @@
       "growth-engine-sequence": "An approach in which each growth phase produces an asset the next phase consumes.",
       "marketing-machine": "An approach in which the full marketing process is mapped as a scored grid before tactics.",
       "traffic-conversion": "An approach in which existing visitors are captured and converted before more traffic is bought.",
+      "document-type-fit": "An approach in which a page serves one reader and one document type.",
+      "document-voice": "An approach in which the reader is addressed directly in active, present, timeless prose.",
+      "document-words": "An approach in which the condition precedes the instruction and plain words replace jargon.",
+      "document-structure": "An approach in which headings, lists, tables and notices form the reader's map.",
+      "procedure-steps": "An approach in which a procedure is a numbered list of single imperative actions with runnable samples.",
+      "reference-completeness": "An approach in which every public element is documented in a consistent formula.",
+      "changelog-structure": "An approach in which release notes state what changed, what it means and what to do.",
+      "documentation-audit": "An approach in which facts are verified before style is judged and findings are reported in severity order.",
       "stability-anti-pattern": "An approach in which every integration point is audited for the failure pattern it enables.",
       "stability-pattern": "An approach in which breakers, bulkheads and timeouts cap the blast radius of one failure.",
       "capacity-model": "An approach in which the first bottleneck and its load are measured before capacity is promised.",
@@ -862,6 +870,21 @@
     },
     {
       "instruction_id": "release-it-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "technical-documentation-score",
+      "dimension": "capability",
+      "reason": "The instruction scores documentation against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "technical-documentation-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "technical-documentation-quick-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
@@ -15001,6 +15024,71 @@
       "instruction_id": "tear-down-the-side-effect-when-the-next-step-fails",
       "path": "instructions/tear-down-the-side-effect-when-the-next-step-fails.md",
       "sha256": "2cfb06be839e9a7c1ed9a6e21c9f5aa2e2532f802822846db3a64e06370b76e0"
+    },
+    {
+      "instruction_id": "technical-documentation-apply",
+      "path": "instructions/technical-documentation-apply.md",
+      "sha256": "1ccffcef9ea877a11dfa63ede6f2ff4f50c70ef326b67925de6c733585192805"
+    },
+    {
+      "instruction_id": "technical-documentation-audit",
+      "path": "instructions/technical-documentation-audit.md",
+      "sha256": "4cbf71431675e1f4df8f02e3fdfdf23fe6aa29d0b0bf5d4629df76d8c57ebe62"
+    },
+    {
+      "instruction_id": "technical-documentation-changelog",
+      "path": "instructions/technical-documentation-changelog.md",
+      "sha256": "9c10adc2420ebf8ac9258ff8638a120996c9c42e834c8a7ae9911af05a9328c0"
+    },
+    {
+      "instruction_id": "technical-documentation-common-mistakes",
+      "path": "instructions/technical-documentation-common-mistakes.md",
+      "sha256": "f6079f8062a7fc2e8cde0edf6805b57237997bb6ddf59f358148e29898b90a4e"
+    },
+    {
+      "instruction_id": "technical-documentation-core",
+      "path": "instructions/technical-documentation-core.md",
+      "sha256": "cabdb667743d2e0a125bc494224e242c33e07a7320a552db89a489be68334f9d"
+    },
+    {
+      "instruction_id": "technical-documentation-procedures",
+      "path": "instructions/technical-documentation-procedures.md",
+      "sha256": "8e7aa867515726593e4be127b96d53a61f3b114ad6a4f45d361ddc3573218290"
+    },
+    {
+      "instruction_id": "technical-documentation-quick-diagnostic",
+      "path": "instructions/technical-documentation-quick-diagnostic.md",
+      "sha256": "ae254f39adf04bf1d4fa02708224d2ea39da2a80d3c3b5f98bed2a54d5a49195"
+    },
+    {
+      "instruction_id": "technical-documentation-reader",
+      "path": "instructions/technical-documentation-reader.md",
+      "sha256": "d57d60244dcb1a07e98531bbad56473488c730780bed8dc932024cdf295483ed"
+    },
+    {
+      "instruction_id": "technical-documentation-reference",
+      "path": "instructions/technical-documentation-reference.md",
+      "sha256": "fb26710a9a7a1c8d864e9ec0e81fbf63d0d34f174d1c018949c32d580937ef8c"
+    },
+    {
+      "instruction_id": "technical-documentation-score",
+      "path": "instructions/technical-documentation-score.md",
+      "sha256": "519ba7f6f9cedcc6d54ba8d88eaae3ed3ff80b79f0100a8d601e2f1ce6aa3200"
+    },
+    {
+      "instruction_id": "technical-documentation-structure",
+      "path": "instructions/technical-documentation-structure.md",
+      "sha256": "c6f764efe573a0d015c30e085edb16e3df4ef617d9765e6f94be45d2376f9df7"
+    },
+    {
+      "instruction_id": "technical-documentation-voice",
+      "path": "instructions/technical-documentation-voice.md",
+      "sha256": "bbe515dd4ba26fad457b67f1833e79496bdae5af72c3ec2b5010361470ddf617"
+    },
+    {
+      "instruction_id": "technical-documentation-words",
+      "path": "instructions/technical-documentation-words.md",
+      "sha256": "56565469bc7d9683e3ce9faea2d2156257dd18a12bbe2e398337889a21cdf7ae"
     },
     {
       "instruction_id": "tell-a-declared-constraint-apart-from-a-missing-field",

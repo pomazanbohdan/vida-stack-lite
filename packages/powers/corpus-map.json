@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5654,
+  "revision": 5667,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -19477,8 +19477,22 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/technical-documentation/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "technical-documentation-apply",
+            "technical-documentation-core",
+            "technical-documentation-score",
+            "technical-documentation-reader",
+            "technical-documentation-voice",
+            "technical-documentation-words",
+            "technical-documentation-structure",
+            "technical-documentation-procedures",
+            "technical-documentation-reference",
+            "technical-documentation-changelog",
+            "technical-documentation-audit",
+            "technical-documentation-common-mistakes",
+            "technical-documentation-quick-diagnostic"
+          ]
         },
         "skills/technical-documentation/references/api-reference.md": {
           "status": "rejected",
