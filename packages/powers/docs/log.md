@@ -2,6 +2,17 @@
 
 ## 2026-11-05
 
+* **H2 CSV intake and CLI context flags started:** added the strict CSV parser,
+  hash/identity helpers and `csvSources` checker in `scripts/csv-intake.ts` and
+  `scripts/csv-map.ts`; `check-corpus` now validates v2 `csvSources` against the
+  allowlist, pinned donor bytes, row/cell hashes, locators, dispositions,
+  bindings and merged targets. Added `--applicability-context` and
+  `--context-file` to search/explain/get/compose/evaluate; context files are
+  repository-relative, UTF-8 JSON and capped at 1 MiB. Tests: 802 pass, 4 skip,
+  0 fail; typecheck 72 files. The CLI `get` exact-ID re-route, converter v2
+  emission, the real UUPM donor/allowlist entry and full H2 acceptance remain
+  open.
+
 * **H2 v2 applicability implementation started:** added
   `config/vpinstruction.v2.schema.json`, `config/vpcorpusmap.v2.schema.json`,
   `config/h2-applicability-vocab.json`,

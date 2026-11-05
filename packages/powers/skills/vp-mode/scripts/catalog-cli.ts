@@ -2,7 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { lstat } from 'node:fs/promises';
 import { realpathSync } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, isAbsolute, relative, resolve } from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { appendFindingEvent, findFindingCandidates } from './findings.ts';
 import { appendArtifactEvent, indexArtifacts, verifyArtifact } from './artifacts.ts';
@@ -26,6 +27,8 @@ import {
   stemToken,
 } from './catalog.ts';
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
+import { parseApplicabilityContext } from './applicability.ts';
+import type { ApplicabilityContext } from './applicability.ts';
 import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText, topPatternFor } from './retrieval.ts';
 import type { IntentCandidate } from './retrieval.ts';
 import { validateAgainstSchema } from './schema.ts';
@@ -135,6 +138,8 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--classification-status': { arity: 'list', value: 'STATUS', description: 'Select classified or unclassified records.' },
       '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Filter to the current resolved effective profile.' },
+      '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
+      '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
       '--limit': { arity: 'scalar', value: 'N', description: 'Return at most N rows.' },
       '--offset': { arity: 'scalar', value: 'N', description: 'Skip N rows after deduplication.' },
       '--all': { arity: 'switch', description: 'Return every row instead of the default first page of 10.' },
@@ -156,6 +161,8 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--classification-status': { arity: 'list', value: 'STATUS', description: 'Filter classification status.' },
       '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Use the effective profile.' },
+      '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
+      '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
     },
     examples: ['explain --approach execution=solo'],
   },
@@ -166,6 +173,8 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--id': { arity: 'list', value: 'ID', description: 'Required instruction IDs; all must compose.' },
       '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Required effective profile from this snapshot.' },
+      '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
+      '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
     },
     examples: ['get --id alpha beta --profile .tmp/effective-profile.json'],
   },
@@ -183,6 +192,8 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--product': { arity: 'list', value: 'PRODUCT', description: 'Filter products.' },
       '--condition': { arity: 'list', value: 'TOKEN', description: 'Filter applicability conditions.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Use a resolved effective profile from this snapshot.' },
+      '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
+      '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
       '--json': { arity: 'switch', description: 'Accepted; JSON remains the default output.' },
     },
     examples: ['compose --required alpha --role engineer'],
@@ -193,6 +204,8 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
       '--operation': { arity: 'scalar', value: 'TEXT', description: 'Required operation description.' },
       '--context': { arity: 'scalar', value: 'TEXT', description: 'Optional context.' },
+      '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
+      '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
       '--product': { arity: 'scalar', value: 'PRODUCT', description: 'Optional product.' },
       '--tag': { arity: 'repeat-list', value: 'TAG', description: 'Repeat or provide several tags.' },
       '--candidate': { arity: 'repeat-list', value: 'ID', description: 'Repeat or provide several candidate IDs.' },
@@ -473,6 +486,36 @@ function required(flags: Map<string, string[]>, name: string): string {
   return value;
 }
 
+async function applicabilityContextFromFlags(flags: Map<string, string[]>): Promise<ApplicabilityContext | undefined> {
+  const inline = one(flags, '--applicability-context');
+  const file = one(flags, '--context-file');
+  if (inline !== undefined && file !== undefined) throw invalid('use either --applicability-context or --context-file, not both');
+  let text: string | undefined;
+  if (inline !== undefined) {
+    text = inline;
+  } else if (file !== undefined) {
+    const path = resolve(file);
+    const rel = relative(process.cwd(), path);
+    if (rel.startsWith('..') || isAbsolute(rel)) throw invalid('--context-file must stay inside the repository root', { path: file });
+    const bytes = await readFile(path);
+    if (bytes.length > 1024 * 1024) throw invalid('--context-file exceeds 1 MiB', { path: file, bytes: bytes.length });
+    text = bytes.toString('utf8');
+  } else {
+    return undefined;
+  }
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    throw invalid('applicability context is not valid JSON');
+  }
+  try {
+    return parseApplicabilityContext(value);
+  } catch (error) {
+    throw invalid(`applicability context is invalid: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 function listValues(flags: Map<string, string[]>, name: string): string[] | undefined {
   const values = flags.get(name);
   if (values === undefined) return undefined;
@@ -746,6 +789,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       if (instructionForms !== undefined) query.instruction_forms = instructionForms;
       if (domains !== undefined) query.domains = domains;
       if (classificationStatuses !== undefined) query.classification_statuses = classificationStatuses;
+      const applicabilityContext = await applicabilityContextFromFlags(flags);
+      if (applicabilityContext !== undefined) query.applicabilityContext = applicabilityContext;
       const profile = await profileAt(one(flags, '--profile'), dirname(resolve(catalogPath)));
       const approaches = listValues(flags, '--approach');
       if (command === 'explain') {
@@ -796,7 +841,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       }
       const profile = await profileAt(required(flags, '--profile'), dirname(resolve(catalogPath)));
       const approaches = listValues(flags, '--approach');
-      const bundle = catalogCompose(catalog, instructions, { required_ids: ids, profile, ...(approaches === undefined ? {} : { approaches }) });
+      const applicabilityContext = await applicabilityContextFromFlags(flags);
+      const bundle = catalogCompose(catalog, instructions, { required_ids: ids, profile, ...(approaches === undefined ? {} : { approaches }), ...(applicabilityContext === undefined ? {} : { applicabilityContext }) });
       const bytes = bundle.instructions.reduce((total, instruction) => total + Buffer.byteLength(instruction.content, 'utf8'), 0);
       return {
         kind: 'text',
@@ -826,17 +872,21 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       if (products !== undefined) query.products = products;
       if (conditions !== undefined) query.conditions = conditions;
       if (profile !== undefined) query.profile = profile;
+      const applicabilityContext = await applicabilityContextFromFlags(flags);
+      if (applicabilityContext !== undefined) query.applicabilityContext = applicabilityContext;
       return { kind: 'json', value: catalogCompose(catalog, instructions, query) };
     }
     case 'evaluate':
       {
         const tags = listValues(flags, '--tag');
+        const applicabilityContext = await applicabilityContextFromFlags(flags);
         return { kind: 'json', value: decisionEvaluate(catalog, instructions, {
           operation: required(flags, '--operation'),
           candidates: listValues(flags, '--candidate') ?? [],
           ...(one(flags, '--product') === undefined ? {} : { product: one(flags, '--product') as string }),
           ...(one(flags, '--context') === undefined ? {} : { context: one(flags, '--context') as string }),
           ...(tags === undefined ? {} : { tags }),
+          ...(applicabilityContext === undefined ? {} : { applicabilityContext }),
         }) };
       }
   }
