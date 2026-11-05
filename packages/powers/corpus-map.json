@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5679,
+  "revision": 5691,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18535,8 +18535,21 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/ios-hig-design/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "ios-hig-design-core",
+            "ios-hig-design-score",
+            "ios-hig-design-layout",
+            "ios-hig-design-typography",
+            "ios-hig-design-color",
+            "ios-hig-design-navigation",
+            "ios-hig-design-controls",
+            "ios-hig-design-accessibility",
+            "ios-hig-design-icons",
+            "ios-hig-design-gestures",
+            "ios-hig-design-common-mistakes",
+            "ios-hig-design-quick-diagnostic"
+          ]
         },
         "skills/ios-hig-design/references/accessibility.md": {
           "status": "rejected",
