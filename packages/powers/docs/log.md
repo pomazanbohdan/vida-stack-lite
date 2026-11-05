@@ -2,6 +2,13 @@
 
 ## 2026-11-05
 
+* **H2 CLI `get` exact-ID mode:** `catalog-cli.ts get` now returns exact
+  instruction rows with the applicability result when `--profile` is omitted;
+  supplying `--profile` preserves the compose-backed batch behavior. This
+  resolves the contract's CLI `get` routing requirement without breaking the
+  existing profile-based batch. Tests: 803 pass, 4 skip, 0 fail; typecheck
+  72 files.
+
 * **H2 CSV intake and CLI context flags started:** added the strict CSV parser,
   hash/identity helpers and `csvSources` checker in `scripts/csv-intake.ts` and
   `scripts/csv-map.ts`; `check-corpus` now validates v2 `csvSources` against the

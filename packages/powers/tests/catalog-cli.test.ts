@@ -1241,17 +1241,16 @@ describe('catalog CLI', () => {
     expect(emptyPage.stderr).toContain('showing 0 of');
   });
 
-  test('get requires IDs and a profile while evaluate keeps its JSON error contract', () => {
+  test('get requires IDs and uses exact-ID mode without a profile', () => {
     const missingGetId = runCli(fixtureArgs(['get', '--profile', 'profile.json']));
     expect(missingGetId.status).toBe(1);
     expect(missingGetId.stdout).toBe('');
     expect(missingGetId.stderr).toContain('missing required flag --id');
     expect(missingGetId.stderr).not.toMatch(/^\{/u);
-    const missingGetProfile = runCli(fixtureArgs(['get', '--id', 'alpha']));
-    expect(missingGetProfile.status).toBe(1);
-    expect(missingGetProfile.stdout).toBe('');
-    expect(missingGetProfile.stderr).toContain('missing required flag --profile');
-    expect(missingGetProfile.stderr).not.toMatch(/^\{/u);
+    const exact = runCli(fixtureArgs(['get', '--id', 'alpha']));
+    expect(exact.status).toBe(0);
+    const value = JSON.parse(exact.stdout) as { instruction_id: string };
+    expect(value.instruction_id).toBe('alpha');
     const missingOperation = runCli(fixtureArgs(['evaluate']));
     expect(missingOperation.status).toBe(1);
     expect(stderrJson(missingOperation).code).toBe('CATALOG_INVALID');
@@ -2007,5 +2006,13 @@ describe('artifacts commands', () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+});
+
+test('get without --profile returns the exact row with applicability', async () => {
+  const result = runCli(['get', '--catalog', join(fixtureDir, 'catalog.json'), '--id', 'alpha', '--applicability-context', '{"runtimes":["node"]}']);
+  expect(result.status).toBe(0);
+  const value = JSON.parse(result.stdout) as { instruction_id: string; applicability: { state: string } };
+  expect(value.instruction_id).toBe('alpha');
+  expect(value.applicability.state).toBe('applicable');
 });
 
