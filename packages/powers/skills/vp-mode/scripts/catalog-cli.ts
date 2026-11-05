@@ -167,12 +167,12 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
     examples: ['explain --approach execution=solo'],
   },
   get: {
-    description: 'Compose required instructions with dependencies and print their source bodies and obligations as text.',
+    description: 'Return exact instruction rows with applicability; with --profile, compose required instructions and dependencies as text.',
     flags: {
       '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
-      '--id': { arity: 'list', value: 'ID', description: 'Required instruction IDs; all must compose.' },
+      '--id': { arity: 'list', value: 'ID', description: 'Exact instruction IDs; with --profile all must compose.' },
       '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
-      '--profile': { arity: 'scalar', value: 'PATH', description: 'Required effective profile from this snapshot.' },
+      '--profile': { arity: 'scalar', value: 'PATH', description: 'Optional; switch to compose mode with this effective profile.' },
       '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
       '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
     },
@@ -839,9 +839,14 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         const nearest = nearestInstructionId(id, instructions.keys());
         if (nearest !== undefined) throw invalid(`unknown instruction id: ${id}; nearest instruction id: ${nearest}`, { instruction_id: id, nearest });
       }
-      const profile = await profileAt(required(flags, '--profile'), dirname(resolve(catalogPath)));
+      const profileFlag = one(flags, '--profile');
       const approaches = listValues(flags, '--approach');
       const applicabilityContext = await applicabilityContextFromFlags(flags);
+      if (profileFlag === undefined) {
+        const rows = ids.map((id) => catalogGet(catalog, instructions, id, applicabilityContext));
+        return { kind: 'json', value: rows.length === 1 ? rows[0] : rows };
+      }
+      const profile = await profileAt(profileFlag, dirname(resolve(catalogPath)));
       const bundle = catalogCompose(catalog, instructions, { required_ids: ids, profile, ...(approaches === undefined ? {} : { approaches }), ...(applicabilityContext === undefined ? {} : { applicabilityContext }) });
       const bytes = bundle.instructions.reduce((total, instruction) => total + Buffer.byteLength(instruction.content, 'utf8'), 0);
       return {
