@@ -2,6 +2,12 @@
 
 ## 2026-11-05
 
+* **H2 fidelity receipt schema:** added
+  `config/h2fidelityreceipt.v1.schema.json` with explicit cell locators, the
+  human/delegated reviewer shape and the delegated-model requirement. H2
+  admission still requires `reviewer.kind: human` under SR-89 until D18 is
+  separately extended. Tests: 806 pass, 4 skip, 0 fail; typecheck 73 files.
+
 * **H2 converter v2 preservation:** `convert.ts` now dispatches the corpus-map
   schema by marker, validates `VPCorpusMap/v2` with the v2 schema and preserves
   existing `csvSources` while adding Markdown file records. Metadata preparation
