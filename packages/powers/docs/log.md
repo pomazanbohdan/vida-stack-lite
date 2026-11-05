@@ -2,6 +2,38 @@
 
 ## 2026-11-05
 
+* **H2 h2-2 technical-documentation source admitted:** 13 `InstructionSpec`
+  drafts from the h2-2 D18 aggregation (13 admitted / 1 merge / 3 reject / 0
+  unresolved; spec manifest
+  `379ac1081bf742bcfd913cf8c701bd0ceebd04002f897ec279d71775a97fb4bf`).
+  Rejected units are the framework heading, About the Source and Further
+  Reading; u13 merged into u12. D49 added eight documentation patterns on the
+  existing `write-technical-prose` capability; three capability exemptions cover
+  score, mistakes and quick diagnostic. Packet SHA-256
+  `76161e2e3506b71067db5f2ee391c244cc7e0c0eb53632dc9ffa909f75fea96b`;
+  committee SHA-256
+  `402b883c3048cbc364312bf3be8e56626a9da77f7324d83e751696d98a4b5ee3`;
+  reviewed plan SHA-256
+  `cb334d5e492e70b69d4382b7135bede9d336b727668bece3c374c7cd1c2b8cd2`;
+  applied plan SHA-256
+  `7d36ed505d0ff9f15c797cabc919a66adf2f444e39c3d94c000286ebc00c553f`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols and the plan review ran on
+  Devin `swe-2-flash-medium`; review returned READY 0/0/0. Apply returned
+  `applied` with all 15 targets observed as `intended`; receipt
+  `36faa18d52d29b846226c2416f0b949f29b801ed4f00051c2055d59a0862a9a7`.
+  Applied: 13 instructions, catalog, map; baseline rebuilt to 9 donors / 1,252
+  files; corpus 3,203; catalog revision 7,213; map revision 5,667.
+
+* **D49 technical-documentation tags accepted:** `catalog.json` gains the
+  `document-type-fit`, `document-voice`, `document-words`, `document-structure`,
+  `procedure-steps`, `reference-completeness`, `changelog-structure` and
+  `documentation-audit` patterns for `technical-documentation`, reusing the
+  existing `write-technical-prose` capability. Catalog revision 7,200. The tags
+  are metadata only and do not admit any source. This is H2 source admission;
+  structured applicability under the H2 v2 contract remains pending.
+
 * **H2 h2-1 release-it source admitted:** 10 `InstructionSpec` drafts from the
   h2-1 D18 aggregation (10 admitted / 1 merge / 3 reject / 0 unresolved; spec
   manifest
