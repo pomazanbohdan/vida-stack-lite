@@ -2,6 +2,13 @@
 
 ## 2026-11-05
 
+* **H2 applicability applicator:** added `scripts/apply-applicability.ts`,
+  which rewrites a v1.2 instruction to `VPInstruction/v2` with the escaped
+  one-line applicability scalar, validates the declaration before writing and
+  updates the catalog digest/revision. This is the separate H2 applicability
+  pipeline; `convert.ts` itself still keeps Markdown instructions at v1.2.
+  Tests: 809 pass, 4 skip, 0 fail; typecheck 75 files.
+
 * **H2 fidelity receipts wired into CSV validation:** `check-corpus` now loads
   each binding's `fidelity` reference from the corpus root, verifies its
   SHA-256, and checks `H2FidelityReceipt/v1` for exact instruction, source
