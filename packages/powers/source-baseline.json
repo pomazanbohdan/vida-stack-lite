@@ -5033,6 +5033,10 @@
           "sha256": "d5971fdfc51e6a6f729856a9c3874d56628bb6802fdd31eb1c97adbfa4b51a73",
           "bytes": 16318
         },
+        "skills/steve-jobs-design-review/SKILL.md": {
+          "sha256": "0bbfdcaf8d00ab82877a247369ce08b3ac7c2646d08b28d76f93bbe9456fa2ad",
+          "bytes": 18068
+        },
         "skills/storybrand-messaging/SKILL.md": {
           "sha256": "a11d015c33e6d5e66c68f6d4da98e4bd0fda6ca32efc805ff4882d0ce0ab6e1c",
           "bytes": 14858
