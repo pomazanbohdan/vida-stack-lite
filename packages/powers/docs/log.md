@@ -2,6 +2,13 @@
 
 ## 2026-11-05
 
+* **H2 fidelity receipts wired into CSV validation:** `check-corpus` now loads
+  each binding's `fidelity` reference from the corpus root, verifies its
+  SHA-256, and checks `H2FidelityReceipt/v1` for exact instruction, source
+  rowKey, cell hashes, locators, `reviewer.kind: human`, `verdict: READY` and
+  evidence binding. Missing or mismatched receipts fail validation. Tests:
+  807 pass, 4 skip, 0 fail; typecheck 73 files.
+
 * **H2 fidelity receipt schema:** added
   `config/h2fidelityreceipt.v1.schema.json` with explicit cell locators, the
   human/delegated reviewer shape and the delegated-model requirement. H2
