@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://vida-powers.invalid/schemas/h2fidelityreceipt.v1.schema.json",
+  "title": "H2FidelityReceipt/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "instructionId", "source", "reviewer", "verdict", "evidence", "recordedAt"],
+  "properties": {
+    "schema": { "const": "H2FidelityReceipt/v1" },
+    "instructionId": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["donor", "path", "rowKey", "cells"],
+      "properties": {
+        "donor": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "rowKey": { "type": "string", "minLength": 1 },
+        "cells": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["columnIndex", "cellHash", "locator"],
+            "properties": {
+              "columnIndex": { "type": "integer", "minimum": 0 },
+              "cellHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+              "locator": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["line", "row", "column"],
+                "properties": {
+                  "line": { "type": "integer", "minimum": 1 },
+                  "row": { "type": "integer", "minimum": 0 },
+                  "column": { "type": "integer", "minimum": 1 }
+                }
+              },
+              "locators": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["line", "row", "column"],
+                  "properties": {
+                    "line": { "type": "integer", "minimum": 1 },
+                    "row": { "type": "integer", "minimum": 0 },
+                    "column": { "type": "integer", "minimum": 1 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "actor"],
+      "properties": {
+        "kind": { "enum": ["human", "delegated"] },
+        "actor": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "delegated" } }, "required": ["kind"] },
+          "then": { "required": ["model"] }
+        }
+      ]
+    },
+    "verdict": { "enum": ["READY", "CHANGES"] },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "recordedAt": { "type": "string", "minLength": 1 }
+  }
+}
