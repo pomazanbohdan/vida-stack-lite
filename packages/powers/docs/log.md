@@ -2,6 +2,34 @@
 
 ## 2026-11-05
 
+* **H2 h2-5 microinteractions source admitted:** 10 `InstructionSpec` drafts
+  from the h2-5 D18 aggregation (10 admitted / 4 reject / 0 merge / 1 manually
+  resolved split; spec manifest
+  `cbd87ad14652fa2cf87edb96b58367e8a07c704ec0181bd730a30e77c9fb63c9`).
+  Rejected units are the title/introduction, the framework heading, Further
+  Reading and About the Author; `u1` was a three-way split resolved as reject
+  with the three protocol rationales recorded. D52 added
+  `design-microinteraction` and six patterns; `microinteraction-feedback` is
+  reused unchanged from D43. Three capability exemptions cover score, common
+  mistakes and quick diagnostic. Packet SHA-256
+  `c37fb698bacff2345dcd95436c0932acabbad7a73995da45f6d5f0cf9faa83c2`;
+  committee SHA-256
+  `f9a838607bc3d9d7dc4974869e208e5a9f2c4f02a591875a390b25f6d9aa673a`;
+  reviewed plan SHA-256
+  `ba63452c2004e573afd3a9828306b40ecb1776a7754422effb5abf690d6b989e`;
+  applied plan SHA-256
+  `f84c75b3634fc85056a725481e8726e6e4ce89a6829d173c677d419d5e4d3930`.
+  This is **H2 source admission**; structured applicability under the H2 v2
+  contract remains pending. Rights are `VPSourceAttribution/v1` with
+  `rightsLineage: HOLD`. All three D18 protocols ran on Devin
+  `swe-2-flash-medium`; the first plan review returned CHANGES because the
+  packet was built before the h2-6 tag additions advanced the catalog, and the
+  rebased review returned READY 0/0/0. Apply returned `applied` with all 12
+  targets observed as `intended`; receipt
+  `bbf8136223ac5808f2caa69ed7a6fdb2febc670d8701319594d5bc459c23f67a`.
+  Baseline rebuilt to 9 donors / 1,256 files; corpus 3,249; catalog revision
+  7,293; map revision 5,713.
+
 * **H2 h2-6 steve-jobs-design-review source admitted:** 12 `InstructionSpec`
   drafts from the h2-6 D18 aggregation (12 admitted / 3 reject / 1 merge / 0
   unresolved; spec manifest

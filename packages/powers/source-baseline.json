@@ -4985,6 +4985,10 @@
           "sha256": "6eb330f403882d8f944590772170de48847f7025b942ee56f564717229d3965e",
           "bytes": 16025
         },
+        "skills/microinteractions/SKILL.md": {
+          "sha256": "6be3a21ff34d6fb0fa5213b728e2a9e50d7e7ec68dbaf090bef1c518d83a6e31",
+          "bytes": 15227
+        },
         "skills/mom-test/SKILL.md": {
           "sha256": "fbf036f31e5932e68adc6d26abe8d75f2213b3c50ea345f7dffa2f235b0ce0ae",
           "bytes": 16817

@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v1",
-  "revision": 5703,
+  "revision": 5713,
   "updated_at": "2026-11-03T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -18832,8 +18832,19 @@
           "reason": "not selected in the clean-code pilot; H1 selection pending"
         },
         "skills/microinteractions/SKILL.md": {
-          "status": "rejected",
-          "reason": "not selected in the clean-code pilot; H1 selection pending"
+          "status": "split",
+          "instruction_ids": [
+            "microinteractions-core",
+            "microinteractions-score",
+            "microinteractions-triggers",
+            "microinteractions-rules",
+            "microinteractions-feedback",
+            "microinteractions-loops-modes",
+            "microinteractions-signature-moments",
+            "microinteractions-simplify",
+            "microinteractions-common-mistakes",
+            "microinteractions-quick-diagnostic"
+          ]
         },
         "skills/microinteractions/references/case-studies.md": {
           "status": "rejected",

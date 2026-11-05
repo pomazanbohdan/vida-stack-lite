@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7283,
+  "revision": 7293,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -974,6 +974,21 @@
     },
     {
       "instruction_id": "steve-jobs-design-review-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "microinteractions-score",
+      "dimension": "capability",
+      "reason": "The instruction scores an interaction against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "microinteractions-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "microinteractions-quick-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
     }
@@ -9493,6 +9508,56 @@
       "instruction_id": "merge-validation-findings-into-fix-suggest-or-ask",
       "path": "instructions/merge-validation-findings-into-fix-suggest-or-ask.md",
       "sha256": "7e12fb2bdd3009acb3d874650c8fc03877ba1b37cf7d26506c77de2a2cc1e456"
+    },
+    {
+      "instruction_id": "microinteractions-common-mistakes",
+      "path": "instructions/microinteractions-common-mistakes.md",
+      "sha256": "afaf245bbefd866e4de0fd47a2abd225018943c5675a5b5f8b750ee9530f0bda"
+    },
+    {
+      "instruction_id": "microinteractions-core",
+      "path": "instructions/microinteractions-core.md",
+      "sha256": "57a18867e69eae0b7e94292ca754fb216edff9db5c3f622671cef83c0eb26f81"
+    },
+    {
+      "instruction_id": "microinteractions-feedback",
+      "path": "instructions/microinteractions-feedback.md",
+      "sha256": "f54e8668e1d092f8a16e766a793fe23cd05c156aad189db2fb7dfe26d57ef16d"
+    },
+    {
+      "instruction_id": "microinteractions-loops-modes",
+      "path": "instructions/microinteractions-loops-modes.md",
+      "sha256": "104218ee6ce104d8c479249ff9c1ff4386579a37d37d6f7ef747b1a42da4c5f9"
+    },
+    {
+      "instruction_id": "microinteractions-quick-diagnostic",
+      "path": "instructions/microinteractions-quick-diagnostic.md",
+      "sha256": "0bb80316a250a78994058120b909558db1348df53a05a36eca9b141e909bf784"
+    },
+    {
+      "instruction_id": "microinteractions-rules",
+      "path": "instructions/microinteractions-rules.md",
+      "sha256": "5bfb8c93f72fa1515b14d2b768642b6e15ff646207959c1ea4f952c206bab3a1"
+    },
+    {
+      "instruction_id": "microinteractions-score",
+      "path": "instructions/microinteractions-score.md",
+      "sha256": "0badcad766ccc084f266b1ffb8286317618a8db8d7217b66d4d045bedef4b115"
+    },
+    {
+      "instruction_id": "microinteractions-signature-moments",
+      "path": "instructions/microinteractions-signature-moments.md",
+      "sha256": "c6791c0024aa561dea86cdd44a37b7bc30ba0a339c3309228743925322e5afe8"
+    },
+    {
+      "instruction_id": "microinteractions-simplify",
+      "path": "instructions/microinteractions-simplify.md",
+      "sha256": "75b97cbc35ac8eb1163162828deedd8066d0da4a506f8c936326c57d6b1d3679"
+    },
+    {
+      "instruction_id": "microinteractions-triggers",
+      "path": "instructions/microinteractions-triggers.md",
+      "sha256": "bae698da702d7918fbfbc2407f2d1495266781b9951a995f3e5503354fe1caf9"
     },
     {
       "instruction_id": "migrate-a-schema-in-phases",
