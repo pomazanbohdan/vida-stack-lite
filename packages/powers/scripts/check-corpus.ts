@@ -11,6 +11,7 @@ import {
   parseFacetClassification,
 } from '../skills/vp-mode/scripts/instruction-facets.ts';
 import { parseApplicability } from '../skills/vp-mode/scripts/applicability.ts';
+import { checkCsvSource } from './csv-map.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 
 export type CorpusIssue = { code: string; message: string; details?: Record<string, unknown> };
@@ -326,6 +327,39 @@ function checkMethodologyProfile(base: string, catalog: Dict, frontmatterById: M
   }
 }
 
+function checkCsvSources(map: Dict, donors: DonorSet, instructionIds: Set<string>, issues: CorpusIssue[]): void {
+  const allowlistPath = join(packageRoot, 'config/h2-csv-allowlist.json');
+  let allowlist: Dict[] = [];
+  if (existsSync(allowlistPath)) {
+    const raw = readJson(allowlistPath);
+    if (Array.isArray(raw)) allowlist = raw.filter(isRecord);
+  }
+  const donorMaps = isRecord(map.donors) ? map.donors : {};
+  for (const [donorId, rawDonor] of Object.entries(donorMaps)) {
+    const donor = donors.donors.get(donorId);
+    if (donor === undefined) continue;
+    const donorMap = isRecord(rawDonor) ? rawDonor : {};
+    const csvSources = isRecord(donorMap.csvSources) ? donorMap.csvSources : {};
+    if (Object.keys(csvSources).length === 0) continue;
+    const cloneRoot = resolve(donors.localRoot, String(donor.local_path ?? ''));
+    const contentRoot = resolve(cloneRoot, String(donor.content_path ?? ''));
+    for (const [path, rawSource] of Object.entries(csvSources)) {
+      const source = isRecord(rawSource) ? rawSource : {};
+      const allowlistEntry = allowlist.find((entry) => entry.donor === donorId && entry.path === path);
+      let bytes: Uint8Array;
+      try {
+        bytes = readFileSync(join(contentRoot, path));
+      } catch (error) {
+        issue(issues, 'CORPUS_CSV_MISSING', `cannot read CSV ${donorId}:${path}`, { donor: donorId, path, error: String(error) });
+        continue;
+      }
+      for (const problem of checkCsvSource({ donor: donorId, path, bytes, source, allowlistEntry, instructionIds })) {
+        issue(issues, problem.code, problem.message, problem.details);
+      }
+    }
+  }
+}
+
 function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   const catalog = readCorpusJson(base, 'catalog.json', issues, 'CORPUS_MANIFEST_INVALID');
   const map = readCorpusJson(base, 'corpus-map.json', issues, 'CORPUS_MAP_INCONSISTENT');
@@ -405,6 +439,7 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
     }
   }
   checkMap(map, donorSet, instructionIds, issues);
+  checkCsvSources(map, donorSet, instructionIds, issues);
   checkDonorCoverage(map, donorSet, issues);
   checkMethodologyProfile(base, catalog, frontmatterById, issues);
 }
