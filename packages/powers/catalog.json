@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7213,
+  "revision": 7232,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-03T00:00:00Z",
   "tag_dictionary": {
@@ -106,6 +106,7 @@
       "design-retention-engine": "Ability to turn signups into habitual users by fixing habit, activation and retention before acquisition.",
       "build-growth-engine": "Ability to turn lumpy revenue into a repeatable growth engine with ordered assets.",
       "design-website-growth": "Ability to turn existing website traffic into more leads, buyers and referrals.",
+      "optimize-web-performance": "Ability to reduce browser round trips and improve field performance metrics.",
       "design-production-readiness": "Ability to design, deploy and operate a production-ready system that degrades gracefully."
     },
     "pattern": {
@@ -421,6 +422,12 @@
       "reference-completeness": "An approach in which every public element is documented in a consistent formula.",
       "changelog-structure": "An approach in which release notes state what changed, what it means and what to do.",
       "documentation-audit": "An approach in which facts are verified before style is judged and findings are reported in severity order.",
+      "latency-budget": "An approach in which round trips, not bandwidth, are treated as the performance bottleneck.",
+      "protocol-version-choice": "An approach in which the protocol version is chosen and configured to remove its predecessor's workarounds.",
+      "critical-render-path": "An approach in which render-blocking resources are removed from the first-paint path.",
+      "cache-layering": "An approach in which browser, service-worker, CDN and origin caches eliminate repeat requests.",
+      "core-web-vitals": "An approach in which LCP, INP and CLS are optimized as the user-facing milestones.",
+      "realtime-transport": "An approach in which WebSocket, SSE or polling is chosen by data direction and frequency.",
       "stability-anti-pattern": "An approach in which every integration point is audited for the failure pattern it enables.",
       "stability-pattern": "An approach in which breakers, bulkheads and timeouts cap the blast radius of one failure.",
       "capacity-model": "An approach in which the first bottleneck and its load are measured before capacity is promised.",
@@ -887,6 +894,31 @@
       "instruction_id": "technical-documentation-quick-diagnostic",
       "dimension": "capability",
       "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "high-perf-browser-score",
+      "dimension": "capability",
+      "reason": "The instruction scores a page against a rubric; no capability definition fits without inventing verification checks."
+    },
+    {
+      "instruction_id": "high-perf-browser-common-mistakes",
+      "dimension": "capability",
+      "reason": "The instruction is a mistake-to-fix checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "high-perf-browser-quick-diagnostic",
+      "dimension": "capability",
+      "reason": "The instruction is a diagnostic checklist; the pattern carries the meaning and no capability definition fits."
+    },
+    {
+      "instruction_id": "high-perf-browser-apply",
+      "dimension": "pattern",
+      "reason": "The instruction states the framework scope; no single pattern definition fits the six-domain overview."
+    },
+    {
+      "instruction_id": "high-perf-browser-framework",
+      "dimension": "pattern",
+      "reason": "The instruction lists the six domains; no single pattern definition fits the overview."
     }
   ],
   "instructions": [
@@ -6634,6 +6666,66 @@
       "instruction_id": "high-output-management-trm",
       "path": "instructions/high-output-management-trm.md",
       "sha256": "92383cd1c83949bc9e228c4f5c1dfdd6404de1954897d1c03ddb762b939eb569"
+    },
+    {
+      "instruction_id": "high-perf-browser-apply",
+      "path": "instructions/high-perf-browser-apply.md",
+      "sha256": "b35967eb826c97d6df7a83de6841d298ca9c3f9624dab2d469388e92e9a48b33"
+    },
+    {
+      "instruction_id": "high-perf-browser-cache",
+      "path": "instructions/high-perf-browser-cache.md",
+      "sha256": "a055de93f668a4ac92781a8e826e8a72f8bc190181870a4e27a62f8969ef03bf"
+    },
+    {
+      "instruction_id": "high-perf-browser-common-mistakes",
+      "path": "instructions/high-perf-browser-common-mistakes.md",
+      "sha256": "cb830c7218690dcdb61500636fb691eab16ef4128ca65034743d7a832b09fc7f"
+    },
+    {
+      "instruction_id": "high-perf-browser-core",
+      "path": "instructions/high-perf-browser-core.md",
+      "sha256": "c57794c3f6f5b2ac2c120eadc311a55a251ef8ad6a3bb4f9aa6ae05bc1f5db81"
+    },
+    {
+      "instruction_id": "high-perf-browser-framework",
+      "path": "instructions/high-perf-browser-framework.md",
+      "sha256": "0e4c53904a6433702baf12083b058f13b2f40ab20f0efe5af8f81a0fe8b52314"
+    },
+    {
+      "instruction_id": "high-perf-browser-http",
+      "path": "instructions/high-perf-browser-http.md",
+      "sha256": "95cfd42d430a086fe6d3821cc4f58834243df5371985fd3f4ba486d7467dec9e"
+    },
+    {
+      "instruction_id": "high-perf-browser-network",
+      "path": "instructions/high-perf-browser-network.md",
+      "sha256": "5e4f94d800c4032aa4da29c3c6e6461a67f573a00d082eb130259ef309ce2277"
+    },
+    {
+      "instruction_id": "high-perf-browser-quick-diagnostic",
+      "path": "instructions/high-perf-browser-quick-diagnostic.md",
+      "sha256": "b469fb08b5e09e170b4eb3b1eddec64a996b84f0ea687e1f3504a975ea640dbc"
+    },
+    {
+      "instruction_id": "high-perf-browser-realtime",
+      "path": "instructions/high-perf-browser-realtime.md",
+      "sha256": "d266ec0898f9536668347200d474a1f5b9a0d4d3ce9d9e8d1e2d39581e92a1d4"
+    },
+    {
+      "instruction_id": "high-perf-browser-render",
+      "path": "instructions/high-perf-browser-render.md",
+      "sha256": "bf52d6babf183f4d7ae55edb4db5a26d8402b49601a66bc6414a3c5170eb4a36"
+    },
+    {
+      "instruction_id": "high-perf-browser-score",
+      "path": "instructions/high-perf-browser-score.md",
+      "sha256": "a8ae9b75c8aeaeb6e1a0de6541ea50cadc513110cc75841b579ec9531f312c75"
+    },
+    {
+      "instruction_id": "high-perf-browser-vitals",
+      "path": "instructions/high-perf-browser-vitals.md",
+      "sha256": "0f5681fad34b2003e106572e372d53a720ecbafc4cc43601754d14ab755134c7"
     },
     {
       "instruction_id": "hillclimb-one-metric",
