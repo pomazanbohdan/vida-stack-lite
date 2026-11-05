@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://vida-powers.invalid/schemas/vpcorpusmap.v2.schema.json",
+  "title": "VPCorpusMap/v2",
+  "description": "Corpus processing map with Markdown carriers and optional CSV sources.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "revision", "updated_at", "donors"],
+  "properties": {
+    "schema": { "const": "VPCorpusMap/v2" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "updated_at": { "type": "string", "minLength": 1 },
+    "donors": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/donor" }
+    }
+  },
+  "definitions": {
+    "donor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_revision", "files"],
+      "properties": {
+        "source_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "files": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/file" }
+        },
+        "csvSources": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/definitions/csvSource" }
+        }
+      }
+    },
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["converted", "split", "merged", "rejected"] },
+        "instruction_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "contributed_sources": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "rejected" } }, "required": ["status"] },
+          "then": { "required": ["reason"], "not": { "required": ["instruction_ids"] } }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["converted", "split", "merged"] } }, "required": ["status"] },
+          "then": { "required": ["instruction_ids"] }
+        }
+      ]
+    },
+    "csvSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rawSha256", "headersDigest", "columns", "rows"],
+      "properties": {
+        "rawSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "headersDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/column" }
+        },
+        "rows": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/row" }
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "header", "role"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 0 },
+        "header": { "type": "string", "minLength": 1 },
+        "role": {
+          "enum": [
+            "identity-entity-id", "identity-source-key",
+            "normative-title", "normative-description", "normative-direction",
+            "normative-exception", "normative-example",
+            "metadata-applicability", "metadata-severity", "metadata-status",
+            "metadata-version", "metadata-other"
+          ]
+        },
+        "sourceLabel": { "type": "string", "minLength": 1 }
+      }
+    },
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rowKey", "rowHash", "cellHashes", "locator", "locators", "disposition", "bindings", "resourceIds", "mergedInto"],
+      "properties": {
+        "rowKey": { "type": "string", "minLength": 1 },
+        "rowHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "cellHashes": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        },
+        "locator": { "$ref": "#/definitions/locator" },
+        "locators": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/locator" }
+        },
+        "disposition": { "enum": ["admitted", "rejected", "merged", "deferred"] },
+        "bindings": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/binding" }
+        },
+        "resourceIds": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/resourceId" }
+        },
+        "mergedInto": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["rowKey", "locator"],
+          "properties": {
+            "rowKey": { "type": "string", "minLength": 1 },
+            "locator": { "$ref": "#/definitions/locator" }
+          }
+        },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "disposition": { "const": "admitted" } }, "required": ["disposition"] },
+          "then": { "properties": { "bindings": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "disposition": { "const": "rejected" } }, "required": ["disposition"] },
+          "then": { "required": ["reason"], "properties": { "bindings": { "maxItems": 0 } } }
+        },
+        {
+          "if": { "properties": { "disposition": { "const": "deferred" } }, "required": ["disposition"] },
+          "then": { "required": ["reason"] }
+        },
+        {
+          "if": { "properties": { "disposition": { "const": "merged" } }, "required": ["disposition"] },
+          "then": {
+            "required": ["mergedInto"],
+            "properties": { "bindings": { "maxItems": 0 }, "resourceIds": { "maxItems": 0 } }
+          }
+        }
+      ]
+    },
+    "locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line", "row"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 1 },
+        "row": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "cellLocator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line", "row", "column"],
+      "properties": {
+        "line": { "type": "integer", "minimum": 1 },
+        "row": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["instructionId", "cells", "fidelity"],
+      "properties": {
+        "instructionId": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+        "cells": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/bindingCell" }
+        },
+        "fidelity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": { "type": "string", "minLength": 1 },
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+          }
+        }
+      }
+    },
+    "bindingCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["columnIndex", "columnHeader", "cellHash", "role", "locator", "locators"],
+      "properties": {
+        "columnIndex": { "type": "integer", "minimum": 0 },
+        "columnHeader": { "type": "string", "minLength": 1 },
+        "cellHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "role": {
+          "enum": [
+            "normative-title", "normative-description", "normative-direction",
+            "normative-exception", "normative-example"
+          ]
+        },
+        "locator": { "$ref": "#/definitions/cellLocator" },
+        "locators": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/cellLocator" }
+        }
+      }
+    },
+    "resourceId": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "disposition", "reason"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "disposition": { "enum": ["rejected", "deferred"] },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

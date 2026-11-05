@@ -20,8 +20,11 @@ import {
 import type { ClassificationStatus, InstructionClassification, InstructionDomain, InstructionForm } from './instruction-facets.ts';
 import { APPROACH_VOCABULARY, parseApproachAssessments } from './instruction-approaches.ts';
 import type { ApproachAssessment } from './instruction-approaches.ts';
+import { parseApplicability, parseApplicabilityContext } from './applicability.ts';
+import type { Applicability, ApplicabilityAliases, ApplicabilityContext, ApplicabilityReason, ApplicabilityResult, ApplicabilityVocab } from './applicability.ts';
+import { evaluateApplicability } from './applicability.ts';
 
-export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED';
+export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED' | 'CATALOG_REQUIRED_SELECTION_UNAVAILABLE';
 
 export class CatalogError extends Error {
   readonly code: CatalogErrorCode;
@@ -43,6 +46,8 @@ export type Instruction = {
   artifact_contract: { output_type: string; required_data: string[]; verified_by: string };
   compatibility: { excludes: string[]; requires: string[] };
   provenance: Provenance[]; status: 'active' | 'disabled'; revision: number; content: string;
+  applicability?: ApplicabilityResult;
+  applicabilityDeclaration?: Applicability;
 };
 export type LoadedInstruction = Instruction & { classification: InstructionClassification; approach_assessments: ApproachAssessment[] };
 export type Catalog = {
@@ -54,11 +59,11 @@ export type Catalog = {
 };
 export type TagEntry = { tag: string; description: string; aliases: string[] };
 export type CatalogTagMatch = { dimension: 'capability' | 'pattern'; tag: string; description: string };
-export type InstructionMetadata = { instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[]; revision: number };
+export type InstructionMetadata = { instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[]; revision: number; applicability?: ApplicabilityResult };
 export type SearchQuery = {
   capability_tags?: string[]; pattern_tags?: string[]; instruction_ids?: string[]; roles?: string[]; products?: string[]; conditions?: string[];
   instruction_forms?: InstructionForm[]; domains?: InstructionDomain[]; classification_statuses?: ClassificationStatus[];
-  approaches?: string[];
+  approaches?: string[]; applicabilityContext?: ApplicabilityContext;
 };
 export type CatalogBrowseGroup<T extends string> = { value: T; count: number; instruction_ids: string[] };
 export type CatalogBrowseResult = {
@@ -66,16 +71,39 @@ export type CatalogBrowseResult = {
   domains: CatalogBrowseGroup<InstructionDomain>[];
   unclassified: { count: number; instruction_ids: string[] };
 };
-export type DecisionRequest = { operation: string; product?: string; context?: string; tags?: string[]; candidates: string[] };
-export type DecisionFallbackReason = 'no-candidates' | 'unknown-candidate' | 'candidate-not-allowed' | 'invalid-format';
-export type DecisionResult = { selected: string[]; score: number; rationale: string; provider: 'catalog' | 'agent'; fallback: boolean; fallbackReason: DecisionFallbackReason | null };
+export type DecisionRequest = { operation: string; product?: string; context?: string; tags?: string[]; candidates: string[]; applicabilityContext?: ApplicabilityContext };
+export type DecisionFallbackReason = 'no-candidates' | 'unknown-candidate' | 'candidate-not-allowed' | 'invalid-format' | 'applicability-unresolved';
+export type DecisionApplicabilityDiagnostic = { instructionId: string; applicability: 'inapplicable' | 'unresolved'; reason?: ApplicabilityReason; requiredContext?: string[]; sourceLabels?: string[] };
+export type DecisionResult = { selected: string[]; score: number; rationale: string; provider: 'catalog' | 'agent'; fallback: boolean; fallbackReason: DecisionFallbackReason | null; diagnostics?: { applicability: DecisionApplicabilityDiagnostic[] } };
 export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; unresolved_groups?: Record<string, string[]> };
 export type ComposeQuery = SearchQuery & { required_ids?: string[]; profile?: EffectiveProfile; role?: string; task_contract?: string; effective_methodology?: string; work_scope?: string; materialization_requirements?: string[]; artifact_references?: string[] };
 export type ComposedInstruction = { instruction_id: string; title: string; summary: string; content: string; capability_tags: string[]; pattern_tags: string[]; artifact_contract: Instruction['artifact_contract']; provenance: Provenance[]; selection_reason: 'matched' | 'dependency' | 'required' };
-export type ComposedBundle = { catalog_id: string; catalog_revision: number; tag_dictionary: Catalog['tag_dictionary']; instructions: ComposedInstruction[]; role: string; task_contract: string; effective_methodology: string; work_scope: string; materialization_requirements: string[]; artifact_references: string[] };
+export type ComposedBundle = { catalog_id: string; catalog_revision: number; tag_dictionary: Catalog['tag_dictionary']; instructions: ComposedInstruction[]; omitted: { inapplicable: string[]; unresolved: string[] }; role: string; task_contract: string; effective_methodology: string; work_scope: string; materialization_requirements: string[]; artifact_references: string[] };
 
-const instructionSchemaName = 'vpinstruction.v1.2.schema.json';
 const approachDeclarations = new Map<string, readonly string[]>(Object.entries(APPROACH_VOCABULARY));
+let applicabilityConfigCache: { vocab: ApplicabilityVocab; aliases: ApplicabilityAliases } | undefined;
+
+function applicabilityConfig(): { vocab: ApplicabilityVocab; aliases: ApplicabilityAliases } {
+  if (applicabilityConfigCache !== undefined) return applicabilityConfigCache;
+  const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
+  const read = (name: string): unknown => {
+    try {
+      return JSON.parse(readFileSync(join(packageRoot, 'config', name), 'utf8')) as unknown;
+    } catch (error) {
+      throw invalid(`cannot read ${name}`, { error: error instanceof Error ? error.message : String(error) });
+    }
+  };
+  const vocab = read('h2-applicability-vocab.json') as ApplicabilityVocab;
+  const aliases = read('h2-applicability-aliases.json') as ApplicabilityAliases;
+  applicabilityConfigCache = { vocab, aliases };
+  return applicabilityConfigCache;
+}
+
+function applicabilityFor(instruction: LoadedInstruction, context: ApplicabilityContext | undefined): ApplicabilityResult | undefined {
+  if (instruction.applicabilityDeclaration === undefined && context === undefined) return undefined;
+  const config = applicabilityConfig();
+  return evaluateApplicability(instruction.applicabilityDeclaration, context, config.vocab, config.aliases);
+}
 const catalogSchemaName = 'vpcatalog.v1.schema.json';
 type CanonicalMethodologyGroup = { id: string; alternatives: string[]; instructionIdsByAlternative: Map<string, string[]>; user_decision: boolean; default?: string };
 type CanonicalMethodologyProfile = { schema: 'VPMethodologyProfile/v1'; groups: { id: string; user_decision: boolean; default?: string; alternatives: { id: string; instruction_ids: string[] }[] }[] };
@@ -239,7 +267,8 @@ function validateTags(catalog: Catalog, instruction: Instruction): void {
 }
 
 export async function loadInstructions(catalog: Catalog, directory: string): Promise<Map<string, LoadedInstruction>> {
-  const schema = await readSchema(directory, instructionSchemaName);
+  const v12Schema = await readSchema(directory, 'vpinstruction.v1.2.schema.json');
+  let v2Schema: Schema | undefined;
   const instructions = new Map<string, LoadedInstruction>();
   for (const entry of catalog.instructions) {
     let bytes: Buffer;
@@ -261,11 +290,26 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
         line: frontmatterError?.line ?? 0,
       });
     }
-    if (parsed.data.schema !== 'VPInstruction/v1.2') throw invalid(`unsupported instruction schema marker for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schema: parsed.data.schema });
+    const marker = parsed.data.schema;
+    if (marker !== 'VPInstruction/v1.2' && marker !== 'VPInstruction/v2') throw invalid(`unsupported instruction schema marker for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schema: parsed.data.schema });
+    if (marker === 'VPInstruction/v2' && v2Schema === undefined) v2Schema = await readSchema(directory, 'vpinstruction.v2.schema.json');
+    const schema = marker === 'VPInstruction/v2' ? v2Schema! : v12Schema;
     const schemaErrors = validateAgainstSchema(parsed.data, schema);
     if (schemaErrors.length > 0) throw invalid(`instruction schema validation failed for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schemaErrors });
     if (parsed.data.instruction_id !== entry.instruction_id) throw invalid(`instruction id mismatch for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, actual_id: parsed.data.instruction_id });
     const data = parsed.data;
+    let applicability: Applicability | undefined;
+    if (data.applicability !== undefined) {
+      if (typeof data.applicability !== 'string') throw invalid(`applicability must be a string for ${entry.instruction_id}`, { instruction_id: entry.instruction_id });
+      try {
+        applicability = parseApplicability(data.applicability);
+      } catch (error) {
+        throw invalid(`applicability is invalid for ${entry.instruction_id}`, {
+          instruction_id: entry.instruction_id,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
     const classification = parseFacetClassification(data);
     if (classification === undefined) throw invalid(`instruction classification is invalid for ${entry.instruction_id}`, { instruction_id: entry.instruction_id });
     let approach_assessments: ApproachAssessment[];
@@ -291,6 +335,7 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
       content: parsed.body,
       classification,
       approach_assessments,
+      ...(applicability === undefined ? {} : { applicabilityDeclaration: applicability }),
     };
     validateTags(catalog, instruction);
     instructions.set(instruction.instruction_id, instruction);
@@ -467,7 +512,13 @@ export function catalogSearch(catalog: Catalog, instructions: Map<string, Loaded
     })
     .filter((instruction) => facets.classificationStatuses.length === 0 || facets.classificationStatuses.includes(instruction.classification.classification_status))
     .sort((left, right) => compareNames(left.instruction_id, right.instruction_id))
-    .map(({ instruction_id, title, summary, capability_tags, pattern_tags, revision }) => ({ instruction_id, title, summary, capability_tags, pattern_tags, revision }));
+    .map((instruction) => {
+      const { instruction_id, title, summary, capability_tags, pattern_tags, revision } = instruction;
+      const applicability = applicabilityFor(instruction, query.applicabilityContext);
+      return applicability === undefined
+        ? { instruction_id, title, summary, capability_tags, pattern_tags, revision }
+        : { instruction_id, title, summary, capability_tags, pattern_tags, revision, applicability };
+    });
 }
 
 export function catalogSearchWithProfile(
@@ -584,9 +635,44 @@ export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Loa
   }
   if (unknownTags.length > 0) return decisionFallback('invalid-format', `Request is malformed: unknown tag${unknownTags.length === 1 ? '' : 's'} ${unknownTags.map((tag) => `"${tag}"`).join(', ')}.`);
   const uniqueTags = [...new Set(requestedTags)];
-  const ranked = [...new Set(candidates)]
+  let applicabilityContext: ApplicabilityContext | undefined;
+  if (request.applicabilityContext !== undefined) {
+    try {
+      applicabilityContext = parseApplicabilityContext(request.applicabilityContext);
+    } catch (error) {
+      return decisionFallback('invalid-format', `Request is malformed: ${error instanceof Error ? error.message : String(error)}.`);
+    }
+  }
+  const uniqueCandidates = [...new Set(candidates)]
     .map((id) => instructions.get(id))
-    .filter((instruction): instruction is LoadedInstruction => instruction !== undefined)
+    .filter((instruction): instruction is LoadedInstruction => instruction !== undefined);
+  const evaluated = uniqueCandidates.map((instruction) => ({ instruction, result: applicabilityFor(instruction, applicabilityContext) }));
+  const diagnostics = evaluated
+    .filter((item): item is { instruction: LoadedInstruction; result: ApplicabilityResult } => item.result !== undefined && item.result.state !== 'applicable')
+    .map(({ instruction, result }) => {
+      const diagnostic: DecisionApplicabilityDiagnostic = { instructionId: instruction.instruction_id, applicability: result.state as 'inapplicable' | 'unresolved' };
+      if (result.reason !== undefined) diagnostic.reason = result.reason;
+      if (result.requiredContext !== undefined) diagnostic.requiredContext = result.requiredContext;
+      if (result.sourceLabels !== undefined) diagnostic.sourceLabels = result.sourceLabels;
+      return diagnostic;
+    });
+  if (evaluated.length > 0 && evaluated.every((item) => item.result !== undefined && item.result.state !== 'applicable')) {
+    const unresolved = diagnostics.some((item) => item.applicability === 'unresolved');
+    return {
+      selected: [],
+      score: 0,
+      rationale: unresolved
+        ? `Operation "${request.operation}" has no applicable candidate; applicability is unresolved for ${diagnostics.length} candidate${diagnostics.length === 1 ? '' : 's'}.`
+        : `Operation "${request.operation}" has no applicable candidate; ${diagnostics.length} candidate${diagnostics.length === 1 ? ' is' : 's are'} inapplicable.`,
+      provider: 'agent',
+      fallback: true,
+      fallbackReason: unresolved ? 'applicability-unresolved' : 'candidate-not-allowed',
+      diagnostics: { applicability: diagnostics },
+    };
+  }
+  const applicableIds = new Set(evaluated.filter((item) => item.result === undefined || item.result.state === 'applicable').map((item) => item.instruction.instruction_id));
+  const ranked = uniqueCandidates
+    .filter((instruction) => applicableIds.has(instruction.instruction_id))
     .map((instruction) => ({
       instruction,
       matchedTags: uniqueTags.filter((tag) => instruction.capability_tags.includes(tag) || instruction.pattern_tags.includes(tag)),
@@ -605,6 +691,7 @@ export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Loa
     provider: 'catalog',
     fallback: false,
     fallbackReason: null,
+    ...(diagnostics.length === 0 ? {} : { diagnostics: { applicability: diagnostics } }),
   };
 }
 
@@ -615,8 +702,9 @@ function activeInstruction(instructions: Map<string, LoadedInstruction>, id: str
   return instruction;
 }
 
-export function catalogGet(_catalog: Catalog, instructions: Map<string, LoadedInstruction>, id: string): Instruction {
+export function catalogGet(_catalog: Catalog, instructions: Map<string, LoadedInstruction>, id: string, context?: ApplicabilityContext): Instruction {
   const instruction = activeInstruction(instructions, id);
+  const applicability = applicabilityFor(instruction, context);
   return {
     instruction_id: instruction.instruction_id,
     title: instruction.title,
@@ -632,6 +720,7 @@ export function catalogGet(_catalog: Catalog, instructions: Map<string, LoadedIn
     status: instruction.status,
     revision: instruction.revision,
     content: instruction.content,
+    ...(applicability === undefined ? {} : { applicability }),
   };
 }
 
@@ -850,6 +939,22 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
     if (unresolvedConflict !== undefined) requireProfileResolution(unresolvedConflict, { instruction_id: item.instruction.instruction_id });
     if (item.reason === 'matched' && profileDrops(item.instruction, query)) selected.delete(item.instruction.instruction_id);
   }
+  const omitted = { inapplicable: [] as string[], unresolved: [] as string[] };
+  for (const item of [...selected.values()]) {
+    const applicability = applicabilityFor(item.instruction, query.applicabilityContext);
+    if (applicability === undefined || applicability.state === 'applicable') continue;
+    const id = item.instruction.instruction_id;
+    if (item.reason === 'required') {
+      throw new CatalogError('CATALOG_REQUIRED_SELECTION_UNAVAILABLE', `required instruction ${id} is ${applicability.state}`, {
+        instruction_id: id,
+        applicability: applicability.state,
+        reason: applicability.reason,
+      });
+    }
+    if (applicability.state === 'inapplicable') omitted.inapplicable.push(id);
+    else omitted.unresolved.push(id);
+    selected.delete(id);
+  }
   const pending = [...selected.values()].map((item) => item.instruction);
   let canonicalGroupsForSubstitution: CanonicalMethodologyGroup[] | undefined;
   for (let index = 0; index < pending.length; index += 1) {
@@ -923,6 +1028,7 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
     catalog_revision: catalog.revision,
     tag_dictionary: catalog.tag_dictionary,
     instructions: composed,
+    omitted,
     role: query.role ?? '',
     task_contract: query.task_contract ?? '',
     effective_methodology: query.effective_methodology ?? '',

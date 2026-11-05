@@ -8,9 +8,9 @@ import { stemToken, tagTokens } from '../skills/vp-mode/scripts/catalog.ts';
 import { APPROACH_VOCABULARY, parseApproachAssessments } from '../skills/vp-mode/scripts/instruction-approaches.ts';
 import {
   FACETED_INSTRUCTION_SCHEMA_NAME,
-  instructionSchemaVersion,
   parseFacetClassification,
 } from '../skills/vp-mode/scripts/instruction-facets.ts';
+import { parseApplicability } from '../skills/vp-mode/scripts/applicability.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 
 export type CorpusIssue = { code: string; message: string; details?: Record<string, unknown> };
@@ -330,9 +330,12 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   const catalog = readCorpusJson(base, 'catalog.json', issues, 'CORPUS_MANIFEST_INVALID');
   const map = readCorpusJson(base, 'corpus-map.json', issues, 'CORPUS_MAP_INCONSISTENT');
   const catalogSchema = readJson(join(packageRoot, 'config/vpcatalog.v1.schema.json')) as Schema;
-  const mapSchema = readJson(join(packageRoot, 'config/vpcorpusmap.v1.schema.json')) as Schema;
-  const instructionSchema = readJson(join(packageRoot, 'config', FACETED_INSTRUCTION_SCHEMA_NAME)) as Schema;
+  const mapV1Schema = readJson(join(packageRoot, 'config/vpcorpusmap.v1.schema.json')) as Schema;
+  const mapV2Schema = readJson(join(packageRoot, 'config/vpcorpusmap.v2.schema.json')) as Schema;
+  const instructionV12Schema = readJson(join(packageRoot, 'config', FACETED_INSTRUCTION_SCHEMA_NAME)) as Schema;
+  const instructionV2Schema = readJson(join(packageRoot, 'config/vpinstruction.v2.schema.json')) as Schema;
   checkSchema(catalog, catalogSchema, issues, 'CORPUS_MANIFEST');
+  const mapSchema = map.schema === 'VPCorpusMap/v2' ? mapV2Schema : mapV1Schema;
   checkSchema(map, mapSchema, issues, 'CORPUS_MAP');
   const donorSet = readDonors(base, issues);
   const entries = Array.isArray(catalog.instructions) ? catalog.instructions.filter(isRecord) : [];
@@ -369,11 +372,19 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
     if (id !== filename) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `frontmatter instruction_id ${id} does not match file basename ${filename}`, { instruction_id: id, filename, path: `instructions/${file}` });
     if (instructionIds.has(filename)) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `duplicate instruction identity ${filename}`, { filename });
     instructionIds.add(filename); frontmatterById.set(filename, front);
-    const version = instructionSchemaVersion(front.schema);
-    if (version === undefined) {
+    const marker = front.schema;
+    if (marker !== 'VPInstruction/v1.2' && marker !== 'VPInstruction/v2') {
       issue(issues, 'CORPUS_INSTRUCTION_VERSION_UNSUPPORTED', `instruction ${filename} has an unsupported schema marker`, { instruction_id: filename, schema: front.schema });
     } else {
-      checkSchema(front, instructionSchema, issues, 'CORPUS_INSTRUCTION', { instruction_id: filename });
+      const schema = marker === 'VPInstruction/v2' ? instructionV2Schema : instructionV12Schema;
+      checkSchema(front, schema, issues, 'CORPUS_INSTRUCTION', { instruction_id: filename });
+      if (marker === 'VPInstruction/v2' && front.applicability !== undefined) {
+        try {
+          parseApplicability(String(front.applicability));
+        } catch (error) {
+          issue(issues, 'CORPUS_INSTRUCTION_APPLICABILITY_INVALID', `instruction ${filename} has invalid applicability: ${error instanceof Error ? error.message : String(error)}`, { instruction_id: filename });
+        }
+      }
       if (parseFacetClassification(front) === undefined) issue(issues, 'CORPUS_INSTRUCTION_CLASSIFICATION_INVALID', `instruction ${filename} has an invalid facet classification`, { instruction_id: filename });
       try {
         parseApproachAssessments(parseFrontmatter(instructionBytes.get(file) ?? readFileSync(path, 'utf8')), new Map(Object.entries(APPROACH_VOCABULARY)));

@@ -1,0 +1,5 @@
+{
+  "runtimes": ["bun", "deno", "node"],
+  "platforms": ["android", "desktop", "ios", "web"],
+  "accessibility": ["high-contrast", "reduced-motion", "screen-reader"]
+}

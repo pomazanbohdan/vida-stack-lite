@@ -15,6 +15,7 @@ type Instruction = {
   conditions_applies_when: string; conditions_does_not_apply_when: string;
   artifact_contract_output_type: string; artifact_contract_required_data: string[]; artifact_contract_verified_by: string;
   compatibility_excludes: string[]; compatibility_requires: string[]; provenance: string[]; status: string; revision: number;
+  applicability?: string;
 };
 type Corpus = { root: string; catalog: any; map: any; instructions: Instruction[]; save: () => Promise<void> };
 
@@ -130,7 +131,7 @@ describe('checkCorpus synthetic fixtures', () => {
   test('v1.2 rejects old markers and malformed or stale approach assessments', async () => {
     const corpus = await fixture();
     const item = corpus.instructions[0]!;
-    for (const marker of ['VPInstruction/v1.1', 'VPInstruction/v2']) {
+    for (const marker of ['VPInstruction/v1.1', 'VPInstruction/v9']) {
       item.schema = marker;
       await rewriteInstruction(corpus, item);
       expect(codes(corpus.root)).toContain('CORPUS_INSTRUCTION_VERSION_UNSUPPORTED');
@@ -139,6 +140,17 @@ describe('checkCorpus synthetic fixtures', () => {
     await rewriteInstruction(corpus, item);
     await addFacetFields(corpus, item.instruction_id, `approach_assessments:\n  - "dimension=execution; state=declared; values=solo; evidence=body:0-1"\napproach_body_sha256: ${'0'.repeat(64)}`);
     expect(codes(corpus.root)).toContain('CORPUS_INSTRUCTION_APPROACH_INVALID');
+  });
+  test('accepts VPInstruction/v2 with valid applicability and rejects malformed applicability', async () => {
+    const corpus = await fixture();
+    const item = corpus.instructions[0]!;
+    item.schema = 'VPInstruction/v2';
+    item.applicability = JSON.stringify({ runtimes: [{ value: 'node' }] });
+    await rewriteInstruction(corpus, item);
+    expect(codes(corpus.root)).toEqual([]);
+    item.applicability = 'not-json';
+    await rewriteInstruction(corpus, item);
+    expect(codes(corpus.root)).toContain('CORPUS_INSTRUCTION_APPLICABILITY_INVALID');
   });
   test('accepts a fully synthetic corpus without external clones', async () => {
     const corpus = await fixture();
@@ -173,7 +185,7 @@ describe('checkCorpus synthetic fixtures', () => {
 
   test('rejects unknown schema markers and malformed v1.1 classification states', async () => {
     const unknown = await fixture();
-    unknown.instructions[0]!.schema = 'VPInstruction/v2';
+    unknown.instructions[0]!.schema = 'VPInstruction/v9';
     await rewriteInstruction(unknown, unknown.instructions[0]!);
     expect(checkCorpus(unknown.root).map((item) => item.code)).toContain('CORPUS_INSTRUCTION_VERSION_UNSUPPORTED');
 
