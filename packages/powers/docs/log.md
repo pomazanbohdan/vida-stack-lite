@@ -52,6 +52,23 @@
   pure helpers used by the focused tests. H2-B is closed; H2-D now depends only
   on H2-A.
 
+* **H2-A UUPM source gate and mechanical CSV intake:** admitted
+  `nextlevelbuilder/ui-ux-pro-max-skill` as donor `uupm` at revision
+  `56ea9cf174ed86786187daa9de0e6247cb0747e4` (MIT, Copyright 2024 Next Level
+  Builder), with attribution in `NOTICE` and the pinned clone under the product
+  donor root. Added 24 allowlisted CSVs under `src/ui-ux-pro-max/data`
+  (`ux-guidelines.csv`, `react-performance.csv`, 22 `stacks/*.csv`) and mapped
+  all **1,434** parsed rows in `VPCorpusMap/v2` with exact row/cell hashes,
+  locators and a terminal disposition. Every row is currently `deferred` with
+  reason `pending semantic review and instruction materialization`; no CSV
+  instruction or fidelity receipt is admitted by this mechanical intake.
+  `check-corpus` reports 0 issues over 3,278 instructions; `check-vector`,
+  `check-source-updates` and the donor manifest remain green. The Markdown-only
+  map consumers accept v2 and use only `files`; `parseCorpusMap` now rejects an
+  unknown map schema. Owner extended D18 to H2 for the later semantic batches.
+  This closes the H2-A source gate and row coverage, not CSV semantic admission,
+  H2 acceptance or Runtime acceptance.
+
 ## 2026-11-05
 
 * **H2 applicability applicator:** added `scripts/apply-applicability.ts`,

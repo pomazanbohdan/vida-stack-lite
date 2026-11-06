@@ -144,6 +144,9 @@ export function loadDonorManifest(root: string): DonorManifest {
 
 export function parseCorpusMap(value: unknown): CorpusMap {
   if (!isRecord(value) || !isRecord(value.donors)) throw new SourceUpdateError('corpus-map.json must contain a donors object');
+  if (value.schema !== 'VPCorpusMap/v1' && value.schema !== 'VPCorpusMap/v2') {
+    throw new SourceUpdateError('corpus-map.json schema must be VPCorpusMap/v1 or VPCorpusMap/v2');
+  }
   const donors = new Map<string, MapDonor>();
   for (const [donorId, donorValue] of Object.entries(value.donors)) {
     if (!isRecord(donorValue) || !isRecord(donorValue.files)) throw new SourceUpdateError(`corpus-map donor ${donorId} must contain a files object`);

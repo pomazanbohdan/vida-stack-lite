@@ -9,6 +9,7 @@ import {
   buildSourceBaseline,
   checkSourceUpdates,
   packageRoot,
+  parseCorpusMap,
   parseDonorManifest,
   parseSourceBaseline,
   runBuildBaselineCli,
@@ -253,6 +254,17 @@ test('rejects invalid baseline bytes and resolves the package root', () => {
     },
   });
   expect(serializeSourceBaseline(twoDonors)).toContain('"a"');
+});
+
+test('accepts v2 maps with CSV sources and rejects unknown map schemas', () => {
+  const v2 = {
+    schema: 'VPCorpusMap/v2',
+    donors: {
+      d1: { source_revision: headA, files: {}, csvSources: { 'a.csv': { rawSha256: 'a'.repeat(64), headersDigest: 'b'.repeat(64), columns: [], rows: [] } } },
+    },
+  };
+  expect([...parseCorpusMap(v2).keys()]).toEqual(['d1']);
+  expect(() => parseCorpusMap({ ...v2, schema: 'VPCorpusMap/v3' })).toThrow('schema must be VPCorpusMap/v1 or VPCorpusMap/v2');
 });
 
 test('resolves symbolic and packed clone heads', async () => {

@@ -14,7 +14,7 @@ schema: vida-powers-donors/v1
 product: vida-powers
 kind: donor-source-manifest
 status: current
-updated_at: '2026-11-02'
+updated_at: '2026-11-06'
 local_root: packages/powers/.tmp/donors
 reproduce: git clone <url> && git checkout --detach <head_sha>
 
@@ -149,6 +149,28 @@ donors:
       journeys and the case-study files state no norm of their own and are not carried into the
       corpus. The 25-file H1 pilot + 31 next-batch files contributed 749 instructions; 0 candidates remain pending H1 selection
       selection and 30 journey files are excluded.
+
+  - id: uupm
+    role: methodology-donor
+    url: https://github.com/nextlevelbuilder/ui-ux-pro-max-skill
+    local_path: nextlevelbuilder-ui-ux-pro-max-skill
+    head_sha: 56ea9cf174ed86786187daa9de0e6247cb0747e4
+    checked_out: detached
+    default_branch: main
+    license: MIT
+    license_file: LICENSE
+    file_count: 692
+    content_path: src/ui-ux-pro-max/data
+    content_file_count: 17
+    snapshot_source: pinned-head
+    status: processed-h2-csv
+    note: >
+      The H2 CSV intake covers 24 normative CSVs under content_path: ux-guidelines.csv,
+      react-performance.csv and the 22 stacks/*.csv files, 1,434 data rows total.
+      The other data files are resource families for H3 and are not part of the 1,434 rows.
+      The owner admitted the donor on 2026-11-06 under MIT with attribution in NOTICE.
+      The rows are mechanically mapped as deferred pending semantic review and instruction
+      materialization; no instruction is admitted by the donor entry alone.
 
 not_cloned:
   - id: vida-runtime
