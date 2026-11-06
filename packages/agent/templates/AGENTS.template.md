@@ -25,9 +25,13 @@ For every request:
    the sidecar. Read nested `AGENTS.md` files for work in their subtree.
 3. Read only the business, system, code, test, and operational sources relevant
    to the request.
-4. If the work changes the reusable agent framework, resolve and read the
-   installed lifecycle instruction with
-   `vida-agent instructions --path development-lifecycle` before planning.
+4. When the work changes the reusable agent framework or needs lifecycle,
+   allocation, clarification, reporting, requirement-routing or knowledge-graph
+   policy, resolve and read the installed instruction with
+   `vida-agent instructions --path NAME` before planning. The supported names
+   are `development-lifecycle`, `agent-allocation`, `request-clarification`,
+   `adaptive-reporting`, `requirement-routing` and `knowledge-graph`. For
+   example, `vida-agent instructions --path development-lifecycle`.
 5. Classify the request and proceed.
 
 If the sidecar is missing or unreadable, answer read-only questions from

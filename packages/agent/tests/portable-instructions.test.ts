@@ -57,6 +57,8 @@ for (const bundleName of ['npm-package', 'vida agent-\u0454']) {
     expect(agents).toContain('vida-agent instructions --path development-lifecycle');
     expect(agents).toContain('vida-agent instructions --path NAME');
     for (const name of required) expect(agents).toContain(name);
+    const bootstrapSection = agents.slice(0, agents.indexOf('## Trace intent to implementation'));
+    for (const name of required) expect(bootstrapSection).toContain(name);
     expect(existsSync(path.join(consumer, 'vida-agent'))).toBe(false);
     expect(agents).not.toContain(bundle);
     expect(agents).not.toMatch(/C:[/\\]|creatio-sample|agent-runtime\/instructions/);
