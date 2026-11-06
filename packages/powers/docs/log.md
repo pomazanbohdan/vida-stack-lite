@@ -1,5 +1,44 @@
 # Directory Update Log
 
+## 2026-11-06
+
+* **H1 AC-59 accepted by the owner:** the 25-file Wondelai pilot is the
+  accepted baseline for scaling the D18 donor-admission method. Receipt
+  `AC-59-RECEIPT.json` SHA-256
+  `49df3c107aaa422857f754d0e2b76e4859d2c66d54559e7ba8d2519a35f548d9`
+  binds baseline `54f48894` (2,529 instructions, 8 donors, 1,202 files) to
+  treatment `13c04900` (2,839 instructions, 9 donors, 1,227 files). D18 covered
+  391 units with 230 accept, 80 amend, 0 merge, 81 reject, 8 manual resolutions
+  and 0 unresolved; 13 rework events; 8h10m baseline-to-last and 7h09m
+  first-to-last. Accepted limitations: commit-time timing, no independent
+  rerun, two reviewed-plan byte sets not retained and delegated-model review.
+  This closes AC-59 only. H2 acceptance, source admission, legal clearance and
+  Runtime acceptance remain separate.
+
+* **H2-C Node runtime evidence recorded:** the shipped catalog subset ran under
+  Node v26.13.0; `search --for "test design" --all` exited 0 with 4,478 stdout
+  bytes and exact-ID `get` exited 0 with 1,733 bytes. Receipt
+  `H2-NODE-RUNTIME-RECEIPT.json` SHA-256
+  `36f2952fb15f7c47f61e330939f0a0f6299bf919fef883872e0ad017fe964fd1`.
+  Deno is excluded from scope by the owner decision of 2026-11-06 because it is
+  not used in this project.
+
+* **D56 H2 contract recorded:** added
+  [D56](decisions/D56-h2-contract.md), the tracked home for the H2 contract
+  approved by the repository owner on 2026-11-05. The record binds the approved
+  source draft SHA-256
+  `d225913e2c7a986a5f8a0e75b85afde504c489d0d7bf73194ed35f61e709928e`,
+  the council approval record SHA-256
+  `f8447f772b5c16177de72c2f83829e9206e12248291294e79198775525702259`
+  and the Node runtime receipt. The council result was 1 APPROVE,
+  5 APPROVE_WITH_CHANGES and 0 REJECT after four rounds, with all Critical and
+  Important findings fixed. The agreed product placement is the existing
+  `docs/decisions/` folder; no separate `docs/contracts/` or
+  `docs/specifications/` convention exists. The record links to the canonical
+  system specification and acceptance criteria without duplicating their text.
+  This is contract approval, not H2 acceptance, source admission, legal
+  clearance or Runtime evidence.
+
 ## 2026-11-05
 
 * **H2 applicability applicator:** added `scripts/apply-applicability.ts`,
