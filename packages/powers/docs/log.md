@@ -2,6 +2,16 @@
 
 ## 2026-11-06
 
+* **Powers queue and retrieval acceptance actualized:** `next-actions.md`
+  revision 29 replaces the superseded 2026-11-02 open list with the current
+  H2-A2 / H2-D / H3-A / E5a-E5b / D19 / D16 / Stage 8 / external-Knip set,
+  records 884 pass, 4 skip, 0 fail, catalog revision 7,348, 100.00% functions
+  and lines, and the 2026-11-06 retrieval hardening. `acceptance.md` AC-69–AC-72
+  is re-bound to 68 recorded cases, one split-intent ambiguity case and
+  `--strict`. The now-unreachable pattern fallback in `catalog-cli.ts` was
+  removed; the coverage gate is green again. No acceptance state, installation
+  or Runtime claim changed.
+
 * **Retrieval ranking, ambiguity and strict bootstrap:** `catalogFindTags` now
   ranks exact/name/alias/description tiers, with more name tokens and an earlier
   tag-name token first; `resolveIntent` reports `confidence`, `runnerUp` and

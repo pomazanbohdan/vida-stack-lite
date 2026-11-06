@@ -24,7 +24,7 @@ sources:
   title: Vida Agent package — Bun package conventions
 generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:40:29Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '28'
+revision: '29'
 ---
 
 # Goal and boundaries
@@ -55,7 +55,67 @@ instruction separately authorizes Root to adopt the documents through
 `AGENT.sidecar.md` and `vida-project-profile.json`. Root AGENTS, runtime
 templates/configuration and native host delivery are outside this packet.
 
-## Current Powers task list after scope actualization (2026-11-02)
+## Open task list after the 2026-11-06 audit
+
+A0, A-D, F and the H0 baseline are closed for their bound inputs. H0
+documentation acceptance and `.69` native fixture parity remain open or
+unreconciled. H1 AC-59 is accepted, but AC-47–AC-58 remain open as
+source-admission and packet-sign-off criteria; this is not a code gap. E source
+and skills are implemented, but E5a/E5b host qualification remains open. F is
+closed as Standalone component-only, AC-22 remains partial/deferred, and donor
+update tracking is closed. The remaining Powers-owned work is:
+
+1. **H2-A2 — CSV semantic admission (active).** 99 of 1,434 UUPM rows are
+   admitted as `uupm-ux-*` instructions with delegated D18 receipts; 1,335 rows
+   remain deferred: 20 `ux-guidelines.csv` rows (8 Mobile-platform, 12
+   non-Mobile SPLIT candidates, including 2 held applicability), 44
+   `react-performance.csv` rows and 1,271 `stacks/*.csv` rows across 22 CSVs.
+   Before another batch, define the collapsed-duplicate rule for the
+   Mobile/SPLIT set and the tag/applicability decision for the stack rows. Done
+   when every row has a terminal disposition, admitted rows have instructions
+   and `H2FidelityReceipt/v1`, the applicator has run over the admitted batch,
+   and `check-corpus` proves row/cell coverage.
+2. **H2-D — H2 acceptance receipt and sign-off (blocked by H2-A2).** H2-B
+   coverage and H2-C Node evidence are closed; Deno is excluded. A bound
+   receipt must record the exact source, schemas, code, fixtures and map
+   hashes, plus test, corpus, coverage, typecheck, Knip, Node-runtime and
+   documentation results, and the owner must accept or reject H2.
+3. **H3-A — typed reference resources (gated by H2-D).** No H3 work is
+   authorized by the H2 approval.
+4. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
+   host installation, Muse first-party catalog digest, public metadata and
+   publication, and Runtime acceptance remain open. The `.54` fixtures are not
+   production outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline only.
+5. **D19 algorithm delegation implementation.** Policy READY; the offer and
+   scoped-preference path are not implemented. Existing human gates remain.
+6. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
+   not a prerequisite for the migrated corpus or the compact CLI. The frozen
+   40-ID trial stays v1.1-bound.
+7. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
+   deterministic catalog library, and a minimal scenario on at least two
+   compatible hosts.
+8. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
+   on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
+9. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
+   verified; they do not establish installation or Runtime acceptance.
+
+Closed or removed from the open set: A0; A-D; E1-E4 (E5 host qualification
+remains open); F (component-only, AC-22 partial/deferred); H0 baseline
+(documentation acceptance and `.69` fixture parity remain open/unreconciled);
+H1 AC-59 (accepted, but AC-47–AC-58 remain open); donor update tracking (all 8
+donors current, baseline 1,258 files); G (outside Powers).
+
+**Open acceptance gap (not active conversion):** H0 documentation acceptance and
+final native fixture parity on the eight `.69` Markdown paths remain described
+as open in `packages/powers/AGENTS.md`; `task-plan-step-h.md` closes only the H0
+baseline. Reconcile the two documents before claiming full H0 closure. F AC-22
+remains partial/deferred: no real finding event or semantic/equivalence
+acceptance is claimed. H1 AC-47–AC-58 remain open until per-source attribution,
+D18 panel/aggregation receipts and the delegated gate path are complete. AC-59
+accepts the 25-file pilot as the D18 baseline; it does not by itself authorize
+H1 conversion.
+
+## Historical task list (2026-11-02, superseded by the 2026-11-06 audit)
 
 1. **F workstream — closed (component-only)** — the owner accepted Powers
    Standalone component evidence on 2026-11-02. AC-22 remains partial/deferred;
@@ -252,11 +312,14 @@ Step H (D14/D15) is tracked as a separate owner-gated scope. H1 source admission
 
 These decisions set scope, not per-source admission. The owner approved the proposed 8/9/8 pilot set on 2026-11-03 for preparation only; it is not admitted. AC-47 to AC-58 stay open until per-source attribution, D18 panel/aggregation receipts and the delegated gate path exist. AC-59 was accepted by the owner on 2026-11-06. H1 preparation may proceed; dependent conversion stays blocked at each packet.
 
-**Step H current state (2026-11-06):** H1 AC-59 is accepted; the 25-file pilot is the accepted baseline for scaling the D18 admission method. The H2 contract is approved and tracked as [D56](decisions/D56-h2-contract.md). All 8 H2 Markdown families are admitted as source admission only, 98 instructions total. H2 implementation covers the v2 schemas, applicability, CSV intake, fidelity validation, CLI context flags and the applicator; Node runtime evidence is recorded and Deno is excluded by owner decision. The H2-B coverage gate is closed at 100% functions and lines. The H2-A source gate is closed: donor `uupm` is pinned at `56ea9cf1`, 24 CSVs are allowlisted and all 1,434 rows are mapped. 99 non-Mobile `KEEP_ATOMIC` UX rows are admitted as 99 instructions with delegated D18 receipts; the remaining 1,335 rows are deferred. CSV semantic admission for the remaining rows and H2 acceptance remain open. H3 remains gated by H2 acceptance. H2 does not inherit H1 acceptance.
+**Step H current state (2026-11-06):** H1 AC-59 is accepted; the 25-file pilot is the accepted baseline for scaling the D18 admission method. The H2 contract is approved and tracked as [D56](decisions/D56-h2-contract.md). All 8 H2 Markdown families are admitted as source admission only, 98 instructions total. H2 implementation covers the v2 schemas, applicability, CSV intake, fidelity validation, CLI context flags and the applicator; Node runtime evidence is recorded and Deno is excluded by owner decision. The H2-B coverage gate is closed at 100% functions and lines. The H2-A source gate is closed: donor `uupm` is pinned at `56ea9cf1`, 24 CSVs are allowlisted and all 1,434 rows are mapped. 99 non-Mobile `KEEP_ATOMIC` UX rows are admitted as 99 instructions with delegated D18 receipts; the remaining 1,335 rows are deferred. The next H2-A2 blockers are the Mobile/SPLIT collapsed-duplicate rule and the
+stack tag/applicability decisions. CSV semantic admission for the remaining rows
+and H2 acceptance remain open. H3 remains gated by H2 acceptance. H2 does not
+inherit H1 acceptance.
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-11-06):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 877 passed, four expected Windows skips, zero failures and native exit 0; strict typecheck passes 77 files; the corpus check reports 3,377 instructions and zero issues; catalog revision 7,347; corpus map 5,748; baseline 9 donors / 1,258 files; OKF reports 71 concepts with no failures or warnings. The coverage gate passes at 100.00% functions and 100.00% lines under the unchanged 1.0 threshold; H2-B is closed. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-11-06):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 884 passed, four expected Windows skips, zero failures and native exit 0; strict typecheck passes 77 files; the corpus check reports 3,377 instructions and zero issues; catalog revision 7,348; corpus map 5,748; baseline 9 donors / 1,258 files; OKF reports 71 concepts with no failures or warnings. The coverage gate passes at 100.00% functions and 100.00% lines under the unchanged 1.0 threshold; H2-B is closed. The 2026-11-06 retrieval hardening adds relevance-ranked `tags --query`, `confidence`/`runnerUp`/`patternSource`, an `ambiguous:` line, `search --for --strict` exit 3, a discovery-only note and English/Ukrainian requirements aliases; the benchmark holds 68 recorded cases plus one split-intent ambiguity case. These are component evidence only. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.
@@ -350,6 +413,18 @@ The owner refined the instruction-discovery workflow on 2026-10-26: vp-mode must
 The current derived design is RETRIEVAL-DESIGN-r3.md with VP-MODE-ROUTING-PROPOSAL-r3.md; the executable task plan is RETRIEVAL-IMPLEMENTATION-PLAN-r1.md, all under packages/powers/.tmp/panel/donor-migration-architecture-20261025/instruction-organization-20261026/implementation-r1/. These are implementation inputs, not replacements for canonical B/S. BR-24/SR-93 now reconcile the compact CLI projection while preserving the existing library APIs and frozen sample outputs.
 
 Current Source implements compact discovery, profile-aware search, approach selection and explanation, and compose-backed multi-ID text retrieval. The 598-test coverage gate, 24/24 metadata queries, corpus checks and real-corpus exercise are historical evidence for their bound inputs. The current reader and checker accept v1.2 only; all 2,510 catalog instructions have been migrated. The strict corpus check reports zero issues; AC-65–AC-69 and Runtime acceptance remain separate.
+
+**2026-11-06 retrieval hardening:** `tags --query` now ranks exact/name/alias/
+description matches and an earlier tag-name token; `resolveIntent` reports
+`confidence`, `runnerUp` and `patternSource`; `search --for` prints `ambiguous:`
+and labels a frequency pattern `(default for capability)`; `--strict` exits 3 on
+a weak or ambiguous resolution; unprofiled search prints `discovery only`; the
+pagination hint names `tags --query`. Catalog revision 7,348 adds English and
+Ukrainian requirements aliases and ADR/runbook aliases; `AGENT.sidecar.md`
+records the project retrieval chain. The benchmark now holds 68 recorded cases
+plus one split-intent ambiguity case; the package suite is 884 pass / 4 skip /
+0 fail with 100% functions and lines. AC-70–AC-72 evidence is reconciled in
+`acceptance.md`; installation and Runtime acceptance remain separate.
 
 On 2026-10-30 the same Source state records 659 passed with four expected Windows skips, zero failures and 693/693 functions plus 5,402/5,402 lines (seed 20261019); the 598-test receipt stays historical.
 
