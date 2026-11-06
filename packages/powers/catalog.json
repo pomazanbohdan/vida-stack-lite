@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7349,
+  "revision": 7350,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-06T00:00:00Z",
   "tag_dictionary": {
@@ -16316,6 +16316,226 @@
       "instruction_id": "use-version-history-to-find-the-regression",
       "path": "instructions/use-version-history-to-find-the-regression.md",
       "sha256": "c343972d9b5b8d290e4b069dde0b5d46a43435b52e2b51219c14c57b6d6861d3"
+    },
+    {
+      "instruction_id": "uupm-react-perf-activity-component",
+      "path": "instructions/uupm-react-perf-activity-component.md",
+      "sha256": "97b7e02d7abacd71bfd5d883df27a684226bc48614b89ecd0e6d269813be63f7"
+    },
+    {
+      "instruction_id": "uupm-react-perf-after-non-blocking",
+      "path": "instructions/uupm-react-perf-after-non-blocking.md",
+      "sha256": "afddc06918260d50534615cf05c1d57bc7287ee0708e0d73902c37e553fb1036"
+    },
+    {
+      "instruction_id": "uupm-react-perf-api-route-optimization",
+      "path": "instructions/uupm-react-perf-api-route-optimization.md",
+      "sha256": "3c714be88cd0a2598a980707255067deb264d6e5abbaf90ac18377f7228a043e"
+    },
+    {
+      "instruction_id": "uupm-react-perf-barrel-imports",
+      "path": "instructions/uupm-react-perf-barrel-imports.md",
+      "sha256": "df64128629b4d7178f5fdcc40455b509c5a88374759b721efbef6672908a07ff"
+    },
+    {
+      "instruction_id": "uupm-react-perf-batch-dom-css",
+      "path": "instructions/uupm-react-perf-batch-dom-css.md",
+      "sha256": "69031e5cff97459829795abfd86a411c8a61ae9bf056ac3847d32fa4b8bc564e"
+    },
+    {
+      "instruction_id": "uupm-react-perf-cache-function-results",
+      "path": "instructions/uupm-react-perf-cache-function-results.md",
+      "sha256": "3b9557e09d76bd92eae12e9a4ea7cbf207791aa83d149999ccc431879c9e625e"
+    },
+    {
+      "instruction_id": "uupm-react-perf-cache-property-access",
+      "path": "instructions/uupm-react-perf-cache-property-access.md",
+      "sha256": "a7e1d348b8410abd1672e8a89820ff29294f5dd075fc2f9be1a54db505e5e3c8"
+    },
+    {
+      "instruction_id": "uupm-react-perf-cache-storage-api",
+      "path": "instructions/uupm-react-perf-cache-storage-api.md",
+      "sha256": "c3976c91e4db2629f45e9d2b059db3e775f94e205b3d0a01be02189bb4225518"
+    },
+    {
+      "instruction_id": "uupm-react-perf-combine-iterations",
+      "path": "instructions/uupm-react-perf-combine-iterations.md",
+      "sha256": "ff050a59ed654b643a66b1debdbb18950b3a5161eacdc7a05dfabb733027dec5"
+    },
+    {
+      "instruction_id": "uupm-react-perf-conditional-loading",
+      "path": "instructions/uupm-react-perf-conditional-loading.md",
+      "sha256": "72cbc18858b99af555f3f3c5a3ad8a1d4e1cb4b00acc2cada2f35de48d8d7df3"
+    },
+    {
+      "instruction_id": "uupm-react-perf-conditional-render",
+      "path": "instructions/uupm-react-perf-conditional-render.md",
+      "sha256": "bd2231861d10006ca279d741b3dc4af7784e0d3e881ec63ac4aa3289079f7211"
+    },
+    {
+      "instruction_id": "uupm-react-perf-content-visibility",
+      "path": "instructions/uupm-react-perf-content-visibility.md",
+      "sha256": "79de4781b4a8da7790a982e1e44b4b9f68a0a389f013bc705bda87884ddea2e6"
+    },
+    {
+      "instruction_id": "uupm-react-perf-defer-await",
+      "path": "instructions/uupm-react-perf-defer-await.md",
+      "sha256": "7f4f57bd266c0e9038482a33ce86bc2ac79afa3174061b70d566442d5a0406d1"
+    },
+    {
+      "instruction_id": "uupm-react-perf-defer-state-reads",
+      "path": "instructions/uupm-react-perf-defer-state-reads.md",
+      "sha256": "384655028989da466e19c3ef29f60a02e04274bbba7dbd5c14914459b4ad39a9"
+    },
+    {
+      "instruction_id": "uupm-react-perf-defer-third-party",
+      "path": "instructions/uupm-react-perf-defer-third-party.md",
+      "sha256": "e8bfab81bb7ce87d71b38696145d8495400b928ff9b76b209343ef281b1281ce"
+    },
+    {
+      "instruction_id": "uupm-react-perf-dependency-parallelization",
+      "path": "instructions/uupm-react-perf-dependency-parallelization.md",
+      "sha256": "6df91b3e1132cd9fbd8a7c6f0d202dc0e74b9e257aa52d4585f5de5ca0077de4"
+    },
+    {
+      "instruction_id": "uupm-react-perf-derived-state",
+      "path": "instructions/uupm-react-perf-derived-state.md",
+      "sha256": "2d0080edeba8c76edae5970348652ff4d0563ace845c6bbd28552ce4efa6f352"
+    },
+    {
+      "instruction_id": "uupm-react-perf-dynamic-imports",
+      "path": "instructions/uupm-react-perf-dynamic-imports.md",
+      "sha256": "a9def3621323413528121f1759644f0eb5c43327eb5e05fb31683d9fb3681983"
+    },
+    {
+      "instruction_id": "uupm-react-perf-early-return",
+      "path": "instructions/uupm-react-perf-early-return.md",
+      "sha256": "ba7ac19abb585f54c1ba97e4ad5f278d111f0385a66698e2abab9d1ec335703b"
+    },
+    {
+      "instruction_id": "uupm-react-perf-effect-events",
+      "path": "instructions/uupm-react-perf-effect-events.md",
+      "sha256": "c081a9a7f0d7957313baf3c4a8cfe69e45e8b8a9580c62d9828b0d44e16cfee9"
+    },
+    {
+      "instruction_id": "uupm-react-perf-event-listener-dedup",
+      "path": "instructions/uupm-react-perf-event-listener-dedup.md",
+      "sha256": "aa980ee04d5a3ac5d95a4e5d4b49b3b60ff1445581b7ec0dc5b36d525001b1b8"
+    },
+    {
+      "instruction_id": "uupm-react-perf-functional-setstate",
+      "path": "instructions/uupm-react-perf-functional-setstate.md",
+      "sha256": "88084c3130757b22906914aed74adcf4cb3757c757e1958e1991b37c2bc164da"
+    },
+    {
+      "instruction_id": "uupm-react-perf-hoist-regexp",
+      "path": "instructions/uupm-react-perf-hoist-regexp.md",
+      "sha256": "811ecc32ee9e2eea37484c9016849fe242602521924808ea563af224d6bdc8ec"
+    },
+    {
+      "instruction_id": "uupm-react-perf-hoist-static-jsx",
+      "path": "instructions/uupm-react-perf-hoist-static-jsx.md",
+      "sha256": "ddfe6e512fa1584fc09b2b70a68afbc76cb33b2b808cd718e096fe06b7bd88ee"
+    },
+    {
+      "instruction_id": "uupm-react-perf-hydration-no-flicker",
+      "path": "instructions/uupm-react-perf-hydration-no-flicker.md",
+      "sha256": "aba99b754112e5a61ae7a689a054467bf757487030bc92ffa112511ee73125b5"
+    },
+    {
+      "instruction_id": "uupm-react-perf-index-map-lookup",
+      "path": "instructions/uupm-react-perf-index-map-lookup.md",
+      "sha256": "a7a93cce9a3c29ca273df5cbd241bdc9e6e32601123d283f6941fdfc12ccfe83"
+    },
+    {
+      "instruction_id": "uupm-react-perf-latest-value-refs",
+      "path": "instructions/uupm-react-perf-latest-value-refs.md",
+      "sha256": "2687f0b60c8206d83b86ace36e88477a4a3f593f504dd8b5af75308413ada394"
+    },
+    {
+      "instruction_id": "uupm-react-perf-lazy-state-init",
+      "path": "instructions/uupm-react-perf-lazy-state-init.md",
+      "sha256": "d90f2b226ea649fc5179560d8d45ea02c4c101d99dfb4b731b232007258f18fc"
+    },
+    {
+      "instruction_id": "uupm-react-perf-length-check-first",
+      "path": "instructions/uupm-react-perf-length-check-first.md",
+      "sha256": "0d16a390334082f55665653b1f5c77ccf815b6985eaa8b37e3387a7c9f595ea2"
+    },
+    {
+      "instruction_id": "uupm-react-perf-loop-min-max",
+      "path": "instructions/uupm-react-perf-loop-min-max.md",
+      "sha256": "ff4cd40cee5d326e74d1f48c548ed1afa5c838a6c976a0a01e865b2f761001b3"
+    },
+    {
+      "instruction_id": "uupm-react-perf-lru-cache-cross-request",
+      "path": "instructions/uupm-react-perf-lru-cache-cross-request.md",
+      "sha256": "b4c1a4de40075235e4e30c35f75b42f2707c861c1be42f6fd3cc519af697a7e5"
+    },
+    {
+      "instruction_id": "uupm-react-perf-memoized-components",
+      "path": "instructions/uupm-react-perf-memoized-components.md",
+      "sha256": "f45b20bc76669817f28bb7672e448801da517f4caedc3917565649c67fbdbb47"
+    },
+    {
+      "instruction_id": "uupm-react-perf-minimize-serialization",
+      "path": "instructions/uupm-react-perf-minimize-serialization.md",
+      "sha256": "06f85ccf68a018bd63b6a4e719e227aaaa6793f031e10d4e880f92eb0364c2f7"
+    },
+    {
+      "instruction_id": "uupm-react-perf-narrow-dependencies",
+      "path": "instructions/uupm-react-perf-narrow-dependencies.md",
+      "sha256": "67ac2f5643fcf98d0588cdc5ba2546357873a42d103601bca613a83e37eaf346"
+    },
+    {
+      "instruction_id": "uupm-react-perf-parallel-fetching",
+      "path": "instructions/uupm-react-perf-parallel-fetching.md",
+      "sha256": "1c7863138a17d206754ceaecebcdadf5607b3be2a5e7382c02be5da319a96ff7"
+    },
+    {
+      "instruction_id": "uupm-react-perf-preload-intent",
+      "path": "instructions/uupm-react-perf-preload-intent.md",
+      "sha256": "39cb567fa5412124b743f1fe59520c3025e383cf8d3a5343a3777c2a61a3299c"
+    },
+    {
+      "instruction_id": "uupm-react-perf-promise-all-parallel",
+      "path": "instructions/uupm-react-perf-promise-all-parallel.md",
+      "sha256": "c5a4f8f6467eec9d1905b66bc6baa55ae599d8c243872d1c4703ae5e99b64f5f"
+    },
+    {
+      "instruction_id": "uupm-react-perf-react-cache-dedup",
+      "path": "instructions/uupm-react-perf-react-cache-dedup.md",
+      "sha256": "9ad9ca20a5249b19b41c93c15c5abbb097cfa05a25571a9396de11d7c14a3ede"
+    },
+    {
+      "instruction_id": "uupm-react-perf-set-map-lookups",
+      "path": "instructions/uupm-react-perf-set-map-lookups.md",
+      "sha256": "ac124f177df8a896be442f34383ad43d76cd1704b97112646680cddc8ceca2fb"
+    },
+    {
+      "instruction_id": "uupm-react-perf-suspense-boundaries",
+      "path": "instructions/uupm-react-perf-suspense-boundaries.md",
+      "sha256": "56d036fad9557589d905cd8802366587aeaf8fdbe31eb3814305b03039854301"
+    },
+    {
+      "instruction_id": "uupm-react-perf-svg-animation-wrapper",
+      "path": "instructions/uupm-react-perf-svg-animation-wrapper.md",
+      "sha256": "22f8b3d830a324b9930d2200f829dcd6abc7c43a6118cc9ce9712e2c84a3d068"
+    },
+    {
+      "instruction_id": "uupm-react-perf-swr-deduplication",
+      "path": "instructions/uupm-react-perf-swr-deduplication.md",
+      "sha256": "b7334223d5957bae1a2c59e5d9095b3fd639da8fd15dee034bbfe21861dfa84f"
+    },
+    {
+      "instruction_id": "uupm-react-perf-tosorted-immutable",
+      "path": "instructions/uupm-react-perf-tosorted-immutable.md",
+      "sha256": "412ad4a3a23930cd7c1bea024265792579d2ed321de44ced19027c1f908be0a8"
+    },
+    {
+      "instruction_id": "uupm-react-perf-transitions",
+      "path": "instructions/uupm-react-perf-transitions.md",
+      "sha256": "856ecc2b25dc963bcd5c5d38a5fd06ff5d5d6b615009389c176dae4836be6aec"
     },
     {
       "instruction_id": "uupm-ux-active-state",

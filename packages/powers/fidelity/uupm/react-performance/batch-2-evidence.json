@@ -1,0 +1,182 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "path": "react-performance.csv",
+    "rawSha256": "3d925802539abac5afeb63ae8aa1960b7229ad271b3a47caed40ab2d97ad0734"
+  },
+  "batch": "batch-2",
+  "aggregation": {
+    "verdict": "READY",
+    "rows": 19,
+    "critical": 0,
+    "important": 0,
+    "minor": 2
+  },
+  "findings": [
+    "Minor: core-web-vitals is a coarse fit for JS Perf/Advanced rows; it is the nearest existing pattern tag.",
+    "Minor: critical-render-path is a moderate fit for Rendering rows; keep as the nearest category tag."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-react-perf-content-visibility",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=d7907b5574552b411fe7f2719776a63f17efe68947344b48d19d9eab27f43cbc",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category."
+    },
+    {
+      "instructionId": "uupm-react-perf-hoist-static-jsx",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=97c63cff4006746a2f8062456eb0bb49b98ab65efac8070eec8b9369a6c6e2c1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category."
+    },
+    {
+      "instructionId": "uupm-react-perf-hydration-no-flicker",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=0ac70205ba503acf4fa366e2a7cf6d3e4a450fd0c350d6dca8b7cca240ab9f86",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category."
+    },
+    {
+      "instructionId": "uupm-react-perf-conditional-render",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=f9819f9302d1b501e793d2ee8df7e37db2d4567edecca8e0f921719af4856660",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category."
+    },
+    {
+      "instructionId": "uupm-react-perf-activity-component",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=b49dea168e42814c9e351ffe1e43ebc6b39d2116b3b80071034e3528f448b5b0",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category."
+    },
+    {
+      "instructionId": "uupm-react-perf-batch-dom-css",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=d63680bd0e4aa21b3ac6c6983f0cce2b2f346172f976aa7bea523a324f3bbd3b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-index-map-lookup",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=bd7d775cf11bb6a5d530f5c1a0a04c10e13c5de37f5a70a5e0c12f280afd50ea",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-cache-property-access",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=9c5c7768f22a107ab93a4ac488510b8a474042cc0737c9a02098aa2043f24e35",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-cache-function-results",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=339f66e202aa2bb3fd117eda66bae05a054146f7ed1bbba6b3a4a38be42774de",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-cache-storage-api",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=14e733fd97b646bbdea6cccc717182e6a7571efca5eed04db8a5b9b43faecf82",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-combine-iterations",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=1e1529f415a9a029dff199806ca0476af66061084616b778d774f0d5e287e40e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-length-check-first",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=dbb53ed0f974162d83ea297da2daa9b4e86cba744f41d95802aea7a29d7c20e1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-early-return",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=10fd17f2a073fc1f3db499ef67afbf7987d40207510a84899c2f273d465a1bca",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-hoist-regexp",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=68ebe1ed168a3667b2a57f7b05bf8627119af2e98b5318b23147c689d2abfd5f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-loop-min-max",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=33ff3869177fd3c7323b287399f1a181670b8d9bbaceb06b68e363e3de645bcb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-set-map-lookups",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=57cd043941e9e1f126851ceffe94d82d1f064c61aa7b5f803e7e56874b7c6ab7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-tosorted-immutable",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=7bddc5c976e1fe6d77cdb46c5ebf11ed020757e6dd873e0f1f865f24724c7431",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-effect-events",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=c8a10a31398877b5723fbec7f4d2cf6a961c46081f37950e9e0262c94cb8e4bc",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    },
+    {
+      "instructionId": "uupm-react-perf-latest-value-refs",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=a7f2cfa7717e00a431e84afea51bdb5a8d8a76d3ade42ab1ed2c4064a945b9be",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Nearest existing performance pattern tag for the source category; no new tag was created."
+    }
+  ],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

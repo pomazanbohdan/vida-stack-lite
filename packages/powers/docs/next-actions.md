@@ -65,19 +65,18 @@ and skills are implemented, but E5a/E5b host qualification remains open. F is
 closed as Standalone component-only, AC-22 remains partial/deferred, and donor
 update tracking is closed. The remaining Powers-owned work is:
 
-1. **H2-A2 — CSV semantic admission (active).** 106 of 1,434 UUPM rows are
-   admitted as `uupm-ux-*` instructions with delegated D18 receipts; 1,328 rows
-   remain deferred: 1 held Mobile row (`Touch Target Size`, SR-82
-   applicability), 12 non-Mobile `ux-guidelines.csv` rows (11 SPLIT candidates
-   plus 1 held `Readable Font Size`), 44 `react-performance.csv` rows and 1,271
-   `stacks/*.csv` rows across 22 CSVs. The 7 KEEP_ATOMIC Mobile rows are
-   admitted; the collapsed-duplicate rule is resolved (no semantic merge where
-   the normative cells differ). Next, resolve the held Mobile applicability,
-   split the 11 non-Mobile rows, resolve the held font-size applicability, and
-   decide the stack tag/applicability treatment. Done when every row has a
-   terminal disposition, admitted rows have instructions and
-   `H2FidelityReceipt/v1`, the applicator has run over the admitted batch, and
-   `check-corpus` proves row/cell coverage.
+1. **H2-A2 — CSV semantic admission (active).** 150 of 1,434 UUPM rows are
+   admitted as `uupm-*` instructions with delegated D18 receipts; 1,284 rows
+   remain deferred: 11 SPLIT `ux-guidelines.csv` rows, 2 held UX rows
+   (`Touch Target Size`, `Readable Font Size`) and 1,271 `stacks/*.csv` rows
+   across 22 CSVs. The 7 KEEP_ATOMIC Mobile rows and the 44 `react-performance`
+   KEEP_ATOMIC rows are admitted. Next, resolve the held applicability, decide
+   the SPLIT-row contract extension (the current receipt binds whole cells, not
+   subspans), qualify the 116 KEEP_ATOMIC stack rows already dispositioned in
+   `react.csv` and `react-native.csv`, and disposition the remaining 1,154 stack
+   rows. Done when every row has a terminal disposition, admitted rows have
+   instructions and `H2FidelityReceipt/v1`, the applicator has run over the
+   admitted batch, and `check-corpus` proves row/cell coverage.
 2. **H2-D — H2 acceptance receipt and sign-off (blocked by H2-A2).** H2-B
    coverage and H2-C Node evidence are closed; Deno is excluded. A bound
    receipt must record the exact source, schemas, code, fixtures and map
@@ -315,11 +314,11 @@ Step H (D14/D15) is tracked as a separate owner-gated scope. H1 source admission
 
 These decisions set scope, not per-source admission. The owner approved the proposed 8/9/8 pilot set on 2026-11-03 for preparation only; it is not admitted. AC-47 to AC-58 stay open until per-source attribution, D18 panel/aggregation receipts and the delegated gate path exist. AC-59 was accepted by the owner on 2026-11-06. H1 preparation may proceed; dependent conversion stays blocked at each packet.
 
-**Step H current state (2026-11-06):** H1 AC-59 is accepted; the 25-file pilot is the accepted baseline for scaling the D18 admission method. The H2 contract is approved and tracked as [D56](decisions/D56-h2-contract.md). All 8 H2 Markdown families are admitted as source admission only, 98 instructions total. H2 implementation covers the v2 schemas, applicability, CSV intake, fidelity validation, CLI context flags and the applicator; Node runtime evidence is recorded and Deno is excluded by owner decision. The H2-B coverage gate is closed at 100% functions and lines. The H2-A source gate is closed: donor `uupm` is pinned at `56ea9cf1`, 24 CSVs are allowlisted and all 1,434 rows are mapped. 106 UX rows are admitted (99 non-Mobile `KEEP_ATOMIC` plus 7 KEEP_ATOMIC Mobile rows) as 106 instructions with delegated D18 receipts; the remaining 1,328 rows are deferred. `Touch Target Size` is held for SR-82 applicability and `Readable Font Size` is held for its All-vs-Mobile conflict. The next H2-A2 work is the held applicability resolution, the 11 non-Mobile SPLIT rows and the stack tag/applicability decisions. CSV semantic admission for the remaining rows and H2 acceptance remain open. H3 remains gated by H2 acceptance. H2 does not inherit H1 acceptance.
+**Step H current state (2026-11-06):** H1 AC-59 is accepted; the 25-file pilot is the accepted baseline for scaling the D18 admission method. The H2 contract is approved and tracked as [D56](decisions/D56-h2-contract.md). All 8 H2 Markdown families are admitted as source admission only, 98 instructions total. H2 implementation covers the v2 schemas, applicability, CSV intake, fidelity validation, CLI context flags and the applicator; Node runtime evidence is recorded and Deno is excluded by owner decision. The H2-B coverage gate is closed at 100% functions and lines. The H2-A source gate is closed: donor `uupm` is pinned at `56ea9cf1`, 24 CSVs are allowlisted and all 1,434 rows are mapped. 150 UX/performance rows are admitted (99 non-Mobile KEEP_ATOMIC, 7 Mobile KEEP_ATOMIC and 44 react-performance KEEP_ATOMIC) with 150 instructions and delegated D18 receipts; the remaining 1,284 rows are deferred. `Touch Target Size` and `Readable Font Size` are held for applicability; the 11 SPLIT UX rows need a subspan-aware receipt contract extension; 1,271 stack rows remain, including 116 KEEP_ATOMIC rows already dispositioned in `react.csv` and `react-native.csv`. CSV semantic admission for the remaining rows and H2 acceptance remain open. H3 remains gated by H2 acceptance. H2 does not inherit H1 acceptance.
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-11-06):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 884 passed, four expected Windows skips, zero failures and native exit 0; strict typecheck passes 77 files; the corpus check reports 3,384 instructions and zero issues; catalog revision 7,349; corpus map 5,749; baseline 9 donors / 1,258 files; OKF reports 71 concepts with no failures or warnings. The coverage gate passes at 100.00% functions and 100.00% lines under the unchanged 1.0 threshold; H2-B is closed. The 2026-11-06 retrieval hardening adds relevance-ranked `tags --query`, `confidence`/`runnerUp`/`patternSource`, an `ambiguous:` line, `search --for --strict` exit 3, a discovery-only note and English/Ukrainian requirements aliases; the benchmark holds 68 recorded cases plus one split-intent ambiguity case. The H2-A2 Mobile batch adds 7 admitted KEEP_ATOMIC instructions and 7 delegated receipts after three SWE-2 protocol reviews (0 Critical / 0 Important); `Touch Target Size` is held for SR-82 applicability. These are component evidence only. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-11-06):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 884 passed, four expected Windows skips, zero failures and native exit 0; strict typecheck passes 77 files; the corpus check reports 3,428 instructions and zero issues; catalog revision 7,350; corpus map 5,750; baseline 9 donors / 1,258 files; OKF reports 71 concepts with no failures or warnings. The coverage gate passes at 100.00% functions and 100.00% lines under the unchanged 1.0 threshold; H2-B is closed. The 2026-11-06 retrieval hardening adds relevance-ranked `tags --query`, `confidence`/`runnerUp`/`patternSource`, an `ambiguous:` line, `search --for --strict` exit 3, a discovery-only note and English/Ukrainian requirements aliases; the benchmark holds 68 recorded cases plus one split-intent ambiguity case. The H2-A2 Mobile batch adds 7 KEEP_ATOMIC instructions and 7 delegated receipts after three SWE-2 protocol reviews; `Touch Target Size` is held for SR-82 applicability. The `react-performance` batch adds 44 KEEP_ATOMIC instructions and 44 delegated receipts after two SWE-2 reviews (0 Critical / 0 Important). These are component evidence only. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.

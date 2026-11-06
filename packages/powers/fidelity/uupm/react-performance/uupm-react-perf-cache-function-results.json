@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-react-perf-cache-function-results",
+  "source": {
+    "donor": "uupm",
+    "path": "react-performance.csv",
+    "rowKey": "path=react-performance.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=339f66e202aa2bb3fd117eda66bae05a054146f7ed1bbba6b3a4a38be42774de",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "35d2deeaccc4d4d766d32f64b978fec65a0502ea3b662aa80f194147f35afaa1",
+        "locator": {
+          "line": 35,
+          "row": 34,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 35,
+            "row": 34,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "731698eb5e9cfb23ae7cf6b991dd1f8ac25e4d131907b6645c5f3d6c5550bbfd",
+        "locator": {
+          "line": 35,
+          "row": 34,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 35,
+            "row": 34,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "090f417967e47004d76073df9fa01f8a7a5bfe01bd237f8ea691cf8de110d854",
+        "locator": {
+          "line": 35,
+          "row": 34,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 35,
+            "row": 34,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "1dcb9f7423c8c0337158488e0b6bb0959f0633c1e1c9143ce42eb68ac1070e44",
+        "locator": {
+          "line": 35,
+          "row": 34,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 35,
+            "row": 34,
+            "column": 8
+          }
+        ]
+      },
+      {
+        "columnIndex": 8,
+        "cellHash": "9740cc0538b8781aff3c9d4a6abd48f1238f11e2e729c8bfa28c61aa29cc5fcd",
+        "locator": {
+          "line": 35,
+          "row": 34,
+          "column": 9
+        },
+        "locators": [
+          {
+            "line": 35,
+            "row": 34,
+            "column": 9
+          }
+        ]
+      },
+      {
+        "columnIndex": 9,
+        "cellHash": "6eb6eb3b4fac201e1f29158ef4d769bbaef1df3623094b4505c2cbe024bc3ee7",
+        "locator": {
+          "line": 35,
+          "row": 34,
+          "column": 10
+        },
+        "locators": [
+          {
+            "line": 35,
+            "row": 34,
+            "column": 10
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/react-performance/batch-2-evidence.json",
+    "sha256": "3b38101bb97c2f531273077bf2a0519325b80a239b74aee6b1e3acee3b369bbf"
+  },
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

@@ -2,6 +2,16 @@
 
 ## 2026-11-06
 
+* **H2-A2 react-performance batch admitted:** 44 KEEP_ATOMIC
+  `react-performance.csv` rows are admitted as `uupm-react-perf-*` instructions
+  with 44 delegated `H2FidelityReceipt/v1` files and two SWE-2 batch evidence
+  records. Both reviews returned READY, 0 Critical / 0 Important; the only
+  findings are coarse existing pattern tags and one reviewer-recommended
+  `lru-cache-cross-request` retag to `cache-layering`. Catalog revision 7,350;
+  corpus map 5,750; corpus 3,428 instructions; `check-corpus` and `check-vector`
+  pass. 1,284 CSV rows remain deferred (11 SPLIT UX, 2 held UX, 1,271 stack).
+  No H2 acceptance, source admission or Runtime claim changed.
+
 * **H2-A2 Mobile batch admitted:** 7 KEEP_ATOMIC deferred Mobile
   `ux-guidelines` rows are admitted as `uupm-ux-*` instructions with 7 delegated
   `H2FidelityReceipt/v1` files. Three blind SWE-2 protocols (V3 Delphi, V2
