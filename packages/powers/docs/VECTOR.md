@@ -112,7 +112,7 @@ product-owner default and cannot override `user_decision: true`.
 | 4 | addy-skills | `aeac41d4d005999432bb7312f7ff06383a91d59d` → `301b02b12bff98e4688e6984af6556802322bbde` | 392 | 10 | 0 | 14 eval files rejected | 2,524 / 2,791 / 1,200 | engineering; documentation |
 | 5 | gsd-core | `19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005` → `bfab82492374a847a01417707a1a38e9e7cf097e` | 1,343 | 6 | 5 | 25 new candidates; 212 packaging/translation docs rejected; 22 stale map records removed | 2,529 / 3,008 / 1,202 | engineering; operations; documentation |
 | 6 | wondelai-skills | `c172996495bed0fcd26896a9416b2093fd7073f0` | 0 | 0 | 749 | 25-file H1 pilot + 31 next-batch files applied; 30 journey files excluded; 0 candidates pending H1 selection | 3,278 / 3,429 / 1,258 | engineering; product/design; business |
-| 7 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 25 | 25 UX-guideline instructions admitted from 1,434 CSV rows; 1,409 deferred; delegated D18 receipts | 3,303 / 3,429 / 1,258 | engineering; product/design; documentation |
+| 7 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 99 | 99 UX-guideline instructions admitted from 1,434 CSV rows; 1,335 deferred; delegated D18 receipts | 3,377 / 3,429 / 1,258 | engineering; product/design; documentation |
 
 Legend: result = corpus instructions / map records / baseline files.
 

@@ -1,0 +1,186 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "D18 three-protocol delegated review",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:opencode",
+    "model": "opencode-go/deepseek-v4.1-flash"
+  },
+  "source": {
+    "donor": "uupm",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "path": "ux-guidelines.csv",
+    "rawSha256": "ff81ec613f70ba9fc3fcce52dbe4ae35d44b2079dbe6dc066d2d6e38c28facd5"
+  },
+  "rows": [
+    {
+      "instructionId": "uupm-ux-placeholder-content",
+      "sourceRowOrdinal": 87,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=56a5ef3a105e1feeb8fbb6680bba904f8552a60c8d39f6113096734ccf73ffd2",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-user-freedom",
+      "sourceRowOrdinal": 88,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=afaa14c3a709c06d31c865b6091b907b938509e6f63c5eb1c28b5d34670c9461",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-autocomplete",
+      "sourceRowOrdinal": 89,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b941ac1d4058e62336972aee0fd2b7b2091023b4ad8443486445b54fbf8dfa7e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-no-results",
+      "sourceRowOrdinal": 90,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=e90cb672c74831d8daf8cbbca5ce17ef6268a88d770747c7fc19d6d930fa19f7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-bulk-actions",
+      "sourceRowOrdinal": 91,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=57697498ea623dc21e2f7089bdefbe01b819dbc58ae27ed0ef0efab346a5a9e7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-disclaimer",
+      "sourceRowOrdinal": 92,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=5cde11a1209bf75780d256f128cc50f92dffe1725b65214c92900dbd751934c1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-streaming",
+      "sourceRowOrdinal": 93,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=0a97921ba906488acc8b186ccdaec5a67b9758b56ddce0450dc8a4bbf4c908c9",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-gaze-hover",
+      "sourceRowOrdinal": 94,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=f2695cc3051b3a702c589894a5f52f0a452a30b51b1f5f00739f5e4d51ee23fe",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-depth-layering",
+      "sourceRowOrdinal": 95,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b5a13d27eb725434f8948e0f3fad6ac5d0e842a90e3a7e090f5e11793eb575d2",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-feedback-loop",
+      "sourceRowOrdinal": 98,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=302e95a58aaaecd648a9229d7a9c7ddf6709937a1e96e8425d2e9632504cd79a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-motion-sensitivity",
+      "sourceRowOrdinal": 99,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=723b176d337f25ccbf4b04a4bea2b2a610cb5fc459e6d04454fa05310459c9b9",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-focus-not-obscured-enhanced",
+      "sourceRowOrdinal": 101,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=513453dc6687a94eee0f98519eef41307f926f7a1a05c59628901d5d07e66a4f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-focus-appearance",
+      "sourceRowOrdinal": 102,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=18eaa899744ac9d8cee88b617897c216d5adaa361a32d3b362c1d194fb6c9fe2",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-target-size-minimum",
+      "sourceRowOrdinal": 104,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=e7a2ee4b880da1317d40fb18f3508bbe23971e39da063ef90f9b6506ef1df8cf",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-consistent-help",
+      "sourceRowOrdinal": 105,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=219393ed148334acff7f0ee7cc842f2a1ca1dcce6f12ce16583d6215dcee4baa",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-redundant-entry",
+      "sourceRowOrdinal": 106,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=8c13e6c8702f89a9203b8caa915d6bec4e5b90159fa01b7c813610c31f165f5d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-long-token-wrapping",
+      "sourceRowOrdinal": 111,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=1022a3e83a9472a71df1349fb31e99f1ae582cea85b5fa07f61ea035efbbdbb6",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-text-reflow-and-spacing",
+      "sourceRowOrdinal": 112,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=10e24d6fe7bc66482e63c4894fdd8136d50aeb5f91afa42919a95e7b68326e1f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-essential-text-truncation",
+      "sourceRowOrdinal": 113,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=c8711ad04023169e4fb49a2e0de89e229f80df79a34bd4ec01994f2d2ee4a874",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-compact-label-semantics",
+      "sourceRowOrdinal": 114,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=d6d0bdfa17ed04b663aca35c5698bdf0ef59a75babc786ebb19456036290e1d7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-chip-collection-reflow",
+      "sourceRowOrdinal": 115,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=7c6ce64238971e099ac61600c13d58cd296ced60e78c6e9038b2ec178ab40671",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-compact-control-semantics",
+      "sourceRowOrdinal": 117,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=1eb6028a8d88d9b0e6648a2540b5996b3e57d5fd7ce68344d48bb0910906942d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-contextual-live-badge-updates",
+      "sourceRowOrdinal": 118,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=36b110d47388136b5718f1d5a67915cc48f07b07388c75667a4296ee9d5235bb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-ux-cancellable-state-transitions",
+      "sourceRowOrdinal": 119,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=461eb3bde5703d35ee533f3cbadcdc1082748c7dbbb996ad251cfdb75cc1c54e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context."
+    }
+  ],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}
