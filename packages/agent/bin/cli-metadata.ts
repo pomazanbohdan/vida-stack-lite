@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { readCliErrorProperty } from './cli-error-properties.ts';
 import { installerProtectedFiles, standaloneDiscoveryFiles } from '../tooling/maintained-source-inventory.ts';
 export { installerProtectedFiles, standaloneDiscoveryFiles };
 import {
@@ -352,9 +353,14 @@ function cliErrorMessage(error: unknown) {
   return 'Unknown CLI error.';
 }
 
-export const cliErrorResult = (error: unknown) => ({
-  schema: 'VidaAgentCommandResult/v1',
-  status: 'blocked',
-  code: 'GAP-VIDA-CLI-001',
-  message: cliErrorMessage(error),
-});
+export const cliErrorResult = (error: unknown) => {
+  const code = readCliErrorProperty(error, 'cliCode');
+  const details = readCliErrorProperty(error, 'details');
+  return {
+    schema: 'VidaAgentCommandResult/v1',
+    status: 'blocked',
+    code: typeof code === 'string' && code === 'INSTRUCTION_NOT_FOUND' ? code : 'GAP-VIDA-CLI-001',
+    message: cliErrorMessage(error),
+    ...(details === undefined ? {} : { details }),
+  };
+};

@@ -516,7 +516,10 @@ prerequisites. Native delivery binds the complete selected artifact, declared ta
 formation provenance. Task behavior is verified in development, not at installation.
 
 The PATH command preserves supported public commands, aliases, arguments, exit
-behavior and `vida-agent instructions --path NAME`. Immutable embedded schemas,
+behavior and `vida-agent instructions --path NAME`. A missing or misspelled
+instruction name fails closed with `INSTRUCTION_NOT_FOUND`, lists the valid
+instruction names and, when one is close, the nearest name; it does not expose a
+raw filesystem error. Immutable embedded schemas,
 templates, instructions and native/WASM resources materialize when physical paths
 are required into a private cache bound to the product version and exact payload.
 Unsafe paths, partial publication, tampering and conflicting materialization fail

@@ -76,6 +76,19 @@ test('public CLI main preserves local exit state for metadata and returns bounde
         expect(stdout).toEqual([]);
         expect(JSON.parse(stderr.join(''))).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'blocked' });
       }
+      stdout.length = 0;
+      stderr.length = 0;
+      const missing: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
+      publicCliMain({ args: ['instructions', '--path', 'developmnt-lifecycle'], exit: missing });
+      expect(missing.exitCode).toBe(1);
+      expect(stdout).toEqual([]);
+      const missingResult = JSON.parse(stderr.join('')) as {
+        code: string;
+        details: { instructions: string[]; nearest?: string };
+      };
+      expect(missingResult.code).toBe('INSTRUCTION_NOT_FOUND');
+      expect(missingResult.details.instructions).toContain('development-lifecycle');
+      expect(missingResult.details.nearest).toBe('development-lifecycle');
     } finally {
       stderrSpy.mockRestore();
     }
