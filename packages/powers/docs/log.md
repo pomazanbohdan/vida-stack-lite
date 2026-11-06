@@ -69,6 +69,16 @@
   This closes the H2-A source gate and row coverage, not CSV semantic admission,
   H2 acceptance or Runtime acceptance.
 
+* **H2-A2 UUPM UX batches 2-4:** admitted the remaining 74 non-Mobile
+  `KEEP_ATOMIC` rows from `ux-guidelines.csv` in three batches, bringing the UX
+  total to **99 instructions**. Each new instruction has a delegated
+  `H2FidelityReceipt/v1` and a map binding covering every normative cell. The
+  evidence files are `pilot-evidence-2.json`, `pilot-evidence-3.json` and
+  `pilot-evidence-4.json`; catalog revision 7,347; corpus map revision 5,748;
+  `check-corpus` reports 0 issues over 3,377 instructions. The remaining 1,335
+  rows are deferred: 7 Mobile UX rows, 12 SPLIT UX rows, 2 held applicability
+  rows and 1,154 stack rows. H2 acceptance remains open.
+
 * **H2-A2 UUPM UX pilot admitted:** admitted 25 `ux-guidelines.csv` rows as
   `uupm-ux-*` instructions. Each instruction preserves the normative title,
   description, direction, exception, examples, platform and severity; each has

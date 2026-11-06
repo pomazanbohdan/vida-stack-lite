@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7344,
+  "revision": 7347,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-06T00:00:00Z",
   "tag_dictionary": {
@@ -16311,9 +16311,99 @@
       "sha256": "1ef2179c5f78b43e992ab38b12c729089f91b0e1022e68d8a99dc2e1b9fbeae3"
     },
     {
+      "instruction_id": "uupm-ux-alt-text",
+      "path": "instructions/uupm-ux-alt-text.md",
+      "sha256": "9d1c171ce23eec3a5758f1e3a4d3fcff21f79f74b1f6ecc5a951f8b1348a0e2d"
+    },
+    {
+      "instruction_id": "uupm-ux-aria-labels",
+      "path": "instructions/uupm-ux-aria-labels.md",
+      "sha256": "463515cdf5cc0e4c75ed0e610adb122fc0ded9b0e637b2e2f4c7829ef761c724"
+    },
+    {
+      "instruction_id": "uupm-ux-autocomplete",
+      "path": "instructions/uupm-ux-autocomplete.md",
+      "sha256": "9d3630ff03166d06ccbb70f259ce513e251dcfe98098bc1253788fa4fba17e89"
+    },
+    {
+      "instruction_id": "uupm-ux-autofill-support",
+      "path": "instructions/uupm-ux-autofill-support.md",
+      "sha256": "3d54297d7e898fbf9ec063f9a4607cea82ac8d4b7a5e03462955bc0706231dfc"
+    },
+    {
       "instruction_id": "uupm-ux-breadcrumbs",
       "path": "instructions/uupm-ux-breadcrumbs.md",
       "sha256": "e145b5089b1559b1fe80e312e41c048b86951bdaf2a584a83d7012c47a43fae6"
+    },
+    {
+      "instruction_id": "uupm-ux-breakpoint-testing",
+      "path": "instructions/uupm-ux-breakpoint-testing.md",
+      "sha256": "97c91ff1355b3b74f2fcaede05dbbaaf0273e5ac8bded8e7a4d16712cec6f648"
+    },
+    {
+      "instruction_id": "uupm-ux-bulk-actions",
+      "path": "instructions/uupm-ux-bulk-actions.md",
+      "sha256": "90ffc1e28bbcb6683291a003f57834101d5464be1d7439b68ff0dcdb588b7c96"
+    },
+    {
+      "instruction_id": "uupm-ux-bundle-size",
+      "path": "instructions/uupm-ux-bundle-size.md",
+      "sha256": "5cac028bd463eeeaa0715dbdbba9fccbec197f2cb0a8f80a34c09ca5cba898e7"
+    },
+    {
+      "instruction_id": "uupm-ux-caching",
+      "path": "instructions/uupm-ux-caching.md",
+      "sha256": "b4fab55202ec4af6ce7aa2f6904593de5c9e7e6f8243e545b78b750e44b0a30b"
+    },
+    {
+      "instruction_id": "uupm-ux-cancellable-state-transitions",
+      "path": "instructions/uupm-ux-cancellable-state-transitions.md",
+      "sha256": "5aa58e2bc4252cc9d0337ba9070a42f5caf0cda8e406aeb47bb470033f7a0e9f"
+    },
+    {
+      "instruction_id": "uupm-ux-chip-collection-reflow",
+      "path": "instructions/uupm-ux-chip-collection-reflow.md",
+      "sha256": "18a583e0458a8af022fce62da55e041f017dfe4510205b598f47e2a4797d1f8d"
+    },
+    {
+      "instruction_id": "uupm-ux-code-splitting",
+      "path": "instructions/uupm-ux-code-splitting.md",
+      "sha256": "2623adf340576be6c9b891a009c2efed8569219b1dea6c1599b7329b05ca6415"
+    },
+    {
+      "instruction_id": "uupm-ux-color-contrast",
+      "path": "instructions/uupm-ux-color-contrast.md",
+      "sha256": "3a1bad290cdeaba1ff89c278688fb6f9ec501d4f35fb44630bfaf7d6c1e85132"
+    },
+    {
+      "instruction_id": "uupm-ux-color-only",
+      "path": "instructions/uupm-ux-color-only.md",
+      "sha256": "b3dbeb1e313c124926be78bb300306b13e4bb013a704e286d57d64dbbc7ef8d7"
+    },
+    {
+      "instruction_id": "uupm-ux-compact-control-semantics",
+      "path": "instructions/uupm-ux-compact-control-semantics.md",
+      "sha256": "49a63a106ebbbc27245b12a41595da1fecd3d5c62326f049597ece63a81b0650"
+    },
+    {
+      "instruction_id": "uupm-ux-compact-label-semantics",
+      "path": "instructions/uupm-ux-compact-label-semantics.md",
+      "sha256": "c0cf0d581d086b0361febee6e0b6dae4acbe9a3f4ecb144d10fadd99c9200f51"
+    },
+    {
+      "instruction_id": "uupm-ux-confirmation-dialogs",
+      "path": "instructions/uupm-ux-confirmation-dialogs.md",
+      "sha256": "257aa79dc945a23b5b09057ad0fd52b22828ef5a0bd7fdf04a918a935351e86e"
+    },
+    {
+      "instruction_id": "uupm-ux-confirmation-messages",
+      "path": "instructions/uupm-ux-confirmation-messages.md",
+      "sha256": "883945e46c2a2eeef853989310a1a90472b3bd4386a0fbcaebdbda6178081c5a"
+    },
+    {
+      "instruction_id": "uupm-ux-consistent-help",
+      "path": "instructions/uupm-ux-consistent-help.md",
+      "sha256": "add8437afbd0ad5af115ebf254e99edb7855cd8777b570b28522a9b65c965f07"
     },
     {
       "instruction_id": "uupm-ux-container-width",
@@ -16326,9 +16416,24 @@
       "sha256": "67052edb51ab6389f73ca71f2a6386a723be3a1cf8aed8f7aa137647e33ece19"
     },
     {
+      "instruction_id": "uupm-ux-contextual-live-badge-updates",
+      "path": "instructions/uupm-ux-contextual-live-badge-updates.md",
+      "sha256": "c20478335b38f4bfd8e458a119e98e7ece611180e376916921ce64dd3703b1ff"
+    },
+    {
       "instruction_id": "uupm-ux-continuous-animation",
       "path": "instructions/uupm-ux-continuous-animation.md",
       "sha256": "f340c46e7c1e7f3da81daa903592cacd461c018f556eafae3087572161e7f2e9"
+    },
+    {
+      "instruction_id": "uupm-ux-contrast-readability",
+      "path": "instructions/uupm-ux-contrast-readability.md",
+      "sha256": "1cdcdcb131ea679d29450012d6fa864e372edbaa0470126f860fc0f334bb6179"
+    },
+    {
+      "instruction_id": "uupm-ux-date-formatting",
+      "path": "instructions/uupm-ux-date-formatting.md",
+      "sha256": "caf5bbcd9a9ee66e8cd7c1accd732a2df45bb1eb479684cf486728a02516df49"
     },
     {
       "instruction_id": "uupm-ux-deep-linking",
@@ -16336,9 +16441,19 @@
       "sha256": "04cc6154a5269794bff6aa67a019f05366385563abb23b5bf324038dcf0f867d"
     },
     {
+      "instruction_id": "uupm-ux-depth-layering",
+      "path": "instructions/uupm-ux-depth-layering.md",
+      "sha256": "95d54edc26f44a82f564fa13fb75ca67bac6a750be29c3cc1a5539c4ba5539da"
+    },
+    {
       "instruction_id": "uupm-ux-disabled-states",
       "path": "instructions/uupm-ux-disabled-states.md",
       "sha256": "2983b234810c49f7066913b910dfdd8a324c43f3f8bc81a9a402cdc92f9bf9d1"
+    },
+    {
+      "instruction_id": "uupm-ux-disclaimer",
+      "path": "instructions/uupm-ux-disclaimer.md",
+      "sha256": "b7b7702493a2955c50977e2fb273081db05bdd032d67c52ef03d40738ad4d068"
     },
     {
       "instruction_id": "uupm-ux-duration-timing",
@@ -16351,9 +16466,44 @@
       "sha256": "5ea85cf17d0d554a3d10d0ca6b920509952b380a6bdaa59445861fdadb905cb1"
     },
     {
+      "instruction_id": "uupm-ux-empty-states",
+      "path": "instructions/uupm-ux-empty-states.md",
+      "sha256": "d1d3b4fb365158a9e445397c06eb79a923baefe69b7edc80b4acbc4800dcbb1f"
+    },
+    {
+      "instruction_id": "uupm-ux-error-feedback",
+      "path": "instructions/uupm-ux-error-feedback.md",
+      "sha256": "7b8aa9f0e81d1e86b9b490250d138212f3dcdf4bf6fd7e73448d690c054b4856"
+    },
+    {
+      "instruction_id": "uupm-ux-error-messages",
+      "path": "instructions/uupm-ux-error-messages.md",
+      "sha256": "bf6b4271626e23ded84da06346c362e95ca018e1e5ad2a6a7b8fd84c8691bdce"
+    },
+    {
+      "instruction_id": "uupm-ux-error-placement",
+      "path": "instructions/uupm-ux-error-placement.md",
+      "sha256": "5e52bdda3a59d0eb8ea5acf1ad9ad3963b19085e969003426fad27ef256975ac"
+    },
+    {
+      "instruction_id": "uupm-ux-error-recovery",
+      "path": "instructions/uupm-ux-error-recovery.md",
+      "sha256": "8c9efa18c96c709e2f6838bb17225a98a41527b3a823c5d339a819f08eee8324"
+    },
+    {
+      "instruction_id": "uupm-ux-essential-text-truncation",
+      "path": "instructions/uupm-ux-essential-text-truncation.md",
+      "sha256": "b4ad451b8c516cb60900ffc567aa5d27528cc1a0dbb270163b41bea643203d3a"
+    },
+    {
       "instruction_id": "uupm-ux-excessive-motion",
       "path": "instructions/uupm-ux-excessive-motion.md",
       "sha256": "f53e501217312c91da5fbf407a6f5d357281263a9faeb899e41a024dd0894804"
+    },
+    {
+      "instruction_id": "uupm-ux-feedback-loop",
+      "path": "instructions/uupm-ux-feedback-loop.md",
+      "sha256": "a598ec581dc9dac06e2232cc8cb923d66499e9ce07a25124c9d723eba67c7383"
     },
     {
       "instruction_id": "uupm-ux-fixed-positioning",
@@ -16361,9 +16511,59 @@
       "sha256": "4a40689b490a266361a49abf237821f1a2326c42df04f07bd093030cdf0c6768"
     },
     {
+      "instruction_id": "uupm-ux-focus-appearance",
+      "path": "instructions/uupm-ux-focus-appearance.md",
+      "sha256": "6b367efe5052c55847199825bd106ebf8b01072dc26b50097f37345d5bc538ba"
+    },
+    {
+      "instruction_id": "uupm-ux-focus-not-obscured-enhanced",
+      "path": "instructions/uupm-ux-focus-not-obscured-enhanced.md",
+      "sha256": "8d00c0bd9a2be305ff287df4e56d0034e05462500b0202c17ab0ec20929130a0"
+    },
+    {
       "instruction_id": "uupm-ux-focus-states",
       "path": "instructions/uupm-ux-focus-states.md",
       "sha256": "d30036661a59ba129174e9cbcf162082c7f0e6e458d4be7b6ae6f2a06af07cf6"
+    },
+    {
+      "instruction_id": "uupm-ux-font-loading",
+      "path": "instructions/uupm-ux-font-loading.md",
+      "sha256": "71cd6b099b7bb32662455b9d831a3024b04784b0ecb8601aea31c2230b1fc389"
+    },
+    {
+      "instruction_id": "uupm-ux-font-loading-2",
+      "path": "instructions/uupm-ux-font-loading-2.md",
+      "sha256": "4bf5c4420f358b14796f15a8bc341671c84b82bb2305a2c9dcc2d13c9b9c872f"
+    },
+    {
+      "instruction_id": "uupm-ux-font-size-scale",
+      "path": "instructions/uupm-ux-font-size-scale.md",
+      "sha256": "83779b13a0dd281ac0e5e9779397d24fd4ec6df143d84b20ec153431f809cb8a"
+    },
+    {
+      "instruction_id": "uupm-ux-form-labels",
+      "path": "instructions/uupm-ux-form-labels.md",
+      "sha256": "50ed40a66a5b8c9e53aae2f7913c5670a925bd8f8e3fe7fff3854057dce86b90"
+    },
+    {
+      "instruction_id": "uupm-ux-gaze-hover",
+      "path": "instructions/uupm-ux-gaze-hover.md",
+      "sha256": "65b7528efcfbef3362f90137358303b5828396a2970246f8e2a971bf88d73eac"
+    },
+    {
+      "instruction_id": "uupm-ux-heading-clarity",
+      "path": "instructions/uupm-ux-heading-clarity.md",
+      "sha256": "76351f4a09fda8f57f1b3235984d4ccdab9081023a244b57694472bf2a30b989"
+    },
+    {
+      "instruction_id": "uupm-ux-heading-hierarchy",
+      "path": "instructions/uupm-ux-heading-hierarchy.md",
+      "sha256": "e9618d6ab05708373571a93b68c0330267e511fca2800552caf76ffed6f24d5c"
+    },
+    {
+      "instruction_id": "uupm-ux-horizontal-scroll",
+      "path": "instructions/uupm-ux-horizontal-scroll.md",
+      "sha256": "cc6f6571a968d621242ca0033ce2e56f8a4050adc672875a440c68cf4789e165"
     },
     {
       "instruction_id": "uupm-ux-hover-states",
@@ -16376,6 +16576,51 @@
       "sha256": "4dd12c6dd7fef7ac06929d7153af94e16557930fc2562c3cac3466065bbb41b8"
     },
     {
+      "instruction_id": "uupm-ux-image-optimization",
+      "path": "instructions/uupm-ux-image-optimization.md",
+      "sha256": "b598787ad54cf6cc64abb153f88126261cede0f77d20686600a2b6b75af2af34"
+    },
+    {
+      "instruction_id": "uupm-ux-image-scaling",
+      "path": "instructions/uupm-ux-image-scaling.md",
+      "sha256": "3d7d5dffbf336c3783f1f53178a6ea7b6ad294514de8be3c58994e57439cbc73"
+    },
+    {
+      "instruction_id": "uupm-ux-inline-validation",
+      "path": "instructions/uupm-ux-inline-validation.md",
+      "sha256": "3032bb5f7ea435e9bdde13caeb7682660924b8fedfdcafaaf5916e1ba6ca824b"
+    },
+    {
+      "instruction_id": "uupm-ux-input-affordance",
+      "path": "instructions/uupm-ux-input-affordance.md",
+      "sha256": "11d76cf308cb6a1bf3c267c0b6c9d6ccaf5d00a66ca449982f8c7cff2c39476f"
+    },
+    {
+      "instruction_id": "uupm-ux-input-labels",
+      "path": "instructions/uupm-ux-input-labels.md",
+      "sha256": "ba562e4ba8536965959c4c667887cd223ae544ff6db0ef2331c6a207ef0e9e4c"
+    },
+    {
+      "instruction_id": "uupm-ux-input-types",
+      "path": "instructions/uupm-ux-input-types.md",
+      "sha256": "1be6a57c9dfd9579fd88fb8e8143947c8fcfabff3ce5a33718c02ba22b774d4d"
+    },
+    {
+      "instruction_id": "uupm-ux-lazy-loading",
+      "path": "instructions/uupm-ux-lazy-loading.md",
+      "sha256": "5f58ef7ecf0f4bd46d480dd80ec2b0a3a5191498049e58a7772474185a3bf1f9"
+    },
+    {
+      "instruction_id": "uupm-ux-line-height",
+      "path": "instructions/uupm-ux-line-height.md",
+      "sha256": "fb82e2737fb6f96b0928450f2f2aed51a4321b4993a5b5c632cf6464e7c7dac7"
+    },
+    {
+      "instruction_id": "uupm-ux-line-length",
+      "path": "instructions/uupm-ux-line-length.md",
+      "sha256": "b09b37b51e16ce074559569a94a6cd4aceb46e2c057ce8e6422c6a7e1b3be0bf"
+    },
+    {
       "instruction_id": "uupm-ux-loading-buttons",
       "path": "instructions/uupm-ux-loading-buttons.md",
       "sha256": "0af522d84eb76061e90f436cebee315cc7c50d1f5b674463923eacbf913f9039"
@@ -16386,14 +16631,79 @@
       "sha256": "3e75eb86436ebb79b230392c787c24108e282571b1250e33b5b9028596a2dc20"
     },
     {
+      "instruction_id": "uupm-ux-long-token-wrapping",
+      "path": "instructions/uupm-ux-long-token-wrapping.md",
+      "sha256": "edc58295dfee583218a570ad6b8b380a9016e536e010fedc52e75af281d8117b"
+    },
+    {
+      "instruction_id": "uupm-ux-mobile-first",
+      "path": "instructions/uupm-ux-mobile-first.md",
+      "sha256": "4eebc0e58fa38328f88b0f1f3ea1f2117f5220b94cddaeebf2cefa73b5156b9f"
+    },
+    {
+      "instruction_id": "uupm-ux-motion-sensitivity",
+      "path": "instructions/uupm-ux-motion-sensitivity.md",
+      "sha256": "ee59b042542a749efda04c344dbc2a19722b80e089a6b3929bbb7d7217dc154e"
+    },
+    {
+      "instruction_id": "uupm-ux-no-results",
+      "path": "instructions/uupm-ux-no-results.md",
+      "sha256": "ec782e56c53e5f0c69adc00aa2feb879157da1b54756e02872e7432d4a194d9c"
+    },
+    {
+      "instruction_id": "uupm-ux-number-formatting",
+      "path": "instructions/uupm-ux-number-formatting.md",
+      "sha256": "ebec33d14625392220d0643addfae0ded573b7a2fd2ada7797cb9604897b1dd0"
+    },
+    {
       "instruction_id": "uupm-ux-overflow-hidden",
       "path": "instructions/uupm-ux-overflow-hidden.md",
       "sha256": "a628f1d8caa63b3531c64afef6606dff6261bfd3b644d367a39f38ee5f113c58"
     },
     {
+      "instruction_id": "uupm-ux-password-visibility",
+      "path": "instructions/uupm-ux-password-visibility.md",
+      "sha256": "5f1614a9e51c09f9b95cb4395c76d59590d89068a07c5a367e50e7ec251d4d88"
+    },
+    {
+      "instruction_id": "uupm-ux-placeholder-content",
+      "path": "instructions/uupm-ux-placeholder-content.md",
+      "sha256": "2397a8b8db7de22201e95696d68c3e04693c330f59c75edc3012fd0186781a59"
+    },
+    {
+      "instruction_id": "uupm-ux-progress-indicators",
+      "path": "instructions/uupm-ux-progress-indicators.md",
+      "sha256": "0fe98e481ff9913219dbbf5cee77bc4192d06513f969141480412f3ac33d6662"
+    },
+    {
       "instruction_id": "uupm-ux-reduced-motion",
       "path": "instructions/uupm-ux-reduced-motion.md",
       "sha256": "118c3301c94d4b320c9e70921fd5d30436137988ed1cf8b699b76f8d81e43f28"
+    },
+    {
+      "instruction_id": "uupm-ux-redundant-entry",
+      "path": "instructions/uupm-ux-redundant-entry.md",
+      "sha256": "e1501d4c26d2e213099c76f58d846fd3b44d07e4b84b832c14e3169795297366"
+    },
+    {
+      "instruction_id": "uupm-ux-render-blocking",
+      "path": "instructions/uupm-ux-render-blocking.md",
+      "sha256": "0f8dcf11686666c06dcc1c1e0d9398248ab0d8a0620f75134c581892370f09fc"
+    },
+    {
+      "instruction_id": "uupm-ux-required-indicators",
+      "path": "instructions/uupm-ux-required-indicators.md",
+      "sha256": "4271f2110e6a1f7844cbbe8fb853b45ce959f2bf53f6a4b35d5ed2e44b97536b"
+    },
+    {
+      "instruction_id": "uupm-ux-screen-reader",
+      "path": "instructions/uupm-ux-screen-reader.md",
+      "sha256": "642f75099e88896fe6ccb9c0b50b6138258c86c71728d70ff5ed2a659ee89b6e"
+    },
+    {
+      "instruction_id": "uupm-ux-skip-links",
+      "path": "instructions/uupm-ux-skip-links.md",
+      "sha256": "4694faf8ffd2e89befa9b308f6ad428e73cb7ce6be58225d6acdae27e242487a"
     },
     {
       "instruction_id": "uupm-ux-smooth-scroll",
@@ -16411,9 +16721,69 @@
       "sha256": "4eca38958c44185cc51acf4f2da811fccb37644088c5dae340f097a084f2ea2f"
     },
     {
+      "instruction_id": "uupm-ux-streaming",
+      "path": "instructions/uupm-ux-streaming.md",
+      "sha256": "2570a7f3c442fa6221d39e9a202cd0c0a0056f2833d52b2294ee332127d3a3cb"
+    },
+    {
+      "instruction_id": "uupm-ux-submit-feedback",
+      "path": "instructions/uupm-ux-submit-feedback.md",
+      "sha256": "07ada9b19face5621521ca851214e467a812c7805fb323a86de2215c53851c55"
+    },
+    {
+      "instruction_id": "uupm-ux-success-feedback",
+      "path": "instructions/uupm-ux-success-feedback.md",
+      "sha256": "8c025769e03b35f7b8a2348db0111729ff8553c4f6fbfc3118a3ff5570028292"
+    },
+    {
+      "instruction_id": "uupm-ux-table-handling",
+      "path": "instructions/uupm-ux-table-handling.md",
+      "sha256": "5f2dea09bced66819d10aaef1ab340e5e66268f2a22cc4b10e995b86ef1db33e"
+    },
+    {
+      "instruction_id": "uupm-ux-target-size-minimum",
+      "path": "instructions/uupm-ux-target-size-minimum.md",
+      "sha256": "54603cfc8a40857eb6a04af49a9544fb524ef398ff9512c8c8b44b5f50f3e753"
+    },
+    {
+      "instruction_id": "uupm-ux-text-reflow-and-spacing",
+      "path": "instructions/uupm-ux-text-reflow-and-spacing.md",
+      "sha256": "c2f9569d3778b492ddd9ef0a82a359682d876baffc451789253f4d043a6f0ecd"
+    },
+    {
+      "instruction_id": "uupm-ux-third-party-scripts",
+      "path": "instructions/uupm-ux-third-party-scripts.md",
+      "sha256": "1b35e6dd6353786d3dfc8140368f6c5889424a4828f9c66ebb677d296f3c078c"
+    },
+    {
+      "instruction_id": "uupm-ux-toast-notifications",
+      "path": "instructions/uupm-ux-toast-notifications.md",
+      "sha256": "a2e3b6f83efd079b23b8f9369560d90c29c8274d600fabc945cf25a7c002e756"
+    },
+    {
+      "instruction_id": "uupm-ux-touch-friendly",
+      "path": "instructions/uupm-ux-touch-friendly.md",
+      "sha256": "af4d788e720df6f491739fd968bbe5208a9afa86af413a74fd55670b0da34b76"
+    },
+    {
       "instruction_id": "uupm-ux-transform-performance",
       "path": "instructions/uupm-ux-transform-performance.md",
       "sha256": "00d0ab5d72cb09d8e6a8249a64ce1f85f2e3739d7a04c715461de14e6fe499ae"
+    },
+    {
+      "instruction_id": "uupm-ux-truncation",
+      "path": "instructions/uupm-ux-truncation.md",
+      "sha256": "7b77694e7c0f0a14eb2f96293ae941e74fc4d143c5af7746d230fa40d8b904f5"
+    },
+    {
+      "instruction_id": "uupm-ux-user-freedom",
+      "path": "instructions/uupm-ux-user-freedom.md",
+      "sha256": "98d14577a01e8d93f212dbade99b1cad2cdf52da51083fe7216d585b47b1e55e"
+    },
+    {
+      "instruction_id": "uupm-ux-viewport-meta",
+      "path": "instructions/uupm-ux-viewport-meta.md",
+      "sha256": "d409f559da52569175f9269a7750fa2635983d5657b96517bc9a7f570355484c"
     },
     {
       "instruction_id": "uupm-ux-viewport-units",
