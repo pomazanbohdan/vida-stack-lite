@@ -31,10 +31,10 @@ describe('donors.yaml', () => {
     expect(manifest.product).toBe('vida-powers');
   });
 
-  test('covers seven methodology donors and one format reference', () => {
+  test('covers eight methodology donors and one format reference', () => {
     const methodology = manifest.donors.filter((donor) => donor.role === 'methodology-donor');
     const format = manifest.donors.filter((donor) => donor.role === 'format-reference');
-    expect(methodology).toHaveLength(7);
+    expect(methodology).toHaveLength(8);
     expect(format).toHaveLength(1);
     expect(format[0]!.id).toBe('open-knowledge-format');
   });

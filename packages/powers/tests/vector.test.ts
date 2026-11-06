@@ -43,7 +43,7 @@ test('reports an unknown donor and a stale pin', () => {
 
 test('reports an invalid latest result and missing sections or rows', () => {
   const invalid = fixture();
-  rewrite(invalid, (text) => text.replace('| 3,278 / 3,429 / 1,258 | engineering; product/design; business |', '| n/a | engineering; product/design; business |'));
+  rewrite(invalid, (text) => text.replaceAll('3,278 / 3,429 / 1,258', 'n/a'));
   expect(checkVector(invalid).issues.map((issue) => issue.code)).toContain('VECTOR_RESULT_INVALID');
 
   const empty = fixture();

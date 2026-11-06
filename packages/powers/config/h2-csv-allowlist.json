@@ -1,1 +1,146 @@
-[]
+[
+  {
+    "donor": "uupm",
+    "path": "react-performance.csv",
+    "rawSha256": "3d925802539abac5afeb63ae8aa1960b7229ad271b3a47caed40ab2d97ad0734",
+    "headersDigest": "aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/angular.csv",
+    "rawSha256": "704be83f2bad30c7e6de01afb113ffa01e0c458762f48b7102f31ba2367b5553",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/astro.csv",
+    "rawSha256": "2c2f55fadaafc05e04cc321c8194a1a28b656e6757fe2ba316f41b16428299c6",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/avalonia.csv",
+    "rawSha256": "442fca14675a020683473e7e49f08abb27b9df0765c80efe54aef61f1a4ac258",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/flutter.csv",
+    "rawSha256": "64dba0ac17349f28bce517a0f5f48c54d9ed2e487ec0c0258303463b382f41a0",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/html-tailwind.csv",
+    "rawSha256": "d05a581d20af57b8ca0104a6d31d90a07c437d500662a96c3029fc2f9a4678ee",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/javafx.csv",
+    "rawSha256": "2e819b8d5abdd23ad4dae0991650fdb57af497aabd68b37463aa9c442944c869",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/jetpack-compose.csv",
+    "rawSha256": "699de218b286948eaec7d15767b6e1350ee299167e49bf476d82e3ff58724e0a",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/laravel.csv",
+    "rawSha256": "854ea4daa5fc61292d22235ad33b49ba3fe22423c3de8d3cb03758ffed3b59f9",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/nextjs.csv",
+    "rawSha256": "ecd2c27b2ea0127d203ae726060efcdd7335b5e83f96b99e4f3befbbfeebd5a4",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/nuxt-ui.csv",
+    "rawSha256": "fce682a338cfcdbf35d318d20e5befbe7b5d81b05abc37f87677a6d9cde84dc6",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/nuxtjs.csv",
+    "rawSha256": "3d9b54ed2d151bd9c86e9e5609b8a6f88a00c4c52fa601a30af96c49b2c4d176",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/react-native.csv",
+    "rawSha256": "ba31dd9c0c04da6bc02a74448bf121f9c0728ae5ba3b4d47b487778b0a1135b5",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/react.csv",
+    "rawSha256": "4dd176a9787e5c6306b5df94158d75955adcdc6edab41ce5286641a5842303c1",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/shadcn.csv",
+    "rawSha256": "e56cfde5b74907836ac3582a4779d5b7f3d206a702ab81b8669a1b668c3eeb51",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/svelte.csv",
+    "rawSha256": "f6e379ba802941ba26b01d4ffbe3cd39120f2587659a1d93851c707f66bc13db",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/swiftui.csv",
+    "rawSha256": "bdd9231ff3ad658f4e7c063e1eb49df2fd09ac8d90631a86df899b39833b9623",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/threejs.csv",
+    "rawSha256": "155d583b9c64da0df4b6c6cb060c02eab222505e0734d6353da02c9e2b5d982b",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/uno.csv",
+    "rawSha256": "a0474363e4225b5367214d5675fd3e075f137026f9500f0d04357882ef4f6d48",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/uwp.csv",
+    "rawSha256": "c409f08c1fbba1f1029f1acaa554e7b4471cc85517a5751c9f2e62465badcd5c",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/vue.csv",
+    "rawSha256": "b655f1ebb9dff2652d15981f31b1784c8a6d4759efd2815a14f3088257569f95",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/winui.csv",
+    "rawSha256": "e676dc1c13ee6c205c40b0746f1335150a346c7a49a0616d2545bc3d2c930c85",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "stacks/wpf.csv",
+    "rawSha256": "9781a9950b20333637b30a02e498b7efca21b618a3eeb8665836f3ac6e974da7",
+    "headersDigest": "38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38"
+  },
+  {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rawSha256": "ff81ec613f70ba9fc3fcce52dbe4ae35d44b2079dbe6dc066d2d6e38c28facd5",
+    "headersDigest": "5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5"
+  }
+]
