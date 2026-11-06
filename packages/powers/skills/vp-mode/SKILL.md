@@ -1,6 +1,6 @@
 ---
 name: vp-mode
-description: Route a task through the Vida Powers catalog: bind intents, resolve capabilities, search candidates, compose one instruction bundle, and verify the retrieval receipt.
+description: Find, search and compose reusable instructions from the Vida Powers catalog: resolve an intent to canonical tags, search candidates, compose one instruction bundle, and verify the retrieval receipt.
 ---
 # vp-mode
 
@@ -23,9 +23,9 @@ Keep source selection fixed across the retrieval chain: pass the same exact `--c
 Use this procedure for every instruction lookup; it is the only one the task needs.
 
 1. **One intent, one first pass.** For each distinct intent in the task, run one focused call with 3-6 literal terms, never the whole task sentence:
-   `bun <skill-dir>/scripts/catalog-cli.ts search --for "<terms>" --profile <effective-profile.json> --catalog <snapshot>`
-   Read the `resolved:` line on stderr. A task with several intents gets one call per intent, up to six calls. For one genuinely compound intent, `--top 2` returns the union of two capabilities, and each extra capability must contribute evidence the first did not already match.
-2. **Fallback on the observable signal.** When the CLI prints `no capability or pattern matched`, it also lists the nearest dictionary entries as `nearest tags:`. Treat that list as heuristic: search one directly with `--capability <tag>` or `--pattern <tag>` only when its name plausibly matches the intent; otherwise run `tags --query` with the same 3-6 terms. When the `resolved:` line ends with `weak match`, treat the resolution as unresolved: the terms matched only a generic action word, so search one of its `nearest tags` instead of building a bundle on the weak guess. Bare tags are the normal form; a namespaced tag is also accepted.
+   `bun <skill-dir>/scripts/catalog-cli.ts search --for "<terms>" --profile <effective-profile.json> --catalog <snapshot> --strict`
+   Read the `resolved:` line on stderr. A task with several intents gets one call per intent, up to six calls. For one genuinely compound intent, `--top 2` returns the union of two capabilities, and each extra capability must contribute evidence the first did not already match. With `--strict`, a weak or ambiguous resolution exits 3 with empty stdout; treat that as the signal to fall back, not as a reason to compose.
+2. **Fallback on the observable signal.** When the CLI prints `no capability or pattern matched`, it also lists the nearest dictionary entries as `nearest tags:`. Treat that list as heuristic: search one directly with `--capability <tag>` or `--pattern <tag>` only when its name plausibly matches the intent; otherwise run `tags --query` with the same 3-6 terms. When the `resolved:` line ends with `weak match`, treat the resolution as unresolved: the terms matched only a generic action word, so search one of its `nearest tags` instead of building a bundle on the weak guess. When it contains `ambiguous:`, the winner and runner-up cover different specific terms; do not compose. Run `tags --query` with the same terms and choose a tag that names the intent. A `pattern=... (default for capability)` label is a frequency default, not query evidence: use it only when the pattern is independently intended. Bare tags are the normal form; a namespaced tag is also accepted.
 3. **Page when the intent is missing.** Search returns 20 rows by default. If page one does not contain the intent, read the next page with `--offset 20`; paging continues the same search and does not consume another one.
 4. **IDs come from rows.** Search rows are instruction IDs; capability and pattern tags are filters. If `get` reports that a value is a capability or pattern, run the command it prints instead of resending the same ID. Never reconstruct an ID from a title: when the ID you expect is not in a returned row, page or search again before choosing.
 5. **One retrieval call.** Choose 8-10 IDs for a multi-intent task, 3-6 for one intent, and run one
@@ -67,5 +67,7 @@ Read `references/findings.md` fully for findings candidates, append, merge, scop
 
 - Resolve `<skill-dir>` from the explicit project map, not the ambient working directory.
 - A `weak match` is unresolved, not a candidate to compose.
+- An `ambiguous:` line is a low-confidence split; `--strict` turns it into exit 3.
+- A `pattern=... (default for capability)` label is a frequency default, not query evidence.
 - A capability or pattern tag is a filter, never an instruction ID.
 - When a command fails, fix the supplied path once; never repeat the identical failing command.

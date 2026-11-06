@@ -562,9 +562,9 @@ describe('catalogFindTags', () => {
     const any = catalogFindTags(catalog, ['test first', 'TEST']);
     const all = catalogFindTags(catalog, ['test first'], 'all');
     expect(any.map(({ dimension, tag }) => `${dimension}:${tag}`)).toEqual([
+      'pattern:test-first-development',
       'capability:test-design',
       'pattern:test-after-development',
-      'pattern:test-first-development',
     ]);
     expect(all.map(({ dimension, tag }) => `${dimension}:${tag}`)).toEqual(['pattern:test-first-development']);
   });
@@ -583,7 +583,7 @@ describe('catalogFindTags', () => {
     });
   });
 
-  test('uses literal tokens and deterministic dimension/tag ties without matching pr inside product', async () => {
+  test('uses literal tokens and ranks an earlier tag-name token before a later one without matching pr inside product', async () => {
     const { catalog } = await fixture();
     const expanded: Catalog = {
       ...catalog,
@@ -603,8 +603,8 @@ describe('catalogFindTags', () => {
     expect(catalogFindTags(expanded, ['pr'])).toEqual([]);
     expect(catalogFindTags(expanded, ['product-review', 'review']).map(({ dimension, tag }) => `${dimension}:${tag}`)).toEqual([
       'capability:product-review',
-      'capability:evidence-review',
       'capability:review-code',
+      'capability:evidence-review',
       'pattern:test-review',
     ]);
   });

@@ -388,24 +388,51 @@ export function catalogFindTags(
   const phrases = [...new Set(terms.map(normalizedTagText).filter((term) => term !== ''))];
   const tokens = [...new Set(terms.flatMap(tagTokens).map(stemToken))];
   if (tokens.length === 0) return [];
-  const matches: Array<{ rank: number; entry: CatalogTagMatch }> = [];
+  // Discovery ranks the tag name before aliases and descriptions. A description
+  // match is a hint, not a declaration that the tag names the intent. Within the
+  // name tier, a match at the start of the tag outranks an incidental later word.
+  const matches: Array<{
+    exact: boolean;
+    nameTokenCount: number;
+    tagFirstIndex: number;
+    queryFirstIndex: number;
+    aliasTokenCount: number;
+    entry: CatalogTagMatch;
+  }> = [];
   for (const dimension of ['capability', 'pattern'] as const) {
     for (const [tag, description] of Object.entries(catalog.tag_dictionary[dimension])) {
       const aliases = Object.entries(catalog.tag_aliases)
         .filter(([, canonical]) => canonical === tag)
         .map(([alias]) => alias);
       const names = [tag, ...aliases];
-      const searchable = [...names, description];
-      const availableTokens = new Set(searchable.flatMap(tagTokens).map(stemToken));
+      const nameTokens = tagTokens(tag).map(stemToken);
+      const aliasTokens = aliases.flatMap((alias) => tagTokens(alias).map(stemToken));
+      const descriptionTokens = tagTokens(description).map(stemToken);
+      const availableTokens = new Set([...nameTokens, ...aliasTokens, ...descriptionTokens]);
       const matchedTokenCount = tokens.filter((token) => availableTokens.has(token)).length;
       const selected = match === 'all' ? matchedTokenCount === tokens.length : matchedTokenCount > 0;
       if (!selected) continue;
       const exact = phrases.some((phrase) => names.some((name) => normalizedTagText(name) === phrase));
-      matches.push({ rank: exact ? 0 : 1, entry: { dimension, tag, description } });
+      const nameTokenCount = tokens.filter((token) => nameTokens.includes(token)).length;
+      const aliasTokenCount = tokens.filter((token) => aliasTokens.includes(token) && !nameTokens.includes(token)).length;
+      const tagFirstIndex = nameTokens.findIndex((token) => tokens.includes(token));
+      const queryFirstIndex = tokens.findIndex((token) => nameTokens.includes(token) || aliasTokens.includes(token));
+      matches.push({
+        exact,
+        nameTokenCount,
+        tagFirstIndex: tagFirstIndex === -1 ? Number.MAX_SAFE_INTEGER : tagFirstIndex,
+        queryFirstIndex: queryFirstIndex === -1 ? Number.MAX_SAFE_INTEGER : queryFirstIndex,
+        aliasTokenCount,
+        entry: { dimension, tag, description },
+      });
     }
   }
   return matches
-    .sort((left, right) => left.rank - right.rank
+    .sort((left, right) => Number(right.exact) - Number(left.exact)
+      || right.nameTokenCount - left.nameTokenCount
+      || left.tagFirstIndex - right.tagFirstIndex
+      || left.queryFirstIndex - right.queryFirstIndex
+      || right.aliasTokenCount - left.aliasTokenCount
       || compareNames(left.entry.dimension, right.entry.dimension)
       || compareNames(left.entry.tag, right.entry.tag))
     .map(({ entry }) => entry);

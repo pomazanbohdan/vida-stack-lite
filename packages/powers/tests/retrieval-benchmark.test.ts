@@ -54,6 +54,12 @@ const resolvedCases: Array<{ terms: string[]; expects: string }> = [
   { terms: ['request', 'processing', 'quality', 'intake'], expects: 'define-quality-bar' },
   { terms: ['decision', 'search', 'solution', 'algorithm', 'options'], expects: 'keep-decision-trail' },
   { terms: ['brownfield', 'characterization', 'test'], expects: 'write-tests-first' },
+  { terms: ['БФТ'], expects: 'clarify-requirements' },
+  { terms: ['бізнес-вимоги'], expects: 'clarify-requirements' },
+  { terms: ['критерії', 'приймання'], expects: 'clarify-requirements' },
+  { terms: ['business', 'functional', 'requirements', 'document'], expects: 'clarify-requirements' },
+  { terms: ['adr'], expects: 'keep-decision-trail' },
+  { terms: ['runbook'], expects: 'write-technical-prose' },
 ];
 
 // A single generic action verb says "do something", not what. These must not
@@ -72,7 +78,13 @@ const unresolvedCases: string[][] = [
   ['intermittent', 'http', '500', 'after', 'deploy'],
 ];
 
-test('keeps every recorded intent resolvable and confident', () => {
+// A split specific intent can still resolve, but it asks for corroboration
+// instead of presenting the winner as the only reading.
+const ambiguousCases: string[][] = [
+  ['results', 'implementation'],
+];
+
+test('keeps every recorded intent resolvable', () => {
   const failures: string[] = [];
   for (const { terms, expects } of resolvedCases) {
     const result = resolveIntent(instructions, terms, aliases);
@@ -80,6 +92,22 @@ test('keeps every recorded intent resolvable and confident', () => {
     if (result.status !== 'resolved' || got !== expects) failures.push(`${terms.join(' ')} -> ${result.status}:${String(got)}`);
   }
   expect(failures).toEqual([]);
+});
+
+test('keeps a split specific intent resolved but marks it low confidence', () => {
+  const failures: string[] = [];
+  for (const terms of ambiguousCases) {
+    const result = resolveIntent(instructions, terms, aliases);
+    if (result.status !== 'resolved' || result.confidence !== 'low' || result.runnerUp === undefined)
+      failures.push(`${terms.join(' ')} -> ${result.status}:${result.confidence}:${String(result.runnerUp?.tag)}`);
+  }
+  expect(failures).toEqual([]);
+});
+
+test('does not send a requirements-document intent to business validation', () => {
+  const result = resolveIntent(instructions, ['business', 'functional', 'requirements', 'document'], aliases);
+  expect(result.capability).toBe('clarify-requirements');
+  expect(result.capability).not.toBe('build-validated-business');
 });
 
 test('flags a generic verb-only match as weak instead of confident', () => {

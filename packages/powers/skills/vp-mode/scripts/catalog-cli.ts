@@ -138,13 +138,14 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--classification-status': { arity: 'list', value: 'STATUS', description: 'Select classified or unclassified records.' },
       '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Filter to the current resolved effective profile.' },
+      '--strict': { arity: 'switch', description: 'Exit 3 when --for is weak or ambiguous, so a bootstrap falls back to tags --query.' },
       '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
       '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
       '--limit': { arity: 'scalar', value: 'N', description: 'Return at most N rows.' },
       '--offset': { arity: 'scalar', value: 'N', description: 'Skip N rows after deduplication.' },
       '--all': { arity: 'switch', description: 'Return every row instead of the default first page of 10.' },
     },
-    examples: ['search --capability test-design acceptance-design', 'search --domain engineering operations --form procedure checklist'],
+    examples: ['search --capability test-design acceptance-design', 'search --domain engineering operations --form procedure checklist', 'search --for "acceptance criteria" --strict'],
   },
   explain: {
     description: 'Explain approach decisions for discovery candidates; metadata is not authority.',
@@ -370,6 +371,7 @@ function renderHelp(command?: Command): string {
       '       first pass: search --for "<terms>" resolves a capability and its top pattern;',
       '       multi-intent task: one focused --for per intent, 3-6 terms each;',
       '       compound intent: --top 2 unions two capabilities with distinct evidence;',
+      '       --strict: a weak or ambiguous --for exits 3 with empty stdout;',
       '       --offset 20 gets the next page; --all lists every row;',
       '       a page is a sample, not a ranking; page again when an intent is missing.',
     );
@@ -589,7 +591,7 @@ function validateStaticFlags(command: Command, flags: Map<string, string[]>): vo
 }
 
 type CompactRow = { id: string; description: string };
-type CompactResult = { kind: 'compact'; text: string; pagination?: string; notes?: string };
+type CompactResult = { kind: 'compact'; text: string; pagination?: string; notes?: string; exitCode?: number };
 type JsonResult = { kind: 'json'; value: unknown };
 type TextResult = { kind: 'text'; text: string; stats?: string };
 type DispatchResult = CompactResult | JsonResult | TextResult;
@@ -727,14 +729,18 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       let resolved: string | undefined;
       const forTerms = listValues(flags, '--for');
       const topValues = listValues(flags, '--top');
+      const strict = flags.has('--strict');
+      let strictFailure = false;
       if (topValues !== undefined && topValues.length !== 1) throw invalid('--top accepts one value', { flag: '--top' });
       const top = topValues === undefined ? 1 : Number(topValues[0]);
       if (!Number.isInteger(top) || top < 1 || top > 3) throw invalid('--top accepts 1, 2 or 3', { flag: '--top' });
       if (topValues !== undefined && forTerms === undefined) throw invalid('--top requires --for', { flag: '--top' });
+      if (strict && forTerms === undefined) throw invalid('--strict requires --for', { flag: '--strict' });
       if (forTerms !== undefined) {
         if (forTerms.length > 8) throw invalid('--for accepts at most 8 terms; run one focused --for per intent (3-6 terms)', { terms: forTerms });
         const aliases = new Map(Object.entries(catalog.tag_aliases));
         const resolution = resolveIntent(instructions, forTerms, aliases);
+        const ambiguous = resolution.confidence === 'low';
         if (top > 1) {
           if (flags.has('--capability') || flags.has('--pattern')) throw invalid('--top cannot be combined with --capability or --pattern', { flag: '--top' });
           const ranked: IntentCandidate[] = [];
@@ -753,9 +759,18 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
           capabilityTags = ranked.map((candidate) => candidate.tag);
           resolved = `resolved: capability=${capabilityTags.join(',')} (from --for, top ${top})`;
           if (resolution.status === 'weak') resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved`;
+          if (ambiguous && resolution.runnerUp !== undefined) resolved += `; ambiguous: also capability=${resolution.runnerUp.tag}; treat it as unresolved and run tags --query with the same terms`;
+          strictFailure = strict && (resolution.status === 'weak' || ambiguous);
         } else {
-          const capability = capabilityTags?.[0] ?? resolution.capability;
-          const pattern = patternTags?.[0] ?? resolution.pattern ?? (capability === undefined ? undefined : topPatternFor(instructions, capability));
+          const explicitCapability = capabilityTags?.[0];
+          const explicitPattern = patternTags?.[0];
+          const capability = explicitCapability ?? resolution.capability;
+          let pattern = explicitPattern ?? resolution.pattern;
+          let patternSource: 'explicit' | 'query' | 'default' | undefined = explicitPattern !== undefined ? 'explicit' : resolution.patternSource;
+          if (pattern === undefined && capability !== undefined) {
+            pattern = topPatternFor(instructions, capability);
+            patternSource = pattern === undefined ? undefined : 'default';
+          }
           if (capability === undefined && pattern === undefined) {
             throw invalid(`no capability or pattern matched --for; ${suggestionText(forTerms, catalogFindTags(catalog, forTerms))}`, { terms: forTerms });
           }
@@ -763,14 +778,22 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
           if (pattern !== undefined) patternTags = patternTags ?? [pattern];
           const explicit = flags.has('--capability') || flags.has('--pattern');
           const weak = resolution.status === 'weak' && !explicit;
-          resolved = `resolved: ${capability === undefined ? '' : `capability=${capabilityTags?.join(',')}`}${capability !== undefined && pattern !== undefined ? ' ' : ''}${pattern === undefined ? '' : `pattern=${patternTags?.join(',')}`} (from --for)`;
+          const lowConfidence = ambiguous && !explicit;
+          const capabilityPart = capability === undefined ? '' : `capability=${capabilityTags?.join(',')}`;
+          const patternLabel = patternSource === 'default' ? ' (default for capability)' : '';
+          const patternPart = pattern === undefined ? '' : `pattern=${patternTags?.join(',')}${patternLabel}`;
+          resolved = `resolved: ${[capabilityPart, patternPart].filter((part) => part !== '').join(' ')} (from --for)`;
           if (weak) {
             const alternatives = resolution.candidates
               .filter((candidate) => candidate.tag !== capability && candidate.tag !== pattern)
               .map((candidate) => ({ dimension: candidate.dimension, tag: candidate.tag }));
             const hint = alternatives.length === 0 ? suggestionHint([]) : suggestionText(forTerms, alternatives);
             resolved += `; weak match: only "${resolution.matchedTokens.join(', ')}" matched, so treat it as unresolved; ${hint}`;
+          } else if (lowConfidence) {
+            const also = resolution.runnerUp === undefined ? '' : `also ${resolution.runnerUp.dimension}=${resolution.runnerUp.tag}; `;
+            resolved += `; ambiguous: ${also}treat it as unresolved and run tags --query with the same terms`;
           }
+          strictFailure = strict && (weak || lowConfidence);
         }
       }
       const roles = listValues(flags, '--roles');
@@ -812,12 +835,15 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
         }) } };
       }
       if (approaches !== undefined) query.approaches = approaches;
+      const discoveryNote = profile === undefined ? 'discovery only: no --profile; rows are unfiltered' : undefined;
       const matches = profile === undefined
         ? catalogSearch(catalog, instructions, query)
         : catalogSearchWithProfile(catalog, instructions, query, profile);
       const rows = matches.map(({ instruction_id, summary }) => ({ id: instruction_id, description: summary }));
-      const compact = compactRows(rows, flags, 20, 'refine: narrow with --pattern <tag> or --query <terms>, or pass --all');
-      return resolved === undefined ? compact : { ...compact, notes: resolved };
+      const compact = compactRows(rows, flags, 20, 'refine: narrow with --capability <tag>, --pattern <tag>, or tags --query <terms>; or pass --all');
+      const notes = [resolved, discoveryNote].filter((value): value is string => value !== undefined).join('; ');
+      if (strictFailure) return { kind: 'compact', text: '', ...(notes === '' ? {} : { notes }), exitCode: 3 };
+      return notes === '' ? compact : { ...compact, notes };
     }
     case 'get': {
       const ids = listValues(flags, '--id');
@@ -921,7 +947,7 @@ async function main(argv: string[], output: CliOutput): Promise<number> {
       if (result.notes !== undefined) output.stderr(`${result.notes}\n`);
       if (result.pagination !== undefined) output.stderr(`${result.pagination}\n`);
       if (result.text !== '') output.stdout(`${result.text}\n`);
-      return 0;
+      return result.exitCode ?? 0;
     }
     if (result.kind === 'text') {
       if (result.stats !== undefined) output.stderr(`${result.stats}\n`);

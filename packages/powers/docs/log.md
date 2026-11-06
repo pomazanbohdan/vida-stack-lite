@@ -2,6 +2,25 @@
 
 ## 2026-11-06
 
+* **Retrieval ranking, ambiguity and strict bootstrap:** `catalogFindTags` now
+  ranks exact/name/alias/description tiers, with more name tokens and an earlier
+  tag-name token first; `resolveIntent` reports `confidence`, `runnerUp` and
+  `patternSource`; `search --for` labels a frequency pattern
+  `(default for capability)`, prints `ambiguous:` with the runner-up, and
+  `--strict` exits 3 on a weak or ambiguous resolution. Unprofiled search says
+  `discovery only` on stderr; the pagination hint now names `tags --query`.
+  Catalog revision 7348 adds English and Ukrainian requirements-document aliases
+  (`БФТ`, `бізнес-вимоги`, `системні вимоги`, `критерії приймання`, `ТЗ`, BRD,
+  SRS, business/system requirements, technical specification, acceptance criteria)
+  and ADR/runbook aliases. The catalog has no separate requirements-document
+  capability; these aliases point to `clarify-requirements` as the nearest
+  existing owner and do not create a second contract. `vp-mode` and
+  `vida-bootstrap` descriptions, examples and the sidecar retrieval block are
+  updated; SR-93/94/95/96 are reconciled; the benchmark now has 68 recorded
+  cases plus a split-intent ambiguity case. Agent `instructions --path` now
+  returns `INSTRUCTION_NOT_FOUND` with valid names and a nearest name instead of
+  a raw filesystem error.
+
 * **Bootstrap instruction lookup route documented:** `vida-bootstrap/SKILL.md`
   now says to read `vp-mode` for an instruction/catalog lookup, and
   `bootstrap-orchestrator.md` Start step 1 names `catalog-cli.ts search`/`tags`/`get`;
