@@ -69,6 +69,26 @@
   This closes the H2-A source gate and row coverage, not CSV semantic admission,
   H2 acceptance or Runtime acceptance.
 
+* **H2-A2 UUPM UX pilot admitted:** admitted 25 `ux-guidelines.csv` rows as
+  `uupm-ux-*` instructions. Each instruction preserves the normative title,
+  description, direction, exception, examples, platform and severity; each has
+  an `H2FidelityReceipt/v1` with `reviewer.kind: delegated`, actor
+  `agent:opencode`, model `opencode-go/deepseek-v4.1-flash`, the batch evidence
+  SHA-256 and exact row/cell locators. The 25 map rows changed from `deferred`
+  to `admitted` with bindings covering every normative cell. Catalog revision
+  7,344; corpus map revision 5,745; `check-corpus` reports 0 issues over 3,303
+  instructions; `check-vector` reports 3,303 instructions / 3,429 map records /
+  1,258 baseline files. The remaining 1,409 CSV rows stay deferred. This is
+  H2 semantic admission for the pilot, not H2 acceptance or Runtime acceptance.
+
+* **D57 D18 extension for H2 CSV admission:** the owner extended the D18
+  three-protocol delegated review to H2 CSV semantic admission on 2026-11-06.
+  `docs/decisions/D57-d18-h2-csv-admission.md` records the scope. Delegated
+  `H2FidelityReceipt/v1` entries are accepted only with `reviewer.actor`,
+  `reviewer.model` and an evidence path/hash; human review remains the default
+  for non-H2 sources and any binding outside D57. This is a separate decision
+  from D56 and does not change the approved contract's normative rules.
+
 ## 2026-11-05
 
 * **H2 applicability applicator:** added `scripts/apply-applicability.ts`,

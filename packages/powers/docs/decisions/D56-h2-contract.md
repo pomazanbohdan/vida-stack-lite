@@ -117,6 +117,11 @@ authority) remain open. The "proposed expansion" in section 0 is the approved
 Step H implementation allowlist described by item 9. The final sentence is
 updated to reflect the approval; the normative rules are unchanged.
 
+The owner later resolved item 2 by admitting all 1,434 measured UUPM rows, item
+5 by admitting the `uupm` donor at `56ea9cf1`, and item 6 by extending D18 to
+H2 in [D57](D57-d18-h2-csv-admission.md). Those later decisions do not change
+the contract's normative rules.
+
 The approved contract follows.
 
 ## H2 contract — VPInstruction/v2, VPCorpusMap/v2, applicability

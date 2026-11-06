@@ -719,6 +719,10 @@ test('validates CSV sources, fidelity receipts and donor clone files', async () 
     expect(issues).toContain('CORPUS_CSV_FIDELITY_INVALID');
     expect(issues).toContain('CORPUS_CSV_FIDELITY_MISSING');
 
+    source.rows[0].bindings.push({ ...validBinding, instructionId: 'unknown-csv', fidelity: { path: receiptPath, sha256: digest(receiptText) } });
+    await corpus.save();
+    expect(checkCorpus(corpus.root).map((item) => item.code)).toContain('CORPUS_MAP_INCONSISTENT');
+
     await rm(csvPath);
     await corpus.save();
     expect(codes(corpus.root)).toContain('CORPUS_CSV_MISSING');
