@@ -2,6 +2,16 @@
 
 ## 2026-11-06
 
+* **Bootstrap instruction lookup route documented:** `vida-bootstrap/SKILL.md`
+  now says to read `vp-mode` for an instruction/catalog lookup, and
+  `bootstrap-orchestrator.md` Start step 1 names `catalog-cli.ts search`/`tags`/`get`;
+  ad-hoc `rg` is not a substitute. `AGENTS.md` §3 no longer asserts a machine PATH
+  fact and points to the project sidecar, which now records the observed Bun PATH,
+  the pinned executable and PowerShell UTF-8/quoting limits. `skill-contract.test.ts`
+  covers the bootstrap route. This is a docs/context fix; no product behavior or
+  acceptance state changed.
+
+
 * **H1 AC-59 accepted by the owner:** the 25-file Wondelai pilot is the
   accepted baseline for scaling the D18 donor-admission method. Receipt
   `AC-59-RECEIPT.json` SHA-256

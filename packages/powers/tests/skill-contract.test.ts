@@ -148,3 +148,11 @@ test('project documents use explicit sources and never substitute a missing prof
   for (const entry of ['vida-bootstrap', 'vp-mode', 'vp-setup']) expect(setup).toContain(entry);
   expect(setup).toContain('does not prove host activation');
 });
+
+test('bootstrap routes instruction lookup through vp-mode and the catalog CLI', async () => {
+  const bootstrap = await readFile(new URL('../skills/vida-bootstrap/SKILL.md', import.meta.url), 'utf8');
+  const orchestrator = await readFile(new URL('../skills/vida-bootstrap/references/bootstrap-orchestrator.md', import.meta.url), 'utf8');
+  expect(bootstrap).toMatch(/instruction\/catalog lookup/u);
+  expect(orchestrator).toMatch(/catalog-cli\.ts search/u);
+  expect(orchestrator).toContain('vp-mode/SKILL.md');
+});

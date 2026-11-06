@@ -191,9 +191,10 @@ but cannot establish composer/receipt execution when that proof is required.
 
 ## 3. Tool chain
 
-- **Bun 1.4.4 — the product runtime.** `node`/`npm`/`npx` are not used.
-  On this machine Bun is **not on PATH**; full path:
-  `C:\Users\pomaz\AppData\Local\Microsoft\WinGet\Packages\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\bun-windows-x64\bun.exe`
+- **Bun 1.4.4 - the product runtime.** `node`/`npm`/`npx` are not used.
+  The project sidecar records the host PATH state and the pinned executable
+  path. Use `packages/powers/.bun-version` and that recorded executable when
+  version identity matters; do not infer the pin from a PATH entry.
 - **No own infrastructure in the plugin.** There is no own runtime,
   bundler, package manager, CLI framework or test runner: everything is
   borrowed from the project.
