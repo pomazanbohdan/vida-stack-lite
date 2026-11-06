@@ -56,7 +56,8 @@ export function verifyFidelityReceipt(receipt: Record<string, unknown>, expected
   if (receipt.schema !== 'H2FidelityReceipt/v1') issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt schema marker is not H2FidelityReceipt/v1');
   if (receipt.instructionId !== expected.instructionId) issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt instruction id does not match the binding', { expected: expected.instructionId, actual: receipt.instructionId });
   const reviewer = isRecord(receipt.reviewer) ? receipt.reviewer : {};
-  if (reviewer.kind !== 'human') issue('CORPUS_CSV_FIDELITY_INVALID', 'H2 fidelity requires reviewer.kind=human under SR-89');
+  if (reviewer.kind !== 'human' && reviewer.kind !== 'delegated') issue('CORPUS_CSV_FIDELITY_INVALID', 'H2 fidelity requires reviewer.kind=human or delegated under SR-89 and D57');
+  if (reviewer.kind === 'delegated' && (typeof reviewer.model !== 'string' || reviewer.model.trim() === '')) issue('CORPUS_CSV_FIDELITY_INVALID', 'delegated fidelity requires reviewer.model under D57');
   if (receipt.verdict !== 'READY') issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt verdict must be READY');
   const source = isRecord(receipt.source) ? receipt.source : {};
   if (source.donor !== expected.donor || source.path !== expected.path || source.rowKey !== expected.rowKey) issue('CORPUS_CSV_FIDELITY_INVALID', 'fidelity receipt source does not match the binding');

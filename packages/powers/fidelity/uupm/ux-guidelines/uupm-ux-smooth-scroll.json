@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-ux-smooth-scroll",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=42192e76aef63d6c642c12cd44e682fb10fbde4cca312f9fe1c9ab531eed2c95",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "d55719c9abf656f4504d1725a0d77c8f356e136eaacc2dfcd97150d8458b9abc",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "9b6eba4565248dfa78ac02af8071e2216265b51a08d4d473b096a795a2491ec9",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "bb0552874df88d1dc1ff13759b5517266abaf35916e6c558ecae858d78a31d52",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "3425bc5b160f97a3953df717cfe005ce7c2d319eb91e305163ae0650d963acbf",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "774b1b5f84047523f9e667ea15904f5db662b6d34ebf059713c0e9b9e5017a87",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 8
+          }
+        ]
+      },
+      {
+        "columnIndex": 8,
+        "cellHash": "3a7598d74e7f326791bda92e6b15a405c3a62c88361fc2b66db0b49750be5be5",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 9
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 9
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:opencode",
+    "model": "opencode-go/deepseek-v4.1-flash"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/pilot-evidence.json",
+    "sha256": "5bea87957bdc281f1e89de84f46764d0742e210962359a4bb3108955e200c5bf"
+  },
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

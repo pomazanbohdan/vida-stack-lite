@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7343,
+  "revision": 7344,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-03T00:00:00Z",
+  "updated_at": "2026-11-06T00:00:00Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -16299,6 +16299,131 @@
       "instruction_id": "use-version-history-to-find-the-regression",
       "path": "instructions/use-version-history-to-find-the-regression.md",
       "sha256": "c343972d9b5b8d290e4b069dde0b5d46a43435b52e2b51219c14c57b6d6861d3"
+    },
+    {
+      "instruction_id": "uupm-ux-active-state",
+      "path": "instructions/uupm-ux-active-state.md",
+      "sha256": "3fdc475b3b25211f0f4f857d4fe968cc33a553acd10075f7bd0ce1288d51335f"
+    },
+    {
+      "instruction_id": "uupm-ux-active-states",
+      "path": "instructions/uupm-ux-active-states.md",
+      "sha256": "1ef2179c5f78b43e992ab38b12c729089f91b0e1022e68d8a99dc2e1b9fbeae3"
+    },
+    {
+      "instruction_id": "uupm-ux-breadcrumbs",
+      "path": "instructions/uupm-ux-breadcrumbs.md",
+      "sha256": "e145b5089b1559b1fe80e312e41c048b86951bdaf2a584a83d7012c47a43fae6"
+    },
+    {
+      "instruction_id": "uupm-ux-container-width",
+      "path": "instructions/uupm-ux-container-width.md",
+      "sha256": "f7c682188254ec2d9154f90e4ae426a9813337824f5c4e378db265c0913be340"
+    },
+    {
+      "instruction_id": "uupm-ux-content-jumping",
+      "path": "instructions/uupm-ux-content-jumping.md",
+      "sha256": "67052edb51ab6389f73ca71f2a6386a723be3a1cf8aed8f7aa137647e33ece19"
+    },
+    {
+      "instruction_id": "uupm-ux-continuous-animation",
+      "path": "instructions/uupm-ux-continuous-animation.md",
+      "sha256": "f340c46e7c1e7f3da81daa903592cacd461c018f556eafae3087572161e7f2e9"
+    },
+    {
+      "instruction_id": "uupm-ux-deep-linking",
+      "path": "instructions/uupm-ux-deep-linking.md",
+      "sha256": "04cc6154a5269794bff6aa67a019f05366385563abb23b5bf324038dcf0f867d"
+    },
+    {
+      "instruction_id": "uupm-ux-disabled-states",
+      "path": "instructions/uupm-ux-disabled-states.md",
+      "sha256": "2983b234810c49f7066913b910dfdd8a324c43f3f8bc81a9a402cdc92f9bf9d1"
+    },
+    {
+      "instruction_id": "uupm-ux-duration-timing",
+      "path": "instructions/uupm-ux-duration-timing.md",
+      "sha256": "84512eeee1f3bc238b79dace936e631034dcdee38e8c79db01b82c1bd2d62b4f"
+    },
+    {
+      "instruction_id": "uupm-ux-easing-functions",
+      "path": "instructions/uupm-ux-easing-functions.md",
+      "sha256": "5ea85cf17d0d554a3d10d0ca6b920509952b380a6bdaa59445861fdadb905cb1"
+    },
+    {
+      "instruction_id": "uupm-ux-excessive-motion",
+      "path": "instructions/uupm-ux-excessive-motion.md",
+      "sha256": "f53e501217312c91da5fbf407a6f5d357281263a9faeb899e41a024dd0894804"
+    },
+    {
+      "instruction_id": "uupm-ux-fixed-positioning",
+      "path": "instructions/uupm-ux-fixed-positioning.md",
+      "sha256": "4a40689b490a266361a49abf237821f1a2326c42df04f07bd093030cdf0c6768"
+    },
+    {
+      "instruction_id": "uupm-ux-focus-states",
+      "path": "instructions/uupm-ux-focus-states.md",
+      "sha256": "d30036661a59ba129174e9cbcf162082c7f0e6e458d4be7b6ae6f2a06af07cf6"
+    },
+    {
+      "instruction_id": "uupm-ux-hover-states",
+      "path": "instructions/uupm-ux-hover-states.md",
+      "sha256": "f1d135142fbd41fdf24c6218c20b92eb715d457a969e7db80502438c8a663b14"
+    },
+    {
+      "instruction_id": "uupm-ux-hover-vs-tap",
+      "path": "instructions/uupm-ux-hover-vs-tap.md",
+      "sha256": "4dd12c6dd7fef7ac06929d7153af94e16557930fc2562c3cac3466065bbb41b8"
+    },
+    {
+      "instruction_id": "uupm-ux-loading-buttons",
+      "path": "instructions/uupm-ux-loading-buttons.md",
+      "sha256": "0af522d84eb76061e90f436cebee315cc7c50d1f5b674463923eacbf913f9039"
+    },
+    {
+      "instruction_id": "uupm-ux-loading-states",
+      "path": "instructions/uupm-ux-loading-states.md",
+      "sha256": "3e75eb86436ebb79b230392c787c24108e282571b1250e33b5b9028596a2dc20"
+    },
+    {
+      "instruction_id": "uupm-ux-overflow-hidden",
+      "path": "instructions/uupm-ux-overflow-hidden.md",
+      "sha256": "a628f1d8caa63b3531c64afef6606dff6261bfd3b644d367a39f38ee5f113c58"
+    },
+    {
+      "instruction_id": "uupm-ux-reduced-motion",
+      "path": "instructions/uupm-ux-reduced-motion.md",
+      "sha256": "118c3301c94d4b320c9e70921fd5d30436137988ed1cf8b699b76f8d81e43f28"
+    },
+    {
+      "instruction_id": "uupm-ux-smooth-scroll",
+      "path": "instructions/uupm-ux-smooth-scroll.md",
+      "sha256": "63aca549b1c315ca0dfc33432793da4728b58fdf2939bc81e6264be2e5c1706c"
+    },
+    {
+      "instruction_id": "uupm-ux-stacking-context",
+      "path": "instructions/uupm-ux-stacking-context.md",
+      "sha256": "c4ff18443d43d83bce68110348513646279e3ed8655755f200573a8290ceda55"
+    },
+    {
+      "instruction_id": "uupm-ux-sticky-navigation",
+      "path": "instructions/uupm-ux-sticky-navigation.md",
+      "sha256": "4eca38958c44185cc51acf4f2da811fccb37644088c5dae340f097a084f2ea2f"
+    },
+    {
+      "instruction_id": "uupm-ux-transform-performance",
+      "path": "instructions/uupm-ux-transform-performance.md",
+      "sha256": "00d0ab5d72cb09d8e6a8249a64ce1f85f2e3739d7a04c715461de14e6fe499ae"
+    },
+    {
+      "instruction_id": "uupm-ux-viewport-units",
+      "path": "instructions/uupm-ux-viewport-units.md",
+      "sha256": "1978af12517c7e1eef66fd9d3bbd68e0a192847e5259652576b57bfbb746109d"
+    },
+    {
+      "instruction_id": "uupm-ux-z-index-management",
+      "path": "instructions/uupm-ux-z-index-management.md",
+      "sha256": "076a41435fb919ddfeb2c0ecd605ac2c4bfaabbafb82167f570784891feb9950"
     },
     {
       "instruction_id": "ux-heuristics-clicks",

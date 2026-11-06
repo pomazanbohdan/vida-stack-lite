@@ -43,7 +43,7 @@ test('reports an unknown donor and a stale pin', () => {
 
 test('reports an invalid latest result and missing sections or rows', () => {
   const invalid = fixture();
-  rewrite(invalid, (text) => text.replaceAll('3,278 / 3,429 / 1,258', 'n/a'));
+  rewrite(invalid, (text) => text.split('\n').map((line) => line.startsWith('| 7 | uupm') ? line.replace(/\| [\d,]+ \/ [\d,]+ \/ [\d,]+ \|/u, '| n/a |') : line).join('\n'));
   expect(checkVector(invalid).issues.map((issue) => issue.code)).toContain('VECTOR_RESULT_INVALID');
 
   const empty = fixture();

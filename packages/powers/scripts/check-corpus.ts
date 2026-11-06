@@ -223,6 +223,17 @@ function checkMap(map: Dict, donors: DonorSet, instructionIds: Set<string>, issu
       const invalid = (record.status === 'converted' && named.length !== 1) || (record.status === 'split' && named.length < 2) || (record.status === 'rejected' && (typeof record.reason !== 'string' || record.reason.trim() === '' || named.length > 0)) || (record.status === 'merged' && (named.length === 0 || stringArray(record.contributed_sources).length === 0));
       if (invalid) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} has inconsistent ${String(record.status)} status`, { donor: donorId, path: sourcePath, status: record.status });
     }
+    const csvSources = isRecord(donorMap.csvSources) ? donorMap.csvSources : {};
+    for (const [sourcePath, rawSource] of Object.entries(csvSources)) {
+      const source = isRecord(rawSource) ? rawSource : {};
+      for (const rawRow of Array.isArray(source.rows) ? source.rows.filter(isRecord) : []) {
+        for (const rawBinding of Array.isArray(rawRow.bindings) ? rawRow.bindings.filter(isRecord) : []) {
+          const id = String(rawBinding.instructionId ?? '');
+          mappedIds.add(id);
+          if (!instructionIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} names unknown instruction ${id}`, { donor: donorId, path: sourcePath, instruction_id: id });
+        }
+      }
+    }
   }
   for (const id of instructionIds) if (!mappedIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `instruction ${id} has no corpus map record`, { instruction_id: id });
 }

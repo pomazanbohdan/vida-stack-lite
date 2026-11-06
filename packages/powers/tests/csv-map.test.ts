@@ -141,6 +141,17 @@ describe('checkCsvSource', () => {
     expect(issues.map((issue) => issue.code)).toContain('CORPUS_CSV_FIDELITY_INVALID');
   });
 
+  test('accepts a delegated fidelity receipt with a model and rejects one without it', () => {
+    const { source, receipt, allowlistEntry } = fixture();
+    const delegated = { ...receipt, reviewer: { kind: 'delegated', actor: 'agent', model: 'test-model' } };
+    const valid = new Map([['fidelity.json', { sha256: '0'.repeat(64), value: delegated }]]);
+    expect(checkCsvSource({ donor: 'donor', path: 'a.csv', bytes: bytes('Title,Description\nAlpha,First\n'), source, allowlistEntry, instructionIds: new Set(['alpha']), receipts: valid })).toEqual([]);
+
+    const missingModel = { ...delegated, reviewer: { kind: 'delegated', actor: 'agent' } };
+    const invalid = new Map([['fidelity.json', { sha256: '0'.repeat(64), value: missingModel }]]);
+    expect(checkCsvSource({ donor: 'donor', path: 'a.csv', bytes: bytes('Title,Description\nAlpha,First\n'), source, allowlistEntry, instructionIds: new Set(['alpha']), receipts: invalid }).map((issue) => issue.code)).toContain('CORPUS_CSV_FIDELITY_INVALID');
+  });
+
   test('reports a rejected row without a reason', () => {
     const base = fixture();
     const source = {
