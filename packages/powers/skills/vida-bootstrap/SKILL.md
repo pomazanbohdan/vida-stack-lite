@@ -17,11 +17,12 @@ their stop boundaries. This document grants no runtime or delivery authority.
 Read the orchestrator base for a lead. For an agent read the agent base followed
 by exactly one family delta selected by `bootstrap.registry.json`; base-only
 selection is inspection, not a complete assignment. Bootstrap precedes stage
-instructions. Read `vp-mode` only when the stage and profile require it.
-Bootstrap does not depend on Agent runtime, catalog or profile. Read lifecycle
-and allocation owners when project policy requires them; a missing mandated
-owner blocks dependent work. If none is configured, apply the project's own
-authority, scope and stop rules and record the limitation.
+instructions. Read `vp-mode` when the request is an instruction/catalog lookup
+or when the stage and profile require it. Bootstrap does not depend on Agent
+runtime, catalog or profile. Read lifecycle and allocation owners when project
+policy requires them; a missing mandated owner blocks dependent work. If none is
+configured, apply the project's own authority, scope and stop rules and record
+the limitation.
 
 The source-local composer may return the same texts; reading or composing does
 not launch an agent. From the project root, use `bun packages/powers/skills/vida-bootstrap/scripts/bootstrap.ts --role agent --role-name code-researcher`.

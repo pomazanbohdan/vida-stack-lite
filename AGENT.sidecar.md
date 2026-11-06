@@ -50,6 +50,27 @@ bootstrap, explicit-profile procedure, local commands and product checks. This
 sidecar owns project roots, shared ownership/policy and pointers only. Product
 instructions do not define Agent runtime consumption or shared-root changes.
 
+## Environment
+
+These are current-host observations, not product contracts. Recheck them when
+the host, shell or PATH changes.
+
+- **Platform and shell.** The host is Windows (`win32`) with PowerShell. The
+  repository root is the directory containing this file; resolve every path
+  from that root even when the caller cwd differs.
+- **Bun.** `bun.exe` is available on PATH on the current host. The observed
+  executable is
+  `C:\Users\pomaz\AppData\Local\Microsoft\WinGet\Packages\Oven-sh.Bun_Microsoft.Winget.Source_8wekyb3d8bbwe\bun-windows-x64\bun.exe`.
+  The product pin is `packages/powers/.bun-version` (1.4.4) and the Agent
+  package keeps its own pin. Use the pinned executable when version identity
+  matters; do not infer the pin from PATH.
+- **Text and search.** PowerShell can misparse `^`, `|`, `*`, `!` and can
+  corrupt UTF-8 or Cyrillic output in pipelines. Use `rg.exe` with explicit
+  arguments, or `bun -e` / `node -e` with absolute paths, for text, encoding
+  and byte checks. Do not use PowerShell pipelines for UTF-8 verification.
+- **Git.** The root is a Git worktree. Commits are Root-owned; push only on a
+  separate instruction. Preserve unrelated dirty source and retained evidence.
+
 ## Development policy and checks
 
 Read the product's nested AGENTS before its work. Existing lifecycle/allocation

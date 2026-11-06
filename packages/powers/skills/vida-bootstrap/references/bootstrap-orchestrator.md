@@ -43,7 +43,10 @@ attribution is recorded, not inferred. Powers does not assess legal risk.
 
 ## Start
 
-1. Read the project sidecar and any configured project retrieval.
+1. Read the project sidecar and any configured project retrieval. For a request
+   to find or retrieve reusable instructions, read `vp-mode/SKILL.md` and use
+   the catalog CLI (`catalog-cli.ts search`/`tags`/`get`); do not substitute
+   ad-hoc `rg` for the catalog.
 2. Classify the request and trace the smallest business -> system -> code path.
 3. State acceptance and the focused checks.
 4. Decide solo or delegate using the configured allocation rules.
