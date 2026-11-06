@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-react-native-use-react-navigation",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/react-native.csv",
+    "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58063717e652cce342f5608e42654e44ae629e9ce46ea25cb8534613d58f29a7",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "2b85157fac3c0be644d97fcb124d288f3eb0f592b828c7c36beeaeab06baac7e",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "4b421082f55f66bec8b64853d9beea69471985c5b1a41315d9cb56a48558b48b",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "4f86a925f9183da9f8bbd473615d515f710d110632126c079d0b196def321b4d",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "46cb5ae99ce305f92e988ac09e79a3f6dbb27e5c4ba30eca5fa20ee10d1bb4e5",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "aeacb928a6c8203c06ff5cfd7874e836ea00dc702dda56f0371b68eacade6449",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "1ba5d33b8c2e2a4195b38fda2976734316bca22c5b982ed11151f54e9bf0329f",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/react-native-1-evidence.json",
+    "sha256": "00bd56d5ba11eba6f15192a075bf81b371bb44afa34e8ce73b925671f4eff485"
+  },
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

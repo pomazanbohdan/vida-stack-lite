@@ -1,0 +1,207 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/react-native.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "ba31dd9c0c04da6bc02a74448bf121f9c0728ae5ba3b4d47b487778b0a1135b5"
+  },
+  "batch": "react-native-1",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 25,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 2
+  },
+  "findings": [
+    "Minor: use-stylesheet-create and avoid-inline-styles overlap but are consistent KEEP_ATOMIC rows; admit both.",
+    "Minor: Lists rows use the UI category tags while rows 23-25 use performance tags; accepted as source-category mapping."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-react-native-use-functional-components",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4361e933e8881dc408b1b2cf30131f112c128d6e6dd3f916bc0b00fd6ba1f884",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-keep-components-small",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ef6b2e0187142e9a6252effac99b3928510f332dec6f06fb199e390bb011f0c2",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-typescript",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=75752ab43d7406486a4b2c51aa80180636988b142c0221786579e8c8e720c62a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-colocate-component-files",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=66c6ecb0b87c3e440ad35352e67eb217d949c00696388e5ffe792c602ddab70d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-stylesheet-create",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0cb061512a13de4803d69555f05a215dc9cf4dc7f068f74ff1bad1903f022ee4",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-avoid-inline-styles",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=91db85d517d55637f5761be4164aed63f5ff85a2edd8b5beac435603d6b1161b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-flexbox-for-layout",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9d61a0200019d04cde5e66a5657e507805f642f4e0fcd7b3dd5e48199329f984",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-handle-platform-differences",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f4689fb8ea3ecd5829a3db82a7e623d19a083cc87f488e038d7594656e003f37",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-responsive-dimensions",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=adefdf15e78fcc5e31f4636cb64cb8d65e91af2625511d053989832f48f6f371",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-react-navigation",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58063717e652cce342f5608e42654e44ae629e9ce46ea25cb8534613d58f29a7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-type-navigation-params",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5e97b848b8acc524a07bbb9d32da41b9bd00de0de8edc0f08128bf2e524cf953",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-deep-linking",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2089b23885c5328319c19f40c4a3778bf123083a40daaff800a300278cbe11c6",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-handle-back-button",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7fb6804ecee13435c81f4f415b622f188d3b59700e8c6c9535e12496f5b99c95",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-usestate-for-local-state",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f1f7ddb34249eebfef7fcea5b80bb2a484a6cefbec8d63e3780c47775d691eea",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-usereducer-for-complex-state",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3591c2c58719f8bd7cb739b312eddba0600b8b42fc5fb9d23b8ff0f77835c6e3",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-context-sparingly",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=431a52fad410aed6ac8ebde1368b862cde265505988417424bb9029c31a1da3f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-consider-zustand-or-redux",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e352968e953172fb6550f77b31c22a883c66257cfdf84c9befe4fdcc19b83977",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-flatlist-for-long-lists",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fa263a85ea481ecf9211854b124267e1659210ce7b76f79615bbfbb185eda6c2",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-provide-keyextractor",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b4c8b6dc052d014b631c7561023128f48cc925d839343080a07d178ac5f7a497",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-optimize-renderitem",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a1931c7820b2a42d3b525885dec9a1acdaaff63bda4a75174c816ea271a04f4f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-getitemlayout-for-fixed-height",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8b04bc45e48ee1d9bf40eb3bb874965131b03cbe606d2a31bd1c75b7a04cc794",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-implement-windowsize",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0f9182bab4345927986dbfc6350c5a612363e61f7780926bc65bb6fbb7a0bf73",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-react-memo",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f77c5f3282b9a6e8ffca15112fc4e305a2189a7bbf0455df88e77cffe35e82fb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-usecallback-for-handlers",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0f2f5ffca5f56d0314a5d738874ec10554c0c47d617649a8558064ea67516cfb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-usememo-for-expensive-ops",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9c2a432d9cd3cb555000f6cffe6c9b3999625add9eb03c9a650d408f51ff9bb9",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "rejected": [],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

@@ -2,6 +2,17 @@
 
 ## 2026-11-06
 
+* **H2-A2 stack batch admitted:** 107 KEEP_ATOMIC `react.csv` and
+  `react-native.csv` rows are admitted as `uupm-react-*` and
+  `uupm-react-native-*` instructions with 107 delegated
+  `H2FidelityReceipt/v1` files and five SWE-2 batch evidence records. Five
+  reviews returned 107 READY and 9 duplicate rejections; the rejected rows are
+  terminal `rejected` map dispositions with reasons, not admitted instructions.
+  Catalog revision 7,351; corpus map 5,751; corpus 3,535 instructions; 1,168
+  rows remain deferred (13 UX, 1 SPLIT stack, 1,154 undispositioned stack).
+  `check-corpus` and `check-vector` pass. No H2 acceptance, source admission or
+  Runtime claim changed.
+
 * **H2-A2 react-performance batch admitted:** 44 KEEP_ATOMIC
   `react-performance.csv` rows are admitted as `uupm-react-perf-*` instructions
   with 44 delegated `H2FidelityReceipt/v1` files and two SWE-2 batch evidence

@@ -1,0 +1,200 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/react.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "4dd176a9787e5c6306b5df94158d75955adcdc6edab41ce5286641a5842303c1"
+  },
+  "batch": "react-2",
+  "aggregation": {
+    "verdict": "CHANGES",
+    "admitted": 17,
+    "rejected": 8,
+    "critical": 0,
+    "important": 0,
+    "minor": 2
+  },
+  "findings": [
+    "Important: six explicit corpus duplicates and two sibling/overlap duplicates were found; reject them rather than admit a second norm for the same rule.",
+    "Minor: manage-focus-properly partially overlaps existing keyboard/focus norms but the modal focus-trap norm is not stated verbatim; admit."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-react-handle-form-submission-properly",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=375ea089bc4e24a285ad5298d542bf5fca65a2873b76228c6a06e039bc80a7e7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-debounce-rapid-input-changes",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=157fed250db5d5ba1a083a8aa785bb490e9b56b8def92d1e5bc9569ee3b2f3af",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-follow-rules-of-hooks",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1cff6fa2cb8497f8509be81665d17e12d747c3a3bb2c2331f8839161350add14",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-custom-hooks-for-reusable-logic",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7539f39f6aa31537f1a52ee8dee2acc34a0a3725d92f52e29f006bd0b611540b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-name-custom-hooks-with-use-prefix",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8eda30f9b5e6598e3f9ddd3849ef7ce074d0af92d7c887cbb2b55a7a4e7f76bf",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-context-for-global-data",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8e836c50803223341b0048d107f7aaf5981abaa11fe8e208f4a89dacb186be9f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-split-contexts-by-concern",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=264d5e8ffd7ca7a8f47e85a78f96c889c11ae3bb353bdaf6509fbb3cdb0d95c7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-memoize-context-values",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0e38149827a8e71339d10137dee0450d71f3e6df93b446657e6c597aa78aa64f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-virtualize-long-lists",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=34085c8e45ed19bd5f8ef50656b1cb33f8f82c4fb6bf618579aa9e1200d3c01f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-batch-state-updates",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=21e3c0395f0f42f78bbb608c2688a3f362a002479887419e10cd7a6177a33426",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-error-boundaries",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f31df198f422ccb2c016bb79c936200610e8fb456a31d358042471b3d0dcec4a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-handle-async-errors",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8a262aef50f0d8ecc95020b57bd6067f470f7f7a3e0f60199af2e3054ec5d93a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-manage-focus-properly",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5a6e56fa36c08020606f2b62362aebb9e674d91bb10ba1648381a8b8789ea237",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-type-state-properly",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bf1971bc126faf68dc7400635eb944e5380679025cc315aca5282d8b4f4688ec",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-type-event-handlers",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=137d6b347740cfb6439f4989af558b9604c1da50ff6d01789cd2444fc67e23ec",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-generics-for-reusable-components",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=64a6072ea1aac1bffca355ba62cfe5eeca72c7961f6ff0486210a912f8eac190",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-container-presentational-split",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9c6ebd8c006ee064beac67d49345087b20b9ee4556805486f8bfa7e2514c4c53",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "rejected": [
+    {
+      "instructionId": "uupm-react-use-react-devtools-profiler",
+      "ordinal": 35,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f0877c9fbdc12d928f3a124bb24be43c8169382f72dae762d88f7e35157cabaa",
+      "reason": "duplicate norm of profile-to-find-the-real-bottleneck; no new instruction"
+    },
+    {
+      "instructionId": "uupm-react-lazy-load-components",
+      "ordinal": 36,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cfa7c49c71e3a083ba1ef1f7a27eeeef711ec1f7bbbf0a397314e6072de46694",
+      "reason": "duplicate norm of split-the-bundle-and-lazy-load-heavy-features, uupm-ux-code-splitting and uupm-react-perf-dynamic-imports; no new instruction"
+    },
+    {
+      "instructionId": "uupm-react-test-behavior-not-implementation",
+      "ordinal": 41,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6990919d58a3b5f45e444f646e912347f985ffb31118ba3b6de2a5622117de01",
+      "reason": "duplicate of the test-behavior family (write-one-test-per-scenario-against-the-public-surface, treat-observable-behaviour-as-a-commitment); no new instruction"
+    },
+    {
+      "instructionId": "uupm-react-use-testing-library-queries",
+      "ordinal": 42,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=886cf5a13d879aff67861929bc7b168f852b08b1cd54e10e05969cf3aec23bc2",
+      "reason": "duplicate norm of query-elements-by-role-not-test-id; no new instruction"
+    },
+    {
+      "instructionId": "uupm-react-use-semantic-html",
+      "ordinal": 43,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=277f6115a19cb0dc233d7c95033a55d9b82017901b2be44bd7100a7f94ac163d",
+      "reason": "duplicate norm of name-every-control-for-assistive-technology; no new instruction"
+    },
+    {
+      "instructionId": "uupm-react-announce-dynamic-content",
+      "ordinal": 45,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c22adcf9f1f135823b4bd14808c5d07f7e44a4f123c6a2dece0dba8a0bf17f6d",
+      "reason": "duplicate norm of announce-dynamic-changes-to-assistive-technology; no new instruction"
+    },
+    {
+      "instructionId": "uupm-react-label-form-controls",
+      "ordinal": 46,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b74f412a44e5b6495fde76c4d910db38daf9d95311922763f3c8916fecee4f33",
+      "reason": "duplicate norm of uupm-ux-form-labels and uupm-ux-input-labels; no new instruction"
+    },
+    {
+      "instructionId": "uupm-react-type-component-props",
+      "ordinal": 47,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=96b1468d78e77a515f56667ceac0ab2daba78f7fde378e78a4b3261dd6e51c43",
+      "reason": "near-duplicate of sibling uupm-react-validate-props-with-typescript; keep the sibling only"
+    }
+  ],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

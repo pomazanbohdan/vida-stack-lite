@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7350,
+  "revision": 7351,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-06T00:00:00Z",
   "tag_dictionary": {
@@ -16318,6 +16318,401 @@
       "sha256": "c343972d9b5b8d290e4b069dde0b5d46a43435b52e2b51219c14c57b6d6861d3"
     },
     {
+      "instruction_id": "uupm-react-avoid-binding-in-render",
+      "path": "instructions/uupm-react-avoid-binding-in-render.md",
+      "sha256": "562e28fb0101f228d8921fd124b8ea836f565f1b029dd28a81fba778f1b34703"
+    },
+    {
+      "instruction_id": "uupm-react-avoid-forwardref-in-new-code",
+      "path": "instructions/uupm-react-avoid-forwardref-in-new-code.md",
+      "sha256": "25d5010bea9428e6dce4d32373d27a36bfdb4a0e720eb76731755c2716371ab4"
+    },
+    {
+      "instruction_id": "uupm-react-avoid-inline-object-array-creation-in-jsx",
+      "path": "instructions/uupm-react-avoid-inline-object-array-creation-in-jsx.md",
+      "sha256": "17c1582656c9851f38275244cc0cc0edb0290bff1d3ba9e6ee80033b9f049128"
+    },
+    {
+      "instruction_id": "uupm-react-avoid-prop-drilling",
+      "path": "instructions/uupm-react-avoid-prop-drilling.md",
+      "sha256": "a96ac011e5c922b3490812b0db3ccb69498515f4084d272cf410d1925bee0294"
+    },
+    {
+      "instruction_id": "uupm-react-avoid-unnecessary-state",
+      "path": "instructions/uupm-react-avoid-unnecessary-state.md",
+      "sha256": "8be4de845e42cf3318cc05d441a3b36fba1df64fb4350abea458a9aa2601c388"
+    },
+    {
+      "instruction_id": "uupm-react-batch-state-updates",
+      "path": "instructions/uupm-react-batch-state-updates.md",
+      "sha256": "5b9199e7d777061d3be872f6c68e657f5b069689a2a829fda3d171eb7a69bd0c"
+    },
+    {
+      "instruction_id": "uupm-react-call-useformstatus-from-a-form-child",
+      "path": "instructions/uupm-react-call-useformstatus-from-a-form-child.md",
+      "sha256": "f21148384b4d09751cd9f0d69c8199550b9246bc8476b91ad53a95e7a92d95af"
+    },
+    {
+      "instruction_id": "uupm-react-call-useoptimistic-updates-inside-an-action",
+      "path": "instructions/uupm-react-call-useoptimistic-updates-inside-an-action.md",
+      "sha256": "1f571a2b5e8df6605aef7d1b4a8d3fc8cb1be1645cdf3047861fef5d07a1caa3"
+    },
+    {
+      "instruction_id": "uupm-react-clean-up-effects",
+      "path": "instructions/uupm-react-clean-up-effects.md",
+      "sha256": "1637f8548b5e4715d3c5a9f96ebe6ea4c5f9f60948b1b5f0c3cf484b27cbc97b"
+    },
+    {
+      "instruction_id": "uupm-react-colocate-related-code",
+      "path": "instructions/uupm-react-colocate-related-code.md",
+      "sha256": "7a3810fc91ffc17b979dac90bfd096fee2053a480f09b71c44433bf655b51ab4"
+    },
+    {
+      "instruction_id": "uupm-react-compound-components",
+      "path": "instructions/uupm-react-compound-components.md",
+      "sha256": "cc8f822219c389aa094539b1f9f01561883cf6726cf4dd80ab2a243313c61e8e"
+    },
+    {
+      "instruction_id": "uupm-react-container-presentational-split",
+      "path": "instructions/uupm-react-container-presentational-split.md",
+      "sha256": "ac72cef5650ad215121c927184dcb44f71e382d2dcbc15950491c90af5984d99"
+    },
+    {
+      "instruction_id": "uupm-react-controlled-components-for-forms",
+      "path": "instructions/uupm-react-controlled-components-for-forms.md",
+      "sha256": "1eaff3b8def63e2372a9d3538afc5b45fbbb16389a40b5a513e4cefe42945908"
+    },
+    {
+      "instruction_id": "uupm-react-custom-hooks-for-reusable-logic",
+      "path": "instructions/uupm-react-custom-hooks-for-reusable-logic.md",
+      "sha256": "bff40574d949841b805265920706b5eef765e3cdc2a7a413acfd5e49d8dc2d90"
+    },
+    {
+      "instruction_id": "uupm-react-debounce-rapid-input-changes",
+      "path": "instructions/uupm-react-debounce-rapid-input-changes.md",
+      "sha256": "6a5317b33639997d7d311c55c3c9d87b15490913fa72e24163a774e1902d9515"
+    },
+    {
+      "instruction_id": "uupm-react-destructure-props",
+      "path": "instructions/uupm-react-destructure-props.md",
+      "sha256": "0085b168a484c637e4fb45d7e4fc035f18a6fa3b52c916ad051579e8a863e033"
+    },
+    {
+      "instruction_id": "uupm-react-follow-rules-of-hooks",
+      "path": "instructions/uupm-react-follow-rules-of-hooks.md",
+      "sha256": "d77eb5148458bb80d135cfd7c9152ef1ada9fa0fc104fb14e88a5e3f28b2e88f"
+    },
+    {
+      "instruction_id": "uupm-react-handle-async-errors",
+      "path": "instructions/uupm-react-handle-async-errors.md",
+      "sha256": "29a8574112e2d16839fb0716a527b8584080511c58d44ff4d4b27d49d1ad38b5"
+    },
+    {
+      "instruction_id": "uupm-react-handle-form-submission-properly",
+      "path": "instructions/uupm-react-handle-form-submission-properly.md",
+      "sha256": "a26c4cb93e42461a1245423693138e0861086f4e494f1bfcd957b991f42309af"
+    },
+    {
+      "instruction_id": "uupm-react-keep-components-small-and-focused",
+      "path": "instructions/uupm-react-keep-components-small-and-focused.md",
+      "sha256": "6c46ed00ea9517052337a9cc5708ad22d3b20b99d869dd0d711958077119313f"
+    },
+    {
+      "instruction_id": "uupm-react-lift-state-up-when-needed",
+      "path": "instructions/uupm-react-lift-state-up-when-needed.md",
+      "sha256": "4b91e644aecd485e5557ee38b794886fa1407fd9eb29ee0be86005c19cdf090d"
+    },
+    {
+      "instruction_id": "uupm-react-manage-focus-properly",
+      "path": "instructions/uupm-react-manage-focus-properly.md",
+      "sha256": "8ebcb5cbb95daf373bdb313a40d0cfe9050d9174f03534b8addcd6be8f6a1589"
+    },
+    {
+      "instruction_id": "uupm-react-memoize-callbacks-passed-to-children",
+      "path": "instructions/uupm-react-memoize-callbacks-passed-to-children.md",
+      "sha256": "e2b759263270e84f157083229519aa9454b13cb655f2ea318f55705b2ab4d7ae"
+    },
+    {
+      "instruction_id": "uupm-react-memoize-context-values",
+      "path": "instructions/uupm-react-memoize-context-values.md",
+      "sha256": "66dac244b5c65222ed1bbd2b82b4c801bc0a4bfdcc2c92eff0c3d1ac567cdf29"
+    },
+    {
+      "instruction_id": "uupm-react-memoize-expensive-calculations",
+      "path": "instructions/uupm-react-memoize-expensive-calculations.md",
+      "sha256": "9d063acfaf49a0d79dc5f6dfa2b77693f28c41a4e0948c4b0744e5c1b4d0af04"
+    },
+    {
+      "instruction_id": "uupm-react-name-custom-hooks-with-use-prefix",
+      "path": "instructions/uupm-react-name-custom-hooks-with-use-prefix.md",
+      "sha256": "f0862f2e288bd0f5eef05192b58aa3408607160514d1a7edf2cc82a31f446895"
+    },
+    {
+      "instruction_id": "uupm-react-native-add-accessibility-labels",
+      "path": "instructions/uupm-react-native-add-accessibility-labels.md",
+      "sha256": "26470822284215c2cbe01e9f52915d451c0898a8d2cbaa71f45ae48be4e57b93"
+    },
+    {
+      "instruction_id": "uupm-react-native-avoid-anonymous-functions-in-jsx",
+      "path": "instructions/uupm-react-native-avoid-anonymous-functions-in-jsx.md",
+      "sha256": "81506f7754d4233486240401c6f9265444391cc85d2e652e912986c8c6b79137"
+    },
+    {
+      "instruction_id": "uupm-react-native-avoid-inline-styles",
+      "path": "instructions/uupm-react-native-avoid-inline-styles.md",
+      "sha256": "b6088f51054d4f5c2d74faafd4cfcdf6d11d8a5f782b4211360836ac16e436dc"
+    },
+    {
+      "instruction_id": "uupm-react-native-cancel-async-operations",
+      "path": "instructions/uupm-react-native-cancel-async-operations.md",
+      "sha256": "718e9010f6968af058e8fcbb64cc24f1b0db47080514f1bf2e191fa767af7af0"
+    },
+    {
+      "instruction_id": "uupm-react-native-colocate-component-files",
+      "path": "instructions/uupm-react-native-colocate-component-files.md",
+      "sha256": "8d5cdb5d4e23ffb952f3fd68789ffa973631c6c73d939d7d40b975972350d1e6"
+    },
+    {
+      "instruction_id": "uupm-react-native-consider-zustand-or-redux",
+      "path": "instructions/uupm-react-native-consider-zustand-or-redux.md",
+      "sha256": "df1b30aac06877a3616b03f077ad31bfabf68e56bf3de5bcc6cbbc7b2241f698"
+    },
+    {
+      "instruction_id": "uupm-react-native-handle-back-button",
+      "path": "instructions/uupm-react-native-handle-back-button.md",
+      "sha256": "d1a137047e5c032f96c7dfbb2de66b583a82188cf9934bba9d174b065964c710"
+    },
+    {
+      "instruction_id": "uupm-react-native-handle-keyboard",
+      "path": "instructions/uupm-react-native-handle-keyboard.md",
+      "sha256": "2e416e2ae6361e88d85efe128bb4e17cf2d702bc4e8399ac7191711df12109d5"
+    },
+    {
+      "instruction_id": "uupm-react-native-handle-loading-states",
+      "path": "instructions/uupm-react-native-handle-loading-states.md",
+      "sha256": "241ff528b7ade2eb1f7f48c68d87a89698731fc8c1a613cdac2f49aa12c81f65"
+    },
+    {
+      "instruction_id": "uupm-react-native-handle-permissions",
+      "path": "instructions/uupm-react-native-handle-permissions.md",
+      "sha256": "68b56b8466deff5d5e5c346116023a5a85fce56f3c55c7eeac476a48e3f278f4"
+    },
+    {
+      "instruction_id": "uupm-react-native-handle-platform-differences",
+      "path": "instructions/uupm-react-native-handle-platform-differences.md",
+      "sha256": "f3f86bc997d606fe5c891286fada60c5e81c2f6d1eabf2bbc4babd2a2d91fbbf"
+    },
+    {
+      "instruction_id": "uupm-react-native-implement-windowsize",
+      "path": "instructions/uupm-react-native-implement-windowsize.md",
+      "sha256": "a2766e1b8a74ff60864d14a452c7cdf4d46d874be8c31554b8eaa4d9e2517cac"
+    },
+    {
+      "instruction_id": "uupm-react-native-keep-components-small",
+      "path": "instructions/uupm-react-native-keep-components-small.md",
+      "sha256": "8239e9c5ba1be966bb487f3b3b56002f6a2c974433735bada3951ba6ef0fbe11"
+    },
+    {
+      "instruction_id": "uupm-react-native-optimize-renderitem",
+      "path": "instructions/uupm-react-native-optimize-renderitem.md",
+      "sha256": "191ae8aefb4405910f6e30a1ca0c74960cb20b71d0dbe6e199523e0101543f7d"
+    },
+    {
+      "instruction_id": "uupm-react-native-provide-keyextractor",
+      "path": "instructions/uupm-react-native-provide-keyextractor.md",
+      "sha256": "82030494e592c34670926fd636c489b51016a8d402b705c95416950647a43485"
+    },
+    {
+      "instruction_id": "uupm-react-native-provide-touch-feedback",
+      "path": "instructions/uupm-react-native-provide-touch-feedback.md",
+      "sha256": "b9bd87b473bdeee937fd014670292239db149065f9089a0276cd177c01512518"
+    },
+    {
+      "instruction_id": "uupm-react-native-run-on-ui-thread",
+      "path": "instructions/uupm-react-native-run-on-ui-thread.md",
+      "sha256": "833186967f0a02a3e1ca56ba8c13d8c581b9bbf42c492f9bf0b8b6a4dc396780"
+    },
+    {
+      "instruction_id": "uupm-react-native-set-hitslop-for-small-targets",
+      "path": "instructions/uupm-react-native-set-hitslop-for-small-targets.md",
+      "sha256": "88d52a73480d2b7e556b8806a51cf5e5d7007360b2dbaf2cad953398a2700717"
+    },
+    {
+      "instruction_id": "uupm-react-native-specify-image-dimensions",
+      "path": "instructions/uupm-react-native-specify-image-dimensions.md",
+      "sha256": "739dc1f6f84cc24697065bc14e8cbcaff55b39f564feb543b638a1bb4c6c53fd"
+    },
+    {
+      "instruction_id": "uupm-react-native-support-screen-readers",
+      "path": "instructions/uupm-react-native-support-screen-readers.md",
+      "sha256": "90a16b2199b3770a9e4c08c564929aa2ba1cf97f6c435e6e2f847b1c8ad2f701"
+    },
+    {
+      "instruction_id": "uupm-react-native-test-on-real-devices",
+      "path": "instructions/uupm-react-native-test-on-real-devices.md",
+      "sha256": "693b4ed0e9310a83a599bcca0333e71a73c14bc893f1955659edef90292aaea3"
+    },
+    {
+      "instruction_id": "uupm-react-native-type-navigation-params",
+      "path": "instructions/uupm-react-native-type-navigation-params.md",
+      "sha256": "751c9caee47c297dffba8722e4ef5f3f5233465bf522fe8018cb1c3be3cb52d4"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-accessibility-roles",
+      "path": "instructions/uupm-react-native-use-accessibility-roles.md",
+      "sha256": "91be969b85da0c252840a0bf4eb014bbafe2b612ccb036955c8bc31494996b3e"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-an-error-boundary-for-rendering-failures",
+      "path": "instructions/uupm-react-native-use-an-error-boundary-for-rendering-failures.md",
+      "sha256": "cf5844f5ffccc63c4bdd5eebb5ddbdde8c8ae6316d53f99f0a34a7ca5f720ce1"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-bundled-hermes-by-default",
+      "path": "instructions/uupm-react-native-use-bundled-hermes-by-default.md",
+      "sha256": "a9b984d60161b5960257455ddebaba1e74904aa39e2b28177d7cfc987ea89550"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-context-sparingly",
+      "path": "instructions/uupm-react-native-use-context-sparingly.md",
+      "sha256": "203db061b9afb909a603650373b8528704c9710921a22f7163aedad3e4469c95"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-controlled-inputs",
+      "path": "instructions/uupm-react-native-use-controlled-inputs.md",
+      "sha256": "cd0049b78d850ea0be56390c37d0c623c927850e49a99dc40b4f34690506c8dc"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-deep-linking",
+      "path": "instructions/uupm-react-native-use-deep-linking.md",
+      "sha256": "ed7f5ab5a8b3d6781b8440a84fdfe71f035561c7414e6d22c572dffcd8eb4a1f"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-detox-for-e2e",
+      "path": "instructions/uupm-react-native-use-detox-for-e2e.md",
+      "sha256": "b0839ebcd1377817c5f948dc5f05759fa24085d171bb8c163cee288c8281e17b"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-expo-image",
+      "path": "instructions/uupm-react-native-use-expo-image.md",
+      "sha256": "afc8918205883a209087666f11979c784ecb99cac58f91d27e9353d7a2a7c6fa"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-expo-when-possible",
+      "path": "instructions/uupm-react-native-use-expo-when-possible.md",
+      "sha256": "e60715bbd09cf85dc7dff623c759f620d2d9c9859c1e8de402cea4239c5262f7"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-flatlist-for-long-lists",
+      "path": "instructions/uupm-react-native-use-flatlist-for-long-lists.md",
+      "sha256": "2a26b227c9881216cab1d247ac48ac426e9427a5cb4cb256952d125322c265b5"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-flexbox-for-layout",
+      "path": "instructions/uupm-react-native-use-flexbox-for-layout.md",
+      "sha256": "13069818b6dd6fc173b3ac515e44f295b26bc91c3f8192edb4c49ceba1487ae4"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-functional-components",
+      "path": "instructions/uupm-react-native-use-functional-components.md",
+      "sha256": "4cd6fe48493ea56f737d87c33522340e3491f86ccebf73f19354ea3ff667e1dc"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-gesture-handler",
+      "path": "instructions/uupm-react-native-use-gesture-handler.md",
+      "sha256": "c5c61a03a0eb1a2096278efea989e707afa4e814c35270a8c32f82b601dc27f2"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-getitemlayout-for-fixed-height",
+      "path": "instructions/uupm-react-native-use-getitemlayout-for-fixed-height.md",
+      "sha256": "194444bd9d4efa69606ff12dff8074376dd058266d021147e7e6a72218f59a4e"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-native-modules-carefully",
+      "path": "instructions/uupm-react-native-use-native-modules-carefully.md",
+      "sha256": "c936d3c8ee59d503820048c4691e999dc235560bfe6fde40a2632f5cd52cf312"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-pressable",
+      "path": "instructions/uupm-react-native-use-pressable.md",
+      "sha256": "a2ec1918508b7b3537168a487ec54b816886578d95dcfa75e59038a3bade2d58"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-proper-keyboard-types",
+      "path": "instructions/uupm-react-native-use-proper-keyboard-types.md",
+      "sha256": "4e9a127b7950dae1c8b8e723b527428a40ef61256000d9d185f7f4eb1b4473f2"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-react-memo",
+      "path": "instructions/uupm-react-native-use-react-memo.md",
+      "sha256": "6801a4cf5fecdba0895a497762a22b5756413d3e7265735fc2d658844c912c30"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-react-native-testing-library",
+      "path": "instructions/uupm-react-native-use-react-native-testing-library.md",
+      "sha256": "ab148162e8f7e2e3bbebab9354e6ddea6f3e1cb6abf37603c091e45341e73ebf"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-react-navigation",
+      "path": "instructions/uupm-react-native-use-react-navigation.md",
+      "sha256": "b70815b084548a958eecb645784588843cdfb609b9eb720a0203e76a80d50913"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-reanimated",
+      "path": "instructions/uupm-react-native-use-reanimated.md",
+      "sha256": "899408f2e6d2a78039f0b5a388dc313606b7554d034ef1f779ce61b83e1996ae"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-resizemode",
+      "path": "instructions/uupm-react-native-use-resizemode.md",
+      "sha256": "fdd790ede16111a82aadfdc2b79a3fe814e4b4dc70bbc54d819f620714208e04"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-responsive-dimensions",
+      "path": "instructions/uupm-react-native-use-responsive-dimensions.md",
+      "sha256": "7856f44faf89f9c3f09b9f79af9a81835a47d97c7c492a829455e8dbb61e83e1"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-stylesheet-create",
+      "path": "instructions/uupm-react-native-use-stylesheet-create.md",
+      "sha256": "54b7171c86474627a9a7bfa168a80f77659cfa6a7322bd2cf2b6e0352ac06269"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-typescript",
+      "path": "instructions/uupm-react-native-use-typescript.md",
+      "sha256": "0836763117f7a2ec7a12b0d631dbf9015ecc993d7c3cc7749d66598f76b45c3a"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-usecallback-for-handlers",
+      "path": "instructions/uupm-react-native-use-usecallback-for-handlers.md",
+      "sha256": "7f28f76b05d93896f155e6f234cb69104558bc1e2a91a9f2f9c912306a16c8d7"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-usememo-for-expensive-ops",
+      "path": "instructions/uupm-react-native-use-usememo-for-expensive-ops.md",
+      "sha256": "af8e1decd1d706f716b1194178a64db54f5a9f2eb15c17067e8246502c1d9121"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-usereducer-for-complex-state",
+      "path": "instructions/uupm-react-native-use-usereducer-for-complex-state.md",
+      "sha256": "a699ffff728770aef549dd0ef557616a6d6a8da4ec26eaa27bb63305d5df5192"
+    },
+    {
+      "instruction_id": "uupm-react-native-use-usestate-for-local-state",
+      "path": "instructions/uupm-react-native-use-usestate-for-local-state.md",
+      "sha256": "aa313bf3736f560935704d8c4816a81ad76cb361ef7b00fe995fecca688c87b8"
+    },
+    {
+      "instruction_id": "uupm-react-pass-event-handlers-not-call-results",
+      "path": "instructions/uupm-react-pass-event-handlers-not-call-results.md",
+      "sha256": "52e84943cdbf06b832739829761a6bcbef7e0ce5882bbb1e6e9c20b522e7b330"
+    },
+    {
+      "instruction_id": "uupm-react-pass-ref-as-a-prop",
+      "path": "instructions/uupm-react-pass-ref-as-a-prop.md",
+      "sha256": "3f57e34499c21e7aa233a4050375b508936480dff2838019f0c71cad363296d2"
+    },
+    {
       "instruction_id": "uupm-react-perf-activity-component",
       "path": "instructions/uupm-react-perf-activity-component.md",
       "sha256": "97b7e02d7abacd71bfd5d883df27a684226bc48614b89ecd0e6d269813be63f7"
@@ -16536,6 +16931,146 @@
       "instruction_id": "uupm-react-perf-transitions",
       "path": "instructions/uupm-react-perf-transitions.md",
       "sha256": "856ecc2b25dc963bcd5c5d38a5fd06ff5d5d6b615009389c176dae4836be6aec"
+    },
+    {
+      "instruction_id": "uupm-react-provide-default-props-values",
+      "path": "instructions/uupm-react-provide-default-props-values.md",
+      "sha256": "c0e2eb5ac0fb2ebc43cd5a77e22f4ae7673ca35b80121c4792462ab8fd634898"
+    },
+    {
+      "instruction_id": "uupm-react-render-props-for-flexibility",
+      "path": "instructions/uupm-react-render-props-for-flexibility.md",
+      "sha256": "1fed86c10f559b0e829035a13d536bee5ac6addda1068037b4dc4b80c91715c8"
+    },
+    {
+      "instruction_id": "uupm-react-require-react-19-2-1-for-rsc-code-paths",
+      "path": "instructions/uupm-react-require-react-19-2-1-for-rsc-code-paths.md",
+      "sha256": "bd26efe07e3ce3930e1eee121a2a841eb02337df757e86f19b60ee8e5cd84464"
+    },
+    {
+      "instruction_id": "uupm-react-specify-dependencies-correctly",
+      "path": "instructions/uupm-react-specify-dependencies-correctly.md",
+      "sha256": "4cb126c33b9bf8ed0850dcaac4acc7e476f239e3a2a93c324ed3eaa650aeb1fa"
+    },
+    {
+      "instruction_id": "uupm-react-split-contexts-by-concern",
+      "path": "instructions/uupm-react-split-contexts-by-concern.md",
+      "sha256": "e6eb5a4f9011b3aa0f16c24073f3c63532448f159d9d38ff7c93db604f082704"
+    },
+    {
+      "instruction_id": "uupm-react-treat-eslint-plugin-react-compiler-as-legacy",
+      "path": "instructions/uupm-react-treat-eslint-plugin-react-compiler-as-legacy.md",
+      "sha256": "13a370ca63dbb3d27f7f6e14cb88dd0134f6620b1ccb860e28f80d0d28799f7c"
+    },
+    {
+      "instruction_id": "uupm-react-type-event-handlers",
+      "path": "instructions/uupm-react-type-event-handlers.md",
+      "sha256": "ec8b498bb86afd02be92af1a22740bf42a2fd51bc1ea540bb037f4c97343e225"
+    },
+    {
+      "instruction_id": "uupm-react-type-state-properly",
+      "path": "instructions/uupm-react-type-state-properly.md",
+      "sha256": "584a0ae9fc1dc52687954ccbe8805b678efa08f809abdafbfdca15515387ddaf"
+    },
+    {
+      "instruction_id": "uupm-react-use-actions-with-async-starttransition",
+      "path": "instructions/uupm-react-use-actions-with-async-starttransition.md",
+      "sha256": "34110e362fdecd1ec5eeb41df796561c0149155a49cfa3286b8138442a0fd995"
+    },
+    {
+      "instruction_id": "uupm-react-use-an-effect-event-for-non-reactive-effect-logic",
+      "path": "instructions/uupm-react-use-an-effect-event-for-non-reactive-effect-logic.md",
+      "sha256": "5b3b355ecee55df5d0fdf893825224b210bc8b38951e1bf604103e5626c75582"
+    },
+    {
+      "instruction_id": "uupm-react-use-composition-over-inheritance",
+      "path": "instructions/uupm-react-use-composition-over-inheritance.md",
+      "sha256": "d9f02fb20ca719059eacdbcb1dc6cb526a0543202ef8fab82dfa458eb302c7fb"
+    },
+    {
+      "instruction_id": "uupm-react-use-context-for-global-data",
+      "path": "instructions/uupm-react-use-context-for-global-data.md",
+      "sha256": "5f981511e6acd516aadbd052264b2912900d3d35e39aedc7edf547f931d2f5d2"
+    },
+    {
+      "instruction_id": "uupm-react-use-error-boundaries",
+      "path": "instructions/uupm-react-use-error-boundaries.md",
+      "sha256": "ebb3a3818b4d1c68eb7e3d6ec8c1eeaf065ad6a3a4ebdf6eff66ae765441623b"
+    },
+    {
+      "instruction_id": "uupm-react-use-eslint-plugin-react-hooks-recommended-preset",
+      "path": "instructions/uupm-react-use-eslint-plugin-react-hooks-recommended-preset.md",
+      "sha256": "36cefb6dd3e5b6a036a03d729fcc0b0b6e82cee74742e2faa48cb16fbdf5e5a1"
+    },
+    {
+      "instruction_id": "uupm-react-use-form-actions-for-action-based-submissions",
+      "path": "instructions/uupm-react-use-form-actions-for-action-based-submissions.md",
+      "sha256": "743bbfec6bb9368d49c03bfb42a706204f45b25b05d07321b14012c25737ff32"
+    },
+    {
+      "instruction_id": "uupm-react-use-fragments-to-avoid-extra-dom",
+      "path": "instructions/uupm-react-use-fragments-to-avoid-extra-dom.md",
+      "sha256": "7c12c1b782254d52b0f355d04177bd68045c2feae43e5f177ed042f4747662e8"
+    },
+    {
+      "instruction_id": "uupm-react-use-generics-for-reusable-components",
+      "path": "instructions/uupm-react-use-generics-for-reusable-components.md",
+      "sha256": "f47cfcdaf5d81cd645079f208d6f98dd2f7a039f344a0ea9235709ef88f83d53"
+    },
+    {
+      "instruction_id": "uupm-react-use-keys-properly",
+      "path": "instructions/uupm-react-use-keys-properly.md",
+      "sha256": "a807dabe4b8aef0f71d2c019155927f92e4fa1ce8b30fc17993901acd2928a99"
+    },
+    {
+      "instruction_id": "uupm-react-use-react-compiler-first-for-memoization",
+      "path": "instructions/uupm-react-use-react-compiler-first-for-memoization.md",
+      "sha256": "a995bea5581b5bac5582d558a18210f5d8224c48df74747cfde00070f8006aa4"
+    },
+    {
+      "instruction_id": "uupm-react-use-react-memo-wisely",
+      "path": "instructions/uupm-react-use-react-memo-wisely.md",
+      "sha256": "4a94ad1380c2362e71d10c4fe482ce7c8f066dae3cfb4257bf2902341b5f7f60"
+    },
+    {
+      "instruction_id": "uupm-react-use-refs-for-non-reactive-values",
+      "path": "instructions/uupm-react-use-refs-for-non-reactive-values.md",
+      "sha256": "2ca52de5c5c2c50386b8b80dc79bc3558803d9d673f72f02525e086f884d001a"
+    },
+    {
+      "instruction_id": "uupm-react-use-synthetic-events-correctly",
+      "path": "instructions/uupm-react-use-synthetic-events-correctly.md",
+      "sha256": "005543183e4932223e595f6ba8ae7e7bca0e5ed9af798695703e7b0f4e45502e"
+    },
+    {
+      "instruction_id": "uupm-react-use-use-with-stable-promises-or-context",
+      "path": "instructions/uupm-react-use-use-with-stable-promises-or-context.md",
+      "sha256": "8c2245fd52c612fe3da88d6f10dc43d1639c965d21bb165d0ea9d31eaeb119e7"
+    },
+    {
+      "instruction_id": "uupm-react-use-useactionstate-for-action-state",
+      "path": "instructions/uupm-react-use-useactionstate-for-action-state.md",
+      "sha256": "ce88b1c3f42127caf87b860b2229d71f534f1dd2fa2843dfa25dbabe6830ab9b"
+    },
+    {
+      "instruction_id": "uupm-react-use-usereducer-for-complex-state",
+      "path": "instructions/uupm-react-use-usereducer-for-complex-state.md",
+      "sha256": "15ef1eabe5821619265939b1bfd3b2c326d979d7d06373e2e31de5ffffb14d5b"
+    },
+    {
+      "instruction_id": "uupm-react-use-usestate-for-local-state",
+      "path": "instructions/uupm-react-use-usestate-for-local-state.md",
+      "sha256": "887bcf8bfeec91f4f0547c63efe472f88901b99f9ab68d19e79e806ae6fc7aa6"
+    },
+    {
+      "instruction_id": "uupm-react-validate-props-with-typescript",
+      "path": "instructions/uupm-react-validate-props-with-typescript.md",
+      "sha256": "a6170e88384e0c2ff1ce4740b8399e2cf1ba4c958758c9abfa9c28317be9c68f"
+    },
+    {
+      "instruction_id": "uupm-react-virtualize-long-lists",
+      "path": "instructions/uupm-react-virtualize-long-lists.md",
+      "sha256": "84b5f7e02f1f6392a9c146dd01fe6e3a64288c0c0dba439372403ab2b5fd333c"
     },
     {
       "instruction_id": "uupm-ux-active-state",

@@ -1,0 +1,140 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/react.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "4dd176a9787e5c6306b5df94158d75955adcdc6edab41ce5286641a5842303c1"
+  },
+  "batch": "react-3",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 15,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 3
+  },
+  "findings": [
+    "Minor: uupm-react-pass-ref-as-a-prop and uupm-react-avoid-forwardref-in-new-code are retagged from design-system-adherence to structural-design because they are React API modernization rules.",
+    "Observation: CSV Status=deprecated on ordinals 59 and 61 is preserved via Applies To react legacy; no frontmatter status change.",
+    "Observation: ordinal 54 overlaps react-1 memoization norms but is a distinct, stronger source row; both are verbatim-faithful."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-react-render-props-for-flexibility",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c2f693fd11765a178ab8ec17221679e5bcfd30ca8ca1f31eddf0a67148fad9ee",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-compound-components",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=feee8ab467b0ad89fe3e11e7a3587446afeb239c6370e5dee38ae90eb4849468",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-react-compiler-first-for-memoization",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=54dc6443281b072e6bcf64078bcce37b53a8f2a8ba8ef4c033f9a53c09970165",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-eslint-plugin-react-hooks-recommended-preset",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ac8fc057e7895d0d1fccca9a44039f4c94031cd91aa5253aaf26d7a5bf7adb26",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-an-effect-event-for-non-reactive-effect-logic",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aabb6477faf8504cd94935c7827e125a9ba212cdbea201814b747ed4d9a9f81d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-actions-with-async-starttransition",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cedad08718ee793859d3c2261508e7054253767e1b64e9e20db9aaa151296ab0",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-pass-ref-as-a-prop",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c718616dc26f631814967830fe5300d2b399bdda2723dc8884e0e12d41c6fd1a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged to structural-design per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-react-avoid-forwardref-in-new-code",
+      "sourceRowOrdinal": 59,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0ccf6e2d39f42a6ce082ffdb4b21b071637a2947c774556f0db63c0dc2940e0d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged to structural-design per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-react-require-react-19-2-1-for-rsc-code-paths",
+      "sourceRowOrdinal": 60,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=56768fce6d5c6c07782773907dc00f6d6303c88cdf5a0e00c4f483414a14b76f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-treat-eslint-plugin-react-compiler-as-legacy",
+      "sourceRowOrdinal": 61,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9a4cbf327bc7964d27279a85f3fe5f46b272d4a11cb14505edeeb1238d5baabf",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-useactionstate-for-action-state",
+      "sourceRowOrdinal": 62,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=101b386cf3e648ff06f3ccee55691262c0bfab4455b8999ea6a5a867555bc6c3",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-call-useformstatus-from-a-form-child",
+      "sourceRowOrdinal": 63,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=df502f2a61796aa9492acf12aa8e8019ec3f024b3b367c8ac91d6acb9863d709",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-use-with-stable-promises-or-context",
+      "sourceRowOrdinal": 64,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=053b9636f6224b506ded35027d7df43b16e7c92cbf09fcf2ed615a0c62c82b9c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-call-useoptimistic-updates-inside-an-action",
+      "sourceRowOrdinal": 65,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6c026991f96f435d499a7ef67451dfed564d95d95aae776efa34287960028bbe",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-use-form-actions-for-action-based-submissions",
+      "sourceRowOrdinal": 66,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6abab12978da88edaa047437f558b0566331aff3c4a5c1e94d4c50e1da639933",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "rejected": [],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

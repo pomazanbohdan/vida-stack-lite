@@ -1,0 +1,213 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/react-native.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "ba31dd9c0c04da6bc02a74448bf121f9c0728ae5ba3b4d47b487778b0a1135b5"
+  },
+  "batch": "react-native-2",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 26,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 1
+  },
+  "findings": [
+    "The reviewer's Important duplicate finding was caused by a stale react-native-3 proposal file from an earlier 6-batch generation; that file has been removed. react-native-2 carries the intended 26 rows and no duplicate remains."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-react-native-avoid-anonymous-functions-in-jsx",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=61a90a6f4db7c8e25eabb56f37bce296b3bb48cc0e0e201ab9927863fce16348",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-bundled-hermes-by-default",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b0f00df4677136da62fc44f80cf1f5a9da9424f7741fb76090edfd495a84d41e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-expo-image",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d49c56329989ad3027c580495d9d4b5bdc8aaebe2789da8e7154448c2181f2f7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-specify-image-dimensions",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=28093489935c6d0b35b4aedbc0633d4b1b2ddd778d911bffb3f1e654f2aeeaeb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-resizemode",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b03eca8e61a3dfc3fdc3d3f72a5400b4bcd31e039cf5297d17324d40479b3974",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-controlled-inputs",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=68e713a3d9e023211e0c9a8c3fffcb6bebbd56cca800db65e7d05e8a75356fc9",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-handle-keyboard",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=42466a0bfcce5233713d6d98121b6c56ca00cbad23123a7f3d6e1503ea37b247",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-proper-keyboard-types",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2fa0cc530f7df19cac365a5a88d25a15d422ed0c7bd6a7407215bd1f8fa43a0a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-pressable",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d46f926c8f9662abd529891c2c40cbc49ff2ead80876b6c6767682d85caa8b22",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-provide-touch-feedback",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=10e04c889a668b4c7b3babe988fb54d191c193f2bc9c2cbd175cffe56a6a08e3",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-set-hitslop-for-small-targets",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f28b29362bafb427850657daf306a8385c9e4a092ef02abe721711a4f915be03",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-reanimated",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a461fdc648193fecbb2e9ea10b64e949cb081f7a5cc5556c761c45e6ef353af9",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-run-on-ui-thread",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0cb31ce190344f0f06c2ca60f5afe6ed5a7e47eef19ce0aadbbb4edd984a5051",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-gesture-handler",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=25e5703c584118f09430699fffb4cec10b33039cc38ae9688135597524f1d779",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-handle-loading-states",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=69f8a005d31783de81aa9f66313186f294cbc590270832a090cb4c136569c224",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-an-error-boundary-for-rendering-failures",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5377046157838f803f0a1f6d62d4ec5f2845a0a4d9fab4412d48b0b9f379a1de",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-cancel-async-operations",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a6e9bad83f263722e02e019c6f3622605f3456e00d4b02db1336cff8998274b7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-add-accessibility-labels",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aeabc769021347217242d555cc3e40159508f713c504a0fb3e55a9bacd299da5",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-accessibility-roles",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=14bc63aef7a0b5e6f60f722fcc1ae7980420d653ed38b3db7939c27a2e7b9356",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-support-screen-readers",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7be1fa15050e5d3c46539448170758bd92a0913544bedbb4a77c2ea40c838332",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-react-native-testing-library",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=74ad31cb5677bbb628728be0fb9bcbb3405fac76e65d46b047b9dc626a35e1fa",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-test-on-real-devices",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8b36bdaa58824bd110e9ce63fa53f787c006d8ddaa0cf591a7ab0c384353bb7b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-detox-for-e2e",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b401fb9f22aa9a0133877e80d9415a0c5fe2087fd45c6f11e00908f22cf16685",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-native-modules-carefully",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a62efd9afb006703cf033db1e261d79e7e66739cfa6e4a2fa5851c7b8428fadf",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-use-expo-when-possible",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6216ca0f8b67a34caafe775f9ec9180a3942f4c75f30716dd8806be90535319e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-react-native-handle-permissions",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/react-native.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=07fe44554500deeffddf3cc1e2e9fbbe0a891bf8c29a1669a0e5ae380980ee29",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "rejected": [],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

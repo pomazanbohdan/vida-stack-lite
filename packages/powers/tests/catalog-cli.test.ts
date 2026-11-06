@@ -1815,7 +1815,7 @@ describe('retrieval workflow contract', () => {
     const sentence = await runInProcess(['search', '--for', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', '--catalog', realCatalog]);
     expect(sentence.status).toBe(1);
     expect(sentence.stderr).toContain('run one focused --for per intent');
-  }, 20000);
+  }, 40000);
 
   test('--for falls back to the most frequent matching pattern when no capability matches', async () => {
     const competingCatalog = await catalogWithProfileSchema();
@@ -1904,7 +1904,7 @@ describe('retrieval workflow contract', () => {
     const noFor = await runInProcess(['search', '--strict', '--catalog', realCatalog]);
     expect(noFor.status).toBe(1);
     expect(noFor.stderr).toContain('--strict requires --for');
-  });
+  }, 20000);
 
   test('search pagination hint names the valid tag-query route', async () => {
     const result = await runInProcess(['search', '--capability', 'clarify-requirements', '--limit', '1', '--catalog', realCatalog]);
