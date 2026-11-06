@@ -29,7 +29,7 @@ import {
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
 import { parseApplicabilityContext } from './applicability.ts';
 import type { ApplicabilityContext } from './applicability.ts';
-import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText, topPatternFor } from './retrieval.ts';
+import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText } from './retrieval.ts';
 import type { IntentCandidate } from './retrieval.ts';
 import { validateAgainstSchema } from './schema.ts';
 import {
@@ -765,12 +765,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
           const explicitCapability = capabilityTags?.[0];
           const explicitPattern = patternTags?.[0];
           const capability = explicitCapability ?? resolution.capability;
-          let pattern = explicitPattern ?? resolution.pattern;
-          let patternSource: 'explicit' | 'query' | 'default' | undefined = explicitPattern !== undefined ? 'explicit' : resolution.patternSource;
-          if (pattern === undefined && capability !== undefined) {
-            pattern = topPatternFor(instructions, capability);
-            patternSource = pattern === undefined ? undefined : 'default';
-          }
+          const pattern = explicitPattern ?? resolution.pattern;
+          const patternSource = explicitPattern !== undefined ? 'explicit' : resolution.patternSource;
           if (capability === undefined && pattern === undefined) {
             throw invalid(`no capability or pattern matched --for; ${suggestionText(forTerms, catalogFindTags(catalog, forTerms))}`, { terms: forTerms });
           }
