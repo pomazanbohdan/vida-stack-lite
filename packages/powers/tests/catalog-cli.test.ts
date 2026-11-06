@@ -661,7 +661,7 @@ describe('catalog CLI', () => {
   test('search emits ID and summary once across tags with no JSON metadata columns', () => {
     const result = runCli(fixtureArgs(['search', '--capability', 'test-design', 'acceptance-design', '--pattern', 'test-first-development']));
     expect(result.status).toBe(0);
-    expect(result.stderr).toBe('');
+    expect(result.stderr).toBe('discovery only: no --profile; rows are unfiltered\n');
     expect(result.stdout).toBe('alpha\tApplies to implementation tasks.\nbeta\tDefines acceptance checks.\n');
     expect(result.stdout).not.toContain('Alpha instruction');
     expect(result.stdout).not.toContain('revision');
@@ -673,7 +673,7 @@ describe('catalog CLI', () => {
     ]));
     expect(paged.status).toBe(0);
     expect(paged.stdout).toBe('beta\tDefines acceptance checks.\n');
-    expect(paged.stderr).toBe('pagination: page 2 of 2: showing 1 of 2; no more rows\n');
+    expect(paged.stderr).toBe('discovery only: no --profile; rows are unfiltered\npagination: page 2 of 2: showing 1 of 2; no more rows\n');
 
     const broad = runCli(fixtureArgs(['search']));
     expect(broad.status).toBe(0);
@@ -698,7 +698,7 @@ describe('catalog CLI', () => {
       '--classification-status', 'classified', 'classified',
     ]);
     expect(search.status).toBe(0);
-    expect(search.stderr).toBe('');
+    expect(search.stderr).toBe('discovery only: no --profile; rows are unfiltered\n');
     expect(search.stdout).toBe('alpha\tApplies to implementation tasks.\ngamma\tSupplies a transitive dependency.\n');
   });
 
@@ -1319,7 +1319,8 @@ describe('catalog CLI', () => {
         expect(result.stdout).toContain('Alpha body.');
         expect(result.stderr).toContain('bundle: ');
       } else expect(JSON.parse(result.stdout)).toBeTruthy();
-      if (command[0] !== 'get') expect(result.stderr).toBe('');
+      if (command[0] === 'search') expect(result.stderr).toContain('discovery only: no --profile');
+      else if (command[0] !== 'get') expect(result.stderr).toBe('');
     }
   });
 
@@ -1872,6 +1873,44 @@ describe('retrieval workflow contract', () => {
     const alias = await runInProcess(['tags', '--query', 'pr-review', '--catalog', realCatalog]);
     expect(alias.status).toBe(0);
     expect(alias.stdout).toContain('capability:review-code');
+  });
+
+  test('tags ranks a tag-name match before a description-only match', async () => {
+    const review = await runInProcess(['tags', '--query', 'review', '--catalog', realCatalog]);
+    expect(review.status).toBe(0);
+    expect(review.stdout.split('\n').filter(Boolean)[0]).toContain('capability:review-code');
+    const requirements = await runInProcess(['tags', '--query', 'requirements', '--catalog', realCatalog]);
+    expect(requirements.status).toBe(0);
+    const requirementRows = requirements.stdout.split('\n').filter(Boolean);
+    expect(requirementRows[0]).toMatch(/^(capability:clarify-requirements|pattern:requirements-clarification)\t/u);
+    expect(requirementRows[0]).not.toContain('assess-change-impact');
+  });
+
+  test('strict fails a weak or ambiguous resolution with exit 3 and no rows', async () => {
+    const weak = await runInProcess(['search', '--for', 'properly', 'handling', 'any', 'request', '--catalog', realCatalog, '--strict']);
+    expect(weak.status).toBe(3);
+    expect(weak.stdout).toBe('');
+    expect(weak.stderr).toContain('weak match');
+
+    const ambiguous = await runInProcess(['search', '--for', 'results', 'implementation', '--catalog', realCatalog, '--strict']);
+    expect(ambiguous.status).toBe(3);
+    expect(ambiguous.stdout).toBe('');
+    expect(ambiguous.stderr).toContain('ambiguous:');
+
+    const clean = await runInProcess(['search', '--for', 'diagnosis', 'intermittent', '500', '--catalog', realCatalog, '--strict']);
+    expect(clean.status).toBe(0);
+    expect(clean.stdout).not.toBe('');
+
+    const noFor = await runInProcess(['search', '--strict', '--catalog', realCatalog]);
+    expect(noFor.status).toBe(1);
+    expect(noFor.stderr).toContain('--strict requires --for');
+  });
+
+  test('search pagination hint names the valid tag-query route', async () => {
+    const result = await runInProcess(['search', '--capability', 'clarify-requirements', '--limit', '1', '--catalog', realCatalog]);
+    expect(result.status).toBe(0);
+    expect(result.stderr).toContain('tags --query <terms>');
+    expect(result.stderr).not.toContain('with --pattern <tag> or --query');
   });
 
   test('search explains that free text belongs to tags', async () => {

@@ -115,7 +115,23 @@ test('lets a phrase alias select a pattern over a weaker capability match', () =
   const result = resolveIntent(catalog, ['one', 'owner', 'per', 'document'], new Map([['one owner', 'single-source-of-truth']]));
   expect(result.capability).toBeUndefined();
   expect(result.pattern).toBe('single-source-of-truth');
+  expect(result.patternSource).toBe('query');
   expect(result.matchedAlias).toBe(true);
+});
+
+test('marks an auto-selected pattern as default and a split specific intent as low confidence', () => {
+  const defaulted = resolveIntent(base, ['debug', 'incident']);
+  expect(defaulted.patternSource).toBe('default');
+  expect(defaulted.confidence).toBe('high');
+
+  const split = catalogOf(
+    instruction('x', ['alpha-review'], ['audit-pattern']),
+    instruction('y', ['beta-review'], ['audit-pattern']),
+  );
+  const result = resolveIntent(split, ['alpha', 'beta']);
+  expect(result.status).toBe('resolved');
+  expect(result.confidence).toBe('low');
+  expect(result.runnerUp?.tag).toBe('beta-review');
 });
 
 test('resolves a phrase alias only when all of its tokens appear in order', () => {  const catalog = catalogOf(

@@ -3,6 +3,9 @@ import type { LoadedInstruction } from './catalog.ts';
 
 export type IntentDimension = 'capability' | 'pattern';
 
+export type IntentConfidence = 'high' | 'low';
+export type PatternSource = 'query' | 'default';
+
 export type IntentCandidate = {
   dimension: IntentDimension;
   tag: string;
@@ -13,8 +16,11 @@ export type IntentCandidate = {
 
 export type IntentResolution = {
   status: 'resolved' | 'weak' | 'unresolved';
+  confidence: IntentConfidence;
   capability?: string;
   pattern?: string;
+  patternSource?: PatternSource;
+  runnerUp?: IntentCandidate;
   candidates: IntentCandidate[];
   rankedCapabilities: IntentCandidate[];
   matchedTokens: string[];
@@ -211,7 +217,7 @@ export function resolveIntent(
   aliases?: ReadonlyMap<string, string>,
 ): IntentResolution {
   const query = queryTokens(terms);
-  const empty: IntentResolution = { status: 'unresolved', candidates: [], rankedCapabilities: [], matchedTokens: [], matchedAlias: false };
+  const empty: IntentResolution = { status: 'unresolved', confidence: 'high', candidates: [], rankedCapabilities: [], matchedTokens: [], matchedAlias: false };
   if (query.length === 0) return empty;
 
   const capabilityNames = nameSets(instructions, 'capability');
@@ -263,8 +269,31 @@ export function resolveIntent(
   const genericOnly = matchedTokens.length > 0 && !matchedAlias && matchedTokens.every((token) => GENERIC_ACTION_TOKENS.has(token));
   const weak = genericOnly && query.length > 1;
 
+  const ranking = choosePattern ? patterns : capabilities;
+  const bestPosition = ranking.findIndex((item) => item.tag === best.tag);
+  const runnerUpRanked = bestPosition === -1 ? undefined : ranking[bestPosition + 1];
+  const runnerUpTokens = runnerUpRanked === undefined
+    ? []
+    : matchedTokensFor(runnerUpRanked.names, query, runnerUpRanked.tag, activeAliases);
+  const runnerUp: IntentCandidate | undefined = runnerUpRanked === undefined ? undefined : {
+    dimension: choosePattern ? 'pattern' : 'capability',
+    tag: runnerUpRanked.tag,
+    score: runnerUpRanked.score,
+    matchedTokens: runnerUpTokens,
+    specific: runnerUpTokens.some((token) => !GENERIC_ACTION_TOKENS.has(token)),
+  };
+  const bestSpecific = new Set(matchedTokens.filter((token) => !GENERIC_ACTION_TOKENS.has(token)));
+  const runnerUpSpecific = new Set(runnerUpTokens.filter((token) => !GENERIC_ACTION_TOKENS.has(token)));
+  const runnerUpAddsSpecific = [...runnerUpSpecific].some((token) => !bestSpecific.has(token));
+  const uncoveredSpecific = query.filter((token) => !bestSpecific.has(token) && !GENERIC_ACTION_TOKENS.has(token));
+  const lowMargin = runnerUp !== undefined && best.score > 0 && best.score - runnerUp.score <= best.score * 0.25;
+  const lowCoverage = bestSpecific.size <= 1 && uncoveredSpecific.length > 0 && runnerUpAddsSpecific;
+  const confidence: IntentConfidence = weak || (lowMargin && lowCoverage) ? 'low' : 'high';
+
   const resolution: IntentResolution = {
     status: weak ? 'weak' : 'resolved',
+    confidence,
+    ...(runnerUp === undefined ? {} : { runnerUp }),
     candidates,
     rankedCapabilities: capabilities.slice(0, 3).map((item) => {
       const matchedTokens = matchedTokensFor(item.names, query, item.tag, capabilityAliases);
@@ -281,10 +310,14 @@ export function resolveIntent(
   };
   if (choosePattern) {
     resolution.pattern = best.tag;
+    resolution.patternSource = 'query';
   } else {
     resolution.capability = best.tag;
     const pattern = topPatternFor(instructions, best.tag);
-    if (pattern !== undefined) resolution.pattern = pattern;
+    if (pattern !== undefined) {
+      resolution.pattern = pattern;
+      resolution.patternSource = 'default';
+    }
   }
   return resolution;
 }

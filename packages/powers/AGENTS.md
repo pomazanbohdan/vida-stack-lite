@@ -141,14 +141,17 @@ bun packages/powers/skills/vida-bootstrap/scripts/bootstrap.ts --role orchestrat
 bun packages/powers/skills/vida-bootstrap/scripts/bootstrap.ts --role agent --role-name code-researcher
 bun packages/powers/skills/vida-bootstrap/scripts/bootstrap.ts --tag bootstrap-agent-validation --json
 bun packages/powers/skills/vp-setup/scripts/cli.ts --root <repository-root> --carrier host-shim --inventory <current-inventory.json> --dry-run
-bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts search --for "<focused terms>" --catalog packages/powers/catalog.json --profile vida-project-profile.json
+bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts search --for "<focused terms>" --catalog packages/powers/catalog.json --profile vida-project-profile.json --strict
 bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts get --id <selected IDs...> --catalog packages/powers/catalog.json --profile vida-project-profile.json
 bun packages/powers/scripts/check-retrieval.ts --catalog packages/powers/catalog.json --report <owned-intent-map.json>
 ```
 
 Keep catalog/profile fixed across the chain. Treat weak matches as unresolved,
 use the dictionary fallback, select IDs actually returned in rows, inspect
-applicability/exclusions and use one final compose-backed get. The receipt checks
+applicability/exclusions and use one final compose-backed get. Treat an
+`ambiguous:` line or a `pattern=... (default for capability)` label as a signal
+to corroborate the intent with `tags --query`; `--strict` makes a weak or
+ambiguous resolution exit 3 with empty stdout. The receipt checks
 the actual intent/ID map; it does not grant semantic, completion or runtime proof.
 Record applied source IDs/digests, output obligations, checks and gaps in the
 existing work output/handoff. Actual evidence, not file presence, establishes

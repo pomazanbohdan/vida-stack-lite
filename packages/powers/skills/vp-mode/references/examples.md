@@ -15,3 +15,19 @@
 Record any translation from a task phrase into a query term explicitly; it is a proposed search term, not an undeclared dictionary alias. Search distinct intents separately when they need different tags: selectors on different axes in one `search` are combined, so combining a review capability with a test-design pattern can suppress both intents. For example, search review and verification separately against the same catalog and profile, merge candidates by instruction ID, and select the applicable IDs for one `get`. Do not treat an empty intersection as proof that either intent has no instructions. Check each selected instruction against the actual target, applicability, exclusions, and proof requirements. Shared keywords and a high lexical score alone do not establish that it is needed.
 
 When the intent is a project-specific procedure whose owner is a project instruction — a development lifecycle, a testing contract, an installation guide — read that owner directly; the catalog covers reusable practice, not the project's own mechanics.
+
+## Retrieval troubleshooting
+
+The canonical procedure remains `SKILL.md`; this table only diagnoses its signals.
+
+| Symptom | Meaning | Action |
+|---|---|---|
+| `resolved:` names a tag that does not fit the intent | A lexical hypothesis, not a decision | Do not compose. Run `tags --query` with the same 3-6 nouns, then search the chosen tag with `--capability` or `--pattern`. |
+| `no capability or pattern matched` | No dictionary match | Do not repeat the same phrase. Run `tags --query`; for a non-English phrase use its canonical English nouns until an alias exists. |
+| `weak match` | Only a generic action word matched | Treat as unresolved. Search one of the printed `nearest tags`. |
+| `ambiguous:` | The winner and runner-up cover different specific terms | Treat as unresolved for composition. Run `tags --query`; `--strict` returns exit 3. |
+| `pattern=... (default for capability)` | A frequency default, not query evidence | Use the pattern only when it is independently intended. |
+| `flag --query is not valid for search` | `search` has no free-text flag | Use `tags --query`; `search` takes `--capability` or `--pattern`. |
+| `discovery only: no --profile` | Rows are unfiltered | Pass `--profile <effective-profile.json>` before composing a bundle. |
+| `get` says the value is a capability or pattern | A tag was sent as an instruction ID | Run the `search --capability` or `--pattern` command it prints. |
+| The expected ID is not in any row | The ID was reconstructed from a title | Page the same search or search again; never invent an ID. |

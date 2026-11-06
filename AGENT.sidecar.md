@@ -71,6 +71,24 @@ the host, shell or PATH changes.
 - **Git.** The root is a Git worktree. Commits are Root-owned; push only on a
   separate instruction. Preserve unrelated dirty source and retained evidence.
 
+## Retrieval
+
+The canonical procedure is `packages/powers/skills/vp-mode/SKILL.md`. These are
+the project-owned locators for that procedure; keep the same catalog and profile
+across the chain.
+
+- Catalog: `packages/powers/catalog.json`
+- Effective profile: `vida-project-profile.json`
+- Skill directory: `packages/powers/skills/vp-mode`
+- Tag discovery: `bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts tags --query "<3-6 nouns>" --catalog packages/powers/catalog.json`
+- First pass: `bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts search --for "<3-6 terms>" --profile vida-project-profile.json --catalog packages/powers/catalog.json --strict`
+- Bundle: `bun packages/powers/skills/vp-mode/scripts/catalog-cli.ts get --id <IDs from rows...> --profile vida-project-profile.json --catalog packages/powers/catalog.json`
+
+`--strict` returns exit 3 on a weak or ambiguous resolution; do not compose from
+that result. Run `tags --query` with the same terms. A `resolved:` line is a
+hypothesis until a returned row supports it. Do not use `rg` over
+`instructions/` as a substitute for the catalog.
+
 ## Development policy and checks
 
 Read the product's nested AGENTS before its work. Existing lifecycle/allocation

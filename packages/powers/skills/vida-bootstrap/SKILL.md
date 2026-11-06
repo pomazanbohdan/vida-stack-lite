@@ -1,6 +1,6 @@
 ---
 name: vida-bootstrap
-description: Read the project-document bootstrap for an orchestrator or assigned agent role.
+description: Bootstrap a session to project instructions: read the project-document bootstrap, then find reusable practice through the Vida Powers catalog when the task needs it.
 ---
 # Vida bootstrap
 
