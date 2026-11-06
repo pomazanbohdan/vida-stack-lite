@@ -195,7 +195,7 @@ function flag(args: readonly string[], name: string): string | undefined {
   return args[index + 1];
 }
 
-function packageRoot(): string {
+export function packageRoot(): string {
   return resolve(fileURLToPath(new URL('..', import.meta.url)));
 }
 

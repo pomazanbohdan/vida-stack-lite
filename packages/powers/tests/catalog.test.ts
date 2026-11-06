@@ -1764,3 +1764,38 @@ test('loads v2 applicability, annotates search and returns get results', async (
   const selectedDecision = decisionEvaluate(loaded, instructions, { operation: 'pick', candidates: ['alpha'], applicabilityContext: { runtimes: ['node'] } });
   expect(selectedDecision.selected).toEqual(['alpha']);
 });
+
+test('rejects an invalid v2 applicability declaration, partitions unresolved compose and rejects a malformed context', async () => {
+  const copy = await copyFixture();
+  const v2Schema = fileURLToPath(new URL('../config/vpinstruction.v2.schema.json', import.meta.url));
+  await writeFile(join(copy.dir, 'config/vpinstruction.v2.schema.json'), await readFile(v2Schema));
+  const catalog = await readManifest(copy.catalogPath);
+  const entry = catalog.instructions.find((item) => item.instruction_id === 'alpha');
+  if (entry === undefined) throw new Error('missing alpha');
+  const path = join(copy.dir, entry.path);
+  const source = await readFile(path, 'utf8');
+  const broken = source.replace('schema: VPInstruction/v1.2', 'schema: VPInstruction/v2\napplicability: "not-json"');
+  await writeFile(path, broken);
+  await updateInstructionDigest(copy.dir, catalog, 'alpha');
+  await writeManifest(copy.catalogPath, catalog);
+  const brokenCatalog = await loadCatalog(copy.catalogPath);
+  await expect(loadInstructions(brokenCatalog, copy.dir)).rejects.toMatchObject({
+    code: 'CATALOG_INVALID',
+    message: 'applicability is invalid for alpha',
+    details: { instruction_id: 'alpha' },
+  });
+
+  const encoded = JSON.stringify(JSON.stringify({ runtimes: [{ value: 'node' }] }));
+  const valid = source.replace('schema: VPInstruction/v1.2', 'schema: VPInstruction/v2\napplicability: ' + encoded);
+  await writeFile(path, valid);
+  await updateInstructionDigest(copy.dir, catalog, 'alpha');
+  await writeManifest(copy.catalogPath, catalog);
+  const loaded = await loadCatalog(copy.catalogPath);
+  const instructions = await loadInstructions(loaded, copy.dir);
+
+  const unresolved = catalogCompose(loaded, instructions, { instruction_ids: ['alpha'] });
+  expect(unresolved.omitted.unresolved).toContain('alpha');
+
+  const malformed = decisionEvaluate(loaded, instructions, { operation: 'pick', candidates: ['alpha'], applicabilityContext: { runtimes: [] } });
+  expect(malformed).toMatchObject({ fallback: true, fallbackReason: 'invalid-format' });
+});

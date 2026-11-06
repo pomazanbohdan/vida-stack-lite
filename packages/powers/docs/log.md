@@ -39,6 +39,19 @@
   This is contract approval, not H2 acceptance, source admission, legal
   clearance or Runtime evidence.
 
+* **H2-B coverage gate restored:** the package suite now reports **874 pass,
+  4 skip, 0 fail** over 878 tests, and `bun test --coverage` passes at **100.00%
+  functions and 100.00% lines** under the unchanged 1.0 threshold. Typecheck
+  passes 77 files. Added focused tests for the H2 applicability, CSV intake,
+  fidelity, validator, applicator, catalog CLI, bootstrap registry, donor
+  triage, source baseline, and vector gates. The new tests found and fixed two
+  defects: CLI `get` now accepts repeatable `--id` as the contract requires, and
+  `requiredContext` tokens for `runtime`/`platform` now map to the plural
+  context dimensions instead of always resolving as missing. Removed the unused
+  `strings` helper and a redundant registry family check, and exported a few
+  pure helpers used by the focused tests. H2-B is closed; H2-D now depends only
+  on H2-A.
+
 ## 2026-11-05
 
 * **H2 applicability applicator:** added `scripts/apply-applicability.ts`,

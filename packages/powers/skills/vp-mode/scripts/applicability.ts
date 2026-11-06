@@ -399,7 +399,8 @@ export function evaluateApplicability(
       if (context.standards === undefined) return result('unresolved', 'required-context-missing', applicability, requiredContext);
       if (!suppliedStandards.some((item) => item.id === value)) return result('inapplicable', 'source-inapplicable', applicability, requiredContext);
     } else {
-      const values = context[dimension as 'runtimes' | 'platforms' | 'accessibility'];
+      const key = dimension === 'runtime' ? 'runtimes' : dimension === 'platform' ? 'platforms' : 'accessibility';
+      const values = context[key];
       if (values === undefined) return result('unresolved', 'required-context-missing', applicability, requiredContext);
       if (!values.includes(value)) return result('inapplicable', 'source-inapplicable', applicability, requiredContext);
     }

@@ -70,34 +70,53 @@ function usage(): never {
   throw new Error('usage: apply-applicability.ts --root <root> --id <instruction-id> (--applicability <json> | --applicability-file <path>) [--catalog <path>]');
 }
 
-async function main(argv: string[]): Promise<void> {
-  const flags = new Map<string, string>();
-  for (let index = 0; index < argv.length; index += 1) {
-    const flag = argv[index];
-    if (!flag?.startsWith('--')) usage();
-    const value = argv[index + 1];
-    if (value === undefined || value.startsWith('--')) usage();
-    flags.set(flag, value);
-    index += 1;
-  }
-  const root = flags.get('--root') ?? usage();
-  const instructionId = flags.get('--id') ?? usage();
-  const inline = flags.get('--applicability');
-  const file = flags.get('--applicability-file');
-  if ((inline === undefined) === (file === undefined)) usage();
-  const applicability = inline !== undefined ? JSON.parse(inline) as unknown : JSON.parse(await readFile(resolve(file as string), 'utf8')) as unknown;
-  const result = await applyApplicability({
-    root,
-    instructionId,
-    applicability,
-    ...(flags.get('--catalog') === undefined ? {} : { catalogPath: flags.get('--catalog') as string }),
-  });
-  process.stdout.write(`${JSON.stringify(result)}\n`);
+export type ApplyApplicabilityCliOutput = {
+  stdout: (text: string) => void;
+  stderr: (text: string) => void;
+};
+
+export function isEntryPoint(moduleUrl: string, argv1: string | undefined): boolean {
+  return argv1 !== undefined && resolve(argv1) === fileURLToPath(moduleUrl);
 }
 
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  main(process.argv.slice(2)).catch((error: unknown) => {
-    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-    process.exit(1);
-  });
+export async function runApplyApplicabilityCli(
+  argv: string[],
+  output: ApplyApplicabilityCliOutput,
+  setExitCode: (code: number) => void = (code) => { process.exitCode = code; },
+): Promise<number | undefined> {
+  if (!isEntryPoint(import.meta.url, argv[1])) return undefined;
+  try {
+    const flags = new Map<string, string>();
+    for (let index = 2; index < argv.length; index += 1) {
+      const flag = argv[index];
+      if (!flag?.startsWith('--')) usage();
+      const value = argv[index + 1];
+      if (value === undefined || value.startsWith('--')) usage();
+      flags.set(flag, value);
+      index += 1;
+    }
+    const root = flags.get('--root') ?? usage();
+    const instructionId = flags.get('--id') ?? usage();
+    const inline = flags.get('--applicability');
+    const file = flags.get('--applicability-file');
+    if ((inline === undefined) === (file === undefined)) usage();
+    const applicability = inline !== undefined ? JSON.parse(inline) as unknown : JSON.parse(await readFile(resolve(file as string), 'utf8')) as unknown;
+    const result = await applyApplicability({
+      root,
+      instructionId,
+      applicability,
+      ...(flags.get('--catalog') === undefined ? {} : { catalogPath: flags.get('--catalog') as string }),
+    });
+    output.stdout(`${JSON.stringify(result)}\n`);
+    return 0;
+  } catch (error) {
+    output.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
+    setExitCode(1);
+    return 1;
+  }
 }
+
+await runApplyApplicabilityCli(process.argv, {
+  stdout: process.stdout.write.bind(process.stdout),
+  stderr: process.stderr.write.bind(process.stderr),
+});

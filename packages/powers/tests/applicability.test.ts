@@ -48,6 +48,24 @@ describe('parseApplicability', () => {
       expect(() => parseApplicability(`{"requiredContext":["${token}"]}`)).toThrow(ApplicabilityError);
     }
   });
+
+  test('accepts standard and optional context tokens and rejects duplicate optional tokens', () => {
+    expect(parseApplicability('{"requiredContext":["standard:wcag"]}').requiredContext).toEqual(['standard:WCAG']);
+    expect(parseApplicability('{"optionalContext":["platform:web"],"runtimes":[{"value":"node"}]}').optionalContext).toEqual(['platform:web']);
+    expect(() => parseApplicability('{"optionalContext":["platform:web","platform:web"],"runtimes":[{"value":"node"}]}')).toThrow(ApplicabilityError);
+  });
+
+  test('rejects stored comparators that do not match the raw range', () => {
+    const raw = '{"frameworks":[{"name":"react","versionRange":{"raw":">=18.0.0","comparators":[{"op":">=","version":"19.0.0"}]}}]}';
+    expect(() => parseApplicability(raw)).toThrow(ApplicabilityError);
+  });
+
+  test('parses platform and accessibility facts', () => {
+    expect(parseApplicability('{"platforms":[{"value":"web"}],"accessibility":[{"value":"screen-reader"}]}')).toEqual({
+      platforms: [{ value: 'web' }],
+      accessibility: [{ value: 'screen-reader' }],
+    });
+  });
 });
 
 describe('parseVersionRange', () => {
@@ -76,6 +94,23 @@ describe('parseVersionRange', () => {
     expect(satisfiesVersion('1.2.3', range)).toBe(true);
     expect(satisfiesVersion('2.0.0', range)).toBe(false);
     expect(satisfiesVersion('1.2.2', range)).toBe(false);
+  });
+
+  test('evaluates equality, greater-than and less-or-equal comparators', () => {
+    expect(satisfiesVersion('1.2.3', [{ op: '=', version: '1.2.3' }])).toBe(true);
+    expect(satisfiesVersion('1.2.4', [{ op: '>', version: '1.2.3' }])).toBe(true);
+    expect(satisfiesVersion('1.2.3', [{ op: '<=', version: '1.2.3' }])).toBe(true);
+    expect(satisfiesVersion('1.2.4', [{ op: '<=', version: '1.2.3' }])).toBe(false);
+  });
+
+  test('expands the major-only wildcard and rejects malformed or oversized components', () => {
+    expect(parseVersionRange('1.x').comparators).toEqual([
+      { op: '>=', version: '1.0.0' },
+      { op: '<', version: '2.0.0' },
+    ]);
+    expect(() => parseVersionRange('^1.2')).toThrow(ApplicabilityError);
+    expect(() => parseVersionRange('^2147483648.0.0')).toThrow(ApplicabilityError);
+    expect(() => satisfiesVersion('2147483648.0.0', [{ op: '=', version: '1.0.0' }])).toThrow(ApplicabilityError);
   });
 });
 
@@ -137,6 +172,18 @@ describe('evaluateApplicability', () => {
     expect(evaluateApplicability(value, parseApplicabilityContext({ frameworks: [{ name: 'vue', version: '3.0.0' }] }), vocab, aliases).state).toBe('inapplicable');
   });
 
+  test('standard and non-framework required tokens distinguish absence, mismatch and presence', () => {
+    const standard = parseApplicability('{"requiredContext":["standard:WCAG"]}');
+    expect(evaluateApplicability(standard, parseApplicabilityContext({ standards: [{ id: 'WCAG', version: '2.2' }] }), vocab).state).toBe('applicable');
+    expect(evaluateApplicability(standard, parseApplicabilityContext({ platforms: ['web'] }), vocab).reason).toBe('required-context-missing');
+    expect(evaluateApplicability(standard, parseApplicabilityContext({ standards: [{ id: 'ISO', version: '1.0.0' }] }), vocab).state).toBe('inapplicable');
+
+    const runtime = parseApplicability('{"requiredContext":["runtime:node"]}');
+    expect(evaluateApplicability(runtime, parseApplicabilityContext({ runtimes: ['node'] }), vocab).state).toBe('applicable');
+    expect(evaluateApplicability(runtime, parseApplicabilityContext({ platforms: ['web'] }), vocab).reason).toBe('required-context-missing');
+    expect(evaluateApplicability(runtime, parseApplicabilityContext({ runtimes: ['bun'] }), vocab).state).toBe('inapplicable');
+  });
+
   test('duplicate supplied context is a conflict', () => {
     const value = parseApplicability('{"runtimes":[{"value":"node"}]}');
     expect(evaluateApplicability(value, parseApplicabilityContext({ runtimes: ['node', 'node'] }), vocab).reason).toBe('context-conflict');
@@ -149,5 +196,25 @@ describe('evaluateApplicability', () => {
 
   test('empty supplied arrays are a request-format error', () => {
     expect(() => parseApplicabilityContext({ runtimes: [] })).toThrow(ApplicabilityError);
+  });
+
+  test('normalizes accessibility context values', () => {
+    expect(parseApplicabilityContext({ accessibility: ['screen-reader'] }).accessibility).toEqual(['screen-reader']);
+  });
+
+  test('parses a full context with every dimension', () => {
+    expect(parseApplicabilityContext({
+      frameworks: [{ name: 'react', version: '18.2.0' }],
+      runtimes: ['node'],
+      platforms: ['web'],
+      standards: [{ id: 'WCAG', version: '2.2', conformance: 'AA' }],
+      accessibility: ['screen-reader'],
+    })).toEqual({
+      frameworks: [{ name: 'react', version: '18.2.0' }],
+      runtimes: ['node'],
+      platforms: ['web'],
+      standards: [{ id: 'WCAG', version: '2.2', conformance: 'AA' }],
+      accessibility: ['screen-reader'],
+    });
   });
 });

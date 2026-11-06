@@ -33,6 +33,19 @@ describe('parseCsv', () => {
     for (const value of cases) expect(() => parseCsv(value)).toThrow(CsvError);
   });
 
+  test('rejects invalid UTF-8', () => {
+    expect(() => parseCsv(new Uint8Array([0x41, 0xff]))).toThrow(CsvError);
+  });
+
+  test('decodes doubled quotes and CRLF inside a quoted field', () => {
+    const parsed = parseCsv(bytes('Title,Description\r\nAlpha,"First ""quoted"" line\r\nsecond"\r\n'));
+    expect(parsed.rows[0]?.cells).toEqual(['Alpha', 'First "quoted" line\r\nsecond']);
+    expect(parsed.rows[0]?.locators).toEqual([
+      { line: 2, row: 1 },
+      { line: 3, row: 1 },
+    ]);
+  });
+
   test('rejects an extra empty record', () => {
     expect(() => parseCsv(bytes('Title\nA\n\n'))).toThrow(CsvError);
   });

@@ -212,8 +212,6 @@ function validateComposition(
   for (const [role, family] of Object.entries(roleFamilies)) {
     if (role === 'orchestrator' || role === 'agent')
       throw new BootstrapError('BOOTSTRAP_REGISTRY_INVALID', `${role} is a session class, not a configured role`);
-    if (!families.has(family))
-      throw new BootstrapError('BOOTSTRAP_REGISTRY_INVALID', `${role} maps to unknown family ${family}`);
   }
 }
 
@@ -227,7 +225,7 @@ function canonicalContent(file: string): string {
   return content;
 }
 
-function resolveEntryFile(root: string, entry: BootstrapEntry): string {
+export function resolveEntryFile(root: string, entry: BootstrapEntry): string {
   const base = path.resolve(root, 'references');
   const baseInfo = lstatSync(base, { throwIfNoEntry: false });
   if (baseInfo === undefined || !baseInfo.isDirectory() || baseInfo.isSymbolicLink())
@@ -298,7 +296,7 @@ function selectEntries(registry: BootstrapRegistry, options: BootstrapOptions): 
   return [byTag.get('bootstrap-orchestrator')!];
 }
 
-function sortEntries(entries: readonly BootstrapEntry[]): readonly BootstrapEntry[] {
+export function sortEntries(entries: readonly BootstrapEntry[]): readonly BootstrapEntry[] {
   return [...entries].sort((left, right) => {
     if (left.kind === 'base' && right.kind !== 'base') return -1;
     if (right.kind === 'base' && left.kind !== 'base') return 1;

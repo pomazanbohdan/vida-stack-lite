@@ -4,7 +4,7 @@ import { cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { applyApplicability } from '../scripts/apply-applicability.ts';
+import { applyApplicability, isEntryPoint, runApplyApplicabilityCli } from '../scripts/apply-applicability.ts';
 import { parseApplicability } from '../skills/vp-mode/scripts/applicability.ts';
 import { loadCatalog, loadInstructions } from '../skills/vp-mode/scripts/catalog.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
@@ -53,5 +53,72 @@ describe('applyApplicability', () => {
   test('rejects invalid applicability before writing', async () => {
     const root = await fixture();
     await expect(applyApplicability({ root, instructionId: 'alpha', applicability: { frameworks: [{ name: 'react', versionRange: { raw: '^0.2.3' } }] } })).rejects.toThrow();
+  });
+
+  test('runs the CLI in process for inline and file applicability and reports errors', async () => {
+    const root = await fixture();
+    const modulePath = join(here, '../scripts/apply-applicability.ts');
+    const run = async (args: string[]) => {
+      let stdout = '';
+      let stderr = '';
+      let exit: number | undefined;
+      const status = await runApplyApplicabilityCli([process.execPath, modulePath, ...args], {
+        stdout: (text) => { stdout += text; },
+        stderr: (text) => { stderr += text; },
+      }, (code) => { exit = code; });
+      return { status, stdout, stderr, exit };
+    };
+
+    const inline = await run(['--root', root, '--id', 'alpha', '--catalog', join(root, 'catalog.json'), '--applicability', '{"runtimes":[{"value":"node"}]}']);
+    expect(inline.status).toBe(0);
+    expect(JSON.parse(inline.stdout)).toMatchObject({ catalogRevision: expect.any(Number) });
+
+    const file = join(root, 'applicability.json');
+    await writeFile(file, JSON.stringify({ runtimes: [{ value: 'bun' }] }), 'utf8');
+    const viaFile = await run(['--root', root, '--id', 'alpha', '--applicability-file', file]);
+    expect(viaFile.status).toBe(0);
+
+    const badJson = await run(['--root', root, '--id', 'alpha', '--applicability', '{']);
+    expect(badJson.status).toBe(1);
+    expect(badJson.exit).toBe(1);
+    expect(badJson.stderr.length).toBeGreaterThan(0);
+
+    const missing = await run(['--root', root, '--id', 'missing', '--applicability', '{"runtimes":[{"value":"node"}]}']);
+    expect(missing.status).toBe(1);
+    expect(missing.stderr).toContain('is not in the catalog');
+
+    const usage = await run(['--root', root]);
+    expect(usage.status).toBe(1);
+    expect(usage.stderr).toContain('usage:');
+
+    const both = await run(['--root', root, '--id', 'alpha', '--applicability', '{}', '--applicability-file', file]);
+    expect(both.status).toBe(1);
+    expect(both.stderr).toContain('usage:');
+
+    expect(isEntryPoint(new URL('../scripts/apply-applicability.ts', import.meta.url).href, modulePath)).toBe(true);
+    expect(isEntryPoint(new URL('../scripts/apply-applicability.ts', import.meta.url).href, undefined)).toBe(false);
+  });
+
+  test('rejects an unsupported schema marker from the CLI', async () => {
+    const root = await fixture();
+    const path = join(root, 'instructions/alpha.md');
+    const source = await readFile(path, 'utf8');
+    await writeFile(path, source.replace('schema: VPInstruction/v1.2', 'schema: VPInstruction/v1'), 'utf8');
+    let stderr = '';
+    const status = await runApplyApplicabilityCli(
+      [process.execPath, join(here, '../scripts/apply-applicability.ts'), '--root', root, '--id', 'alpha', '--applicability', '{"runtimes":[{"value":"node"}]}'],
+      { stdout: () => undefined, stderr: (text) => { stderr += text; } },
+    );
+    expect(status).toBe(1);
+    expect(stderr).toContain('unsupported schema marker');
+  });
+
+  test('rejects a catalog without an instruction list', async () => {
+    const root = await fixture();
+    const catalogPath = join(root, 'catalog.json');
+    const catalog = JSON.parse(await readFile(catalogPath, 'utf8')) as Record<string, unknown>;
+    catalog.instructions = {};
+    await writeFile(catalogPath, JSON.stringify(catalog), 'utf8');
+    await expect(applyApplicability({ root, instructionId: 'alpha', applicability: { runtimes: [{ value: 'node' }] } })).rejects.toThrow('is not in the catalog');
   });
 });

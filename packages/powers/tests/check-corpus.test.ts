@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkCorpus, corpusCli, runCorpusCli, startCorpusCli } from '../scripts/check-corpus.ts';
+import { cellHash, cellsDigest, parseCsv, rowHash } from '../scripts/csv-intake.ts';
 
 type Instruction = {
   schema: string; classification_status: string; classification_reason: string;
@@ -633,6 +634,97 @@ describe('real corpus (requires ignored pinned donor clones)', () => {
     expect(cloneTests).toHaveLength(3);
     expect(cloneTests.every((name) => name.includes(cloneRequirement))).toBe(true);
   });
+});
+
+test('validates CSV sources, fidelity receipts and donor clone files', async () => {
+  const corpus = await fixture();
+  const csvText = 'Title,Description\nAlpha,First\n';
+  const csvBytes = new TextEncoder().encode(csvText);
+  const parsed = parseCsv(csvBytes);
+  const row = parsed.rows[0]!;
+  const hashes = row.cells.map(cellHash);
+  const rowKey = `path=source.csv&headers=${parsed.headersDigest}&cells=${cellsDigest(row.cells)}`;
+  const csvPath = join(corpus.root, cloneRoot, 'source.csv');
+  await writeFile(csvPath, csvBytes);
+  const receiptPath = 'receipts/fidelity.json';
+  const receipt = {
+    schema: 'H2FidelityReceipt/v1',
+    instructionId: 'alpha-instruction',
+    source: {
+      donor: donorId,
+      path: 'source.csv',
+      rowKey,
+      cells: [
+        { columnIndex: 0, cellHash: hashes[0], locator: { ...row.locators[0]!, column: 1 } },
+        { columnIndex: 1, cellHash: hashes[1], locator: { ...row.locators[0]!, column: 2 } },
+      ],
+    },
+    reviewer: { kind: 'human', actor: 'reviewer' },
+    verdict: 'READY',
+    evidence: { path: 'evidence.json', sha256: '1'.repeat(64) },
+    recordedAt: '2026-11-05T00:00:00Z',
+  };
+  const receiptText = JSON.stringify(receipt);
+  await mkdir(join(corpus.root, 'receipts'), { recursive: true });
+  await writeFile(join(corpus.root, receiptPath), receiptText);
+  const validBinding = {
+    instructionId: 'alpha-instruction',
+    cells: [
+      { columnIndex: 0, columnHeader: 'Title', cellHash: hashes[0], role: 'normative-title', locator: { ...row.locators[0]!, column: 1 }, locators: [{ ...row.locators[0]!, column: 1 }] },
+      { columnIndex: 1, columnHeader: 'Description', cellHash: hashes[1], role: 'normative-description', locator: { ...row.locators[0]!, column: 2 }, locators: [{ ...row.locators[0]!, column: 2 }] },
+    ],
+    fidelity: { path: receiptPath, sha256: digest(receiptText) },
+  };
+  corpus.map.schema = 'VPCorpusMap/v2';
+  corpus.map.donors[donorId].csvSources = {
+    'source.csv': {
+      rawSha256: parsed.rawSha256,
+      headersDigest: parsed.headersDigest,
+      columns: [
+        { index: 0, header: 'Title', role: 'normative-title' },
+        { index: 1, header: 'Description', role: 'normative-description' },
+      ],
+      rows: [{
+        rowKey,
+        rowHash: rowHash(rowKey, parsed.headersDigest, hashes),
+        cellHashes: hashes,
+        locator: row.locators[0],
+        locators: row.locators,
+        disposition: 'admitted',
+        bindings: [validBinding],
+        resourceIds: [],
+        mergedInto: null,
+      }],
+    },
+  };
+  const allowlist = [{ donor: donorId, path: 'source.csv', rawSha256: parsed.rawSha256, headersDigest: parsed.headersDigest }];
+  const realRead = filesystem.readFileSync;
+  const io = spyOn(filesystem, 'readFileSync').mockImplementation(new Proxy(realRead, {
+    apply(read, receiver: unknown, args: unknown[]) {
+      if (String(args[0]) === join(packageRoot, 'config/h2-csv-allowlist.json')) return JSON.stringify(allowlist);
+      return Reflect.apply(read, receiver, args);
+    },
+  }));
+  try {
+    await corpus.save();
+    expect(checkCorpus(corpus.root)).toEqual([]);
+
+    const source = corpus.map.donors[donorId].csvSources['source.csv'];
+    source.rows[0].bindings.push(
+      { ...validBinding, fidelity: { path: '../outside.json', sha256: '0'.repeat(64) } },
+      { ...validBinding, fidelity: { path: 'receipts/missing.json', sha256: '0'.repeat(64) } },
+    );
+    await corpus.save();
+    const issues = checkCorpus(corpus.root).map((item) => item.code);
+    expect(issues).toContain('CORPUS_CSV_FIDELITY_INVALID');
+    expect(issues).toContain('CORPUS_CSV_FIDELITY_MISSING');
+
+    await rm(csvPath);
+    await corpus.save();
+    expect(codes(corpus.root)).toContain('CORPUS_CSV_MISSING');
+  } finally {
+    io.mockRestore();
+  }
 });
 
 describe('CLI helpers', () => {
