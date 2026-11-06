@@ -2,6 +2,18 @@
 
 ## 2026-11-06
 
+* **H2-A2 Mobile batch admitted:** 7 KEEP_ATOMIC deferred Mobile
+  `ux-guidelines` rows are admitted as `uupm-ux-*` instructions with 7 delegated
+  `H2FidelityReceipt/v1` files. Three blind SWE-2 protocols (V3 Delphi, V2
+  Adversarial, V4 Party chat) returned READY for the 8-row proposal, 0 Critical
+  / 0 Important; `Touch Target Size` is held for SR-82 applicability because its
+  Mobile label conflicts with the Web clause. The batch resolves the
+  collapsed-duplicate rule: no semantic merge where the normative cells differ.
+  Catalog revision 7,349; corpus map 5,749; corpus 3,384 instructions;
+  `check-corpus` and `check-vector` pass. 1,328 CSV rows remain deferred (1 held
+  Mobile, 12 non-Mobile including 1 held, 44 react-performance, 1,271 stack). No
+  H2 acceptance, source admission or Runtime claim changed.
+
 * **Powers queue and retrieval acceptance actualized:** `next-actions.md`
   revision 29 replaces the superseded 2026-11-02 open list with the current
   H2-A2 / H2-D / H3-A / E5a-E5b / D19 / D16 / Stage 8 / external-Knip set,

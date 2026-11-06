@@ -1,0 +1,126 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "D18 three-protocol delegated review",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "ff81ec613f70ba9fc3fcce52dbe4ae35d44b2079dbe6dc066d2d6e38c28facd5"
+  },
+  "batch": "h2-a2-mobile-8",
+  "decisions": {
+    "duplicateRule": "No semantic merge. D56 section 6.4 permits merged only when the merged row is identical to its target in every normative cell. The 8 Mobile rows are distinct cells and each map row has one locator; they are admitted separately. Touch Target Size stays separate from Target Size (Minimum) (Web WCAG) and Touch Friendly (Web responsive) because the platform and normative cells differ.",
+    "applicability": "Keep the batch neutral VPInstruction/v1.2. \"Mobile\" is source context, not a vocabulary platform token; the H2 vocab has ios/android/web/desktop and no mobile. The platform stays in conditions_applies_when and in the body. No applicator run is required for a neutral instruction."
+  },
+  "protocols": [
+    {
+      "id": "V3 Delphi two-round",
+      "verdict": "READY",
+      "findings": [
+        "No Critical or Important findings. All 8 instructions preserve the source cells verbatim.",
+        "Minor: the proposal path in the review brief was repo-root .tmp, not packages/powers/.tmp; content was reviewed at the actual path.",
+        "Minor: uupm-ux-tap-delay preserves the donor phrase fastclick; D56 section 7 forbids strengthening or weakening, so verbatim preservation is correct."
+      ]
+    },
+    {
+      "id": "V2 Adversarial triad",
+      "verdict": "READY",
+      "findings": [
+        "No Critical or Important findings. Cell hashes, row hashes and locators match the live corpus map.",
+        "Minor: the Touch rows use per-row tags instead of the prior deterministic Touch category map; the rationale is recorded per row below.",
+        "Minor: uupm-ux-tap-delay preserves the donor fastclick reference; no change permitted by fidelity."
+      ]
+    },
+    {
+      "id": "V4 Round-robin party chat",
+      "verdict": "READY",
+      "findings": [
+        "No Critical or Important findings. No collapsed-duplicate or merge error found.",
+        "Minor: Back Button, Haptic Feedback and Gesture Conflicts overlap semantically with other donors; D56 section 6.4 does not permit merging non-identical cells.",
+        "Minor: proposal path note only; final artifacts are placed in the product instruction and fidelity directories."
+      ]
+    }
+  ],
+  "aggregation": {
+    "verdict": "READY",
+    "rows": 7,
+    "critical": 0,
+    "important": 0,
+    "minor": 6,
+    "note": "Seven KEEP_ATOMIC Mobile rows are admitted. Touch Target Size (source ordinal 22, line 23) is held: the 280-row disposition marks it HELD_APPLICABILITY because the row labels itself Mobile while its direction and example include Web; three target-specific size candidates require SR-82 applicability resolution. The three SWE-2 protocols reviewed the eight-row proposal; only the seven KEEP_ATOMIC rows are admitted.",
+    "held": 1
+  },
+  "rows": [
+    {
+      "instructionId": "uupm-ux-back-button",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=608e92a479a5f3318ab65f964d2f624447eb6a7a3ee37e6bb883893fd89f85ff",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Navigation behavior; design-user-interface + interaction-simplification matches uupm-ux-deep-linking."
+    },
+    {
+      "instructionId": "uupm-ux-touch-spacing",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=7e627c397f3e57d98ad11475b135f031e446f5776bb1bb56235f431462432bef",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Platform touch layout guidance; design-user-interface + design-system-adherence matches uupm-ux-touch-friendly and is distinct from the Web WCAG Target Size Minimum instruction."
+    },
+    {
+      "instructionId": "uupm-ux-gesture-conflicts",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=c9d3b528a836617b3b9087ef648daf92e76180ddc3cd3e29ef5c941ac1a90055",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Interaction boundary and scroll behavior; design-user-interface + interaction-simplification."
+    },
+    {
+      "instructionId": "uupm-ux-tap-delay",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=6f2fd5398508c058aff6340d6f5cb7a86482232051681bff1e322adbba0f8f47",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Timing and tactile feedback; design-microinteraction + microinteraction-feedback matches the admitted interaction-feedback precedent."
+    },
+    {
+      "instructionId": "uupm-ux-pull-to-refresh",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=65c1bc86b47fedcd56e3377c311b943b48d47cbf9e4cf6881ed78ce540511e8b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Interaction boundary and scroll behavior; design-user-interface + interaction-simplification."
+    },
+    {
+      "instructionId": "uupm-ux-haptic-feedback",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=44416557d26b07c56021c803f9e2a9d67648d5ec7e55584e596f6c9bb4d2a7bc",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Timing and tactile feedback; design-microinteraction + microinteraction-feedback matches the admitted interaction-feedback precedent."
+    },
+    {
+      "instructionId": "uupm-ux-mobile-keyboards",
+      "sourceRowOrdinal": 63,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=fa22babf76c864a1a65159baf68435b358006a209e64190a362fd3a9799017be",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; platform and severity remain source context.",
+      "tagRationale": "Form input state; design-user-interface + state-modeling matches uupm-ux-input-types."
+    }
+  ],
+  "held": [
+    {
+      "instructionId": "uupm-ux-touch-target-size",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=4f36c8f672a2376a3080c4018ff08c9324e50f8ac3c2a040120c1bc8d611a30e",
+      "disposition": "HELD_APPLICABILITY",
+      "reason": "The row labels itself Mobile while its direction and example include Web. Keep that conflict visible; do not apply the Web clause to every platform or claim a standard edition/conformance level. Three target-specific size rules can be separated by exact source spans after SR-82 resolution.",
+      "candidateUnits": 3
+    }
+  ]
+}

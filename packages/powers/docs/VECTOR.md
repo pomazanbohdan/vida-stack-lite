@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '13'
+revision: '14'
 ---
 
 # Instruction change vector
@@ -113,6 +113,7 @@ product-owner default and cannot override `user_decision: true`.
 | 5 | gsd-core | `19f2d5e8eeb0aa4e8d1c03246b52de1a48a7c005` → `bfab82492374a847a01417707a1a38e9e7cf097e` | 1,343 | 6 | 5 | 25 new candidates; 212 packaging/translation docs rejected; 22 stale map records removed | 2,529 / 3,008 / 1,202 | engineering; operations; documentation |
 | 6 | wondelai-skills | `c172996495bed0fcd26896a9416b2093fd7073f0` | 0 | 0 | 749 | 25-file H1 pilot + 31 next-batch files applied; 30 journey files excluded; 0 candidates pending H1 selection | 3,278 / 3,429 / 1,258 | engineering; product/design; business |
 | 7 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 99 | 99 UX-guideline instructions admitted from 1,434 CSV rows; 1,335 deferred; delegated D18 receipts | 3,377 / 3,429 / 1,258 | engineering; product/design; documentation |
+| 8 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 7 | 7 KEEP_ATOMIC Mobile UX instructions admitted after three-protocol SWE-2 review; Touch Target Size held for SR-82 applicability; 1,328 remain deferred (1 held Mobile, 12 non-Mobile UX including 1 held, 44 react-performance, 1,271 stack) | 3,384 / 3,429 / 1,258 | engineering; product/design; documentation |
 
 Legend: result = corpus instructions / map records / baseline files.
 

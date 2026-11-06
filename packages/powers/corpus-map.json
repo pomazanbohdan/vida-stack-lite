@@ -1,6 +1,6 @@
 {
   "schema": "VPCorpusMap/v2",
-  "revision": 5748,
+  "revision": 5749,
   "updated_at": "2026-11-06T00:00:00Z",
   "donors": {
     "superpowers": {
@@ -66625,11 +66625,128 @@
                   "row": 4
                 }
               ],
-              "disposition": "deferred",
-              "bindings": [],
+              "disposition": "admitted",
+              "bindings": [
+                {
+                  "instructionId": "uupm-ux-back-button",
+                  "cells": [
+                    {
+                      "columnIndex": 2,
+                      "columnHeader": "Issue",
+                      "cellHash": "191e53a44e1dc3026e4adc2a529ea457d67e7b3f3c6ac8b7a598b89cf09feb53",
+                      "role": "normative-title",
+                      "locator": {
+                        "line": 5,
+                        "row": 4,
+                        "column": 3
+                      },
+                      "locators": [
+                        {
+                          "line": 5,
+                          "row": 4,
+                          "column": 3
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 4,
+                      "columnHeader": "Description",
+                      "cellHash": "f02e62b3566327834103ed28eed4e2085173c7c157650441412a003ce1c09ef8",
+                      "role": "normative-description",
+                      "locator": {
+                        "line": 5,
+                        "row": 4,
+                        "column": 5
+                      },
+                      "locators": [
+                        {
+                          "line": 5,
+                          "row": 4,
+                          "column": 5
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 5,
+                      "columnHeader": "Do",
+                      "cellHash": "6f7399ef510f8af5c8070a0dc5e1f7a37d4222d53e3f0741f347463ef06d0a3a",
+                      "role": "normative-direction",
+                      "locator": {
+                        "line": 5,
+                        "row": 4,
+                        "column": 6
+                      },
+                      "locators": [
+                        {
+                          "line": 5,
+                          "row": 4,
+                          "column": 6
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 6,
+                      "columnHeader": "Don't",
+                      "cellHash": "510ee7d222e5590a1014aec5fc04e6c7a9b1b4770e316b543d45cc4934437c0e",
+                      "role": "normative-exception",
+                      "locator": {
+                        "line": 5,
+                        "row": 4,
+                        "column": 7
+                      },
+                      "locators": [
+                        {
+                          "line": 5,
+                          "row": 4,
+                          "column": 7
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 7,
+                      "columnHeader": "Code Example Good",
+                      "cellHash": "408d279e07379eebe07afd2a0954c07b4577b05c9a29b2dd9017ec156a77ee8a",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 5,
+                        "row": 4,
+                        "column": 8
+                      },
+                      "locators": [
+                        {
+                          "line": 5,
+                          "row": 4,
+                          "column": 8
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 8,
+                      "columnHeader": "Code Example Bad",
+                      "cellHash": "cc41c68c3979228707f28607697d45feafa85fdd55e356d018709d6da31885e8",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 5,
+                        "row": 4,
+                        "column": 9
+                      },
+                      "locators": [
+                        {
+                          "line": 5,
+                          "row": 4,
+                          "column": 9
+                        }
+                      ]
+                    }
+                  ],
+                  "fidelity": {
+                    "path": "fidelity/uupm/ux-guidelines/uupm-ux-back-button.json",
+                    "sha256": "4b60253d5d6328d903019f3035624159eb2bd1e1abf1f9b3a74aa731076d0b9c"
+                  }
+                }
+              ],
               "resourceIds": [],
-              "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "mergedInto": null
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=85895340b392e6b91634cbc4d27b33da2f688b9fce0a5a3292aefff6b3c89d35",
@@ -69176,7 +69293,7 @@
               "bindings": [],
               "resourceIds": [],
               "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "reason": "pending semantic review and instruction materialization; held applicability: the row labels itself Mobile while its direction and example include Web; split into three target-specific size rules after SR-82 resolution."
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=7e627c397f3e57d98ad11475b135f031e446f5776bb1bb56235f431462432bef",
@@ -69203,11 +69320,128 @@
                   "row": 23
                 }
               ],
-              "disposition": "deferred",
-              "bindings": [],
+              "disposition": "admitted",
+              "bindings": [
+                {
+                  "instructionId": "uupm-ux-touch-spacing",
+                  "cells": [
+                    {
+                      "columnIndex": 2,
+                      "columnHeader": "Issue",
+                      "cellHash": "0f709cc3576822aeab035e387a0ca9288f3fa7bcfad47139d678e4489320eb28",
+                      "role": "normative-title",
+                      "locator": {
+                        "line": 24,
+                        "row": 23,
+                        "column": 3
+                      },
+                      "locators": [
+                        {
+                          "line": 24,
+                          "row": 23,
+                          "column": 3
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 4,
+                      "columnHeader": "Description",
+                      "cellHash": "3dc56ea50686a77c3b72397ccfc8815d4e06aea2e309bc8c9a381dbccb8626c1",
+                      "role": "normative-description",
+                      "locator": {
+                        "line": 24,
+                        "row": 23,
+                        "column": 5
+                      },
+                      "locators": [
+                        {
+                          "line": 24,
+                          "row": 23,
+                          "column": 5
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 5,
+                      "columnHeader": "Do",
+                      "cellHash": "bfabe24702d4d511824c48cf48ed3c7040e5c1e82cb47925e5db2367f76884d3",
+                      "role": "normative-direction",
+                      "locator": {
+                        "line": 24,
+                        "row": 23,
+                        "column": 6
+                      },
+                      "locators": [
+                        {
+                          "line": 24,
+                          "row": 23,
+                          "column": 6
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 6,
+                      "columnHeader": "Don't",
+                      "cellHash": "1e2a3b2afbfafbcc45c3d5b34a218cdb2fb3fce30ad3ea17a3183d6065525a8f",
+                      "role": "normative-exception",
+                      "locator": {
+                        "line": 24,
+                        "row": 23,
+                        "column": 7
+                      },
+                      "locators": [
+                        {
+                          "line": 24,
+                          "row": 23,
+                          "column": 7
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 7,
+                      "columnHeader": "Code Example Good",
+                      "cellHash": "c3c08047ed287b21d4380c52fd93f41362a0db7c224c7124d36286408bd1950f",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 24,
+                        "row": 23,
+                        "column": 8
+                      },
+                      "locators": [
+                        {
+                          "line": 24,
+                          "row": 23,
+                          "column": 8
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 8,
+                      "columnHeader": "Code Example Bad",
+                      "cellHash": "30006176072a68fd3baa496e2237546f2a86cee133c0924bf8ffeafd6f05025d",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 24,
+                        "row": 23,
+                        "column": 9
+                      },
+                      "locators": [
+                        {
+                          "line": 24,
+                          "row": 23,
+                          "column": 9
+                        }
+                      ]
+                    }
+                  ],
+                  "fidelity": {
+                    "path": "fidelity/uupm/ux-guidelines/uupm-ux-touch-spacing.json",
+                    "sha256": "a793100f0016e8f9d67f5d03147acf589142a5d68522c98a9583fe362f00d461"
+                  }
+                }
+              ],
               "resourceIds": [],
-              "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "mergedInto": null
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=c9d3b528a836617b3b9087ef648daf92e76180ddc3cd3e29ef5c941ac1a90055",
@@ -69234,11 +69468,128 @@
                   "row": 24
                 }
               ],
-              "disposition": "deferred",
-              "bindings": [],
+              "disposition": "admitted",
+              "bindings": [
+                {
+                  "instructionId": "uupm-ux-gesture-conflicts",
+                  "cells": [
+                    {
+                      "columnIndex": 2,
+                      "columnHeader": "Issue",
+                      "cellHash": "88e0145d1c2aea1fb3252732cf50d917ba496ff70cb9fd1b37f9af2a0931ebb5",
+                      "role": "normative-title",
+                      "locator": {
+                        "line": 25,
+                        "row": 24,
+                        "column": 3
+                      },
+                      "locators": [
+                        {
+                          "line": 25,
+                          "row": 24,
+                          "column": 3
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 4,
+                      "columnHeader": "Description",
+                      "cellHash": "ccc0d4a9c9a878fd62e4fc408397102aa9d4b8a67843e3d310843a70efd1215a",
+                      "role": "normative-description",
+                      "locator": {
+                        "line": 25,
+                        "row": 24,
+                        "column": 5
+                      },
+                      "locators": [
+                        {
+                          "line": 25,
+                          "row": 24,
+                          "column": 5
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 5,
+                      "columnHeader": "Do",
+                      "cellHash": "bc109f07648e007f1f00aac554e66434ddc9c480b7b6a508eda06072a1d3f5a5",
+                      "role": "normative-direction",
+                      "locator": {
+                        "line": 25,
+                        "row": 24,
+                        "column": 6
+                      },
+                      "locators": [
+                        {
+                          "line": 25,
+                          "row": 24,
+                          "column": 6
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 6,
+                      "columnHeader": "Don't",
+                      "cellHash": "79322f903a63525981b6d26e5d9989cc72b88e589aa80dee70fa563dab044e7c",
+                      "role": "normative-exception",
+                      "locator": {
+                        "line": 25,
+                        "row": 24,
+                        "column": 7
+                      },
+                      "locators": [
+                        {
+                          "line": 25,
+                          "row": 24,
+                          "column": 7
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 7,
+                      "columnHeader": "Code Example Good",
+                      "cellHash": "c0b412e020ea22f7d0b749c6f5076a8d9d813aabf63e08a3b0dad9f4d4681d9b",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 25,
+                        "row": 24,
+                        "column": 8
+                      },
+                      "locators": [
+                        {
+                          "line": 25,
+                          "row": 24,
+                          "column": 8
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 8,
+                      "columnHeader": "Code Example Bad",
+                      "cellHash": "c0a83ad5487da389b617a3fe71eb7835bd330ee12d96daae13eb21378daf7842",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 25,
+                        "row": 24,
+                        "column": 9
+                      },
+                      "locators": [
+                        {
+                          "line": 25,
+                          "row": 24,
+                          "column": 9
+                        }
+                      ]
+                    }
+                  ],
+                  "fidelity": {
+                    "path": "fidelity/uupm/ux-guidelines/uupm-ux-gesture-conflicts.json",
+                    "sha256": "badcdd3a8a3e58ae5683cdefa14787ab9221c9f6b14555be90491b650289978e"
+                  }
+                }
+              ],
               "resourceIds": [],
-              "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "mergedInto": null
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=6f2fd5398508c058aff6340d6f5cb7a86482232051681bff1e322adbba0f8f47",
@@ -69265,11 +69616,128 @@
                   "row": 25
                 }
               ],
-              "disposition": "deferred",
-              "bindings": [],
+              "disposition": "admitted",
+              "bindings": [
+                {
+                  "instructionId": "uupm-ux-tap-delay",
+                  "cells": [
+                    {
+                      "columnIndex": 2,
+                      "columnHeader": "Issue",
+                      "cellHash": "7c54b41c0faeccf7d0aaabb93840fa98b5e9d39c5aee9a71641f7b0fe2ad3c4b",
+                      "role": "normative-title",
+                      "locator": {
+                        "line": 26,
+                        "row": 25,
+                        "column": 3
+                      },
+                      "locators": [
+                        {
+                          "line": 26,
+                          "row": 25,
+                          "column": 3
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 4,
+                      "columnHeader": "Description",
+                      "cellHash": "062665fa4b49ac9266699438d23fbba8582d358510abe6368e297be3ba3d7f0d",
+                      "role": "normative-description",
+                      "locator": {
+                        "line": 26,
+                        "row": 25,
+                        "column": 5
+                      },
+                      "locators": [
+                        {
+                          "line": 26,
+                          "row": 25,
+                          "column": 5
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 5,
+                      "columnHeader": "Do",
+                      "cellHash": "55c6f6674b4f3473faf5823424aca054cd64edc3bc70cceeba4c973becb47616",
+                      "role": "normative-direction",
+                      "locator": {
+                        "line": 26,
+                        "row": 25,
+                        "column": 6
+                      },
+                      "locators": [
+                        {
+                          "line": 26,
+                          "row": 25,
+                          "column": 6
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 6,
+                      "columnHeader": "Don't",
+                      "cellHash": "3e929378d6d85ed8e85b9713218437dfd8bc08ce7ee06cad4beaef2f667b4345",
+                      "role": "normative-exception",
+                      "locator": {
+                        "line": 26,
+                        "row": 25,
+                        "column": 7
+                      },
+                      "locators": [
+                        {
+                          "line": 26,
+                          "row": 25,
+                          "column": 7
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 7,
+                      "columnHeader": "Code Example Good",
+                      "cellHash": "4b86d0ed565d2568432b0171dad9ba5ff1f6a3a9aa2f6b9b7e7a1ea44ccce5d7",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 26,
+                        "row": 25,
+                        "column": 8
+                      },
+                      "locators": [
+                        {
+                          "line": 26,
+                          "row": 25,
+                          "column": 8
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 8,
+                      "columnHeader": "Code Example Bad",
+                      "cellHash": "0849dc134b0c80d05234aaece9fab49376db3d10c471d19d5c39b6dab285d799",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 26,
+                        "row": 25,
+                        "column": 9
+                      },
+                      "locators": [
+                        {
+                          "line": 26,
+                          "row": 25,
+                          "column": 9
+                        }
+                      ]
+                    }
+                  ],
+                  "fidelity": {
+                    "path": "fidelity/uupm/ux-guidelines/uupm-ux-tap-delay.json",
+                    "sha256": "3ee003bf7ea5921f1b393be5b87db99b39321f46303ec529ccaf336f5a9bfbd1"
+                  }
+                }
+              ],
               "resourceIds": [],
-              "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "mergedInto": null
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=65c1bc86b47fedcd56e3377c311b943b48d47cbf9e4cf6881ed78ce540511e8b",
@@ -69296,11 +69764,128 @@
                   "row": 26
                 }
               ],
-              "disposition": "deferred",
-              "bindings": [],
+              "disposition": "admitted",
+              "bindings": [
+                {
+                  "instructionId": "uupm-ux-pull-to-refresh",
+                  "cells": [
+                    {
+                      "columnIndex": 2,
+                      "columnHeader": "Issue",
+                      "cellHash": "a00c801b3c09b05160945f0ad901e38c0606f7f6a24bb4950b2baaef8ebdfa7c",
+                      "role": "normative-title",
+                      "locator": {
+                        "line": 27,
+                        "row": 26,
+                        "column": 3
+                      },
+                      "locators": [
+                        {
+                          "line": 27,
+                          "row": 26,
+                          "column": 3
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 4,
+                      "columnHeader": "Description",
+                      "cellHash": "4a944db96ac85cd5a93a2d1397a6aa0ed13d35c6e773e98c0e464b2d9b79b271",
+                      "role": "normative-description",
+                      "locator": {
+                        "line": 27,
+                        "row": 26,
+                        "column": 5
+                      },
+                      "locators": [
+                        {
+                          "line": 27,
+                          "row": 26,
+                          "column": 5
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 5,
+                      "columnHeader": "Do",
+                      "cellHash": "350f6b7349032cad3b904e84bc873270dd1e870a4780e76613810311d93549e3",
+                      "role": "normative-direction",
+                      "locator": {
+                        "line": 27,
+                        "row": 26,
+                        "column": 6
+                      },
+                      "locators": [
+                        {
+                          "line": 27,
+                          "row": 26,
+                          "column": 6
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 6,
+                      "columnHeader": "Don't",
+                      "cellHash": "7573e4484575488b5ef7eba63eaf6a875f198ceefca104a7cef288536d3f1789",
+                      "role": "normative-exception",
+                      "locator": {
+                        "line": 27,
+                        "row": 26,
+                        "column": 7
+                      },
+                      "locators": [
+                        {
+                          "line": 27,
+                          "row": 26,
+                          "column": 7
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 7,
+                      "columnHeader": "Code Example Good",
+                      "cellHash": "c1489b05765273412579aac6bcbe83b1e6d5f9bc1831e791f46b99eecb2ec191",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 27,
+                        "row": 26,
+                        "column": 8
+                      },
+                      "locators": [
+                        {
+                          "line": 27,
+                          "row": 26,
+                          "column": 8
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 8,
+                      "columnHeader": "Code Example Bad",
+                      "cellHash": "60725b8ca75a50442e8c9bf1afcd280626f74687b02eb902250232b06260c780",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 27,
+                        "row": 26,
+                        "column": 9
+                      },
+                      "locators": [
+                        {
+                          "line": 27,
+                          "row": 26,
+                          "column": 9
+                        }
+                      ]
+                    }
+                  ],
+                  "fidelity": {
+                    "path": "fidelity/uupm/ux-guidelines/uupm-ux-pull-to-refresh.json",
+                    "sha256": "300eaefda97ebed356506831f29b952d71c0f8a2c1218043bfd186b9b17ad036"
+                  }
+                }
+              ],
               "resourceIds": [],
-              "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "mergedInto": null
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=44416557d26b07c56021c803f9e2a9d67648d5ec7e55584e596f6c9bb4d2a7bc",
@@ -69327,11 +69912,128 @@
                   "row": 27
                 }
               ],
-              "disposition": "deferred",
-              "bindings": [],
+              "disposition": "admitted",
+              "bindings": [
+                {
+                  "instructionId": "uupm-ux-haptic-feedback",
+                  "cells": [
+                    {
+                      "columnIndex": 2,
+                      "columnHeader": "Issue",
+                      "cellHash": "1dda578b5c856603da932795b3249f1f55b0ccea1b37ea2c132c09a0f7513dfe",
+                      "role": "normative-title",
+                      "locator": {
+                        "line": 28,
+                        "row": 27,
+                        "column": 3
+                      },
+                      "locators": [
+                        {
+                          "line": 28,
+                          "row": 27,
+                          "column": 3
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 4,
+                      "columnHeader": "Description",
+                      "cellHash": "ff5c52771df7db2ebd181f22475065b94a4b5cbf4a189134277b53f42696250a",
+                      "role": "normative-description",
+                      "locator": {
+                        "line": 28,
+                        "row": 27,
+                        "column": 5
+                      },
+                      "locators": [
+                        {
+                          "line": 28,
+                          "row": 27,
+                          "column": 5
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 5,
+                      "columnHeader": "Do",
+                      "cellHash": "8474cd0004ec88646bde8c047b3038e7cf75e5657b7c47cbba7e68e065a9bbb8",
+                      "role": "normative-direction",
+                      "locator": {
+                        "line": 28,
+                        "row": 27,
+                        "column": 6
+                      },
+                      "locators": [
+                        {
+                          "line": 28,
+                          "row": 27,
+                          "column": 6
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 6,
+                      "columnHeader": "Don't",
+                      "cellHash": "b4ac89af78f8ce483426f52067a7862622f0447b4c7571d182bf11e20483aff1",
+                      "role": "normative-exception",
+                      "locator": {
+                        "line": 28,
+                        "row": 27,
+                        "column": 7
+                      },
+                      "locators": [
+                        {
+                          "line": 28,
+                          "row": 27,
+                          "column": 7
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 7,
+                      "columnHeader": "Code Example Good",
+                      "cellHash": "ad67d3f1c4dbc142de475cad324294806639af792c2f2f1ba466dc78982e93f0",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 28,
+                        "row": 27,
+                        "column": 8
+                      },
+                      "locators": [
+                        {
+                          "line": 28,
+                          "row": 27,
+                          "column": 8
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 8,
+                      "columnHeader": "Code Example Bad",
+                      "cellHash": "b01fbd5331e0abb35aea6ac08c3441ef9219785b158ff18a00f28469d3a7e034",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 28,
+                        "row": 27,
+                        "column": 9
+                      },
+                      "locators": [
+                        {
+                          "line": 28,
+                          "row": 27,
+                          "column": 9
+                        }
+                      ]
+                    }
+                  ],
+                  "fidelity": {
+                    "path": "fidelity/uupm/ux-guidelines/uupm-ux-haptic-feedback.json",
+                    "sha256": "94316e2bf8cf0161d389d0485a0cb8b35ba3462fc3fde8c1f2cf71ed96c4007b"
+                  }
+                }
+              ],
               "resourceIds": [],
-              "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "mergedInto": null
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=de21fc7b5b4ccd48bcdbe496747254ab2b677b2012585270d298bcf5132bc5ea",
@@ -74421,11 +75123,128 @@
                   "row": 63
                 }
               ],
-              "disposition": "deferred",
-              "bindings": [],
+              "disposition": "admitted",
+              "bindings": [
+                {
+                  "instructionId": "uupm-ux-mobile-keyboards",
+                  "cells": [
+                    {
+                      "columnIndex": 2,
+                      "columnHeader": "Issue",
+                      "cellHash": "468cb4af03926ac0df194c5e9412bf8e8272dd46e8ea0ab6b7d7725c99b23d95",
+                      "role": "normative-title",
+                      "locator": {
+                        "line": 64,
+                        "row": 63,
+                        "column": 3
+                      },
+                      "locators": [
+                        {
+                          "line": 64,
+                          "row": 63,
+                          "column": 3
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 4,
+                      "columnHeader": "Description",
+                      "cellHash": "5b766de2d6aadf6a9db5923c6906af04ba61dc4b764261ce1cd066122bced113",
+                      "role": "normative-description",
+                      "locator": {
+                        "line": 64,
+                        "row": 63,
+                        "column": 5
+                      },
+                      "locators": [
+                        {
+                          "line": 64,
+                          "row": 63,
+                          "column": 5
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 5,
+                      "columnHeader": "Do",
+                      "cellHash": "24226c3db9702420acec48dc24055866f16280b954859a7ce5798378643bf034",
+                      "role": "normative-direction",
+                      "locator": {
+                        "line": 64,
+                        "row": 63,
+                        "column": 6
+                      },
+                      "locators": [
+                        {
+                          "line": 64,
+                          "row": 63,
+                          "column": 6
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 6,
+                      "columnHeader": "Don't",
+                      "cellHash": "a760f9cd23ed442f119e043af3fd03decb14e0b197ced0a4c618d07d955a4a83",
+                      "role": "normative-exception",
+                      "locator": {
+                        "line": 64,
+                        "row": 63,
+                        "column": 7
+                      },
+                      "locators": [
+                        {
+                          "line": 64,
+                          "row": 63,
+                          "column": 7
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 7,
+                      "columnHeader": "Code Example Good",
+                      "cellHash": "a9c1a2f0159078471a942dde59104eeeaf937403cbc4d915f548dfa6cacb92c2",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 64,
+                        "row": 63,
+                        "column": 8
+                      },
+                      "locators": [
+                        {
+                          "line": 64,
+                          "row": 63,
+                          "column": 8
+                        }
+                      ]
+                    },
+                    {
+                      "columnIndex": 8,
+                      "columnHeader": "Code Example Bad",
+                      "cellHash": "b42d72e1034ff845c6d21ce98fceda2a0c680d4089eeb0c0dcd15e663bdef7f3",
+                      "role": "normative-example",
+                      "locator": {
+                        "line": 64,
+                        "row": 63,
+                        "column": 9
+                      },
+                      "locators": [
+                        {
+                          "line": 64,
+                          "row": 63,
+                          "column": 9
+                        }
+                      ]
+                    }
+                  ],
+                  "fidelity": {
+                    "path": "fidelity/uupm/ux-guidelines/uupm-ux-mobile-keyboards.json",
+                    "sha256": "87d480468210edacf1c19604af02685ecf355e69d4d4f90decab2ce7ecab3228"
+                  }
+                }
+              ],
               "resourceIds": [],
-              "mergedInto": null,
-              "reason": "pending semantic review and instruction materialization"
+              "mergedInto": null
             },
             {
               "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=7f42c7414d454d289b28274ee6a0a0a360208e58a4be1bfc3244e5be19edb708",
