@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-flutter-support-dark-mode",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/flutter.csv",
+    "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b3c3f119fea7f7f27fd32e730385b18191bbf311a9d30f6f283162e7723a372c",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "c5f644e511aa3add4e8876b36967e99b07def79d324e2ccf14860bf53ac68ead",
+        "locator": {
+          "line": 31,
+          "row": 30,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 31,
+            "row": 30,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "c70cdbbb56864906c8151d0b921b48a1781d7e974e8a81e9c58466d0a698b21b",
+        "locator": {
+          "line": 31,
+          "row": 30,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 31,
+            "row": 30,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "29ef2558bb1504cc3698dc9be3f91e955914c558d4781bcd594042a1848757be",
+        "locator": {
+          "line": 31,
+          "row": 30,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 31,
+            "row": 30,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "0a83fcb492f303fb2f3b5a690f48f781067034bb10dc4fff082fcf995e2da025",
+        "locator": {
+          "line": 31,
+          "row": 30,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 31,
+            "row": 30,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "0a048ef2e7133964886962d1a6c101663a646acd0d1cab933cf99597388d4159",
+        "locator": {
+          "line": 31,
+          "row": 30,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 31,
+            "row": 30,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "043a541db6205cb6317de90a785fc1406517c213cc9684d394782b9f331afb41",
+        "locator": {
+          "line": 31,
+          "row": 30,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 31,
+            "row": 30,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/flutter-evidence.json",
+    "sha256": "218fbee4af995102611721f2b2b9732401e6323708192c26a90fa82dafd8256a"
+  },
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

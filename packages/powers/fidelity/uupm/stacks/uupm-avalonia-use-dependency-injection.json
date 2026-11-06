@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-avalonia-use-dependency-injection",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/avalonia.csv",
+    "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4a86180019b0947c1f78171fe798bd0a9c31e32adf6e3b94dd2ff1d36e9c5f91",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "fdc3bbf96099887432b387698412e70b6a92f46d657260f2d4011bc0b8af5c06",
+        "locator": {
+          "line": 29,
+          "row": 28,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 29,
+            "row": 28,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "3d530fac8ac921177264c14fff72fd3eba435af698a65b5c5326a7f010069abd",
+        "locator": {
+          "line": 29,
+          "row": 28,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 29,
+            "row": 28,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "ac4177ebc36dffb4a3ee5dfaacf97b78d65aca54a58a57914b6d51869e3e9448",
+        "locator": {
+          "line": 29,
+          "row": 28,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 29,
+            "row": 28,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "4828c2c470cd11c51146ec9ff0d8d20c8dbe20aa7b4d2b9f0eefd1bac45742f0",
+        "locator": {
+          "line": 29,
+          "row": 28,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 29,
+            "row": 28,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "d5d1fac4240c795b6a83d6267a64956d5d1f97f2392e1626314067ae91489c14",
+        "locator": {
+          "line": 29,
+          "row": 28,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 29,
+            "row": 28,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "8c3dea15acaabf2487114b28b1146d04354c10fc9a492c35f8e85d7cc344664b",
+        "locator": {
+          "line": 29,
+          "row": 28,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 29,
+            "row": 28,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/avalonia-evidence.json",
+    "sha256": "faa4a6abc2ef089db48aab181f30e38ab5ddf8bc70838aae1f2c383b7f7bf9e6"
+  },
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

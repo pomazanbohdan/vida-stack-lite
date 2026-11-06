@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-astro-use-strict-mode",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/astro.csv",
+    "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=da6cfeb29bdb9404321e1def783e6d88ab8e9590a38a9cd89008e628e64d50e0",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "1c1310ca334bffb9e2fa345fcea6bc11fbd316281a1f08cb0c7b6e55ca7de901",
+        "locator": {
+          "line": 42,
+          "row": 41,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 42,
+            "row": 41,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "730352d44b90edd23f34ae8ec70fcb9f410b27d11ec7b58d272bca7c1aad9ce4",
+        "locator": {
+          "line": 42,
+          "row": 41,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 42,
+            "row": 41,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "528a9bdc240662cebdc720f53f666abc62fb3e811f4de2c4fe30cf87fed0339f",
+        "locator": {
+          "line": 42,
+          "row": 41,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 42,
+            "row": 41,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "a94c859358d9cd1a6045363757cba548800bbb609b0cb735eb736bdc4b60f5f7",
+        "locator": {
+          "line": 42,
+          "row": 41,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 42,
+            "row": 41,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "9592663ab10014b7e6f119ab124c2be7cdfa1827a45360fc0567db67e63635fa",
+        "locator": {
+          "line": 42,
+          "row": 41,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 42,
+            "row": 41,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "2c0331627fe642e483952f78a2df7b9468505db98756f6257fb23043d818e838",
+        "locator": {
+          "line": 42,
+          "row": 41,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 42,
+            "row": 41,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/astro-evidence.json",
+    "sha256": "2d4a8f38217560a0f4ffd967645105d6df0abce7073162840458d141949c6d22"
+  },
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

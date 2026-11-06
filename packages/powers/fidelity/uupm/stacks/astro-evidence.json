@@ -1,0 +1,413 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/astro.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "2c2f55fadaafc05e04cc321c8194a1a28b656e6757fe2ba316f41b16428299c6"
+  },
+  "batch": "astro",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 53,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 2
+  },
+  "findings": [
+    "SWE-2 returned CHANGES for 11 tag misfits; the exact recommended tags were applied: 7 data/API rows to design-structure/structural-design, sanitize-user-content to harden-security-controls/untrusted-content-handling, HTTPS/input validation to harden-security-controls/defense-in-depth, analyze-bundle-size to improve-performance/performance-measurement.",
+    "Minor SEO head-metadata rows keep write-technical-prose/document-structure as the nearest existing tag; no new tag was invented."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-astro-use-islands-architecture",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ad7587e97353ae40661f762e96d4e6355e5a0aba987f116515a09ebe5a71586b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-default-to-zero-js",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=54ccc70214f763d7a2fb54643e6762818e4025269582c7f44497e5c0972516ae",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-choose-right-client-directive",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fc96cd82db123c97e6b06b2077e166bdb7440fc06ef1cab931a554b136639025",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-content-collections",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=65198d1fe469f5e8276ad00f40d88441f483da73045429c7c8ab56b7c84060f8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-define-collection-schemas",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5335af846bf852c768cb170653d3612f93fc1a024b403acd5bc20e42f5e3f585",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-file-based-routing",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af2c5a9daac866b4d86c98b4cd611af9f192e9f69d603e88cfd403c2c3667625",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-dynamic-routes-with-brackets",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7568887ce30cfa91258f4c6abd85c4d90b4ddedb42224b2c4d952476d1f20baf",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-getstaticpaths-for-ssg",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7171fc961b955a27f457c1962e529a273f75c21779ab37981068e9da7f5254aa",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-enable-on-demand-rendering-when-needed",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fcb144a3269af9fd1eb3e522bac213c6c140007143ba055cf488f1fe5f91cdcb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-keep-astro-for-static",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ff4f3793b3f1dc0ffe82a5776a4450b6a8f7023d9835cf1bc10d9972b1c3c61",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-framework-components-for-interactivity",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=96ecb25dd32970fc764016b4b796a3625a91bfb74430af41b001a7fb1e333afd",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-pass-data-via-props",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6bb390924a70cac792c9aaeb732240cf42c3a5eb498cf9e7e12dd17d111c13c1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-slots-for-composition",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=08b360c74635b0775be228bf646d8695efbad734349254e1727d903f55197472",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-colocate-component-styles",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=11632a5bb4fb9b4d5ba62fa010c18813ad841eb51983b1cf2f7e60f1ba81edc6",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-scoped-styles-by-default",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=61e90a0c14262ddfa4e4a7061fb571662817b2d53dca05a61bc325ba57e1e32c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-is-global-sparingly",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c2d06fffecc7563a6cbb2284b9c009c496a8bf2e4b3451fdd0515b35bae9b66f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-integrate-tailwind-4-through-vite",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=963d392ec087b16fd424f99e9b6da5789829b5589207d252ad747baebbf9c00b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-css-variables-for-theming",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e994a191d0e39686adb2314236dffb4e9e7879d69c748310f19ecd4b753d83c8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-fetch-in-frontmatter",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e6291d5c89e91994a62b76c2694671f721f31703ce87092478b0ec52616b797c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-use-astro-glob-for-local-files",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3bd92db85b8e9af52ba7b07216d4f0b3b7105f7dc5344c306ad3a55f1a326949",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-prefer-content-collections-over-glob",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7ca218015dccabe64ed47c4b7e3e03a455f1dc6cbbb35365d61d3dc460d487cd",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-use-environment-variables-correctly",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a91de9ce4da8e38e0fcdccb7d8c2a6d440264b77ba7b456e4227e733d89cbd7a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-preload-critical-assets",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5a29498fa8a657820945b1bebddaf53f60d4c34000e1e6dc63fca8520ee8d35d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-optimize-images-with-astro-assets",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ad189ad1fb59f7ead9ec86dce64b96f37f544d9074fa4da639d6d9753a4980e8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-picture-for-responsive-images",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e33ee8c025df8eaa9193fcc0fa48792c5f80347a073ff3495f53319fc2d13103",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-lazy-load-below-fold-content",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=da2c936c73a773fe7395502d8a4ff01e04f4b0f44d7c45492ca8c0c50466ca13",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-minimize-client-directives",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=29e551d61e665c92e1acc0528f9442131ed20ae882abb3df6d3cb48dcb02206e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-clientrouter-for-client-side-transitions",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a95b87acd370f5f85fc8a1a37b4760c606dc70073b5e9b02ed0009c59bebd0a0",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-transition-name",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8fced1a61c430c68211cbbf71d3856d3fd41842d0532105ada5a414cbc19b0a1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-handle-transition-persist",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ceffdedfd9eb7253be24175ccd560b6b457c09b898bf333a2f441d5e510d8773",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-add-fallback-for-no-js",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d63f9685bd83f2bd7d60ef7b945c821104f7e33c5155d043c4262b565667151",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-a-shared-head-component",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b02ff82b80f87c34268102cdca41c272d9793afdda6f6a133dbdea7fafa1865b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-generate-sitemap",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=73fc68db07dc7b751e258cfd7f4b0f0d4a5c4e0715751a29ce8ced7c0508fc1b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-add-rss-feed-for-content",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=de89419a09389db2540af9037c6ee0aa524d60acd5bac7b4ad7b6d0696feceb4",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-canonical-urls",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=201a68ed152bf0d5def843259535e8e2df0e9823a5651e8434201b926d8a411d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-official-integrations",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5ae6ee0e9779fd78a4686ee36d5514475fcccfee03a9c903c6df896458112631",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-configure-integrations-in-astro-config",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a42d8fb66c94c5a66772609234215cc201cd9dfe0331415c71999894ef7d8549",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-adapter-for-deployment",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=226010adedec9240e485d26619fcdbd9fa7e9e51dc68e12afbeef1f3cd51889e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-enable-typescript",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=32f4c1f0107e10ccd84627d1788561adee17ea1327651df3c09f6b91394a5389",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-type-component-props",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9927fa3177121283db9a4314a4972887c1a7457b7cd1f49a3ae1edfe5694c5f7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-strict-mode",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=da6cfeb29bdb9404321e1def783e6d88ab8e9590a38a9cd89008e628e64d50e0",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-mdx-for-components",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=df3e6bad049e27d1ee626d45328bcc34af24158f8d1c3c65e6734c597bb9c3ba",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-configure-markdown-plugins",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3b5f2bbf816f52bf6c3cc4e704b5e7303a2ce4ef145d1883b2a569aa1f129ade",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-frontmatter-for-metadata",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fdfcb8bfbae10578a2321731e2288687f35a97b1acaf63b4bd61837cc9c989bc",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-use-api-routes-for-endpoints",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=53bffa63016d4ac0e2db05a36af85f48f38038a3c0a766612f1c3e71dd868314",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-return-proper-responses",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=032a4c1f9133bd9bc83b012ed89a0a584345788239731b6e327d12e2d82bdb20",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-handle-methods-correctly",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e6647a3bb51fbb39204f7b2b3b1f39ab5d3713fa2bf7363ab29c048fb4fc705a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-sanitize-user-content",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e280c82e5cb8cb0cd190b26613d3b2ad3a7b326d378d3e4421bf1dce441b368d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-use-https-in-production",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aefd966ee8100f768f20ca2a8431c1737ec576be63e45d637326a0e4d90e6580",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-validate-api-input",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a07cb07ca4b72117fa1678f46f79dd42670f6220e89e4267fd0f5c02596222b2",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-mix-prerendered-and-on-demand-routes",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=80ac552c80d23b0705214e425369174407f45ae29465347bdee08a5d5cad7e80",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-astro-analyze-bundle-size",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=94793887df28b484d2fb305952028fb6357e3cc27e0be78c527ebdbdc2249acf",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context.",
+      "tagRationale": "Retagged per SWE-2 review."
+    },
+    {
+      "instructionId": "uupm-astro-configure-built-in-prefetch",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/astro.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=954e4359780940ab08957a97c79ed21565f17c74ed9a5d8575c75965eb1edf5e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

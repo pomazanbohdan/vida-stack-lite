@@ -1,0 +1,394 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/flutter.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "64dba0ac17349f28bce517a0f5f48c54d9ed2e487ec0c0258303463b382f41a0"
+  },
+  "batch": "flutter",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 52,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 1
+  },
+  "findings": [
+    "SWE-2 READY: all 52 rows preserve the source cells; dependency-selection rows keep design-structure/structural-design as the nearest existing tag."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-flutter-use-statelesswidget-when-possible",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=35841a68fa07f25ef17ac6176ccd8cb000a676e7ab08f8f3891401fb5e147476",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-keep-widgets-small",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8283734626ec9481518e16812b465a1e955bff2dd6d6333b7e6c11cae9f3bc33",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-const-constructors",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=96c7f921a52d421fd258a1e30da04d4d234c2ea350928ef9383ebd6d50a1837c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-prefer-composition-over-inheritance",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=96bee8a0c9f11b2696dc4567a83bd65037d3ef9a27861e9088bfc8cf668fd719",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-setstate-correctly",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=90861381eae28b705fd189472c22509357f6433b6ff094fd1bde4e3d7966c6cd",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-avoid-setstate-in-build",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d2acec585debde6343777a8bdb146514fe9e7802fc29da19134ac8b7ad90c0b4",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-state-management-for-complex-apps",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e01d456e118c7e905c9793f876da942521e5f28fc9c20910e8d94f2e6fed2fd5",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-prefer-riverpod-or-provider",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6b7e8e094ce282cb8a649d11217e475d2ff8e1eb47b97f493342fa7425fc86f3",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-dispose-resources",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=378be7f4265887a291837635d0ba22938f8f4f1c903917c9405fde9081cfb57d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-column-and-row",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2f683feadc510aa94c2b7d7474cd00e7506b0ecc3eaf6be54be7668b704c9cbe",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-expanded-and-flexible",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=303e7dcefb464c75b660fc1142debe845f6e244982fdf7d18a25eafbf92302e7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-sizedbox-for-spacing",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fa1187d34c2f47f7e46582ebe75380eca7c57b7ff83644ac6c6787b2ff092f1a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-layoutbuilder-for-responsive",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3385da649ab4626e30cb6c633d06a097c2e2368644677a8785aa15b439bc9fcf",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-avoid-deep-nesting",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=83a862884a2afeb0300d4774d54587ea1ca1bcf07d285d4e9b42bb264a8f9cac",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-listview-builder",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0de61627886cbd63995962aaf03486a834e0eb62f360c892eb4b11470dc1003c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-provide-itemextent-when-known",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=23f6ef58fb68d10052c12c5ca91de6feb7cbc6ba8d1445876541caf42c938d28",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-keys-for-stateful-items",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d8a118924e546e41e4750df53d20e24dad5ed44236ff5be0fe7f55291e8a9554",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-sliverlist-for-custom-scroll",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6bc41fb0d66f9f75b30f58f9fb18ae4dc80243df0e334954290455f72318988f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-navigator-2-0-or-gorouter",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b975dc23966846ae208eb55a6b7c5f0f18379d975a4a60fd77e874bd04e7e164",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-named-routes",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a14ef17e783dec302afdd756d8bbc6a258dec0a2862800a83b6e09432091d5fc",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-handle-back-button-with-popscope",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=db1d840ea22c8fe494c9d80993bb832b3b748683ed3188893d636681a9f0120f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-pass-typed-arguments",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=37dbb473694d6b9e50e016036c3d10f36e83e5107f38942ff053a304f083e3a7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-futurebuilder",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7deb0bc544f46f07689d589f511fbc4abaf89ce00c6755c9e8c1740f34ef8f99",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-streambuilder",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4410cc8bb2e694ffb20edee1746a1aabbd7d3aac7224d090745f58291b41808d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-handle-loading-and-error-states",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=832d8d0962242f019d69a52ad8eb923eaa9c80557e04e08b658c08de6331fae1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-cancel-subscriptions",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=076d335d7ddf819a79c189f56801c8014708022223297758e75330b63f81e621",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-themedata",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b298a4ba7e8cb4bbdd2fdbdd3ae18f64e60b76814261ba38ebed0e094512cf24",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-colorscheme",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0af864c46d40e223d1b876368aeac9d876b24041362000b9363a50bfb7057612",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-access-theme-via-context",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d467266bf533b53790ff3fce33f5da088a9d97fc42b7aae72d333a4868cd7d60",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-support-dark-mode",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b3c3f119fea7f7f27fd32e730385b18191bbf311a9d30f6f283162e7723a372c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-implicit-animations",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=37a4b1a6dfdb064105f8404a3833903d4f9456a04332dda5d10ed8255e552b4c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-animationcontroller-for-complex",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=04e85e1c4e2037ad4853f5187210955724d1cbae2214c4d557789e80f7a79665",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-dispose-animationcontrollers",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=67388d05cecc347cb227ab90949490b77cba4a236090f4f599997041a3ef1c34",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-hero-for-transitions",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6be98db6d48d1182bc192730e4487f2dde878a8fde435692e32de4c6af729208",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-form-widget",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=566b67044d2a7d5e378656ef9f59c675d4012a2a67d628890975c331d8e0e09e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-texteditingcontroller",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8bae0d2107f737844afc6e662301421bd4f6e8f54ac99a58875d2bdbcf08bb13",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-validate-on-submit",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9dc7f8468983f262d34bdac8b141386a68a6d2362f6065d342469d95f3e6c39e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-dispose-controllers",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ff08c35797b2604e4d18bfd05c5329140519fcaa5cbe7cc578172ca9bcb8cc7b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-const-widgets",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ed94a14bd309649b8c98250fdf4a792880fd0dab99e46836272445e7d816149",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-avoid-rebuilding-entire-tree",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2697bd8531c3383a111ade1513ac54284b43a456f9b63f25115efe24d62cbfd3",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-repaintboundary",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=de5ef1b916ce282cfc4e12e55cbe79a9218d0ee02457c053255a94c733eb8e10",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-profile-with-devtools",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8b7011d24784685014205e3379e498122a92750df2bf5502e65a839a9cc505f4",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-semantics-widget",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d03725992eba3432d75010e67ac5d3fc4dc97b6b6542b2404d8ec91be79fe56",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-support-large-fonts",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5c286a7642a456c2120dcefdb5495309925ac680c3693cc70cdff07d5986abce",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-test-with-screen-readers",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3cadbf5e00aba9bacb3ad760550a820c33233a884d78c43199004f4bb967e866",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-widget-tests",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dcef911893675dc2f8066c9c234ed561d005307e7ef4e25bd5fa1244bb2f170e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-integration-tests",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6c7bc4f37cb13d3af88756477dacda88c57f8e2595b98d62c7b477cc0a792af6",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-mock-dependencies",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d8e9eed882135dc584e80d66a7ad7e0c9cd8e47dde44b21b0df12397da4b286a",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-platform-checks",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1e2d4b7bc78deecd53a93f6114067e546d780641adcc3b79145b69098483287f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-kisweb-for-web",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e3eba3f74baab0ab85faa9ab6d278d80db8983156857d2fc60f5b01b64535799",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-use-pub-dev-packages",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b362cb0194e92771355155cb5aab8a7d0d20464aeb24ac549d8a864aa04cf3f0",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-flutter-check-package-quality",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/flutter.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6bd66ccf2ee6890ea1aab82f8a68d943204dbd58676beeeabeb9121a71689dbb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

@@ -2,6 +2,15 @@
 
 ## 2026-11-06
 
+* **H2-A2 stack group admitted:** 211 KEEP_ATOMIC `angular`, `astro`,
+  `avalonia` and `flutter` rows are admitted with 211 delegated
+  `H2FidelityReceipt/v1` files and four SWE-2 batch evidence records. Angular,
+  Avalonia and Flutter returned READY; Astro returned CHANGES for 11 tag
+  misfits, and the exact recommended tags were applied. Catalog revision 7,352;
+  corpus map 5,752; corpus 3,746 instructions; 957 rows remain deferred (13 UX,
+  9 SPLIT stack, 935 undispositioned stack). `check-corpus` and `check-vector`
+  pass. No H2 acceptance, source admission or Runtime claim changed.
+
 * **H2-A2 stack batch admitted:** 107 KEEP_ATOMIC `react.csv` and
   `react-native.csv` rows are admitted as `uupm-react-*` and
   `uupm-react-native-*` instructions with 107 delegated

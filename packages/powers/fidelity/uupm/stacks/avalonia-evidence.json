@@ -1,0 +1,422 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/avalonia.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "442fca14675a020683473e7e49f08abb27b9df0765c80efe54aef61f1a4ac258"
+  },
+  "batch": "avalonia",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 56,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 1
+  },
+  "findings": [
+    "SWE-2 READY: all 56 rows preserve the source cells; minor cross-donor overlap is framework-specific and acceptable."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-avalonia-use-avalonia-xaml-namespace",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cf30fc355c03a82994228c1d44312a97e66b40cbcd301b8e9e2da2f8907db683",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-compiled-bindings-with-x-datatype",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e08714abfd03e0292a6fde02106b568ae3c31a3609a0f0c024d6ce4b3fc2ac47",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-enable-compiled-bindings-globally",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8354d6fe0f7a187a848f2e1239762b1af758ba16cbe02ac291dcf11241a2e7da",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-name-shorthand-for-element-to-element-bindings",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=78b61c2ab855baf648c877b3d91f461898f51c02e047c5bb94fa389d7e4d7365",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-css-like-selectors",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=465fd2be4c4d93d66129d74241cd8118d555f0fe4d1910b32b631303e92163da",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-pseudoclass-selectors-for-states",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d61ab4f07714feaf4da4f1583b2a14f784be8304db3cfb0780869cf07b411318",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-nesting-selectors",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b2e937bc5ceb4238dcb9d4cb20c4aadbf61bd21f7f5f60076b28b19a5599e476",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-styleinclude-for-modularity",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a0b4f84d9d6d750855299f4d133672be2b3e603103d338f37c3f5617b6c241af",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-fluent-or-simple-theme",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ab352f6d41cd30971149f7dbf03f5ad5e6784f4928c8721ca71170230798cbf7",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-theme-variants-for-dark-mode",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ead9593eb4758b110f6bb073506bc2d9078aad1ca192b00885e37baf37188592",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-datagrid-for-tabular-data",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=16d158e1ec72a0e86fc06eb234650755af6d6c1749d78f7e822990ecebb21cfd",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-treeview-with-treedatatemplate",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d514dcd31be05ebc8c1d7bb8cc99869672742f49cec5c5da7778da2a8191d20d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-nativemenu-for-platform-menus",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fbf3c314ebf411b2ee7de57472e618e4ba072ea80bb3c0897fb01ebf51269dec",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-implement-inotifypropertychanged",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5519b2fe75c412530c9ac224bcc3e190b935a63d907eb5572815a370589765d9",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-observablecollection-for-lists",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c534a08be61bfa541f5f05d5278fd469a947dbdb78398a32716f2fa8b4ea0eef",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-binding-to-named-controls",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=26ec8acfc9187dc1080bac3a0798756a2d2c9396000250dc1583f551dc7b5eb8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-converters-or-funcvalueconverter",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=36ce9e9322b0732e150c0005b0baeb4d483bdeaf62e3a110b1994685b072fbc6",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-platform-specific-code-carefully",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bd6e14c8c02895d6257bc1fa8b8b95ba86afd2f959ca6b86fbae04f7cc553b4b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-test-on-all-target-platforms",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fa41dc818365ef384907cb440f552dd54b70c3b8fa09b49ee48dbe8aa6d8cbe4",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-handle-platform-file-paths",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5f8ca373177257cdb195d49d653d7f445ebf127680d7990469cd61a1fe96eeea",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-avalonia-asset-system",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c4f063fe03dccb7c0d43c911624a5759684cd949bc0d831a4b361be6a26ed333",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-virtualization-for-large-lists",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d61d683af6bfc9df2e344ed64056c8b1a9ccda6e57ea782c0aba36e437a52f52",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-avoid-unnecessary-bindings",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=22bc286ee33bb8a76ce9bf4ebe775db2b0a1af376b9d6166d8f1957d61e262d1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-set-bitmap-interpolation-mode-on-scaled-images",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f225f7c2f488672c5e17d92c29784f51b4928ceef2c9196da360bdce6ba7c548",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-profile-with-avalonia-devtools",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7e6e0328fc1d1f8670901a557be5e0f52e95eddbee9f52e491a3fe6ae42803f0",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-mvvm-with-reactiveui-or-communitytoolkit",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2779b4222df9d98d8cc3581cf4cdff886c217d15cf76e44280c675b610cd8ada",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-viewlocator-pattern",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a0d026b8c194f932ceaba1dd3470f0c7280b61ae41b61a1a2f1946d9927f1131",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-dependency-injection",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4a86180019b0947c1f78171fe798bd0a9c31e32adf6e3b94dd2ff1d36e9c5f91",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-separate-views-from-viewmodels",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=688cb2f5d67d59698c615bf92baad9c126d2ba872e956f0a4da50406015a949e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-set-automationproperties",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c4ba809dbb732fa43c964bbd04f81e60b55c42159c6d2c17ccb67ca6c7040650",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-support-keyboard-navigation",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fc8b0c41f1b7b33d861610edf853b4ed4495d9706dc3fd17561c1010a95e7628",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-semantic-control-types",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d2891ae15fd599c126768057d0de1b4deb288fac5925fc80db72d903dec89833",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-avalonia-headless-for-ui-tests",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c573c2bd0819d469e2c0d5ed37246ad37b3247859d524bf8edf7d2eb1c10daa8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-unit-test-viewmodels",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0a5db2b2dee766cc658608e27931c8edc615168e95cbdd4f4d8ea1c5deb67e36",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-test-converters-independently",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0817624fafd7ffe3d60a5a69dd99382dbdf081d959240e36bd8d0b10f1b50e3b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-reactiveui-routing-for-navigation",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3ded81da96b9d7a66afeb1f7033468f0a1b56210bbf1e3681ee84e31db39d760",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-usercontrol-for-views",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=273bed6842ba3b66e06af9c0fd6f815adaff21ee4437ed78af15fb9f91af1442",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-page-transitions-for-view-switching",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cf0aa4beb17a031afddd6366457a622f2b0d3d889b0102cde7236f71465423e8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-support-back-navigation",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=112947a11bebeda05692536b067cc76e8d6c4a925c10fd38c3be02c20e554370",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-autocompletebox-for-search",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9a2304733cbc6d71db861455a19777643d142b64066f2b98cfd7b6d4e725c8db",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-tabcontrol-for-tabbed-interfaces",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=28a1460ff4a54103eea16d62cfe79dccc7dc85930d99db2c556181758f0113cc",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-splitview-for-master-detail",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5c9cb533051d7bb00362e10a185364a834aa97e5bab8a29b761f6d0f75d18136",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-flyout-for-contextual-actions",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b64533bd9dc88767b631c98a3992f73433834231bc51b30837711a0353f599fb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-appbuilder-for-app-configuration",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=eb125a3aee423659ae4cad34fd0145ab484c5f19016129c1733d2d53113b2243",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-initialize-mainwindow-in-onframeworkinitializationcompleted",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a07766dd51555ba192ebb7791da41decc2601cb250827f3b529d4e65373c5f72",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-css-like-keyframe-animations",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=284e1eed154defe65a7cf4566dbe97769a559194a1e813fa0395c300e821074d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-transitions-for-implicit-animations",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7bad640877674567548dcc1e1e28f1205ec0f390c9d74b70983076096965ac87",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-compiled-bindings-and-trimmerroots-xml-for-publishaot",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=86b3ebabd4d22a6ba80481cf9fbfaf4d989156c260868e39e5e6dfd8a72948b5",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-marshal-cross-thread-work-to-the-ui-thread",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4326d1f67b11411c236148ba70f1370e67f92e9c5c86d3dc2023c94a8e41f7e4",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-asyncrelaycommand-or-reactivecommand-for-async-work",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3a8a7f55c198104ab918b47e2ab610b65865953e144e35a3ac7b7c8f841d2ac3",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-dynamicresource-for-theme-aware-brushes",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=87723a19b5703ec55cbd7c41be202abb63f91ee873c04002684ce15f299a00de",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-hotkey-or-keybinding-for-keyboard-shortcuts",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1172b3ead3a2b07409c1c1dbbd1e9a95f7a3cbfe80782b361c84c278a3015e23",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-customize-window-chrome-with-extendclientareatodecorationshi",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=70558da8c983864b3005e4155d9fa60b1e3a4144ed1e7039e101e7ed94c6444f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-toplevel-storageprovider-for-file-pickers",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aa46a6c4c4db45aa6ada3d9b2ab039360ef12fff9f1ee6a846066a62d3cfc713",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-trayicon-for-system-tray-icon",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=98a3b6115024aca8e84bc175221938a8bfd1aecb26ec2918fec545a7f1799d77",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-avalonia-use-onplatform-and-onformfactor-markup-for-per-os-values",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/avalonia.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a81433dfab079d7bc441256958abaf68facb6c3479726dfc154e77834e3ebdfb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

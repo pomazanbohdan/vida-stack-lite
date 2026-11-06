@@ -1,7 +1,7 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 7351,
+  "revision": 7352,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
   "updated_at": "2026-11-06T00:00:00Z",
   "tag_dictionary": {
@@ -16316,6 +16316,1061 @@
       "instruction_id": "use-version-history-to-find-the-regression",
       "path": "instructions/use-version-history-to-find-the-regression.md",
       "sha256": "c343972d9b5b8d290e4b069dde0b5d46a43435b52e2b51219c14c57b6d6861d3"
+    },
+    {
+      "instruction_id": "uupm-angular-avoid-direct-dom-manipulation",
+      "path": "instructions/uupm-angular-avoid-direct-dom-manipulation.md",
+      "sha256": "470d40468b3b41b76ffa7e2b515ed47eda40b1c21136edd8d2e74bf0fb6906ef"
+    },
+    {
+      "instruction_id": "uupm-angular-avoid-mixing-rxjs-and-signals-unnecessarily",
+      "path": "instructions/uupm-angular-avoid-mixing-rxjs-and-signals-unnecessarily.md",
+      "sha256": "3a8cdcc6959b88398b6beef134ee686616f6a6b975c6c061dc538b13641d7fbf"
+    },
+    {
+      "instruction_id": "uupm-angular-avoid-subscribe-in-components",
+      "path": "instructions/uupm-angular-avoid-subscribe-in-components.md",
+      "sha256": "83e1d07668b7dcb18637f7120d3a9df59015c2828bef300650cfee60f1cd5cf2"
+    },
+    {
+      "instruction_id": "uupm-angular-configure-preloading-strategies",
+      "path": "instructions/uupm-angular-configure-preloading-strategies.md",
+      "sha256": "d17a4934b759c7cd97c453310c9a96b7beb237f04c8d993223e57289feec918a"
+    },
+    {
+      "instruction_id": "uupm-angular-display-validation-errors-clearly",
+      "path": "instructions/uupm-angular-display-validation-errors-clearly.md",
+      "sha256": "8629e90ca0b188203555cf4986cf1c23aaf65986de27d57d5f6b1079757df676"
+    },
+    {
+      "instruction_id": "uupm-angular-inject-services-for-shared-state",
+      "path": "instructions/uupm-angular-inject-services-for-shared-state.md",
+      "sha256": "9452698a8d0a021000f52263baa27c3449be5037e7fb982d2713a878c88ad663"
+    },
+    {
+      "instruction_id": "uupm-angular-integrate-tailwind-with-angular",
+      "path": "instructions/uupm-angular-integrate-tailwind-with-angular.md",
+      "sha256": "fe81d6a963d2a74bc1e4d007850b0778d2e98a1cd60b032e90377777dbda2eb9"
+    },
+    {
+      "instruction_id": "uupm-angular-keep-components-small",
+      "path": "instructions/uupm-angular-keep-components-small.md",
+      "sha256": "c70da709754833bf618c7b40eb4f4f152f48e14f6fa8f4ecbddd082f3cada5cf"
+    },
+    {
+      "instruction_id": "uupm-angular-lazy-load-feature-routes",
+      "path": "instructions/uupm-angular-lazy-load-feature-routes.md",
+      "sha256": "63bba2dc05e5e90a8ce526879c2bd28a683df287b0cf733fb50206aca0017231"
+    },
+    {
+      "instruction_id": "uupm-angular-minimize-bundle-with-standalone-apis",
+      "path": "instructions/uupm-angular-minimize-bundle-with-standalone-apis.md",
+      "sha256": "01a42917d144431d8b57bccd253ef4e65a9b1458d5786649d079df6ad25d4aad"
+    },
+    {
+      "instruction_id": "uupm-angular-mock-services-with-jasmine-createspyobj",
+      "path": "instructions/uupm-angular-mock-services-with-jasmine-createspyobj.md",
+      "sha256": "f723608dd5c0b377de4c522db779b190ba0b4493a6f6d68e3071becd728f2874"
+    },
+    {
+      "instruction_id": "uupm-angular-organize-by-feature-not-type",
+      "path": "instructions/uupm-angular-organize-by-feature-not-type.md",
+      "sha256": "2bc661fc4a09573721a25473e833594fc1d9d59e8eacf1ef5ff06d80cff0bb56"
+    },
+    {
+      "instruction_id": "uupm-angular-prefer-inject-over-constructor-di",
+      "path": "instructions/uupm-angular-prefer-inject-over-constructor-di.md",
+      "sha256": "f6109004d20fa40b7d1ac4b7dda67d82aedba63ce0320a931a918674a250ef83"
+    },
+    {
+      "instruction_id": "uupm-angular-prepare-components-for-zoneless-change-detection",
+      "path": "instructions/uupm-angular-prepare-components-for-zoneless-change-detection.md",
+      "sha256": "49cfc77498bc081b828469105ede91f25fb04d90b15a2e7b350a41658e8aec7b"
+    },
+    {
+      "instruction_id": "uupm-angular-test-signal-based-components",
+      "path": "instructions/uupm-angular-test-signal-based-components.md",
+      "sha256": "d3319f3e25fb8a7d5a3991738b6574561151701a0bcf95c38700cd3f9474bfc0"
+    },
+    {
+      "instruction_id": "uupm-angular-tree-shake-unused-angular-features",
+      "path": "instructions/uupm-angular-tree-shake-unused-angular-features.md",
+      "sha256": "98bf6d1b1a18c9ff31f4c0fa6760947702243cd263dc9b5594d09cd7ba2d129f"
+    },
+    {
+      "instruction_id": "uupm-angular-type-route-params-with-inject",
+      "path": "instructions/uupm-angular-type-route-params-with-inject.md",
+      "sha256": "e277c96d6ab0b845f6516b090cd0478acae814b0178b0e86972c7202201f3910"
+    },
+    {
+      "instruction_id": "uupm-angular-use-angular-cdk-component-harnesses",
+      "path": "instructions/uupm-angular-use-angular-cdk-component-harnesses.md",
+      "sha256": "e42606fe4a50e29ee6dbf6bbc970408e3f9d3abe76338ea16c604ebda9174f1a"
+    },
+    {
+      "instruction_id": "uupm-angular-use-angular-material-theming-tokens",
+      "path": "instructions/uupm-angular-use-angular-material-theming-tokens.md",
+      "sha256": "61f2e21dc36f7a3f0a4b5b52831efc2c5bd7240964fa49de5570e04bd7f3b3b9"
+    },
+    {
+      "instruction_id": "uupm-angular-use-angular-ssr-for-hybrid-rendering",
+      "path": "instructions/uupm-angular-use-angular-ssr-for-hybrid-rendering.md",
+      "sha256": "aaf23d99b584a8d66b1adbeb9d3a922e49f9660f4aa5e2c58f764e7ac6d29774"
+    },
+    {
+      "instruction_id": "uupm-angular-use-computed-for-derived-state",
+      "path": "instructions/uupm-angular-use-computed-for-derived-state.md",
+      "sha256": "f4c41b23e5a80170d9b5fa299d928f734e38d8df8d26f226fe12baf18faf4325"
+    },
+    {
+      "instruction_id": "uupm-angular-use-content-projection",
+      "path": "instructions/uupm-angular-use-content-projection.md",
+      "sha256": "4d488c19a14f3560a543821ba4815587f8b008b8150964b15e46a3fecf3b5251"
+    },
+    {
+      "instruction_id": "uupm-angular-use-css-custom-properties-for-theming",
+      "path": "instructions/uupm-angular-use-css-custom-properties-for-theming.md",
+      "sha256": "bae2f38558eb201956d5e27c8d5b7990da916300c4fffa8451a903815ceb2848"
+    },
+    {
+      "instruction_id": "uupm-angular-use-defer-for-below-the-fold-content",
+      "path": "instructions/uupm-angular-use-defer-for-below-the-fold-content.md",
+      "sha256": "21c20fc5ae177a34b3f67b83ca5ae833c687160f452f674e5574aa755e9cd80c"
+    },
+    {
+      "instruction_id": "uupm-angular-use-effect-carefully",
+      "path": "instructions/uupm-angular-use-effect-carefully.md",
+      "sha256": "d7d8e7a511e17e76414e66945a2eff671b998fd4ef686c733ca4fb2f510d245e"
+    },
+    {
+      "instruction_id": "uupm-angular-use-environment-configurations",
+      "path": "instructions/uupm-angular-use-environment-configurations.md",
+      "sha256": "add277b58487e509afefee62e345a394d3dcb5303a552954a6bf704e453b348c"
+    },
+    {
+      "instruction_id": "uupm-angular-use-formarray-for-dynamic-fields",
+      "path": "instructions/uupm-angular-use-formarray-for-dynamic-fields.md",
+      "sha256": "ca0b1ecc59115f5c4d3a422606471d7e6e8ae0dbfd10cf309e9c8fbf531237d6"
+    },
+    {
+      "instruction_id": "uupm-angular-use-host-selector",
+      "path": "instructions/uupm-angular-use-host-selector.md",
+      "sha256": "f69e4ec6db6d0736e6d6ea060587df1b1968a940375ec9fe6a2599ef3e01e782"
+    },
+    {
+      "instruction_id": "uupm-angular-use-http-interceptors",
+      "path": "instructions/uupm-angular-use-http-interceptors.md",
+      "sha256": "dcd2e6328aac544cfe38c10822c78ca8aa355e7fbe78074c3730f14dee571145"
+    },
+    {
+      "instruction_id": "uupm-angular-use-if-for-switch-control-flow",
+      "path": "instructions/uupm-angular-use-if-for-switch-control-flow.md",
+      "sha256": "5beda7b8526a393a5da26117673fec45c92486628631cb98c0480d8b3a62c40b"
+    },
+    {
+      "instruction_id": "uupm-angular-use-injection-tokens-for-config",
+      "path": "instructions/uupm-angular-use-injection-tokens-for-config.md",
+      "sha256": "be15be716d9f5419e7d8e7da4ca586a8b94dbfef335bff66d0d0b6d55d9afa2a"
+    },
+    {
+      "instruction_id": "uupm-angular-use-input-and-output-component-apis",
+      "path": "instructions/uupm-angular-use-input-and-output-component-apis.md",
+      "sha256": "96f25e318237bd50608b75ad95ddddd69f84d4a5156d47f3af912af9bc47a697"
+    },
+    {
+      "instruction_id": "uupm-angular-use-nested-routes-for-layouts",
+      "path": "instructions/uupm-angular-use-nested-routes-for-layouts.md",
+      "sha256": "da33f71ca7f9e0f7ad62770bbbc695d4ef8611c38553e5d9cc2bb71ddd08dd5c"
+    },
+    {
+      "instruction_id": "uupm-angular-use-ngoptimizedimage",
+      "path": "instructions/uupm-angular-use-ngoptimizedimage.md",
+      "sha256": "cc22c369023b72f48c04e7230e6064445504abad7b7078c63d1b1d376e6aadd1"
+    },
+    {
+      "instruction_id": "uupm-angular-use-ngrx-signal-store-for-complex-state",
+      "path": "instructions/uupm-angular-use-ngrx-signal-store-for-complex-state.md",
+      "sha256": "b431751dd3584ad58a15860024602fc9efdb2bd56f8a32e2aa5da3478cf8e4a6"
+    },
+    {
+      "instruction_id": "uupm-angular-use-onpush-where-subtree-skipping-fits",
+      "path": "instructions/uupm-angular-use-onpush-where-subtree-skipping-fits.md",
+      "sha256": "4acf9065c04d3888b780177ba15a8fb71e80c79f2b228581baddfbca0ba8a5f3"
+    },
+    {
+      "instruction_id": "uupm-angular-use-reactive-forms-over-template-driven",
+      "path": "instructions/uupm-angular-use-reactive-forms-over-template-driven.md",
+      "sha256": "d9efd97b1552445d0a7281a02e73c7156cc915f51d90280be481e7d00a20a3ea"
+    },
+    {
+      "instruction_id": "uupm-angular-use-route-guards-with-functional-api",
+      "path": "instructions/uupm-angular-use-route-guards-with-functional-api.md",
+      "sha256": "6d07ae2373a143d536e2f8e5583b6a796e0b036923e5ad20b020efab86b70406"
+    },
+    {
+      "instruction_id": "uupm-angular-use-route-resolvers-for-data",
+      "path": "instructions/uupm-angular-use-route-resolvers-for-data.md",
+      "sha256": "8f8b5a704e8a53c6f2d2b09230654bd1a690894bb84428b58093a18edd39c3bc"
+    },
+    {
+      "instruction_id": "uupm-angular-use-signals-for-local-state",
+      "path": "instructions/uupm-angular-use-signals-for-local-state.md",
+      "sha256": "3680fc5c0af1bd52d2a02c5452e23abef28b7288f29d89e08f7153bfd89c71f6"
+    },
+    {
+      "instruction_id": "uupm-angular-use-signals-for-state",
+      "path": "instructions/uupm-angular-use-signals-for-state.md",
+      "sha256": "fb23a572d9b80de49ffca5fd7fca32705409d4032910a6dbc0c3a81f0d3dc62d"
+    },
+    {
+      "instruction_id": "uupm-angular-use-spectator-for-less-boilerplate",
+      "path": "instructions/uupm-angular-use-spectator-for-less-boilerplate.md",
+      "sha256": "76fa508510c01c48b718fb6ab2529187e07af802eac4a4ab1c5144d0b4cd995b"
+    },
+    {
+      "instruction_id": "uupm-angular-use-standalone-components",
+      "path": "instructions/uupm-angular-use-standalone-components.md",
+      "sha256": "914279dbe84154ed368bedba55453c63662d03e2e0bb74fb4cd42b0157719f93"
+    },
+    {
+      "instruction_id": "uupm-angular-use-testbed-for-component-tests",
+      "path": "instructions/uupm-angular-use-testbed-for-component-tests.md",
+      "sha256": "d6d700e2d64b0ce52f4f5306c868bc86441438ec610d31f725663281fd705e5d"
+    },
+    {
+      "instruction_id": "uupm-angular-use-trackby-in-for-blocks",
+      "path": "instructions/uupm-angular-use-trackby-in-for-blocks.md",
+      "sha256": "7cc5439cadc1c72829a6eef2b7f4cef5077205dbb4d39f6cb7577c2b0bca99fc"
+    },
+    {
+      "instruction_id": "uupm-angular-use-typed-reactive-forms",
+      "path": "instructions/uupm-angular-use-typed-reactive-forms.md",
+      "sha256": "f158eb52bbd40d0f0628acd334da0de904516fcbfb5da74edc85b4b0caaa6e47"
+    },
+    {
+      "instruction_id": "uupm-angular-use-updateon-for-performance",
+      "path": "instructions/uupm-angular-use-updateon-for-performance.md",
+      "sha256": "7e2e65ae2f4e2ac1c823a30105bd24bb004f1a0ccec7c86c3c204f535b38bdbb"
+    },
+    {
+      "instruction_id": "uupm-angular-use-viewencapsulation-emulated",
+      "path": "instructions/uupm-angular-use-viewencapsulation-emulated.md",
+      "sha256": "a26f9b94c3dc042e60a7c8d7e99e2344ee1993b65f6213c499f83d146858f3ad"
+    },
+    {
+      "instruction_id": "uupm-angular-write-custom-validators-as-functions",
+      "path": "instructions/uupm-angular-write-custom-validators-as-functions.md",
+      "sha256": "af700cae5bdeedc75f350c51c8fa8575e8956a69fe0eaa254656a52b1941873f"
+    },
+    {
+      "instruction_id": "uupm-angular-write-integration-tests-for-routes",
+      "path": "instructions/uupm-angular-write-integration-tests-for-routes.md",
+      "sha256": "ca8eb1a0ed9d0e41009b1e8ffc6f84693b7290c297aa7cf8ea455a0d67feee3a"
+    },
+    {
+      "instruction_id": "uupm-astro-add-fallback-for-no-js",
+      "path": "instructions/uupm-astro-add-fallback-for-no-js.md",
+      "sha256": "fe5e0827ad1dd7387ab114b202021fc788311aad993ce1357c352576edf10598"
+    },
+    {
+      "instruction_id": "uupm-astro-add-rss-feed-for-content",
+      "path": "instructions/uupm-astro-add-rss-feed-for-content.md",
+      "sha256": "741941ab17b526eb07ffac5b388e84431f6ca78066ebfb55eaebc36c957b0c2d"
+    },
+    {
+      "instruction_id": "uupm-astro-analyze-bundle-size",
+      "path": "instructions/uupm-astro-analyze-bundle-size.md",
+      "sha256": "67925296d9429847973c6bc84458286af3b73cd8056fcdcaf2209cd1f01a95ef"
+    },
+    {
+      "instruction_id": "uupm-astro-choose-right-client-directive",
+      "path": "instructions/uupm-astro-choose-right-client-directive.md",
+      "sha256": "dc836614773916d361bb4f19a63b095a00b3c66c0a6b79ae29849dc3303a6d49"
+    },
+    {
+      "instruction_id": "uupm-astro-colocate-component-styles",
+      "path": "instructions/uupm-astro-colocate-component-styles.md",
+      "sha256": "2884e1ef29f71f087514e25c309ef4b6e78354f04ec87e5a735c3c1b555c0e40"
+    },
+    {
+      "instruction_id": "uupm-astro-configure-built-in-prefetch",
+      "path": "instructions/uupm-astro-configure-built-in-prefetch.md",
+      "sha256": "6790304cd4fd8f9c0db3af2c1d2b4f29e7e31504ccc1ce4467d6596046a5f1b3"
+    },
+    {
+      "instruction_id": "uupm-astro-configure-integrations-in-astro-config",
+      "path": "instructions/uupm-astro-configure-integrations-in-astro-config.md",
+      "sha256": "3e95b0141e1bc1b0db041f4b58b348c4ae8dde74c2a4e30abf39f54bafffc26d"
+    },
+    {
+      "instruction_id": "uupm-astro-configure-markdown-plugins",
+      "path": "instructions/uupm-astro-configure-markdown-plugins.md",
+      "sha256": "f72d2ccc5b483cb668c02f31e726c2d2dc6c744d9fe0bebf10420f5c30585db9"
+    },
+    {
+      "instruction_id": "uupm-astro-default-to-zero-js",
+      "path": "instructions/uupm-astro-default-to-zero-js.md",
+      "sha256": "1bf563b7c083edcb8f0e1dc0cca50fdc6f0c80c0f153dbaeff9d0d9315e73a62"
+    },
+    {
+      "instruction_id": "uupm-astro-define-collection-schemas",
+      "path": "instructions/uupm-astro-define-collection-schemas.md",
+      "sha256": "c3358095331ac76972d4fac02d245b286042b59f3f5cec4766fb5193c4461203"
+    },
+    {
+      "instruction_id": "uupm-astro-dynamic-routes-with-brackets",
+      "path": "instructions/uupm-astro-dynamic-routes-with-brackets.md",
+      "sha256": "dc8003d2efb86c99c47a09a96928ef0b6cc935a2869a2be88a42f9d620f4e368"
+    },
+    {
+      "instruction_id": "uupm-astro-enable-on-demand-rendering-when-needed",
+      "path": "instructions/uupm-astro-enable-on-demand-rendering-when-needed.md",
+      "sha256": "8f189221e76f4ba601aa4983b61cde29f5feb5474b94f556f61fa1839602bdaf"
+    },
+    {
+      "instruction_id": "uupm-astro-enable-typescript",
+      "path": "instructions/uupm-astro-enable-typescript.md",
+      "sha256": "e36c3bb570d8eba51086e9e7d50e19692bfc01f2339535e8dae08db069eb9993"
+    },
+    {
+      "instruction_id": "uupm-astro-fetch-in-frontmatter",
+      "path": "instructions/uupm-astro-fetch-in-frontmatter.md",
+      "sha256": "90929a6bb8d7d3319d9f5252121f2240e8569e41f39aecf15b244bf01654eff9"
+    },
+    {
+      "instruction_id": "uupm-astro-generate-sitemap",
+      "path": "instructions/uupm-astro-generate-sitemap.md",
+      "sha256": "ceeac278a98a7f39abab5791e40893e66a34e0265bb9140bc165902ccc96a4d1"
+    },
+    {
+      "instruction_id": "uupm-astro-handle-methods-correctly",
+      "path": "instructions/uupm-astro-handle-methods-correctly.md",
+      "sha256": "8060311867e8f62e04d21bd554ef6a496ec3d9775cc362773073dd7ade31415f"
+    },
+    {
+      "instruction_id": "uupm-astro-handle-transition-persist",
+      "path": "instructions/uupm-astro-handle-transition-persist.md",
+      "sha256": "609c0ca9ef1e61fd7e8ac0c36956fc5cc68adeb108f76db607ce25a240464ecb"
+    },
+    {
+      "instruction_id": "uupm-astro-integrate-tailwind-4-through-vite",
+      "path": "instructions/uupm-astro-integrate-tailwind-4-through-vite.md",
+      "sha256": "a914aa10f512ee2349ad88f92445d67354dd7c9ddca20acb75b4fe77edf0095a"
+    },
+    {
+      "instruction_id": "uupm-astro-keep-astro-for-static",
+      "path": "instructions/uupm-astro-keep-astro-for-static.md",
+      "sha256": "93cd22fe39c463c6d478d2253b06803a4977421b1424fc73d6637783ffae5a3c"
+    },
+    {
+      "instruction_id": "uupm-astro-lazy-load-below-fold-content",
+      "path": "instructions/uupm-astro-lazy-load-below-fold-content.md",
+      "sha256": "c804540b2fde983ee258f69ae103164634c518fc51c1bb1f989470ba3e204a8d"
+    },
+    {
+      "instruction_id": "uupm-astro-minimize-client-directives",
+      "path": "instructions/uupm-astro-minimize-client-directives.md",
+      "sha256": "6f2ebb4fb00141527ab12ce2ac68fcb46a1ca9b1bd835fad4ef65ef843bd018b"
+    },
+    {
+      "instruction_id": "uupm-astro-mix-prerendered-and-on-demand-routes",
+      "path": "instructions/uupm-astro-mix-prerendered-and-on-demand-routes.md",
+      "sha256": "1126bc90b0e44732a8049dcc71238fff7a53fb709cd307d85852520af5bf8970"
+    },
+    {
+      "instruction_id": "uupm-astro-optimize-images-with-astro-assets",
+      "path": "instructions/uupm-astro-optimize-images-with-astro-assets.md",
+      "sha256": "d9bee2d8ae9a1c4a2081afd1f69559069896e00374a388dd444f26997c35b740"
+    },
+    {
+      "instruction_id": "uupm-astro-pass-data-via-props",
+      "path": "instructions/uupm-astro-pass-data-via-props.md",
+      "sha256": "6099dccffd9e7e91a7a8dca3325c11adf4f228e52ff85b7eea501e2513bd20d7"
+    },
+    {
+      "instruction_id": "uupm-astro-prefer-content-collections-over-glob",
+      "path": "instructions/uupm-astro-prefer-content-collections-over-glob.md",
+      "sha256": "3686c1dd96f87344023130e82f479331148e7a6569425017cee4dbb82d4e37ce"
+    },
+    {
+      "instruction_id": "uupm-astro-preload-critical-assets",
+      "path": "instructions/uupm-astro-preload-critical-assets.md",
+      "sha256": "2b4537328cf327835e203e073f99be3df79f16fb67a856d75d0f4d350bc2a074"
+    },
+    {
+      "instruction_id": "uupm-astro-return-proper-responses",
+      "path": "instructions/uupm-astro-return-proper-responses.md",
+      "sha256": "a95b26efb43f29f22faed922f5b1c82028c9182c098264c6bfd42093b91a4cf7"
+    },
+    {
+      "instruction_id": "uupm-astro-sanitize-user-content",
+      "path": "instructions/uupm-astro-sanitize-user-content.md",
+      "sha256": "c81e9daa895478f551d83babf213957505591167bf77b9ce180fccee149a6e82"
+    },
+    {
+      "instruction_id": "uupm-astro-type-component-props",
+      "path": "instructions/uupm-astro-type-component-props.md",
+      "sha256": "7eb4fc1794562cc58b57ae696572da8bae727310d2da3ed31298ad9a20e75ecd"
+    },
+    {
+      "instruction_id": "uupm-astro-use-a-shared-head-component",
+      "path": "instructions/uupm-astro-use-a-shared-head-component.md",
+      "sha256": "d53f8f274aa3f53eec2f445bb6683fb172d4f66966bcacfae4c1fbe2bd6e0936"
+    },
+    {
+      "instruction_id": "uupm-astro-use-adapter-for-deployment",
+      "path": "instructions/uupm-astro-use-adapter-for-deployment.md",
+      "sha256": "41d594a0088cff828db7fc1e6032cc9fd09327b8473171c587145309c8458593"
+    },
+    {
+      "instruction_id": "uupm-astro-use-api-routes-for-endpoints",
+      "path": "instructions/uupm-astro-use-api-routes-for-endpoints.md",
+      "sha256": "212e58fad2835862bff6262f3cd6c954788adabf784d6cc37ef340a3c6ab8cae"
+    },
+    {
+      "instruction_id": "uupm-astro-use-astro-glob-for-local-files",
+      "path": "instructions/uupm-astro-use-astro-glob-for-local-files.md",
+      "sha256": "ad698905197f29bf1307fdc2fa3924b1edec9a6dda4b5d23175e9190b632ec4a"
+    },
+    {
+      "instruction_id": "uupm-astro-use-canonical-urls",
+      "path": "instructions/uupm-astro-use-canonical-urls.md",
+      "sha256": "07e2f90b756b1e71032cc83ca27913c5fdde2b901172df90d46de41282e7c096"
+    },
+    {
+      "instruction_id": "uupm-astro-use-clientrouter-for-client-side-transitions",
+      "path": "instructions/uupm-astro-use-clientrouter-for-client-side-transitions.md",
+      "sha256": "6a0f2e8ff56bab967915d877a877e2584a4325d00210c109d89cb999c115f179"
+    },
+    {
+      "instruction_id": "uupm-astro-use-content-collections",
+      "path": "instructions/uupm-astro-use-content-collections.md",
+      "sha256": "b84a1805c3eccaec1a463da26dad847e5b8341a71cae968adf0bb4f83fab4839"
+    },
+    {
+      "instruction_id": "uupm-astro-use-css-variables-for-theming",
+      "path": "instructions/uupm-astro-use-css-variables-for-theming.md",
+      "sha256": "44d5658d32838f96ed29daa824af2478c1b52c70442cc1e164eb13555b2c1faa"
+    },
+    {
+      "instruction_id": "uupm-astro-use-environment-variables-correctly",
+      "path": "instructions/uupm-astro-use-environment-variables-correctly.md",
+      "sha256": "93afab364838e161683cf64c44f673db6b2ebe6986b8971620306adbe5e17aeb"
+    },
+    {
+      "instruction_id": "uupm-astro-use-file-based-routing",
+      "path": "instructions/uupm-astro-use-file-based-routing.md",
+      "sha256": "298b75a276c5da3d6d7333de60e72247ff267f4ccf1cf3e0bdc49a2468861603"
+    },
+    {
+      "instruction_id": "uupm-astro-use-framework-components-for-interactivity",
+      "path": "instructions/uupm-astro-use-framework-components-for-interactivity.md",
+      "sha256": "24ef4bface710bcad40bc671cbdd9321602f8c64622ecc799cee98a7295ee948"
+    },
+    {
+      "instruction_id": "uupm-astro-use-frontmatter-for-metadata",
+      "path": "instructions/uupm-astro-use-frontmatter-for-metadata.md",
+      "sha256": "2658405cf8a1b1e93aefa78045a6575346bf6e2316601e9bb2cb01ca5dea8bdc"
+    },
+    {
+      "instruction_id": "uupm-astro-use-getstaticpaths-for-ssg",
+      "path": "instructions/uupm-astro-use-getstaticpaths-for-ssg.md",
+      "sha256": "491e07d2b750104d9e38e59f421dfa9f8bc19e786a6f6e3d8b5e75cc81db040e"
+    },
+    {
+      "instruction_id": "uupm-astro-use-https-in-production",
+      "path": "instructions/uupm-astro-use-https-in-production.md",
+      "sha256": "1685676f0934a29e2c3d987226a4a5fbd8cd7642c326ecf686618cfa4bb5761f"
+    },
+    {
+      "instruction_id": "uupm-astro-use-is-global-sparingly",
+      "path": "instructions/uupm-astro-use-is-global-sparingly.md",
+      "sha256": "e2dfd965a068b2175000dc360c2c6d9b9e5c0b6e63424615c97117987f7b2607"
+    },
+    {
+      "instruction_id": "uupm-astro-use-islands-architecture",
+      "path": "instructions/uupm-astro-use-islands-architecture.md",
+      "sha256": "8331fceec11f578664027c454a5871ad79f455705eb5837b8561c54b08fb4f4b"
+    },
+    {
+      "instruction_id": "uupm-astro-use-mdx-for-components",
+      "path": "instructions/uupm-astro-use-mdx-for-components.md",
+      "sha256": "2d464a6d4220c71ce4d65288a9b2b1c4465a0af33b53f812d562ecd5887bba69"
+    },
+    {
+      "instruction_id": "uupm-astro-use-official-integrations",
+      "path": "instructions/uupm-astro-use-official-integrations.md",
+      "sha256": "e57a5c7205780ee657ef7fe7425a8960241c6c680000a24d27f7b7dd63c3adcd"
+    },
+    {
+      "instruction_id": "uupm-astro-use-picture-for-responsive-images",
+      "path": "instructions/uupm-astro-use-picture-for-responsive-images.md",
+      "sha256": "5e9d144e3575dab66d608d6188c7e213c03ba27b360b72f28441d2cf72322c25"
+    },
+    {
+      "instruction_id": "uupm-astro-use-scoped-styles-by-default",
+      "path": "instructions/uupm-astro-use-scoped-styles-by-default.md",
+      "sha256": "bb7fb5d30c20eaa7fb6426aafb2e88d5a373566aa606522604ecafee789cf3e5"
+    },
+    {
+      "instruction_id": "uupm-astro-use-slots-for-composition",
+      "path": "instructions/uupm-astro-use-slots-for-composition.md",
+      "sha256": "f565a48df5ceb5c4070ada36fe01434926b4a93090cd157f84169aa9645874f1"
+    },
+    {
+      "instruction_id": "uupm-astro-use-strict-mode",
+      "path": "instructions/uupm-astro-use-strict-mode.md",
+      "sha256": "71ebaa56300cf1ed51bd2053beb439f5fad698183da0c93c9430b776725af2ea"
+    },
+    {
+      "instruction_id": "uupm-astro-use-transition-name",
+      "path": "instructions/uupm-astro-use-transition-name.md",
+      "sha256": "b07c1a582f1396139dbd3507fe958a5ceae8c1bc13ec0cc432edf630ec6f8009"
+    },
+    {
+      "instruction_id": "uupm-astro-validate-api-input",
+      "path": "instructions/uupm-astro-validate-api-input.md",
+      "sha256": "d5130914074102e985df4517985c7ee9f57791101b8708c99ac468181d706999"
+    },
+    {
+      "instruction_id": "uupm-avalonia-avoid-unnecessary-bindings",
+      "path": "instructions/uupm-avalonia-avoid-unnecessary-bindings.md",
+      "sha256": "b7918853d9e4b181c043a694a0131527d3ef3d9dc4335789324b06729bd61218"
+    },
+    {
+      "instruction_id": "uupm-avalonia-customize-window-chrome-with-extendclientareatodecorationshi",
+      "path": "instructions/uupm-avalonia-customize-window-chrome-with-extendclientareatodecorationshi.md",
+      "sha256": "16b02d8e0a1e2de51ec6a38cb139d4235ae6c48334afed8808431d9b0c16d6bc"
+    },
+    {
+      "instruction_id": "uupm-avalonia-enable-compiled-bindings-globally",
+      "path": "instructions/uupm-avalonia-enable-compiled-bindings-globally.md",
+      "sha256": "66c19caee82b3b99127948e118e582d43f1965662d463221c431903e12596a8e"
+    },
+    {
+      "instruction_id": "uupm-avalonia-handle-platform-file-paths",
+      "path": "instructions/uupm-avalonia-handle-platform-file-paths.md",
+      "sha256": "ab3ddb1fcaebc6916dd660fc4486a64c26754d84aaed54ebef44402c95ea22a9"
+    },
+    {
+      "instruction_id": "uupm-avalonia-implement-inotifypropertychanged",
+      "path": "instructions/uupm-avalonia-implement-inotifypropertychanged.md",
+      "sha256": "7ac809d8046b0a89b7d67a9edc6819d67b9d01c1ce0a8e19dca916fdf41d3583"
+    },
+    {
+      "instruction_id": "uupm-avalonia-initialize-mainwindow-in-onframeworkinitializationcompleted",
+      "path": "instructions/uupm-avalonia-initialize-mainwindow-in-onframeworkinitializationcompleted.md",
+      "sha256": "01d4d04f3ee54be82e878f6a251495af8b6756d1f5da51cf4911b69c8cae196a"
+    },
+    {
+      "instruction_id": "uupm-avalonia-marshal-cross-thread-work-to-the-ui-thread",
+      "path": "instructions/uupm-avalonia-marshal-cross-thread-work-to-the-ui-thread.md",
+      "sha256": "0638a411def0a413225f232e381331229502631034fc829974452f075d01af24"
+    },
+    {
+      "instruction_id": "uupm-avalonia-profile-with-avalonia-devtools",
+      "path": "instructions/uupm-avalonia-profile-with-avalonia-devtools.md",
+      "sha256": "60c4d48048daa12ed8f6cd96bb9c86147ab2101e386e4ce28ed51f5c98a18699"
+    },
+    {
+      "instruction_id": "uupm-avalonia-separate-views-from-viewmodels",
+      "path": "instructions/uupm-avalonia-separate-views-from-viewmodels.md",
+      "sha256": "e97a7aafe0d722e68cf52e6b3c2aa10fef61f2dc17630330eead28c47f68fc1b"
+    },
+    {
+      "instruction_id": "uupm-avalonia-set-automationproperties",
+      "path": "instructions/uupm-avalonia-set-automationproperties.md",
+      "sha256": "15ee75463f3e7cf76feb8f3f822da53344400d9f93b0c22ceb023e5cc3ddd91e"
+    },
+    {
+      "instruction_id": "uupm-avalonia-set-bitmap-interpolation-mode-on-scaled-images",
+      "path": "instructions/uupm-avalonia-set-bitmap-interpolation-mode-on-scaled-images.md",
+      "sha256": "1011752992dc1db6ac39e7a871c6719be3995b7837f179b6ffa2f6e5d1dbe706"
+    },
+    {
+      "instruction_id": "uupm-avalonia-support-back-navigation",
+      "path": "instructions/uupm-avalonia-support-back-navigation.md",
+      "sha256": "596c17a3df6a4e5c3d17f38dd3acaf5ae043ae49507e66fa891dc03c494f08d3"
+    },
+    {
+      "instruction_id": "uupm-avalonia-support-keyboard-navigation",
+      "path": "instructions/uupm-avalonia-support-keyboard-navigation.md",
+      "sha256": "c19c988f9c7a37700c87a6be744dcaf1944ab454af680cb79acba54c6e18176a"
+    },
+    {
+      "instruction_id": "uupm-avalonia-test-converters-independently",
+      "path": "instructions/uupm-avalonia-test-converters-independently.md",
+      "sha256": "667d135557e43d3c469e5a3a3dc1ddabcb274a20f281fa712322c50eb9b8ed8e"
+    },
+    {
+      "instruction_id": "uupm-avalonia-test-on-all-target-platforms",
+      "path": "instructions/uupm-avalonia-test-on-all-target-platforms.md",
+      "sha256": "b73a5c828f07d512f21e62eeb213a0f7f87850d52f4166a46a8e59cf12616b8a"
+    },
+    {
+      "instruction_id": "uupm-avalonia-unit-test-viewmodels",
+      "path": "instructions/uupm-avalonia-unit-test-viewmodels.md",
+      "sha256": "c7bb4c09eee806c26fbd359a73afb83955e40d7dc80e825960c16a9bc9909636"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-appbuilder-for-app-configuration",
+      "path": "instructions/uupm-avalonia-use-appbuilder-for-app-configuration.md",
+      "sha256": "17462da60a0ac542fed7cdc0d45e0a8f8e09a417a3e4be5c8246bcffb8b1e38a"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-asyncrelaycommand-or-reactivecommand-for-async-work",
+      "path": "instructions/uupm-avalonia-use-asyncrelaycommand-or-reactivecommand-for-async-work.md",
+      "sha256": "ed347106e533a9c5e0fc5e8a30cf34597f6d3ed621eca766af2b761d273eb863"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-autocompletebox-for-search",
+      "path": "instructions/uupm-avalonia-use-autocompletebox-for-search.md",
+      "sha256": "0850bf8cde4cf0aca7a2c2c823365a302c6734308de457602a281f317c1ca13f"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-avalonia-asset-system",
+      "path": "instructions/uupm-avalonia-use-avalonia-asset-system.md",
+      "sha256": "5231f113e47ea662f85c34c10350a6db241b09238aeb788993069afdfb4c0611"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-avalonia-headless-for-ui-tests",
+      "path": "instructions/uupm-avalonia-use-avalonia-headless-for-ui-tests.md",
+      "sha256": "69393031b2851e7a64eefbd5fece316c8e6d5688fd62657950b328323233de09"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-avalonia-xaml-namespace",
+      "path": "instructions/uupm-avalonia-use-avalonia-xaml-namespace.md",
+      "sha256": "9e3acecb2f09eb32fcce09f51c2a7882c7dc30307fb1a94609d446e4df712976"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-binding-to-named-controls",
+      "path": "instructions/uupm-avalonia-use-binding-to-named-controls.md",
+      "sha256": "309670aa2054f9275135ab5613fb53e9b1ade6ed1764096a8e2e3b949a4a9381"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-compiled-bindings-and-trimmerroots-xml-for-publishaot",
+      "path": "instructions/uupm-avalonia-use-compiled-bindings-and-trimmerroots-xml-for-publishaot.md",
+      "sha256": "6f02f104c3c64b6006c4d59305ec281e43127d50a4582edd8235409850d7254e"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-compiled-bindings-with-x-datatype",
+      "path": "instructions/uupm-avalonia-use-compiled-bindings-with-x-datatype.md",
+      "sha256": "831a7214dba9ce2f4b4c6c09e2aa7707e0be9e86cf9e011ba37859b23817eda0"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-converters-or-funcvalueconverter",
+      "path": "instructions/uupm-avalonia-use-converters-or-funcvalueconverter.md",
+      "sha256": "e8937caf06bc044c08d03551e7ddbc549eb46078bc1f3c6bd7f29d777ec54986"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-css-like-keyframe-animations",
+      "path": "instructions/uupm-avalonia-use-css-like-keyframe-animations.md",
+      "sha256": "af67ef7b918054de11461326312035d1d56780d1f1be3db0cea2fa2031e34473"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-css-like-selectors",
+      "path": "instructions/uupm-avalonia-use-css-like-selectors.md",
+      "sha256": "e84e09dbf38a5ef43932d8d97507783b143c4f058c12ef8eaa1a4420f193384a"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-datagrid-for-tabular-data",
+      "path": "instructions/uupm-avalonia-use-datagrid-for-tabular-data.md",
+      "sha256": "7ce1d61506b38bdcecba9b1241f090c7dd46a09e56f4e7238c90e0141a93e80b"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-dependency-injection",
+      "path": "instructions/uupm-avalonia-use-dependency-injection.md",
+      "sha256": "3612d7a64519d7a3e62519a708416bfaaf022dedaabe7c2755dac16c204d55b3"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-dynamicresource-for-theme-aware-brushes",
+      "path": "instructions/uupm-avalonia-use-dynamicresource-for-theme-aware-brushes.md",
+      "sha256": "5b40214df8d7f880d8658384df29907d302bd8e790aaa2c9bcbc292e5cb5dfce"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-fluent-or-simple-theme",
+      "path": "instructions/uupm-avalonia-use-fluent-or-simple-theme.md",
+      "sha256": "64458a4fb82356a78041acea7312e168dd13e492e26b0cd9aac8bf03e66757ef"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-flyout-for-contextual-actions",
+      "path": "instructions/uupm-avalonia-use-flyout-for-contextual-actions.md",
+      "sha256": "7efe42018a426cbd1cdec1118a9b4761ee65d5f1201a9093ef51fe8b54c20f6f"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-hotkey-or-keybinding-for-keyboard-shortcuts",
+      "path": "instructions/uupm-avalonia-use-hotkey-or-keybinding-for-keyboard-shortcuts.md",
+      "sha256": "97d919c6594028a1b20e17d689fbc50a2c2f0ed501ff50e0d2b6c7d574c39ad5"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-mvvm-with-reactiveui-or-communitytoolkit",
+      "path": "instructions/uupm-avalonia-use-mvvm-with-reactiveui-or-communitytoolkit.md",
+      "sha256": "1ef9d8fb8a95443814621ae30a80d512f4eb27b2162da5773c7ba95e1f7080f7"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-name-shorthand-for-element-to-element-bindings",
+      "path": "instructions/uupm-avalonia-use-name-shorthand-for-element-to-element-bindings.md",
+      "sha256": "5ad40b2558bc6be72d41b58b475b856dce9c1a4b9936aea0e772082aad8df8f4"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-nativemenu-for-platform-menus",
+      "path": "instructions/uupm-avalonia-use-nativemenu-for-platform-menus.md",
+      "sha256": "f9327e900c23ff4c1c3f2f70797805e27afb6448660ae18aae81e8bc4f3152ba"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-nesting-selectors",
+      "path": "instructions/uupm-avalonia-use-nesting-selectors.md",
+      "sha256": "311f9f969ffb0a894e5d6591f1eb99208f49bfd9f6823d478d23944ebe0c2264"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-observablecollection-for-lists",
+      "path": "instructions/uupm-avalonia-use-observablecollection-for-lists.md",
+      "sha256": "94be007f68ce828943331f238442bbff1d0eb1d09e6c557d71909c2883078e9b"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-onplatform-and-onformfactor-markup-for-per-os-values",
+      "path": "instructions/uupm-avalonia-use-onplatform-and-onformfactor-markup-for-per-os-values.md",
+      "sha256": "b5aecfca6ea03eed9bc3ed0e3542a3046b8b12fcf7d05b1be629451c3bb4c9a6"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-page-transitions-for-view-switching",
+      "path": "instructions/uupm-avalonia-use-page-transitions-for-view-switching.md",
+      "sha256": "164c0229a292026a8d01df288aedc54215ddfb808de18d40b04b14ef0cf57b78"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-platform-specific-code-carefully",
+      "path": "instructions/uupm-avalonia-use-platform-specific-code-carefully.md",
+      "sha256": "7db85f8ae6db3872f2cd01426bd2233511d3d7bb4edf318a7bbdc77840bfef98"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-pseudoclass-selectors-for-states",
+      "path": "instructions/uupm-avalonia-use-pseudoclass-selectors-for-states.md",
+      "sha256": "b724a8331129e03b55d51e8accb319fef5cb3cacf4f7d2093049da8351d39fa7"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-reactiveui-routing-for-navigation",
+      "path": "instructions/uupm-avalonia-use-reactiveui-routing-for-navigation.md",
+      "sha256": "bc571d2a6f326b0e2e3b48c7e455a9f740220b193253055a80993d5a0796059b"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-semantic-control-types",
+      "path": "instructions/uupm-avalonia-use-semantic-control-types.md",
+      "sha256": "5836bec75fe9a3fee25326414bf5db79c8555c157e881c943eb302340f6aa917"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-splitview-for-master-detail",
+      "path": "instructions/uupm-avalonia-use-splitview-for-master-detail.md",
+      "sha256": "277898bcbea716a4c6d30f9c40559023e538a4b648bf98ccd0830bfbfac28be2"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-styleinclude-for-modularity",
+      "path": "instructions/uupm-avalonia-use-styleinclude-for-modularity.md",
+      "sha256": "727dc8da665b57362d26366c723017072464b4135436db4d5abee5faabba75bd"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-tabcontrol-for-tabbed-interfaces",
+      "path": "instructions/uupm-avalonia-use-tabcontrol-for-tabbed-interfaces.md",
+      "sha256": "d7714087d0a48f844102a6925d03e1e2925472c6972a7a28b38c47977a99fe66"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-theme-variants-for-dark-mode",
+      "path": "instructions/uupm-avalonia-use-theme-variants-for-dark-mode.md",
+      "sha256": "a9a78886f05c7ad8b72120fbf0aed608e1f60bc3a494b12f896cbe1c3f6dcab0"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-toplevel-storageprovider-for-file-pickers",
+      "path": "instructions/uupm-avalonia-use-toplevel-storageprovider-for-file-pickers.md",
+      "sha256": "64c44a50811584b21efb23b2b3aa65e692469aecd5c2c56c4a1a680d84a46d5b"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-transitions-for-implicit-animations",
+      "path": "instructions/uupm-avalonia-use-transitions-for-implicit-animations.md",
+      "sha256": "6c930fac50acbf3071201922a46ac152d1c0d9e582467a8824fbd02aad410452"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-trayicon-for-system-tray-icon",
+      "path": "instructions/uupm-avalonia-use-trayicon-for-system-tray-icon.md",
+      "sha256": "06842ecd643a9b9c9e9287a21b38dadb509e0dc4bf45053e3e5da52d5424b2fb"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-treeview-with-treedatatemplate",
+      "path": "instructions/uupm-avalonia-use-treeview-with-treedatatemplate.md",
+      "sha256": "e83597c773126433fbc15cf067fbddbfa651c27cac338198c0c054305ab1ad27"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-usercontrol-for-views",
+      "path": "instructions/uupm-avalonia-use-usercontrol-for-views.md",
+      "sha256": "667e638246062e50410e8e32709d0b97eec8bfa2cef601ad029b24f3053bf429"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-viewlocator-pattern",
+      "path": "instructions/uupm-avalonia-use-viewlocator-pattern.md",
+      "sha256": "84cfcc19a3ba3bfaae89076e2e3ea79272ef614cd5a46d80cfca8a3c607f675d"
+    },
+    {
+      "instruction_id": "uupm-avalonia-use-virtualization-for-large-lists",
+      "path": "instructions/uupm-avalonia-use-virtualization-for-large-lists.md",
+      "sha256": "8da445943117281e99d5e3d0a2fa5ce8b2bcc635c232b33a0f91571e6a62e33c"
+    },
+    {
+      "instruction_id": "uupm-flutter-access-theme-via-context",
+      "path": "instructions/uupm-flutter-access-theme-via-context.md",
+      "sha256": "b40ba1c6144687d4688e183b0a168b4a2336416440eea041b4759e596323b1dc"
+    },
+    {
+      "instruction_id": "uupm-flutter-avoid-deep-nesting",
+      "path": "instructions/uupm-flutter-avoid-deep-nesting.md",
+      "sha256": "dfc1e015eed41b9024b659c38fca5cc7474549a65079379b37d702d13c853849"
+    },
+    {
+      "instruction_id": "uupm-flutter-avoid-rebuilding-entire-tree",
+      "path": "instructions/uupm-flutter-avoid-rebuilding-entire-tree.md",
+      "sha256": "a6782b6c559d123b224d2dff3af6b221dba203f1bf6a2dc23659ff7a6641ffaf"
+    },
+    {
+      "instruction_id": "uupm-flutter-avoid-setstate-in-build",
+      "path": "instructions/uupm-flutter-avoid-setstate-in-build.md",
+      "sha256": "367a7f13d96ea00b62c22c22ab92333b42b770a00cb6bc0fe49d5fd1d65e5c57"
+    },
+    {
+      "instruction_id": "uupm-flutter-cancel-subscriptions",
+      "path": "instructions/uupm-flutter-cancel-subscriptions.md",
+      "sha256": "427b955bdee144d00e143d9088c5d04e7916048224639bda4fe545eb3fd67ae3"
+    },
+    {
+      "instruction_id": "uupm-flutter-check-package-quality",
+      "path": "instructions/uupm-flutter-check-package-quality.md",
+      "sha256": "675073bc1a1dd6a7525a912ec59493993f52bf9eda272524f4fdab09405bfe9b"
+    },
+    {
+      "instruction_id": "uupm-flutter-dispose-animationcontrollers",
+      "path": "instructions/uupm-flutter-dispose-animationcontrollers.md",
+      "sha256": "52cc7c428f7b1ac0a6bd090d5cf9c66c058e5156b08e108de6b3594fb036285f"
+    },
+    {
+      "instruction_id": "uupm-flutter-dispose-controllers",
+      "path": "instructions/uupm-flutter-dispose-controllers.md",
+      "sha256": "9b7e6e7913e972532512fa2dc5f9a63b1c74ea1e2f089e4d83c923e629e066ea"
+    },
+    {
+      "instruction_id": "uupm-flutter-dispose-resources",
+      "path": "instructions/uupm-flutter-dispose-resources.md",
+      "sha256": "9ed48abf3ca465f29bc4ecf4077a285b2f8dd5e65d492e71ad819a65d1c666a1"
+    },
+    {
+      "instruction_id": "uupm-flutter-handle-back-button-with-popscope",
+      "path": "instructions/uupm-flutter-handle-back-button-with-popscope.md",
+      "sha256": "0c5ad55171ada2a15426e464a1b00d24d9c03bde073d8d7de005548b83672df9"
+    },
+    {
+      "instruction_id": "uupm-flutter-handle-loading-and-error-states",
+      "path": "instructions/uupm-flutter-handle-loading-and-error-states.md",
+      "sha256": "796da19300253d57805fd7e7192b5eb6d42247cea1c86b04b6dbe2c4792fd9a7"
+    },
+    {
+      "instruction_id": "uupm-flutter-keep-widgets-small",
+      "path": "instructions/uupm-flutter-keep-widgets-small.md",
+      "sha256": "53e428b6b84a1ce03050f9ee246dd38af633ecf2c95f6d5e8038f814bcbfcb08"
+    },
+    {
+      "instruction_id": "uupm-flutter-mock-dependencies",
+      "path": "instructions/uupm-flutter-mock-dependencies.md",
+      "sha256": "192336b413ca9238c70c0c3a81c282cfeacd5bb60d00ce57e2edb29a69579e22"
+    },
+    {
+      "instruction_id": "uupm-flutter-pass-typed-arguments",
+      "path": "instructions/uupm-flutter-pass-typed-arguments.md",
+      "sha256": "3434e0f7b8478e18e5fd7d94cd980e7d6f6246caf4874317a99205139a527363"
+    },
+    {
+      "instruction_id": "uupm-flutter-prefer-composition-over-inheritance",
+      "path": "instructions/uupm-flutter-prefer-composition-over-inheritance.md",
+      "sha256": "cd9891c1f20c2c5c1262a1dbf696077f6e9ee585d04fe99c077dbeaf3f8e916d"
+    },
+    {
+      "instruction_id": "uupm-flutter-prefer-riverpod-or-provider",
+      "path": "instructions/uupm-flutter-prefer-riverpod-or-provider.md",
+      "sha256": "43d17ba1f994e1b5aeea7efd259fdc5724972c0b4fd26b6e35ecd9c8318a53ab"
+    },
+    {
+      "instruction_id": "uupm-flutter-profile-with-devtools",
+      "path": "instructions/uupm-flutter-profile-with-devtools.md",
+      "sha256": "8ca3b1d8ecead0ae18e31aa2f057643b694bc1df3fbea98d306630a15547fb48"
+    },
+    {
+      "instruction_id": "uupm-flutter-provide-itemextent-when-known",
+      "path": "instructions/uupm-flutter-provide-itemextent-when-known.md",
+      "sha256": "546c11968d4c1a6d9d51a79e22a35bd968034e627309725f23a17f491ad0a1a5"
+    },
+    {
+      "instruction_id": "uupm-flutter-support-dark-mode",
+      "path": "instructions/uupm-flutter-support-dark-mode.md",
+      "sha256": "ea6a3eefacab1b6242296fd473624c2b435345b9c639e856db83e59e90f0476f"
+    },
+    {
+      "instruction_id": "uupm-flutter-support-large-fonts",
+      "path": "instructions/uupm-flutter-support-large-fonts.md",
+      "sha256": "122cbf23b1fa48edd4525f545bf49c205ccc955e9956f3aabbcc69c53c7233d6"
+    },
+    {
+      "instruction_id": "uupm-flutter-test-with-screen-readers",
+      "path": "instructions/uupm-flutter-test-with-screen-readers.md",
+      "sha256": "3a8c329142427483b82a1cc26308ce54b592be496ecc0136964b22de8cbfa430"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-animationcontroller-for-complex",
+      "path": "instructions/uupm-flutter-use-animationcontroller-for-complex.md",
+      "sha256": "c74d783ab3ebbf2816011ce0e1465019ec9925d7c12ba6e2f00c09f6ffed8b4d"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-colorscheme",
+      "path": "instructions/uupm-flutter-use-colorscheme.md",
+      "sha256": "c7abe7aed77b0f09e64230b7dcc13c93a64809c1b381ae037bd12e33588cdb19"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-column-and-row",
+      "path": "instructions/uupm-flutter-use-column-and-row.md",
+      "sha256": "0af9c5f8915b1c1571378fb056a6609bc28cb94bf7dab99112553e6f301a8463"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-const-constructors",
+      "path": "instructions/uupm-flutter-use-const-constructors.md",
+      "sha256": "35001ae7e6467a9b5a0b6a940a3851f53de006a5c1eaa02c79dc4cbf4ed95840"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-const-widgets",
+      "path": "instructions/uupm-flutter-use-const-widgets.md",
+      "sha256": "b79140aa609fc7a9f66aa057aad981b7b52b53e6e9e436e00437a8c4cd39ba6e"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-expanded-and-flexible",
+      "path": "instructions/uupm-flutter-use-expanded-and-flexible.md",
+      "sha256": "41c2245305c55174fc92380e094ba6d7a6c7e548877042d2956c5ba02c1f4ff4"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-form-widget",
+      "path": "instructions/uupm-flutter-use-form-widget.md",
+      "sha256": "bcb5311fb4840894a181912a76df44f94ff677befa4e3f0bb20c501bbe7cd5b7"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-futurebuilder",
+      "path": "instructions/uupm-flutter-use-futurebuilder.md",
+      "sha256": "547a20500d6d39b18118e71c756a79ce9d643d660581d81e0cc66ee49246a11e"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-hero-for-transitions",
+      "path": "instructions/uupm-flutter-use-hero-for-transitions.md",
+      "sha256": "6d2cbfe020d48ddc2390eb9b3be79b7a3b86d146d2afd29c0147aafa42bf73f5"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-implicit-animations",
+      "path": "instructions/uupm-flutter-use-implicit-animations.md",
+      "sha256": "5dfbb09f6653a121cedca5216cc3e4797bdb7fea30c7ffb81462b18c3f3acbef"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-integration-tests",
+      "path": "instructions/uupm-flutter-use-integration-tests.md",
+      "sha256": "98065663d91408648e75714b13464acab0f0adad4c82667cb67842e47ae3813f"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-keys-for-stateful-items",
+      "path": "instructions/uupm-flutter-use-keys-for-stateful-items.md",
+      "sha256": "6d286e28c72dc8dd08da20008cab9e33a11ebaa98b2af828ff315583e8968206"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-kisweb-for-web",
+      "path": "instructions/uupm-flutter-use-kisweb-for-web.md",
+      "sha256": "f5fac0443de462f0a44c4112576ca9e84cbacfcf3d6285bf67806e296954f884"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-layoutbuilder-for-responsive",
+      "path": "instructions/uupm-flutter-use-layoutbuilder-for-responsive.md",
+      "sha256": "6692bc3e9db4c32a0bc76835e864778a8d9cf40c6a2588d7f29dcc713c5aa1bd"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-listview-builder",
+      "path": "instructions/uupm-flutter-use-listview-builder.md",
+      "sha256": "8adea13cc962a93abcfb4dc15e55885d1eafe0e9e5d35243b47783b997e14099"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-named-routes",
+      "path": "instructions/uupm-flutter-use-named-routes.md",
+      "sha256": "f597fe4fccadc0ca5279fbb9c68219c060f29c9cc09fa385a43b92e02123b85c"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-navigator-2-0-or-gorouter",
+      "path": "instructions/uupm-flutter-use-navigator-2-0-or-gorouter.md",
+      "sha256": "22b2d3d12de524dc6dc2cdf6d657378e13d873bf34496819c880f885a92c1a4c"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-platform-checks",
+      "path": "instructions/uupm-flutter-use-platform-checks.md",
+      "sha256": "4611ada9cd23443a6dc30472e469e0d88f4e918dd893fb0cd0916bfa76709db4"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-pub-dev-packages",
+      "path": "instructions/uupm-flutter-use-pub-dev-packages.md",
+      "sha256": "df06b990684f38c77fef77ba813d560e686fb29c1b972b7d8ffcd361acbcba44"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-repaintboundary",
+      "path": "instructions/uupm-flutter-use-repaintboundary.md",
+      "sha256": "4c1b66f917236041039432f4e046720f1d544e5ffc8586d15640e6cb8c370228"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-semantics-widget",
+      "path": "instructions/uupm-flutter-use-semantics-widget.md",
+      "sha256": "bd58157f3b566e3b3f5b6f302aa78c3298a2945aaf491f11f4608b841a98330e"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-setstate-correctly",
+      "path": "instructions/uupm-flutter-use-setstate-correctly.md",
+      "sha256": "bf4f3d37fa9449974ed7021312bf4680c1f32b079582a0b1030300287ae72085"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-sizedbox-for-spacing",
+      "path": "instructions/uupm-flutter-use-sizedbox-for-spacing.md",
+      "sha256": "d4ad87465f6a2e636196313b83e27e08b755da3a5e997f677c0a86b993a8e885"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-sliverlist-for-custom-scroll",
+      "path": "instructions/uupm-flutter-use-sliverlist-for-custom-scroll.md",
+      "sha256": "8148ab58d76772a4f21019763ebcea0a3a551ed928ef906cad1d80ef190f02ca"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-state-management-for-complex-apps",
+      "path": "instructions/uupm-flutter-use-state-management-for-complex-apps.md",
+      "sha256": "da4ce31540c844d852e904dc2954ce07b87500a7612d26950ac8620181e5174d"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-statelesswidget-when-possible",
+      "path": "instructions/uupm-flutter-use-statelesswidget-when-possible.md",
+      "sha256": "0a37d5a4ce9caddaee3335b0456d9bb8eeda06662ba136481b80369bb16946f6"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-streambuilder",
+      "path": "instructions/uupm-flutter-use-streambuilder.md",
+      "sha256": "efb8637cd08ecc040091ebc6d3dfee8be20403b992532d0824730f2b79cb28f5"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-texteditingcontroller",
+      "path": "instructions/uupm-flutter-use-texteditingcontroller.md",
+      "sha256": "ce1ec50a0a8680e96ac06772c37556dcdf3a3055148fa7d6967b6d62221a8db2"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-themedata",
+      "path": "instructions/uupm-flutter-use-themedata.md",
+      "sha256": "20754fd08e6d3f6242ddcbbd059d9d2f1a7a466b3ac77509eb265a930e9ae61f"
+    },
+    {
+      "instruction_id": "uupm-flutter-use-widget-tests",
+      "path": "instructions/uupm-flutter-use-widget-tests.md",
+      "sha256": "3c85aa5bd1c627225662d632e653e9075acb3df81f4fe170402bc8bd9d9ba2c6"
+    },
+    {
+      "instruction_id": "uupm-flutter-validate-on-submit",
+      "path": "instructions/uupm-flutter-validate-on-submit.md",
+      "sha256": "b4895d234027fbc28ebf99566e0e8c07c7294f5f74175c3ac94fb8ffb4951a7d"
     },
     {
       "instruction_id": "uupm-react-avoid-binding-in-render",

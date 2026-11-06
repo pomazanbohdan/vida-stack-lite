@@ -1,0 +1,380 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/angular.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "704be83f2bad30c7e6de01afb113ffa01e0c458762f48b7102f31ba2367b5553"
+  },
+  "batch": "angular",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 50,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 1
+  },
+  "findings": [
+    "SWE-2 READY: all 50 rows preserve the source cells; no duplicate norm or tag defect."
+  ],
+  "rows": [
+    {
+      "instructionId": "uupm-angular-use-standalone-components",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cc14a7001738396b4a2064699d48eefca5a77f3f0ab421b6bd78364fd0e70658",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-signals-for-state",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6781ac6ed0a756ea0ce14048da0362d3f06deb5713bf2878ab41fd52bb018eab",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-if-for-switch-control-flow",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ce79e9917723f5d2a7220f422cc53bc7a242c482986513bfeaa462e0339973ce",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-input-and-output-component-apis",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bcadd6e6e2eb232147ee939d3992c10704d69c5cbe86c873c58b1dc8d6b20995",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-content-projection",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9fa6fb3ae86c69dca19081ee051ab4ae4914b9200d1c3e2c3e8fe4a1a17e891f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-keep-components-small",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e6e0d6e648ba180852182d21aba4daa759f3332859becceb198173b9259c9602",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-onpush-where-subtree-skipping-fits",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bb1e2b25ffa8f02f42063e0d5bc28f6b046a8b8dc48909c40076ee7442b673cd",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-avoid-direct-dom-manipulation",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=edebb14a558d71d7c2e0d4b35dbc2b2f64b0c277489d6c01d83eae92fb623e49",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-lazy-load-feature-routes",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b85061ef6365a3991eccfadc3e0ca8964009b7a1295efdcc6f02e0d9b6eed5b5",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-route-guards-with-functional-api",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=42fb15327c1eb7c7da124d5cd822e668a34049e9534f2011c7372c3b4c5303df",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-route-resolvers-for-data",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2e5c0d479109172ee4f2ea44e4bc45385009663337b1cf29310d7086f153936e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-type-route-params-with-inject",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=34134bff318f5be066d51be11a2a01e5d09760124d52a1faae5c8458fb50d5af",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-nested-routes-for-layouts",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=29126375d913529d819ebeba045e599501562e32bc457fc4e8954dd91da4a989",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-configure-preloading-strategies",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=40c4ba45b02ab2faef9fbf9f013932f1bc9afef201a823f6a30d933392aa451c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-signals-for-local-state",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d96aacfaa2e9d6b0c31b49eb847bbc6945e7ebada39fc483dd7c55c19f2e6eab",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-computed-for-derived-state",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cfea64a386a58ddf015af88f2fdad4e3120b88daa5eefa109aa3bd1ba4ed6010",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-effect-carefully",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dd375f6e5f84c25f4e5a7880e4ee68b18febd27d7222c5f828f9ecb5ea78adb6",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-ngrx-signal-store-for-complex-state",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e078a26c433782082f90728ac13db96687ee9c868d74681101e1baf33106a5c4",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-inject-services-for-shared-state",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0104e622c93d5abaec025224f3a6374b3011cc1011d64cbc7b48bbb434486450",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-avoid-mixing-rxjs-and-signals-unnecessarily",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2dcdc7dbea7e291125ee207f49c5dd5af67fdbd556ea4ba0c6c2cf3fa242cb8b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-typed-reactive-forms",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=43127fb6bd9e471b91f4f0b5af3fc167fb67b4d74fba198eabc9772087484d81",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-reactive-forms-over-template-driven",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b3ef91f539ae700a01fb1bcb0767ec4e74a1f2afeb3e7f34c43dcf065c6e2658",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-write-custom-validators-as-functions",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ea35e3968b29057895134da0c6134c32847ed67a872dfbfe653aef4c14a8acc1",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-updateon-for-performance",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=96cc899d3b800b995040db49b6e4ffc9a5676703edf375f095a5a0fb4d5f32dd",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-formarray-for-dynamic-fields",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=692925cf2e99cc9add3b63d6020712a95812b7531f535b34fe50f0b3f3e2aa07",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-display-validation-errors-clearly",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ea3e5d4b39bcf729d1dc5e1374e1602ea3317ad8adc68893c6b5ac2c676f092e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-prepare-components-for-zoneless-change-detection",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=12ca766fecf30fc4e4584d281ef6a5f00056bd5f0cb21d01aac08c19b7e1f0fa",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-trackby-in-for-blocks",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a6d1fe0e7ecd69bcaf9c69710d9e79f15738ccdc92166b3d8f62ef49e4c0bd70",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-defer-for-below-the-fold-content",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6f54a94fc7a4be4880cd7b28c45b0451132c0b7415107289464461646eb7f31b",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-ngoptimizedimage",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=213e8462a93b6d9f641d4e536327475e29eeb98696d469c83674738483a33b23",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-tree-shake-unused-angular-features",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6d256201bc0407169fb25f70e558a7ee95d37d2a981e251d2dce4083d0ea3cf0",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-avoid-subscribe-in-components",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3a8bf6db73e38799ae02a64d27dc61e2b4a6a0bf1f86cc1196b2a559f25182a6",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-angular-ssr-for-hybrid-rendering",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2eb9953b54572220393548d614de80f34dfb7cc63142bbc339d87303ebcccb98",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-minimize-bundle-with-standalone-apis",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b1db00ed1ce94ace73968151490cc3ff4e742f3e95c231cea7ad9975af96843d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-testbed-for-component-tests",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=198536bcd3c869f2bd3b4cf0244c362c9fe58014d64d4e48b2a20f02bf3b96bb",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-angular-cdk-component-harnesses",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1abc98879c0b1b4b43e5cf905b30c1b58871bef3f0dc676db7996b0a7f23885c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-spectator-for-less-boilerplate",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4fdc062b9ca2084c9519899e89e72b14379800b75323937e17fe9c15ff77d229",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-mock-services-with-jasmine-createspyobj",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a667e29e7520ed5693689aef28bb2125d6df57d88a66b91d14fa040f72dcd3d8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-write-integration-tests-for-routes",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=024eaace1d31c0fddc5fe07ebb5563f6533affdd6a0c5ee1b56154952b36ffd9",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-test-signal-based-components",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=afcf2a35632307c9ef364a7bf6dab1da13863e38d377d110eb2a9b96f81d22a8",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-viewencapsulation-emulated",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ad23d70ebe1e775e223112cb8c1c5674b4b651d5420b85eb2245473c5912399e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-host-selector",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=27d06331adccc628c7ba02ad9259e74c6d5cb345705315e691aff1205900c545",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-css-custom-properties-for-theming",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=159cbefbd0d94da762eff5306ce81443db54a0e0351c0f607a5ce063a119bd87",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-integrate-tailwind-with-angular",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5bda741d49d968fc2d6a8a444e37410a66d3d04b145099ee9d88f11d650687da",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-angular-material-theming-tokens",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f6671b76c36610b3d20e8f6f96cfad5926222b88046a351e3a93525d6195568f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-injection-tokens-for-config",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dd453588da386a7e568eadac48ae3e706bdf0f5a7973524a27e2a11ee9c4c344",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-http-interceptors",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c2a74e99ce34deca04dde9456e136fd350729cf7542925a0c0d405959ac7409e",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-organize-by-feature-not-type",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af424184adedfcb2ee618b68bfa287f9dcc7d076345f8dff08f2632fcacdb95c",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-use-environment-configurations",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=47e0d01bb25358e9b3869a7b0eae15d854364e01d65de249edebb69aee38b96f",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    },
+    {
+      "instructionId": "uupm-angular-prefer-inject-over-constructor-di",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/angular.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cd98e15e7d24652443a3626de139eca3b1a6744fbf020cb9912da1f35ce09a88",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples; framework/version and severity remain source context."
+    }
+  ],
+  "recordedAt": "2026-11-06T00:00:00Z"
+}

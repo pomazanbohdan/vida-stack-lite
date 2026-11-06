@@ -27,7 +27,7 @@ sources:
   title: Methodology profile groups and defaults
 generated: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
 verified: { by: human:repository-owner, at: '2026-11-02T16:00:00Z' }
-revision: '16'
+revision: '17'
 ---
 
 # Instruction change vector
@@ -116,6 +116,7 @@ product-owner default and cannot override `user_decision: true`.
 | 8 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 7 | 7 KEEP_ATOMIC Mobile UX instructions admitted after three-protocol SWE-2 review; Touch Target Size held for SR-82 applicability; 1,328 remain deferred (1 held Mobile, 12 non-Mobile UX including 1 held, 44 react-performance, 1,271 stack) | 3,384 / 3,429 / 1,258 | engineering; product/design; documentation |
 | 9 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 44 | 44 react-performance instructions admitted after two SWE-2 reviews; 1,284 remain deferred (11 SPLIT UX, 2 held UX, 1,271 stack) | 3,428 / 3,429 / 1,258 | engineering; documentation |
 | 10 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 107 | 107 KEEP_ATOMIC stack instructions admitted after five SWE-2 reviews; 9 duplicate rows rejected; 1,168 remain deferred (13 UX, 1 SPLIT stack, 1,154 undispositioned stack) | 3,535 / 3,429 / 1,258 | engineering; documentation |
+| 11 | uupm | `56ea9cf174ed86786187daa9de0e6247cb0747e4` | 0 | 0 | 211 | 211 KEEP_ATOMIC stack instructions admitted after four SWE-2 reviews (angular 50, astro 53, avalonia 56, flutter 52); astro 11 tag corrections applied; 957 remain deferred (13 UX, 9 SPLIT stack, 935 undispositioned stack) | 3,746 / 3,429 / 1,258 | engineering; documentation |
 
 Legend: result = corpus instructions / map records / baseline files.
 
