@@ -99,6 +99,10 @@ function applicabilityConfig(): { vocab: ApplicabilityVocab; aliases: Applicabil
   return applicabilityConfigCache;
 }
 
+export function resetApplicabilityConfigCache(): void {
+  applicabilityConfigCache = undefined;
+}
+
 function applicabilityFor(instruction: LoadedInstruction, context: ApplicabilityContext | undefined): ApplicabilityResult | undefined {
   if (instruction.applicabilityDeclaration === undefined && context === undefined) return undefined;
   const config = applicabilityConfig();

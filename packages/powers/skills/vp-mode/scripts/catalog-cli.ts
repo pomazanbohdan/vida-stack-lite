@@ -170,7 +170,7 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
     description: 'Return exact instruction rows with applicability; with --profile, compose required instructions and dependencies as text.',
     flags: {
       '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
-      '--id': { arity: 'list', value: 'ID', description: 'Exact instruction IDs; with --profile all must compose.' },
+      '--id': { arity: 'repeat-list', value: 'ID', description: 'Exact instruction IDs; repeatable and comma-separated. With --profile all must compose.' },
       '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Optional; switch to compose mode with this effective profile.' },
       '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },

@@ -2016,3 +2016,46 @@ test('get without --profile returns the exact row with applicability', async () 
   expect(value.applicability.state).toBe('applicable');
 });
 
+test('get exact-ID in process accepts both context flags and rejects malformed context', async () => {
+  const directory = await mkdtemp(join(here, '../.tmp/context-'));
+  const outsideDirectory = await mkdtemp(join(tmpdir(), 'vp-context-outside-'));
+  try {
+    const contextFile = join(directory, 'context.json');
+    await writeFile(contextFile, JSON.stringify({ runtimes: ['node'] }), 'utf8');
+    const outsideFile = join(outsideDirectory, 'context.json');
+    await writeFile(outsideFile, JSON.stringify({ runtimes: ['node'] }), 'utf8');
+    const catalog = join(fixtureDir, 'catalog.json');
+
+    const viaFile = await runInProcess(['get', '--catalog', catalog, '--id', 'alpha', '--context-file', contextFile]);
+    expect(viaFile.status).toBe(0);
+    expect((JSON.parse(viaFile.stdout) as { instruction_id: string }).instruction_id).toBe('alpha');
+
+    const viaInline = await runInProcess(['get', '--catalog', catalog, '--id', 'alpha', '--applicability-context', '{"runtimes":["node"]}']);
+    expect(viaInline.status).toBe(0);
+    expect((JSON.parse(viaInline.stdout) as { instruction_id: string }).instruction_id).toBe('alpha');
+
+    const twoRows = await runInProcess(['get', '--catalog', catalog, '--id', 'alpha', '--id', 'guidance']);
+    if (twoRows.status !== 0) throw new Error(twoRows.stderr);
+    expect((JSON.parse(twoRows.stdout) as unknown[]).length).toBe(2);
+
+    const both = await runInProcess(['get', '--catalog', catalog, '--id', 'alpha', '--applicability-context', '{}', '--context-file', contextFile]);
+    expect(both.status).toBe(1);
+    expect(both.stderr).toContain('use either --applicability-context or --context-file, not both');
+
+    const outside = await runInProcess(['get', '--catalog', catalog, '--id', 'alpha', '--context-file', outsideFile]);
+    expect(outside.status).toBe(1);
+    expect(outside.stderr).toContain('--context-file must stay inside the repository root');
+
+    const badJson = await runInProcess(['get', '--catalog', catalog, '--id', 'alpha', '--applicability-context', '{']);
+    expect(badJson.status).toBe(1);
+    expect(badJson.stderr).toContain('applicability context is not valid JSON');
+
+    const badShape = await runInProcess(['get', '--catalog', catalog, '--id', 'alpha', '--applicability-context', '{"runtimes":[]}']);
+    expect(badShape.status).toBe(1);
+    expect(badShape.stderr).toContain('applicability context is invalid');
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+    await rm(outsideDirectory, { recursive: true, force: true });
+  }
+});
+

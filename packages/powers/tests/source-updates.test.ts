@@ -2,13 +2,16 @@ import { afterAll, expect, test } from 'bun:test';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateAgainstSchema } from '../skills/vp-mode/scripts/schema.ts';
 import {
   buildSourceBaseline,
   checkSourceUpdates,
+  packageRoot,
+  parseDonorManifest,
   parseSourceBaseline,
+  runBuildBaselineCli,
   runCheckSourceUpdatesCli,
   serializeSourceBaseline,
   SourceUpdateError,
@@ -211,4 +214,112 @@ test('CLI returns 0 current, 1 stale and 2 invalid baseline', async () => {
   const invalidBaseline = join(invalidRoot, 'source-baseline.json');
   await writeFile(invalidBaseline, '{"schema":"wrong"}', 'utf8');
   expect(runCheckSourceUpdatesCli(['--root', invalidRoot, '--baseline', invalidBaseline, '--json'], () => undefined)).toBe(2);
+});
+
+test('builds a baseline across multiple donors in sorted order', async () => {
+  const root = await makeFixture();
+  const donorRoot = join(root, '.tmp', 'donors', 'd2');
+  await mkdir(join(donorRoot, '.git'), { recursive: true });
+  await writeFile(join(donorRoot, '.git', 'HEAD'), `${headA}\n`, 'utf8');
+  await writeFile(join(donorRoot, 'c.md'), 'gamma\n', 'utf8');
+  const donorsPath = join(root, 'donors.yaml');
+  await writeFile(donorsPath, `${readFileSync(donorsPath, 'utf8')}  - id: d2\n    local_path: d2\n    head_sha: ${headA}\n    license: MIT\n`, 'utf8');
+  const mapPath = join(root, 'corpus-map.json');
+  const map = JSON.parse(readFileSync(mapPath, 'utf8')) as { donors: Record<string, unknown> };
+  map.donors.d2 = { source_revision: headA, files: { 'c.md': { status: 'converted', instruction_ids: ['i3'] } } };
+  await writeFile(mapPath, JSON.stringify(map), 'utf8');
+  expect([...buildSourceBaseline(root).donors.keys()]).toEqual(['d1', 'd2']);
+});
+
+test('rejects invalid baseline bytes and resolves the package root', () => {
+  expect(() => parseSourceBaseline({
+    schema: 'VPSourceBaseline/v1',
+    basis: 'synthetic',
+    donors: { d1: { revision: headA, files: { 'a.md': { sha256: 'a'.repeat(64), bytes: -1 } } } },
+  })).toThrow('bytes must be a non-negative integer');
+  expect(packageRoot()).toBe(join(here, '..'));
+  const manifest = parseDonorManifest({
+    schema: 'vida-powers-donors/v1',
+    local_root: 'packages/powers/.tmp/donors',
+    donors: [{ id: 'd1', local_path: 'd1', head_sha: headA, license: 'MIT' }],
+  }, join(here, '..'));
+  expect(manifest.localRoot).toBe(resolve(join(here, '..'), '..', '..', 'packages/powers/.tmp/donors'));
+  const twoDonors = parseSourceBaseline({
+    schema: 'VPSourceBaseline/v1',
+    basis: 'synthetic',
+    donors: {
+      b: { revision: headA, files: {} },
+      a: { revision: headA, files: {} },
+    },
+  });
+  expect(serializeSourceBaseline(twoDonors)).toContain('"a"');
+});
+
+test('resolves symbolic and packed clone heads', async () => {
+  const root = await makeFixture();
+  const git = join(root, '.tmp', 'donors', 'd1', '.git');
+  await writeFile(join(git, 'HEAD'), 'ref: refs/heads/main\n', 'utf8');
+  await writeFile(join(git, 'packed-refs'), `${headA} refs/heads/main\n`, 'utf8');
+  expect(buildSourceBaseline(root).donors.get('d1')?.revision).toBe(headA);
+
+  const unresolved = await makeFixture();
+  const unresolvedGit = join(unresolved, '.tmp', 'donors', 'd1', '.git');
+  await writeFile(join(unresolvedGit, 'HEAD'), 'ref: refs/heads/main\n', 'utf8');
+  expect(() => buildSourceBaseline(unresolved)).toThrow('cannot read clone HEAD');
+});
+
+test('reports unknown without a clone head and for a baseline-only donor', async () => {
+  const root = await makeFixture();
+  const baseline = buildSourceBaseline(root);
+  await rm(join(root, '.tmp', 'donors', 'd1', '.git', 'HEAD'));
+  expect(checkSourceUpdates(root, baseline).summary.unknown).toBe(2);
+
+  const baselineOnly = parseSourceBaseline({
+    schema: 'VPSourceBaseline/v1',
+    basis: 'synthetic',
+    donors: { d2: { revision: headA, files: { 'x.md': { sha256: 'a'.repeat(64), bytes: 1 } } } },
+  });
+  const report = checkSourceUpdates(root, baselineOnly);
+  expect(report.donors.find((donor) => donor.donor === 'd2')?.status).toBe('unknown');
+});
+
+test('rejects an unreadable mapped source and reports a non-ENOENT read error', async () => {
+  const missing = await makeFixture();
+  await rm(join(missing, '.tmp', 'donors', 'd1', 'a.md'));
+  expect(() => buildSourceBaseline(missing)).toThrow('is not readable');
+
+  const directory = await makeFixture();
+  const baseline = buildSourceBaseline(directory);
+  await rm(join(directory, '.tmp', 'donors', 'd1', 'a.md'));
+  await mkdir(join(directory, '.tmp', 'donors', 'd1', 'a.md'));
+  expect(() => checkSourceUpdates(directory, baseline)).toThrow('cannot read source');
+});
+
+test('build and check CLIs emit text and JSON', async () => {
+  const root = await makeFixture();
+  const out = join(root, 'baseline.json');
+  const json: string[] = [];
+  expect(runBuildBaselineCli(['--root', root, '--out', out, '--json'], (text) => json.push(text))).toBe(0);
+  expect(JSON.parse(json[0]!).files).toBe(2);
+  const text: string[] = [];
+  expect(runBuildBaselineCli(['--root', root, '--out', out], (line) => text.push(line))).toBe(0);
+  expect(text[0]).toContain('source baseline:');
+  const errorText: string[] = [];
+  expect(runBuildBaselineCli(['--root', join(root, 'missing')], (line) => errorText.push(line))).toBe(2);
+  expect(errorText[0]).toContain('error:');
+  const errorJson: string[] = [];
+  expect(runBuildBaselineCli(['--root', join(root, 'missing'), '--json'], (line) => errorJson.push(line))).toBe(2);
+  expect(JSON.parse(errorJson[0]!).ok).toBe(false);
+
+  const baseline = await writeBaseline(root);
+  const checkText: string[] = [];
+  expect(runCheckSourceUpdatesCli(['--root', root, '--baseline', baseline], (line) => checkText.push(line))).toBe(0);
+  expect(checkText[0]).toContain('source update check:');
+  await writeFile(join(root, '.tmp', 'donors', 'd1', 'a.md'), 'changed\n', 'utf8');
+  const staleText: string[] = [];
+  expect(runCheckSourceUpdatesCli(['--root', root, '--baseline', baseline], (line) => staleText.push(line))).toBe(1);
+  expect(staleText.some((line) => line.startsWith('stale d1:a.md'))).toBe(true);
+  const checkError: string[] = [];
+  expect(runCheckSourceUpdatesCli(['--root', join(root, 'missing'), '--baseline', baseline], (line) => checkError.push(line))).toBe(2);
+  expect(checkError[0]).toContain('error:');
 });
