@@ -5350,10 +5350,10 @@ export function inspectHostWorkspaceDatabase(
               state.workspace_id === workspaceId &&
               state.work_id === row.work_id &&
               state.attempt === row.attempt &&
-              state.run_id === owner.state.execution.run_id &&
               state.schema === 'MastraSessionLedger/v1',
             'workspace inspection journal integrity differs',
           );
+          validateWorkSessionBinding(owner.state, state, repositoryRoot);
           return {
             work_id: row.work_id,
             attempt: row.attempt,

@@ -171,7 +171,11 @@ import {
   runtimeConfigDigest,
   runtimePackageCodePaths,
 } from '../../src/config/runtime-config.ts';
-import { PROJECT_UPGRADE_OPERATION_PATH, sessionBridgeDatabaseRelativePath } from '../../src/config/project-paths.ts';
+import {
+  PROJECT_UPGRADE_OPERATION_PATH,
+  sessionBridgeDatabaseRelativePath,
+  sessionHandoffDatabaseRelativePath,
+} from '../../src/config/project-paths.ts';
 import type { FlowIntent, WorkItemKind } from '../../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../../src/config/project-context.ts';
 import { createTestTrustedHostLauncherCapability, createTrustedHostComposition } from '../../src/runtime-kernel.ts';
@@ -1495,10 +1499,132 @@ test(
       expect(createHash('sha256').update(authorityBytes).digest('hex')).toBe(issued.authorization.sha256);
       expect(f.store.retrieveCorrectiveAuthorization(lookup)).toEqual(issued);
       const authorizedRows = readFixtureHostRows(f.database);
+      const inspectWorkspace = () =>
+        inspectHostWorkspaceDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.store.workspaceId);
+      const observed = inspectWorkspace();
+      expect(firstOf(observed.journals, 'authorized corrective Journal inspection').state).toEqual(corrected.state);
+      expect(readFixtureHostRows(f.database)).toEqual(authorizedRows);
+      for (const artifact of retainedArtifacts) expect(readFileSync(artifact.file)).toEqual(artifact.bytes);
       const authorizedJournal = requiredValue(
         authorizedRows.journal.find((row) => row.work_id === f.identity.work_id && row.attempt === 1),
         'authorized corrective Journal preimage',
       );
+      const inspectChangedJournal = (change: (state: Record<string, unknown>) => void) => {
+        const state = parseJsonRecord(authorizedJournal.payload);
+        change(state);
+        const payload = canonicalJson(state),
+          digest = canonicalJsonDigest(state);
+        const rewrite = f.database.query<never, SQLQueryBindings[]>(
+          'UPDATE agent_host_mastra_session_ledger SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1 AND revision=? AND digest=?',
+        );
+        expect(
+          rewrite.run(
+            payload,
+            digest,
+            f.store.workspaceId,
+            f.identity.work_id,
+            authorizedJournal.revision,
+            authorizedJournal.digest,
+          ).changes,
+        ).toBe(1);
+        const changedRows = readFixtureHostRows(f.database);
+        expect(() => inspectWorkspace()).toThrow();
+        expect(readFixtureHostRows(f.database)).toEqual(changedRows);
+        expect(
+          rewrite.run(
+            authorizedJournal.payload,
+            authorizedJournal.digest,
+            f.store.workspaceId,
+            f.identity.work_id,
+            authorizedJournal.revision,
+            digest,
+          ).changes,
+        ).toBe(1);
+        expect(readFixtureHostRows(f.database)).toEqual(authorizedRows);
+      };
+      inspectChangedJournal((state) => {
+        const execution = requiredValue(
+          isPlainRecord(state.corrective_execution) ? state.corrective_execution : undefined,
+          'corrective Journal execution',
+        );
+        execution.base_run_id = 'foreign-base-run';
+      });
+      inspectChangedJournal((state) => {
+        const execution = requiredValue(
+          isPlainRecord(state.corrective_execution) ? state.corrective_execution : undefined,
+          'corrective Journal execution',
+        );
+        execution.engine_run_id = randomUUID();
+      });
+      inspectChangedJournal((state) => {
+        state.workspace_id = 'b'.repeat(64);
+      });
+      inspectChangedJournal((state) => {
+        state.work_id = 'foreign-work';
+      });
+      inspectChangedJournal((state) => {
+        state.attempt = 2;
+      });
+      const inspectionAuthorizedWork = requiredValue(
+        authorizedRows.host.find((row) => row.kind === 'work' && row.digest === after.workVersion?.digest),
+        'authorized corrective Work preimage',
+      );
+      const missingConsumedAuthority = {
+        ...after.work,
+        lifecycle: {
+          ...after.work.lifecycle,
+          references: after.work.lifecycle.references.filter(
+            (reference) =>
+              reference.kind !== 'correction_authorization' || reference.path !== issued.authorization.path,
+          ),
+        },
+      };
+      expect(missingConsumedAuthority.lifecycle.references.length).toBeLessThan(after.work.lifecycle.references.length);
+      const missingConsumedPayload = canonicalJson(missingConsumedAuthority),
+        missingConsumedDigest = canonicalJsonDigest(missingConsumedAuthority);
+      const rewriteWork = f.database.query<never, SQLQueryBindings[]>(
+        "UPDATE agent_host_state SET payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+      );
+      expect(
+        rewriteWork.run(
+          missingConsumedPayload,
+          missingConsumedDigest,
+          f.store.workspaceId,
+          inspectionAuthorizedWork.id,
+          inspectionAuthorizedWork.revision,
+          inspectionAuthorizedWork.digest,
+        ).changes,
+      ).toBe(1);
+      const missingConsumedRows = readFixtureHostRows(f.database);
+      expect(() => inspectWorkspace()).toThrow('consumed Host correction authority missing');
+      expect(readFixtureHostRows(f.database)).toEqual(missingConsumedRows);
+      expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+      expect(
+        rewriteWork.run(
+          inspectionAuthorizedWork.payload,
+          inspectionAuthorizedWork.digest,
+          f.store.workspaceId,
+          inspectionAuthorizedWork.id,
+          inspectionAuthorizedWork.revision,
+          missingConsumedDigest,
+        ).changes,
+      ).toBe(1);
+      expect(readFixtureHostRows(f.database)).toEqual(authorizedRows);
+      nodeFs.unlinkSync(authorityPath);
+      const missingAuthorityRows = readFixtureHostRows(f.database);
+      expect(() => inspectWorkspace()).toThrow();
+      expect(readFixtureHostRows(f.database)).toEqual(missingAuthorityRows);
+      expect(existsSync(authorityPath)).toBe(false);
+      writeFileSync(authorityPath, authorityBytes, { flag: 'wx' });
+      const changedAuthority = Buffer.concat([authorityBytes, Buffer.from(' ')]);
+      writeFileSync(authorityPath, changedAuthority);
+      const changedAuthorityRows = readFixtureHostRows(f.database);
+      expect(() => inspectWorkspace()).toThrow();
+      expect(readFixtureHostRows(f.database)).toEqual(changedAuthorityRows);
+      expect(readFileSync(authorityPath)).toEqual(changedAuthority);
+      writeFileSync(authorityPath, authorityBytes);
+      expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+      expect(readFixtureHostRows(f.database)).toEqual(authorizedRows);
       const withoutExecution = parseJsonRecord(authorizedJournal.payload);
       expect(Reflect.deleteProperty(withoutExecution, 'corrective_execution')).toBe(true);
       const probePayload = canonicalJson(withoutExecution),
@@ -11921,6 +12047,11 @@ test('readonly canonical workspace inspection preserves populated governance and
     emptyCatalog,
   );
   const original = commitHostState(fixture());
+  const ordinaryJournal = quiescentJournal(
+    identity.work_id,
+    requiredValue(original.work.execution.run_id, 'ordinary inspection run id'),
+  );
+  const ordinaryRows = readFixtureHostRows(database);
   const operation = reserveRequiredOperation(store, 'inspection', '1'.repeat(64), '2'.repeat(64));
   store.transitionOperation(operation, 'commit_unknown');
   store.transitionOperation(operation, 'applied', '3'.repeat(64));
@@ -11931,8 +12062,10 @@ test('readonly canonical workspace inspection preserves populated governance and
   expect(observed.schema).toBe('HostWorkspaceInspection/v1');
   expect(firstOf(observed.work, 'inspected Host work').state).toEqual(original.work);
   expect(observed.ledger_version).toEqual(original.ledgerVersion);
+  expect(firstOf(observed.journals, 'ordinary inspected Journal').state).toEqual(ordinaryJournal.state);
   expect(observed.governance).toHaveLength(1);
   expect(firstOf(observed.governance, 'inspected governance operation').state.status).toBe('applied');
+  expect(readFixtureHostRows(database)).toEqual(ordinaryRows);
   expect(await readFile(databasePath)).toEqual(bytes);
   expect(database.query<SqliteMasterRow, []>('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(schema);
   expect(database.query<SqliteJournalModeRow, []>('PRAGMA journal_mode').get()).toEqual(journalMode);
