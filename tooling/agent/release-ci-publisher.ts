@@ -86,12 +86,14 @@ async function bodyBytes(res: Response, limit: number): Promise<Buffer> {
     while (true) {
       const item = await reader.read();
       if (item.done) break;
-      size += item.value.byteLength;
+      const chunk: unknown = item.value;
+      need(chunk instanceof Uint8Array, 'response body chunk invalid');
+      size += chunk.byteLength;
       if (size > limit) {
         await reader.cancel();
         throw new Error('response exceeds size limit');
       }
-      chunks.push(item.value);
+      chunks.push(chunk);
     }
   } catch (error) {
     await reader.cancel();
@@ -101,6 +103,69 @@ async function bodyBytes(res: Response, limit: number): Promise<Buffer> {
     chunks.map((chunk) => Buffer.from(chunk)),
     size,
   );
+}
+
+type ReleaseAssetByteRange = { start: number; end: number; total: number };
+
+function parseReleaseAssetByteRange(header: string | null): ReleaseAssetByteRange {
+  need(header !== null, 'release asset range missing');
+  const match = /^bytes (0|[1-9]\d*)-(0|[1-9]\d*)\/(0|[1-9]\d*)$/.exec(header);
+  need(match?.[1] !== undefined && match[2] !== undefined && match[3] !== undefined, 'release asset range invalid');
+  const start = Number(match[1]);
+  const end = Number(match[2]);
+  const total = Number(match[3]);
+  need(
+    Number.isSafeInteger(start) &&
+      Number.isSafeInteger(end) &&
+      Number.isSafeInteger(total) &&
+      total > 0 &&
+      total <= 256 * 1024 * 1024 &&
+      start <= end &&
+      end < total,
+    'release asset range bounds invalid',
+  );
+  return { start, end, total };
+}
+
+async function readBoundedStorageAsset(fetcher: Fetch, location: string): Promise<Buffer> {
+  const owner = new AbortController();
+  const signal = AbortSignal.any([AbortSignal.timeout(300000), owner.signal]);
+  const chunkSize = 8 * 1024 * 1024;
+  const chunks: Buffer[] = [];
+  let total: number | undefined;
+  try {
+    for (let start = 0; ;) {
+      const requestedEnd = start + chunkSize - 1;
+      const res = await fetcher(location, {
+        headers: { Accept: 'application/octet-stream', Range: `bytes=${start}-${requestedEnd}` },
+        redirect: 'error',
+        signal,
+      });
+      if (res.status === 200 && start === 0) return await bodyBytes(res, 256 * 1024 * 1024);
+      need(res.status === 206, 'release asset range status rejected');
+      const encoding = res.headers.get('content-encoding');
+      need(encoding === null || encoding.toLowerCase() === 'identity', 'release asset range encoding rejected');
+      const range = parseReleaseAssetByteRange(res.headers.get('content-range'));
+      const expectedEnd = Math.min(requestedEnd, range.total - 1);
+      need(range.start === start && range.end === expectedEnd, 'release asset range offset rejected');
+      need(total === undefined || total === range.total, 'release asset range total changed');
+      total = range.total;
+      const expectedBytes = range.end - range.start + 1;
+      const contentLength = res.headers.get('content-length');
+      if (contentLength !== null)
+        need(
+          /^(0|[1-9]\d*)$/.test(contentLength) && Number(contentLength) === expectedBytes,
+          'release asset range length invalid',
+        );
+      const bytes = await bodyBytes(res, expectedBytes);
+      need(bytes.length === expectedBytes, 'release asset range body length rejected');
+      chunks.push(bytes);
+      if (range.end + 1 === range.total) return Buffer.concat(chunks, range.total);
+      start = range.end + 1;
+    }
+  } finally {
+    owner.abort();
+  }
 }
 async function jsonResponse(res: Response): Promise<unknown> {
   const links = res.headers.get('link');
@@ -276,7 +341,11 @@ export async function main(env: NodeJS.ProcessEnv = process.env): Promise<unknow
   }
 }
 
-function createNativeGitHubReleaseClient(token: string, fetcher: Fetch = fetch): PublicationAPI {
+function createNativeGitHubReleaseClient(
+  token: string,
+  fetcher: Fetch = fetch,
+  boundedStorageRanges = false,
+): PublicationAPI {
   need(controlled(token), 'publisher token missing');
   return {
     async json(method, suffix, data, allow404 = false) {
@@ -330,6 +399,7 @@ function createNativeGitHubReleaseClient(token: string, fetcher: Fetch = fetch):
       ]);
       const storage = new URL(location);
       need(storage.hostname === 'release-assets.githubusercontent.com', 'release asset host rejected');
+      if (boundedStorageRanges) return readBoundedStorageAsset(fetcher, location);
       return bodyBytes(
         await response(fetcher, location, {
           headers: { Accept: 'application/octet-stream' },
@@ -341,7 +411,7 @@ function createNativeGitHubReleaseClient(token: string, fetcher: Fetch = fetch):
 }
 
 export function createPublishedReleaseReadClient(token: string, fetcher: Fetch = fetch): PublicationReadAPI {
-  const api = createNativeGitHubReleaseClient(token, fetcher);
+  const api = createNativeGitHubReleaseClient(token, fetcher, true);
   return {
     async json(method, suffix, body, allow404) {
       need(method === 'GET' && body === undefined, 'read-only transport rejected');

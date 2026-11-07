@@ -1,8 +1,11 @@
 import { describe, test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { randomInt } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { runBoundedSubprocess } from './helpers/bounded-subprocess.ts';
 import { releaseDigest, releaseJSON } from '../../../packages/agent/bin/local-release-artifacts.ts';
 import {
   publishGitHubRelease,
@@ -298,6 +301,588 @@ describe('published version baseline', () => {
     await assert.rejects(() => unsafe.json('POST', '/releases', {}));
     await assert.rejects(() => unsafe.json('PATCH', '/releases/1', {}));
     assert.equal(typeof unsafe.upload, 'undefined');
+    assert.equal(calls, 0);
+  });
+
+  test('bounded read client reconstructs sequential ranges with one storage deadline', async () => {
+    const storageUrl = 'https://release-assets.githubusercontent.com/download?signature=secret';
+    const data = Buffer.alloc(8 * 1024 * 1024 + 3, 0x5a);
+    const calls: Array<{ url: string; init: RequestInit | undefined }> = [];
+    const api = createPublishedReleaseReadClient('secret-token', async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      calls.push({ url, init });
+      if (url === 'https://api.github.com/repos/pomazanbohdan/vida-stack-lite/releases/assets/42')
+        return new Response(null, { status: 302, headers: { location: storageUrl } });
+      const range = new Headers(init?.headers).get('range');
+      if (range === 'bytes=0-8388607')
+        return new Response(data.subarray(0, 8 * 1024 * 1024), {
+          status: 206,
+          headers: { 'content-range': `bytes 0-8388607/${data.length}` },
+        });
+      if (range === 'bytes=8388608-16777215')
+        return new Response(data.subarray(8 * 1024 * 1024), {
+          status: 206,
+          headers: { 'content-range': `bytes 8388608-${data.length - 1}/${data.length}` },
+        });
+      throw new Error(`unexpected range ${range}`);
+    });
+
+    assert.deepEqual(await api.download(42), data);
+    assert.equal(calls.length, 3);
+    assert.equal(calls[1]?.url, storageUrl);
+    assert.equal(calls[2]?.url, storageUrl);
+    assert.equal(new Headers(calls[0]?.init?.headers).get('authorization'), 'Bearer secret-token');
+    for (const call of calls.slice(1)) {
+      assert.equal(new Headers(call.init?.headers).get('authorization'), null);
+      assert.equal(call.init?.redirect, 'error');
+      assert.equal(call.init?.signal, calls[1]?.init?.signal);
+    }
+  });
+
+  test('bounded read client preserves direct API200 and initial storage200 bodies', async () => {
+    const direct = Buffer.from('direct-api-body');
+    let directCalls = 0;
+    const directClient = createPublishedReleaseReadClient('secret-token', async () => {
+      directCalls++;
+      return new Response(direct, { status: 200 });
+    });
+    assert.deepEqual(await directClient.download(43), direct);
+    assert.equal(directCalls, 1);
+
+    const storageUrl = 'https://release-assets.githubusercontent.com/full?signature=secret';
+    const stored = Buffer.from('storage-full-body');
+    const calls: Array<{ url: string; init: RequestInit | undefined }> = [];
+    const storageClient = createPublishedReleaseReadClient('secret-token', async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      calls.push({ url, init });
+      return url.startsWith('https://api.github.com/')
+        ? new Response(null, { status: 302, headers: { location: storageUrl } })
+        : new Response(stored, { status: 200 });
+    });
+    assert.deepEqual(await storageClient.download(44), stored);
+    assert.equal(calls.length, 2);
+    assert.equal(new Headers(calls[1]?.init?.headers).get('range'), 'bytes=0-8388607');
+  });
+
+  test('bounded read client returns one exact short206 range as a complete asset', async () => {
+    const storageUrl = 'https://release-assets.githubusercontent.com/one?signature=secret';
+    const data = Buffer.from('complete');
+    let storageCalls = 0;
+    const client = createPublishedReleaseReadClient('secret-token', async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith('https://api.github.com/')) {
+        assert.equal(init?.redirect, 'manual');
+        return new Response(null, { status: 302, headers: { location: storageUrl } });
+      }
+      storageCalls++;
+      assert.equal(new Headers(init?.headers).get('range'), 'bytes=0-8388607');
+      return new Response(data, {
+        status: 206,
+        headers: { 'content-range': `bytes 0-${data.length - 1}/${data.length}` },
+      });
+    });
+    assert.deepEqual(await client.download(49), data);
+    assert.equal(storageCalls, 1);
+  });
+
+  test.each([8 * 1024 * 1024, 8 * 1024 * 1024 + 1])(
+    'bounded read client reconstructs the exact %i-byte boundary',
+    async (total) => {
+      const chunkSize = 8 * 1024 * 1024;
+      const data = Buffer.alloc(total, 0x35);
+      data[total - 1] = 0x7a;
+      const ranges: string[] = [];
+      const client = createPublishedReleaseReadClient('token', async (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.startsWith('https://api.github.com/'))
+          return new Response(null, {
+            status: 302,
+            headers: { location: 'https://release-assets.githubusercontent.com/boundary' },
+          });
+        const start = ranges.length * chunkSize;
+        const end = Math.min(start + chunkSize, total);
+        const requested = new Headers(init?.headers).get('range');
+        assert.equal(requested, `bytes=${start}-${start + chunkSize - 1}`);
+        assert.ok(requested);
+        ranges.push(requested);
+        return new Response(data.subarray(start, end), {
+          status: 206,
+          headers: { 'content-range': `bytes ${start}-${end - 1}/${total}`, 'content-length': String(end - start) },
+        });
+      });
+      assert.deepEqual(await client.download(60), data);
+      assert.equal(ranges.length, Math.ceil(total / chunkSize));
+    },
+  );
+
+  test.each(['direct', 'storage'])('bounded read client preserves empty200 through %s', async (mode) => {
+    const storage = mode === 'storage';
+    let calls = 0;
+    const client = createPublishedReleaseReadClient('token', async (_input, init) => {
+      calls++;
+      if (storage && calls === 1)
+        return new Response(null, {
+          status: 302,
+          headers: { location: 'https://release-assets.githubusercontent.com/empty' },
+        });
+      if (storage) assert.equal(new Headers(init?.headers).get('authorization'), null);
+      return new Response(Buffer.alloc(0), { status: 200 });
+    });
+    assert.deepEqual(await client.download(61), Buffer.alloc(0));
+    assert.equal(calls, storage ? 2 : 1);
+  });
+
+  test.each([
+    ['missing range', null],
+    ['wrong start', 'bytes 1-3/4'],
+    ['unsafe total', 'bytes 0-3/9007199254740992'],
+    ['zero total', 'bytes 0-0/0'],
+    ['unknown total', 'bytes 0-3/*'],
+    ['nonnumeric total', 'bytes 0-3/NaN'],
+    ['noncanonical offset', 'bytes 00-3/4'],
+    ['foreign range unit', 'items 0-3/4'],
+    ['reversed bounds', 'bytes 3-0/4'],
+  ])('bounded read client rejects %s without retry', async (_label, contentRange) => {
+    const storageUrl = 'https://release-assets.githubusercontent.com/range?signature=secret';
+    let storageCalls = 0;
+    const client = createPublishedReleaseReadClient('secret-token', async (input) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith('https://api.github.com/'))
+        return new Response(null, { status: 302, headers: { location: storageUrl } });
+      storageCalls++;
+      return new Response(Buffer.from('abcd'), {
+        status: 206,
+        headers: contentRange === null ? {} : { 'content-range': contentRange },
+      });
+    });
+    await assert.rejects(() => client.download(45));
+    assert.equal(storageCalls, 1);
+  });
+
+  test.each([
+    ['overlong body', 'abcde', '4'],
+    ['short Content-Length', 'abcd', '3'],
+    ['long Content-Length', 'abcd', '5'],
+    ['noncanonical Content-Length', 'abcd', '04'],
+  ])('bounded read client refuses %s without retry', async (_label, body, contentLength) => {
+    let storageCalls = 0;
+    const client = createPublishedReleaseReadClient('token', async (input) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith('https://api.github.com/'))
+        return new Response(null, {
+          status: 302,
+          headers: { location: 'https://release-assets.githubusercontent.com/length' },
+        });
+      storageCalls++;
+      return new Response(body, {
+        status: 206,
+        headers: { 'content-range': 'bytes 0-3/4', 'content-length': contentLength },
+      });
+    });
+    await assert.rejects(() => client.download(62), /response exceeds size limit|release asset range length invalid/);
+    assert.equal(storageCalls, 1);
+  });
+
+  test.each([
+    ['first', 302],
+    ['later', 302],
+    ['first', 307],
+    ['later', 307],
+    ['first', 404],
+    ['later', 503],
+    ['first', 204],
+    ['later', 416],
+  ] as const)(
+    'bounded read client rejects storage status %s/%i without following or retrying',
+    async (phase, status) => {
+      const later = phase === 'later';
+      let storageCalls = 0;
+      const client = createPublishedReleaseReadClient('token', async (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.startsWith('https://api.github.com/'))
+          return new Response(null, {
+            status: 302,
+            headers: { location: 'https://release-assets.githubusercontent.com/status' },
+          });
+        storageCalls++;
+        assert.equal(url, 'https://release-assets.githubusercontent.com/status');
+        assert.equal(init?.redirect, 'error');
+        assert.equal(new Headers(init?.headers).get('authorization'), null);
+        if (later && storageCalls === 1)
+          return new Response(Buffer.alloc(8 * 1024 * 1024), {
+            status: 206,
+            headers: { 'content-range': 'bytes 0-8388607/8388609' },
+          });
+        return new Response(null, { status, headers: { location: 'https://foreign.invalid/denied' } });
+      });
+      await assert.rejects(() => client.download(63), /release asset range status rejected/);
+      assert.equal(storageCalls, later ? 2 : 1);
+    },
+  );
+
+  test.each([
+    null,
+    'not-a-url',
+    'http://release-assets.githubusercontent.com/file',
+    'https://foreign.invalid/file',
+    'https://release-assets.githubusercontent.com.foreign.invalid/file',
+    'https://user:password@release-assets.githubusercontent.com/file',
+    'https://release-assets.githubusercontent.com:444/file',
+    'https://release-assets.githubusercontent.com/file#fragment',
+  ])('bounded read client refuses untrusted storage location %s before storage fetch', async (location) => {
+    let calls = 0;
+    const client = createPublishedReleaseReadClient('token', async (input) => {
+      calls++;
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      assert.equal(url, 'https://api.github.com/repos/pomazanbohdan/vida-stack-lite/releases/assets/64');
+      return new Response(null, { status: 302, headers: location === null ? {} : { location } });
+    });
+    await assert.rejects(() => client.download(64), /artifact redirect/);
+    assert.equal(calls, 1);
+  });
+
+  test.each(['identity', 'Identity'])('bounded read client accepts explicit %s content encoding', async (encoding) => {
+    let storageCalls = 0;
+    const client = createPublishedReleaseReadClient('token', async (input) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith('https://api.github.com/'))
+        return new Response(null, {
+          status: 302,
+          headers: { location: 'https://release-assets.githubusercontent.com/identity' },
+        });
+      storageCalls++;
+      return new Response('abcd', {
+        status: 206,
+        headers: { 'content-range': 'bytes 0-3/4', 'content-length': '4', 'content-encoding': encoding },
+      });
+    });
+    assert.deepEqual(await client.download(65), Buffer.from('abcd'));
+    assert.equal(storageCalls, 1);
+  });
+
+  test.skipIf(process.platform !== 'win32' || process.arch !== 'x64')(
+    'publisher public entry supplies the original full-download transport',
+    async () => {
+      const fixture = mkdtempSync(path.join(os.tmpdir(), 'vida-publisher-full-mode-'));
+      const repoRoot = path.resolve(import.meta.dir, '../../..');
+      const runId = String(randomInt(1_000_000_000_000, 9_000_000_000_000));
+      const diagnostic = path.join(repoRoot, '.tmp/ci-publication', `diagnostic-${runId}-1.ndjson`);
+      const script = path.join(fixture, 'publisher-full-mode.mjs');
+      const moduleURL = (relative: string) => pathToFileURL(path.join(repoRoot, relative)).href;
+      let completed = false;
+      try {
+        assert.equal(existsSync(diagnostic), false);
+        // The isolated consumer double exercises the real publisher-supplied client, without publication effects.
+        writeFileSync(
+          script,
+          `
+import { mock } from 'bun:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+const root = ${JSON.stringify(repoRoot)};
+const { releaseSourceBinding, releaseJSON, releaseDigest } = await import(${JSON.stringify(moduleURL('packages/agent/bin/local-release-artifacts.ts'))});
+const version = JSON.parse(readFileSync(path.join(root, 'packages/agent/package.json'), 'utf8')).version;
+const binding = releaseSourceBinding(root).source_binding;
+const source = 'a'.repeat(40);
+const request = target => {
+  const body = { schema: 'VidaCIDeliveryRequest/v1', operation_id: 'publisher-transport-unit', version,
+    repository_id: 'vida-agent', project_ids: ['agent'], target, source_binding: binding };
+  return JSON.stringify({ ...body, request_id: releaseDigest(releaseJSON(body)) });
+};
+const ownerURL = ${JSON.stringify(moduleURL('tooling/agent/release-github-publication.ts'))};
+const actual = await import(ownerURL);
+const stop = new Error('unit consumer stopped before publication');
+let consumed = 0;
+let storageCalls = 0;
+mock.module(ownerURL, () => ({ ...actual, publishGitHubRelease: async ({ api }) => {
+  consumed++;
+  assert.deepEqual(await api.download(99), Buffer.from('legacy-full-body'));
+  throw stop;
+} }));
+globalThis.fetch = async (input, init) => {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+  if (url.endsWith('/git/commits/' + source))
+    return Response.json({ sha: source, committer: { date: '2026-10-30T12:00:00Z' } });
+  if (url === 'https://api.github.com/repos/pomazanbohdan/vida-stack-lite/releases/assets/99')
+    return new Response(null, { status: 302, headers: { location: 'https://release-assets.githubusercontent.com/publisher-unit' } });
+  assert.equal(url, 'https://release-assets.githubusercontent.com/publisher-unit');
+  assert.equal(new Headers(init?.headers).get('range'), null);
+  assert.equal(new Headers(init?.headers).get('authorization'), null);
+  assert.equal(init?.redirect, 'error');
+  storageCalls++;
+  return new Response('legacy-full-body', { status: 200 });
+};
+const { main } = await import(${JSON.stringify(moduleURL('tooling/agent/release-ci-publisher.ts'))});
+await assert.rejects(() => main({ CI: 'true', GITHUB_ACTIONS: 'true', VIDA_NATIVE_CI_ENABLED: 'true',
+  GITHUB_JOB: 'publish', GITHUB_REPOSITORY: 'pomazanbohdan/vida-stack-lite', GITHUB_REPOSITORY_ID: '1340911900',
+  GITHUB_WORKFLOW_REF: 'pomazanbohdan/vida-stack-lite/.github/workflows/agent-native-delivery.yml@refs/heads/main',
+  GITHUB_REF: 'refs/heads/main', CI_SOURCE_COMMIT: source, GITHUB_SHA: source,
+  CI_WINDOWS_RESULT: 'success', CI_LINUX_RESULT: 'success', CI_REQUEST: request('bun-windows-x64'),
+  CI_REQUEST_LINUX: request('bun-linux-x64'), GITHUB_RUN_ID: ${JSON.stringify(runId)}, GITHUB_RUN_ATTEMPT: '1',
+  CI_WINDOWS_PRODUCER_ATTEMPT: '1', CI_LINUX_PRODUCER_ATTEMPT: '1', CI_WINDOWS_ARTIFACT_ID: '1001',
+  CI_LINUX_ARTIFACT_ID: '1002', GITHUB_TOKEN: 'fixture-token', GITHUB_OUTPUT: ${JSON.stringify(path.join(fixture, 'github-output'))}
+}), error => error === stop);
+assert.equal(consumed, 1);
+assert.equal(storageCalls, 1);
+console.log(JSON.stringify({ publisher_full_mode: true, storage_calls: storageCalls }));
+`,
+          { flag: 'wx' },
+        );
+        const child = await runBoundedSubprocess(process.execPath, ['--no-env-file', '--no-install', script], {
+          cwd: repoRoot,
+          env: {
+            PATH: process.env.PATH,
+            SystemRoot: process.env.SystemRoot,
+            TEMP: process.env.TEMP,
+            TMP: process.env.TMP,
+          },
+          timeoutMs: 4000,
+          stdoutLimitBytes: 65536,
+          stderrLimitBytes: 65536,
+          terminateOnOutputLimit: true,
+        });
+        assert.equal(child.exitCode, 0, child.stderr.toString());
+        assert.equal(child.closeObserved, true);
+        assert.equal(child.timedOut, false);
+        assert.equal(child.signal, null);
+        assert.equal(child.childError, null);
+        assert.equal(child.stdoutTruncated, false);
+        assert.equal(child.stderrTruncated, false);
+        const proof: unknown = JSON.parse(child.stdout.toString());
+        assert.ok(isRecord(proof));
+        assert.equal(proof.publisher_full_mode, true);
+        assert.equal(proof.storage_calls, 1);
+        completed = true;
+      } finally {
+        if (completed) {
+          assert.equal(path.dirname(path.resolve(fixture)), path.resolve(os.tmpdir()));
+          assert.ok(path.basename(fixture).startsWith('vida-publisher-full-mode-'));
+          rmSync(fixture, { recursive: true, force: true });
+          if (existsSync(diagnostic)) unlinkSync(diagnostic);
+        } else console.error(`retained publisher transport fixture: ${fixture}; diagnostic: ${diagnostic}`);
+      }
+    },
+  );
+
+  test('bounded read client rejects a later200 after a partial206 without retry', async () => {
+    const storageUrl = 'https://release-assets.githubusercontent.com/range?signature=secret';
+    let storageCalls = 0;
+    const client = createPublishedReleaseReadClient('secret-token', async (input) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith('https://api.github.com/'))
+        return new Response(null, { status: 302, headers: { location: storageUrl } });
+      storageCalls++;
+      return storageCalls === 1
+        ? new Response(Buffer.alloc(8 * 1024 * 1024), {
+            status: 206,
+            headers: { 'content-range': 'bytes 0-8388607/8388609' },
+          })
+        : new Response(Buffer.from('fallback'), { status: 200 });
+    });
+    await assert.rejects(() => client.download(46));
+    assert.equal(storageCalls, 2);
+  });
+
+  test('bounded read client uses one300000ms storage deadline and refuses a later abort', async () => {
+    const storageUrl = 'https://release-assets.githubusercontent.com/range?signature=secret';
+    const controller = new AbortController();
+    const original = Object.getOwnPropertyDescriptor(AbortSignal, 'timeout');
+    const durations: number[] = [];
+    Object.defineProperty(AbortSignal, 'timeout', {
+      configurable: true,
+      value: (milliseconds: number) => {
+        durations.push(milliseconds);
+        return durations.length === 1 ? new AbortController().signal : controller.signal;
+      },
+      writable: true,
+    });
+    let storageCalls = 0;
+    const signals: AbortSignal[] = [];
+    try {
+      const client = createPublishedReleaseReadClient('secret-token', async (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.startsWith('https://api.github.com/'))
+          return new Response(null, { status: 302, headers: { location: storageUrl } });
+        storageCalls++;
+        assert.ok(init?.signal instanceof AbortSignal);
+        signals.push(init.signal);
+        if (storageCalls === 1)
+          return new Response(Buffer.alloc(8 * 1024 * 1024), {
+            status: 206,
+            headers: { 'content-range': 'bytes 0-8388607/8388609' },
+          });
+        controller.abort();
+        throw new DOMException('aborted', 'AbortError');
+      });
+      await assert.rejects(() => client.download(47));
+      assert.equal(storageCalls, 2);
+      assert.equal(durations.length, 2);
+      assert.deepEqual(durations, [300000, 300000]);
+      assert.equal(signals[0]?.aborted, true);
+      assert.equal(signals[1], signals[0]);
+    } finally {
+      if (original) Object.defineProperty(AbortSignal, 'timeout', original);
+      else Reflect.deleteProperty(AbortSignal, 'timeout');
+    }
+  });
+
+  test('bounded read client rejects oversized, encoded, and truncated range responses', async () => {
+    const storageUrl = 'https://release-assets.githubusercontent.com/range?signature=secret';
+    const cases = [
+      { contentRange: 'bytes 0-8388607/268435457', encoding: null, body: Buffer.alloc(0) },
+      { contentRange: 'bytes 0-8388607/8388608', encoding: 'gzip', body: Buffer.alloc(0) },
+      { contentRange: 'bytes 0-8388607/8388608', encoding: null, body: Buffer.alloc(8 * 1024 * 1024 - 1) },
+    ];
+    for (const [index, entry] of cases.entries()) {
+      let storageCalls = 0;
+      const client = createPublishedReleaseReadClient('secret-token', async (input) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.startsWith('https://api.github.com/'))
+          return new Response(null, { status: 302, headers: { location: storageUrl } });
+        storageCalls++;
+        return new Response(entry.body, {
+          status: 206,
+          headers: {
+            'content-range': entry.contentRange,
+            ...(entry.encoding === null ? {} : { 'content-encoding': entry.encoding }),
+          },
+        });
+      });
+      await assert.rejects(() => client.download(48 + index));
+      assert.equal(storageCalls, 1);
+    }
+  });
+
+  test('bounded read client aborts its owned storage request after rejected range proof', async () => {
+    const signals: AbortSignal[] = [];
+    const client = createPublishedReleaseReadClient('token', async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith('https://api.github.com/'))
+        return new Response(null, {
+          status: 302,
+          headers: { location: 'https://release-assets.githubusercontent.com/rejected' },
+        });
+      assert.ok(init?.signal instanceof AbortSignal);
+      signals.push(init.signal);
+      return new Response(Buffer.from('untrusted'), { status: 206 });
+    });
+    await assert.rejects(() => client.download(50), /release asset range missing/);
+    assert.equal(signals.length, 1);
+    assert.equal(signals[0]?.aborted, true);
+  });
+
+  test('bounded read client awaits complete storage200 bytes before aborting owned transport', async () => {
+    const signals: AbortSignal[] = [];
+    let pulls = 0;
+    const client = createPublishedReleaseReadClient('token', async (input, init) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+      if (url.startsWith('https://api.github.com/'))
+        return new Response(null, {
+          status: 302,
+          headers: { location: 'https://release-assets.githubusercontent.com/full-body' },
+        });
+      assert.ok(init?.signal instanceof AbortSignal);
+      signals.push(init.signal);
+      return new Response(
+        new ReadableStream<Uint8Array>({
+          pull(controller) {
+            assert.equal(signals[0]?.aborted, false);
+            pulls++;
+            controller.enqueue(Buffer.from(pulls === 1 ? 'first' : 'last'));
+            if (pulls === 2) controller.close();
+          },
+        }),
+      );
+    });
+    assert.deepEqual(await client.download(51), Buffer.from('firstlast'));
+    assert.equal(pulls, 2);
+    assert.equal(signals.length, 1);
+    assert.equal(signals[0]?.aborted, true);
+  });
+
+  test('bounded read client propagates an abort during storage body consumption', async () => {
+    const timer = new AbortController();
+    const original = Object.getOwnPropertyDescriptor(AbortSignal, 'timeout');
+    const reason = new DOMException('body deadline', 'TimeoutError');
+    let timeouts = 0;
+    let storageCalls = 0;
+    let pulls = 0;
+    Object.defineProperty(AbortSignal, 'timeout', {
+      configurable: true,
+      value: () => (++timeouts === 1 ? new AbortController().signal : timer.signal),
+    });
+    try {
+      const client = createPublishedReleaseReadClient('token', async (input, init) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.startsWith('https://api.github.com/'))
+          return new Response(null, {
+            status: 302,
+            headers: { location: 'https://release-assets.githubusercontent.com/body-abort' },
+          });
+        storageCalls++;
+        assert.ok(init?.signal instanceof AbortSignal);
+        const signal = init.signal;
+        return new Response(
+          new ReadableStream<Uint8Array>({
+            start(controller) {
+              signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
+            },
+            pull(controller) {
+              pulls++;
+              if (pulls === 1) controller.enqueue(Buffer.from('a'));
+              else timer.abort(reason);
+            },
+          }),
+          { status: 206, headers: { 'content-range': 'bytes 0-2/3' } },
+        );
+      });
+      await assert.rejects(
+        () => client.download(52),
+        (error) => error === reason,
+      );
+      assert.equal(timeouts, 2);
+      assert.equal(storageCalls, 1);
+      assert.equal(pulls, 2);
+    } finally {
+      if (original) Object.defineProperty(AbortSignal, 'timeout', original);
+      else Reflect.deleteProperty(AbortSignal, 'timeout');
+    }
+  });
+
+  test('bounded read client refuses changed totals, overlaps, and short later ranges without retry', async () => {
+    const first = Buffer.alloc(8 * 1024 * 1024);
+    for (const contentRange of [
+      'bytes 8388608-8388609/8388610',
+      'bytes 8388607-8388610/8388611',
+      'bytes 8388608-8388609/8388611',
+    ]) {
+      let storageCalls = 0;
+      const client = createPublishedReleaseReadClient('token', async (input) => {
+        const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+        if (url.startsWith('https://api.github.com/'))
+          return new Response(null, {
+            status: 302,
+            headers: { location: 'https://release-assets.githubusercontent.com/later-proof' },
+          });
+        storageCalls++;
+        return storageCalls === 1
+          ? new Response(first, { status: 206, headers: { 'content-range': 'bytes 0-8388607/8388611' } })
+          : new Response(Buffer.from('abc'), { status: 206, headers: { 'content-range': contentRange } });
+      });
+      await assert.rejects(() => client.download(53), /release asset range (total changed|offset rejected)/);
+      assert.equal(storageCalls, 2);
+    }
+  });
+
+  test('bounded read client rejects invalid asset ids before fetch', async () => {
+    let calls = 0;
+    const client = createPublishedReleaseReadClient('secret-token', async () => {
+      calls++;
+      return new Response(null, { status: 200 });
+    });
+    await assert.rejects(() => client.download(Number.MAX_SAFE_INTEGER + 1));
+    await assert.rejects(() => client.download(0));
     assert.equal(calls, 0);
   });
 });

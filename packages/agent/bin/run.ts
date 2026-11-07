@@ -2365,6 +2365,7 @@ type StoppedSourceCaptureObservation = NonNullable<HostStoppedSourceCaptureInput
 type StoppedSourceCaptureTerminalEvidence = HostStoppedSourceCaptureInput['terminalEvidence'];
 type StoppedSourceCaptureSnapshot = HostStoppedSourceCaptureInput['candidateSnapshot'];
 type StoppedSourceCaptureEntry = StoppedSourceCaptureSnapshot['entries'][number];
+type StoppedSourceDriftCandidate = Extract<StoppedSourceCaptureSnapshot, { schema: 'StoppedSourceDriftCandidate/v1' }>;
 type StoppedSourceCandidateReview = {
   actor_id: string;
   history_ref: string;
@@ -2386,6 +2387,8 @@ type StoppedSourceTerminalRecord = {
   final_message_id?: unknown;
   current_tmp_only_turn_id?: unknown;
   owner_thread_id?: unknown;
+  source_io_ended_at?: unknown;
+  terminal_inventory?: unknown;
 };
 interface RunOptionValues {
   projects: string[];
@@ -3627,13 +3630,77 @@ function isStoppedSourceCaptureEntry(value: unknown): value is StoppedSourceCapt
   return isRecord(value) && isString(value.path) && isString(value.sha256) && typeof value.size === 'number';
 }
 
+/** @param {unknown} value @returns {value is StoppedSourceCaptureEntry} */
+function isStoppedSourceCapturePresenceEntry(value: unknown): value is StoppedSourceCaptureEntry {
+  if (!isRecord(value) || !isString(value.path)) return false;
+  const keys = Object.keys(value).sort();
+  if (keys.join('\0') !== ['path', 'presence', 'sha256', 'size'].sort().join('\0')) return false;
+  if (value.presence === 'absent') return value.sha256 === null && value.size === null;
+  return (
+    value.presence === 'present' &&
+    typeof value.sha256 === 'string' &&
+    /^[0-9a-f]{64}$/.test(value.sha256) &&
+    Number.isSafeInteger(value.size) &&
+    (value.size as number) >= 0
+  );
+}
+
 /** @param {unknown} value @returns {value is StoppedSourceCaptureSnapshot} */
 function isStoppedSourceCaptureSnapshot(value: unknown): value is StoppedSourceCaptureSnapshot {
+  if (!isRecord(value) || !Array.isArray(value.entries)) return false;
+  if (value.schema === 'UnverifiedSourceSnapshot/v1') return value.entries.every(isStoppedSourceCaptureEntry);
+  if (value.schema === 'StoppedSourceCandidatePresence/v1')
+    return (
+      Object.keys(value).sort().join('\0') === ['entries', 'schema'].join('\0') &&
+      value.entries.every(isStoppedSourceCapturePresenceEntry)
+    );
+  return (
+    value.schema === 'StoppedSourceDriftCandidate/v1' &&
+    Object.keys(value).sort().join('\0') ===
+      ['entries', 'external_changes', 'schema', 'source_io_ended_at', 'terminal_inventory'].sort().join('\0') &&
+    value.entries.every(isStoppedSourceCapturePresenceEntry) &&
+    isStoppedSourceDriftCandidateInventory(value.terminal_inventory) &&
+    typeof value.source_io_ended_at === 'string' &&
+    Number.isFinite(Date.parse(value.source_io_ended_at)) &&
+    Array.isArray(value.external_changes) &&
+    value.external_changes.every(isStoppedSourceDriftExternalChange)
+  );
+}
+
+/** @param {unknown} value */
+function isStoppedSourceDriftCandidateInventory(value: unknown): boolean {
   return (
     isRecord(value) &&
-    value.schema === 'UnverifiedSourceSnapshot/v1' &&
+    value.schema === 'StoppedSourceTerminalActorInventory/v1' &&
+    Object.keys(value).sort().join('\0') === ['actors', 'entries', 'schema'].join('\0') &&
     Array.isArray(value.entries) &&
-    value.entries.every(isStoppedSourceCaptureEntry)
+    value.entries.every(isStoppedSourceCapturePresenceEntry) &&
+    Array.isArray(value.actors) &&
+    value.actors.length > 0 &&
+    value.actors.every(
+      (actor) =>
+        isRecord(actor) &&
+        Object.keys(actor).sort().join('\0') === ['actor_id', 'changed_paths', 'in_scope_paths'].join('\0') &&
+        isString(actor.actor_id) &&
+        isStringArray(actor.changed_paths) &&
+        isStringArray(actor.in_scope_paths),
+    ) &&
+    new Set(value.actors.map((actor) => (actor as { actor_id: string }).actor_id)).size === value.actors.length
+  );
+}
+
+/** @param {unknown} value */
+function isStoppedSourceDriftExternalChange(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    Object.keys(value).sort().join('\0') ===
+      ['actor_id', 'before', 'current', 'event_ref', 'observed_at', 'path', 'terminal'].join('\0') &&
+    isString(value.path) &&
+    isString(value.actor_id) &&
+    isString(value.event_ref) &&
+    isString(value.observed_at) &&
+    Number.isFinite(Date.parse(value.observed_at)) &&
+    [value.before, value.terminal, value.current].every(isStoppedSourceCapturePresenceEntry)
   );
 }
 
@@ -3768,6 +3835,8 @@ async function captureStoppedSource(args: string[]) {
   const { readFileSync, writeFileSync, realpathSync } = await import('node:fs');
   const { createHash } = await import('node:crypto');
   const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts');
+  const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
+  const { snapshotDeclaredSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
   const { loadRuntimeConfig } = await import('../src/config/runtime-config.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
@@ -3835,14 +3904,98 @@ async function captureStoppedSource(args: string[]) {
       terminal.observation_ref !== input.terminalEvidence.observation_ref
     )
       throw Error('actual terminal fixture evidence differs');
-    for (const entry of input.candidateSnapshot.entries) {
-      const absolute = path.resolve(root, entry.path),
-        relative = path.relative(root, absolute);
-      if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(absolute) !== absolute)
-        throw Error('candidate source path differs');
-      const data = readFileSync(absolute);
-      if (data.length !== entry.size || createHash('sha256').update(data).digest('hex') !== entry.sha256)
+    if (input.candidateSnapshot.schema === 'StoppedSourceDriftCandidate/v1') {
+      const candidate = input.candidateSnapshot as StoppedSourceDriftCandidate;
+      if (
+        terminal.source_io_ended_at !== candidate.source_io_ended_at ||
+        canonicalJsonDigest(terminal.terminal_inventory) !== canonicalJsonDigest(candidate.terminal_inventory)
+      )
+        throw Error('terminal actor inventory or Source I/O end binding differs');
+      const current = snapshotDeclaredSources(
+        requireSafeRepositoryAccess(root),
+        candidate.entries.map((entry) => entry.path),
+      );
+      const actual = current.entries
+        .map((entry) =>
+          entry.exists
+            ? { path: entry.path, presence: 'present', sha256: entry.sha256, size: entry.bytes }
+            : { path: entry.path, presence: 'absent', sha256: null, size: null },
+        )
+        .sort((left, right) => left.path.localeCompare(right.path));
+      const expected = [...candidate.entries].sort((left, right) => left.path.localeCompare(right.path));
+      if (canonicalJsonDigest(actual) !== canonicalJsonDigest(expected))
+        throw Error('candidate source presence or bytes changed after frozen request');
+      for (const change of candidate.external_changes) {
+        const eventPath = path.resolve(root, change.event_ref),
+          relative = path.relative(root, eventPath);
+        if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(eventPath) !== eventPath)
+          throw Error('external readonly change evidence path differs');
+        const eventStat = lstatSync(eventPath);
+        if (eventStat.isSymbolicLink() || !eventStat.isFile() || eventStat.size > 65536)
+          throw Error('external readonly change evidence is not a bounded regular file');
+        const eventBytes = readFileSync(eventPath);
+        if (eventBytes.length > 65536) throw Error('external readonly change evidence exceeds bound');
+        /** @type {unknown} */
+        const decodedEvent: unknown = JSON.parse(eventBytes.toString('utf8'));
+        if (
+          !isRecord(decodedEvent) ||
+          Object.keys(decodedEvent).sort().join('\0') !==
+            [
+              'action_id',
+              'actor_id',
+              'before',
+              'current',
+              'host_attempt_id',
+              'issue_id',
+              'observed_at',
+              'owner_thread_id',
+              'path',
+              'schema',
+              'source_io_ended_at',
+              'terminal',
+            ].join('\0') ||
+          decodedEvent.schema !== 'RootObservedReadonlySourceChange/v1' ||
+          decodedEvent.action_id !== input.observation.action_id ||
+          decodedEvent.issue_id !== input.observation.issue_id ||
+          decodedEvent.host_attempt_id !== input.observation.host_attempt_id ||
+          decodedEvent.owner_thread_id !== input.nativeSessionHandle ||
+          decodedEvent.source_io_ended_at !== candidate.source_io_ended_at ||
+          decodedEvent.path !== change.path ||
+          decodedEvent.actor_id !== change.actor_id ||
+          decodedEvent.observed_at !== change.observed_at ||
+          canonicalJsonDigest(decodedEvent.before) !== canonicalJsonDigest(change.terminal) ||
+          canonicalJsonDigest(decodedEvent.terminal) !== canonicalJsonDigest(change.terminal) ||
+          canonicalJsonDigest(decodedEvent.current) !== canonicalJsonDigest(change.current) ||
+          Date.parse(change.observed_at) <= Date.parse(candidate.source_io_ended_at)
+        )
+          throw Error('external readonly change event binding differs');
+        approvedFiles.push([eventPath, eventBytes]);
+      }
+    } else if (input.candidateSnapshot.schema === 'StoppedSourceCandidatePresence/v1') {
+      const current = snapshotDeclaredSources(
+        requireSafeRepositoryAccess(root),
+        input.candidateSnapshot.entries.map((entry) => entry.path),
+      );
+      const actual = current.entries.map((entry) =>
+        entry.exists
+          ? { path: entry.path, presence: 'present', sha256: entry.sha256, size: entry.bytes }
+          : { path: entry.path, presence: 'absent', sha256: null, size: null },
+      );
+      const expected = [...input.candidateSnapshot.entries].sort((left, right) =>
+        left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
+      );
+      if (canonicalJsonDigest(actual) !== canonicalJsonDigest(expected))
         throw Error('candidate source changed after frozen request');
+    } else {
+      for (const entry of input.candidateSnapshot.entries) {
+        const absolute = path.resolve(root, entry.path),
+          relative = path.relative(root, absolute);
+        if (relative.startsWith('..') || path.isAbsolute(relative) || realpathSync(absolute) !== absolute)
+          throw Error('candidate source path differs');
+        const data = readFileSync(absolute);
+        if (data.length !== entry.size || createHash('sha256').update(data).digest('hex') !== entry.sha256)
+          throw Error('candidate source changed after frozen request');
+      }
     }
   }
   verifyCurrent();
@@ -5494,7 +5647,7 @@ async function releaseCompletedReadonly(args: string[]) {
         item.host_reservation ||
         item.research_activation ||
         item.research_normalization ||
-        !configuredReadonlyAssignment(config, issued) ||
+        !configuredReadonlyAssignment(config, issued, 'completed-readonly') ||
         issued.run_id !== state.run_id ||
         issued.config_digest !== input.config_digest ||
         issued.scope_digest !== input.scope_digest ||

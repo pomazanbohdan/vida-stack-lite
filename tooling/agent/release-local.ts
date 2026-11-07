@@ -2842,7 +2842,7 @@ function publishedPreparationSnapshot(root: string, operation: string) {
   const identity = readRuntimeConfigIdentityForObservation(root);
   if (
     identity.repository_id !== 'vida-agent' ||
-    identity.bundle !== 'packages/agent' ||
+    (identity.bundle !== 'vida-agent' && identity.bundle !== 'packages/agent') ||
     !identity.project_ids.includes('agent')
   )
     throw new Error('Approved repository project identity differs.');

@@ -68,7 +68,7 @@ function requireCompletedReadonly(input: SuspensionInput): void {
           !item.host_reservation &&
           !item.research_activation &&
           !item.research_normalization &&
-          (!input.config || configuredReadonlyAssignment(input.config, item.request)),
+          (!input.config || configuredReadonlyAssignment(input.config, item.request, 'completed-readonly')),
       ),
     'completed readonly owner still has unobserved, failed or reserved activity',
   );

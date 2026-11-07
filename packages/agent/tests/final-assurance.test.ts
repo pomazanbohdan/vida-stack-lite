@@ -310,6 +310,101 @@ test('settled validator inspection permits test.read without granting unknown or
   expect(configuredReadonlyAssignment(config, { ...request, assignment_index: -1 }, 'settled-validation')).toBe(false);
 });
 
+test('completed readonly inspection admits only the exact security prewriter', () => {
+  const config = structuredClone(configuredTestContext().config);
+  const workflow = config.workflows.task_execution;
+  const stage = workflow?.stages.find((entry) => entry.id === 'review_source_prewrite');
+  if (!workflow || !stage) throw new Error('Configured prewriter fixture is missing');
+  const index = stage.assignments.findIndex((entry) => entry.role === 'security-prewriter');
+  const profileName = stage.assignments[index]?.profile;
+  const profile = profileName && config.agents.profiles[profileName];
+  if (!profileName || !profile) throw new Error('Configured security prewriter fixture is missing');
+  const request = {
+    ...settledRequest('e'.repeat(64)),
+    stage_id: stage.id,
+    assignment_index: index,
+    role: 'security-prewriter',
+  };
+  const before = structuredClone(config);
+  expect(configuredReadonlyAssignment(config, request, 'completed-readonly')).toBe(true);
+  expect(configuredReadonlyAssignment(config, request)).toBe(false);
+  expect(eligibleReadonlyRelinquishment(config, { request, issue_id: 'unknown', observation: null })).toBe(false);
+  expect(configuredReadonlyAssignment(config, request, 'settled-validation')).toBe(true);
+
+  const prewriterStage = (candidate: AgentRuntimeConfig) => {
+    const current = candidate.workflows.task_execution?.stages.find((entry) => entry.id === request.stage_id);
+    if (!current) throw new Error('Prewriter denial fixture is missing');
+    return current;
+  };
+  const refuses = (change: (candidate: AgentRuntimeConfig) => void, fields: Partial<SessionBridgeRequest> = {}) => {
+    const candidate = structuredClone(config);
+    change(candidate);
+    expect(configuredReadonlyAssignment(candidate, { ...request, ...fields }, 'completed-readonly')).toBe(false);
+  };
+  const otherStage = 'validate_prewrite_neighbor';
+  expect(workflow.stages.some((entry) => entry.id === otherStage)).toBe(false);
+  refuses((candidate) => Object.defineProperty(prewriterStage(candidate), 'id', { value: otherStage }), {
+    stage_id: otherStage,
+  });
+  refuses((candidate) => Object.defineProperty(prewriterStage(candidate), 'kind', { value: 'test' }));
+  refuses(
+    (candidate) =>
+      Object.defineProperty(prewriterStage(candidate).assignments[index]!, 'role', {
+        value: 'security-data-validator',
+      }),
+    { role: 'security-data-validator' },
+  );
+  refuses((candidate) =>
+    Object.defineProperty(candidate.workflows.task_execution!, 'stages', {
+      value: [...candidate.workflows.task_execution!.stages, structuredClone(prewriterStage(candidate))],
+    }),
+  );
+  refuses((candidate) =>
+    Object.defineProperty(candidate.agents.profiles[profileName]!, 'mutation_scope', { value: 'repository_source' }),
+  );
+  refuses((candidate) =>
+    Object.defineProperty(candidate.agents.tool_policies[profile.tools_policy]!, 'source_write', { value: true }),
+  );
+  for (const tool of ['test.execute', 'runtime.write', 'source.write', 'delivery.write', 'unknown']) {
+    refuses((candidate) =>
+      Object.defineProperty(candidate.agents.tool_policies[profile.tools_policy]!, 'allowed_tools', {
+        value: [...candidate.agents.tool_policies[profile.tools_policy]!.allowed_tools, tool],
+      }),
+    );
+  }
+  for (const host of ['', '*.example.org', '-edge.example', 'edge.example.1a']) {
+    refuses((candidate) =>
+      Object.defineProperty(candidate.agents.egress_policies[profile.egress_policy]!, 'allowed_hosts', {
+        value: [host],
+      }),
+    );
+  }
+  for (const assignmentIndex of [-1, stage.assignments.length]) {
+    expect(
+      configuredReadonlyAssignment(config, { ...request, assignment_index: assignmentIndex }, 'completed-readonly'),
+    ).toBe(false);
+  }
+  let sharedValidator: SessionBridgeRequest | undefined;
+  for (const [workflowId, candidate] of Object.entries(config.workflows)) {
+    const parallel = candidate.stages.find((entry) => entry.id === 'validate_parallel');
+    const validatorIndex = parallel?.assignments.findIndex((entry) => entry.role === 'security-data-validator');
+    if (parallel && validatorIndex !== undefined && validatorIndex >= 0) {
+      expect(parallel.assignments[validatorIndex]?.profile).toBe(profileName);
+      sharedValidator = {
+        ...request,
+        workflow_id: workflowId,
+        stage_id: parallel.id,
+        assignment_index: validatorIndex,
+        role: 'security-data-validator',
+      };
+      break;
+    }
+  }
+  if (!sharedValidator) throw new Error('Shared security validator fixture is missing');
+  expect(configuredReadonlyAssignment(config, sharedValidator, 'completed-readonly')).toBe(false);
+  expect(config).toEqual(before);
+});
+
 const packet: FinalAssurancePacket = {
   schema: 'FinalAssurancePacket/v1',
   packet_id: 'packet-one',

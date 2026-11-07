@@ -217,7 +217,7 @@ export function settledSessionItems(journal: MastraSessionLedgerState) {
 export function configuredReadonlyAssignment(
   config: AgentRuntimeConfig,
   request: MastraSessionLedgerState['items'][number]['request'],
-  purpose: 'readonly' | 'settled-validation' = 'readonly',
+  purpose: 'readonly' | 'settled-validation' | 'completed-readonly' = 'readonly',
 ): boolean {
   const stages = config.workflows[request.workflow_id]?.stages.filter((stage) => stage.id === request.stage_id);
   const stage = stages?.length === 1 ? stages[0] : undefined;
@@ -236,7 +236,12 @@ export function configuredReadonlyAssignment(
     tools.allowed_tools.every(
       (tool) =>
         ['runtime.read', 'source.read', 'docs.read', 'web.search'].includes(tool) ||
-        (purpose === 'settled-validation' && stage?.kind === 'validate' && tool === 'test.read'),
+        (tool === 'test.read' &&
+          stage?.kind === 'validate' &&
+          (purpose === 'settled-validation' ||
+            (purpose === 'completed-readonly' &&
+              stage.id === 'review_source_prewrite' &&
+              request.role === 'security-prewriter'))),
     ) &&
     egress &&
     egress.allowed_hosts.every((host) => /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/i.test(host)),

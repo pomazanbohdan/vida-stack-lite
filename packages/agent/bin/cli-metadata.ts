@@ -63,6 +63,7 @@ const typescriptCommands = new Set([
   'reconcile-artifacts',
   'init',
   'configure',
+  'clean-init',
   'install',
   'development-controller',
 ]);
@@ -131,7 +132,9 @@ function availableModesFor(canonical: string, nested: string | undefined) {
         ? Object.keys(developmentModes)
         : canonical === 'run'
           ? ['task-source', ...runSpecialSelectors]
-          : [];
+          : canonical === 'clean-init'
+            ? ['plan', 'inspect']
+            : [];
   if (nested && !modes.includes(nested)) throw Error(`unsupported ${canonical} help mode`);
   return modes;
 }

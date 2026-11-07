@@ -89,6 +89,18 @@ Installation records the selected installed bytes, version and effective PATH. N
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
+The repository Source contains strict `clean-init plan|inspect|apply|resume|retire`
+routes for the legacy YAML, gate-only contour. Publication refuses existing
+`.vida` product data before pending state. Source has closed local fault/recovery
+and public apply/release/retire cases:1 executed/28 assertions/0 failures and
+1/15/0 respectively. Raw JUnit corrects the retained Luna25 count. Root R8,
+prepared-suite, CLI/help/inventory and static checks closed; the
+[Task3 record](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
+binds exact receipts. Native Code closeout, delivery and installation remain
+open. Package0.1.9; installed system runtime0.1.11 has separate R13 delivery
+and does not establish these C3 commands. Do not use an installed clean-init
+route until Task3 delivery closes. Historical UNKNOWN and closed failures remain.
+
 ## Configure a consumer before Host use
 
 Version 0.1.8 introduces `configure plan`, `inspect`, `apply` and `resume`.

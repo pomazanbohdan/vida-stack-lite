@@ -19,7 +19,7 @@ import {
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
-import { openHostStateDatabase, inspectHostWorkspaceDatabase } from '../src/host-state.ts';
+import { HostStateStore, openHostStateDatabase, inspectHostWorkspaceDatabase } from '../src/host-state.ts';
 import type { HostStateSnapshot, RetiredSourceCaptureRequest } from '../src/host-state.ts';
 import { sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
@@ -48,6 +48,7 @@ import { snapshotRuntimePackageSources } from '../src/orchestration/scoped-sourc
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { coordinationLedgerJson, coordinationLedgerDigest } from '../src/contracts/envelopes.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.ts';
+import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.ts';
 
 type ExecutionBudget = ReturnType<ContainedControllerFixture['caseBudget']>;
 type SessionLedger = ReturnType<typeof openConfiguredMastraSessionLedger>;
@@ -285,6 +286,21 @@ function assertMalformedSiblingRefusals(
   expect(currentJournal(f.ledger, f.identity.work_id, 1)).toEqual(journal);
 }
 
+function stoppedCaptureRows(f: Pick<Awaited<ReturnType<typeof fixture>>, 'ledger' | 'workspace' | 'identity'>) {
+  const db = f.ledger.sessionProducerBinding().database,
+    table = db
+      .query<{ name: string }, []>(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_stopped_source_capture'",
+      )
+      .get();
+  if (!table) return null;
+  return db
+    .query<{ action_id: string; payload: string; digest: string }, [string, string, number]>(
+      'SELECT action_id,payload,digest FROM agent_host_stopped_source_capture WHERE workspace_id=? AND work_id=? AND attempt=? ORDER BY action_id',
+    )
+    .all(f.workspace, f.identity.work_id, 1);
+}
+
 async function publicRun(args: string[], runner: typeof run = run): Promise<JsonRecord> {
   const result: unknown = await runner(args);
   if (!isRecord(result)) throw new Error('Public run returned a non-object result.');
@@ -436,9 +452,11 @@ const writeJson = (root: string, file: string, value: unknown): void => {
 type FixtureSetupClose = () => void | Promise<void>;
 type FixtureOptions = {
   writer?: boolean;
+  readonlyPaths?: string[];
   earlierDisjointPeers?: boolean;
   readonlyHostPreparation?: boolean;
   unissuedNoEffectPreparation?: boolean;
+  sourcePaths?: readonly string[];
 };
 
 async function fixture(options: FixtureOptions = {}, prepare: typeof buildFixture = buildFixture) {
@@ -462,14 +480,17 @@ async function fixture(options: FixtureOptions = {}, prepare: typeof buildFixtur
 async function buildFixture(
   {
     writer = true,
+    readonlyPaths = [],
     earlierDisjointPeers = false,
     readonlyHostPreparation = false,
     unissuedNoEffectPreparation = false,
+    sourcePaths = ['AGENT.sidecar.md'],
   }: FixtureOptions,
   setupCloses: FixtureSetupClose[],
 ) {
   markPhase?.('fixture:start');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stopped-source-'));
+  mkdirSync(path.join(root, '.agent', 'work'), { recursive: true });
   if (deferFixtureCleanup) activeConsumerRoots.push(root);
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),
@@ -498,9 +519,25 @@ async function buildFixture(
     relations: ['documents'],
     updated_at: new Date().toISOString(),
   });
+  mkdirSync(path.join(root, '.agent'), { recursive: true });
   const config = loadRuntimeConfig(root),
     workspace = deriveWorkspaceId(config.repository.repository_id, root),
-    ledger = openConfiguredMastraSessionLedger(root),
+    bootstrapDatabase = openHostStateDatabase(root, sessionHandoffDatabaseRelativePath(config), workspace);
+  try {
+    const bootstrapStore = new HostStateStore(
+      bootstrapDatabase,
+      workspace,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      root,
+    );
+    await bindControlledRuntimeInitialization(root, config, bootstrapStore);
+  } finally {
+    closeWorkspaceDatabaseWithAdmission(bootstrapDatabase);
+  }
+  const ledger = openConfiguredMastraSessionLedger(root),
     store = ledger.hostState;
   setupCloses.push(() => ledger.close());
   const selection: WorkItemSelection = {
@@ -511,9 +548,15 @@ async function buildFixture(
     risk_flags: [],
     labels: [],
   };
-  function admission(id: string = 'stopped', file: string = 'AGENT.sidecar.md', thread: string = 'synthetic-owner') {
+  function admission(
+    id: string = 'stopped',
+    files: string | readonly string[] = 'AGENT.sidecar.md',
+    thread: string = 'synthetic-owner',
+  ) {
     markPhase?.('admission:' + id + ':setup');
-    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [file]),
+    const paths = typeof files === 'string' ? [files] : [...files],
+      admittedPaths = [...new Set([...paths, ...(id === 'stopped' ? readonlyPaths : [])])],
+      source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), admittedPaths),
       scopePath = `.agent/work/${id}/scope.json`,
       acceptancePath = `.agent/work/${id}/acceptance.json`,
       ac = 'AC-' + id;
@@ -523,8 +566,8 @@ async function buildFixture(
       work_id: id,
       source_revision: source.digest,
       ac_ids: [ac],
-      allowed_paths: [file],
-      implementation_paths: [file],
+      allowed_paths: admittedPaths,
+      implementation_paths: paths,
       documentation_paths: [],
       changed_symbols: [],
       non_goals: ['Runtime acceptance'],
@@ -542,7 +585,7 @@ async function buildFixture(
       id: 'acceptance-' + id,
       version: 1,
       ac_ids: [ac],
-      source: file,
+      source: paths[0]!,
       scope: scope.scope_id,
       source_revision: source.digest,
       contracts: [
@@ -565,7 +608,7 @@ async function buildFixture(
       config_digest: runtimeConfigDigest(config),
       workflow_id: 'task_execution',
       stage_ids: ['develop_task'],
-      implementation_paths: [file],
+      implementation_paths: paths,
       native_session_handle: thread,
     });
     const input = {
@@ -653,7 +696,7 @@ async function buildFixture(
   const earlierClaims =
     earlierLedger?.claims.filter((claim) => earlierTickets.some((ticket) => ticket.ticket_id === claim.ticket_id)) ??
     [];
-  const original = admission(),
+  const original = admission('stopped', sourcePaths),
     { input, identity, source } = original;
   const bridge = await MastraSessionBridge.open({
     ledger,
@@ -801,7 +844,6 @@ async function buildFixture(
     work: required(original.admitted.host.work, 'Admitted public fixture work'),
   };
   markPhase?.('fixture:bind-runtime');
-  await bindControlledRuntimeInitialization(root, config, store);
   markPhase?.('fixture:task-synthesis');
   let journal = writer
     ? await runPreparationFixtureInProcess(publicFixture, { ledger, bridge, source })
@@ -1017,13 +1059,39 @@ async function buildFixture(
     });
     return { completedJournal, host, observation, reservation, updatedScope };
   }
-  function captureInput({ containedReviews = true }: { containedReviews?: boolean } = {}) {
+  function captureInput({
+    containedReviews = true,
+    changeCandidate = true,
+    presenceCandidate = false,
+    reviewBinding,
+    drift = false,
+  }: {
+    containedReviews?: boolean;
+    changeCandidate?: boolean;
+    presenceCandidate?: boolean;
+    reviewBinding?: string;
+    drift?: boolean;
+  } = {}) {
     markPhase?.('capture-input:start');
     const host = completeHost(store.readHostStateSnapshot(identity)),
       current = currentJournal(ledger, 'stopped', 1),
       pending = at(current.state.items, 0, 'Pending stopped-source action');
-    writeFileSync(path.join(root, 'AGENT.sidecar.md'), 'Synthetic partial candidate bytes');
-    const candidate = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
+    const changedFile = sourcePaths[0]!;
+    if (changeCandidate) writeFileSync(path.join(root, changedFile), 'Synthetic partial candidate bytes');
+    const candidatePaths = current.state.source_scope?.entries.map((entry) => entry.path) ?? [...sourcePaths],
+      terminalCandidate = snapshotDeclaredSources(requireSafeRepositoryAccess(root), candidatePaths),
+      candidate = terminalCandidate,
+      changedPaths = candidate.entries
+        .filter((entry) => {
+          const originalEntry = source.entries.find((sourceEntry) => sourceEntry.path === entry.path);
+          return (
+            !originalEntry ||
+            originalEntry.exists !== entry.exists ||
+            originalEntry.sha256 !== entry.sha256 ||
+            originalEntry.bytes !== entry.bytes
+          );
+        })
+        .map((entry) => entry.path);
     const terminalRef = '.agent/work/stopped/synthetic-terminal.json',
       ownerRef = '.agent/work/stopped/synthetic-owner-manifest.json',
       summary = 'Synthetic partial stopped Source outcome';
@@ -1037,9 +1105,30 @@ async function buildFixture(
       status: 'reported_failed',
       summary,
       output_digest: canonicalJsonDigest(summary),
-      changed_paths: ['AGENT.sidecar.md'],
+      changed_paths: changedPaths,
       evidence_refs: [terminalRef],
     };
+    const sourceIoEndedAt = new Date().toISOString(),
+      terminalInventory = {
+        schema: 'StoppedSourceTerminalActorInventory/v1' as const,
+        entries: terminalCandidate.entries.map((entry) =>
+          entry.exists
+            ? {
+                path: entry.path,
+                presence: 'present' as const,
+                sha256: required(entry.sha256, 'Terminal digest'),
+                size: required(entry.bytes, 'Terminal size'),
+              }
+            : { path: entry.path, presence: 'absent' as const, sha256: null, size: null },
+        ),
+        actors: [
+          {
+            actor_id: observation.agent_id,
+            in_scope_paths: [...required(host.work, 'Stopped-source Host work').binding.implementation_paths].sort(),
+            changed_paths: changedPaths,
+          },
+        ],
+      };
     writeJson(root, terminalRef, {
       schema: 'RootObservedStoppedSource/v1',
       status: 'partial_stopped',
@@ -1053,7 +1142,69 @@ async function buildFixture(
       final_message_id: 'synthetic-final-message',
       current_tmp_only_turn_id: 'synthetic-maintenance-turn',
       owner_thread_id: input.nativeSessionHandle,
+      source_io_ended_at: sourceIoEndedAt,
+      terminal_inventory: terminalInventory,
     });
+    const oldPresence = (entry: (typeof terminalCandidate.entries)[number]) =>
+      entry.exists
+        ? {
+            path: entry.path,
+            presence: 'present' as const,
+            sha256: required(entry.sha256, 'Source before digest'),
+            size: required(entry.bytes, 'Source before size'),
+          }
+        : { path: entry.path, presence: 'absent' as const, sha256: null, size: null };
+    let operationCandidate: StoppedCaptureOperation['candidateSnapshot'] | undefined;
+    if (drift) {
+      if (readonlyPaths.length === 0) throw new Error('Drift fixture requires original readonly paths.');
+      const externalChanges: Extract<
+        StoppedCaptureOperation['candidateSnapshot'],
+        { schema: 'StoppedSourceDriftCandidate/v1' }
+      >['external_changes'][number][] = [];
+      for (const [index, readonlyPath] of readonlyPaths.entries()) {
+        const terminal = terminalCandidate.entries.find((entry) => entry.path === readonlyPath);
+        if (!terminal) throw new Error('Drift fixture readonly path is outside the terminal inventory.');
+        writeFileSync(path.join(root, readonlyPath), 'Synthetic later external readonly change');
+        const currentCandidate = snapshotDeclaredSources(requireSafeRepositoryAccess(root), candidatePaths),
+          currentEntry = currentCandidate.entries.find((entry) => entry.path === readonlyPath);
+        if (!currentEntry) throw new Error('Drift fixture current readonly path is absent from the inventory.');
+        const eventRef = '.agent/work/stopped/readonly-change-' + index + '.json',
+          beforePresence = oldPresence(terminal),
+          currentPresence = oldPresence(currentEntry),
+          observedAt = new Date(Date.parse(sourceIoEndedAt) + 1).toISOString();
+        const externalChange = {
+          path: readonlyPath,
+          actor_id: 'synthetic-external-readonly-actor',
+          event_ref: eventRef,
+          observed_at: observedAt,
+          before: beforePresence,
+          terminal: beforePresence,
+          current: currentPresence,
+        };
+        writeJson(root, eventRef, {
+          schema: 'RootObservedReadonlySourceChange/v1',
+          action_id: observation.action_id,
+          issue_id: observation.issue_id,
+          host_attempt_id: observation.host_attempt_id,
+          owner_thread_id: input.nativeSessionHandle,
+          source_io_ended_at: sourceIoEndedAt,
+          path: readonlyPath,
+          actor_id: externalChange.actor_id,
+          observed_at: observedAt,
+          before: beforePresence,
+          terminal: beforePresence,
+          current: currentPresence,
+        });
+        externalChanges.push(externalChange);
+      }
+      operationCandidate = {
+        schema: 'StoppedSourceDriftCandidate/v1',
+        entries: snapshotDeclaredSources(requireSafeRepositoryAccess(root), candidatePaths).entries.map(oldPresence),
+        source_io_ended_at: sourceIoEndedAt,
+        terminal_inventory: terminalInventory,
+        external_changes: externalChanges,
+      };
+    }
     const operation: StoppedCaptureOperation = {
       identity,
       attempt: 1,
@@ -1069,23 +1220,40 @@ async function buildFixture(
         owner_decision_ref: ownerRef,
         terminal: 'partial_stopped',
       },
-      candidateSnapshot: {
-        schema: 'UnverifiedSourceSnapshot/v1',
-        entries: candidate.entries.map((entry) => ({
-          path: entry.path,
-          sha256: required(entry.sha256, 'Candidate source digest'),
-          size: required(entry.bytes, 'Candidate source size'),
-        })),
-      },
+      candidateSnapshot:
+        operationCandidate ??
+        (presenceCandidate
+          ? {
+              schema: 'StoppedSourceCandidatePresence/v1',
+              entries: candidate.entries.map((entry) =>
+                entry.exists
+                  ? {
+                      path: entry.path,
+                      presence: 'present' as const,
+                      sha256: required(entry.sha256, 'Candidate source digest'),
+                      size: required(entry.bytes, 'Candidate source size'),
+                    }
+                  : { path: entry.path, presence: 'absent' as const, sha256: null, size: null },
+              ),
+            }
+          : {
+              schema: 'UnverifiedSourceSnapshot/v1',
+              entries: candidate.entries.map((entry) => ({
+                path: entry.path,
+                sha256: required(entry.sha256, 'Candidate source digest'),
+                size: required(entry.bytes, 'Candidate source size'),
+              })),
+            }),
     };
     if (containedReviews) {
-      const requestDigest = canonicalJsonDigest(operation);
+      const requestDigest = canonicalJsonDigest(operation),
+        currentReviewBinding = reviewBinding ?? candidateBindingValue();
       const reviews = [0, 1, 2].map((index) => ({
         actor_id: 'synthetic-candidate-reviewer-' + index,
         history_ref: 'synthetic-history-' + index,
         tool_call_ref: 'local:synthetic-candidate-review-' + index,
         verdict: 'pass',
-        candidate_binding: candidateBindingValue(),
+        candidate_binding: currentReviewBinding,
         receipt_ref: '.agent/work/stopped/synthetic-review-' + index + '.json',
       }));
       for (const review of reviews)
@@ -1099,7 +1267,7 @@ async function buildFixture(
         action: 'source.capture-failed-and-release',
         owner_thread_id: input.nativeSessionHandle,
         request_digest: requestDigest,
-        candidate_binding: candidateBindingValue(),
+        candidate_binding: currentReviewBinding,
         source_turn_id: 'synthetic-original-turn',
         status: 'approved_exact_manifest',
         reviews,
@@ -1108,10 +1276,31 @@ async function buildFixture(
     const requestRef = '.agent/work/stopped/capture-request.json';
     writeJson(root, requestRef, { workspace_id: workspace, ...operation });
     const verifyCurrent = () => {
-      expect(
-        snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']),
-        'Synthetic stopped-source candidate differs',
-      ).toEqual(candidate);
+      const candidate = snapshotDeclaredSources(requireSafeRepositoryAccess(root), candidatePaths);
+      const actual = candidate.entries.map((entry) => ({
+        path: entry.path,
+        exists: entry.exists,
+        sha256: entry.sha256,
+        bytes: entry.bytes,
+      }));
+      if (operation.candidateSnapshot.schema === 'UnverifiedSourceSnapshot/v1')
+        expect(actual).toEqual(
+          terminalCandidate.entries.map((entry) => ({
+            path: entry.path,
+            exists: entry.exists,
+            sha256: entry.sha256,
+            bytes: entry.bytes,
+          })),
+        );
+      else
+        expect(actual).toEqual(
+          operation.candidateSnapshot.entries.map((entry) => ({
+            path: entry.path,
+            exists: entry.presence === 'present',
+            sha256: entry.sha256,
+            bytes: entry.size,
+          })),
+        );
       expect(loadRuntimeConfig(root)).toEqual(config);
       const terminal: unknown = JSON.parse(readFileSync(path.join(root, terminalRef), 'utf8'));
       expect(isRecord(terminal) ? terminal.actor : undefined).toBe(observation.agent_id);
@@ -1387,6 +1576,7 @@ async function buildFixture(
     identity,
     input,
     source,
+    sourcePaths,
     reservation,
     readonlyObservation,
     readonlyPreparation,
@@ -2318,9 +2508,23 @@ test(
       ).toBe('released');
       expect(afterJournal.state).toEqual(expectedJournal);
       expect(afterJournal.state.source_scope).toEqual(f.source);
-      expect(f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toEqual(
-        settled,
-      );
+      const db = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+      try {
+        const row = db
+          .query<{ payload: string }, [string, string, number, string]>(
+            'SELECT payload FROM agent_host_stopped_source_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+          )
+          .get(f.workspace, c.operation.identity.work_id, c.operation.attempt, c.operation.observation!.action_id);
+        expect(row).not.toBeNull();
+        const receipt: unknown = JSON.parse(row!.payload);
+        expect(isRecord(receipt) ? receipt.schema : undefined).toBe('StoppedSourceCaptureReceipt/v1');
+        expect(isRecord(receipt) ? receipt.candidate_snapshot : undefined).toEqual(c.operation.candidateSnapshot);
+        expect(f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toEqual(
+          settled,
+        );
+      } finally {
+        closeWorkspaceDatabaseWithAdmission(db);
+      }
       expect(currentJournal(f.ledger, 'stopped', 1).state).toEqual(afterJournal.state);
     } finally {
       await f.close();
@@ -2330,10 +2534,199 @@ test(
   { sourceOnly: true },
 );
 
+test(
+  'Stopped candidate presence v1 uses a v2 receipt and exact same-version retry',
+  async () => {
+    const f = await fixture();
+    try {
+      const c = f.captureInput({ containedReviews: false }),
+        legacyCandidate = c.operation.candidateSnapshot;
+      if (legacyCandidate.schema !== 'UnverifiedSourceSnapshot/v1')
+        throw new Error('Legacy stopped-source fixture candidate changed family.');
+      const candidateSnapshot = {
+        schema: 'StoppedSourceCandidatePresence/v1',
+        entries: legacyCandidate.entries.map((entry) => ({
+          path: entry.path,
+          presence: 'present' as const,
+          sha256: entry.sha256,
+          size: entry.size,
+        })),
+      } as const;
+      const operation = { ...c.operation, candidateSnapshot };
+      const before = f.inspect(),
+        beforeDdl = f.ddl(),
+        beforeCaptures = stoppedCaptureRows(f),
+        beforeSource = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths),
+        entry = candidateSnapshot.entries[0]!;
+      for (const malformed of [
+        { ...candidateSnapshot, entries: [] },
+        { ...candidateSnapshot, entries: [{ ...entry, sha256: null }] },
+        { ...candidateSnapshot, entries: [{ ...entry, extra: true }] },
+        { ...candidateSnapshot, entries: [entry, entry] },
+        { ...candidateSnapshot, entries: [{ ...entry, path: 'foreign-source.txt' }] },
+        { ...candidateSnapshot, entries: [{ ...entry, path: 'agent.sidecar.md' }] },
+        { ...candidateSnapshot, entries: [{ ...entry, size: -1 }] },
+        { ...candidateSnapshot, entries: [{ ...entry, size: Number.MAX_SAFE_INTEGER + 1 }] },
+        { ...candidateSnapshot, entries: [{ ...entry, size: 1.5 }] },
+        {
+          schema: 'StoppedSourceCandidatePresence/v1',
+          entries: [{ path: entry.path, presence: 'absent', sha256: null, size: 0 }],
+        },
+      ]) {
+        expect(() =>
+          f.store.captureStoppedSourceObservation({
+            ...operation,
+            candidateSnapshot: malformed as unknown as StoppedCaptureRequest['candidateSnapshot'],
+            verifyCurrent: c.verifyCurrent,
+          }),
+        ).toThrow();
+        expect(f.inspect()).toEqual(before);
+        expect(f.ddl()).toEqual(beforeDdl);
+        expect(stoppedCaptureRows(f)).toEqual(beforeCaptures);
+        expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths)).toEqual(beforeSource);
+      }
+      const settled = f.store.captureStoppedSourceObservation({ ...operation, verifyCurrent: c.verifyCurrent });
+      expect(settled.work?.execution.status).toBe('suspended');
+
+      const db = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+      try {
+        const row = db
+          .query<{ payload: string }, [string, string, number, string]>(
+            'SELECT payload FROM agent_host_stopped_source_capture WHERE workspace_id=? AND work_id=? AND attempt=? AND action_id=?',
+          )
+          .get(f.workspace, operation.identity.work_id, operation.attempt, operation.observation!.action_id);
+        expect(row).not.toBeNull();
+        const receipt: unknown = JSON.parse(row!.payload);
+        expect(isRecord(receipt) ? receipt.schema : undefined).toBe('StoppedSourceCaptureReceipt/v2');
+        expect(isRecord(receipt) ? receipt.candidate_snapshot : undefined).toEqual(candidateSnapshot);
+        expect(f.store.captureStoppedSourceObservation({ ...operation, verifyCurrent: c.verifyCurrent })).toEqual(
+          settled,
+        );
+        expect(() =>
+          f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }),
+        ).toThrow('retry differs');
+      } finally {
+        closeWorkspaceDatabaseWithAdmission(db);
+      }
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'presence candidates preserve mixed absence and require exact live changed paths',
+  async () => {
+    const unchanged = await fixture({ sourcePaths: ['AGENT.sidecar.md', 'initially-absent.txt'] });
+    try {
+      const c = unchanged.captureInput({ changeCandidate: false, presenceCandidate: true, containedReviews: false });
+      expect(c.operation.candidateSnapshot).toEqual({
+        schema: 'StoppedSourceCandidatePresence/v1',
+        entries: [
+          {
+            path: 'AGENT.sidecar.md',
+            presence: 'present',
+            sha256: required(unchanged.source.entries[0]!.sha256, 'Original source digest'),
+            size: required(unchanged.source.entries[0]!.bytes, 'Original source size'),
+          },
+          { path: 'initially-absent.txt', presence: 'absent', sha256: null, size: null },
+        ],
+      });
+      expect(c.operation.observation?.changed_paths).toEqual([]);
+      const result = unchanged.store.captureStoppedSourceObservation({
+        ...c.operation,
+        verifyCurrent: c.verifyCurrent,
+      });
+      expect(result.work?.execution.status).toBe('suspended');
+      expect(
+        unchanged.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }),
+      ).toEqual(result);
+    } finally {
+      await unchanged.close();
+    }
+
+    const appeared = await fixture({ sourcePaths: ['initially-absent.txt'] });
+    try {
+      const c = appeared.captureInput({ presenceCandidate: true, containedReviews: false }),
+        before = appeared.inspect(),
+        ddl = appeared.ddl(),
+        capturesBefore = stoppedCaptureRows(appeared);
+      await rm(path.join(appeared.root, 'initially-absent.txt'));
+      const sourceBefore = snapshotDeclaredSources(requireSafeRepositoryAccess(appeared.root), appeared.sourcePaths);
+      expect(() =>
+        appeared.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }),
+      ).toThrow('Synthetic stopped-source candidate differs');
+      expect(appeared.inspect()).toEqual(before);
+      expect(appeared.ddl()).toEqual(ddl);
+      expect(stoppedCaptureRows(appeared)).toEqual(capturesBefore);
+      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(appeared.root), appeared.sourcePaths)).toEqual(
+        sourceBefore,
+      );
+      writeFileSync(path.join(appeared.root, 'initially-absent.txt'), 'Synthetic partial candidate bytes');
+      expect(c.operation.observation?.changed_paths).toEqual(['initially-absent.txt']);
+      expect(c.operation.candidateSnapshot).toMatchObject({
+        entries: [{ path: 'initially-absent.txt', presence: 'present' }],
+      });
+      const observation = required(c.operation.observation, 'Appearance observation');
+      expect(() =>
+        appeared.store.captureStoppedSourceObservation({
+          ...c.operation,
+          observation: { ...observation, changed_paths: [] },
+          verifyCurrent: c.verifyCurrent,
+        }),
+      ).toThrow('candidate change outside original scope or observation differs');
+      expect(appeared.inspect()).toEqual(before);
+      expect(appeared.ddl()).toEqual(ddl);
+      writeFileSync(path.join(appeared.root, 'initially-absent.txt'), 'drifted candidate bytes');
+      expect(() =>
+        appeared.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }),
+      ).toThrow('Synthetic stopped-source candidate differs');
+      expect(appeared.inspect()).toEqual(before);
+      expect(appeared.ddl()).toEqual(ddl);
+      writeFileSync(path.join(appeared.root, 'initially-absent.txt'), 'Synthetic partial candidate bytes');
+      expect(
+        appeared.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }).work
+          ?.execution.status,
+      ).toBe('suspended');
+    } finally {
+      await appeared.close();
+    }
+
+    const disappeared = await fixture();
+    try {
+      const c = disappeared.captureInput({ changeCandidate: false, presenceCandidate: true, containedReviews: false });
+      await rm(path.join(disappeared.root, 'AGENT.sidecar.md'));
+      const observation = required(c.operation.observation, 'Disappearance observation'),
+        operation: StoppedCaptureOperation = {
+          ...c.operation,
+          candidateSnapshot: {
+            schema: 'StoppedSourceCandidatePresence/v1',
+            entries: [{ path: 'AGENT.sidecar.md', presence: 'absent', sha256: null, size: null }],
+          },
+          observation: { ...observation, changed_paths: ['AGENT.sidecar.md'] },
+        },
+        verifyCurrent = () => {
+          expect(
+            snapshotDeclaredSources(requireSafeRepositoryAccess(disappeared.root), ['AGENT.sidecar.md']).entries,
+          ).toEqual([{ path: 'AGENT.sidecar.md', exists: false, bytes: null, sha256: null }]);
+        };
+      expect(
+        disappeared.store.captureStoppedSourceObservation({ ...operation, verifyCurrent }).work?.execution.status,
+      ).toBe('suspended');
+    } finally {
+      await disappeared.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
 test('public stopped capture preserves failure, rolls back all fields and DDL, then retries without new rights', async () => {
   const f = await fixture();
   try {
-    const c = f.captureInput(),
+    const c = f.captureInput({ presenceCandidate: true }),
       before = f.inspect(),
       ddl = f.ddl();
     expect(() =>
@@ -2362,6 +2755,23 @@ test('public stopped capture preserves failure, rolls back all fields and DDL, t
     );
     expect(c.cli('inspect').status).toBe('inspect_current');
     expect(c.cli('plan').status).toBe('planned');
+    const ownerPath = path.join(f.root, c.operation.terminalEvidence.owner_decision_ref),
+      approvedOwnerBytes = readFileSync(ownerPath),
+      ownerValue: unknown = JSON.parse(approvedOwnerBytes.toString('utf8'));
+    if (!isRecord(ownerValue)) throw new Error('Stopped-source owner authorization fixture is invalid.');
+    writeFileSync(ownerPath, jsonText({ ...ownerValue, owner_thread_id: 'synthetic-foreign-owner' }));
+    const deniedOwnerBytes = readFileSync(ownerPath),
+      approvalBefore = f.inspect(),
+      approvalDdl = f.ddl(),
+      approvalRows = stoppedCaptureRows(f),
+      sourceBeforeApproval = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths);
+    expect(() => c.cli('apply')).toThrow('Capture exact manifest/owner authorization differs');
+    expect(f.inspect()).toEqual(approvalBefore);
+    expect(f.ddl()).toEqual(approvalDdl);
+    expect(stoppedCaptureRows(f)).toEqual(approvalRows);
+    expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths)).toEqual(sourceBeforeApproval);
+    expect(readFileSync(ownerPath)).toEqual(deniedOwnerBytes);
+    writeFileSync(ownerPath, approvedOwnerBytes);
     const result = c.cli('apply');
     expect(result).toMatchObject({
       status: 'captured_partial_source_released',
@@ -2413,12 +2823,336 @@ test('public stopped capture preserves failure, rolls back all fields and DDL, t
   }
 }, 60000);
 
+test(
+  'strict stopped capture releases its own rights after separately evidenced readonly drift',
+  async () => {
+    const f = await fixture({ readonlyPaths: ['AGENTS.md', 'later-external.md'] });
+    try {
+      const c = f.captureInput({ containedReviews: false, drift: true });
+      expect(c.operation.candidateSnapshot.schema).toBe('StoppedSourceDriftCandidate/v1');
+      const candidate = c.operation.candidateSnapshot;
+      if (candidate.schema !== 'StoppedSourceDriftCandidate/v1') throw new Error('Strict drift fixture missing.');
+      expect(candidate.external_changes).toHaveLength(2);
+      expect(candidate.external_changes[1]?.terminal.presence).toBe('absent');
+      expect(candidate.external_changes[1]?.current.presence).toBe('present');
+      const before = f.inspect(),
+        beforeDdl = f.ddl();
+      expect(() =>
+        f.store.captureStoppedSourceObservation({
+          ...c.operation,
+          verifyCurrent: c.verifyCurrent,
+          fault: () => {
+            throw new Error('Synthetic capture rollback');
+          },
+        }),
+      ).toThrow('Synthetic capture rollback');
+      expect(f.inspect()).toEqual(before);
+      expect(f.ddl()).toEqual(beforeDdl);
+      const result = f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent });
+      expect(f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toEqual(
+        result,
+      );
+      const host = completeHost(f.store.readHostStateSnapshot(f.identity)),
+        journal = currentJournal(f.ledger, 'stopped', 1);
+      expect(result.workVersion).toEqual(host.workVersion);
+      expect(host.work.lease).toBeNull();
+      expect(host.work.execution.status).toBe('suspended');
+      expect(at(host.work.execution.assignment_attempts, 0, 'Captured partial attempt').result).toEqual(
+        c.operation.observation,
+      );
+      expect(at(journal.state.items, 0, 'Captured partial item').observation).toEqual(c.operation.observation);
+      expect(journal.state.source_scope).toEqual(f.source);
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'strict stopped capture refuses a post-I/O owned overwrite with an unchanged changed-path set',
+  async () => {
+    const f = await fixture({ readonlyPaths: ['AGENTS.md'] });
+    try {
+      const c = f.captureInput({ containedReviews: false, drift: true }),
+        before = f.inspect(),
+        beforeDdl = f.ddl(),
+        candidate = c.operation.candidateSnapshot;
+      if (candidate.schema !== 'StoppedSourceDriftCandidate/v1') throw new Error('Strict drift fixture missing.');
+      const later = Buffer.from('Post-I/O overwrite of the already observed owned output');
+      writeFileSync(path.join(f.root, 'AGENT.sidecar.md'), later);
+      c.operation.candidateSnapshot = {
+        ...candidate,
+        entries: candidate.entries.map((entry) =>
+          entry.path === 'AGENT.sidecar.md'
+            ? {
+                path: entry.path,
+                presence: 'present' as const,
+                sha256: createHash('sha256').update(later).digest('hex'),
+                size: later.length,
+              }
+            : entry,
+        ),
+      };
+      expect(() => f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toThrow(
+        'stopped-source owned or external changes differ',
+      );
+      expect(f.inspect()).toEqual(before);
+      expect(f.ddl()).toEqual(beforeDdl);
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'strict stopped capture rejects incomplete terminal and foreign external proofs atomically',
+  async () => {
+    const f = await fixture({ readonlyPaths: ['AGENTS.md', 'later-external.md'] });
+    try {
+      const c = f.captureInput({ containedReviews: false, drift: true }),
+        candidate = c.operation.candidateSnapshot,
+        before = f.inspect(),
+        beforeDdl = f.ddl();
+      if (candidate.schema !== 'StoppedSourceDriftCandidate/v1') throw new Error('Strict drift fixture missing.');
+      const terminal = candidate.terminal_inventory,
+        first = required(terminal.entries[0], 'First terminal entry'),
+        event = required(candidate.external_changes[0], 'First external event'),
+        actor = required(terminal.actors[0], 'Original actor');
+      const variants: (typeof candidate)[] = [
+        { ...candidate, terminal_inventory: { ...terminal, entries: terminal.entries.slice(1) } },
+        { ...candidate, terminal_inventory: { ...terminal, entries: terminal.entries.map(() => first) } },
+        {
+          ...candidate,
+          terminal_inventory: {
+            ...terminal,
+            entries: terminal.entries.map((entry, index) =>
+              index === 0 ? { ...entry, path: 'outside-original-scope.md' } : entry,
+            ),
+          },
+        },
+        {
+          ...candidate,
+          terminal_inventory: {
+            ...terminal,
+            entries: terminal.entries.map((entry) =>
+              entry.path === 'AGENT.sidecar.md' && entry.presence === 'present'
+                ? { ...entry, sha256: '0'.repeat(64) }
+                : entry,
+            ),
+          },
+        },
+        {
+          ...candidate,
+          terminal_inventory: {
+            ...terminal,
+            entries: terminal.entries.map((entry) =>
+              entry.path === 'AGENT.sidecar.md'
+                ? { path: entry.path, presence: 'absent', sha256: null, size: null }
+                : entry,
+            ),
+          },
+        },
+        {
+          ...candidate,
+          terminal_inventory: {
+            ...terminal,
+            entries: terminal.entries.map((entry) => (entry.path === event.path ? event.current : entry)),
+          },
+        },
+        {
+          ...candidate,
+          terminal_inventory: { ...terminal, actors: [{ ...actor, actor_id: 'foreign-original-actor' }] },
+        },
+        { ...candidate, terminal_inventory: { ...terminal, actors: [{ ...actor, changed_paths: [] }] } },
+        {
+          ...candidate,
+          terminal_inventory: {
+            ...terminal,
+            actors: [{ ...actor, changed_paths: [...actor.changed_paths, ...actor.changed_paths] }],
+          },
+        },
+        { ...candidate, external_changes: candidate.external_changes.slice(1) },
+        { ...candidate, external_changes: candidate.external_changes.map(() => event) },
+        ...[
+          { ...event, actor_id: actor.actor_id },
+          { ...event, observed_at: candidate.source_io_ended_at },
+          { ...event, observed_at: new Date(Date.parse(candidate.source_io_ended_at) - 1).toISOString() },
+          { ...event, before: event.current },
+          { ...event, terminal: event.current },
+          { ...event, current: event.before },
+        ].map((changed) => ({
+          ...candidate,
+          external_changes: candidate.external_changes.map((entry, index) => (index === 0 ? changed : entry)),
+        })),
+      ];
+      for (const changed of variants) {
+        expect(() =>
+          f.store.captureStoppedSourceObservation({
+            ...c.operation,
+            candidateSnapshot: changed,
+            verifyCurrent: c.verifyCurrent,
+          }),
+        ).toThrow();
+        expect(f.inspect()).toEqual(before);
+        expect(f.ddl()).toEqual(beforeDdl);
+      }
+      for (const foreign of [
+        {
+          ...c.operation,
+          expectedWork: { ...c.operation.expectedWork, revision: c.operation.expectedWork.revision + 1 },
+        },
+        { ...c.operation, nativeSessionHandle: 'foreign-owner' },
+        {
+          ...c.operation,
+          observation: { ...required(c.operation.observation, 'Observation'), issue_id: 'foreign-issue' },
+        },
+        {
+          ...c.operation,
+          observation: { ...required(c.operation.observation, 'Observation'), status: 'reported_complete' as const },
+        },
+      ]) {
+        expect(() => f.store.captureStoppedSourceObservation({ ...foreign, verifyCurrent: c.verifyCurrent })).toThrow();
+        expect(f.inspect()).toEqual(before);
+        expect(f.ddl()).toEqual(beforeDdl);
+      }
+      expect(
+        f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }).work?.lease,
+      ).toBeNull();
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'strict stopped capture preserves byte-v1 and presence-v2 compatibility',
+  async () => {
+    for (const presence of [false, true]) {
+      const f = await fixture();
+      try {
+        const c = f.captureInput({ containedReviews: false });
+        if (presence)
+          c.operation.candidateSnapshot = {
+            schema: 'StoppedSourceCandidatePresence/v1',
+            entries: c.operation.candidateSnapshot.entries.map((entry) => ({
+              path: entry.path,
+              presence: 'present',
+              sha256: required(entry.sha256, 'Legacy digest'),
+              size: required(entry.size, 'Legacy size'),
+            })),
+          };
+        expect(
+          f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent }).work?.lease,
+        ).toBeNull();
+        expect(currentJournal(f.ledger, 'stopped', 1).state.source_scope).toEqual(f.source);
+      } finally {
+        await f.close();
+      }
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'strict stopped capture public Source entrypoint verifies terminal evidence before inspect and plan',
+  async () => {
+    const f = await fixture({ readonlyPaths: ['AGENTS.md', 'later-external.md'] });
+    try {
+      const c = f.captureInput({ containedReviews: false, drift: true }),
+        before = f.inspect(),
+        beforeDdl = f.ddl(),
+        candidate = c.operation.candidateSnapshot;
+      if (candidate.schema !== 'StoppedSourceDriftCandidate/v1') throw new Error('Strict drift fixture missing.');
+      const actor = required(candidate.terminal_inventory.actors[0], 'Original actor');
+      c.operation.candidateSnapshot = {
+        ...candidate,
+        terminal_inventory: {
+          ...candidate.terminal_inventory,
+          actors: [...candidate.terminal_inventory.actors, { ...actor, actor_id: 'synthetic-coauthor' }],
+        },
+      };
+      const terminalPath = path.join(f.root, c.operation.terminalEvidence.observation_ref);
+      const terminal: unknown = JSON.parse(readFileSync(terminalPath, 'utf8'));
+      if (!isRecord(terminal)) throw new Error('Terminal fixture record missing.');
+      terminal.terminal_inventory = c.operation.candidateSnapshot.terminal_inventory;
+      writeJson(f.root, c.operation.terminalEvidence.observation_ref, terminal);
+      writeJson(f.root, c.requestRef, { workspace_id: f.workspace, ...c.operation });
+      const invoke = (mode: string) =>
+        run(['--capture-stopped-source', 'true', '--mode', mode, '--project-root', f.root, '--request', c.requestRef]);
+      for (const native_status of ['active', 'unknown']) {
+        writeJson(f.root, c.operation.terminalEvidence.observation_ref, { ...terminal, native_status });
+        await expectRejection(invoke('inspect'), 'Actual stopped SOURCE turn provenance incomplete');
+        expect(f.inspect()).toEqual(before);
+        expect(f.ddl()).toEqual(beforeDdl);
+      }
+      writeJson(f.root, c.operation.terminalEvidence.observation_ref, terminal);
+      expect(await invoke('inspect')).toMatchObject({ status: 'inspect_current' });
+      expect(await invoke('plan')).toMatchObject({ status: 'planned' });
+      expect(f.inspect()).toEqual(before);
+      expect(f.ddl()).toEqual(beforeDdl);
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'strict stopped capture refuses disguised out-of-scope writer drift without effects',
+  async () => {
+    const f = await fixture({ readonlyPaths: ['AGENTS.md'] });
+    try {
+      const c = f.captureInput({ containedReviews: false, drift: true }),
+        before = f.inspect(),
+        beforeDdl = f.ddl(),
+        candidate = c.operation.candidateSnapshot;
+      if (candidate.schema !== 'StoppedSourceDriftCandidate/v1') throw new Error('Strict drift fixture missing.');
+      const actor = candidate.terminal_inventory.actors[0],
+        observation = c.operation.observation;
+      if (!actor || !observation) throw new Error('Strict drift fixture actor or observation missing.');
+      c.operation.candidateSnapshot = {
+        ...candidate,
+        terminal_inventory: {
+          ...candidate.terminal_inventory,
+          actors: candidate.terminal_inventory.actors.map((entry, index) =>
+            index === 0 ? { ...entry, changed_paths: [...entry.changed_paths, 'AGENTS.md'] } : entry,
+          ),
+        },
+      };
+      c.operation.observation = {
+        ...observation,
+        changed_paths: [...required(observation.changed_paths, 'Stopped-source changed paths'), 'AGENTS.md'],
+      };
+      expect(() => f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toThrow(
+        'stopped-source owned or external changes differ',
+      );
+      expect(f.inspect()).toEqual(before);
+      expect(f.ddl()).toEqual(beforeDdl);
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
 test('stopped capture keeps the persisted candidate snapshot bound to the owned request after verification', async () => {
   const f = await fixture();
   try {
     const c = f.captureInput(),
-      ownedCandidate = structuredClone(c.operation.candidateSnapshot),
-      changedCandidate = c.operation.candidateSnapshot.entries[0]!;
+      candidateInput = c.operation.candidateSnapshot;
+    if (candidateInput.schema !== 'UnverifiedSourceSnapshot/v1')
+      throw new Error('Legacy stopped-source fixture candidate changed family.');
+    const ownedCandidate = structuredClone(candidateInput),
+      changedCandidate = candidateInput.entries[0]!;
     const observation = c.operation.observation;
     if (!observation) throw new Error('Stopped capture fixture observation is absent.');
     let verified = false;
@@ -2460,27 +3194,169 @@ test('stopped capture keeps the persisted candidate snapshot bound to the owned 
   }
 }, 60000);
 
-test('foreign identities and stale capture versions cannot settle protected stopped Source', async () => {
-  const f = await fixture();
-  try {
-    const c = f.captureInput(),
-      before = f.inspect();
-    for (const change of [
-      { identity: { ...f.identity, work_id: 'synthetic-foreign' } },
-      { attempt: 2 },
-      { nativeSessionHandle: 'synthetic-foreign-owner' },
-      { expectedWork: { ...c.operation.expectedWork, revision: c.operation.expectedWork.revision + 1 } },
-      { expectedJournal: { ...c.operation.expectedJournal, revision: c.operation.expectedJournal.revision + 1 } },
-      { terminalEvidence: { ...c.operation.terminalEvidence, native_actor: 'synthetic-foreign-actor' } },
-    ])
-      expect(() =>
-        f.store.captureStoppedSourceObservation({ ...c.operation, ...change, verifyCurrent: c.verifyCurrent }),
-      ).toThrow();
-    expect(f.inspect()).toEqual(before);
-  } finally {
-    await f.close();
-  }
-}, 60000);
+test(
+  'presence capture rejects foreign issue owner reservation and stale CAS without effects',
+  async () => {
+    const f = await fixture();
+    try {
+      const c = f.captureInput({ presenceCandidate: true, containedReviews: false }),
+        before = f.inspect(),
+        ddl = f.ddl(),
+        captureRows = stoppedCaptureRows(f),
+        sourceBefore = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths),
+        observation = required(c.operation.observation, 'Presence capture observation');
+      const denials = [
+        { identity: { ...f.identity, work_id: 'synthetic-foreign' } },
+        { attempt: 2 },
+        { nativeSessionHandle: 'synthetic-foreign-owner' },
+        { expectedWork: { ...c.operation.expectedWork, revision: c.operation.expectedWork.revision + 1 } },
+        { expectedLedger: { ...c.operation.expectedLedger, revision: c.operation.expectedLedger.revision + 1 } },
+        { expectedJournal: { ...c.operation.expectedJournal, revision: c.operation.expectedJournal.revision + 1 } },
+        { terminalEvidence: { ...c.operation.terminalEvidence, native_actor: 'synthetic-foreign-actor' } },
+        { observation: { ...observation, issue_id: 'synthetic-foreign-issue' } },
+        { observation: { ...observation, host_attempt_id: 'synthetic-foreign-reservation' } },
+      ];
+      for (const change of denials) {
+        expect(() =>
+          f.store.captureStoppedSourceObservation({ ...c.operation, ...change, verifyCurrent: c.verifyCurrent }),
+        ).toThrow();
+        expect(f.inspect()).toEqual(before);
+        expect(f.ddl()).toEqual(ddl);
+        expect(stoppedCaptureRows(f)).toEqual(captureRows);
+        expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths)).toEqual(sourceBefore);
+      }
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'public presence capture refuses missing bytes and a foreign approval path',
+  async () => {
+    const f = await fixture();
+    try {
+      const c = f.captureInput({ presenceCandidate: true, containedReviews: false });
+      const cli = (mode: string) =>
+        publicRun([
+          '--capture-stopped-source',
+          'true',
+          '--mode',
+          mode,
+          '--project-root',
+          f.root,
+          '--request',
+          c.requestRef,
+        ]);
+      const before = f.inspect(),
+        ddl = f.ddl(),
+        rows = stoppedCaptureRows(f);
+      const candidatePath = path.join(f.root, f.sourcePaths[0]!);
+      const candidateBytes = readFileSync(candidatePath);
+      await rm(candidatePath);
+      const absentSource = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths);
+      await expectRejection(cli('inspect'), 'candidate source changed after frozen request');
+      expect(f.inspect()).toEqual(before);
+      expect(f.ddl()).toEqual(ddl);
+      expect(stoppedCaptureRows(f)).toEqual(rows);
+      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths)).toEqual(absentSource);
+      writeFileSync(candidatePath, candidateBytes);
+      const presentSource = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths);
+      const foreignApproval = {
+        ...c.operation,
+        terminalEvidence: { ...c.operation.terminalEvidence, owner_decision_ref: path.join(bundle, 'package.json') },
+      };
+      writeJson(f.root, c.requestRef, { workspace_id: f.workspace, ...foreignApproval });
+      const requestBefore = readFileSync(path.join(f.root, c.requestRef));
+      expect((await cli('plan')).status).toBe('planned');
+      await expectRejection(cli('apply'), 'Capture authorization path differs');
+      expect(f.inspect()).toEqual(before);
+      expect(f.ddl()).toEqual(ddl);
+      expect(stoppedCaptureRows(f)).toEqual(rows);
+      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths)).toEqual(presentSource);
+      expect(readFileSync(path.join(f.root, c.requestRef))).toEqual(requestBefore);
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: true },
+);
+
+test(
+  'qualified contained stopped capture rejects only a foreign owner and preserves state',
+  async () => {
+    const f = await fixture();
+    try {
+      const controllerRoot = process.env.VIDA_STOPPED_SOURCE_CONTROLLER;
+      let containedRun: typeof run | undefined;
+      let reviewBinding: string | undefined;
+      if (controllerRoot !== undefined) {
+        const { inspectDevelopmentController } = await import('../bin/development-controller.ts');
+        const controller = await inspectDevelopmentController({ controllerRoot });
+        expect(controller.status).toBe('ready');
+        expect(controller.qualification?.status).toBe('pass');
+        expect(controller.qualification?.package_binding).toBe(controller.package_binding.digest);
+        for (const relative of runtimeExecutableInventory(bundle))
+          expect(
+            readFileSync(path.join(controller.package_root, relative)).equals(
+              readFileSync(path.join(bundle, relative)),
+            ),
+            'Qualified controller runtime input differs: ' + relative,
+          ).toBe(true);
+        const imported: unknown = await import(pathToFileURL(path.join(controller.package_root, 'bin/run.ts')).href);
+        if (!isRunModule(imported)) throw new Error('Qualified controller public run API is unavailable.');
+        containedRun = imported.run;
+        reviewBinding = controller.package_binding.digest;
+      }
+      const c = f.captureInput({
+        presenceCandidate: true,
+        ...(reviewBinding === undefined ? {} : { reviewBinding }),
+      });
+      const invoke = async (mode: 'inspect' | 'plan' | 'apply' | 'resume') =>
+        containedRun
+          ? publicRun(
+              ['--capture-stopped-source', 'true', '--mode', mode, '--project-root', f.root, '--request', c.requestRef],
+              containedRun,
+            )
+          : c.cli(mode);
+      expect((await invoke('inspect')).status).toBe('inspect_current');
+      expect((await invoke('plan')).status).toBe('planned');
+      const ownerPath = path.join(f.root, c.operation.terminalEvidence.owner_decision_ref);
+      const approvedBytes = readFileSync(ownerPath);
+      const approved: unknown = JSON.parse(approvedBytes.toString('utf8'));
+      if (!isRecord(approved)) throw new Error('Exact owner authorization fixture is invalid.');
+      expect(approved.owner_thread_id).toBe(c.operation.nativeSessionHandle);
+      writeFileSync(ownerPath, jsonText({ ...approved, owner_thread_id: 'synthetic-foreign-owner' }));
+      const refusedBytes = readFileSync(ownerPath),
+        before = f.inspect(),
+        ddl = f.ddl(),
+        rows = stoppedCaptureRows(f),
+        journal = currentJournal(f.ledger, f.identity.work_id, 1),
+        source = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths);
+      await expectRejection(invoke('apply'), 'Capture exact manifest/owner authorization differs');
+      expect(f.inspect()).toEqual(before);
+      expect(f.ddl()).toEqual(ddl);
+      expect(stoppedCaptureRows(f)).toEqual(rows);
+      expect(currentJournal(f.ledger, f.identity.work_id, 1)).toEqual(journal);
+      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.sourcePaths)).toEqual(source);
+      expect(readFileSync(ownerPath)).toEqual(refusedBytes);
+      writeFileSync(ownerPath, approvedBytes);
+      expect(await invoke('apply')).toMatchObject({
+        status: 'captured_partial_source_released',
+        rights_granted: false,
+        canonical_acceptance: false,
+      });
+      expect(f.store.readHostStateSnapshot(f.identity).work?.lease).toBeNull();
+    } finally {
+      await f.close();
+    }
+  },
+  60000,
+  { sourceOnly: process.env.VIDA_STOPPED_SOURCE_CONTROLLER !== undefined },
+);
 
 test('another started or unknown Host effect blocks capture without fabricating task success', async () => {
   const f = await fixture();

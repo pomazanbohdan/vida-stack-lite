@@ -15,6 +15,7 @@ export const installerProtectedFiles = [
 export const standaloneDiscoveryFiles = [
   ...installerProtectedFiles,
   'bin/vida-agent.ts',
+  'bin/clean-init.ts',
   'bin/cli-metadata.ts',
   'bin/cli-command-contracts.ts',
   'bin/run-cli-options.ts',

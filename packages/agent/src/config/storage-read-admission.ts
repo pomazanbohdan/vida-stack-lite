@@ -11,6 +11,7 @@ import {
   STORAGE_ADMISSION_GATE_FILE,
   RUNTIME_INITIALIZATION_PATH,
   PROJECT_INITIALIZATION_PATH,
+  CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH,
   assertConsumerCleanInitializationInactive,
 } from './project-paths.js';
 import {
@@ -485,12 +486,15 @@ function openAndBindWorkspaceDatabase<T extends Database>(
   workspaceId: string,
   admission: StorageReadAdmission,
   open: (capture: (database: T) => void) => T,
+  validateBeforeOpen: () => void = () =>
+    assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(requireSafeRepositoryAccess(root))),
+  validateAfterOpen?: () => void,
 ): T {
   assertLeaseOwner(admission, root, relative, workspaceId);
   requireAdmission(leaseState(admission).sourceDatabase === null, 'admission already owns a database');
   let database: T | undefined;
   try {
-    assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(requireSafeRepositoryAccess(root)));
+    validateBeforeOpen();
     const capture = (opened: T) => {
       database = opened;
       bindWorkspaceStorageAdmission(opened, admission, root, relative, workspaceId);
@@ -498,6 +502,7 @@ function openAndBindWorkspaceDatabase<T extends Database>(
     const returned = open(capture);
     if (!database) capture(returned);
     requireAdmission(database === returned, 'database opener returned a different connection');
+    validateAfterOpen?.();
     return returned;
   } catch (error) {
     const cleanupErrors: unknown[] = [];
@@ -522,6 +527,62 @@ function openAndBindWorkspaceDatabase<T extends Database>(
     if (cleanupErrors.length > 0) throw new AggregateError([error, ...cleanupErrors], 'workspace open cleanup failed');
     throw error;
   }
+}
+
+function assertExactCleanInitializationIntent(
+  root: string,
+  workspaceId: string,
+  operationId: string,
+  expectedBytes: Uint8Array,
+): void {
+  const access = requireSafeRepositoryAccess(root);
+  const currentBytes = access.readBytes(CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH, 'clean initialization intent');
+  requireAdmission(currentBytes.equals(Buffer.from(expectedBytes)), 'clean initialization pending bytes changed');
+  let current: unknown;
+  try {
+    current = JSON.parse(currentBytes.toString('utf8'));
+  } catch {
+    throw new Error('Project storage admission: pending clean initialization intent is invalid');
+  }
+  requireAdmission(
+    current !== null && typeof current === 'object' && !Array.isArray(current),
+    'pending clean initialization intent is invalid',
+  );
+  const operation = current as Record<string, unknown>;
+  requireAdmission(
+    operation.schema === 'ConsumerCleanInitializationOperation/v2' &&
+      operation.root === root &&
+      operation.workspace_id === workspaceId &&
+      operation.operation_id === operationId &&
+      ['intent', 'archiving', 'archive_complete', 'initializing', 'complete'].includes(String(operation.phase)),
+    'pending clean initialization operation binding differs',
+  );
+}
+
+/** Open only the Host DB named by the exact still-pending v2 operation image. */
+export function openExistingWorkspaceDatabaseWithCleanInitializationIntent(
+  root: string,
+  relative: string,
+  admission: StorageReadAdmission,
+  operationId: string,
+  pendingBytes: Uint8Array,
+): Database {
+  assertWorkspaceDatabaseRelativePath(relative);
+  requireAdmission(typeof operationId === 'string' && operationId.length > 0, 'operation identity is required');
+  requireAdmission(pendingBytes instanceof Uint8Array && pendingBytes.byteLength > 0, 'pending bytes are required');
+  const state = leaseState(admission);
+  assertSupportedArguments(root, state.workspaceId, false, false);
+  const expectedBytes = Buffer.from(pendingBytes);
+  const validate = () => assertExactCleanInitializationIntent(root, state.workspaceId, operationId, expectedBytes);
+  return openAndBindWorkspaceDatabase(
+    root,
+    relative,
+    state.workspaceId,
+    admission,
+    (capture) => openUnadmittedWorkspaceDatabase(root, relative, false, false, capture),
+    validate,
+    validate,
+  );
 }
 
 export interface ExclusiveStorageSourceOwner {
@@ -692,6 +753,8 @@ const withExclusiveStorageAdmissionOwner = async <T, A>(
 };
 
 export type InitConfigAdmissionProof = { readonly assertActive: () => void };
+export type JoinedInitConfigAdmissionProof<TFence> = InitConfigAdmissionProof &
+  ExclusiveStorageSourceOwner & { readonly fence: TFence };
 const initConfigProofs = new WeakMap<InitConfigAdmissionProof, { root: string; workspaceId: string }>();
 
 /** Check object identity, binding, and the still-held native gate. */
@@ -722,26 +785,22 @@ export function assertGateOnlyUnderInitAdmission(
   assertInitConfigAdmission(proof, root, workspaceId);
 }
 
-/** Hold both receipt locks only for the initial journal publication interval. */
-export async function withCleanInitializationPublicationLocks<T>(
+async function withCleanInitializationReceiptLocks<T>(
   proof: InitConfigAdmissionProof,
   root: string,
   workspaceId: string,
-  publish: () => Promise<T>,
+  access: ReturnType<typeof requireSafeRepositoryAccess>,
+  purpose: string,
+  operation: () => Promise<T>,
 ): Promise<T> {
-  assertGateOnlyUnderInitAdmission(proof, root, workspaceId);
-  const access = requireSafeRepositoryAccess(root);
-  access.assertDirectory('.agent', 'clean initialization namespace');
-  const observation = repositoryReadOnlyObservation(access);
-  assertConsumerCleanInitializationInactive(observation);
   const deadline = Date.now() + 5_000;
-  const acquire = async <R>(target: string, operation: () => Promise<R>): Promise<R> => {
+  const acquire = async <R>(target: string, action: () => Promise<R>): Promise<R> => {
     let entered = false;
     try {
-      return await access.withExclusiveLockAsync(target, 'clean initialization publication', async () => {
+      return await access.withExclusiveLockAsync(target, purpose, async () => {
         entered = true;
         assertInitConfigAdmission(proof, root, workspaceId);
-        return operation();
+        return action();
       });
     } catch (error) {
       const code = error !== null && typeof error === 'object' && 'code' in error ? error.code : undefined;
@@ -754,15 +813,78 @@ export async function withCleanInitializationPublicationLocks<T>(
       assertInitConfigAdmission(proof, root, workspaceId);
       await Bun.sleep(25);
       assertInitConfigAdmission(proof, root, workspaceId);
-      return acquire(target, operation);
+      return acquire(target, action);
     }
   };
-  return acquire(RUNTIME_INITIALIZATION_PATH, () =>
-    acquire(PROJECT_INITIALIZATION_PATH, async () => {
+  return acquire(RUNTIME_INITIALIZATION_PATH, () => acquire(PROJECT_INITIALIZATION_PATH, operation));
+}
+
+/** Hold both receipt locks only for the initial journal publication interval. */
+export async function withCleanInitializationPublicationLocks<T>(
+  proof: InitConfigAdmissionProof,
+  root: string,
+  workspaceId: string,
+  publish: () => Promise<T>,
+): Promise<T> {
+  assertGateOnlyUnderInitAdmission(proof, root, workspaceId);
+  const access = requireSafeRepositoryAccess(root);
+  access.assertDirectory('.agent', 'clean initialization namespace');
+  const observation = repositoryReadOnlyObservation(access);
+  assertConsumerCleanInitializationInactive(observation);
+  return withCleanInitializationReceiptLocks(
+    proof,
+    root,
+    workspaceId,
+    access,
+    'clean initialization publication',
+    async () => {
       assertConsumerCleanInitializationInactive(observation);
       assertInitConfigAdmission(proof, root, workspaceId);
       return publish();
-    }),
+    },
+  );
+}
+
+type CleanInitializationPendingBinding = {
+  readonly schema: 'ConsumerCleanInitializationOperation/v2';
+  readonly root: string;
+  readonly workspace_id: string;
+  readonly operation_id: string;
+};
+
+export async function withCleanInitializationEffectLocks<T, TOperation extends CleanInitializationPendingBinding>(
+  proof: InitConfigAdmissionProof,
+  root: string,
+  workspaceId: string,
+  operationId: string,
+  pendingBytes: Uint8Array,
+  decodeV2: (bytes: Uint8Array) => TOperation,
+  effect: (operation: TOperation) => Promise<T>,
+): Promise<T> {
+  const expectedPending = Buffer.from(pendingBytes);
+  assertInitConfigAdmission(proof, root, workspaceId);
+  const access = requireSafeRepositoryAccess(root);
+  access.assertDirectory('.agent', 'clean initialization namespace');
+  return withCleanInitializationReceiptLocks(
+    proof,
+    root,
+    workspaceId,
+    access,
+    'clean initialization effect/resume',
+    async () => {
+      const currentBytes = access.readBytes(CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH, 'clean initialization intent');
+      requireAdmission(currentBytes.equals(expectedPending), 'clean initialization pending bytes changed');
+      const operation = decodeV2(currentBytes);
+      requireAdmission(
+        operation.schema === 'ConsumerCleanInitializationOperation/v2' &&
+          operation.root === root &&
+          operation.workspace_id === workspaceId &&
+          operation.operation_id === operationId,
+        'clean initialization pending operation binding mismatch',
+      );
+      assertInitConfigAdmission(proof, root, workspaceId);
+      return effect(operation);
+    },
   );
 }
 
@@ -786,6 +908,30 @@ export function withExclusiveInitConfigAdmission<T>(
       }
     },
   );
+}
+
+/** Join clean-init's verified Host fence to the same exclusive gate used by init/config writers. */
+export function withExclusiveStorageInitConfigAdmission<T, TFence>(
+  root: string,
+  workspaceId: string,
+  verifyHeldHostFence: (this: void, sourceOwner: ExclusiveStorageSourceOwner) => TFence,
+  operation: (proof: JoinedInitConfigAdmissionProof<TFence>) => Promise<T>,
+): Promise<T> {
+  return withExclusiveStorageAdmissionOwner(root, workspaceId, verifyHeldHostFence, async (owner) => {
+    const proof: JoinedInitConfigAdmissionProof<TFence> = Object.freeze({
+      assertActive: owner.assertActive,
+      captureSource: owner.captureSource,
+      closeSource: owner.closeSource,
+      fence: owner.owner,
+    });
+    initConfigProofs.set(proof, { root, workspaceId });
+    try {
+      assertInitConfigAdmission(proof, root, workspaceId);
+      return await operation(proof);
+    } finally {
+      initConfigProofs.delete(proof);
+    }
+  });
 }
 
 /** Existing Host maintenance retains its Host-fence contract and capability shape. */

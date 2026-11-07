@@ -50,8 +50,22 @@ verification and journal creation. Receipt binders retain their existing locks
 and recheck journal presence before binding effects; they do not acquire an
 exclusive gate. Gate-only inspection under a live proof lists the directory
 without opening another SQLite connection. Its owner checks outside receipt-lock
-sidecars and retains the journal after an issued callback failure. These
-primitives do not constitute a connected clean-init command or its recovery owner.
+sidecars and retains the journal after an issued callback failure.
+The current Source exposes strict `clean-init plan|inspect|apply|resume|retire`
+routes. Apply binds exact local consent, current recapture and absent pending
+bytes; archive, witnessed initialization, private release verification and
+metadata retirement use the existing effect owner. Publication reuses the
+gate-only admission predicate: any `.vida` entry beyond its storage gate is
+refused before pending publication. Supported apply requires captured legacy
+YAML; `.vida` product data is unsupported. Current local Source proof includes
+a combined native fault/recovery case at1 executed/28 assertions/0 failures
+and public apply/release/retire at1/15/0. Raw JUnit corrects the retained Luna25
+count. Root R8, prepared, publication/refusal, CLI, formatter/lint/four
+typechecks, AST and help/inventory checks closed successfully. The
+[Task3 record](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
+binds exact receipts and independent review. Earlier four full-path timeouts
+remain UNKNOWN; closed failures retain their status. Native Code closeout,
+delivery, installation and Runtime acceptance remain open.
 The [clean journal schema](../schemas/consumer-clean-initialization-operation.v1.schema.json)
 and [data validator](../bin/consumer-clean-initialization.ts) define one closed
 operation record. Its frozen plan binds the request, declared root/runtime
@@ -909,19 +923,51 @@ parsed values and raw payload text while preserving deterministic row order.
 Task outcome, effect certainty and lease ownership are independent. A known
 terminal partial Source invocation may be captured as `reported_failed` and its
 Host invocation completed with that same failed observation. One Host transaction
-settles the exact matching local source approval, records the unchanged issued
-journal and an unverified candidate inventory, then releases only the old owner's
-ticket, claim and lease. It preserves lifecycle phase, assurance, original issue,
-configured stage/index, generation and immutable history. This is neither task
-success, no-effect proof, acceptance nor a new grant. Unknown or still running
-writer effects require reconciliation; expiry alone never proves a terminal
-outcome. Cooperative local native evidence is consistency evidence, not a
-cryptographic authentication or physical isolation claim.
+settles the exact matching local source approval, updates only the matching
+issued Journal observation, records the candidate and release receipt, then
+releases only the old owner's ticket, claim and lease. It preserves lifecycle
+phase, assurance, original issue, configured stage/index, generation and
+immutable history. This is neither task success, no-effect proof, acceptance nor
+a new grant. Unknown or still running writer effects require reconciliation;
+expiry alone never proves a terminal outcome. Cooperative local native evidence
+is consistency evidence, not a cryptographic authentication or physical
+isolation claim.
+
+Legacy `UnverifiedSourceSnapshot/v1` candidates retain their
+`StoppedSourceCaptureReceipt/v1` encoding. New stopped-source candidates may use
+the separately versioned `StoppedSourceCandidatePresence/v1` shape with exact
+`{path,presence,sha256,size}` entries. Present entries bind lowercase SHA-256
+and safe nonnegative byte size; absent entries use null digest and size. The
+original Source snapshot supplies the exact unique path set and prior presence
+and content. The public route rechecks the complete candidate with the existing
+safe declared-source observer; absent paths are not read as files, and unsafe
+paths or reader errors deny. Presence candidates persist
+`StoppedSourceCaptureReceipt/v2`; same-version retries require exact candidate,
+request and released lineage, while altered or cross-version retries deny.
+Retired-source capture remains separately versioned and v1-only.
+
+The distinct `StoppedSourceDriftCandidate/v1` variant records a complete
+presence-aware current inventory, the complete original terminal per-path
+presence/hash/size snapshot and actor/coauthor inventory,
+the Source I/O end, and one immutable event reference for every changed readonly
+path. Each event binds original, terminal and current presence/hash/size and must
+be ordered after Source I/O ended. The original writer's changed paths must stay
+inside its issued implementation paths and exactly match its observation.
+Current owned bytes/presence must equal the terminal snapshot, including paths
+already listed as changed. Terminal readonly entries must match the original
+scope before separately proved later events;
+readonly evidence must exactly cover the remaining candidate diff. Missing,
+ambiguous, out-of-scope or uncertain evidence refuses before writes. Existing
+byte-v1 and presence-v2 inventories retain their own formats and semantics.
+Existing independent manifest reviews bind the full drift candidate by request
+digest. These are cooperative Root observations, not cryptographic provider
+attestations.
 
 The public `run --capture-stopped-source true` surface has explicit inspect,
 plan, apply and resume modes. An exact approved manifest binds the original
-owner/work/attempt/issue/reservation, terminal observation and candidate bytes.
-Commit rechecks these bindings and current CAS atomically. Exact retry tolerates
+owner/work/attempt/issue/reservation, terminal observation and complete
+candidate presence/content image. Commit rechecks these bindings and current CAS
+atomically. Exact retry tolerates
 unrelated disjoint coordination, but denies dependent work/journal changes or a
 new overlapping grant even if that later grant has been released. Original
 expiry remains in recovery evidence; ordinary released-ticket normalization does
