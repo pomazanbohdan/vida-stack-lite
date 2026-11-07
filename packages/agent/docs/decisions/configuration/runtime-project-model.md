@@ -2,6 +2,7 @@
 type: Design Proposal
 title: Продукти, wiki та роботи — пропозиція для затвердження
 ---
+
 # Продукти, wiki та роботи
 
 Статус: затверджено до реалізації з анотаціями користувача. Codex identity стає `codex`; вкладеність типів налаштовується продуктом без hardcoded type matrix. Source/runtime ще потребують реалізації та доказів. Попередній review receipt стосується своїх sealed inputs і не є review нових анотацій. Канонічна системна специфікація узгоджує погоджений target з поточним Source. Operational work record: `.agent/work/runtime-project-model-implementation-20261102/WORK.md` під repository root.
@@ -26,23 +27,23 @@ title: Продукти, wiki та роботи — пропозиція для 
 
 Навігація, вимоги й операційний стан мають різні ролі, але друга копія документів не створюється. Наявні ownership/CAS/lease, safe filesystem, UNKNOWN та assurance policy з [sidecar](../../../../../AGENT.sidecar.md) зберігаються. Дизайн не видає додаткових прав запису або delivery.
 
-## Конкретні рекомендації до затвердження
+## Погоджені значення
 
-| Питання | Рекомендація цього пакета |
-| --- | --- |
-| Prefixes | Repository `VIDA`; продукти `AGENT`, `CODEX`, `POWERS`. Стабільні IDs не перейменовуються |
-| Початкові типи нової моделі | `PBI`, `BUG`, `TASK`. Додавання нового коду потребує зміни runtime contract; продукт не перевизначає код |
-| Enabled list | Обмежує створення та reclassification; читання й references уже збережених робіт залишаються доступними. Наявні team/provider обмеження також діють |
-| Counter | Один монотонний counter на продукт для всіх типів; починається з 1 для нового порожнього store. Номери не перевикористовуються; пропуски дозволені |
-| Identity | Незмінний `internal_id` UUID; human key — окреме поле |
-| Key | `<repository-prefix>-<product-prefix>-<type-code>-<number>`, наприклад `VIDA-AGENT-BUG-43`; padding не є частиною identity |
-| Prefix validation | Непорожні uppercase Latin letters/digits, prefix починається з літери; дефіс є розділювачем. Product prefixes унікальні в repository; aliases/canonical keys не можуть мати різних власників |
-| Reclassification | Зберігає `internal_id` і номер; змінює type та key; попередній key назавжди стає alias тієї самої роботи. Усі parent/child edges перевіряються повторно |
-| Prefix/ownership change | Для store з даними — лише підтримана явна migration operation; редагування cfg не переписує ключі або ownership автоматично |
-| Вкладеність | Нуль або один parent; без циклів; type combinations перевіряються за налаштуванням продукту. Будь-який enabled тип може бути parent/child, якщо налаштування це дозволяє; жоден тип не є leaf безумовно |
-| Початкова policy трьох продуктів | Окремі `custom` maps з однаковими обраними значеннями: `PBI → TASK, BUG; BUG → []; TASK → []`; окремі TASK дозволені. BUG terminal підтверджено користувачем |
-| Міжпродуктові зв’язки | Явні related/dependency references, окремі від parent. Перенесення ownership роботи між продуктами не додається як мовчазний ефект |
-| Документи | Root і `index.md` плюс каталогова карта напрямків. Paths не виводяться з code root; явно задані mappings можуть перетинатися |
+| Питання                          | Рекомендація цього пакета                                                                                                                                                                               |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Prefixes                         | Користувач підтвердив 2026-11-03: repository `VIDA`; Agent `AGENT`; Codex `CODEX`; Powers `POWERS`. Display prefixes не змінюють стабільні IDs                                                          |
+| Початкові типи нової моделі      | `PBI`, `BUG`, `TASK`. Додавання нового коду потребує зміни runtime contract; продукт не перевизначає код                                                                                                |
+| Enabled list                     | Обмежує створення та reclassification; читання й references уже збережених робіт залишаються доступними. Наявні team/provider обмеження також діють                                                     |
+| Counter                          | Один монотонний counter на продукт для всіх типів; починається з 1 для нового порожнього store. Номери не перевикористовуються; пропуски дозволені                                                      |
+| Identity                         | Незмінний `internal_id` UUID; human key — окреме поле                                                                                                                                                   |
+| Key                              | `<repository-prefix>-<product-prefix>-<type-code>-<number>`, наприклад `VIDA-AGENT-BUG-43`; padding не є частиною identity                                                                              |
+| Prefix validation                | Непорожні uppercase Latin letters/digits, prefix починається з літери; дефіс є розділювачем. Product prefixes унікальні в repository; aliases/canonical keys не можуть мати різних власників            |
+| Reclassification                 | Зберігає `internal_id` і номер; змінює type та key; попередній key назавжди стає alias тієї самої роботи. Усі parent/child edges перевіряються повторно                                                 |
+| Prefix/ownership change          | Для store з даними — лише підтримана явна migration operation; редагування cfg не переписує ключі або ownership автоматично                                                                             |
+| Вкладеність                      | Нуль або один parent; без циклів; type combinations перевіряються за налаштуванням продукту. Будь-який enabled тип може бути parent/child, якщо налаштування це дозволяє; жоден тип не є leaf безумовно |
+| Початкова policy трьох продуктів | Окремі `custom` maps з однаковими обраними значеннями: `PBI → TASK, BUG; BUG → []; TASK → []`; окремі TASK дозволені. BUG terminal підтверджено користувачем                                            |
+| Міжпродуктові зв’язки            | Явні related/dependency references, окремі від parent. Перенесення ownership роботи між продуктами не додається як мовчазний ефект                                                                      |
+| Документи                        | Root і `index.md` плюс каталогова карта напрямків. Paths не виводяться з code root; явно задані mappings можуть перетинатися                                                                            |
 
 Користувач затвердив пакет з анотаціями, які мають пріоритет над прикладами. Number зберігається при зміні типу, type prefix змінюється; relation checks використовують product configuration. Затвердження не встановлює Runtime acceptance і не дозволяє немарковану міграцію існуючих даних.
 
@@ -110,13 +111,13 @@ Reparent в межах продукту зберігає key. `TASK → BUG` з�
 
 ## Початковий стан нашого repository
 
-| Продукт | Цільова wiki | Рекомендований work store | Readiness |
-| --- | --- | --- | --- |
-| Agent (`agent`) | `packages/agent/docs`, index створений | `packages/agent/backlogs` | Canonical SR збережений; BR/AC/domain split та повна OKF qualification потребують adoption |
-| Codex (`codex`) | `packages/codex/docs` | `packages/codex/backlogs` | Є лише package manifest; docs/requirements setup та явна identity conversion входять у adoption |
-| Powers (`powers`) | `packages/powers/docs` | `packages/powers/docs/work` | Store обраний за [продуктовим D2](../../../../powers/docs/decisions/D2-ownership-and-work-space.md), а не за суперечливим root backlogs value; формат/дані не мігровані |
+| Продукт           | Цільова wiki                           | Рекомендований work store   | Readiness                                                                                                                                                               |
+| ----------------- | -------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Agent (`agent`)   | `packages/agent/docs`, index створений | `packages/agent/backlogs`   | Canonical SR збережений; BR/AC/domain split та повна OKF qualification потребують adoption                                                                              |
+| Codex (`codex`)   | `packages/codex/docs`                  | `packages/codex/backlogs`   | Є лише package manifest; docs/requirements setup та явна identity conversion входять у adoption                                                                         |
+| Powers (`powers`) | `packages/powers/docs`                 | `packages/powers/docs/work` | Store обраний за [продуктовим D2](../../../../powers/docs/decisions/D2-ownership-and-work-space.md), а не за суперечливим root backlogs value; формат/дані не мігровані |
 
-Цільові paths і prefixes у YAML є конкретною пропозицією для затвердження, не доказом readiness трьох installed products. Для Powers перед activation потрібне узгодження його B/S/AC та D2 щодо глобальних type codes/нової моделі; Root не переписує ці продуктові документи як побічний ефект дизайну.
+Prefixes у YAML підтверджені користувачем. Цільові paths потребують перевірки під час setup та adoption. Підтверджені значення не доводять readiness трьох installed products і не змінюють активний cfg. Для Powers перед activation потрібне узгодження його B/S/AC та D2 щодо глобальних type codes/нової моделі; Root не переписує ці продуктові документи як побічний ефект дизайну.
 
 ## Adoption і порядок реалізації
 
@@ -131,20 +132,51 @@ Future GUI, інтеграція Jira/Azure API, Powers runtime integration, н�
 
 ## Критерії приймання реалізації
 
-| Перевірка | Очікуваний результат |
-| --- | --- |
-| Розділені code/wiki roots | Правильні sources незалежно від consumer cwd; зміна code root не переміщує docs |
-| Перетин mappings | Усі належні продукти resolving явно; ownership не вгадується |
-| Напрямки | BR/SR/AC/test cases runtime і delivery ізольовані по явних mappings |
-| Індекси та OKF | Scoped перевірка Agent corpus, navigation і concept metadata; Powers-only checker не видається за Agent gate |
-| Відсутні джерела | Точний setup/trace gap; залежна зміна зупинена без вигаданих documents/PASS |
-| Enabled types | Невідомий/вимкнений код не створюється й не призначається; існуючі роботи не зникають |
-| Counter | Parallel/crash tests не дають duplicate/reused numbers; gaps не маскуються |
-| Reclassification | internal ID/file незмінні; typed key оновлений; старий key resolving через alias; edges повторно перевірені |
-| Containment | Різні product policies дозволяють різні type combinations; негативні cycle/multi-parent/cross-product та edge, заборонений саме product configuration |
-| Legacy adoption | IDs/provider references збережені; unknown ownership не підмінена припущенням |
-| Переривання migration | Inspect/resume/repair узгоджують exact inputs і effects, без втрати final docs або silent overwrite |
-| Межі доказів | Source, scoped checks, delivered artifact та Runtime acceptance звітуються окремо |
+| Перевірка                 | Очікуваний результат                                                                                                                                  |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Розділені code/wiki roots | Правильні sources незалежно від consumer cwd; зміна code root не переміщує docs                                                                       |
+| Перетин mappings          | Усі належні продукти resolving явно; ownership не вгадується                                                                                          |
+| Напрямки                  | BR/SR/AC/test cases runtime і delivery ізольовані по явних mappings                                                                                   |
+| Індекси та OKF            | Scoped перевірка Agent corpus, navigation і concept metadata; Powers-only checker не видається за Agent gate                                          |
+| Відсутні джерела          | Точний setup/trace gap; залежна зміна зупинена без вигаданих documents/PASS                                                                           |
+| Enabled types             | Невідомий/вимкнений код не створюється й не призначається; існуючі роботи не зникають                                                                 |
+| Counter                   | Parallel/crash tests не дають duplicate/reused numbers; gaps не маскуються                                                                            |
+| Reclassification          | internal ID/file незмінні; typed key оновлений; старий key resolving через alias; edges повторно перевірені                                           |
+| Containment               | Різні product policies дозволяють різні type combinations; негативні cycle/multi-parent/cross-product та edge, заборонений саме product configuration |
+| Legacy adoption           | IDs/provider references збережені; unknown ownership не підмінена припущенням                                                                         |
+| Переривання migration     | Inspect/resume/repair узгоджують exact inputs і effects, без втрати final docs або silent overwrite                                                   |
+| Межі доказів              | Source, scoped checks, delivered artifact та Runtime acceptance звітуються окремо                                                                     |
+
+## Engineering contract clean-init v2
+
+Статус: Root implementation decision за чинним user grant; contract ще не реалізований і не активований. Task 3 виконується окремим delivery cycle. Delivered 0.1.9 має лише legacy init/configure; він не доводить готовність нового clean init або повного product setup.
+
+- Додати окремий `ConsumerCleanInitializationOperation/v2`; strict v1 codec/schema зберегти byte-identical. Наявність або відсутність історичних v1 effects не вгадується. v1 можна читати через його owner; v2 owner не застосовує, не перетворює і не знімає fence v1 pending.
+- v2 лишає file-only archive для відомих managed integration outputs та старого `.agent/runtime-initialization.v1.json`. Project directory moves залишаються окремому configure owner. `.agent/work`, configured product stores, Source/wiki/evidence, metadata та чужий WIP не стають archive candidates.
+- v2 `preserved` містить file observations `{type:'file',path,identity,size,sha256}` для project-owned integration outputs: `AGENT.sidecar.md`, а коли вони вже project-owned — також `AGENTS.md` і `docs/agent-instructions/documentation-policy.v1.json`. Binding включає ці before-images; preserved content не записується заново, а новий receipt описує фактичні bytes. Config не стає preserved замість requested initialization. Підготовка/init/resume потребують additive preservation seam; обхід post-init копіюванням не дозволено.
+- `protected_paths` фіксує actual canonical product Source/wiki/work/evidence union і захищений work/coordination store; owner повторно derives/перевіряє його перед effects. Не підставляти guessed `docs`/`backlogs` замість configured paths. Fixed internal metadata guards діють окремо. Preserved paths можуть бути всередині protected roots; рух protected source або destination заборонений. Власний archive history — окрема exact destination namespace, а не дозвіл рухати його вміст.
+- Один v2 immutable binding охоплює root/workspace/runtime/request, archive inventory/targets, preserved observations та protected union. Progress CAS прив’язаний до exact pending bytes. Data validation не надає authorization, maintenance, native completion або acceptance.
+- 8 MiB обмежує весь serialized operation. `prepared.intent.maxLength` є додатковою межею поля, а не обіцянкою, що intent розміром 8 MiB поміститься в envelope: metadata, UTF-8 та JSON escaping зменшують фактичну місткість. Native owner звіряє кожну project identity з конкретним mapping; C1 count-check не підміняє цю перевірку.
+- Підтримати Windows і Linux через наявні safe observation/move owners. Відсутня native capability дає точну відмову до effects; не послаблювати no-follow/identity/CAS.
+- Init/config storage admission не вважається Host maintenance. До effect-owner writer окремо фіксуються фактичний maintenance verifier, lock ordering і scope quiescence. Caller boolean або operator claim не підміняє native fence. `.vida` product data не видаляються, щоб пройти gate-only seam.
+- Public boundary — plan/inspect/apply/resume з правдивим help та package/native parity. Partial/ambiguous operation зберігає pending fence; generic retire/unfence для неузгодженого стану не додається. Terminal history retirement допустимий лише після verified completed initialization і current valid state.
+- Реальний init цього repository чекає delivered Tasks 4–5: `plugin` не перейменовується побічно під час Task 3. Уже погоджені IDs/prefixes/mappings повторно не запитуються.
+
+Task 3 перевіряється послідовними Source units: C1 — pure strict v2 codec/schema і contract tests; C2 — capture/protection/preservation та maintenance/admission seams; C3 — effect/recovery owner і public CLI/help/inventory. C1 не має filesystem effects і не є готовим clean-init owner. Жоден unit не відкладає required checks або scoped PATCH delivery після завершення всього Task 3.
+
+C3 Source state (2026-11-05): strict plan/inspect/apply/resume/retire routes and
+the existing gate-only refusal for `.vida` data are present. Apply remains bound
+to legacy YAML capture. The final combined native fault/recovery case closed
+PASS at1 executed case/28 assertions/0 failures; public apply/release/retire
+closed at1/15/0. Raw JUnit corrects the retained Luna25 count without changing
+the original report.
+Four older full-path timeouts remain UNKNOWN, Root apply-01/02 remain FAIL, and
+Root apply-03/guard-02 remain closed PASS. Root R8 four cases/46 assertions,
+prepared two/38, publication/refusal two/58 and CLI seven/16 closed, as did
+formatter, lint, four typechecks, AST, help/inventory and Vex update. The
+[Task3 record](../../plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
+binds receipts and independent review. Source stays0.1.9; installed runtime
+0.1.11 is separate. Native Code closeout, delivery and installation remain open.
 
 ## Джерела і межі затвердження
 

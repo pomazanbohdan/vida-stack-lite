@@ -1159,6 +1159,14 @@ and an affected caller pass do not establish a complete-run timing improvement.
 
 `bun run test` selects four disjoint agent phases: ordinary tests, repair, HostState and run entrypoint. It does not build or install. `verify` is a local subset. It does not install dependencies or a bundle. `ci:pinned` is delivery preparation; run it only through the delivery lane.
 
+`tests/clean-initialization-cli.test.ts` covers only strict plan/inspect argument
+parsing and public command registration under the ordinary5000ms default. It
+does not exercise a clean-init filesystem or Host effect. No C3 coupled case is
+qualified by this test; archive/init/release cases need fresh disposable roots,
+an owned close receipt and separately declared full-clock ceilings before they
+run. Keep the existing four R8 Windows45s/non-Windows5s cases and all numeric
+and product walls unchanged.
+
 Launch `test:mutation:pinned` only with its separate manual authorization. An inventory check does not prove that mutants ran or were killed.
 
 For an explicitly authorized bounded diagnostic, run
@@ -2970,6 +2978,81 @@ such as observing a complete isolated pool or a real recovery quarantine.
 Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
+
+The exact case `v2 preparation adopts exact preserved bytes into the fresh
+initialization receipt` in `tests/prepared-initialization-admission.test.ts`
+has a prospective 30,000ms component-fixture ceiling. Its monotonic clock starts
+before allocation and includes canonicalization, setup, the complete body,
+exclusive-gate close and retained-root reporting. Record the allocated absolute
+root before canonicalization, retain it on every outcome, stop later setup after
+expiry and preserve both body and budget errors. The prior Windows observation
+completed eight functional assertions but failed the default 5s deadline at
+24.655s; the sibling v1 case's explicit 30s literal is code precedent, not prior
+policy approval. Both remain historical evidence, not a qualified PASS.
+One focused parent uses 60,000ms including import, close and reporting reserve;
+keep the runner default at 5,000ms and select this exact case. Its constructed
+preservation witness is component evidence, not complete Host/archive/release
+proof or a fifth coupled C3 case. All other ordinary bounds, R8/C3 exceptions,
+the product 2s target and numeric/global walls remain unchanged.
+
+The four Windows clean-initialization integration cases below use a finite
+45,000ms Bun case timeout and the same monotonic budget across fixture setup,
+the full body, owned rollback/close and retained-root recording. The previous
+coupled fixture runs failed their 5s deadlines at 9.980s, 11.255s and 24.252s;
+the exception covers that measured setup plus the unchanged real assertions.
+Stop later setup after expiry and retain each root on pass, failure or expiry.
+All other cases and non-Windows execution keep the 5,000ms default. One
+serialized four-case functional parent has a 210,000ms envelope including
+capture, close and reporting reserve. These behavior ceilings establish no
+product latency or numeric qualification.
+
+| Exact case name                                                                         | Windows case timeout |
+| --------------------------------------------------------------------------------------- | -------------------: |
+| initial intent refuses captured inventory byte drift before callback or fence creation  |             45,000ms |
+| initial intent refuses preserved byte drift before callback or fence creation           |             45,000ms |
+| initial intent refuses same-byte preserved identity drift on held-fence reattach        |             45,000ms |
+| a real Host reader blocks callback admission and leaves the exact fence and intent held |             45,000ms |
+
+The named C3 case `clean-init reviewed publication binds approval and reports
+pristine intent as planned` has an explicit120000ms integration ceiling across
+fresh Host fixture setup, native plan/publication/refusal observations and owned
+close/retained-root recording. It occupies one of the four C3 coupled cases and
+uses the existing120s complete-configuration precedent below; it does not qualify
+product latency. A single-case parent has150000ms including close/report reserve;
+at most two C3 coupled cases use270000ms. Other defaults, the four existing R8
+exceptions, product2s target and numeric/global walls remain unchanged.
+
+The named C3 case `clean-init applies and retires only verified completed state
+while preserving protected files` has the same120000ms whole-case ceiling. Its
+fresh fixture drives the public apply and retire routes through real file-only
+archive moves, prepared initializer completion, exact released Host-fence proof,
+and metadata-only history retirement. The clock covers setup, effects, assertions,
+and retained-root reporting. This is the second of at most four coupled C3 cases;
+the serialized parent remains270000ms for at most two such cases.
+
+The third C3 case `clean-init publication reuses the gate-only admission refusal
+for constructed .vida data` verifies the existing
+`assertGateOnlyUnderInitAdmission` predicate rejects a non-gate `.vida` entry
+before pending bytes, archive payload or Host DB changes. It does not claim a
+valid activated project fixture. A supported legacy plan captures
+`agent-runtime.config.v1.yaml`; its loader requires that source. These checks
+prove the current source-selection boundary, not empty-inventory success.
+
+The fourth and final C3 case `clean-init recovers real archive, initializer and
+retirement lost acknowledgements` injects failures only after the native archive
+move, initializer pending-intent write and no-replace metadata retirement return.
+It observes the exact held fence and pending bytes, rejects stale resume and
+nonterminal retirement without changing them, resumes from freshly observed
+hashes, and retries exact retired metadata against the released Host row. One
+monotonic120,000ms case clock includes fixture allocation/setup, body, owned
+wrapper restoration, close and retained-root recording. Use at most four named
+C3 cases, each at most120,000ms, with at most two in a270,000ms parent. The
+constructed `.vida` case is third; this injected-fault case is fourth.
+
+Current apply-retire diagnostic runs retained their fixture roots and bounded
+phase output. They timed out before JUnit and observed close; do not count them
+as C3 qualification. Preserve their UNKNOWN status until a measured cause is
+corrected and a fresh complete receipt closes within120000ms.
 
 Bun's timer can run late during synchronous fixture work. A PASS row after the
 declared deadline is not time-budget evidence. Carry the same monotonic case

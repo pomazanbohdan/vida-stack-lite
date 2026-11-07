@@ -1,9 +1,14 @@
 import { expect, test } from 'bun:test';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { finishPreparedInitializationUnderAdmission, prepareInitializationUnderAdmission } from '../bin/init-core.ts';
+import {
+  captureInitializationRuntimeBinding,
+  finishPreparedInitializationUnderAdmission,
+  prepareInitializationUnderAdmission,
+} from '../bin/init-core.ts';
+import { sealCleanInitializationOperationV2 } from '../bin/consumer-clean-initialization-v2.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
   withExclusiveInitConfigAdmission,
@@ -14,6 +19,7 @@ import { CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH } from '../src/config/projec
 
 const digest = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const pendingPath = '.agent/runtime-initialization.pending.v1.json';
+const preservedPreparationTimeoutMs = 30_000;
 
 test('prepared intent requires the live bound gate and resumes the exact journaled operation once', async () => {
   const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'vida-prepared-init-')));
@@ -69,6 +75,26 @@ test('prepared intent requires the live bound gate and resumes the exact journal
       const prepared = prepareInitializationUnderAdmission(proof, request, digest(clean));
       expect(Object.isFrozen(prepared)).toBe(true);
       expect(Object.isFrozen(prepared.projectIdentities)).toBe(true);
+      const forgedIntent = {
+        ...prepared,
+        intent: JSON.stringify({ ...JSON.parse(prepared.intent), config_digest: '0'.repeat(64) }) + '\n',
+      };
+      await Promise.resolve(
+        expect(finishPreparedInitializationUnderAdmission(proof, request, forgedIntent, digest(clean))).rejects.toThrow(
+          'Prepared initialization inputs changed',
+        ),
+      );
+      await Promise.resolve(
+        expect(
+          finishPreparedInitializationUnderAdmission(
+            proof,
+            { ...request, reconcileExisting: true },
+            prepared,
+            digest(clean),
+          ),
+        ).rejects.toThrow('requires a fresh request'),
+      );
+      expect(readdirSync(path.join(root, '.agent')).sort()).toEqual(before);
       expect(readdirSync(path.join(root, '.agent')).sort()).toEqual(before);
       expect(readFileSync(path.join(root, CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH), 'utf8')).toBe(clean);
       await access.writeExclusiveAtomicAsync(pendingPath, prepared.intent, 'test handoff');
@@ -170,3 +196,135 @@ test('prepared intent requires the live bound gate and resumes the exact journal
     );
   }
 }, 30_000);
+
+test(
+  'v2 preparation adopts exact preserved bytes into the fresh initialization receipt',
+  async () => {
+    const startedAt = performance.now();
+    const assertWithinBudget = () => {
+      if (performance.now() - startedAt >= preservedPreparationTimeoutMs)
+        throw new Error('Preserved preparation fixture exceeded its 30000ms whole-case budget');
+    };
+    let allocatedRoot: string | undefined;
+    let failed = false;
+    let bodyError: unknown;
+    try {
+      assertWithinBudget();
+      allocatedRoot = mkdtempSync(path.join(tmpdir(), 'vida-clean-preserved-'));
+      console.error('Allocated v2 preservation fixture: ' + allocatedRoot);
+      assertWithinBudget();
+      const root = realpathSync(allocatedRoot);
+      const request = {
+        projectRoot: root,
+        repository: 'prepared-repo',
+        projectMappings: ['agent=agent', 'codex=codex', 'powers=powers'],
+      };
+      const sidecar = Buffer.from('project-owned sidecar bytes\n', 'utf8');
+      for (const directory of ['.agent', 'agent', 'codex', 'powers']) {
+        assertWithinBudget();
+        mkdirSync(path.join(root, directory));
+      }
+      assertWithinBudget();
+      writeFileSync(path.join(root, 'AGENT.sidecar.md'), sidecar);
+      assertWithinBudget();
+      const access = requireSafeRepositoryAccess(root);
+      assertWithinBudget();
+      const identity = access.observeFileIdentity?.('AGENT.sidecar.md', 'test preserved sidecar');
+      if (!identity) throw new Error('verified capture is unavailable');
+      assertWithinBudget();
+      const operationId = randomUUID();
+      const workspace = deriveWorkspaceId(request.repository, root);
+      const operation = sealCleanInitializationOperationV2({
+        schema: 'ConsumerCleanInitializationOperation/v2',
+        version: 2,
+        operation_id: operationId,
+        root,
+        root_identity: access.directoryIdentity('.', 'test root'),
+        workspace_id: workspace,
+        request,
+        runtime: captureInitializationRuntimeBinding(),
+        archive_root: `.agent/clean-initialization-history/${operationId}/payload`,
+        inventory: [],
+        preserved: [
+          {
+            type: 'file',
+            path: 'AGENT.sidecar.md',
+            identity,
+            size: sidecar.length,
+            sha256: digest(sidecar),
+          },
+        ],
+        protected_paths: ['.agent/coordination', '.agent/work'],
+        moves: [],
+        containers: [],
+        phase: 'archive_complete',
+        prepared: null,
+        initialization: 'not-started',
+      });
+      const clean = JSON.stringify(operation) + '\n';
+      assertWithinBudget();
+      writeFileSync(path.join(root, CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH), clean);
+      assertWithinBudget();
+      await withExclusiveInitConfigAdmission(root, workspace, async (proof) => {
+        assertWithinBudget();
+        const prepared = prepareInitializationUnderAdmission(proof, request, digest(clean));
+        assertWithinBudget();
+        const receipt = JSON.parse(prepared.intent) as {
+          provenance: string;
+          templates: Array<{ output: string; output_sha256: string }>;
+        };
+        expect(receipt.provenance).toBe('adopted_existing');
+        expect(receipt.templates.find((entry) => entry.output === 'AGENT.sidecar.md')?.output_sha256).toBe(
+          digest(sidecar),
+        );
+        expect(prepared.preserved).toEqual(operation.preserved);
+        expect(readFileSync(path.join(root, 'AGENT.sidecar.md')).equals(sidecar)).toBe(true);
+        expect(readdirSync(path.join(root, '.agent')).sort()).toEqual([
+          'consumer-clean-initialization.pending.v1.json',
+        ]);
+        assertWithinBudget();
+        const completed = sealCleanInitializationOperationV2({
+          ...Object.fromEntries(Object.entries(operation).filter(([key]) => key !== 'binding')),
+          phase: 'complete',
+          prepared: {
+            intent: prepared.intent,
+            rootIdentity: prepared.rootIdentity,
+            bundleIdentity: prepared.bundleIdentity,
+            projectIdentities: prepared.projectIdentities,
+            resourceDigest: prepared.resourceDigest,
+          },
+          initialization: 'completed',
+        });
+        const completedBytes = JSON.stringify(completed) + '\n';
+        assertWithinBudget();
+        writeFileSync(path.join(root, CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH), completedBytes);
+        assertWithinBudget();
+        writeFileSync(path.join(root, pendingPath), prepared.intent);
+        assertWithinBudget();
+        const result = await finishPreparedInitializationUnderAdmission(
+          proof,
+          request,
+          prepared,
+          digest(completedBytes),
+        );
+        expect(result.status).toBe('resumed_initialization');
+        expect(readFileSync(path.join(root, 'AGENT.sidecar.md')).equals(sidecar)).toBe(true);
+        expect(readFileSync(path.join(root, result.receipt), 'utf8')).toBe(prepared.intent);
+      });
+    } catch (error) {
+      failed = true;
+      bodyError = error;
+    } finally {
+      if (allocatedRoot !== undefined) console.error('Retained v2 preservation fixture: ' + allocatedRoot);
+    }
+    const elapsedMs = performance.now() - startedAt;
+    const budgetError =
+      elapsedMs >= preservedPreparationTimeoutMs
+        ? new Error('Preserved preparation fixture completed after its 30000ms budget: ' + elapsedMs.toFixed(3) + 'ms')
+        : undefined;
+    if (failed && budgetError) throw new AggregateError([bodyError, budgetError], 'Fixture body and budget failed');
+    if (failed) throw bodyError;
+    if (budgetError) throw budgetError;
+  },
+  preservedPreparationTimeoutMs,
+);

@@ -43,6 +43,27 @@ export const cliCommandContracts = freezeCliDeclaration({
     ],
     example: 'vida-agent configure plan --project-root /workspace/app --repository example --project app=.',
   },
+  'clean-init': {
+    purpose: 'Plan and inspect clean initialization, then apply, resume, or retire exact journaled state.',
+    syntax: 'vida-agent clean-init plan|inspect|apply|resume|retire <mode options>',
+    options: [
+      { name: '--project-root', arity: 1, type: 'canonical-absolute-path', required: true },
+      { name: '--repository', arity: 1, type: 'repository-id', requiredIn: 'plan|apply' },
+      { name: '--project', arity: 1, type: 'project-mapping', repeatable: true, requiredIn: 'plan|apply' },
+      { name: '--operation-id', arity: 1, type: 'operation-id', requiredIn: 'apply|resume|retire' },
+      { name: '--approve-plan', arity: 1, type: 'sha256-binding', requiredIn: 'apply|resume|retire' },
+      { name: '--pending-sha256', arity: 1, type: 'sha256-pending-bytes', requiredIn: 'resume|retire' },
+    ],
+    constraints: [
+      'plan requires --project-root, --repository and one or more --project; it does not publish pending state.',
+      'inspect requires only --project-root and is read-only.',
+      'apply re-captures the plan by --operation-id and requires exact --approve-plan consent; it journals and verifies each archive/init effect.',
+      'resume and retire require exact current pending bytes from inspect plus matching operation id, immutable plan binding and explicit consent.',
+      'retire accepts only verified complete state and moves pending metadata to its history record; archive payload is retained.',
+    ],
+    example:
+      'vida-agent clean-init resume --project-root /workspace/app --operation-id UUID --approve-plan SHA256 --pending-sha256 SHA256',
+  },
   install: {
     purpose: 'Check installer inputs or install dependencies and initialize a project.',
     syntax:
@@ -127,7 +148,7 @@ export const cliHelpSelectorLimits: Readonly<{
   routes: Readonly<Record<string, number>>;
 }> = freezeCliDeclaration({
   default: 1,
-  commands: { 'reconcile-artifacts': 3, run: 2, 'development-controller': 2 },
+  commands: { 'reconcile-artifacts': 3, run: 2, 'development-controller': 2, 'clean-init': 2 },
   routes: { 'reconcile-artifacts/runtime-code': 4 },
 });
 const cliCommands = new Set(cliCommandNames.filter((name) => !['help', 'instructions', 'version'].includes(name)));

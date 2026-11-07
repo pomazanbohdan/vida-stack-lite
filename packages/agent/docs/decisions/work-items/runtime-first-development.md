@@ -27,11 +27,25 @@ title: Робота через runtime та цикл виправлень
 
 ## Markdown і докази
 
+Уточнення маршруту2026-11-04 після запитання користувача про поточну задачу: відсутність майбутньої функції, яку ця задача саме розробляє, не доводить блокування runtime orchestration. Inspect/recovery/refusal без issued action і причинної діагностики також не встановлюють такий дефект. Поточний C1 уже виконаний поза runtime та зберігається як Source evidence; він не є native task completion і не повторюється задля статусу. Зовнішній C2-контур зупиняється; подальше виконання має пройти supported admission → issue → фактичний tool result → report. Коректна захисна відмова або помилка виклику не дають автоматичного Source fallback.
+
 Вимоги, рішення, findings та blocker status актуалізуються одразу. Для задачі окремо вказувати завершені Source та check результати, фактичний стан runtime-спроби й стан поставки. Після позарантаймного завершення поточної задачі можна зафіксувати саме цей результат. Старий runtime work залишається у своєму фактичному стані до підтримуваного disposition його owner. Не ставити йому runtime-completed заднім числом і не називати Source або Delivery результат користувацьким Runtime acceptance.
 
 Публічні intake/scope/acceptance DTO є вхідними даними підтримуваної операції. Persisted tasks, journals, counters, leases і службовий configuration state створює або змінює їхній operation owner. Ручне редагування цих об’єктів для імітації реєстрації чи завершення не дозволене.
 
 Task-state re-registration обмежена runtime work state. Source, wiki, канонічні продуктові документи, backups та UNKNOWN мають чинний preservation contract. Окремий [дозвіл на clean init repository](../configuration/clean-init-authorization.md) зберігає свої delivered-version, inventory та backup prerequisites.
+
+C3 Source now contains strict `clean-init plan|inspect|apply|resume|retire`
+routes and the gate-only `.vida` refusal before pending publication. Current
+combined fault/recovery proof closed at1 executed case/28 assertions/0 failures;
+public apply/release/retire closed at1/15/0. Raw JUnit corrects the retained
+Luna25 count. Four older timeouts remain UNKNOWN; Root apply-01/02 remain FAIL;
+Root apply-03/guard-02 remain closed PASS. Root R8, prepared-suite,
+CLI/help/inventory and static checks closed; exact receipts belong to the linked
+Task3 record. Native Code closeout and delivery remain open. Package0.1.9;
+installed runtime0.1.11 is separate. No Task3 delivery or PATCH qualification
+is claimed.
+Follow the [Task 3 implementation record](../../plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner).
 
 ## Підстави та validation
 

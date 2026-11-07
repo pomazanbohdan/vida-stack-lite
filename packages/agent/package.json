@@ -1,10 +1,11 @@
 {
   "name": "vida-agent",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "private": true,
   "description": "Configurable clean-v1 development-team runtime governed by one repository YAML authority.",
   "bin": {
     "vida-agent": "./bin/vida-agent.ts",
+    "vida-agent-clean-init": "./bin/clean-init.ts",
     "vida-agent-documentation-clear": "./bin/documentation-clear.ts",
     "vida-agent-init": "./bin/init.ts",
     "vida-agent-install": "./bin/install.ts",
@@ -21,6 +22,7 @@
     "tsconfig.json",
     "bin/bun.ts",
     "bin/vida-agent.ts",
+    "bin/clean-init.ts",
     "bin/cli-metadata.ts",
     "bin/cli-command-contracts.ts",
     "bin/run-cli-options.ts",

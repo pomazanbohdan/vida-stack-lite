@@ -151,7 +151,16 @@ terminal result from lease expiry, return a newer grant as an old capture result
 or replay the old writer. Completed readonly release uses configured bounded
 egress and exact accepted observations; a wholly unissued downstream wave stays
 inert. It requires no retroactive Source authorization and grants no new rights.
-The system specification owns capture, retry and release guards.
+The distinct drift-candidate variant binds a complete presence inventory, the
+complete terminal per-path presence/hash/size and actor/coauthor scope, Source I/O end, and per-path readonly events ordered
+after that end. It permits only separately reviewed readonly changes; owned writes
+must exactly match the failed observation and original implementation paths.
+Every current owned entry must still equal its terminal snapshot; terminal
+readonly entries must equal their original scope before later external changes.
+Missing or uncertain proof refuses before effects. The cooperative Root evidence
+does not establish cryptographic provider attestation. Byte-v1 and presence-v2
+formats retain their existing semantics. The system specification owns capture,
+retry and release guards.
 
 An authorized forward correction may use the fixed admitted completed-readonly
 capture operation while the parent maintenance overlay blocks ordinary work.

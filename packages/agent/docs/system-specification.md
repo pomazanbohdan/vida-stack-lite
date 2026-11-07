@@ -50,8 +50,22 @@ verification and journal creation. Receipt binders retain their existing locks
 and recheck journal presence before binding effects; they do not acquire an
 exclusive gate. Gate-only inspection under a live proof lists the directory
 without opening another SQLite connection. Its owner checks outside receipt-lock
-sidecars and retains the journal after an issued callback failure. These
-primitives do not constitute a connected clean-init command or its recovery owner.
+sidecars and retains the journal after an issued callback failure.
+The current Source exposes strict `clean-init plan|inspect|apply|resume|retire`
+routes. Apply binds exact local consent, current recapture and absent pending
+bytes; archive, witnessed initialization, private release verification and
+metadata retirement use the existing effect owner. Publication reuses the
+gate-only admission predicate: any `.vida` entry beyond its storage gate is
+refused before pending publication. Supported apply requires captured legacy
+YAML; `.vida` product data is unsupported. Current local Source proof includes
+a combined native fault/recovery case at1 executed/28 assertions/0 failures
+and public apply/release/retire at1/15/0. Raw JUnit corrects the retained Luna25
+count. Root R8, prepared, publication/refusal, CLI, formatter/lint/four
+typechecks, AST and help/inventory checks closed successfully. The
+[Task3 record](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
+binds exact receipts and independent review. Earlier four full-path timeouts
+remain UNKNOWN; closed failures retain their status. Native Code closeout,
+delivery, installation and Runtime acceptance remain open.
 The [clean journal schema](../schemas/consumer-clean-initialization-operation.v1.schema.json)
 and [data validator](../bin/consumer-clean-initialization.ts) define one closed
 operation record. Its frozen plan binds the request, declared root/runtime
@@ -928,6 +942,23 @@ paths or reader errors deny. Presence candidates persist
 `StoppedSourceCaptureReceipt/v2`; same-version retries require exact candidate,
 request and released lineage, while altered or cross-version retries deny.
 Retired-source capture remains separately versioned and v1-only.
+
+The distinct `StoppedSourceDriftCandidate/v1` variant records a complete
+presence-aware current inventory, the complete original terminal per-path
+presence/hash/size snapshot and actor/coauthor inventory,
+the Source I/O end, and one immutable event reference for every changed readonly
+path. Each event binds original, terminal and current presence/hash/size and must
+be ordered after Source I/O ended. The original writer's changed paths must stay
+inside its issued implementation paths and exactly match its observation.
+Current owned bytes/presence must equal the terminal snapshot, including paths
+already listed as changed. Terminal readonly entries must match the original
+scope before separately proved later events;
+readonly evidence must exactly cover the remaining candidate diff. Missing,
+ambiguous, out-of-scope or uncertain evidence refuses before writes. Existing
+byte-v1 and presence-v2 inventories retain their own formats and semantics.
+Existing independent manifest reviews bind the full drift candidate by request
+digest. These are cooperative Root observations, not cryptographic provider
+attestations.
 
 The public `run --capture-stopped-source true` surface has explicit inspect,
 plan, apply and resume modes. An exact approved manifest binds the original
