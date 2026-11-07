@@ -118,16 +118,28 @@ installation does not settle that local journal; its existing owner must persist
 the actual terminal and published-artifact evidence. The user-run release-path
 allowance is effective. Actual init and user Runtime acceptance remain open.
 
+R19's two-file corrective workspace inspection fix and this queue were published
+in [main b4bb0b1d](https://github.com/pomazanbohdan/vida-stack-lite/commit/b4bb0b1d763adface6f9a325b77b43d2c10ab182).
+Normal pre-commit passed formatting, typecheck and lint; normal Windows pre-push
+passed its 122 selected cases. Primary main and the release checkout were
+fast-forwarded with primary working files and both release-tree WIP files
+preserved. The existing release owner then completed fresh all-nine published
+readback and local CAS, selecting `0.1.13` at `awaiting_assurance`. Its manifest
+change is version-only. Qualified native formation, publication and installation
+are still pending; existing `0.1.12` does not prove R19's installed behavior.
+
 Published main now contains the I-1 guard supporting `vida-agent` and legacy
 `packages/agent`. Its earlier main/release divergence is reconciled. Do not open
 another guard implementation task.
 
-Exact push, process, binding and capture-preparation evidence is retained under
-`.agent/work/init-main-integration-20261107/`. Main and its primary index remained
-unchanged during push. Two unrelated Powers WIP scripts changed during the
-operation; their writer is unattributed and their bytes were preserved. Both
-Agent capture candidates remained unchanged. The updated queue is a local
-documentation change after the published release packet was frozen.
+Historical `df99a11b` push, process, binding and capture-preparation evidence is
+retained under `.agent/work/init-main-integration-20261107/`. That push preserved
+the primary index; two unrelated Powers scripts changed during its interval,
+with no actor attribution, and their current bytes were retained. R19 evidence
+belongs to `.agent/work/runtime-corrective-workspace-inspection-20261107-r19/`.
+Its normal-hook main commit/push and checkout reconciliation preserve primary
+WIP. Capture candidates, bundle binding and CAS require fresh verification after
+the corrected native installation; historical review packets grant no new rights.
 
 ## Completed dependencies and merged queue entries
 
