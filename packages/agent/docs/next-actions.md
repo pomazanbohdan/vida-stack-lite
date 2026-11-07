@@ -14,9 +14,9 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 
 | Task                                                                                                                                            | Current state                                  | Remaining outcome and dependency                                                                                                                                                                                                                                                                   |
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.12 installed; owner closeout open         | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and its capture/readback corrections are published and installed. Reuse the qualified capture owner for old Task 4/5 claims; real init and Runtime acceptance remain open.                          |
-| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | Partial config/context component in WIP        | After qualified stopped-Source capture releases the old claim, complete public versioned types, configuration codecs, exact-byte adoption and journal/CAS/resume, fix selector matching, integrate callers and registration, and explicitly convert `plugin` to `codex` without rewriting history. |
-| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Input/prompt component ready; integration open | Retain the four-file component and its Root corrections. After old-claim capture and Task 4 adapter delivery, integrate init/configure handlers, prompts, help, resources and package registration. Complete actual product/path setup and Source/native parity.                                   |
+| [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open   | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open.                                                        |
+| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | Old claim settled; synthesis review pending   | Complete serializable public v1/v2 types, configuration codecs, exact-byte adoption and journal/CAS/resume; fix selector matching, integrate causal receipt/path/preservation callers and registration, and explicitly convert `plugin` to `codex` without rewriting history.                        |
+| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Old claim settled; component ready            | Retain the four-file component and Root corrections. After Task 4 adapter delivery, integrate init/configure handlers, prompts, help, resources and package registration. Complete actual product/path setup and Source/native parity.                                                             |
 | [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Waiting for delivered Tasks 4 and 5            | Qualify the complete model in a temporary consumer, then perform the approved real init and verify products, documentation and preserved work. Attribute workflow evidence and user Runtime acceptance separately.                                                                                 |
 
 Release, installer verification and Markdown reconciliation are completion steps
@@ -32,114 +32,85 @@ evidence. These are working-tree components, not delivered tasks or completed
 repository setup. The four Task 5 files remain uncommitted until their real
 callers consume the exported types and the normal hook accepts that integration.
 
-The old Task 4 and Task 5 Source claims remain unsettled. Complete terminal
-inventories and two terminal records plus five later readonly-change events
-are prepared; independent record review reports no findings and zero drift.
-The corrected native owner is qualified and installed; runtime access is open
-and the installed lifecycle has been read. Fresh targeted inspections closed
-successfully for both works. Three independent Task 4 reviews reproduced the
-exact installed binding, all 46 candidate tuples and terminal provenance, but
-returned FAIL for operational readiness because public capture inspect refuses
-`workspace inspection journal integrity differs`. No authorization or apply ran.
+Both old Source claims are settled through installed `0.1.13`'s public capture
+owner. Task 4 was captured first. Task 5 then used fresh shared CAS after the
+legitimate disjoint Task 4 continuation changed Ledger. Each applied request had
+three fresh independent passing exact reviews and Root authorization. Closed
+post-inspections show lease `null`, pending `0` and recovery `false` for both.
+Capture records reported-failed/partial-stopped work and releases only old rights;
+it establishes neither task completion nor a successor Source grant.
 
-Bounded readonly diagnosis identified two valid corrective journals, R17 and R18.
-The global inspector compares their engine run IDs directly with their Work base
-run IDs; the existing `validateWorkSessionBinding` accepts both exact joins and
-their current authorization bytes. The next causal correction is to reuse that
-validator in global inspection while preserving every other identity, digest and
-coordination check. Its two-file R19 plan and actual synthesis passed independent
-review. Both actual prewrite PASS results and their attributed metadata
-projections passed independent review. Runtime accepted physical completion of
-the two-file Source delta after Luna's partial test work and separately attributed
-Root correction. A genuine preimage RED and current GREEN are retained: three
-cases, 260 assertions, zero failures across two processes. Scoped format, lint,
-Source/bin types, AST and Vex passed; tests-project types retain three diagnostics
-in two unowned Task 4 files. Independent actual-Source review is READY for this
-bounded delta. Runtime accepted both Code PASS observations after fresh
-independent reviews. Runtime also accepted the bounded tester PASS after its
-independent review. Runtime prepared the Source-handoff instruction after Root
-corrected its old-rights-only capture boundary and Task4-before-Task5 CAS order.
-Fresh target qualification, corrected native delivery/install and public capture
-remain pending; no init or Runtime acceptance is claimed. Retained developer evidence remains distinct
-from verified native test execution and full numeric qualification.
-This remains a Task 3 prerequisite, not another active feature task.
+The R19 correction replaces the global inspector's direct run-ID equality with
+the existing `validateWorkSessionBinding` after unchanged integrity checks. Its
+bounded Source/Code/tester results and corrected Source-handoff were accepted.
+Retained proof has three cases/260 assertions across two processes, scoped
+statics and independent reviews. Primary tests-project types still retain three
+diagnostics in two Task 4 files; whole numeric qualification remains separate.
+R19 is delivered in `0.1.13` and its ordinary continuation admitted the real
+Task 4 completion work. It is not another active feature task.
 
-After corrected delivery, obtain fresh CAS and three passing exact request
-reviews before capture. The retained failed Task 4 request cannot authorize it.
-Task 5 needs fresh shared-Ledger CAS after Task 4 settlement. Capture releases
-only old rights as failed partial work; it grants neither task completion nor
-new Source rights.
+The current Task 4 work is
+`.agent/work/runtime-product-config-v2-finish-20261107-task4-r3/`.
+Its execution-only intake covers the existing partial delta plus causal
+init-core receipt, clean-init protection and direct versioned path/component
+seams. No Source writer is issued yet. The accepted schema/adapter contract stays
+canonical; implementation, checks/review, main integration and Task 4 delivery
+remain required before Task 5 integration. Earlier failed reviews, superseded
+CAS packets, UNKNOWN effects and original journals remain in the work store.
+
+The configured Luna/xhigh synthesis completed. Its original report exceeds the
+word budget and remains unchanged; a separately attributed Root projection meets
+that budget. The pre-Source map freezes 1,777 callable rows, including 1,062
+production rows, against 336 baseline rows. The 741 unpaired roles have prospective
+10/10 caps; proposed correspondences still require review and numeric results
+remain unmeasured. The independent Devin review could not start because its
+provider executable is unavailable. Review, native prewrite and actual Source
+issuance remain pending; no alternate model or passing review is inferred.
 
 ## Current delivery state
 
-The [Task 3 evidence record](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
-retains the accepted R15 Source/Code workflow. The published `0.1.12` baseline
-contains C3, R17 stopped-Source capture and R18 bounded readback Source integrated
-with fetched upstream in [main df99a11b](https://github.com/pomazanbohdan/vida-stack-lite/commit/df99a11b70bf604b4ef4ea4745093e5f3fd7564b).
-The normal Windows pre-push passed static checks and all 122 selected cases in
-five files, with observed closed native job groups. This is the Windows push
-profile, not whole-product or Runtime qualification.
+Published and installed current runtime is
+[v0.1.13](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.13).
+It contains C3, R17/R18 and R19. R19's reviewed Source and queue reached
+[main b4bb0b1d](https://github.com/pomazanbohdan/vida-stack-lite/commit/b4bb0b1d763adface6f9a325b77b43d2c10ab182);
+the owner-selected version reached
+[main 1a7a902c](https://github.com/pomazanbohdan/vida-stack-lite/commit/1a7a902c379504da86dedbe8be48b290268d9f43).
+Normal hooks passed formatting/type/lint and the Windows profile's 122 cases.
+Primary and release-tree WIP were preserved; this is not whole-product proof.
 
-R18 retains a successful GET-only observation of all nine 0.1.11 assets and owner
-preparation of candidate `0.1.12` at `awaiting_assurance`. The earlier preparation,
-asset-body and public-inspection UNKNOWN observations keep their original status.
-They are not evidence that the later readback or version preparation is missing.
+The existing release owner selected `0.1.13` after its own fresh all-nine
+`0.1.12` baseline readback and CAS. One native workflow was dispatched:
+[CI run 42384133330](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42384133330).
+Assurance and both original producers passed. Two publication readback failures
+left the exact tag, then the exact empty draft. Each failed-job recovery followed
+fresh matching-state reconciliation of that same operation and original producer
+claim; no new dispatch, rebuild, tag overwrite or manual asset replacement.
+Attempt 3 succeeded, including public publication and external Linux installation.
+Original failures remain retained.
 
-Published `0.1.12`'s release Source binding is
-`e21cfadf0e832984e3ecf0c05a54469819ecac54c128c5da1c00b4fa5ffe925a`.
-The release checkout was fast-forwarded to that exact commit. The existing
-owner issued matching Linux and Windows requests in the same operation and
-retained six older requests. Pending state, journal and manifest were unchanged.
-The earlier pair bound to `9ef581e7f77972a22af3c9ffcbded72ac35351f1ab4cec25718c16b983f9d3d9`
-remains historical evidence and is not used for the new run.
+The maintained public Windows installer updated to `0.1.13` without Source
+override, closed exit 0 and returned matching immutable artifact bytes with cleanup
+complete. Its structured result owns that postcheck. Public native identity and
+instruction lookup were then used for actual capture binding. The delivered R19
+inspector and both supported old-claim captures succeeded on this runtime.
 
-[CI run 42363302934](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42363302934)
-attempt 1 passed release assurance and both native builds. Its publisher created
-the matching annotated tag and draft `v0.1.12`, then failed after the draft-list
-readback and before any asset upload. Fresh reads verified the exact operation,
-Source, original producer artifacts, claim digest, draft metadata and zero assets.
-Failed-job recovery used the same run without new Source, another dispatch or
-tag overwrite. Attempt 2 completed successfully, including publication and the
-external Linux install. Public latest is non-draft `v0.1.12` with the exact nine
-claim-bound assets. The original attempt-1 failure is retained.
-
-The public Windows installer updated the existing `0.1.11` installation to
-`0.1.12` without a Source override. Its original process closed exit 0 and
-reported cleanup complete; installed executable SHA-256 is
-`de2e706990c494ec265511766ef8544b360d093415a8c74e60548c5de09d409c`.
-Effective PATH selects that executable. Native `version` and all six requested
-instruction lookups return `0.1.12`. The first outer wait timed out while the
-original installer remained running; it was observed to completion, not retried.
-
-Published `0.1.12`'s manifest is `0.1.12`; the primary working manifest remains
-`0.1.9` as preserved WIP. The release checkout's local `0.1.12` operation remains
-at `awaiting_assurance`, with its own installation leg not started. Public
-installation does not settle that local journal; its existing owner must persist
-the actual terminal and published-artifact evidence. The user-run release-path
-allowance is effective. Actual init and user Runtime acceptance remain open.
-
-R19's two-file corrective workspace inspection fix and this queue were published
-in [main b4bb0b1d](https://github.com/pomazanbohdan/vida-stack-lite/commit/b4bb0b1d763adface6f9a325b77b43d2c10ab182).
-Normal pre-commit passed formatting, typecheck and lint; normal Windows pre-push
-passed its 122 selected cases. Primary main and the release checkout were
-fast-forwarded with primary working files and both release-tree WIP files
-preserved. The existing release owner then completed fresh all-nine published
-readback and local CAS, selecting `0.1.13` at `awaiting_assurance`. Its manifest
-change is version-only. Qualified native formation, publication and installation
-are still pending; existing `0.1.12` does not prove R19's installed behavior.
+The release checkout's manifest is `0.1.13`; primary working manifest `0.1.9`
+remains preserved WIP. Local release journals, including the selected operation's
+`awaiting_assurance`, retain their own existing closeout owner. Public publication
+and installation do not rewrite those journals. Actual project init and user
+Runtime acceptance remain open.
 
 Published main now contains the I-1 guard supporting `vida-agent` and legacy
 `packages/agent`. Its earlier main/release divergence is reconciled. Do not open
 another guard implementation task.
 
-Historical `df99a11b` push, process, binding and capture-preparation evidence is
-retained under `.agent/work/init-main-integration-20261107/`. That push preserved
-the primary index; two unrelated Powers scripts changed during its interval,
-with no actor attribution, and their current bytes were retained. R19 evidence
-belongs to `.agent/work/runtime-corrective-workspace-inspection-20261107-r19/`.
-Its normal-hook main commit/push and checkout reconciliation preserve primary
-WIP. Capture candidates, bundle binding and CAS require fresh verification after
-the corrected native installation; historical review packets grant no new rights.
+Evidence: `.agent/work/init-main-integration-20261107/` retains predecessor
+delivery, protected-WIP reconciliation and capture records; its
+`capture-evidence-audit/capture-native-v013-r1/task4/` and
+`capture-evidence-audit/capture-native-v013-r2/task5/` retain exact authorization/apply receipts and
+fresh post-inspections. R19 formation/install belongs to
+`.agent/work/runtime-corrective-workspace-inspection-20261107-r19/release-next-r1/`.
+Historical failed/superseded packets grant no new rights and are not replayed.
 
 ## Completed dependencies and merged queue entries
 
