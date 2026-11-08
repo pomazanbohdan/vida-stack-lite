@@ -105,13 +105,33 @@ Its manifest update is version-only; the predecessor journal and primary `0.1.9`
 WIP are unchanged. Qualified native formation, publication and installation remain
 open. Existing `0.1.13` installation does not establish Task 4 delivery.
 
+The version commit reached main as `cd3e835f`; its normal Windows push profile
+again passed all 122 cases. The single native
+[CI42478472372](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42478472372)
+passed release assurance but both producers failed at native-build and publication
+failed. No installation is claimed. The root cause was a duplicated raw
+dist/product-model schema entry plus omitted C3 clean-init-v2 resources in the
+manifest. The manifest-only correction has accepted Source/Code and independent
+inventory proof (one case/10 assertions plus raw uniqueness/coexistence).
+Evidence belongs to `.agent/work/runtime-product-publication-inventory-20261108-r1/`.
+Fresh remote inspection found no current v0.1.14 tag or release; latest remains
+non-draft v0.1.13. Root retains the failed run and old requests, reconciles this
+Source correction through normal hooks and selects new current-Source proof
+requests in the same release operation before later authorized formation.
+
+The user explicitly approved every value in
+[the setup model](decisions/configuration/project-config.proposed.yaml) on
+2026-11-08, including wiki/requirements/store paths for all three products.
+This removes the path-approval gap; no automatic activation, migration or
+Runtime acceptance is implied.
+
 Coverage/CRAP, reviewed final callable correspondence, manual mutation, full-suite,
 Host/C3 recovery, v2 physical relocation and lost-ack/restart qualification remain
 unproved under unchanged policy. The historical composite timeout and 2 s target
 are not qualified by focused passes. After Task 4 delivery, integrate Task 5's
 existing prompt/input ports before target observation, v2 configure routing and
 CLI/help/package resources; then qualify a complete temporary consumer before
-real repository init. Proposed document destinations are not active configuration.
+real repository init. Approved document destinations are not active configuration.
 
 ## Current delivery state
 

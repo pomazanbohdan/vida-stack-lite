@@ -1,11 +1,11 @@
-# Current design proposal, not an active or complete runtime configuration.
-# Existing schema does not accept this new wiki/prefix/work_items model.
-# Approved values plus annotations; implementation shape is being reconciled.
+# User-approved model values (2026-11-08), not an active runtime configuration.
+# Strict v1 stays unchanged; Task4 v2 carries this complete ProductModel.
+# All repository/product/path/store/hierarchy values below are approved.
 # Contract and acceptance: runtime-project-model.md in this directory.
 # Paths are repository-relative; documents can overlap code and other products.
-# Wiki/requirements destinations are proposed; folders are not created or migrated.
+# Wiki/requirements/store destinations are approved; no migration is performed here.
 # index.md follows the existing standard verified by the topical research.
-# Required/optional policy and migration remain open design points.
+# Complete fields follow ProductModel/v1; governed owners retain migration authority.
 # Type codes come from a fixed runtime catalog, never from a project definition.
 # User confirmed VIDA / AGENT / CODEX / POWERS on 2026-11-03; activation is pending.
 
@@ -124,7 +124,7 @@ projects:
 # No per-project task_prefix or type-code override.
 # No global source_catalog: documents are nested in the product.
 # No separate wiki_output/internal/generated-documents corpus.
-# Area names/destinations are recommendations; canonical docs remain owners until adoption.
+# Area names/destinations are approved; canonical docs remain owners until supported adoption.
 # Work-item keys include their fixed type code, e.g. VIDA-AGENT-BUG-43.
 # Containment combinations are generic and configured by each product.
 # User-selected initial hierarchy: PBI contains TASK/BUG; BUG/TASK are leaves.

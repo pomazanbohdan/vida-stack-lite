@@ -1336,6 +1336,21 @@ Bun runtime, exact inputs/outputs
 and virtual entry. Actual formed-artifact qualification and its join to tests
 remain pending; capture tests and static checks are not that evidence.
 
+Publication schema paths must be unique in the raw package manifest and complete
+at both source and dist locations. The SDK compatibility projection normalizes its
+file list; its uniqueness check alone cannot prove raw-input uniqueness.
+CI42478472372 confirmed a duplicated product-model schema caused the second copy
+to fail on the immutable destination on both Windows and Linux. The same manifest
+integration omitted the current clean-init-v2 resource. Correct the manifest owner,
+retaining copy permissions and both clean-init/configuration v2 resources.
+The existing inventory case and a separate raw-list probe retain RED/GREEN proof;
+native formation and installation require their actual CI/CD evidence.
+[Node copyFile](https://nodejs.org/api/fs.html#fspromisescopyfilesrc-dest-mode)
+documents default overwrite behavior, and [npm files](https://docs.npmjs.com/cli/v11/configuring-npm/package-json#files)
+defines the payload inventory. Neither calls for relaxing immutable-input guards.
+The [product-model decision](../decisions/configuration/runtime-project-model.md)
+and [canonical queue](../next-actions.md) record the current correction.
+
 Official [fs-safe0.26.2 entry publication](https://github.com/openclaw/fs-safe/blob/v0.26.2/docs/entry-publication.md)
 requires native no-replace support and excludes overlay filesystems. The current
 workspace is observed as overlayfs. Do not add this filesystem restriction as a

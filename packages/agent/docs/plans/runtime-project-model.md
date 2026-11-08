@@ -107,7 +107,7 @@ Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Tas
 
 ## Task 4 — config/context adoption and Codex identity
 
-**Status:** queued after Task 3's verified delivery. This queue update establishes no implementation or schema transition.
+**Status:** Source/Code and independent focused tester accepted; integrated into main. The owner-selected 0.1.14 candidate awaits qualified native delivery after the manifest inventory correction. The canonical [queue](../next-actions.md) owns current evidence, retained failures and remaining qualification.
 
 **Files:** `src/config/runtime-config.ts`, `project-context.ts`, `project-layout.ts`, `project-upgrade-artifacts.ts`; runtime/component schemas, config template; `bin/consumer-configuration-operation.ts`, `consumer-project-relocation.ts`, `project-mapping-contract.ts`; package manifests/maintained-source inventories/exports. Tests named in source preflight: runtime-config-yaml, project-configuration-contract, project-context-boundary, project-mapping-contract, runtime-config-repair-boundary, consumer-configuration-operation, consumer-project-relocation.
 
@@ -122,6 +122,8 @@ Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Tas
 ## Task 5 — interactive init/config/help and package parity
 
 **Status:** queued after Task 4's verified delivery. The approved prefixes remain VIDA, AGENT, CODEX and POWERS.
+
+The user explicitly approved every value of the [full setup model](../decisions/configuration/project-config.proposed.yaml) on 2026-11-08, including all document/requirements/store destinations. No path-approval gap remains. Current Source only has the input/prompt component; CLI/TTY/configure/help/package integration and delivered behavior remain required.
 
 **Files:** `bin/init.ts`, `init-core.ts`, `init-configuration.ts`, `configure.ts`, `cli-metadata.ts`, `cli-command-contracts.ts`; injected prompt helper; templates and `docs/installation.md`, README/help sources. Tests: init-entrypoint-v8, initialization, configure-cli, scope-help-parity plus new prompt/setup scenarios.
 
