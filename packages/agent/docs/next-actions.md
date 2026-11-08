@@ -15,7 +15,7 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 | Task                                                                                                                                            | Current state                                | Remaining outcome and dependency                                                                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open. |
-| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | Source committed; main merge in progress     | Reconcile and push main through normal hooks, then form and install qualified Task 4 artifacts. Preserve the seven LibSQL cleanup failures and separate numeric/broader recovery qualification gaps.                                        |
+| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | Source on main; delivery pending             | Form and install qualified Task 4 artifacts after verified publication through normal hooks. Preserve the seven LibSQL cleanup failures and separate numeric/broader recovery qualification gaps.                                        |
 | [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Old claim settled; component ready           | Retain the four-file component and Root corrections. After Task 4 adapter delivery, integrate init/configure handlers, prompts, help, resources and package registration. Complete actual product/path setup and Source/native parity.      |
 | [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Waiting for delivered Tasks 4 and 5          | Qualify the complete model in a temporary consumer, then perform the approved real init and verify products, documentation and preserved work. Attribute workflow evidence and user Runtime acceptance separately.                          |
 
@@ -92,9 +92,13 @@ Source-handoff are accepted under
 
 Target commit `71d0950f049ba6a46759db6fc1c7ece9187f9f27` contains all 34 paths.
 Normal pre-commit passed Knip, formatting, typecheck (617 files) and lint.
-The other 31 staged blobs and primary index were preserved. A merge with main
-is reconciling this queue; main publication and qualified Task 4 delivery remain
-open. Target `0.1.13` and primary `0.1.9` WIP remain preserved.
+The other 31 staged blobs and primary index were preserved. Primary main and the
+release branch contain merge `48951983`, which reconciles the current queue.
+All 34 primary Source file bytes and 48 unrelated tracked WIP paths were preserved;
+73 unrelated untracked paths and the original scoped stash remain retained.
+Normal push qualification and publication have their own receipts in the closeout
+work record; qualified Task 4 artifact delivery remains open. Target `0.1.13` and
+primary `0.1.9` WIP remain preserved.
 
 Coverage/CRAP, reviewed final callable correspondence, manual mutation, full-suite,
 Host/C3 recovery, v2 physical relocation and lost-ack/restart qualification remain
