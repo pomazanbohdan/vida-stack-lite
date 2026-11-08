@@ -15,7 +15,7 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 | Task                                                                                                                                            | Current state                                | Remaining outcome and dependency                                                                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open. |
-| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | Code/tester PASS; strict test types clear    | Qualify and commit the integrated target through normal hooks, reconcile main, then form and install qualified Task 4 artifacts. Preserve the seven LibSQL cleanup failures and separate numeric/broader recovery qualification gaps.       |
+| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | Source committed; main merge in progress     | Reconcile and push main through normal hooks, then form and install qualified Task 4 artifacts. Preserve the seven LibSQL cleanup failures and separate numeric/broader recovery qualification gaps.                                        |
 | [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Old claim settled; component ready           | Retain the four-file component and Root corrections. After Task 4 adapter delivery, integrate init/configure handlers, prompts, help, resources and package registration. Complete actual product/path setup and Source/native parity.      |
 | [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Waiting for delivered Tasks 4 and 5          | Qualify the complete model in a temporary consumer, then perform the approved real init and verify products, documentation and preserved work. Attribute workflow evidence and user Runtime acceptance separately.                          |
 
@@ -81,13 +81,20 @@ The complete YAML file remains CLOSED_FAIL: 82 pass/seven LibSQL smoke
 close/cleanup EBUSY or error-shape failures. Their baseline and causality are
 unproved; no whole-suite or whole-Static PASS is inferred from the type repair.
 
-Root integrated the 32-path Task 4/fixture/schema/plan candidate, reconciled this
-queue, then applied the one-file YAML correction with an exact target preimage.
-The release worktree has 34 selected integration paths. Source/bin types and the
-22-case/122-assertion product checks passed before the one-line test correction;
-current complete tests types pass after it. Normal hooks, main commit/push and
-new Task 4 delivery remain open. Target `0.1.13` and primary `0.1.9` WIP remain
-preserved. The two fixture work records retain the actual integration and checks.
+Root integrated the 32-path Task 4/fixture/schema/plan candidate, this queue
+and the YAML correction as 34 paths. The normal commit hook first refused new
+unused exports. The causal three-file closeout removes only an unconsumed new
+wrapper, keeps the consumed product-path collector and public configuration
+union, privatizes two new component interfaces and narrows the YAML parser input.
+Its Source/Code observations, independent 22-case/122-assertion tester and
+Source-handoff are accepted under
+`.agent/work/init-product-model-hook-closeout-20261108-r1/`.
+
+Target commit `71d0950f049ba6a46759db6fc1c7ece9187f9f27` contains all 34 paths.
+Normal pre-commit passed Knip, formatting, typecheck (617 files) and lint.
+The other 31 staged blobs and primary index were preserved. A merge with main
+is reconciling this queue; main publication and qualified Task 4 delivery remain
+open. Target `0.1.13` and primary `0.1.9` WIP remain preserved.
 
 Coverage/CRAP, reviewed final callable correspondence, manual mutation, full-suite,
 Host/C3 recovery, v2 physical relocation and lost-ack/restart qualification remain
