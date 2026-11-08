@@ -3,13 +3,23 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import schema from '../schemas/consumer-configuration-operation.v1.schema.json' with { type: 'json' };
+import schemaV2 from '../schemas/consumer-configuration-operation.v2.schema.json' with { type: 'json' };
+import productSchema from '../schemas/product-model.v1.schema.json' with { type: 'json' };
 import { validateRuntimeInitializationReceipt } from '../src/config/initialization-record.ts';
 import { readRuntimePackageResourceText, runtimePackageAccess } from '../src/config/runtime-config.ts';
 import { repositoryReadOnlyObservation, requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { canonicalRepositoryRoot, deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { withExclusiveInitConfigAdmission } from '../src/config/storage-read-admission.ts';
-import { captureConsumerConfiguration, captureConsumerConfigurationForRecovery } from './init-configuration.ts';
-import type { ConsumerConfigurationRequest } from './init-configuration.ts';
+import {
+  captureConsumerConfiguration,
+  captureConsumerConfigurationForRecovery,
+  consumerConfigurationProjectMappings,
+} from './init-configuration.ts';
+import type {
+  VersionedConsumerConfigurationRequest as ConsumerConfigurationRequest,
+  ConsumerConfigurationRequestV1,
+  ConsumerConfigurationRequestV2,
+} from './init-configuration.ts';
 import { RUNTIME_INITIALIZATION_PATH, assertConsumerCleanInitializationInactive } from '../src/config/project-paths.ts';
 import { derivePendingConfigurationReceipt } from './init-core.ts';
 import { parseConsumerProjectMoves, rebaseDocumentationPolicy } from './consumer-project-relocation.ts';
@@ -44,14 +54,11 @@ interface FrozenRelocation {
   }[];
   readonly policy: { readonly before: Bytes; readonly target: Bytes; readonly state: MoveState };
 }
-export interface ConsumerConfigurationOperation {
-  readonly schema: 'ConsumerConfigurationOperation/v1';
-  readonly version: 1;
+interface ConsumerConfigurationOperationBase {
   readonly operation_id: string;
   readonly root: string;
   readonly root_identity: string;
   readonly workspace_id: string;
-  readonly request: ConsumerConfigurationRequest;
   readonly binding: string;
   readonly before: readonly Bytes[];
   readonly target: Bytes;
@@ -60,6 +67,20 @@ export interface ConsumerConfigurationOperation {
   readonly progress: 'intent' | 'config_applied' | 'receipt_applied' | 'complete';
 }
 
+export type ConsumerConfigurationOperation = ConsumerConfigurationOperationBase &
+  (
+    | {
+        readonly schema: 'ConsumerConfigurationOperation/v1';
+        readonly version: 1;
+        readonly request: ConsumerConfigurationRequestV1;
+      }
+    | {
+        readonly schema: 'ConsumerConfigurationOperation/v2';
+        readonly version: 2;
+        readonly request: ConsumerConfigurationRequestV2;
+      }
+  );
+
 type AjvConstructor = new (options: Record<string, unknown>) => { compile<T>(schema: object): ValidateFunction<T> };
 const Constructor = Ajv2020 as unknown as AjvConstructor;
 const validate = new Constructor({
@@ -67,6 +88,12 @@ const validate = new Constructor({
   allErrors: false,
   ownProperties: true,
 }).compile<ConsumerConfigurationOperation>(schema);
+const validateV2 = new Constructor({
+  strict: true,
+  allErrors: false,
+  ownProperties: true,
+  schemas: [productSchema],
+}).compile<ConsumerConfigurationOperation>(schemaV2);
 const validateRelocation = new Constructor({
   strict: true,
   allErrors: false,
@@ -77,7 +104,12 @@ const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 /** Validate the complete frozen record and each retained byte string. */
 export function validateConsumerConfigurationOperation(value: unknown): ConsumerConfigurationOperation {
-  if (!validate(value)) throw new Error('Invalid consumer configuration operation');
+  if (!validate(value) && !validateV2(value)) throw new Error('Invalid consumer configuration operation');
+  if (value.schema === 'ConsumerConfigurationOperation/v2') {
+    consumerConfigurationProjectMappings(value.request);
+    if (Buffer.byteLength(JSON.stringify(value) + '\n') > 8 * 1024 * 1024)
+      throw new Error('Product configuration operation exceeds pending reader limit');
+  }
   for (const entry of [
     ...value.before,
     value.target,
@@ -137,7 +169,8 @@ const sha = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).d
 const encoded = (bytes: Uint8Array): Bytes => ({ base64: Buffer.from(bytes).toString('base64'), sha256: sha(bytes) });
 const decoded = (entry: Bytes): Buffer => Buffer.from(entry.base64, 'base64');
 const serialize = (record: ConsumerConfigurationOperation): string => JSON.stringify(record) + '\n';
-const archivePath = (id: string): string => `.agent/consumer-configuration-operation.${id}.v1.json`;
+const archivePath = (id: string, version: 1 | 2): string =>
+  `.agent/consumer-configuration-operation.${id}.v${version}.json`;
 const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
 type Completion = {
   readonly operation_id: string;
@@ -201,7 +234,7 @@ function validateFrozenRelocation(record: RelocationValidationInput): void {
   if (!beforePolicy.equals(decoded(record.before[3]!))) throw new Error('Relocation policy before differs');
   const beforeConfig = parseRuntimeConfigYaml(decoder.decode(decoded(record.before[2]!)));
   const afterConfig = parseRuntimeConfigYaml(decoder.decode(decoded(record.target)));
-  const desired = projectMappings(record.request.projectMappings);
+  const desired = projectMappings(consumerConfigurationProjectMappings(record.request));
   const moves = parseConsumerProjectMoves(
     record.request.projectMoves,
     new Map(beforeConfig.projects.map((project) => [project.project_id, project.project_root])),
@@ -341,9 +374,15 @@ function sameRequest(left: ConsumerConfigurationRequest, right: ConsumerConfigur
   return (
     left.projectRoot === right.projectRoot &&
     left.repository === right.repository &&
-    JSON.stringify(left.projectMappings) === JSON.stringify(right.projectMappings) &&
+    JSON.stringify(consumerConfigurationProjectMappings(left)) ===
+      JSON.stringify(consumerConfigurationProjectMappings(right)) &&
     JSON.stringify(left.teamProjectGrants ?? []) === JSON.stringify(right.teamProjectGrants ?? []) &&
-    JSON.stringify(left.projectMoves ?? []) === JSON.stringify(right.projectMoves ?? [])
+    JSON.stringify(left.projectMoves ?? []) === JSON.stringify(right.projectMoves ?? []) &&
+    left.schema === right.schema &&
+    (left.schema === 'ConsumerConfigurationRequest/v2' && right.schema === 'ConsumerConfigurationRequest/v2'
+      ? JSON.stringify(left.productModel) === JSON.stringify(right.productModel) &&
+        JSON.stringify(left.legacyProjectIdMap ?? {}) === JSON.stringify(right.legacyProjectIdMap ?? {})
+      : true)
   );
 }
 
@@ -364,7 +403,12 @@ export async function applyConsumerConfiguration(
     if (rootIdentity(root) !== initialIdentity) throw new Error('Root identity changed');
     const access = requireSafeRepositoryAccess(root);
     assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
-    if (access.fileExists(archivePath(operationId), 'configuration archive'))
+    if (
+      access.fileExists(
+        archivePath(operationId, frozenRequest.schema === 'ConsumerConfigurationRequest/v2' ? 2 : 1),
+        'configuration archive',
+      )
+    )
       throw new Error('Configuration archive already exists');
     const capture = captureConsumerConfiguration(frozenRequest);
     if (capture.plan.binding !== expectedBinding) throw new Error('Configuration plan binding changed');
@@ -373,9 +417,12 @@ export async function applyConsumerConfiguration(
     const derived = capture.receipt ? await derivePendingConfigurationReceipt(frozenRequest, proof.assertActive) : null;
     if (derived && (derived.plan.binding !== capture.plan.binding || !derived.beforeReceipt.equals(capture.receipt!)))
       throw new Error('Receipt inputs changed before intent');
-    const record: ConsumerConfigurationOperation = {
-      schema: 'ConsumerConfigurationOperation/v1',
-      version: 1,
+    const record = validateConsumerConfigurationOperation({
+      schema:
+        frozenRequest.schema === 'ConsumerConfigurationRequest/v2'
+          ? 'ConsumerConfigurationOperation/v2'
+          : 'ConsumerConfigurationOperation/v1',
+      version: frozenRequest.schema === 'ConsumerConfigurationRequest/v2' ? 2 : 1,
       operation_id: operationId,
       root,
       root_identity: initialIdentity,
@@ -391,15 +438,14 @@ export async function applyConsumerConfiguration(
         ? { relocation: freezeConsumerRelocation(frozenRequest, capture, initialIdentity) }
         : {}),
       progress: 'intent',
-    };
-    validateConsumerConfigurationOperation(record);
+    });
     proof.assertActive();
     if (rootIdentity(root) !== initialIdentity) throw new Error('Root identity changed');
     await access.ensureDirectoryAsync('.agent', 'configuration namespace');
     proof.assertActive();
     if (rootIdentity(root) !== initialIdentity) throw new Error('Root identity changed');
     access.assertDirectory('.agent', 'configuration namespace');
-    if (access.fileExists(archivePath(operationId), 'configuration archive'))
+    if (access.fileExists(archivePath(operationId, record.version), 'configuration archive'))
       throw new Error('Configuration archive already exists');
     const fresh = captureConsumerConfiguration(frozenRequest);
     if (
@@ -432,7 +478,7 @@ export async function resumeConsumerConfiguration(
     const view = repositoryReadOnlyObservation(access);
     assertConsumerCleanInitializationInactive(view);
     const hasPending = view.fileExists(pending, 'configuration intent');
-    const archive = archivePath(operationId);
+    const archive = archivePath(operationId, frozenRequest.schema === 'ConsumerConfigurationRequest/v2' ? 2 : 1);
     const hasArchive = view.fileExists(archive, 'configuration archive');
     const pendingBytes = hasPending ? view.readBytes(pending, 'configuration intent') : null;
     const archiveBytes = hasArchive ? view.readBytes(archive, 'configuration archive') : null;
@@ -746,14 +792,19 @@ async function finishOperation(
   if (record.progress === 'receipt_applied') await advance('complete');
   await revalidate();
   const result = completedResult(record);
-  if (access.fileExists(archivePath(record.operation_id), 'configuration archive'))
+  if (access.fileExists(archivePath(record.operation_id, record.version), 'configuration archive'))
     throw new Error('Configuration archive already exists');
   proof.assertActive();
-  await access.moveNoReplaceAsync(pending, archivePath(record.operation_id), sha(bytes), 'configuration archive');
+  await access.moveNoReplaceAsync(
+    pending,
+    archivePath(record.operation_id, record.version),
+    sha(bytes),
+    'configuration archive',
+  );
   proof.assertActive();
   if (
     access.fileExists(pending, 'configuration intent') ||
-    !access.readBytes(archivePath(record.operation_id), 'configuration archive').equals(bytes)
+    !access.readBytes(archivePath(record.operation_id, record.version), 'configuration archive').equals(bytes)
   )
     throw new Error('Configuration archive outcome is unknown');
   return result;

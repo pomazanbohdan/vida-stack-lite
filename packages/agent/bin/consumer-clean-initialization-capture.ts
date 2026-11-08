@@ -3,7 +3,7 @@ import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
-import { loadProjectSetContext } from '../src/config/project-context.ts';
+import { loadProjectSetContext, productDefinitionPaths } from '../src/config/project-context.ts';
 import { repositoryReadOnlyObservation, requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
   CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH,
@@ -98,6 +98,22 @@ function fileObservation(root: string, relative: string, access: ReturnType<type
   });
 }
 
+function configuredProjectPaths(config: AgentRuntimeConfig): string[] {
+  return config.projects.flatMap((project) => [
+    ...('documents' in project
+      ? productDefinitionPaths(project).map((value) => value.split(/[?*]/, 1)[0]!.replace(/\/+$/, '') || '.')
+      : [
+          project.project_root,
+          project.wiki_root,
+          project.wiki_path,
+          project.wiki_output_root,
+          project.internal_root,
+          project.ledger_root,
+        ]),
+    ...Object.values(project.path_overrides ?? {}).filter((value): value is string => typeof value === 'string'),
+  ]);
+}
+
 function protectedPaths(config: AgentRuntimeConfig, projectRoots: readonly string[]): string[] {
   const result = [
     '.agent/coordination',
@@ -121,15 +137,7 @@ function protectedPaths(config: AgentRuntimeConfig, projectRoots: readonly strin
     config.research_decision.paths.cache,
     config.research_decision.paths.activation_history,
     ...projectRoots,
-    ...config.projects.flatMap((project) => [
-      project.project_root,
-      project.wiki_root,
-      project.wiki_path,
-      project.wiki_output_root,
-      project.internal_root,
-      project.ledger_root,
-      ...Object.values(project.path_overrides ?? {}).filter((value): value is string => typeof value === 'string'),
-    ]),
+    ...configuredProjectPaths(config),
     ...config.knowledge.sources.filter((source) => source.kind === 'local').map((source) => source.location),
   ];
   for (const item of result) {
@@ -145,20 +153,9 @@ function protectedPaths(config: AgentRuntimeConfig, projectRoots: readonly strin
   return ordered(result);
 }
 
-/** Re-derive the durable protection union from validated current config without adding v2 fields. */
+/** Re-derive the durable protection union from every declared versioned product path. */
 export function consumerCleanInitializationProtectedPaths(config: AgentRuntimeConfig): string[] {
-  return protectedPaths(
-    config,
-    config.projects.flatMap((project) => [
-      project.project_root,
-      project.wiki_root,
-      project.wiki_path,
-      project.wiki_output_root,
-      project.internal_root,
-      project.ledger_root,
-      ...Object.values(project.path_overrides ?? {}).filter((value): value is string => typeof value === 'string'),
-    ]),
-  );
+  return protectedPaths(config, []);
 }
 
 /** Capture a v2 plan from the current validated project config without publishing or creating anything. */

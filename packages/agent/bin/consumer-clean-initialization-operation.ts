@@ -34,6 +34,7 @@ import { requireSafeRepositoryAccess, repositoryReadOnlyObservation } from '../s
 import {
   parseRuntimeConfigYaml,
   readRuntimeConfigurationForObservation,
+  productModelForRuntimeConfig,
   type AgentRuntimeConfig,
 } from '../src/config/runtime-config.js';
 import { deriveWorkspaceId, canonicalRepositoryRoot } from '../src/workspace-identity.js';
@@ -986,10 +987,12 @@ function preparedForOperation(operation: ConsumerCleanInitializationOperationV2)
 }
 
 function initializationRequest(operation: ConsumerCleanInitializationOperationV2) {
+  const model = productModelForRuntimeConfig(operationConfig(operation.root, operation));
   return {
     projectRoot: operation.request.projectRoot,
     repository: operation.request.repository,
     projectMappings: operation.request.projectMappings,
+    ...(model === undefined ? {} : { productModel: model }),
   };
 }
 

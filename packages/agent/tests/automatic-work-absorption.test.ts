@@ -2330,6 +2330,7 @@ test('admission rejects forged foreign implementation paths before source snapsh
     const rawConfig = parseAgentRuntimeConfigYaml(
       readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8'),
     );
+    if (rawConfig.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
     const project = rawConfig.projects[0],
       integration = rawConfig.integrations.providers[0];
     if (!project || !integration) throw new Error('fixture config is missing project or integration');
@@ -2382,6 +2383,7 @@ test('admission accepts an exact out-of-root shared path under the selected proj
     const rawConfig = parseAgentRuntimeConfigYaml(
       readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8'),
     );
+    if (rawConfig.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
     const project = rawConfig.projects[0];
     if (!project) throw new Error('fixture config has no project');
     const changedConfig: AgentRuntimeConfig = {

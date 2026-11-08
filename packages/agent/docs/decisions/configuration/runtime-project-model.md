@@ -130,6 +130,19 @@ Prefixes у YAML підтверджені користувачем. Цільов
 
 Future GUI, інтеграція Jira/Azure API, Powers runtime integration, нові work-item типи поза початковим набором і загальний `.vida` storage rollout не входять у цей пакет реалізації.
 
+## Task 4/5 versioned runtime contract
+
+Root resolves the Task4/5 implementation seam under the approved Task4 schema-decision authority on 2026-11-06. The actual Luna drafts and their independent Devin reviews are retained in `.agent/work/init-priority-parallel-20261106/`; both reviews found an incompatible adapter and a second resolver. Those drafts are proposals, not active configuration or Source grants. The following contract replaces their incompatible API proposals.
+
+1. Add strict `AgentRuntimeConfig/v2`, version `2`, and the corresponding strict project-component schema dispatch where `.vida/project.yaml` is used. Preserve the v1 schema, serializer, existing artifact meaning and old-read behavior. Source selection continues through the existing configuration-source owner; schema/version dispatch occurs inside the existing `loadRuntimeConfig`/validation functions. Keep one active configuration source and one existing project-context resolver. No separately loaded product-model companion, second `ProductContext` resolver or independent adoption framework is introduced.
+2. The v2 runtime document retains the framework's operational configuration. Its repository adds the explicit repository `prefix`; each project carries the complete existing `ProductDefinition` fields, including product prefix, independent document/index/requirements-area/research/decision paths, work-store path, enabled catalog kinds and hierarchy. Existing operational delivery-group/path overrides may remain explicitly declared fields. Legacy `task_prefix` and wiki/internal/ledger project fields are not a second serialized authority for these product values. Validate the extracted product definitions with the existing `productModelSchema`, rather than implementing another product validator. Ordinary operational scratch/coordination paths do not become canonical product documents or product work stores.
+3. `AgentRuntimeConfigV1` names the preserved legacy type; `AgentRuntimeConfigV2` names the new raw contract; the existing public `AgentRuntimeConfig` entry supports their explicit version dispatch. Extend `loadProjectSetContext` and its existing path-profile/membership owner for product fields and fresh complete-input bindings. Overlapping code/document/requirements/work paths return all matching products, independent of cwd; a singular operation requires an explicit selected product. Existing loaded-context authorization and stale-input checks remain binding. Missing configured documents are reported as setup gaps, not fabricated content.
+4. Freeze the shared pure adapter as `applyProductModelToRuntimeConfig(template, model, options?): AgentRuntimeConfigV2` in `src/config/runtime-config.ts`, where `template` is a supported validated runtime config, `model` is `ProductModelDefinition`, and `options.legacy_project_id_map` is an explicit immutable old-to-new project-ID map. Fresh init may reuse documented package-owned operational defaults; it must not invent missing product prefixes, paths, kinds or hierarchy. The returned v2 config retains every supplied model value and is validated through the same version-dispatched codec. No effect or activation occurs in this adapter.
+5. Task4 owns the full-model consumer-configuration request/plan/operation codec transition, including `bin/init-configuration.ts`, `bin/consumer-configuration-operation.ts`, their schemas and named tests. Introduce explicitly versioned v2 request/plan/operation variants for the model route; preserve v1 journal reads and exact historical resume semantics. The request includes the complete model and explicit identity map. Its plan binds exact before/after bytes and references; apply/resume use the existing admission, consent, receipt re-derivation, journal-before-effect and CAS owner. Its existing `applyConsumerConfiguration`/`resumeConsumerConfiguration` are the effect boundary, not the pure `prepareProjectUpgradeArtifacts` helper. The existing project-upgrade owner remains responsible for its supported `.vida` activation closure; its current existing-storage refusal is preserved. Extend only the causal existing owner needed for the v2 target, ship it with the codecs, and retain UNKNOWN/refusal when an active contour is unsupported.
+6. Explicit `plugin -> codex` conversion changes local project references only through the bound configuration operation. Preserve provider IDs/provider/tenant/namespace values and retain exact old project links in before-images and operation evidence. Enumerate all affected local references; unresolved or ambiguous attribution refuses conversion. Never rename old work keys, rewrite historical journals or derive project identity from integration metadata.
+7. Task5 consumes this adapter and the exported request/result types. It owns the injected async prompt port, deterministic complete-input DTO, public init/configure entrypoints and help integration. Complete `--product-model` input is noninteractive; missing no-TTY input returns structured `input_required` before target observation/effects; cancellation has no init/config effect. The existing initialization prepare/finish owner binds the complete model and rendered output bytes. Legacy explicit-input behavior and C3 custody/CAS remain supported. Shared init-core integration follows Task4's frozen exported types; independent pure prompt/input work can run concurrently without writing Task4 files.
+8. Root owns package/export/resource registration and canonical documentation integration under actual Source authority. Native issue and ownership precede every Source writer; reviews grant no rights. Qualify old-read compatibility, full-model round-trip, overlap, explicit identity conversion, refusal/CAS/recovery, no-TTY/cancellation and public help/package parity on final bytes. Preserve current test/product/numeric limits and all FAIL/UNKNOWN evidence. This is an implementation contract, not proof of delivered v2, actual repository init or user Runtime acceptance. Proposed document destinations remain subject to the existing explicit-input/adoption rules.
+
 ## Критерії приймання реалізації
 
 | Перевірка                 | Очікуваний результат                                                                                                                                  |
@@ -164,19 +177,10 @@ Future GUI, інтеграція Jira/Azure API, Powers runtime integration, н�
 
 Task 3 перевіряється послідовними Source units: C1 — pure strict v2 codec/schema і contract tests; C2 — capture/protection/preservation та maintenance/admission seams; C3 — effect/recovery owner і public CLI/help/inventory. C1 не має filesystem effects і не є готовим clean-init owner. Жоден unit не відкладає required checks або scoped PATCH delivery після завершення всього Task 3.
 
-C3 Source state (2026-11-05): strict plan/inspect/apply/resume/retire routes and
-the existing gate-only refusal for `.vida` data are present. Apply remains bound
-to legacy YAML capture. The final combined native fault/recovery case closed
-PASS at1 executed case/28 assertions/0 failures; public apply/release/retire
-closed at1/15/0. Raw JUnit corrects the retained Luna25 count without changing
-the original report.
-Four older full-path timeouts remain UNKNOWN, Root apply-01/02 remain FAIL, and
-Root apply-03/guard-02 remain closed PASS. Root R8 four cases/46 assertions,
-prepared two/38, publication/refusal two/58 and CLI seven/16 closed, as did
-formatter, lint, four typechecks, AST, help/inventory and Vex update. The
-[Task3 record](../../plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
-binds receipts and independent review. Source stays0.1.9; installed runtime
-0.1.11 is separate. Native Code closeout, delivery and installation remain open.
+Поточні статуси та delivery blockers належать [канонічній черзі](../../next-actions.md).
+[Task 3 record](../../plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
+містить Source/check/native evidence та межі proof. Це рішення зберігає погоджений
+контракт; воно не є другою чергою або окремим version/status record.
 
 ## Джерела і межі затвердження
 

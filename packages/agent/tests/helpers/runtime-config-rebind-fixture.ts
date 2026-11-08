@@ -1392,6 +1392,7 @@ export function fixture({
     const values = parseRuntimeConfigYaml(
       readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8').replaceAll('src/**', 'packages/agent/**'),
     );
+    if (values.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
     if (!values.projects.some((project) => project.project_id === projectId))
       throw Error('Fixture Source project is missing');
     const sourceConfig: AgentRuntimeConfig = {
@@ -1413,8 +1414,9 @@ export function fixture({
   );
   if (!sourceMode) cpSync(path.join(source, 'schemas'), path.join(root, bundle, 'schemas'), { recursive: true });
   if (extraProject) {
-    const values = parseRuntimeConfigYaml(readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8')),
-      originalProject = values.projects[0],
+    const values = parseRuntimeConfigYaml(readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8'));
+    if (values.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
+    const originalProject = values.projects[0],
       defaultTeam = values.teams['default-development'];
     if (originalProject === undefined) throw Error('Fixture config has no project to clone');
     if (defaultTeam === undefined) throw Error('Fixture default development team is missing');
@@ -1642,6 +1644,12 @@ export function withAgentProfileChange(
 
 export function withProjectTitle(config: AgentRuntimeConfig, projectIndex: number, title: string): AgentRuntimeConfig {
   if (config.projects[projectIndex] === undefined) throw Error(`Fixture project ${projectIndex} is missing`);
+  if (config.schema === 'AgentRuntimeConfig/v1') {
+    return {
+      ...config,
+      projects: config.projects.map((project, index) => (index === projectIndex ? { ...project, title } : project)),
+    };
+  }
   return {
     ...config,
     projects: config.projects.map((project, index) => (index === projectIndex ? { ...project, title } : project)),
@@ -1650,6 +1658,7 @@ export function withProjectTitle(config: AgentRuntimeConfig, projectIndex: numbe
 
 export function withoutLastProject(config: AgentRuntimeConfig): AgentRuntimeConfig {
   if (config.projects.length === 0) throw Error('Fixture config has no project to remove');
+  if (config.schema === 'AgentRuntimeConfig/v1') return { ...config, projects: config.projects.slice(0, -1) };
   return { ...config, projects: config.projects.slice(0, -1) };
 }
 

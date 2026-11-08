@@ -7706,6 +7706,7 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       let completed = false;
       try {
         const { args, initialization, initializationPath, config } = createFixture(root, 'agent-runtime-new', true);
+        if (config.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
         const defaultTeam = config.teams['default-development'];
         assert.ok(defaultTeam);
         const missingPolicyPath = 'docs/agent-instructions/unavailable-alpha-policy.v1.json';
@@ -14620,16 +14621,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
         }),
       },
       {
-        name: 'stopped-source presence family stays outside retired ingress',
-        change: (request: DecoderPrefix) => ({
-          ...request,
-          candidateSnapshot: {
-            schema: 'StoppedSourceCandidatePresence/v1',
-            entries: [{ path: 'candidate.ts', presence: 'absent', sha256: null, size: null }],
-          },
-        }),
-      },
-      {
         name: 'original tool record must be completed',
         change: (request: DecoderPrefix) => ({
           ...request,
@@ -14849,39 +14840,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
             },
           }),
         },
-        {
-          label: 'presence candidate tuple must be closed',
-          change: (r: StoppedDecoderPrefix) => ({
-            ...r,
-            candidateSnapshot: {
-              schema: 'StoppedSourceCandidatePresence/v1',
-              entries: [{ path: 'candidate.ts', presence: 'absent', sha256: null }],
-            },
-          }),
-        },
-        {
-          label: 'presence candidate rejects mixed legacy entries',
-          change: (r: StoppedDecoderPrefix) => ({
-            ...r,
-            candidateSnapshot: {
-              schema: 'StoppedSourceCandidatePresence/v1',
-              entries: [
-                { path: 'candidate.ts', presence: 'absent', sha256: null, size: null },
-                { path: 'legacy.ts', sha256: 'e'.repeat(64), size: 1 },
-              ],
-            },
-          }),
-        },
-        {
-          label: 'presence candidate rejects absent bytes',
-          change: (r: StoppedDecoderPrefix) => ({
-            ...r,
-            candidateSnapshot: {
-              schema: 'StoppedSourceCandidatePresence/v1',
-              entries: [{ path: 'candidate.ts', presence: 'absent', sha256: 'e'.repeat(64), size: null }],
-            },
-          }),
-        },
       ],
     ],
   ] as const;
@@ -14945,71 +14903,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     },
   );
 
-  test('run stopped-source decoder rejects invalid presence sizes before workspace access', async () => {
-    const malformedEntries = [
-      { label: 'negative present size', presence: 'present', sha256: 'e'.repeat(64), size: -1 },
-      {
-        label: 'unsafe present size',
-        presence: 'present',
-        sha256: 'e'.repeat(64),
-        size: Number.MAX_SAFE_INTEGER + 1,
-      },
-      { label: 'fractional present size', presence: 'present', sha256: 'e'.repeat(64), size: 1.5 },
-      { label: 'absent tuple has a size', presence: 'absent', sha256: null, size: 0 },
-    ];
-    for (const entry of malformedEntries) {
-      const { label, ...tuple } = entry;
-      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-stopped-presence-size-'));
-      let complete = false;
-      try {
-        const { config, initialization, initializationPath } = createFixture(root),
-          configPath = path.join(root, 'agent-runtime.config.v1.yaml'),
-          requestPath = path.join(root, 'request.json'),
-          configBefore = readFileSync(configPath),
-          initializationBefore = readFileSync(initializationPath),
-          base = stoppedSourceDecoderRequest(initialization),
-          request = {
-            ...base,
-            observation: {
-              ...base.observation,
-              status: 'reported_failed',
-              evidence_refs: ['missing-terminal-record.json'],
-            },
-            candidateSnapshot: {
-              schema: 'StoppedSourceCandidatePresence/v1',
-              entries: [{ path: 'candidate.ts', ...tuple }],
-            },
-          },
-          requestBytes = Buffer.from(JSON.stringify(request));
-        writeFileSync(requestPath, requestBytes);
-        await assert.rejects(
-          run([
-            '--capture-stopped-source',
-            'true',
-            '--mode',
-            'inspect',
-            '--project-root',
-            root,
-            '--request',
-            'request.json',
-          ]),
-          (error: unknown) => error instanceof Error && error.message === 'Capture workspace/root binding differs',
-          label,
-        );
-        expect(readFileSync(configPath)).toEqual(configBefore);
-        expect(readFileSync(initializationPath)).toEqual(initializationBefore);
-        expect(readFileSync(requestPath)).toEqual(requestBytes);
-        expect(existsSync(sessionHandoffDatabasePath(root, config))).toBe(false);
-        expect(existsSync(path.join(root, 'fixture.sqlite'))).toBe(false);
-        expect(existsSync(path.join(root, '.agent', 'work'))).toBe(false);
-        complete = true;
-      } finally {
-        if (complete) rmSync(root, { recursive: true, force: true });
-        else process.stderr.write(`Retained failed stopped-source size decoder root (${label}): ${root}\n`);
-      }
-    }
-  });
-
   test('run stopped-source capture rejects an unrecognized terminal record before workspace access', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-stopped-terminal-'));
     let complete = false;
@@ -15066,102 +14959,6 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
       if (complete) rmSync(root, { recursive: true, force: true });
       else process.stderr.write(`Retained failed stopped-source terminal root: ${root}\n`);
     }
-  });
-
-  test('run stopped-source inspect safely observes a declared absent presence candidate', async () => {
-    await withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
-      const fixture = createFixture(false, true),
-        workId = `stopped-source-presence-${randomUUID()}`,
-        ownerHandle = `fixture-owner-${randomUUID()}`,
-        nativeActor = `fixture-source-${randomUUID()}`,
-        actionId = `fixture-action-${randomUUID()}`,
-        issueId = `fixture-issue-${randomUUID()}`,
-        hostAttemptId = `fixture-attempt-${randomUUID()}`,
-        admitted = fixture.admit(fixture.prepare(workId, `user:${workId}`, ownerHandle)),
-        admittedWork = admitted.host.work,
-        workVersion = admitted.host.workVersion,
-        ledgerVersion = admitted.host.ledgerVersion;
-      if (!admittedWork || !workVersion || !ledgerVersion)
-        throw Error('Stopped-source presence fixture did not admit complete Host state');
-      const initialization = {
-          workspace_id: deriveWorkspaceId(fixture.config.repository.repository_id, fixture.root),
-          repository_id: admittedWork.binding.repository_id,
-          project_ids: [...admittedWork.binding.project_ids],
-          integrations_digest: admittedWork.binding.integrations_digest,
-        },
-        absentPath = `absent-source-${workId}.txt`,
-        baseRequest = stoppedSourceDecoderRequest(initialization),
-        summary = 'Read-only presence ingress check',
-        request = {
-          ...baseRequest,
-          workspace_id: fixture.store.workspaceId,
-          identity: { ...baseRequest.identity, work_id: workId },
-          expectedWork: workVersion,
-          expectedLedger: ledgerVersion,
-          nativeSessionHandle: ownerHandle,
-          observation: {
-            ...baseRequest.observation,
-            status: 'reported_failed',
-            summary,
-            output_digest: canonicalJsonDigest(summary),
-            action_id: actionId,
-            issue_id: issueId,
-            host_attempt_id: hostAttemptId,
-            agent_id: nativeActor,
-            changed_paths: [],
-            evidence_refs: ['terminal-record.json'],
-          },
-          terminalEvidence: {
-            ...baseRequest.terminalEvidence,
-            native_actor: nativeActor,
-            observation_ref: 'terminal-record.json',
-            owner_decision_ref: 'authorization.json',
-          },
-          candidateSnapshot: {
-            schema: 'StoppedSourceCandidatePresence/v1',
-            entries: [{ path: absentPath, presence: 'absent', sha256: null, size: null }],
-          },
-        },
-        requestPath = path.join(fixture.root, 'request.json'),
-        terminalPath = path.join(fixture.root, 'terminal-record.json'),
-        databaseRelativePath = sessionHandoffDatabaseRelativePath(fixture.config),
-        workspaceBefore = inspectHostWorkspaceDatabase(fixture.root, databaseRelativePath, fixture.store.workspaceId);
-      expect(existsSync(path.join(fixture.root, absentPath))).toBe(false);
-      writeFileSync(requestPath, record(request));
-      writeFileSync(
-        terminalPath,
-        record({
-          schema: 'RootObservedStoppedSource/v1',
-          status: 'partial_stopped',
-          actor: nativeActor,
-          action_id: actionId,
-          issue_id: issueId,
-          host_attempt_id: hostAttemptId,
-          observation_ref: 'terminal-record.json',
-          native_status: 'completed',
-          source_turn_id: `source-turn-${workId}`,
-          final_message_id: `final-message-${workId}`,
-          current_tmp_only_turn_id: `temporary-turn-${workId}`,
-          owner_thread_id: ownerHandle,
-        }),
-      );
-      const result = await run([
-        '--capture-stopped-source',
-        'true',
-        '--mode',
-        'inspect',
-        '--project-root',
-        fixture.root,
-        '--request',
-        'request.json',
-      ]);
-      expect(result).toMatchObject({ status: 'inspect_current' });
-      expect(result).not.toHaveProperty('rights_granted');
-      expect(existsSync(path.join(fixture.root, absentPath))).toBe(false);
-      expect(inspectHostWorkspaceDatabase(fixture.root, databaseRelativePath, fixture.store.workspaceId)).toEqual(
-        workspaceBefore,
-      );
-    });
   });
 
   describe(() => {

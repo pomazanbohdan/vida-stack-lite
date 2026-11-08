@@ -543,6 +543,8 @@ test('read-only repair context handoff preserves plan bytes and refuses forged o
   try {
     const { projectContext, snapshot } = repairSnapshot(value);
     const input = { ...value.input, snapshot };
+    const config = input.config;
+    if (config.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
     const expected = planReadOnlyDispatchRepair(value.input);
     expect(buildReadOnlyDispatchRepairPlan(input)).toEqual(expected);
     expect(buildReadOnlyDispatchRepairPlan({ ...input, projectContext })).toEqual(expected);
@@ -553,7 +555,7 @@ test('read-only repair context handoff preserves plan bytes and refuses forged o
       buildReadOnlyDispatchRepairPlan({
         ...input,
         projectContext,
-        config: { ...input.config, repository: { ...input.config.repository, title: 'changed title' } },
+        config: { ...config, repository: { ...config.repository, title: 'changed title' } },
       }),
     ).toThrow(/repair project context differs/);
     copyFileSync(

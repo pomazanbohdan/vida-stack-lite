@@ -234,6 +234,7 @@ export async function createInitialSourceWorkFixture({
     writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), configBytes);
     if (sourceProject) {
       const initial = loadRuntimeConfig(root);
+      if (initial.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
       const configured: AgentRuntimeConfig = {
         ...initial,
         repository: { ...initial.repository, code_selectors: ['packages/agent/src/**'] },

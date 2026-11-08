@@ -63,6 +63,8 @@ test('plans two to three projects without writing and preserves unrelated YAML',
     expect(captured.targetConfig).toContain('# private-comment-do-not-publish');
     const previous = parseRuntimeConfigYaml(original);
     const target = parseRuntimeConfigYaml(captured.targetConfig);
+    if (previous.schema !== 'AgentRuntimeConfig/v1' || target.schema !== 'AgentRuntimeConfig/v1')
+      throw new Error('Fixture requires v1 runtime configs');
     expect(target.projects.slice(0, 2)).toEqual([...previous.projects]);
     expect(target.integrations.providers.slice(0, 2)).toEqual([...previous.integrations.providers]);
     expect(target.agents).toEqual(previous.agents);

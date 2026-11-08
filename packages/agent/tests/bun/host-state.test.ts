@@ -1364,6 +1364,7 @@ test(
         userInstructionRef: request.userInstructionRef,
       };
       expect(f.store.retrieveCorrectiveAuthorization(lookup)).toBeNull();
+      if (f.config.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
       const denied: readonly [Partial<typeof request>, string][] = [
         [{ userInstructionRef: ' ' }, 'attributable corrective authorization missing'],
         [
@@ -15589,6 +15590,7 @@ describe('host-owned durable maintenance fence', () => {
           },
         });
         const config = loadRuntimeConfig(configuredRoot);
+        if (config.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
         const relative = config.control.work_root + '/session-handoff.v1.sqlite';
         mkdirSync(path.join(configuredRoot, config.control.work_root), { recursive: true });
         const configuredWorkspace = deriveWorkspaceId(config.repository.repository_id, configuredRoot);

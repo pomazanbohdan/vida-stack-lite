@@ -5,7 +5,7 @@ title: Runtime product model implementation
 
 # Runtime product model implementation plan
 
-> For agentic workers: use subagent-driven development task by task. Luna implements; OpenCode DeepSeek V4.1 Flash validates; Root owns Git and native/publication effects. User already authorized execution; do not ask again for a routine plan/execution choice.
+> For agentic workers: use subagent-driven development task by task. Luna implements; Devin SWE-2 Flash additionally reviews every Luna result under the user's current instruction. Required runtime validator roles remain separate. Root owns Git and native/publication effects. User already authorized execution; do not ask again for a routine plan/execution choice.
 
 **Goal:** implement the approved product/wiki/work-item model, qualify temporary CLI setup, release the next PATCH, externally update Windows runtime and safely clean-initialize this repository.
 
@@ -19,7 +19,7 @@ title: Runtime product model implementation
 
 Follow the [one-task runtime-first delivery cycle](../decisions/work-items/runtime-first-development.md). This plan describes the full program; it is not one release batch. Start one task through the installed runtime. If a demonstrated runtime defect blocks it, fix only that defect and finish the same task outside runtime. Qualify, deliver a new PATCH build, update the system runtime, and reconcile Markdown before starting the next task through that updated runtime.
 
-Task 2 (`runtime-work-records`) Source and the demonstrated readonly-frontier repair are delivered in v0.1.9; its original runtime attempt has the supported suspended disposition described below. Task 1 is an integrated dependency. Tasks 3–6 remain queued for delivery; Task 3 C3 Source work is in progress and not complete. Preserve mandatory release gates. An unrelated gate is a reported delivery blocker, not permission to skip checks or silently add other tasks. Track Source completion, the retained runtime attempt, and actual delivery separately.
+The [canonical queue](../next-actions.md#active-implementation) owns current priority and dependencies. Task 1 is an integrated Source dependency and Task 2 is delivered in v0.1.9. Task 3's R15 Source/Code workflow is complete; delivery remains blocked. Tasks 4–6 wait in order. This plan owns acceptance and evidence for those same tasks, not duplicate active entries. Preserve release gates, original attempt dispositions and the distinction between Source completion, delivery and user Runtime acceptance.
 
 ## Global constraints
 
@@ -32,7 +32,7 @@ Task 2 (`runtime-work-records`) Source and the demonstrated readonly-frontier re
 - This repository's clean-init prefixes are explicitly confirmed: repository `VIDA`, Agent `AGENT`, Codex `CODEX`, Powers `POWERS`. Carry them into the supported setup owner without asking again; do not activate new cfg fields before their implementation/adoption gates.
 - Published strict-v1 active-artifact formats must not be silently widened before a supported atomic repair/adoption owner. Preserve CAS, safe filesystem, UNKNOWN, native evidence and installed-vs-Source boundaries.
 - Root alone uses Git, dispatches/releases workflows, installs or resets the real repository. Workers never commit, publish, update real installed files or clean real state.
-- No new external runtime for installers; Linux Bash/system tools, Windows PowerShell/system tools. Software version increments PATCH. Published and system-installed runtime version is 0.1.9; the next candidate is selected by the existing owner from live state, normally 0.1.10.
+- No new external runtime for installers; Linux Bash/system tools, Windows PowerShell/system tools. Software version increments PATCH. The existing owner selects the next candidate from verified live state. The [canonical queue](../next-actions.md#current-delivery-state) separates main Source, release checkout, public and installed versions.
 
 ## Review focus
 
@@ -43,6 +43,8 @@ Task 2 (`runtime-work-records`) Source and the demonstrated readonly-frontier re
 5. Clean-init archive interruption, symlinks and foreign files: retain docs/work/evidence, refuse unowned paths, verify before-images and resumability.
 
 ## Task 1 — reusable catalog and product model
+
+**Status:** integrated Source dependency reused by Task 2. Active config/context adoption remains Task 4. The criteria below are the acceptance baseline, not a new implementation queue.
 
 **Files:** create `packages/agent/src/work-items/catalog.ts`, `packages/agent/src/config/product-model.ts`, `packages/agent/schemas/product-model.v1.schema.json`; tests `tests/work-item-catalog.test.ts`, `tests/product-model.test.ts`. Conditionally modify `src/config/runtime-config.ts` only to centralize/re-export its canonical-kind type without changing behavior. Do not change active runtime-config v1 validation.
 
@@ -58,11 +60,8 @@ Zod is the semantic authority for Task 1; JSON Schema is a declarative integrati
 
 Path validation follows the existing pure rules at `src/config/project-context.ts:356-372` and its `invalidPathSegment` dependency. A pure local helper must preserve those rules without importing project-context or doing filesystem I/O. Directory/file path fields use it; code_selectors are nonempty strings with existing glob syntax and are not subjected to the no-wildcard path rule. Prefix regex is `^[A-Z][A-Z0-9]*$`.
 
-- [ ] RED: assert all seven existing kinds map consistently; unknown code fails; duplicate prefixes/IDs, malformed paths and inconsistent policy references fail; explicit codex accepted.
-- [ ] RED: configure TASK→PBI, BUG→BUG and PBI→TASK in one product, forbid one pair in another; assert data-driven behavior with no special leaf type.
-- [ ] Implement the catalog/schema/validation owner using existing dependencies. Keep policy parsing pure and deterministic; no filesystem writes.
-- [ ] GREEN: pinned Bun targeted new tests plus existing runtime-config-yaml/project-configuration-contract regressions; package typecheck as applicable.
-- [ ] Root captures diff/evidence; fresh OpenCode spec+quality review before integration.
+- Acceptance baseline covers seven canonical kinds, unknown codes, duplicate prefixes/IDs, malformed paths, policy references and explicit codex identity. Policy fixtures cover TASK→PBI, BUG→BUG and PBI→TASK without a fixed leaf type.
+- The catalog/schema/validation owner stays pure and uses existing dependencies. Scoped test/review evidence does not establish whole-product numeric qualification or active configuration adoption. Retain the original pinned Bun tests, existing runtime-config-yaml/project-configuration-contract regressions, applicable typecheck and independent spec/quality review criteria.
 
 ## Task 2 — local work records, keys and hierarchy
 
@@ -78,11 +77,8 @@ Path validation follows the existing pure rules at `src/config/project-context.t
 
 Record includes schema, internal_id, key, kind/code, product ID, number, parent_id, aliases and provider identity references. Persist current OKF concepts at `items/<internal_id>.md`; index is derived. Use existing SafeRepositoryAccess atomic operations and owner/custody patterns, not ad hoc replacement.
 
-- [ ] RED: creation/lookup/typed keys, per-product shared counter and disabled-type creation; legacy provider IDs retained.
-- [ ] RED: arbitrary configured edges, cycle/self/multi-parent/cross-product rejection; reclassification checks both parent and children.
-- [ ] RED: parallel creates plus injected faults around counter reservation/record/index; assert unique non-reused numbers, exact retry and recoverable gaps.
-- [x] Implement store and typed operations with UUID identity, alias uniqueness and preserved record on invalid reclassification. No actual user-store effects.
-- [ ] GREEN: new focused tests and existing work-admission/provider-binding regressions; OpenCode review.
+- Delivered scope includes typed creation/lookup, shared counters, disabled-type refusal, legacy references, configurable hierarchy, UUID identity, aliases and identity-preserving reclassification. Invalid operations preserve records; no actual user-store effects are inferred.
+- Retained acceptance covers cycle/self/multi-parent/cross-product rejection, parent/child reclassification checks, parallel creation and counter/record/index faults, unique numbers, exact retry and recoverable gaps. Keep focused and work-admission/provider-binding regression and independent review criteria. The check limits above remain authoritative; no all-green suite or repeated implementation is inferred.
 
 ## Task 3 — clean-init/archive/repair effect owner
 
@@ -92,22 +88,26 @@ C3 Source checkpoint (2026-11-05): strict plan/inspect/apply/resume/retire and r
 
 Root final qualification closed R8 four cases/46 assertions, prepared two/38, publication/refusal two/58 and CLI seven/16. Together with fault and happy-path receipts these are six separate processes,17 cases/201 assertions, not one combined suite. Formatter, type-aware lint, Source/CLI/tests/tooling typechecks109/162/575/213 files, AST and public help/package inventory checks passed. Vex update completed with4147 indexed files and125 unsupported files; stale clusters were unused. Exact argv, input/driver hashes, JUnit, raw output and observed-close receipts are in `.agent/work/runtime-clean-init-c3-finish-20261105-r15/root-final-qualification-r1/summary.json` and `evidence/`; final Luna receipts are `final-writer-r1/implementation/evidence/fault-03` and `happy-01` in the same work store. Root's initial absent `src/tsconfig.json` invocation remains a closed failure; the corrected existing `tsconfig.json` route passed without Source changes.
 
-Independent Devin review (`final-writer-r1/devin-review/report.md` in that work store) found bounded implementation/quality/security PASS and requested current-proof documentation reconciliation. Root corrected the six stale pages with separate attribution under `root-doc-review-correction-r1/`; original CHANGES and25-count artifacts remain preserved. This docs-only correction changes no executable input. Native Source/Code closeout, scoped delivery, installation, Tasks4-5 activation, real repository initialization and attributable Runtime acceptance remain open. Source package0.1.9 and installed runtime0.1.11 remain separate.
+Independent Devin review (`final-writer-r1/devin-review/report.md` in that work store) requested current-proof documentation reconciliation. Root corrected six pages under `root-doc-review-correction-r1/`; original CHANGES and25-count artifacts remain preserved. Subsequent requirements/correctness/tester results and the delivery proposal each have the required additional Devin review.
+
+**Source/Code status:** R15 native report60 accepted the reviewed Source-only handoff. Inspection61 and `SOURCE-CLOSEOUT.json` record workflow success, resume complete, journal revision27, no pending actions, no recovery requirement and released Source rights. Implementation fingerprint is `37013132235ceb068c5d08b8508084a0f7ab3f0f6aecce07a16ce529fa304853`. Evidence remains `caller_report_consistency`, without native test-execution proof. Delivery, installation, Tasks4–5, actual init and user Runtime acceptance remain open.
+
+**Delivery evidence:** `delivery-integration-r1/applied.json` records 22 C3/prerequisite files and preserved published Host/run owners. Preliminary combined-tree typechecks passed for109/162/575/220 files. That directory also retains `prepare-next-auth.receipt.json`, the 300s preparation UNKNOWN, and `published-baseline-readonly-r1.result.json`, the closed read-only asset-body timeout. The [canonical queue](../next-actions.md#current-delivery-state) owns the current blocker and version split. Queue reconciliation changes no executable input, but earlier byte bindings do not certify the edited document bytes.
 
 C1 Source is integrated locally as `205157d634b99b4dd6c3d839c3bd0f5149788649` (three new files, normal commit hooks). Independent Source review is Specification MET, bounded Quality/Security PASS, Source READY; Root applied the Minor test corrections and qualified final tests9/58, with unchanged v1 journal9/32 and planner7/55 receipts. Formatter, scoped type-aware lint and four typechecks pass. This local Source component is not pushed, delivered, installed or a public effect owner. Current C2/C3 Source proof is recorded above; delivery, installed behavior and real init remain pending. All retained FAIL/UNKNOWN remain preserved.
 
 Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Task3 inspect/recovery calls did not issue or complete the current task; the missing clean-init feature alone did not establish an orchestration defect. Root requested cancellation of the external C2 planner and resumes the remaining Task3 through supported fresh/current admission and actual issue/report. Preserve C1 without replay and the original expired attempt without private edits or retroactive completion. No new external Source lane follows merely from a generic refusal.
 
-**Files:** C1 creates `bin/consumer-clean-initialization-v2.ts`, `schemas/consumer-clean-initialization-operation.v2.schema.json` and `tests/consumer-clean-journal-v2.test.ts`; existing v1 module/schema stay unchanged. C2/C3 add the preservation/maintenance seams, effect/public CLI and focused tests `tests/consumer-clean-initialization-apply.test.ts`, `tests/consumer-clean-initialization-recovery.test.ts`. Reuse existing safe observation, admission and initializer owners.
+**Files:** C1 adds `bin/consumer-clean-initialization-v2.ts`, `schemas/consumer-clean-initialization-operation.v2.schema.json` and `tests/consumer-clean-journal-v2.test.ts`; v1 stays unchanged. C2/C3 add preservation/maintenance seams, the operation/public CLI and focused apply, capture, admission and CLI tests. Fault/recovery cases live in `tests/consumer-clean-initialization-apply.test.ts`; no separate `consumer-clean-initialization-recovery.test.ts` implementation is claimed. Reuse existing safe observation, admission and initializer owners.
 
 **Interfaces:** preserve current read-only plan capture; add explicit plan/inspect/apply/resume operations. Export `applyConsumerCleanInitialization`, `inspectConsumerCleanInitialization`, `resumeConsumerCleanInitialization` with plan identity, expected state version, authorization and exact repository bindings; typed receipts distinguish planned/applied/needs_reconciliation.
 
-- [ ] RED: known managed paths archived with verified hashes and before-images; docs/work/source/evidence untouched; reject foreign identity, changed before-image, expired/unknown effects and unsafe paths.
-- [ ] RED: fault each archive/init phase, then inspect/resume; no blind duplicate move/init and no false completed receipt.
-- [ ] Implement narrowly scoped archive/apply/recovery owner. Keep retained historical custody immutable. Pair active-artifact repair before dependent format adoption.
-- [ ] GREEN: targeted recovery and safe-fs tests; package typecheck and OpenCode review. Only disposable fixture roots used.
+- [x] Complete C1/C2/C3 Source and the bounded Code workflow with the fault, happy-path, refusal and regression evidence above. Contract criteria still require verified managed-path beforeimages, docs/work/source/evidence preservation, unsafe/foreign/drift refusal and exact recovery without duplicate effects or false completion. Historical custody remains immutable.
+- [ ] Qualify and deliver the exact reconciled release checkout, then verify external Linux/Windows installation. Historical UNKNOWN effects, dependent format adoption and broader quality debt retain their own gates.
 
 ## Task 4 — config/context adoption and Codex identity
+
+**Status:** queued after Task 3's verified delivery. This queue update establishes no implementation or schema transition.
 
 **Files:** `src/config/runtime-config.ts`, `project-context.ts`, `project-layout.ts`, `project-upgrade-artifacts.ts`; runtime/component schemas, config template; `bin/consumer-configuration-operation.ts`, `consumer-project-relocation.ts`, `project-mapping-contract.ts`; package manifests/maintained-source inventories/exports. Tests named in source preflight: runtime-config-yaml, project-configuration-contract, project-context-boundary, project-mapping-contract, runtime-config-repair-boundary, consumer-configuration-operation, consumer-project-relocation.
 
@@ -117,9 +117,11 @@ Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Tas
 - [ ] RED: old config remains readable; new explicit model resolves docs independent of code, overlapping roots return all owners, cwd does not alter resolution.
 - [ ] RED: identity conversion to codex preserves provider references and refuses ambiguous ownership; active APIs/help/templates use codex; retained journals unchanged.
 - [ ] Implement using existing prepare/validate/layout/configuration owners; no second resolver or silent defaults of missing prefixes/hierarchy.
-- [ ] GREEN: focused existing/new tests, schema/resource parity, typecheck/static gates; OpenCode review before integration.
+- [ ] GREEN: focused existing/new tests, schema/resource parity, typecheck/static gates and independent review, including the user's required additional Devin review of Luna work.
 
 ## Task 5 — interactive init/config/help and package parity
+
+**Status:** queued after Task 4's verified delivery. The approved prefixes remain VIDA, AGENT, CODEX and POWERS.
 
 **Files:** `bin/init.ts`, `init-core.ts`, `init-configuration.ts`, `configure.ts`, `cli-metadata.ts`, `cli-command-contracts.ts`; injected prompt helper; templates and `docs/installation.md`, README/help sources. Tests: init-entrypoint-v8, initialization, configure-cli, scope-help-parity plus new prompt/setup scenarios.
 
@@ -128,21 +130,19 @@ Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Tas
 - [ ] RED: interactive choices reach exact config; refused prefix is not written; incomplete noninteractive input never hangs/defaults.
 - [ ] RED: all three product setup including Codex empty Source and independent/overlapping document roots; any/custom hierarchy prompts tested with scripted user responses.
 - [ ] Implement help for first init, inspect/plan/apply/resume, product setup, generic hierarchy and authorized clean init. CLI/source/native help parity and portable asset inventory required.
-- [ ] GREEN: focused CLI tests, package exports/resources/standalone regression checks; OpenCode review.
+- [ ] GREEN: focused CLI tests, package exports/resources/standalone regression checks and independent review, including the additional Devin review of Luna work.
 
 ## Task 6 — temporary end-to-end acceptance and delivery
 
-This task owns final acceptance and adoption of the complete product model. Its full-model scenarios wait for their feature dependencies. They do not postpone each earlier task's scoped PATCH delivery. Repeat the applicable existing release/install checks for each one-task cycle; do not claim unimplemented init/configuration/reset scenarios in a Task 2 release.
+**Status:** queued after Task 5's verified delivery. This task owns full-model temporary-consumer qualification, real repository adoption and attributable Runtime acceptance. It includes the formerly separate governed-installed-runtime-session scenario. No real init or user acceptance is established. Each earlier task retains its own scoped delivery cycle.
 
 - [ ] Build a qualified candidate in an isolated temp consumer; use actual CLI init/config to cover every approved field and work operation, invalid inputs, interrupted clean-init recovery and help examples. Record actual receipts/exit/hash/config bindings.
-- [ ] Fresh whole-change OpenCode review, required test/static/resource checks; preserve failures and fix through assigned Luna writer.
-- [ ] Root normal commits/push with hooks; bump runtime/manifest/executable consistently by PATCH and bind exact Source. Reconcile pre-existing Powers commits without overwriting them.
-- [ ] Root prepares supported controller request and dispatches the single native-delivery workflow for assurance, Linux/Windows builds and publication. Observe exact assets, Source, version, hashes and terminal jobs; no fake completed workflow or blind retry.
-- [ ] Download public external installer, update installed Windows runtime through its owner, verify structured receipt/bytes/hash/PATH/resources and actual commands.
+- [ ] Apply required whole-change review and test/static/resource gates with the user's additional Devin review of Luna work. Root selects the PATCH, commits/pushes with hooks, uses the single Linux/Windows workflow and verifies public installers and exact installed version/bytes/hash/PATH/resources/commands. Reuse current matching evidence, preserve unrelated Powers commits, and never fabricate completion or replay UNKNOWN.
+- [ ] Bind a normal installed-runtime work session to actual invocation, admission, issue, report, Source and lease/CAS observations. This technical evidence remains separate from user Runtime acceptance.
 - [ ] With approved clean-init scope and actual user answers, inventory/backup managed integration and real state; clean-init using qualified delivered owner, configure all products and verify bindings/docs/work preservation.
 - [ ] After verified clean init, continue the existing still-current tasks as directly requested by the user on2026-11-04. Reconcile `docs/next-actions.md` with actual public runtime states, preserve predecessor/completed/UNKNOWN history, and use supported admission/disposition owners under the one-task delivery policy. No repeated implementation or retroactive completion is required to continue.
 - [ ] Final report separates technical Source/tests/Delivery/native installation evidence from attributable user Runtime acceptance.
 
 ## Preflight boundaries
 
-Clean-init remains planner-only, active schema v1 remains strict, the catalog retains seven canonical kinds and an interactive prompt port is not implemented. The reusable product model and typed local work store are implemented Source; their active configuration/CLI adoption remains in Tasks 4–5. The schema integration decision in Task 4 is intentionally a gated future brief, not authorization to guess now. Each task gets a fresh scoped Luna writer and fresh OpenCode reviewer; only Root integrates commits and updates the ledger. Preserve the next-cycle publication-preparation guard gap in [next actions](../next-actions.md#remaining-work-outside-the-implementation-plan) before using that route.
+Clean-init Source has the C3 effect/public CLI owner; verified delivery is pending. Active schema v1 remains strict, the catalog retains seven canonical kinds and an interactive prompt port is not implemented. Product-model and work-store Source exist; active configuration/CLI adoption belongs to Tasks 4–5. Resolve Task 4's schema decision before writing. Use a fresh scoped Luna writer and the required additional Devin reviewer; only Root integrates and updates the queue. The old release-preparation guard is a checkout-reconciliation prerequisite, not another implementation task. Keep the [canonical delivery state](../next-actions.md#current-delivery-state) current.

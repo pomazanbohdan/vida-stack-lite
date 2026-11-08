@@ -112,6 +112,7 @@ test('read-only plan rebases typed paths and policy while redacting inventory', 
     const before = await tree(root);
     const capture = captureConsumerConfiguration(desired);
     const target = parseRuntimeConfigYaml(capture.targetConfig);
+    if (target.schema !== 'AgentRuntimeConfig/v1') throw new Error('Expected the legacy relocation fixture');
     expect(target.projects[0]?.project_id).toBe('alpha');
     expect(target.projects[0]?.project_root).toBe('new');
     expect(target.projects[0]?.wiki_root).toBe('new/docs');

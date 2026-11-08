@@ -15,6 +15,8 @@ const initializationRecord = isBunRuntime ? await import('../src/config/initiali
 const projectPaths = isBunRuntime ? await import('../src/config/project-paths.ts') : null;
 const documentationPolicy = isBunRuntime ? await import('../src/documentation/policy.ts') : null;
 const storageAdmission = isBunRuntime ? await import('../src/config/storage-read-admission.ts') : null;
+const productModel = isBunRuntime ? await import('../src/config/product-model.ts') : null;
+const cleanInitializationCodec = isBunRuntime ? await import('./consumer-clean-initialization-v2.ts') : null;
 
 type AgentRuntimeConfig = import('../src/config/runtime-config.ts').AgentRuntimeConfig;
 type SafeRepositoryAccess = import('../src/config/safe-repository-access.ts').SafeRepositoryAccess;
@@ -39,6 +41,8 @@ type InitializationRequest = {
   readonly repository: string;
   readonly projectMappings: readonly string[];
   readonly reconcileExisting?: boolean;
+  readonly productModel?: import('../src/config/product-model.ts').ProductModelDefinition;
+  readonly legacyProjectIdMap?: Readonly<Record<string, string>>;
 };
 type InitializationContext = {
   readonly access: SafeRepositoryAccess;
@@ -140,6 +144,8 @@ function withinProject(root: string, relative: string): string {
 
 /** @param {AgentRuntimeConfig} config @param {readonly ProjectMapping[]} mappings @returns {AgentRuntimeConfig} */
 function expandProjectSet(config: AgentRuntimeConfig, mappings: readonly ProjectMapping[]): AgentRuntimeConfig {
+  if (config.schema !== 'AgentRuntimeConfig/v1')
+    throw new Error('Project mapping expansion requires a legacy neutral template');
   const projectTemplate = config.projects[0];
   const integrationTemplate = config.integrations.providers[0];
   if (!projectTemplate || !integrationTemplate) throw new Error('Neutral template must define one project integration');
@@ -420,10 +426,18 @@ function renderTemplates(
 function configureRenderedTemplates(
   rendered: RenderedTemplate[],
   selectedProjects: readonly ProjectMapping[],
+  request?: InitializationRequest,
 ): { readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig } {
   const configTemplate = requireEntry(rendered, 2, 'Runtime configuration template');
   const templateConfig = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(configTemplate.content);
-  const config = expandProjectSet(templateConfig, selectedProjects);
+  const expanded = expandProjectSet(templateConfig, selectedProjects);
+  const config = request?.productModel
+    ? requireRuntimeModule(runtimeConfig).applyProductModelToRuntimeConfig(
+        expanded,
+        request.productModel,
+        request.legacyProjectIdMap === undefined ? {} : { legacy_project_id_map: request.legacyProjectIdMap },
+      )
+    : expanded;
   configTemplate.content = requireRuntimeModule(yaml).stringify(config);
   configTemplate.output_sha256 = hash(configTemplate.content);
   return {
@@ -741,6 +755,7 @@ function preparePendingInitialization(
   selectedProjects: readonly ProjectMapping[],
   packageAccess: SafeRepositoryAccess,
   preparedResume?: ExactPreparedResumeContext,
+  productRequest?: InitializationRequest,
 ): {
   pendingBytes: Buffer;
   intent: RuntimeInitializationReceipt;
@@ -756,7 +771,8 @@ function preparePendingInitialization(
     typeof parsedIntent === 'object' &&
     parsedIntent !== null &&
     'schema' in parsedIntent &&
-    parsedIntent.schema === 'ConsumerConfigurationOperation/v1'
+    (parsedIntent.schema === 'ConsumerConfigurationOperation/v1' ||
+      parsedIntent.schema === 'ConsumerConfigurationOperation/v2')
   )
     throw new Error('Pending consumer configuration requires its own recovery');
   const rawSchema = packageAccess.readText('schemas/runtime-initialization.v1.schema.json', 'initialization schema');
@@ -774,7 +790,7 @@ function preparePendingInitialization(
     throw new Error('Pending initialization intent has no pending workspace binding');
   const rendered = renderTemplates(packageAccess, bundle, repository, selectedProjects, intent.created_at);
   if (preparedResume) applyPreservedOutputs(preparedResume.access, rendered, preparedResume.preserved);
-  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects);
+  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects, productRequest);
   const planned = buildReceipt(
     packageAccess,
     bundle,
@@ -859,6 +875,7 @@ async function resumePendingInitialization(
   packageAccess: SafeRepositoryAccess,
   assertActive: () => void,
   preparedResume?: ExactPreparedResumeContext,
+  productRequest?: InitializationRequest,
 ): Promise<{ status: string; receipt: string; config_digest: string }> {
   const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
   const { pendingBytes, intent, rawSchema, rendered, existing, existingReceipt } = preparePendingInitialization(
@@ -869,6 +886,7 @@ async function resumePendingInitialization(
     selectedProjects,
     packageAccess,
     preparedResume,
+    productRequest,
   );
   if (existingReceipt) {
     await archivePendingIntent(access, pendingBytes, intent, assertActive);
@@ -951,12 +969,23 @@ function prepareExistingReconciliation(
   repository: string,
   selectedProjects: readonly ProjectMapping[],
   packageAccess: SafeRepositoryAccess,
+  productRequest?: InitializationRequest,
 ): { receipt: RuntimeInitializationReceipt; existing: boolean; evidence: TemplateEvidence[] } {
   const present = outputs
     .map(([, output]) => output)
     .filter((output) => access.fileExists(output, 'existing project integration file'));
   if (access.fileExists('agent-runtime.config.v1.yaml', 'existing project configuration'))
     requireRuntimeModule(runtimeConfig).assertProjectUpgradeInactive(access);
+  if (productRequest?.productModel) {
+    const actual = requireRuntimeModule(runtimeConfig).productModelForRuntimeConfig(
+      readInitializationConfig(access, projectRoot),
+    );
+    if (
+      requireRuntimeModule(publicIngress).canonicalJsonDigest(actual ?? null) !==
+      requireRuntimeModule(publicIngress).canonicalJsonDigest(productRequest.productModel)
+    )
+      throw new Error('Existing product model differs from initialization request');
+  }
   if (access.fileExists(initializationReceiptPath(), 'initialization receipt')) {
     const receipt = validateExistingReceipt(
       access,
@@ -1002,6 +1031,7 @@ async function reconcileExistingInitialization(
   selectedProjects: readonly ProjectMapping[],
   packageAccess: SafeRepositoryAccess,
   assertActive: () => void,
+  productRequest?: InitializationRequest,
 ): Promise<{ status: string; receipt: string; config_digest: string }> {
   const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
   if (observation.fileExists(pendingReceiptPath, 'pending initialization intent'))
@@ -1014,6 +1044,8 @@ async function reconcileExistingInitialization(
       selectedProjects,
       packageAccess,
       assertActive,
+      undefined,
+      productRequest,
     );
   const { receipt, existing, evidence } = prepareExistingReconciliation(
     { ...observation, assertDirectory: access.assertDirectory },
@@ -1023,6 +1055,7 @@ async function reconcileExistingInitialization(
     repository,
     selectedProjects,
     packageAccess,
+    productRequest,
   );
   if (existing)
     return { status: 'existing', receipt: initializationReceiptPath(), config_digest: receipt.config_digest };
@@ -1137,6 +1170,8 @@ function prepareNewInitialization(
       request.repository,
       selectedProjects,
       packageAccess,
+      undefined,
+      request,
     );
   const existing = existingInitialization(observation);
   if (existing) return { existing };
@@ -1155,7 +1190,7 @@ function renderFreshInitialization(
   const rendered = renderTemplates(packageAccess, bundle, request.repository, selectedProjects, createdAt);
   reportCleanInitializationPhase('render-templates', startedAt, { output_count: rendered.length });
   applyPreservedOutputs(access, rendered, preserved);
-  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects);
+  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects, request);
   reportCleanInitializationPhase('render-configure', startedAt);
   validateGeneratedBindings(validatedConfig, bundle, request.repository, selectedProjects);
   reportCleanInitializationPhase('render-bindings', startedAt);
@@ -1210,6 +1245,7 @@ async function initializeProjectUnderAdmission(
       selectedProjects,
       packageAccess,
       assertActive,
+      request,
     );
   const prepared = prepareNewInitialization(request, context);
   if (prepared.existing) return prepared.existing;
@@ -1235,12 +1271,32 @@ type ExactPreparedResumeContext = Readonly<{
 }>;
 
 function snapshotInitializationRequest(input: InitializationRequest): InitializationRequest {
-  const { projectRoot, repository, projectMappings, reconcileExisting } = input;
+  const { projectRoot, repository, projectMappings: mappings, reconcileExisting } = input;
+  const model =
+    input.productModel === undefined
+      ? undefined
+      : requireRuntimeModule(productModel).productModelSchema.parse(input.productModel);
+  if (input.legacyProjectIdMap !== undefined && model === undefined)
+    throw new Error('Legacy project identity mapping requires a complete product model');
+  if (model) {
+    const selected = requireRuntimeModule(publicIngress).canonicalJsonDigest(projectMappings(mappings));
+    const expected = requireRuntimeModule(publicIngress).canonicalJsonDigest(
+      model.projects
+        .map((project) => ({ id: project.project_id, root: project.project_root }))
+        .sort((left, right) => left.id.localeCompare(right.id)),
+    );
+    if (model.repository.repository_id !== repository || selected !== expected)
+      throw new Error('Initialization product model differs from explicit project mappings');
+  }
   return Object.freeze({
     projectRoot,
     repository,
-    projectMappings: Object.freeze([...projectMappings]),
+    projectMappings: Object.freeze([...mappings]),
     ...(reconcileExisting === undefined ? {} : { reconcileExisting }),
+    ...(model === undefined ? {} : { productModel: requireRuntimeModule(publicIngress).freezeJsonValue(model) }),
+    ...(input.legacyProjectIdMap === undefined
+      ? {}
+      : { legacyProjectIdMap: Object.freeze({ ...input.legacyProjectIdMap }) }),
   });
 }
 
@@ -1384,6 +1440,7 @@ function assertCleanWitness(
     record.phase === 'initializing' &&
     record.root === request.projectRoot &&
     record.workspace_id === workspace &&
+    request.productModel === undefined &&
     (!expectedPrepared || (expectedPrepared.preserved ?? []).length === 0)
   )
     return bytes;
@@ -1402,6 +1459,25 @@ function assertCleanWitness(
       JSON.stringify(request.projectMappings) &&
     Array.isArray(record.preserved)
   ) {
+    if (request.productModel !== undefined) {
+      const operation = requireRuntimeModule(cleanInitializationCodec).validateCleanInitializationOperationV2(record);
+      const original = operation.inventory.find((entry) => entry.path === 'agent-runtime.config.v1.yaml');
+      const move = operation.moves.find((entry) => entry.source === 'agent-runtime.config.v1.yaml');
+      if (!original || !move || move.state !== 'completed')
+        throw new Error('Product initialization requires the completed original configuration archive');
+      const archived = access.readBytes(move.target, 'archived product configuration witness');
+      if (archived.length !== original.size || hash(archived) !== original.sha256)
+        throw new Error('Archived product configuration witness changed');
+      const config = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(
+        new TextDecoder('utf-8', { fatal: true }).decode(archived),
+      );
+      const model = requireRuntimeModule(runtimeConfig).productModelForRuntimeConfig(config);
+      if (
+        requireRuntimeModule(publicIngress).canonicalJsonDigest(model ?? null) !==
+        requireRuntimeModule(publicIngress).canonicalJsonDigest(request.productModel)
+      )
+        throw new Error('Product initialization differs from the clean operation configuration');
+    }
     if (
       !expectedPrepared &&
       record.phase === 'archive_complete' &&
@@ -1616,6 +1692,7 @@ export async function finishPreparedInitializationUnderAdmission(
     context.packageAccess,
     assertCurrent,
     preparedResume,
+    request,
   );
   assertCurrent();
   return result;
@@ -1623,9 +1700,10 @@ export async function finishPreparedInitializationUnderAdmission(
 
 /** All legacy initialization effects share the configuration admission gate. */
 export async function initializeProjectFromBundle(
-  request: InitializationRequest,
+  inputRequest: InitializationRequest,
   bundleRoot: string,
 ): Promise<{ status: string; receipt?: string; config_digest?: string; existing?: string[]; next_action?: string }> {
+  const request = snapshotInitializationRequest(inputRequest);
   const initial = initializationContext({
     projectRoot: request.projectRoot,
     repository: request.repository,
@@ -1645,6 +1723,8 @@ export async function initializeProjectFromBundle(
         request.repository,
         initial.selectedProjects,
         initial.packageAccess,
+        undefined,
+        request,
       );
     else {
       const prepared = prepareExistingReconciliation(
@@ -1655,6 +1735,7 @@ export async function initializeProjectFromBundle(
         request.repository,
         initial.selectedProjects,
         initial.packageAccess,
+        request,
       );
       if (prepared.existing)
         return {
@@ -1702,13 +1783,7 @@ export async function initializeProjectFromBundle(
 
 /** Internal receipt preparation only; the caller owns admission, journal and CAS. */
 export async function derivePendingConfigurationReceipt(
-  request: {
-    readonly projectRoot: string;
-    readonly repository: string;
-    readonly projectMappings: readonly string[];
-    readonly teamProjectGrants?: readonly string[];
-    readonly projectMoves?: readonly string[];
-  },
+  request: import('./init-configuration.ts').VersionedConsumerConfigurationRequest,
   assertActive: () => void,
   recovery?: import('./init-configuration.ts').ConfigurationRecovery,
 ): Promise<{
@@ -1717,8 +1792,11 @@ export async function derivePendingConfigurationReceipt(
   readonly targetReceipt: string;
 }> {
   assertActive();
-  const { captureConsumerConfiguration, captureConsumerConfigurationForRecovery } =
-    await import('./init-configuration.ts');
+  const {
+    captureConsumerConfiguration,
+    captureConsumerConfigurationForRecovery,
+    consumerConfigurationProjectMappings,
+  } = await import('./init-configuration.ts');
   assertActive();
   const capture = recovery
     ? captureConsumerConfigurationForRecovery(request, recovery)
@@ -1727,7 +1805,7 @@ export async function derivePendingConfigurationReceipt(
   const context = initializationContext({
     projectRoot: request.projectRoot,
     repository: request.repository,
-    mappings: request.projectMappings,
+    mappings: consumerConfigurationProjectMappings(request),
     bundleRoot: executingPackageRoot,
   });
   const currentBytes = capture.before[2];

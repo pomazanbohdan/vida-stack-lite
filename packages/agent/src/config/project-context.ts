@@ -3,14 +3,17 @@ import path from 'node:path';
 import {
   PATH_PROFILE_KEYS,
   loadRuntimeConfig,
+  productModelForRuntimeConfig,
   runtimeConfigDigest,
   type AgentRuntimeConfig,
+  type AgentRuntimeConfigV2,
   type PathProfileKey,
   type PathProfileOverride,
   type ProcessingScope,
   type RepositoryMode,
   type TrustedPathProfileOverride,
 } from './runtime-config.js';
+import type { ProductDefinition, ProductModelDefinition } from './product-model.js';
 import { canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 
 export const pathProfileGap = 'GAP-RTNEW-PATH-PROFILE-001' as const;
@@ -66,6 +69,7 @@ export interface ProjectContext {
   readonly repository_id: string;
   readonly project_ids: readonly string[];
   readonly repository_title: string;
+  readonly product_model?: ProductModelDefinition;
   /** Every selected project is represented; there is no implicit primary project. */
   readonly project_bindings: readonly ProjectContextProjectBinding[];
   readonly integration_bindings: readonly ProjectIntegrationBinding[];
@@ -82,6 +86,7 @@ export interface ProjectContextProjectBinding {
   readonly code_selectors: readonly string[];
   readonly delivery_group: string;
   readonly project_root: string;
+  readonly product_definition?: ProductDefinition;
   readonly integration_binding: ProjectIntegrationBinding;
   readonly path_profile: ResolvedPathProfile;
   readonly path_bindings: ProjectPathBindings;
@@ -113,6 +118,7 @@ export interface ProjectPathResolutionEntry {
   readonly project_id: string;
   readonly project_root?: string;
   readonly path_overrides?: Readonly<{ project_root?: string }>;
+  readonly product_paths?: readonly string[];
 }
 
 export interface ProjectPathResolutionOptions {
@@ -210,7 +216,7 @@ export function resolveProjectPathMembership(
   options: ProjectPathResolutionOptions = {},
 ): ProjectPathMembership {
   enforce(projects.length > 0, 'projects must be non-empty');
-  const platform = options.platform ?? process.platform;
+  const platform: 'win32' | 'posix' = options.platform ?? (process.platform === 'win32' ? 'win32' : 'posix');
   const fold = (value: string): string => (platform === 'win32' ? value.toLowerCase() : value);
   const ids = new Set<string>();
   const candidates = projects.map((project) => {
@@ -225,13 +231,37 @@ export function resolveProjectPathMembership(
       'multi-project entries require explicit project roots',
     );
     const root = normalizeProjectRoot(project.project_root ?? project.path_overrides?.project_root, 'project root');
+    const productPaths = (project.product_paths ?? []).map((entry) => normalizeProjectRoot(entry, 'product path'));
     return {
       project_id: project.project_id,
       project_root: root,
       specificity: root === '.' ? 0 : root.split('/').length,
+      product_paths: productPaths,
     };
   });
   const target = normalizeRepositoryPath(repositoryPath);
+  const hasProductPaths = candidates.some((candidate) => candidate.product_paths.length > 0);
+  if (hasProductPaths) {
+    const matches = candidates.filter((candidate) => {
+      const paths = [candidate.project_root, ...candidate.product_paths];
+      return paths.some((value) => repositoryPathMatches(target, value, platform));
+    });
+    if (matches.length === 0)
+      return Object.freeze({ project_ids: Object.freeze([]), project_root: null, specificity: -1 });
+    const specificity = Math.max(
+      ...matches.flatMap((candidate) =>
+        [candidate.project_root, ...candidate.product_paths]
+          .filter((value) => repositoryPathMatches(target, value, platform))
+          .map((value) => (value === '.' ? 0 : value.split('/').length)),
+      ),
+    );
+    const roots = new Set(matches.map((candidate) => candidate.project_root));
+    return Object.freeze({
+      project_ids: Object.freeze(matches.map((candidate) => candidate.project_id).sort()),
+      project_root: roots.size === 1 ? matches[0]!.project_root : null,
+      specificity,
+    });
+  }
   const matches = candidates.filter(
     (candidate) =>
       candidate.project_root === '.' ||
@@ -247,6 +277,31 @@ export function resolveProjectPathMembership(
     project_root: selected[0]!.project_root,
     specificity: deepest,
   });
+}
+
+function repositoryPathMatches(target: string, configured: string, platform: 'win32' | 'posix'): boolean {
+  const fold = (value: string): string => (platform === 'win32' ? value.toLowerCase() : value);
+  const normalized = normalizeProjectRoot(configured, 'product path');
+  if (normalized === '.' || normalized === '') return true;
+  if (!/[?*]/.test(normalized))
+    return fold(target) === fold(normalized) || fold(target).startsWith(fold(normalized) + '/');
+  let expression = '^';
+  for (let index = 0; index < normalized.length; index++) {
+    const character = normalized[index]!;
+    const next = normalized[index + 1];
+    if (character === '*' && next === '*') {
+      if (normalized[index + 2] === '/') {
+        expression += '(?:[^/]+/)*';
+        index += 2;
+      } else {
+        expression += '.*';
+        index++;
+      }
+    } else if (character === '*') expression += '[^/]*';
+    else if (character === '?') expression += '[^/]';
+    else expression += character.replace(/[|\\{}()[\]^$+?.]/g, '\\$&');
+  }
+  return new RegExp(expression + '$').test(fold(target));
 }
 
 /** A path is eligible for this selected project when it belongs to its deepest root or is repository-shared. */
@@ -536,17 +591,52 @@ function applyTrustedOverride(
 function applyProjectFields(
   values: Record<PathProfileKey, string>,
   provenance: Record<PathProfileKey, PathProfileProvenance>,
-  source: {
-    readonly wiki_root: string;
-    readonly wiki_output_root: string;
-    readonly internal_root: string;
-    readonly ledger_root: string;
-    readonly wiki_path?: string;
-    readonly path_overrides?: unknown;
-  },
+  source:
+    | AgentRuntimeConfigV2['projects'][number]
+    | {
+        readonly wiki_root: string;
+        readonly wiki_output_root: string;
+        readonly internal_root: string;
+        readonly ledger_root: string;
+        readonly wiki_path?: string;
+        readonly path_overrides?: unknown;
+      },
   layer: 'tenant-config' | 'project-config',
   pointer: string,
 ): void {
+  if ('documents' in source) {
+    applyOverrides(values, provenance, source.path_overrides, layer, pointer + '.path_overrides');
+    assignPath(values, provenance, 'project_root', source.project_root, layer, pointer + '.project_root');
+    assignPath(values, provenance, 'wiki_root', source.documents.root, layer, pointer + '.documents.root');
+    assignPath(values, provenance, 'documentation_root', source.documents.root, layer, pointer + '.documents.root');
+    assignPath(values, provenance, 'wiki_output_root', source.documents.root, layer, pointer + '.documents.root');
+    assignPath(values, provenance, 'wiki_path', source.documents.index, layer, pointer + '.documents.index');
+    assignPath(
+      values,
+      provenance,
+      'internal_root',
+      source.documents.requirements.root,
+      layer,
+      pointer + '.documents.requirements.root',
+    );
+    assignPath(
+      values,
+      provenance,
+      'internal_requirements_root',
+      source.documents.requirements.root,
+      layer,
+      pointer + '.documents.requirements.root',
+    );
+    assignPath(
+      values,
+      provenance,
+      'ledger_root',
+      source.work_items.storage_root,
+      layer,
+      pointer + '.work_items.storage_root',
+    );
+    return;
+  }
   assignPath(values, provenance, 'wiki_root', source.wiki_root, layer, pointer + '.wiki_root');
   assignPath(values, provenance, 'documentation_root', source.wiki_root, layer, pointer + '.wiki_root');
   assignPath(values, provenance, 'wiki_output_root', source.wiki_output_root, layer, pointer + '.wiki_output_root');
@@ -802,8 +892,9 @@ function projectContextDigest(
   projectIds: readonly string[],
   integrationsDigest: string,
   pathBindingsDigest: string,
+  productModel: ProductModelDefinition | null,
 ): string {
-  return canonicalJsonDigest({
+  const binding = {
     schema: 'ProjectContext/v1',
     repository_id: repositoryId,
     project_ids: projectIds,
@@ -811,7 +902,9 @@ function projectContextDigest(
     registry_hash: projectCatalogDigest(config),
     integrations_digest: integrationsDigest,
     path_bindings_digest: pathBindingsDigest,
-  });
+    ...(productModel === null ? {} : { product_model: productModel }),
+  };
+  return canonicalJsonDigest(binding);
 }
 
 /**
@@ -867,6 +960,8 @@ function buildProjectSetContext(
   ids: readonly string[],
   profiles: readonly ResolvedPathProfile[],
 ): ProjectContext {
+  const productModel = productModelForRuntimeConfig(config) ?? null;
+  const productById = new Map(productModel?.projects.map((product) => [product.project_id, product]) ?? []);
   const project_bindings = ids.map((projectId, index) => {
     const project = configuredProject(config, repositoryId, projectId);
     const integration_binding = integrationBinding(config, projectId);
@@ -876,10 +971,11 @@ function buildProjectSetContext(
       schema: 'ProjectContextProjectBinding/v1' as const,
       project_id: projectId,
       project_title: project.title,
-      task_prefix: project.task_prefix,
+      task_prefix: 'documents' in project ? project.prefix : project.task_prefix,
       code_selectors: [...project.code_selectors],
       delivery_group: project.delivery_group,
       project_root: project.project_root,
+      ...(productById.get(projectId) === undefined ? {} : { product_definition: productById.get(projectId)! }),
       integration_binding,
       path_profile: profile!,
       path_bindings: buildBindings(profile!),
@@ -898,6 +994,7 @@ function buildProjectSetContext(
     registry_hash: registryHash,
     repository_id: config.repository.repository_id,
     project_ids: ids,
+    ...(productModel === null ? {} : { product_model: productModel }),
     integrations_digest,
     repository_title: config.repository.title,
     project_bindings,
@@ -905,7 +1002,14 @@ function buildProjectSetContext(
     path_profiles,
     path_bindings,
     path_bindings_digest,
-    project_context_digest: projectContextDigest(config, repositoryId, ids, integrations_digest, path_bindings_digest),
+    project_context_digest: projectContextDigest(
+      config,
+      repositoryId,
+      ids,
+      integrations_digest,
+      path_bindings_digest,
+      productModel,
+    ),
   });
   TRUSTED_PROJECT_CONTEXTS.add(context);
   return context;
@@ -926,6 +1030,21 @@ export function loadProjectContext(
 
 export function projectBindingFor(context: ProjectContext, projectId: string): ProjectContextProjectBinding | null {
   return context.project_bindings.find((binding) => binding.project_id === projectId) ?? null;
+}
+
+/** Collect declared product paths without resolving identity or granting authority. */
+export function productDefinitionPaths(product: ProductDefinition): readonly string[] {
+  return Object.freeze([
+    product.project_root,
+    ...product.code_selectors,
+    product.documents.root,
+    product.documents.index,
+    product.documents.requirements.root,
+    ...Object.values(product.documents.requirements.areas).flatMap((area) => Object.values(area)),
+    product.documents.research,
+    product.documents.decisions,
+    product.work_items.storage_root,
+  ]);
 }
 export function validateProjectContextBinding(value: unknown, trustedRepositoryRoot: string): ProjectContext {
   const context = issuedProjectContext(value);

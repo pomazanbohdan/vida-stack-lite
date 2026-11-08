@@ -1,7 +1,9 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import runtimeSchema from '../../schemas/agent-runtime-config.v1.schema.json' with { type: 'json' };
+import runtimeSchemaV2 from '../../schemas/agent-runtime-config.v2.schema.json' with { type: 'json' };
 import componentsSchema from '../../schemas/project-configuration.v1.schema.json' with { type: 'json' };
+import componentsSchemaV2 from '../../schemas/project-configuration.v2.schema.json' with { type: 'json' };
 import { freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
 import {
   LEGACY_RUNTIME_CONFIGURATION_PATH,
@@ -16,6 +18,8 @@ import {
   snapshotRuntimeConfig,
   validateRuntimeConfig,
   type AgentRuntimeConfig,
+  type AgentRuntimeConfigV1,
+  type AgentRuntimeConfigV2,
 } from './runtime-config.js';
 
 const COMPONENT_REFERENCES = Object.freeze({ agents: 'agents.yaml', flows: 'flows.yaml' });
@@ -29,21 +33,32 @@ type PartitionedField =
   | 'workflows'
   | 'workflow_bindings';
 
-export interface ProjectConfiguration {
-  readonly project: Omit<AgentRuntimeConfig, PartitionedField> & {
+interface ProjectConfigurationV1 {
+  readonly project: Omit<AgentRuntimeConfigV1, PartitionedField> & {
     readonly schema: 'VidaProjectConfig/v1';
     readonly revision: number;
     readonly components: typeof COMPONENT_REFERENCES;
   };
-  readonly agents: Pick<AgentRuntimeConfig, 'agents' | 'teams' | 'config_id'> & {
+  readonly agents: Pick<AgentRuntimeConfigV1, 'agents' | 'teams' | 'config_id'> & {
     readonly schema: 'VidaAgentsConfig/v1';
     readonly revision: number;
   };
-  readonly flows: Pick<AgentRuntimeConfig, 'workflows' | 'workflow_bindings' | 'config_id'> & {
+  readonly flows: Pick<AgentRuntimeConfigV1, 'workflows' | 'workflow_bindings' | 'config_id'> & {
     readonly schema: 'VidaFlowsConfig/v1';
     readonly revision: number;
   };
 }
+
+interface ProjectConfigurationV2 {
+  readonly project: Omit<AgentRuntimeConfigV2, PartitionedField> & {
+    readonly schema: 'VidaProjectConfig/v2';
+    readonly revision: number;
+    readonly components: typeof COMPONENT_REFERENCES;
+  };
+  readonly agents: ProjectConfigurationV1['agents'];
+  readonly flows: ProjectConfigurationV1['flows'];
+}
+export type ProjectConfiguration = ProjectConfigurationV1 | ProjectConfigurationV2;
 
 interface ComposedProjectConfiguration {
   readonly documents: ProjectConfiguration;
@@ -85,8 +100,18 @@ type AjvConstructor = new (options: Record<string, unknown>) => {
 };
 const AjvConstructor = Ajv2020 as unknown as AjvConstructor;
 let componentValidator: ValidateFunction<ProjectConfiguration> | undefined;
+let componentValidatorV2: ValidateFunction<ProjectConfiguration> | undefined;
 
-function validator(): ValidateFunction<ProjectConfiguration> {
+function validator(version: 1 | 2): ValidateFunction<ProjectConfiguration> {
+  if (version === 2) {
+    if (componentValidatorV2 === undefined) {
+      const ajv = new AjvConstructor({ strict: true, allErrors: false, ownProperties: true });
+      ajv.addSchema(runtimeSchema);
+      ajv.addSchema(runtimeSchemaV2);
+      componentValidatorV2 = ajv.compile<ProjectConfiguration>(componentsSchemaV2);
+    }
+    return componentValidatorV2;
+  }
   if (componentValidator === undefined) {
     const ajv = new AjvConstructor({ strict: true, allErrors: false, ownProperties: true });
     ajv.addSchema(runtimeSchema);
@@ -108,24 +133,27 @@ function compose(
     agents: snapshotRuntimeConfig(agents),
     flows: snapshotRuntimeConfig(flows),
   };
-  if (!validator()(documents))
+  const projectDocument = documents.project;
+  const version = isPlainRecord(projectDocument) && projectDocument.schema === 'VidaProjectConfig/v2' ? 2 : 1;
+  if (!validator(version)(documents))
     throw new RuntimeConfigError('Project configuration component schema is invalid; use a supported upgrade.');
+  const checkedDocuments = documents as ProjectConfiguration;
   if (
-    documents.project.config_id !== documents.agents.config_id ||
-    documents.project.config_id !== documents.flows.config_id
+    checkedDocuments.project.config_id !== checkedDocuments.agents.config_id ||
+    checkedDocuments.project.config_id !== checkedDocuments.flows.config_id
   )
     throw new RuntimeConfigError('Project configuration component identities differ.');
-  const { schema: _schema, revision, components: _components, ...settings } = documents.project;
+  const { schema: _schema, revision, components: _components, ...settings } = checkedDocuments.project;
   const config = validateRuntimeConfig(
     {
       ...settings,
-      schema: 'AgentRuntimeConfig/v1',
-      version: 1,
+      schema: version === 1 ? 'AgentRuntimeConfig/v1' : 'AgentRuntimeConfig/v2',
+      version,
       config_revision: revision,
-      agents: documents.agents.agents,
-      teams: documents.agents.teams,
-      workflows: documents.flows.workflows,
-      workflow_bindings: documents.flows.workflow_bindings,
+      agents: checkedDocuments.agents.agents,
+      teams: checkedDocuments.agents.teams,
+      workflows: checkedDocuments.flows.workflows,
+      workflow_bindings: checkedDocuments.flows.workflow_bindings,
     },
     repositoryRoot,
     source,
@@ -179,6 +207,30 @@ export function splitRuntimeConfig(
   source: RuntimeConfigurationSource = LEGACY_RUNTIME_CONFIGURATION_PATH,
 ): ProjectConfiguration {
   const config = validateRuntimeConfig(value, undefined, source);
+  if (config.schema === 'AgentRuntimeConfig/v2') {
+    const {
+      schema: _schema,
+      version: _version,
+      config_revision,
+      agents,
+      teams,
+      workflows,
+      workflow_bindings,
+      ...operational
+    } = config;
+    const project = {
+      ...operational,
+      schema: 'VidaProjectConfig/v2' as const,
+      revision: config_revision,
+      components: COMPONENT_REFERENCES,
+    };
+    const split = {
+      project,
+      agents: { schema: 'VidaAgentsConfig/v1', config_id: config.config_id, revision: 1, agents, teams },
+      flows: { schema: 'VidaFlowsConfig/v1', config_id: config.config_id, revision: 1, workflows, workflow_bindings },
+    } satisfies ProjectConfigurationV2;
+    return freezeJsonValue(split);
+  }
   const {
     schema: _schema,
     version: _version,

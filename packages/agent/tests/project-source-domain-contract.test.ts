@@ -150,14 +150,19 @@ function withSource(inputs: ProjectConfiguration, index: number, source: string)
   );
   const registryBody = { ...inputs.project.research_decision.registry, instructions };
   const registryWithoutDigest = Object.fromEntries(Object.entries(registryBody).filter(([key]) => key !== 'digest'));
+  const research_decision = {
+    ...inputs.project.research_decision,
+    registry: { ...registryBody, digest: canonicalJsonDigest(registryWithoutDigest) },
+  };
+  if (inputs.project.schema === 'VidaProjectConfig/v1')
+    return asInputs({
+      project: { ...inputs.project, research_decision },
+      agents: inputs.agents,
+      flows: inputs.flows,
+    });
   return asInputs({
-    ...inputs,
-    project: {
-      ...inputs.project,
-      research_decision: {
-        ...inputs.project.research_decision,
-        registry: { ...registryBody, digest: canonicalJsonDigest(registryWithoutDigest) },
-      },
-    },
+    project: { ...inputs.project, research_decision },
+    agents: inputs.agents,
+    flows: inputs.flows,
   });
 }

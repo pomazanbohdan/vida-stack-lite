@@ -39,6 +39,7 @@ import * as fs from 'node:fs';
 import {
   loadRuntimeConfig,
   type AgentRuntimeConfig,
+  type AgentRuntimeConfigV1,
   type PathProfileKey,
   type PathProfileOverride,
 } from '../src/config/runtime-config.ts';
@@ -60,7 +61,7 @@ const projectId = 'sample';
 const secondProjectId = 'second';
 type PathProfileResolutionEntry = Parameters<typeof resolveProjectPathMembership>[0][number];
 let repositoryRoot: string;
-let config: AgentRuntimeConfig;
+let config: AgentRuntimeConfigV1;
 let project: ProjectContext;
 let scopeId: string;
 let runtimeConfigPath: string;
@@ -95,7 +96,7 @@ async function ensureBoundaryFixture(): Promise<void> {
     runtimeConfigPath = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
     initialRuntimeConfig = readFileSync(runtimeConfigPath, 'utf8');
     mkdirSync(path.join(repositoryRoot, '.agent', 'work'), { recursive: true });
-    config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
+    config = legacyFixture(expectReturned(() => loadRuntimeConfig(repositoryRoot)));
     project = expectReturned(() =>
       loadProjectContext(repositoryRoot, config, config.repository.repository_id, projectId),
     );
@@ -129,12 +130,17 @@ function resolve(paths: PathProfileOverride = {}) {
 function resolveUntrustedOptions(value: unknown): void {
   Reflect.apply(resolvePathProfile, undefined, [repositoryRoot, config, value]);
 }
-function loadConfigFixture(value: AgentRuntimeConfig): AgentRuntimeConfig {
+function legacyFixture(value: AgentRuntimeConfig): AgentRuntimeConfigV1 {
+  if (value.schema !== 'AgentRuntimeConfig/v1') throw new Error('Expected a legacy v1 boundary fixture');
+  return value;
+}
+
+function loadConfigFixture(value: AgentRuntimeConfig): AgentRuntimeConfigV1 {
   const serialized = JSON.stringify(value);
   if (serialized === undefined) throw new Error('runtime config fixture could not be serialized');
   // JSON is valid YAML and keeps the fixture bytes deterministic.
   writeFileSync(runtimeConfigPath, serialized + '\n');
-  return loadRuntimeConfig(repositoryRoot);
+  return legacyFixture(loadRuntimeConfig(repositoryRoot));
 }
 function tempRoot(): string {
   const value = realpathSync(
@@ -885,7 +891,7 @@ describe('project context path boundary', () => {
         defaults: { ...config.paths.defaults, work_root: '.' },
       },
     });
-    let activeConfig: AgentRuntimeConfig = repositoryConfig;
+    let activeConfig: AgentRuntimeConfigV1 = repositoryConfig;
     const isolated = projectContext;
     const resolved = isolated.resolvePathProfile(repositoryRoot, repositoryConfig);
     expect(resolved.scope_id).toBe('repository:' + config.config_id);

@@ -7,6 +7,7 @@
 # index.md follows the existing standard verified by the topical research.
 # Required/optional policy and migration remain open design points.
 # Type codes come from a fixed runtime catalog, never from a project definition.
+# User confirmed VIDA / AGENT / CODEX / POWERS on 2026-11-03; activation is pending.
 
 repository:
   repository_id: vida-agent

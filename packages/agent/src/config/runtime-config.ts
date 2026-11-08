@@ -46,6 +46,7 @@ import {
 import researchResultSchema from '../../schemas/research-result.v1.schema.json' with { type: 'json' };
 import researchSynthesisSchema from '../../schemas/research-synthesis.v1.schema.json' with { type: 'json' };
 import type { WorkItemKind } from '../work-items/catalog.js';
+import { productModelSchema, type ProductDefinition, type ProductModelDefinition } from './product-model.js';
 
 export type { WorkItemKind } from '../work-items/catalog.js';
 
@@ -104,6 +105,11 @@ export function activeRuntimeConfigurationSource(access: SafeRepositoryAccess): 
 const CONFIG_SCHEMA_ID = 'https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json';
 const CONFIG_SCHEMA_SHA256 = '7f3fdca11792bbd4729545c2bc3eb74185d355f6cc63e5678cd97913150dcc1d';
 const CONFIG_SCHEMA_FILE = fileURLToPath(new URL('../../schemas/agent-runtime-config.v1.schema.json', import.meta.url));
+const CONFIG_SCHEMA_V2_ID = 'https://agent-runtime.invalid/schemas/agent-runtime-config.v2.schema.json';
+const CONFIG_SCHEMA_V2_SHA256 = '1b9a9ea8537dfe1c0fdb5c975562c3f73e6d3305073d22b9a2f821701c8fb89a';
+const CONFIG_SCHEMA_V2_FILE = fileURLToPath(
+  new URL('../../schemas/agent-runtime-config.v2.schema.json', import.meta.url),
+);
 const resourceRoot = path.dirname(path.dirname(CONFIG_SCHEMA_FILE));
 const RUNTIME_PACKAGE_ROOT = existsSync(path.join(resourceRoot, 'package.json'))
   ? resourceRoot
@@ -344,7 +350,7 @@ interface ProjectConfig {
   readonly path_overrides?: PathProfileOverride;
 }
 
-export interface AgentRuntimeConfig {
+export interface AgentRuntimeConfigV1 {
   readonly schema: 'AgentRuntimeConfig/v1';
   readonly config_id: string;
   readonly version: 1;
@@ -509,6 +515,135 @@ export interface AgentRuntimeConfig {
   readonly timing: { readonly threshold_ms: number; readonly optimization_reason: string };
 }
 
+export type AgentRuntimeConfig = AgentRuntimeConfigV1 | AgentRuntimeConfigV2;
+export type AgentRuntimeConfigV2 = Omit<AgentRuntimeConfigV1, 'schema' | 'version' | 'repository' | 'projects'> & {
+  readonly schema: 'AgentRuntimeConfig/v2';
+  readonly version: 2;
+  readonly repository: Omit<AgentRuntimeConfigV1['repository'], 'repository_id'> & {
+    readonly repository_id: string;
+    readonly prefix: string;
+  };
+  readonly projects: readonly (ProductDefinition & Pick<ProjectConfig, 'delivery_group' | 'path_overrides'>)[];
+};
+
+export interface ProductModelApplicationOptions {
+  readonly legacy_project_id_map?: Readonly<Record<string, string>>;
+}
+
+/** Purely applies a complete, validated product model to operational defaults. */
+export function applyProductModelToRuntimeConfig(
+  template: AgentRuntimeConfig,
+  model: ProductModelDefinition,
+  options: ProductModelApplicationOptions = {},
+): AgentRuntimeConfigV2 {
+  const base = validateRuntimeConfig(template);
+  const checkedModel = productModelSchema.parse(model);
+  assertCondition(
+    base.repository.repository_id === checkedModel.repository.repository_id,
+    'product model repository identity differs from runtime template',
+  );
+  const mapping = options.legacy_project_id_map ?? {};
+  const oldIds = base.projects.map((project) => project.project_id);
+  assertCondition(
+    Object.keys(mapping).every((id) => oldIds.includes(id)),
+    'legacy project map contains an unknown project',
+  );
+  const mappedIds = oldIds.map((id) => mapping[id] ?? id);
+  assertUnique(mappedIds, 'mapped project ids');
+  const modelIds = checkedModel.projects.map((project) => project.project_id);
+  assertCondition(
+    mappedIds.length === modelIds.length && mappedIds.every((id) => modelIds.includes(id)),
+    'product model projects require a complete explicit legacy project mapping',
+  );
+  const mapId = (id: string): string => {
+    const mapped = mapping[id] ?? id;
+    assertCondition(modelIds.includes(mapped), 'project reference has no product model match: ' + id);
+    return mapped;
+  };
+  const operationalProjects = new Map(base.projects.map((project) => [mapId(project.project_id), project]));
+  const projects = checkedModel.projects.map((product) => {
+    const operational = operationalProjects.get(product.project_id);
+    assertCondition(
+      operational !== undefined,
+      'product model project has no operational template: ' + product.project_id,
+    );
+    return {
+      ...product,
+      delivery_group: operational!.delivery_group,
+      ...(operational!.path_overrides === undefined ? {} : { path_overrides: operational!.path_overrides }),
+    };
+  });
+  const next: AgentRuntimeConfigV2 = {
+    ...base,
+    schema: 'AgentRuntimeConfig/v2',
+    version: 2,
+    repository: { ...base.repository, prefix: checkedModel.repository.prefix },
+    integrations: {
+      providers: base.integrations.providers.map((provider) => ({
+        ...provider,
+        project_id: mapId(provider.project_id),
+      })),
+    },
+    teams: Object.fromEntries(
+      Object.entries(base.teams).map(([id, team]) => [
+        id,
+        {
+          ...team,
+          allowed_projects: team.allowed_projects.map((projectId) => (projectId === '*' ? '*' : mapId(projectId))),
+        },
+      ]),
+    ),
+    workflow_bindings: base.workflow_bindings.map((binding) => ({
+      ...binding,
+      projects: binding.projects.map((projectId) => (projectId === '*' ? '*' : mapId(projectId))),
+    })),
+    projects,
+  };
+  checkedModel.projects.forEach((project) =>
+    assertCondition(
+      projects.some((entry) => entry.project_id === project.project_id),
+      'product model project was lost',
+    ),
+  );
+  return validateAgentRuntimeConfigV2(next);
+}
+
+export function validateAgentRuntimeConfigV2(value: unknown): AgentRuntimeConfigV2 {
+  const snapshot = snapshotRuntimeConfig(value);
+  const validate = validatorV2();
+  assertCondition(validate(snapshot), 'runtime config v2 validation failed: ' + formatAjvErrors(validate.errors));
+  const config = snapshot as AgentRuntimeConfigV2;
+  assertCondition(
+    config.schema === 'AgentRuntimeConfig/v2' && config.version === 2,
+    'runtime config v2 identity is invalid',
+  );
+  const products = config.projects.map(({ delivery_group: _group, path_overrides: _overrides, ...product }) => product);
+  productModelSchema.parse({
+    schema: 'ProductModel/v1',
+    version: 1,
+    repository: { repository_id: config.repository.repository_id, prefix: config.repository.prefix },
+    projects: products,
+  });
+  return config;
+}
+
+/** Read the explicit product model from a validated versioned configuration. */
+export function productModelForRuntimeConfig(config: AgentRuntimeConfig): ProductModelDefinition | undefined {
+  if (config.schema === 'AgentRuntimeConfig/v2') {
+    const { prefix: _prefix, ...repository } = config.repository;
+    const projects = config.projects.map(
+      ({ delivery_group: _group, path_overrides: _overrides, ...product }) => product,
+    );
+    return productModelSchema.parse({
+      schema: 'ProductModel/v1',
+      version: 1,
+      repository: { repository_id: repository.repository_id, prefix: config.repository.prefix },
+      projects,
+    });
+  }
+  return undefined;
+}
+
 export class RuntimeConfigError extends Error {
   readonly code = 'GAP-RUNTIME-CONFIG-001';
 
@@ -519,6 +654,7 @@ export class RuntimeConfigError extends Error {
 }
 
 type AjvConstructor = new (options?: Record<string, unknown>) => {
+  addSchema(schema: object): unknown;
   compile(schema: object): ((value: unknown) => boolean) & { errors?: ErrorObject[] | null };
 };
 const Ajv2020Constructor = Ajv2020 as unknown as AjvConstructor;
@@ -745,13 +881,13 @@ export function resolveConfigPath(repositoryRoot: string, relativePath: string, 
   return target;
 }
 
-function assertRegularSchemaFile(file: string): string {
+function assertRegularSchemaFile(file: string, expectedSha256 = CONFIG_SCHEMA_SHA256): string {
   const stat = lstatSync(file);
   const invalid = [!stat.isFile(), stat.isSymbolicLink(), stat.size <= 0, stat.size > MAX_CONFIG_BYTES].some(Boolean);
   assertCondition(!invalid, 'runtime config schema identity is invalid');
   const raw = readFileSync(file, 'utf8');
   assertCondition(
-    createHash('sha256').update(raw, 'utf8').digest('hex') === CONFIG_SCHEMA_SHA256,
+    createHash('sha256').update(raw, 'utf8').digest('hex') === expectedSha256,
     'runtime config schema content is not canonical',
   );
   return raw;
@@ -845,6 +981,7 @@ export function parseRuntimeConfigDocument(raw: string): unknown {
 }
 
 let schemaValidator: ConfigValidator | undefined;
+let schemaValidatorV2: ConfigValidator | undefined;
 function validator(): ConfigValidator {
   return choose(
     Boolean(schemaValidator),
@@ -864,11 +1001,26 @@ function validator(): ConfigValidator {
   );
 }
 
+function validatorV2(): ConfigValidator {
+  if (schemaValidatorV2 !== undefined) return schemaValidatorV2;
+  const schema = parseRuntimeConfigDocument(assertRegularSchemaFile(CONFIG_SCHEMA_V2_FILE, CONFIG_SCHEMA_V2_SHA256));
+  assertCondition(isYamlObject(schema), 'runtime config v2 schema identity is invalid');
+  assertCondition(
+    (schema as { $id?: unknown }).$id === CONFIG_SCHEMA_V2_ID,
+    'runtime config v2 schema identity is invalid',
+  );
+  const legacySchema = parseRuntimeConfigDocument(assertRegularSchemaFile(CONFIG_SCHEMA_FILE));
+  const ajv = new Ajv2020Constructor({ strict: true, allErrors: true, ownProperties: true });
+  ajv.addSchema(legacySchema as object);
+  schemaValidatorV2 = ajv.compile(schema as object) as ConfigValidator;
+  return schemaValidatorV2;
+}
+
 function assertUnique(values: readonly string[], label: string): void {
   assertCondition(new Set(values).size === values.length, label + ' contains duplicates');
 }
 
-function assertConfiguredPaths(config: AgentRuntimeConfig): void {
+function assertConfiguredPaths(config: AgentRuntimeConfigV1): void {
   const base: [string, string][] = [
     [config.repository.sidecar, 'repository sidecar'],
     [config.repository.policy, 'repository policy'],
@@ -1650,10 +1802,37 @@ function validateRuntimeConfigWithAccess(
     source === CONFIG_FILE || source === PROJECT_CONFIGURATION_PATHS.project,
     'runtime config source is unsupported',
   );
+  const candidate = snapshotRuntimeConfig(value);
+  if (isPlainRecord(candidate) && candidate.schema === 'AgentRuntimeConfig/v2' && candidate.version === 2) {
+    const configV2 = validateAgentRuntimeConfigV2(candidate);
+    const { prefix: _prefix, ...repository } = configV2.repository;
+    const normalized = {
+      ...configV2,
+      schema: 'AgentRuntimeConfig/v1',
+      version: 1,
+      repository,
+      projects: configV2.projects.map((project) => ({
+        project_id: project.project_id,
+        title: project.title,
+        project_root: project.project_root,
+        wiki_root: project.documents.root,
+        wiki_path: project.documents.index,
+        wiki_output_root: project.documents.root,
+        internal_root: project.documents.requirements.root,
+        ledger_root: project.work_items.storage_root,
+        task_prefix: project.prefix,
+        code_selectors: project.code_selectors,
+        delivery_group: project.delivery_group,
+        ...(project.path_overrides === undefined ? {} : { path_overrides: project.path_overrides }),
+      })),
+    };
+    validateRuntimeConfigWithAccess(normalized, repositoryRoot, source, access);
+    return configV2;
+  }
   const snapshot = snapshotRuntimeConfig(value);
   const validate = validator();
   assertCondition(validate(snapshot), 'runtime config validation failed: ' + formatAjvErrors(validate.errors));
-  const config = snapshot as AgentRuntimeConfig;
+  const config = snapshot as AgentRuntimeConfigV1;
   assertCondition(config.schema === 'AgentRuntimeConfig/v1', 'runtime config identity is invalid');
   assertCondition(config.version === 1, 'runtime config identity is invalid');
   assertConfiguredPaths(config);

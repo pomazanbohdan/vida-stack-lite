@@ -25,9 +25,11 @@ import { LEGACY_RUNTIME_CONFIGURATION_PATH, PROJECT_CONFIGURATION_PATHS } from '
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryRoot = path.resolve(packageRoot, '../..');
-const original = validateRuntimeConfig(
+const originalConfig = validateRuntimeConfig(
   parseRuntimeConfigDocument(readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'), 'utf8')),
 );
+if (originalConfig.schema !== 'AgentRuntimeConfig/v1') throw new Error('Expected the legacy v1 fixture');
+const original = originalConfig;
 const originalDocuments = splitRuntimeConfig(original, LEGACY_RUNTIME_CONFIGURATION_PATH);
 const baseInputs = Object.freeze({
   project: stringify(originalDocuments.project, { lineWidth: 0 }),

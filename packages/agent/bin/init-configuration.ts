@@ -1,10 +1,13 @@
 import { createHash } from 'node:crypto';
-import { parseDocument, isSeq } from 'yaml';
+import { parseDocument, isSeq, stringify } from 'yaml';
+import { z } from 'zod';
+import { productModelSchema, type ProductModelDefinition } from '../src/config/product-model.ts';
 import { initializationObservationContext } from './init-core.ts';
 import {
   parseRuntimeConfigYaml,
   runtimeConfigDigest,
   assertProjectUpgradeInactive,
+  applyProductModelToRuntimeConfig,
 } from '../src/config/runtime-config.ts';
 import {
   sessionHandoffDatabaseRelativePath,
@@ -26,7 +29,8 @@ import {
 import type { ConsumerProjectMove, ConsumerProjectMoveInventory } from './consumer-project-relocation.ts';
 import { validateConsumerConfigurationOperation } from './consumer-configuration-operation.ts';
 
-export interface ConsumerConfigurationRequest {
+export interface ConsumerConfigurationRequestV1 {
+  readonly schema?: never;
   readonly projectRoot: string;
   readonly repository: string;
   readonly projectMappings: readonly string[];
@@ -34,14 +38,57 @@ export interface ConsumerConfigurationRequest {
   readonly projectMoves?: readonly string[];
 }
 
-export interface ConsumerConfigurationPlan {
-  readonly schema: 'ConsumerConfigurationPlan/v1';
-  readonly request: {
-    readonly repository: string;
-    readonly projects: readonly { readonly id: string; readonly root: string }[];
-    readonly team_project_grants: readonly string[];
-    readonly project_moves?: readonly ConsumerProjectMove[];
-  };
+export interface ConsumerConfigurationRequestV2 {
+  readonly schema: 'ConsumerConfigurationRequest/v2';
+  readonly version: 2;
+  readonly projectRoot: string;
+  readonly repository: string;
+  readonly productModel: ProductModelDefinition;
+  readonly legacyProjectIdMap?: Readonly<Record<string, string>>;
+  readonly teamProjectGrants?: readonly string[];
+  readonly projectMoves?: readonly string[];
+}
+
+/** Existing CLI callers remain v1 until their separately owned integration. */
+export type ConsumerConfigurationRequest = ConsumerConfigurationRequestV1;
+export type VersionedConsumerConfigurationRequest = ConsumerConfigurationRequestV1 | ConsumerConfigurationRequestV2;
+
+const productRequestSchema = z.strictObject({
+  schema: z.literal('ConsumerConfigurationRequest/v2'),
+  version: z.literal(2),
+  projectRoot: z.string().min(1),
+  repository: z.string().min(1),
+  productModel: productModelSchema,
+  legacyProjectIdMap: z
+    .record(z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/), z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/))
+    .optional(),
+  teamProjectGrants: z.array(z.string()).optional(),
+  projectMoves: z.array(z.string()).optional(),
+});
+
+/** Derive the existing context owner's mappings from the single admitted model. */
+export function consumerConfigurationProjectMappings(
+  request: VersionedConsumerConfigurationRequest,
+): readonly string[] {
+  if (request.schema === 'ConsumerConfigurationRequest/v2') {
+    const checked = productRequestSchema.parse(request);
+    if (checked.repository !== checked.productModel.repository.repository_id)
+      throw new Error('Product model repository differs from request');
+    return checked.productModel.projects.map((project) => `${project.project_id}=${project.project_root}`);
+  }
+  if (request.schema !== undefined || 'productModel' in request || 'legacyProjectIdMap' in request)
+    throw new Error('Invalid consumer configuration request version');
+  return request.projectMappings;
+}
+
+interface ConfigurationPlanRequest {
+  readonly repository: string;
+  readonly projects: readonly { readonly id: string; readonly root: string }[];
+  readonly team_project_grants: readonly string[];
+  readonly project_moves?: readonly ConsumerProjectMove[];
+}
+
+interface ConsumerConfigurationPlanBase {
   readonly operation_id: string;
   readonly binding: string;
   readonly changes: {
@@ -59,6 +106,18 @@ export interface ConsumerConfigurationPlan {
   };
 }
 
+export type ConsumerConfigurationPlan = ConsumerConfigurationPlanBase &
+  (
+    | { readonly schema: 'ConsumerConfigurationPlan/v1'; readonly request: ConfigurationPlanRequest }
+    | {
+        readonly schema: 'ConsumerConfigurationPlan/v2';
+        readonly request: ConfigurationPlanRequest & {
+          readonly product_model: ProductModelDefinition;
+          readonly legacy_project_id_map: Readonly<Record<string, string>>;
+        };
+      }
+  );
+
 const outputs = [
   ['templates/AGENTS.template.md', 'AGENTS.md'],
   ['templates/AGENT.sidecar.template.md', 'AGENT.sidecar.md'],
@@ -69,7 +128,7 @@ const digest = (data: string | Uint8Array): string => createHash('sha256').updat
 const text = (data: Uint8Array): string => new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(data);
 
 /** Observes current consumer bytes and derives an opaque, non-authoritative plan. */
-export function captureConsumerConfiguration(request: ConsumerConfigurationRequest): {
+export function captureConsumerConfiguration(request: VersionedConsumerConfigurationRequest): {
   readonly plan: ConsumerConfigurationPlan;
   readonly targetConfig: string;
   readonly targetPolicy: string;
@@ -89,14 +148,14 @@ export type ConfigurationRecovery = {
 
 /** Internal recovery overlay. The caller validates the exact owned journal first. */
 export function captureConsumerConfigurationForRecovery(
-  request: ConsumerConfigurationRequest,
+  request: VersionedConsumerConfigurationRequest,
   recovery: ConfigurationRecovery,
 ): ReturnType<typeof captureConsumerConfiguration> {
   return capture(request, recovery);
 }
 
 function capture(
-  request: ConsumerConfigurationRequest,
+  request: VersionedConsumerConfigurationRequest,
   recovery?: ConfigurationRecovery,
 ): {
   readonly plan: ConsumerConfigurationPlan;
@@ -106,7 +165,10 @@ function capture(
   readonly before: readonly Buffer[];
   readonly receipt: Buffer | null;
 } {
-  const ctx = initializationObservationContext(request);
+  const projectMappings = consumerConfigurationProjectMappings(request);
+  const productRequest =
+    request.schema === 'ConsumerConfigurationRequest/v2' ? productRequestSchema.parse(request) : undefined;
+  const ctx = initializationObservationContext({ ...request, projectMappings });
   const physical = ctx.observation;
   const pendingPath = '.agent/runtime-initialization.pending.v1.json';
   const assertRecovery = () => {
@@ -115,7 +177,7 @@ function capture(
     const journal = validateConsumerConfigurationOperation(JSON.parse(text(journalBytes)));
     if (recovery.before.length !== 4) throw new Error('Recovery before images differ');
     if (recovery.archived) {
-      const archivePath = `.agent/consumer-configuration-operation.${journal.operation_id}.v1.json`;
+      const archivePath = `.agent/consumer-configuration-operation.${journal.operation_id}.v${journal.version}.json`;
       if (
         journal.operation_id !== `config-${journal.binding}` ||
         journal.progress !== 'complete' ||
@@ -130,7 +192,7 @@ function capture(
     } else if (
       !physical.fileExists(pendingPath, 'pending initialization') ||
       physical.fileExists(
-        `.agent/consumer-configuration-operation.${journal.operation_id}.v1.json`,
+        `.agent/consumer-configuration-operation.${journal.operation_id}.v${journal.version}.json`,
         'configuration archive',
       ) ||
       !physical.readBytes(pendingPath, 'pending initialization').equals(journalBytes)
@@ -262,7 +324,17 @@ function capture(
     throw new Error('Existing documentation policy is invalid');
   }
   const current = new Map(config.projects.map((project) => [project.project_id, project.project_root]));
-  const moves = parseConsumerProjectMoves(request.projectMoves, current, ctx.selectedProjects);
+  if (!productRequest && config.schema !== 'AgentRuntimeConfig/v1')
+    throw new Error('A versioned product configuration requires a v2 request');
+  const mappedId = (id: string) => productRequest?.legacyProjectIdMap?.[id] ?? id;
+  if (
+    (request.projectMoves ?? []).length &&
+    productRequest &&
+    Object.keys(productRequest.legacyProjectIdMap ?? {}).length
+  )
+    throw new Error('Project identity adoption and physical relocation require separate operations');
+  const moveProjects = productRequest ? new Map([...current].map(([id, root]) => [mappedId(id), root])) : current;
+  const moves = parseConsumerProjectMoves(request.projectMoves, moveProjects, ctx.selectedProjects);
   const inventory = recoveryJournal?.relocation
     ? recoveryJournal.relocation.inventory.map((item) => observeFrozenProjectMove(ctx.canonicalRoot, item))
     : moves.map((move) => captureConsumerProjectMoveInventory(ctx.canonicalRoot, move));
@@ -288,11 +360,12 @@ function capture(
     )
       throw new Error('Team grant must name an existing team and desired project');
     const existingTeam = config.teams[team];
-    if (!existingTeam || existingTeam.allowed_projects.includes(project)) throw new Error('Team grant already exists');
+    if (!existingTeam || existingTeam.allowed_projects.some((id) => mappedId(id) === project))
+      throw new Error('Team grant already exists');
     return { team, project };
   });
   for (const [id, root] of current) {
-    const requested = ctx.selectedProjects.find((project) => project.id === id);
+    const requested = ctx.selectedProjects.find((project) => project.id === mappedId(id));
     if (!requested) throw new Error('Removing or renaming a project is unsupported');
     if (requested.root !== root && !moves.some((move) => move.id === id))
       throw new Error('Project relocation requires an explicit move');
@@ -344,7 +417,8 @@ function capture(
       throw new Error('Initialization receipt differs or workspace is bound');
   }
   const defaults = ctx.defaultConfig();
-  const added = ctx.selectedProjects.filter((project) => !current.has(project.id));
+  const mappedCurrent = new Set([...current.keys()].map(mappedId));
+  const added = ctx.selectedProjects.filter((project) => !mappedCurrent.has(project.id));
   const document = parseDocument(text(configBytes));
   if (document.errors.length) throw new Error('Existing configuration is invalid');
   const projects = document.get('projects');
@@ -354,7 +428,9 @@ function capture(
     const index = config.projects.findIndex((project) => project.project_id === move.id);
     if (index < 0) throw new Error('Relocation project is missing');
     document.setIn(['projects', index, 'project_root'], move.newRoot);
-    for (const field of ['wiki_root', 'wiki_path', 'wiki_output_root', 'internal_root', 'ledger_root'] as const) {
+    for (const field of config.schema === 'AgentRuntimeConfig/v1'
+      ? (['wiki_root', 'wiki_path', 'wiki_output_root', 'internal_root', 'ledger_root'] as const)
+      : []) {
       const value = document.getIn(['projects', index, field]);
       if (typeof value !== 'string') throw new Error('Project path is invalid');
       document.setIn(['projects', index, field], rebaseProjectPath(value, [move]));
@@ -396,7 +472,17 @@ function capture(
   }
   for (const key of ['bundle', 'schema_root', 'instruction_root', 'tooling_root'] as const)
     document.setIn(['runtime', key], defaults.runtime[key]);
-  const target = String(document);
+  const target = productRequest
+    ? stringify(
+        applyProductModelToRuntimeConfig(
+          parseRuntimeConfigYaml(String(document)),
+          productRequest.productModel,
+          productRequest.legacyProjectIdMap === undefined
+            ? {}
+            : { legacy_project_id_map: productRequest.legacyProjectIdMap },
+        ),
+      )
+    : String(document);
   const targetPolicy = rebaseDocumentationPolicy(text(policyBytes), moves);
   let targetConfig: ReturnType<typeof parseRuntimeConfigYaml>;
   try {
@@ -419,6 +505,13 @@ function capture(
       'schemas/agent-runtime-config.v1.schema.json',
       'schemas/research-result.v1.schema.json',
       'schemas/research-synthesis.v1.schema.json',
+      ...(productRequest
+        ? [
+            'schemas/agent-runtime-config.v2.schema.json',
+            'schemas/product-model.v1.schema.json',
+            'schemas/consumer-configuration-operation.v2.schema.json',
+          ]
+        : []),
     ]),
   ].sort();
   const packageBinding = packagePaths.map((entry) => [entry, digest(ctx.readPackageBytes(entry))]);
@@ -453,6 +546,9 @@ function capture(
     projects: ctx.selectedProjects,
     team_project_grants: grants,
     ...(moves.length ? { project_moves: moves } : {}),
+    ...(productRequest
+      ? { product_model: productRequest.productModel, legacy_project_id_map: productRequest.legacyProjectIdMap ?? {} }
+      : {}),
   };
   const relocationBinding = moves.length
     ? {
@@ -484,9 +580,7 @@ function capture(
       ...relocationBinding,
     }),
   );
-  const plan: ConsumerConfigurationPlan = {
-    schema: 'ConsumerConfigurationPlan/v1',
-    request: canonicalRequest,
+  const details: ConsumerConfigurationPlanBase = {
     operation_id: `config-${binding}`,
     binding,
     changes: {
@@ -506,6 +600,17 @@ function capture(
         : 'none',
     },
   };
+  const plan: ConsumerConfigurationPlan = productRequest
+    ? {
+        ...details,
+        schema: 'ConsumerConfigurationPlan/v2',
+        request: {
+          ...canonicalRequest,
+          product_model: productRequest.productModel,
+          legacy_project_id_map: productRequest.legacyProjectIdMap ?? {},
+        },
+      }
+    : { ...details, schema: 'ConsumerConfigurationPlan/v1', request: canonicalRequest };
   assertRecovery();
   if (
     recovery &&
@@ -520,6 +625,6 @@ function capture(
   return { plan, targetConfig: target, targetPolicy, relocationInventory: inventory, before, receipt: receiptBytes };
 }
 
-export function planConsumerConfiguration(request: ConsumerConfigurationRequest): ConsumerConfigurationPlan {
+export function planConsumerConfiguration(request: VersionedConsumerConfigurationRequest): ConsumerConfigurationPlan {
   return captureConsumerConfiguration(request).plan;
 }

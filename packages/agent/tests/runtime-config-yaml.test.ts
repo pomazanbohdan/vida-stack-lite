@@ -314,6 +314,7 @@ function portableRuntimeConfigText(yaml: string): string {
   const config = mutableClone(
     validateRuntimeConfig(replaceRuntimeDirectory(sourceConfig, fixtureBundle, 'vida-agent')),
   );
+  if (config.schema !== 'AgentRuntimeConfig/v1') throw new Error('Portable YAML fixture requires v1 config');
   config.config_id = 'creatio-sample';
   config.repository.repository_id = 'creatio-sample';
   config.repository.title = 'creatio-sample repository';
