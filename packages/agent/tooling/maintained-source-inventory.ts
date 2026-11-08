@@ -23,6 +23,10 @@ export const standaloneDiscoveryFiles = [
   'bin/cli-error-properties.ts',
   'tooling/owned-cleanup-completion.ts',
   'bin/project-mapping-contract.ts',
+  'bin/init-product-input.ts',
+  'bin/init-prompt.ts',
+  'bin/init-cli-input.ts',
+  'bin/init-terminal.ts',
   'bunfig.toml',
   'tooling/maintained-source-inventory.ts',
 ];

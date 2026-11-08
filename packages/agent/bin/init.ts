@@ -3,6 +3,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initializeProjectFromBundle } from './init-core.ts';
 import { readCliErrorProperty } from './cli-error-properties.ts';
+import {
+  initializationRequestForSetup,
+  mergeSetupInput,
+  readSetupInput,
+  resolveCliSetup,
+  SetupInputError,
+  setupExitCode,
+} from './init-cli-input.ts';
+import type { SetupPromptPort } from './init-prompt.ts';
 
 type InitializationRequest = Parameters<typeof initializeProjectFromBundle>[0];
 type InitOption = (typeof cliCommandContracts.init.options)[number];
@@ -12,6 +21,8 @@ interface InitOptions {
   reconcileExisting?: boolean;
   '--project-root'?: string;
   '--repository'?: string;
+  '--product-model'?: string;
+  '--input'?: string;
 }
 interface InitIo {
   log(message: string): unknown;
@@ -24,13 +35,10 @@ type InitInitializer = (request: InitializationRequest) => unknown;
 const isBunRuntime = typeof Bun !== 'undefined';
 const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-export async function initializeProject({
-  projectRoot,
-  repository,
-  projectMappings,
-  reconcileExisting = false,
-}: InitializationRequest): Promise<Awaited<ReturnType<typeof initializeProjectFromBundle>>> {
-  return initializeProjectFromBundle({ projectRoot, repository, projectMappings, reconcileExisting }, bundleRoot);
+export async function initializeProject(
+  request: InitializationRequest,
+): Promise<Awaited<ReturnType<typeof initializeProjectFromBundle>>> {
+  return initializeProjectFromBundle(request, bundleRoot);
 }
 
 const usage = `Usage: ${cliCommandContracts.init.syntax}`;
@@ -54,7 +62,7 @@ function recordOption(values: InitOptions, key: InitScalarOption, value: string)
   else values[key] = value;
 }
 
-function parseInitArguments(args: string[]): InitializationRequest {
+function parseInitArguments(args: string[]): InitOptions {
   const values: InitOptions = { projects: [] };
   for (let index = 0; index < args.length;) {
     const key = args[index];
@@ -68,9 +76,16 @@ function parseInitArguments(args: string[]): InitializationRequest {
     recordOption(values, pair.key, pair.value);
     index += 2;
   }
+  return values;
+}
+
+function legacyInitializationRequest(values: InitOptions): InitializationRequest {
+  const projectRoot = requiredInitOption(values['--project-root']);
+  const repository = requiredInitOption(values['--repository']);
+  if (!values.projects.length) throw new Error('Projects must be a non-empty explicit project mapping set');
   return {
-    projectRoot: requiredInitOption(values['--project-root']),
-    repository: requiredInitOption(values['--repository']),
+    projectRoot,
+    repository,
     projectMappings: values.projects,
     ...(values.reconcileExisting ? { reconcileExisting: true } : {}),
   };
@@ -116,13 +131,46 @@ interface RunNodeCliOptions extends RunCliOptions {
 
 interface RunBunCliOptions extends RunCliOptions {
   initialize: InitInitializer;
+  setupPort?: SetupPromptPort | undefined;
 }
 
-async function runBunCli({ args, io, exit, initialize }: RunBunCliOptions): Promise<void> {
+function setupFile(values: InitOptions): string | undefined {
+  if (values['--product-model'] !== undefined && values['--input'] !== undefined) {
+    throw new SetupInputError('explicit_value_changed', '/input', 'Choose either --product-model or --input.');
+  }
+  return values['--product-model'] ?? values['--input'];
+}
+
+async function runBunCli({ args, io, exit, initialize, setupPort }: RunBunCliOptions): Promise<void> {
   try {
-    io.log(JSON.stringify(await initialize(parseInitArguments(args))));
+    const values = parseInitArguments(args),
+      file = setupFile(values);
+    if (values['--repository'] !== undefined || values.projects.length) {
+      if (file !== undefined)
+        throw new SetupInputError(
+          'explicit_value_changed',
+          '/model',
+          'Do not mix legacy repository/project flags with a model input file.',
+        );
+      io.log(JSON.stringify(await initialize(legacyInitializationRequest(values))));
+      return;
+    }
+    const draft = mergeSetupInput(file === undefined ? {} : readSetupInput(file), {
+      projectRoot: values['--project-root'],
+      reconcile: values.reconcileExisting,
+    });
+    const resolved = await resolveCliSetup(draft, setupPort);
+    if (resolved.status !== 'ready') {
+      io.log(JSON.stringify(resolved));
+      exit.exitCode = setupExitCode(resolved) ?? 1;
+      return;
+    }
+    io.log(JSON.stringify(await initialize(initializationRequestForSetup(resolved.input))));
   } catch (error: unknown) {
-    reportInitFailure(error, io, exit, false);
+    if (error instanceof SetupInputError) {
+      io.log(JSON.stringify(error.result));
+      exit.exitCode = 1;
+    } else reportInitFailure(error, io, exit, false);
   }
 }
 
@@ -134,6 +182,7 @@ export interface InitMainOptions {
   exit?: InitExit;
   initialize?: InitInitializer;
   delegate?: InitDelegate;
+  setupPort?: SetupPromptPort;
 }
 
 export async function main({
@@ -144,6 +193,7 @@ export async function main({
   exit = process,
   initialize = initializeProject,
   delegate,
+  setupPort,
 }: InitMainOptions = {}): Promise<void> {
   if (!isMain) return;
   if (args[0] === '--help') {
@@ -154,7 +204,7 @@ export async function main({
     await runNodeCli({ args, io, exit, delegate });
     return;
   }
-  await runBunCli({ args, io, exit, initialize });
+  await runBunCli({ args, io, exit, initialize, setupPort });
 }
 
 async function printHelp(args: string[], io: InitIo, command: string): Promise<void> {

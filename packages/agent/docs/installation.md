@@ -91,15 +91,66 @@ The installed package root comes from the running module; the explicit consumer 
 
 The repository Source contains strict `clean-init plan|inspect|apply|resume|retire`
 routes for the legacy YAML, gate-only contour. Publication refuses existing
-`.vida` product data before pending state. Source has closed local fault/recovery
-and public apply/release/retire cases:1 executed/28 assertions/0 failures and
-1/15/0 respectively. Raw JUnit corrects the retained Luna25 count. Root R8,
-prepared-suite, CLI/help/inventory and static checks closed; the
-[Task3 record](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
-binds exact receipts. Native Code closeout, delivery and installation remain
-open. Package0.1.9; installed system runtime0.1.11 has separate R13 delivery
-and does not establish these C3 commands. Do not use an installed clean-init
-route until Task3 delivery closes. Historical UNKNOWN and closed failures remain.
+`.vida` product data before pending state. Check the
+[canonical delivery state](next-actions.md#current-delivery-state) before using
+an installed clean-init route. Source presence does not establish delivery.
+The [Task 3 record](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)
+binds implementation and verification evidence; this installation guide keeps
+the procedure rather than another task/version status copy.
+
+## Full product model input
+
+The init/configure Source interface accepts `--product-model SETUP_FILE` or its
+mutually exclusive alias `--input SETUP_FILE`. Verify the delivered command's
+help before use; Source implementation alone does not establish installed support.
+The bounded UTF-8 JSON/YAML file has only `projectRoot`, `model`, `reconcile` and
+optional `legacyProjectIdMap` keys. Its maximum size is 32768 bytes. `model` is a
+complete `ProductModel/v1` value including `schema`, `version`, repository values,
+all products and explicit document/work paths. A standalone approved model YAML
+is not the setup envelope. The setup file is operator input, not another stored
+runtime configuration or automatic activation of a proposed file.
+
+```yaml
+projectRoot: C:/workspace/example
+reconcile: false
+model:
+  schema: ProductModel/v1
+  version: 1
+  repository: { repository_id: example, prefix: EXAMPLE }
+  projects:
+    - project_id: app
+      title: Example app
+      prefix: APP
+      project_root: .
+      code_selectors: []
+      documents:
+        root: docs/wiki
+        index: docs/wiki/index.md
+        requirements: { root: docs/requirements, areas: {} }
+        research: docs/research
+        decisions: docs/decisions
+      work_items:
+        storage_root: work
+        enabled_types: [TASK]
+        hierarchy: { mode: any }
+```
+
+These are example choices, not defaults. Use the approved values for the consumer.
+Run `vida-agent init --product-model SETUP_FILE`. Complete input never prompts.
+Missing values use an interactive terminal; prompts go to stderr and the JSON
+result goes to stdout. Without a TTY, incomplete input returns `input_required`
+before initialization. Invalid input and cancellation leave the target unchanged;
+cancellation exits 130 and refusal/missing input exits 1. Explicit CLI/file values
+must agree. Do not mix a model input file with legacy `--repository`/`--project`
+flags. Complete legacy initialization arguments remain supported.
+
+For configuration, `vida-agent configure plan --product-model SETUP_FILE` uses
+the same reader and existing operation owner; init-only `reconcile` is optional
+and does not grant configuration effects. Save the exact returned v1/v2 public
+JSON plan, then use `configure apply --project-root ABS --plan PLAN_FILE`.
+Apply derives the plan again before effects. Resume uses the same setup/model,
+grants/moves and `--operation OPERATION_ID`. Existing pre-Host eligibility,
+consent, receipt, journal/CAS, UNKNOWN and recovery rules below still apply.
 
 ## Configure a consumer before Host use
 

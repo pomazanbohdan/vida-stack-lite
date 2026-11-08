@@ -1,6 +1,6 @@
 # Runtime next actions
 
-Owner: runtime maintainers. Updated: 2026-11-08.
+Owner: runtime maintainers. Updated: 2026-11-09.
 Class: derived task queue. The [system specification](system-specification.md),
 [development lifecycle](../instructions/development-lifecycle.md) and
 [testing policy](../TESTING.md) retain their contract ownership.
@@ -15,9 +15,9 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 | Task                                                                                                                                            | Current state                                | Remaining outcome and dependency                                                                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open. |
-| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | Source on main; delivery pending             | Form and install qualified Task 4 artifacts after verified publication through normal hooks. Preserve the seven LibSQL cleanup failures and separate numeric/broader recovery qualification gaps.                                        |
-| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Old claim settled; component ready           | Retain the four-file component and Root corrections. After Task 4 adapter delivery, integrate init/configure handlers, prompts, help, resources and package registration. Complete actual product/path setup and Source/native parity.      |
-| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Waiting for delivered Tasks 4 and 5          | Qualify the complete model in a temporary consumer, then perform the approved real init and verify products, documentation and preserved work. Attribute workflow evidence and user Runtime acceptance separately.                          |
+| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed              | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                    |
+| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Source/Code/focused PASS; Root integration   | Integrate exact 13-path delta plus four reviewed pure prerequisites and canonical docs through normal hooks. Resolve strict Knip hint through its owner, then deliver/install the owner-selected next PATCH and verify native parity.       |
+| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Waiting for delivered Task 5                 | Qualify the complete model through the delivered CLI in a temporary consumer, then perform approved real adoption and verify data/docs/work preservation. User Runtime acceptance remains separate.                                         |
 
 Release, installer verification and Markdown reconciliation are completion steps
 of each task's cycle. They are not additional implementation tasks or a reason
@@ -31,9 +31,16 @@ and clean-init preservation, explicit identity mapping and segment-aware selecto
 Both current Code validators passed. An independent focused tester executed
 22 cases/122 assertions with no failures; Root reproduced that result on the
 integrated release target. The older 53-case parser evidence remains historical.
-Task 5's independently reviewed Root-corrected input/prompt component retains
-17-case/65-assertion evidence. Its handlers, TTY, help and package consumers remain
-unintegrated; these components establish neither delivered tasks nor real init.
+Task 5 now wires that pure input/prompt component through bounded JSON/YAML
+`--product-model`/`--input`, missing-value terminal completion, init forwarding,
+strict v1/v2 configure plans and help/resource registration. Its accepted Code
+fingerprint is `6c1499eee333c78e9c4dd5d670a67667b785add95c26f7a69f75b63caad187cd`.
+A distinct tester executed 49 cases/203 assertions, 23 legacy-adapter cases/94
+assertions and three help/resource cases/61 assertions, all passing; strict test
+types passed 586 files with zero errors. The work record is
+`.agent/work/runtime-product-setup-cli-20261108-task5-r5/`. Source handoff is
+accepted, but normal-hook integration, qualified Task 5 artifacts and real init
+remain open. Root's private Source consumer proof is not delivered-artifact proof.
 
 Both old Source claims are settled through installed `0.1.13`'s public capture
 owner. Task 4 was captured first. Task 5 then used fresh shared CAS after the
@@ -102,22 +109,27 @@ The release owner then completed its fresh all-nine published `0.1.13` baseline
 readback and selected candidate `0.1.14`, operation
 `local-831586e9-9827-4673-b85d-d135d8c3de4f`, at `awaiting_assurance`.
 Its manifest update is version-only; the predecessor journal and primary `0.1.9`
-WIP are unchanged. Qualified native formation, publication and installation remain
-open. Existing `0.1.13` installation does not establish Task 4 delivery.
+WIP are unchanged. That preparation record remains at its own local closeout
+boundary; subsequent public formation/publication and installation are recorded
+below and do not rewrite its journal.
 
 The version commit reached main as `cd3e835f`; its normal Windows push profile
 again passed all 122 cases. The single native
 [CI42478472372](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42478472372)
 passed release assurance but both producers failed at native-build and publication
-failed. No installation is claimed. The root cause was a duplicated raw
+failed. That failed run established no installation. The root cause was a duplicated raw
 dist/product-model schema entry plus omitted C3 clean-init-v2 resources in the
 manifest. The manifest-only correction has accepted Source/Code and independent
 inventory proof (one case/10 assertions plus raw uniqueness/coexistence).
 Evidence belongs to `.agent/work/runtime-product-publication-inventory-20261108-r1/`.
-Fresh remote inspection found no current v0.1.14 tag or release; latest remains
-non-draft v0.1.13. Root retains the failed run and old requests, reconciles this
-Source correction through normal hooks and selects new current-Source proof
-requests in the same release operation before later authorized formation.
+Root retained that failure and reconciled the manifest correction through normal
+hooks as `8dca4fd440e1b9744027a5508fbb44b001d55ff7`. Corrected
+[CI42483708460](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42483708460)
+passed assurance and both native producers. The first publisher attempt left the
+matching immutable tag and empty draft; exact-state reconciliation preceded one
+failed-job recovery using the original producer artifacts. Attempt 2 published
+successfully and passed external Linux installation. Windows update and cleanup
+completed through the maintained public installer without Source override.
 
 The user explicitly approved every value in
 [the setup model](decisions/configuration/project-config.proposed.yaml) on
@@ -128,16 +140,32 @@ Runtime acceptance is implied.
 Coverage/CRAP, reviewed final callable correspondence, manual mutation, full-suite,
 Host/C3 recovery, v2 physical relocation and lost-ack/restart qualification remain
 unproved under unchanged policy. The historical composite timeout and 2 s target
-are not qualified by focused passes. After Task 4 delivery, integrate Task 5's
-existing prompt/input ports before target observation, v2 configure routing and
-CLI/help/package resources; then qualify a complete temporary consumer before
-real repository init. Approved document destinations are not active configuration.
+are not qualified by focused passes. Task 5's broad legacy campaign retained
+68 passes/29 failures, including stale expectations subsequently corrected,
+five-second init timeouts, Windows symlink EPERM, unowned clean-init direct-help
+and stale SDK receipt failures. Strict Knip has zero code issues but one redundant
+entry hint in unchanged `knip.config.ts`; its exit 1 remains a proper-owner gate.
+Physical PTY launch was denied before process creation, so scripted questions do
+not establish physical TTY/SIGINT behavior. No limits or checks were weakened.
+Qualify a complete delivered temporary consumer before real repository init.
+Approved document destinations are not active configuration.
 
 ## Current delivery state
 
 Published and installed current runtime is
-[v0.1.13](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.13).
-It contains C3, R17/R18 and R19. R19's reviewed Source and queue reached
+[v0.1.14](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.14).
+It contains C3, R17/R18/R19 and Task 4. Corrected CI42483708460 and its external
+Linux install passed; the maintained Windows installer returned version 0.1.14,
+161263616 bytes and SHA256 `f9182144c1351f7a0c4c3df9a384add68e026ccc093d0ccfdc8b47f21a17a20a`,
+cleanup complete and effective PATH confirmed once. Six installed instruction
+lookups succeeded. Evidence is in
+`.agent/work/runtime-product-publication-inventory-20261108-r1/`.
+Task 5 is not delivered by these 0.1.14 artifacts. Its next PATCH must be selected
+by the existing release owner after complete current published-baseline readback.
+No actual repository init or attributable user Runtime acceptance exists.
+
+The preceding v0.1.13 delivered the stopped-source and workspace-inspection
+corrections. R19's reviewed Source and queue reached
 [main b4bb0b1d](https://github.com/pomazanbohdan/vida-stack-lite/commit/b4bb0b1d763adface6f9a325b77b43d2c10ab182);
 the owner-selected version reached
 [main 1a7a902c](https://github.com/pomazanbohdan/vida-stack-lite/commit/1a7a902c379504da86dedbe8be48b290268d9f43).
@@ -160,7 +188,13 @@ complete. Its structured result owns that postcheck. Public native identity and
 instruction lookup were then used for actual capture binding. The delivered R19
 inspector and both supported old-claim captures succeeded on this runtime.
 
-The release checkout's manifest is `0.1.13`; primary working manifest `0.1.9`
+The release owner verified the complete published `0.1.14` baseline and selected
+Task 5 candidate `0.1.15`, operation `local-a153c79d-39ee-4649-add5-3d4306357eca`,
+at `awaiting_assurance`. Its version-only manifest change and unchanged predecessor
+are recorded in `.agent/work/runtime-product-setup-cli-20261108-task5-r5/prepared-release.json`.
+This is preparation, not publication or installation of Task 5.
+
+The release checkout's manifest is `0.1.15`; primary working manifest `0.1.9`
 remains preserved WIP. Local release journals, including the selected operation's
 `awaiting_assurance`, retain their own existing closeout owner. Public publication
 and installation do not rewrite those journals. Actual project init and user

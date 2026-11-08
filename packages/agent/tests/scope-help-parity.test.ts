@@ -494,6 +494,25 @@ test('shared CLI declaration freezes nested aliases and preserves supported scal
   expect(Object.isFrozen(cliCommandNames)).toBe(true);
 });
 
+test('init and configure help expose bounded full-model input before target access', () => {
+  for (const command of ['init', 'configure']) {
+    const help: unknown = cliMetadataResult([command, '--help'], manifest);
+    expect(help).toMatchObject({ status: 'help', command });
+    const text = JSON.stringify(help);
+    for (const value of ['--product-model', '--input', '32768', 'input_required', 'mutually exclusive'])
+      expect(text).toContain(value);
+  }
+  expect(cliCommandContracts.init.example).toContain('--product-model');
+  for (const file of [
+    'bin/init-product-input.ts',
+    'bin/init-prompt.ts',
+    'bin/init-cli-input.ts',
+    'bin/init-terminal.ts',
+  ]) {
+    expect(manifest.files.filter((value) => value === file)).toEqual([file]);
+  }
+});
+
 test('public help rejects surplus selectors instead of silently accepting them', () => {
   const malformed = [
     ['scope', '--help', 'extra'],

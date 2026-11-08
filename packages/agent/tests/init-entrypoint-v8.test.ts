@@ -470,9 +470,7 @@ test('init CLI passes parsed values to the fixed-root initializer and prints its
 });
 
 test.each([
-  ['no arguments', []],
   ['missing required root', ['--repository', 'sample']],
-  ['missing required repository', ['--project-root', 'C:/workspace']],
   ['unknown switch', ['--project-root', 'C:/workspace', '--repository', 'sample', '--unknown', 'value']],
   ['missing value', ['--project-root', 'C:/workspace', '--repository']],
   ['duplicate root', ['--project-root', 'C:/workspace', '--project-root', 'C:/other', '--repository', 'sample']],
@@ -571,7 +569,7 @@ test.each([true, false])(
       status: 'help',
       command: 'init',
       syntax:
-        'vida-agent init --project-root ABSOLUTE_PATH --repository SLUG --project ID=RELATIVE_ROOT [--project ID=RELATIVE_ROOT] [--reconcile-existing]',
+        'vida-agent init [--product-model SETUP_FILE | --input SETUP_FILE] [--project-root ABSOLUTE_PATH] [--reconcile-existing] | --project-root ABSOLUTE_PATH --repository SLUG --project ID=RELATIVE_ROOT [--project ID=RELATIVE_ROOT] [--reconcile-existing]',
     });
   },
 );
@@ -614,7 +612,7 @@ test('initializer entrypoint help works without project configuration or file mu
       status: 'help',
       command: 'init',
       syntax:
-        'vida-agent init --project-root ABSOLUTE_PATH --repository SLUG --project ID=RELATIVE_ROOT [--project ID=RELATIVE_ROOT] [--reconcile-existing]',
+        'vida-agent init [--product-model SETUP_FILE | --input SETUP_FILE] [--project-root ABSOLUTE_PATH] [--reconcile-existing] | --project-root ABSOLUTE_PATH --repository SLUG --project ID=RELATIVE_ROOT [--project ID=RELATIVE_ROOT] [--reconcile-existing]',
     });
     expect(readdirSync(projectRoot)).toEqual([]);
     completed = true;

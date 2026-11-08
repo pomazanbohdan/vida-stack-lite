@@ -1,9 +1,25 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { z } from 'zod';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { productModelSchema } from '../src/config/product-model.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { parseConsumerProjectMoves } from './consumer-project-relocation.ts';
-import { planConsumerConfiguration, type ConsumerConfigurationRequest } from './init-configuration.ts';
+import {
+  planConsumerConfiguration,
+  type ConsumerConfigurationRequest,
+  type VersionedConsumerConfigurationRequest,
+} from './init-configuration.ts';
+import {
+  configurationRequestForSetup,
+  mergeSetupInput,
+  readSetupInput,
+  resolveCliSetup,
+  SetupInputError,
+  setupExitCode,
+} from './init-cli-input.ts';
+import { validateSetupInput, type SetupInputDraft } from './init-product-input.ts';
+import type { SetupPromptPort } from './init-prompt.ts';
 import {
   applyConsumerConfiguration,
   inspectConsumerConfigurationOperation,
@@ -14,179 +30,236 @@ type Parsed =
   | { mode: 'inspect'; projectRoot: string }
   | { mode: 'apply'; projectRoot: string; plan: string }
   | ({ mode: 'plan' } & ConsumerConfigurationRequest)
-  | ({ mode: 'resume'; operation: string } & ConsumerConfigurationRequest);
+  | ({ mode: 'resume'; operation: string } & ConsumerConfigurationRequest)
+  | {
+      mode: 'plan' | 'resume';
+      setup: { file?: string; projectRoot?: string };
+      operation?: string;
+      teamProjectGrants: string[];
+      projectMoves?: string[];
+    };
+type Mode = Parsed['mode'];
+const repeatableOptions = new Set(['--project', '--allow-project', '--move-project']);
+const modeOptions: Record<Mode, readonly string[]> = {
+  inspect: ['--project-root'],
+  apply: ['--project-root', '--plan'],
+  plan: [
+    '--project-root',
+    '--repository',
+    '--project',
+    '--allow-project',
+    '--move-project',
+    '--product-model',
+    '--input',
+  ],
+  resume: [
+    '--project-root',
+    '--repository',
+    '--project',
+    '--allow-project',
+    '--move-project',
+    '--product-model',
+    '--input',
+    '--operation',
+  ],
+};
+
+function optionValues(args: readonly string[], mode: Mode): Map<string, string[]> {
+  const values = new Map<string, string[]>();
+  for (let index = 1; index < args.length; index += 2) {
+    const key = args[index],
+      value = args[index + 1];
+    if (!key || !modeOptions[mode].includes(key) || !value || value.startsWith('--'))
+      throw Error('Invalid configure option');
+    if (values.has(key) && !repeatableOptions.has(key)) throw Error('Duplicate configure option');
+    values.set(key, [...(values.get(key) ?? []), value]);
+  }
+  return values;
+}
+
+function requiredOption(values: Map<string, string[]>, key: string): string {
+  const value = values.get(key)?.[0];
+  if (value === undefined) throw Error('Missing ' + key);
+  return value;
+}
+
+function configurationInputFile(values: Map<string, string[]>): string | undefined {
+  if (values.has('--product-model') && values.has('--input'))
+    throw new SetupInputError('explicit_value_changed', '/input', 'Choose either --product-model or --input.');
+  return values.get('--product-model')?.[0] ?? values.get('--input')?.[0];
+}
 
 export function configureArguments(args: readonly string[]): Parsed {
-  const mode = args[0];
-  if (mode !== 'plan' && mode !== 'inspect' && mode !== 'apply' && mode !== 'resume')
-    throw Error('Invalid configure mode');
-  const scalars = new Map<string, string>();
-  const projects: string[] = [];
-  const grants: string[] = [];
-  const moves: string[] = [];
-  const allowed =
-    mode === 'inspect'
-      ? ['--project-root']
-      : mode === 'apply'
-        ? ['--project-root', '--plan']
-        : [
-            '--project-root',
-            '--repository',
-            '--project',
-            '--allow-project',
-            '--move-project',
-            ...(mode === 'resume' ? ['--operation'] : []),
-          ];
-  for (let i = 1; i < args.length; i += 2) {
-    const key = args[i];
-    const value = args[i + 1];
-    if (!key || !allowed.includes(key) || !value || value.startsWith('--')) throw Error('Invalid configure option');
-    if (key === '--project') projects.push(value);
-    else if (key === '--allow-project') grants.push(value);
-    else if (key === '--move-project') moves.push(value);
-    else if (scalars.has(key)) throw Error('Duplicate configure option');
-    else scalars.set(key, value);
-  }
-  const required = (key: string): string => {
-    const value = scalars.get(key);
-    if (!value) throw Error(`Missing ${key}`);
-    return value;
-  };
-  const projectRoot = required('--project-root');
-  if (!path.isAbsolute(projectRoot)) throw Error('Project root must be absolute');
-  if (mode === 'inspect') return { mode, projectRoot };
-  if (mode === 'apply') return { mode, projectRoot, plan: required('--plan') };
-  if (!projects.length) throw Error('Missing --project');
-  const request = {
-    projectRoot,
-    repository: required('--repository'),
-    projectMappings: projects,
-    teamProjectGrants: grants,
-    ...(moves.length ? { projectMoves: moves } : {}),
-  };
-  return mode === 'plan' ? { mode, ...request } : { mode, ...request, operation: required('--operation') };
+  const mode = z.enum(['plan', 'inspect', 'apply', 'resume']).parse(args[0]);
+  const values = optionValues(args, mode);
+  const projectRoot = values.get('--project-root')?.[0];
+  if (projectRoot !== undefined && !path.isAbsolute(projectRoot)) throw Error('Project root must be absolute');
+  if (mode === 'inspect') return { mode, projectRoot: requiredOption(values, '--project-root') };
+  if (mode === 'apply')
+    return { mode, projectRoot: requiredOption(values, '--project-root'), plan: requiredOption(values, '--plan') };
+  return configurationRequestArguments(values, mode, projectRoot);
 }
 
-function object(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
-  return (
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    Object.keys(value).length === keys.length &&
-    keys.every((key) => Object.hasOwn(value, key))
-  );
+function configurationRequestArguments(
+  values: Map<string, string[]>,
+  mode: 'plan' | 'resume',
+  projectRoot?: string,
+): Parsed {
+  const file = configurationInputFile(values),
+    projects = values.get('--project') ?? [];
+  const moves = values.get('--move-project');
+  const common = {
+    teamProjectGrants: values.get('--allow-project') ?? [],
+    ...(moves === undefined ? {} : { projectMoves: moves }),
+  };
+  const operation = mode === 'resume' ? requiredOption(values, '--operation') : undefined;
+  if (values.has('--repository') || projects.length) {
+    if (file !== undefined)
+      throw new SetupInputError(
+        'explicit_value_changed',
+        '/model',
+        'Do not mix legacy repository/project flags with a model input file.',
+      );
+    const request = { ...legacyConfigurationRequest(values, projects), ...common };
+    return mode === 'plan'
+      ? { mode, ...request }
+      : { mode, ...request, operation: requiredOption(values, '--operation') };
+  }
+  return {
+    mode,
+    setup: setupArguments(file, projectRoot),
+    ...common,
+    ...(operation === undefined ? {} : { operation }),
+  };
 }
-const strings = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every((x) => typeof x === 'string' && x.length > 0);
+
+function setupArguments(
+  file: string | undefined,
+  projectRoot: string | undefined,
+): { file?: string; projectRoot?: string } {
+  return { ...(file === undefined ? {} : { file }), ...(projectRoot === undefined ? {} : { projectRoot }) };
+}
+
+function legacyConfigurationRequest(values: Map<string, string[]>, projects: string[]): ConsumerConfigurationRequest {
+  if (!projects.length) throw Error('Missing --project');
+  return {
+    projectRoot: requiredOption(values, '--project-root'),
+    repository: requiredOption(values, '--repository'),
+    projectMappings: projects,
+  };
+}
+
+const nonempty = z.string().min(1);
+const mappingPart = nonempty.refine((value) => !value.includes('='));
+const projectSchema = z.strictObject({ id: mappingPart, root: mappingPart });
+const movePart = nonempty.refine((value) => !/[=:]/.test(value));
+const moveSchema = z.strictObject({ id: movePart, oldRoot: movePart, newRoot: movePart });
+const planRequestSchema = z.strictObject({
+  repository: nonempty,
+  projects: z.array(projectSchema).min(1),
+  team_project_grants: z.array(nonempty),
+  project_moves: z.array(moveSchema).min(1).optional(),
+});
+const relocationSchema = z.strictObject({
+  files: z.number().int().nonnegative(),
+  directories: z.number().int().nonnegative(),
+  source_directories_retained: z.number().int().nonnegative(),
+  source_empty_directories_retained: z.number().int().nonnegative(),
+  projection: z.literal('plan_only'),
+});
+const planFields = {
+  binding: z.string().regex(/^[a-f0-9]{64}$/),
+  operation_id: nonempty,
+  changes: z.strictObject({
+    added_projects: z.array(nonempty),
+    team_project_grants: z.array(nonempty),
+    relocation: z.union([z.literal('none'), relocationSchema]),
+  }),
+};
+const publicPlanSchema = z.discriminatedUnion('schema', [
+  z.strictObject({ ...planFields, schema: z.literal('ConsumerConfigurationPlan/v1'), request: planRequestSchema }),
+  z.strictObject({
+    ...planFields,
+    schema: z.literal('ConsumerConfigurationPlan/v2'),
+    request: planRequestSchema.extend({
+      product_model: productModelSchema,
+      legacy_project_id_map: z.record(z.string(), z.string()),
+    }),
+  }),
+]);
+type PublicPlan = z.infer<typeof publicPlanSchema>;
+
+function validateRelocation(plan: PublicPlan): string[] | undefined {
+  const moves = plan.request.project_moves,
+    relocation = plan.changes.relocation;
+  if (moves === undefined) {
+    if (relocation !== 'none') throw Error('Invalid public configuration plan');
+    return undefined;
+  }
+  if (relocation === 'none') throw Error('Invalid public configuration plan');
+  const limit = 10000 * moves.length;
+  if (
+    relocation.directories < moves.length ||
+    relocation.files + relocation.directories > limit ||
+    relocation.source_directories_retained !== relocation.directories ||
+    relocation.source_empty_directories_retained > relocation.directories
+  )
+    throw Error('Invalid public configuration plan');
+  const current = new Map(plan.request.projects.map((project) => [project.id, project.root]));
+  for (const move of moves) current.set(move.id, move.oldRoot);
+  const encoded = moves.map((move) => move.id + '=' + move.oldRoot + ':' + move.newRoot);
+  parseConsumerProjectMoves(encoded, current, plan.request.projects);
+  return encoded;
+}
+
+function modelRequestFromPlan(
+  plan: Extract<PublicPlan, { schema: 'ConsumerConfigurationPlan/v2' }>,
+  projectRoot: string,
+): VersionedConsumerConfigurationRequest {
+  const checked = validateSetupInput({
+    projectRoot,
+    model: plan.request.product_model,
+    reconcile: false,
+    legacyProjectIdMap: plan.request.legacy_project_id_map,
+  });
+  if (checked.status !== 'ready') throw Error('Invalid public configuration plan');
+  const expected = checked.input.model.projects.map((project) => ({
+    id: project.project_id,
+    root: project.project_root,
+  }));
+  const sort = (projects: readonly { id: string; root: string }[]) =>
+    [...projects].sort((left, right) => left.id.localeCompare(right.id));
+  if (
+    checked.input.model.repository.repository_id !== plan.request.repository ||
+    canonicalJsonDigest(sort(expected)) !== canonicalJsonDigest(sort(plan.request.projects))
+  )
+    throw Error('Invalid public configuration plan');
+  return configurationRequestForSetup(checked.input);
+}
 
 export function requestFromPlan(
   value: unknown,
   projectRoot: string,
-): { request: ConsumerConfigurationRequest; binding: string; operationId: string } {
-  if (
-    !object(value, ['schema', 'request', 'operation_id', 'binding', 'changes']) ||
-    value.schema !== 'ConsumerConfigurationPlan/v1' ||
-    typeof value.binding !== 'string' ||
-    !/^[a-f0-9]{64}$/.test(value.binding) ||
-    value.operation_id !== `config-${value.binding}` ||
-    !(
-      object(value.request, ['repository', 'projects', 'team_project_grants']) ||
-      object(value.request, ['repository', 'projects', 'team_project_grants', 'project_moves'])
-    ) ||
-    typeof value.request.repository !== 'string' ||
-    !value.request.repository ||
-    !Array.isArray(value.request.projects) ||
-    !value.request.projects.length ||
-    !strings(value.request.team_project_grants) ||
-    !object(value.changes, ['added_projects', 'team_project_grants', 'relocation']) ||
-    !strings(value.changes.added_projects) ||
-    !strings(value.changes.team_project_grants)
-  )
-    throw Error('Invalid public configuration plan');
-  const mappings = value.request.projects.map((entry: unknown) => {
-    if (
-      !object(entry, ['id', 'root']) ||
-      typeof entry.id !== 'string' ||
-      !entry.id ||
-      typeof entry.root !== 'string' ||
-      !entry.root ||
-      entry.id.includes('=') ||
-      entry.root.includes('=')
-    )
-      throw Error('Invalid public configuration plan');
-    return `${entry.id}=${entry.root}`;
-  });
-  let projectMoves: string[] | undefined;
-  if (Object.hasOwn(value.request, 'project_moves')) {
-    const moves = value.request.project_moves;
-    if (!Array.isArray(moves) || !moves.length) throw Error('Invalid public configuration plan');
-    projectMoves = moves.map((entry: unknown) => {
-      if (
-        !object(entry, ['id', 'oldRoot', 'newRoot']) ||
-        typeof entry.id !== 'string' ||
-        !entry.id ||
-        /[=:]/.test(entry.id) ||
-        typeof entry.oldRoot !== 'string' ||
-        !entry.oldRoot ||
-        /[=:]/.test(entry.oldRoot) ||
-        typeof entry.newRoot !== 'string' ||
-        !entry.newRoot ||
-        /[=:]/.test(entry.newRoot)
-      )
-        throw Error('Invalid public configuration plan');
-      return `${entry.id}=${entry.oldRoot}:${entry.newRoot}`;
-    });
-    const current = new Map<string, string>();
-    const desired = mappings.map((mapping) => {
-      const [id, root] = mapping.split('=');
-      if (!id || !root) throw Error('Invalid public configuration plan');
-      current.set(id, root);
-      return { id, root };
-    });
-    for (const move of projectMoves) {
-      const [id, roots] = move.split('=');
-      const [oldRoot] = roots?.split(':') ?? [];
-      if (!id || !oldRoot) throw Error('Invalid public configuration plan');
-      current.set(id, oldRoot);
-    }
-    parseConsumerProjectMoves(projectMoves, current, desired);
-    const relocation = value.changes.relocation;
-    if (
-      !object(relocation, [
-        'files',
-        'directories',
-        'source_directories_retained',
-        'source_empty_directories_retained',
-        'projection',
-      ]) ||
-      relocation.projection !== 'plan_only' ||
-      !['files', 'directories', 'source_directories_retained', 'source_empty_directories_retained'].every(
-        (key) =>
-          typeof relocation[key] === 'number' &&
-          Number.isSafeInteger(relocation[key]) &&
-          relocation[key] >= 0 &&
-          relocation[key] <= 10000 * moves.length,
-      ) ||
-      typeof relocation.files !== 'number' ||
-      typeof relocation.directories !== 'number' ||
-      typeof relocation.source_empty_directories_retained !== 'number' ||
-      relocation.directories < moves.length ||
-      relocation.files + relocation.directories > 10000 * moves.length ||
-      relocation.source_directories_retained !== relocation.directories ||
-      relocation.source_empty_directories_retained > relocation.directories
-    )
-      throw Error('Invalid public configuration plan');
-  } else if (value.changes.relocation !== 'none') throw Error('Invalid public configuration plan');
+): { request: VersionedConsumerConfigurationRequest; binding: string; operationId: string } {
+  const plan = publicPlanSchema.parse(value);
+  if (plan.operation_id !== 'config-' + plan.binding) throw Error('Invalid public configuration plan');
+  const projectMoves = validateRelocation(plan);
+  const request =
+    plan.schema === 'ConsumerConfigurationPlan/v2'
+      ? modelRequestFromPlan(plan, projectRoot)
+      : {
+          projectRoot,
+          repository: plan.request.repository,
+          projectMappings: plan.request.projects.map((project) => project.id + '=' + project.root),
+        };
   return {
     request: {
-      projectRoot,
-      repository: value.request.repository,
-      projectMappings: mappings,
-      teamProjectGrants: value.request.team_project_grants,
-      ...(projectMoves ? { projectMoves } : {}),
+      ...request,
+      teamProjectGrants: plan.request.team_project_grants,
+      ...(projectMoves === undefined ? {} : { projectMoves }),
     },
-    binding: value.binding,
-    operationId: value.operation_id,
+    binding: plan.binding,
+    operationId: plan.operation_id,
   };
 }
 
@@ -200,7 +273,32 @@ function readPlan(file: string): unknown {
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
 }
 
-export async function configure(args: readonly string[]): Promise<unknown> {
+async function requestForParsed(parsed: Exclude<Parsed, { mode: 'apply' | 'inspect' }>, port?: SetupPromptPort) {
+  if (!('setup' in parsed)) {
+    const { mode: _mode, ...request } = parsed;
+    if ('operation' in request) {
+      const { operation: _operation, ...rest } = request;
+      return { status: 'ready' as const, request: rest };
+    }
+    return { status: 'ready' as const, request };
+  }
+  const draft: SetupInputDraft = mergeSetupInput(
+    parsed.setup.file === undefined ? {} : readSetupInput(parsed.setup.file),
+    { projectRoot: parsed.setup.projectRoot },
+  );
+  const resolved = await resolveCliSetup({ ...draft, reconcile: draft.reconcile ?? false }, port);
+  if (resolved.status !== 'ready') return resolved;
+  return {
+    status: 'ready' as const,
+    request: {
+      ...configurationRequestForSetup(resolved.input),
+      teamProjectGrants: parsed.teamProjectGrants,
+      ...(parsed.projectMoves === undefined ? {} : { projectMoves: parsed.projectMoves }),
+    },
+  };
+}
+
+export async function configure(args: readonly string[], port?: SetupPromptPort): Promise<unknown> {
   const parsed = configureArguments(args);
   if (parsed.mode === 'inspect') return inspectConsumerConfigurationOperation(parsed.projectRoot);
   if (parsed.mode === 'apply') {
@@ -208,19 +306,13 @@ export async function configure(args: readonly string[]): Promise<unknown> {
     const { request, binding, operationId } = requestFromPlan(supplied, parsed.projectRoot);
     const fresh = planConsumerConfiguration(request);
     if (canonicalJsonDigest(supplied) !== canonicalJsonDigest(fresh)) throw Error('Public configuration plan changed');
-    return await applyConsumerConfiguration(request, binding, operationId);
+    return applyConsumerConfiguration(request, binding, operationId);
   }
-  const { projectRoot, repository, projectMappings, teamProjectGrants, projectMoves } = parsed;
-  const request = {
-    projectRoot,
-    repository,
-    projectMappings,
-    ...(teamProjectGrants ? { teamProjectGrants } : {}),
-    ...(projectMoves ? { projectMoves } : {}),
-  };
+  const resolved = await requestForParsed(parsed, port);
+  if (resolved.status !== 'ready') return resolved;
   return parsed.mode === 'plan'
-    ? planConsumerConfiguration(request)
-    : await resumeConsumerConfiguration(request, parsed.operation);
+    ? planConsumerConfiguration(resolved.request)
+    : resumeConsumerConfiguration(resolved.request, z.string().parse(parsed.operation));
 }
 
 export async function main(
@@ -237,9 +329,15 @@ export async function main(
     } else if (!bunRuntime) {
       const { runPinnedBun } = await import('./bun.ts');
       exit.exitCode = runPinnedBun([fileURLToPath(import.meta.url), ...args]);
-    } else io.log(JSON.stringify(await run(args)));
+    } else {
+      const result = await run(args);
+      io.log(JSON.stringify(result));
+      const code = setupExitCode(result);
+      if (code !== undefined) exit.exitCode = code;
+    }
   } catch (error: unknown) {
-    io.error(error instanceof Error ? error.message : 'Configuration failed');
+    if (error instanceof SetupInputError) io.log(JSON.stringify(error.result));
+    else io.error(error instanceof Error ? error.message : 'Configuration failed');
     exit.exitCode = 1;
   }
 }

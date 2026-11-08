@@ -1,6 +1,6 @@
 {
   "name": "vida-agent",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "private": true,
   "description": "Configurable clean-v1 development-team runtime governed by one repository YAML authority.",
   "bin": {
@@ -36,6 +36,10 @@
     "bin/consumer-configuration-operation.ts",
     "bin/configure.ts",
     "bin/init.ts",
+    "bin/init-product-input.ts",
+    "bin/init-prompt.ts",
+    "bin/init-cli-input.ts",
+    "bin/init-terminal.ts",
     "bin/install.ts",
     "bin/run.ts",
     "bin/workspace-database-cli.ts",

@@ -173,3 +173,36 @@ test('CLI awaits asynchronous operation before writing output', async () => {
   await completion;
   expect(output).toEqual(['{"status":"completed"}']);
 });
+
+test('configure model arguments preserve mode, grants and moves while refusing mixed forms', () => {
+  expect(
+    configureArguments([
+      'plan',
+      '--product-model',
+      'setup.yaml',
+      '--allow-project',
+      'team=app',
+      '--move-project',
+      'app=old:new',
+    ]),
+  ).toEqual({
+    mode: 'plan',
+    setup: { file: 'setup.yaml' },
+    teamProjectGrants: ['team=app'],
+    projectMoves: ['app=old:new'],
+  });
+  expect(configureArguments(['resume', '--input', 'setup.json', '--operation', `config-${binding}`])).toEqual({
+    mode: 'resume',
+    setup: { file: 'setup.json' },
+    teamProjectGrants: [],
+    operation: `config-${binding}`,
+  });
+  for (const args of [
+    ['plan', '--product-model', 'one', '--input', 'two'],
+    ['plan', '--input', 'one', '--repository', 'repo', '--project', 'app=.'],
+    ['inspect', '--project-root', path.resolve('.'), '--input', 'one'],
+    ['apply', '--project-root', path.resolve('.'), '--plan', 'plan.json', '--input', 'one'],
+    ['resume', '--input', 'one'],
+  ])
+    expect(() => configureArguments(args)).toThrow();
+});

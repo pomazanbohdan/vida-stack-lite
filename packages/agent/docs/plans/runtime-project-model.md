@@ -107,7 +107,7 @@ Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Tas
 
 ## Task 4 — config/context adoption and Codex identity
 
-**Status:** Source/Code and independent focused tester accepted; integrated into main. The owner-selected 0.1.14 candidate awaits qualified native delivery after the manifest inventory correction. The canonical [queue](../next-actions.md) owns current evidence, retained failures and remaining qualification.
+**Status:** delivered and installed as 0.1.14 after the manifest inventory correction. Source/Code and independent focused evidence remain bounded; numeric and broader recovery qualification are open. The canonical [queue](../next-actions.md) owns release/install records and retained failures.
 
 **Files:** `src/config/runtime-config.ts`, `project-context.ts`, `project-layout.ts`, `project-upgrade-artifacts.ts`; runtime/component schemas, config template; `bin/consumer-configuration-operation.ts`, `consumer-project-relocation.ts`, `project-mapping-contract.ts`; package manifests/maintained-source inventories/exports. Tests named in source preflight: runtime-config-yaml, project-configuration-contract, project-context-boundary, project-mapping-contract, runtime-config-repair-boundary, consumer-configuration-operation, consumer-project-relocation.
 
@@ -121,18 +121,21 @@ Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Tas
 
 ## Task 5 — interactive init/config/help and package parity
 
-**Status:** queued after Task 4's verified delivery. The approved prefixes remain VIDA, AGENT, CODEX and POWERS.
+**Status:** bounded Source/Code/tester and Source handoff accepted; Root integration is in progress after Task 4's verified 0.1.14 delivery. Task 5 is not yet delivered. The approved prefixes remain VIDA, AGENT, CODEX and POWERS.
 
-The user explicitly approved every value of the [full setup model](../decisions/configuration/project-config.proposed.yaml) on 2026-11-08, including all document/requirements/store destinations. No path-approval gap remains. Current Source only has the input/prompt component; CLI/TTY/configure/help/package integration and delivered behavior remain required.
+The user explicitly approved every value of the [full setup model](../decisions/configuration/project-config.proposed.yaml) on 2026-11-08, including all document/requirements/store destinations. No path-approval gap remains. Source now has bounded JSON/YAML setup input, missing-value terminal completion, full model/map/reconcile forwarding, strict v1/v2 configure adaptation and help/resource registration. Both Code views passed; a distinct tester executed 49 cases/203 assertions, 23 legacy-adapter cases/94 assertions and three help/resource cases/61 assertions, plus strict test types (586 files, zero errors). Evidence belongs to `.agent/work/runtime-product-setup-cli-20261108-task5-r5/`, fingerprint `6c1499eee333c78e9c4dd5d670a67667b785add95c26f7a69f75b63caad187cd`.
+
+The current writer delta is 13 paths. Root's 17-path integration assembly also tracks four unchanged reviewed pure input/prompt prerequisites; three canonical docs are reconciled separately. Primary version 0.1.9 remains protected WIP. After complete published 0.1.14 baseline readback, the release owner selected Target candidate 0.1.15 at awaiting_assurance; no Task 5 publication/install is claimed. Strict Knip retains an unchanged config hint; full legacy timeouts, symlink EPERM, clean-init alias-help and stale SDK receipt failures remain. Physical TTY/SIGINT, numeric/CRAP/manual/full-suite/counterpart review/native TestEvidence remain gaps. Root's private Source CLI consumer passed init/reload/configure/tampered-plan/resume; it is not qualification of a delivered consumer.
 
 **Files:** `bin/init.ts`, `init-core.ts`, `init-configuration.ts`, `configure.ts`, `cli-metadata.ts`, `cli-command-contracts.ts`; injected prompt helper; templates and `docs/installation.md`, README/help sources. Tests: init-entrypoint-v8, initialization, configure-cli, scope-help-parity plus new prompt/setup scenarios.
 
 **Interface:** injected async prompt port at CLI boundary; deterministic core receives complete approved choices. Init/config ask repository/product prefixes, selected product IDs, code/wiki/requirements/store mappings, enabled types and hierarchy mode/custom edges. Explicit complete CLI/config input is noninteractive; missing input with no TTY returns structured input_required.
 
-- [ ] RED: interactive choices reach exact config; refused prefix is not written; incomplete noninteractive input never hangs/defaults.
-- [ ] RED: all three product setup including Codex empty Source and independent/overlapping document roots; any/custom hierarchy prompts tested with scripted user responses.
-- [ ] Implement help for first init, inspect/plan/apply/resume, product setup, generic hierarchy and authorized clean init. CLI/source/native help parity and portable asset inventory required.
-- [ ] GREEN: focused CLI tests, package exports/resources/standalone regression checks and independent review, including the additional Devin review of Luna work.
+- [x] Source semantic RED/GREEN, invalid/no-TTY/cancellation refusal and full-model forwarding; explicit choices remain unchanged.
+- [x] Scripted three-product, empty-selector, overlapping-document and any/custom hierarchy cases; physical TTY/SIGINT remains unproved.
+- [x] Source help and package resource registration plus v1/v2 configure plan/apply/resume adaptation through existing owners.
+- [x] Bounded independent Code and focused execution above; user-authorized Luna replaces unavailable Devin. These passes do not establish numeric or global qualification.
+- [ ] Complete Root normal-hook integration, proper-owner Knip disposition, owner-selected PATCH delivery/install and delivered CLI/resource parity.
 
 ## Task 6 — temporary end-to-end acceptance and delivery
 
@@ -147,4 +150,4 @@ The user explicitly approved every value of the [full setup model](../decisions/
 
 ## Preflight boundaries
 
-Clean-init Source has the C3 effect/public CLI owner; verified delivery is pending. Active schema v1 remains strict, the catalog retains seven canonical kinds and an interactive prompt port is not implemented. Product-model and work-store Source exist; active configuration/CLI adoption belongs to Tasks 4–5. Resolve Task 4's schema decision before writing. Use a fresh scoped Luna writer and the required additional Devin reviewer; only Root integrates and updates the queue. The old release-preparation guard is a checkout-reconciliation prerequisite, not another implementation task. Keep the [canonical delivery state](../next-actions.md#current-delivery-state) current.
+The installed 0.1.14 contains C3 and Task 4's strict v1/v2 model/configuration owners. Task 5 Source has the prompt port and CLI adapters, with delivery pending. V1 remains strict and the catalog retains seven canonical kinds. The approved model is not active repository configuration. Root owns normal-hook integration, qualified delivery, the temporary delivered consumer and real adoption. User-authorized independent Luna roles replace unavailable Devin; prior FAIL/UNKNOWN and unmeasured qualification remain. Keep the [canonical delivery state](../next-actions.md#current-delivery-state) current.
