@@ -96,9 +96,14 @@ The other 31 staged blobs and primary index were preserved. Primary main and the
 release branch contain merge `48951983`, which reconciles the current queue.
 All 34 primary Source file bytes and 48 unrelated tracked WIP paths were preserved;
 73 unrelated untracked paths and the original scoped stash remain retained.
-Normal push qualification and publication have their own receipts in the closeout
-work record; qualified Task 4 artifact delivery remains open. Target `0.1.13` and
-primary `0.1.9` WIP remain preserved.
+Normal push closed successfully and origin/main was verified at `2c1727dd`.
+The Windows push profile passed all 122 selected cases with no skips or failures.
+The release owner then completed its fresh all-nine published `0.1.13` baseline
+readback and selected candidate `0.1.14`, operation
+`local-831586e9-9827-4673-b85d-d135d8c3de4f`, at `awaiting_assurance`.
+Its manifest update is version-only; the predecessor journal and primary `0.1.9`
+WIP are unchanged. Qualified native formation, publication and installation remain
+open. Existing `0.1.13` installation does not establish Task 4 delivery.
 
 Coverage/CRAP, reviewed final callable correspondence, manual mutation, full-suite,
 Host/C3 recovery, v2 physical relocation and lost-ack/restart qualification remain
