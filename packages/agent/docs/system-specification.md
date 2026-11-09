@@ -3540,6 +3540,40 @@ This releases only that old execution ownership; adoption separately observes
 current quiescence. Source, delivery, actual init and user Runtime acceptance
 retain distinct evidence.
 
+A distinct current-config terminal-ownership disposal contract uses strict
+`TerminalOwnerReleaseRequest/v1` through the existing run/suspension owner.
+It does not relax the completed-success predicate above. The corrective Source
+predicate binds current consumed authorization, base/engine/correction generation,
+the configured develop/validate/test subset, actual persisted engine and journal,
+durably accepted Source reservation/results, two typed passing Code outcomes and
+a terminal typed tester outcome. A failed tester and suspended engine remain
+failed/suspended. A subset ending at test does not fabricate delivery. Started or
+uncertain Source effects and missing issued outcomes refuse. Source drift invalidates
+affected byte-bound qualification, not a durable accepted completion used only to
+dispose old ownership.
+
+The observed-terminal legacy readonly predicate joins the original issued
+action/request/configured readonly rights, original dispatch and full frozen
+brief/history with attributable builtin terminal task/thread observations. Require
+the exact run/child/parent/native-session lineage, no active run, pending child,
+question or approval, and retained final content. Official-doc egress is not
+no-egress. Missing, running, foreign or substituted provenance refuses. Retain the
+original native journal as UNKNOWN: disposal creates no reported observation,
+research activation/acceptance or successful work result. A stopped safety refusal
+is preserved and its denied operation is never retried. These Root observations
+are cooperative consistency evidence, not provider authentication or native
+TestEvidence.
+
+Inspect/apply use nofollow captured reads: request64KiB, original cfg and each
+evidence file1MiB, fatal UTF-8/JSON and strict version/field validation. Inspect
+freezes current cfg/accepted authority, corrective authority or readonly provenance,
+engine, original bytes, exact ticket/claim/generation and Work/Ledger/Journal/
+maintenance CAS. Apply rechecks them and releases only that owned ticket and claim
+through the existing atomic owner. Preserve journal, phase, results, history and
+old IDs. Exact original apply bytes return the same recorded suspended result
+without mutation/reacquisition/new rights; changed bindings or a third state refuse.
+Global native maintenance quiescence and fresh adoption consent/CAS remain separate.
+
 Public configure v3 plans use the governed 8 MiB serialized-operation envelope
 for captured transport; setup input and legacy v1/v2 plans retain their 32 KiB
 caps. Fatal UTF-8/JSON, closed version/schema validation and fresh canonical

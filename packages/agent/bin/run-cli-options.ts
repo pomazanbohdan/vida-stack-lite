@@ -215,6 +215,12 @@ const specialModeContracts: SpecialModeContract[] = [
     modes: ['inspect', 'plan', 'apply', 'resume'],
     conflicts: ['--report', '--issue-wave'],
   },
+  {
+    selector: '--release-terminal-owner',
+    options: ['--mode', '--project-root', '--native-session-handle', '--baseline-config', '--request'],
+    modes: ['inspect', 'apply'],
+    conflicts: ['--report', '--issue-wave', '--capture-stopped-source', '--release-completed-readonly'],
+  },
 ];
 export const runSpecialModeOptions = freezeCliDeclaration(
   specialModeContracts.map((contract) => ({

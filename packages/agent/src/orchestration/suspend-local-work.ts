@@ -16,7 +16,10 @@ import {
   configuredReadonlyAssignment,
   lifecyclePreparationObservationSchema,
   settledSessionItems,
+  validateWorkSessionBindingAndReturnCorrectiveAuthority,
 } from './final-assurance.js';
+import type { SessionBridgeSnapshot } from './mastra-session-bridge.js';
+import type { CorrectiveExecution } from './final-assurance.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
 import { parseObservedTesterVerdict } from './observed-testing.js';
 import { parseObservedDeliveryProposal } from './observed-delivery.js';
@@ -56,6 +59,220 @@ export type CompletedSourceWorkflowSuspensionInput = SuspensionInput & {
   readonly config: AgentRuntimeConfig;
   readonly expectedMaintenanceGeneration: number;
 };
+
+export type TerminalOwnerSuspensionInput = SuspensionInput & {
+  readonly config: AgentRuntimeConfig;
+  readonly expectedMaintenanceGeneration: number;
+  readonly kind: 'corrective_source_frontier' | 'observed_terminal_readonly';
+  readonly engineSnapshot?: SessionBridgeSnapshot;
+  readonly ownerTicketId: string;
+  readonly ownerClaimId: string;
+  readonly ownerGeneration: number;
+  readonly terminalIssue?: { readonly action_id: string; readonly issue_id: string };
+};
+
+type TerminalOwnerCoreBinding = {
+  readonly kind: TerminalOwnerSuspensionInput['kind'];
+  readonly requestDigest: string;
+  readonly ownerTicketId: string;
+  readonly ownerClaimId: string;
+  readonly ownerGeneration: number;
+  readonly correctiveExecution?: CorrectiveExecution;
+};
+
+/** Release one exact terminal owner after the public caller has reread its bound evidence. */
+export function suspendTerminalOwnerWork(
+  input: TerminalOwnerSuspensionInput,
+  requestDigest: string,
+): HostStateSnapshot {
+  return releaseTerminalOwner(input, requestDigest, false);
+}
+
+/** Read-only eligibility check for the exact terminal-owner release request. */
+export function inspectTerminalOwnerWork(
+  input: TerminalOwnerSuspensionInput,
+  requestDigest: string,
+): HostStateSnapshot {
+  return releaseTerminalOwner(input, requestDigest, true);
+}
+
+function releaseTerminalOwner(
+  input: TerminalOwnerSuspensionInput,
+  requestDigest: string,
+  inspectOnly: boolean,
+): HostStateSnapshot {
+  const current = input.store.readWorkSessionSnapshot(input.identity, input.journal.state.attempt),
+    work = current.host.work,
+    state = input.journal.state,
+    items = [...state.completed.flatMap((wave) => wave.items), ...state.items];
+  requireSuspension(
+    work &&
+      current.journal &&
+      canonicalJsonDigest(current.journal.version) === canonicalJsonDigest(input.journal.version) &&
+      canonicalJsonDigest(current.journal.state) === canonicalJsonDigest(state) &&
+      /^[a-f0-9]{64}$/.test(requestDigest),
+    'terminal owner journal or request binding differs',
+  );
+  requireSuspension(
+    input.identity.project_ids.length === 1 &&
+      input.documentationContext.repository_id === input.identity.repository_id &&
+      input.documentationContext.project_id === input.identity.project_ids[0] &&
+      input.documentationContext.work_id === input.identity.work_id &&
+      work.binding.config_digest === runtimeConfigDigest(input.config),
+    'terminal owner configuration or work binding differs',
+  );
+  let correctiveExecution: CorrectiveExecution | undefined;
+  if (input.kind === 'corrective_source_frontier') {
+    correctiveExecution = requireCorrectiveTerminalFrontier(input, work, items);
+  } else requireObservedTerminalReadonly(input, work, items);
+  return suspendLocalWorkCore(input, false, false, inspectOnly, false, false, false, undefined, {
+    kind: input.kind,
+    requestDigest,
+    ownerTicketId: input.ownerTicketId,
+    ownerClaimId: input.ownerClaimId,
+    ownerGeneration: input.ownerGeneration,
+    ...(correctiveExecution ? { correctiveExecution } : {}),
+  });
+}
+
+function requireCorrectiveTerminalFrontier(
+  input: TerminalOwnerSuspensionInput,
+  work: WorkState,
+  items: readonly SettledWorkflowItem[],
+): CorrectiveExecution {
+  const state = input.journal.state,
+    execution = state.corrective_execution;
+  requireSuspension(execution, 'corrective terminal frontier has no persisted execution');
+  const authority = validateWorkSessionBindingAndReturnCorrectiveAuthority(
+    work,
+    { attempt: state.attempt, run_id: state.run_id, corrective_execution: execution },
+    input.documentationContext.repository_root,
+  );
+  requireSuspension(
+    authority &&
+      execution.base_run_id === work.execution.run_id &&
+      execution.engine_run_id === state.run_id &&
+      execution.correction_generation === work.lifecycle.assurance.correction_count &&
+      canonicalJsonDigest(authority.stage_ids) === canonicalJsonDigest(execution.stage_ids) &&
+      input.engineSnapshot?.run_id === execution.engine_run_id &&
+      state.items.every((item) => item.issue_id !== null && item.observation !== null) &&
+      work.execution.assignment_attempts.length > 0 &&
+      work.execution.assignment_attempts.every((attempt) => attempt.status === 'completed'),
+    'corrective authority, persisted frontier or Source effects are unsettled',
+  );
+  const workflow = input.config.workflows[work.binding.workflow_id],
+    stages = execution.stage_ids.map((stageId) => workflow?.stages.find((stage) => stage.id === stageId));
+  requireSuspension(
+    workflow &&
+      execution.stage_ids.length === 3 &&
+      new Set(execution.stage_ids).size === 3 &&
+      stages.every(Boolean) &&
+      stages.filter((stage) => stage?.kind === 'develop').length === 1 &&
+      stages.filter((stage) => stage?.kind === 'validate').length === 1 &&
+      stages.filter((stage) => stage?.kind === 'test').length === 1,
+    'corrective stage subset differs from the configured develop/validate/test frontier',
+  );
+  const expected = stages.flatMap((stage) =>
+    stage!.assignments.map((assignment, assignmentIndex) => ({ stage: stage!, assignment, assignmentIndex })),
+  );
+  requireSuspension(
+    items.length === expected.length &&
+      expected.every(({ stage, assignment, assignmentIndex }) => {
+        const matches = items.filter(
+          (item) => item.request.stage_id === stage.id && item.request.assignment_index === assignmentIndex,
+        );
+        if (matches.length !== 1) return false;
+        const item = matches[0]!,
+          request = item.request,
+          profile = input.config.agents.profiles[assignment.profile],
+          policy = profile && input.config.agents.tool_policies[profile.tools_policy],
+          observation = item.observation;
+        if (
+          request.run_id !== state.run_id ||
+          request.workflow_id !== work.binding.workflow_id ||
+          request.config_digest !== work.binding.config_digest ||
+          request.corrective_execution === undefined ||
+          canonicalJsonDigest(request.corrective_execution) !== canonicalJsonDigest(execution) ||
+          request.role !== assignment.role ||
+          !item.issue_id ||
+          !observation ||
+          observation.action_id !== request.action_id ||
+          observation.issue_id !== item.issue_id ||
+          item.research_activation ||
+          item.research_normalization
+        )
+          return false;
+        if (stage.kind === 'develop')
+          return Boolean(
+            profile?.mutation_scope === 'repository_source' &&
+            item.host_reservation &&
+            observation.status === 'reported_complete' &&
+            completedSourceJournalObservationMatches(work, item),
+          );
+        if (item.host_reservation || profile?.mutation_scope !== 'none' || policy?.source_write !== false) return false;
+        if (stage.kind === 'validate')
+          return (
+            observation.status === 'reported_complete' && parseObservedValidatorVerdict(observation).verdict === 'pass'
+          );
+        return (
+          stage.kind === 'test' &&
+          ['reported_complete', 'reported_failed'].includes(observation.status) &&
+          ((parseObservedTesterVerdict(observation).status === 'pass' && observation.status === 'reported_complete') ||
+            (parseObservedTesterVerdict(observation).status === 'fail' && observation.status === 'reported_failed'))
+        );
+      }),
+    'corrective Source assignments or typed Code/test outcomes differ',
+  );
+  const tester = items.find((item) => stages.find((stage) => stage?.kind === 'test')?.id === item.request.stage_id);
+  requireSuspension(tester?.observation, 'corrective terminal tester observation is missing');
+  const observations = items.map((item) => item.observation);
+  requireSuspension(
+    input.engineSnapshot.status === 'success'
+      ? input.engineSnapshot.step_id === null &&
+          input.engineSnapshot.requests.length === 0 &&
+          tester.observation.status === 'reported_complete' &&
+          canonicalJsonDigest(input.engineSnapshot.observations) === canonicalJsonDigest(observations)
+      : input.engineSnapshot.status === 'suspended' &&
+          input.engineSnapshot.step_id !== null &&
+          input.engineSnapshot.requests.length === 1 &&
+          tester.observation.status === 'reported_failed' &&
+          canonicalJsonDigest(input.engineSnapshot.requests[0]) === canonicalJsonDigest(tester.request) &&
+          canonicalJsonDigest(input.engineSnapshot.observations) ===
+            canonicalJsonDigest(observations.filter((observation) => observation !== tester.observation)),
+    'corrective engine requests or observations differ from the terminal journal',
+  );
+  return execution;
+}
+
+function requireObservedTerminalReadonly(
+  input: TerminalOwnerSuspensionInput,
+  work: WorkState,
+  items: readonly SettledWorkflowItem[],
+): void {
+  const state = input.journal.state,
+    pending = items.filter((item) => item.issue_id !== null && item.observation === null);
+  requireSuspension(
+    !state.corrective_execution &&
+      input.journal.resume_status === 'issued_outcome_uncertain' &&
+      pending.length === 1 &&
+      input.terminalIssue?.action_id === pending[0]!.request.action_id &&
+      input.terminalIssue.issue_id === pending[0]!.issue_id &&
+      items.every(
+        (item) =>
+          !item.host_reservation &&
+          !item.research_activation &&
+          !item.research_normalization &&
+          item.issue_id !== null &&
+          (item === pending[0]
+            ? item.observation === null
+            : item.observation?.status === 'reported_complete' &&
+              configuredReadonlyAssignment(input.config, item.request)),
+      ) &&
+      configuredReadonlyAssignment(input.config, pending[0]!.request) &&
+      work.execution.assignment_attempts.length === 0,
+    'observed terminal readonly issue differs or retains a writer effect',
+  );
+}
 
 /** Dispose only exact settled execution ownership; task acceptance remains unchanged. */
 export function suspendCompletedSourceWorkflowWork(input: CompletedSourceWorkflowSuspensionInput): HostStateSnapshot {
@@ -639,6 +856,7 @@ function suspendLocalWorkCore(
   settledResearch = false,
   readonlyBookkeeping = false,
   terminalSynthesisCapture?: HistoricalTerminalSynthesisCaptureInput['capture'],
+  terminalOwner?: TerminalOwnerCoreBinding,
 ): HostStateSnapshot {
   const {
     store,
@@ -694,7 +912,14 @@ function suspendLocalWorkCore(
       work.binding.lifecycle_work_id === identity.work_id &&
       journal.state.workspace_id === store.workspaceId &&
       journal.state.work_id === identity.work_id &&
-      journal.state.run_id === work.execution.run_id,
+      (journal.state.run_id === work.execution.run_id ||
+        (terminalOwner?.kind === 'corrective_source_frontier' &&
+          terminalOwner.correctiveExecution &&
+          journal.state.run_id === terminalOwner.correctiveExecution.engine_run_id &&
+          terminalOwner.correctiveExecution.base_run_id === work.execution.run_id &&
+          canonicalJsonDigest(journal.state.corrective_execution) ===
+            canonicalJsonDigest(terminalOwner.correctiveExecution) &&
+          terminalOwner.correctiveExecution.correction_generation === work.lifecycle.assurance.correction_count)),
     'work identity or journal differs',
   );
   const issues = [...journal.state.completed.flatMap((step) => step.items), ...journal.state.items];
@@ -740,32 +965,78 @@ function suspendLocalWorkCore(
     );
   }
   requireSuspension(
-    (readonlyBookkeeping || unknownReadonly || pending.length === 0) &&
+    (readonlyBookkeeping ||
+      unknownReadonly ||
+      pending.length === 0 ||
+      (terminalOwner?.kind === 'observed_terminal_readonly' && pending.length === 1)) &&
       !work.execution.assignment_attempts.some(
         (attempt) => attempt.status === 'started' || attempt.status === 'uncertain',
       ),
     'native action or host assignment is still active or uncertain',
   );
-  const operationId = `${terminalSynthesisCapture ? 'historical-terminal-synthesis-capture' : readonlyBookkeeping ? 'readonly-bookkeeping-release' : settledResearch ? 'settled-research-release' : unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
-    {
-      work_id: identity.work_id,
-      nativeSessionHandle,
-      userRequestPointer,
-      requestIntent,
-      journal: journal.version.digest,
-    },
-  ).slice(0, 40)}`;
+  const operationId =
+    terminalOwner === undefined
+      ? `${terminalSynthesisCapture ? 'historical-terminal-synthesis-capture' : readonlyBookkeeping ? 'readonly-bookkeeping-release' : settledResearch ? 'settled-research-release' : unissuedPrepared ? 'unissued-owner-release' : settledWriter ? 'settled-writer-release' : completedReadonly ? 'completed-readonly-release' : 'session-release'}-${canonicalJsonDigest(
+          {
+            work_id: identity.work_id,
+            nativeSessionHandle,
+            userRequestPointer,
+            requestIntent,
+            journal: journal.version.digest,
+          },
+        ).slice(0, 40)}`
+      : `terminal-owner-release-${canonicalJsonDigest({
+          work_id: identity.work_id,
+          attempt: journal.state.attempt,
+          nativeSessionHandle,
+          userRequestPointer,
+          requestIntent,
+          journal: journal.version.digest,
+          kind: terminalOwner.kind,
+          requestDigest: terminalOwner.requestDigest,
+          ownerTicketId: terminalOwner.ownerTicketId,
+          ownerClaimId: terminalOwner.ownerClaimId,
+          ownerGeneration: terminalOwner.ownerGeneration,
+        }).slice(0, 40)}`;
   if (work.lease === null) {
-    requireSuspension(
-      work.execution.status === 'suspended' &&
-        host.ledger.operations.some(
-          (operation) =>
-            operation.kind === 'release' &&
-            operation.operation_id === operationId &&
-            operation.decision_pointer === userRequestPointer,
-        ),
-      'prior suspension is not the same attributed request',
-    );
+    if (terminalOwner) {
+      const ticket = host.ledger.tickets.filter((item) => item.ticket_id === terminalOwner.ownerTicketId),
+        claims = host.ledger.claims.filter((item) => item.claim_id === terminalOwner.ownerClaimId),
+        operations = host.ledger.operations.filter((operation) => operation.operation_id === operationId);
+      requireSuspension(
+        work.execution.status === 'suspended' &&
+          ticket.length === 1 &&
+          ticket[0]!.status === 'released' &&
+          ticket[0]!.work_id === identity.work_id &&
+          ticket[0]!.thread_id === nativeSessionHandle &&
+          ticket[0]!.generation === terminalOwner.ownerGeneration &&
+          claims.length === 1 &&
+          claims[0]!.status === 'released' &&
+          claims[0]!.ticket_id === ticket[0]!.ticket_id &&
+          claims[0]!.work_id === identity.work_id &&
+          claims[0]!.thread_id === nativeSessionHandle &&
+          claims[0]!.generation === terminalOwner.ownerGeneration &&
+          operations.length === 1 &&
+          operations[0]!.kind === 'release' &&
+          operations[0]!.ticket_id === ticket[0]!.ticket_id &&
+          operations[0]!.work_id === identity.work_id &&
+          operations[0]!.thread_id === nativeSessionHandle &&
+          operations[0]!.source_revision === ticket[0]!.source_revision &&
+          operations[0]!.decision_pointer === userRequestPointer,
+        'prior terminal owner release differs from this exact attributed request',
+      );
+    } else {
+      requireSuspension(
+        work.execution.status === 'suspended' &&
+          host.ledger.operations.some(
+            (operation) =>
+              operation.kind === 'release' &&
+              operation.operation_id === operationId &&
+              operation.decision_pointer === userRequestPointer,
+          ),
+        'prior suspension is not the same attributed request',
+      );
+    }
     return host;
   }
   requireSuspension(
@@ -829,6 +1100,11 @@ function suspendLocalWorkCore(
       ticket.thread_id === nativeSessionHandle &&
       ticket.work_id === identity.work_id &&
       ticket.generation === lease.generation &&
+      (!terminalOwner ||
+        (ticket.repository_id === identity.repository_id &&
+          sameCoordinationStrings(ticket.project_ids, identity.project_ids) &&
+          ticket.integrations_digest === identity.integrations_digest &&
+          ticket.source_revision === work.binding.work_source_revision)) &&
       ticket.expires_at !== null &&
       (completedReadonly ||
         readonlyBookkeeping ||
@@ -836,17 +1112,23 @@ function suspendLocalWorkCore(
         settledWriter ||
         expiredUnissued ||
         unknownReadonly ||
+        terminalOwner !== undefined ||
         Date.parse(ticket.expires_at) > Date.now()) &&
       claims.length === 1 &&
       claims[0]!.thread_id === nativeSessionHandle &&
       claims[0]!.work_id === identity.work_id &&
       claims[0]!.generation === lease.generation &&
+      (!terminalOwner ||
+        (lease.ticket_id === terminalOwner.ownerTicketId &&
+          claims[0]!.claim_id === terminalOwner.ownerClaimId &&
+          lease.generation === terminalOwner.ownerGeneration)) &&
       (completedReadonly ||
         readonlyBookkeeping ||
         settledResearch ||
         expiredUnissued ||
         unknownReadonly ||
         settledWriter ||
+        terminalOwner !== undefined ||
         Date.parse(claims[0]!.lease_expires_at) > Date.now()) &&
       claims[0]!.lease_expires_at === ticket.expires_at &&
       sameCoordinationStrings([...claims[0]!.resources].sort(), expectedResources) &&
@@ -877,6 +1159,10 @@ function suspendLocalWorkCore(
     'exact active same-thread lease is missing, expired or incomplete',
   );
   const now = new Date().toISOString();
+  requireSuspension(
+    !terminalOwner || !host.ledger.operations.some((operation) => operation.operation_id === operationId),
+    'terminal owner release operation already exists while its ticket is active',
+  );
   const ownedQueued = host.ledger.tickets.filter(
     (item) =>
       item.status === 'queued' &&
@@ -892,9 +1178,13 @@ function suspendLocalWorkCore(
     ownedQueued.every((item) => item.active_resources.length === 0 && item.claim_ids.length === 0),
     'queued owner has ambiguous active effects',
   );
+  requireSuspension(
+    !terminalOwner || ownedQueued.length === 0,
+    'terminal owner has queued rights outside the exact released ticket',
+  );
   const releasedIds = new Set([
     ticket.ticket_id,
-    ...(terminalSynthesisCapture ? [] : ownedQueued.map((item) => item.ticket_id)),
+    ...(terminalSynthesisCapture || terminalOwner ? [] : ownedQueued.map((item) => item.ticket_id)),
   ]);
   const nextWork = {
     ...work,
@@ -902,7 +1192,7 @@ function suspendLocalWorkCore(
     lease: null,
     execution: {
       ...work.execution,
-      ...(completedReadonly || settledWriter ? {} : { phase: 'awaiting_followup' }),
+      ...(completedReadonly || settledWriter || terminalOwner ? {} : { phase: 'awaiting_followup' }),
       status: 'suspended' as const,
     },
     lifecycle: {
@@ -910,13 +1200,15 @@ function suspendLocalWorkCore(
       revision: work.revision + 1,
       next_action: terminalSynthesisCapture
         ? 'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.'
-        : readonlyBookkeeping
-          ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
-          : unissuedPrepared || settledResearch
-            ? 'The original unissued frontier remains inert; continuation needs normal admission.'
-            : requestIntent === 'linked_correction'
-              ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
-              : 'Prior work awaits user testing; new work must be admitted separately.',
+        : terminalOwner
+          ? 'Only the original owner rights were released; the journal and lifecycle phase remain unchanged and continuation needs normal admission.'
+          : readonlyBookkeeping
+            ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
+            : unissuedPrepared || settledResearch
+              ? 'The original unissued frontier remains inert; continuation needs normal admission.'
+              : requestIntent === 'linked_correction'
+                ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
+                : 'Prior work awaits user testing; new work must be admitted separately.',
     },
   };
   const nextLedger = {
@@ -951,21 +1243,23 @@ function suspendLocalWorkCore(
       },
       ...(terminalSynthesisCapture
         ? []
-        : ownedQueued.map((item) => ({
-            schema: 'CoordinationOperation/v1' as const,
-            operation_id: operationId + '-' + item.ticket_id,
-            kind: 'release' as const,
-            ticket_id: item.ticket_id,
-            work_id: item.work_id,
-            thread_id: item.thread_id,
-            source_revision: item.source_revision,
-            resources: item.exclusive_resources,
-            from_ledger_revision: host.ledger!.revision,
-            to_ledger_revision: host.ledger!.revision + 1,
-            decided_by: nativeSessionHandle,
-            decision_pointer: userRequestPointer,
-            created_at: now,
-          }))),
+        : terminalOwner
+          ? []
+          : ownedQueued.map((item) => ({
+              schema: 'CoordinationOperation/v1' as const,
+              operation_id: operationId + '-' + item.ticket_id,
+              kind: 'release' as const,
+              ticket_id: item.ticket_id,
+              work_id: item.work_id,
+              thread_id: item.thread_id,
+              source_revision: item.source_revision,
+              resources: item.exclusive_resources,
+              from_ledger_revision: host.ledger!.revision,
+              to_ledger_revision: host.ledger!.revision + 1,
+              decided_by: nativeSessionHandle,
+              decision_pointer: userRequestPointer,
+              created_at: now,
+            }))),
     ],
   };
   if (inspectOnly) return host;

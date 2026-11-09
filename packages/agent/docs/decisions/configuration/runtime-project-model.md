@@ -171,6 +171,18 @@ reads, strict validation and re-plan-before-effect remain with the existing CLI
 owner; see the canonical system contract. This repairs transport for the full
 frozen runtime binding without changing operation schema or adoption authority.
 
+Terminal ownership has two additional explicit current predicates in the same
+run/suspension owner: consumed corrective Source frontiers ending at test, and
+observed-terminal legacy readonly issues. They preserve failed tester outcomes,
+unobserved native UNKNOWN, original safety STOP, phases/history/results and old
+identities. Strict original/current evidence, exact owner/CAS and immutable replay
+bindings grant no successor rights or task acceptance. The
+[canonical system owner](../../system-specification.md#host-present-pending-receipt-configuration-adoption)
+defines these predicates; the older completed-success and unknown-readonly routes
+keep their own limits. Deliver the extension and qualify a NEW installed Host
+consumer before actual old-owner disposal, then separately remeasure quiescence
+and fresh-consent adoption/init. No DB/config reset or history rewrite.
+
 ## Критерії приймання реалізації
 
 | Перевірка                 | Очікуваний результат                                                                                                                                  |

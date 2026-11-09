@@ -2303,6 +2303,9 @@ type ScopedSourceSnapshot = import('../src/orchestration/scoped-source-snapshot.
 type HistoricalOwnerSuspension = Parameters<
   typeof import('../src/orchestration/suspend-local-work.ts').inspectHistoricalOwnerWork
 >[0];
+type TerminalOwnerSuspension = Parameters<
+  typeof import('../src/orchestration/suspend-local-work.ts').suspendTerminalOwnerWork
+>[0];
 type HistoricalOwnerPredicate =
   | 'completed_readonly'
   | 'unknown_readonly'
@@ -2332,6 +2335,40 @@ type HistoricalOwnerReleaseRequest = {
   predicate: HistoricalOwnerPredicate;
   preimage_ref?: string;
   inspection?: HistoricalOwnerReleaseInspection;
+};
+type TerminalOwnerEvidenceReference = { path: string; sha256: string };
+type TerminalOwnerReleaseInspection = {
+  expectedWork: StateVersion;
+  expectedLedger: StateVersion;
+  expectedJournal: StateVersion;
+  expectedMaintenanceGeneration: number;
+  currentConfigBinding: string;
+  authorityBinding: string;
+  baselineBinding: string;
+  engineBinding: string | null;
+  requestBinding: string;
+  evidenceBinding: string | null;
+  ownerTicketId: string;
+  ownerClaimId: string;
+  ownerGeneration: number;
+  nativeSessionHandle: string;
+};
+type TerminalOwnerReleaseEvidence = {
+  originalIssue: TerminalOwnerEvidenceReference;
+  originalDispatch: TerminalOwnerEvidenceReference;
+  frozenBrief: TerminalOwnerEvidenceReference;
+  currentTask: TerminalOwnerEvidenceReference;
+  currentThread: TerminalOwnerEvidenceReference;
+};
+type TerminalOwnerReleaseRequest = {
+  schema: 'TerminalOwnerReleaseRequest/v1';
+  kind: 'corrective_source_frontier' | 'observed_terminal_readonly';
+  identity: WorkIdentity;
+  attempt: number;
+  userRequestPointer: string;
+  requestIntent: 'next_work' | 'linked_correction';
+  evidence?: TerminalOwnerReleaseEvidence;
+  inspection?: TerminalOwnerReleaseInspection;
 };
 type InternalRecoveryReviewInput = Parameters<
   typeof import('./runtime-config-rebind.ts').openInternalRecoveryReview
@@ -2867,6 +2904,346 @@ function parseHistoricalOwnerReleaseRequest(
   if (!isHistoricalOwnerReleaseRequest(value, schema, predicates, mode))
     throw Error('Historical release request shape or predicate invalid');
   return value;
+}
+
+function isTerminalOwnerEvidenceReference(value: unknown): value is TerminalOwnerEvidenceReference {
+  return (
+    isRecord(value) &&
+    exactKeys(value, ['path', 'sha256']) &&
+    isString(value.path) &&
+    value.path.length <= 2048 &&
+    !value.path.includes('\\') &&
+    !/^(?:\/|[A-Za-z]:)/.test(value.path) &&
+    !/\p{Cc}/u.test(value.path) &&
+    value.path.split('/').every((part) => part && part !== '.' && part !== '..') &&
+    typeof value.sha256 === 'string' &&
+    /^[a-f0-9]{64}$/.test(value.sha256)
+  );
+}
+
+function isTerminalOwnerReleaseEvidence(value: unknown): value is TerminalOwnerReleaseEvidence {
+  return (
+    isRecord(value) &&
+    exactKeys(value, ['originalIssue', 'originalDispatch', 'frozenBrief', 'currentTask', 'currentThread']) &&
+    isTerminalOwnerEvidenceReference(value.originalIssue) &&
+    isTerminalOwnerEvidenceReference(value.originalDispatch) &&
+    isTerminalOwnerEvidenceReference(value.frozenBrief) &&
+    isTerminalOwnerEvidenceReference(value.currentTask) &&
+    isTerminalOwnerEvidenceReference(value.currentThread)
+  );
+}
+
+function isTerminalOwnerReleaseInspection(value: unknown): value is TerminalOwnerReleaseInspection {
+  return (
+    isRecord(value) &&
+    exactKeys(value, [
+      'expectedWork',
+      'expectedLedger',
+      'expectedJournal',
+      'expectedMaintenanceGeneration',
+      'currentConfigBinding',
+      'authorityBinding',
+      'baselineBinding',
+      'engineBinding',
+      'requestBinding',
+      'evidenceBinding',
+      'ownerTicketId',
+      'ownerClaimId',
+      'ownerGeneration',
+      'nativeSessionHandle',
+    ]) &&
+    isStateVersion(value.expectedWork) &&
+    isStateVersion(value.expectedLedger) &&
+    isStateVersion(value.expectedJournal) &&
+    Number.isSafeInteger(value.expectedMaintenanceGeneration) &&
+    isSha256(value.currentConfigBinding) &&
+    isSha256(value.authorityBinding) &&
+    isSha256(value.baselineBinding) &&
+    (value.engineBinding === null || isSha256(value.engineBinding)) &&
+    isSha256(value.requestBinding) &&
+    (value.evidenceBinding === null || isSha256(value.evidenceBinding)) &&
+    isBoundedIdentifier(value.ownerTicketId, 256) &&
+    isBoundedIdentifier(value.ownerClaimId, 256) &&
+    Number.isSafeInteger(value.ownerGeneration) &&
+    isBoundedIdentifier(value.nativeSessionHandle, 256)
+  );
+}
+
+function isSha256(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+}
+
+function isBoundedIdentifier(value: unknown, max: number): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= max && !/\p{Cc}/u.test(value);
+}
+
+function isTerminalOwnerReleaseRequest(
+  value: unknown,
+  mode: 'inspect' | 'apply',
+): value is TerminalOwnerReleaseRequest {
+  if (
+    !isRecord(value) ||
+    !isWorkIdentity(value.identity) ||
+    value.identity.repository_id.length === 0 ||
+    value.identity.repository_id.length > 128 ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value.identity.repository_id) ||
+    value.identity.project_ids.length !== 1 ||
+    !value.identity.project_ids.every(
+      (project) => project.length > 0 && project.length <= 128 && /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(project),
+    ) ||
+    !isSha256(value.identity.integrations_digest) ||
+    value.identity.work_id.length === 0 ||
+    value.identity.work_id.length > 128 ||
+    !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value.identity.work_id) ||
+    typeof value.attempt !== 'number' ||
+    !Number.isSafeInteger(value.attempt) ||
+    value.attempt <= 0 ||
+    !isString(value.userRequestPointer) ||
+    value.userRequestPointer.length > 2048 ||
+    !value.userRequestPointer.length ||
+    /\p{Cc}/u.test(value.userRequestPointer) ||
+    !['next_work', 'linked_correction'].includes(String(value.requestIntent)) ||
+    !['corrective_source_frontier', 'observed_terminal_readonly'].includes(String(value.kind))
+  )
+    return false;
+  const readonly = value.kind === 'observed_terminal_readonly',
+    keys = [
+      'schema',
+      'kind',
+      'identity',
+      'attempt',
+      'userRequestPointer',
+      'requestIntent',
+      ...(readonly ? ['evidence'] : []),
+      ...(mode === 'apply' ? ['inspection'] : []),
+    ];
+  return (
+    exactKeys(value, keys) &&
+    value.schema === 'TerminalOwnerReleaseRequest/v1' &&
+    (!readonly || isTerminalOwnerReleaseEvidence(value.evidence)) &&
+    (mode === 'inspect' || isTerminalOwnerReleaseInspection(value.inspection))
+  );
+}
+
+function parseTerminalOwnerReleaseRequest(bytes: Uint8Array, mode: 'inspect' | 'apply'): TerminalOwnerReleaseRequest {
+  let value: unknown;
+  try {
+    value = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    throw Error('Terminal owner release request must be bounded strict UTF-8 JSON');
+  }
+  if (!isTerminalOwnerReleaseRequest(value, mode)) throw Error('Terminal owner release request shape is invalid');
+  return value;
+}
+
+function decodeTerminalOwnerText(bytes: Uint8Array, label: string): string {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    throw Error(`${label} must be valid UTF-8`);
+  }
+}
+
+function parseTerminalOwnerEvidenceJson(bytes: Uint8Array, label: string): unknown {
+  try {
+    return JSON.parse(decodeTerminalOwnerText(bytes, label));
+  } catch {
+    throw Error(`${label} must be bounded UTF-8 JSON`);
+  }
+}
+
+function requireTerminalReadonlyFrozenBrief(
+  text: string,
+  input: { readonly identity: WorkIdentity; readonly nativeSessionHandle: string },
+  issueId: string,
+  actionId: string,
+  dispatch: Record<string, unknown>,
+): string {
+  let value: unknown;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    if (
+      !text.startsWith('# Actual issued bounded synthesis') ||
+      !text.includes(issueId) ||
+      !text.includes(actionId) ||
+      !text.includes(input.identity.work_id)
+    )
+      throw Error('Frozen readonly brief does not bind the original issue, action and work');
+    return text;
+  }
+  if (!isRecord(value) || !isRecord(value.thread) || !Array.isArray(value.items))
+    throw Error('Frozen readonly history has no complete originating thread');
+  const historyItems: unknown[] = value.items;
+  const historyThread = value.thread,
+    messages = historyItems.filter(
+      (item): item is Record<string, unknown> & { text: string } =>
+        isRecord(item) &&
+        item.type === 'user_message' &&
+        item.position === 0 &&
+        item.sourceThreadId === dispatch.childThreadId &&
+        item.senderThreadId === input.nativeSessionHandle &&
+        item.runId === dispatch.childRunId &&
+        item.textTruncated === false &&
+        isString(item.text),
+    );
+  if (
+    historyThread.threadId !== dispatch.childThreadId ||
+    historyThread.parentThreadId !== input.nativeSessionHandle ||
+    historyThread.latestRunId !== dispatch.childRunId ||
+    historyThread.status !== 'completed' ||
+    historyThread.activeRunId !== null ||
+    value.hasMore !== false ||
+    messages.length !== 1 ||
+    !messages[0]!.text.includes(issueId) ||
+    !messages[0]!.text.includes(input.identity.work_id) ||
+    !/attempt\s*1/i.test(messages[0]!.text)
+  )
+    throw Error('Frozen readonly user brief is not the complete issued thread input');
+  return messages[0]!.text;
+}
+
+function requireTerminalReadonlyProvenance(
+  issued: unknown,
+  dispatch: unknown,
+  task: unknown,
+  threadRead: unknown,
+  brief: string,
+  input: {
+    readonly identity: WorkIdentity;
+    readonly attempt: number;
+    readonly nativeSessionHandle: string;
+    readonly originalConfigDigest: string;
+    readonly originalConfig: import('../src/config/runtime-config.js').AgentRuntimeConfig;
+    readonly journal: import('../src/orchestration/persistent-session-handoff.js').MastraSessionLedgerSnapshot;
+    readonly configuredReadonlyAssignment: typeof import('../src/orchestration/final-assurance.js').configuredReadonlyAssignment;
+    readonly parseRequest: (
+      value: unknown,
+    ) => import('../src/orchestration/persistent-session-handoff.js').MastraLedgerItem['request'];
+    readonly digestJson: (value: unknown) => string;
+  },
+): { readonly actionId: string; readonly issueId: string; readonly binding: string } {
+  const issue = isRecord(issued) ? issued : {},
+    action = issue.action,
+    launch = isRecord(dispatch) ? dispatch : {},
+    status = isRecord(task) ? task : {},
+    thread = isRecord(threadRead) && isRecord(threadRead.thread) ? threadRead.thread : {},
+    items = isRecord(threadRead) && Array.isArray(threadRead.items) ? threadRead.items : [];
+  if (
+    !isString(issue.issue_id) ||
+    !isRecord(issue.request) ||
+    !isRecord(action) ||
+    !isString(action.action_id) ||
+    !isString(action.role) ||
+    !isString(action.stage_id) ||
+    !isString(action.scope_digest) ||
+    !isString(action.work_id) ||
+    !Number.isSafeInteger(action.attempt) ||
+    action.work_id !== input.identity.work_id ||
+    action.attempt !== input.attempt ||
+    action.mutation_scope !== 'none' ||
+    !isRecord(action.resolved_profile) ||
+    action.resolved_profile.config_digest !== input.originalConfigDigest ||
+    action.resolved_profile.mutation_scope !== 'none' ||
+    !isRecord(action.resolved_profile.tools_policy) ||
+    action.resolved_profile.tools_policy.source_write !== false ||
+    !isRecord(action.resolved_profile.egress_policy) ||
+    !Array.isArray(action.resolved_profile.egress_policy.allowed_hosts)
+  )
+    throw Error('Original readonly issue binding or configured rights differ');
+  const request = input.parseRequest(issue.request);
+  if (
+    action.action_id !== request.action_id ||
+    action.stage_id !== request.stage_id ||
+    action.role !== request.role ||
+    action.scope_digest !== request.scope_digest ||
+    request.config_digest !== input.originalConfigDigest ||
+    !input.configuredReadonlyAssignment(input.originalConfig, request)
+  )
+    throw Error('Original readonly action differs from its native request');
+  const originalItem = [
+    ...input.journal.state.completed.flatMap((wave) => wave.items),
+    ...input.journal.state.items,
+  ].filter((item) => item.issue_id === issue.issue_id && item.request.action_id === request.action_id);
+  if (
+    originalItem.length !== 1 ||
+    input.digestJson(originalItem[0]!.request) !== input.digestJson(request) ||
+    originalItem[0]!.observation !== null ||
+    originalItem[0]!.issue_id !== issue.issue_id
+  )
+    throw Error('Original readonly issue is not the exact persisted pending journal action');
+  const profile =
+      input.originalConfig.agents.profiles[
+        input.originalConfig.workflows[request.workflow_id]?.stages.find((stage) => stage.id === request.stage_id)
+          ?.assignments[request.assignment_index]?.profile ?? ''
+      ],
+    policy = profile && input.originalConfig.agents.egress_policies[profile.egress_policy];
+  if (
+    !profile ||
+    !policy ||
+    action.resolved_profile.egress_policy.id !== profile.egress_policy ||
+    input.digestJson(action.resolved_profile.egress_policy.allowed_hosts) !== input.digestJson(policy.allowed_hosts)
+  )
+    throw Error('Original readonly egress policy differs');
+  if (
+    !isString(launch.taskId) ||
+    !isString(launch.childThreadId) ||
+    !isString(launch.childRunId) ||
+    !isString(launch.childNodeId) ||
+    !isString(launch.providerInstanceId) ||
+    status.taskId !== launch.taskId ||
+    status.childThreadId !== launch.childThreadId ||
+    status.childRunId !== launch.childRunId ||
+    status.childNodeId !== launch.childNodeId ||
+    status.providerInstanceId !== launch.providerInstanceId ||
+    status.model !== action.model ||
+    !['completed', 'failed', 'stopped', 'cancelled'].includes(String(status.status)) ||
+    status.workState !== 'result_available' ||
+    status.hasPendingChildRuns !== false ||
+    status.latestTerminalRunId !== launch.childRunId ||
+    !['completed', 'failed', 'stopped', 'cancelled'].includes(String(status.latestTerminalStatus)) ||
+    status.latestTerminalStatus !== status.status ||
+    status.hasPendingQuestion !== false ||
+    status.pendingApproval !== null ||
+    status.waitTimedOut !== false ||
+    !isString(status.summary) ||
+    status.summary.length === 0 ||
+    thread.threadId !== launch.childThreadId ||
+    thread.parentThreadId !== input.nativeSessionHandle ||
+    thread.latestRunId !== launch.childRunId ||
+    thread.providerInstanceId !== launch.providerInstanceId ||
+    thread.model !== action.model ||
+    !['completed', 'failed', 'stopped', 'cancelled'].includes(String(thread.status)) ||
+    thread.activeRunId !== null ||
+    thread.pendingRequestCount !== 0 ||
+    !isRecord(threadRead) ||
+    threadRead.hasMore !== false ||
+    !items.some(
+      (item) =>
+        isRecord(item) &&
+        item.runId === launch.childRunId &&
+        item.type === 'assistant_message' &&
+        isString(item.text) &&
+        item.text === status.summary,
+    )
+  )
+    throw Error('Current builtin terminal task/thread provenance differs or lacks final content');
+  const frozenUserBrief = requireTerminalReadonlyFrozenBrief(
+    brief,
+    input,
+    issue.issue_id as string,
+    action.action_id as string,
+    launch,
+  );
+  const binding = input.digestJson({
+    issued,
+    dispatch,
+    task,
+    threadRead,
+    frozenBriefDigest: digest(Buffer.from(brief, 'utf8')),
+    frozenUserBriefDigest: digest(Buffer.from(frozenUserBrief, 'utf8')),
+  });
+  return { actionId: request.action_id as string, issueId: issue.issue_id, binding };
 }
 
 /** @param {'inspect' | 'apply'} mode @param {HistoricalOwnerReleaseInspection | undefined} supplied @param {HistoricalOwnerReleaseInspection} current @returns {HistoricalOwnerReleaseInspection} */
@@ -5922,6 +6299,376 @@ async function releaseCompletedReadonly(args: string[]) {
 }
 
 /** @param {string[]} args */
+async function releaseTerminalOwner(args: string[]): Promise<unknown> {
+  if (args.length !== 10) throw Error('Terminal owner release requires its exact argument set');
+  const values: Record<string, string> = {};
+  for (let index = 0; index < args.length; index += 2) {
+    const key = runOptionKey(args[index]),
+      value = args[index + 1];
+    if (Object.hasOwn(values, key) || !value) throw Error('Terminal owner release arguments are invalid');
+    values[key] = value;
+  }
+  const projectRoot = values['--project-root'],
+    requestPath = values['--request'];
+  if (!projectRoot || !path.isAbsolute(projectRoot) || !requestPath || !isPreparedRelativePath(requestPath))
+    throw Error('Terminal owner release root or request path is invalid');
+  const root = realpathSync(projectRoot),
+    { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts'),
+    access = requireSafeRepositoryAccess(root),
+    requestBytes = access.readCapturedBytes(requestPath, 'terminal owner release request', 65536);
+  let header: unknown;
+  try {
+    header = JSON.parse(decodeTerminalOwnerText(requestBytes, 'terminal owner release request'));
+  } catch {
+    throw Error('Terminal owner release request must be bounded strict UTF-8 JSON');
+  }
+  if (!isRecord(header) || header.schema !== 'TerminalOwnerReleaseRequest/v1')
+    throw Error('Terminal owner release request schema differs');
+  const mode = values['--mode'];
+  if (mode !== 'inspect' && mode !== 'apply') throw Error('Terminal owner release mode is invalid');
+  const expectedArguments = ['--mode', '--project-root', '--native-session-handle', '--baseline-config', '--request'];
+  if (
+    Object.keys(values).sort().join('|') !== expectedArguments.sort().join('|') ||
+    !isString(values['--native-session-handle']) ||
+    !isPreparedRelativePath(values['--baseline-config'])
+  )
+    throw Error('Terminal owner release arguments invalid');
+  const request = parseTerminalOwnerReleaseRequest(requestBytes, mode),
+    { inspection: suppliedInspection, ...base } = request,
+    identity = base.identity,
+    nativeSessionHandle = values['--native-session-handle']!;
+  if (identity.project_ids.length !== 1 || !identity.work_id || request.attempt <= 0)
+    throw Error('Terminal owner work identity invalid');
+  const baselineBytes = access.readCapturedBytes(
+    values['--baseline-config']!,
+    'terminal owner original configuration',
+    1024 * 1024,
+  );
+  const { parseRuntimeConfigYaml, loadRuntimeConfig, runtimeConfigDigest } =
+      await import('../src/config/runtime-config.ts'),
+    originalConfig = parseRuntimeConfigYaml(decodeTerminalOwnerText(baselineBytes, 'terminal owner baseline')),
+    currentConfig = loadRuntimeConfig(root),
+    currentConfigDigest = runtimeConfigDigest(currentConfig),
+    originalConfigDigest = runtimeConfigDigest(originalConfig),
+    { readRuntimeInitializationAuthority } = await import('../src/runtime-initialization.ts'),
+    currentAuthority = readRuntimeInitializationAuthority(root, currentConfig),
+    { deriveWorkspaceId } = await import('../src/workspace-identity.ts'),
+    { canonicalJsonDigest } = await import('../src/contracts/public-ingress.ts'),
+    { parseSessionBridgeRequest } = await import('../src/orchestration/mastra-session-bridge-contract.ts'),
+    workspaceId = deriveWorkspaceId(currentConfig.repository.repository_id, root),
+    digestJson = canonicalJsonDigest;
+  if (
+    currentAuthority.binding.repository_id !== identity.repository_id ||
+    !currentConfig.projects.some((project) => project.project_id === identity.project_ids[0]) ||
+    currentAuthority.binding.config_digest !== currentConfigDigest
+  )
+    throw Error('Terminal owner current accepted configuration differs');
+  if (
+    originalConfig.repository.repository_id !== identity.repository_id ||
+    !originalConfig.projects.some((project) => project.project_id === identity.project_ids[0])
+  )
+    throw Error('Terminal owner original configuration identity differs');
+  if (request.kind === 'corrective_source_frontier' && originalConfigDigest !== currentConfigDigest)
+    throw Error('Corrective terminal owner requires the current accepted configuration');
+  const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts'),
+    { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts'),
+    { configuredReadonlyAssignment, validateWorkSessionBindingAndReturnCorrectiveAuthority } =
+      await import('../src/orchestration/final-assurance.ts'),
+    { inspectTerminalOwnerWork, suspendTerminalOwnerWork } = await import('../src/orchestration/suspend-local-work.ts'),
+    db = openCliWorkspaceDatabase(
+      root,
+      sessionHandoffDatabasePath(root, currentConfig),
+      workspaceId,
+      mode === 'inspect',
+    );
+  try {
+    const store = createCliHostStateStore(db, workspaceId, undefined, undefined, undefined, undefined, root),
+      current = store.readWorkSessionSnapshot(identity, request.attempt),
+      work = current.host.work,
+      ledger = current.host.ledger,
+      journal = current.journal;
+    if (!work || !ledger || !current.host.workVersion || !current.host.ledgerVersion || !journal)
+      throw Error('Terminal owner Host work, ledger or journal is unavailable');
+    const intake = readAdmittedSessionIntake(root, store, identity);
+    if (intake.native_session_handle !== nativeSessionHandle)
+      throw Error('Terminal owner original native-session handle differs');
+    if (journal.state.workspace_id !== workspaceId || journal.state.attempt !== request.attempt)
+      throw Error('Terminal owner journal workspace or attempt differs');
+    const allItems = [...journal.state.completed.flatMap((wave) => wave.items), ...journal.state.items],
+      scopes = [...new Set(allItems.map((item) => item.request.scope_digest))];
+    if (!scopes.length || scopes.length !== 1) throw Error('Terminal owner journal scope is missing or mixed');
+    const resumeStatus = allItems.some((item) => item.issue_id !== null && item.observation === null)
+      ? 'issued_outcome_uncertain'
+      : 'ready_to_resume';
+    const journalSnapshot: import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot = {
+      state: journal.state,
+      version: journal.version,
+      resume_status: resumeStatus,
+    };
+    let engineSnapshot: RunSessionSnapshot | undefined,
+      terminalIssue: { action_id: string; issue_id: string } | undefined,
+      evidenceBinding: string | null = null,
+      engineBinding: string | null = null,
+      authorityBinding: string;
+    const evidenceRefs: { readonly path: string; readonly bytes: Buffer }[] = [];
+    if (request.kind === 'corrective_source_frontier') {
+      if (work.binding.config_digest !== currentConfigDigest || originalConfigDigest !== currentConfigDigest)
+        throw Error('Corrective terminal owner Work is not bound to current accepted configuration');
+      const authority = validateWorkSessionBindingAndReturnCorrectiveAuthority(
+        work,
+        {
+          attempt: journal.state.attempt,
+          run_id: journal.state.run_id,
+          corrective_execution: journal.state.corrective_execution ?? null,
+        },
+        root,
+      );
+      if (!authority || !journal.state.corrective_execution)
+        throw Error('Corrective terminal owner consumed authority is missing');
+      authorityBinding = digestJson({ authority, execution: journal.state.corrective_execution });
+      const { workflowWorkItemSchema } = await import('../src/orchestration/workflow-session-reservation-contract.ts'),
+        workItem = workflowWorkItemSchema.parse(intake.work_item),
+        selection: WorkItemSelection = {
+          team: work.binding.team_id,
+          kind: workItem.canonical_kind,
+          intent: workItem.intent,
+          project: workItem.project_id,
+          risk_flags: [...workItem.risk_flags],
+          labels: [...workItem.labels],
+        },
+        context = { work_id: identity.work_id, attempt: request.attempt, scope_digest: scopes[0]! },
+        readerBinding = {
+          repositoryRoot: root,
+          config: currentConfig,
+          selection,
+          context,
+          workflowId: work.binding.workflow_id,
+          runId: journal.state.run_id,
+          lifecycleRisk: work.lifecycle.risk,
+          correctiveExecution: journal.state.corrective_execution,
+        },
+        reader = await import('../src/orchestration/session-engine-snapshot.ts');
+      engineSnapshot = reader.readSessionEngineSnapshot(readerBinding) ?? undefined;
+      if (!engineSnapshot) throw Error('Corrective terminal persisted engine snapshot is missing');
+      engineBinding = digestJson(engineSnapshot);
+    } else {
+      if (work.binding.config_digest !== originalConfigDigest)
+        throw Error('Readonly terminal owner original configuration binding differs');
+      const evidence = request.evidence!;
+      for (const ref of [evidence.originalIssue, evidence.originalDispatch, evidence.frozenBrief])
+        if (!ref.path.startsWith(`.agent/work/${identity.work_id}/`))
+          throw Error('Readonly terminal original issue, dispatch and brief must remain in their old work record');
+      for (const ref of [evidence.currentTask, evidence.currentThread])
+        if (!ref.path.startsWith('.agent/work/'))
+          throw Error('Readonly terminal builtin provenance must remain in the work evidence store');
+      const capture = (ref: TerminalOwnerEvidenceReference, label: string) => {
+        const bytes = access.readCapturedBytes(ref.path, label, 1024 * 1024);
+        if (digest(bytes) !== ref.sha256) throw Error(`${label} bytes or digest differ`);
+        evidenceRefs.push({ path: ref.path, bytes });
+        return bytes;
+      };
+      const issueBytes = capture(evidence.originalIssue, 'original readonly issue binding'),
+        dispatchBytes = capture(evidence.originalDispatch, 'original readonly dispatch'),
+        briefBytes = capture(evidence.frozenBrief, 'frozen readonly worker brief'),
+        taskBytes = capture(evidence.currentTask, 'current builtin task status'),
+        threadBytes = capture(evidence.currentThread, 'current builtin thread read'),
+        issued = parseTerminalOwnerEvidenceJson(issueBytes, 'original readonly issue binding'),
+        dispatch = parseTerminalOwnerEvidenceJson(dispatchBytes, 'original readonly dispatch'),
+        task = parseTerminalOwnerEvidenceJson(taskBytes, 'current builtin task status'),
+        threadRead = parseTerminalOwnerEvidenceJson(threadBytes, 'current builtin thread read'),
+        provenance = requireTerminalReadonlyProvenance(
+          issued,
+          dispatch,
+          task,
+          threadRead,
+          decodeTerminalOwnerText(briefBytes, 'frozen readonly worker brief'),
+          {
+            identity,
+            attempt: request.attempt,
+            nativeSessionHandle,
+            originalConfigDigest,
+            originalConfig,
+            journal: journalSnapshot,
+            configuredReadonlyAssignment,
+            parseRequest: parseSessionBridgeRequest,
+            digestJson,
+          },
+        );
+      terminalIssue = { action_id: provenance.actionId, issue_id: provenance.issueId };
+      evidenceBinding = digestJson(
+        evidenceRefs.map(({ path: refPath, bytes }) => ({ path: refPath, sha256: digest(bytes) })),
+      );
+      authorityBinding = provenance.binding;
+    }
+    const leaseTicketId = work.lease?.ticket_id ?? suppliedInspection?.ownerTicketId;
+    if (!leaseTicketId) throw Error('Terminal owner exact ticket is unavailable');
+    const tickets = ledger.tickets.filter((ticket) => ticket.ticket_id === leaseTicketId);
+    if (tickets.length !== 1 || !tickets[0]) throw Error('Terminal owner ticket is missing or ambiguous');
+    const ticket = tickets[0],
+      claim = work.lease
+        ? ledger.claims.filter((entry) => entry.ticket_id === leaseTicketId && entry.status === 'active')
+        : ledger.claims.filter((entry) => entry.claim_id === suppliedInspection?.ownerClaimId);
+    if (claim.length !== 1 || !claim[0]) throw Error('Terminal owner exact claim is missing or ambiguous');
+    authorityBinding = digestJson({ acceptedAuthority: currentAuthority, terminalBinding: authorityBinding });
+    const currentInspection: TerminalOwnerReleaseInspection = {
+      expectedWork: current.host.workVersion,
+      expectedLedger: current.host.ledgerVersion,
+      expectedJournal: journal.version,
+      expectedMaintenanceGeneration: current.host.maintenanceGeneration,
+      currentConfigBinding: currentConfigDigest,
+      authorityBinding,
+      baselineBinding: digest(baselineBytes),
+      engineBinding,
+      requestBinding: digestJson(base),
+      evidenceBinding,
+      ownerTicketId: ticket.ticket_id,
+      ownerClaimId: claim[0].claim_id,
+      ownerGeneration: ticket.generation,
+      nativeSessionHandle,
+    };
+    if (work.lease && (claim[0].generation !== work.lease.generation || ticket.generation !== work.lease.generation))
+      throw Error('Terminal owner ticket, claim and lease generation differ');
+    if (!work.lease && (ticket.status !== 'released' || claim[0].status !== 'released'))
+      throw Error('Terminal owner replay has a third-state ticket or claim');
+    if (mode === 'apply') {
+      if (!suppliedInspection) throw Error('Terminal owner apply inspection is missing');
+      const comparable = (inspectionValue: TerminalOwnerReleaseInspection, replay: boolean) =>
+        replay
+          ? Object.fromEntries(
+              Object.entries(inspectionValue).filter(([key]) => !['expectedWork', 'expectedLedger'].includes(key)),
+            )
+          : inspectionValue;
+      if (
+        digestJson(comparable(suppliedInspection, !work.lease)) !==
+        digestJson(comparable(currentInspection, !work.lease))
+      )
+        throw Error('Terminal owner request, evidence, owner or fresh CAS binding changed');
+    }
+    const inspection = mode === 'inspect' ? currentInspection : suppliedInspection!,
+      requestDigest = digestJson({
+        requestSha256: digest(requestBytes),
+        requestBinding: currentInspection.requestBinding,
+        baselineBinding: currentInspection.baselineBinding,
+        currentConfigBinding: currentInspection.currentConfigBinding,
+        authorityBinding: currentInspection.authorityBinding,
+        engineBinding: currentInspection.engineBinding,
+        evidenceBinding: currentInspection.evidenceBinding,
+        expectedWork: inspection.expectedWork,
+        expectedLedger: inspection.expectedLedger,
+        expectedJournal: inspection.expectedJournal,
+        expectedMaintenanceGeneration: inspection.expectedMaintenanceGeneration,
+        ownerTicketId: inspection.ownerTicketId,
+        ownerClaimId: inspection.ownerClaimId,
+        ownerGeneration: inspection.ownerGeneration,
+        nativeSessionHandle,
+      }),
+      suspension: TerminalOwnerSuspension = {
+        store,
+        identity,
+        journal: journalSnapshot,
+        expectedWork: inspection.expectedWork,
+        expectedLedger: inspection.expectedLedger,
+        expectedMaintenanceGeneration: inspection.expectedMaintenanceGeneration,
+        nativeSessionHandle,
+        userRequestPointer: base.userRequestPointer,
+        requestIntent: base.requestIntent,
+        documentationContext: {
+          repository_root: root,
+          repository_id: identity.repository_id,
+          project_id: identity.project_ids[0]!,
+          work_id: identity.work_id,
+        },
+        config: request.kind === 'corrective_source_frontier' ? currentConfig : originalConfig,
+        kind: request.kind,
+        ownerTicketId: inspection.ownerTicketId,
+        ownerClaimId: inspection.ownerClaimId,
+        ownerGeneration: inspection.ownerGeneration,
+        ...(engineSnapshot ? { engineSnapshot } : {}),
+        ...(terminalIssue ? { terminalIssue } : {}),
+      };
+    if (mode === 'inspect') {
+      inspectTerminalOwnerWork(suspension, requestDigest);
+      return {
+        status: 'terminal_owner_release_inspected',
+        request: { ...base, inspection: currentInspection },
+        rights_granted: false,
+        caller_identity_authenticated: false,
+        runtime_acceptance: false,
+      };
+    }
+    if (!access.readCapturedBytes(requestPath, 'terminal owner request stability', 65536).equals(requestBytes))
+      throw Error('Terminal owner request changed before CAS');
+    if (
+      !access
+        .readCapturedBytes(values['--baseline-config']!, 'terminal owner baseline stability', 1024 * 1024)
+        .equals(baselineBytes)
+    )
+      throw Error('Terminal owner baseline changed before CAS');
+    for (const captured of evidenceRefs)
+      if (
+        !access
+          .readCapturedBytes(captured.path, 'terminal owner evidence stability', 1024 * 1024)
+          .equals(captured.bytes)
+      )
+        throw Error('Terminal owner evidence changed before CAS');
+    const freshConfig = loadRuntimeConfig(root),
+      freshAuthority = readRuntimeInitializationAuthority(root, freshConfig);
+    if (
+      runtimeConfigDigest(freshConfig) !== currentConfigDigest ||
+      digestJson(freshAuthority) !== digestJson(currentAuthority)
+    )
+      throw Error('Terminal owner current configuration or accepted authority changed before CAS');
+    if (request.kind === 'corrective_source_frontier') {
+      const freshEngine = (await import('../src/orchestration/session-engine-snapshot.ts')).readSessionEngineSnapshot({
+        repositoryRoot: root,
+        config: freshConfig,
+        selection: {
+          team: work.binding.team_id,
+          kind: (
+            await import('../src/orchestration/workflow-session-reservation-contract.ts')
+          ).workflowWorkItemSchema.parse(intake.work_item).canonical_kind,
+          intent: (
+            await import('../src/orchestration/workflow-session-reservation-contract.ts')
+          ).workflowWorkItemSchema.parse(intake.work_item).intent,
+          project: (
+            await import('../src/orchestration/workflow-session-reservation-contract.ts')
+          ).workflowWorkItemSchema.parse(intake.work_item).project_id,
+          risk_flags: [
+            ...(
+              await import('../src/orchestration/workflow-session-reservation-contract.ts')
+            ).workflowWorkItemSchema.parse(intake.work_item).risk_flags,
+          ],
+          labels: [
+            ...(
+              await import('../src/orchestration/workflow-session-reservation-contract.ts')
+            ).workflowWorkItemSchema.parse(intake.work_item).labels,
+          ],
+        },
+        context: { work_id: identity.work_id, attempt: request.attempt, scope_digest: scopes[0]! },
+        workflowId: work.binding.workflow_id,
+        runId: journal.state.run_id,
+        lifecycleRisk: work.lifecycle.risk,
+        correctiveExecution: journal.state.corrective_execution ?? undefined,
+      });
+      if (digestJson(freshEngine) !== digestJson(engineSnapshot))
+        throw Error('Terminal owner persisted engine changed before CAS');
+    }
+    const result = suspendTerminalOwnerWork(suspension, requestDigest);
+    return {
+      status: work.lease ? 'terminal_owner_released' : 'terminal_owner_release_replayed',
+      work_version: result.workVersion,
+      ledger_version: result.ledgerVersion,
+      journal_version: journal.version,
+      rights_granted: false,
+      caller_identity_authenticated: false,
+      runtime_acceptance: false,
+      native_outcome: request.kind === 'observed_terminal_readonly' ? 'preserved_unknown' : 'terminal_source_frontier',
+    };
+  } finally {
+    closeWorkspaceDatabaseWithAdmission(db);
+  }
+}
+
 async function releaseHistoricalOwner(
   args: string[],
   unissuedOwner = false,
@@ -6382,6 +7129,11 @@ export async function run(args: string[] = process.argv.slice(2)) {
     if (args[0] !== runSpecialSelectors[15] || args[1] !== 'true' || hasRunSpecialConflict(args, 15))
       throw Error('Stopped-source capture requires exact separate capture signal');
     return captureStoppedSource(args.slice(2));
+  }
+  if (hasRunSpecialSelector(args, 16)) {
+    if (args[0] !== runSpecialSelectors[16] || args[1] !== 'true' || hasRunSpecialConflict(args, 16))
+      throw Error('Terminal owner release requires its exact separate signal');
+    return releaseTerminalOwner(args.slice(2));
   }
   const { checkManifest, readPin } = await import('./bun.ts');
   let values = parseArgs(args);

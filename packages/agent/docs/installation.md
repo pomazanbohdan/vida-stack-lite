@@ -177,6 +177,32 @@ work, journals or DBs. Refused/UNKNOWN effects remain fenced; no blind retry,
 manual receipt rewrite or reset is a recovery route. Qualify a fresh delivered
 Host-present consumer before real repository adoption/init.
 
+## Dispose exact terminal ownership before adoption
+
+Use only a verified delivered build containing the terminal-owner extension;
+Source presence or an older installation does not provide it. The
+[canonical contract](system-specification.md#host-present-pending-receipt-configuration-adoption)
+separates ownership disposal from successful work and actual Host quiescence.
+
+Prepare the strict `TerminalOwnerReleaseRequest/v1` in the evidence store. It
+contains `kind` (`corrective_source_frontier` or `observed_terminal_readonly`),
+exact `identity`, `attempt`, `userRequestPointer` and `requestIntent`. Readonly
+requests also contain five path/SHA256 refs: `originalIssue`, `originalDispatch`,
+`frozenBrief`, `currentTask` and `currentThread`. Use the original baseline cfg;
+corrective disposal requires that cfg to equal the current accepted cfg.
+
+`vida-agent run --release-terminal-owner true --mode inspect --project-root ABS_PROJECT_ROOT --native-session-handle ORIGINAL_HANDLE --baseline-config .agent/work/OWNER/baseline.yaml --request .agent/work/OWNER/request.json`
+
+Inspect has no effects. Save its exact returned `request` field, including the
+frozen `inspection`, then invoke the same flags with `--mode apply`. Reuse only
+those exact original apply bytes for recorded replay. A fresh inspection or a
+substituted file is not authorization to reacquire rights. Request size is64KiB;
+the original cfg and each evidence file are bounded to1MiB. Unknown fields,
+invalid paths/encoding, stale cfg/authority/evidence/CAS and active Source effects
+refuse. Preserve FAIL/UNKNOWN, safety refusals and the original journals. Never
+retry the old worker to obtain disposal evidence. Adoption still requires fresh
+consent/currentness/CAS and observed global native maintenance quiescence.
+
 ## Configure a consumer before Host use
 
 Version 0.1.8 introduces `configure plan`, `inspect`, `apply` and `resume`.

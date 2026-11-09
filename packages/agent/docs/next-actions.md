@@ -17,7 +17,19 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open           | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open.                                   |
 | [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed                        | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                                                      |
 | [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.19 installed; bounded native consumer PASS | Raw helper closure and v3 plan transport are corrected. Fresh delivered init/configure/apply/resume/refusal proof passes; physical TTY and wider qualification remain open. |
-| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | v0.1.19 Host consumer PASS; actual adoption blocked | Real apply refused before cfg/receipt/output changes on historical Host leases. Eighteen own leases are released; five terminal/corrective contours require their supported disposition. Preserve layout, outputs, metadata, history and FAIL/UNKNOWN. Real init and user Runtime acceptance remain open. |
+| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Terminal-disposal Source/Code/tester accepted; delivery pending | v0.1.19 remains installed. Deliver the exact extension and qualify a NEW delivered consumer, then dispose the five eligible old owners and this completed Source owner with fresh evidence/CAS. Remeasure global quiescence before approved-model adoption/init. Preserve FAIL/UNKNOWN, outputs and history; real init and user Runtime acceptance remain open. |
+
+The bounded terminal-owner correction is accepted at fingerprint
+`94456f56ae4f46b338dcf16aa30068699894c364a84724a4987b2dc96f13389e`.
+Two independent-from-Root Code views passed (one reviewer invocation); a distinct
+tester executed22 focused cases/163 Bun expect calls plus unaggregated Node
+assert oracles,6 old controls/40 expects, and clean168-bin/590-test-file types.
+Root's separate actual disposable Host/Mastra Source-API probe passed both
+corrective outcomes and public inspect/apply/replay; it is not native TestEvidence.
+All original failures and the unqualified5s composite remain. Source workflow
+success/complete and its exact four-path handoff are in
+`.agent/work/runtime-terminal-owner-disposal-20261109-r1/`. Root's five-doc
+reconciliation is separate. Main/native delivery and real effects remain pending.
 
 Release, installer verification and Markdown reconciliation are completion steps
 of each task's cycle. They are not additional implementation tasks or a reason
