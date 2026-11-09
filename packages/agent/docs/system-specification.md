@@ -3539,3 +3539,8 @@ foreign, substituted, mismatched, pending, failed or UNKNOWN workflows refuse.
 This releases only that old execution ownership; adoption separately observes
 current quiescence. Source, delivery, actual init and user Runtime acceptance
 retain distinct evidence.
+
+Public configure v3 plans use the governed 8 MiB serialized-operation envelope
+for captured transport; setup input and legacy v1/v2 plans retain their 32 KiB
+caps. Fatal UTF-8/JSON, closed version/schema validation and fresh canonical
+re-planning precede target effects; a larger transport grants no authority.

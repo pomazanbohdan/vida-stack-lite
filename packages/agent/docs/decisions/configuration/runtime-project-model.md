@@ -165,6 +165,12 @@ and a fresh delivered Host consumer before separately fresh-consented actual
 repository adoption/init. Source review and focused proof do not establish delivery,
 full qualification or user Runtime acceptance.
 
+Host-present v3 public-plan transport reuses the existing 8 MiB operation
+envelope. Setup input and legacy v1/v2 public plans keep 32 KiB. Safe captured
+reads, strict validation and re-plan-before-effect remain with the existing CLI
+owner; see the canonical system contract. This repairs transport for the full
+frozen runtime binding without changing operation schema or adoption authority.
+
 ## Критерії приймання реалізації
 
 | Перевірка                 | Очікуваний результат                                                                                                                                  |

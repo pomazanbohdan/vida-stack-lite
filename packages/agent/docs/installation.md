@@ -163,6 +163,11 @@ returned JSON plan to a regular UTF-8 file; apply uses
 `vida-agent configure apply --project-root ABS --plan PLAN_FILE`. Resume supplies
 the same model input, `--adopt-host-present true` and `--operation OPERATION_ID`.
 
+The generated v3 plan can exceed the 32 KiB setup-input limit: its captured
+transport is bounded by the existing 8 MiB operation envelope. Legacy v1/v2
+plans retain 32 KiB. Use the exact generated plan; a larger file does not bypass
+strict schema, currentness or consent checks.
+
 This explicit route supports a valid pending receipt with existing legacy Host
 storage. It preserves current project-owned outputs, old receipt provenance,
 provider metadata and work/history; it does not migrate DB layout or grant old-work

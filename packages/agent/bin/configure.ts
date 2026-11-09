@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { productModelSchema } from '../src/config/product-model.ts';
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
 import { parseConsumerProjectMoves } from './consumer-project-relocation.ts';
 import {
   planConsumerConfiguration,
@@ -314,9 +314,12 @@ function readPlan(file: string): unknown {
   const bytes = requireSafeRepositoryAccess(path.dirname(absolute)).readCapturedBytes(
     path.basename(absolute),
     'configuration plan',
-    32768,
+    8 * 1024 * 1024,
   );
-  return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  if (bytes.length > 32768 && (!isPlainRecord(value) || value.schema !== 'ConsumerConfigurationPlan/v3'))
+    throw Error('Legacy or unknown configuration plan exceeds 32 KiB');
+  return value;
 }
 
 async function requestForParsed(parsed: Exclude<Parsed, { mode: 'apply' | 'inspect' }>, port?: SetupPromptPort) {

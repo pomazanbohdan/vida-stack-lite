@@ -1,9 +1,10 @@
 import { expect, test } from 'bun:test';
-import { mkdtemp, realpath, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, realpath, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { configure, configureArguments, main, requestFromPlan } from '../bin/configure.ts';
 import { cliMetadataResult } from '../bin/cli-metadata.ts';
+import { ZodError } from 'zod';
 
 const binding = 'a'.repeat(64);
 const plan = {
@@ -13,6 +14,61 @@ const plan = {
   binding,
   changes: { added_projects: ['app'], team_project_grants: ['team=app'], relocation: 'none' },
 };
+
+test('public v3 plan transport reaches strict validation above the legacy cap and remains bounded', async () => {
+  const parent = await realpath(tmpdir());
+  const root = await realpath(await mkdtemp(path.join(parent, 'vida-config-plan-envelope-')));
+  const target = path.join(root, 'target-must-stay-absent');
+  let completed = false;
+  try {
+    for (const size of [32768, 32769, 65536, 8 * 1024 * 1024]) {
+      const body = JSON.stringify({ schema: 'ConsumerConfigurationPlan/v3' });
+      const file = path.join(root, `v3-${size}.json`);
+      await writeFile(file, body + ' '.repeat(size - Buffer.byteLength(body)));
+      await Promise.resolve(
+        expect(configure(['apply', '--project-root', target, '--plan', file])).rejects.toBeInstanceOf(ZodError),
+      );
+      expect(await readdir(root)).not.toContain('target-must-stay-absent');
+    }
+    for (const schema of ['ConsumerConfigurationPlan/v1', 'ConsumerConfigurationPlan/v2', 'Foreign/v3']) {
+      const body = JSON.stringify({ schema });
+      const file = path.join(root, schema.replace('/', '-') + '.json');
+      await writeFile(file, body + ' '.repeat(32769 - Buffer.byteLength(body)));
+      let refusal: unknown;
+      try {
+        await configure(['apply', '--project-root', target, '--plan', file]);
+      } catch (error: unknown) {
+        refusal = error;
+      }
+      expect(refusal).toBeInstanceOf(Error);
+      expect(refusal).not.toBeInstanceOf(ZodError);
+      expect(await readdir(root)).not.toContain('target-must-stay-absent');
+    }
+    const over = path.join(root, 'v3-over-envelope.json');
+    await writeFile(over, JSON.stringify({ schema: 'ConsumerConfigurationPlan/v3' }) + ' '.repeat(8 * 1024 * 1024));
+    await Promise.resolve(
+      expect(configure(['apply', '--project-root', target, '--plan', over])).rejects.not.toBeInstanceOf(ZodError),
+    );
+    const malformed = path.join(root, 'malformed.json');
+    await writeFile(malformed, '{');
+    await Promise.resolve(
+      expect(configure(['apply', '--project-root', target, '--plan', malformed])).rejects.toBeInstanceOf(SyntaxError),
+    );
+    const invalidUtf8 = path.join(root, 'invalid-utf8.json');
+    await writeFile(invalidUtf8, Buffer.from([255]));
+    await Promise.resolve(
+      expect(configure(['apply', '--project-root', target, '--plan', invalidUtf8])).rejects.toBeInstanceOf(TypeError),
+    );
+    expect(await readdir(root)).not.toContain('target-must-stay-absent');
+    completed = true;
+  } finally {
+    if (completed) {
+      expect(path.dirname(root)).toBe(parent);
+      expect(path.basename(root).startsWith('vida-config-plan-envelope-')).toBe(true);
+      await rm(root, { recursive: true, force: true });
+    } else console.info('Retained plan-envelope fixture: ' + root);
+  }
+});
 
 test('configure enforces mode options and adapts a closed public plan', () => {
   expect(requestFromPlan(plan, '/root')).toEqual({
