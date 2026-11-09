@@ -179,8 +179,7 @@ Host-present consumer before real repository adoption/init.
 
 ## Dispose exact terminal ownership before adoption
 
-Use only a verified delivered build containing the terminal-owner extension;
-Source presence or an older installation does not provide it. The
+The terminal-owner extension is delivered in 0.1.20; the [current delivery record](next-actions.md#current-delivery-state) binds its published and installed bytes. Use that verified delivered build. Source presence alone does not provide installation evidence. The
 [canonical contract](system-specification.md#host-present-pending-receipt-configuration-adoption)
 separates ownership disposal from successful work and actual Host quiescence.
 

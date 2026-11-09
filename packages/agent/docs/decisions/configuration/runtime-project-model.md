@@ -5,7 +5,7 @@ title: Продукти, wiki та роботи — погоджена моде�
 
 # Продукти, wiki та роботи
 
-Статус: затверджено до реалізації з анотаціями користувача. Codex identity стає `codex`; вкладеність типів налаштовується продуктом без hardcoded type matrix. Source/runtime ще потребують реалізації та доказів. Попередній review receipt стосується своїх sealed inputs і не є review нових анотацій. Канонічна системна специфікація узгоджує погоджений target з поточним Source. Operational work record: `.agent/work/runtime-project-model-implementation-20261102/WORK.md` під repository root.
+Статус: затверджено до реалізації з анотаціями користувача. Codex identity стає `codex`; вкладеність типів налаштовується продуктом без hardcoded type matrix. Source та доставлений runtime реалізують модель; 0.1.20 виконав adoption і public init reconciliation цього репозиторію. Ширша кваліфікація й user Runtime acceptance залишаються відкритими. Попередній review receipt стосується своїх sealed inputs і не є review нових анотацій. Канонічна системна специфікація узгоджує погоджений target з поточним Source. Operational work record: `.agent/work/runtime-project-model-implementation-20261102/WORK.md` під repository root.
 
 ## Результат для користувача
 
@@ -29,7 +29,7 @@ title: Продукти, wiki та роботи — погоджена моде�
 
 ## Погоджені значення
 
-Користувач 2026-11-08 явно затвердив усі значення [конкретної моделі](project-config.proposed.yaml): repository/product IDs та prefixes, code selectors, wiki/requirements paths та areas, work-item stores, enabled types і hierarchy. Назва файла збережена для чинних references. Затверджені значення ще не є активною runtime cfg, міграцією документів або Runtime acceptance; активація проходить через доставлені Task4/5 owners після повного temporary-consumer proof.
+Користувач 2026-11-08 явно затвердив усі значення [конкретної моделі](project-config.proposed.yaml): repository/product IDs та prefixes, code selectors, wiki/requirements paths та areas, work-item stores, enabled types і hierarchy. Назва файла збережена для чинних references. Затверджені значення активовані 2026-11-09 через доставлений configure v3 owner у 0.1.20 після свіжих temporary-consumer перевірок, точного звільнення ownership і native maintenance. Public init підтвердив existing cfg; AGENTS/sidecar/policy та старі Work/Journal/Ledger збережені. Це не міграція документів і не user Runtime acceptance. Докази: `.agent/work/runtime-terminal-owner-disposal-20261109-r1/actual-root-result.json`.
 
 | Питання                          | Рекомендація цього пакета                                                                                                                                                                               |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
