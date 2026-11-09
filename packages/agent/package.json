@@ -1,6 +1,6 @@
 {
   "name": "vida-agent",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "private": true,
   "description": "Configurable clean-v1 development-team runtime governed by one repository YAML authority.",
   "bin": {
