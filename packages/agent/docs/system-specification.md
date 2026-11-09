@@ -3503,3 +3503,39 @@ and synthesis normalization path. Undeclared `research_mode`, `answer_only`,
 `save_document` and associated output hints are not supported public scope
 fields. Strict schema validation rejects these fields; the ordinary typed normalization
 path remains the single supported contract.
+
+## Host-present pending-receipt configuration adoption
+
+The existing configure owner exposes explicit strict Request/Plan/Operation v3 for
+`host_present_pending_receipt` adoption. It accepts the complete approved model
+and explicit local identity map for a legacy Host with a valid pending receipt.
+Strict v1/v2 meanings and replay remain unchanged. A bound/foreign/missing receipt,
+unsupported storage, relocation, grants or ambiguous attribution refuses. The
+project-upgrade existing-storage refusal and legacy DB layout remain intact.
+
+The plan binds exact config and receipt before/target bytes, current preserved
+AGENTS/sidecar/policy outputs, old output/template provenance, executing runtime
+closure and project/DB/path/parent identities. The target receipt records
+`adopted_existing`; it does not claim that current outputs were freshly generated.
+Explicit plugin-to-codex conversion changes current local references only; provider
+IDs/tenant/namespace metadata and stored WorkIdentity/history remain unchanged.
+Old work gains no continuation authority.
+
+Effects require recorded-token native Host maintenance and observed quiescence,
+closed connections and typed exclusive init/config admission. The immutable intent
+precedes native acquisition and effects. Apply/resume reconcile exact before/target
+images, rederive receipts and CAS progress; third states retain UNKNOWN and the fence.
+Fresh acquisition requires pristine beforeimages. Native release follows verified
+config/receipt/output/runtime/history closure; archive follows observed release.
+Same-operation lost acknowledgements retain their persisted identity and outcome.
+
+The completed-Source-workflow suspension SDK owner proves terminal success from
+the persisted journal, authoritative accepted Source reservations and configured
+readonly validation/test/delivery observations. It checks current cfg/identity,
+Work/Ledger/Journal CAS, native session/claim and maintenance generation through
+the existing suspension core. Expiry proves nothing. Exact already-recorded release
+returns the same suspended result without mutation, reacquisition or new rights;
+foreign, substituted, mismatched, pending, failed or UNKNOWN workflows refuse.
+This releases only that old execution ownership; adoption separately observes
+current quiescence. Source, delivery, actual init and user Runtime acceptance
+retain distinct evidence.

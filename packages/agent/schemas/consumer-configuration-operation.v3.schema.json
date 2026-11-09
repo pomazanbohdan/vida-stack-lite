@@ -1,0 +1,246 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/consumer-configuration-operation.v3.schema.json",
+  "title": "Consumer Configuration Operation v3 — Host-present adoption",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "version",
+    "operation_id",
+    "root",
+    "root_identity",
+    "workspace_id",
+    "request",
+    "binding",
+    "before",
+    "target",
+    "receipt",
+    "progress",
+    "adoption"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ConsumerConfigurationOperation/v3"
+    },
+    "version": {
+      "const": 3
+    },
+    "operation_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "root_identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workspace_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "version", "projectRoot", "repository", "productModel", "adoption"],
+      "properties": {
+        "schema": {
+          "const": "ConsumerConfigurationRequest/v3"
+        },
+        "version": {
+          "const": 3
+        },
+        "projectRoot": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1
+        },
+        "productModel": {
+          "$ref": "https://vida-agent.invalid/schemas/product-model.v1.schema.json"
+        },
+        "legacyProjectIdMap": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+          }
+        },
+        "adoption": {
+          "const": "host_present_pending_receipt"
+        }
+      }
+    },
+    "binding": {
+      "$ref": "#/$defs/digest"
+    },
+    "before": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/bytes"
+      }
+    },
+    "target": {
+      "$ref": "#/$defs/bytes"
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["before", "target"],
+      "properties": {
+        "before": {
+          "$ref": "#/$defs/bytes"
+        },
+        "target": {
+          "$ref": "#/$defs/bytes"
+        }
+      }
+    },
+    "progress": {
+      "enum": ["intent", "config_applied", "receipt_applied", "complete"]
+    },
+    "adoption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "host",
+        "workflow",
+        "projects",
+        "original_receipt_sha256",
+        "output_drift",
+        "template_drift",
+        "runtime"
+      ],
+      "properties": {
+        "mode": {
+          "const": "host_present_pending_receipt"
+        },
+        "host": {
+          "$ref": "#/$defs/storage"
+        },
+        "workflow": {
+          "$ref": "#/$defs/storage"
+        },
+        "projects": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          }
+        },
+        "original_receipt_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "output_drift": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "template_drift": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "runtime": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              },
+              {
+                "$ref": "#/$defs/digest"
+              }
+            ],
+            "items": false
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "bytes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base64", "sha256"],
+      "properties": {
+        "base64": {
+          "type": "string",
+          "pattern": "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+        },
+        "sha256": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "exists", "identity", "parent_identity", "data_digest"],
+      "properties": {
+        "relative_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "exists": {
+          "type": "boolean"
+        },
+        "identity": {
+          "type": ["string", "null"]
+        },
+        "parent_identity": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "data_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

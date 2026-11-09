@@ -1838,11 +1838,11 @@ export async function derivePendingConfigurationReceipt(
     target,
     target,
     evidence,
-    oldReceipt.provenance,
+    request.schema === 'ConsumerConfigurationRequest/v3' ? 'adopted_existing' : oldReceipt.provenance,
     oldReceipt.created_at,
   );
   const receipt =
-    oldReceipt.provenance === undefined
+    oldReceipt.provenance === undefined && request.schema !== 'ConsumerConfigurationRequest/v3'
       ? Object.fromEntries(Object.entries(built.receipt).filter(([key]) => key !== 'provenance'))
       : built.receipt;
   validateReceipt(built.rawSchema, receipt);

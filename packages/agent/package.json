@@ -1,6 +1,6 @@
 {
   "name": "vida-agent",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "private": true,
   "description": "Configurable clean-v1 development-team runtime governed by one repository YAML authority.",
   "bin": {
@@ -38,6 +38,7 @@
     "bin/init-configuration.ts",
     "bin/consumer-project-relocation.ts",
     "bin/consumer-configuration-operation.ts",
+    "bin/consumer-configuration-adoption.ts",
     "bin/configure.ts",
     "bin/init.ts",
     "bin/init-product-input.ts",
@@ -112,6 +113,7 @@
     "dist/schemas/config-rebind-operation.v1.schema.json",
     "dist/schemas/consumer-configuration-operation.v1.schema.json",
     "dist/schemas/consumer-configuration-operation.v2.schema.json",
+    "dist/schemas/consumer-configuration-operation.v3.schema.json",
     "dist/schemas/consumer-clean-initialization-operation.v1.schema.json",
     "dist/schemas/consumer-clean-initialization-operation.v2.schema.json",
     "dist/schemas/documentation-policy-transition.v1.schema.json",
@@ -158,6 +160,7 @@
     "schemas/config-rebind-operation.v1.schema.json",
     "schemas/consumer-configuration-operation.v1.schema.json",
     "schemas/consumer-configuration-operation.v2.schema.json",
+    "schemas/consumer-configuration-operation.v3.schema.json",
     "schemas/consumer-clean-initialization-operation.v1.schema.json",
     "schemas/consumer-clean-initialization-operation.v2.schema.json",
     "schemas/documentation-policy-transition.v1.schema.json",

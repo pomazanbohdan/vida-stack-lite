@@ -12,12 +12,12 @@ This is the canonical Agent queue. The
 contains scope, acceptance and evidence for these same tasks, not another queue.
 Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-first-development.md).
 
-| Task                                                                                                                                            | Current state                                   | Remaining outcome and dependency                                                                                                                                                                                                              |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open    | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open.   |
-| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed                 | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                      |
-| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.17 installed; bounded native consumer PASS | Raw helper closure is corrected. A fresh eight-process delivered consumer passes full-model init, configure apply/resume and refusals; physical TTY and wider qualification remain open. |
-| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Host-present adoption capability missing        | Extend the existing fenced configuration owner for the approved model and plugin-to-codex map; preserve current DB layout, project-owned outputs, old work/history and receipt provenance. Real init and user Runtime acceptance remain open. |
+| Task                                                                                                                                            | Current state                                   | Remaining outcome and dependency                                                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open    | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open.                                   |
+| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed                 | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                                                      |
+| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.17 installed; bounded native consumer PASS | Raw helper closure is corrected. A fresh eight-process delivered consumer passes full-model init, configure apply/resume and refusals; physical TTY and wider qualification remain open.                                                                                      |
+| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Host-present Source candidate; delivery pending | Strict v3 Source and two independent Code views pass; finish independent execution, normal main/PATCH delivery and a fresh delivered Host consumer before actual adoption. Preserve layout, outputs, metadata and history. Real init and user Runtime acceptance remain open. |
 
 Release, installer verification and Markdown reconciliation are completion steps
 of each task's cycle. They are not additional implementation tasks or a reason
@@ -193,11 +193,11 @@ The completed corrective work has no pending actions, but its execution-only lea
 is expired; supported owner disposal remains an operational closeout, not permission
 to edit its Work, Journal or history privately.
 
-Actual repository adoption remains unsupported. Its v1 cfg and pending receipt
+Installed 0.1.17 does not support actual repository adoption. Its v1 cfg and pending receipt
 have matching repository/workspace/project/config/integration bindings, but
 AGENTS and sidecar output bytes have advanced, and the executing AGENTS template
-differs from the old receipt. Current configure refuses operational work/Host DB
-presence. Extend the existing configuration owner through real Host maintenance,
+differs from the old receipt. Installed configure refuses operational work/Host DB
+presence. The separate Source v3 candidate extends the existing owner through real Host maintenance,
 typed versioned intent, exact before-images, CAS and UNKNOWN recovery; retain old
 receipt provenance, current project-owned outputs, provider metadata and old work
 IDs. The existing C3 native maintenance owner selects legacy DB paths from cfg;
@@ -320,9 +320,10 @@ Read-only inspection finds a pending initialization receipt alongside existing
 legacy Host/workflow databases and operational work state. `.vida` contains only
 the storage-admission gate, with no unified workspace database. Current configure
 refuses that Host/work state; init reconciliation requires an already equal model,
-and clean-init v2 derives its model from current config. A supported full-model
-adoption route for this Host-present v1 consumer is not implemented or qualified.
-Task 6 must resolve that configuration-owner boundary without resetting old data,
+and clean-init v2 derives its model from current config. The strict full-model Source v3 route is implemented with two independent Code PASS
+views and a disposable SDK apply/archive-resume bracket. Independent focused execution passes;
+normal main/PATCH delivery and fresh delivered Host qualification remain pending.
+Task 6 retains the configuration-owner boundary without resetting old data,
 rewriting work/history or enabling the unrelated existing-storage upgrade gate.
 The complete model and explicit plugin-to-codex conversion remain approved;
-prospective implementation still needs its exact contract, scope and authority.
+actual repository adoption still needs delivered current bytes, supported exact old-owner disposal and fresh consent/CAS/currentness/native quiescence. Source evidence belongs to .agent/work/runtime-host-present-model-adoption-20261109-r4/.

@@ -5,14 +5,21 @@ import type {
   HostStateStore,
   StateVersion,
   WorkIdentity,
+  WorkState,
 } from '../host-state.js';
 import { completedSourceJournalObservationMatches } from '../host-state.js';
 import type { DocumentationVerificationContext } from '../lifecycle/lifecycle-state.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
-import { type AgentRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
-import { configuredReadonlyAssignment, settledSessionItems } from './final-assurance.js';
+import { type AgentRuntimeConfig, loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
+import {
+  configuredReadonlyAssignment,
+  lifecyclePreparationObservationSchema,
+  settledSessionItems,
+} from './final-assurance.js';
 import { parseObservedValidatorVerdict } from './observed-validation.js';
+import { parseObservedTesterVerdict } from './observed-testing.js';
+import { parseObservedDeliveryProposal } from './observed-delivery.js';
 import {
   readHistoricalObservedResearchLineage,
   readHistoricalObservedActivationUse,
@@ -43,6 +50,135 @@ type SuspensionInput = {
 
 export function suspendLocalWork(input: SuspensionInput): HostStateSnapshot {
   return suspendLocalWorkCore(input, false);
+}
+
+export type CompletedSourceWorkflowSuspensionInput = SuspensionInput & {
+  readonly config: AgentRuntimeConfig;
+  readonly expectedMaintenanceGeneration: number;
+};
+
+/** Dispose only exact settled execution ownership; task acceptance remains unchanged. */
+export function suspendCompletedSourceWorkflowWork(input: CompletedSourceWorkflowSuspensionInput): HostStateSnapshot {
+  const current = input.store.readWorkSessionSnapshot(input.identity, input.journal.state.attempt);
+  requireSuspension(current.host.work && current.journal, 'completed Source workflow is not persisted');
+  requireSuspension(
+    canonicalJsonDigest(current.journal.version) === canonicalJsonDigest(input.journal.version) &&
+      canonicalJsonDigest(current.journal.state) === canonicalJsonDigest(input.journal.state) &&
+      runtimeConfigDigest(input.config) === current.host.work.binding.config_digest &&
+      runtimeConfigDigest(loadRuntimeConfig(input.documentationContext.repository_root)) ===
+        current.host.work.binding.config_digest,
+    'completed Source workflow journal or configuration differs',
+  );
+  requireCompletedSourceWorkflow(input, current.host.work);
+  return suspendLocalWorkCore(input, false, true);
+}
+
+type SettledWorkflowItem = MastraSessionLedgerSnapshot['state']['items'][number];
+
+function requireCompletedSourceWorkflow(input: CompletedSourceWorkflowSuspensionInput, work: WorkState): void {
+  const state = input.journal.state,
+    { observed, inert } = settledSessionItems(state);
+  requireSuspension(
+    input.journal.resume_status === 'complete' &&
+      state.step_id === null &&
+      state.items.length === 0 &&
+      inert.length === 0,
+    'Source workflow is not terminal',
+  );
+  requireSuspension(
+    observed.length > 0 && new Set(observed.map((item) => item.request.action_id)).size === observed.length,
+    'Source workflow actions are missing or duplicated',
+  );
+  const kinds = observed.map((item) => completedWorkflowItemKind(input, work, item));
+  requireSuspension(
+    kinds.includes('develop') &&
+      kinds.includes('validate-code') &&
+      kinds.includes('test') &&
+      kinds.at(-1) === 'deliver',
+    'Source workflow lacks completed Code/test/delivery stages',
+  );
+}
+
+function completedWorkflowAssignment(
+  input: CompletedSourceWorkflowSuspensionInput,
+  work: WorkState,
+  item: SettledWorkflowItem,
+) {
+  const request = item.request;
+  requireSuspension(
+    request.run_id === input.journal.state.run_id &&
+      request.workflow_id === work.binding.workflow_id &&
+      request.config_digest === work.binding.config_digest &&
+      item.observation?.status === 'reported_complete',
+    'Source workflow has foreign, failed or UNKNOWN activity',
+  );
+  const stage = input.config.workflows[request.workflow_id]?.stages.find((entry) => entry.id === request.stage_id);
+  const assignment = stage?.assignments[request.assignment_index],
+    profile = assignment && input.config.agents.profiles[assignment.profile];
+  requireSuspension(
+    stage && assignment?.role === request.role && profile && !item.research_activation && !item.research_normalization,
+    'Source workflow assignment differs',
+  );
+  return { stage, profile };
+}
+
+function completedWorkflowItemKind(
+  input: CompletedSourceWorkflowSuspensionInput,
+  work: WorkState,
+  item: SettledWorkflowItem,
+): string {
+  const { stage, profile } = completedWorkflowAssignment(input, work, item);
+  if (item.host_reservation) {
+    requireSuspension(
+      stage.kind === 'develop' &&
+        profile.mutation_scope === 'repository_source' &&
+        completedSourceJournalObservationMatches(work, item),
+      'Source result lacks its accepted Host reservation',
+    );
+    return 'develop';
+  }
+  requireSuspension(
+    profile.mutation_scope === 'none' &&
+      input.config.agents.tool_policies[profile.tools_policy]?.source_write === false,
+    'completed workflow action is not configured readonly',
+  );
+  return completedReadonlyWorkflowKind(input.config, stage, item);
+}
+
+function completedReadonlyWorkflowKind(
+  config: AgentRuntimeConfig,
+  stage: AgentRuntimeConfig['workflows'][string]['stages'][number],
+  item: SettledWorkflowItem,
+): string {
+  const observation = item.observation;
+  requireSuspension(observation, 'completed workflow observation is missing');
+  if (stage.kind === 'test') {
+    requireSuspension(parseObservedTesterVerdict(observation).status === 'pass', 'completed workflow tester failed');
+    return 'test';
+  }
+  if (stage.kind === 'deliver') {
+    parseObservedDeliveryProposal(observation);
+    return 'deliver';
+  }
+  requireSuspension(
+    configuredReadonlyAssignment(config, item.request, 'settled-validation'),
+    'completed workflow readonly policy differs',
+  );
+  if (stage.kind === 'validate' && stage.produces.includes('ValidationReceipt/v1')) {
+    requireSuspension(
+      parseObservedValidatorVerdict(observation).verdict === 'pass',
+      'completed workflow validator failed',
+    );
+    return 'validate-code';
+  }
+  if (stage.kind === 'validate' && stage.produces.includes('LifecyclePreparationObservation/v1')) {
+    const preparation = lifecyclePreparationObservationSchema.parse(JSON.parse(observation.summary));
+    requireSuspension(
+      preparation.status === 'pass' && preparation.gaps.length === 0,
+      'completed workflow prewrite remains GAP',
+    );
+  }
+  return stage.kind;
 }
 
 /** Close a completed readonly owner's exact lease, including an expired one.

@@ -28,6 +28,7 @@ import {
 } from './consumer-project-relocation.ts';
 import type { ConsumerProjectMove, ConsumerProjectMoveInventory } from './consumer-project-relocation.ts';
 import { validateConsumerConfigurationOperation } from './consumer-configuration-operation.ts';
+import { captureHostPresentConfiguration, type ConfigurationAdoptionPlan } from './consumer-configuration-adoption.ts';
 
 export interface ConsumerConfigurationRequestV1 {
   readonly schema?: never;
@@ -49,9 +50,23 @@ export interface ConsumerConfigurationRequestV2 {
   readonly projectMoves?: readonly string[];
 }
 
+export interface ConsumerConfigurationRequestV3 extends Omit<
+  ConsumerConfigurationRequestV2,
+  'schema' | 'version' | 'teamProjectGrants' | 'projectMoves'
+> {
+  readonly schema: 'ConsumerConfigurationRequest/v3';
+  readonly version: 3;
+  readonly adoption: 'host_present_pending_receipt';
+  readonly teamProjectGrants?: never;
+  readonly projectMoves?: never;
+}
+
 /** Existing CLI callers remain v1 until their separately owned integration. */
 export type ConsumerConfigurationRequest = ConsumerConfigurationRequestV1;
-export type VersionedConsumerConfigurationRequest = ConsumerConfigurationRequestV1 | ConsumerConfigurationRequestV2;
+export type VersionedConsumerConfigurationRequest =
+  | ConsumerConfigurationRequestV1
+  | ConsumerConfigurationRequestV2
+  | ConsumerConfigurationRequestV3;
 
 const productRequestSchema = z.strictObject({
   schema: z.literal('ConsumerConfigurationRequest/v2'),
@@ -66,12 +81,26 @@ const productRequestSchema = z.strictObject({
   projectMoves: z.array(z.string()).optional(),
 });
 
+const adoptionRequestSchema = productRequestSchema.omit({ teamProjectGrants: true, projectMoves: true }).extend({
+  schema: z.literal('ConsumerConfigurationRequest/v3'),
+  version: z.literal(3),
+  adoption: z.literal('host_present_pending_receipt'),
+});
+
+export function validateConfigurationAdoptionRequest(value: unknown): ConsumerConfigurationRequestV3 {
+  const { legacyProjectIdMap, ...request } = adoptionRequestSchema.parse(value);
+  return legacyProjectIdMap === undefined ? request : { ...request, legacyProjectIdMap };
+}
+
 /** Derive the existing context owner's mappings from the single admitted model. */
 export function consumerConfigurationProjectMappings(
   request: VersionedConsumerConfigurationRequest,
 ): readonly string[] {
-  if (request.schema === 'ConsumerConfigurationRequest/v2') {
-    const checked = productRequestSchema.parse(request);
+  if (request.schema === 'ConsumerConfigurationRequest/v2' || request.schema === 'ConsumerConfigurationRequest/v3') {
+    const checked =
+      request.schema === 'ConsumerConfigurationRequest/v3'
+        ? adoptionRequestSchema.parse(request)
+        : productRequestSchema.parse(request);
     if (checked.repository !== checked.productModel.repository.repository_id)
       throw new Error('Product model repository differs from request');
     return checked.productModel.projects.map((project) => `${project.project_id}=${project.project_root}`);
@@ -106,17 +135,19 @@ interface ConsumerConfigurationPlanBase {
   };
 }
 
-export type ConsumerConfigurationPlan = ConsumerConfigurationPlanBase &
-  (
-    | { readonly schema: 'ConsumerConfigurationPlan/v1'; readonly request: ConfigurationPlanRequest }
-    | {
-        readonly schema: 'ConsumerConfigurationPlan/v2';
-        readonly request: ConfigurationPlanRequest & {
-          readonly product_model: ProductModelDefinition;
-          readonly legacy_project_id_map: Readonly<Record<string, string>>;
-        };
-      }
-  );
+export type ConsumerConfigurationPlan =
+  | ConfigurationAdoptionPlan
+  | (ConsumerConfigurationPlanBase &
+      (
+        | { readonly schema: 'ConsumerConfigurationPlan/v1'; readonly request: ConfigurationPlanRequest }
+        | {
+            readonly schema: 'ConsumerConfigurationPlan/v2';
+            readonly request: ConfigurationPlanRequest & {
+              readonly product_model: ProductModelDefinition;
+              readonly legacy_project_id_map: Readonly<Record<string, string>>;
+            };
+          }
+      ));
 
 const outputs = [
   ['templates/AGENTS.template.md', 'AGENTS.md'],
@@ -136,6 +167,7 @@ export function captureConsumerConfiguration(request: VersionedConsumerConfigura
   readonly before: readonly Buffer[];
   readonly receipt: Buffer | null;
 } {
+  if (request.schema === 'ConsumerConfigurationRequest/v3') return captureHostPresentConfiguration(request);
   return capture(request);
 }
 
@@ -144,6 +176,7 @@ export type ConfigurationRecovery = {
   readonly target: Buffer;
   readonly beforeReceipt: Buffer | null;
   readonly targetReceipt: Buffer | null;
+  readonly adoptionAdmission?: { readonly assertActive: () => void };
 } & ({ readonly pending: Buffer; readonly archived?: false } | { readonly archive: Buffer; readonly archived: true });
 
 /** Internal recovery overlay. The caller validates the exact owned journal first. */
@@ -151,11 +184,12 @@ export function captureConsumerConfigurationForRecovery(
   request: VersionedConsumerConfigurationRequest,
   recovery: ConfigurationRecovery,
 ): ReturnType<typeof captureConsumerConfiguration> {
+  if (request.schema === 'ConsumerConfigurationRequest/v3') return captureHostPresentConfiguration(request, recovery);
   return capture(request, recovery);
 }
 
 function capture(
-  request: VersionedConsumerConfigurationRequest,
+  request: ConsumerConfigurationRequestV1 | ConsumerConfigurationRequestV2,
   recovery?: ConfigurationRecovery,
 ): {
   readonly plan: ConsumerConfigurationPlan;

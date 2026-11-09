@@ -44,11 +44,13 @@ export const cliCommandContracts = freezeCliDeclaration({
       { name: '--operation', arity: 1, type: 'operation-id' },
       { name: '--product-model', arity: 1, type: 'setup-json-or-yaml-file' },
       { name: '--input', arity: 1, type: 'setup-json-or-yaml-file' },
+      { name: '--adopt-host-present', arity: 1, type: 'true' },
     ],
     constraints: [
       'plan requires --project-root, --repository, and one or more --project; --allow-project and --move-project may repeat.',
       'Alternatively plan/resume use --product-model SETUP_FILE (or mutually exclusive --input) with the same 32768-byte setup DTO as init; complete model input never prompts and missing no-TTY input returns input_required before target observation.',
       'Model input cannot be mixed with --repository/--project; explicit --project-root must agree with the file. Configure uses the model/map; init-only reconcile does not change configure effects.',
+      'plan/resume --adopt-host-present true selects strict v3 pending-receipt Host adoption with complete model input. It cannot grant projects or relocate data; apply requires the exact fresh v3 plan and native maintenance.',
       'inspect requires only --project-root.',
       'apply requires --project-root and --plan containing the public JSON plan.',
       'resume requires --project-root, --repository, one or more --project and --operation; repeat --allow-project and --move-project as in the applied plan. Supply project mappings, grants and moves in plan order.',

@@ -145,6 +145,26 @@ Root resolves the Task4/5 implementation seam under the approved Task4 schema-de
 7. Task5 consumes this adapter and the exported request/result types. It owns the injected async prompt port, deterministic complete-input DTO, public init/configure entrypoints and help integration. Complete `--product-model` input is noninteractive; missing no-TTY input returns structured `input_required` before target observation/effects; cancellation has no init/config effect. The existing initialization prepare/finish owner binds the complete model and rendered output bytes. Legacy explicit-input behavior and C3 custody/CAS remain supported. Shared init-core integration follows Task4's frozen exported types; independent pure prompt/input work can run concurrently without writing Task4 files.
 8. Root owns package/export/resource registration and canonical documentation integration under actual Source authority. Native issue and ownership precede every Source writer; reviews grant no rights. Qualify old-read compatibility, full-model round-trip, overlap, explicit identity conversion, refusal/CAS/recovery, no-TTY/cancellation and public help/package parity on final bytes. Preserve current test/product/numeric limits and all FAIL/UNKNOWN evidence. This is an implementation contract, not proof of delivered v2, actual repository init or user Runtime acceptance. Proposed document destinations remain subject to the existing explicit-input/adoption rules.
 
+## Task 6 Host-present adoption contract
+
+The approved full-model transition for a legacy Host with a pending initialization
+receipt uses strict configure v3 through the existing apply/resume owner. It joins
+the native recorded-token Host maintenance fence to typed exclusive admission;
+current cfg/receipt/output/runtime/storage bindings, exact effects/progress CAS
+and UNKNOWN/restart/release/archive retain their existing owners. Preserve original
+receipt/output/template provenance and emit honest adopted_existing evidence.
+Explicit plugin-to-codex mapping preserves integration metadata and old WorkIdentity,
+work/history and DB layout; it grants no old-work continuation. Bound/foreign/
+unsupported/relocative/grant-bearing state refuses. The existing-storage upgrade
+refusal remains. A separate persisted-success Source suspension owner disposes
+only exact old execution ownership; it does not infer Host quiescence from expiry.
+
+The [canonical system contract](../../system-specification.md#host-present-pending-receipt-configuration-adoption)
+defines the exact replay/effect boundary. Root owns integration, qualified delivery
+and a fresh delivered Host consumer before separately fresh-consented actual
+repository adoption/init. Source review and focused proof do not establish delivery,
+full qualification or user Runtime acceptance.
+
 ## Критерії приймання реалізації
 
 | Перевірка                 | Очікуваний результат                                                                                                                                  |

@@ -153,6 +153,25 @@ Apply derives the plan again before effects. Resume uses the same setup/model,
 grants/moves and `--operation OPERATION_ID`. Existing pre-Host eligibility,
 consent, receipt, journal/CAS, UNKNOWN and recovery rules below still apply.
 
+## Adopt a pending-receipt legacy Host
+
+Check the [current delivered version](next-actions.md#current-delivery-state) and
+command help before using the Source v3 route. Source presence does not install it.
+Use `vida-agent configure plan --product-model SETUP_FILE --adopt-host-present true`
+with the complete approved model and explicit legacyProjectIdMap. Save the exact
+returned JSON plan to a regular UTF-8 file; apply uses
+`vida-agent configure apply --project-root ABS --plan PLAN_FILE`. Resume supplies
+the same model input, `--adopt-host-present true` and `--operation OPERATION_ID`.
+
+This explicit route supports a valid pending receipt with existing legacy Host
+storage. It preserves current project-owned outputs, old receipt provenance,
+provider metadata and work/history; it does not migrate DB layout or grant old-work
+rights. Native maintenance measures current quiescence before effects. Active
+ownership must be disposed through its supported owner, never by editing leases,
+work, journals or DBs. Refused/UNKNOWN effects remain fenced; no blind retry,
+manual receipt rewrite or reset is a recovery route. Qualify a fresh delivered
+Host-present consumer before real repository adoption/init.
+
 ## Configure a consumer before Host use
 
 Version 0.1.8 introduces `configure plan`, `inspect`, `apply` and `resume`.

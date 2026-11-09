@@ -585,6 +585,55 @@ export function openExistingWorkspaceDatabaseWithCleanInitializationIntent(
   );
 }
 
+/** A distinct v3 configuration intent never conveys a clean-initialization capability. */
+export function openExistingWorkspaceDatabaseWithConfigurationAdoptionIntent(
+  root: string,
+  relative: string,
+  admission: StorageReadAdmission,
+  operationId: string,
+  pendingBytes: Uint8Array,
+): Database {
+  assertWorkspaceDatabaseRelativePath(relative);
+  const state = leaseState(admission);
+  assertSupportedArguments(root, state.workspaceId, false, false);
+  const expected = Buffer.from(pendingBytes);
+  requireAdmission(
+    expected.byteLength > 0 && expected.byteLength <= 8 * 1024 * 1024,
+    'configuration intent size invalid',
+  );
+  const validate = () => {
+    const bytes = requireSafeRepositoryAccess(root).readBytes(
+      '.agent/runtime-initialization.pending.v1.json',
+      'configuration adoption intent',
+    );
+    requireAdmission(bytes.equals(expected), 'configuration adoption pending bytes changed');
+    const value: unknown = JSON.parse(bytes.toString('utf8'));
+    requireAdmission(
+      value !== null && typeof value === 'object' && !Array.isArray(value),
+      'configuration adoption intent invalid',
+    );
+    const record = value as Record<string, unknown>;
+    requireAdmission(
+      record.schema === 'ConsumerConfigurationOperation/v3' &&
+        record.version === 3 &&
+        record.root === root &&
+        record.workspace_id === state.workspaceId &&
+        record.operation_id === operationId &&
+        ['intent', 'config_applied', 'receipt_applied', 'complete'].includes(String(record.progress)),
+      'configuration adoption intent binding differs',
+    );
+  };
+  return openAndBindWorkspaceDatabase(
+    root,
+    relative,
+    state.workspaceId,
+    admission,
+    (capture) => openUnadmittedWorkspaceDatabase(root, relative, false, false, capture),
+    validate,
+    validate,
+  );
+}
+
 export interface ExclusiveStorageSourceOwner {
   captureSource(this: void, database: Database): void;
   closeSource(this: void, database: Database): void;
@@ -785,7 +834,7 @@ export function assertGateOnlyUnderInitAdmission(
   assertInitConfigAdmission(proof, root, workspaceId);
 }
 
-async function withCleanInitializationReceiptLocks<T>(
+export async function withCleanInitializationReceiptLocks<T>(
   proof: InitConfigAdmissionProof,
   root: string,
   workspaceId: string,
