@@ -7063,7 +7063,10 @@ export class HostStateStore {
           binding.context.attempt,
         ),
       );
-    return readSessionEngineSnapshot(binding);
+    return readSessionEngineSnapshot({
+      ...binding,
+      ...(currentHost.work ? { lifecycleRisk: currentHost.work.lifecycle.risk } : {}),
+    });
   }
 
   beginSessionProducer(ledger: MastraSessionLedger, supplied: SessionProducerInput): SessionProducerHandle {

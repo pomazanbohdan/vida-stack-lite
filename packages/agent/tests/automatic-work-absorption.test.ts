@@ -799,6 +799,117 @@ test('source or retained artifact drift inside Host admission denies the actual 
   }
 });
 
+async function withProducerBridge<T>(
+  args: Parameters<typeof MastraSessionBridge.open>[0],
+  body: (bridge: MastraSessionBridge) => Promise<T>,
+): Promise<T> {
+  const bridge = await MastraSessionBridge.open(args);
+  let result: { value: T } | { error: unknown };
+  try {
+    result = { value: await body(bridge) };
+  } catch (error) {
+    result = { error };
+  }
+  try {
+    await bridge.close();
+  } catch (error) {
+    if ('error' in result) throw new AggregateError([result.error, error], 'Producer body and close both failed');
+    throw error;
+  }
+  if ('error' in result) throw result.error;
+  return result.value;
+}
+
+for (const { risk, riskFlags, expectedRoles } of [
+  { risk: 'high', riskFlags: [], expectedRoles: ['security-prewriter', 'source-planner'] },
+  { risk: 'high', riskFlags: ['configuration_adoption'], expectedRoles: ['security-prewriter', 'source-planner'] },
+  { risk: 'low', riskFlags: ['high'], expectedRoles: ['security-prewriter', 'source-planner'] },
+  { risk: 'low', riskFlags: [], expectedRoles: ['source-planner'] },
+] as const) {
+  test(`producer reopens ${risk}-risk frontier with raw flags ${JSON.stringify(riskFlags)}`, async () => {
+    await withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const f = createFixture(true, true);
+      const input = f.prepare('producer-risk-reopen', 'user:producer-risk-reopen');
+      input.selection = { ...input.selection, kind: 'task', intent: 'task_execution', risk_flags: [...riskFlags] };
+      input.workItem = {
+        ...input.workItem,
+        canonical_kind: 'task',
+        intent: 'task_execution',
+        provider_type: 'Task',
+        risk_flags: [...riskFlags],
+      };
+      input.risk = risk;
+      input.route = risk === 'high' ? 'R3' : 'R2';
+      input.intakePath = '.agent/work/producer-risk-reopen/raw-intake.json';
+      writeFileSync(
+        path.join(f.root, input.intakePath),
+        JSON.stringify({
+          schema: 'VidaLocalSessionIntake/v1',
+          work_item: input.workItem,
+          native_session_handle: input.nativeSessionHandle,
+          scope_path: input.scopePath,
+          acceptance_path: input.acceptancePath,
+          runtime_code_paths: input.runtimeCodePaths,
+          route: input.route,
+          risk: input.risk,
+          change_kind: input.changeKind,
+        }),
+      );
+      const admitted = admitLocalSessionWork(input);
+      expect(admitted.host.work.lifecycle.risk).toBe(risk);
+      const ledger = new MastraSessionLedger(f.database, f.store.workspaceId, f.config, f.root, f.store);
+      const args = {
+        repositoryRoot: f.root,
+        config: f.config,
+        ledger,
+        projectIds: ['sample'],
+        selection: input.selection,
+        context: input.context,
+        workflowId: 'task_execution',
+        workspaceId: f.store.workspaceId,
+        lifecycleRisk: risk,
+      };
+      await withProducerBridge(args, async (bridge) => {
+        const started = await bridge.start(f.source);
+        const journal = ledger.resume(input.context.work_id, 1);
+        if (!journal || !started.step_id) throw new Error('Initial producer frontier is missing');
+        const issued = ledger.issueWave(input.context.work_id, 1, journal.version);
+        const item = requireArrayItem(issued.state.items, 0, 'issued task synthesis');
+        if (!item.issue_id) throw new Error('Task synthesis issue is missing');
+        expect(issued.state.items).toHaveLength(1);
+        expect(item.request.role).toBe('research-synthesizer');
+        const summary = 'Retain the protected lifecycle risk and unchanged raw packet flags.';
+        const observation: SessionBridgeObservation = {
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          agent_id: 'fixture:producer-risk',
+          tool_call_ref: 'fixture:producer-risk-synthesis',
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: [],
+        };
+        ledger.report(input.context.work_id, 1, issued.version, observation, f.source);
+        const frontier = await bridge.resume(started.step_id, [observation], f.source);
+        expect(frontier.requests.map((request) => request.role).sort()).toEqual([...expectedRoles]);
+      });
+      const { identity } = readAdmittedSessionExecutionContext(f.root, f.store, 'sample', input.context.work_id);
+      const before = f.store.readHostStateSnapshot(identity);
+      const beforeJournal = ledger.resume(input.context.work_id, 1);
+      const beforeIntake = readFileSync(path.join(f.root, input.intakePath));
+      await withProducerBridge(args, async (bridge) => {
+        const reopened = await bridge.snapshot();
+        expect(reopened?.requests.map((request) => request.role).sort()).toEqual([...expectedRoles]);
+      });
+      expect(f.store.readHostStateSnapshot(identity)).toEqual(before);
+      expect(ledger.resume(input.context.work_id, 1)).toEqual(beforeJournal);
+      expect(readFileSync(path.join(f.root, input.intakePath))).toEqual(beforeIntake);
+      expect(input.workItem.risk_flags).toEqual(riskFlags);
+    });
+  });
+}
+
 test(
   'producer binds original admitted risk and labels before initializing engine storage',
   async () => {
