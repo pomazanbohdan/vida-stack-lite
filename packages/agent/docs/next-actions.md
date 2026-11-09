@@ -12,12 +12,12 @@ This is the canonical Agent queue. The
 contains scope, acceptance and evidence for these same tasks, not another queue.
 Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-first-development.md).
 
-| Task                                                                                                                                            | Current state                                | Remaining outcome and dependency                                                                                                                                                                                                            |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open. |
-| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed              | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                    |
-| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.15 installed; native init blocked       | Correct the omitted raw clean-init helper resource exposed by the delivered temporary consumer. Requalify complete native init/configure after the scoped package correction; retain the failure.                                           |
-| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Temporary consumer exposed package defect    | Complete delivered consumer qualification, then use the supported bound-Host adoption owner for the approved model and plugin-to-codex map. Preserve existing data/docs/work and user-attributed Runtime acceptance.                        |
+| Task                                                                                                                                            | Current state                                   | Remaining outcome and dependency                                                                                                                                                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open    | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open.   |
+| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed                 | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                      |
+| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.16 installed; bounded native consumer PASS | Raw helper closure is corrected. Delivered full-model init, configure apply/resume and refusal contours pass; physical TTY and wider qualification remain open.                                                                               |
+| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Host-present adoption capability missing        | Extend the existing fenced configuration owner for the approved model and plugin-to-codex map; preserve current DB layout, project-owned outputs, old work/history and receipt provenance. Real init and user Runtime acceptance remain open. |
 
 Release, installer verification and Markdown reconciliation are completion steps
 of each task's cycle. They are not additional implementation tasks or a reason
@@ -42,11 +42,19 @@ types passed 586 files with zero errors. The work record is
 accepted. Root integrated the exact 20-path assembly on main as `d1cc2251` through
 normal hooks. The second normal push passed all 122 Windows cases; the first
 retained push failed one unchanged five-second process-custody test. Public
-0.1.15 formation, publication and installation passed, but delivered init failed
+0.1.15 formation, publication and installation passed, but its delivered init failed
 before creating integration files because `bin/consumer-clean-initialization-v2.ts`
 is missing from its raw helper payload. The temporary root retains only its
 precreated product directories. Root's private Source consumer pass does not
-replace this delivered failure. Real repository init remains unperformed.
+replace this delivered failure. The four-entry manifest correction reached main
+as `acb0b18b`; 0.1.16 native formation, recovered publication, external Linux install,
+all-nine readback and Windows update passed. A fresh installed consumer passed
+full-model init, disk reload/context, configure plan/apply/archived resume,
+tampered-plan refusal and valid incomplete no-TTY refusal. Nine native processes
+closed without timeout or truncated streams. The first wrapper's incorrect
+`input_required` expectation for a schema/version-absent model remains a retained
+oracle failure; a separate valid-partial-input follow-up passed without replaying
+init or apply. Real repository init remains unperformed.
 
 Both old Source claims are settled through installed `0.1.13`'s public capture
 owner. Task 4 was captured first. Task 5 then used fresh shared CAS after the
@@ -160,26 +168,36 @@ Approved document destinations are not active configuration.
 ## Current delivery state
 
 Published and installed current runtime is
-[v0.1.15](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.15),
-Source `d1cc225121a9c7d9dcbe9a1755f7788dce234c1a`.
-[CI42534601541](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42534601541)
-passed assurance and both producers. Its first publisher failure left a matching
-immutable tag and empty matching draft. Exact remote inspection preceded one
-failed-job recovery of the same run using the original artifacts; publication and
-external Linux install then passed. GET-only readback verified all nine assets.
-The maintained Windows update returned version 0.1.15, 161274368 bytes and SHA256
-`4aa7ef0b35f86476ef15b04b5fe95534ec2f8a1666600b015216e41b8f4f738d`,
+[v0.1.16](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.16),
+Source `acb0b18be5d1ef097d7f7fe20d9999632f7b23e2`.
+[CI42541158430](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42541158430)
+passed assurance and both original producers. Its first publisher failure left
+the matching immutable tag and empty matching draft. Exact remote inspection
+preceded one failed-job recovery of the same run using the original artifacts;
+publication and external Linux install then passed. GET-only readback verified
+all nine assets. The maintained Windows update returned version 0.1.16,
+161298944 bytes and SHA256
+`fd0579992475c02487a7004f700bafebdaffff19da4cfcdb38115b7ee6488729`,
 cleanup complete and effective PATH confirmed once. No Source override was used.
-Evidence belongs to `.agent/work/runtime-product-setup-cli-20261108-task5-r5/`.
-Installed version/help pass, but its actual full-model temporary init fails on an
-omitted raw helper import before creating config, receipt or AGENTS. Installation
-therefore does not establish complete Task 5 functional qualification. The package
-closure correction now has accepted Source/Code/independent tester and Source
-handoff in `.agent/work/runtime-native-init-resource-closure-20261109-r1/`: four
-existing raw C3 helpers added to the manifest, zero callable-body changes, 62
-modules with no missing raw-bin imports, two SDK cases/44 expect calls and scoped
-formatting. Root is integrating it for the next owner-selected PATCH. No actual repository init or
-attributable user Runtime acceptance exists.
+Evidence belongs to `.agent/work/runtime-native-init-resource-closure-20261109-r1/`.
+Its manifest-only correction adds four existing raw C3 helpers with zero callable
+changes; independent selector/closure, SDK compatibility, formatting, Code and
+tester evidence pass. The fresh delivered consumer's nine closed processes
+support full-model init/disk reload/context, configure plan/apply/archived resume
+and refusal behavior. The original 0.1.15 missing-helper failure and the later
+wrapper-oracle failure are retained; neither is relabeled as a successful run.
+
+Actual repository adoption remains unsupported. Its v1 cfg and pending receipt
+have matching repository/workspace/project/config/integration bindings, but
+AGENTS and sidecar output bytes have advanced, and the executing AGENTS template
+differs from the old receipt. Current configure refuses operational work/Host DB
+presence. Extend the existing configuration owner through real Host maintenance,
+typed versioned intent, exact before-images, CAS and UNKNOWN recovery; retain old
+receipt provenance, current project-owned outputs, provider metadata and old work
+IDs. The existing C3 native maintenance owner selects legacy DB paths from cfg;
+the unified-storage absence is not itself a missing maintenance implementation.
+No DB migration/reset or live cfg rewrite is authorized as a shortcut.
+No actual repository init or attributable user Runtime acceptance exists.
 
 The preceding v0.1.13 delivered the stopped-source and workspace-inspection
 corrections. R19's reviewed Source and queue reached
@@ -214,7 +232,8 @@ publication and installation recorded above.
 
 After complete all-nine 0.1.15 readback, the existing release owner selected
 0.1.16, operation `local-95cfdc94-ee1c-4504-81e3-0833697cce80`, at
-`awaiting_assurance`. This is preparation, not publication or installation.
+`awaiting_assurance`. That preparation is historically separate from the later
+0.1.16 public publication and installation recorded above.
 The release checkout's manifest is `0.1.16`; primary working manifest `0.1.9`
 remains preserved WIP. Local release journals, including the selected operation's
 `awaiting_assurance`, retain their own existing closeout owner. Public publication
