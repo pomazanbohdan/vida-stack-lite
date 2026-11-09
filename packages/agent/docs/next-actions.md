@@ -16,8 +16,8 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open. |
 | [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed              | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                    |
-| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Source/Code/focused PASS; Root integration   | Integrate exact 13-path delta plus four reviewed pure prerequisites and canonical docs through normal hooks. Resolve strict Knip hint through its owner, then deliver/install the owner-selected next PATCH and verify native parity.       |
-| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Waiting for delivered Task 5                 | Qualify the complete model through the delivered CLI in a temporary consumer, then perform approved real adoption and verify data/docs/work preservation. User Runtime acceptance remains separate.                                         |
+| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.15 installed; native init blocked       | Correct the omitted raw clean-init helper resource exposed by the delivered temporary consumer. Requalify complete native init/configure after the scoped package correction; retain the failure.                                           |
+| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Temporary consumer exposed package defect    | Complete delivered consumer qualification, then use the supported bound-Host adoption owner for the approved model and plugin-to-codex map. Preserve existing data/docs/work and user-attributed Runtime acceptance.                        |
 
 Release, installer verification and Markdown reconciliation are completion steps
 of each task's cycle. They are not additional implementation tasks or a reason
@@ -39,8 +39,14 @@ A distinct tester executed 49 cases/203 assertions, 23 legacy-adapter cases/94
 assertions and three help/resource cases/61 assertions, all passing; strict test
 types passed 586 files with zero errors. The work record is
 `.agent/work/runtime-product-setup-cli-20261108-task5-r5/`. Source handoff is
-accepted, but normal-hook integration, qualified Task 5 artifacts and real init
-remain open. Root's private Source consumer proof is not delivered-artifact proof.
+accepted. Root integrated the exact 20-path assembly on main as `d1cc2251` through
+normal hooks. The second normal push passed all 122 Windows cases; the first
+retained push failed one unchanged five-second process-custody test. Public
+0.1.15 formation, publication and installation passed, but delivered init failed
+before creating integration files because `bin/consumer-clean-initialization-v2.ts`
+is missing from its raw helper payload. The temporary root retains only its
+precreated product directories. Root's private Source consumer pass does not
+replace this delivered failure. Real repository init remains unperformed.
 
 Both old Source claims are settled through installed `0.1.13`'s public capture
 owner. Task 4 was captured first. Task 5 then used fresh shared CAS after the
@@ -143,8 +149,9 @@ unproved under unchanged policy. The historical composite timeout and 2 s target
 are not qualified by focused passes. Task 5's broad legacy campaign retained
 68 passes/29 failures, including stale expectations subsequently corrected,
 five-second init timeouts, Windows symlink EPERM, unowned clean-init direct-help
-and stale SDK receipt failures. Strict Knip has zero code issues but one redundant
-entry hint in unchanged `knip.config.ts`; its exit 1 remains a proper-owner gate.
+and stale SDK receipt failures. Direct primary Knip retains zero code issues and
+one redundant entry hint in unchanged `knip.config.ts`; the actual integrated
+target's normal staged hook passed strict Knip without changing that config.
 Physical PTY launch was denied before process creation, so scripted questions do
 not establish physical TTY/SIGINT behavior. No limits or checks were weakened.
 Qualify a complete delivered temporary consumer before real repository init.
@@ -153,16 +160,26 @@ Approved document destinations are not active configuration.
 ## Current delivery state
 
 Published and installed current runtime is
-[v0.1.14](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.14).
-It contains C3, R17/R18/R19 and Task 4. Corrected CI42483708460 and its external
-Linux install passed; the maintained Windows installer returned version 0.1.14,
-161263616 bytes and SHA256 `f9182144c1351f7a0c4c3df9a384add68e026ccc093d0ccfdc8b47f21a17a20a`,
-cleanup complete and effective PATH confirmed once. Six installed instruction
-lookups succeeded. Evidence is in
-`.agent/work/runtime-product-publication-inventory-20261108-r1/`.
-Task 5 is not delivered by these 0.1.14 artifacts. Its next PATCH must be selected
-by the existing release owner after complete current published-baseline readback.
-No actual repository init or attributable user Runtime acceptance exists.
+[v0.1.15](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.15),
+Source `d1cc225121a9c7d9dcbe9a1755f7788dce234c1a`.
+[CI42534601541](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42534601541)
+passed assurance and both producers. Its first publisher failure left a matching
+immutable tag and empty matching draft. Exact remote inspection preceded one
+failed-job recovery of the same run using the original artifacts; publication and
+external Linux install then passed. GET-only readback verified all nine assets.
+The maintained Windows update returned version 0.1.15, 161274368 bytes and SHA256
+`4aa7ef0b35f86476ef15b04b5fe95534ec2f8a1666600b015216e41b8f4f738d`,
+cleanup complete and effective PATH confirmed once. No Source override was used.
+Evidence belongs to `.agent/work/runtime-product-setup-cli-20261108-task5-r5/`.
+Installed version/help pass, but its actual full-model temporary init fails on an
+omitted raw helper import before creating config, receipt or AGENTS. Installation
+therefore does not establish complete Task 5 functional qualification. The package
+closure correction now has accepted Source/Code/independent tester and Source
+handoff in `.agent/work/runtime-native-init-resource-closure-20261109-r1/`: four
+existing raw C3 helpers added to the manifest, zero callable-body changes, 62
+modules with no missing raw-bin imports, two SDK cases/44 expect calls and scoped
+formatting. Root is integrating it for the next owner-selected PATCH. No actual repository init or
+attributable user Runtime acceptance exists.
 
 The preceding v0.1.13 delivered the stopped-source and workspace-inspection
 corrections. R19's reviewed Source and queue reached
@@ -192,9 +209,13 @@ The release owner verified the complete published `0.1.14` baseline and selected
 Task 5 candidate `0.1.15`, operation `local-a153c79d-39ee-4649-add5-3d4306357eca`,
 at `awaiting_assurance`. Its version-only manifest change and unchanged predecessor
 are recorded in `.agent/work/runtime-product-setup-cli-20261108-task5-r5/prepared-release.json`.
-This is preparation, not publication or installation of Task 5.
+That preparation remains historically distinct from the subsequent public
+publication and installation recorded above.
 
-The release checkout's manifest is `0.1.15`; primary working manifest `0.1.9`
+After complete all-nine 0.1.15 readback, the existing release owner selected
+0.1.16, operation `local-95cfdc94-ee1c-4504-81e3-0833697cce80`, at
+`awaiting_assurance`. This is preparation, not publication or installation.
+The release checkout's manifest is `0.1.16`; primary working manifest `0.1.9`
 remains preserved WIP. Local release journals, including the selected operation's
 `awaiting_assurance`, retain their own existing closeout owner. Public publication
 and installation do not rewrite those journals. Actual project init and user
@@ -265,3 +286,16 @@ roots retain their original bindings and recovery owners. Removing a duplicate
 or obsolete queue entry changes documentation only. It does not settle,
 supersede, delete or authorize replay of a persisted runtime operation.
 Attributable user testing remains required for Runtime acceptance.
+
+## Real repository adoption boundary
+
+Read-only inspection finds a pending initialization receipt alongside existing
+legacy Host/workflow databases and operational work state. `.vida` contains only
+the storage-admission gate, with no unified workspace database. Current configure
+refuses that Host/work state; init reconciliation requires an already equal model,
+and clean-init v2 derives its model from current config. A supported full-model
+adoption route for this Host-present v1 consumer is not implemented or qualified.
+Task 6 must resolve that configuration-owner boundary without resetting old data,
+rewriting work/history or enabling the unrelated existing-storage upgrade gate.
+The complete model and explicit plugin-to-codex conversion remain approved;
+prospective implementation still needs its exact contract, scope and authority.

@@ -20,7 +20,8 @@ solely for installation. Preserve original operation and failed/UNKNOWN history.
 The delivery sequence is: select the default next PATCH before final Source
 checks; publish the reviewed Source packet; run one `publish: true` Actions run
 for assurance, both native builds and publication; then download the public
-`install-windows.ps1` and run `-Action install` without a Source override. Reuse
+`install-windows.ps1` and run `-Action install` for a fresh command or `-Action update`
+for an existing installation, without a Source override. Reuse
 current checks and independent review, the installer's structured version/hash
 postchecks, and observe effective PATH once. Resolve the required installed
 instructions with the public `instructions --path NAME` command.
