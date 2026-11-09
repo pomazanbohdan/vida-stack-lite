@@ -16,8 +16,8 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open           | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open.                                   |
 | [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed                        | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                                                      |
-| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.17 installed; bounded native consumer PASS        | Raw helper closure is corrected. A fresh eight-process delivered consumer passes full-model init, configure apply/resume and refusals; physical TTY and wider qualification remain open.                                                                                      |
-| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | 0.1.18 installed; v3 plan transport correction pending | Strict v3 Source and two independent Code views pass; finish independent execution, normal main/PATCH delivery and a fresh delivered Host consumer before actual adoption. Preserve layout, outputs, metadata and history. Real init and user Runtime acceptance remain open. |
+| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.19 installed; bounded native consumer PASS | Raw helper closure and v3 plan transport are corrected. Fresh delivered init/configure/apply/resume/refusal proof passes; physical TTY and wider qualification remain open. |
+| [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | v0.1.19 Host consumer PASS; actual adoption blocked | Real apply refused before cfg/receipt/output changes on historical Host leases. Eighteen own leases are released; five terminal/corrective contours require their supported disposition. Preserve layout, outputs, metadata, history and FAIL/UNKNOWN. Real init and user Runtime acceptance remain open. |
 
 Release, installer verification and Markdown reconciliation are completion steps
 of each task's cycle. They are not additional implementation tasks or a reason
@@ -168,15 +168,15 @@ Approved document destinations are not active configuration.
 ## Current delivery state
 
 Published and installed current runtime is
-[v0.1.18](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.18),
-Source [2c71f6a4](https://github.com/pomazanbohdan/vida-stack-lite/commit/2c71f6a4e24ca524dc826849870bc73ab7eccbff).
-[CI42575839814](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42575839814)
+[v0.1.19](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.19),
+Source [54826939](https://github.com/pomazanbohdan/vida-stack-lite/commit/548269398f950b00a906946717cb789905d29446).
+[CI42584798739](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42584798739)
 passed assurance and both original native producers. Publication initially left
 the exact tag and empty matching draft; read-only reconciliation preceded one
 failed-job recovery with the same original artifacts. Publication and external
 Linux install then passed. Independent GET-only readback verified all nine
 assets; Windows update verified version/hash, cleanup and one effective PATH.
-Evidence: .agent/work/runtime-host-present-model-adoption-20261109-r4/.
+Evidence: `.agent/work/runtime-adoption-plan-envelope-20261109-r1/`.
 
 The strict Host-present v3 Source, two independent Code invocations and focused
 tester pass their bounded predicates. Disposable SDK apply/archive-resume
@@ -185,13 +185,26 @@ persisted-success ownership-disposal owner. Neither is native TestEvidence.
 The NEW delivered Host consumer passed legacy init, ordinary refusal and v3
 plan generation, but apply refused the emitted 34471B plan at the legacy32768B
 reader before effects. That fixture remains retained and is not retried.
-The two-file correction under .agent/work/runtime-adoption-plan-envelope-20261109-r1/
-uses the governed8MiB envelope for v3 while retaining setup/legacy32KiB caps.
-Its Code and current focused assertions pass; the original tester JUnit-retention
-FAIL and current combined-evidence clarification remain separate. Main/PATCH
-delivery and a NEW delivered Host apply/refusal/resume/init-reconcile bracket
-precede separately fresh consent/CAS/currentness/native quiescence-gated actual
-repository adoption/init. No actual init or attributable Runtime acceptance exists.
+The two-file correction uses the governed 8 MiB envelope for v3 while retaining
+setup/legacy 32 KiB caps. Normal main hooks and all 122 Windows push cases passed;
+native delivery, all-nine readback and Windows installation passed. A NEW delivered
+0.1.19 Host consumer closed all eight native processes successfully: legacy init,
+ordinary refusal, v3 planning, tamper refusal, full-model apply, archived resume
+and public init reconciliation. The original tester JUnit-retention FAIL and
+current combined-evidence clarification remain separate.
+
+Actual repository plan `config-c4ffa9f2ed3d4a844c4d77ecc210c5498d0e1e080bdbd4fe6f466f273da5564f`
+was emitted by installed 0.1.19. Apply refused on `active work lease blocks
+maintenance`; the config, initialization receipt, AGENTS, sidecar and documentation
+policy remain byte-exact. The initial ownership check covered only three recent
+workflows; a complete Host inspection exposed twenty older own leases. Existing
+owners then released eight completed Source workflows and seven entirely unissued
+preparations, preserving journals and lifecycle phases. Together with the first
+three releases, eighteen leases are disposed. Two old synthesis issues and three
+Source/corrective contours remain fenced. Their exact terminal/corrective release
+route is the current critical path; lease expiry alone proves no completion.
+No actual init or attributable Runtime acceptance exists. Do not replay the failed
+apply; reconcile the exact operation and fresh CAS after supported disposition.
 Preserve all original failure/UNKNOWN, local release closeout and numeric, timing,
 fault/recovery, physical-TTY, full-suite and native evidence debt.
 
@@ -232,7 +245,7 @@ After complete all-nine 0.1.15 readback, the existing release owner selected
 0.1.16 public publication and installation recorded above.
 The release owner subsequently selected 0.1.17 as
 `local-138f7a94-79ad-4286-819e-ea681f978b25`; its public delivery is verified above.
-The release checkout's manifest is `0.1.17`; primary working manifest `0.1.9`
+The release checkout's manifest is `0.1.19`; primary working manifest `0.1.9`
 remains preserved WIP. Local release journals, including the selected operation's
 `awaiting_assurance`, retain their own existing closeout owner. Public publication
 and installation do not rewrite those journals. Actual project init and user

@@ -113,15 +113,15 @@ Runtime-first correction2026-11-04: C1 was executed outside runtime. The old Tas
 
 **Consumes:** Tasks 1–3. Integrate the model into the existing loader and one context resolver, retaining old-read support and exact-input binding. New strict schema fields are shipped together with the validated repair/adoption owner; do not claim fields already valid in the old published contract. Prefer a versioned target contract when it avoids changing old artifact meaning; the concrete schema dispatch must be written into this task's brief before implementation, based on actual codec ownership.
 
-- [ ] Before writer dispatch, Root resolves schema-version transition and exact adapter signatures from Task 1–3 results; no active-artifact mutation while undecided.
-- [ ] RED: old config remains readable; new explicit model resolves docs independent of code, overlapping roots return all owners, cwd does not alter resolution.
-- [ ] RED: identity conversion to codex preserves provider references and refuses ambiguous ownership; active APIs/help/templates use codex; retained journals unchanged.
-- [ ] Implement using existing prepare/validate/layout/configuration owners; no second resolver or silent defaults of missing prefixes/hierarchy.
-- [ ] GREEN: focused existing/new tests, schema/resource parity, typecheck/static gates and independent review, including the user's required additional Devin review of Luna work.
+- [x] Resolve public serializable v1/v2 schema dispatch and adapter signatures before admitted Source implementation; preserve v1 artifact meaning.
+- [x] Bounded config/context proof covers old reads, explicit document paths, overlapping owners and cwd independence.
+- [x] Explicit local identity mapping preserves provider fields and refuses ambiguous attribution; old journals remain unchanged.
+- [x] Implement through existing configuration, init and path-resolution owners without a second resolver or silent required-field defaults.
+- [x] Bounded Code and 22-case/122-assertion independent proof pass; user-authorized Luna replaces unavailable Devin. Numeric, full-suite and wider recovery qualification remain open.
 
 ## Task 5 — interactive init/config/help and package parity
 
-**Status:** bounded Source/Code/tester and Source handoff accepted; current runtime 0.1.17 is published and installed. The four-entry manifest correction closes the raw clean-init helper omission. A fresh eight-process delivered consumer passes full-model init/disk reload/context, configure plan/apply/archived resume and refusal contours. Physical TTY and broader qualification remain open. The approved prefixes remain VIDA, AGENT, CODEX and POWERS.
+**Status:** bounded Source/Code/tester and Source handoff accepted; current runtime 0.1.19 is published and installed. Raw helper closure and v3 plan transport are corrected. Fresh delivered consumers pass full-model init/disk reload/context, configure plan/apply/archived resume and refusal contours. Physical TTY and broader qualification remain open. The approved prefixes remain VIDA, AGENT, CODEX and POWERS.
 
 The user explicitly approved every value of the [full setup model](../decisions/configuration/project-config.proposed.yaml) on 2026-11-08, including all document/requirements/store destinations. No path-approval gap remains. Source now has bounded JSON/YAML setup input, missing-value terminal completion, full model/map/reconcile forwarding, strict v1/v2 configure adaptation and help/resource registration. Both Code views passed; a distinct tester executed 49 cases/203 assertions, 23 legacy-adapter cases/94 assertions and three help/resource cases/61 assertions, plus strict test types (586 files, zero errors). Evidence belongs to `.agent/work/runtime-product-setup-cli-20261108-task5-r5/`, fingerprint `6c1499eee333c78e9c4dd5d670a67667b785add95c26f7a69f75b63caad187cd`.
 
@@ -140,9 +140,11 @@ The writer delta is 13 paths. Root's 17-path integration assembly also tracks fo
 
 ## Task 6 — temporary end-to-end acceptance and delivery
 
-**Status:** v3 adoption is published and installed in0.1.18; its new delivered Host consumer exposed an apply transport refusal before effects (34471B plan versus32768B reader). The two-file version-aware correction has bounded Code/focused proof and requires its nextPATCH delivery plus a NEW delivered Host apply/refusal/resume/init-reconcile consumer. Prior17pre-Host consumer proof and18SDK apply/resume remain distinct. Actual repository adoption waits supported exact old-owner disposal and fresh consent/currentness/CAS/native quiescence; no DB/history reset or old-work rights. Numeric, timing, fault/full-suite/native and user Runtime evidence remain open.
+**Status:** the v3 reader correction is integrated on main as `54826939`, published and installed in 0.1.19. A NEW eight-process delivered Host consumer passes v3 planning/apply, refusals, archived resume, preserved outputs and public init reconciliation. Actual repository apply stopped before cfg/receipt/output effects on historical leases. Eighteen own leases are disposed through existing owners; two synthesis issues and three Source/corrective contours remain fenced. Their supported disposition precedes fresh consent/currentness/CAS/native quiescence and actual adoption/init. No DB/history reset or old-work rights are granted. Numeric, timing, fault/full-suite/native TestEvidence and user Runtime evidence remain open.
 
 - [ ] Build a qualified candidate in an isolated temp consumer; use actual CLI init/config to cover every approved field and work operation, invalid inputs, interrupted clean-init recovery and help examples. Record actual receipts/exit/hash/config bindings.
+- [x] Deliver the bounded v3 plan reader through normal main hooks, Linux/Windows formation, recovered publication, all-nine hash readback and maintained Windows installation at 0.1.19.
+- [x] Qualify a NEW delivered Host-present model/apply/refusal/archived-resume/init-reconcile bracket on installed 0.1.19. Wider recovery and work-operation matrices remain separate.
 - [ ] Apply required whole-change review and test/static/resource gates with user-authorized independent Luna reviews replacing unavailable Devin. Root selects the PATCH, commits/pushes with hooks, uses the single Linux/Windows workflow and verifies public installers and exact installed version/bytes/hash/PATH/resources/commands. Reuse current matching evidence, preserve unrelated Powers commits, and never fabricate completion or replay UNKNOWN.
 - [ ] Bind a normal installed-runtime work session to actual invocation, admission, issue, report, Source and lease/CAS observations. This technical evidence remains separate from user Runtime acceptance.
 - [ ] After fresh delivered Host-present qualification, use the supported exact old-owner disposal and native-maintenance configure v3 adoption route with the approved model/map and fresh consent/CAS/currentness; verify actual repository bindings, preserved outputs and old work/history. Do not substitute clean-init, reset or a DB migration.
@@ -152,9 +154,10 @@ The writer delta is 13 paths. Root's 17-path integration assembly also tracks fo
 The delivered18 Host-present consumer exposed a transport defect before apply:
 its valid34471B plan exceeds readPlan32768B. The two-file version-aware correction
 retains legacy/setup32KiB and uses the governed8MiB v3 envelope. Original fixture
-refusal and tester retention FAIL remain. Deliver the correction and qualify a
-NEW Host consumer before real repository adoption; no direct effect or cache route.
+refusal and tester retention FAIL remain. The correction and NEW Host consumer
+now pass on 0.1.19. The real apply refusal is retained; supported historical-owner
+disposition and exact operation reconciliation precede any new effect.
 
 ## Preflight boundaries
 
-The installed 0.1.18 closes the raw helper and canonical producer-risk prerequisites and passes the bounded native full-model init/configure/refusal/resume bracket in a fresh temporary consumer. V1 remains strict and the catalog retains seven canonical kinds. The approved model is not active repository configuration; Host-present pending-receipt adoption is implemented in the Source candidate; its delivery and fresh delivered Host qualification remain pending. Root owns its supported configuration/maintenance extension, safe old-owner disposal, wider temporary qualification and real adoption. User-authorized independent Luna roles replace unavailable Devin; prior FAIL/UNKNOWN and unmeasured qualification remain. Keep the [canonical delivery state](../next-actions.md#current-delivery-state) current.
+The installed 0.1.19 closes the raw helper, canonical producer-risk and v3 plan-reader prerequisites and passes a fresh delivered Host adoption/configure/refusal/resume/init-reconcile bracket. V1 remains strict and the catalog retains seven canonical kinds. The approved model is not active repository configuration: actual apply refused before cfg/receipt/output changes on historical ownership. Root owns exact supported old-owner disposition, fresh operation/CAS/native-maintenance checks and real adoption. User-authorized independent Luna roles replace unavailable Devin; prior FAIL/UNKNOWN and unmeasured qualification remain. Keep the [canonical delivery state](../next-actions.md#current-delivery-state) current.
