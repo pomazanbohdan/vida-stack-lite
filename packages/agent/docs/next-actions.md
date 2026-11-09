@@ -16,7 +16,7 @@ Follow the [one-task runtime-first delivery cycle](decisions/work-items/runtime-
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)                                  | v0.1.13 installed; local owner closeout open    | Persist actual terminal and published-artifact evidence through the existing release owner. C3 and R17/R18/R19 corrections are published and installed; both old Source claims were captured. Real init and Runtime acceptance remain open.   |
 | [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity)          | v0.1.14 published and installed                 | Delivery prerequisite for Task 5 is met. Preserve seven LibSQL cleanup failures and numeric/broader recovery qualification debt; installation is not Runtime acceptance.                                                                      |
-| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.16 installed; bounded native consumer PASS | Raw helper closure is corrected. Delivered full-model init, configure apply/resume and refusal contours pass; physical TTY and wider qualification remain open.                                                                               |
+| [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | v0.1.17 installed; bounded native consumer PASS | Raw helper closure is corrected. A fresh eight-process delivered consumer passes full-model init, configure apply/resume and refusals; physical TTY and wider qualification remain open. |
 | [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Host-present adoption capability missing        | Extend the existing fenced configuration owner for the approved model and plugin-to-codex map; preserve current DB layout, project-owned outputs, old work/history and receipt provenance. Real init and user Runtime acceptance remain open. |
 
 Release, installer verification and Markdown reconciliation are completion steps
@@ -168,24 +168,30 @@ Approved document destinations are not active configuration.
 ## Current delivery state
 
 Published and installed current runtime is
-[v0.1.16](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.16),
-Source `acb0b18be5d1ef097d7f7fe20d9999632f7b23e2`.
-[CI42541158430](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42541158430)
-passed assurance and both original producers. Its first publisher failure left
-the matching immutable tag and empty matching draft. Exact remote inspection
-preceded one failed-job recovery of the same run using the original artifacts;
-publication and external Linux install then passed. GET-only readback verified
-all nine assets. The maintained Windows update returned version 0.1.16,
-161298944 bytes and SHA256
-`fd0579992475c02487a7004f700bafebdaffff19da4cfcdb38115b7ee6488729`,
-cleanup complete and effective PATH confirmed once. No Source override was used.
-Evidence belongs to `.agent/work/runtime-native-init-resource-closure-20261109-r1/`.
-Its manifest-only correction adds four existing raw C3 helpers with zero callable
-changes; independent selector/closure, SDK compatibility, formatting, Code and
-tester evidence pass. The fresh delivered consumer's nine closed processes
-support full-model init/disk reload/context, configure plan/apply/archived resume
-and refusal behavior. The original 0.1.15 missing-helper failure and the later
-wrapper-oracle failure are retained; neither is relabeled as a successful run.
+[v0.1.17](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.17),
+Source [85c0d3e1](https://github.com/pomazanbohdan/vida-stack-lite/commit/85c0d3e157722908565ab52108a89b8c9d0c9fad).
+[CI42558350324](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42558350324)
+passed assurance and both original native producers. The initial publication
+failure left the exact tag and an empty matching draft. Read-only reconciliation
+preceded one failed-job recovery using the same original artifacts; publication
+and external Linux install then passed. GET-only readback verified all nine assets.
+The maintained Windows update returned 0.1.17 with cleanup complete and one
+effective PATH executable. Its structured receipt owns the exact binary binding.
+No Source override was used. Evidence belongs to
+`.agent/work/runtime-producer-risk-binding-20261109-r1/`.
+
+The correction makes the ordinary producer reader derive lifecycle risk from
+validated Host Work while preserving raw flags, no-Work fallback and historical
+branches. Semantic RED and final focused/Host/workflow controls total 191 passing
+cases and 1067 expect calls. Code views and the corrected retained-evidence tester
+pass; the original missing-JUnit tester FAIL remains retained. Normal hooks and
+the 122-case Windows push profile pass. A fresh delivered consumer closes eight
+native processes across full-model init/disk reload/context, configure plan/apply/
+archived resume, tampered-plan refusal and valid incomplete no-TTY refusal.
+Numeric, CRAP, manual, full-suite and native TestEvidence remain separate gaps.
+The completed corrective work has no pending actions, but its execution-only lease
+is expired; supported owner disposal remains an operational closeout, not permission
+to edit its Work, Journal or history privately.
 
 Actual repository adoption remains unsupported. Its v1 cfg and pending receipt
 have matching repository/workspace/project/config/integration bindings, but
@@ -234,7 +240,9 @@ After complete all-nine 0.1.15 readback, the existing release owner selected
 0.1.16, operation `local-95cfdc94-ee1c-4504-81e3-0833697cce80`, at
 `awaiting_assurance`. That preparation is historically separate from the later
 0.1.16 public publication and installation recorded above.
-The release checkout's manifest is `0.1.16`; primary working manifest `0.1.9`
+The release owner subsequently selected 0.1.17 as
+`local-138f7a94-79ad-4286-819e-ea681f978b25`; its public delivery is verified above.
+The release checkout's manifest is `0.1.17`; primary working manifest `0.1.9`
 remains preserved WIP. Local release journals, including the selected operation's
 `awaiting_assurance`, retain their own existing closeout owner. Public publication
 and installation do not rewrite those journals. Actual project init and user

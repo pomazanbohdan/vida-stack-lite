@@ -620,6 +620,17 @@ its inspected public surfaces; local handles and test capabilities do not supply
 native caller proof. Authenticated UNKNOWN recovery remains an integration GAP, separate
 from the system-update allocator and current human-authorized Source work.
 
+Verified 2026-11-09: [Mastra snapshots](https://mastra.ai/docs/workflows/snapshots)
+retain serialized workflow state, while [suspend/resume](https://mastra.ai/docs/workflows/suspend-and-resume)
+restores a suspended step. VIDA still owns canonical Host risk and exact frontier
+validation. Its ordinary producer reader now derives risk from validated Host Work;
+raw flags and historical continuation readers remain unchanged. Shared begin/settle
+callers use that owner. The causal regression and controls pass 191 cases/1067
+expect calls. Main 85c0d3e1 and installed 0.1.17 carry the correction; a fresh
+eight-process delivered consumer passes. These results do not qualify every other
+snapshot caller, real Host-present adoption or user Runtime acceptance. Work and
+bounded contour evidence: `.agent/work/runtime-producer-risk-binding-20261109-r1/`.
+
 ## Historical terminal synthesis custody
 
 Owner: Agent/Core. Work: `core-cloud-continuation-20261002`.
