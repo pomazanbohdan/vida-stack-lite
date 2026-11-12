@@ -1,0 +1,343 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/winui.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "e676dc1c13ee6c205c40b0746f1335150a346c7a49a0616d2545bc3d2c930c85"
+  },
+  "batch": "NF-07",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 45,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-winui-use-x-load-for-deferred-loading",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ee82a466bfa279817289f1841c404acbed4c574f466cb555f1716f528173d571",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L3 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-x-phase-for-incremental-rendering",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8286edbfe4c68f55ee62f5faca32e7326ece3b7f947e993c3de64c1a3daa1ac6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L4 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-navigationview-for-app-navigation",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1feaaf79a147ba6bf18cfb490520bd5464415da780b33a040dcc358e2567d155",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L6 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-infobar-for-status-messages",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0bd9340ed19136813d51095d33cb4cb1671ee9496e5300918d19c48a1e15bce7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L7 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-teachingtip-for-onboarding",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c255d792457c047de58b32d6fb0fe8854a55cd2ee1361b1b11cc517df692b0e0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L8 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-breadcrumbbar-for-hierarchy",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=50f74ad756d266b5334d75f04b8075465ea8d2864c0cd3325fbab5fde42bb07b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L10 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-fluent-design-system",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=23f511e73a8bbdf79bf936042535f966c0ca2f2d8ab2c49ec6b63b88c03778ae",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L14 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-pass-typed-navigation-parameters",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=353d747f26222e6b8eb07f3f3b08ca4f3204c8130fa71f0f014b121282c5922b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L16 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-handle-back-navigation",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=989e39ecef19a5010b5fe2cf41fa4ec0999a2cb3d88367ffb8ba54b3fffddcd1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L17 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-inotifypropertychanged",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dc1b6ca290d53ae9100b16a184204447edc1375ea02d4b239e09d5926473a05a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L20 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-function-binding-with-x-bind",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2d28fe42b8f7db4f8ce1c146cf33ab7c80b013dc9eaf86d585ce2cf83e53326c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L21 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-specify-mode-explicitly-on-x-bind",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b643e103eeac28ee0a3632b86618016f7c6c21f2cb5f46a2decd29ed3fced15",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L22 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-itemsrepeater-for-custom-lists",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3854b7547085291f1c8d4dcca5e0a9b599fb56273ccb599ee2c89b7978ada030",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L23 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-incremental-loading",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d4ad84694717d8e161fe4539ff5d6a668950f67dee9951e8dd2064782b0cd2b7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L24 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-reduce-visual-tree-complexity",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6169274b013beb81a76fbb4790596c69e690d2f8223932745b720b5508d1cd5f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L25 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-compiled-bindings-over-reflection",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2505461a72052f2617676bbc45342f56cdbdf501d78c3ae5d4176d5835b20950",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L26 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-dispatcherqueue-not-dispatcher",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=927aed1d799f23545adb1707f86c93b7e727723f6930ec07fff9e1b01c457e3e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L27 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-async-await-for-io-operations",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3125dc9835b75ec6f4d3a5e40019d0299980bc5b92a7f337af3341a9a50c5ae9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L28 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-winappsdk-correctly",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2de0777ab937ceaa885e1bf53a46ecd2009f413e3432f90b422c5166dc89d863",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L30 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-unpackaged-or-packaged-appropriately",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7957d55536082bf3a6d3e702a10a0b3bf22a49a01fba02a511d9cbb1805b6277",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L31 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-single-project-msix",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dcf1015c2b9a5190710fe028cff994a1d986de3701a3b5346b34412bf9b534de",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L32 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-proper-heading-levels",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c9732259d425cc7ae72ee94acca0ba1b051dc1adc6445f564426af397c1fcc6d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L35 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-support-high-contrast",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=389844c8d3314658ee8d6777420abad18aafa5530d3bb71e73eee7f3bd268c58",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L36 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-test-with-accessibility-insights",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aafd769e7f381751165f4531288803dd1f387270924bed0083f9d6d0fe3ab278",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L37 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-mvvm-with-communitytoolkit",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=31dc156847871e4a52d67aca8bbb323c26623ca108c528d671b604c87a91255d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L38 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-template-studio-patterns",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4788679ca0324af696123d901e44c7a1af4798d544302b7ef1bd7cb813d6a2a9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L40 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-separate-platform-from-business-logic",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f746ed4455a347a296220475f561ad11a75390a1d5101e94e925ab4e9a8cd92d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L41 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-winui-3-window-management",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f6bd87fbf508d508393779e3a4c7ff5f1578bd3197e421f4fdb31b4fb8d5e6e0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L42 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-winappdriver-for-ui-tests",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=52c7a0351af3186636dc3bc99fa988913e97615b921da0ec176e8b9d02680f30",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L44 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-mock-winrt-apis-in-tests",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=76620762c0652c80bc50bc36957f4657153b53d647c8b59a316439b6025f5704",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L45 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-numberbox-for-numeric-input",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a58c27c2862faed7936f4655cbc9af75a710a8c53eb4b1094623265fe28c98a5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L46 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-expander-for-collapsible-sections",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6710add5012e0244c0a00b89da102d4e1982ef009b8f8fe80df649eb1c65d92f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L47 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-progressring-and-progressbar-for-loading",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6b610b47c3a8fd0f5c5bd203d49c61eca7673aafe8c5a25d0c8312cffbc9b5fd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L48 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-visualstatemanager-for-responsive-layouts",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1c4abedc36577a12040c1a7e02651aef94d2fed5777dda481086f0d77f499e18",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L49 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-handle-app-activation-and-launch",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=44f768b780c9f296286f4db3bdf86a7b3eedbb2687866d8be09a3ab75afec437",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L50 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-single-instancing-with-appinstance",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ec719092702beacb3d997f22aa2a7f6230c795678aae99f345bb5b55298cb26a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L51 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-save-and-restore-app-state",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3b236a5c9ee6fb5eaab64a29713a5f2abf4422a2a9976f4c7d17e08f14aeea28",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L52 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-choose-mica-vs-acrylic-by-surface-lifetime",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0be30e497be805656101f3e328c61e9bb3521c940762c1844e80741b0197c5b0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L53 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-set-systembackdrop-on-window-directly",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5e7d7dc392d8251b4f3fc9d6e86e16a039d591b5aac8013c175ef349df0c9d7e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L54 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-open-secondary-windows-with-new-window",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fe32206cc5f291b3f4e3025e9556b992e4a2931b40d81b0f7b687bd8cc98bce1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L55 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-extend-client-area-into-the-title-bar",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b9f929a9e1a14c14527494051f31e395de1b221122f72b965732c0773b481354",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L56 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-keyboardaccelerator-for-shortcuts",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fb64b3cb5a81a1973c6a0e5a8308c98015a38413fef2a06470e927379d28b4f6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L57 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-organize-resources-with-merged-dictionaries",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=afe20fb65f039ef67a927eebbcbf4e85fdd42ccf32f58c7749c532decac2ffcb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L58 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-asyncrelaycommand-for-async-commands",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=22bc2d325dff76fe685443d95e9bde74a491b4cbe0633c1e847e2bf475a2c86d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L59 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-winui-use-ilogger-for-structured-logging",
+      "sourceRowOrdinal": 59,
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aa6698a566d75bd85c382373b5b5bb15f6c2e040ef034378ea6c6824a69d3c31",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/winui.csv L60 per winui.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

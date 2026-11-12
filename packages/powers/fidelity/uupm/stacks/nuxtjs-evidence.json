@@ -1,0 +1,469 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nuxtjs.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "3d9b54ed2d151bd9c86e9e5609b8a6f88a00c4c52fa601a30af96c49b2c4d176"
+  },
+  "batch": "NF-04",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 63,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-nuxtjs-use-dynamic-route-parameters",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e73420b39cada8d65b294fdd3e2d81b42c8602ffe1f3ae1cec09e2259e7e6bda",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L3 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-catch-all-routes",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=589ab64c3783202503dd2b3c11010d41464cdf24922ac14ead9ad0677c547ab9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L4 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-define-page-metadata-with-definepagemeta",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=18902c14f01d62b4c13219c13f0a467491a0dbc9b27e8efaade282eebd6642b0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L5 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-validate-for-route-params",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e7a4a3d05aa5bb6a800e8a396d81a8f8306da9b89e34d4f4138993e020c8536c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L6 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-ssr-by-default",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a150d7908d84a7c5f5e09e103a12d3b68068de38d297b38f26daebdaf8c16b3b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L7 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-client-suffix-for-client-only-components",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b9655442ad166c709810f6f71e8b13033034bd8ff24228c7d0e6efe329f64739",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L8 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-server-suffix-for-server-only-components",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cc34e44a0731be08d87c1b9e23532df2c1656530b9f474e201699fed33a5530b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L9 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-usefetch-for-simple-data-fetching",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=72ff86111defa9145017e5765b3c5ce33d0396cb186aec67c35978ecbb544b41",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L10 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-useasyncdata-for-complex-fetching",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=844cb5076ff293b2375ae19d43ef8a37ececdc5bcb45e94fe31ca681167d3124",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L11 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-fetch-for-non-reactive-requests",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7c6bf445623750f4c2ee78fcf769e35f21c323e8370471b127ae0cef2dc7c006",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L12 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-lazy-option-for-non-blocking-fetch",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b0d7f667d74357b270276429350174c8189e015cd11832f22890480187fb6cf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L13 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-server-option-intentionally",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d7f684ded9eb877410b9b42d4a47892dccec9a438bf45ebae3e66469665b1dc8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L14 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-pick-to-reduce-payload-size",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=85948c90526a3aada97569371cd1121ba08d1c14c02bb0de00ef769609a85889",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L15 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-transform-for-data-manipulation",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3a797334c86a86529c0bf03ee4620159f40fc7be9fec3d112b16eeee85c179b7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L16 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-avoid-side-effects-in-script-setup-root",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9b4d77706d77089e42fb24f26bc1047f533014bfd9269d40718d5ca4a87f8cb6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L18 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-nexttick-for-post-render-access",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=39482acf32b615aa731487e7935967af6976a905cc9633d588f6a1d3835eac6e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L20 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-onprehydrate-for-pre-hydration-logic",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=78a9fe063feeeadccedf82ecbe92dddbf0d8b19312a711762d37684f4b42ac86",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L21 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-server-api-for-api-routes",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af44ced4c690c15f4c0a642435b31a40e95dd91a109a13bff286901c60427249",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L22 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-defineeventhandler-for-handlers",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=379096fa50d504e2f5f06281968c1db8c637cadce6987590c9b787b05e596131",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L23 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-server-routes-for-non-api-routes",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d7df1a951635ab8ce8540a9e3119eadabb78fe98b26a11c32f77c62e3d5c3b9a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L24 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-getquery-and-readbody-for-input",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=424a68ad56d69519ac15f769a653ddc4bef55a986453077f85fd16aa8471d203",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L25 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-validate-server-input",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b6d9122cded469216d4a60b1291c153522a1a68040ee936a8c817e6ea8c6915b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L26 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-usestate-for-serializable-shared-state",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f035a5f82815a005715bd7f1fbf56ff3e31abe19915df23f499089d6729897fd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L27 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-unique-keys-for-usestate",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c50b9b698cb45aa18b5f5256be6502a43f1c47a36552dc88655e0c589123febe",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L28 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-pinia-for-complex-state",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7f47895521c2f1f0f83a4c6a675a07903e36be1db1ad2371245dc99ef04d50b0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L29 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-callonce-for-one-time-async-operations",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=940ad8142a8adb8c93289cc6f55dff41b58c8fd083929f2dd320a9f41f40bb38",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L30 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-useseometa-for-seo-tags",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6233a8128501ee8eca03e982e727e6b325eac776d151ffd451ea5b43e12cd092",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L31 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-reactive-values-in-useseometa",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cfb419d567ddc0bd014890c8ea58265200c01ad6b080f6597727b462bde4679b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L32 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-usehead-for-non-meta-head-elements",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=86efd01fef27d1d70a98666015a472668bb0e6bf58af312587cfad14520fc776",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L33 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-include-opengraph-tags",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5eeac3671c54f7371772adf0210f45831c2d1c07009a98bfde61ba6aa56c7aae",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L34 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-definenuxtroutemiddleware",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=88d085c3f419e6c99889be1d3c3b99fa9ea5e33a63b0feb78d663f2d4587040e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L35 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-navigateto-for-redirects",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=91fd3cd3825963657d3c9da528b6db0b0377fa5b6ecd8d1b2ce3a6341373c336",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L36 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-reference-middleware-in-definepagemeta",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0a58866bdb83b9cae9bf3ce9aaea38a06a2feb698fef985d2124c6aba94b0ced",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L37 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-createerror-for-errors",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f0642b04aa51024baf4a4a05abf0597d404320846960af13442abf1e6e8ae932",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L39 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-nuxterrorboundary-for-local-errors",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=011ed35b93fafada67c93394a8a69ec02eadd7d25dd2cf0b0eb278a7c33ea5a3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L40 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-clearerror-to-recover-from-errors",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a6c0f96bbe9a9fd8aabbe179c399a39d945ec8592e8087091dc3cdd4215ee125",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L41 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-short-statusmessage",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a3589d7ef8921656e8848fc09ffb9b32c0f1b7f94022e5b504b75244238ab597",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L42 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-nuxtlink-for-internal-navigation",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2232bec5d7af20656db736039cc57dcfefaebdcc701f38c76fc7c7b1750bf95a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L43 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-configure-prefetch-behavior",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f22acef45ccc19e5c2c7aa3c2b88697073c859b60c3ef37c56775d83a451bc44",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L44 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-userouter-for-programmatic-navigation",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8410009e618bfbf358616ed2a7d2d5b6ebaa0a796c41a2c2a4feea692327ea72",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L45 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-navigateto-in-composables",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cba0b28ecadd665b349241d46415d94d4a963d1ae6e3e02379f3a5e1a74acfb1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L46 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-nuxt-auto-imports-intentionally",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4ed0fb0eec01ec6e27d19be11abd633fee9fd3f192ef4cd817ec9f1414bd15d1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L47 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-imports-for-explicit-nuxt-imports",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=34f05c9f78ff565d1213b299a1870e5dfda4dd08750bb646f73c59187a9a7226",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L48 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-configure-third-party-auto-imports",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ddf432b214cad54d36c8cd580a28aa586444c8ec3f8aa7b4d589dc65de8c388a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L49 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-definenuxtplugin",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5241bafe427068a73939bafbf62ee5fbc1cbcbe094d1d6445077313f34241977",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L50 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-provide-for-injection",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1ce85408f77e813ac6ae5575ef677b815f0260aaf92e41532b6e7e0209b1fb08",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L51 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-client-or-server-suffix",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bf27354604501de350b2bbbfa4e5d4f1c78f7ab4f70e47cc87de1b2410f6c1ad",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L52 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-runtimeconfig-for-env-vars",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a2668d03ba020945010eb1e1554dc479d35edcd2e9b33b73ab7dec5b7b46132b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L53 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-declare-keys-before-nuxt-overrides",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8dc37ca63320aa958d74579a2b86ab160931eae970da859b890a0a1b1728e1cb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L54 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-access-public-config-with-useruntimeconfig",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=36e28c928dab81af750300510c080318d69c093df7ea2f6506241e0a07825824",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L55 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-keep-secrets-in-private-config",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d2c4fe1bde7d0be539df94460fdcea4e1969b7e13050fe3958e56a136440487b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L56 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-lazy-prefix-for-code-splitting",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c04fe238c135c5d49a99d9528ce91212429bb95abd3857ad566dd6cd5524a255",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L57 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-uselazyfetch-for-non-blocking-data",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6368dcb947928bf416dc9d3c74ef2bc9a8625a37216834b98976896cb2ac7ae9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L58 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-lazy-hydration-for-interactivity",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=982a072bcef21840ee40e608db240accf62b1b18b87b126d6fd28fe3da0044db",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L59 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-enabled-for-conditional-async-data",
+      "sourceRowOrdinal": 59,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aafca69650ac49f2471f9f338925b3d0ce84a4d20218c94b2238e0531b4c5372",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L60 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-keep-async-data-handlers-pure",
+      "sourceRowOrdinal": 60,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1fdbabb741fc5b943469897bec8f9abbbf6fdd9943c068be2de3c3ddb18a8b49",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L61 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-respect-ssr-request-boundaries",
+      "sourceRowOrdinal": 61,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=70ab61ca3e9deea8588f2c36201c6beadfa26b6b2c6d7d3c44ad353621ff4af5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L62 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-usecookie-for-ssr-safe-cookies",
+      "sourceRowOrdinal": 62,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e0746ba771ef77e81383aeaaf9586a9059221cc3f5c716a034d4fc17df2a6825",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L63 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-use-routerules-for-per-route-rendering",
+      "sourceRowOrdinal": 63,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0f9be81a01f42580a2b3f9cb27a3d22207dd5cf90517426c1e72ca2e4f615ba6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L64 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-separate-app-config-from-runtime-config",
+      "sourceRowOrdinal": 64,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9317e8f889eca262446f21ff115edb677970a993093bc5b87984de41c5431946",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L65 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-refresh-externally-changed-cookies",
+      "sourceRowOrdinal": 65,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=534c27659b7aa19d2db881dfafcad2c5660c2c93395f0f3bbc0ecdec55cb1409",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L66 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-replace-shallow-watched-cookie-values",
+      "sourceRowOrdinal": 66,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58104bf751e84dbed8243d53c52b1203a2c99d36ff925a9596a1d599e91ffc7d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L67 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nuxtjs-migrate-nuxt-3-before-adding-nuxt-4-features",
+      "sourceRowOrdinal": 67,
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=67e13de887948be6e33578a46889c9df389ef711eb364ec761c0693b9e7b54c4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nuxtjs.csv L68 per nuxtjs.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    }
+  ]
+}

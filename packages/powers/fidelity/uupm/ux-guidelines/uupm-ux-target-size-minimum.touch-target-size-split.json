@@ -1,0 +1,70 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-ux-target-size-minimum",
+  "variantId": "uupm-ux-target-size-minimum",
+  "variantBodySha256": "6730ef53931fb5652eb7f0d214547c7fb8bca40e1d8532e0f125f05438a8deb2",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=4f36c8f672a2376a3080c4018ff08c9324e50f8ac3c2a040120c1bc8d611a30e",
+    "cells": [
+      {
+        "columnIndex": 5,
+        "cellHash": "547ec60c3c36c64d44b5f2bced9f7faf8821e8190208ef73c7bd34fcee507a02",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 37,
+            "endCodePoint": 83,
+            "textSha256": "98c3b438da363e16dfeb1f64bea6b12387144dd9422621ba0880dacad43b9f10"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "a7b56556aea0ea7d5383342498d86ec9eed2707208130ce86ac7d9a09921cba0",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 24,
+            "endCodePoint": 58,
+            "textSha256": "20b666d11513fd02068a73f5f6e39e228137407e674dc1b769b65ddceee34914"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/touch-target-size-split-evidence.json",
+    "sha256": "e818187218d8ddc3a881063cebe5f631fda501badcec27f390f9a36d289a32ba"
+  },
+  "recordedAt": "2026-11-10T00:00:00Z"
+}

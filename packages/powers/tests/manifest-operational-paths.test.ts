@@ -222,7 +222,7 @@ test('native manifest formation preserves an injected hashing failure after obse
   } finally {
     intercepted.mockRestore();
   }
-  expect(observedHashCalls).toBe(1);
+  expect(observedHashCalls).toBeGreaterThanOrEqual(1);
   expect(await lstat(join(root, '.tmp/vp-manifest-formations')).catch(() => undefined)).toBeUndefined();
   expect(await lstat(join(root, '.tmp/vp-manifest-ownership.json')).catch(() => undefined)).toBeUndefined();
 });

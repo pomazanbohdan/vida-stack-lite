@@ -1,0 +1,350 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/vue.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "b655f1ebb9dff2652d15981f31b1784c8a6d4759efd2815a14f3088257569f95"
+  },
+  "batch": "NF-06",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 46,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-vue-use-composition-api-for-new-projects",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0f09753542fda3c5e5179e5f950d53081fd4a3de080624092cd4ede8b94963ab",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L2 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-script-setup-syntax",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=52de348d792f311d1221b3853d5114eb294baf7d09ab3d0b1e19db197a1dcdb4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L3 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-ref-for-primitives",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fc512c8b67191334207c7e43c8f0c8aafa49dbc02c889f0f1a70f223cfbaafa2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L4 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-reactive-for-objects",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2ed5b78dcc6a5b939bea07945ffb01c2f614b1025957cf4c62ec96642c58d7f9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L5 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-access-ref-values-with-value",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ed2d7710ede1c7d33f92bec4c14df0172d820554d811d826075a81acde1893b2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L6 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-shallowref-for-large-objects",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9c136557ec1e6c12b0a35dec5c5a0973bb723247cc2753353d61a3b1da46cf29",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L8 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-watcheffect-for-simple-cases",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a7d070706431c13618d33b367a1966c6411916b6a0acf6d4a2c4c1ef26b66de3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L9 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-watch-for-specific-sources",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d2e1879aca07ebeb92d74b21b9970b4d971206a2a0e275929e17d96cc55ca0da",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L10 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-clean-up-side-effects",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c2de3ed0746b5fdac0cef5ca23ece95d3df44edc24f3ba9bea92a762908f914b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L11 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-define-props-with-defineprops",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7783dea2e65f8e0e65e7be84277db4f01f39abcc073cdb7f47bc6d4cec3724f7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L12 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-withdefaults-for-default-values",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=11b94897e7ca64c8e42eab6ac97816681619bb126fe3048aee2565b46113dc64",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L13 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-avoid-mutating-props",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=adca352364a3c71d9a65c5c92602c7ac5a46fff58035f839c6b3e745654eda2a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L14 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-define-emits-with-defineemits",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d23f4ed238631188f6ce291e3cba6043b2fd3d6c05ddfbbbfd0e145aeeb56ca8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L15 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-v-model-for-two-way-binding",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=95b28ef42fd75dd6c7990f53b1aec9fcf8421d2556f34c7c27751d6afbde8a1b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L16 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-clean-up-in-onunmounted",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e277c58e286ab8b5571a37dc40b7442d1d12a0862c13b41f94427f2f805aaa41",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L18 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-avoid-onbeforemount-for-data",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=086732882bbc0610a5a9010ddd1a086aca61fbd0bdbeeae70649f3d00a1eef3d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L19 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-single-file-components",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5bafbb6be60c835e3679e2bded865766aa1845c2a13dce88933ff5628f8d9e76",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L20 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-pascalcase-for-components",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7e1e7f8b5e80992f6ae628e64cb16965d68696e2a56ffe45dfb77e2efc21211a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L21 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-prefer-composition-over-mixins",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=851f1d93f79334de3ff8f5d028d462109c02649cbcec0555c22b52a86ce977dd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L22 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-name-composables-with-use-prefix",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e70d7bc6604761025dd6d3e2ac228b51ef13092c1eabe96a06cbe18f2b2c9d11",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L23 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-return-refs-from-composables",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5459fd317fcf24fe1361cbed4367a03bdf0f64f2aa2f7980eee2c3eb22c9b55a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L24 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-accept-ref-or-value-params",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f9150bc836e47bb0e537b8f09815a3856b09a323a4ec496ba1a5c2de640ad120",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L25 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-v-bind-shorthand",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b445aebe00ec79f9de162bcb7cad3e05fa63c981b81b8c971fedd95c9cd28569",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L26 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-v-on-shorthand",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58d4c9be0013a9cb837b84df672289a1e7ed9edc22ba109882f78631f4207a9d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L27 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-avoid-v-if-with-v-for",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ea7e1179148c180e6cb1664fe292971197306d02bc036bd5364fe2c734cd652c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L28 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-key-with-v-for",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=64d7ae5e284be27567a430ba371bda7252d32b1b5966243374740c223cc5de4c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L29 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-pinia-for-global-state",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9206912cafa5e32e19ae05253585c02f42a1865a46be4c93635f2ef239863f66",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L30 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-define-stores-with-definestore",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=99d88e9e1d10b258adb00805e8c2c3deea8bc3d33bfe4486635a1e6386649a57",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L31 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-storetorefs-for-destructuring",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=691453ef54e950cb38a2cc98df299f73a75ab4b0fc6822ea4031575de07ba238",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L32 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-userouter-and-useroute",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=00e16453c291bbbefd9c983ad3fd9bcf31b038a34c4e65f9600acfd7c4f9ded3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L33 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-lazy-load-route-components",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2f706bddbe6cd25c5310a4dee147e89e6c58a46d82124a873e0b16498f80f0b5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L34 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-navigation-guards",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=15a73f2b1441e7112009e05c04bdcffb98a5a84c0abcd261c83b74bc657dc0ea",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L35 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-v-once-for-static-content",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a3c600569cadc29410c4ed0ea52de9651fcfe74db30bb3a9543f015d8bec6bfd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L36 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-v-memo-for-expensive-lists",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d1c2f13de50e6baf95ea1dc3ef894685b0ee8b162f5e244deef904514a296c04",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L37 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-shallowreactive-for-flat-objects",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0e80eb2b8d61374852bd1f94ec06fa687bd774b02dee0650b55819fc016670a2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L38 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-defineasynccomponent",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=059bb338e15505e1a99df2cc143e2fc7de79bdccfac54f56437a9bd5c0b40300",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L39 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-generic-components",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=207ac40073c75a72513c05c479341cf45c5c0b7943db34e9b4e630667e248076",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L40 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-type-template-refs",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0235ec0838d13020ceb2a4c94fa326d7a496a2226a6e304fbd7e6c173eee33e6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L41 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-proptype-for-complex-props",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=548e17c2c8f691f3fa4b00d8fe7e53296eb3182d30c9c34aebbdec2db6ddcc35",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L42 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-vue-test-utils",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ba261b6966f447c04675d8f5af638624d9cb37e1166b5600eaf74426315853b7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L43 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-test-component-behavior",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2d352ba0b2b5692180a2d5583b0e2ec7340590385a5f9e6d777efb4e6c588f5f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L44 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-v-model-modifiers",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cb883afbb673066a52522d7f243e3748cc0f0053cb1d3186cee5bd9b2881d467",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L45 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-veevalidate-or-formkit",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=02f36b97db6dd253b6500751ae2563bce77165ce7f9b12b92cac5f9d5062c703",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L46 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-bind-aria-attributes-dynamically",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2b352dd0989d1b67e9529c024e07230967efc7a7929082c8b748803480054040",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L48 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-use-nuxt-for-ssr",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=75950412205128d56f76b9a7e29bd08773b1e4e70e63c8ffdba6e4fcf5d8a2be",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L49 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-vue-handle-hydration-mismatches",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b0be19410197a526b763414fe02580b09a32ff912e3f3e251c267abcbd0420b4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/vue.csv L50 per vue.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

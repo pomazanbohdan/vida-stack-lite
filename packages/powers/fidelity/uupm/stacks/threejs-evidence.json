@@ -1,0 +1,399 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/threejs.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "155d583b9c64da0df4b6c6cb060c02eab222505e0734d6353da02c9e2b5d982b"
+  },
+  "batch": "NF-05",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 53,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-threejs-pin-the-three-js-package-version",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c32759f847ea20d11af47ff7064495ee31434504b073432b506355478c2c127a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L2 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-use-capsulegeometry-for-capsule-shapes",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=70d1c4f0495d77add12db74a248be654499947f871bf43b05787dbac41e9f495",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L3 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-import-orbitcontrols-from-three-js-addons",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0da9e3b084585351186acfc2278c252bfc4fc17d17e95a8a2266566ea2e2219b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L4 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-custom-drag-orbit-fallback",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=97647c81fec85ad3c946f038fc9ed575b04eac7686e12f7ea6af2f88de055675",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L5 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-use-esm-imports-with-bundlers-or-import-maps",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=82943cf29f679ed79a9f5c520465729660e35d595c1e5c2ab483c0d509e9b0af",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L6 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-single-renderer-per-page",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=39acb696aa5baa6fa85c270f0949a94a52ca05c1d99620b52c873f65168bebbc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L7 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-pixel-ratio-cap-at-2",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6bff549317acb362519a75dccbd837879844ff90c93169da282d10e58fa6ef61",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L8 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-alpha-canvas-plus-css-background",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1ff8c810d9c7c22a0491729770a060df7757c19a153d761332eca3e90777388f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L9 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-aspect-ratio-on-resize",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=50623c577e2af6dfd8696d55b397093a037791f70445820d3df4bb04e0f5995e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L10 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-fov-range-45-to-75",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fd41865ad9a838004c3c2a439c839f6cbd347dc6b976a694d3752968ab631d18",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L11 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-explicit-position-and-lookat",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=619a6714c821e328f049a9c6f1f9ee1e05a564aab64feb73c0470df8ca2a3216",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L12 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-orbitcontrols-vs-gsap-camera-rig",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f5e0da79730d63b5b0f2d92592e6f830e6f18e87365a1f4d12d9605d7be2aba2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L13 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-never-create-geometry-per-frame",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=140fb4292b16fb0a105ecdf5300c055cf83fb4defe9cb56368dbf9548a72cc28",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L14 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-share-geometry-across-meshes",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c4683b8ef8e07a27edd2af8f2ba6fe147128474fe71ba4baba73c1b1cbd1deda",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L15 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-dispose-on-scene-removal",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=95918313621e5722500b611082b12c7607e3112d30eff3f8b977ddb73e32cdc2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L16 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-segment-count-budget",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=11529051a136561d4571acc98da7008c20150463143bf8059cdfda5ad30ea755",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L17 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-buffergeometry-for-custom-vertex-data",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=716556e3cfffc1327101bcb9ac78524051fba9a38a215379aa822169c42b1abb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L18 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-meshbasicmaterial-vs-meshstandardmaterial",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4a2d2e938ac06a9a126a62d0f381531b6031a9edb41df2d34b843f52b6a20ba6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L19 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-share-material-instances",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e9f91b460a1bf004f8e1e5cf61bd66f8e7c5d40ac642643cc4de15bd1737bbea",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L20 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-dispose-textures-explicitly",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c13c1b8634b057f5e2738a1dce8c81d2884d293ace297f7f35b46ba10149037b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L21 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-ambient-plus-directional-minimum",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b8f78c07ad22b870cfde0627f071a7ff2cec3a67c7ffc11dbefd35309df0a51e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L22 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-enable-shadowmap-before-castshadow",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9cd2d35ca3bab49d48c51a080c7e4b8aa2b0f46fbb9264003a9f7266f0eb329e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L23 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-selective-shadow-casting",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9973b2fba6783190bff3b336e78ca33e7b89a438cd43e85c43e5622e1b75e82a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L24 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-skip-lights-for-meshbasicmaterial",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d44af896a7c4785fe4a415eecb4b2b5a3e352e5c3652edd354a4ee51c336c8ff",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L25 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-single-shared-raycaster",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=573053b81fb8d68b8fb58f4847c879d821b4df95671c4f336b87597484b419a3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L26 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-ndc-mouse-coordinates",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2e7caf2e94463264af041fbc3eccc07f332a8dae5478e18712c15ba5baa89e8c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L27 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-setfromcamera-and-intersectobjects-in-animate",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d7d19709e194702ea7b4a13e5ba0d27fb63c1f39bcb70e72aa67f2e14f630e05",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L28 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-recursive-flag-for-groups-and-gltf",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=82c61a640dfc6b9ec89197d6dd17cff1ae10b6dccf86cd54e85e2483705c31ec",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L29 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-cursor-feedback-on-hover",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6b688757d3b27a39e513f86f8e75bec6734077356deef87226775927c18df363",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L30 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-requestanimationframe-loop-only",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0b7189dc5f0286cad17ef3ba0c34194c6758ab90d8ac914e76a967b12a94d9bc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L31 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-three-timer-for-delta-time",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=59098dc89750be0ba20045d5891715021c9c7f9ff39218dafd5595ba708399c3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L32 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-lerp-for-smooth-pointer-follow",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9fde501f7ca8ceefd09248a04f70ccee0795f0e9d0b8ff8e83079cc7dd31c0d3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L33 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-gsap-for-multi-step-sequences",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d88e2e690998cc5f2ab52567b853de3fc32fd5ed0d25010c2936094010696b7a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L34 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-pause-render-loop-on-tab-hidden",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=212f2c7001e217e2ab7857bf1ab64fecf238aceaa0044f5b2da3f61ca504bfa9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L35 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-load-gsap-before-scene-script",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=764ec62a2fbc6131c4796b0d6ee00147c98b3095710abd5aac11d02c0edb6677",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L36 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-register-scrolltrigger-before-use",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a4b6a3eb3960c851818d01449e9d6d7b7a11bd94c5740e485d056ccb71f8ff9a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L37 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-tween-three-js-properties-directly",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e68d67066b2f3085d9c568a26dc32fb856974610ae000efe4efd304d407ee7df",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L38 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-scrub-for-scroll-driven-camera-path",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2fa51bb3a5fbec2f9db440b6c920151008b6129a11b2213d7b4aa1285b9dc704",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L39 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-instancedmesh-for-repeated-objects",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=15f07ca11fd9c1d9f23024185d6a57017de4674bf6ba2ada2b02985f7c7cb2b2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L40 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-tone-mapping-and-output-color-space",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e392806753413aeec0a6a7c24ddc7e878ad8865fc5a5b5e65dfbca4ffedc20f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L41 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-antialias-set-at-construction-only",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8838edfe7bdc7396baa132b7d823edfa3f5807d5ac7d54c7af863c4c7d691a5d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L42 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-fogexp2-for-depth-and-far-culling",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f9f3b1c6dbb81e80510f427df2d62414a53911742102048cf59c7f53c993cc47",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L43 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-buffergeometry-plus-points-for-particle-systems",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=32b56218b30bfc50f9fbf03238e91bb2c848ab918c2b9f0916835d6ccb80adf3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L44 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-particle-count-ceiling",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4d40a619664a0a93ef7fff269c39360f1c588dfb509c2346dc9bf23672f518d9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L45 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-needsupdate-after-buffer-mutation",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=30eba5abcf01765e9ad0a623aed210187ed8d05dd1d627b23b791139f9777bc4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L46 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-canvas-dimensions-not-window",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4dc2f25be0fcc27228f612b4cf55d252f819259606e7d2c46348b633fb28fa52",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L47 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-resizeobserver-over-window-resize-event",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=94ca711f483dd5bb226565f5b56aeb421f6793584b6bef207abc7559e6170a1d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L48 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-touch-events-for-mobile-interaction",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8a619dd288ead5f714a99a87ed85ae469a9d87e17f32c659dd2d56f75240bc84",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L49 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-prefers-reduced-motion",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3ffd56bb1bf79b66cabb048e7593c50fe98fcc1420a90c43e2e408619086a2fe",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L50 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-canvas-aria-label",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=26af57c0b721b670554d15a2827c286668b13c5e35d8bfd8304466142a3571e5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L51 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-bundler-stack-for-production",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e6baad5705d2f3dbbb449e2c1b3c1d9ae6fbfeafa1a56624b0b9488ca0e1368c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L52 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-gltfloader-with-scene-traverse",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4ce75ac5d9b18429e73ba459eff61882492bb0d444e42d496bb9fc96cc6f8ed5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L53 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-threejs-lod-for-distance-based-detail",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=81d8b32453744c8948b1dc779651e11ffb527cdb7ffbd75ef47c6240f9132654",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/threejs.csv L54 per threejs.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

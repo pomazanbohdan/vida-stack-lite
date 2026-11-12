@@ -1,0 +1,483 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/shadcn.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "e56cfde5b74907836ac3582a4779d5b7f3d206a702ab81b8669a1b668c3eeb51"
+  },
+  "batch": "NF-04",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 65,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-shadcn-use-cli-for-installation",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b12dd9d1537351e78c9eab1c5ba256753a7990daee90dd9b4b56d3450bc832f4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L2 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-initialize-project-properly",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af0f38942470bf1865ea9a681f94c37e331090a139626d47546376b5f0fe0bf3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L3 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-configure-path-aliases",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cab6c56fccd5391e38345211648b3d26e6e5bb43f6aa6cd8b6bcffcbb1061261",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L4 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-css-variables-for-colors",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c8c9f9429f3660104e5efd6a4cc2542e6a7c0cc8de18c0bbf8e735e36c0b05fa",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L5 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-follow-semantic-color-pairs",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c3de96825ec4e98bf20480602daca0393ce0dadc0e0b69b849e11d838d3aa7ed",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L6 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-component-variants",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=74f1716e937f29271ccad4b687483a009f9c820869fab875219b7180fa12a4f9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L8 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-compose-with-classname",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=48a89c564e0dd2a3777658b8b3ffc1d4bf68c99f6ee0a5fb20aadd0ebe57042f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L9 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-size-variants-consistently",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4139fcea2c30e8477209084433179165d7cd910f8236f7608fd9519ce0572a8b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L10 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-prefer-compound-components",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e2d977aa0daccdbf6c704b69a50db6a5055669edffe0a7a7a5e2b284e69fe3b7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L11 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-dialog-for-modal-content",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=efe098e0f20e41e5203b39d977f0c7084d444d448fa3990ac81b692c43885abe",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L12 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-handle-dialog-state-properly",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a0b1f10a0dff1e76db430ce7c2a3d4fa15ed902674914b72c291ed408743c3d9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L13 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-include-proper-dialog-structure",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6bb478d425fbdc715b95a12ec422ed922519cf30853cb6def35ad3b2298882e4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L14 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-sheet-for-side-panels",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8969c203a4ecde5192267d54da69addd7df06f0a18a90b4fdb0a9cf2c59a786a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L15 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-specify-sheet-side",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=61ab72de241d4866b12fe64481269fd324786c51f00eef02fb3943c9dd80b751",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L16 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-react-hook-form-integration",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ba44bc0d2025348c2dcdd541bd18f2798ef7247fd538af97c8449a85c89ac0a8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L17 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-field-for-input-structure",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8763d7373c777e93f70e706a4c4a145d8a35d8e6d2e8737872b98cc1c7cfb3ce",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L18 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-display-field-errors",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6fe39f4a7806fd48334283c194daae3736b2b4cc41798e7dec668c0d9f077dcf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L19 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-schema-validation",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2145635378535625856b1aa640c5503fea3aaea9ae8efac4c2f71bdb88115b73",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L20 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-select-for-dropdowns",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a2d13529b06381762c9b6a6fcb9aca923320f752cd9a3276dd82ec424323b02c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L21 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-structure-select-properly",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=301c30e16fe50b75d02b72c65f13f683c0252af4f3706d5abdfcc7b6a331d918",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L22 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-command-for-search",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4db8be2ebb33e8418efb0de5ec946e8428119f86693d469b6fc83a1228eec19d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L23 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-group-command-items",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f07fb1536ae986cc7817db0f7fab332fd9a66e36fc9be5163f5e1c205a3d482e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L24 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-table-for-data-display",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8438ba90e9265cc51243596b8987f160d6800187afdee371936fcdb116413a67",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L25 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-include-proper-table-structure",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0a53735be3d2ae00de6ddae4d07f325a2241a9dbd2e0353df8265a82ba448d30",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L26 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-datatable-for-complex-tables",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a770bc4f167f16db44329a6a8bc21edc14a623abf63673bab1de5be02afeaa6f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L27 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-tabs-for-content-switching",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fb7175acc1e2831120fa129b0eb84a04feeccc987ce6077072c184c9c43da4dd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L28 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-set-default-tab-value",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d1a9cc1914d9e289d02a6a88cbd4fd0d2fc4de52480f5bf6519efc7611d5bc2d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L29 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-accordion-for-collapsible",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b8081c9a9dc092a02600174534554a48c812993c7f1754adb453736c0f58268a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L30 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-choose-accordion-type",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c0653764757abee7b2e2c3561508ec71eb549204da08ce9b8c24f290f75a9976",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L31 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-sonner-for-toasts",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=44bc7770ab35b3e62bacfc8bbf34b5e895acb660a9978a7d1e97382211f7349a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L32 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-add-toaster-to-layout",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=452eb5136d2e957b26ba285359ee16127fc928378d4302f0d07829a9eb868fb2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L33 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-toast-variants",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c349ee1481b6a515520258c14092f13cddf9703760a29312ae6d1ee3b612f668",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L34 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-popover-for-floating-content",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d7138fe3c06f592d00a61189673632b2df1ecab0d5fcc736af9671dc1701e264",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L35 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-handle-popover-alignment",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6b242876c532a7831da4985b4cc6f59455dc5aecd2f7892cf0ed775cc7e9c008",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L36 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-dropdownmenu-for-actions",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6a38b42dc54b795d670166c734ebb5784664641c4f74a31a36fdbe2ccc695fa9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L37 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-group-menu-items",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=47fd0dce0c46c45b10e380a8c880efa36d54f6d2fac2f9e784a943fdf391e8a9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L38 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-tooltip-for-hints",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ce7c9a9e1261c5805f2fbda4a3a839b29ed4ff6aafa2750d4175757cf695d426",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L39 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-add-tooltipprovider",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c5e62195ad7bf9cc999f1ab9e8f3714bb11a66f58205ce21d6e54215de393330",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L40 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-skeleton-for-loading",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=31f6944bb30e3c2c56bd6a513106e7acd4ef52d02ff8a5cfa0e4be0af67efdd4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L41 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-match-skeleton-dimensions",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=225f90ae2e595b2da8999119fd8989b9d1477542aac53e6407e67c64df76d5a0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L42 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-alertdialog-for-confirms",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2d9c8669bf0e225942b943d45174c7f83980e791a9da3c2ef9c2a07e59c26faa",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L43 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-include-action-buttons",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7a349210476f5956d65506dfeddaf484bd56dcd3239177586d863210a513c78b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L44 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-sidebar-for-navigation",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b10a5eca2c584676daea80e8799201fb86460212f1c1e0c5338946c5fe5c88d5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L45 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-wrap-in-sidebarprovider",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d047780c9a7ada614c2f2f97fda06f9ccbf914c7e5ca65a29334ac414fe9d424",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L46 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-sidebartrigger",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8b14f3f3f7e05511e901823a260de2357146131fe24f7685620b02058cf4def4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L47 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-chart-for-data-viz",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=22581c9fca9da9b6d989a8c692cd030581ec283bd3cd0909fe0701c60b48647c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L48 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-define-chart-config",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3b38ea4f189cb7101781ab0f216a1820e7966df295d85f075d9fe49733b19b50",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L49 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-charttooltip",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5cae0a8394510dd3352ee4e587b49ae5e3045e3648fb0d0048505f6bc6bb663d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L50 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-blocks-for-scaffolding",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0dfd540072693fc271cd04523a76942caf297d607e7307358169adb9e68d54a9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L51 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-customize-block-components",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4866869de4ee029f947248136fdcdfa70e9451f59e6497cbdb244eaf7b85fa6d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L52 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-semantic-components",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3b0697dbc68a97a233b52b07babd1ba417b132354c087c4452b635d9bb3f8489",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L53 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-maintain-focus-management",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=eb7665dbef392937497cd186057f8128562ac16b3fbbab4cc61c31a22cd0d03b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L54 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-provide-labels",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cb5b78eda760f5437c24a169cd419929b312e3e46fc8f999bcc6413cff577f8c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L55 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-extend-variants-with-cva",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=eccf401e204ba1f97af0cea0220f41dabe47ffc90c58c4af79b52aecc1987c3c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L58 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-create-custom-components",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cae05c18c7288a8d59eacd7312ba102a96098ecf091c539eb2bc18fa759630d2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L59 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-aschild-for-radix-composition",
+      "sourceRowOrdinal": 59,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2b59672853e56ea492ef9bf1b41b9cf9ac6cd6d5e7b305eb2cbafd252a0f9d14",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L60 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-tanstack-form-integration",
+      "sourceRowOrdinal": 60,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a1145b4235428894cc2c11959cc5b2ad1e8c38781ad1264586a8cdb787fe4456",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L61 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-select-an-explicit-component-base",
+      "sourceRowOrdinal": 61,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d6b1441a5a78b20b9ddecb9926f28d38afb3fd09b37e3fc7e6fcd49635ac2f28",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L62 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-base-and-font-registry-item-types",
+      "sourceRowOrdinal": 62,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=56a51100c51566c7d0291c2564b7bb3924c76026eb6873be79ff40103f5af73b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L63 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-inspect-cli-changes-before-writing",
+      "sourceRowOrdinal": 63,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b3476c1a7b1799c859ec393d6329e523ede623d00500104558e7e628fb7902e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L64 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-install-public-github-registries-directly",
+      "sourceRowOrdinal": 64,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d7b1b34277c67dd938f5e8bf47d9f80e94bc74be995bc69e6d3b6f07848b099f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L65 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-cli-presets-and-apply-workflows",
+      "sourceRowOrdinal": 65,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f9f3875afea9d15acc25b97f2b8bfd74b133ff47485985e3be0ce38cbfc6bb55",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L66 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-keep-registry-source-declarations",
+      "sourceRowOrdinal": 66,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e0ba873e135cccf83e7558f60e2b39c0f52dceb6d7dd35f6605de7341e02ef4c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L67 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-preserve-react-aria-link-semantics",
+      "sourceRowOrdinal": 67,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c5f6c755ed44ebfc6a691c91e7daa73a979a5bc6498456eb4010143b77496c02",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L68 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-shadcn-use-render-for-base-ui-composition",
+      "sourceRowOrdinal": 68,
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5b426020fa88672098c62495a96d18d6b345ba06af3e8fa63064e4f23ff1832d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/shadcn.csv L69 per shadcn.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

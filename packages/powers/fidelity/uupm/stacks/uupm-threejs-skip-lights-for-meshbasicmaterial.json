@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-threejs-skip-lights-for-meshbasicmaterial",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/threejs.csv",
+    "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d44af896a7c4785fe4a415eecb4b2b5a3e352e5c3652edd354a4ee51c336c8ff",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "35bafde3b6501cda49d6a7c6f225d1583901312c5b3331a325627b8871597f5f",
+        "locator": {
+          "line": 25,
+          "row": 24,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 25,
+            "row": 24,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "9eae3136b4e38fc1417298613eb3909a6775f6be8ead0233b783e46691278905",
+        "locator": {
+          "line": 25,
+          "row": 24,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 25,
+            "row": 24,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "6e6f3399b4441cbabf197941be11af59929f343559e2e1b12c5ef94c3a34f33d",
+        "locator": {
+          "line": 25,
+          "row": 24,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 25,
+            "row": 24,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "9fb71905e2d0d7e58a6dc0f7ae14e85c117e59639eb2f58e1115e6f6f90966d3",
+        "locator": {
+          "line": 25,
+          "row": 24,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 25,
+            "row": 24,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "80127a065a655b3326cbffbfd4ed3fad2fac819da4b5be2b69471086e52a0b3f",
+        "locator": {
+          "line": 25,
+          "row": 24,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 25,
+            "row": 24,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "eb85c9a6b261b4dfd1c7c2d01f8b130f05ef92f942b11ba6c763abb12cee9cea",
+        "locator": {
+          "line": 25,
+          "row": 24,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 25,
+            "row": 24,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/threejs-evidence.json",
+    "sha256": "25bbc945ef87760566ad436276f373440700600877e09cc0e4cb4e24b0c5ba03"
+  },
+  "recordedAt": "2026-11-11T13:05:28.876Z"
+}

@@ -1,0 +1,50 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "js-ts-web",
+  "recordedAt": "2026-11-12T07:05:00Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nuxtjs.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "3d9b54ed2d151bd9c86e9e5609b8a6f88a00c4c52fa601a30af96c49b2c4d176"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-nuxtjs-handle-loading-and-error-states",
+      "familyId": "family-handle-loading-and-error-states-ff3861a4",
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f3b7838856c4c018d2507da51470c47aac5384b518bdc43c45671240f0e177fa",
+      "locator": {
+        "line": 17,
+        "row": 16
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/nuxtjs.csv L17 admitted as SBVF variant uupm-nuxtjs-handle-loading-and-error-states of family-handle-loading-and-error-states-ff3861a4; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-nuxtjs-use-file-based-routing",
+      "familyId": "family-use-file-based-routing-0927fbb8",
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=361df3895303494557debd5e229f20b4e132db6539ffc41f023be4b881c52472",
+      "locator": {
+        "line": 2,
+        "row": 1
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/nuxtjs.csv L2 admitted as SBVF variant uupm-nuxtjs-use-file-based-routing of family-use-file-based-routing-0927fbb8; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-nuxtjs-use-onmounted-for-dom-access",
+      "familyId": "family-use-onmounted-for-dom-access-ffd0d226",
+      "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bd758d6e34d676996f0e7b4ae6430f5e8e818218d664fe203eca8279e8bb6a83",
+      "locator": {
+        "line": 19,
+        "row": 18
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/nuxtjs.csv L19 admitted as SBVF variant uupm-nuxtjs-use-onmounted-for-dom-access of family-use-onmounted-for-dom-access-ffd0d226; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

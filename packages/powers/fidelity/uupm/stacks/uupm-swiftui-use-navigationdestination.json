@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-swiftui-use-navigationdestination",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/swiftui.csv",
+    "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=542cbf34b1ff27855f11c17060fdd3ab733b7eefc7b59ce91e3bd6b37b2600ab",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "7bd047c5573402b98b45c4222cc5f30388fac9b199f97248b139e930cf24b617",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "bd36bf27c111f1123adf34176eff2d209e2aa79ba4dd138c7d45746784b272ad",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "0eb2fa5f2aacd3269cbd7c5096376785735614be956d1098521c478b4d453660",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "ea1b672b0840664ce05183a7aef25ca491205f4c1c3de97882e3c821a4b40a63",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "0ee1bf47a37910dbc9e4be238c42d05da2820b223c808be03066c1bc2dea2c07",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "b44a6152a3fefe53a2b1f6876b1cc6d1320f805ecae536ebf0c1dc2691b4571d",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/swiftui-evidence.json",
+    "sha256": "e911d67546a5470e1ec30071a495e033bacc40fbe4096fd0035c9b4e4b491b39"
+  },
+  "recordedAt": "2026-11-11T13:05:28.876Z"
+}

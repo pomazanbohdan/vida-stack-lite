@@ -9,6 +9,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkCorpus, corpusCli, runCorpusCli, startCorpusCli } from '../scripts/check-corpus.ts';
 import { cellHash, cellsDigest, parseCsv, rowHash } from '../scripts/csv-intake.ts';
+import { encodeVariantScalar, type VariantRecord } from '../skills/vp-mode/scripts/variants.ts';
 
 type Instruction = {
   schema: string; classification_status: string; classification_reason: string;
@@ -17,6 +18,7 @@ type Instruction = {
   artifact_contract_output_type: string; artifact_contract_required_data: string[]; artifact_contract_verified_by: string;
   compatibility_excludes: string[]; compatibility_requires: string[]; provenance: string[]; status: string; revision: number;
   applicability?: string;
+  instruction_variants?: string;
 };
 type Corpus = { root: string; catalog: any; map: any; instructions: Instruction[]; save: () => Promise<void> };
 
@@ -129,6 +131,73 @@ function snapshot(root: string): Array<{ path: string; mtime: number; digest: st
 afterEach(async () => { await Promise.all(tempRoots.splice(0).map((root) => rm(root, { recursive: true, force: true }))); });
 
 describe('checkCorpus synthetic fixtures', () => {
+  test('validates v3 family sections and requires a mapped binding for every variant', async () => {
+    const corpus = await fixture();
+    const body = readFileSync(join(packageRoot, 'tests', 'fixtures', 'sbvf', 'family-body.md'), 'utf8');
+    const variants: VariantRecord[] = [
+      { variant_id: 'variant-alpha-one', title: 'Variant one', summary: 'First.', capability_tags: ['write-tests-first'], pattern_tags: ['test-first-development'], conditions_applies_when: 'React.', conditions_does_not_apply_when: 'Not react.', artifact_contract_output_type: 'test-suite', artifact_contract_required_data: ['cases'], artifact_contract_verified_by: 'bun test', compatibility_excludes: [], compatibility_requires: [], provenance: [`donor=${donorId}; license=MIT; revision=${revision}; path=${donorFile}`], status: 'active', revision: 1, classification_status: 'unclassified', classification_reason: 'Fixture.', approach_assessments: ['invalid'], approach_body_sha256: digest('# Alpha variant one.\n'), source: { donor: donorId, path: 'source.csv', rowKey: 'row=1', rawSha256: 'a'.repeat(64) }, sourceLabel: 'react', applicability: { frameworks: [{ name: 'react' }] }, contentSha256: digest('# Alpha variant one.\n') },
+      { variant_id: 'variant-alpha-two', title: 'Variant two', summary: 'Second.', capability_tags: ['write-tests-first'], pattern_tags: ['test-first-development'], conditions_applies_when: 'Angular.', conditions_does_not_apply_when: 'Not angular.', artifact_contract_output_type: 'test-suite', artifact_contract_required_data: ['cases'], artifact_contract_verified_by: 'bun test', compatibility_excludes: [], compatibility_requires: [], provenance: [`donor=${donorId}; license=MIT; revision=${revision}; path=${donorFile}`], status: 'active', revision: 1, classification_status: 'unclassified', classification_reason: 'Fixture.', source: { donor: donorId, path: 'source.csv', rowKey: 'row=2', rawSha256: 'b'.repeat(64) }, sourceLabel: 'angular', applicability: { frameworks: [{ name: 'angular' }] }, contentSha256: digest('# Alpha variant two.\n') },
+    ];
+    const family: Instruction = {
+      ...defaultInstruction('family-alpha'), schema: 'VPInstruction/v3', title: 'Family Alpha', pattern_tags: [],
+      conditions_applies_when: 'A selected framework applies.', conditions_does_not_apply_when: 'No selected framework applies.',
+      classification_status: 'unclassified', classification_reason: 'Family fixture.', instruction_variants: JSON.stringify(variants),
+    };
+    const singleton = defaultInstruction('variant-alpha-one');
+    const oldPath = join(corpus.root, 'instructions', `${corpus.instructions[0]!.instruction_id}.md`);
+    await rm(oldPath, { force: true });
+    corpus.instructions.splice(0, 1, family);
+    corpus.catalog.instructions = [
+      { instruction_id: 'family-alpha', path: 'instructions/family-alpha.md', sha256: '' },
+      { instruction_id: singleton.instruction_id, path: `instructions/${singleton.instruction_id}.md`, sha256: '' },
+      { instruction_id: 'family-beta', path: 'instructions/family-beta.md', sha256: '' },
+    ];
+    const familyBeta: Instruction = { ...family, instruction_id: 'family-beta', title: 'Family Beta' };
+    corpus.instructions.push(familyBeta);
+    corpus.map.schema = 'VPCorpusMap/v3';
+    corpus.map.donors[donorId].files[donorFile].status = 'split';
+    corpus.map.donors[donorId].files[donorFile].instruction_ids = ['family-alpha', singleton.instruction_id, 'family-beta'];
+    corpus.map.donors[donorId].csvSources = {
+      'missing.csv': {
+        rawSha256: 'c'.repeat(64), headersDigest: 'd'.repeat(64),
+        columns: [{ index: 0, header: 'Title', role: 'normative-title' }],
+        rows: [{ rowKey: 'row=1', rowHash: 'e'.repeat(64), cellHashes: ['f'.repeat(64)], locator: { line: 2, row: 0 }, locators: [{ line: 2, row: 0 }], disposition: 'admitted', bindings: [
+          { instructionId: 'family-alpha', variantId: 'variant-alpha-one', cells: [{ columnIndex: 0, columnHeader: 'Title', cellHash: 'f'.repeat(64), role: 'normative-title', locator: { line: 2, row: 0, column: 1 }, locators: [{ line: 2, row: 0, column: 1 }] }], fidelity: { path: 'missing-receipt.json', sha256: '0'.repeat(64) } },
+          { instructionId: 'family-beta', variantId: 'variant-alpha-one', cells: [], fidelity: { path: 'missing-receipt.json', sha256: '0'.repeat(64) } },
+          { instructionId: 'family-alpha', cells: [], fidelity: { path: 'missing-receipt.json', sha256: '0'.repeat(64) } },
+          { instructionId: 'family-alpha', variantId: 'variant-not-in-family', cells: [], fidelity: { path: 'missing-receipt.json', sha256: '0'.repeat(64) } },
+          { instructionId: 'unknown-singleton', variantId: 'not-the-same-id', cells: [], fidelity: { path: 'missing-receipt.json', sha256: '0'.repeat(64) } },
+          { instructionId: 'family-alpha', variantId: 'variant-alpha-one', cells: [], fidelity: { path: 'missing-receipt.json', sha256: '0'.repeat(64) } },
+        ], resourceIds: [], mergedInto: null }],
+      },
+    };
+    const rendered = renderInstruction(family);
+    const close = rendered.indexOf('\n---\n');
+    const markdown = `${rendered.slice(0, close + 5)}${body}`;
+    await writeFile(join(corpus.root, 'instructions', 'family-alpha.md'), markdown);
+    corpus.catalog.instructions[0].sha256 = digest(markdown);
+    const betaRendered = renderInstruction(familyBeta);
+    const betaClose = betaRendered.indexOf('\n---\n');
+    const betaMarkdown = `${betaRendered.slice(0, betaClose + 5)}${body}`;
+    await writeFile(join(corpus.root, 'instructions', 'family-beta.md'), betaMarkdown);
+    corpus.catalog.instructions[2]!.sha256 = digest(betaMarkdown);
+    const singletonMarkdown = renderInstruction(singleton);
+    await writeFile(join(corpus.root, 'instructions', `${singleton.instruction_id}.md`), singletonMarkdown);
+    corpus.catalog.instructions[1].sha256 = digest(singletonMarkdown);
+    await corpus.save();
+    const found = codes(corpus.root);
+    const issues = checkCorpus(corpus.root);
+    expect(found).toContain('CORPUS_MAP_INCONSISTENT');
+    expect(found).toContain('CORPUS_INSTRUCTION_ID_MISMATCH');
+    expect(found).not.toContain('CORPUS_INSTRUCTION_VARIANTS_INVALID');
+    expect(found).not.toContain('CORPUS_INSTRUCTION_VERSION_UNSUPPORTED');
+    expect(issues.filter(issue => issue.message.includes('family variant variant-alpha-one must have exactly one admitted binding'))).toEqual([]);
+    const tampered = markdown.replace('Alpha variant one', 'Tampered variant one');
+    await writeFile(join(corpus.root, 'instructions', 'family-alpha.md'), tampered);
+    corpus.catalog.instructions[0].sha256 = digest(tampered);
+    await corpus.save();
+    expect(codes(corpus.root)).toContain('CORPUS_INSTRUCTION_VARIANTS_INVALID');
+  });
   test('v1.2 rejects old markers and malformed or stale approach assessments', async () => {
     const corpus = await fixture();
     const item = corpus.instructions[0]!;
@@ -368,7 +437,7 @@ describe('checkCorpus synthetic fixtures', () => {
 
   test('rejects manifest identity that differs from the path basename', async () => {
     const corpus = await fixture(); corpus.catalog.instructions[0].instruction_id = 'renamed-id';
-    await expectCodes(corpus, ['CORPUS_INSTRUCTION_ID_MISMATCH']);
+    await expectCodes(corpus, ['CORPUS_INSTRUCTION_ID_MISMATCH', 'CORPUS_MAP_INCONSISTENT']);
     const identity = checkCorpus(corpus.root).find((item) => item.code === 'CORPUS_INSTRUCTION_ID_MISMATCH');
     expect(identity?.details).toMatchObject({ instruction_id: 'renamed-id', filename: 'alpha-instruction' });
   });
@@ -404,7 +473,7 @@ describe('checkCorpus synthetic fixtures', () => {
   test('rejects a manifest path without a file', async () => {
     const corpus = await fixture(); await rm(join(corpus.root, 'instructions/alpha-instruction.md'));
     delete corpus.map.donors[donorId].files[donorFile];
-    await expectCodes(corpus, ['CORPUS_MANIFEST_FILE_MISSING', 'CORPUS_MAP_COVERAGE_MISSING']);
+    await expectCodes(corpus, ['CORPUS_MANIFEST_FILE_MISSING', 'CORPUS_MAP_COVERAGE_MISSING', 'CORPUS_MAP_INCONSISTENT']);
   });
 
   test('rejects manifest path that resolves to a directory', async () => {
@@ -412,7 +481,7 @@ describe('checkCorpus synthetic fixtures', () => {
     await rm(join(corpus.root, 'instructions/alpha-instruction.md'));
     await mkdir(join(corpus.root, 'instructions/alpha-instruction.md'));
     delete corpus.map.donors[donorId].files[donorFile];
-    await expectCodes(corpus, ['CORPUS_PATH_INVALID', 'CORPUS_MAP_COVERAGE_MISSING']);
+    await expectCodes(corpus, ['CORPUS_PATH_INVALID', 'CORPUS_MAP_COVERAGE_MISSING', 'CORPUS_MAP_INCONSISTENT']);
   });
 
   test('rejects a manifest path outside instructions', async () => {
@@ -655,8 +724,8 @@ test('validates CSV sources, fidelity receipts and donor clone files', async () 
       path: 'source.csv',
       rowKey,
       cells: [
-        { columnIndex: 0, cellHash: hashes[0], locator: { ...row.locators[0]!, column: 1 } },
-        { columnIndex: 1, cellHash: hashes[1], locator: { ...row.locators[0]!, column: 2 } },
+        { columnIndex: 0, cellHash: hashes[0], locator: { ...row.locators[0]!, column: 1 }, locators: [{ ...row.locators[0]!, column: 1 }] },
+        { columnIndex: 1, cellHash: hashes[1], locator: { ...row.locators[0]!, column: 2 }, locators: [{ ...row.locators[0]!, column: 2 }] },
       ],
     },
     reviewer: { kind: 'human', actor: 'reviewer' },

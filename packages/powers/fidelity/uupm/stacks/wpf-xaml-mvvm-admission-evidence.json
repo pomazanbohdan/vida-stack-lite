@@ -1,0 +1,110 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "xaml-mvvm",
+  "recordedAt": "2026-11-12T09:31:18.049Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/wpf.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "9781a9950b20333637b30a02e498b7efca21b618a3eeb8665836f3ac6e974da7"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-wpf-implement-inotifypropertychanged",
+      "familyId": "family-implement-inotifypropertychanged-8678305f",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f06c6c74306376abfab98530f9df98715dbb1d4e1e454a87ae16084703e499a7",
+      "locator": {
+        "line": 7,
+        "row": 6
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L7 admitted as SBVF variant uupm-wpf-implement-inotifypropertychanged of family-implement-inotifypropertychanged-8678305f; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-wpf-set-automationproperties",
+      "familyId": "family-set-automationproperties-e5ee1685",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2538f97d361e9a3af787cfbfabb66b1affe7fbc3ebf0a9bdd149ddde60a4404f",
+      "locator": {
+        "line": 43,
+        "row": 42
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L43 admitted as SBVF variant uupm-wpf-set-automationproperties of family-set-automationproperties-e5ee1685; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-wpf-support-keyboard-navigation",
+      "familyId": "family-support-keyboard-navigation-b8dc783f",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=93d923860e0df17f9bcbca60d0d4de08a6c9c3a3c2647ee843f721d37794aacd",
+      "locator": {
+        "line": 44,
+        "row": 43
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L44 admitted as SBVF variant uupm-wpf-support-keyboard-navigation of family-support-keyboard-navigation-b8dc783f; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-wpf-unit-test-viewmodels",
+      "familyId": "family-unit-test-viewmodels-f453bbfc",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f2ef0354c9b02e0e51532ada8403b0788cd8603a6a17a5e537e88316aba1e47a",
+      "locator": {
+        "line": 55,
+        "row": 54
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L55 admitted as SBVF variant uupm-wpf-unit-test-viewmodels of family-unit-test-viewmodels-f453bbfc; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-wpf-use-dependency-injection",
+      "familyId": "family-use-dependency-injection-4f6d3aeb",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e045bf1b8164031577eecb998068d7f489b0f827a2b56c71e83ea90bdc6d6962",
+      "locator": {
+        "line": 51,
+        "row": 50
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L51 admitted as SBVF variant uupm-wpf-use-dependency-injection of family-use-dependency-injection-4f6d3aeb; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-wpf-use-mvvm-pattern",
+      "familyId": "family-use-mvvm-pattern-4aaa7775",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=465d5d8e328395acfa1d9e13a810c122c57dad90aafd985a985a54f6b82d891a",
+      "locator": {
+        "line": 49,
+        "row": 48
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L49 admitted as SBVF variant uupm-wpf-use-mvvm-pattern of family-use-mvvm-pattern-4aaa7775; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-wpf-use-observablecollection-for-lists",
+      "familyId": "family-use-observablecollection-for-lists-8b7c19b8",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=eb7b34f0c2237153dc9681464583d690e10a9a0670c3059b62b4dec0bacb9917",
+      "locator": {
+        "line": 8,
+        "row": 7
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L8 admitted as SBVF variant uupm-wpf-use-observablecollection-for-lists of family-use-observablecollection-for-lists-8b7c19b8; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-wpf-use-task-run-for-cpu-bound-work",
+      "familyId": "family-use-task-run-for-cpu-bound-work-3cde3adb",
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=608d0de6ee84ef420cec606cef08a7527573434b75e7024a511654c5c81c0e48",
+      "locator": {
+        "line": 40,
+        "row": 39
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/wpf.csv L40 admitted as SBVF variant uupm-wpf-use-task-run-for-cpu-bound-work of family-use-task-run-for-cpu-bound-work-3cde3adb; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-laravel-use-wire-model-live-for-real-time-validation",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/laravel.csv",
+    "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e61439754093e82aa7012ca9305846db268626fa371b676d84cf10cc67cdd8a5",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "76fdfd4574b1fbc5f36412ddad93b3ae955e1f1583ce5d89b479a6f1de3f4735",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "6eda28ea28d27b88d05ef6c3ca55565d930fe53bbd570437174fc951dfdc8d70",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "a34f624e0ed7a086e4980ac1e55579820f3c6e9c8334af528b2c68478909512a",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "f6f958ddea7e2371cb79dc23b5346e391b85c898d0345143ac14f3ab15ed38dc",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "224ccb8427bf00bddba972c383e627da33fc7ae9e83573c6ebfaf9e6b3eab051",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "87ca03a53feaa36021ea9b46534b0f4a1ad89e32d9875f95946ff1bc8c38daaf",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/laravel-evidence.json",
+    "sha256": "eb52d3b50de09fddc216a403973af86802cdcf18dc9099de1b0ea71a5276ae28"
+  },
+  "recordedAt": "2026-11-11T13:05:18.178Z"
+}

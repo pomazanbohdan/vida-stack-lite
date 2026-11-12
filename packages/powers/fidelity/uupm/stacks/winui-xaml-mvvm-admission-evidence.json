@@ -1,0 +1,170 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "xaml-mvvm",
+  "recordedAt": "2026-11-12T09:31:18.049Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/winui.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "e676dc1c13ee6c205c40b0746f1335150a346c7a49a0616d2545bc3d2c930c85"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-winui-set-automationproperties",
+      "familyId": "family-set-automationproperties-e5ee1685",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8880c0350c2d53ccd45b3edf6a1a0415606b8a29030727b6945f12fc42c99a8b",
+      "locator": {
+        "line": 33,
+        "row": 32
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L33 admitted as SBVF variant uupm-winui-set-automationproperties of family-set-automationproperties-e5ee1685; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-support-light-and-dark-themes",
+      "familyId": "family-support-light-and-dark-themes-872048c5",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=36e5b1b11946e008cc1fe06977d55adeb08a8de607d59120a54f089c7c37a737",
+      "locator": {
+        "line": 13,
+        "row": 12
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L13 admitted as SBVF variant uupm-winui-support-light-and-dark-themes of family-support-light-and-dark-themes-872048c5; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-unit-test-viewmodels",
+      "familyId": "family-unit-test-viewmodels-f453bbfc",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7df82d4f7472f64d08e64c71a52a7da83fde6d996b92e85c0444abfb9607f431",
+      "locator": {
+        "line": 43,
+        "row": 42
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L43 admitted as SBVF variant uupm-winui-unit-test-viewmodels of family-unit-test-viewmodels-f453bbfc; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-contentdialog-for-modal-interactions",
+      "familyId": "family-use-contentdialog-for-modal-interactions-ed057048",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ad5b8d3afe8ade0d3bbf5b83f86b63685405635c7c5f2e39e0e835c942ac607a",
+      "locator": {
+        "line": 9,
+        "row": 8
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L9 admitted as SBVF variant uupm-winui-use-contentdialog-for-modal-interactions of family-use-contentdialog-for-modal-interactions-ed057048; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-deep-linking",
+      "familyId": "family-use-deep-linking-acc8c928",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fe6e4815cd91e7bba58fe7492e9263dba73b994e8870b16d8d39f686b0dd86c0",
+      "locator": {
+        "line": 18,
+        "row": 17
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L18 admitted as SBVF variant uupm-winui-use-deep-linking of family-use-deep-linking-acc8c928; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-dependency-injection",
+      "familyId": "family-use-dependency-injection-4f6d3aeb",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=574c4e3c5ba240a942a45a162835c241636f705a40053fae91ffe206e3b81e1f",
+      "locator": {
+        "line": 39,
+        "row": 38
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L39 admitted as SBVF variant uupm-winui-use-dependency-injection of family-use-dependency-injection-4f6d3aeb; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-frame-for-page-navigation",
+      "familyId": "family-use-frame-for-page-navigation-65ba670c",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9449bb20468079b9dee7da6442c5aaf266761e0dbd45479d09be0b81c750697b",
+      "locator": {
+        "line": 15,
+        "row": 14
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L15 admitted as SBVF variant uupm-winui-use-frame-for-page-navigation of family-use-frame-for-page-navigation-65ba670c; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-lightweight-styling",
+      "familyId": "family-use-lightweight-styling-8bff6229",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=88ed768f0ec6e0ac1e003cc15c80e98153742b6cca6b887962fafb74077117a1",
+      "locator": {
+        "line": 11,
+        "row": 10
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L11 admitted as SBVF variant uupm-winui-use-lightweight-styling of family-use-lightweight-styling-8bff6229; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-observablecollection-for-lists",
+      "familyId": "family-use-observablecollection-for-lists-8b7c19b8",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=680a0a81edb012ec822563eab8675499d91a19dc2342504844f70061923d8279",
+      "locator": {
+        "line": 19,
+        "row": 18
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L19 admitted as SBVF variant uupm-winui-use-observablecollection-for-lists of family-use-observablecollection-for-lists-8b7c19b8; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-task-run-for-cpu-bound-work",
+      "familyId": "family-use-task-run-for-cpu-bound-work-3cde3adb",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f904c3fb4d601433d35031ff3027461495849412ea9b6833aed244af07c1136f",
+      "locator": {
+        "line": 29,
+        "row": 28
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L29 admitted as SBVF variant uupm-winui-use-task-run-for-cpu-bound-work of family-use-task-run-for-cpu-bound-work-3cde3adb; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-winui-theme-resources",
+      "familyId": "family-use-winui-theme-resources-758df824",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=071d4e8ee9980774c12b209d5043c640dff88e58b3887e290146a5fb17e9e361",
+      "locator": {
+        "line": 12,
+        "row": 11
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L12 admitted as SBVF variant uupm-winui-use-winui-theme-resources of family-use-winui-theme-resources-758df824; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-x-bind-for-compiled-bindings",
+      "familyId": "family-use-x-bind-for-compiled-bindings-172c34ba",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a51631862199f596ebf8b3572d6e779d9cf812c6adee3c9817fe4959e154c103",
+      "locator": {
+        "line": 2,
+        "row": 1
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L2 admitted as SBVF variant uupm-winui-use-x-bind-for-compiled-bindings of family-use-x-bind-for-compiled-bindings-172c34ba; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-winui-use-x-defaultbindmode",
+      "familyId": "family-use-x-defaultbindmode-d7d12aa9",
+      "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8ecc96969debd5de7680054581bda5e17efef64a945932b89c0acf4872d94bf6",
+      "locator": {
+        "line": 5,
+        "row": 4
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/winui.csv L5 admitted as SBVF variant uupm-winui-use-x-defaultbindmode of family-use-x-defaultbindmode-d7d12aa9; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

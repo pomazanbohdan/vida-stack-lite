@@ -1,0 +1,399 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/svelte.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "f6e379ba802941ba26b01d4ffbe3cd39120f2587659a1d93851c707f66bc13db"
+  },
+  "batch": "h2-a2-ae-1",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 53,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-svelte-use-for-reactive-statements",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1439feb1fbc23b6b8eef4fcbaea127ab51226f99044c30d41764a7d0420f6d6d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L2 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-trigger-legacy-reactivity-with-assignment",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2799dd0c466374487ea1079a5b1d32df187df10b5d8a6a6210117f3239fbc505",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L3 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-use-state-in-svelte-5",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=173d51f13610c7f7f1981a4226933bb7fae51e6eaeb1e7e20c3462b68d6ea509",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L4 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-derived-for-computed-values",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=78f81d46f3f568656d912593f33ab0231ef3c4eb4afbe63761f6b666db9360a1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L5 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-effect-for-side-effects",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9e25ae6f24699ddfc06642bee3e34560f2cdb26a0a584f5f14c5c42860215032",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L6 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-export-let-for-legacy-props",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=313b96f2cff54bb5b479de2247f38dc413c1ec1088f946d259612e0e5e59038b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L7 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-use-props-in-svelte-5",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=37d4eec78b90a5a56a2646c9f7c0b4d64dcd90e57ef5a8f3d6f230d9c4459249",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L8 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-provide-prop-default-values",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d45d5a6210a7ea694ce4a30f13aad5a524f2c332f089611c2a1f8c55ba8640ae",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L9 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-rest-props-in-runes-mode",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=398660e7ab576a5c9b5d8cd9078c73cf6cd860354f2aa91ae3dbacb2796d447b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L10 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-bind-for-two-way-binding",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af2b22ec60f6741455e23271b7038c8be8962046a0647f4b660802af15abb345",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L11 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-bind-to-dom-elements",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c3f5448d4ee7b8fc5bc766355d65092bde5aea1088faa5be902151e6593f46a5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L12 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-bind-group-for-radios-checkboxes",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a3453fdb9bf8aab727464d5bfd2161f52f013248daed941e4fbc5a4fa9d1bab8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L13 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-on-for-legacy-event-handlers",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3cc6215ad906e57bb6d32571a2342e3a2997db9c7d355188a2cf12aeb5396110",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L14 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-forward-events-with-on-event-in-legacy-mode",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6ce52bc9bb92098cb210580d0bc3e11da57787322aa9f184ca6d850a5ad3e992",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L15 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-use-createeventdispatcher-only-in-legacy-components",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9b2430016aa2f3ba0d67d689db9b9b73550980c95cd2a9ca42b70767034a4976",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L16 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-use-onmount-for-initialization",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=54c140f77b71afdc945483acc19552b08c78c886dc14e6fe0f4a3b63a2291554",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L17 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-return-cleanup-from-onmount",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d36dd633c853433ff2c166cdbdfee10751ed5357706a8dc20d3465fb14c92a22",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L18 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-ondestroy-sparingly",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a3dbd7106cbbf2efa06838357bb5cb44a3abb536ce6f1b11618889265f1816cc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L19 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-avoid-beforeupdate-and-afterupdate",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3677ba644fbfd1e37dc8f38443b6f423af2af93f27fef7921ae565e60088b4c5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L20 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-writable-for-mutable-state",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bd355697ff9758fa0e4512d644305bca0eb353f5f737b4525b98e728257f1581",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L21 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-readable-for-read-only-state",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e01425fb7de554bef4bca2c8d1b636903cafdc61b29bc0c74d607e49abdcdf8a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L22 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-derived-for-computed-stores",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9c6f0795131206ee1a56d89c998cfa5d72705cf248825cae63f5edeabc15b174",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L23 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-prefix-for-auto-subscription",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1a6a485f8d544783dea011e81b5c5bf1da006bd3b0a07257e4304c375ac34087",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L24 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-clean-up-custom-subscriptions",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=86b191618fa59219ad6efd9a4bf1c365d3578f6045f79143f493d85cbc5d82df",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L25 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-slots-for-legacy-composition",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=be7f840e3a83e976580a6f25f51b7582272761194289c4bee20c72ceee450991",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L26 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-use-named-slots-for-legacy-areas",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f27d52aa1414bec78a3a830a94b3907c7e5c96b5d15237fc29504695cad6d3ac",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L27 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-check-slot-content-with-slots-in-legacy-mode",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=076560a096362164ce049de18fb8f01b46b4395e5f74ba67d560b1060600c6eb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L28 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-use-global-sparingly",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e3a902a2a0552ffaa54cca42954e37b8278c825d36cd162abaa5de725c2a200",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L30 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-built-in-transitions",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=779b138260bf87680098d93d68908ce442473bcf4f0b2e4b7e5d1766b620ea70",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L32 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-in-and-out-separately",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=524e156cafe55496b1503e781abbeeee87402e0b372957885bd19c27672f8f81",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L33 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-add-local-modifier",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2daecfad7769e38533c5bf3622d888019b71f203a068d040ab4303bfb63131ba",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L34 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-actions-for-dom-behavior",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dac5fc89a5f87674c207060577034106ab511b47d734747af8750811c52cc0c6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L35 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-return-update-and-destroy",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1364a537582ea860c2a67ccddc86d260e47999e8e3adbab8b9090a9a91aa5844",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L36 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-pass-parameters-to-actions",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0c7f4a57eee6729691ba429a5b8b01861998175d64a9340dc897f0351c90679a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L37 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-if-for-conditionals",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0907b7b07bcb59b0b35b9cd4e14ea32effc995dd6431aee82302df979213fead",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L38 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-each-for-lists",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=27c619e6ac7491d51e793a1557f8b1b3395a17b31f76116210dbb3a28359480f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L39 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-always-use-keys-in-each",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b68fd7553d8cdd21d4845d4ad2148e30c4cf871888e724bc2df55863421b4cfa",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L40 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-await-for-promises",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d2b389246460389e8a8de59c37216221181117b77072772868107aa334742aee",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L41 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-page-svelte-for-routes",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2ac8c666b327fdcdf41726ebd7d0803ed2f2ca603b3e9c9c8e4804c4accdc418",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L42 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-page-js-for-data-loading",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6341735571fdb28a35de21d1b79878376d72d51e9e493573d5fefa1e8b39838a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L43 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-page-server-js-for-server-only",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3439fec945e7219cebc968650973dfeb45e9a0b5aa3519e6c108f6c5a281a29d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L44 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-form-actions",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9daf819ac1522c3205c9839ab194443dd0392564f1c2cfde0c6fc455be76f21b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L45 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-app-stores-for-legacy-app-state",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3c85f37f50a462aed0cce3704785707d71fc0e3f3466119474dd6db099c5a26e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L46 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-use-key-for-forced-re-render",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ea50d2f2cb749a09903aa02f9021672fc119c41f03efc20f0e66a8483ad71b73",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L47 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-avoid-legacy-immutable-compiler-assumptions",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3ce9b539cd47a7630e569e96a28c057e41617e3617bdf1aed0b1c878bebc5c6c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L49 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-lang-ts-in-script",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b155822a8009db52f5bc48f93f98287227c3154b98950e37fed45e16974d5a7f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L50 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-type-props-with-an-interface",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58d755bde84ecd276bf250b3f4fa69ba198fb950785ec87728f2a0db85731657",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L51 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-type-legacy-events-with-createeventdispatcher",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5c92d6aa0c2d566e6f4f5a9a2ac959a80560e675c450e788969c1bd39fcbab4d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L52 per svelte.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-svelte-add-aria-to-dynamic-content",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=266a1fabc1bff2e69242a2b0fa585f2ec6825d5f65994e391a32eaef1061f3d8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L54 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-event-properties-in-runes-mode",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6970a734444c8e3dfe62c789f805ff263300210ec349f70d324c2fd888bfd8db",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L55 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-app-state-for-current-app-state",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=77dcb19e315f62a8208169f3cac23d7a0b6b57d7ee8c1fd22fee59faaef3e7c2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L56 per svelte.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-use-semantic-elements",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=afe2f67370a67b344526b46def8a84eb8e8c3349f70370b998754940593acf93",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L53 per svelte.json HELD + owner ruling family-use-semantic-elements-24a21964 dissolved (family-of-one); singleton admission outside any family. Whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-svelte-avoid-unnecessary-effects",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f38da4cdccbb907f62b976bb6d6aac08b4d4df8eb596c0780fb86a3eb7241424",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/svelte.csv L48 per svelte.json HELD + owner ruling family-avoid-unnecessary-effects-d6b2db8c excluded from js-ts-web batch (react.csv L9 rowKey collision with subspan v2 receipts, D58); singleton admission outside any family. Whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

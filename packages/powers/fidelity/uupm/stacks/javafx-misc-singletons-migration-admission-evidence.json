@@ -1,0 +1,26 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "misc-singletons-migration",
+  "recordedAt": "2026-11-12T10:02:14.047Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/javafx.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "2e819b8d5abdd23ad4dae0991650fdb57af497aabd68b37463aa9c442944c869"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-javafx-use-spacing-and-padding-consistently",
+      "familyId": "family-use-spacing-and-padding-consistently-1ba38b2a",
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5459f497b6757e8cc6b179525f75841e2c1a07769a650c521ae3c437547a3aa4",
+      "locator": {
+        "line": 16,
+        "row": 15
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/javafx.csv L16 admitted as SBVF variant uupm-javafx-use-spacing-and-padding-consistently of family-use-spacing-and-padding-consistently-1ba38b2a; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

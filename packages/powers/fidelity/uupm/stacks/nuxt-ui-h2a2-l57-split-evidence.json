@@ -1,0 +1,146 @@
+{
+  "schema": "H2SplitEvidence/v1",
+  "recordedAt": "2026-11-10T15:30:00Z",
+  "source": {
+    "donor": "uupm",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4"
+  },
+  "decision": "Admit stacks/nuxt-ui.csv L57 ('Use UInputDate for date selection') as SPLIT under the owner-approved D57 deferred-sibling dedup amendment (2026-11-10): the 'Use range when needed' fragment becomes its own VPInstruction/v1.2 singleton; the two L71-covered fragments are bound by exact code-point subspan to the L71-derived instruction uupm-nuxt-ui-use-uapp-locale-prop-for-internationalization-pass-locale-to-uapp (claim-equivalence, Touch-Target precedent ux-guidelines.csv L23 -> uupm-ux-target-size-minimum). The Applies To cell ('nuxt-ui 4.11.1', col 10, metadata-applicability) is covered whole-cell by the new unit's own applicability (conditions_applies_when); corpus bindings are restricted to normative-* cells per D56 §6.1, so its coverage is recorded in the coverage table rather than as a binding cell.",
+  "rows": [
+    {
+      "file": "stacks/nuxt-ui.csv",
+      "line": 57,
+      "rowKey": "path=stacks/nuxt-ui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=51c8d3838a13d688c70ce3f0c5c752b458ecc396eb0df4d637378966d3684faa",
+      "locator": {
+        "line": 57,
+        "row": 56
+      },
+      "units": [
+        {
+          "instructionId": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+          "candidateUnitId": "use-range-when-needed",
+          "unitLabel": "use-range-when-needed",
+          "rowKey": "path=stacks/nuxt-ui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=51c8d3838a13d688c70ce3f0c5c752b458ecc396eb0df4d637378966d3684faa",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"use-range-when-needed\" of stacks/nuxt-ui.csv L57; binds L57-unique fragments as exact code-point subspans per D56 amendment and SR-111."
+        }
+      ],
+      "crossBindings": [
+        {
+          "instructionId": "uupm-nuxt-ui-use-uapp-locale-prop-for-internationalization-pass-locale-to-uapp",
+          "variantId": "uupm-nuxt-ui-use-uapp-locale-prop-for-internationalization-pass-locale-to-uapp",
+          "coveringRow": {
+            "file": "stacks/nuxt-ui.csv",
+            "line": 71,
+            "locator": {
+              "line": 71,
+              "row": 70
+            }
+          },
+          "establishingCells": [
+            "L71 Do fragment 'Pass a locale object to UApp' (bound subspan [0,28))",
+            "L71 Description 'UApp locale configures component messages, formatting, and direction' (whole-cell)",
+            "L71 Code Good '<UApp :locale=\"fr\">' (bound subspan [0,60))"
+          ],
+          "fragments": [
+            {
+              "cell": "Do",
+              "columnIndex": 4,
+              "text": "configure locale on UApp"
+            },
+            {
+              "cell": "Code Good",
+              "columnIndex": 6,
+              "text": "<UApp :locale=\"fr\">"
+            }
+          ],
+          "verdict": "READY",
+          "notes": "Claim-equivalence coverage per D57 amendment rule 5; locators resolve to the L57 row per rule 6."
+        }
+      ],
+      "coverage": [
+        {
+          "column": "Guideline",
+          "columnIndex": 2,
+          "cell": "Use UInputDate for date selection",
+          "mode": "whole-cell",
+          "boundTo": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+          "note": "L57-unique"
+        },
+        {
+          "column": "Description",
+          "columnIndex": 3,
+          "cell": "Date input supports single dates and ranges with locale inherited from UApp",
+          "mode": "whole-cell",
+          "boundTo": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+          "note": "L57-unique; 'locale inherited from UApp' has no establishing L71 bound cell"
+        },
+        {
+          "column": "Do",
+          "columnIndex": 4,
+          "cell": "Use range when needed and configure locale on UApp",
+          "mode": "subspan",
+          "spans": [
+            {
+              "text": "Use range when needed",
+              "boundTo": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+              "note": "L57-unique (range mode)"
+            },
+            {
+              "text": " and ",
+              "boundTo": null,
+              "note": "separator-only gap"
+            },
+            {
+              "text": "configure locale on UApp",
+              "boundTo": "uupm-nuxt-ui-use-uapp-locale-prop-for-internationalization-pass-locale-to-uapp",
+              "note": "L71-covered: claim-equivalent to L71 Do fragment 'Pass a locale object to UApp' (+ L71 Description 'UApp locale configures component messages, formatting, and direction', Code Good '<UApp :locale=\"fr\">' corroboration)"
+            }
+          ]
+        },
+        {
+          "column": "Don't",
+          "columnIndex": 5,
+          "cell": "Third-party date picker libraries",
+          "mode": "whole-cell",
+          "boundTo": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+          "note": "L57-unique; L71's Don't covers string translation, not picker libraries"
+        },
+        {
+          "column": "Code Good",
+          "columnIndex": 6,
+          "cell": "<UApp :locale=\"fr\"><UInputDate v-model=\"range\" range/></UApp>",
+          "mode": "subspan",
+          "spans": [
+            {
+              "text": "<UApp :locale=\"fr\">",
+              "boundTo": "uupm-nuxt-ui-use-uapp-locale-prop-for-internationalization-pass-locale-to-uapp",
+              "note": "L71-covered: exact substring of L71 bound Code Good fragment"
+            },
+            {
+              "text": "<UInputDate v-model=\"range\" range/></UApp>",
+              "boundTo": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+              "note": "L57-unique; includes '</UApp>' which no L71 cell contains"
+            }
+          ]
+        },
+        {
+          "column": "Code Bad",
+          "columnIndex": 7,
+          "cell": "<UInputDate locale=\"fr\"/>",
+          "mode": "whole-cell",
+          "boundTo": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+          "note": "L57-unique; L71 does not prohibit a locale prop on UInputDate"
+        },
+        {
+          "column": "Applies To",
+          "columnIndex": 10,
+          "cell": "nuxt-ui 4.11.1",
+          "mode": "whole-cell",
+          "boundTo": "uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed",
+          "note": "L57-unique applicability scope ('nuxt-ui 4.11.1'); owned by this unit and carried by its conditions_applies_when. Column role is metadata-applicability: D56 §6.1 and the v3 bindingCell role enum restrict corpus bindings to normative-* cells, so coverage is recorded in this table and the instruction frontmatter rather than as a binding cell (no admitted row or precedent staging binds col 10)."
+        }
+      ]
+    }
+  ]
+}

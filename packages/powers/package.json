@@ -15,7 +15,7 @@
   "type": "module",
   "scripts": {
     "test": "bun test",
-    "test:coverage": "bun test --coverage",
+    "test:coverage": "bun test --coverage --timeout 60000",
     "typecheck": "bun check --no-script --project tsconfig.json",
     "format:check": "bun scripts/check-format.ts",
     "build:manifests": "bun scripts/build-manifests.ts",

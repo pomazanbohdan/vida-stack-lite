@@ -1,0 +1,102 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-ux-focusable-error-summary-retain-inline-errors",
+  "variantId": "uupm-ux-focusable-error-summary-retain-inline-errors",
+  "variantBodySha256": "e14d51c497c2ddb1d244876260978963bce9aee11511af1a05cd06feeb5fd7f6",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b9b30ac5cbc4eee1021c37ee2f5bcf822296b8107d842652c3714435e55fb8a2",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "7552af74c07155d9395d38a89c710780acc5f0b5b6533d38e4e2d17553f1b088",
+        "locator": {
+          "line": 110,
+          "row": 109,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 110,
+            "row": 109,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "fed210dec263b50e818ef1b499b02142dff3bdeefe609233fe619716eee5a87d",
+        "locator": {
+          "line": 110,
+          "row": 109,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 110,
+            "row": 109,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "56408b45808cce5b33a5b3b668480a87fdda26725fc790942fe8b3778ded4ec8",
+        "locator": {
+          "line": 110,
+          "row": 109,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 110,
+            "row": 109,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 130,
+            "endCodePoint": 150,
+            "textSha256": "dd6c3c8bd7928a7129ac59cf8ae832c94c096d705fdcfa5da98b24e0bc5a6975"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "ef3b1e389f1e4d14ddc63914991adf45f7241c26bb417a007153d87c05550619",
+        "locator": {
+          "line": 110,
+          "row": 109,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 110,
+            "row": 109,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 48,
+            "textSha256": "f136b316956bf795c393d6f3731828d016d5303c2859a5a8e3975b826b7e1de7"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/h2a2-split-ux-rows-evidence.json",
+    "sha256": "d52b5ca5369d47086ad24b61c79ebd83bfc0186cd0ad08f2ed564ab9c43286c4"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

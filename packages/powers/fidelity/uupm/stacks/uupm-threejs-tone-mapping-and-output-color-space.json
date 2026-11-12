@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-threejs-tone-mapping-and-output-color-space",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/threejs.csv",
+    "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e392806753413aeec0a6a7c24ddc7e878ad8865fc5a5b5e65dfbca4ffedc20f",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "b3775584cea62d747ea8e28743f03f3a3025cabf11c97219a79c10e91e5219cb",
+        "locator": {
+          "line": 41,
+          "row": 40,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 41,
+            "row": 40,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "e1d98ad797eae9bdce780cf80ae37b1f9d878c87398d4111d4c2ec5637e5a5fb",
+        "locator": {
+          "line": 41,
+          "row": 40,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 41,
+            "row": 40,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "dd911969a45027c84fee721f9831bbf47caa207fb628a224bd54133f94d101f7",
+        "locator": {
+          "line": 41,
+          "row": 40,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 41,
+            "row": 40,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "e1e7971a66a7f04b6e9f533838cd2405460bc402570a85131170ab46b45e06f7",
+        "locator": {
+          "line": 41,
+          "row": 40,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 41,
+            "row": 40,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "bba397696abe57b4447f699c075eac19248353b214735a1d0ac345afd314780b",
+        "locator": {
+          "line": 41,
+          "row": 40,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 41,
+            "row": 40,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "e02736d44fff8ccbd9576f52b9cc29d5f3c76dc8e45b8ac0884bf6ac8529d835",
+        "locator": {
+          "line": 41,
+          "row": 40,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 41,
+            "row": 40,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/threejs-evidence.json",
+    "sha256": "25bbc945ef87760566ad436276f373440700600877e09cc0e4cb4e24b0c5ba03"
+  },
+  "recordedAt": "2026-11-11T13:05:28.876Z"
+}

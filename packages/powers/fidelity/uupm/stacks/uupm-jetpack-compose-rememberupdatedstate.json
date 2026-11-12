@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-jetpack-compose-rememberupdatedstate",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/jetpack-compose.csv",
+    "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58e006489f17c451575cfc995ed622afbc4a26f4d4bd880ab9789cabd20e0482",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "837ea9c274c74a5e9a7f09085f6daa4501f71f56178afc5584245968fe310247",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "91b4cdfa3d29189a967e8ed8010b802c1389b86676a6d80837126dba06a6fbdf",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "837ea9c274c74a5e9a7f09085f6daa4501f71f56178afc5584245968fe310247",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "a0e9e4565a9d53cfe0a1c950375d07eab7af0e6ac5696355524434f9b647d6a1",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "71e9cf861ce52d5d4496a2d54d3461a065789c5fb94b8ce74a9cdc3f2d3405f9",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "2beb33fefa9298db00e7edf90705c3200410a1e2aa13d3f5b1d6a781dfd1ce3a",
+        "locator": {
+          "line": 11,
+          "row": 10,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 11,
+            "row": 10,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/jetpack-compose-evidence.json",
+    "sha256": "2799e0d75adf79851cd87bf196c18f5d9e42a64420fc1b89a13ba5935cad26f5"
+  },
+  "recordedAt": "2026-11-11T13:05:18.178Z"
+}

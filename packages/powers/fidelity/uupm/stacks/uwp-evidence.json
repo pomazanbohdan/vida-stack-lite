@@ -1,0 +1,322 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/uwp.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "c409f08c1fbba1f1029f1acaa554e7b4471cc85517a5751c9f2e62465badcd5c"
+  },
+  "batch": "NF-06",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 42,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-uwp-use-x-load-for-deferred-elements",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af2b9011951683b0a19d2f3eb07835c06bf4c9518fbcd14cfef2a06f54314a6c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L3 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-x-phase-for-incremental-item-rendering",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7e4b1ff0939f17b8379a3e1b518196dd8cc45a74e26948710abfff13087da67e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L4 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-x-deferloadstrategy-for-legacy-support",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=56454ff9d01986e8d371070242f10ac4263b1bf8c00042aa33b1d2fc6098ea34",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L6 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-contentdialog-for-modals",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1f92342edda0f7e77131f286be913b1caf6658e62798eb5319d0feb2fc113be8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L9 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-autosuggestbox-for-search",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=63cc90b8dacd61cd8d91b7cc1a30bdd51222f79cdc688486f4020c9116444dbe",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L10 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-calendardatepicker-and-timepicker",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=41faf6cf95e7d9b20c73ec5302b5e2405aafa127815aa1e394426b7b203c90bf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L11 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-personpicture-for-user-avatars",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=09eaaaa5fcffccc8654d138f9b5cf9f2414f32d8884198de3e35f1acc16c8a84",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L12 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-themeresource-for-adaptive-colors",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2a0dfe2777073920a87cf6110d37c8028f6d1ffeb34ef2712a3feeb3170f421a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L13 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-fluent-design-materials",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8709cd5904afa21c1f6bf622996019d798ad0f349f30d28f4f2f381a8d4c19a2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L14 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-implicit-styles-for-consistency",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8f0ac0d756267ab8a361fa240cdc451c007e28af63e279254ab7bdeb4cc9834e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L16 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-visualstatemanager-for-visual-states",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2b82cabf5b6e3dda0c13d376ab0709a176e9d21c9e3239c9a3f709ba835ba290",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L17 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-support-deep-linking-with-protocol-activation",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=23f7372506d4caf4d7cfca2869ec5b153d1f2bdcab361223a7d58a728471ac42",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L20 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-connectedanimations-for-continuity",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=68e315f84accc5a5d522ae416522fa72925bc3cd030649fb27c06d5e304a86d4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L21 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-function-bindings-with-x-bind",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f4b77c8104c2f08e15fe461a0a2e60768ad7fc847d0a291192454c54bebdb12c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L24 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-specify-mode-on-x-bind",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d8180a0c41ef7587bd2454b93b9733aabb3a7827f123badd87b325b87e38bc94",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L25 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-collectionviewsource-for-grouping",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=185abdeddf494f612ff2cfd444b9c42c8cea8b9e4ec38122eb5d4b7040cb5d4a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L26 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-listview-and-gridview-virtualization",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e6978b81adb1493226dbb00fb00cbec501bc6cf8c5c89fee4b5df3c8e317bd6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L27 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-isupportincrementalloading",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=86b977ac08982a3c4062f655a4b91d94093c9d1541af114cabb4a86bf3998a78",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L28 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-reduce-xaml-visual-tree-depth",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=72d514b2d440e506b3a2e20f649003cdcb4cdae9922472a10ae65542781a9f89",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L29 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-compiled-bindings-in-datatemplates",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2a70bc8693fb28b33c2719479ff0e19e6b278091add6b5c4a43d4b0949c37ad9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L30 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-profile-with-visual-studio-diagnostics",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ff97842a8fddbaab92f9fc14351ca1482581fbb4864d01a7dc39b5b493419d1a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L31 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-async-await-for-all-io",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bb773c78fbda4de0ba756a223b1fa44d764e352732b81c5f4b320023776dd714",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L32 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-coredispatcher-for-ui-thread-access",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=02f52cf2e87f281cd05887ebc3270b1dc555a6a186435ddaa1c22bcc414b2b26",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L33 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-offload-cpu-work-with-task-run",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=41cf6b8ef66148e56712ee4d5cb072562fc002e5361f658f5f4efa1a6f6c1930",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L34 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-iprogress-for-status-updates",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0a2b26d28d8d6a7109a3262f0c82f90a9c672d94131f693970e67e5ccb142c48",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L35 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-adaptivetrigger-for-responsive-layouts",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a146f51d0695d4d643c31efd0380e394bc89cbb7fea949a79a31671fb1a33cbb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L36 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-design-for-multiple-device-families",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bcec85be0e01c871217d58bb213fba1765bbf3aa249c35cfc9c3c25e780fe69c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L37 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-relativepanel-for-adaptive-positioning",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b4b482ba0ba25cc778f742c2ade63273f1f30ababd23efdf58b59185b0a87bba",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L38 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-support-multi-window-with-secondary-views",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6680f187fd51ba82f62ab47bc3b39a4c582863fd8c40c4d16e3910912ef67ca3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L39 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-support-keyboard-and-gamepad",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f2c64e054ab0bc1bf7d0712e617f41a79ff905cab2a6f0462354bd55b9e22dc5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L41 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-support-contrast-themes",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dc13e766e407064645e0725f45c2466ac7f53a0a6ab3d26a606374abd74ddc10",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L42 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-test-with-narrator-and-accessibility-insights",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=35723be1800e17794e92c412e3e4cfd731f6b7852649d0e9b06f6bf849380bd4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L43 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-template-studio-for-scaffolding",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4428d6bc46256cce7c46c522e716d6a144819a5498a776237403f16fa98014d4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L45 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-keep-platform-apis-behind-abstractions",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8fe0397438e767f6715250722d17ab2dc76ad07f3e9edb3b3d17a6a7497d9ee9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L47 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-handle-suspend-and-resume",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2cb58c923e8cc375e213407e63e6d64b1b95079735311aff6649ddcd9c112ed5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L48 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-extendedexecutionsession-for-background-work",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=29dd29d37585b526fff216e69dc5a3530876ffbaaf883a245412a7c732989420",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L49 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-handle-prelaunch",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1568ccf81ecd68d2c9484f7852f4923c0d1fc3d3b0873383fa773ad052d186e1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L50 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-winappdriver-with-appium-for-ui-tests",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dcc16e2175f902c653803500e773ef21ffdd9132b8ca2e74ea5d11c05b3c67ea",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L52 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-test-on-multiple-device-families",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c0ab8211b8e6bce28f5df5a792aef384d5cd7a4ba00081cfc2f5d1341b10c49a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L53 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-prefer-winui-3-for-new-projects",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=01568938ce1ead913c4d4725df57d10487599bf45aabdf94cdc6562d42c1fb67",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L54 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-plan-migration-to-windows-app-sdk",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=65ea92b1c7af5f9447c565412a51623ec76f0ff7e9fb0e740b83347f447f2f7e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L55 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-uwp-use-a-deferral-when-saving-async-state-on-suspend",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=37f6fd537b8a5a471d226f11badbdfa0d95fef66b80ba9d8d01322470618248b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uwp.csv L56 per uwp.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    }
+  ]
+}

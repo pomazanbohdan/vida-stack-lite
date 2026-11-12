@@ -1,0 +1,38 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "js-ts-web",
+  "recordedAt": "2026-11-12T07:05:00Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/vue.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "b655f1ebb9dff2652d15981f31b1784c8a6d4759efd2815a14f3088257569f95"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-vue-use-computed-for-derived-state",
+      "familyId": "family-use-computed-for-derived-state-d111c3bd",
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fbb3780cab1876863ff242af60a16f41906adfd1bbc4f2a8a1e769dcb6f7ebbf",
+      "locator": {
+        "line": 7,
+        "row": 6
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/vue.csv L7 admitted as SBVF variant uupm-vue-use-computed-for-derived-state of family-use-computed-for-derived-state-d111c3bd; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-vue-use-onmounted-for-dom-access",
+      "familyId": "family-use-onmounted-for-dom-access-ffd0d226",
+      "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5cfe2bb6bd592bdcb4e8304f3c628792834054345519bab58df8d2dfdd8d90f7",
+      "locator": {
+        "line": 17,
+        "row": 16
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/vue.csv L17 admitted as SBVF variant uupm-vue-use-onmounted-for-dom-access of family-use-onmounted-for-dom-access-ffd0d226; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

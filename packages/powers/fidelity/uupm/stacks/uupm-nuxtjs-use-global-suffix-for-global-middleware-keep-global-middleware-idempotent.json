@@ -1,0 +1,155 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-nuxtjs-use-global-suffix-for-global-middleware-keep-global-middleware-idempotent",
+  "variantId": "uupm-nuxtjs-use-global-suffix-for-global-middleware-keep-global-middleware-idempotent",
+  "variantBodySha256": "a10884419fe7441c349efacdabad81887c7d4e5b8579bf1109ce3c8f723ce9c1",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nuxtjs.csv",
+    "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d5ac70208b23b19b75f5ac31a0bfa81db50226c0c8fedbd3d9ff3a8b011a29a",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "c71a97c2e6666d7fe779b65f34f1ebe11dc4f101b9e2dae96ce51d4e06e6a9d4",
+        "locator": {
+          "line": 38,
+          "row": 37,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 38,
+            "row": 37,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "b13f72b138806763d2a9dc532232518fdbecea5ae28069e56f53a3c42951c65b",
+        "locator": {
+          "line": 38,
+          "row": 37,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 38,
+            "row": 37,
+            "column": 4
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 55,
+            "endCodePoint": 135,
+            "textSha256": "370a3a2d29c69eae9db81d2d1266bcab65b546d448f21017ae0e9d7a34944fc8"
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "3650a181cca5c59fb64eec7dec4e241b794ff82b62b06549d362531b7413618c",
+        "locator": {
+          "line": 38,
+          "row": 37,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 38,
+            "row": 37,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 52,
+            "textSha256": "3650a181cca5c59fb64eec7dec4e241b794ff82b62b06549d362531b7413618c"
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "1c45d27cc48cf9114611cc907d709bd0100ac6de7d6718ad7d6bd6f64a4db50b",
+        "locator": {
+          "line": 38,
+          "row": 37,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 38,
+            "row": 37,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 27,
+            "textSha256": "1c45d27cc48cf9114611cc907d709bd0100ac6de7d6718ad7d6bd6f64a4db50b"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "74831d88e3c2636ec9ae2702f6448843bb889efa5a189c2955f08b01218287e7",
+        "locator": {
+          "line": 38,
+          "row": 37,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 38,
+            "row": 37,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 29,
+            "textSha256": "74831d88e3c2636ec9ae2702f6448843bb889efa5a189c2955f08b01218287e7"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "743ae1212fa335d385f2418eb520feace8143b437a4e887d1fb80df52d147ed6",
+        "locator": {
+          "line": 38,
+          "row": 37,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 38,
+            "row": 37,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 55,
+            "textSha256": "743ae1212fa335d385f2418eb520feace8143b437a4e887d1fb80df52d147ed6"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/nuxtjs-h2a2-split-rows-evidence.json",
+    "sha256": "15bba0d4706750b3d822321f23ca3b92cfb46c88ca2bde7b8447ca78d3854d40"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

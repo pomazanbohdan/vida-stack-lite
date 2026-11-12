@@ -105,6 +105,7 @@ export function loadCorpus(root: string): CorpusView {
     if (!file.endsWith('.md')) continue;
     const raw = readFileSync(join(instructionsRoot, file), 'utf8');
     const { data, body } = parseFrontmatter(raw);
+    if (data.schema === 'VPInstruction/v3') throw new Error(`audit-report does not support VPInstruction/v3: instructions/${file}`);
     const id = typeof data.instruction_id === 'string' ? data.instruction_id : file.replace(/\.md$/, '');
     const provenance = stringList(data.provenance)
       .map((line) => parseProvenanceLine(line))
@@ -123,6 +124,9 @@ export function loadCorpus(root: string): CorpusView {
 
   const mapRecords = new Map<string, MapRecordView>();
   const map = readJsonFile(join(root, 'corpus-map.json'));
+  if (map.schema !== 'VPCorpusMap/v1' && map.schema !== 'VPCorpusMap/v2' && map.schema !== 'VPCorpusMap/v3') {
+    throw new Error(`audit-report does not support ${String(map.schema)}: corpus-map.json`);
+  }
   const donors = isRecord(map.donors) ? map.donors : {};
   for (const [donorId, rawDonor] of Object.entries(donors)) {
     if (!isRecord(rawDonor)) continue;

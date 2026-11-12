@@ -1,0 +1,378 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/html-tailwind.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "d05a581d20af57b8ca0104a6d31d90a07c437d500662a96c3029fc2f9a4678ee"
+  },
+  "batch": "NF-01",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 50,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-html-tailwind-use-tailwind-animate-utilities",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=92812222c71e44a14f195b244511aa196ab28a636af570c3cc43441a1c6fc842",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L2 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-limit-bounce-animations",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a20dfaaa429dc8c50248a15b95f690ff573f7d285cd65f1d0868ca42d7ac774f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L3 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-transition-duration",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e870a5ef66161c8b9a55f370faeb5b846d84accb942723b80c74c0d38e1284cb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L4 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-hover-transitions",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fdae5d2efda9396910ba4a1ff592fee178f20b17c27e1775cb290770bccd4065",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L5 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-use-tailwind-z-scale",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cb1686b0ee9431caa66b01b69c6ac9f3ec529d2b0996b950c4294f78ca38a2a9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L6 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-fixed-elements-z-index",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=574be26add8c72af41e5033723b14038dfa57ff75d366900efbe4ab5f3bf03db",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L7 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-negative-z-index-for-backgrounds",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=76623ec96eed3dcf6856294b98c9a47b597dc0f017082897168a9169ec7924f7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L8 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-container-max-width",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2e6aebbccd968720c0f2ee3510b506db517a4d06468c77bcba34c0d9f7d70cd4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L9 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-responsive-padding",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e915af7d9ecdc3aacd6f80259658ca8cec7dc6351732ef83d277c8fd78403e2f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L10 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-grid-gaps",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=27030dec893c034e01495fc3f46ac923fd83d8e3f572b131454bd6570846ec26",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L11 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-flexbox-alignment",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0a22dd0dcb1115d0aeafc740c1ee25fc7c62326c6e77e5b3801da6756d16f917",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L12 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-aspect-ratio",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b54953d1636a8413dd1e7b5588ae3abd66a1980db29580a869090452010f62dd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L13 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-object-fit",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1dabc80dae8634b5205d8c69977b298591826116dbeabed58c2592ac2e208d4d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L14 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-reserve-image-space",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1981d12ad2fc3fe77e1b3e68fc9271be5c00f8198e8d19d79b0f11e1f62f04fa",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L15 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-responsive-image-layout",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e0800b0dbe0885355519b80d8beb2c8772bdcbf37fb881456e82884718d70a4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L16 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-prose-plugin",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5de254e53889749b5a69c1108c22c22092434071bc6966ad457380fab7bd401d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L17 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-text-truncation",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1933ace554895571255b9ea1e5e6adbfa18e3ab1656a233219964730b893a5eb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L20 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-opacity-utilities",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fef5d94016b68f44a9a013380436378704627b5265f8d1916a227555a52caf08",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L21 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-dark-mode",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=34c1a50954130e166882c9a018803db5279b681e9e343d44719c9840971638a2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L22 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-semantic-colors",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8f3d33757260c8b0f11553fd5bdeb9b9a3c5a757dd04cb2ecbc4f3a8ddfd4383",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L23 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-consistent-spacing-scale",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2ac000d2592b619d1178b2dc6051bf63e5256ea3a978ed3973894c196e826106",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L24 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-negative-margins",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5bab9720a99089cb8f91de576bb8e63e211f5cb3debd671150ec1e49983c27e3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L25 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-space-between",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f251fa3267f25f1e1706e9cc856bf99f05c468c201b26de14180f17135db8936",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L26 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-input-sizing",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=41801a66810753d54234904f7e29a7abb521a7261b111cf8a7565c35c0594d0c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L28 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-placeholder-styling",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bfea37585a25c74928ce34e39eed022c5c98ae5db158effdadcd961ee518e9f1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L30 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-mobile-first-approach",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=705006e49898a79c2cecd9865c4bc5cdedea1c2901b09f8a8632afd4c9e0a90c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L31 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-hidden-shown-utilities",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6daf529405765d8aa853ad506ee3bcf0435119992e56be0e0aeed7a35d069ddc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L33 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-button-sizing",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6de9532711eef8bc2ed7ccd337fc74bf870b64c84f0def99aca14b19376d444e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L34 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-touch-targets",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4a55407f1fb0618b1747b5515b678689a2a84c8b5a5bd03d4c172f0394bfc3ff",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L35 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-card-structure",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5684287ec5ef7d41bb52a60f1082a80871c0adf0da67a92469ae54407e13e094",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L38 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-card-hover-states",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=607dff4315839457643e619f90fd2428e96d53854e37cd120eaef96710fc1a84",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L39 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-card-spacing",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ded72b3ae109df1a5d6971d9314f0249ed2e69b6a4f1bc37ef4289e237f43c03",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L40 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-screen-reader-text",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a419cfb445d1ca0732a048e079607e98133c1b4d57396d2e73709891bcb9337c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L41 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-focus-visible",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7d96b09eda884a7292e4232b8f5d8e07c56003ca2d6c436ebe7507f37175844b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L42 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-declare-non-detected-sources",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0df14e9939fa9ea656317e81c181e909488777b37df585b78c8884f7710bb28e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L44 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-jit-mode-migration",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b51c1ac03f0b94cb27572f539b0c41cc68505b4088e4298f66171b1322087d5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L45 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-avoid-apply-bloat",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=93fa97c619580c3277174d749029a6bba8a2391b791a48a7a45016a783b718e9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L46 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-official-plugins",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ed047bbef373ff0c62d5d9fc7affeb3136101d73119ab5fd6d294526d2fc1ee",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L47 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-custom-utilities",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=37a72ca1023369a2529dce325e49f5972c3d261dbc136b41f273faf50a591391",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L48 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-container-queries",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4e2bd45392942bad409d333d2553bcd3a703864ed545b3c05322034f4ba3e861",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L49 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-group-and-peer",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=28d7cd40d63b90f99e0bdb065c0900df2a179ab4650f52b8a1dc161550d3ea2d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L50 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-arbitrary-values",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c153e2bfd58c4a9cf33b8edc01318cc014e8c71b5ca75677ae451ee3335e1238",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L51 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-theme-color-variables",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=41d3b2d62752eaaf34032a4f28424b25c4558d149b7c6826f6346cff47e89348",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L52 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-use-bg-linear-to-for-gradients",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b2c6b4e03981eda5de252f3d28bd6ff146302a7b57f113b5f8f1ab063bb86901",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L53 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-use-shrink-0-shorthand",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4a0de8ebf032f0b3048e78cd2b3c646d409e31bebebd3185b35ccb436b5b788e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L54 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-use-size-for-square-dimensions",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a22264021311a94360497cf34d75b28ba8e19f0f6c675323be750bd7605a6c28",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L55 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-svg-explicit-dimensions",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=75f1bb3906e1764c986dd63437808757784073652ea96556d4f51082a99bb73b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L56 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-use-complete-class-tokens",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=72c958a1a9aff0e0c434b6ac39085c1e7422fce7cc937eddbc6cff97299630cc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L57 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-balanced-heading-wrapping",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7aa3d326e775cd27532ffab0b066fd0b4e4441dbb231f6a419b59ede62a537fe",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L58 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-html-tailwind-long-token-resilience",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=efd7da53e70754ed9fbe0f0b0a7020f7aa72422988b756e917fcadcea07a7ec0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/html-tailwind.csv L59 per html-tailwind.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

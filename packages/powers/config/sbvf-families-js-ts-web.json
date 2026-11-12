@@ -1,0 +1,103 @@
+{
+  "schema": "SBVFFamilyManifest/v1",
+  "families": [
+    {
+      "family_id": "family-add-accessibility-labels-43cd8497",
+      "title": "Add accessibility labels",
+      "summary": "Add accessibility labels to interactive elements; each stack variant keeps its own guidance.",
+      "rationale": "React Native and SwiftUI share the accessibility-labels norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-react-native-add-accessibility-labels", "uupm-swiftui-add-accessibility-labels"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-analyze-bundle-size-1bee1185",
+      "title": "Analyze bundle size",
+      "summary": "Analyze bundle size to catch regressions; each stack variant keeps its own guidance.",
+      "rationale": "Astro and Next.js share the bundle-size-analysis norm; stack-specific tooling and examples stay in separate variants.",
+      "variants": ["uupm-astro-analyze-bundle-size", "uupm-nextjs-analyze-bundle-size"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-handle-loading-and-error-states-ff3861a4",
+      "title": "Handle loading and error states",
+      "summary": "Handle loading and error states explicitly; each stack variant keeps its own guidance.",
+      "rationale": "Flutter and Nuxt share the loading-and-error-states norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-flutter-handle-loading-and-error-states", "uupm-nuxtjs-handle-loading-and-error-states"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-handle-loading-states-52f592e1",
+      "title": "Handle loading states",
+      "summary": "Handle loading states explicitly; each stack variant keeps its own guidance.",
+      "rationale": "React Native, Next.js and SwiftUI share the loading-states norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-react-native-handle-loading-states",
+        "uupm-nextjs-handle-loading-states",
+        "uupm-swiftui-handle-loading-states"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-support-dark-mode-9bd99e0c",
+      "title": "Support dark mode",
+      "summary": "Support dark mode; each stack variant keeps its own guidance.",
+      "rationale": "Flutter and shadcn share the dark-mode norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-flutter-support-dark-mode", "uupm-shadcn-support-dark-mode"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-use-computed-for-derived-state-d111c3bd",
+      "title": "Use computed for derived state",
+      "summary": "Use computed signals for derived state; each stack variant keeps its own guidance.",
+      "rationale": "Angular and Vue share the computed-for-derived-state norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-angular-use-computed-for-derived-state", "uupm-vue-use-computed-for-derived-state"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-use-css-variables-for-theming-f918fed6",
+      "title": "Use CSS variables for theming",
+      "summary": "Use CSS variables for theming; each stack variant keeps its own guidance.",
+      "rationale": "Astro and Svelte share the CSS-variables-theming norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-astro-use-css-variables-for-theming", "uupm-svelte-use-css-variables-for-theming"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-use-file-based-routing-0927fbb8",
+      "title": "Use file-based routing",
+      "summary": "Use file-based routing; each stack variant keeps its own guidance.",
+      "rationale": "Astro, Next.js and Nuxt share the file-based-routing norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-astro-use-file-based-routing",
+        "uupm-nextjs-use-file-based-routing",
+        "uupm-nuxtjs-use-file-based-routing"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-use-onmounted-for-dom-access-ffd0d226",
+      "title": "Use onMounted for DOM access",
+      "summary": "Use onMounted for DOM access; each stack variant keeps its own guidance.",
+      "rationale": "Nuxt and Vue share the onMounted-for-DOM-access norm; stack-specific APIs and examples stay in separate variants. Both members are deferred rows admitted by this batch; no already-admitted singleton migrates.",
+      "variants": ["uupm-nuxtjs-use-onmounted-for-dom-access", "uupm-vue-use-onmounted-for-dom-access"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    },
+    {
+      "family_id": "family-use-scoped-styles-by-default-28f83eaf",
+      "title": "Use scoped styles by default",
+      "summary": "Use scoped styles by default; each stack variant keeps its own guidance.",
+      "rationale": "Astro and Svelte share the scoped-styles norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-astro-use-scoped-styles-by-default", "uupm-svelte-use-scoped-styles-by-default"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z"
+    }
+  ]
+}

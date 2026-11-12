@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-winui-mock-winrt-apis-in-tests",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/winui.csv",
+    "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=76620762c0652c80bc50bc36957f4657153b53d647c8b59a316439b6025f5704",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "c54716dec6da61450ad7958b732391bca63dac3f91887bb573f5a7c67f6cfcaf",
+        "locator": {
+          "line": 45,
+          "row": 44,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 45,
+            "row": 44,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "7c2d6727ed689f4b52f9bac02b949cf1909b066071869ad116463e7e980766d8",
+        "locator": {
+          "line": 45,
+          "row": 44,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 45,
+            "row": 44,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "10a152fba2599550c81d554c74d5eea5f28bf234736e9305467fe0c34e824a08",
+        "locator": {
+          "line": 45,
+          "row": 44,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 45,
+            "row": 44,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "ca8cbec8b549662698bc3e4fdd7f3477d1d05e8f69449648c1eed772d2717c77",
+        "locator": {
+          "line": 45,
+          "row": 44,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 45,
+            "row": 44,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "c0d9d8880c2f56310acd7e20be1717c6b252d7364a03c02404cec9a4f80c6294",
+        "locator": {
+          "line": 45,
+          "row": 44,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 45,
+            "row": 44,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "629580c8f240e5296b235f80ef4a3fa1daf2a282ab186c7ce877145da5608152",
+        "locator": {
+          "line": 45,
+          "row": 44,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 45,
+            "row": 44,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/winui-evidence.json",
+    "sha256": "ac986c52701df08ff9ebe5e210ae54873d0b53c0d4909c3770053248058143b0"
+  },
+  "recordedAt": "2026-11-11T12:55:23.014Z"
+}

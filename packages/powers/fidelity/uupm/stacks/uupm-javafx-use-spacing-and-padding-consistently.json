@@ -1,0 +1,132 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-javafx-use-spacing-and-padding-consistently",
+  "variantId": "uupm-javafx-use-spacing-and-padding-consistently",
+  "variantBodySha256": "2492ec61f7f9ad232a735f9ad770fac9a65ec30cec8aedb70ab767cb301aa628",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/javafx.csv",
+    "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5459f497b6757e8cc6b179525f75841e2c1a07769a650c521ae3c437547a3aa4",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "columnHeader": "Guideline",
+        "cellHash": "8b5422014df9117311c3940897dc5905b56627777ed7bf987434f0a3485082bb",
+        "role": "normative-title",
+        "locator": {
+          "line": 16,
+          "row": 15,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 16,
+            "row": 15,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "columnHeader": "Description",
+        "cellHash": "14143fa739ee451eb93d046fd2fd9fbb34dad5c599bcc536e73a2fe2775aa7ca",
+        "role": "normative-description",
+        "locator": {
+          "line": 16,
+          "row": 15,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 16,
+            "row": 15,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "columnHeader": "Do",
+        "cellHash": "a0b230c4e27efc9bd6713514521032cff1befeb0d6c1375da7a82f3981d1d396",
+        "role": "normative-direction",
+        "locator": {
+          "line": 16,
+          "row": 15,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 16,
+            "row": 15,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "columnHeader": "Don't",
+        "cellHash": "f02bc311af4a7feb10e2855e8166d88d1ed385a00d6c98d24ece84f0a6dfae5a",
+        "role": "normative-exception",
+        "locator": {
+          "line": 16,
+          "row": 15,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 16,
+            "row": 15,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "columnHeader": "Code Good",
+        "cellHash": "b1fa7acf04a75429f7f42d5db74276cd402e3ebd0f51fa641df076674d72011e",
+        "role": "normative-example",
+        "locator": {
+          "line": 16,
+          "row": 15,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 16,
+            "row": 15,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "columnHeader": "Code Bad",
+        "cellHash": "29d206e91ad8f65592734a69d5c5f1bdd6d344e33959ea8ce355eb83c2ebfd36",
+        "role": "normative-example",
+        "locator": {
+          "line": 16,
+          "row": 15,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 16,
+            "row": 15,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/javafx-misc-singletons-migration-admission-evidence.json",
+    "sha256": "fb49147a282da33836c5cf4f6a1eefd8740db8b7c4137b56e76dce9204aa4c33"
+  },
+  "recordedAt": "2026-11-12T10:02:14.047Z"
+}

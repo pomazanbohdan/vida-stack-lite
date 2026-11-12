@@ -1,0 +1,343 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/uno.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "a0474363e4225b5367214d5675fd3e075f137026f9500f0d04357882ef4f6d48"
+  },
+  "batch": "NF-06",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 45,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-uno-use-winui-xaml-api-surface",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dbdced3065171841709e2516ec5bfa894aea8b3139ca682ab7c75f5d70cd3dc7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L2 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-check-api-implementation-status",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ced63de550f02d30b212440a2f297aa88a36695b26df128201243d6a55b8edcf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L3 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-uno-winui-not-uno-ui-for-new-projects",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=86e3daf780c056eb08e0ec327314b169d601f3b7669cc7fe8d85eaff3f2591b8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L4 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-xaml-hot-reload",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=36a03e591fc0ff534250205ce85b52f3cc319fee4d7e71db2bda0cb7fc6b2954",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L5 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-platform-specific-xaml",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d598e96d2c3bbbbbce29ce4335ad33bea22b4d352f0f72b9f6b614a7f8bf4f16",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L6 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-partial-classes-for-platform-code",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7005215dca3a36b4ac32b15f9a891ff218ee291443cc08e76104a75dbac9631c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L7 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-preprocessor-symbols-correctly",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fd015c97508ae5118c1bcaa48e4a695b108cd6d3bf1e2e10b11d57802e7fc7dc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L8 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-minimize-platform-specific-code",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=96b320124a5f311312ddc8ffb06528d1db26e8ff60f40519d5a3673c29a81a0f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L9 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-frame-based-navigation",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=961cbb286ec3aeaa11b00945f67a43832b1cd73501fab67c32bc0d1aaa3ae003",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L10 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-uno-extensions-navigation",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ede024836c76a18cbf066a5f1ef8c085a1769ec62215208a2402f7c68a622e54",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L11 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-handle-platform-back-navigation",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7f5a4fd9f5e7c17fc4140d26b1233898c5db6795f122b59547dadafa24fcb54d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L12 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-understand-skia-vs-native-rendering",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1ed700fb0d50aabd47a8042bf9ab792fb9eaa7f364429cefbfd0bc23f0ebb0ca",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L14 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-unified-net10-0-desktop-target",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=086accf416b6987a675ba7eef7f6e0b18d602ef37f39d8fa9cbce6732811d25a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L15 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-test-rendering-on-each-target",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e7d5f2ec1e22cedc94b6efacd54843120517b52221621a3f56417d4a62a907bb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L16 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-platform-native-features-when-needed",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=49206179bd0b447f1562ff447c2312c1806f0bb5a9280c225fcbbd46fdaaf837",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L17 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-optimize-wasm-bundle-size",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e6a93a68d5ee8f4ea13b16f9937869d012d4520c7453f603f9e4a70941513922",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L18 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-x-load-for-deferred-xaml",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0524b891bc11ceed8f1373a638e6f16f2542447e1f747468055fbafcc597f8f2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L19 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-profile-per-platform",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e2026579f4458b0d63895176cdc39399f053293567b4505c761b2950c36efc6b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L21 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-test-themes-on-each-platform",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fd03b17b9b14b1ce451b7c849599ca7c01873ecdc276320fcdd0576e2921626d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L25 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-uno-extensions",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e889296cd3c3de05a77cdad7b81336dc4eb05276a041d8facbe2e6b2d22f4b9c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L27 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-share-code-via-class-libraries",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=813b640e3a905af1488d5ffe41cc8264b48eaa66be817b2a8cfae70d822b4196",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L29 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-uno-resizetizer-for-assets",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=df0a8f363aa97bfd44fa09f66a7ed598efd5dc4b16992718d0469bf9592a0ed7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L30 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-test-accessibility-per-platform",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=61215a5eefbe6abf6aaef95170fd208e29f6bc3124db9200c9937385f58cd16f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L32 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-support-platform-text-scaling",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=256b117748a8c6b69fa007828e276212d6523d0370813e91291a014f418ff782",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L33 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-uno-uitest-for-integration",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c297aeef41ed364ef8e8e701b3625e2f7a52f3718f86e27bf6854e83c56b11bb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L35 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-show-an-extended-splash-screen-on-wasm",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e28e7d3c557eddb1358e8fa7aba4814cffaa2d761d5f9adefbe211c5aa865b38",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L36 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-aot-compilation-for-performance",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=65495f66f73f165d349415736761297da0cd684c32be268fb170def24effcc24",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L37 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-handle-browser-limitations",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=98a780cf163576e56eaa96a9bc20963a80831ad26f7e321784a863acdbf9267f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L38 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-toggleswitch-for-boolean-settings",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=80605ff67fec0b654aa30b3ba0ad378613aa28d89af612840819a6cec4c0238e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L42 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-observablecollection-for-bound-lists",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=53029abda4e45ce31241d1d597678016be75992f1c68900e346fbd854a22c767",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L44 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-handle-app-suspension-on-mobile",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2cc839020a34e72fe926ce43f36785fcf7fbe44495dcfadf2be16b4b8b266877",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L45 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-uno-extensions-hosting-for-startup",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e79ef9a34e64fdf5f42c65a830bf3ed1d5e5dca430af9b1d280e9b7f5ea9e52b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L46 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-listview-virtualization-for-large-lists",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=47ab132927c0c0bcabb9289173696783b3c9c6ea34ff2b88eda84e5a84cb8fa4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L47 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-support-keyboard-navigation-on-desktop",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=34e290427010089c776efb170036579ce1e35dba8dc17da6ecd467c81dd6db0c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L48 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-service-workers-for-offline-support",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8da8fdaffa570ddf8517648860b289c7fb2bff27f6e569df269d20914efccf65",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L49 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-marshal-to-ui-thread-with-dispatcherqueue",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=25cc485ec9688cea7fbd37bf4df8d939a458a8ab805c8d35c396ed38b674d4c3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L50 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-merge-xamlcontrolsresources-in-app-xaml",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1cc3d097fb5f8bf9ad01470b59725f130e95725dccc473e02f1b6e8e7cd05bc7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L51 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-async-relaycommand-for-i-o",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e389732283ae34b274dfb1faaa5767f1b16ebccc7e949d0d26969bc408fdc57b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L52 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-x-uid-for-localized-strings",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=097b44bbc3cb59470bda439cdf09b8c0160adb6ebf21f2ee543c6dca21931d56",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L53 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-wire-up-ilogger-via-uno-extensions-logging",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=de7f02f8f3bf5a31da3cbd12119f8acf3d61b6eac5b5cfd7af9a4c99e2bb24ed",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L54 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-enable-publishaot-on-net10-0-desktop",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=90ddf2090e9ea2c84199cc2b5b7e184ce3e237dbb8d5871a59df63a09c8e9c40",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L55 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-define-themedictionaries-for-light-dark-and-highcontrast",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c6c690bfa855fc86e2383be47ba436c9e38a09d44491fe8d564ab15a26b1a2f5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L57 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-uno-sdk-with-unofeatures",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f4f0cdb35d2724092b28de54c6192514962ae5f9f5a5e321b7622eba23b582c3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L58 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-persist-desktop-window-state-via-window-closed",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5ac3a04c2a93cd1697e410780659118df7d5473b51754571cec4077fd4ab15c5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L59 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-uno-use-winrt-interop-for-native-window-handle-on-windows",
+      "sourceRowOrdinal": 59,
+      "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=edc6326fad40468a677764faaeb8746935218bc10d5f8ffa672bb510646d98c5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/uno.csv L60 per uno.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

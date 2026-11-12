@@ -1,0 +1,148 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-html-tailwind-compact-label-layout-single-label-overflow-control",
+  "variantId": "uupm-html-tailwind-compact-label-layout-single-label-overflow-control",
+  "variantBodySha256": "57b9b6dab823b03696e807da26a55e82d21fd3696d8b73ba4d893e3679616624",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/html-tailwind.csv",
+    "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=53a8f7d5d91927a68b57d2db061ae7269193a30606bc32aac67542c0712e47a7",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "ca03ac595387b69f7c3b9d5bb7bc698e5ee936fcc372ee0bfcdd0f7fa226c340",
+        "locator": {
+          "line": 60,
+          "row": 59,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 60,
+            "row": 59,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "ca17709c14e5b88f17aa72b22885af42066fb7ebd51503df0eadbce7463773a0",
+        "locator": {
+          "line": 60,
+          "row": 59,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 60,
+            "row": 59,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "4f2136497e4585d345b7d7b1e13094a2462a9f738054c39d6c997fd114d989cc",
+        "locator": {
+          "line": 60,
+          "row": 59,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 60,
+            "row": 59,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 42,
+            "endCodePoint": 124,
+            "textSha256": "9c7006dbfb04e940434ec9481c0881ec8cf6e90afb34b8296ab6c247a368a1a5"
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "68c83d3f9795f263c364e232f0f02c923478cb294cf7f4811b404118ff5daf28",
+        "locator": {
+          "line": 60,
+          "row": 59,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 60,
+            "row": 59,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 81,
+            "textSha256": "68c83d3f9795f263c364e232f0f02c923478cb294cf7f4811b404118ff5daf28"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "e3991a2d242780e4ac5283a70e1f762e1fcf1f3209089b11562476a6838e90dd",
+        "locator": {
+          "line": 60,
+          "row": 59,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 60,
+            "row": 59,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 77,
+            "textSha256": "e3991a2d242780e4ac5283a70e1f762e1fcf1f3209089b11562476a6838e90dd"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "994774de27e6864364fd4eea23451a00c8c610ea1911e3deea8a5294bb9685a3",
+        "locator": {
+          "line": 60,
+          "row": 59,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 60,
+            "row": 59,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 24,
+            "textSha256": "994774de27e6864364fd4eea23451a00c8c610ea1911e3deea8a5294bb9685a3"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/html-tailwind-h2a2-split-rows-evidence.json",
+    "sha256": "185d7fe51b68b3aa5dd847fbb19b4f0b0d01079c2c02d47573128d204dfe7b81"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

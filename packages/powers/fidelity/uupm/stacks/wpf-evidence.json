@@ -1,0 +1,364 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/wpf.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "9781a9950b20333637b30a02e498b7efca21b618a3eeb8665836f3ac6e974da7"
+  },
+  "batch": "NF-07",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 48,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-wpf-use-xaml-for-declarative-ui",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f7f6281b27961f16a719a90b23d725c7bfcf0d069628f0b30e68c4ef1565a9be",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L2 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-set-x-class-on-root-element",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6bcdfe68ba373effbce10c19aaf5b0bfbda9bd59b38ea370cc8290471b92836f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L3 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-x-name-sparingly",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=db038ff5eb2ca0878340f80bd2e5886e0d8dc2b90a3bc7b2ce36cac79b9073c6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L4 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-prefer-attached-properties-for-layout",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f45f8282b2382b49bcda907f8f4a6a9743d5f7b219d39a72c3dc5abcb2dfeba1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L5 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-routed-events-for-tree-wide-handling",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f038b1f5eba05aea3b02887679bab6cbf2ecf3bd46db9a31ecfc5f1bdb8c48ae",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L6 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-set-datacontext-at-the-right-level",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b0a79bb3abf15e7fdc9e1809a079ec37ffa56fb066cfef29383db5b46462ea24",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L9 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-prefer-binding-over-code-behind-assignments",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3f5b0fdce27248a18c5aceaa97034e371768e80b3408a40420fdc331562b8467",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L10 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-updatesourcetrigger-appropriately",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0f26b8eb61691d7ed0d3be85d71a3fb2cc77f21d9569b9a8f2882cb40141eeee",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L11 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-ivalueconverter-for-display-transforms",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=30859344b14d556f11e1c293cc8c9b327fa48e54032b985dc8d203677c667741",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L12 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-inotifydataerrorinfo-for-validation",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=31268f99a4a37f324cffbe026f8fedb8356c7aed3a5575a4591c1a4756f3a4f3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L13 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-grid-for-complex-layouts",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=81fde599a3ea397ae33f5015f6af330dfbe90ffa2bddd4bbbde0f0ba544efd8f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L14 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-stackpanel-for-linear-content",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e04d43ec2eb299b3b38d2ee13fd6ae7d73db3d1e74265a78a3d5bf99353f95e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L15 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-dockpanel-for-docked-regions",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=38e8cec2e253fecb4951ed417bcfa1214e3d6cf698c7076fb3db163c8253a268",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L16 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-avoid-hardcoded-sizes",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fcb41b89338e3d97b90bd7029311735a4cb155f42afbe8a9c79607f599ddb0f3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L17 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-scrollviewer-for-overflow",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=709bff00ba8fa08af55715bb7998ee368f193c70a7aa46b8f0caa748717725fa",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L18 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-resource-dictionaries",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=19526d2fdf20b5c0f225eeea496c02b90de98724f1b1c86c25ef67a77d923dbb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L19 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-pack-uris-for-embedded-resources",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=747c5f5a6e826e80cd479a13674fe38bbd6e8f397c9ab341b2586fecaf6f6c63",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L20 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-implicit-styles",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=02e88d3375ca0e17c5056f1956a4913438388c19f825f92c8e92a3a54f51a19f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L21 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-explicit-styles-with-x-key-and-basedon",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=846dc4a0d38e5758fe71e8f8f9e6cfd01f8e986f2af63313a4c75720d883935e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L22 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-prefer-staticresource-over-dynamicresource",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7770a5fb7d99efde20383f8dd02050090740ea76c9b146282dcce3b49fff870b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L23 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-controltemplate-for-full-control",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5a32c77b5171a43beaa69fd09a63c16e4e1e721cb4dc9f351688937be93ea9f1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L24 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-datatemplate-for-data-presentation",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fcec09d94f6d514770fd3288df1f3bf77111c0b41675d89e12b855235f54efe1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L25 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-fluent-theme-on-net-9",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2e8718eba6f8c122760774eb3be7d1487e012b62c9a3b9dbdd80bf6072d97bc9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L26 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-icommand-for-user-actions",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=44f863ac56ff477d55b7a613c89a6a94bc69c3fea2ce0728630a1e1d6090b16e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L27 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-canexecute-for-enable-disable",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=723591193dd1e24d9dbfb181d1a2d482828b150b0d138adfa72b2ec10618f36f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L28 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-relaycommand-or-delegatecommand",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c77d8aa673a785353f25f647c3056187fd88c24151c6bcabec0b0e0df835785a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L29 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-asyncrelaycommand-for-async-operations",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d39cf680c50cfb425a64d01d92cb0e1124b7efb2d8ae820b024975ea012a60ae",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L30 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-commandparameter-for-context",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6783a83f94fd463f2d34450d3f93a77f021fe001da52fc1a5fa1f326ca3c4e88",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L31 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-inputbindings-for-keyboard-shortcuts",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dc98584ec1d56cd9be020a2903ccd050e14d498de40de4e73ef6efe3c1c3028d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L32 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-virtualizingstackpanel-for-large-lists",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=71ca89adf117e5347289f26a75668faf55ab76fd54c5081cf31f8e51d4668dd0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L33 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-freeze-freezable-objects",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d57c0dd709325ae209c206ff3db2ed6516ba47f771e41f56228d86bddf505f78",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L34 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-dependencyproperty-for-custom-control-binding-targets",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b1bf9f270c836772260f33e2ab6b076ad933226f21f24d4e5b98cd5b23b6e40",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L35 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-async-for-long-operations",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4f75097d26922b1d99cf968e26fa45366465f58d6e8635462428518d4a3ec63a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L36 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-profile-with-perfview-and-visual-studio",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b9e767005bab4b9858010464bef7218055b5383ff64d707bac76a8e0b101e1f7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L37 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-dispatcher-for-ui-updates",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=34ba4dcf259859f3729040a6db5d14c500245fc2da36f012de9926f762c11f9e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L38 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-prefer-async-await-over-dispatcher",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=071cedd6e47042a963d4f3803af5b026202d6890473bba583f0aa86fd92a618c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L39 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-report-progress-from-background-tasks",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=48a547fb8171efe4444dc61ab2d61a31fa4bd8ab49329baf2d5533e7f0ccaae0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L41 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-handle-dispatcherunhandledexception",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=980797412b96650b2ccd863118fdd86229a9797ab52d423eea5a2576db9ceed1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L42 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-support-high-contrast-themes",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=46130604bb30d38fa0bd178b05348b04669023c16918c06b52b7db00434ceed6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L45 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-appropriate-control-types",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=497a5b34f41ef50abcb24bd49b80e460071851da92299a0198b004ae78c19701",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L46 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-support-dpi-scaling",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=385129c8028ea08989958e4a6cc5887ffd2e7480517d0f4eb231f4b79b6c7724",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L47 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-declare-permonitorv2-dpi-awareness",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e23fb5a7ef47bbe05f2f2a1a2148108904ec76d179d532333c088cc77d624ab1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L48 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-override-app-onstartup-for-app-initialization",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d1c8c5ba2507d299f4f97d505b57be3d700622031cdb1adbea1004ad651d88ca",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L50 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-communitytoolkit-mvvm",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0a7ef8ae08c7054005738b7e38b129ade2b775482306250a2a41c4cd35417e1e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L52 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-keep-code-behind-minimal",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2f50890ff4d833695cf0c5e31d3a00457501480f5b1dbf5ca6715b8de89806c2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L53 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-messaging-for-loose-coupling",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2388da91655a9d1ddd51e7aef09d13ef2636060b6075ba41fd692ef2668e46ac",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L54 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-mock-services-in-tests",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3eae887d1773c317ef88e448da21481c3c8bc65808f0272aa8c74e3deb42acce",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L56 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-wpf-use-ui-automation-for-integration-tests",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f650793a8891ea8c60a79cd293790887f909d210c8e6064af55b1b3675c6fe0f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/wpf.csv L57 per wpf.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

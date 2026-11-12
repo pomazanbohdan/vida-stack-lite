@@ -1,0 +1,125 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-laravel-use-lifecycle-hooks-appropriately-updatedfoo-for-property-changes",
+  "variantId": "uupm-laravel-use-lifecycle-hooks-appropriately-updatedfoo-for-property-changes",
+  "variantBodySha256": "075c50dd2b036c063cc9d4852918eabaeda0570be9c9dc78faaa1c7d92d0be62",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/laravel.csv",
+    "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8c43db18219bdfdab0be992d185f2e5d2fe0db329f247e0ee6ab481371633421",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "996d5b470ec3f540b9aa3017129c311b72495091073f892750c13615ff9337d8",
+        "locator": {
+          "line": 13,
+          "row": 12,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 13,
+            "row": 12,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "da3b66beba6ad2a2e9eb9de8022a68a96a0e230aabf0ed574623e37954d9cddb",
+        "locator": {
+          "line": 13,
+          "row": 12,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 13,
+            "row": 12,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "a8c61ed993c9289ebc2a27019838d225e9b4714b320030dcb9c82cc74e7cadfa",
+        "locator": {
+          "line": 13,
+          "row": 12,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 13,
+            "row": 12,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 27,
+            "endCodePoint": 60,
+            "textSha256": "dca8ea8e8e5a085da577cc00f3f913ce204abd6902ea6bdf9ec6e32e36031eab"
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "8b7ff1454c7227051e72766819b61bcf06455985e7bbf871999e5fa217a999fb",
+        "locator": {
+          "line": 13,
+          "row": 12,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 13,
+            "row": 12,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 40,
+            "textSha256": "8b7ff1454c7227051e72766819b61bcf06455985e7bbf871999e5fa217a999fb"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "f064e3f5174ba06506e3180dac6c2e6a7cee097bb8e34c8ec7dbec7843e429a5",
+        "locator": {
+          "line": 13,
+          "row": 12,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 13,
+            "row": 12,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 62,
+            "textSha256": "f064e3f5174ba06506e3180dac6c2e6a7cee097bb8e34c8ec7dbec7843e429a5"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/laravel-h2a2-split-rows-evidence.json",
+    "sha256": "5e2a8303821ca6cdded325613350bec453eee83ffc6635d20879d5f098fa47a1"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

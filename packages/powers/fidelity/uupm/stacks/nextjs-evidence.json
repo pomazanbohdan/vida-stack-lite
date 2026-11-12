@@ -1,0 +1,427 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nextjs.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "ecd2c27b2ea0127d203ae726060efcdd7335b5e83f96b99e4f3befbbfeebd5a4"
+  },
+  "batch": "NF-03",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 56,
+    "rejected": 1,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-nextjs-use-app-router-for-new-projects",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2ed6bd16a1e98574786650840ae4c6c85b58436a319d2b53675659822004cbd8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L2 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-colocate-related-files",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5f7fa5c375db7a8b7087f633d4ebcd153652b4402a9cf8134775acfc50b9f95e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L4 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-route-groups-for-organization",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=10573e74073cab43dcb91f2e8705bafa32134c5eb7dbe8bf989557d001e7ad00",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L5 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-handle-errors-with-error-tsx",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=68c37ab0c25b5042a58a50806e5990f196f140b1ba18698d82b99bd95268c4a8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L7 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-server-components-by-default",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f0907ef3c574b2b216716fac5050e2f7f7e9ca38ee920b601cfa1045ca81313f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L8 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-mark-client-components-explicitly",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=24fb1a43fac1f89a4c30cf46a6e87d97b58d3b5714f637c56eeb9f3bae19bca6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L9 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-push-client-components-down",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e6f2cad02045f051539f2774ef84bac715587e8e0e86293c01f82aa14f8e3dea",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L10 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-streaming-for-better-ux",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fc69f240e73a27c508a0b3a839dddd3787f644444ea2e844c3aee4b4ec2b83bc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L11 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-choose-correct-rendering-strategy",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6d6b598d7d0cc5606f159cd7e94d9d82d6b055aad4fce7e9511cb5864947ad8f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L12 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-fetch-data-in-server-components",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8b63ce4360563c4c04bf9f4faa7b51ae3b0b768b8f328a298deff72833b631b4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L13 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-configure-caching-explicitly-next-js-16-2",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=016866cb059166f609c0e49e6e262d36dd467156c4d40d66fc642bf75550a3c2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L14 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-deduplicate-fetch-requests",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=62da6acefe11c011c5fda77c38f5a499c51389ddaa32aa9c5ea68e8eb99d870a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L15 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-server-actions-for-mutations",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=99593aa2aae6ee38d6825be4d33f19d8724b94778f7b3f0643544b706a6c8d9b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L16 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-revalidate-or-update-data-appropriately",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=37524ea3a51bda0e72c7020a8751ec5fe0c4afea38865486bdc189a3ae8d9ef0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L17 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-next-image-for-optimization",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=006d4965168386e7f301c2a21bfaf7d67e3a4e354d798f13dd729179ba797b54",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L18 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-provide-width-and-height",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6243bc66738b7e866055bd526e3e68b7098ffb0d3dc612b9726f93432bab6ef1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L19 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-fill-for-responsive-images",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=46f9a3b38e829313323f10804f2ca0e0369765b27b1c03bacfd70a7cf3efd828",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L20 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-configure-remote-image-domains",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9aa16e56d71a492160e134f8bbdd9c204e6ffc87a2ceac786c10c2a1e066e333",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L21 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-priority-for-lcp-images",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=22dbc4af474c1ef5cd2e55d48ea1182eab00e1eff4ffeacb3a1974914fe037b3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L22 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-next-font-for-fonts",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5cd249c9cdcdb5a1b46d0bf12de52f90ab800624270735d5db2382b32f9acf7d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L23 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-apply-font-to-layout",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=17965b98b6796c476f0c21bf2f8a5e78c46c253e6c2bee0e680d510653b1c0af",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L24 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-variable-fonts",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4c4b5f21c38f6ff7ce3d6d66ed7fed4eba8069bd2bc78a43a68bb97581d6628d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L25 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-generatemetadata-for-dynamic",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5f7d1d22cee72343a0b9d95fd6609bfa68dacfc927983ec9551eabdd97a178d1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L26 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-include-opengraph-images",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=95d5fee4306fd5c3d74b51053973ac93fd4bc59d79d4b5d01f1b145fe9b6a5e0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L27 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-metadata-api",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=980e6cd4b0db6d9ff72556a8b00f475dbc7aa8236181a5c796e045c0f81e0444",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L28 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-route-handlers-for-apis",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d891116de3810e950d2c4e1ddd6c211422ebfd0bce9cb52f9521de4768d37e86",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L29 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-return-proper-response-objects",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7f3ceb3e8ea4f1d99675c3299c496217daba0731324f25a892b383bf508d923e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L30 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-handle-http-methods-explicitly",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aff3c9d7d3f783ace2cab4c3bf5043d8a697c34e16804bba0943e2b05988364e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L31 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-validate-request-body",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6b906731c7c2afcdb09e48fa14fc8570685aa1e6bda47a20a77e6b343cd10117",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L32 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-proxy-ts-for-auth-and-request-guards",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b7f77a8332289c2c00052f583217fdc5e7f97add1634c05c9223a8d0b13e3216",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L33 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-match-specific-proxy-paths",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bd52ff79f789ef0e303dad279a64389e2249d5b5b5afde477284f79d7dbba738",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L34 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-keep-proxy-runtime-safe",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7c7e82fb990ee1e672e50acf379c83774508569411b3faf3df50a957964589cf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L35 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-next-public-prefix",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=39d34b6d927627c2599a0a7cfe82e946603d1a45aefbdffbfbe80ee75e22560f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L36 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-validate-env-vars",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dee59d06cc36d3cfac5a3968452b4c622490773188dbf23d7634cff0b35c3c17",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L37 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-env-local-for-secrets",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5f4e216120476925d3adff2e20dde006c403edf8a029f4cc685307b8261eb1bb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L38 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-dynamic-imports",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7b762982f45e0f410741b3e1a30b7cdfb0e546ab807746d2e17df01d3f3b22c1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L40 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-avoid-layout-shifts",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a59f0e6824e2bb12b78648621ac99d11a8ada6dede219ef8b45b4b9f938c7444",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L41 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-partial-prerendering",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=104b97c6265318715bd1f4f17f961da639d2c416b7b284c971cc738658cb2472",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L42 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-next-link-for-navigation",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d0e09babb9ba1dd58cb8714805235f11d056ed72073f89ad8e5d3742153c88c2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L43 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-prefetch-strategically",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5e60d3e3a042dc61b8225b86bb82e7bd65f72841c1c38760fd6c00e159979c1e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L44 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-scroll-option-appropriately",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b54f45203f6b982d7b90db709da6d96fb1d7e0123e4efadac7f9caf3ecd8abd4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L45 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-next-config-ts-correctly",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5937e2124703dc0f05b0ebba9c72f8f984ed5c1f6096278034a9ed280dfdbf2b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L46 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-enable-strict-mode",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2232c7776a51791343014a12e5ae2f24acf4f7be42afe7a812c209887cd94b70",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L47 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-configure-redirects-and-rewrites",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2ea1ad3559d5bb813b9bae3cc2fe5deeebce160b6459020b0972773cdb1e5771",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L48 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-vercel-for-easiest-deploy",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4a1df9e7c0d7184729146e19cff17379083e4696a1b15d55737a43248293785c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L49 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-configure-output-for-self-hosting",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=be97ee34227a946e3af325d66a3cff73f3a7a2beb6165fee2178654eb6a392e4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L50 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-sanitize-user-input",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b68844bf0699085b015dcd4b9e1e74b6ce1548928eac4ea9a0213339fb736e03",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L51 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-csp-headers",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b0dc54035e7e9112b402f015b115f59f283c7c35b2eb71ee3e2a63d8f2f909e3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L52 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-validate-server-action-input",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1b4387dd485e61eb2543ca882f8537d5d934548f8cb038af69a4f429340f2873",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L53 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-cache-components-as-the-current-cache-model",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af1bfb9a19bd18c3d8a2af3bf7d49e7ed372cfa3a74fb0d2946374663a5a0763",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L54 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-use-cache-for-cacheable-functions-and-components",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3357e81e80c835ea616524ce31bbae5d46f3f2f3f77f0b2875dfa9cfded0f5b3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L55 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-set-cache-lifetime-with-cachelife",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=676098fe2f5893e5c4eb4894d20e2c2e0a0c889132a1c2ee78c0775003d77dc7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L57 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-tag-cache-entries-with-cachetag",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aa4237d307e1ecb49dbcd0217e5ef5d93fe2d3cee3e7ff994ac09be67d976bc5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L58 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-updatetag-for-read-your-own-writes",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=04f48fbdf2a32b2b03ae6d6909b89a95befc45acbe18652d4f1bd98190303195",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L59 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-use-revalidatetag-max-for-swr-invalidation",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=350153e5f41c6168e9bc60718165490478709839c9f4db42c00a409546ad3eb9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L60 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-nextjs-treat-middleware-ts-and-export-function-middleware-as-legacy",
+      "sourceRowOrdinal": 60,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=64fd77eb3fa72279a3d2d443c0e91b12e37b7aa0a7b6bfc3b4c2b06e5598c223",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/nextjs.csv L62 per nextjs.json; whole-cell verbatim template body, cols 2-7 bound. CSV Status=deprecated -> deprecated-keep-atomic-v1 (status:active, legacy scope via Applies To)."
+    },
+    {
+      "instructionId": null,
+      "sourceRowOrdinal": null,
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bea758fd47c4a17ceda11582ac2aec7cef899c8304ec3987ce2401cffd083c4a",
+      "verdict": "REJECTED",
+      "notes": "Do-cell norm identical to deferred sibling line 33 (proxy.ts for redirects/rewrites/lightweight guards); Description nodejs-runtime fact and no-fetch-cache detail are covered by sibling line 35 (proxy runtime-safe, nodejs-compatible, no fetch cache options). Full per-cell coverage verified per D57 deferred-sibling dedup amendment (2026-11-10); covering rows admitted in the same batch."
+    }
+  ]
+}

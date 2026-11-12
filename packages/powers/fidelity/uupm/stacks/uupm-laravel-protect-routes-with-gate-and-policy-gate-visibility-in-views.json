@@ -1,0 +1,148 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-laravel-protect-routes-with-gate-and-policy-gate-visibility-in-views",
+  "variantId": "uupm-laravel-protect-routes-with-gate-and-policy-gate-visibility-in-views",
+  "variantBodySha256": "8deafa62c5aa313e707fd0aad7d3cec397c8bbd54bebf8d9497ab4a8004eb78f",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/laravel.csv",
+    "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7cff0163c93ffa158552f7f36dfe8caa011ee457e42a879d09dfe5d5c571fe62",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "e9313ce66b04f894713609608c3560a59d6121d15bfe5e5203bddfd19f07e772",
+        "locator": {
+          "line": 48,
+          "row": 47,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 48,
+            "row": 47,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "938bd8e624df1977d4d34fce3a5394b486ff065fc9ba8af659b1b5c53fd56d40",
+        "locator": {
+          "line": 48,
+          "row": 47,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 48,
+            "row": 47,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "e3611622439310d78bdf6995e596db97045f3c4eef639ebf77626b30e93312bd",
+        "locator": {
+          "line": 48,
+          "row": 47,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 48,
+            "row": 47,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 39,
+            "textSha256": "92ebc4b41735241d38e5217b1cc50e07952a5ae1c3192a14f2485703a0213a6a"
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "6e5c966f95e6814861486a67088dd6cfecb79cfb13454a9bfa0783ef21327219",
+        "locator": {
+          "line": 48,
+          "row": 47,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 48,
+            "row": 47,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 44,
+            "textSha256": "6e5c966f95e6814861486a67088dd6cfecb79cfb13454a9bfa0783ef21327219"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "9cc55464a0ac903a1f54351a716ef7a0d3861b51485dc2b091043074d2a6608e",
+        "locator": {
+          "line": 48,
+          "row": 47,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 48,
+            "row": 47,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 79,
+            "textSha256": "9cc55464a0ac903a1f54351a716ef7a0d3861b51485dc2b091043074d2a6608e"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "3e3e69bfdc661093c106f6149fb5948fd84c649ba91c073af91200647c551ef1",
+        "locator": {
+          "line": 48,
+          "row": 47,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 48,
+            "row": 47,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 54,
+            "textSha256": "3e3e69bfdc661093c106f6149fb5948fd84c649ba91c073af91200647c551ef1"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/laravel-h2a2-split-rows-evidence.json",
+    "sha256": "5e2a8303821ca6cdded325613350bec453eee83ffc6635d20879d5f098fa47a1"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

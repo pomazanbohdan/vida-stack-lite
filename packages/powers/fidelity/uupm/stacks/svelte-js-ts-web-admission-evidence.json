@@ -1,0 +1,38 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "js-ts-web",
+  "recordedAt": "2026-11-12T07:05:00Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/svelte.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "f6e379ba802941ba26b01d4ffbe3cd39120f2587659a1d93851c707f66bc13db"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-svelte-use-css-variables-for-theming",
+      "familyId": "family-use-css-variables-for-theming-f918fed6",
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bb7a06cc373a61c27cef6c8ac10579728d5469174ab72b2bb4da8df7938c881a",
+      "locator": {
+        "line": 31,
+        "row": 30
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/svelte.csv L31 admitted as SBVF variant uupm-svelte-use-css-variables-for-theming of family-use-css-variables-for-theming-f918fed6; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-svelte-use-scoped-styles-by-default",
+      "familyId": "family-use-scoped-styles-by-default-28f83eaf",
+      "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9e60eef0a9252700d5aa6469ae116a38d3a0d897ef4efa4f5f6be743c1b196f1",
+      "locator": {
+        "line": 29,
+        "row": 28
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/svelte.csv L29 admitted as SBVF variant uupm-svelte-use-scoped-styles-by-default of family-use-scoped-styles-by-default-28f83eaf; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 ---
 type: Decision
 title: 'D56 - H2 contract approval: VPInstruction/v2, VPCorpusMap/v2 and applicability'
-description: 'Adopt the owner-approved H2 contract for v2 instruction and map markers, applicability, CSV intake, fidelity receipts and the v2-aware validator.'
+description: 'Adopt the owner-approved H2 contract for v2 instruction and map markers, applicability, CSV intake, fidelity receipts and the v2-aware validator, with the 2026-11-10 exact-subspan amendment.'
 status: stable
 stale_after: '2027-11-06T00:00:00Z'
 tags:
@@ -19,7 +19,7 @@ sources:
 - id: step-h
   resource: /task-plan-step-h.md
   title: Step H source-admission plan
-revision: '1'
+revision: '2'
 ---
 
 # D56 — H2 contract approval
@@ -342,6 +342,10 @@ Value domains:
 Quantifiers:
 
 - declared facts are conjunctive: every declared fact must be satisfied.
+- within one dimension, multiple declared values are conjunctive too:
+  `platforms: [ios, android]` requires both `ios` and `android` in the
+  supplied context and is never a "mobile-any-of" match; a dimension has no
+  disjunctive (OR) form.
 - declared `requiredContext` tokens are conjunctive presence requirements; a
   token requires its dimension and canonical value to be present.
 - `optionalContext` is metadata only; a match never changes the result. Its
@@ -666,7 +670,9 @@ All preimages are UTF-8; structural preimages are compact JSON
 - `admitted` needs at least one binding, at least one `normative-*` cell, and
   the union of binding cells must cover every `normative-*` cell; an unbound
   normative cell invalidates the row. Every admitted binding requires a fidelity
-  receipt with `verdict: READY`.
+  receipt with `verdict: READY`. A SPLIT row may bind exact code-point subspans
+  under the amendment at the end of this record; the union of its subspans
+  satisfies the coverage rule when the complement is separator-only.
 - `merged` and `rejected` forbid bindings; `deferred` may have none. A deferred
   binding is evidence only and does not require a fidelity receipt.
 - `merged` forbids `resourceIds` and a `reason`; the target aggregates the merged
@@ -777,6 +783,8 @@ writes.
   locator and locator list.
 - `bindings[].fidelity` in the corpus map is a reference (`path` + `sha256`) to
   an `H2FidelityReceipt/v1` artifact; the receipt is the authoritative shape.
+  A subspan binding uses `H2FidelityReceipt/v2` and mirrors its subspans; see
+  the amendment at the end of this record.
 - H2 semantic fidelity is human under SR-89 unless the owner records a separate
   decision extending D18 to H2. Until then, `reviewer.kind` must be `human` for
   H2 admission; `delegated` is shape-valid but fails the H2 validator rule.
@@ -814,6 +822,10 @@ markers and performs the checks below.
 - every binding cell locator and `locators` entry resolves to a parsed cell in
   the **owning map row**, and every binding `cellHash` equals the re-parsed cell
   hash at that locator. A binding locator may not point into a merged row.
+- for a subspan binding, validate offsets, exact substring hashes, order and
+  overlap within a binding cell, whole-cell/subspan mode per column,
+  separator-only gaps and the exact receipt mirror under the amendment at the
+  end of this record.
 - recompute and compare `rawSha256` and `headersDigest` from the pinned bytes,
   `cellHashes` from the raw parsed cells, `cellsDigest` from the ordered parsed
   `cells`, and `rowHash` from `[rowKey, headersDigest, cellHashes]`. A mismatch
@@ -917,6 +929,15 @@ markers and performs the checks below.
     one row plus applicability per ID, and does not emit a composed bundle.
 42. The validator recomputes `rawSha256`, `headersDigest`, `cellHashes`,
     `cellsDigest` and `rowHash`; a corrupted identity-keyed row fails.
+43. A SPLIT row binds exact code-point subspans; the union leaves only a
+    separator (`; `, ` and `, whitespace) unbound and is accepted.
+44. An out-of-bounds span, a wrong substring hash, an overlap inside one binding
+    cell, non-separator unbound text, or a whole-cell/subspan mix in one column
+    fails validation.
+45. A subspan binding with a v1 receipt, a v2 receipt missing the subspans, or a
+    receipt whose offsets or hash differ fails validation.
+46. A v2 map or v1 receipt carrying `subspans` fails schema validation; the v3
+    map and v2 receipt accept the same shape.
 
 ### 11. Open owner decisions
 
@@ -945,3 +966,55 @@ markers and performs the checks below.
 
 The contract was approved on 2026-11-05; implementation is authorized within its
 scope.
+
+## Amendment — exact code-point subspan binding (2026-11-10)
+
+Status: applied under the owner's 2026-11-10 direction to fix the H2-A2
+contract architecturally. It extends the CSV row/cell contract in §6 and the
+fidelity receipt in §7; it changes no row hash, cell hash, locator, disposition
+or existing receipt.
+
+A `SPLIT` CSV row is one source row whose normative cell contains more than one
+independently testable norm. It is admitted as separate instructions only when
+every split normative cell is bound through exact subspans; shared columns may
+remain whole-cell.
+
+- A `bindingCell` in `VPCorpusMap/v3` MAY carry `subspans`. Each subspan is
+  `{ startCodePoint, endCodePoint, textSha256 }`: a zero-based, end-exclusive
+  code-point range of the parsed cell and the SHA-256 of that exact UTF-8
+  substring. Offsets count Unicode code points, not UTF-16 units or bytes.
+- The binding keeps the whole-cell `cellHash`, so `cellHashes`, `rowHash`,
+  locators, dispositions and merged-row rules are unchanged.
+- A column is bound either whole-cell or by subspans, never both in one admitted
+  row. Within one binding cell, subspans are strictly ordered and
+  non-overlapping. Across bindings, a fragment may be shared (for example a
+  shared operator or object); the validator evaluates the union of intervals.
+- For every column bound by subspans, the text outside the union must be
+  separator-only: after trimming, the gap is empty, exactly `and` or `or`, or
+  consists only of Unicode punctuation and whitespace. Leading and trailing text
+  is checked by the same rule. A mixed gap such as `, and ` is not accepted;
+  the producer folds the connector into a span or requests a contract change.
+  Non-separator text left unbound invalidates the row: a producer may not drop
+  a normative word, unit or negation by narrowing a span.
+- A subspan binding uses `H2FidelityReceipt/v2`. The receipt cell mirrors the
+  binding `subspans` exactly: same count, order, offsets and `textSha256`
+  values. A v1 receipt cannot carry subspans; a v2 receipt that omits, adds or
+  changes a subspan fails closed.
+- A SPLIT row's admitted bindings must cover every `normative-*` column under
+  the same rule; each binding still needs its own READY receipt. A held row
+  remains `deferred` until the owner resolves its applicability; subspans do
+  not widen applicability and do not turn a held row into a SPLIT row.
+
+`H2FidelityReceipt/v2` was introduced for family variants and requires
+`variantId` and `variantBodySha256`. The same shape serves a SPLIT singleton:
+`variantId` equals the instruction ID, and `variantBodySha256` is the SHA-256 of
+the instruction body as returned by the frontmatter parser. For a family
+variant, the body hash remains its `contentSha256`. The validator compares the
+receipt body hash with the bound instruction or variant body.
+
+The validator checks: start ≥ 0, end > start, end ≤ code-point length, exact
+substring hash, order and overlap within a binding cell, whole-cell/subspan
+mixing per column, separator-only complement, and exact receipt mirroring. A
+subspan marker in `VPCorpusMap/v2` or `H2FidelityReceipt/v1` is invalid. The
+live map remains `VPCorpusMap/v2`; adopting v3 and applying the prepared SPLIT
+rows requires a separate owner approval.

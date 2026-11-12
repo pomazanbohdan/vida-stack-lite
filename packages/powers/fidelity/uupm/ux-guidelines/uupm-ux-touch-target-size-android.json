@@ -1,0 +1,139 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-ux-touch-target-size-android",
+  "variantId": "uupm-ux-touch-target-size-android",
+  "variantBodySha256": "d89d22d0106477dd0b94713fdb4ba865d832509378d49be8bb9ded6f7b770312",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=4f36c8f672a2376a3080c4018ff08c9324e50f8ac3c2a040120c1bc8d611a30e",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "03c55246cce8013b06e0a1030d70a82b922b54bc03d9c73eb5785e42f67f0477",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "9123780fdb4322dcd71859f05a670246d50649f18322fc82c0cfa4e663f18a10",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "547ec60c3c36c64d44b5f2bced9f7faf8821e8190208ef73c7bd34fcee507a02",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 3,
+            "textSha256": "c36d819e7bc6d2b7da51394411c733db89c395987885ca6770167a3b9bc45c3c"
+          },
+          {
+            "startCodePoint": 20,
+            "endCodePoint": 35,
+            "textSha256": "301a2f587bf0e44b574eab95dbd7483096c051fb7309a7048dcd685244144364"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "6c09dc8c45e77c844849380d4c5d586fa05fa6534e24cf416ea88e829540201a",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "a7b56556aea0ea7d5383342498d86ec9eed2707208130ce86ac7d9a09921cba0",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 10,
+            "endCodePoint": 22,
+            "textSha256": "99d0b9d0a033526113cf6a8831a0879f128fa3adf5ee1f4044ebfb1f84af24ad"
+          }
+        ]
+      },
+      {
+        "columnIndex": 8,
+        "cellHash": "5bcf09e12898f2fa79af52484084be54c9d46e00eaa10b6cb9bb83d328f510ea",
+        "locator": {
+          "line": 23,
+          "row": 22,
+          "column": 9
+        },
+        "locators": [
+          {
+            "line": 23,
+            "row": 22,
+            "column": 9
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/touch-target-size-split-evidence.json",
+    "sha256": "e818187218d8ddc3a881063cebe5f631fda501badcec27f390f9a36d289a32ba"
+  },
+  "recordedAt": "2026-11-10T00:00:00Z"
+}

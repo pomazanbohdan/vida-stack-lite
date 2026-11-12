@@ -1,0 +1,86 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "web-ux-pairs",
+  "recordedAt": "2026-11-12T06:48:32.257Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/html-tailwind.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "d05a581d20af57b8ca0104a6d31d90a07c437d500662a96c3029fc2f9a4678ee"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-html-tailwind-breakpoint-testing",
+      "familyId": "family-breakpoint-testing-4645d668",
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cd9e5e91462d0f8e46a9bf6931cd054cb3ff731a15a20553b5215812fba7bf9c",
+      "locator": {
+        "line": 32,
+        "row": 31
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/html-tailwind.csv L32 admitted as SBVF variant uupm-html-tailwind-breakpoint-testing of family-breakpoint-testing-4645d668; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-html-tailwind-disabled-states",
+      "familyId": "family-disabled-states-de30c3d9",
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bf8ffa3e8c2304e88d119fd128717a59991509044f0b5b9cc9ee9331649bcb97",
+      "locator": {
+        "line": 29,
+        "row": 28
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/html-tailwind.csv L29 admitted as SBVF variant uupm-html-tailwind-disabled-states of family-disabled-states-de30c3d9; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-html-tailwind-font-size-scale",
+      "familyId": "family-font-size-scale-5f8992c7",
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1daedea2459a32826f36aff84f1f69ea63603c733bc50a51fad3b3d773fc3b27",
+      "locator": {
+        "line": 19,
+        "row": 18
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/html-tailwind.csv L19 admitted as SBVF variant uupm-html-tailwind-font-size-scale of family-font-size-scale-5f8992c7; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-html-tailwind-line-height",
+      "familyId": "family-line-height-8829c7a7",
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bc6704e09a62398580b763b2ac98411d9c38d5f91357c2e06512959d6a5fa524",
+      "locator": {
+        "line": 18,
+        "row": 17
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/html-tailwind.csv L18 admitted as SBVF variant uupm-html-tailwind-line-height of family-line-height-8829c7a7; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-html-tailwind-loading-states",
+      "familyId": "family-loading-states-fe4b50d8",
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4fdb31acd4fe12ed9b2d69af790e32661770da3a9c1c2149d382090672c8bf34",
+      "locator": {
+        "line": 36,
+        "row": 35
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/html-tailwind.csv L36 admitted as SBVF variant uupm-html-tailwind-loading-states of family-loading-states-fe4b50d8; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-html-tailwind-reduced-motion",
+      "familyId": "family-reduced-motion-3fee940d",
+      "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c2067369f096403c5060837f55b3e60e24e8241bbbf61a3c7406567843b61c9c",
+      "locator": {
+        "line": 43,
+        "row": 42
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/html-tailwind.csv L43 admitted as SBVF variant uupm-html-tailwind-reduced-motion of family-reduced-motion-3fee940d; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

@@ -15,7 +15,7 @@ sources:
   resource: /system-specification.md
   title: Vida Powers system specification
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T15:36:09Z' }
-revision: '5'
+revision: '7'
 ---
 
 # Decision
@@ -31,6 +31,29 @@ Version allocation: VPInstruction/v1.2 is the approved clean-cutover target for 
 Implementation status: the clean cutover to VPInstruction/v1.2 is complete — all 2,510 instructions carry the v1.2 marker, and the reader and checker accept that version only. Explicit facet filters, browse and converter-owned metadata preparation exist. Classification is complete for form and domain: 2,420 instructions are classified, each declaring at least one domain (790 carry more than one, across 24 form/domain combinations), and the remaining 90 carry an explicit unclassified reason. Approach assessments are absent from the corpus. AC-60 through AC-69 now carry component evidence: the metadata pipeline, the converter batches, the retained frozen trial and the compact retrieval workflow are proven for their bound inputs. What remains open is not acceptance of these clauses but the current v1.2 re-binding of the frozen trial, a real artifact/finding store, host installation and Runtime acceptance.
 
 The v1.2 foundation defines immutable descriptive vocabulary and semantic parsing. The reader, checker and approach selector are present; the corpus conversion and clean cutover are in place, while domain classification and approach assessments remain pending. Approach metadata does not grant permissions; profile policy and host/runtime authority remain binding. Search preserves uncertain and unassessed records, excluding only declared disjoint values; required and effective mandatory declared conflicts fail retrieval atomically and D12 exclusions remain binding.
+
+## SBVF amendment (D58)
+
+On 2026-11-06 the owner accepted [D58](D58-source-bound-variant-families.md).
+Stable canonical identifiers do not require one file per ID: an owner-approved
+family migration may replace member files with one family carrier while
+preserving every legacy ID as an exact-lookup variant ID. This replacement is
+allowed only through D58's reversible prepared migration, including its bound
+before-images, CAS, reconciliation, reviewed reverse rollback, and catalog-last
+publication. All other D16 facets and boundaries remain unchanged.
+
+## Lossless module amendment (D59)
+
+On 2026-11-08 the owner accepted
+[D59](D59-lossless-instruction-modules.md). Stable canonical identifiers do not
+require one atom file per ID: an owner-approved lossless module migration may
+replace a map-primary source group's atom files with one carrier that holds
+their complete payloads. Every atom ID remains stable and exact-lookup; the
+corpus map and fidelity receipts stay atom-level. Replacement uses D59's
+prepared migration with bound before-images, CAS, reconciliation, reviewed
+reverse rollback and catalog-last publication. Modules are carriers, not
+compose units, and D58's CSV family contract is unchanged. All other D16 facets
+and boundaries remain unchanged.
 
 ## Current evidence
 

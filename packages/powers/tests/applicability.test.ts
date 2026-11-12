@@ -184,6 +184,14 @@ describe('evaluateApplicability', () => {
     expect(evaluateApplicability(runtime, parseApplicabilityContext({ runtimes: ['bun'] }), vocab).state).toBe('inapplicable');
   });
 
+  test('multiple facts in one dimension are conjunctive, not disjunctive', () => {
+    const value = parseApplicability('{"platforms":[{"value":"ios"},{"value":"android"}]}');
+    expect(evaluateApplicability(value, parseApplicabilityContext({ platforms: ['ios', 'android'] }), vocab).state).toBe('applicable');
+    expect(evaluateApplicability(value, parseApplicabilityContext({ platforms: ['ios'] }), vocab).state).toBe('inapplicable');
+    expect(evaluateApplicability(value, parseApplicabilityContext({ platforms: ['android', 'web'] }), vocab).state).toBe('inapplicable');
+    expect(evaluateApplicability(value, parseApplicabilityContext({ runtimes: ['node'] }), vocab).reason).toBe('required-context-missing');
+  });
+
   test('duplicate supplied context is a conflict', () => {
     const value = parseApplicability('{"runtimes":[{"value":"node"}]}');
     expect(evaluateApplicability(value, parseApplicabilityContext({ runtimes: ['node', 'node'] }), vocab).reason).toBe('context-conflict');

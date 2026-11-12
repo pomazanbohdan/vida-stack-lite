@@ -1,0 +1,149 @@
+---
+schema: VPInstructionModule/v1
+instruction_id: "module-bmad-method-skills-bmad-prd-assets-prd-validation-checklist-md-3eece230-c01"
+title: "bmad-method: skills/bmad-prd/assets/prd-validation-checklist.md module"
+summary: "Carrier for 2 atomic instructions from bmad-method:skills/bmad-prd/assets/prd-validation-checklist.md."
+source: "{\"donor\":\"bmad-method\",\"path\":\"skills/bmad-prd/assets/prd-validation-checklist.md\"}"
+atom_ids:
+  - flag-the-theater-in-a-requirements-document
+  - review-a-requirements-document-dimension-by-dimension
+atom_count: 2
+atoms: "[{\"atom_id\":\"flag-the-theater-in-a-requirements-document\",\"file_sha256\":\"7318cfe41ca519935db6fea745934fd7be9d1604a794a0d05e6ebc300c44a869\",\"content_sha256\":\"c4ba9461220c34938da183a7fefd4faa099d98d39ad2ad54b83f78f026039a5c\",\"file_bytes\":1830,\"body_bytes\":677},{\"atom_id\":\"review-a-requirements-document-dimension-by-dimension\",\"file_sha256\":\"0d5b2db90902cdf94124dffb4f0eca5e344e0f8554dd4327af63da619ef03a9b\",\"content_sha256\":\"2af7f2877927acc0942169a9a13027e86a37a6f89070035e53bca568113e7746\",\"file_bytes\":6268,\"body_bytes\":5044}]"
+carrier_sha256: fcc2202ccc206fe933acb8f12dcf6fc370aa598b3bd845d5329491be74618b80
+carrier_bytes: 8405
+revision: 1
+status: active
+---
+<!-- vpmodule:atom:begin flag-the-theater-in-a-requirements-document -->
+---
+instruction_id: flag-the-theater-in-a-requirements-document
+title: Flag the theater in a requirements document
+summary: "Name the content that is there to look thorough — the personas, the novelty, the boilerplate requirements, the swappable vision — even when it is well written."
+capability_tags:
+  - review-code
+pattern_tags:
+  - code-review
+conditions_applies_when: A requirements document is reviewed and its content may be furniture.
+conditions_does_not_apply_when: The document is being written rather than reviewed.
+artifact_contract_output_type: theater-findings
+artifact_contract_required_data:
+  - the kind of theater
+  - the passage that shows it
+  - the decision it fails to drive
+artifact_contract_verified_by: each finding names the kind of theater and the passage that shows it
+compatibility_excludes: []
+compatibility_requires: []
+provenance:
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-prd/assets/prd-validation-checklist.md
+status: active
+revision: 2
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: checklist
+domains:
+  - product
+---
+
+# Flag the theater in a requirements document
+**Persona theater** — Personas that don't drive a single decision in the PRD. More than four personas. Personas whose only function is to make the PRD look thorough.
+**Innovation theater** — claimed novelty that isn't novel. Differentiation sections written because the template had one, not because Discovery surfaced something.
+**NFR theater** — copied boilerplate ("system must be scalable / secure / reliable") without product-specific thresholds.
+**Vision theater** — a Vision statement that could swap into any PRD in this category without change.
+Flag what reads like furniture, even if it's well-written furniture.
+<!-- vpmodule:atom:end flag-the-theater-in-a-requirements-document -->
+<!-- vpmodule:atom:begin review-a-requirements-document-dimension-by-dimension -->
+---
+instruction_id: review-a-requirements-document-dimension-by-dimension
+title: Review a requirements document dimension by dimension
+summary: "Walk the fixed dimensions, form a verdict on each one, and write findings only where they add information; the overall verdict is earned by the dimension verdicts."
+capability_tags:
+  - review-code
+pattern_tags:
+  - code-review
+conditions_applies_when: A requirements document is up for review.
+conditions_does_not_apply_when: The review is a mechanical check of the format.
+artifact_contract_output_type: dimension-review
+artifact_contract_required_data:
+  - the verdict per dimension
+  - the findings per dimension
+  - the overall verdict
+  - the mechanical notes
+artifact_contract_verified_by: every dimension carries a verdict and each finding cites a location and quotes the text
+compatibility_excludes: []
+compatibility_requires: []
+provenance:
+  - donor=bmad-method; license=MIT; revision=bd70c643a7ec85d1ec2e88076b3fbdd8e4517f41; path=skills/bmad-prd/assets/prd-validation-checklist.md
+status: active
+revision: 3
+schema: VPInstruction/v1.2
+classification_status: classified
+instruction_form: checklist
+domains:
+  - engineering
+  - design-ux
+  - product
+  - business
+---
+
+# Review a requirements document dimension by dimension
+A judgment rubric for the validator subagent. Walk the PRD with these dimensions in mind and write substantive findings — not box-ticking.
+The goal is a review that tells the user whether this PRD is *good*, not whether it has the right section headers.
+Be specific — cite locations, quote phrases, name what's missing. Abstract criticism is failure of nerve.
+For each of the seven dimensions below, form a judgment — *strong / adequate / thin / broken* — backed by specifics from the PRD.
+Write findings only where they add information. A `strong` dimension may need no findings; a `broken` one needs concrete, fixable ones.
+Severity ranks impact on the PRD's usefulness, not how easy the fix is.
+A vague Vision statement is *critical* even though it's a one-paragraph fix; a glossary drift might be *Minor* even though it appears in many places.
+The overall verdict is your synthesis — 2–3 sentences that name what holds up and what's at risk. Earn it with the dimension judgments.
+- **[Critical|Important|Minor]** [Title] (§ location) — [Note]. *Fix:* [suggested fix].
+## Decision-readiness
+Can a decision-maker act on this PRD? Are the trade-offs surfaced honestly, or has the PRD smoothed everything to neutral? Would someone pushing back find their objection acknowledged or dodged?
+Look for:
+- Decisions that are stated as decisions, not buried as "considerations."
+- Trade-offs named with what was given up, not just what was chosen.
+- Open Questions that are actually open — not rhetorical questions with an answer in the next sentence.
+- `[NOTE FOR PM]` callouts at real tensions, not at safe checkpoints.
+Red flag: a PRD where every choice "balances" everything, every NFR is "important," every persona "values" the product.
+## Substance over theater
+Is the content earned, or is it furniture?
+## Strategic coherence
+Does the PRD have a thesis? Do the features serve a unified arc, or is it a list of capabilities someone wanted?
+Look for:
+- A stated thesis the PRD bets on (problem framing, user insight, market move).
+- Feature prioritization that follows from the thesis — not from "what's easy first."
+- Success Metrics that validate the thesis, not metrics that just measure activity (DAU/MAU when the thesis is about engagement quality is a tell).
+- Coherent MVP scope kind — problem-solving, experience, platform, or revenue — with scope logic that matches.
+Red flag: a PRD that reads as a backlog with section headings.
+## Done-ness clarity
+Would an engineer reading this PRD know what "done" looks like for each FR?
+Acceptance criteria implied or explicit. Sometimes the FR's consequences carry this; sometimes the PRD genuinely needs an Acceptance section.
+## Scope honesty
+Are omissions explicit, or is the reader meant to infer them?
+Look for:
+- `[ASSUMPTION: …]` tags on inferences the user didn't directly confirm, indexed at the end.
+- `[NOTE FOR PM]` callouts at deferred decisions and unresolved tensions.
+- De-scoping proposed honestly, not done silently.
+## Downstream usability
+If this PRD feeds UX, architecture, or the ticket's Requirements (Sofia cites FR ids as sources), can those workflows source-extract from it cleanly?
+Look for:
+- Glossary present; every domain noun used identically across FRs, UJs, SM definitions.
+- FR / UJ / SM IDs contiguous, unique, and cross-references that resolve.
+- Each section makes sense pulled out alone — cross-references via Glossary terms, not "see above."
+- UJs each have a named protagonist; no floating UJs.
+For standalone PRDs (no downstream), this dimension matters less — say so.
+## Shape fit
+Has the PRD been forced into a shape that doesn't match the product?
+- Consumer product / multi-stakeholder B2B / meaningful UX → UJs with named protagonists are load-bearing.
+- Internal tool, single-operator role → capability spec shape; UJs may be overhead; SMs may be operational rather than user-facing.
+- Regulatory or compliance update → constraint traceability is non-negotiable; UJs may be irrelevant.
+- Hobby / solo → rigor light, substance bar still applies.
+- Brownfield → existing-code references must be accurate; new UJs and existing UJs must be distinguished.
+- Chain-top (feeds UX → architecture → stories) → downstream usability matters more; standalone PRDs can be lighter on traceability.
+Flag PRDs that are over-formalized (UJ density for a single-operator tool) or under-formalized (consumer product with no UJs).
+## Mechanical notes
+Cover these as a tail section, not a primary dimension. They matter for downstream but don't drive the verdict on whether the PRD is good.
+- Glossary drift (case, plural, synonyms across the PRD).
+- ID continuity (gaps, duplicates, unresolved cross-references).
+- Assumptions Index roundtrip (every inline `[ASSUMPTION]` indexed; index entries all appear inline).
+- UJ protagonist naming (each UJ has a named protagonist carrying context inline).
+- Required sections present for the agreed stakes and product type.
+<!-- vpmodule:atom:end review-a-requirements-document-dimension-by-dimension -->

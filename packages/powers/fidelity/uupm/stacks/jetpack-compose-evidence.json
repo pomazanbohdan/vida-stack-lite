@@ -1,0 +1,392 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/jetpack-compose.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "699de218b286948eaec7d15767b6e1350ee299167e49bf476d82e3ff58724e0a"
+  },
+  "batch": "NF-02",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 52,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-jetpack-compose-pure-ui-composables",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=52328e24bd0d3e91df479419aa75ed2115b74d9b0b6262ef7ebb436005ca71bc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L2 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-small-composables",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6248b412bf33b238c184f50a02f2e7cd32a27d54f6a872bde898ba7fd076b168",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L3 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-stateless-by-default",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=001822f2e457ac971befa671e872336df1f2e06f5e93f23468eb9f9654d130b8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L4 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-single-source-of-truth",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=df8dbf9cd025747d702205023abf804904d5b777a1e5c0e982860a0c440600a0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L5 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-model-ui-state",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=75caf45545904c6f0e98826b7aca104add56b9b9d1a51fa96fbed12e4fbf8057",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L6 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-remember-only-ui-state",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d78cbb23c466e015e3089c9d48f7b9a5616a434437f0e050193e7b413e02300b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L7 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-remembersaveable",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6f8176742788ab9d5918ab0c729239b96094b55f778fcbeccb7bb125c62412b3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L8 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-derivedstateof",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=661098d7949b073bc23eb82c9dbbae4a326ab9c407cb59bc3ad3f1d4e3708150",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L9 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-launchedeffect-keys",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=103087267eefef0866ef12fd497f9527ef7ca5238a542ca7a5f2b322c015c2b0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L10 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-rememberupdatedstate",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58e006489f17c451575cfc995ed622afbc4a26f4d4bd880ab9789cabd20e0482",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L11 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-disposableeffect",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7774d3d74ad9d1a20c906da6df25f2ac352532d4f25d3b1f92705d058820a832",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L12 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-unidirectional-data-flow",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8f81ae89a213edc20f7ddb0bf57583a0bd1382f7b63ce66d63386e97cb870011",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L13 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-no-business-logic-in-ui",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f30a5b15b645b2e35432333c77c41eba19f1061e8e556bc758171b5f9748eab0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L14 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-expose-immutable-state",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dac5c661c69fadc91c54bfed4bd767a254e91c242519bd51ceec6f262a1a98aa",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L15 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-lifecycle-aware-collect",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4651896889102a7f5e10840ed34a531f3b0c1bded47742bd7ee5e6f937acc2d4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L16 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-event-based-navigation",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=48d4bcdfd7fbcdbe59bc2abba0ef03642b0c857621e297874dcec3f0ab1afd71",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L17 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-typed-routes",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=90933e2072a6aa99b53041ebb5ecd6460281601aa0af725ac75e77b3475b1dca",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L18 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-stable-parameters",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=82baa34bb4fe593a973fcd260ccfdfba7710c423c86695b1efbdb1a922c3d909",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L19 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-use-key-in-lazy",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6acd7563fd9d89c3bb16aeb5ec937a4b37ebaf193d3124ce8d9f872c53365082",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L20 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-heavy-work",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cbcd3f123ca5f1c3954c9587dfca1f9a214914b73dcbd20b9ddaa312da06b681",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L21 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-remember-expensive-objects",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0608dec753da425cfcd16a65519515eac2c5d869fb395a57c4231a1d388ce2cb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L22 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-design-system",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=acfd6470c6d3912a0682573649fe7c8d97d4ff8436c3a4be1b0dad2b78c203dc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L23 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-dark-mode-support",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4c3837e10824dd97313781829a9b6424c87e5ffbd7f887bc05da6ec872231ef3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L24 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-prefer-modifier-over-extra-layouts",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2b7230da2f83df8f2a0cec651103867a822b28e00131983dc7f340dda0094bcd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L25 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-deep-layout-nesting",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9a7fd4b5256cf12918b8cf9ccbe6f5ece13ea2db2df919c42c7ede0a520f4406",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L26 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-use-row-column-for-linear-layout",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=70528f5cb978c9dcb7f79ba28f805489a712d56d9d9c06feb5fdc21b17631bbd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L27 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-use-box-only-for-overlapping-content",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b9c18ddd81c507cb71217042811f761f8950a8079491624fc682db10117538fe",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L28 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-prefer-lazycolumn-over-column-scroll",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fb928e7d4fd00a962c09b55fe8dd80d2ac8de2be386759452e2e9c85e0f3ef1a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L29 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-nested-scroll-containers",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=913390d32cd4a97eab15dc90b2d105cb80b34792ee313843b6e89df3a8d05ac1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L30 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-fillmaxsize-by-default",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=338bc24ed35ccc47dd899562971e8f5318ff6c5d3e1c25e751f6175b67a00687",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L31 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-intrinsic-size-unless-necessary",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e3ea300ff9775f8f8d7c7910ea0fbcd2486adedbd615b1c3451db88c2d4e56d1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L32 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-use-arrangement-and-alignment-apis",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=77161b5aaadc46aad08367a4d08e6fd4df336f6a36e129c62e39a1dae8c8310c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L33 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-extract-reusable-layout-patterns",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=be408f2b55887e95610e7cf83b9406928fbed044a0948f53b7cc5f47ece2f574",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L34 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-no-hardcoded-text-style",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=886413173ae1642890abca1000c02718f5c602f8d6fe2ac18327b6d1ef2de499",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L35 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-stateless-ui-testing",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f0ebdb1a3ab9ed7e3a2b46b71b245d99f617f79d7bd6d63db99d1a36240c1963",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L36 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-use-testtag",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=296d29791d2df06d49304e47cfb823b46d112e308f08f026a20526d5e6f5e8b4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L37 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-multiple-previews",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=94cabc8e5223cd4d7d5933e0fb31a32d200a6c77baaa81b4f5d5f97a79cf8250",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L38 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-inject-vm-via-hilt",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=408d38a15f4ab929470a031cbf5f6ce171e0a4a15305f653d5254f172914f0fb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L39 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-no-di-in-ui",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0e0d36e5cdad1625477ad62a05adb4477568dc4a7b4054bf9d86f1836028b59e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L40 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-content-description",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0e8b88a87eb89ef6d8855c56f79f2277e38a2f5205ecbea3b9085dd1da7e9171",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L41 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-semantics",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f5e9460a2e1b9ef077cea606def8f25427d420ddbf4175915605dbd00fb19500",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L42 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-compose-animation-apis",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0609d0f99af05eb6dc137c6f17137926cd89dd6e87b356d9259951520ffca2b1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L43 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-animation-logic-in-vm",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ca36d1c5f562d1635bacea88373d5166e004a8bb4e06b2ae779694edf8f4990",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L44 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-feature-based-ui-modules",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=413862253228de25f8d163a7e991b8108472139448d6dd5095bb77a4b31a7fbf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L45 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-public-ui-contracts",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=069a9133416ac2dda37992fdab3f84e5c6ca26420947bd43d3075008f3b68910",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L46 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-snapshot-state-only",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3d915b44e0a95e7ffbff2e0d0ff90a4c493dba287ba1e60b0df5672423ca8ee3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L47 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-mutable-collections",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cf8ce193e44204ddc3d3545b49398f40a12d6e1e44674a96caa60d9c0be25d1f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L48 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-remembercoroutinescope-usage",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=946ddd08839394699d4951dcfda6a53f898ea5b91a22e2c3eaec1d753bbcc527",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L49 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-interop-view-carefully",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=10b02b9481f9854ddd445129510dc3f1aa8bbd7c9aa80e627c46bc6b3ffa538b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L50 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-avoid-legacy-patterns",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=54bdf1cc1dc6e620749279711696a806e2b66244224c98af4a4690343dbb2d3a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L51 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-use-layout-inspector",
+      "sourceRowOrdinal": 51,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cb8abc31acc54c6d8a8b225c200a52eb6d6c3e011847078be9b34bdea4bc93cf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L52 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-jetpack-compose-enable-recomposition-counts",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/jetpack-compose.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=534e044e75dcc2d3b476b1773f8c97d4c2ca98692f6e229a3a4e93f84ed514ad",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/jetpack-compose.csv L53 per jetpack-compose.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-laravel-use-named-slots-for-flexible-layouts",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/laravel.csv",
+    "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7b319c5439d1232f42a42c0fbf055eb922f4415e4819d04f11013d5633704045",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "d942eae8ee204dcca6bf3751edf5459ea4c4f7f383157523c92111e6301991f4",
+        "locator": {
+          "line": 6,
+          "row": 5,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 6,
+            "row": 5,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "b75f29a5786731fad0c7751cb77a0681f7e56a606ab0298ed487276070cefe1c",
+        "locator": {
+          "line": 6,
+          "row": 5,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 6,
+            "row": 5,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "a9b6469552a0a5a3e7e6295e0f1412c0a6d6dd4d1595fc441f50075085816233",
+        "locator": {
+          "line": 6,
+          "row": 5,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 6,
+            "row": 5,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "bea3bc4262d2afb79393612952db5461eb173a970dd8b819a375346c5c6063fc",
+        "locator": {
+          "line": 6,
+          "row": 5,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 6,
+            "row": 5,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "09522b8d8ccea8ad69897ea92d4e4f9a0cb57efc3a19b09a87fab4bdf86ccf36",
+        "locator": {
+          "line": 6,
+          "row": 5,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 6,
+            "row": 5,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "5c0936e0fa235515370531ada3052dafc3a954da39f0317bf04cbd90a3254928",
+        "locator": {
+          "line": 6,
+          "row": 5,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 6,
+            "row": 5,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/laravel-evidence.json",
+    "sha256": "eb52d3b50de09fddc216a403973af86802cdcf18dc9099de1b0ea71a5276ae28"
+  },
+  "recordedAt": "2026-11-11T13:05:18.178Z"
+}

@@ -1,0 +1,357 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/laravel.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "854ea4daa5fc61292d22235ad33b49ba3fe22423c3de8d3cb03758ffed3b59f9"
+  },
+  "batch": "NF-02",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 46,
+    "rejected": 1,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-laravel-use-blade-components-for-reusable-ui",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9e39b8141db40617f9c65f79e50b6bd840e6d9122f96974f4a7f8c81f28258b5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L2 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-layouts-with-extends-and-section",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f23cc3348a950cd04d8d80e78d6bfd988692b2f036bdd0fc9743cab282baec3e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L3 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-props-for-component-type-safety",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=57e0ba89ada1fb7340510114d91db1802834cde3f38fdeb232c064cc6107c391",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L4 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-conditional-css-classes-with-class",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9c0b4bf970c754d91d62b2fea58b226311ac66b26772ea2e3c3db8245d40d949",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L5 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-named-slots-for-flexible-layouts",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7b319c5439d1232f42a42c0fbf055eb922f4415e4819d04f11013d5633704045",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L6 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-blade-directives-instead-of-raw-php",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2c0dfca0bf96519b2a50b85c18606c275b51f220a0cff0d5db62818175f9fe25",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L7 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-escape-output-with",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7253ccc751058ed530b3ee3902e5554e798913aede28f6d11c9f70cd9bb31adc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L8 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-vite-for-asset-loading",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4dc48e9d30c2b125b692aec2e0b4bd4f4151fe45c2425badd763bc199e862d56",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L9 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-bind-inputs-with-wire-model",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ae25783d6a5186ce09bb6682077c6e6dbf7abb6a72e3983fba1d72e0d07d8150",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L10 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-wire-model-live-for-real-time-validation",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e61439754093e82aa7012ca9305846db268626fa371b676d84cf10cc67cdd8a5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L11 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-wire-click-for-actions",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=70b90c2d4a4f5c18f9267c71e3a55573babbf29813a5d0d5f2eca6382dd28fd1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L12 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-lazy-loading-for-heavy-components",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f38b6c07c6382b57ea30677ac346ad2b8326a94d9ec5121728b90adb86f2ae21",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L14 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-integrate-alpine-js-for-local-ui-state",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8c84d25f1cea92a80b54c79ffcda7f4a81c7e3e23112998821c7bd84e046b8f0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L15 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-wire-loading-for-feedback",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2dcc0fcc00b4df91d2b78b89056780b26218b8dfa7012543931e79af89435519",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L16 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-handle-file-uploads-with-withfileuploads",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8d8971d87e85e3f9223cb3ea8be86c0d2a79e5c3311af332255f79e09b59d254",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L17 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-inertia-page-components-as-route-endpoints",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bd360a6f20abcc7384d623f90cc6c4ad93f958cd57a6c11dea9f2ce4f85b6fda",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L18 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-share-global-data-via-handleinertiarequests",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=090542d1523e81a12d3f5f856b1b4df36667db287a193513d8cf404bad8da3b4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L19 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-link-for-client-side-navigation",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9465227ca9f014aada162ad23d7ac6debeb6020a9a4e247e2febab6b08b741dc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L20 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-useform-for-form-state-and-submission",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=90206adefa0e52810f8ddbc10ebad852cfd46b724d505b35bfee7f6ba4a5ab29",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L21 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-persistent-layouts-to-preserve-state",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=13817f8e0d0c2ccff404b2cc9c34e783bbf17b57541620c724eb22b9375da248",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L22 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-enable-ssr-for-public-pages",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cb20ebadc7ce4d52e078fa802ff715b7efbbff088ce1b7cc7514a808c90a70b9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L23 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-set-up-tailwind-css-via-vite",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=00a8dcde67d87a29553479a9ef92e7c2cb23b27c080d5c026c6ac82b04b8162d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L24 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-purge-unused-styles-via-content-config",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e9657ef2f033058ebc7407d3eea07aff713407a194b3acfd4700ea05b37bac84",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L25 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-dark-mode-class-strategy",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2bc9feefa049c843ed68920453b3e135028bccc5c081149547cd3011f71c890e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L26 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-apply-sparingly-in-component-css",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4a241032a7269eed9c54f9491fd74a8f07e4733f408d98e39995cd32c2195c9f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L27 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-configure-custom-design-tokens-in-css",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=98f4b78cba0b5087c0361700f0bc5c0fcb6f610b1a0353d91e60d42c76339908",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L28 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-anonymous-blade-components-for-ui-primitives",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3f60fda78c9c77b770138d2a624e2715cecfb531b94bd4f52e45850bbf36818b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L29 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-class-based-components-for-complex-logic",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e4de6891701bbe698fa53aacb55ccb8d99d0f973c7b1ed9219601fdae481d0f2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L30 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-forward-extra-attributes-with-attributes",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=005c624e20721528fc3ab80673829294430d297622cb4503df1c5badb152a363",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L31 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-separate-variant-logic-from-templates",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ccdceb4eeebfb8f372cfdd48d2ac89400aa751db5eb4ec718c04b9b6034418c0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L32 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-provide-default-slot-content",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=adb63787806e8e99809b2c5e5b9924d2c8ef14f747de9df0f1e436afeef38ffb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L33 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-component-namespacing-for-packages",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2ada98d3ae574a28afff42134c12294af22c97c065d0893fea0a52b70b5322c2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L34 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-validate-with-form-request-classes",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8606ad84a643bb8772e9ad77dc0fb0d0706cf44199b0d24443860be947492573",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L35 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-preserve-old-input-on-validation-failure",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=953a5b1e5618c60b5fe7c99195ee12d3745a892c3bfb54f421047e212ca6a819",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L36 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-display-validation-errors-with-error",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0d37cd0a5b741a580db0f270cf700e5509874928c12b83c52f75511890cb766e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L37 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-csrf-token-on-all-forms",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c4d51e84102fd0bedc03fb689c38209f994e203e5358db8b919f8b85bf646dca",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L38 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-method-spoofing-for-put-patch-delete",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ac8d765fb85a08f667182ddc5b4ee51eec20f6a0ecf5eea6c50cd7638d47c989",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L39 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-display-flash-messages-consistently",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=79069e47f004b76aae69458d879ba760ae5fb71cd1285b2b44022cf4407d8e7b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L40 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-eager-load-relationships-to-prevent-n-1",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a660d345ac4a04acb43c22d3b44ab89430a5b8ec2d7d99f125756ce8bd9707f3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L41 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-cache-rendered-blade-fragments",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=876ffed4769945319cf3b5ea376929598e19a94ee1b977547c7c6b3f6b368334",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L42 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-paginate-large-data-sets",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e7b155e8699539d826291b9f262cc11bc54b1b9a25c55ebdd1d9623d4ca71341",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L43 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-queue-slow-background-tasks",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=adf8117fe0322851b4cc7c03cde197dc2d564b8c909de819c89e6f950a816c94",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L44 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-route-model-binding",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d8bc85bc42514ba9231a42e2a2331490412d53d8150d5e50785f814d36766dbf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L45 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-enable-http-response-caching-for-static-content",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e91ed4cd7fe31b66b3876f66f7601564437d4ca0e2883f67047a0f5a22418ebc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L46 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-use-signed-urls-for-temporary-links",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b32e5615008aa8584f47e89d7d4111d8803ba0e447bbb7008bf1a8259ef4b618",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L50 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-laravel-set-a-strict-content-security-policy",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5a415778a3f1754ed21669353edccc957249ac30d4b7c3c9ddd26f29f73f6387",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/laravel.csv L51 per laravel.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": null,
+      "sourceRowOrdinal": null,
+      "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cc0435a58e44ee01a4080ee354866735183e37dd4ff96b5c578dbd6dbfeb861b",
+      "verdict": "REJECTED",
+      "notes": "Near-identical norm to sibling line 8 (escape output with {{ }} / never {!! !!} on user data); every normative cell covered by line 8 per D57 deferred-sibling dedup amendment (2026-11-10); covering row admitted in the same batch."
+    }
+  ]
+}

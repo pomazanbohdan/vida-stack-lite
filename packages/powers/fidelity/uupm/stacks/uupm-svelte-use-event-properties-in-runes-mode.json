@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-svelte-use-event-properties-in-runes-mode",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/svelte.csv",
+    "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6970a734444c8e3dfe62c789f805ff263300210ec349f70d324c2fd888bfd8db",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "3e0d17582ac72a538b772df670930932140703322ed5c3a7dce9865558fd5819",
+        "locator": {
+          "line": 55,
+          "row": 54,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 55,
+            "row": 54,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "c9b1a18c3a5bc4e72178cf6787dd805509c3263c3ebc3bc9d6755e2600b55861",
+        "locator": {
+          "line": 55,
+          "row": 54,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 55,
+            "row": 54,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "0a77ef390909d71f5f3a61c5b826908378f9d5da0054e1b76f1aa70ec93521ef",
+        "locator": {
+          "line": 55,
+          "row": 54,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 55,
+            "row": 54,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "29b2becc721733f987143aea69d8fd27b69d38685a122c0eaa7a6bd19241e704",
+        "locator": {
+          "line": 55,
+          "row": 54,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 55,
+            "row": 54,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "19906dced0cdf7cb3aeaeb94400077df3aae0a227cbded76ba246172be077c8a",
+        "locator": {
+          "line": 55,
+          "row": 54,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 55,
+            "row": 54,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "e8fe27c3c2741193d1fb2e300e816903e3468200d168e4b21ec1716763b0fe9f",
+        "locator": {
+          "line": 55,
+          "row": 54,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 55,
+            "row": 54,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/svelte-evidence.json",
+    "sha256": "9e593c670a417fd5a171857bcae27bdf8df238216022d3fdebd8d397c195f6a3"
+  },
+  "recordedAt": "2026-11-11T13:05:28.876Z"
+}

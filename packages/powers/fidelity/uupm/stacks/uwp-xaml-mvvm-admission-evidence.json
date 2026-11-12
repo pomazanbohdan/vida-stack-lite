@@ -1,0 +1,158 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "xaml-mvvm",
+  "recordedAt": "2026-11-12T09:31:18.049Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/uwp.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "c409f08c1fbba1f1029f1acaa554e7b4471cc85517a5751c9f2e62465badcd5c"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-uwp-implement-inotifypropertychanged",
+      "familyId": "family-implement-inotifypropertychanged-8678305f",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d51b1ff2550c9e61ce80069a870ad46bdd917f593188f61b2568a28123ae9b4b",
+      "locator": {
+        "line": 22,
+        "row": 21
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L22 admitted as SBVF variant uupm-uwp-implement-inotifypropertychanged of family-implement-inotifypropertychanged-8678305f; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-set-automationproperties",
+      "familyId": "family-set-automationproperties-e5ee1685",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e18d4fe8ba5b02f3558c0dc4bc9803bbb123d879067062c34d7e00a5aa2f18a",
+      "locator": {
+        "line": 40,
+        "row": 39
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L40 admitted as SBVF variant uupm-uwp-set-automationproperties of family-set-automationproperties-e5ee1685; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-unit-test-viewmodels",
+      "familyId": "family-unit-test-viewmodels-f453bbfc",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ee2658e4eed55a52d0f08b9d796ced5d6cb78ac9aeacca0c6e56571196fd889",
+      "locator": {
+        "line": 51,
+        "row": 50
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L51 admitted as SBVF variant uupm-uwp-unit-test-viewmodels of family-unit-test-viewmodels-f453bbfc; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-commandbar-for-app-actions",
+      "familyId": "family-use-commandbar-for-app-actions-466af20d",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=398f38d9134b7979d1a818a034d8e708c19952a921c26f3f99c4b27dd625fc27",
+      "locator": {
+        "line": 8,
+        "row": 7
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L8 admitted as SBVF variant uupm-uwp-use-commandbar-for-app-actions of family-use-commandbar-for-app-actions-466af20d; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-dependency-injection",
+      "familyId": "family-use-dependency-injection-4f6d3aeb",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7306884d91661f22a06895ae3321b671bff8980ada75563d9cdf9c189fcdbd0b",
+      "locator": {
+        "line": 46,
+        "row": 45
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L46 admitted as SBVF variant uupm-uwp-use-dependency-injection of family-use-dependency-injection-4f6d3aeb; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-frame-for-page-navigation",
+      "familyId": "family-use-frame-for-page-navigation-65ba670c",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a02594ed3953d159c417c6118c65ccf302b9b91ad2870238ed450cdd7e1a3fff",
+      "locator": {
+        "line": 18,
+        "row": 17
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L18 admitted as SBVF variant uupm-uwp-use-frame-for-page-navigation of family-use-frame-for-page-navigation-65ba670c; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-lightweight-styling",
+      "familyId": "family-use-lightweight-styling-8bff6229",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=52cfce4565125fe6550718aa58476f692698ea60ea8ee64a432faa6da5437652",
+      "locator": {
+        "line": 15,
+        "row": 14
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L15 admitted as SBVF variant uupm-uwp-use-lightweight-styling of family-use-lightweight-styling-8bff6229; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-mvvm-pattern",
+      "familyId": "family-use-mvvm-pattern-4aaa7775",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b1bf8e6d862f0e9814890026763ec7ecb422f191c42d4d1c44a115896c5eb24",
+      "locator": {
+        "line": 44,
+        "row": 43
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L44 admitted as SBVF variant uupm-uwp-use-mvvm-pattern of family-use-mvvm-pattern-4aaa7775; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-navigationview-for-app-shell",
+      "familyId": "family-use-navigationview-for-app-shell-853b40e1",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ad4c9d82eba0937c84dc756e6a7bfbb4b81b23e926a8a45a34d3d36041de20ca",
+      "locator": {
+        "line": 7,
+        "row": 6
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L7 admitted as SBVF variant uupm-uwp-use-navigationview-for-app-shell of family-use-navigationview-for-app-shell-853b40e1; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-observablecollection-for-lists",
+      "familyId": "family-use-observablecollection-for-lists-8b7c19b8",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=845881ad3b509ff8e96d8689f449f43aac4556ad1b669a09bd2cd06e34cafec0",
+      "locator": {
+        "line": 23,
+        "row": 22
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L23 admitted as SBVF variant uupm-uwp-use-observablecollection-for-lists of family-use-observablecollection-for-lists-8b7c19b8; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-x-bind-for-compiled-bindings",
+      "familyId": "family-use-x-bind-for-compiled-bindings-172c34ba",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4f134d33f476ca87d04c77ee858a520c1f493f7e611eaedee6d5a4e0dec9c151",
+      "locator": {
+        "line": 2,
+        "row": 1
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L2 admitted as SBVF variant uupm-uwp-use-x-bind-for-compiled-bindings of family-use-x-bind-for-compiled-bindings-172c34ba; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-uwp-use-x-defaultbindmode",
+      "familyId": "family-use-x-defaultbindmode-d7d12aa9",
+      "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f8db8bdf8bfcdd6903fe618aecb99c71c8b431de7e56f13ee5bc94baffbd677f",
+      "locator": {
+        "line": 5,
+        "row": 4
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/uwp.csv L5 admitted as SBVF variant uupm-uwp-use-x-defaultbindmode of family-use-x-defaultbindmode-d7d12aa9; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

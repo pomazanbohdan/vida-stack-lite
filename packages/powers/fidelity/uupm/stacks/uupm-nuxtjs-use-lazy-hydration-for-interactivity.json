@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-nuxtjs-use-lazy-hydration-for-interactivity",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nuxtjs.csv",
+    "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=982a072bcef21840ee40e608db240accf62b1b18b87b126d6fd28fe3da0044db",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "ab4cfc43cb0752d9242004acc82237cddaf41d2356ebc79b3be7678dbc61899d",
+        "locator": {
+          "line": 59,
+          "row": 58,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 59,
+            "row": 58,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "727fb90ac7f6f6a7182c691563cf26390a6585a83967bab61460e7840909d38a",
+        "locator": {
+          "line": 59,
+          "row": 58,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 59,
+            "row": 58,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "e8ef5fa752ad4398088c7872cd4463f0a20dcdf8cef56c1f8d90ae54f4076eaf",
+        "locator": {
+          "line": 59,
+          "row": 58,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 59,
+            "row": 58,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "a411ea34c290c8490110a08b6a3b2653fbfc15a0ed7e8066c7bc476a6436d56e",
+        "locator": {
+          "line": 59,
+          "row": 58,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 59,
+            "row": 58,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "b1789ee04aa4de8c25f077142eaa4897f9dc51c62f686c68b86727c3cd87a3d8",
+        "locator": {
+          "line": 59,
+          "row": 58,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 59,
+            "row": 58,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "cc795cccd5b16c9d30c85329d25c8201b724c6fbd38e9f11bdc8efdc671e2c37",
+        "locator": {
+          "line": 59,
+          "row": 58,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 59,
+            "row": 58,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/nuxtjs-evidence.json",
+    "sha256": "e10101b0aa453b74fcf7b54e458ba3908112413614cffc58522984acc74e57a6"
+  },
+  "recordedAt": "2026-11-11T13:05:25.881Z"
+}

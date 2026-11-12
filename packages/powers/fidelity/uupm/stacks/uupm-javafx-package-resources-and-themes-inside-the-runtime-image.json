@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-javafx-package-resources-and-themes-inside-the-runtime-image",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/javafx.csv",
+    "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=03a699ad06145906b26197ac395878b7848d973c246e120cc096b8cda9d31885",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "cfbef0b409129fbbe4e61a3c3775e1a47a70172963b4d2bea93096d5d97fa8e2",
+        "locator": {
+          "line": 73,
+          "row": 72,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 73,
+            "row": 72,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "dbedeeac57bdfdb99fcadd6bd475359863644c93a31e1c82de350a7c2e9a0ac6",
+        "locator": {
+          "line": 73,
+          "row": 72,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 73,
+            "row": 72,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "6412f10c526ec8f6a178d546371a3caad5e7be63d634a6abff4309c3b51f9855",
+        "locator": {
+          "line": 73,
+          "row": 72,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 73,
+            "row": 72,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "bffd7bd56d21f8940afbc483f313ca75f234f4d141e23ccb26e33807444e6a03",
+        "locator": {
+          "line": 73,
+          "row": 72,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 73,
+            "row": 72,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "dbb3bece14cb14ce3e362f11fe2b1e4d602ea4834861a97b0f8f462e6100b64a",
+        "locator": {
+          "line": 73,
+          "row": 72,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 73,
+            "row": 72,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "2c948b9ff2787224374c842b014f9ef79cc653794c90e61e0abf467f1dbafa34",
+        "locator": {
+          "line": 73,
+          "row": 72,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 73,
+            "row": 72,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/javafx-evidence.json",
+    "sha256": "32366ba18c6741631e799c5f36a51414c6f769d4bdbfe9f1b775d65114bfd4f8"
+  },
+  "recordedAt": "2026-11-11T13:04:39.243Z"
+}

@@ -1,0 +1,148 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-javafx-design-tableview-for-high-density-enterprise-data-sorting",
+  "variantId": "uupm-javafx-design-tableview-for-high-density-enterprise-data-sorting",
+  "variantBodySha256": "58c410e0aa12dce3f7cb34f9ae3fb8c495b5708a1645aecc38b12a4e49e67c5b",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/javafx.csv",
+    "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d055d9e47b9c42a0e8c97e9993ff17b305f413d4e8a3330ab1b92ec3637d3fc",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "f5cf2665dde3bc2b17f642fdb8c2625423acc7d0b9b26c9c4e761fe35ff994d4",
+        "locator": {
+          "line": 64,
+          "row": 63,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 64,
+            "row": 63,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "fc064f5edbb66594345ed6c29ad5910f57a48b4b1e0609be791abbf95c9440dd",
+        "locator": {
+          "line": 64,
+          "row": 63,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 64,
+            "row": 63,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "4ab220941dbe5bb44a9282d7ce1425c4bf13cef8ae4d765450e8742bc60bb8aa",
+        "locator": {
+          "line": 64,
+          "row": 63,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 64,
+            "row": 63,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 37,
+            "endCodePoint": 44,
+            "textSha256": "df7e865c6f5709c062e9d1f5672b7151aa2ca42974f0b94a6a1535ed4041beeb"
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "93cff73b3eda47f1e4eeeb90750ab9866e2e022671adbdbb8e01980bce604a85",
+        "locator": {
+          "line": 64,
+          "row": 63,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 64,
+            "row": 63,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 41,
+            "textSha256": "93cff73b3eda47f1e4eeeb90750ab9866e2e022671adbdbb8e01980bce604a85"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "a8ec07458facba41c499ac40fa54469922836aa5a89d4c5268333ab0dd3ead2f",
+        "locator": {
+          "line": 64,
+          "row": 63,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 64,
+            "row": 63,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 84,
+            "textSha256": "a8ec07458facba41c499ac40fa54469922836aa5a89d4c5268333ab0dd3ead2f"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "8faaf71177f326cbd7a20ebf1da765316accfd8066708b3e06964c56740c913d",
+        "locator": {
+          "line": 64,
+          "row": 63,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 64,
+            "row": 63,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 27,
+            "textSha256": "8faaf71177f326cbd7a20ebf1da765316accfd8066708b3e06964c56740c913d"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/javafx-h2a2-split-rows-evidence.json",
+    "sha256": "d659cc8fd92ea692729275312fc5744d34c96f44f8460ae50af6c8b3908b23c2"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

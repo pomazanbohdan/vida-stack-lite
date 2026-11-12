@@ -171,6 +171,24 @@ describe('row selection', () => {
 });
 
 describe('the map report', () => {
+  test('loadCorpus rejects v3 instruction families until the audit is family-aware', async () => {
+    const source = instruction({ id: 'family-alpha', body: '# family-alpha\n\nA body.' }).replace('---\n', '---\nschema: VPInstruction/v3\n');
+    const corpus = await fixture([source]);
+    expect(() => loadCorpus(corpus.root)).toThrow('audit-report does not support VPInstruction/v3');
+  });
+
+  test('loadCorpus accepts a v3 corpus map', async () => {
+    const map = { ...(corpusMap({}) as Record<string, unknown>), schema: 'VPCorpusMap/v3' };
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })], map);
+    expect(() => loadCorpus(corpus.root)).not.toThrow();
+  });
+
+  test('loadCorpus rejects an unsupported corpus map schema', async () => {
+    const map = { ...(corpusMap({}) as Record<string, unknown>), schema: 'VPCorpusMap/v9' };
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })], map);
+    expect(() => loadCorpus(corpus.root)).toThrow('audit-report does not support VPCorpusMap/v9: corpus-map.json');
+  });
+
   test('reports nothing when the map and the provenance agree', async () => {
     const corpus = await fixture([instruction({ id: 'instruction-0', body: 'A body.' })]);
     const report = mapReport(loadCorpus(corpus.root));

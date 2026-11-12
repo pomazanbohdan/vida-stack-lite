@@ -1,0 +1,227 @@
+{
+  "schema": "SBVFAdmissionManifest/v1",
+  "asOf": "2026-11-11T00:00:00Z",
+  "admissions": [
+    {
+      "variant_id": "uupm-swiftui-add-accessibility-labels",
+      "family_id": "family-add-accessibility-labels-43cd8497",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/swiftui.csv",
+        "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=aa69c468dbd0972c83e3e3d85853424ca8db5e655b3981c53a46e65279adb76b"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/swiftui.csv L43 (\"Add accessibility labels\"); review disposition HELD as SBVF family candidate of family-add-accessibility-labels-43cd8497 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/swiftui.json",
+        "sha256": "b12e8b180c37a2d90d5a5846c27c93ef8d01e1af7c9ba4c02f7298e6035ce92d"
+      }
+    },
+    {
+      "variant_id": "uupm-nextjs-analyze-bundle-size",
+      "family_id": "family-analyze-bundle-size-1bee1185",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/nextjs.csv",
+        "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b7000b806f704fd0da6f2a34705cd858c6385bdbdb8fd35ede04019244e3cc7"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/nextjs.csv L39 (\"Analyze bundle size\"); review disposition HELD as SBVF family candidate of family-analyze-bundle-size-1bee1185 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/nextjs.json",
+        "sha256": "409d860da9e03825442a04a8285de54ebbf7168b4e5fdeef8abd816d6adf969f"
+      }
+    },
+    {
+      "variant_id": "uupm-nuxtjs-handle-loading-and-error-states",
+      "family_id": "family-handle-loading-and-error-states-ff3861a4",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/nuxtjs.csv",
+        "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f3b7838856c4c018d2507da51470c47aac5384b518bdc43c45671240f0e177fa"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/nuxtjs.csv L17 (\"Handle loading and error states\"); review disposition HELD as SBVF family candidate of family-handle-loading-and-error-states-ff3861a4 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/nuxtjs.json",
+        "sha256": "3bb77622e3b25fb120dc189776818ccc79fbbcea2e73be58c28e2039dc25ab4a"
+      }
+    },
+    {
+      "variant_id": "uupm-nextjs-handle-loading-states",
+      "family_id": "family-handle-loading-states-52f592e1",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/nextjs.csv",
+        "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fe1193ea61bd5c6deb94747207effcb0d0de28a2cc86f0ae5389344cde884519"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/nextjs.csv L6 (\"Handle loading states\"); review disposition HELD as SBVF family candidate of family-handle-loading-states-52f592e1 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/nextjs.json",
+        "sha256": "409d860da9e03825442a04a8285de54ebbf7168b4e5fdeef8abd816d6adf969f"
+      }
+    },
+    {
+      "variant_id": "uupm-swiftui-handle-loading-states",
+      "family_id": "family-handle-loading-states-52f592e1",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/swiftui.csv",
+        "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2beca6f01892b209ae84216fb462f7ebd9bc59ef3bebc9c6d1af9a51c09d0379"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/swiftui.csv L32 (\"Handle loading states\"); review disposition HELD as SBVF family candidate of family-handle-loading-states-52f592e1 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/swiftui.json",
+        "sha256": "b12e8b180c37a2d90d5a5846c27c93ef8d01e1af7c9ba4c02f7298e6035ce92d"
+      }
+    },
+    {
+      "variant_id": "uupm-shadcn-support-dark-mode",
+      "family_id": "family-support-dark-mode-9bd99e0c",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/shadcn.csv",
+        "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7d7fbc8d26fd7f3cd1dfb2c1ba06c6caf9c4f536326bab3b5a247406b1b69a77"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/shadcn.csv L7 (\"Support dark mode\"); review disposition HELD as SBVF family candidate of family-support-dark-mode-9bd99e0c (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/shadcn.json",
+        "sha256": "c8612009e5f722878aefd293cbaab0a291d0e72d8fd6cb30166f13d9a7f4d9e0"
+      }
+    },
+    {
+      "variant_id": "uupm-vue-use-computed-for-derived-state",
+      "family_id": "family-use-computed-for-derived-state-d111c3bd",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/vue.csv",
+        "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fbb3780cab1876863ff242af60a16f41906adfd1bbc4f2a8a1e769dcb6f7ebbf"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/vue.csv L7 (\"Use computed for derived state\"); review disposition HELD as SBVF family candidate of family-use-computed-for-derived-state-d111c3bd (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/vue.json",
+        "sha256": "614c4f26a0ac140afb6758867e64d45835b2813b738418f9f5967c1a1fccda6e"
+      }
+    },
+    {
+      "variant_id": "uupm-svelte-use-css-variables-for-theming",
+      "family_id": "family-use-css-variables-for-theming-f918fed6",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/svelte.csv",
+        "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bb7a06cc373a61c27cef6c8ac10579728d5469174ab72b2bb4da8df7938c881a"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/svelte.csv L31 (\"Use CSS variables for theming\"); review disposition HELD as SBVF family candidate of family-use-css-variables-for-theming-f918fed6 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/svelte.json",
+        "sha256": "59e0f7bc937bb8eb185e14824bb668abbbc319365ec528c0e80da6ff7ac66f22"
+      }
+    },
+    {
+      "variant_id": "uupm-nextjs-use-file-based-routing",
+      "family_id": "family-use-file-based-routing-0927fbb8",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/nextjs.csv",
+        "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ffcddb3df3c498263097b32d925ab1f8c2e1f187f4f2e48b7bf9dd5c324b9a6"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/nextjs.csv L3 (\"Use file-based routing\"); review disposition HELD as SBVF family candidate of family-use-file-based-routing-0927fbb8 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/nextjs.json",
+        "sha256": "409d860da9e03825442a04a8285de54ebbf7168b4e5fdeef8abd816d6adf969f"
+      }
+    },
+    {
+      "variant_id": "uupm-nuxtjs-use-file-based-routing",
+      "family_id": "family-use-file-based-routing-0927fbb8",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/nuxtjs.csv",
+        "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=361df3895303494557debd5e229f20b4e132db6539ffc41f023be4b881c52472"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/nuxtjs.csv L2 (\"Use file-based routing\"); review disposition HELD as SBVF family candidate of family-use-file-based-routing-0927fbb8 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/nuxtjs.json",
+        "sha256": "3bb77622e3b25fb120dc189776818ccc79fbbcea2e73be58c28e2039dc25ab4a"
+      }
+    },
+    {
+      "variant_id": "uupm-nuxtjs-use-onmounted-for-dom-access",
+      "family_id": "family-use-onmounted-for-dom-access-ffd0d226",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/nuxtjs.csv",
+        "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bd758d6e34d676996f0e7b4ae6430f5e8e818218d664fe203eca8279e8bb6a83"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/nuxtjs.csv L19 (\"Use onMounted for DOM access\"); review disposition HELD as SBVF family candidate of family-use-onmounted-for-dom-access-ffd0d226 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/nuxtjs.json",
+        "sha256": "3bb77622e3b25fb120dc189776818ccc79fbbcea2e73be58c28e2039dc25ab4a"
+      }
+    },
+    {
+      "variant_id": "uupm-vue-use-onmounted-for-dom-access",
+      "family_id": "family-use-onmounted-for-dom-access-ffd0d226",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/vue.csv",
+        "rowKey": "path=stacks/vue.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5cfe2bb6bd592bdcb4e8304f3c628792834054345519bab58df8d2dfdd8d90f7"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/vue.csv L17 (\"Use onMounted for DOM access\"); review disposition HELD as SBVF family candidate of family-use-onmounted-for-dom-access-ffd0d226 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/vue.json",
+        "sha256": "614c4f26a0ac140afb6758867e64d45835b2813b738418f9f5967c1a1fccda6e"
+      }
+    },
+    {
+      "variant_id": "uupm-svelte-use-scoped-styles-by-default",
+      "family_id": "family-use-scoped-styles-by-default-28f83eaf",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/svelte.csv",
+        "rowKey": "path=stacks/svelte.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9e60eef0a9252700d5aa6469ae116a38d3a0d897ef4efa4f5f6be743c1b196f1"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/svelte.csv L29 (\"Use scoped styles by default\"); review disposition HELD as SBVF family candidate of family-use-scoped-styles-by-default-28f83eaf (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T07:02:38.488Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/svelte.json",
+        "sha256": "59e0f7bc937bb8eb185e14824bb668abbbc319365ec528c0e80da6ff7ac66f22"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "VPInstructionModule/v1",
+  "title": "VPInstructionModule/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "instruction_id",
+    "title",
+    "summary",
+    "source",
+    "atom_ids",
+    "atom_count",
+    "atoms",
+    "carrier_sha256",
+    "carrier_bytes",
+    "revision",
+    "status"
+  ],
+  "properties": {
+    "schema": { "const": "VPInstructionModule/v1" },
+    "instruction_id": { "type": "string", "pattern": "^module-[a-z0-9]+(?:-[a-z0-9]+)*-c[0-9]{2}$" },
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "source": { "type": "string", "minLength": 1 },
+    "atom_ids": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^(?!module-|family-)[a-z0-9]+(?:-[a-z0-9]+)*$" }
+    },
+    "atom_count": { "type": "integer", "minimum": 2, "maximum": 8 },
+    "atoms": { "type": "string", "minLength": 1 },
+    "carrier_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "carrier_bytes": { "type": "integer", "minimum": 0 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["active", "disabled"] }
+  }
+}

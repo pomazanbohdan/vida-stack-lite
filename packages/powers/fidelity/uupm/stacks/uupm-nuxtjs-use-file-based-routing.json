@@ -1,0 +1,132 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-nuxtjs-use-file-based-routing",
+  "variantId": "uupm-nuxtjs-use-file-based-routing",
+  "variantBodySha256": "c38969918ccfbac38330268a51fb304e46165fa4ffd8c490995d65ee9dfd3117",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nuxtjs.csv",
+    "rowKey": "path=stacks/nuxtjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=361df3895303494557debd5e229f20b4e132db6539ffc41f023be4b881c52472",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "columnHeader": "Guideline",
+        "cellHash": "b8772d281b2af2631d65d76da65f5c714848132c1e88ddb8fe317d537624d71d",
+        "role": "normative-title",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "columnHeader": "Description",
+        "cellHash": "7612265222856fcb1b7d23c1faa890b02e2efd8e7bd0e23b63b3777f89522d8a",
+        "role": "normative-description",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "columnHeader": "Do",
+        "cellHash": "e31575cac5c689cbd7a80a5764ec1138a696ecfd33bb1cc54ce7353827b315a6",
+        "role": "normative-direction",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "columnHeader": "Don't",
+        "cellHash": "4239b43e561ccaae64f7489e4deab2336d098ce5e70442a7ac072b880f3af1e8",
+        "role": "normative-exception",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "columnHeader": "Code Good",
+        "cellHash": "3725d7521d771e1318f4b307e29ddb007c279394c46e8e2fa34a1efdaae75731",
+        "role": "normative-example",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "columnHeader": "Code Bad",
+        "cellHash": "06c9f11a9bb2d74d8723888d696ebb1d84350737a3bb23fd65a1f9616a36d8d0",
+        "role": "normative-example",
+        "locator": {
+          "line": 2,
+          "row": 1,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 2,
+            "row": 1,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/nuxtjs-js-ts-web-admission-evidence.json",
+    "sha256": "1c868f0a1c10b3a60847f2db69f719f022c9d188186f9d4a4c9e63fbf26adc17"
+  },
+  "recordedAt": "2026-11-12T07:05:00Z"
+}

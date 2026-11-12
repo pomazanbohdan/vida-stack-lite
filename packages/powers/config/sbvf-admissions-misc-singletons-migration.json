@@ -1,0 +1,57 @@
+{
+  "schema": "SBVFAdmissionManifest/v1",
+  "asOf": "2026-11-11T00:00:00Z",
+  "admissions": [
+    {
+      "variant_id": "uupm-swiftui-prefer-composition-over-inheritance",
+      "family_id": "family-prefer-composition-over-inheritance-c301153b",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/swiftui.csv",
+        "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=23140fbce3e91122334e65616363fa268f6d35f5b659f410774dd74d841ae92f"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/swiftui.csv L5 (\"Prefer composition over inheritance\"); review disposition HELD as SBVF family candidate of family-prefer-composition-over-inheritance-c301153b (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T10:02:14.047Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/swiftui.json",
+        "sha256": "b12e8b180c37a2d90d5a5846c27c93ef8d01e1af7c9ba4c02f7298e6035ce92d"
+      }
+    },
+    {
+      "variant_id": "uupm-javafx-use-spacing-and-padding-consistently",
+      "family_id": "family-use-spacing-and-padding-consistently-1ba38b2a",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/javafx.csv",
+        "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5459f497b6757e8cc6b179525f75841e2c1a07769a650c521ae3c437547a3aa4"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/javafx.csv L16 (\"Use spacing and padding consistently\"); review disposition HELD as SBVF family candidate of family-use-spacing-and-padding-consistently-1ba38b2a (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T10:02:14.047Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/javafx.json",
+        "sha256": "52141fbd20496dd74e11057970ff93284782a4a8822eac123d7b5323b68578c7"
+      }
+    },
+    {
+      "variant_id": "uupm-swiftui-use-spacing-and-padding-consistently",
+      "family_id": "family-use-spacing-and-padding-consistently-1ba38b2a",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/swiftui.csv",
+        "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=201eb62d4493282757c90791a11d55868882892f96648a771ec90ac1bf102879"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/swiftui.csv L17 (\"Use spacing and padding consistently\"); review disposition HELD as SBVF family candidate of family-use-spacing-and-padding-consistently-1ba38b2a (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T10:02:14.047Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/swiftui.json",
+        "sha256": "b12e8b180c37a2d90d5a5846c27c93ef8d01e1af7c9ba4c02f7298e6035ce92d"
+      }
+    }
+  ]
+}

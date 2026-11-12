@@ -22,7 +22,7 @@ sources:
   resource: /acceptance.md
   title: Vida Powers — acceptance criteria
 generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:10:10Z' }
-revision: '19'
+revision: '22'
 ---
 
 ## Research → BR → SR → AC
@@ -63,6 +63,7 @@ revision: '19'
 | §14 sources | BR-02 | SR-07 | AC-01 |
 | Owner request 2026-10-30; retrieval architecture analysis (Terra/owner research) | BR-24 | SR-94, SR-95, SR-96, SR-97 | AC-70–AC-73 |
 | Owner request 2026-11-02; donor source update tracking | BR-02, BR-22 | SR-99 | AC-79, AC-80 |
+| §4.7 catalog operations; owner request 2026-11-06; D58 variant families | BR-01, BR-24 | SR-10, SR-11, SR-12, SR-58, SR-102–SR-105 | AC-05–AC-08, AC-82–AC-85 |
 
 **Not normative (context, not rules):** §1 "without an automatic transition to
 a new scope of work" (an operational rule of the owner, not VP behavior) and §13
@@ -88,10 +89,12 @@ the list of technically open questions (closed by stages, not by the specificati
 | D13 one canonical finding-severity scale | SR-78; AC-44 |
 | D14 bounded engineering/UX, product and business guidance | BR-22; SR-81, SR-82, SR-84, SR-85, SR-88–SR-91; AC-47 to AC-51, AC-53, AC-56–AC-59; Step H |
 | D15 selected typed reference resources | BR-22; SR-83, SR-86, SR-87; AC-52, AC-54, AC-55; Step H |
-| D16 stable files with form/domain facets | BR-24; SR-06, SR-10, SR-70, SR-92; AC-60–AC-64 |
+| D16 stable identifiers with form/domain facets; D58 family-carrier amendment | BR-24; SR-06, SR-10, SR-70, SR-92, SR-102–SR-105; AC-60–AC-64, AC-82–AC-85 |
 | D17 source attribution, not legal-risk assessment | BR-22; SR-81, SR-89; AC-47, AC-57; Step H H1-H3 |
 | D18 blind three-protocol H1 review and aggregation | BR-22; SR-81, SR-89, SR-100; AC-47, AC-57, AC-59; Step H H1 |
 | D19 algorithm delegation for human-loop decisions | BR-09, BR-12; SR-71, SR-101; AC-81; all declared human-loop decision points |
+| D58 source-bound variant families | BR-01, BR-24; SR-102–SR-105; AC-82–AC-85; D16 amendment; P0–P6 in `next-actions.md` |
+| D59 lossless instruction modules | BR-01, BR-24; SR-106–SR-110; AC-86–AC-91; D16 amendment; 2 pilots + 20 scale batches; prepared update path; `WORK.md` sections 21–24 |
 
 ## Deferred decisions (CAT-D) → SR/AC
 

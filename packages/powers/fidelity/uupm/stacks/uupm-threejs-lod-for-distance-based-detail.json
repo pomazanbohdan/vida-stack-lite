@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-threejs-lod-for-distance-based-detail",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/threejs.csv",
+    "rowKey": "path=stacks/threejs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=81d8b32453744c8948b1dc779651e11ffb527cdb7ffbd75ef47c6240f9132654",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "d7b65b5f80f93269e102b3efea1624c496648e2fb4fa02046808d1ea862dd7f9",
+        "locator": {
+          "line": 54,
+          "row": 53,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 54,
+            "row": 53,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "96c8da4be4e10b9c841d62d754c9ad68fedcd9a27eb7e753fcbfd8f80c0c6ebb",
+        "locator": {
+          "line": 54,
+          "row": 53,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 54,
+            "row": 53,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "c3ef6954f5ad57a2fcdde5051c91d1c18510eae73a481c42c2f8755bf10cc907",
+        "locator": {
+          "line": 54,
+          "row": 53,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 54,
+            "row": 53,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "a3ad767d405ed517351b7a1bbb50933d3decee1ad26851545899f7a68b7dde88",
+        "locator": {
+          "line": 54,
+          "row": 53,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 54,
+            "row": 53,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "37e6fd9b9d0ac9f96d59a5811699e5e75f4a7bd96da7565551417813fcb4319d",
+        "locator": {
+          "line": 54,
+          "row": 53,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 54,
+            "row": 53,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "dafc44ddb96f39d8a4007099eecfc344cea121b436d54b3d14f17bc516fe4c26",
+        "locator": {
+          "line": 54,
+          "row": 53,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 54,
+            "row": 53,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/threejs-evidence.json",
+    "sha256": "25bbc945ef87760566ad436276f373440700600877e09cc0e4cb4e24b0c5ba03"
+  },
+  "recordedAt": "2026-11-11T13:05:28.876Z"
+}

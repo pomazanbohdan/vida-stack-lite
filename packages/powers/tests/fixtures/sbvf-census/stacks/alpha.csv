@@ -1,0 +1,3 @@
+Title,Description,Do,Don't,Applies To
+Use dependency-injection,Resolve services through the application container.,Register and request dependencies through the container.,Do not construct services outside the container.,alpha 1.x
+Avoid orange kangaroos,Keep the unrelated sample rule isolated.,Use this sample as its own instruction.,Do not combine this sample with other rows.,alpha 1.x

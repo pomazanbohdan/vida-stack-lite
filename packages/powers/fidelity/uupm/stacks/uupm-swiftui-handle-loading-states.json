@@ -1,0 +1,132 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-swiftui-handle-loading-states",
+  "variantId": "uupm-swiftui-handle-loading-states",
+  "variantBodySha256": "56274cbb22848b64802dd42136f0475fcb8e62291514dfa7a631fc9726ffb71f",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/swiftui.csv",
+    "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2beca6f01892b209ae84216fb462f7ebd9bc59ef3bebc9c6d1af9a51c09d0379",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "columnHeader": "Guideline",
+        "cellHash": "873bba2f23942d6a21fcdd04eb937331dcb4c541f698f5f310eed7024ec9a0d7",
+        "role": "normative-title",
+        "locator": {
+          "line": 32,
+          "row": 31,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 32,
+            "row": 31,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "columnHeader": "Description",
+        "cellHash": "cb295170eade8b0a232d11f48dc53a8fe4966cc30ca8f250b97c83ce5df3e295",
+        "role": "normative-description",
+        "locator": {
+          "line": 32,
+          "row": 31,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 32,
+            "row": 31,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "columnHeader": "Do",
+        "cellHash": "f904a3dcfcaa311ec472a6c3ebcebda35b707c3eb3c23427e59ed3f602f88cc6",
+        "role": "normative-direction",
+        "locator": {
+          "line": 32,
+          "row": 31,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 32,
+            "row": 31,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "columnHeader": "Don't",
+        "cellHash": "94537f68764ccb5f1e5cc15be135b8344fe2b72b4fe5ce59e62a93dbdae39601",
+        "role": "normative-exception",
+        "locator": {
+          "line": 32,
+          "row": 31,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 32,
+            "row": 31,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "columnHeader": "Code Good",
+        "cellHash": "220c71a9a8a04dbefffc3e44244c1bcbe725e247eaded70f4d5a6f76f1f4f290",
+        "role": "normative-example",
+        "locator": {
+          "line": 32,
+          "row": 31,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 32,
+            "row": 31,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "columnHeader": "Code Bad",
+        "cellHash": "6c05a3acae0530dba8d3cc3e1d87f7854d377c82407c8d7b2299f7100ef6f7ad",
+        "role": "normative-example",
+        "locator": {
+          "line": 32,
+          "row": 31,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 32,
+            "row": 31,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/swiftui-js-ts-web-admission-evidence.json",
+    "sha256": "fd32e690075abd7c2838673121c28e06184c3963b3ef9a76ea9832c77cff3fed"
+  },
+  "recordedAt": "2026-11-12T07:05:00Z"
+}

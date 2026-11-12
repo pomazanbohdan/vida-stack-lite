@@ -1,0 +1,132 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-html-tailwind-line-height",
+  "variantId": "uupm-html-tailwind-line-height",
+  "variantBodySha256": "1de90f20bcd89241d1dc60e28fd8083d75f6afce5909cc3ea56a7b6d76fc7fd8",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/html-tailwind.csv",
+    "rowKey": "path=stacks/html-tailwind.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bc6704e09a62398580b763b2ac98411d9c38d5f91357c2e06512959d6a5fa524",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "columnHeader": "Guideline",
+        "cellHash": "127166f79c332f3e50ba5b64cf5479d7be34b62a977fb4f3e946c000b35970af",
+        "role": "normative-title",
+        "locator": {
+          "line": 18,
+          "row": 17,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 18,
+            "row": 17,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "columnHeader": "Description",
+        "cellHash": "781ad121e09aa3ab8fc4f3cf2acb94dfb3aa10f5c2c44cde5e730a6e40713487",
+        "role": "normative-description",
+        "locator": {
+          "line": 18,
+          "row": 17,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 18,
+            "row": 17,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "columnHeader": "Do",
+        "cellHash": "12fea5b11fc35f071334a3b5c493fe8aafca7e95c680a858cbd85ef94679fb6f",
+        "role": "normative-direction",
+        "locator": {
+          "line": 18,
+          "row": 17,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 18,
+            "row": 17,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "columnHeader": "Don't",
+        "cellHash": "0d98b1fc7dbd72d5a4ebbdf9b0a8b834e1ab6094ed031593da2a9fce64dd538c",
+        "role": "normative-exception",
+        "locator": {
+          "line": 18,
+          "row": 17,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 18,
+            "row": 17,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "columnHeader": "Code Good",
+        "cellHash": "b5ef0dcafb2848f79cf53f3b86ab03e626fac7228d3662844fbbfb887edb1bb4",
+        "role": "normative-example",
+        "locator": {
+          "line": 18,
+          "row": 17,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 18,
+            "row": 17,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "columnHeader": "Code Bad",
+        "cellHash": "7ac31296fa396eef273aec9cdcf1b8800a484b515308056eabf47618135d0c2a",
+        "role": "normative-example",
+        "locator": {
+          "line": 18,
+          "row": 17,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 18,
+            "row": 17,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/html-tailwind-web-ux-pairs-admission-evidence.json",
+    "sha256": "0b8478c076e843f6ed1672d28703b25d175bca6ec66fda7d93b5a70b3cc088f2"
+  },
+  "recordedAt": "2026-11-12T06:48:32.257Z"
+}

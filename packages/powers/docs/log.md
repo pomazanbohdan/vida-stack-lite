@@ -1,6 +1,631 @@
 # Directory Update Log
 
+## 2026-11-13
+
+* **H2-D owner acceptance — H2 accepted:** The owner accepted H2 on
+  2026-11-12. Bound receipt
+  `.agent/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md`, SHA-256
+  `857f3001f2fd2e4d665899c36c70bcb60172a3ac97d14c4b2103a6727d147251`,
+  with evidence under `h2d-evidence/` in the same folder. Final
+  state: corpus-map `VPCorpusMap/v3` rev 5774 (sha `7f02b5bf…`),
+  catalog rev 8055 (sha `4a88ea15…`, 2,402 instructions), 52 VECTOR
+  batches; H2-A2 fully dispositioned — 1,434 UUPM rows: 1,414
+  admitted / 0 deferred / 20 rejected; P5 pilot + P6 batches 46–51
+  applied; SBVF machinery luna-accepted; live family state 97
+  bindings / 38 `VPInstruction/v3` family files / 97 variants.
+  AC-82/AC-83 moved to `verified (owner, 2026-11-12)`; AC-84/AC-85
+  unchanged (outside this acceptance scope).
+* **H2-D gate results:** `bun test --coverage` 1,039 pass / 5 skip /
+  0 fail with All files 100% funcs/lines/statements, exit 0;
+  typecheck, format check, `check-corpus` (0 issues), `check-vector`
+  (52 batches) and `check-okf` all exit 0; Node runtime `search`/`get`
+  exit 0 under Node v26.13.1 with the H2-C receipt; independent
+  disposition audit clean — 1,449 bindings, 0 missing/mismatched
+  receipts.
+* **Known limitation and unblock:** the pinned Agent knip gate exits
+  1 with `issues: []` on the `knip.config.ts` self-entry — an
+  external Agent/config conflict confirmed by the receipt, not a
+  PASS; it remains an open item. H3-A typed reference resources is
+  unblocked by the H2-D acceptance and ready to start pending owner
+  go.
+
+## 2026-11-12
+
+* **P6 batch 46 — web-ux-pairs SBVF admission (first family batch):**
+  the D58/P6 family-aware machinery (`scripts/sbvf-admission.ts`,
+  `SBVFAdmissionManifest/v1` + `SBVFFamilyManifest/v1` per-batch slices
+  in `config/`, admission-aware `sbvf-census`/`sbvf-plan`/`sbvf-apply`/
+  `sbvf-verify`) admitted its first batch after owner approval:
+  6 deferred stack rows became whole-cell family variants and 6
+  `uupm-ux-*` singletons migrated into 6 `VPInstruction/v3` family
+  files (net instruction count unchanged at 2,389; catalog rev 8049,
+  map rev 5768). `H2FidelityReceipt/v2` receipts and a per-batch
+  `H2FamilyAdmissionEvidence/v1` doc were generated; `sbvf-verify`
+  outcome `verified`; `check-corpus` 0 issues. Owner rulings recorded:
+  web-ux-pairs approved; `family-use-semantic-elements-24a21964`
+  dissolved (svelte L53 reverts to KEEP_ATOMIC singleton, staged
+  separately); evidence binding = stack-review JSON. Remaining
+  family-held deferred rows: 66, in batches js-ts-web (14),
+  xaml-mvvm (48, last) and misc-singletons-migration (3), plus 1
+  blocked semantic-elements row pending its singleton apply.
+* **P6 batch 47 — js-ts-web SBVF admission:** the second family batch
+  applied after owner approval: 10 `VPInstruction/v3` families covering
+  13 deferred→family admissions plus 9 singleton→family migrations
+  (catalog 2,389→2,390, map rev 5769; plan SHA `4c0c719b…`). Owner
+  ruling excluded `family-avoid-unnecessary-effects-d6b2db8c` — its two
+  react variants shared the react.csv L9 SPLIT rowKey with subspan v2
+  receipts, violating the D58 whole-cell/distinct-rowKey contract that
+  census/plan did not mechanically enforce (machinery guard pending);
+  the two react split singletons remain unchanged and the svelte member
+  was admitted separately as a singleton (batch 48 sibling). Manifests
+  finalized in `config/` with `approved_by=human:repository-owner`;
+  `check-corpus` 0 issues. `sbvf-verify` could not complete: a tool bug
+  maps single-component `.x` versionRange raws (`22.x`→`22.0`) so the
+  angular `>=22.0.0` comparator finds no applicable variant; the apply
+  agent independently verified all 22 variant selections via
+  `catalogGet`/`catalogCompose` (22/22 correct). Verify fix pending.
+* **P6 batch 48 — svelte.csv L53 singleton:** "Use semantic elements"
+  admitted as `uupm-svelte-use-semantic-elements`
+  (`VPInstruction/v1.2` + `H2FidelityReceipt/v1`, whole-cell cols 2–7)
+  after the owner dissolved `family-use-semantic-elements-24a21964`
+  (family-of-one); the HELD review entry is preserved and the ruling is
+  recorded in `.tmp/h2a2-stack-review-rulings/owner-rulings.json`.
+  Staging-first admit script copies to live only on `checkCsvSource`
+  PASS; family-aware `variantFamilies`/`familyIds`/`variantBodyHashes`
+  inputs were added after the first apply attempt correctly rejected
+  the two js-ts-web svelte family bindings (empty maps, not corrupt
+  data). Map rev 5770, catalog rev 8051 (2,391 instructions);
+  dispositions 1,362 admitted / 52 deferred / 20 rejected;
+  `check-corpus` 0 issues. Remaining deferred: xaml-mvvm (48),
+  misc-singletons-migration (3), svelte avoid-effects singleton (1,
+  staged; luna validation in progress).
+* **P6 batch 49 — svelte.csv L48 singleton:** "Avoid unnecessary
+  effects" admitted as `uupm-svelte-avoid-unnecessary-effects`
+  (`VPInstruction/v1.2` + `H2FidelityReceipt/v1`, whole-cell cols 2–7)
+  — the svelte member of the D58-excluded
+  `family-avoid-unnecessary-effects-d6b2db8c`, admitted outside the
+  family per owner ruling (second ruling in `owner-rulings.json`).
+  First luna review returned CHANGES_REQUIRED on a stale staging
+  snapshot (pre-js-ts-web baseline); staging was regenerated against
+  live 5770/8051 — evidence merge carries both svelte singleton rows —
+  and the admit script gained the same family-aware
+  `variantFamilies`/`familyIds`/`variantBodyHashes` inputs as the L53
+  script. Luna re-check ACCEPT; `--apply` PASS/0 issues. Map rev 5771,
+  catalog rev 8052 (2,392 instructions); dispositions 1,363 admitted /
+  51 deferred / 20 rejected; `check-corpus` 0 issues. Remaining
+  deferred: xaml-mvvm (48, last family batch) +
+  misc-singletons-migration (3).
+* **P6 batch 50 — xaml-mvvm SBVF admission (last family batch):**
+  18 `VPInstruction/v3` families covering 48 deferred→family
+  admissions plus 7 singleton→family migrations (6 avalonia, 1
+  react-native); `family-support-keyboard-navigation-b8dc783f`
+  intentionally scoped to Avalonia+WPF (winui L34 SPLIT excluded per
+  SR-105/D58). Owner-approved manifests in `config/`; regenerated
+  plan SHA `eff1e3a1…`; `sbvf-verify` outcome `verified` — the
+  `.x` versionRange fix (variantContextVersion, canonical expandRange
+  semantics) landed before this apply, so no fallback was needed;
+  check-corpus 0 issues. Map rev 5772, catalog rev 8053 (2,403
+  instructions; −7 singletons, +18 families, +48 variants);
+  dispositions 1,411 admitted / 3 deferred / 20 rejected. Remaining
+  deferred: misc-singletons-migration (3 rows) — final batch.
+  Machinery hardening landed and luna-accepted in parallel:
+  `sbvf-verify` `variantContextVersion` (`.x`/wildcard range fix),
+  D58 census guards in `validateManifest` (same-rowKey, subspan
+  cells/receipts, SPLIT-row via unit status or >1 binding), and
+  symlink-safe receipt/evidence containment
+  (`fidelityReceiptPath`/`reviewEvidencePath` +
+  `realContainedUnderRoot` realpath-under-root; `verifyReceipt` routed
+  through it). Tests: sbvf-verify + sbvf-family-guards 7/7, typecheck
+  clean.
+* **P6 batch 51 — misc-singletons-migration (FINAL SBVF batch):**
+  2 `VPInstruction/v3` families, 4 variants — 3 deferred admissions
+  (swiftui L5 composition-over-inheritance, javafx L16 + swiftui L17
+  spacing-and-padding) plus the flutter composition singleton
+  migration. Owner-approved manifests in `config/`; regenerated plan
+  SHA `396a1067…`; `sbvf-verify` verified; `check-corpus` 0 issues.
+  Map rev 5773, catalog rev 8054 (2,404 instructions; +1 net).
+  **UUPM corpus fully dispositioned: 1,414 admitted / 0 deferred /
+  20 rejected across all 1,434 rows.** H2-A2 CSV semantic admission
+  complete.
+* **H2-SBVF P5 pilot applied:** owner chose a fresh plan over the
+  superseded-pilot assessment. The two pilot families
+  (`family-use-usestate-for-local-state-3bc378f6`,
+  `family-use-usereducer-for-complex-state-fc948845` — IDs normalized
+  to the `-<8hex>` convention) migrated 4 admitted singletons
+  (react + react-native × useState/useReducer) into
+  `VPInstruction/v3` family files; migration-only, no new admissions.
+  Plan SHA `91d66675…`; `sbvf-verify` verified (variant bodies
+  byte-identical, v1 receipts retained); `check-corpus` 0 issues.
+  Map rev 5774, catalog rev 8055 (2,402 instructions, net −2);
+  dispositions unchanged 1,414/0/20. AC-82/AC-83 family-form
+  evidence now instantiated; H2-D receipt is the remaining gate.
+
+## 2026-11-11
+
+* **H2-A2 batches 41–45 — NF-01..NF-05 non-family KEEP_ATOMIC (lane
+  complete):** the remaining five NF batches were applied sequentially
+  via `.tmp/h2a2-nf-apply.ts --apply` after the independent luna
+  re-check ACCEPTed all staging groups (849 files verified: zero
+  non-array/bare-null `pattern_tags`, exactly 12 `pattern_tags: []`
+  rows). NF-01 = 119 rows (html-tailwind, javafx; batch 41, catalog
+  1,885), NF-02 = 98 rows (jetpack-compose, laravel; batch 42,
+  catalog 1,983), NF-03 = 130 rows (nextjs, nuxt-ui; batch 43,
+  catalog 2,113), NF-04 = 128 rows (nuxtjs, shadcn; batch 44, catalog
+  2,241), NF-05 = 148 rows (svelte, swiftui, threejs; batch 45,
+  catalog 2,389). The two D57 sibling-covered rejects were applied
+  in-batch: `stacks/laravel.csv` L47 (NF-02) and `stacks/nextjs.csv`
+  L61 (NF-03) flipped deferred→rejected with review reasons. The
+  `pattern_tags: []` emitter fix required catalog `tag_exemptions`
+  entries (pattern dimension) for the 12 empty-pattern rows — one
+  added manually for the already-applied NF-01 row, eleven emitted by
+  the engine for NF-02..05. `checkCsvSource` reported 0 issues per
+  file on every apply; `check-corpus` 0 issues; live map revision
+  5767 / catalog revision 8048. Final dispositions: **1,342 admitted /
+  72 deferred / 20 rejected** — the deferred remainder is exclusively
+  the 72 family-held rows pending the SBVF admission machinery (P6).
+
+## 2026-11-11
+
+* **H2-A2 batches 39–40 — NF-06/NF-07 non-family KEEP_ATOMIC:** the
+  mechanical materialization engine `.tmp/h2a2-nf-apply.ts` (consilium
+  template-primary decision) applied two of the seven NF batches:
+  NF-06 = 133 rows (uno, uwp, vue; batch 39, catalog 1,673) and NF-07 =
+  93 rows (winui, wpf; batch 40, catalog 1,766). Each row became a
+  `VPInstruction/v1.2` singleton with template-generated verbatim-cell
+  bodies, whole-cell `H2FidelityReceipt/v1` bindings on normative
+  columns 2–7, `H2CsvPilotEvidence/v1` per stack, tags from the
+  reviewed Category→tag authority table (142 categories; 38
+  precedent-backed + 104 luna-reviewed proposals), per-stack
+  `conditions_*` constants, and `deprecated-keep-atomic-v1` handling
+  (42 + 0 deprecated rows materialized `status: active` with legacy
+  scope in Applies To/conditions). Sibling-covered rejects are wired
+  per batch (NF-02 laravel L47, NF-03 nextjs L61 — pending). All rows
+  validated by `checkCsvSource` (0 issues), body-purity self-check and
+  independent luna review before apply; live map revisions 5761/5762,
+  catalog revisions 8041/8042. Dispositions after both batches:
+  719 admitted / 697 deferred / 18 rejected. NF-01..05 remain staged
+  pending final luna re-check of the `pattern_tags: []` fix.
+
+## 2026-11-11
+
+* **H2-A2 batch 38 — winui L34 SPLIT singletons:** `stacks/winui.csv` L34
+  'Support keyboard navigation' is admitted as two
+  `VPInstruction/v1.2` singletons —
+  `uupm-winui-support-keyboard-navigation-tab-navigation` and
+  `uupm-winui-support-keyboard-navigation-access-keys` — with exact
+  code-point subspans on the Do cell (`[0,14)` / `[19,47)`, separator-only
+  gap), `H2FidelityReceipt/v2` and `H2SplitEvidence/v1`. The review
+  entry's `familyIds` stamp is resolved out of
+  `family-support-keyboard-navigation-b8dc783f`: SR-105 and D58
+  categorically exclude SPLIT rows from families and family bindings are
+  whole-cell only, so the family plan's `split-family` label was an
+  artifact (the xaml-mvvm batch drops to 48 rows at next regeneration).
+  The row-level Don't exception is bound to both units and labeled
+  row-level; the access-keys Code Good example binds only to the
+  access-keys unit (sibling-scope). Col-10 'Applies To' coverage is
+  recorded whole-cell per unit in the split evidence per the L57
+  precedent. Staged under `.tmp/h2a2-winui-l34-staging/`, luna-validated
+  (ACCEPT after one fix round), applied via
+  `.tmp/h2a2-winui-l34-apply.ts --apply`; `checkCsvSource` 0 issues, live
+  map revision 5760 / catalog revision 8040, catalog 1,540 instructions;
+  VECTOR batch 38 recorded. Dispositions: 493 admitted / 923 deferred
+  (all stack) / 18 rejected.
+
+## 2026-11-11
+
+* **H2-A2 batch 37 — Readable Font Size neutral v1.2 admission:**
+  `ux-guidelines.csv` L68 is admitted as
+  `uupm-ux-readable-font-size` (`VPInstruction/v1.2`, whole-cell
+  `H2FidelityReceipt/v1`, `H2CsvPilotEvidence/v1`) following the
+  consilium decision and the seven Mobile-sibling precedent: source
+  context may say Mobile/Responsive, but the instruction stays
+  neutral and no `mobile` applicability token is added to the
+  vocabulary (literal platform matching has no any-of semantics).
+  Staged under `.tmp/h2a2-rfs-staging/`, independently luna-validated
+  (ACCEPT), then applied via `.tmp/h2a2-rfs-admit.ts --apply`;
+  `checkCsvSource` 0 issues, live map revision 5759 / catalog
+  revision 8039, catalog 1,538 instructions; VECTOR batch 37
+  recorded; UX deferred remainder is now zero. The deferred set is
+  924 stack rows.
+
+## 2026-11-11
+
+* **H2-A2 batch 36 — nuxt-ui L57 SPLIT + 9 duplicate rejects:**
+  `stacks/nuxt-ui.csv` L57 is admitted as the
+  `uupm-nuxt-ui-use-uinputdate-for-date-selection-use-range-when-needed`
+  singleton: the range fragment binds locally with exact code-point
+  subspans and the locale fragment cross-binds to the L71-derived
+  `pass-locale-to-uapp` instruction (claim-equivalence, row-owned
+  locators, `H2FidelityReceipt/v2` + `H2SplitEvidence/v1`), per the D57
+  deferred-sibling amendment; AC-92 confirmed to cover normative cells
+  only, so the `metadata-applicability` column is evidenced in the
+  split evidence and frontmatter rather than bound. Nine
+  REJECT_DUPLICATE rows whose coverage is by already-admitted
+  instructions are resolved in `corpus-map.json` (html-tailwind ×2,
+  javafx ×4, shadcn ×2, vue ×1; map revision 5758); laravel L47 and
+  nextjs L61 remain deferred because their covering siblings are
+  admitted only inside the same NF batch. Catalog 1,537; VECTOR batch
+  36 recorded; `check-corpus` 0 issues.
+
+## 2026-11-10
+
+* **H2-D prerequisite closed — locator validation:** `csv-map.ts` now
+  resolves every binding-cell `locator` and each `locators[]` entry
+  against the owning parsed row per D56 §9 (integer line/row/column,
+  one-based column of the bound cell, line within the cell's
+  physical-line span) and requires receipt `locators` to mirror
+  bindings; empty lists fail `CORPUS_CSV_LOCATOR_MISSING`. Added
+  regression tests for wrong-column, unoccupied-line, invalid-type and
+  empty-list cases in `tests/csv-map.test.ts` and updated
+  `tests/check-corpus.test.ts` fixtures. Typecheck clean; focused
+  tests pass; `check-corpus` reports 0 issues / 1,536 instructions —
+  all 3,086 live binding cells already conform, so no corpus change.
+  Independent luna validation accepted after two fix rounds.
+* **H2-A2 post-apply verification:** after the batch-35 SPLIT apply and the
+  D57 amendment, `check-corpus` reports 0 issues / 1,536 instructions;
+  `check-vector` passes (35 batches, 1,536 instructions, 3,429 map records,
+  1,258 baseline files); `check-okf` reports 73 concepts / 0 failures;
+  `bun check` typecheck is clean (105 files); `format:check` passes; the
+  five-document documentation check passes (98 local links, 0 failures);
+  the full `bun test` suite passes 995 / 5 skipped / 0 failed across 50
+  files when split into three batches — `module-update.test.ts` needs
+  `--timeout 30000` because its product-copy `beforeAll` now exceeds the
+  default 5s hook timeout (perf-only, passes cleanly).
+* **H2-A2 stack SPLIT batch + D57 dedup amendment (owner-approved):** nine
+  reviewed `stacks/*.csv` SPLIT rows are admitted as 21
+  `VPInstruction/v1.2` singleton instructions (javafx L64 ×5, laravel
+  L13/L48/L49 ×6, nuxt-ui L71 ×2, nuxtjs L38 ×2, uno L56 ×2, uwp L19 ×2,
+  html-tailwind L60 ×2) with exact code-point subspan bindings under
+  `VPCorpusMap/v3` and one `H2FidelityReceipt/v2` each, plus seven
+  `H2SplitEvidence/v1` documents; `winui.csv` L34 stays deferred for the
+  SBVF family batch. Applied from `.tmp/h2a2-stack-split-apply.ts
+  --apply`; `checkCsvSource` reported 0 issues on all eight touched
+  sources. The owner also approved the D57 deferred-sibling dedup
+  amendment (same-batch sibling coverage, per-cell/per-fragment full
+  coverage, cross-row subspan binding with row-owned locators), recorded
+  in `decisions/D57-d18-h2-csv-admission.md`; nextjs L61 and laravel L47
+  resolve as REJECT_DUPLICATE under it, nextjs L17 stays KEEP_ATOMIC,
+  and nuxt-ui L57 awaits its split+cross-binding materialization.
+* **H2-A2 stack semantic review (delegated flash + luna):** all 943
+  deferred stack rows received per-row dispositions across 16 stack CSVs
+  (ten parallel swe-2-flash-medium agents, nine luna validations with
+  adjudicated corrections): consolidated 848 KEEP_ATOMIC, 10 SPLIT,
+  9 REJECT_DUPLICATE and 76 HELD (72 SBVF-family members per D58 + 4
+  intra-file duplicates later resolved by the D57 amendment). Dispositions
+  and the family batch plan are staged under `.tmp/h2a2-stack-review/` and
+  `.tmp/h2a2-family-plan.json`; the live corpus changed only via the
+  SPLIT batch above.
+* **H2-A2 staged SPLIT apply (owner-approved):** all 12 prepared D18 panel
+  SPLIT rows are admitted — 11 `ux-guidelines.csv` rows (L42, L79, L97, L98,
+  L101, L104, L108, L109, L110, L111, L117) and `stacks/react.csv` L9 — as
+  31 `VPInstruction/v1.2` singleton instructions with exact code-point
+  subspan bindings under `VPCorpusMap/v3` and one `H2FidelityReceipt/v2`
+  each, plus two `H2SplitEvidence/v1` documents. The apply ran from
+  `.tmp/h2a2-split-apply.ts` after a dry-run staging rehearsal; in-memory
+  `checkCsvSource` over both touched CSV sources reported 0 issues,
+  including whole-cell/subspan mode consistency and separator-only
+  coverage gaps. `check-corpus` reports 0 issues / 1,515 instructions;
+  catalog revision advanced with 31 sorted entries; `VECTOR.md` batch 34
+  records 1,515 / 3,429 / 1,258. Deferred rows are now 944 (943 stack:
+  8 SPLIT + 935 undispositioned; 1 held UX); `Readable Font Size` remains
+  deferred pending an owner-approved `mobile` applicability token.
+  H2 acceptance remains open.
+
+* **H2-A2 SPLIT contract implemented:** amended [D56](decisions/D56-h2-contract.md)
+  with exact code-point subspan binding for SPLIT rows and reconciled D58's
+  family-only statement. Added optional `subspans` (`startCodePoint`,
+  `endCodePoint`, `textSha256`) to `VPCorpusMap/v3` binding cells and
+  `H2FidelityReceipt/v2` cells; the v2 map and v1 receipt shapes are unchanged.
+  `csv-map.ts` now checks bounds, exact substring hashes, order/overlap within a
+  binding cell, per-column whole-cell/subspan mode, separator-only gaps and
+  exact receipt mirroring; v2 singleton receipts bind the instruction body hash.
+  Added SR-111, AC-92, the D56/D58/index/next-actions trace and tests. Suite:
+  994 pass / 5 skip / 0 fail. The live map stays v2; the v3 migration and the
+  staged SPLIT apply need owner approval. No corpus, commit or push change.
+
+* **H2-A2 next-task validation (SWE-2 Flash Medium):** independent read-only
+  review returned CHANGES with one Important finding: `convert.ts` is also a
+  strict `VPCorpusMap` consumer and belongs in the v3 migration. The task list
+  now names it; the separator grammar is pinned in D56/SR-111; AC-82/AC-83
+  evidence wording is clarified; and the binding-cell `locators` resolution gap
+  is recorded as a pre-existing H2-D prerequisite. The review confirmed the
+  counts, the subspan code/docs/schema contract, and the targeted, typecheck,
+  corpus, OKF and docs checks; it did not complete the full suite. No code or
+  corpus change.
+
+* **H2-A2 held-row resolution and v3 migration applied:** `Touch Target Size`
+  (ux-guidelines.csv line 23) is admitted as three singleton
+  `VPInstruction/v2` instructions — `uupm-ux-touch-target-size-ios` (44pt),
+  `uupm-ux-touch-target-size-android` (48dp) and a subspan binding on the
+  existing `uupm-ux-target-size-minimum` (Web/WCAG) — each with an
+  `H2FidelityReceipt/v2`; the catalog is 1,484 entries and the row is no
+  longer held. `Readable Font Size` stays deferred pending an owner-approved
+  `mobile` applicability token, because platform facts are conjunctive
+  (D56/SR-82) and `[ios, android]` cannot express mobile-any-of; the
+  conjunctive multi-value rule is now stated in D56 and SR-82 and covered by
+  a new `applicability.test.ts` case. The live `corpus-map.json` migrated
+  `VPCorpusMap/v2` → `v3` with singleton `variantId` values on every admitted
+  CSV binding (471 after this admission), and `audit-report.ts`,
+  `source-updates.ts`,
+  `convert.ts`, `sbvf-census.ts` and `sbvf-plan.ts` are v3-aware (multi-binding
+  admitted rows, `instructionIds` per census unit, plan-carried
+  `bindingCounts`). `VECTOR.md` batch 33 records 1,484 / 3,429 / 1,258.
+  Deferred-row totals: 956 deferred (12 UX incl. 1 held, 944 stack), 9
+  rejected. H2 acceptance remains open.
+
+## 2026-11-09
+
+* **Global state validated (SWE-2 Flash Medium):** independent read-only
+  validation returned READY with 0 Critical / 0 Important / 0 Minor. It
+  confirmed all eight claims against live files and executed checks: 1,482
+  catalog entries at revision 8,034 (682 modules / 332 singletons / 468 CSV);
+  3,746 atomic records (2,946 module atoms, min 2 / max 8 / average 4.32); map
+  revision 5,752 with 3,429 records and 1,434 CSV rows (468 admitted / 957
+  deferred / 9 rejected); 468 fidelity receipts plus 16 pilot evidence files;
+  9 donors / 1,258 files / 3,278 covered instructions all current with 0
+  affected; a 3,746 → 1,482 compression (−60.43%) with atom count unchanged;
+  981 pass / 5 skip / 0 fail at 100% functions/lines, typecheck 105 files,
+  corpus 0, vector 32/1,482/3,429/1,258, OKF 73 concepts, docs 38 links; a
+  revision-48 task queue with the stale P4b catalog before-image
+  `ad60b5f5…` against the current `e91a2f7b…`; and 3,703 uncommitted paths
+  under `packages/powers` with no commit or push. The plain `test` invocation
+  exceeded the 5-minute foreground cap, so the validator used the identical
+  coverage suite, which completed in 388s. No mutation was performed.
+
+* **Task queue refreshed:** `docs/next-actions.md` now separates the open D58
+  P5/P6 variant-family gate from the accepted D59 module campaign, records the
+  applied 3,746 → 1,482 catalog with 682 carriers / 2,946 atoms and the READY
+  `module-update` path (AC-91), updates the current package gate to 981 pass /
+  5 skip / 0 fail at 100% functions/lines, and lists CSV module packaging and
+  the H2-A2 957-row admission as candidate next scopes that still need owner
+  approval. The D58 P5 plan is stale after D59 and needs a fresh prepared plan
+  bound to the 1,482-entry catalog. No code or corpus change.
+
+* **D59 module update path implemented:** added `scripts/module-update.ts` with
+  prepared `plan/apply/verify/rollback` for a changed packaged atom. The plan
+  keeps atom IDs, increments the carrier and catalog revisions, leaves the
+  catalog count unchanged and targets only the module plus catalog (catalog
+  last); apply binds the plan and review through the existing prepared batch,
+  verify binds plan→manifest→review→receipt with the receipt schema/kind and
+  exact plan/review refs, rejects synthetic or incomplete records and
+  manifest/review-as-receipt substitution, checks payload/catalog/map/receipt
+  state and compose parity, and preserves carrier status (active/disabled);
+  rollback restores the old
+  carrier/catalog newest-first. Tests cover all/subset
+  updates, no-op and invalid atoms, schema/LF rejection, SHA/review/drift
+  rejection, missing map/receipt, invalid profile, declared-exclusion parity and
+  rollback. Suite: 981 pass / 5 skip / 0 fail; 100% functions/lines; typecheck,
+  corpus, vector and OKF pass. Independent review returned READY with
+  0 Critical / 0 Important / 0 Minor after the receipt-binding and
+  disabled-status fixes. No real apply, commit or push. AC-91 carries the
+  component evidence.
+
+## 2026-11-08
+
+* **D59 accepted — lossless instruction modules:** the repository owner
+  accepted the lossless module contract and the applied campaign. Added
+  [D59](decisions/D59-lossless-instruction-modules.md), the D16 module-carrier
+  amendment, SR-106–SR-110, AC-86–AC-90 and the D59 traceability row. The
+  applied campaign produced 682 carriers / 2,946 atoms, left 332 non-CSV
+  singletons and 468 CSV entries top-level, moved the catalog 3,746 → **1,482**
+  (−60.4%), and kept map revision 5,752 (3,429 records) and 468 receipt hashes
+  unchanged. Integrity: 3,278 map atoms + 468 CSV atoms present exactly once,
+  zero missing/unexpected/duplicates. Suite 980 pass / 5 skip / 0 fail, 100%
+  functions/lines; typecheck, corpus, vector, OKF and docs checks pass. This is
+  bounded Source acceptance, not installation or Runtime acceptance. Commit and
+  push remain Root/owner actions.
+
+* **H2-SBVF donor batch — gsd-core (7 batches):** applied 301 carriers /
+  1,040 atoms. Batch SHAs/counts: (1) 50/179, `a906f0fa…b4ed8b`; (2) 50/141,
+  `988374d8…5c45cc`; (3) 50/159, `d37449f0…aed086`; (4) 50/171,
+  `0b8269a4…28530`; (5) 50/189, `d1444ad2…f72212`; (6) 50/198,
+  `2123df19…6d9126`; (7) 1/3, `b9b0ea9a…1060da`; final catalog SHA
+  `e91a2f7be64fd34340dc0c7fe6ba783bc4f86bca7258b8bca7dc83599fc728d4`,
+  catalog 2,221 → **1,482**. Catalog revision 8,034; map and 468 receipts
+  unchanged. All seven batches verify 0 issues; batch 4 exercised the declared
+  exclusion compose-error parity; VECTOR rows 26–32.
+
+* **H2-SBVF historical batch verification:** `module-batch verify` keeps the
+  strict latest-state gate by default and accepts `--historical` for batches
+  followed by later applies. Historical mode still verifies the batch
+  plan/review/apply bindings, per-module parity, old-atom absence, map and
+  receipt hashes, and that every batch module is present and unchanged in the
+  current catalog; it skips only the historical final catalog count/SHA
+  comparison. The conflict batch, the provenance batch and the final batch
+  verify with 0 issues under the appropriate mode; a two-batch fixture covers
+  strict failure, historical success and strict success for the latest batch.
+
+* **H2-SBVF module scale campaign closeout:** the catalog moved 3,737 → **1,482**
+  (−2,255 entries, −60.3%) across 682 lossless carriers; 1,014 non-CSV entries
+  remain (682 modules + 332 singleton instructions) and all 468 CSV entries
+  stay top-level. Map revision 5,752 with 3,429 atom records and 468 fidelity
+  receipts are unchanged; every applied batch verified 0 issues, and
+  `check-corpus`/`check-vector` pass at 1,482 / 3,429 / 1,258. Independent
+  integrity check: all 3,278 map atoms and 468 CSV atoms are present exactly
+  once (682 modules hold 2,946 atoms; 332 non-CSV singletons and 468 CSV
+  entries remain top-level; zero duplicates or unexpected IDs). No commit,
+  push or acceptance claim.
+
+* **H2-SBVF donor batch — bmad-method (4 batches):** applied 157 carriers /
+  626 atoms. Batch SHAs/counts: (1) 50/205, `62320726…f21c856`, catalog
+  2,690 → 2,535; (2) 50/208, `2e40b841…7507d0`, 2,535 → 2,377; (3) 50/190,
+  `8a67034e…c5d0d0`, 2,377 → 2,237; (4) 7/23, `d05f4a96…ba41e0`, final
+  catalog SHA `69a125f9cdeda0cb8efb7547c64c96aab3cd20099b8f5e11d81dda0be765211d`,
+  2,237 → **2,221**. Catalog revision 7,733; map and 468 receipts unchanged.
+  All four batches verify 0 issues with full atom parity; VECTOR rows 22–25.
+
+* **H2-SBVF donor batch — wondelai-skills (3 batches):** applied 121 carriers
+  / 747 atoms. Batch 1: 50 carriers / 312 atoms, batch SHA
+  `9ad763e3cdc252ed972f1f851b0510b387ad48b01a25315cfd4c342962cf0b1d`,
+  catalog 3,316 → 3,054. Batch 2: 50 carriers / 298 atoms, batch SHA
+  `fe8c19014125a26a8602dd0acf8782355a358cc1176eeafe7b91faeac045f921`,
+  catalog 3,054 → 2,806. Batch 3: 21 carriers / 137 atoms, batch SHA
+  `805ea8996e57fb5f41aac5bb1e5f44d1eb3cfdfc135a61ec544131385e3841fd`,
+  final catalog SHA
+  `5c60a24640bf1fb47148a683ecd5398f5eef342c7f9615aa7f422e525bfbbbd4`,
+  catalog 2,806 → **2,690**. Catalog revision 7,576; map and 468 receipts
+  unchanged. All three batches verify 0 issues with full atom parity; VECTOR
+  rows 19–21.
+
+* **H2-SBVF v1.2 provenance fix:** the wondelai batch verify initially
+  reported 362 parity mismatches because the v1.2 loader parsed
+  `path=...; sha256=...; locator=...` with the legacy path-to-end pattern,
+  swallowing the optional attribution fields into `path`. The parser now
+  accepts optional `sha256`/`locator` for v1.2 provenance as well; the batch
+  re-verified with 0 issues and a regression test covers the format. The
+  carrier payloads were byte-identical throughout; no data was lost.
+
+* **H2-SBVF donor batch — addy-skills (2 batches):** batch 1 applied 50
+  carriers / 292 atoms (batch SHA
+  `fcde04d49789077ccc1a425b4582fb43f5fddfa1224dc92121fe4691c51ad8b6`;
+  final catalog SHA
+  `a37586cdf4cf134813c39666339eb95c79a37506002d57bba8403fc58cce41b0`;
+  catalog 3,622 → 3,380). Batch 2 applied 11 carriers / 75 atoms (batch SHA
+  `a5ea0263a8b7fd79aaf930be3384e1cb8e90e2c7f4c7f8ee17593ed4c02f0f72`;
+  final catalog SHA
+  `e7b565b20d0e6857ebdc294c9c47d89a073565faf1fce95d0289e39511be4dc7`;
+  catalog 3,380 → **3,316**). Catalog revision 7,455; map and 468 receipts
+  unchanged. Both batches verify 0 issues with all module parity true and
+  module get fail-closed; `check-corpus` 0. VECTOR rows 17–18.
+
+* **H2-SBVF donor batch — superpowers:** applied 13 carriers / 51 atoms from
+  engineering, documentation and product/design source groups. Batch SHA
+  `d0c02d330ee50ba5c541082ba557dddbab6648b1566af77951f644ae7c5104be`;
+  final catalog SHA
+  `0ca9d0a5456845d892970a13037b975191ae7c2880b343113d25a6fc2c7c12f0`;
+  catalog 3,660 → **3,622**; catalog revision 7,394; map and 468 receipts
+  unchanged. Batch verify: 0 issues, 13/13 module parity, module get
+  fail-closed, `check-corpus` 0. VECTOR row 16.
+
+* **H2-SBVF donor batch — matt-skills:** applied 14 carriers / 36 atoms from
+  engineering, documentation and productivity source groups. Batch SHA
+  `d28094a9ad68eb21cfb16ef97552d7fca21de5353b84d0c99a884ba93ec36adb`;
+  final catalog SHA
+  `5c6e6475ec033c8e4c9f17d83a2264c9be1d978bc970e239dd7213be29343686`;
+  catalog 3,682 → **3,660**; catalog revision 7,381; map and 468 receipts
+  unchanged. Batch verify: 0 issues, 14/14 module parity, module get
+  fail-closed, `check-corpus` 0. VECTOR row 15.
+
+* **H2-SBVF donor batch — ponytail:** applied 3 carriers / 15 atoms from two
+  ponytail source groups. Batch SHA
+  `63c4b48add68f2d207a06569b63d8df13aa4f22121c4fe28aaa4e4f4d8e8e020`;
+  final catalog SHA
+  `8c462970a4ead837fb69ac90efc11f0b81b9a4c39d978f63e8a23f97e16938f3`;
+  catalog 3,694 → **3,682**; catalog revision 7,367; map and 468 receipts
+  unchanged. Batch verify: 0 issues, 3/3 module parity, module get
+  fail-closed, compose 9/5/2 (one module has a mandatory dependency; the
+  closure check passed), `check-corpus` 0. VECTOR row 14.
+
+* **H2-SBVF module canary — open-knowledge-format:** the owner-approved donor
+  batch applied 10 chunked carriers for `open-knowledge-format` (53 unique
+  atoms across 5 map-primary source groups; groups 29→8/8/8/5, 11 and 14
+  chunked with shared atoms assigned once). Batch SHA
+  `b89a54f6baa9d3b2fbc6b2b2694a84b632c2b4742f7577e133f6420255005c9f`;
+  final catalog SHA
+  `99c4978fccc19bc47c14f9b25cb44a0c8b29a173a0dd49f6314488dfc60b22ba`;
+  catalog 3,737 → **3,694**; catalog revision 7,364; map revision 5,752 and
+  468 receipts unchanged. Batch verify: 0 issues, 10/10 module parity,
+  module get fail-closed, compose counts 2/8/8/8/5/2/8/2/8/2,
+  `check-corpus` 0 issues. `check-vector` 13 batches / 3,694 / 3,429 / 1,258
+  after the VECTOR row update. No commit or push.
+
+* **H2-SBVF lossless source modules — M1/M2a and owner-authorized real pilot:**
+  added the `VPInstructionModule/v1` reader path (parse, load, search, get,
+  compose, browse), the module identity split in `check-corpus`, and the
+  `module-plan/apply/verify/rollback` migration CLIs with manifest-SHA
+  verification and unique rehearsal roots. The real pilot packaged 11 atoms into
+  two carriers: GSD `module-gsd-core-agents-gsd-security-auditor-compact-md-40e93f83-c01`
+  (3 atoms; plan SHA
+  `46c3fb369d5d2630eda3941330da69eebded7937d3bd7ba997fe7a47169e9d98`;
+  receipt `913b12d1e03e6343ed67e5a4dda81f8074aa2fbc5c8a13614810389ec9e31d9c`)
+  and Addy `module-addy-skills-agents-security-auditor-md-4a372cf3-c01`
+  (8 atoms; plan SHA
+  `5b86987a20080d52b7c49bb38b310a758baa6f1e2c64808dec7b12f859cbfb8d`;
+  receipt `c9ed7ac3d20f51b24a64cd91ba112f5e95d7b1251026cede24b168a7caf9c88d`).
+  Catalog 3,746 → 3,737; catalog revision 7,354; map revision 5,752 and 468
+  receipts unchanged; atom parity 11/11; module get fails closed with
+  `CATALOG_MODULE_ATOM_REQUIRED`; compose expands 3 and 8 atoms. Post-pilot
+  test reconciliation replaced fixed pre-pilot counts and top-level atom
+  assumptions with derived values and a pre-pilot reconstruction from the two
+  real module files. Full check: 968 pass / 5 skip / 0 fail, 100% functions and
+  lines; typecheck, `check-corpus` (0 issues), `check-vector` (12 batches /
+  3,737 / 3,429 / 1,258) and `check-okf` exit 0. The 11 atom files are deleted
+  and the two module files are added in the working tree; no commit or push, no
+  scale apply, no acceptance claim.
+
+* **H2-SBVF post-pilot optimization:** `scripts/module-census.ts` now expands
+  `VPInstructionModule/v1` carriers back into their member atoms, so the
+  post-pilot census reproduces the atomic cohort counts: 3,737 catalog
+  carriers, 468 CSV atoms, 3,278 non-CSV atoms, map-primary 908 groups /
+  1,026 carriers / 1,494 current / 2,429 all-in; pilot cohorts 3 (GSD) and 8
+  (Addy). Runtime 405 ms. `module-migration.ts` now reads `corpus-map.json`
+  once per plan and reuses the parsed map for the receipt snapshot, and
+  `module-verify` loads the catalog once instead of twice; Addy verify dropped
+  from 2.5 s to 2.05 s with 0 issues. A pre-pilot GSD plan measured 582 ms.
+  A fixture test covers carrier expansion. Full check: 969 pass / 5 skip /
+  0 fail, 100% functions and lines; typecheck, `check-corpus`, `check-vector`
+  and `check-okf` exit 0. No further corpus change; no commit or push.
+
+## 2026-11-07
+
+* **H2-SBVF module M0 — census, schema and contract proposal:** added the
+  read-only module census, `VPInstructionModule/v1` schema, synthetic fixture
+  tests and an unaccepted contract proposal in the existing H2-SBVF work area.
+  Cap-8 census: map-primary 908 groups / 1,026 carriers / 1,494 current / 2,429
+  all-in; first provenance donor+path 929 / 1,050 / 1,518 / 2,453; path-only
+  928 / 1,049 / 1,517 / 2,452. Catalog: 3,746; CSV atoms: 468; non-CSV atoms:
+  3,278. Census runtime: 340 ms. The GSD pilot is 0 at the exact map-primary
+  path and 3 by provenance; the Addy pilot is 8 map-primary and 7 by first
+  provenance. This source-group mismatch is recorded for owner resolution
+  before rehearsal. No corpus, catalog, map, instruction or receipt changed;
+  no module was applied; no acceptance or owner approval is claimed.
+
+* **H2-SBVF P4b — apply/rollback/verify rehearsal:** added the same-process
+  apply path, reviewed reverse batch, read-only parity verifier and fixture-copy
+  integration coverage. Rehearsal plan SHA
+  `2db034afff0a30dfd8342662dcb23428b9b9077f7a45e56dc4156bde1a7960b4` applied
+  2 families / 4 variants across 8 targets; catalog 3,746 → 3,744 and map 468
+  bindings (464 singleton + 4 family). Verification passed body parity,
+  family get/compose, non-family instruction checks, receipt hashes and corpus
+  checks. Reviewed rollback restored the original bytes and passed
+  check-corpus. The rehearsal used only an isolated `.tmp` product copy; the
+  real corpus, catalog, map, instructions and receipts are unchanged. No real
+  apply, acceptance claim, commit or push.
+
+* **H2-SBVF P4a — pilot manifest and dry-run plan:** added the owner-approved
+  two-family pilot manifest (React/React Native `useState` and `useReducer`),
+  prepared-batch delete targets in `convert.ts`, and the read-only
+  `sbvf-plan.ts` planner. Real dry-run plan SHA
+  `2db034afff0a30dfd8342662dcb23428b9b9077f7a45e56dc4156bde1a7960b4`:
+  2 families, 4 variants, 8 targets, 4 deletions; map 468 bindings = 464
+  singletons + 4 family; catalog 3,746 → 3,744; target order families → map →
+  deletes → catalog last. No corpus, catalog, map, instruction or receipt
+  change; no apply; no acceptance claim. P4b apply/rollback/verify and the
+  owner-approved P5 apply remain open.
+
+* **H2-SBVF P3 implemented:** added the read-only UUPM row census, the
+  `SBVFFamilyManifest/v1` schema and corpus-bound manifest validation. The real
+  census verifies 3,746 catalog instructions and 1,434 CSV rows: 468 admitted,
+  957 deferred and 9 rejected; it proposes 44 exact-title and 1 near candidate
+  groups, with 5 eligible pilot proposals. The current map yields 944 deferred
+  stack rows = 935 KEEP_ATOMIC + 9 SPLIT; the earlier 943-row figure excluded
+  the react.csv SPLIT from an earlier batch, so 944 is consistent with the 957
+  deferred total minus 13 UX rows. The 850/93/8 source-classification breakdown
+  is not encoded row-by-row and remains a baseline-only note, not a data
+  mismatch. Outputs are in the existing H2-SBVF work folder.
+  Read-only P3: no corpus, catalog, map, instruction or receipt changes; no
+  H2/AC-85 or Runtime acceptance claim. Owner approval and P3 independent
+  review remain pending.
+
 ## 2026-11-06
+
+* **D58 Source-bound variant families accepted (P0 documentation scope):** added
+  [D58](decisions/D58-source-bound-variant-families.md), amended D16 to permit
+  only the reversible owner-approved family migration, and added SR-102–SR-105
+  plus open AC-82–AC-85. AC-74–AC-81 were already allocated, so the new
+  acceptance criteria use the next free IDs. `next-actions.md` records H2-SBVF,
+  P0–P6 and the census reconciliation; the existing H2-A2 item is unchanged.
+  No corpus or code change, source admission, H2 acceptance or Runtime claim.
 
 * **H2-A2 stack group admitted:** 211 KEEP_ATOMIC `angular`, `astro`,
   `avalonia` and `flutter` rows are admitted with 211 delegated
@@ -2573,3 +3198,5 @@
 * **Update, 2026-10-23 — F Source integration and SR-55 (.117):** Root accepted the `.116` code/evidence READY review for the exact nine-path aggregate. The aggregate is now integrated at the current Source; the four TS/test files retain the exact reviewed candidate bytes. The plan and VP-6 trace now include SR-55; `vp-mode/SKILL.md` states that a third-party fix proposal is an optional human loop after main work and still requires permission before action. The initial integration gates ran before the status-row update; final five-document OKF/Markdown and source-stability checks remain pending. See the current Step F row in [next actions](next-actions.md) for gate results. AC-20/21/23 remain open, AC-22 partial, AC-24 component-only; no real finding event, host acceptance, Runtime acceptance, or F closure is claimed. Step G remains open, unsent, and unaccepted.
 * **Update, 2026-10-23 - H0 source-quality baseline status correction:** Step H revision 6 records Source-quality closeout CLOSED for the accepted baseline at commit fafb40158d20a2a10155d6ef984dfd55c36be23d, based on accepted .89 publication review (SHA-256 3d5cb04bc3299f45927248d32c9ca62c6996f05c42d399cd42b91a60f68072e6) and .91 WORK closeout receipt (SHA-256 4f217726c4de535a9480c1df1cb2d8e1c184d84c79444fb3867afc94837d37b9). Later G publication at HEAD e73f16f693f8a93cdfbdd8685eaa6c75310243be does not reopen that baseline. Historical .67 remains overall NOT_CLOSED and packagePass=false; H1 remains NOT_CLOSED with no donor/source admission. This correction does not establish package, product, release, host, legal, public-metadata or Runtime acceptance.
 * **Update, 2026-10-28 — approach foundation:** Added the descriptive vocabulary, semantic parser corrections and v1.2 schema pairing, with focused tests and the target contract. Reader, corpus integration and clean cutover remain pending.
+* **2026-11-07 — H2-SBVF P1 implementation and SWE-2 CHANGES fixes.** The independent SWE-2 review returned CHANGES on P1. The fix batch aligns `parseVariantScalar` with P2 (`encodeVariantScalar` emits the quoted frontmatter scalar; parsing accepts decoded JSON text from `parseFrontmatter`), enforces v2 tag/role/product/provenance formats and required conditional classification, rejects reserved `family-` variant IDs and decoded control/separator characters, and requires lowercase `source.rawSha256`. `artifact_contract_verified_by` remains type-only, including empty strings, to match v2. Regression coverage now includes the frontmatter integration, quoted-input rejection, scalar metadata formats and hashes, classification boundaries, direct/decoded controls and reserved IDs. Typecheck passes; package suite: 895 passed / 4 skipped / 0 failed; coverage: 100% functions and lines; corpus check: 3,746 instructions / 0 issues; OKF: 72 concepts / no failures or warnings. No corpus, catalog, corpus-map data, instructions or fidelity receipt changed. Independent re-review remains pending; no acceptance claim is made.
+* **2026-11-08 — H2 module scale implementation.** Generalized single-module selection to map-primary donor/source groups with deterministic `cNN` IDs, then added chunked donor batch plan/apply/verify using the existing module writer and rollback contract. Review hardening binds each batch record entry to its module apply plan, receipt and internal review, checks the rolling and final catalog SHA, validates the batch review, and compares module compose to the atom-cohort dependency closure instead of requiring the cohort size to equal the composed count. Fixture-only tests cover selector bounds, deterministic batching, sequential apply, drift/review rejection, record binding, same-count catalog drift, dependency closure, one-module rollback and batch verification. Typecheck exited 0; tests: 976 passed / 5 skipped / 0 failed; coverage: 100% functions and lines; corpus: 3,737 instructions / 0 issues; vector: 12 batches, 3,737 instructions, 3,429 map records, 1,258 baseline files; OKF: 72 concepts / 0 failures / 0 warnings. No canary apply or real-corpus mutation was performed.

@@ -1,0 +1,70 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-nuxt-ui-use-uapp-locale-prop-for-internationalization-pass-locale-to-uapp",
+  "variantId": "uupm-nuxt-ui-use-uapp-locale-prop-for-internationalization-pass-locale-to-uapp",
+  "variantBodySha256": "a66ce61f96918438278305d9bf0c20eda470c936aad76aa8ffcf840c6ce2e30b",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nuxt-ui.csv",
+    "rowKey": "path=stacks/nuxt-ui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=51c8d3838a13d688c70ce3f0c5c752b458ecc396eb0df4d637378966d3684faa",
+    "cells": [
+      {
+        "columnIndex": 4,
+        "cellHash": "fd50148d02c25cdc67a95b60d34ad9cfcefa5aeec0bc73f064a87ffa31a69133",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 26,
+            "endCodePoint": 50,
+            "textSha256": "c21c39c5e383a637aa832c9032b103090ada1a4e4cb6408202054a37fb7d2da9"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "359746539939c1e4120fb30e5a12945065e3bb6d69808e0fb575a7b03e93defc",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 19,
+            "textSha256": "0be369afe4ce94389be31d636994f43b1dc3a8041d5b7fa66e1cc6d25b478d07"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/nuxt-ui-h2a2-l57-split-evidence.json",
+    "sha256": "5f7929501504b70b8e10d217cf39c093bd51d068107afc5f04f518b0ea94a2fd"
+  },
+  "recordedAt": "2026-11-10T15:30:00Z"
+}

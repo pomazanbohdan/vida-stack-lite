@@ -1,0 +1,31 @@
+{
+  "schema": "H2SplitEvidence/v1",
+  "recordedAt": "2026-11-10T00:00:00Z",
+  "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=4f36c8f672a2376a3080c4018ff08c9324e50f8ac3c2a040120c1bc8d611a30e",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "locator": {
+      "line": 23,
+      "row": 22
+    }
+  },
+  "decision": "SPLIT held row \"Touch Target Size\" into per-platform singleton instructions; the web fragment binds the already-admitted uupm-ux-target-size-minimum (the donor row itself defers web to the separate WCAG Target Size rule).",
+  "council": "V3 Delphi + V2 Adversarial agreed; platforms facts are conjunctive so a single [ios,android] fact set is invalid.",
+  "variants": [
+    {
+      "instructionId": "uupm-ux-touch-target-size-ios",
+      "variantId": "uupm-ux-touch-target-size-ios",
+      "platform": "ios"
+    },
+    {
+      "instructionId": "uupm-ux-touch-target-size-android",
+      "variantId": "uupm-ux-touch-target-size-android",
+      "platform": "android"
+    }
+  ],
+  "webBinding": {
+    "instructionId": "uupm-ux-target-size-minimum",
+    "variantId": "uupm-ux-target-size-minimum"
+  }
+}

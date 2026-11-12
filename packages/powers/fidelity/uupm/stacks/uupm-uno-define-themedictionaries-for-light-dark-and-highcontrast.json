@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-uno-define-themedictionaries-for-light-dark-and-highcontrast",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/uno.csv",
+    "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c6c690bfa855fc86e2383be47ba436c9e38a09d44491fe8d564ab15a26b1a2f5",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "444458bf61789d082c65ae7f19b3a83204d4123d86b1ea86b2d96b851392c05a",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "8e351f8ee761ec0a9f50d2a8061fecfee1a8a41e46152c3d76870f436af89338",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "bbac8d0be770703a4457609e72cb786dc88cff8d4e426c0a04db55eba3e4d31e",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "50788dda8ca16b95762882f570f5fc62f42a6ec208e371ab73e707a23e60a8b3",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "a4e9500eb2aa767a4af50c278e48fce86e9c67a1faa81fc06ffc3150b42cdb98",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "290a3e11207a2efbb5e7d75992b320285f7c22d3c6a94534af6f93533641692f",
+        "locator": {
+          "line": 57,
+          "row": 56,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 57,
+            "row": 56,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/uno-evidence.json",
+    "sha256": "1f21f42eac06984dd60015699fc9f09057fac57f786ba6e7aa9d9fb1539e9c76"
+  },
+  "recordedAt": "2026-11-11T12:55:20.753Z"
+}

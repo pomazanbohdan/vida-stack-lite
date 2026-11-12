@@ -1,0 +1,47 @@
+---
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: h2-csv-pilot-not-classified
+instruction_id: uupm-svelte-use-effect-for-side-effects
+title: "Use $effect for side effects"
+summary: "$effect replaces $: side effects"
+capability_tags:
+  - design-user-interface
+pattern_tags:
+  - state-modeling
+conditions_applies_when: "Reactivity guidance for svelte 5."
+conditions_does_not_apply_when: A context where the platform convention or the stated exception makes the rule unsafe.
+artifact_contract_output_type: none
+artifact_contract_required_data: []
+artifact_contract_verified_by: The interface applies the stated rule and the result is checked against the source guideline.
+compatibility_excludes: []
+compatibility_requires: []
+provenance:
+  - "donor=uupm; license=MIT; revision=56ea9cf174ed86786187daa9de0e6247cb0747e4; path=stacks/svelte.csv; sha256=f6e379ba802941ba26b01d4ffbe3cd39120f2587659a1d93851c707f66bc13db; locator=stacks/svelte.csv#L6"
+status: active
+revision: 1
+---
+
+# Use $effect for side effects
+
+$effect replaces $: side effects
+
+**Do:** Use $effect for subscriptions
+
+**Don't:** $: for side effects in Svelte 5
+
+**Applies To:** svelte 5
+
+**Severity:** Medium
+
+**Good example:**
+
+```text
+$effect(() => console.log(count))
+```
+
+**Bad example:**
+
+```text
+$: console.log(count) (Svelte 5)
+```

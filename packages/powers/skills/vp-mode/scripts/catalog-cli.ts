@@ -29,7 +29,7 @@ import {
 import type { Catalog, ComposedBundle, ComposeQuery, EffectiveProfile, LoadedInstruction, SearchQuery } from './catalog.ts';
 import { parseApplicabilityContext } from './applicability.ts';
 import type { ApplicabilityContext } from './applicability.ts';
-import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText, topPatternFor } from './retrieval.ts';
+import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText } from './retrieval.ts';
 import type { IntentCandidate } from './retrieval.ts';
 import { validateAgainstSchema } from './schema.ts';
 import {
@@ -590,7 +590,7 @@ function validateStaticFlags(command: Command, flags: Map<string, string[]>): vo
   }
 }
 
-type CompactRow = { id: string; description: string };
+type CompactRow = { id: string; description: string; members?: Array<{ atom_id: string; matched: boolean }> };
 type CompactResult = { kind: 'compact'; text: string; pagination?: string; notes?: string; exitCode?: number };
 type JsonResult = { kind: 'json'; value: unknown };
 type TextResult = { kind: 'text'; text: string; stats?: string };
@@ -600,7 +600,7 @@ function compactRows(rows: CompactRow[], flags: Map<string, string[]>, defaultLi
   const offset = nonnegativeInteger(flags, '--offset', 0);
   const limit = flags.has('--limit') ? nonnegativeInteger(flags, '--limit', 0) : flags.has('--all') ? undefined : defaultLimit;
   const page = rows.slice(offset, limit === undefined ? undefined : offset + limit);
-  const text = page.map((row) => `${escapeField(row.id)}\t${escapeField(row.description)}`).join('\n');
+  const text = page.map((row) => `${escapeField(row.id)}\t${escapeField(row.description)}${row.members === undefined ? '' : `\tmembers: ${row.members.map(({ atom_id, matched }) => `${escapeField(atom_id)}=${matched ? 'matched' : 'not-matched'}`).join(', ')}`}`).join('\n');
   const remaining = Math.max(0, rows.length - offset - page.length);
   const paginated = page.length < rows.length || offset > 0;
   const pageNumber = Math.floor(offset / Math.max(limit ?? page.length, 1)) + 1;
@@ -765,12 +765,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
           const explicitCapability = capabilityTags?.[0];
           const explicitPattern = patternTags?.[0];
           const capability = explicitCapability ?? resolution.capability;
-          let pattern = explicitPattern ?? resolution.pattern;
-          let patternSource: 'explicit' | 'query' | 'default' | undefined = explicitPattern !== undefined ? 'explicit' : resolution.patternSource;
-          if (pattern === undefined && capability !== undefined) {
-            pattern = topPatternFor(instructions, capability);
-            patternSource = pattern === undefined ? undefined : 'default';
-          }
+          const pattern = explicitPattern ?? resolution.pattern;
+          const patternSource = explicitPattern !== undefined ? 'explicit' : resolution.patternSource;
           if (capability === undefined && pattern === undefined) {
             throw invalid(`no capability or pattern matched --for; ${suggestionText(forTerms, catalogFindTags(catalog, forTerms))}`, { terms: forTerms });
           }
@@ -839,7 +835,11 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       const matches = profile === undefined
         ? catalogSearch(catalog, instructions, query)
         : catalogSearchWithProfile(catalog, instructions, query, profile);
-      const rows = matches.map(({ instruction_id, summary }) => ({ id: instruction_id, description: summary }));
+      const rows = matches.map(({ instruction_id, summary, members }) => ({
+        id: instruction_id,
+        description: summary,
+        ...(members === undefined ? {} : { members: members.map(({ atom_id, matched }) => ({ atom_id, matched })) }),
+      }));
       const compact = compactRows(rows, flags, 20, 'refine: narrow with --capability <tag>, --pattern <tag>, or tags --query <terms>; or pass --all');
       const notes = [resolved, discoveryNote].filter((value): value is string => value !== undefined).join('; ');
       if (strictFailure) return { kind: 'compact', text: '', ...(notes === '' ? {} : { notes }), exitCode: 3 };

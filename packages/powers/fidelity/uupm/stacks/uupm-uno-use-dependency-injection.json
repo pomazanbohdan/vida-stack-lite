@@ -1,0 +1,132 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-uno-use-dependency-injection",
+  "variantId": "uupm-uno-use-dependency-injection",
+  "variantBodySha256": "e80a37f8a8f0549c73859b1e67da10bc8408aaaf17bc5bef57f08a821e91db6f",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/uno.csv",
+    "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bc3d1036cfa1b17f037d77fbff1217c5fe8d62d58a7037852e55d3b6171000d3",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "columnHeader": "Guideline",
+        "cellHash": "fdc3bbf96099887432b387698412e70b6a92f46d657260f2d4011bc0b8af5c06",
+        "role": "normative-title",
+        "locator": {
+          "line": 28,
+          "row": 27,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 28,
+            "row": 27,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "columnHeader": "Description",
+        "cellHash": "8aa25acda765335655c30e20878dabaef1c0aea051e562345bfb1598fecc649d",
+        "role": "normative-description",
+        "locator": {
+          "line": 28,
+          "row": 27,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 28,
+            "row": 27,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "columnHeader": "Do",
+        "cellHash": "05000e35da26d9bef52c6449060e03af79e59a4adb194aecf126f3f3d83909ad",
+        "role": "normative-direction",
+        "locator": {
+          "line": 28,
+          "row": 27,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 28,
+            "row": 27,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "columnHeader": "Don't",
+        "cellHash": "72194f2f7e67aa40a08f30f3f89427e5fe48ac5b3d0e7d615af7ddd1c56e933e",
+        "role": "normative-exception",
+        "locator": {
+          "line": 28,
+          "row": 27,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 28,
+            "row": 27,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "columnHeader": "Code Good",
+        "cellHash": "a5354a53a2f4678a004501761f05ad8be09637c76db2956b8da5a3234d28ab2e",
+        "role": "normative-example",
+        "locator": {
+          "line": 28,
+          "row": 27,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 28,
+            "row": 27,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "columnHeader": "Code Bad",
+        "cellHash": "087146aba8bced503784be9c23a848314822df5dc60ae5940f4ff4764998943a",
+        "role": "normative-example",
+        "locator": {
+          "line": 28,
+          "row": 27,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 28,
+            "row": 27,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/uno-xaml-mvvm-admission-evidence.json",
+    "sha256": "3e8a7bf4a4d4e3e763d598a5d28cebd9195bc15c289ab4ccb3fd347c6aad3a5c"
+  },
+  "recordedAt": "2026-11-12T09:31:18.049Z"
+}

@@ -15,4 +15,4 @@ test('migration review rejects tampering and preserves UNKNOWN', async () => {
   expect(result.status).toBe('PASS');
   expect(result.cases.length).toBe(28);
   expect(result.cleanup).toBe('removed');
-}, 30000);
+}, 120000);

@@ -1,0 +1,125 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-winui-support-keyboard-navigation-tab-navigation",
+  "variantId": "uupm-winui-support-keyboard-navigation-tab-navigation",
+  "variantBodySha256": "b8cd5d8d3ecb818d78e408d76da30c2e440d4e377de4e77d0a1b2af340f84b00",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/winui.csv",
+    "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=43f61a879b572b15ba06507eee06749173941dd2596c92da77735a9fec158c39",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "40735896a8b13d17408597206a4c4d8e2e984c7b1e19610f795217e5310f19e3",
+        "locator": {
+          "line": 34,
+          "row": 33,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 34,
+            "row": 33,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "e7c91b08d7b13b9a80e93f08e2eec1cb0cae887525e655481c83376843166da1",
+        "locator": {
+          "line": 34,
+          "row": 33,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 34,
+            "row": 33,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "e8141cc6dc1c31ec4785a8953f7920b0ab2df1de7cb1eb2e9e1dc72fa5d24e70",
+        "locator": {
+          "line": 34,
+          "row": 33,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 34,
+            "row": 33,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 14,
+            "textSha256": "33ce363d0bcaf921dd260f230c062d65f62b701e29845d0d4eab386ea073dbec"
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "534ea15acfdf1b30ee010d54f67920ccd701610bbfd9511063347ac20f4f2d1d",
+        "locator": {
+          "line": 34,
+          "row": 33,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 34,
+            "row": 33,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 23,
+            "textSha256": "534ea15acfdf1b30ee010d54f67920ccd701610bbfd9511063347ac20f4f2d1d"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "c5bff287ea16d640dd871dd9d7d71380d3aed8aecae8fed30461e9956ed4222a",
+        "locator": {
+          "line": 34,
+          "row": 33,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 34,
+            "row": 33,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 44,
+            "textSha256": "c5bff287ea16d640dd871dd9d7d71380d3aed8aecae8fed30461e9956ed4222a"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/winui-h2a2-l34-split-evidence.json",
+    "sha256": "ec8396779b210c84ed079a021997d174e8f29803d198c77223a81078a39d50be"
+  },
+  "recordedAt": "2026-11-11T00:00:00Z"
+}

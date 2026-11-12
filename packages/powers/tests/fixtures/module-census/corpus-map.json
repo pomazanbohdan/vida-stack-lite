@@ -1,0 +1,19 @@
+{
+  "schema": "VPCorpusMap/v2",
+  "donors": {
+    "gsd-core": {
+      "files": {
+        "agents/gsd-security-auditor.md": { "instruction_ids": ["atom-a", "atom-b", "atom-c"] }
+      },
+      "csvSources": {
+        "source.csv": { "rows": [{ "bindings": [{ "instructionId": "csv-one" }] }] }
+      }
+    },
+    "addy-skills": {
+      "files": {
+        "agents/security-auditor.md": { "instruction_ids": ["atom-d", "atom-e"] }
+      },
+      "csvSources": {}
+    }
+  }
+}

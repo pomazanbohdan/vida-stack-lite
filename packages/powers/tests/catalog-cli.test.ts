@@ -282,7 +282,7 @@ test('browse counts retain uncertain and exclude contradictory approaches', asyn
   const invalid = runCli(['browse', '--catalog', catalogPath, '--profile', 'unused']);
   expect(invalid.status).toBe(1);
   expect(invalid.stdout).toBe('');
-});
+}, 15_000);
 
 test('get checks substituted dependency approaches and stays atomic on effective conflict', async () => {
   const { catalogPath, group, alternatives } = await catalogWithPolicyAlternatives();

@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-ux-readable-font-size",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=440fedf7a3414e2dd8afc4ec661b8c936316dcef134a3669c7bb2bf447255b1d",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "5d9b3b3b7acc941453e664b351d3ecf72c1d0f11bb58280c7484ecc88bb5ed4e",
+        "locator": {
+          "line": 68,
+          "row": 67,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 68,
+            "row": 67,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "39a1a49c126c1ed92f4e237f4ca55009fcaf3963ac637aefcbba4c5bebf96325",
+        "locator": {
+          "line": 68,
+          "row": 67,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 68,
+            "row": 67,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "c30f7096eb728e130583d526432294cda1f65fd7d3a2d36554427a4ed83d9d74",
+        "locator": {
+          "line": 68,
+          "row": 67,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 68,
+            "row": 67,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "6d0b8ee5400d510e4b8831a08572661069831248c17df994ace6b9fe91c3f8f6",
+        "locator": {
+          "line": 68,
+          "row": 67,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 68,
+            "row": 67,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "b562fdc5baadf2a6459b73dfea9ec9839109bf9b66dad6c1e1cde82e4fd0f026",
+        "locator": {
+          "line": 68,
+          "row": 67,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 68,
+            "row": 67,
+            "column": 8
+          }
+        ]
+      },
+      {
+        "columnIndex": 8,
+        "cellHash": "3cf3addf8262faa3fcc8c8ad18e6ccc2b1f14dd4a648998690c210c2e5e4ebb6",
+        "locator": {
+          "line": 68,
+          "row": 67,
+          "column": 9
+        },
+        "locators": [
+          {
+            "line": 68,
+            "row": 67,
+            "column": 9
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/readable-font-size-evidence.json",
+    "sha256": "a5236f7e445a2499d0c4a382ef65814114ceb407191de7c3bbd163e7a831e01c"
+  },
+  "recordedAt": "2026-11-11T00:00:00Z"
+}

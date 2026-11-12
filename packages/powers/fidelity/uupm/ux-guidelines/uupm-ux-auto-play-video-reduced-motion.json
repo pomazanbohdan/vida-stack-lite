@@ -1,0 +1,79 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-ux-auto-play-video-reduced-motion",
+  "variantId": "uupm-ux-auto-play-video-reduced-motion",
+  "variantBodySha256": "19899b5e12a39679ca98bbe89665d80a266183fc9f2a2deb3069aeda3fe87cfb",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3ac7fb72da6422efdac80abff69b3b9094703fe4466fa9b8b8c2ccf7667ea128",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "005fe7100c1d423d518bf6e52599db13e88763490b8d25754eb118480b0563e5",
+        "locator": {
+          "line": 97,
+          "row": 96,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 97,
+            "row": 96,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "88c4f24a5aa958a3d0d56e8ed688b6adbac376c04b61e4ad7d26898d2c52b14f",
+        "locator": {
+          "line": 97,
+          "row": 96,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 97,
+            "row": 96,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "9e65fc2fa5ccb7f90167c61548fb918a37334e91f90ad0dd48c7d770f1571e71",
+        "locator": {
+          "line": 97,
+          "row": 96,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 97,
+            "row": 96,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 70,
+            "endCodePoint": 90,
+            "textSha256": "65fe2446f9e2d2dbc5d518c2428e4b20eb400a5be2f08eb8934627d4b43ad3dc"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/h2a2-split-ux-rows-evidence.json",
+    "sha256": "d52b5ca5369d47086ad24b61c79ebd83bfc0186cd0ad08f2ed564ab9c43286c4"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

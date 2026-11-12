@@ -24,7 +24,7 @@ sources:
   title: Vida Agent package — Bun package conventions
 generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:40:29Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '29'
+revision: '49'
 ---
 
 # Goal and boundaries
@@ -37,8 +37,9 @@ the Powers-owned role bootstrap, adapts document procedures, and lets Root
 wire the project sidecar/profile. Native installer/manifests, harness activation
 and Agent runtime/template/config changes are not part of this packet.
 Bootstrap source, project-owned sidecar/profile and bounded local usage are
-implemented. Current component evidence is 765 pass, 4 skip, 0 fail, with
-typecheck and OKF passing; focused bootstrap/contract evidence is 19 pass.
+implemented. The packet closed with 765 pass, 4 skip, 0 fail, with typecheck
+and OKF passing; focused bootstrap/contract evidence is 19 pass. The current
+package gate is recorded in "Key decisions of the queue".
 The 8-ID applied map passes its receipt. Independent Luna source review ACCEPT:
 0 Critical / 0 Important / 1 Minor, with the ledger Minor corrected by Root.
 AC-74–AC-78 carry bounded component/project/contract evidence. This packet's
@@ -55,7 +56,7 @@ instruction separately authorizes Root to adopt the documents through
 `AGENT.sidecar.md` and `vida-project-profile.json`. Root AGENTS, runtime
 templates/configuration and native host delivery are outside this packet.
 
-## Open task list after the 2026-11-06 audit
+## Open task list (refreshed 2026-11-10)
 
 A0, A-D, F and the H0 baseline are closed for their bound inputs. H0
 documentation acceptance and `.69` native fixture parity remain open or
@@ -63,50 +64,189 @@ unreconciled. H1 AC-59 is accepted, but AC-47–AC-58 remain open as
 source-admission and packet-sign-off criteria; this is not a code gap. E source
 and skills are implemented, but E5a/E5b host qualification remains open. F is
 closed as Standalone component-only, AC-22 remains partial/deferred, and donor
-update tracking is closed. The remaining Powers-owned work is:
+update tracking is closed. D59 lossless modules are accepted and the
+3,746 → 1,482 campaign is applied; the module update path is READY. The
+remaining Powers-owned work is:
 
-1. **H2-A2 — CSV semantic admission (active).** 468 of 1,434 UUPM rows are
-   admitted as `uupm-*` instructions with delegated D18 receipts; 957 rows
-   remain deferred and 9 duplicate rows are rejected. The deferred set is 13
-   UX rows (11 SPLIT, 2 held), 9 SPLIT stack rows and 935 undispositioned stack
-   rows. The 7 KEEP_ATOMIC Mobile rows, 44 `react-performance` rows, 107
-   KEEP_ATOMIC `react.csv`/`react-native.csv` rows and 211 KEEP_ATOMIC
-   `angular`/`astro`/`avalonia`/`flutter` rows are admitted; 9 stack rows were
-   rejected as duplicate norms. Next, resolve the held applicability, decide the
-   SPLIT-row contract extension (the current receipt binds whole cells, not
-   subspans), and continue the remaining stack CSV batches. Done when every row
-   has a terminal disposition, admitted rows have instructions and
-   `H2FidelityReceipt/v1`, the applicator has run over the admitted batch, and
-   `check-corpus` proves row/cell coverage.
-2. **H2-D — H2 acceptance receipt and sign-off (blocked by H2-A2).** H2-B
-   coverage and H2-C Node evidence are closed; Deno is excluded. A bound
-   receipt must record the exact source, schemas, code, fixtures and map
-   hashes, plus test, corpus, coverage, typecheck, Knip, Node-runtime and
-   documentation results, and the owner must accept or reject H2.
-3. **H3-A — typed reference resources (gated by H2-D).** No H3 work is
-   authorized by the H2 approval.
-4. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
+1. **H2-A2 — CSV semantic admission (COMPLETE).** All 1,434 UUPM rows
+   have terminal dispositions: **1,414 admitted / 0 deferred /
+   20 rejected**. Final batch misc-singletons-migration applied as
+   VECTOR batch 51 (map 5773, catalog 8054, 2,404 instructions;
+   `sbvf-verify` verified). The non-family KEEP_ATOMIC lane is complete (VECTOR
+   batches 39–45; catalog 2,389). P6 batch 1 (web-ux-pairs) is applied
+   (VECTOR batch 46; map 5768, catalog 8049): 6 deferred rows admitted
+   as family variants + 6 ux singletons migrated to `VPInstruction/v3`
+   families under the luna-accepted `sbvf-*` admission machinery.
+   P6 batch 2 (js-ts-web) is applied (VECTOR batch 47; map 5769,
+   catalog 8050→2,390 instructions): 10 families, 13 deferred
+   admissions + 9 singleton migrations; the D58-violating
+   `family-avoid-unnecessary-effects-d6b2db8c` was excluded by owner
+   ruling. Svelte L53 "Use semantic elements" is applied as a
+   KEEP_ATOMIC singleton (VECTOR batch 48; map 5770, catalog 8051,
+   2,391 instructions) after the owner dissolved its family-of-one;
+   the svelte avoid-effects row (L48) is applied as KEEP_ATOMIC
+   singleton `uupm-svelte-avoid-unnecessary-effects` (VECTOR batch
+   49; map 5771, catalog 8052, 2,392 instructions).
+   `sbvf-verify` `.x` versionRange bug is fixed (`variantContextVersion`,
+   canonical expandRange semantics) — batch 50 verified cleanly.
+   Owner rulings: web-ux-pairs approved; semantic-elements family
+   dissolved (svelte L53 → KEEP_ATOMIC singleton, APPLIED as VECTOR
+   batch 48); evidence = stack-review JSON; avoid-unnecessary-effects
+   family excluded from js-ts-web (D58 violation — its svelte row
+   reverts to a singleton, APPLIED as VECTOR batch 49). xaml-mvvm is
+   applied (VECTOR batch 50; map 5772,
+   catalog 8053, 2,403 instructions; `sbvf-verify` verified after the
+   `.x` versionRange fix). misc-singletons-migration — the final
+   batch — is applied (VECTOR batch 51; deferred = 0). Machinery
+   hardened: `sbvf-verify` `.x` versionRange fix +
+   D58 census guards (same-rowKey / whole-cell / SPLIT-row) +
+   receipt/evidence realpath containment — all luna-accepted.
+   Remaining closeout: full product test suite + format/OKF checks,
+   final audit, commit decision. Per-batch
+   KEEP_ATOMIC Mobile rows, 44
+   `react-performance` rows, 107 KEEP_ATOMIC `react.csv`/`react-native.csv`
+   rows and 211 KEEP_ATOMIC `angular`/`astro`/`avalonia`/`flutter` rows are
+   admitted; 20 rows are rejected as duplicate norms (18 earlier
+   duplicates plus the two D57 sibling-covered rejects). `Touch Target
+   Size` is resolved: it was split into the singleton instructions
+   `uupm-ux-touch-target-size-ios`, `uupm-ux-touch-target-size-android` and
+   a subspan binding on `uupm-ux-target-size-minimum` (Web), each with an
+   `H2FidelityReceipt/v2`. All 12 prepared D18 SPLIT rows are now admitted
+   (11 `ux-guidelines.csv` rows + `stacks/react.csv` L9) as 31
+   `VPInstruction/v1.2` singletons with exact code-point subspan bindings
+   and `H2FidelityReceipt/v2` (batch 34; catalog 1,515). The SPLIT contract
+   gap is closed in Source by the D56 amendment, and the live map is
+   `VPCorpusMap/v3` with singleton `variantId` values;
+   `audit-report.ts`, `source-updates.ts`, `convert.ts` and the SBVF
+   census/plan path are v3-aware. Stack semantic review (cycle 1–2,
+   2026-11-10): all 943 deferred stack rows received per-row dispositions
+   from ten parallel flash agents, each file independently validated by
+   luna with adjudicated corrections; consolidated result is 849
+   KEEP_ATOMIC, 10 SPLIT, 11 REJECT_DUPLICATE and 73 HELD. The D57
+   deferred-sibling dedup amendment is applied (same-batch sibling
+   coverage, per-cell/per-fragment full coverage, cross-row subspan
+   binding). Nine stack SPLIT rows are admitted as 21
+   `VPInstruction/v1.2` singletons with subspan bindings and
+   `H2FidelityReceipt/v2` (batch 35; catalog 1,536). `winui.csv` L34 is
+   resolved by batch 38 (catalog 1,540): admitted as two SR-111 singleton
+   SPLITs outside its mislabeled family (SR-105/D58 exclude SPLIT rows
+   from families). Batch 36 (catalog 1,537) admitted
+   `nuxt-ui.csv` L57 as the `use-range-when-needed` singleton with the
+   locale fragment cross-bound to the L71-derived instruction per the D57
+   amendment, and resolved 9 REJECT_DUPLICATE rows against already-admitted
+   instructions; laravel L47 and nextjs L61 were resolved by the D57
+   same-batch rule inside NF-02/NF-03 (batches 42–43). `Readable Font Size` is resolved by batch 37 (catalog
+   1,538): admitted as the neutral `VPInstruction/v1.2` singleton
+   `uupm-ux-readable-font-size` under the consilium decision — the seven
+   Mobile siblings set the precedent and no `mobile` vocabulary token is
+   needed (platform facts are conjunctive, D56/SR-82); the UX deferred
+   remainder is zero. `csv-map.ts` locator validation now covers every
+   `locators[]` entry per D56 §9. Dispositions live in
+   `packages/powers/.tmp/h2a2-stack-review/*.json`; the family batch plan
+   (45 READY families, 5 batches) is `.tmp/h2a2-family-plan.json` — note
+   `winui.csv` L34's `split-family` label is an artifact: SR-105/D58
+   categorically exclude SPLIT rows from families, so L34 is staged as
+   two singleton SPLIT instructions outside the family (the xaml-mvvm
+   batch drops to 48 rows). Next, in order:
+   1. ~~Materialize the remaining non-family KEEP_ATOMIC rows~~ — DONE:
+      all seven NF batches applied (VECTOR batches 39–45; catalog
+      2,389; dispositions 1,342/72/20). NF-01..05 were applied after
+      the luna re-check ACCEPTed the `pattern_tags: []` fix; the 12
+      empty-pattern rows carry `tag_exemptions` (pattern dimension).
+   2. Family-aware admission per D58/P6 — COMPLETE for UUPM: machinery
+      ACCEPTED by luna (`sbvf-admission.ts` +
+      `SBVFAdmissionManifest/v1` extending `sbvf-*`, Option A);
+      batches 1–4 applied (VECTOR 46 web-ux-pairs, 47 js-ts-web
+      minus the D58-excluded avoid-effects family, 50 xaml-mvvm,
+      51 misc-singletons-migration); both dissolved svelte rows
+      applied as singletons (VECTOR 48–49). **H2-A2 complete:
+      deferred = 0, all 1,434 rows dispositioned.** Machinery
+      hardened and luna-accepted: `sbvf-verify` `.x` versionRange
+      fix + D58 census guards (same-rowKey / whole-cell / SPLIT-row)
+      + receipt/evidence realpath containment. Closeout: full
+      product test suite + format/OKF + final audit + commit
+      decision. Per-batch
+      flow: manifest draft → owner approval → config/ → plan regen →
+      apply → verify → docs. Apply strictly sequentially; plans must
+      be regenerated against live revisions before each apply.
+   - **Validator gap resolved (2026-11-10):** `csv-map.ts` now resolves
+     every binding-cell `locator` and `locators[]` entry against the owning
+     parsed row per D56 §9 — integer line/row/column, one-based column equal
+     to the bound cell, and line inside the cell's physical-line span;
+     receipt `locators` must mirror bindings. Regression tests cover
+     wrong-column, unoccupied-line, invalid-type and empty-list cases;
+     `check-corpus` reports 0 issues on the live corpus.
+   Done when every row has a terminal disposition, admitted rows have
+   instructions and READY receipts (v1, or v2 for subspan bindings), the
+   applicator has run over the admitted batch, and `check-corpus` proves
+   row/cell coverage.
+2. **H2-SBVF — source-bound variant families (D58; P5 APPLIED).**
+   D58 is accepted; P0–P4b implementation, the isolated rehearsal and
+   the P5 pilot apply are done. Pilot A (`useState`, `useReducer`)
+   was applied 2026-11-12 after owner chose a fresh plan over the
+   superseded assessment: 4 singletons migrated into 2
+   `VPInstruction/v3` families (VECTOR batch 52; plan SHA
+   `91d66675…`; `sbvf-verify` verified; family_ids normalized to the
+   `-<8hex>` convention). The 2026-11-06 census (3,746 catalog entries at that
+   time) covers 1,434 CSV rows: 468 admitted, 957 deferred and 9 rejected; the
+   deferred set is 13 UX rows (11 SPLIT, 2 held), 9 SPLIT stack rows and 935
+   undispositioned stack rows (historical census; the live corpus is now
+   fully dispositioned — see item 1). The original pilot dry-run plan
+   (SHA `2db034af…`, pre-D59 catalog) was superseded; the applied P5
+   plan SHA is `91d66675…` bound to live map 5774 / catalog 8055.
+   P6 scale-up ran under per-batch owner approvals (VECTOR 46–51).
+   Family and atomic-variant counts stay separate. **H2-SBVF fully
+   closed/accepted:** the owner accepted H2 on 2026-11-12 via the
+   bound H2-D receipt `.agent/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md`
+   (SHA-256 `857f3001f2fd2e4d665899c36c70bcb60172a3ac97d14c4b2103a6727d147251`);
+   AC-82/AC-83 are verified (owner, 2026-11-12).
+3. **H2-D — H2 acceptance receipt and sign-off (DONE — owner accepted
+   H2 on 2026-11-12).** Bound receipt
+   `.agent/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md` (SHA-256
+   `857f3001f2fd2e4d665899c36c70bcb60172a3ac97d14c4b2103a6727d147251`,
+   evidence `h2d-evidence/`): corpus-map `VPCorpusMap/v3` rev 5774
+   (sha `7f02b5bf…`), catalog rev 8055 (sha `4a88ea15…`, 2,402
+   instructions), 52 VECTOR batches; gates — `bun test --coverage`
+   1,039 pass / 5 skip / 0 fail with 100% funcs/lines/statements,
+   typecheck/format/`check-corpus` (0 issues)/`check-vector` (52
+   batches)/`check-okf` all exit 0, Node runtime search/get exit 0
+   under Node v26.13.1 with the H2-C receipt, and an independent
+   disposition audit clean (1,449 bindings, 0 missing/mismatched
+   receipts). The pinned Knip external conflict remains open (item 9)
+   and is not claimed PASS.
+4. **H3-A — typed reference resources (gate satisfied: H2-D accepted
+   2026-11-12).** Ready to start pending owner go; no H3 work is
+   authorized by the H2 approval itself.
+5. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
    host installation, Muse first-party catalog digest, public metadata and
    publication, and Runtime acceptance remain open. The `.54` fixtures are not
    production outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline only.
-5. **D19 algorithm delegation implementation.** Policy READY; the offer and
+6. **D19 algorithm delegation implementation.** Policy READY; the offer and
    scoped-preference path are not implemented. Existing human gates remain.
-6. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
+7. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
    not a prerequisite for the migrated corpus or the compact CLI. The frozen
    40-ID trial stays v1.1-bound.
-7. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
+8. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
    deterministic catalog library, and a minimal scenario on at least two
    compatible hosts.
-8. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
+9. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
    on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
-9. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
+   The H2-D receipt (owner-accepted 2026-11-12) re-confirms the same
+   `issues: []` exit 1 external conflict — not PASS; item stays open.
+10. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
    verified; they do not establish installation or Runtime acceptance.
+11. **Candidate next scopes (owner approval required; not started).** CSV
+    module packaging would extend D59 carriers to the 468 CSV atoms; the
+    remaining H2-A2 stack rows are already tracked under item 1. Neither is
+    authorized by the current D59 acceptance.
 
 Closed or removed from the open set: A0; A-D; E1-E4 (E5 host qualification
 remains open); F (component-only, AC-22 partial/deferred); H0 baseline
 (documentation acceptance and `.69` fixture parity remain open/unreconciled);
 H1 AC-59 (accepted, but AC-47–AC-58 remain open); donor update tracking (all 8
-donors current, baseline 1,258 files); G (outside Powers).
+donors current, baseline 1,258 files); D59 lossless modules (accepted
+2026-11-08; catalog 3,746 → 1,482, 682 carriers / 2,946 atoms;
+`module-update` READY, AC-91); G (outside Powers).
 
 **Open acceptance gap (not active conversion):** H0 documentation acceptance and
 final native fixture parity on the eight `.69` Markdown paths remain described
@@ -118,7 +258,7 @@ D18 panel/aggregation receipts and the delegated gate path are complete. AC-59
 accepts the 25-file pilot as the D18 baseline; it does not by itself authorize
 H1 conversion.
 
-## Historical task list (2026-11-02, superseded by the 2026-11-06 audit)
+## Historical task list (2026-11-02, superseded by the refreshed open list)
 
 1. **F workstream — closed (component-only)** — the owner accepted Powers
    Standalone component evidence on 2026-11-02. AC-22 remains partial/deferred;
@@ -315,11 +455,11 @@ Step H (D14/D15) is tracked as a separate owner-gated scope. H1 source admission
 
 These decisions set scope, not per-source admission. The owner approved the proposed 8/9/8 pilot set on 2026-11-03 for preparation only; it is not admitted. AC-47 to AC-58 stay open until per-source attribution, D18 panel/aggregation receipts and the delegated gate path exist. AC-59 was accepted by the owner on 2026-11-06. H1 preparation may proceed; dependent conversion stays blocked at each packet.
 
-**Step H current state (2026-11-06):** H1 AC-59 is accepted; the 25-file pilot is the accepted baseline for scaling the D18 admission method. The H2 contract is approved and tracked as [D56](decisions/D56-h2-contract.md). All 8 H2 Markdown families are admitted as source admission only, 98 instructions total. H2 implementation covers the v2 schemas, applicability, CSV intake, fidelity validation, CLI context flags and the applicator; Node runtime evidence is recorded and Deno is excluded by owner decision. The H2-B coverage gate is closed at 100% functions and lines. The H2-A source gate is closed: donor `uupm` is pinned at `56ea9cf1`, 24 CSVs are allowlisted and all 1,434 rows are mapped. 468 UX/performance/stack rows are admitted (99 non-Mobile KEEP_ATOMIC, 7 Mobile KEEP_ATOMIC, 44 react-performance, 107 KEEP_ATOMIC react/react-native stack and 211 KEEP_ATOMIC angular/astro/avalonia/flutter stack rows) with 468 instructions and delegated D18 receipts; 957 rows remain deferred and 9 stack rows are rejected as duplicates. `Touch Target Size` and `Readable Font Size` are held for applicability; 20 SPLIT rows (11 UX + 9 stack) need a subspan-aware receipt contract extension; 935 stack rows have no disposition yet. CSV semantic admission for the remaining rows and H2 acceptance remain open. H3 remains gated by H2 acceptance. H2 does not inherit H1 acceptance.
+**Step H current state (2026-11-10):** H1 AC-59 is accepted; the 25-file pilot is the accepted baseline for scaling the D18 admission method. The H2 contract is approved and tracked as [D56](decisions/D56-h2-contract.md). All 8 H2 Markdown families are admitted as source admission only, 98 instructions total. H2 implementation covers the v2 schemas, applicability, CSV intake, fidelity validation, CLI context flags and the applicator; Node runtime evidence is recorded and Deno is excluded by owner decision. The H2-B coverage gate is closed at 100% functions and lines. The H2-A source gate is closed: donor `uupm` is pinned at `56ea9cf1`, 24 CSVs are allowlisted and all 1,434 rows are mapped. 481 UX/performance/stack rows are admitted (99 non-Mobile KEEP_ATOMIC, 7 Mobile KEEP_ATOMIC, 44 react-performance, 107 KEEP_ATOMIC react/react-native stack, 211 KEEP_ATOMIC angular/astro/avalonia/flutter stack rows and 13 SPLIT rows materialized as singletons) with delegated D18 receipts; 944 rows remain deferred and 9 stack rows are rejected as duplicates. `Touch Target Size` is resolved by SPLIT; `Readable Font Size` stays held pending an owner-approved `mobile` applicability token. The SPLIT contract is implemented in Source (D56 amendment, v3 map/v2 receipt shape, validator tests) and the live map is `VPCorpusMap/v3`; the v3 migration and all 12 prepared SPLIT rows are applied (batch 34; catalog 1,515). The remaining 8 stack SPLIT rows plus 935 undispositioned stack rows are still open. CSV semantic admission for the remaining rows and H2 acceptance remain open. H3 remains gated by H2 acceptance. H2 does not inherit H1 acceptance.
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-11-06):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 884 passed, four expected Windows skips, zero failures and native exit 0; strict typecheck passes 77 files; the corpus check reports 3,746 instructions and zero issues; catalog revision 7,352; corpus map 5,752; baseline 9 donors / 1,258 files; OKF reports 71 concepts with no failures or warnings. The coverage gate passes at 100.00% functions and 100.00% lines under the unchanged 1.0 threshold; H2-B is closed. The 2026-11-06 retrieval hardening adds relevance-ranked `tags --query`, `confidence`/`runnerUp`/`patternSource`, an `ambiguous:` line, `search --for --strict` exit 3, a discovery-only note and English/Ukrainian requirements aliases; the benchmark holds 68 recorded cases plus one split-intent ambiguity case. The H2-A2 Mobile batch adds 7 KEEP_ATOMIC instructions after three SWE-2 protocol reviews; `Touch Target Size` is held for SR-82 applicability. The `react-performance` batch adds 44 KEEP_ATOMIC instructions after two SWE-2 reviews. The first stack batch adds 107 KEEP_ATOMIC instructions after five SWE-2 reviews and rejects 9 duplicate norms. The second stack group adds 211 KEEP_ATOMIC instructions after four SWE-2 reviews (astro's 11 tag corrections applied). These are component evidence only. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-11-10):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 995 passed, five expected Windows skips, zero failures; strict typecheck passes; the corpus check reports 1,515 catalog carriers with zero issues, of which 682 are modules holding 2,946 atoms, 332 are non-CSV singletons and 501 are CSV entries; catalog revision 8,036; corpus map 5,755 (3,429 records, `VPCorpusMap/v3`) with 502 CSV bindings and matching fidelity receipts; baseline 9 donors / 1,258 files; OKF and documentation checks pass. The coverage gate passes at 100.00% functions and 100.00% lines under the unchanged 1.0 threshold. The 2026-11-06 retrieval hardening adds relevance-ranked `tags --query`, `confidence`/`runnerUp`/`patternSource`, an `ambiguous:` line, `search --for --strict` exit 3, a discovery-only note and English/Ukrainian requirements aliases; the benchmark holds 68 recorded cases plus one split-intent ambiguity case. H2-A2 has 481 admitted CSV rows (99 non-Mobile KEEP_ATOMIC, 7 Mobile, 44 react-performance, 107 react/react-native stack, 211 angular/astro/avalonia/flutter stack and 13 SPLIT rows), 944 deferred rows (943 stack + 1 held UX) and 9 rejected duplicate rows. The 2026-11-09 module update path adds prepared plan/apply/verify/rollback for a changed packaged atom with AC-91 component evidence. The 2026-11-10 H2-A2 work adds the exact code-point subspan contract (v3 map/v2 receipt shapes, validator tests), the v3 migration and the owner-approved staged SPLIT apply (batch 34: 31 singletons). These are component evidence only. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.
@@ -421,9 +561,9 @@ and labels a frequency pattern `(default for capability)`; `--strict` exits 3 on
 a weak or ambiguous resolution; unprofiled search prints `discovery only`; the
 pagination hint names `tags --query`. Catalog revision 7,348 adds English and
 Ukrainian requirements aliases and ADR/runbook aliases; `AGENT.sidecar.md`
-records the project retrieval chain. The benchmark now holds 68 recorded cases
-plus one split-intent ambiguity case; the package suite is 884 pass / 4 skip /
-0 fail with 100% functions and lines. AC-70–AC-72 evidence is reconciled in
+records the project retrieval chain. The benchmark held 68 recorded cases at the 2026-11-06 input, plus one
+split-intent ambiguity case; that package suite was 884 pass / 4 skip / 0 fail
+with 100% functions and lines. AC-70–AC-72 evidence is reconciled in
 `acceptance.md`; installation and Runtime acceptance remain separate.
 
 On 2026-10-30 the same Source state records 659 passed with four expected Windows skips, zero failures and 693/693 functions plus 5,402/5,402 lines (seed 20261019); the 598-test receipt stays historical.

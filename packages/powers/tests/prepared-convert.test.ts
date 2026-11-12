@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prepareBatch, prepareFacetMigration, prepareInstructionFacetBatch, applyPreparedBatch, reconcilePreparedBatch, releasePreparedOwnership, convertMany, convertMapRecord } from '../scripts/convert.ts';
+import { prepareBatch, prepareTargetBatch, prepareFacetMigration, prepareInstructionFacetBatch, applyPreparedBatch, reconcilePreparedBatch, releasePreparedOwnership, convertMany, convertMapRecord } from '../scripts/convert.ts';
 import { checkCorpus } from '../scripts/check-corpus.ts';
 import { parseFrontmatter } from '../skills/vp-mode/scripts/frontmatter.ts';
 import { sealArtifact } from '../scripts/source-packets.ts';
@@ -284,6 +284,40 @@ test('prepared batch stages all outputs without writing, then applies once and p
   expect(JSON.parse(await readFile(join(f.root, 'catalog.json'), 'utf8')).instructions).toHaveLength(2);
   expect(await readFile(join(f.root, 'unrelated.txt'), 'utf8')).toBe('Keep unrelated bytes.');
   await expect(applyPreparedBatch(plan, { review: { path: 'review.json', sha256: '0'.repeat(64) }, observe: async () => ({ kind: 'unconfirmed' }) })).rejects.toThrow();
+});
+
+test('prepared target deletes retain before images, reconcile, CAS, and reverse restore', async () => {
+  const f = await fixture(); const path = join(f.root, 'unrelated.txt'); const original = await readFile(path);
+  const initial = await prepareBatch(f.sources, f.options);
+  expect((await applyPreparedBatch(initial, await approval(initial, f.staging))).kind).toBe('applied');
+  const plan = await prepareTargetBatch([{ path: 'unrelated.txt', bytes: null }], { root: f.root, stagingRoot: f.staging });
+  const manifest = JSON.parse(await readFile(join(plan.directory, plan.manifest.path), 'utf8'));
+  expect(manifest.targets[0]).toMatchObject({ before: digest(original), after: null, staged: null, backup: { sha256: digest(original) } });
+  expect((await reconcilePreparedBatch(plan)).targets[0]?.state).toBe('old');
+  expect((await applyPreparedBatch(plan, await approval(plan, f.staging))).kind).toBe('applied');
+  await expect(readFile(path)).rejects.toMatchObject({ code: 'ENOENT' });
+  expect((await reconcilePreparedBatch(plan)).targets[0]?.state).toBe('intended');
+
+  await writeFile(path, original);
+  const missingConflict = await prepareTargetBatch([{ path: 'unrelated.txt', bytes: null }], { root: f.root, stagingRoot: f.staging });
+  await rm(path);
+  expect((await applyPreparedBatch(missingConflict, await approval(missingConflict, f.staging))).kind).toBe('no-write-conflict');
+  await expect(readFile(path)).rejects.toMatchObject({ code: 'ENOENT' });
+
+  const reverse = await prepareTargetBatch([{ path: 'unrelated.txt', bytes: original }], { root: f.root, stagingRoot: f.staging });
+  expect((await applyPreparedBatch(reverse, await approval(reverse, f.staging))).kind).toBe('applied');
+  expect(await readFile(path)).toEqual(original);
+
+  const conflict = await prepareTargetBatch([{ path: 'unrelated.txt', bytes: null }], { root: f.root, stagingRoot: f.staging });
+  await writeFile(path, 'intervening bytes');
+  expect((await reconcilePreparedBatch(conflict)).state).toBe('CONFLICT_OR_UNKNOWN');
+  expect((await applyPreparedBatch(conflict, await approval(conflict, f.staging))).kind).toBe('no-write-conflict');
+  expect(await readFile(path, 'utf8')).toBe('intervening bytes');
+
+  await rm(path);
+  const alreadyMissing = await prepareTargetBatch([{ path: 'unrelated.txt', bytes: null }], { root: f.root, stagingRoot: f.staging });
+  expect((await reconcilePreparedBatch(alreadyMissing)).state).toBe('NO_CHANGE');
+  expect((await applyPreparedBatch(alreadyMissing, await approval(alreadyMissing, f.staging))).kind).toBe('no-change');
 });
 test('metadata-only batches stage strict v1.2 classifications, preserve raw body and map bytes, then apply through the shared owner', async () => {
   const f = await fixture(2);

@@ -1,0 +1,240 @@
+{
+  "schema": "SBVFFamilyManifest/v1",
+  "families": [
+    {
+      "family_id": "family-implement-inotifypropertychanged-8678305f",
+      "title": "Implement INotifyPropertyChanged",
+      "summary": "Implement INotifyPropertyChanged; each stack variant keeps its own guidance.",
+      "rationale": "Avalonia, Uno, UWP, and WPF share the implement INotifyPropertyChanged norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-avalonia-implement-inotifypropertychanged",
+        "uupm-uno-implement-inotifypropertychanged",
+        "uupm-uwp-implement-inotifypropertychanged",
+        "uupm-wpf-implement-inotifypropertychanged"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-set-automationproperties-e5ee1685",
+      "title": "Set AutomationProperties",
+      "summary": "Set AutomationProperties; each stack variant keeps its own guidance.",
+      "rationale": "Avalonia, Uno, UWP, WinUI, and WPF share the set AutomationProperties norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-avalonia-set-automationproperties",
+        "uupm-uno-set-automationproperties",
+        "uupm-uwp-set-automationproperties",
+        "uupm-winui-set-automationproperties",
+        "uupm-wpf-set-automationproperties"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-support-keyboard-navigation-b8dc783f",
+      "title": "Support keyboard navigation",
+      "summary": "Support keyboard navigation; each stack variant keeps its own guidance.",
+      "rationale": "Avalonia and WPF share the support keyboard navigation norm; stack-specific APIs and examples stay in separate variants. The winui.csv L34 member is already admitted as two subspan SPLIT singleton instructions (tab-navigation, access-keys); whole-cell family bindings cannot include it, so it stays outside the family pending owner ruling.",
+      "variants": [
+        "uupm-avalonia-support-keyboard-navigation",
+        "uupm-wpf-support-keyboard-navigation"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-support-light-and-dark-themes-872048c5",
+      "title": "Support light and dark themes",
+      "summary": "Support light and dark themes; each stack variant keeps its own guidance.",
+      "rationale": "Uno and WinUI share the support light and dark themes norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uno-support-light-and-dark-themes",
+        "uupm-winui-support-light-and-dark-themes"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-unit-test-viewmodels-f453bbfc",
+      "title": "Unit test ViewModels",
+      "summary": "Unit test ViewModels; each stack variant keeps its own guidance.",
+      "rationale": "Avalonia, Uno, UWP, WinUI, and WPF share the unit test ViewModels norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-avalonia-unit-test-viewmodels",
+        "uupm-uno-unit-test-viewmodels",
+        "uupm-uwp-unit-test-viewmodels",
+        "uupm-winui-unit-test-viewmodels",
+        "uupm-wpf-unit-test-viewmodels"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-commandbar-for-app-actions-466af20d",
+      "title": "Use CommandBar for app actions",
+      "summary": "Use CommandBar for app actions; each stack variant keeps its own guidance.",
+      "rationale": "Uno and UWP share the use CommandBar for app actions norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uno-use-commandbar-for-app-actions",
+        "uupm-uwp-use-commandbar-for-app-actions"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-contentdialog-for-modal-interactions-ed057048",
+      "title": "Use ContentDialog for modal interactions",
+      "summary": "Use ContentDialog for modal interactions; each stack variant keeps its own guidance.",
+      "rationale": "Uno and WinUI share the use ContentDialog for modal interactions norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uno-use-contentdialog-for-modal-interactions",
+        "uupm-winui-use-contentdialog-for-modal-interactions"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-deep-linking-acc8c928",
+      "title": "Use deep linking",
+      "summary": "Use deep linking; each stack variant keeps its own guidance.",
+      "rationale": "react, Uno, and WinUI share the use deep linking norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-react-native-use-deep-linking",
+        "uupm-uno-use-deep-linking",
+        "uupm-winui-use-deep-linking"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-dependency-injection-4f6d3aeb",
+      "title": "Use dependency injection",
+      "summary": "Use dependency injection; each stack variant keeps its own guidance.",
+      "rationale": "Avalonia, SwiftUI, Uno, UWP, WinUI, and WPF share the use dependency injection norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-avalonia-use-dependency-injection",
+        "uupm-swiftui-use-dependency-injection",
+        "uupm-uno-use-dependency-injection",
+        "uupm-uwp-use-dependency-injection",
+        "uupm-winui-use-dependency-injection",
+        "uupm-wpf-use-dependency-injection"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-frame-for-page-navigation-65ba670c",
+      "title": "Use Frame for page navigation",
+      "summary": "Use Frame for page navigation; each stack variant keeps its own guidance.",
+      "rationale": "UWP and WinUI share the use Frame for page navigation norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uwp-use-frame-for-page-navigation",
+        "uupm-winui-use-frame-for-page-navigation"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-lightweight-styling-8bff6229",
+      "title": "Use lightweight styling",
+      "summary": "Use lightweight styling; each stack variant keeps its own guidance.",
+      "rationale": "Uno, UWP, and WinUI share the use lightweight styling norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uno-use-lightweight-styling",
+        "uupm-uwp-use-lightweight-styling",
+        "uupm-winui-use-lightweight-styling"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-mvvm-pattern-4aaa7775",
+      "title": "Use MVVM pattern",
+      "summary": "Use MVVM pattern; each stack variant keeps its own guidance.",
+      "rationale": "SwiftUI, Uno, UWP, and WPF share the use MVVM pattern norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-swiftui-use-mvvm-pattern",
+        "uupm-uno-use-mvvm-pattern",
+        "uupm-uwp-use-mvvm-pattern",
+        "uupm-wpf-use-mvvm-pattern"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-navigationview-for-app-shell-853b40e1",
+      "title": "Use NavigationView for app shell",
+      "summary": "Use NavigationView for app shell; each stack variant keeps its own guidance.",
+      "rationale": "Uno and UWP share the use NavigationView for app shell norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uno-use-navigationview-for-app-shell",
+        "uupm-uwp-use-navigationview-for-app-shell"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-observablecollection-for-lists-8b7c19b8",
+      "title": "Use ObservableCollection for lists",
+      "summary": "Use ObservableCollection for lists; each stack variant keeps its own guidance.",
+      "rationale": "Avalonia, UWP, WinUI, and WPF share the use ObservableCollection for lists norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-avalonia-use-observablecollection-for-lists",
+        "uupm-uwp-use-observablecollection-for-lists",
+        "uupm-winui-use-observablecollection-for-lists",
+        "uupm-wpf-use-observablecollection-for-lists"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-task-run-for-cpu-bound-work-3cde3adb",
+      "title": "Use Task.Run for CPU-bound work",
+      "summary": "Use Task.Run for CPU-bound work; each stack variant keeps its own guidance.",
+      "rationale": "WinUI and WPF share the use Task.Run for CPU-bound work norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-winui-use-task-run-for-cpu-bound-work",
+        "uupm-wpf-use-task-run-for-cpu-bound-work"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-winui-theme-resources-758df824",
+      "title": "Use WinUI theme resources",
+      "summary": "Use WinUI theme resources; each stack variant keeps its own guidance.",
+      "rationale": "Uno and WinUI share the use WinUI theme resources norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uno-use-winui-theme-resources",
+        "uupm-winui-use-winui-theme-resources"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-x-bind-for-compiled-bindings-172c34ba",
+      "title": "Use x:Bind for compiled bindings",
+      "summary": "Use x:Bind for compiled bindings; each stack variant keeps its own guidance.",
+      "rationale": "Uno, UWP, and WinUI share the use x:Bind for compiled bindings norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uno-use-x-bind-for-compiled-bindings",
+        "uupm-uwp-use-x-bind-for-compiled-bindings",
+        "uupm-winui-use-x-bind-for-compiled-bindings"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    },
+    {
+      "family_id": "family-use-x-defaultbindmode-d7d12aa9",
+      "title": "Use x:DefaultBindMode",
+      "summary": "Use x:DefaultBindMode; each stack variant keeps its own guidance.",
+      "rationale": "UWP and WinUI share the use x:DefaultBindMode norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-uwp-use-x-defaultbindmode",
+        "uupm-winui-use-x-defaultbindmode"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z"
+    }
+  ]
+}

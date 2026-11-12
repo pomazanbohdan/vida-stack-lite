@@ -1,0 +1,38 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "misc-singletons-migration",
+  "recordedAt": "2026-11-12T10:02:14.047Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/swiftui.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "bdd9231ff3ad658f4e7c063e1eb49df2fd09ac8d90631a86df899b39833b9623"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-swiftui-prefer-composition-over-inheritance",
+      "familyId": "family-prefer-composition-over-inheritance-c301153b",
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=23140fbce3e91122334e65616363fa268f6d35f5b659f410774dd74d841ae92f",
+      "locator": {
+        "line": 5,
+        "row": 4
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/swiftui.csv L5 admitted as SBVF variant uupm-swiftui-prefer-composition-over-inheritance of family-prefer-composition-over-inheritance-c301153b; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-swiftui-use-spacing-and-padding-consistently",
+      "familyId": "family-use-spacing-and-padding-consistently-1ba38b2a",
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=201eb62d4493282757c90791a11d55868882892f96648a771ec90ac1bf102879",
+      "locator": {
+        "line": 17,
+        "row": 16
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/swiftui.csv L17 admitted as SBVF variant uupm-swiftui-use-spacing-and-padding-consistently of family-use-spacing-and-padding-consistently-1ba38b2a; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "xaml-mvvm",
+  "recordedAt": "2026-11-12T09:31:18.049Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/swiftui.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "bdd9231ff3ad658f4e7c063e1eb49df2fd09ac8d90631a86df899b39833b9623"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-swiftui-use-dependency-injection",
+      "familyId": "family-use-dependency-injection-4f6d3aeb",
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b866892b89ae57392de713fd665bacaf4672dbe6206476dc743d4c60400d7da8",
+      "locator": {
+        "line": 51,
+        "row": 50
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/swiftui.csv L51 admitted as SBVF variant uupm-swiftui-use-dependency-injection of family-use-dependency-injection-4f6d3aeb; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-swiftui-use-mvvm-pattern",
+      "familyId": "family-use-mvvm-pattern-4aaa7775",
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8915e9d67b7320f9feaaf4657ae04aec77c7e54c23c674ed8d0438c08dea1e04",
+      "locator": {
+        "line": 49,
+        "row": 48
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/swiftui.csv L49 admitted as SBVF variant uupm-swiftui-use-mvvm-pattern of family-use-mvvm-pattern-4aaa7775; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

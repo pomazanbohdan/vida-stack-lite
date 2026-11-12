@@ -1,0 +1,336 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/swiftui.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "bdd9231ff3ad658f4e7c063e1eb49df2fd09ac8d90631a86df899b39833b9623"
+  },
+  "batch": "NF-05",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 44,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-swiftui-use-struct-for-views",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=26a9419b8237d6d6ae3e35c3bfac06235965f5bd7a07e0f61f8f74ad658e880b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L2 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-keep-views-small-and-focused",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7d9ba7acaff5f5121b3108c7fc72fbd56c6f8c7a4ac4bfe3e3daeec1f4cc5b35",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L3 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-body-computed-property",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=404e9b82600e3b0fcc6642025e0729a6a94e0d6209e65e673a362655ee6e3017",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L4 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-state-for-local-state",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=244de07ac4c6abb4c86df52456f27233cee3872d3f189e4255371b6f3b9791ff",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L6 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-binding-for-two-way-data",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4fb644af08988f568ffc63a566f7f3622b5bcdb70ef4eac6e56f58d370d4d3e3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L7 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-stateobject-for-reference-types",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5c07b3a15c7eb4f31c0f9c223b9bb99074810e1a7292635abd8cb1d6f798a0a8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L8 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-observedobject-for-injected-objects",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f5840871563c1bcfcdd94af8c05f11482b358c1d0be7f6c157e65ea4f1b6bda6",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L9 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-environmentobject-for-shared-state",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=044d25cfa736593460dfa0cdeebb22db91f5bd68a0a376fe665541bb8ee499ae",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L10 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-published-in-observableobject",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=015094da0164cf343e635462508f8ee5fa11c6f72d9d81fa6840083a337a6526",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L11 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-observable-macro-ios-17",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ed435a2bb276b6e3a50a25a96ab7ea91b7b9e971827562cdd7f1b8150ac67553",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L12 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-bindable-for-observable",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f5ad99cf77a27a00c3fc2d9ba46cce56bdabd77607da25ef4e14ba3d77d63a09",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L13 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-vstack-hstack-zstack",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cc6c37c4254cc3ee8bffa85ab54fba5fa95dd0b19cc946fa03c76447d1bdd0eb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L14 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-lazyvstack-lazyhstack-for-lists",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=623b8b68563b49f5d01c3f8cc15a01af88b142a4277d0b0e392d1ab67d5ce20a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L15 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-geometryreader-sparingly",
+      "sourceRowOrdinal": 15,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=84c2f984a7bebdc244e68ad44da75c73c040e62a9fdf4fd4360da88b26759465",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L16 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-frame-modifiers-correctly",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6eeeb7e455cafd0d573d3bf023e8c2bde618f9dab742a1e1a24ed9551784ad1e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L18 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-order-modifiers-correctly",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ea675dd1f4bb8ba1bfce90fb3dbc6abe5a51c7ba8cefa0f8385698719e6eb0c8",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L19 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-create-custom-viewmodifiers",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8f30c80878ac35d0d63c4ff53e65182649453513f9c774ff40dd60f6542a65c2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L20 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-conditional-modifiers-carefully",
+      "sourceRowOrdinal": 20,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8d9f1d05dfdf34cae95846ddd0505b015bac7f6e8dd7a2d2ce5dddd6e80866d4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L21 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-navigationstack-or-navigationsplitview-ios-16",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5415b95d2f4c38c2aa88315939f7db1b0a9462b1e0c22c19442b96fc087dc0a1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L22 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-navigationdestination",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=542cbf34b1ff27855f11c17060fdd3ab733b7eefc7b59ce91e3bd6b37b2600ab",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L23 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-environment-for-dismiss",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2097f52d0c4c3960d620a7f26a2d914cdf7f933497fe6bf1983b175eb4fc3d0d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L24 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-list-for-scrollable-content",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ce04bbdd03ff53103b23652322f599864c554c69fd77fd27c2496f2e232a03f0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L25 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-provide-stable-identifiers",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b2e898d6120ce08badcb13f72efb7c6acc458e13f0d199fc62d165dfab7aa757",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L26 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-ondelete-and-onmove",
+      "sourceRowOrdinal": 26,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c83ce3fbda09f679c45d4793cb4f641a3f6da494043984f3ae67c5b36560eb2f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L27 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-form-for-settings",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e22e4e03c7d5c03233c45b14c491582bb3a0d9cc6a545e8e20a219f0635e9f48",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L28 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-focusstate-for-keyboard",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a7e347c522a3411777e46842c6c64b949a5de2dc47ff80a2ca8bea23774d20cd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L29 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-validate-input-properly",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6515e8abf0b4a7b60cd1b43fa4754ef66c40e163ec8f82ae54e920d379135a73",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L30 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-task-for-async-work",
+      "sourceRowOrdinal": 30,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0b49fec57a876c70f0ee5689a52077ed8eb9b6c567d8a044bfa682c478945e1e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L31 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-mainactor-for-ui-updates",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e683478abf1e07009ba849ef87686bead6bdb41808605ee54693c94f18bce678",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L33 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-withanimation",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=49cc096312901decfeb828a2cad499692f32477e891c2d5b0c11de1d75488e60",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L34 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-animation-modifier",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a3dd17d6f8792921ca5b88b1b1348b3217e9b3ace16d968926ce5647ba53cece",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L35 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-respect-reduced-motion",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=869e82c30fecd007ea2166409e0b75df2c608f7d3a1377ee13a20cbf7aca8fc7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L36 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-preview-macro-xcode-15",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2fc95e992f4d88856f5215230d3b0b051ce957356ec39b26debfa7bc9cb3636b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L37 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-create-multiple-previews",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6d583c302fc62b272fd52078990c56928f3ff7662db3ce4a98ffdcaec72e8927",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L38 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-preview-data",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0a0efb64f73450399317a78f127d38a3c28ae2e2e6133e34afabd902abe7b968",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L39 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-avoid-expensive-body-computations",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f6365c98b754a91951a48e3964b47f503d143c7512f6330c219da0e896dc995b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L40 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-equatable-views",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=744a1e530a87d8e0437c5ca7ce348955356d80f622506cf9cbf41107b52d3e73",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L41 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-profile-with-instruments",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=402482c9001de95d40239d9690618c7b4d242492fb4c67637bd00eba759e792a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L42 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-support-dynamic-type",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=460dd9ac033bbc7a2e343e11452e04a8164c47d6c7731101002420eacf58b26d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L44 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-semantic-views",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bcb77ef4db936aaae11212a4c4b06150d901bd7731b2307a9cc011e5d5b0b224",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L45 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-viewinspector-for-testing",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=da7efd89a4f5e0b92f4b70f554935e3547b7c41ca8a3aeb02ccf6c2a080ba5c2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L46 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-test-view-models",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=05f5ea2963172e3e37fb12c620d730f601d4517acd7edf78827857c283041821",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L47 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-use-preview-as-visual-test",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=060ffc1d6c87a060d254a829e7bf140cf06e6a90aeda8cbb03fdf57ff016e3d4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L48 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-swiftui-keep-views-dumb",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cd4cc259b4d54c172ba5c18f057e513b69323859f728ef140906a1e492d4d585",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/swiftui.csv L50 per swiftui.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

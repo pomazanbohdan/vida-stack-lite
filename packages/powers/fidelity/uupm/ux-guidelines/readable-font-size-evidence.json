@@ -1,0 +1,43 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "D18 delegated consilium review (options + red-team analyses)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "ff81ec613f70ba9fc3fcce52dbe4ae35d44b2079dbe6dc066d2d6e38c28facd5"
+  },
+  "batch": "h2-a2-rfs-1",
+  "consilium": [
+    ".tmp/consilium-rfs-options/analysis.md",
+    ".tmp/consilium-rfs-redteam/analysis.md"
+  ],
+  "decisions": {
+    "duplicateRule": "No semantic merge. The row is a single KEEP_ATOMIC unit; each normative cell carries one norm and the whole-cell binding covers every normative-* column.",
+    "applicability": "Keep the row neutral VPInstruction/v1.2 per consilium Option A (Mobile-batch precedent): \"Mobile is source context, not a vocabulary platform token\"; the Platform cell says All and the mobile qualifier lives only in normative prose preserved verbatim. No vocab, schema or contract change."
+  },
+  "aggregation": {
+    "verdict": "READY",
+    "rows": 1,
+    "critical": 0,
+    "important": 0,
+    "minor": 0,
+    "note": "The deferred ux-guidelines.csv L68 row \"Readable Font Size\" is admitted as one neutral v1.2 instruction. The consilium options analysis recommended Option A (neutral v1.2) and the red-team analysis confirmed it is the only contract-clean faithful admission; both analyses converge."
+  },
+  "rows": [
+    {
+      "instructionId": "uupm-ux-readable-font-size",
+      "sourceRowOrdinal": 67,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=440fedf7a3414e2dd8afc4ec661b8c936316dcef134a3669c7bb2bf447255b1d",
+      "verdict": "READY",
+      "notes": "The instruction preserves the normative title, description, direction, exception and examples verbatim; platform (All) and severity (High) remain source context.",
+      "tagRationale": "Responsive category falls through to the default tag pair design-user-interface + design-system-adherence, matching admitted Responsive siblings uupm-ux-breakpoint-testing and uupm-ux-horizontal-scroll."
+    }
+  ],
+  "recordedAt": "2026-11-11T00:00:00Z"
+}

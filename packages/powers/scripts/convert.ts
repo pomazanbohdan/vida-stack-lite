@@ -254,6 +254,7 @@ function json(value: unknown): string {
 }
 
 function mapSchemaName(map: Record<string, unknown>): string {
+  if (map.schema === 'VPCorpusMap/v3') return 'vpcorpusmap.v3.schema.json';
   return map.schema === 'VPCorpusMap/v2' ? 'vpcorpusmap.v2.schema.json' : 'vpcorpusmap.v1.schema.json';
 }
 
@@ -595,7 +596,7 @@ export async function releasePreparedOwnership(plan: PreparedBatch, observe: (re
   return { released, receipt };
 }
 
-type PreparedTarget = { path: string; before: string | null; after: string; staged: ArtifactRef; backup: ArtifactRef | null };
+type PreparedTarget = { path: string; before: string | null; after: string | null; staged: ArtifactRef | null; backup: ArtifactRef | null };
 type MigrationRecord = { id: string; path: string; before: string; body: string; marker: 'legacy' | 'v1.1' | 'v1.2' };
 type MigrationBinding = { initialCatalog: string; map: string; cohort: MigrationRecord[]; catalog: string; current: string[] };
 type BatchManifest = { schema: 'VPPreparedBatch/v1'; root: string; targets: PreparedTarget[]; specs: ArtifactRef[]; tools: ArtifactRef[]; context: { path: string; sha256: string | null }[]; runtime: ArtifactRef; sources: { source: Awaited<ReturnType<typeof readEligibleSource>>['source']; packet: ArtifactRef; unitIds: string[]; specs: ArtifactRef[] }[]; migration?: MigrationBinding };
@@ -833,7 +834,7 @@ function updateInstructionFacets(markdown: string, instructionId: string, classi
 
 type PreparedBatchInputs = {
   root: string; directory: string; prefix: string; targetPaths: readonly string[];
-  before: Map<string, Buffer | undefined>; outputs: Map<string, Buffer>; specs: readonly ArtifactRef[];
+  before: Map<string, Buffer | undefined>; outputs: Map<string, Buffer | null>; specs: readonly ArtifactRef[];
   context: BatchManifest['context']; sources: readonly EligibleSource[];
   sourceData: readonly Awaited<ReturnType<typeof readEligibleSource>>[];
   migration?: FacetMigration | undefined;
@@ -843,19 +844,22 @@ async function createPreparedBatch({ root, directory, prefix, targetPaths, befor
   for (const [index, path] of [...new Set(targetPaths)].entries()) {
     const name = targetRelative(root, path);
     const old = before.get(path);
-    const next = outputs.get(path) ?? old;
+    const next = outputs.has(path) ? outputs.get(path)! : old;
     if (next === undefined) throw new Error(`missing prepared output: ${name}`);
-    const stagedPath = `${prefix}/outputs/${index}.txt`;
-    const stagedAbsolute = await resolveArtifactPath(directory, stagedPath, true);
-    await writeFile(stagedAbsolute, next, { flag: 'wx' });
-    const staged = { path: stagedPath, sha256: fingerprint(next) };
+    let staged: ArtifactRef | null = null;
+    if (next !== null) {
+      const stagedPath = `${prefix}/outputs/${index}.txt`;
+      const stagedAbsolute = await resolveArtifactPath(directory, stagedPath, true);
+      await writeFile(stagedAbsolute, next, { flag: 'wx' });
+      staged = { path: stagedPath, sha256: fingerprint(next) };
+    }
     let backup: ArtifactRef | null = null;
     if (old !== undefined) {
       const backupPath = `${prefix}/before/${index}.txt`;
       await writeFile(await resolveArtifactPath(directory, backupPath, true), old, { flag: 'wx' });
       backup = { path: backupPath, sha256: fingerprint(old) };
     }
-    targets.push({ path: name, before: old === undefined ? null : fingerprint(old), after: fingerprint(next), staged, backup });
+    targets.push({ path: name, before: old === undefined ? null : fingerprint(old), after: next === null ? null : fingerprint(next), staged, backup });
   }
   const toolPaths = ['scripts/convert.ts', 'scripts/source-packets.ts', 'scripts/check-corpus.ts', 'skills/vp-mode/scripts/catalog.ts', 'skills/vp-mode/scripts/frontmatter.ts', 'skills/vp-mode/scripts/schema.ts', 'skills/vp-mode/scripts/instruction-facets.ts', 'skills/vp-mode/scripts/instruction-approaches.ts', 'config/vpinstruction.v1.schema.json', 'config/vpinstruction.v1.1.schema.json', 'config/vpinstruction.v1.2.schema.json', 'config/vpcatalog.v1.schema.json', 'config/vpcorpusmap.v1.schema.json'];
   const tools: ArtifactRef[] = [];
@@ -869,6 +873,38 @@ async function createPreparedBatch({ root, directory, prefix, targetPaths, befor
   const plan: PreparedBatch = Object.freeze({ directory, manifest: await sealArtifact(directory, `${prefix}/plan.json`, manifest) });
   preparedBatches.set(plan, { manifest, sources: [...sources], migration });
   return plan;
+}
+
+export type PreparedTargetInput = Readonly<{ path: string; bytes: Uint8Array | null }>;
+export type PreparedTargetContextInput = Readonly<{ path: string; sha256: string }>;
+export async function prepareTargetBatch(targets: readonly PreparedTargetInput[], options: { root: string; stagingRoot: string; stagingPrefix?: string; context?: readonly PreparedTargetContextInput[] }): Promise<PreparedBatch> {
+  if (targets.length < 1) throw new Error('target batches require at least one explicit target');
+  const root = resolve(options.root); const directory = resolve(options.stagingRoot); const prefix = options.stagingPrefix ?? randomUUID();
+  if (!/^[a-zA-Z0-9._-]+$/.test(prefix) || prefix === '.' || prefix === '..') throw new Error('invalid prepared target staging prefix');
+  await mkdir(directory, { recursive: true });
+  const before = new Map<string, Buffer | undefined>(); const outputs = new Map<string, Buffer | null>(); const paths: string[] = [];
+  for (const targetInput of targets) {
+    const absolute = await resolveArtifactPath(root, targetInput.path, true);
+    const name = targetRelative(root, absolute);
+    if (paths.includes(absolute)) throw new Error(`duplicate prepared target: ${name}`);
+    const old = await optionalBytes(absolute); before.set(absolute, old);
+    if (targetInput.bytes === null) {
+      if (old !== undefined) { outputs.set(absolute, null); paths.push(absolute); }
+    } else {
+      const bytes = Buffer.from(targetInput.bytes);
+      paths.push(absolute);
+      if (old === undefined || !old.equals(bytes)) outputs.set(absolute, bytes);
+    }
+  }
+  const context: BatchManifest['context'] = [];
+  for (const path of [join(root, 'donors.yaml'), join(root, 'config', 'methodology-profile.json')]) { const bytes = await optionalBytes(path); context.push({ path, sha256: bytes === undefined ? null : fingerprint(bytes) }); }
+  for (const item of options.context ?? []) {
+    const absolute = await resolveArtifactPath(root, item.path);
+    const bytes = await optionalBytes(absolute);
+    if (bytes === undefined || fingerprint(bytes) !== item.sha256) throw new Error(`prepared target context binding mismatch: ${item.path}`);
+    context.push({ path: absolute, sha256: item.sha256 });
+  }
+  return createPreparedBatch({ root, directory, prefix, targetPaths: paths, before, outputs, specs: [], context, sources: [], sourceData: [] });
 }
 
 export async function prepareInstructionFacetBatch(assignments: readonly InstructionFacetAssignment[], options: PrepareInstructionFacetBatchOptions): Promise<PreparedBatch> {
@@ -902,6 +938,7 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
   const catalogSchema = await readSchema(packageRoot, 'vpcatalog.v1.schema.json');
   const mapV1Schema = await readSchema(packageRoot, 'vpcorpusmap.v1.schema.json');
   const mapV2Schema = await readSchema(packageRoot, 'vpcorpusmap.v2.schema.json');
+  const mapV3Schema = await readSchema(packageRoot, 'vpcorpusmap.v3.schema.json');
   const legacySchema = await readSchema(packageRoot, 'vpinstruction.v1.schema.json');
   const oldFacetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.1.schema.json');
   const facetedSchema = await readSchema(packageRoot, 'vpinstruction.v1.2.schema.json');
@@ -920,12 +957,12 @@ export async function prepareInstructionFacetBatch(assignments: readonly Instruc
   }
   const mapValue = parseJsonBytes(mapBefore, 'corpus map');
   if (!record(mapValue)) throw new Error('corpus map must be an object');
-  const mapSchema = mapValue.schema === 'VPCorpusMap/v2' ? mapV2Schema : mapV1Schema;
+  const mapSchema = mapValue.schema === 'VPCorpusMap/v3' ? mapV3Schema : mapValue.schema === 'VPCorpusMap/v2' ? mapV2Schema : mapV1Schema;
   const mapErrors = validateAgainstSchema(mapValue, mapSchema);
   if (mapErrors.length > 0) throw new Error(`corpus map schema validation failed: ${mapErrors.join('; ')}`);
 
   const before = new Map<string, Buffer | undefined>([[catalogTarget, catalogBefore], [mapTarget, mapBefore]]);
-  const outputs = new Map<string, Buffer>();
+  const outputs = new Map<string, Buffer | null>();
   const instructionTargets: string[] = [];
   const now = options.now ?? (() => new Date().toISOString());
   for (const assignment of parsedAssignments) {
@@ -986,7 +1023,7 @@ export async function prepareBatch(sources: readonly EligibleSource[], options: 
     }
   }
   const before = new Map<string, Buffer | undefined>();
-  const outputs = new Map<string, Buffer>();
+  const outputs = new Map<string, Buffer | null>();
   const read = async (path: string): Promise<Buffer | undefined> => {
     if (!before.has(path)) before.set(path, await optionalBytes(path));
     return outputs.get(path) ?? before.get(path);
@@ -1029,7 +1066,7 @@ const nullableRef: Schema = { ...batchRef, type: ['object', 'null'] };
 const manifestSchema: Schema = { type: 'object', required: ['schema', 'root', 'targets', 'specs', 'tools', 'context', 'runtime', 'sources'], additionalProperties: false, properties: {
   schema: { const: 'VPPreparedBatch/v1' }, root: batchText, specs: { type: 'array', items: batchRef }, tools: { type: 'array', items: batchRef }, runtime: batchRef, sources: { type: 'array', items: { type: 'object' } },
   context: { type: 'array', items: { type: 'object', required: ['path', 'sha256'], properties: { path: batchText, sha256: { type: ['string', 'null'] } }, additionalProperties: false } },
-  targets: { type: 'array', items: { type: 'object', required: ['path', 'before', 'after', 'staged', 'backup'], additionalProperties: false, properties: { path: batchText, before: { type: ['string', 'null'] }, after: batchSha, staged: batchRef, backup: nullableRef } } },
+  targets: { type: 'array', items: { type: 'object', required: ['path', 'before', 'after', 'staged', 'backup'], additionalProperties: false, properties: { path: batchText, before: { type: ['string', 'null'] }, after: { type: ['string', 'null'] }, staged: nullableRef, backup: nullableRef } } },
   migration: { type: 'object', required: ['initialCatalog', 'map', 'cohort', 'catalog', 'current'], additionalProperties: false, properties: {
     initialCatalog: batchSha, map: batchSha, catalog: batchSha, current: { type: 'array', items: batchSha },
     cohort: { type: 'array', items: { type: 'object', required: ['id', 'path', 'before', 'body', 'marker'], additionalProperties: false, properties: { id: batchText, path: batchText, before: batchSha, body: batchSha, marker: { enum: ['legacy', 'v1.1', 'v1.2'] } } } },
@@ -1039,6 +1076,10 @@ async function readBatchManifest(plan: PreparedBatch): Promise<BatchManifest> {
   const value: unknown = JSON.parse((await verifyArtifact(plan.directory, plan.manifest)).toString('utf8'));
   const errors = validateAgainstSchema(value, manifestSchema);
   if (errors.length) throw new Error(`invalid prepared plan: ${errors.join('; ')}`);
+  if (record(value) && Array.isArray(value.targets)) for (const target of value.targets) {
+    if (record(target) && target.after === null && (target.before === null || target.staged !== null)) throw new Error('delete target requires a before-image and no staged output');
+    if (record(target) && target.after !== null && target.staged === null) throw new Error('write target requires a staged output');
+  }
   return value as BatchManifest;
 }
 export async function reconcilePreparedBatch(plan: PreparedBatch): Promise<{ state: 'NO_CHANGE' | 'NO_EFFECT_OBSERVED' | 'TARGET_STATE_MATCHES' | 'KNOWN_PARTIAL' | 'CONFLICT_OR_UNKNOWN'; targets: { path: string; state: 'old' | 'intended' | 'noop' | 'unexpected' }[]; retry: 'fenced' }> {
@@ -1046,13 +1087,18 @@ export async function reconcilePreparedBatch(plan: PreparedBatch): Promise<{ sta
   try {
     const manifest = await readBatchManifest(plan);
     for (const target of manifest.targets) {
-      const staged = await verifyArtifact(plan.directory, target.staged);
-      if (fingerprint(staged) !== target.after) throw new Error('staged output binding mismatch');
+      if (target.after === null) {
+        if (target.staged !== null) throw new Error('delete target has staged output');
+      } else {
+        if (target.staged === null) throw new Error('write target has no staged output');
+        const staged = await verifyArtifact(plan.directory, target.staged);
+        if (fingerprint(staged) !== target.after) throw new Error('staged output binding mismatch');
+      }
       if (target.backup !== null && fingerprint(await verifyArtifact(plan.directory, target.backup)) !== target.before) throw new Error('backup binding mismatch');
       if ((target.before === null) !== (target.backup === null)) throw new Error('missing preimage proof');
       const bytes = await preparedTargetBytes(manifest.root, target.path);
       const digest = bytes === undefined ? null : fingerprint(bytes);
-      targets.push({ path: target.path, state: digest === target.after ? target.before === target.after ? 'noop' : 'intended' : digest === target.before ? 'old' : 'unexpected' });
+      targets.push({ path: target.path, state: target.after === null && digest === null ? 'intended' : digest === target.after ? target.before === target.after ? 'noop' : 'intended' : digest === target.before ? 'old' : 'unexpected' });
     }
     const changed = targets.filter(target => target.state !== 'noop');
     const state = changed.some(target => target.state === 'unexpected') ? 'CONFLICT_OR_UNKNOWN' : changed.length === 0 ? 'NO_CHANGE' : changed.every(target => target.state === 'old') ? 'NO_EFFECT_OBSERVED' : changed.every(target => target.state === 'intended') ? 'TARGET_STATE_MATCHES' : 'KNOWN_PARTIAL';
@@ -1094,11 +1140,15 @@ export async function applyPreparedBatch(plan: PreparedBatch, approval: BatchApp
     try {
       for (const target of manifest.targets) {
         if (target.before === target.after) continue;
-        const bytes = await verifyArtifact(plan.directory, target.staged);
         const path = await resolveArtifactPath(manifest.root, target.path, true);
         const current = await optionalBytes(path);
         if ((current === undefined ? null : fingerprint(current)) !== target.before) throw new Error(`publication target changed before write: ${target.path}`);
-        await io.write(path, bytes.toString('utf8'));
+        if (target.after === null) await rm(path);
+        else {
+          if (target.staged === null) throw new Error('write target has no staged output');
+          const bytes = await verifyArtifact(plan.directory, target.staged);
+          await io.write(path, bytes.toString('utf8'));
+        }
       }
       const observation = await reconcilePreparedBatch(plan);
       if (observation.state !== 'TARGET_STATE_MATCHES') throw new Error(`publication readback: ${observation.state}`);
@@ -1108,10 +1158,11 @@ export async function applyPreparedBatch(plan: PreparedBatch, approval: BatchApp
         const next = structuredClone(manifest.migration);
         const catalogTarget = manifest.targets.find(target => target.path === 'catalog.json');
         if (catalogTarget === undefined) throw new Error('migration catalog target missing');
+        if (catalogTarget.after === null) throw new Error('migration catalog cannot be deleted');
         next.catalog = catalogTarget.after;
         for (const [index, item] of next.cohort.entries()) {
           const target = manifest.targets.find(target => target.path === item.path);
-          if (target !== undefined) next.current[index] = target.after;
+          if (target !== undefined) { if (target.after === null) throw new Error('migration cohort member cannot be deleted'); next.current[index] = target.after; }
         }
         const remaining = await validateFacetMigration(migration, next);
         migration.binding = next;

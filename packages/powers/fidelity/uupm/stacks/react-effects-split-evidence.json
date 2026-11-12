@@ -1,0 +1,38 @@
+{
+  "schema": "H2SplitEvidence/v1",
+  "recordedAt": "2026-11-10T14:31:00Z",
+  "source": {
+    "donor": "uupm",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4"
+  },
+  "decision": "Materialize the D18 panel SPLIT decomposition (.tmp/panel/uupm-280-atomic-repair-luna-max-20261023-152) as VPInstruction/v1.2 singletons with exact code-point subspan bindings and H2FidelityReceipt/v2, per the D56 2026-11-10 amendment.",
+  "rows": [
+    {
+      "file": "stacks/react.csv",
+      "line": 9,
+      "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2c5f33bd95316e3b6371f14f063f5d8b71f90a10e886f1aeae56a2a1c21c6c2d",
+      "locator": {
+        "line": 9,
+        "row": 8
+      },
+      "units": [
+        {
+          "instructionId": "uupm-react-avoid-unnecessary-effects-derive-data-during-render",
+          "candidateUnitId": "uupm-row:bb06742bf13cbe7284bdcd8e6c7baae4160ddc81bfb3fab01529f5db256ba2dd/candidate-01",
+          "unitLabel": "derive-data-during-render",
+          "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2c5f33bd95316e3b6371f14f063f5d8b71f90a10e886f1aeae56a2a1c21c6c2d",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"derive-data-during-render\" of stacks/react.csv L9; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-react-avoid-unnecessary-effects-handle-events-directly",
+          "candidateUnitId": "uupm-row:bb06742bf13cbe7284bdcd8e6c7baae4160ddc81bfb3fab01529f5db256ba2dd/candidate-02",
+          "unitLabel": "handle-events-directly",
+          "rowKey": "path=stacks/react.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2c5f33bd95316e3b6371f14f063f5d8b71f90a10e886f1aeae56a2a1c21c6c2d",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"handle-events-directly\" of stacks/react.csv L9; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    }
+  ]
+}

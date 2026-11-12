@@ -1,0 +1,118 @@
+{
+  "schema": "H2FidelityReceipt/v1",
+  "instructionId": "uupm-shadcn-use-base-and-font-registry-item-types",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/shadcn.csv",
+    "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=56a51100c51566c7d0291c2564b7bb3924c76026eb6873be79ff40103f5af73b",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "015f6ed61ec136f2db2501063601f27ca77a7d238681552dca83ee2534e171bf",
+        "locator": {
+          "line": 63,
+          "row": 62,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 63,
+            "row": 62,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "cbe8b6ac84b45b6df9dd6f3e35fd2a212c622fde6ac8a63190a93f4e488ce215",
+        "locator": {
+          "line": 63,
+          "row": 62,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 63,
+            "row": 62,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "79c05ecc2fcde04d48a5fa5bf5c4e45aaa2c268fc7d45e4ffa5b4619d8834060",
+        "locator": {
+          "line": 63,
+          "row": 62,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 63,
+            "row": 62,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "04dbbb17bf7b52238adeca1799bb3d569e2576c15dbdb32b05d35ac184834393",
+        "locator": {
+          "line": 63,
+          "row": 62,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 63,
+            "row": 62,
+            "column": 6
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "39c128847a9c36c54cc8c2bbd2bb888925e28031ee2c12c734707a981db1cd69",
+        "locator": {
+          "line": 63,
+          "row": 62,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 63,
+            "row": 62,
+            "column": 7
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "6cc744846c37c35db3fc565ba0c5e6385064a80f0a92b2a66c0c9cf95e4289d1",
+        "locator": {
+          "line": 63,
+          "row": 62,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 63,
+            "row": 62,
+            "column": 8
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/shadcn-evidence.json",
+    "sha256": "a97aaebca147834b93681294d5b56c0add91214d20ca3db78b5863d59bcb67c3"
+  },
+  "recordedAt": "2026-11-11T13:05:25.881Z"
+}

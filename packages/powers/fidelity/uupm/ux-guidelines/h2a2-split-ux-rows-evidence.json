@@ -1,0 +1,364 @@
+{
+  "schema": "H2SplitEvidence/v1",
+  "recordedAt": "2026-11-10T14:31:00Z",
+  "source": {
+    "donor": "uupm",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4"
+  },
+  "decision": "Materialize the D18 panel SPLIT decomposition (.tmp/panel/uupm-280-atomic-repair-luna-max-20261023-152) as VPInstruction/v1.2 singletons with exact code-point subspan bindings and H2FidelityReceipt/v2, per the D56 2026-11-10 amendment.",
+  "rows": [
+    {
+      "file": "ux-guidelines.csv",
+      "line": 42,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=69231352f0531dcbdca6fcc72f55ac31936c43ad73a6823db38f1a06953019ed",
+      "locator": {
+        "line": 42,
+        "row": 41
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-keyboard-navigation-visual-tab-order",
+          "candidateUnitId": "uupm-row:22d6d6963f4de9163b989cfc31e0e47d048d6e575949a91bbf2f9fb9a4b42bb0/candidate-01",
+          "unitLabel": "visual-tab-order",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=69231352f0531dcbdca6fcc72f55ac31936c43ad73a6823db38f1a06953019ed",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"visual-tab-order\" of ux-guidelines.csv L42; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-keyboard-navigation-pointer-free-action-test",
+          "candidateUnitId": "uupm-row:22d6d6963f4de9163b989cfc31e0e47d048d6e575949a91bbf2f9fb9a4b42bb0/candidate-02",
+          "unitLabel": "pointer-free-action-test",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=69231352f0531dcbdca6fcc72f55ac31936c43ad73a6823db38f1a06953019ed",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"pointer-free-action-test\" of ux-guidelines.csv L42; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 79,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=bba005bff1253f26381f88c4f5d9c14221041ffa884c9f05cfa88bfc0382e1ae",
+      "locator": {
+        "line": 79,
+        "row": 78
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-loading-indicators-platform-and-component-guidance",
+          "candidateUnitId": "uupm-row:4b5a4bece29d9b481e884632a12fc9066099e50b2ac3e23853f3a3258d671456/candidate-01",
+          "unitLabel": "platform-and-component-guidance",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=bba005bff1253f26381f88c4f5d9c14221041ffa884c9f05cfa88bfc0382e1ae",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"platform-and-component-guidance\" of ux-guidelines.csv L79; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-loading-indicators-preserve-layout",
+          "candidateUnitId": "uupm-row:4b5a4bece29d9b481e884632a12fc9066099e50b2ac3e23853f3a3258d671456/candidate-02",
+          "unitLabel": "preserve-layout",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=bba005bff1253f26381f88c4f5d9c14221041ffa884c9f05cfa88bfc0382e1ae",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"preserve-layout\" of ux-guidelines.csv L79; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-loading-indicators-preserve-focus",
+          "candidateUnitId": "uupm-row:4b5a4bece29d9b481e884632a12fc9066099e50b2ac3e23853f3a3258d671456/candidate-03",
+          "unitLabel": "preserve-focus",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=bba005bff1253f26381f88c4f5d9c14221041ffa884c9f05cfa88bfc0382e1ae",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"preserve-focus\" of ux-guidelines.csv L79; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-loading-indicators-accessible-busy-status",
+          "candidateUnitId": "uupm-row:4b5a4bece29d9b481e884632a12fc9066099e50b2ac3e23853f3a3258d671456/candidate-04",
+          "unitLabel": "accessible-busy-status",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=bba005bff1253f26381f88c4f5d9c14221041ffa884c9f05cfa88bfc0382e1ae",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"accessible-busy-status\" of ux-guidelines.csv L79; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 97,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3ac7fb72da6422efdac80abff69b3b9094703fe4466fa9b8b8c2ccf7667ea128",
+      "locator": {
+        "line": 97,
+        "row": 96
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-auto-play-video-user-initiated-play",
+          "candidateUnitId": "uupm-row:a448a0bc8a6521a0dc1db8dcfedc9ddeb67ee710c225540bd7d0d3f84bac86f3/candidate-01",
+          "unitLabel": "user-initiated-play",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3ac7fb72da6422efdac80abff69b3b9094703fe4466fa9b8b8c2ccf7667ea128",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"user-initiated-play\" of ux-guidelines.csv L97; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-auto-play-video-pause-and-captions",
+          "candidateUnitId": "uupm-row:a448a0bc8a6521a0dc1db8dcfedc9ddeb67ee710c225540bd7d0d3f84bac86f3/candidate-02",
+          "unitLabel": "pause-and-captions",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3ac7fb72da6422efdac80abff69b3b9094703fe4466fa9b8b8c2ccf7667ea128",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"pause-and-captions\" of ux-guidelines.csv L97; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-auto-play-video-stop-off-screen",
+          "candidateUnitId": "uupm-row:a448a0bc8a6521a0dc1db8dcfedc9ddeb67ee710c225540bd7d0d3f84bac86f3/candidate-03",
+          "unitLabel": "stop-off-screen",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3ac7fb72da6422efdac80abff69b3b9094703fe4466fa9b8b8c2ccf7667ea128",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"stop-off-screen\" of ux-guidelines.csv L97; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-auto-play-video-reduced-motion",
+          "candidateUnitId": "uupm-row:a448a0bc8a6521a0dc1db8dcfedc9ddeb67ee710c225540bd7d0d3f84bac86f3/candidate-04",
+          "unitLabel": "reduced-motion",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3ac7fb72da6422efdac80abff69b3b9094703fe4466fa9b8b8c2ccf7667ea128",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"reduced-motion\" of ux-guidelines.csv L97; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 98,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=e2c03648d1471fc28d7cb10c871bbea2ba5ec8b3523f22a280852f748edc691f",
+      "locator": {
+        "line": 98,
+        "row": 97
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-asset-weight-compress-3d-models",
+          "candidateUnitId": "uupm-row:5d2763e4ac47d004aaab082c48f18c57b17ae706e633a72a15a836854466da96/candidate-01",
+          "unitLabel": "compress-3d-models",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=e2c03648d1471fc28d7cb10c871bbea2ba5ec8b3523f22a280852f748edc691f",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"compress-3d-models\" of ux-guidelines.csv L98; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-asset-weight-lazy-load-3d-models",
+          "candidateUnitId": "uupm-row:5d2763e4ac47d004aaab082c48f18c57b17ae706e633a72a15a836854466da96/candidate-02",
+          "unitLabel": "lazy-load-3d-models",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=e2c03648d1471fc28d7cb10c871bbea2ba5ec8b3523f22a280852f748edc691f",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"lazy-load-3d-models\" of ux-guidelines.csv L98; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 101,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=637676e4b0bc38beef8192eed270169b66d0b7bfe4f897c4aa6e47fe6514dca5",
+      "locator": {
+        "line": 101,
+        "row": 100
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-focus-not-obscured-minimum-offset-sticky-ui",
+          "candidateUnitId": "uupm-row:fc956ae9bf6c0755c3abb2e5b90e535202ff030f5d072f813ed65de05db03d3f/candidate-01",
+          "unitLabel": "offset-sticky-ui",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=637676e4b0bc38beef8192eed270169b66d0b7bfe4f897c4aa6e47fe6514dca5",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"offset-sticky-ui\" of ux-guidelines.csv L101; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-focus-not-obscured-minimum-dismiss-or-move-overlays",
+          "candidateUnitId": "uupm-row:fc956ae9bf6c0755c3abb2e5b90e535202ff030f5d072f813ed65de05db03d3f/candidate-02",
+          "unitLabel": "dismiss-or-move-overlays",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=637676e4b0bc38beef8192eed270169b66d0b7bfe4f897c4aa6e47fe6514dca5",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"dismiss-or-move-overlays\" of ux-guidelines.csv L101; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 104,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=a17ba5b1327da3c24e7e81337cf25167637778fd62b39094e10418efac20676c",
+      "locator": {
+        "line": 104,
+        "row": 103
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-dragging-movements-single-pointer-alternative",
+          "candidateUnitId": "uupm-row:8ef914b2f1296e9430e75121f515e03505901f22671257a6184e2bedcf2ba571/candidate-01",
+          "unitLabel": "single-pointer-alternative",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=a17ba5b1327da3c24e7e81337cf25167637778fd62b39094e10418efac20676c",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"single-pointer-alternative\" of ux-guidelines.csv L104; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-dragging-movements-retain-keyboard-operation",
+          "candidateUnitId": "uupm-row:8ef914b2f1296e9430e75121f515e03505901f22671257a6184e2bedcf2ba571/candidate-02",
+          "unitLabel": "retain-keyboard-operation",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=a17ba5b1327da3c24e7e81337cf25167637778fd62b39094e10418efac20676c",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"retain-keyboard-operation\" of ux-guidelines.csv L104; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 108,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=9e2f96d1bcca70d1c12dd075b4f6bb728fb12d293fd96ea70ce6515e9805c302",
+      "locator": {
+        "line": 108,
+        "row": 107
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-accessible-authentication-minimum-credential-manager-and-paste-support",
+          "candidateUnitId": "uupm-row:16c2f5d591d5db5d9686703f73c73081005a8beda244597f83f19880dad022b9/candidate-01",
+          "unitLabel": "credential-manager-and-paste-support",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=9e2f96d1bcca70d1c12dd075b4f6bb728fb12d293fd96ea70ce6515e9805c302",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"credential-manager-and-paste-support\" of ux-guidelines.csv L108; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-accessible-authentication-minimum-non-cognitive-authentication-alternative",
+          "candidateUnitId": "uupm-row:16c2f5d591d5db5d9686703f73c73081005a8beda244597f83f19880dad022b9/candidate-02",
+          "unitLabel": "non-cognitive-authentication-alternative",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=9e2f96d1bcca70d1c12dd075b4f6bb728fb12d293fd96ea70ce6515e9805c302",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"non-cognitive-authentication-alternative\" of ux-guidelines.csv L108; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 109,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3f014b7132f9d1960b269292ab35b4f5807c849bb8d87b192eac8d63be9c5cf2",
+      "locator": {
+        "line": 109,
+        "row": 108
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-auto-rotating-content-controls-carousel-controls",
+          "candidateUnitId": "uupm-row:deb0d20bf835b531baf8f2dd39bc4aaf398d3626f52c713b17fe90d45e353527/candidate-01",
+          "unitLabel": "carousel-controls",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3f014b7132f9d1960b269292ab35b4f5807c849bb8d87b192eac8d63be9c5cf2",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"carousel-controls\" of ux-guidelines.csv L109; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-auto-rotating-content-controls-rotation-stop-conditions",
+          "candidateUnitId": "uupm-row:deb0d20bf835b531baf8f2dd39bc4aaf398d3626f52c713b17fe90d45e353527/candidate-02",
+          "unitLabel": "rotation-stop-conditions",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3f014b7132f9d1960b269292ab35b4f5807c849bb8d87b192eac8d63be9c5cf2",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"rotation-stop-conditions\" of ux-guidelines.csv L109; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 110,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b9b30ac5cbc4eee1021c37ee2f5bcf822296b8107d842652c3714435e55fb8a2",
+      "locator": {
+        "line": 110,
+        "row": 109
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-focusable-error-summary-summary-placement",
+          "candidateUnitId": "uupm-row:2e2fd1af585d6e145a93241ac3d656752290c08b5ad1a53ba1ae3e022a9629cb/candidate-01",
+          "unitLabel": "summary-placement",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b9b30ac5cbc4eee1021c37ee2f5bcf822296b8107d842652c3714435e55fb8a2",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"summary-placement\" of ux-guidelines.csv L110; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-focusable-error-summary-post-submit-focus",
+          "candidateUnitId": "uupm-row:2e2fd1af585d6e145a93241ac3d656752290c08b5ad1a53ba1ae3e022a9629cb/candidate-02",
+          "unitLabel": "post-submit-focus",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b9b30ac5cbc4eee1021c37ee2f5bcf822296b8107d842652c3714435e55fb8a2",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"post-submit-focus\" of ux-guidelines.csv L110; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-focusable-error-summary-summary-items-link-to-fields",
+          "candidateUnitId": "uupm-row:2e2fd1af585d6e145a93241ac3d656752290c08b5ad1a53ba1ae3e022a9629cb/candidate-03",
+          "unitLabel": "summary-items-link-to-fields",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b9b30ac5cbc4eee1021c37ee2f5bcf822296b8107d842652c3714435e55fb8a2",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"summary-items-link-to-fields\" of ux-guidelines.csv L110; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-focusable-error-summary-retain-inline-errors",
+          "candidateUnitId": "uupm-row:2e2fd1af585d6e145a93241ac3d656752290c08b5ad1a53ba1ae3e022a9629cb/candidate-04",
+          "unitLabel": "retain-inline-errors",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=b9b30ac5cbc4eee1021c37ee2f5bcf822296b8107d842652c3714435e55fb8a2",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"retain-inline-errors\" of ux-guidelines.csv L110; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 111,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3bac8a636246eadbf9c67b0dec34f15a07c282dda9a87fb02e3024f4b29cb71e",
+      "locator": {
+        "line": 111,
+        "row": 110
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-heading-line-balance-bound-heading-measure",
+          "candidateUnitId": "uupm-row:6a1f6f7e7fac0ae57dbc7610b51d3e3f216420a94afef8e80a2946fd8ccc21a4/candidate-01",
+          "unitLabel": "bound-heading-measure",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3bac8a636246eadbf9c67b0dec34f15a07c282dda9a87fb02e3024f4b29cb71e",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"bound-heading-measure\" of ux-guidelines.csv L111; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-heading-line-balance-test-natural-wrap-fallback",
+          "candidateUnitId": "uupm-row:6a1f6f7e7fac0ae57dbc7610b51d3e3f216420a94afef8e80a2946fd8ccc21a4/candidate-02",
+          "unitLabel": "test-natural-wrap-fallback",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=3bac8a636246eadbf9c67b0dec34f15a07c282dda9a87fb02e3024f4b29cb71e",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"test-natural-wrap-fallback\" of ux-guidelines.csv L111; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    },
+    {
+      "file": "ux-guidelines.csv",
+      "line": 117,
+      "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=a5a7f8cf40c269c6f17d725ffbc07d097aa9b00e462a862c3d428ecfaf028971",
+      "locator": {
+        "line": 117,
+        "row": 116
+      },
+      "units": [
+        {
+          "instructionId": "uupm-ux-compact-label-overflow-bound-unpredictable-values",
+          "candidateUnitId": "uupm-row:52c5536496b82edd7af1c2c7c72914953b1fa1bd81fcb1b17cf9895d1853c010/candidate-01",
+          "unitLabel": "bound-unpredictable-values",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=a5a7f8cf40c269c6f17d725ffbc07d097aa9b00e462a862c3d428ecfaf028971",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"bound-unpredictable-values\" of ux-guidelines.csv L117; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-compact-label-overflow-shrinkable-single-line-label",
+          "candidateUnitId": "uupm-row:52c5536496b82edd7af1c2c7c72914953b1fa1bd81fcb1b17cf9895d1853c010/candidate-02",
+          "unitLabel": "shrinkable-single-line-label",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=a5a7f8cf40c269c6f17d725ffbc07d097aa9b00e462a862c3d428ecfaf028971",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"shrinkable-single-line-label\" of ux-guidelines.csv L117; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-ux-compact-label-overflow-operable-full-text-disclosure",
+          "candidateUnitId": "uupm-row:52c5536496b82edd7af1c2c7c72914953b1fa1bd81fcb1b17cf9895d1853c010/candidate-03",
+          "unitLabel": "operable-full-text-disclosure",
+          "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=a5a7f8cf40c269c6f17d725ffbc07d097aa9b00e462a862c3d428ecfaf028971",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"operable-full-text-disclosure\" of ux-guidelines.csv L117; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    }
+  ]
+}

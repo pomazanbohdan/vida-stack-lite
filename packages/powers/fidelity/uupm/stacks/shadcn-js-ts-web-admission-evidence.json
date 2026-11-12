@@ -1,0 +1,26 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "js-ts-web",
+  "recordedAt": "2026-11-12T07:05:00Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/shadcn.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "e56cfde5b74907836ac3582a4779d5b7f3d206a702ab81b8669a1b668c3eeb51"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-shadcn-support-dark-mode",
+      "familyId": "family-support-dark-mode-9bd99e0c",
+      "rowKey": "path=stacks/shadcn.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7d7fbc8d26fd7f3cd1dfb2c1ba06c6caf9c4f536326bab3b5a247406b1b69a77",
+      "locator": {
+        "line": 7,
+        "row": 6
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/shadcn.csv L7 admitted as SBVF variant uupm-shadcn-support-dark-mode of family-support-dark-mode-9bd99e0c; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

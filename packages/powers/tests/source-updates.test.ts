@@ -256,7 +256,7 @@ test('rejects invalid baseline bytes and resolves the package root', () => {
   expect(serializeSourceBaseline(twoDonors)).toContain('"a"');
 });
 
-test('accepts v2 maps with CSV sources and rejects unknown map schemas', () => {
+test('accepts v2 and v3 maps with CSV sources and rejects unknown map schemas', () => {
   const v2 = {
     schema: 'VPCorpusMap/v2',
     donors: {
@@ -264,7 +264,8 @@ test('accepts v2 maps with CSV sources and rejects unknown map schemas', () => {
     },
   };
   expect([...parseCorpusMap(v2).keys()]).toEqual(['d1']);
-  expect(() => parseCorpusMap({ ...v2, schema: 'VPCorpusMap/v3' })).toThrow('schema must be VPCorpusMap/v1 or VPCorpusMap/v2');
+  expect([...parseCorpusMap({ ...v2, schema: 'VPCorpusMap/v3' }).keys()]).toEqual(['d1']);
+  expect(() => parseCorpusMap({ ...v2, schema: 'VPCorpusMap/v4' })).toThrow('schema must be VPCorpusMap/v1, VPCorpusMap/v2 or VPCorpusMap/v3');
 });
 
 test('resolves symbolic and packed clone heads', async () => {

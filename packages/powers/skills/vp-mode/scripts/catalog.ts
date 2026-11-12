@@ -23,8 +23,12 @@ import type { ApproachAssessment } from './instruction-approaches.ts';
 import { parseApplicability, parseApplicabilityContext } from './applicability.ts';
 import type { Applicability, ApplicabilityAliases, ApplicabilityContext, ApplicabilityReason, ApplicabilityResult, ApplicabilityVocab } from './applicability.ts';
 import { evaluateApplicability } from './applicability.ts';
+import { parseVariantScalar, parseVariantSections } from './variants.ts';
+import type { VariantRecord } from './variants.ts';
+import { extractModuleBody, parseModule, ModuleError } from './modules.ts';
+import type { ModuleRecord } from './modules.ts';
 
-export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED' | 'CATALOG_REQUIRED_SELECTION_UNAVAILABLE';
+export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED' | 'CATALOG_REQUIRED_SELECTION_UNAVAILABLE' | 'CATALOG_FAMILY_REQUIRES_CONTEXT' | 'CATALOG_MODULE_ATOM_REQUIRED';
 
 export class CatalogError extends Error {
   readonly code: CatalogErrorCode;
@@ -49,7 +53,7 @@ export type Instruction = {
   applicability?: ApplicabilityResult;
   applicabilityDeclaration?: Applicability;
 };
-export type LoadedInstruction = Instruction & { classification: InstructionClassification; approach_assessments: ApproachAssessment[] };
+export type LoadedInstruction = Instruction & { classification: InstructionClassification; approach_assessments: ApproachAssessment[]; familyId?: string; moduleId?: string; moduleAtoms?: string[]; variants?: LoadedInstruction[] };
 export type Catalog = {
   schema: 'VPCatalog/v1'; catalog_id: string; revision: number; source_revision: string; updated_at: string;
   tag_dictionary: { capability: Record<string, string>; pattern: Record<string, string> };
@@ -59,7 +63,7 @@ export type Catalog = {
 };
 export type TagEntry = { tag: string; description: string; aliases: string[] };
 export type CatalogTagMatch = { dimension: 'capability' | 'pattern'; tag: string; description: string };
-export type InstructionMetadata = { instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[]; revision: number; applicability?: ApplicabilityResult };
+export type InstructionMetadata = { instruction_id: string; title: string; summary: string; capability_tags: string[]; pattern_tags: string[]; revision: number; applicability?: ApplicabilityResult; variants?: Array<{ variant_id: string; applicability?: ApplicabilityResult }>; members?: Array<{ atom_id: string; matched: boolean; applicability?: ApplicabilityResult }> };
 export type SearchQuery = {
   capability_tags?: string[]; pattern_tags?: string[]; instruction_ids?: string[]; roles?: string[]; products?: string[]; conditions?: string[];
   instruction_forms?: InstructionForm[]; domains?: InstructionDomain[]; classification_statuses?: ClassificationStatus[];
@@ -77,7 +81,7 @@ export type DecisionApplicabilityDiagnostic = { instructionId: string; applicabi
 export type DecisionResult = { selected: string[]; score: number; rationale: string; provider: 'catalog' | 'agent'; fallback: boolean; fallbackReason: DecisionFallbackReason | null; diagnostics?: { applicability: DecisionApplicabilityDiagnostic[] } };
 export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; unresolved_groups?: Record<string, string[]> };
 export type ComposeQuery = SearchQuery & { required_ids?: string[]; profile?: EffectiveProfile; role?: string; task_contract?: string; effective_methodology?: string; work_scope?: string; materialization_requirements?: string[]; artifact_references?: string[] };
-export type ComposedInstruction = { instruction_id: string; title: string; summary: string; content: string; capability_tags: string[]; pattern_tags: string[]; artifact_contract: Instruction['artifact_contract']; provenance: Provenance[]; selection_reason: 'matched' | 'dependency' | 'required' };
+export type ComposedInstruction = { instruction_id: string; family_id?: string; title: string; summary: string; content: string; capability_tags: string[]; pattern_tags: string[]; artifact_contract: Instruction['artifact_contract']; provenance: Provenance[]; selection_reason: 'matched' | 'dependency' | 'required' };
 export type ComposedBundle = { catalog_id: string; catalog_revision: number; tag_dictionary: Catalog['tag_dictionary']; instructions: ComposedInstruction[]; omitted: { inapplicable: string[]; unresolved: string[] }; role: string; task_contract: string; effective_methodology: string; work_scope: string; materialization_requirements: string[]; artifact_references: string[] };
 
 const approachDeclarations = new Map<string, readonly string[]>(Object.entries(APPROACH_VOCABULARY));
@@ -242,18 +246,20 @@ export async function loadCatalog(catalogPath: string): Promise<Catalog> {
   return catalog;
 }
 
-function parseProvenance(value: unknown, instructionId: string): Provenance[] {
+function parseProvenance(value: unknown, instructionId: string, sourceBound = false): Provenance[] {
   if (!Array.isArray(value)) throw invalid(`invalid provenance for ${instructionId}`, { instruction_id: instructionId });
   return value.map((item): Provenance => {
     if (typeof item !== 'string') throw invalid(`invalid provenance for ${instructionId}`, { instruction_id: instructionId, value: item });
-    const match = /^donor=([^;]+); license=([^;]+); revision=([^;]+); path=(.+)$/.exec(item);
+    const match = sourceBound
+      ? /^donor=([^;]+); license=([^;]+); revision=([0-9a-f]{40}); path=([^;]+?)(?:; sha256=([0-9a-f]{64}))?(?:; locator=([^;]+))?$/.exec(item)
+      : /^donor=([^;]+); license=([^;]+); revision=([^;]+); path=(.+?)(?:; sha256=([0-9a-f]{64}))?(?:; locator=([^;]+))?$/.exec(item);
     if (match === null) throw invalid(`invalid provenance for ${instructionId}`, { instruction_id: instructionId, value: item });
     const donor = match[1]?.trim() ?? '';
     const license = match[2]?.trim() ?? '';
     const revision = match[3]?.trim() ?? '';
     const path = match[4]?.trim() ?? '';
     if (donor === '' || license === '' || revision === '' || path === '') throw invalid(`invalid provenance for ${instructionId}`, { instruction_id: instructionId, value: item });
-    return { donor, license, revision, path };
+    return { donor, license, revision, path, ...(match[5] === undefined ? {} : { sha256: match[5] }), ...(match[6] === undefined ? {} : { locator: match[6] }) };
   });
 }
 
@@ -273,6 +279,8 @@ function validateTags(catalog: Catalog, instruction: Instruction): void {
 export async function loadInstructions(catalog: Catalog, directory: string): Promise<Map<string, LoadedInstruction>> {
   const v12Schema = await readSchema(directory, 'vpinstruction.v1.2.schema.json');
   let v2Schema: Schema | undefined;
+  let v3Schema: Schema | undefined;
+  let moduleSchema: Schema | undefined;
   const instructions = new Map<string, LoadedInstruction>();
   for (const entry of catalog.instructions) {
     let bytes: Buffer;
@@ -295,13 +303,171 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
       });
     }
     const marker = parsed.data.schema;
-    if (marker !== 'VPInstruction/v1.2' && marker !== 'VPInstruction/v2') throw invalid(`unsupported instruction schema marker for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schema: parsed.data.schema });
+    if (marker === 'VPInstructionModule/v1') {
+      if (moduleSchema === undefined) moduleSchema = await readSchema(directory, 'vpinstructionmodule.v1.schema.json');
+      const schemaErrors = validateAgainstSchema(parsed.data, moduleSchema);
+      if (schemaErrors.length > 0) throw invalid(`module schema validation failed for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schemaErrors });
+      if (parsed.data.instruction_id !== entry.instruction_id) throw invalid(`module instruction id mismatch for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, actual_id: parsed.data.instruction_id });
+      let module: ReturnType<typeof parseModule>;
+      try { module = parseModule(parsed.data as unknown as ModuleRecord, extractModuleBody(bytes.toString('utf8')), entry.instruction_id); }
+      catch (error) {
+        const moduleError = error instanceof ModuleError ? error : undefined;
+        throw invalid(`module carrier is invalid for ${entry.instruction_id}`, {
+          instruction_id: entry.instruction_id,
+          code: moduleError?.code,
+          message: error instanceof Error ? error.message : String(error),
+          details: moduleError?.details,
+        });
+      }
+      if (v2Schema === undefined && module.members.some((member) => member.frontmatter.schema === 'VPInstruction/v2')) {
+        v2Schema = await readSchema(directory, 'vpinstruction.v2.schema.json');
+      }
+      const atomInstructions: LoadedInstruction[] = module.members.map((member) => {
+        const data = member.frontmatter;
+        const activeSchema = data.schema === 'VPInstruction/v2' ? v2Schema! : v12Schema;
+        const atomSchemaErrors = validateAgainstSchema(data, activeSchema);
+        if (atomSchemaErrors.length > 0) throw invalid(`module atom schema validation failed for ${member.atom_id}`, { instruction_id: entry.instruction_id, atom_id: member.atom_id, schemaErrors: atomSchemaErrors });
+        let applicability: Applicability | undefined;
+        if (data.applicability !== undefined) {
+          if (typeof data.applicability !== 'string') throw invalid(`applicability must be a string for ${member.atom_id}`, { instruction_id: entry.instruction_id, atom_id: member.atom_id });
+          try { applicability = parseApplicability(data.applicability); }
+          catch (error) { throw invalid(`applicability is invalid for ${member.atom_id}`, { instruction_id: entry.instruction_id, atom_id: member.atom_id, message: error instanceof Error ? error.message : String(error) }); }
+        }
+        const classification = parseFacetClassification(data);
+        if (classification === undefined) throw invalid(`instruction classification is invalid for ${member.atom_id}`, { instruction_id: entry.instruction_id, atom_id: member.atom_id });
+        let approach_assessments: ApproachAssessment[];
+        try { approach_assessments = parseApproachAssessments({ data, body: member.body }, approachDeclarations); }
+        catch (error) { throw invalid(`instruction approach assessments are invalid for ${member.atom_id}`, { instruction_id: entry.instruction_id, atom_id: member.atom_id, message: error instanceof Error ? error.message : String(error) }); }
+        const atom: LoadedInstruction = {
+          instruction_id: member.atom_id, moduleId: entry.instruction_id,
+          title: data.title as string, summary: data.summary as string,
+          capability_tags: data.capability_tags as string[], pattern_tags: data.pattern_tags as string[],
+          roles: (data.roles as string[] | undefined) ?? [], products: (data.products as string[] | undefined) ?? [],
+          conditions: { applies_when: data.conditions_applies_when as string, does_not_apply_when: data.conditions_does_not_apply_when as string },
+          artifact_contract: { output_type: data.artifact_contract_output_type as string, required_data: data.artifact_contract_required_data as string[], verified_by: data.artifact_contract_verified_by as string },
+          compatibility: { excludes: data.compatibility_excludes as string[], requires: data.compatibility_requires as string[] },
+          provenance: parseProvenance(data.provenance, member.atom_id), status: data.status as 'active' | 'disabled', revision: data.revision as number,
+          content: member.body, classification, approach_assessments,
+          ...(applicability === undefined ? {} : { applicabilityDeclaration: applicability }),
+        };
+        validateTags(catalog, atom);
+        return atom;
+      });
+      const activeAtoms = atomInstructions.filter((atom) => atom.status === 'active');
+      const firstClass = activeAtoms[0]?.classification;
+      const firstClassified = firstClass?.classification_status === 'classified' ? firstClass : undefined;
+      const sameClassification = firstClassified !== undefined
+        && activeAtoms.every((atom) => {
+          const classification = atom.classification;
+          return classification.classification_status === 'classified'
+            && classification.instruction_form === firstClassified.instruction_form
+            && classification.domains.length === firstClassified.domains.length
+            && firstClassified.domains.every((domain) => classification.domains.includes(domain));
+        });
+      const moduleClassification = sameClassification
+        ? firstClass!
+        : parseFacetClassification({ classification_status: 'unclassified', classification_reason: 'module carrier: member classifications differ' });
+      if (moduleClassification === undefined) throw invalid(`module classification is invalid for ${entry.instruction_id}`, { instruction_id: entry.instruction_id });
+      const union = (select: (atom: LoadedInstruction) => string[]): string[] => [...new Set(activeAtoms.flatMap(select))].sort(compareNames);
+      const moduleEntry: LoadedInstruction = {
+        instruction_id: entry.instruction_id, title: module.record.title, summary: module.record.summary,
+        capability_tags: union((atom) => atom.capability_tags), pattern_tags: union((atom) => atom.pattern_tags),
+        roles: union((atom) => atom.roles), products: union((atom) => atom.products),
+        conditions: { applies_when: 'Select an atom for its complete instruction.', does_not_apply_when: '' },
+        artifact_contract: { output_type: 'none', required_data: [], verified_by: 'Module carrier; atom metadata is authoritative.' },
+        compatibility: { excludes: [], requires: [] }, provenance: [],
+        status: module.record.status, revision: module.record.revision, content: '', classification: moduleClassification,
+        approach_assessments: [], moduleAtoms: module.record.atom_ids,
+      };
+      for (const atom of atomInstructions) {
+        if (instructions.has(atom.instruction_id) || atom.instruction_id === moduleEntry.instruction_id) {
+          throw invalid('module or atom instruction id collision', { instruction_id: atom.instruction_id, module_id: moduleEntry.instruction_id });
+        }
+        instructions.set(atom.instruction_id, atom);
+      }
+      if (instructions.has(moduleEntry.instruction_id)) throw invalid('module instruction id collision', { instruction_id: moduleEntry.instruction_id });
+      instructions.set(moduleEntry.instruction_id, moduleEntry);
+      continue;
+    }
+    if (marker !== 'VPInstruction/v1.2' && marker !== 'VPInstruction/v2' && marker !== 'VPInstruction/v3') throw invalid(`unsupported instruction schema marker for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schema: parsed.data.schema });
     if (marker === 'VPInstruction/v2' && v2Schema === undefined) v2Schema = await readSchema(directory, 'vpinstruction.v2.schema.json');
-    const schema = marker === 'VPInstruction/v2' ? v2Schema! : v12Schema;
+    if (marker === 'VPInstruction/v3' && v3Schema === undefined) v3Schema = await readSchema(directory, 'vpinstruction.v3.schema.json');
+    const schema = marker === 'VPInstruction/v3' ? v3Schema! : marker === 'VPInstruction/v2' ? v2Schema! : v12Schema;
     const schemaErrors = validateAgainstSchema(parsed.data, schema);
     if (schemaErrors.length > 0) throw invalid(`instruction schema validation failed for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, schemaErrors });
     if (parsed.data.instruction_id !== entry.instruction_id) throw invalid(`instruction id mismatch for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, actual_id: parsed.data.instruction_id });
     const data = parsed.data;
+    if (marker === 'VPInstruction/v3') {
+      let variants: VariantRecord[];
+      let sections: Map<string, string>;
+      try {
+        variants = parseVariantScalar(String(data.instruction_variants), entry.instruction_id);
+        sections = parseVariantSections(parsed.body, variants, entry.instruction_id);
+      } catch (error) {
+        throw invalid(`variant family is invalid for ${entry.instruction_id}`, {
+          instruction_id: entry.instruction_id,
+          code: typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : undefined,
+          message: error instanceof Error ? error.message : String(error),
+          details: typeof error === 'object' && error !== null && 'details' in error ? error.details : undefined,
+        });
+      }
+      const classification = parseFacetClassification(data);
+      if (classification === undefined) throw invalid(`instruction classification is invalid for ${entry.instruction_id}`, { instruction_id: entry.instruction_id });
+      let approach_assessments: ApproachAssessment[];
+      try { approach_assessments = parseApproachAssessments(parsed, approachDeclarations); }
+      catch (error) { throw invalid(`instruction approach assessments are invalid for ${entry.instruction_id}`, { instruction_id: entry.instruction_id, message: error instanceof Error ? error.message : String(error) }); }
+      const family: LoadedInstruction = {
+        instruction_id: entry.instruction_id, title: data.title as string, summary: data.summary as string,
+        capability_tags: data.capability_tags as string[], pattern_tags: data.pattern_tags as string[],
+        roles: (data.roles as string[] | undefined) ?? [], products: (data.products as string[] | undefined) ?? [],
+        conditions: { applies_when: data.conditions_applies_when as string, does_not_apply_when: data.conditions_does_not_apply_when as string },
+        artifact_contract: { output_type: data.artifact_contract_output_type as string, required_data: data.artifact_contract_required_data as string[], verified_by: data.artifact_contract_verified_by as string },
+        compatibility: { excludes: data.compatibility_excludes as string[], requires: data.compatibility_requires as string[] },
+        provenance: parseProvenance(data.provenance, entry.instruction_id, true), status: data.status as 'active' | 'disabled', revision: data.revision as number,
+        content: '', classification, approach_assessments,
+      };
+      validateTags(catalog, family);
+      const familyVariants: LoadedInstruction[] = variants.map((record) => {
+        const id = record.variant_id;
+        const content = sections.get(id);
+        if (content === undefined) throw invalid(`variant section missing for ${id}`, { instruction_id: entry.instruction_id, variant_id: id });
+        const applicabilityDeclaration = parseApplicability(JSON.stringify(record.applicability));
+        const variantData = {
+          classification_status: record.classification_status,
+          ...(record.instruction_form === undefined ? {} : { instruction_form: record.instruction_form }),
+          ...(record.domains === undefined ? {} : { domains: record.domains }),
+          ...(record.classification_reason === undefined ? {} : { classification_reason: record.classification_reason }),
+        };
+        const variantClassification = parseFacetClassification(variantData)!;
+        let variantApproaches: ApproachAssessment[];
+        try {
+          const variantParsed = { ...parsed, data: { ...parsed.data, approach_assessments: record.approach_assessments, approach_body_sha256: record.approach_body_sha256 }, body: content };
+          variantApproaches = parseApproachAssessments(variantParsed, approachDeclarations);
+        } catch (error) { throw invalid(`instruction approach assessments are invalid for variant ${id}`, { instruction_id: entry.instruction_id, variant_id: id, message: error instanceof Error ? error.message : String(error) }); }
+        const variant: LoadedInstruction = {
+          instruction_id: id, familyId: entry.instruction_id, title: record.title, summary: record.summary,
+          capability_tags: record.capability_tags, pattern_tags: record.pattern_tags,
+          roles: record.roles ?? [], products: record.products ?? [],
+          conditions: { applies_when: record.conditions_applies_when, does_not_apply_when: record.conditions_does_not_apply_when },
+          artifact_contract: { output_type: record.artifact_contract_output_type, required_data: record.artifact_contract_required_data, verified_by: record.artifact_contract_verified_by },
+          compatibility: { excludes: record.compatibility_excludes, requires: record.compatibility_requires },
+          provenance: parseProvenance(record.provenance, id, true), status: record.status, revision: record.revision, content,
+          classification: variantClassification, approach_assessments: variantApproaches, applicabilityDeclaration,
+        };
+        validateTags(catalog, variant);
+        return variant;
+      });
+      for (const variant of familyVariants) {
+        if (instructions.has(variant.instruction_id) || variant.instruction_id === family.instruction_id) {
+          throw invalid('family or variant instruction id collision', { instruction_id: variant.instruction_id, family_id: family.instruction_id });
+        }
+        instructions.set(variant.instruction_id, variant);
+      }
+      if (instructions.has(family.instruction_id)) throw invalid('family instruction id collision', { instruction_id: family.instruction_id });
+      family.variants = familyVariants;
+      instructions.set(family.instruction_id, family);
+      continue;
+    }
     let applicability: Applicability | undefined;
     if (data.applicability !== undefined) {
       if (typeof data.applicability !== 'string') throw invalid(`applicability must be a string for ${entry.instruction_id}`, { instruction_id: entry.instruction_id });
@@ -341,6 +507,7 @@ export async function loadInstructions(catalog: Catalog, directory: string): Pro
       approach_assessments,
       ...(applicability === undefined ? {} : { applicabilityDeclaration: applicability }),
     };
+    if (instructions.has(instruction.instruction_id)) throw invalid('instruction id collides with an existing family or variant', { instruction_id: instruction.instruction_id });
     validateTags(catalog, instruction);
     instructions.set(instruction.instruction_id, instruction);
   }
@@ -526,25 +693,60 @@ export function catalogSearch(catalog: Catalog, instructions: Map<string, Loaded
     if (token.trim() === '') throw invalid('condition token must not be empty', { token, dimension: 'conditions' });
   }
   const ids = query.instruction_ids ?? [];
+  const matches = (instruction: LoadedInstruction): boolean => {
+    const classification = instruction.classification;
+    return evaluateApproaches(instruction, approaches).included
+    && hasAny(instruction.capability_tags, capabilities)
+    && hasAny(instruction.pattern_tags, patterns)
+    && (instruction.roles.length === 0 || hasAny(instruction.roles, query.roles ?? []))
+    && (instruction.products.length === 0 || hasAny(instruction.products, query.products ?? []))
+    && matchesConditions(instruction, query.conditions)
+    && (facets.instructionForms.length === 0 || (classification.classification_status === 'classified' && facets.instructionForms.includes(classification.instruction_form)))
+    && (facets.domains.length === 0 || (classification.classification_status === 'classified' && facets.domains.some((domain) => classification.domains.includes(domain))))
+    && (facets.classificationStatuses.length === 0 || facets.classificationStatuses.includes(classification.classification_status));
+  };
   return [...instructions.values()]
+    .filter((instruction) => instruction.familyId === undefined && instruction.moduleId === undefined)
     .filter((instruction) => instruction.status === 'active')
-    .filter((instruction) => evaluateApproaches(instruction, approaches).included)
-    .filter((instruction) => hasAny(instruction.capability_tags, capabilities))
-    .filter((instruction) => hasAny(instruction.pattern_tags, patterns))
-    .filter((instruction) => ids.length === 0 || ids.includes(instruction.instruction_id))
-    .filter((instruction) => instruction.roles.length === 0 || hasAny(instruction.roles, query.roles ?? []))
-    .filter((instruction) => instruction.products.length === 0 || hasAny(instruction.products, query.products ?? []))
-    .filter((instruction) => matchesConditions(instruction, query.conditions))
-    .filter((instruction) => facets.instructionForms.length === 0 || (instruction.classification.classification_status === 'classified' && facets.instructionForms.includes(instruction.classification.instruction_form)))
-    .filter((instruction) => {
-      if (facets.domains.length === 0) return true;
-      const classification = instruction.classification;
-      return classification.classification_status === 'classified' && facets.domains.some((domain) => classification.domains.includes(domain));
-    })
-    .filter((instruction) => facets.classificationStatuses.length === 0 || facets.classificationStatuses.includes(instruction.classification.classification_status))
+    .filter((instruction) => instruction.moduleAtoms !== undefined
+      ? (ids.length === 0 || ids.includes(instruction.instruction_id) || instruction.moduleAtoms.some((id) => ids.includes(id)))
+        && instruction.moduleAtoms.some((id) => {
+          const atom = instructions.get(id);
+          return atom !== undefined && atom.status === 'active'
+            && (ids.length === 0 || ids.includes(instruction.instruction_id) || ids.includes(id)) && matches(atom);
+        })
+      : instruction.variants === undefined
+        ? (ids.length === 0 || ids.includes(instruction.instruction_id)) && matches(instruction)
+        : (instruction.variants.some((variant) => ids.includes(variant.instruction_id)) || ids.includes(instruction.instruction_id) || ids.length === 0)
+          && instruction.variants.some((variant) => variant.status === 'active'
+            && (ids.includes(instruction.instruction_id)
+              ? true
+              : ids.length > 0
+                ? ids.includes(variant.instruction_id)
+                : true)
+            && matches(variant)))
     .sort((left, right) => compareNames(left.instruction_id, right.instruction_id))
     .map((instruction) => {
       const { instruction_id, title, summary, capability_tags, pattern_tags, revision } = instruction;
+      if (instruction.moduleAtoms !== undefined) {
+        const members = instruction.moduleAtoms.flatMap((atomId) => {
+          const atom = instructions.get(atomId);
+          if (atom === undefined || atom.status !== 'active' || (ids.length > 0 && !ids.includes(instruction.instruction_id) && !ids.includes(atomId))) return [];
+          const matched = matches(atom);
+          const applicability = applicabilityFor(atom, query.applicabilityContext);
+          return [applicability === undefined ? { atom_id: atomId, matched } : { atom_id: atomId, matched, applicability }];
+        });
+        return { instruction_id, title, summary, capability_tags, pattern_tags, revision, members };
+      }
+      if (instruction.variants !== undefined) {
+        const selected = instruction.variants.filter((variant) => variant.status === 'active'
+          && (ids.includes(instruction.instruction_id) || ids.length === 0 || ids.includes(variant.instruction_id))
+          && matches(variant));
+        return { instruction_id, title, summary, capability_tags, pattern_tags, revision, variants: selected.map((variant) => {
+          const applicability = applicabilityFor(variant, query.applicabilityContext);
+          return applicability === undefined ? { variant_id: variant.instruction_id } : { variant_id: variant.instruction_id, applicability };
+        }) };
+      }
       const applicability = applicabilityFor(instruction, query.applicabilityContext);
       return applicability === undefined
         ? { instruction_id, title, summary, capability_tags, pattern_tags, revision }
@@ -566,6 +768,37 @@ export function catalogSearchWithProfile(
   const results: InstructionMetadata[] = [];
   for (const metadata of matches) {
     const instruction = activeInstruction(instructions, metadata.instruction_id);
+    if (instruction.moduleAtoms !== undefined) {
+      const kept: string[] = [];
+      for (const annotation of metadata.members ?? []) {
+        if (!annotation.matched) continue;
+        const atom = instructions.get(annotation.atom_id);
+        if (atom === undefined || atom.status !== 'active') continue;
+        if (!evaluateApproaches(atom, selectors).included) continue;
+        const unresolvedAtom = unresolvedProfileConflictFor(atom, profile);
+        if (unresolvedAtom !== undefined) requireProfileResolution(unresolvedAtom, { instruction_id: atom.instruction_id });
+        if (profileConflictFor(atom, profile) !== undefined) continue;
+        kept.push(atom.instruction_id);
+        selected.set(atom.instruction_id, { instruction: atom, reason: 'matched' });
+      }
+      if (kept.length > 0) results.push({ ...metadata, members: (metadata.members ?? []).filter((item) => kept.includes(item.atom_id)) });
+      continue;
+    }
+    if (instruction.variants !== undefined) {
+      const kept: string[] = [];
+      for (const annotation of metadata.variants ?? []) {
+        const variant = instructions.get(annotation.variant_id);
+        if (variant === undefined || variant.status !== 'active') continue;
+        if (!evaluateApproaches(variant, selectors).included) continue;
+        const unresolvedVariant = unresolvedProfileConflictFor(variant, profile);
+        if (unresolvedVariant !== undefined) requireProfileResolution(unresolvedVariant, { instruction_id: variant.instruction_id });
+        if (profileConflictFor(variant, profile) !== undefined) continue;
+        kept.push(variant.instruction_id);
+        selected.set(variant.instruction_id, { instruction: variant, reason: 'matched' });
+      }
+      if (kept.length > 0) results.push({ ...metadata, variants: (metadata.variants ?? []).filter((item) => kept.includes(item.variant_id)) });
+      continue;
+    }
     if (!evaluateApproaches(instruction, selectors).included) continue;
     const unresolved = unresolvedProfileConflictFor(instruction, profile);
     if (unresolved !== undefined) requireProfileResolution(unresolved, { instruction_id: instruction.instruction_id });
@@ -594,6 +827,7 @@ export function catalogBrowse(catalog: Catalog, instructions: Map<string, Loaded
     if (instruction.status !== 'active' && instruction.status !== 'disabled') throw invalid('catalog browse found an invalid instruction status', { instruction_id: id, status: instruction.status });
     if (!isInstructionClassification(instruction.classification)) throw invalid('catalog browse found invalid instruction classification', { instruction_id: id });
     if (instruction.status === 'disabled') continue;
+    if (instruction.familyId !== undefined) continue;
     if (!evaluateApproaches(instruction, selectors).included) continue;
     switch (instruction.classification.classification_status) {
       case 'classified': {
@@ -647,14 +881,17 @@ export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Loa
   const candidates = request.candidates;
   const tags = request.tags ?? [];
   if (candidates.length === 0) return decisionFallback('no-candidates', `Operation "${request.operation}" has no candidates; the agent must decide.`);
-  const manifestIds = new Set(catalog.instructions.map((entry) => entry.instruction_id));
-  const unknown = candidates.find((id) => !manifestIds.has(id));
+  const unknown = candidates.find((id) => !instructions.has(id));
   if (unknown !== undefined) return decisionFallback('unknown-candidate', `Candidate "${unknown}" is not in the catalog; the agent must decide.`);
   const disallowed = candidates.find((id) => {
     const instruction = instructions.get(id);
     return instruction === undefined || instruction.status !== 'active';
   });
   if (disallowed !== undefined) return decisionFallback('candidate-not-allowed', `Candidate "${disallowed}" is not admissible; the agent must decide.`);
+  const unsupportedModule = candidates.find((id) => instructions.get(id)?.moduleAtoms !== undefined);
+  if (unsupportedModule !== undefined) {
+    return decisionFallback('candidate-not-allowed', `Candidate module "${unsupportedModule}" is a carrier; choose an atom ID.`);
+  }
 
   const requestedTags: string[] = [];
   const unknownTags: string[] = [];
@@ -674,9 +911,21 @@ export function decisionEvaluate(catalog: Catalog, instructions: Map<string, Loa
       return decisionFallback('invalid-format', `Request is malformed: ${error instanceof Error ? error.message : String(error)}.`);
     }
   }
-  const uniqueCandidates = [...new Set(candidates)]
-    .map((id) => instructions.get(id))
-    .filter((instruction): instruction is LoadedInstruction => instruction !== undefined);
+  const uniqueCandidates: LoadedInstruction[] = [];
+  for (const id of [...new Set(candidates)]) {
+    const candidate = instructions.get(id);
+    if (candidate === undefined) continue;
+    if (candidate.variants === undefined) { uniqueCandidates.push(candidate); continue; }
+    const familyVariants = candidate.variants
+      .filter((variant) => variant.status !== 'disabled')
+      .map((variant) => ({ variant, result: applicabilityFor(variant, applicabilityContext) }));
+    const applicableVariants = familyVariants.filter(({ result }) => result === undefined || result.state === 'applicable');
+    if (applicableVariants.length !== 1) {
+      const familyDiagnostics = familyVariants.map(({ variant, result }) => ({ instructionId: variant.instruction_id, applicability: result?.state === 'inapplicable' ? 'inapplicable' as const : 'unresolved' as const, ...(result?.reason === undefined ? {} : { reason: result.reason }), ...(result?.requiredContext === undefined ? {} : { requiredContext: result.requiredContext }), ...(result?.sourceLabels === undefined ? {} : { sourceLabels: result.sourceLabels }) }));
+      return { selected: [], score: 0, rationale: `Operation "${request.operation}" cannot resolve family "${id}" to exactly one applicable variant.`, provider: 'agent', fallback: true, fallbackReason: 'applicability-unresolved', diagnostics: { applicability: familyDiagnostics } };
+    }
+    uniqueCandidates.push(applicableVariants[0]!.variant);
+  }
   const evaluated = uniqueCandidates.map((instruction) => ({ instruction, result: applicabilityFor(instruction, applicabilityContext) }));
   const diagnostics = evaluated
     .filter((item): item is { instruction: LoadedInstruction; result: ApplicabilityResult } => item.result !== undefined && item.result.state !== 'applicable')
@@ -735,6 +984,18 @@ function activeInstruction(instructions: Map<string, LoadedInstruction>, id: str
 
 export function catalogGet(_catalog: Catalog, instructions: Map<string, LoadedInstruction>, id: string, context?: ApplicabilityContext): Instruction {
   const instruction = activeInstruction(instructions, id);
+  if (instruction.moduleAtoms !== undefined) throw new CatalogError('CATALOG_MODULE_ATOM_REQUIRED', `module ${id} is a carrier; select one of its atom IDs`, { module_id: id, atom_ids: instruction.moduleAtoms });
+  if (instruction.variants !== undefined) {
+    if (context === undefined) throw new CatalogError('CATALOG_FAMILY_REQUIRES_CONTEXT', `family ${id} requires applicability context`, { family_id: id, variant_ids: instruction.variants.map((variant) => variant.instruction_id) });
+    const enabled = instruction.variants.filter((variant) => variant.status !== 'disabled');
+    const evaluated = enabled.map((variant) => ({ variant, applicability: applicabilityFor(variant, context) }));
+    const applicable = evaluated.filter((item) => item.applicability?.state === 'applicable');
+    if (applicable.length !== 1) throw new CatalogError('CATALOG_REQUIRED_SELECTION_UNAVAILABLE', `family ${id} has ${applicable.length === 0 ? 'no' : 'multiple'} applicable variants`, {
+      family_id: id,
+      variants: evaluated.map(({ variant, applicability }) => ({ variant_id: variant.instruction_id, state: applicability?.state ?? 'unresolved', reason: applicability?.reason })),
+    });
+    return catalogGet(_catalog, instructions, applicable[0]!.variant.instruction_id, context);
+  }
   const applicability = applicabilityFor(instruction, context);
   return {
     instruction_id: instruction.instruction_id,
@@ -947,7 +1208,31 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
   };
   validateProfile(query.profile);
   const selected = new Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>();
-  for (const id of query.required_ids ?? []) { const instruction = activeInstruction(instructions, id); requireApproach(instruction); addSelected(selected, instruction, 'required'); }
+  const requiredVariantIds = new Set<string>();
+  for (const id of query.required_ids ?? []) {
+    const instruction = activeInstruction(instructions, id);
+    if (instruction.moduleAtoms !== undefined) throw new CatalogError('CATALOG_MODULE_ATOM_REQUIRED', `required module ${id} is a carrier; select atom IDs`, { module_id: id, atom_ids: instruction.moduleAtoms });
+    if (instruction.variants === undefined) {
+      requireApproach(instruction);
+      addSelected(selected, instruction, 'required');
+      requiredVariantIds.add(instruction.instruction_id);
+      continue;
+    }
+    const enabled = instruction.variants.filter((variant) => variant.status === 'active');
+    const evaluated = enabled.map((variant) => ({ variant, applicability: applicabilityFor(variant, query.applicabilityContext) }));
+    const applicable = evaluated.filter(({ applicability }) => applicability === undefined || applicability.state === 'applicable');
+    if (applicable.length === 0 || evaluated.some(({ applicability }) => applicability?.state === 'unresolved')) {
+      throw new CatalogError('CATALOG_REQUIRED_SELECTION_UNAVAILABLE', `required family ${id} has no complete applicable variant selection`, {
+        family_id: id,
+        variants: evaluated.map(({ variant, applicability }) => ({ variant_id: variant.instruction_id, state: applicability?.state ?? 'applicable', ...(applicability?.reason === undefined ? {} : { reason: applicability.reason }) })),
+      });
+    }
+    for (const { variant } of applicable) {
+      requireApproach(variant);
+      addSelected(selected, variant, 'required');
+      requiredVariantIds.add(variant.instruction_id);
+    }
+  }
   const supplied = (value: string[] | undefined): boolean => Array.isArray(value) && value.length > 0;
   const hasSelectionDimension = supplied(query.capability_tags) || supplied(query.pattern_tags) || supplied(query.instruction_ids)
     || supplied(query.roles) || supplied(query.products) || supplied(query.conditions)
@@ -955,10 +1240,24 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
   if (hasSelectionDimension) {
     for (const metadata of catalogSearch(catalog, instructions, query)) {
       const instruction = instructions.get(metadata.instruction_id);
-      if (instruction !== undefined) addSelected(selected, instruction, 'matched');
+      if (instruction === undefined) continue;
+      if (instruction.moduleAtoms !== undefined) {
+        for (const annotation of metadata.members ?? []) {
+          if (!annotation.matched) continue;
+          const atom = instructions.get(annotation.atom_id);
+          if (atom !== undefined && atom.status === 'active') addSelected(selected, atom, 'matched');
+        }
+        continue;
+      }
+      if (instruction.variants !== undefined) {
+        for (const annotation of metadata.variants ?? []) {
+          const variant = instructions.get(annotation.variant_id);
+          if (variant !== undefined && variant.status === 'active') addSelected(selected, variant, 'matched');
+        }
+      } else addSelected(selected, instruction, 'matched');
     }
   }
-  for (const id of query.required_ids ?? []) {
+  for (const id of requiredVariantIds) {
     const instruction = instructions.get(id);
     const unresolvedConflict = instruction === undefined ? undefined : unresolvedProfileConflictFor(instruction, query.profile);
     if (unresolvedConflict !== undefined) requireProfileResolution(unresolvedConflict, { instruction_id: id });
@@ -987,6 +1286,15 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
     selected.delete(id);
   }
   const pending = [...selected.values()].map((item) => item.instruction);
+  const dependencyEdges = new Map<string, Set<string>>();
+  const addDependencyEdges = (instructionId: string, dependencyIds: string[]): void => {
+    let edges = dependencyEdges.get(instructionId);
+    if (edges === undefined) {
+      edges = new Set<string>();
+      dependencyEdges.set(instructionId, edges);
+    }
+    for (const dependencyId of dependencyIds) edges.add(dependencyId);
+  };
   let canonicalGroupsForSubstitution: CanonicalMethodologyGroup[] | undefined;
   for (let index = 0; index < pending.length; index += 1) {
     const instruction = pending[index];
@@ -994,6 +1302,8 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
     for (const dependencyId of instruction.compatibility.requires) {
       const dependency = instructions.get(dependencyId);
       if (dependency === undefined) throw new CatalogError('CATALOG_DEPENDENCY_MISSING', `dependency ${dependencyId} required by ${instruction.instruction_id} is missing`, { instruction_id: instruction.instruction_id, dependency_id: dependencyId });
+      if (dependency.variants !== undefined) throw new CatalogError('CATALOG_DEPENDENCY_MISSING', `dependency ${dependencyId} required by ${instruction.instruction_id} is a family`, { instruction_id: instruction.instruction_id, dependency_id: dependencyId, family_id: dependencyId });
+      if (dependency.moduleAtoms !== undefined) throw new CatalogError('CATALOG_MODULE_ATOM_REQUIRED', `dependency ${dependencyId} required by ${instruction.instruction_id} is a module carrier; select an atom ID`, { instruction_id: instruction.instruction_id, module_id: dependencyId, atom_ids: dependency.moduleAtoms });
       if (dependency.status === 'disabled') throw new CatalogError('CATALOG_DEPENDENCY_DISABLED', `dependency ${dependencyId} required by ${instruction.instruction_id} is disabled`, { instruction_id: instruction.instruction_id, dependency_id: dependencyId });
       const unresolvedConflict = unresolvedProfileConflictFor(dependency, query.profile);
       if (unresolvedConflict !== undefined) requireProfileResolution(unresolvedConflict, { dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
@@ -1005,6 +1315,8 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
         let completeMapping = mappedIds !== undefined && mappedIds.length > 0;
         for (const id of mappedIds ?? []) {
           const active = instructions.get(id);
+          if (active?.variants !== undefined) throw new CatalogError('CATALOG_DEPENDENCY_MISSING', `dependency ${id} required by ${instruction.instruction_id} resolves to a family`, { instruction_id: instruction.instruction_id, dependency_id: id, family_id: id });
+          if (active?.moduleAtoms !== undefined) throw new CatalogError('CATALOG_MODULE_ATOM_REQUIRED', `dependency ${id} required by ${instruction.instruction_id} resolves to a module carrier; select an atom ID`, { instruction_id: instruction.instruction_id, module_id: id, atom_ids: active.moduleAtoms });
           if (active === undefined || active.status !== 'active' || !active.pattern_tags.includes(profileConflict.active)) {
             completeMapping = false;
             break;
@@ -1012,6 +1324,7 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
           activeInstructions.push(active);
         }
         if (!completeMapping) throw new CatalogError('CATALOG_PROFILE_CONFLICT', `active profile pattern ${profileConflict.active} has no instruction in ${profileConflict.group}`, { ...profileConflict, dependency_id: dependencyId, requiring_instruction_id: instruction.instruction_id });
+        addDependencyEdges(instruction.instruction_id, activeInstructions.map((active) => active.instruction_id));
         for (const active of activeInstructions) {
           requireApproach(active, instruction.instruction_id);
           const unresolvedActiveConflict = unresolvedProfileConflictFor(active, query.profile);
@@ -1022,6 +1335,7 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
           }
         }
       } else {
+        addDependencyEdges(instruction.instruction_id, [dependencyId]);
         requireApproach(dependency, instruction.instruction_id);
         if (!selected.has(dependencyId)) {
           addSelected(selected, dependency, 'dependency');
@@ -1030,12 +1344,81 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
       }
     }
   }
+  const omittedState = new Map<string, 'inapplicable' | 'unresolved'>([
+    ...omitted.inapplicable.map((id) => [id, 'inapplicable'] as const),
+    ...omitted.unresolved.map((id) => [id, 'unresolved'] as const),
+  ]);
+  const reachableFrom = (roots: Iterable<string>): Set<string> => {
+    const reachable = new Set<string>();
+    const queue = [...roots].filter((id) => selected.has(id));
+    for (let index = 0; index < queue.length; index += 1) {
+      const id = queue[index];
+      if (id === undefined || reachable.has(id)) continue;
+      reachable.add(id);
+      for (const dependencyId of dependencyEdges.get(id) ?? []) {
+        if (selected.has(dependencyId) && !reachable.has(dependencyId)) queue.push(dependencyId);
+      }
+    }
+    return reachable;
+  };
+  const requiredRoots = [...requiredVariantIds].filter((id) => selected.has(id));
+  const matchedRoots = [...selected.values()]
+    .filter((item) => item.reason === 'matched' && !requiredVariantIds.has(item.instruction.instruction_id))
+    .map((item) => item.instruction.instruction_id);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const requiredReachable = reachableFrom(requiredRoots);
+    const matchedReachable = reachableFrom(matchedRoots);
+    const reachable = new Set([...requiredReachable, ...matchedReachable]);
+    for (const id of [...reachable].sort(compareNames)) {
+      const item = selected.get(id);
+      if (item === undefined) continue;
+      const applicability = applicabilityFor(item.instruction, query.applicabilityContext);
+      if (applicability === undefined || applicability.state === 'applicable') continue;
+      if (requiredReachable.has(id)) {
+        throw new CatalogError('CATALOG_REQUIRED_SELECTION_UNAVAILABLE', `required instruction ${id} is ${applicability.state}`, {
+          instruction_id: id,
+          applicability: applicability.state,
+          reason: applicability.reason,
+        });
+      }
+      omitted[applicability.state].push(id);
+      omittedState.set(id, applicability.state);
+      selected.delete(id);
+      changed = true;
+    }
+    if (changed) continue;
+    for (const id of [...matchedReachable].sort(compareNames)) {
+      const item = selected.get(id);
+      if (item === undefined || requiredReachable.has(id)) continue;
+      const unavailableDependency = [...(dependencyEdges.get(id) ?? [])]
+        .filter((dependencyId) => !selected.has(dependencyId))
+        .sort(compareNames)[0];
+      if (unavailableDependency === undefined) continue;
+      const state = omittedState.get(unavailableDependency) ?? 'unresolved';
+      omitted[state].push(id);
+      omittedState.set(id, state);
+      selected.delete(id);
+      changed = true;
+    }
+    if (changed) continue;
+    const survivingReachable = new Set([...reachableFrom(requiredRoots), ...reachableFrom(matchedRoots)]);
+    for (const id of selected.keys()) {
+      if (survivingReachable.has(id)) continue;
+      selected.delete(id);
+      changed = true;
+    }
+  }
+  omitted.inapplicable = [...new Set(omitted.inapplicable)].sort(compareNames);
+  omitted.unresolved = [...new Set(omitted.unresolved)].sort(compareNames);
   validateCanonicalPolicySelection(selected, query.profile);
   checkExcludes(selected);
   const composed = [...selected.values()]
     .sort((left, right) => compareNames(left.instruction.instruction_id, right.instruction.instruction_id))
     .map(({ instruction, reason }) => ({
       instruction_id: instruction.instruction_id,
+      ...(instruction.familyId === undefined ? {} : { family_id: instruction.familyId }),
       title: instruction.title,
       summary: instruction.summary,
       content: instruction.content,

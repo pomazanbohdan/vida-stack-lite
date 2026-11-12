@@ -1,0 +1,62 @@
+{
+  "schema": "H2SplitEvidence/v1",
+  "recordedAt": "2026-11-10T14:31:00Z",
+  "source": {
+    "donor": "uupm",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4"
+  },
+  "decision": "Materialize the h2a2-stack-review SPLIT decomposition (.tmp/h2a2-stack-review) as VPInstruction/v1.2 singletons with exact code-point subspan bindings and H2FidelityReceipt/v2, per the D56 2026-11-10 amendment.",
+  "rows": [
+    {
+      "file": "stacks/javafx.csv",
+      "line": 64,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d055d9e47b9c42a0e8c97e9993ff17b305f413d4e8a3330ab1b92ec3637d3fc",
+      "locator": {
+        "line": 64,
+        "row": 63
+      },
+      "units": [
+        {
+          "instructionId": "uupm-javafx-design-tableview-for-high-density-enterprise-data-compact-row-height",
+          "candidateUnitId": "compact-row-height",
+          "unitLabel": "compact-row-height",
+          "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d055d9e47b9c42a0e8c97e9993ff17b305f413d4e8a3330ab1b92ec3637d3fc",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"compact-row-height\" of stacks/javafx.csv L64; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-javafx-design-tableview-for-high-density-enterprise-data-clear-columns",
+          "candidateUnitId": "clear-columns",
+          "unitLabel": "clear-columns",
+          "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d055d9e47b9c42a0e8c97e9993ff17b305f413d4e8a3330ab1b92ec3637d3fc",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"clear-columns\" of stacks/javafx.csv L64; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-javafx-design-tableview-for-high-density-enterprise-data-sorting",
+          "candidateUnitId": "sorting",
+          "unitLabel": "sorting",
+          "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d055d9e47b9c42a0e8c97e9993ff17b305f413d4e8a3330ab1b92ec3637d3fc",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"sorting\" of stacks/javafx.csv L64; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-javafx-design-tableview-for-high-density-enterprise-data-filtering",
+          "candidateUnitId": "filtering",
+          "unitLabel": "filtering",
+          "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d055d9e47b9c42a0e8c97e9993ff17b305f413d4e8a3330ab1b92ec3637d3fc",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"filtering\" of stacks/javafx.csv L64; binds exact code-point subspans per D56 amendment and SR-111."
+        },
+        {
+          "instructionId": "uupm-javafx-design-tableview-for-high-density-enterprise-data-selection-summary",
+          "candidateUnitId": "selection-summary",
+          "unitLabel": "selection-summary",
+          "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d055d9e47b9c42a0e8c97e9993ff17b305f413d4e8a3330ab1b92ec3637d3fc",
+          "verdict": "READY",
+          "notes": "SPLIT unit \"selection-summary\" of stacks/javafx.csv L64; binds exact code-point subspans per D56 amendment and SR-111."
+        }
+      ]
+    }
+  ]
+}

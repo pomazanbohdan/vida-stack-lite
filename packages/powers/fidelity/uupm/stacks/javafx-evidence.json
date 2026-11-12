@@ -1,0 +1,511 @@
+{
+  "schema": "H2CsvPilotEvidence/v1",
+  "protocol": "SWE-2 delegated review (fidelity plus adversarial pass)",
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:t3-delegate",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/javafx.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "2e819b8d5abdd23ad4dae0991650fdb57af497aabd68b37463aa9c442944c869"
+  },
+  "batch": "NF-01",
+  "decision": "Materialize the h2a2-nonfamily-plan KEEP_ATOMIC rows as VPInstruction/v1.2 singletons with whole-cell bindings (cols 2-7) and H2FidelityReceipt/v1, per consilium TEMPLATE-primary decision and deprecated-keep-atomic-v1 for Status=deprecated rows.",
+  "aggregation": {
+    "verdict": "READY",
+    "admitted": 69,
+    "rejected": 0,
+    "critical": 0,
+    "important": 0,
+    "minor": 0
+  },
+  "findings": [],
+  "rows": [
+    {
+      "instructionId": "uupm-javafx-start-ui-from-application-subclass",
+      "sourceRowOrdinal": 1,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fdcdb17f1fd97535a43ec07c9f682149df31ce92f8d944afe65d5bd0bfffe6c1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L2 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-keep-work-off-the-fx-application-thread",
+      "sourceRowOrdinal": 2,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2d4ba338459a6b702059276b974f2fb876aaef8a0bae5c35bac9838d43b8167f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L3 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-update-ui-only-on-fx-thread",
+      "sourceRowOrdinal": 3,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=652aa7773fd3d37c982a945149f02e1c2b46d77607d6a57a57faedfe3f160c99",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L4 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-bind-progress-to-background-tasks",
+      "sourceRowOrdinal": 4,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58d24674352f4d54045f519afcbf6c67f40423dec937cf617c1e07522a443cc3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L5 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-fxml-for-stable-declarative-layouts",
+      "sourceRowOrdinal": 5,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cb33529b579c04d53d7e61dabee4d490a0089da0b8c934283c47153d002b83e3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L6 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-keep-controllers-focused-on-view-behavior",
+      "sourceRowOrdinal": 6,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e9cb545a520a1491917cdf04f5c7a1c726ffbdc8a604fc8abb083eee9bc47414",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L7 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-fx-id-for-injected-controls",
+      "sourceRowOrdinal": 7,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=18738c533a8a7b819f56148950baadd7192280fc543c5d97a571b26b54065421",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L8 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-fail-fast-when-loading-fxml",
+      "sourceRowOrdinal": 8,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=def72e387f3ca676ca2afb8452c32d3d34d8a20c821e881bc5230f20e34ef943",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L9 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-style-with-style-classes",
+      "sourceRowOrdinal": 9,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6419e4a71c993ac75fad6f7bdf43090d3e515726b71fe4364f36334fb6c19754",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L10 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-design-tokens-through-looked-up-colors",
+      "sourceRowOrdinal": 10,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e3305590b520047d0452f92611ad6c402db09e0dfa96fd2ff3d7fdffe7fc6dbf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L11 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-avoid-overusing-inline-effects",
+      "sourceRowOrdinal": 11,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=af531ad870b935c03ad20999bd2b12ce2088b74fce31130b741f052033dedae3",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L12 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-choose-layout-panes-by-responsibility",
+      "sourceRowOrdinal": 12,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=177e9dfacc6ea48bca35d4a31ca068d1964adaa1f8f3dab37f31198cbbcd704d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L13 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-prefer-constraints-over-fixed-coordinates",
+      "sourceRowOrdinal": 13,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8b87cb892ca2a8229b85b244a1de161037645f8ab26d1b580225d3f7ce93ff02",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L14 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-set-sensible-min-pref-and-max-sizes",
+      "sourceRowOrdinal": 14,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2e7d8b09ccdafd5fbdbdae0002e417c499997e43e83809d2dec56175bcaa765f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L15 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-observablelist-for-list-controls",
+      "sourceRowOrdinal": 16,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=cc080277d5eb5535eaeb15598f97e9c8bb66ff1465212664448ac43319af3ea4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L17 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-configure-tableview-cell-value-factories-with-properties",
+      "sourceRowOrdinal": 17,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7b82f841fd6d801143e5ce57b8e9f6efc4230b9dea7177520abf1c16ef7efdb1",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L18 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-cell-factories-for-custom-rendering",
+      "sourceRowOrdinal": 18,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6f1feb697622bb886ad25558e6fbe6c55f61f9a5b83217405642cabfc8dd1228",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L19 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-virtualized-controls-are-for-large-data",
+      "sourceRowOrdinal": 19,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c637b0639ea877f5f12e8c70b007578a54217d708141139b53fd4425c2d7d053",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L20 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-property-binding-for-derived-ui-state",
+      "sourceRowOrdinal": 21,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3213ef4625c36bcd9d3808321dadf01e17acfaebc9fa9484eb9793c962498066",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L22 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-unbind-before-manual-updates",
+      "sourceRowOrdinal": 22,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=6627f7c561235aa8811842b6919b4c00b26e5243c99140b039f12ed694478654",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L23 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-listeners-sparingly",
+      "sourceRowOrdinal": 23,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=430e176526190b9f3af12934b00958685611ae0585c25180c5d22afa7e2cc996",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L24 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-action-handlers-for-commands",
+      "sourceRowOrdinal": 24,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a0dded1a9b7d63eee186cc3f06826053dbc828f1dce4e652ddde8427f9b8a908",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L25 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-event-filters-for-global-shortcuts",
+      "sourceRowOrdinal": 25,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b9a73bc09247f03c3176c6625b01d4eb5708abf9840f9a611492bf0af2bace59",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L26 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-expose-accessible-text-for-icon-buttons",
+      "sourceRowOrdinal": 27,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1926e0c51245a86431c69aa7062a540df6c8a8fb24eba3fc857bb5b368690741",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L28 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-keep-keyboard-focus-visible",
+      "sourceRowOrdinal": 28,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e2f2296a0f0907b3537ed6fa4e7ca978a22ee1c1b2a099d706d34bf874363aab",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L29 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-mnemonics-for-menu-and-form-workflows",
+      "sourceRowOrdinal": 29,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=0b18c9a8d5fbf293833a06f83fb1cc5ac996cb03fd76ed3d93e5df141d890beb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L30 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-textformatter-for-constrained-input",
+      "sourceRowOrdinal": 31,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=253dcac4e30541921db944028c40490e2ad671862b188997b30eecf62f26f210",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L32 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-modal-ownership-for-dialogs",
+      "sourceRowOrdinal": 32,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4d4d14f0735c96680889eafc1a4d7a314aaa1daf24c5fb73fbef63d1af99c342",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L33 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-prefer-custom-dialogpane-over-ad-hoc-stages",
+      "sourceRowOrdinal": 33,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7078364f98df3d68cd5ef57d5f36faa6c8d0fe3bb0c3943cfa7aa2053182def0",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L34 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-load-images-as-resources",
+      "sourceRowOrdinal": 34,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5505d19b36f15d03f7dc10c3e4a67d4d5b423f4c39b3f18e379fab4dce6d46bd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L35 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-background-loading-for-large-images",
+      "sourceRowOrdinal": 35,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a7edfb676eba44c029d30e18857a2451b15c05a28f62e16415ef31ac694b8aab",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L36 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-keep-animations-purposeful-and-short",
+      "sourceRowOrdinal": 36,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=337b268c3e256ad909c1adc51163e6f9d9d2f7f707da7cedfc7a7272369d89cc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L37 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-respect-reduced-motion-contexts-where-possible",
+      "sourceRowOrdinal": 37,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=31c815f5a4811c1297a6d999583c258250d8ab1e9126e275d18db054a34a65c5",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L38 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-avoid-recreating-scenes-for-small-state-changes",
+      "sourceRowOrdinal": 38,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=44470d1f7589f2ff8fb4bf1e5c8bfb34e3a531eb9aa8defdf9d08415ad95532c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L39 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-reuse-loaded-views-when-appropriate",
+      "sourceRowOrdinal": 39,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=34c0f94aa790218f8068bae241429d193c048d85368bfd773393c6ae558ee09b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L40 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-batch-observable-list-changes",
+      "sourceRowOrdinal": 40,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9812c452da93a3614f8b81bd3de365a464918e1ee71feacb6eec931a2341ed10",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L41 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-view-models-for-complex-screens",
+      "sourceRowOrdinal": 41,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a09b8ec3c2869f76289bd5f00a70ea7546d63d1926ba8628684dcf8a8e42397c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L42 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-separate-navigation-from-feature-controllers",
+      "sourceRowOrdinal": 42,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7cf4b897a4c684dee865853e633bd6b268365fafee1217b064ce63476faa532d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L43 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-declare-required-javafx-modules",
+      "sourceRowOrdinal": 43,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=61c9379cb5062dcb2582dc382b75bdb03c8ecbff01da94366aee43395abeab89",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L44 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-jlink-or-jpackage-for-desktop-delivery",
+      "sourceRowOrdinal": 44,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f93a05e698edb547802abf99615ad3cb5ad9ef5628a1a911b11db3c7b0ba4048",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L45 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-testfx-for-interaction-tests",
+      "sourceRowOrdinal": 45,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=dc4c68310afb172f6940606d09f537265d33948c9a4aefc81db68ea903fd9fd7",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L46 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-atlantafx-as-the-enterprise-theme-baseline",
+      "sourceRowOrdinal": 46,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=065b2338059a9689f7a475373b3506460e7cc8691c6525300ea5a7eaef0d6f1f",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L47 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-prefer-primer-for-enterprise-applications",
+      "sourceRowOrdinal": 47,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=59835338341aa5eef3cd6f1c03bf6be7b0e512e2cea68332b2dcd88d8d09e97e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L48 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-layer-brand-css-after-atlantafx",
+      "sourceRowOrdinal": 48,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=10ff58055b63c1daf66d67c2f7360b7c50cb8b480698a3c2f206f590653d286e",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L49 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-looked-up-colors-as-enterprise-tokens",
+      "sourceRowOrdinal": 49,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f62884bb8a014bf34aac4803c2bf14ab5fdb0cd31be451a2cb2773f1479b9869",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L50 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-keep-theme-switching-centralized",
+      "sourceRowOrdinal": 50,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=872c5b4bab4828b144a11b8d3dd069fa4e2fcccad694a3367742ba762a1ac077",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L51 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-atlantafx-style-classes-before-custom-css",
+      "sourceRowOrdinal": 52,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a2819ab8c10e5caa4f50b4b083144905fd5a2d7e2699d29e32fedaae6ac426b9",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L53 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-treat-atlantafx-as-a-base-not-the-whole-design-system",
+      "sourceRowOrdinal": 53,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c393872dc253994940a0885f569736d43263ecf16ae514c22cda3d9701f8c95a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L54 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-ikonli-for-consistent-enterprise-icons",
+      "sourceRowOrdinal": 54,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bc0fc49a04d3c4fc95c3f57360197890a773c645562c93996c27f982d8a727b2",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L55 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-atlantafx-controls-for-common-app-affordances",
+      "sourceRowOrdinal": 55,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=011abd378a2f78c556bcd41c3fa0dd628dfe1f86ba7f2d08679d54cb4732af5c",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L56 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-add-controlsfx-only-for-missing-enterprise-controls",
+      "sourceRowOrdinal": 56,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ac83e55060cfb6c2a109508273094502a288b10922bee7f42e756fc0bd0d7e46",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L57 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-test-theme-critical-flows-with-testfx",
+      "sourceRowOrdinal": 57,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=510b28255de157bada17c0579575d76b4a6fc753f7bf4483245c915880aa7747",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L58 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-application-shell-plus-feature-workspaces",
+      "sourceRowOrdinal": 58,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1c6e5dc9b9a4de900277b747b83c4d160469c2e5174d006b22ca559eebf48464",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L59 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-mvvm-for-complex-enterprise-screens",
+      "sourceRowOrdinal": 59,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4bdea96d7dbe92d60042492d7fc9e2636d282d3b743e450b1b32c65187513adf",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L60 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-inject-services-into-controllers",
+      "sourceRowOrdinal": 60,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=1d04d8e015327338d64aa2b887b4f7e355e810ca1c114df91947703cf93023d4",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L61 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-role-aware-navigation-models",
+      "sourceRowOrdinal": 61,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=60e3b9e8be34fdb60d80671814f18ea3a7f10e93f89426df4306bef068252d3a",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L62 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-represent-workflow-states-visibly",
+      "sourceRowOrdinal": 62,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ef1f2050b185dee0bf00511252499cb53d61542dc32b41d5705704c6f8588c08",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L63 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-keep-row-actions-predictable",
+      "sourceRowOrdinal": 64,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=483a0291c0c218f998a36a6da836b8df0b1d591bf8a33c417f0c8e62b5cdc6ef",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L65 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-server-side-paging-for-large-enterprise-datasets",
+      "sourceRowOrdinal": 65,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2d797a40892f606f7e78035408b00f530e6645cea24271f9d86aef20f323bf31",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L66 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-use-form-sections-for-enterprise-data-entry",
+      "sourceRowOrdinal": 66,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=feb8ec3624bd45e95d0e1cbe52389ec3d8cc75ffe1ec132b1e990fa5fceb8654",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L67 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-provide-validation-summary-plus-field-errors",
+      "sourceRowOrdinal": 67,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7c14222d05b626a2e5f86efe51c1febe9e0f9bc98ce16f40669f1e13d4cad9bd",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L68 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-make-long-operations-cancellable",
+      "sourceRowOrdinal": 68,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e5cb46ab390e11e2572c52aa4670567dd9d18257d9b27eb0eaf301a4f8c355bc",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L69 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-surface-retryable-errors-without-losing-context",
+      "sourceRowOrdinal": 69,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e8658a3e91b61658a2d3d581ae1e0553f23e455cb38ac03ebd61aeb29e8a2097",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L70 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-log-business-actions-through-services",
+      "sourceRowOrdinal": 70,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=241fc8acf5cc1721e2d3e7936c1723754f0eb07b8bf13e67908d47e59e4b3b7b",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L71 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-separate-user-preferences-from-application-config",
+      "sourceRowOrdinal": 71,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3926d9b0394f141edc9a26b45a8f390191edb7761f47bfb440c91a6ad2f596eb",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L72 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-package-resources-and-themes-inside-the-runtime-image",
+      "sourceRowOrdinal": 72,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=03a699ad06145906b26197ac395878b7848d973c246e120cc096b8cda9d31885",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L73 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-write-logs-to-user-writable-locations",
+      "sourceRowOrdinal": 73,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8dacd93874bf814d2ae4c7dcdd63e9651538e3caec5fb6880651e2c5696b9c53",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L74 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-cover-enterprise-happy-path-and-failure-path",
+      "sourceRowOrdinal": 74,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=60cb5876d4b11b3bac7e5f628caf602013289ffd3b12a4647dd622d5f2a47d5d",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L75 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    },
+    {
+      "instructionId": "uupm-javafx-keep-optional-ui-libraries-behind-actual-needs",
+      "sourceRowOrdinal": 75,
+      "rowKey": "path=stacks/javafx.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=5ddd8466895166421c4d2a3ecb36862b4783f2089bc8a31a7e315c98d212f932",
+      "verdict": "READY",
+      "notes": "KEEP_ATOMIC row stacks/javafx.csv L76 per javafx.json; whole-cell verbatim template body, cols 2-7 bound."
+    }
+  ]
+}

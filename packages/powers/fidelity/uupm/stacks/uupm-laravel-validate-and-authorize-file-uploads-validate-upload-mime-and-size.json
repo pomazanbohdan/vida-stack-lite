@@ -1,0 +1,148 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-laravel-validate-and-authorize-file-uploads-validate-upload-mime-and-size",
+  "variantId": "uupm-laravel-validate-and-authorize-file-uploads-validate-upload-mime-and-size",
+  "variantBodySha256": "883d10cb8c9e050a9f70ee9864777af61c669d3d2dc65026a812eaed3a060e9f",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/laravel.csv",
+    "rowKey": "path=stacks/laravel.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a39a1926652223e9df11072e18d20157a39cebf4cde50b7d48818ed265eb74e1",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "754952f25c0b453931c4e9d183e49b6107438d845ad5ccf81e8a680bb5078cd8",
+        "locator": {
+          "line": 49,
+          "row": 48,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 49,
+            "row": 48,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 3,
+        "cellHash": "81ebc3626aaff3970f015d3eb2f89fc6832d3bc0d42dd26034148bdfb3b12599",
+        "locator": {
+          "line": 49,
+          "row": 48,
+          "column": 4
+        },
+        "locators": [
+          {
+            "line": 49,
+            "row": 48,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "173eea7df9a88014f7fce52327b5352b7430bfffac69f7028e8f6bd5cd722763",
+        "locator": {
+          "line": 49,
+          "row": 48,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 49,
+            "row": 48,
+            "column": 5
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 29,
+            "endCodePoint": 53,
+            "textSha256": "4651636e97623d0a45af27b30c18df273e0fe868c46dfc4ef3a7888904e8cc48"
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "c571cbd8d71f091d66730790e0f571b5344ae91b9c54f56119d563458dc590d5",
+        "locator": {
+          "line": 49,
+          "row": 48,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 49,
+            "row": 48,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 46,
+            "textSha256": "c571cbd8d71f091d66730790e0f571b5344ae91b9c54f56119d563458dc590d5"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "17b911bc239970ce82369f0a48d277e0a118e9bf3371e26a5c844aae423c5483",
+        "locator": {
+          "line": 49,
+          "row": 48,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 49,
+            "row": 48,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 59,
+            "textSha256": "17b911bc239970ce82369f0a48d277e0a118e9bf3371e26a5c844aae423c5483"
+          }
+        ]
+      },
+      {
+        "columnIndex": 7,
+        "cellHash": "a90c1256452e474b2f0f2a2e6817372377637e2b3c0b402506731097fb529a51",
+        "locator": {
+          "line": 49,
+          "row": 48,
+          "column": 8
+        },
+        "locators": [
+          {
+            "line": 49,
+            "row": 48,
+            "column": 8
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 0,
+            "endCodePoint": 49,
+            "textSha256": "a90c1256452e474b2f0f2a2e6817372377637e2b3c0b402506731097fb529a51"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/stacks/laravel-h2a2-split-rows-evidence.json",
+    "sha256": "5e2a8303821ca6cdded325613350bec453eee83ffc6635d20879d5f098fa47a1"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

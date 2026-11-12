@@ -11,6 +11,8 @@ import {
   parseFacetClassification,
 } from '../skills/vp-mode/scripts/instruction-facets.ts';
 import { parseApplicability } from '../skills/vp-mode/scripts/applicability.ts';
+import { parseVariantScalar, parseVariantSections } from '../skills/vp-mode/scripts/variants.ts';
+import { extractModuleBody, ModuleError, parseModule, validateModuleRecord } from '../skills/vp-mode/scripts/modules.ts';
 import { checkCsvSource } from './csv-map.ts';
 import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 
@@ -209,9 +211,10 @@ function checkProvenance(id: string, front: Dict, donors: DonorSet, seenSources:
   }
 }
 
-function checkMap(map: Dict, donors: DonorSet, instructionIds: Set<string>, issues: CorpusIssue[]): void {
+function checkMap(map: Dict, donors: DonorSet, catalogEntryIds: Set<string>, atomicIds: Set<string>, allIds: Set<string>, moduleAtomIds: Set<string>, familyVariants: Map<string, Set<string>>, variantFamilies: Map<string, string>, issues: CorpusIssue[]): void {
   const donorMaps = isRecord(map.donors) ? map.donors : {};
   const mappedIds = new Set<string>();
+  const boundVariants = new Map<string, number>();
   for (const [donorId, rawDonor] of Object.entries(donorMaps)) {
     const donorMap = isRecord(rawDonor) ? rawDonor : {};
     const donor = donors.donors.get(donorId);
@@ -219,7 +222,15 @@ function checkMap(map: Dict, donors: DonorSet, instructionIds: Set<string>, issu
     const files = isRecord(donorMap.files) ? donorMap.files : {};
     for (const [sourcePath, rawRecord] of Object.entries(files)) {
       const record = isRecord(rawRecord) ? rawRecord : {}; const named = stringArray(record.instruction_ids);
-      for (const id of named) { mappedIds.add(id); if (!instructionIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} names unknown instruction ${id}`, { donor: donorId, path: sourcePath, instruction_id: id }); }
+      for (const id of named) {
+        if (id.startsWith('module-')) {
+          issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} binds module carrier ${id}; bind atom IDs`, { donor: donorId, path: sourcePath, instruction_id: id });
+          continue;
+        }
+        if (!allIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} names unknown instruction ${id}`, { donor: donorId, path: sourcePath, instruction_id: id });
+        if (atomicIds.has(id)) mappedIds.add(id);
+        else if (catalogEntryIds.has(id)) for (const variantId of familyVariants.get(id) ?? []) mappedIds.add(variantId);
+      }
       const invalid = (record.status === 'converted' && named.length !== 1) || (record.status === 'split' && named.length < 2) || (record.status === 'rejected' && (typeof record.reason !== 'string' || record.reason.trim() === '' || named.length > 0)) || (record.status === 'merged' && (named.length === 0 || stringArray(record.contributed_sources).length === 0));
       if (invalid) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} has inconsistent ${String(record.status)} status`, { donor: donorId, path: sourcePath, status: record.status });
     }
@@ -229,13 +240,36 @@ function checkMap(map: Dict, donors: DonorSet, instructionIds: Set<string>, issu
       for (const rawRow of Array.isArray(source.rows) ? source.rows.filter(isRecord) : []) {
         for (const rawBinding of Array.isArray(rawRow.bindings) ? rawRow.bindings.filter(isRecord) : []) {
           const id = String(rawBinding.instructionId ?? '');
-          mappedIds.add(id);
-          if (!instructionIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} names unknown instruction ${id}`, { donor: donorId, path: sourcePath, instruction_id: id });
+          const moduleCarrier = id.startsWith('module-');
+          if (moduleCarrier) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} binds module carrier ${id}; bind atom IDs`, { donor: donorId, path: sourcePath, instruction_id: id });
+          else mappedIds.add(id);
+          if (!moduleCarrier && !allIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `corpus map ${donorId}:${sourcePath} names unknown instruction ${id}`, { donor: donorId, path: sourcePath, instruction_id: id });
+          if (map.schema === 'VPCorpusMap/v3' && rawRow.disposition === 'admitted') {
+            const variantId = String(rawBinding.variantId ?? '');
+            const family = familyVariants.get(id);
+            if (variantId === '') issue(issues, 'CORPUS_MAP_INCONSISTENT', `v3 binding for ${id} is missing variantId`, { donor: donorId, path: sourcePath, instruction_id: id });
+             else if (family !== undefined) {
+              if (!family.has(variantId) || variantFamilies.get(variantId) !== id) issue(issues, 'CORPUS_MAP_INCONSISTENT', `v3 binding variant ${variantId} does not belong to family ${id}`, { donor: donorId, path: sourcePath, instruction_id: id, variant_id: variantId });
+               else { boundVariants.set(variantId, (boundVariants.get(variantId) ?? 0) + 1); mappedIds.add(variantId); }
+             } else if (variantId !== id) issue(issues, 'CORPUS_MAP_INCONSISTENT', `v3 singleton binding must use variantId ${id}`, { donor: donorId, path: sourcePath, instruction_id: id, variant_id: variantId });
+             else mappedIds.add(variantId);
+          }
+           else if (atomicIds.has(id)) mappedIds.add(id);
         }
       }
     }
   }
-  for (const id of instructionIds) if (!mappedIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `instruction ${id} has no corpus map record`, { instruction_id: id });
+  for (const id of atomicIds) {
+    if (!mappedIds.has(id)) issue(issues, moduleAtomIds.has(id) ? 'CORPUS_MODULE_MAP_COVERAGE' : 'CORPUS_MAP_INCONSISTENT', `instruction ${id} has no corpus map record`, { instruction_id: id });
+  }
+  for (const id of catalogEntryIds) {
+    if (id.startsWith('module-') || atomicIds.has(id)) continue;
+    if (!mappedIds.has(id)) issue(issues, 'CORPUS_MAP_INCONSISTENT', `instruction ${id} has no corpus map record`, { instruction_id: id });
+  }
+  if (map.schema === 'VPCorpusMap/v3') for (const [familyId, variants] of familyVariants) for (const variantId of variants) {
+    const count = boundVariants.get(variantId) ?? 0;
+    if (count !== 1) issue(issues, 'CORPUS_MAP_INCONSISTENT', `family variant ${variantId} must have exactly one admitted binding`, { instruction_id: familyId, variant_id: variantId, bindings: count });
+  }
 }
 
 function checkDonorCoverage(map: Dict, donors: DonorSet, issues: CorpusIssue[]): void {
@@ -338,7 +372,7 @@ function checkMethodologyProfile(base: string, catalog: Dict, frontmatterById: M
   }
 }
 
-function checkCsvSources(base: string, map: Dict, donors: DonorSet, instructionIds: Set<string>, issues: CorpusIssue[]): void {
+function checkCsvSources(base: string, map: Dict, donors: DonorSet, instructionIds: Set<string>, variantFamilies: Map<string, string>, familyIds: Set<string>, variantBodyHashes: Map<string, string>, issues: CorpusIssue[]): void {
   const allowlistPath = join(packageRoot, 'config/h2-csv-allowlist.json');
   let allowlist: Dict[] = [];
   if (existsSync(allowlistPath)) {
@@ -395,7 +429,7 @@ function checkCsvSources(base: string, map: Dict, donors: DonorSet, instructionI
         issue(issues, 'CORPUS_CSV_MISSING', `cannot read CSV ${donorId}:${path}`, { donor: donorId, path, error: String(error) });
         continue;
       }
-      for (const problem of checkCsvSource({ donor: donorId, path, bytes, source, allowlistEntry, instructionIds, receipts })) {
+      for (const problem of checkCsvSource({ donor: donorId, path, bytes, source, allowlistEntry, instructionIds, receipts, ...(map.schema === 'VPCorpusMap/v3' ? { variantFamilies, familyIds, variantBodyHashes } : {}) })) {
         issue(issues, problem.code, problem.message, problem.details);
       }
     }
@@ -408,16 +442,19 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   const catalogSchema = readJson(join(packageRoot, 'config/vpcatalog.v1.schema.json')) as Schema;
   const mapV1Schema = readJson(join(packageRoot, 'config/vpcorpusmap.v1.schema.json')) as Schema;
   const mapV2Schema = readJson(join(packageRoot, 'config/vpcorpusmap.v2.schema.json')) as Schema;
+  const mapV3Schema = readJson(join(packageRoot, 'config/vpcorpusmap.v3.schema.json')) as Schema;
   const instructionV12Schema = readJson(join(packageRoot, 'config', FACETED_INSTRUCTION_SCHEMA_NAME)) as Schema;
   const instructionV2Schema = readJson(join(packageRoot, 'config/vpinstruction.v2.schema.json')) as Schema;
+  const instructionV3Schema = readJson(join(packageRoot, 'config/vpinstruction.v3.schema.json')) as Schema;
+  const instructionModuleV1Schema = readJson(join(packageRoot, 'config/vpinstructionmodule.v1.schema.json')) as Schema;
   checkSchema(catalog, catalogSchema, issues, 'CORPUS_MANIFEST');
-  const mapSchema = map.schema === 'VPCorpusMap/v2' ? mapV2Schema : mapV1Schema;
+  const mapSchema = map.schema === 'VPCorpusMap/v3' ? mapV3Schema : map.schema === 'VPCorpusMap/v2' ? mapV2Schema : mapV1Schema;
   checkSchema(map, mapSchema, issues, 'CORPUS_MAP');
   const donorSet = readDonors(base, issues);
   const entries = Array.isArray(catalog.instructions) ? catalog.instructions.filter(isRecord) : [];
   const files = listMarkdown(join(base, 'instructions'), issues);
   const instructionBytes = validateManifestPaths(base, entries, files, issues);
-  const manifestIds = new Set<string>();
+  const catalogEntryIds = new Set<string>();
   const entryIdsByFile = new Map<string, string>();
   for (const entry of entries) {
     const id = typeof entry.instruction_id === 'string' ? entry.instruction_id : String(entry.instruction_id);
@@ -426,18 +463,24 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
     if (!entryPath.startsWith('instructions/') || !entryPath.endsWith('.md')) continue;
     const previous = entryIdsByFile.get(filename);
     if (previous !== undefined && previous !== id) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `manifest path instructions/${filename}.md has instruction ids ${previous} and ${id}`, { path: `instructions/${filename}.md`, instruction_ids: [previous, id] });
-    entryIdsByFile.set(filename, id); manifestIds.add(id);
+    entryIdsByFile.set(filename, id); catalogEntryIds.add(id);
     if (id !== filename) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `manifest instruction_id ${id} does not match path basename ${filename}`, { instruction_id: id, filename });
   }
   const { dictionary, aliases, exemptions } = checkDictionary(catalog, issues);
   const exemptionKeys = new Set<string>();
   for (const exemption of exemptions) {
     const id = String(exemption.instruction_id ?? ''); const dimension = String(exemption.dimension ?? ''); const key = `${id}\0${dimension}`;
-    if (!manifestIds.has(id)) issue(issues, 'CORPUS_TAG_EXEMPTION_INVALID', `tag exemption names unknown instruction ${id}`, { instruction_id: id, dimension });
     if (exemptionKeys.has(key)) issue(issues, 'CORPUS_TAG_EXEMPTION_INVALID', `duplicate tag exemption for ${id} dimension ${dimension}`, { instruction_id: id, dimension });
     exemptionKeys.add(key);
   }
-  const instructionIds = new Set<string>();
+  const atomicIds = new Set<string>();
+  const allIds = new Set<string>(catalogEntryIds);
+  const moduleAtomIds = new Set<string>();
+  const moduleAtomOwners = new Map<string, string>();
+  const seenCarrierIds = new Set<string>();
+  const familyVariants = new Map<string, Set<string>>();
+  const variantFamilies = new Map<string, string>();
+  const variantBodyHashes = new Map<string, string>();
   const frontmatterById = new Map<string, Dict>();
   const donorRoots = new Map<string, DonorRoots>();
   const regularSources = new Set<string>();
@@ -446,13 +489,70 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
     if (front === undefined) continue;
     const filename = file.slice(0, -3); const id = typeof front.instruction_id === 'string' ? front.instruction_id : '';
     if (id !== filename) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `frontmatter instruction_id ${id} does not match file basename ${filename}`, { instruction_id: id, filename, path: `instructions/${file}` });
-    if (instructionIds.has(filename)) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `duplicate instruction identity ${filename}`, { filename });
-    instructionIds.add(filename); frontmatterById.set(filename, front);
+    if (seenCarrierIds.has(filename)) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `duplicate instruction identity ${filename}`, { filename });
+    seenCarrierIds.add(filename);
     const marker = front.schema;
-    if (marker !== 'VPInstruction/v1.2' && marker !== 'VPInstruction/v2') {
+    if (marker === 'VPInstructionModule/v1') {
+      const moduleSchemaErrors = validateAgainstSchema(front, instructionModuleV1Schema);
+      if (moduleSchemaErrors.length > 0) issue(issues, 'CORPUS_MODULE_INVALID', `module ${filename} schema validation failed: ${moduleSchemaErrors.join('; ')}`, { instruction_id: filename, errors: moduleSchemaErrors });
+      const moduleText = instructionBytes.get(file) ?? readFileSync(path, 'utf8');
+      let parsedModule: ReturnType<typeof parseModule> | undefined;
+      try {
+        parseFrontmatter(moduleText);
+        validateModuleRecord(front, filename);
+        parsedModule = parseModule(front, extractModuleBody(moduleText), filename);
+      } catch (error) {
+        const moduleError = error instanceof ModuleError ? error : undefined;
+        const code = moduleError?.code === 'MODULE_HASH_MISMATCH'
+          ? 'CORPUS_MODULE_HASH_MISMATCH'
+          : moduleError?.code === 'MODULE_SECTION_INVALID'
+            ? 'CORPUS_MODULE_SECTION_INVALID'
+            : 'CORPUS_MODULE_INVALID';
+        issue(issues, code, `module ${filename} is invalid: ${error instanceof Error ? error.message : String(error)}`, { instruction_id: filename, ...(moduleError === undefined ? {} : { module_code: moduleError.code, details: moduleError.details }) });
+      }
+      if (parsedModule !== undefined) {
+        const members = new Set<string>();
+        for (const member of parsedModule.members) {
+          const atomId = member.atom_id;
+          if (members.has(atomId) || moduleAtomOwners.has(atomId) || catalogEntryIds.has(atomId) || allIds.has(atomId)) {
+            issue(issues, 'CORPUS_MODULE_ATOM_COLLISION', `module atom ${atomId} collides with a carrier or another atom`, { instruction_id: filename, atom_id: atomId, previous_module_id: moduleAtomOwners.get(atomId) });
+            issue(issues, 'CORPUS_MODULE_BIJECTION', `module atom ${atomId} does not have one unique module owner`, { instruction_id: filename, atom_id: atomId });
+          }
+          members.add(atomId);
+          moduleAtomOwners.set(atomId, filename);
+          moduleAtomIds.add(atomId);
+          atomicIds.add(atomId);
+          allIds.add(atomId);
+          variantBodyHashes.set(atomId, member.content_sha256);
+          frontmatterById.set(atomId, member.frontmatter);
+          const atomSchema = member.frontmatter.schema === 'VPInstruction/v2' ? instructionV2Schema : instructionV12Schema;
+          const atomSchemaErrors = validateAgainstSchema(member.frontmatter, atomSchema);
+          if (atomSchemaErrors.length > 0) issue(issues, 'CORPUS_MODULE_INVALID', `module atom ${atomId} schema validation failed: ${atomSchemaErrors.join('; ')}`, { instruction_id: filename, atom_id: atomId, errors: atomSchemaErrors });
+          if (member.frontmatter.schema === 'VPInstruction/v2' && member.frontmatter.applicability !== undefined) {
+            try { parseApplicability(String(member.frontmatter.applicability)); }
+            catch (error) { issue(issues, 'CORPUS_INSTRUCTION_APPLICABILITY_INVALID', `module atom ${atomId} has invalid applicability: ${error instanceof Error ? error.message : String(error)}`, { instruction_id: filename, atom_id: atomId }); }
+          }
+          if (parseFacetClassification(member.frontmatter) === undefined) issue(issues, 'CORPUS_INSTRUCTION_CLASSIFICATION_INVALID', `module atom ${atomId} has an invalid facet classification`, { instruction_id: filename, atom_id: atomId });
+          try { parseApproachAssessments({ data: member.frontmatter, body: member.body }, new Map(Object.entries(APPROACH_VOCABULARY))); }
+          catch (error) { issue(issues, 'CORPUS_INSTRUCTION_APPROACH_INVALID', `module atom ${atomId} has invalid approach assessments: ${String(error)}`, { instruction_id: filename, atom_id: atomId }); }
+          checkInstructionTags(atomId, member.frontmatter, dictionary, aliases, exemptions, issues);
+          if (member.frontmatter.artifact_contract_output_type !== 'none' && (typeof member.frontmatter.artifact_contract_verified_by !== 'string' || member.frontmatter.artifact_contract_verified_by.trim() === '')) issue(issues, 'CORPUS_ARTIFACT_CONTRACT_INVALID', `module atom ${atomId} requires artifact_contract_verified_by`, { instruction_id: filename, atom_id: atomId });
+          if (member.frontmatter.artifact_contract_output_type === 'none' && stringArray(member.frontmatter.artifact_contract_required_data).length > 0) issue(issues, 'CORPUS_ARTIFACT_CONTRACT_INVALID', `guidance module atom ${atomId} must have empty artifact_contract_required_data`, { instruction_id: filename, atom_id: atomId });
+          checkProvenance(atomId, member.frontmatter, donorSet, new Set<string>(), issues, donorRoots, regularSources);
+        }
+      }
+      continue;
+    }
+    if (allIds.has(filename) && !catalogEntryIds.has(filename)) issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `singleton id ${filename} collides with a module atom`, { instruction_id: filename });
+    allIds.add(filename);
+    if (marker !== 'VPInstruction/v3') {
+      atomicIds.add(filename);
+      frontmatterById.set(filename, front);
+    }
+    if (marker !== 'VPInstruction/v1.2' && marker !== 'VPInstruction/v2' && marker !== 'VPInstruction/v3') {
       issue(issues, 'CORPUS_INSTRUCTION_VERSION_UNSUPPORTED', `instruction ${filename} has an unsupported schema marker`, { instruction_id: filename, schema: front.schema });
     } else {
-      const schema = marker === 'VPInstruction/v2' ? instructionV2Schema : instructionV12Schema;
+      const schema = marker === 'VPInstruction/v3' ? instructionV3Schema : marker === 'VPInstruction/v2' ? instructionV2Schema : instructionV12Schema;
       checkSchema(front, schema, issues, 'CORPUS_INSTRUCTION', { instruction_id: filename });
       if (marker === 'VPInstruction/v2' && front.applicability !== undefined) {
         try {
@@ -463,9 +563,50 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
       }
       if (parseFacetClassification(front) === undefined) issue(issues, 'CORPUS_INSTRUCTION_CLASSIFICATION_INVALID', `instruction ${filename} has an invalid facet classification`, { instruction_id: filename });
       try {
-        parseApproachAssessments(parseFrontmatter(instructionBytes.get(file) ?? readFileSync(path, 'utf8')), new Map(Object.entries(APPROACH_VOCABULARY)));
+        const parsedFile = parseFrontmatter(instructionBytes.get(file) ?? readFileSync(path, 'utf8'));
+        variantBodyHashes.set(filename, createHash('sha256').update(parsedFile.body).digest('hex'));
+        parseApproachAssessments(parsedFile, new Map(Object.entries(APPROACH_VOCABULARY)));
       } catch (error) {
         issue(issues, 'CORPUS_INSTRUCTION_APPROACH_INVALID', `instruction ${filename} has invalid approach assessments: ${String(error)}`, { instruction_id: filename });
+      }
+      if (marker === 'VPInstruction/v3') {
+        const parsed = parseFrontmatter(instructionBytes.get(file) ?? readFileSync(path, 'utf8'));
+        try {
+          const variants = parseVariantScalar(String(front.instruction_variants), filename);
+          const sections = parseVariantSections(parsed.body, variants, filename);
+          const ids = new Set<string>();
+          const familyProvenance = new Set(stringArray(front.provenance));
+          for (const variant of variants) {
+            if (allIds.has(variant.variant_id) || variant.variant_id === filename || variantFamilies.has(variant.variant_id)) {
+              issue(issues, 'CORPUS_INSTRUCTION_ID_MISMATCH', `variant id ${variant.variant_id} collides with a family or singleton id`, { instruction_id: filename, variant_id: variant.variant_id });
+            }
+            ids.add(variant.variant_id);
+            atomicIds.add(variant.variant_id);
+            allIds.add(variant.variant_id);
+            variantFamilies.set(variant.variant_id, filename);
+            const body = sections.get(variant.variant_id) ?? '';
+            variantBodyHashes.set(variant.variant_id, variant.contentSha256);
+            for (const source of variant.provenance) if (!familyProvenance.has(source)) issue(issues, 'CORPUS_PROVENANCE_MISMATCH', `family ${filename} provenance omits variant ${variant.variant_id} source`, { instruction_id: filename, variant_id: variant.variant_id, source });
+            const variantFront: Dict = {
+              instruction_id: variant.variant_id, status: variant.status, pattern_tags: variant.pattern_tags,
+              capability_tags: variant.capability_tags, compatibility_requires: variant.compatibility_requires,
+              compatibility_excludes: variant.compatibility_excludes,
+            };
+            frontmatterById.set(variant.variant_id, variantFront);
+            for (const [dimension, tags] of [['capability', variant.capability_tags], ['pattern', variant.pattern_tags]] as const) {
+              const familyTags = stringArray(front[dimension === 'capability' ? 'capability_tags' : 'pattern_tags']);
+              for (const tag of tags) if (!familyTags.includes(tag)) issue(issues, 'CORPUS_TAG_UNKNOWN', `variant ${variant.variant_id} tag ${tag} is absent from family ${filename} tag union`, { instruction_id: filename, variant_id: variant.variant_id, dimension, tag });
+            }
+            checkInstructionTags(filename, variantFront, dictionary, aliases, exemptions, issues);
+            try {
+              const variantParsed = { ...parsed, data: { ...parsed.data, approach_assessments: variant.approach_assessments, approach_body_sha256: variant.approach_body_sha256 }, body };
+              parseApproachAssessments(variantParsed, new Map(Object.entries(APPROACH_VOCABULARY)));
+            } catch (error) { issue(issues, 'CORPUS_INSTRUCTION_APPROACH_INVALID', `variant ${variant.variant_id} has invalid approach assessments: ${String(error)}`, { instruction_id: filename, variant_id: variant.variant_id }); }
+          }
+          familyVariants.set(filename, ids);
+        } catch (error) {
+          issue(issues, 'CORPUS_INSTRUCTION_VARIANTS_INVALID', `family ${filename} variants or section payloads are invalid: ${String(error)}`, { instruction_id: filename, error: String(error) });
+        }
       }
     }
     checkInstructionTags(filename, front, dictionary, aliases, exemptions, issues);
@@ -476,12 +617,17 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   }
   for (const [id, front] of frontmatterById) {
     for (const field of ['compatibility_requires', 'compatibility_excludes']) for (const ref of stringArray(front[field])) {
-      if (!instructionIds.has(ref)) issue(issues, 'CORPUS_COMPATIBILITY_UNKNOWN', `instruction ${id} references unknown compatibility id ${ref}`, { instruction_id: id, compatibility_id: ref });
+      if (!atomicIds.has(ref)) issue(issues, 'CORPUS_COMPATIBILITY_UNKNOWN', `instruction ${id} references unknown compatibility id ${ref}`, { instruction_id: id, compatibility_id: ref });
       if (field === 'compatibility_requires' && ref === id) issue(issues, 'CORPUS_COMPATIBILITY_SELF_REQUIRE', `instruction ${id} requires itself`, { instruction_id: id });
     }
   }
-  checkMap(map, donorSet, instructionIds, issues);
-  checkCsvSources(base, map, donorSet, instructionIds, issues);
+  for (const exemption of exemptions) {
+    const id = String(exemption.instruction_id ?? '');
+    if (!atomicIds.has(id)) issue(issues, 'CORPUS_TAG_EXEMPTION_INVALID', `tag exemption names unknown atomic instruction ${id}`, { instruction_id: id, dimension: exemption.dimension });
+  }
+  checkMap(map, donorSet, catalogEntryIds, atomicIds, allIds, moduleAtomIds, familyVariants, variantFamilies, issues);
+  const csvBindingIds = new Set([...atomicIds, ...familyVariants.keys()]);
+  checkCsvSources(base, map, donorSet, csvBindingIds, variantFamilies, new Set(familyVariants.keys()), variantBodyHashes, issues);
   checkDonorCoverage(map, donorSet, issues);
   checkMethodologyProfile(base, catalog, frontmatterById, issues);
 }

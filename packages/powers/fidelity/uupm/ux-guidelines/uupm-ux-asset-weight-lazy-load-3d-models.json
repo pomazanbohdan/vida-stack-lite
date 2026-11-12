@@ -1,0 +1,95 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-ux-asset-weight-lazy-load-3d-models",
+  "variantId": "uupm-ux-asset-weight-lazy-load-3d-models",
+  "variantBodySha256": "82b6788f3439edc00888061ee215e34487b01c887a743330fb031a205fcf4d68",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=e2c03648d1471fc28d7cb10c871bbea2ba5ec8b3523f22a280852f748edc691f",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "c435b433a7074ca94d3a990276bc7aa2892205929dcbc399b05bb373d0c4af73",
+        "locator": {
+          "line": 98,
+          "row": 97,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 98,
+            "row": 97,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "73d6863d66a99575ac76aebd4d1c5de20b9fdd4d3b23c5c9d8689907bf53e05b",
+        "locator": {
+          "line": 98,
+          "row": 97,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 98,
+            "row": 97,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "7650d89412d79dbeb7afe5b15ad1bf252fda9c93e01da25231a6f6403db67742",
+        "locator": {
+          "line": 98,
+          "row": 97,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 98,
+            "row": 97,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 13,
+            "endCodePoint": 32,
+            "textSha256": "216d8617a312d4f8706d6bcb2feb15b9cdba91b95721c5b4f52f186c78f4451e"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "6e61a10d67e0d8c65d5143b7486431496a43a94d44065fa03827f72f7c22329a",
+        "locator": {
+          "line": 98,
+          "row": 97,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 98,
+            "row": 97,
+            "column": 7
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/h2a2-split-ux-rows-evidence.json",
+    "sha256": "d52b5ca5369d47086ad24b61c79ebd83bfc0186cd0ad08f2ed564ab9c43286c4"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

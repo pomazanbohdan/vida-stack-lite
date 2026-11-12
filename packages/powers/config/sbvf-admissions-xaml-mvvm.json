@@ -1,0 +1,822 @@
+{
+  "schema": "SBVFAdmissionManifest/v1",
+  "asOf": "2026-11-11T00:00:00Z",
+  "admissions": [
+    {
+      "variant_id": "uupm-uno-implement-inotifypropertychanged",
+      "family_id": "family-implement-inotifypropertychanged-8678305f",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=887febb2322a61f15ee3b4986ca0d2f02d857b7047c97d65dd470cee49e07fa1"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L43 (\"Implement INotifyPropertyChanged\"); review disposition HELD as SBVF family candidate of family-implement-inotifypropertychanged-8678305f (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-implement-inotifypropertychanged",
+      "family_id": "family-implement-inotifypropertychanged-8678305f",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d51b1ff2550c9e61ce80069a870ad46bdd917f593188f61b2568a28123ae9b4b"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L22 (\"Implement INotifyPropertyChanged\"); review disposition HELD as SBVF family candidate of family-implement-inotifypropertychanged-8678305f (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-implement-inotifypropertychanged",
+      "family_id": "family-implement-inotifypropertychanged-8678305f",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f06c6c74306376abfab98530f9df98715dbb1d4e1e454a87ae16084703e499a7"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L7 (\"Implement INotifyPropertyChanged\"); review disposition HELD as SBVF family candidate of family-implement-inotifypropertychanged-8678305f (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-set-automationproperties",
+      "family_id": "family-set-automationproperties-e5ee1685",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=d995777f8b795ae80eed20599db04ae52fa6fe2491f11959caec479f55db8149"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L31 (\"Set AutomationProperties\"); review disposition HELD as SBVF family candidate of family-set-automationproperties-e5ee1685 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-set-automationproperties",
+      "family_id": "family-set-automationproperties-e5ee1685",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=3e18d4fe8ba5b02f3558c0dc4bc9803bbb123d879067062c34d7e00a5aa2f18a"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L40 (\"Set AutomationProperties\"); review disposition HELD as SBVF family candidate of family-set-automationproperties-e5ee1685 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-set-automationproperties",
+      "family_id": "family-set-automationproperties-e5ee1685",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8880c0350c2d53ccd45b3edf6a1a0415606b8a29030727b6945f12fc42c99a8b"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L33 (\"Set AutomationProperties\"); review disposition HELD as SBVF family candidate of family-set-automationproperties-e5ee1685 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-set-automationproperties",
+      "family_id": "family-set-automationproperties-e5ee1685",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=2538f97d361e9a3af787cfbfabb66b1affe7fbc3ebf0a9bdd149ddde60a4404f"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L43 (\"Set AutomationProperties\"); review disposition HELD as SBVF family candidate of family-set-automationproperties-e5ee1685 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-support-keyboard-navigation",
+      "family_id": "family-support-keyboard-navigation-b8dc783f",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=93d923860e0df17f9bcbca60d0d4de08a6c9c3a3c2647ee843f721d37794aacd"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L44 (\"Support keyboard navigation\"); review disposition HELD as SBVF family candidate of family-support-keyboard-navigation-b8dc783f (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-support-light-and-dark-themes",
+      "family_id": "family-support-light-and-dark-themes-872048c5",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=58ff459186887d79ec96348dbc7a2f000272d55a67a58c4252fc71d3626b944f"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L23 (\"Support light and dark themes\"); review disposition HELD as SBVF family candidate of family-support-light-and-dark-themes-872048c5 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-support-light-and-dark-themes",
+      "family_id": "family-support-light-and-dark-themes-872048c5",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=36e5b1b11946e008cc1fe06977d55adeb08a8de607d59120a54f089c7c37a737"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L13 (\"Support light and dark themes\"); review disposition HELD as SBVF family candidate of family-support-light-and-dark-themes-872048c5 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-unit-test-viewmodels",
+      "family_id": "family-unit-test-viewmodels-f453bbfc",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bae90980e06fb3a016901c5cde208482ea94646bd27a6685b47be792aaa32ccf"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L34 (\"Unit test ViewModels\"); review disposition HELD as SBVF family candidate of family-unit-test-viewmodels-f453bbfc (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-unit-test-viewmodels",
+      "family_id": "family-unit-test-viewmodels-f453bbfc",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ee2658e4eed55a52d0f08b9d796ced5d6cb78ac9aeacca0c6e56571196fd889"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L51 (\"Unit test ViewModels\"); review disposition HELD as SBVF family candidate of family-unit-test-viewmodels-f453bbfc (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-unit-test-viewmodels",
+      "family_id": "family-unit-test-viewmodels-f453bbfc",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7df82d4f7472f64d08e64c71a52a7da83fde6d996b92e85c0444abfb9607f431"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L43 (\"Unit test ViewModels\"); review disposition HELD as SBVF family candidate of family-unit-test-viewmodels-f453bbfc (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-unit-test-viewmodels",
+      "family_id": "family-unit-test-viewmodels-f453bbfc",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f2ef0354c9b02e0e51532ada8403b0788cd8603a6a17a5e537e88316aba1e47a"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L55 (\"Unit test ViewModels\"); review disposition HELD as SBVF family candidate of family-unit-test-viewmodels-f453bbfc (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-commandbar-for-app-actions",
+      "family_id": "family-use-commandbar-for-app-actions-466af20d",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b6eeaf23076f558971eb85907d782230cc4264abd17bcbbfa0ce5ef60633f342"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L41 (\"Use CommandBar for app actions\"); review disposition HELD as SBVF family candidate of family-use-commandbar-for-app-actions-466af20d (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-commandbar-for-app-actions",
+      "family_id": "family-use-commandbar-for-app-actions-466af20d",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=398f38d9134b7979d1a818a034d8e708c19952a921c26f3f99c4b27dd625fc27"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L8 (\"Use CommandBar for app actions\"); review disposition HELD as SBVF family candidate of family-use-commandbar-for-app-actions-466af20d (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-contentdialog-for-modal-interactions",
+      "family_id": "family-use-contentdialog-for-modal-interactions-ed057048",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a45c24f58f89413579d4cc5ee4f0d9870c94447b1139e93b4e7d52f73365c993"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L40 (\"Use ContentDialog for modal interactions\"); review disposition HELD as SBVF family candidate of family-use-contentdialog-for-modal-interactions-ed057048 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-contentdialog-for-modal-interactions",
+      "family_id": "family-use-contentdialog-for-modal-interactions-ed057048",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ad5b8d3afe8ade0d3bbf5b83f86b63685405635c7c5f2e39e0e835c942ac607a"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L9 (\"Use ContentDialog for modal interactions\"); review disposition HELD as SBVF family candidate of family-use-contentdialog-for-modal-interactions-ed057048 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-deep-linking",
+      "family_id": "family-use-deep-linking-acc8c928",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9a000e8dbae742a028ed9138226c4ba81ed1e03f79e4673ee9ad12d37f26f049"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L13 (\"Use deep linking\"); review disposition HELD as SBVF family candidate of family-use-deep-linking-acc8c928 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-deep-linking",
+      "family_id": "family-use-deep-linking-acc8c928",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fe6e4815cd91e7bba58fe7492e9263dba73b994e8870b16d8d39f686b0dd86c0"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L18 (\"Use deep linking\"); review disposition HELD as SBVF family candidate of family-use-deep-linking-acc8c928 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-swiftui-use-dependency-injection",
+      "family_id": "family-use-dependency-injection-4f6d3aeb",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/swiftui.csv",
+        "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=b866892b89ae57392de713fd665bacaf4672dbe6206476dc743d4c60400d7da8"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/swiftui.csv L51 (\"Use dependency injection\"); review disposition HELD as SBVF family candidate of family-use-dependency-injection-4f6d3aeb (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/swiftui.json",
+        "sha256": "b12e8b180c37a2d90d5a5846c27c93ef8d01e1af7c9ba4c02f7298e6035ce92d"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-dependency-injection",
+      "family_id": "family-use-dependency-injection-4f6d3aeb",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=bc3d1036cfa1b17f037d77fbff1217c5fe8d62d58a7037852e55d3b6171000d3"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L28 (\"Use dependency injection\"); review disposition HELD as SBVF family candidate of family-use-dependency-injection-4f6d3aeb (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-dependency-injection",
+      "family_id": "family-use-dependency-injection-4f6d3aeb",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=7306884d91661f22a06895ae3321b671bff8980ada75563d9cdf9c189fcdbd0b"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L46 (\"Use dependency injection\"); review disposition HELD as SBVF family candidate of family-use-dependency-injection-4f6d3aeb (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-dependency-injection",
+      "family_id": "family-use-dependency-injection-4f6d3aeb",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=574c4e3c5ba240a942a45a162835c241636f705a40053fae91ffe206e3b81e1f"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L39 (\"Use dependency injection\"); review disposition HELD as SBVF family candidate of family-use-dependency-injection-4f6d3aeb (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-use-dependency-injection",
+      "family_id": "family-use-dependency-injection-4f6d3aeb",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=e045bf1b8164031577eecb998068d7f489b0f827a2b56c71e83ea90bdc6d6962"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L51 (\"Use dependency injection\"); review disposition HELD as SBVF family candidate of family-use-dependency-injection-4f6d3aeb (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-frame-for-page-navigation",
+      "family_id": "family-use-frame-for-page-navigation-65ba670c",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a02594ed3953d159c417c6118c65ccf302b9b91ad2870238ed450cdd7e1a3fff"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L18 (\"Use Frame for page navigation\"); review disposition HELD as SBVF family candidate of family-use-frame-for-page-navigation-65ba670c (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-frame-for-page-navigation",
+      "family_id": "family-use-frame-for-page-navigation-65ba670c",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9449bb20468079b9dee7da6442c5aaf266761e0dbd45479d09be0b81c750697b"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L15 (\"Use Frame for page navigation\"); review disposition HELD as SBVF family candidate of family-use-frame-for-page-navigation-65ba670c (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-lightweight-styling",
+      "family_id": "family-use-lightweight-styling-8bff6229",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=c5c93e08ecc385afb15a85a8543b7e2e26525870f73c4a8b3d9353d6c19c827d"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L24 (\"Use Lightweight Styling\"); review disposition HELD as SBVF family candidate of family-use-lightweight-styling-8bff6229 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-lightweight-styling",
+      "family_id": "family-use-lightweight-styling-8bff6229",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=52cfce4565125fe6550718aa58476f692698ea60ea8ee64a432faa6da5437652"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L15 (\"Use Lightweight Styling\"); review disposition HELD as SBVF family candidate of family-use-lightweight-styling-8bff6229 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-lightweight-styling",
+      "family_id": "family-use-lightweight-styling-8bff6229",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=88ed768f0ec6e0ac1e003cc15c80e98153742b6cca6b887962fafb74077117a1"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L11 (\"Use Lightweight Styling\"); review disposition HELD as SBVF family candidate of family-use-lightweight-styling-8bff6229 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-swiftui-use-mvvm-pattern",
+      "family_id": "family-use-mvvm-pattern-4aaa7775",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/swiftui.csv",
+        "rowKey": "path=stacks/swiftui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8915e9d67b7320f9feaaf4657ae04aec77c7e54c23c674ed8d0438c08dea1e04"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/swiftui.csv L49 (\"Use MVVM pattern\"); review disposition HELD as SBVF family candidate of family-use-mvvm-pattern-4aaa7775 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/swiftui.json",
+        "sha256": "b12e8b180c37a2d90d5a5846c27c93ef8d01e1af7c9ba4c02f7298e6035ce92d"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-mvvm-pattern",
+      "family_id": "family-use-mvvm-pattern-4aaa7775",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4172a9e535181e0619f669a9239d336435b18ed3c41ad362fc5cdea52e20a72e"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L26 (\"Use MVVM pattern\"); review disposition HELD as SBVF family candidate of family-use-mvvm-pattern-4aaa7775 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-mvvm-pattern",
+      "family_id": "family-use-mvvm-pattern-4aaa7775",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b1bf8e6d862f0e9814890026763ec7ecb422f191c42d4d1c44a115896c5eb24"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L44 (\"Use MVVM pattern\"); review disposition HELD as SBVF family candidate of family-use-mvvm-pattern-4aaa7775 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-use-mvvm-pattern",
+      "family_id": "family-use-mvvm-pattern-4aaa7775",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=465d5d8e328395acfa1d9e13a810c122c57dad90aafd985a985a54f6b82d891a"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L49 (\"Use MVVM pattern\"); review disposition HELD as SBVF family candidate of family-use-mvvm-pattern-4aaa7775 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-navigationview-for-app-shell",
+      "family_id": "family-use-navigationview-for-app-shell-853b40e1",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8bc24655fb2b1000e6ecdcad49f9fbcad7afca46c2b07ab355ed63ae8e80e20e"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L39 (\"Use NavigationView for app shell\"); review disposition HELD as SBVF family candidate of family-use-navigationview-for-app-shell-853b40e1 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-navigationview-for-app-shell",
+      "family_id": "family-use-navigationview-for-app-shell-853b40e1",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=ad4c9d82eba0937c84dc756e6a7bfbb4b81b23e926a8a45a34d3d36041de20ca"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L7 (\"Use NavigationView for app shell\"); review disposition HELD as SBVF family candidate of family-use-navigationview-for-app-shell-853b40e1 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-observablecollection-for-lists",
+      "family_id": "family-use-observablecollection-for-lists-8b7c19b8",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=845881ad3b509ff8e96d8689f449f43aac4556ad1b669a09bd2cd06e34cafec0"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L23 (\"Use ObservableCollection for lists\"); review disposition HELD as SBVF family candidate of family-use-observablecollection-for-lists-8b7c19b8 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-observablecollection-for-lists",
+      "family_id": "family-use-observablecollection-for-lists-8b7c19b8",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=680a0a81edb012ec822563eab8675499d91a19dc2342504844f70061923d8279"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L19 (\"Use ObservableCollection for lists\"); review disposition HELD as SBVF family candidate of family-use-observablecollection-for-lists-8b7c19b8 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-use-observablecollection-for-lists",
+      "family_id": "family-use-observablecollection-for-lists-8b7c19b8",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=eb7b34f0c2237153dc9681464583d690e10a9a0670c3059b62b4dec0bacb9917"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L8 (\"Use ObservableCollection for lists\"); review disposition HELD as SBVF family candidate of family-use-observablecollection-for-lists-8b7c19b8 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-task-run-for-cpu-bound-work",
+      "family_id": "family-use-task-run-for-cpu-bound-work-3cde3adb",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f904c3fb4d601433d35031ff3027461495849412ea9b6833aed244af07c1136f"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L29 (\"Use Task.Run for CPU-bound work\"); review disposition HELD as SBVF family candidate of family-use-task-run-for-cpu-bound-work-3cde3adb (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-wpf-use-task-run-for-cpu-bound-work",
+      "family_id": "family-use-task-run-for-cpu-bound-work-3cde3adb",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/wpf.csv",
+        "rowKey": "path=stacks/wpf.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=608d0de6ee84ef420cec606cef08a7527573434b75e7024a511654c5c81c0e48"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/wpf.csv L40 (\"Use Task.Run for CPU-bound work\"); review disposition HELD as SBVF family candidate of family-use-task-run-for-cpu-bound-work-3cde3adb (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/wpf.json",
+        "sha256": "7539c1b036ac0f1a155c3a26084c8b1d4ca410e4e6968c5877c1108d2cb57f28"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-winui-theme-resources",
+      "family_id": "family-use-winui-theme-resources-758df824",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=86a6ea9c37585bb036a204c19d47a7d252e5e74772ca7180500dd46639def3fc"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L22 (\"Use WinUI theme resources\"); review disposition HELD as SBVF family candidate of family-use-winui-theme-resources-758df824 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-winui-theme-resources",
+      "family_id": "family-use-winui-theme-resources-758df824",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=071d4e8ee9980774c12b209d5043c640dff88e58b3887e290146a5fb17e9e361"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L12 (\"Use WinUI theme resources\"); review disposition HELD as SBVF family candidate of family-use-winui-theme-resources-758df824 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-uno-use-x-bind-for-compiled-bindings",
+      "family_id": "family-use-x-bind-for-compiled-bindings-172c34ba",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uno.csv",
+        "rowKey": "path=stacks/uno.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=35be4f8cf84d65b7e5f24a4af0180eeee9811ba24494689c0e93a84c2d39865e"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uno.csv L20 (\"Use x:Bind for compiled bindings\"); review disposition HELD as SBVF family candidate of family-use-x-bind-for-compiled-bindings-172c34ba (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uno.json",
+        "sha256": "c2e503f5cd3fdabd5eb770c8a40f535b90f1914ab79bc92165e22d4a3530020d"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-x-bind-for-compiled-bindings",
+      "family_id": "family-use-x-bind-for-compiled-bindings-172c34ba",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4f134d33f476ca87d04c77ee858a520c1f493f7e611eaedee6d5a4e0dec9c151"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L2 (\"Use x:Bind for compiled bindings\"); review disposition HELD as SBVF family candidate of family-use-x-bind-for-compiled-bindings-172c34ba (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-x-bind-for-compiled-bindings",
+      "family_id": "family-use-x-bind-for-compiled-bindings-172c34ba",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=a51631862199f596ebf8b3572d6e779d9cf812c6adee3c9817fe4959e154c103"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L2 (\"Use x:Bind for compiled bindings\"); review disposition HELD as SBVF family candidate of family-use-x-bind-for-compiled-bindings-172c34ba (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    },
+    {
+      "variant_id": "uupm-uwp-use-x-defaultbindmode",
+      "family_id": "family-use-x-defaultbindmode-d7d12aa9",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/uwp.csv",
+        "rowKey": "path=stacks/uwp.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=f8db8bdf8bfcdd6903fe618aecb99c71c8b431de7e56f13ee5bc94baffbd677f"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/uwp.csv L5 (\"Use x:DefaultBindMode\"); review disposition HELD as SBVF family candidate of family-use-x-defaultbindmode-d7d12aa9 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/uwp.json",
+        "sha256": "cb65454e455011db9b7adbaae3541fd79023f9779423e7d5fcb13b3461ef073b"
+      }
+    },
+    {
+      "variant_id": "uupm-winui-use-x-defaultbindmode",
+      "family_id": "family-use-x-defaultbindmode-d7d12aa9",
+      "source": {
+        "donor": "uupm",
+        "path": "stacks/winui.csv",
+        "rowKey": "path=stacks/winui.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=8ecc96969debd5de7680054581bda5e17efef64a945932b89c0acf4872d94bf6"
+      },
+      "disposition": "family-held",
+      "rationale": "DRAFT pending owner approval. Family-held UUPM row stacks/winui.csv L5 (\"Use x:DefaultBindMode\"); review disposition HELD as SBVF family candidate of family-use-x-defaultbindmode-d7d12aa9 (prior semantic classification KEEP_ATOMIC). Admit as whole-cell family variant per D58/P6; variant ID derived deterministically by scripts/sbvf-admission.ts against catalog rev 8048 / map rev 5767.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T09:31:18.049Z",
+      "evidence": {
+        "path": ".tmp/h2a2-stack-review/winui.json",
+        "sha256": "6559de045c09b0793067b1429c8543b12a254a7bc8712b7f0a8efbae9228faa8"
+      }
+    }
+  ]
+}

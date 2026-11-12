@@ -1,0 +1,29 @@
+{
+  "schema": "SBVFFamilyManifest/v1",
+  "families": [
+    {
+      "family_id": "family-prefer-composition-over-inheritance-c301153b",
+      "title": "Prefer composition over inheritance",
+      "summary": "Prefer composition over inheritance; each stack variant keeps its own guidance.",
+      "rationale": "Flutter and SwiftUI share the prefer composition over inheritance norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-flutter-prefer-composition-over-inheritance",
+        "uupm-swiftui-prefer-composition-over-inheritance"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T10:02:14.047Z"
+    },
+    {
+      "family_id": "family-use-spacing-and-padding-consistently-1ba38b2a",
+      "title": "Use spacing and padding consistently",
+      "summary": "Use spacing and padding consistently; each stack variant keeps its own guidance.",
+      "rationale": "JavaFX and SwiftUI share the use spacing and padding consistently norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": [
+        "uupm-javafx-use-spacing-and-padding-consistently",
+        "uupm-swiftui-use-spacing-and-padding-consistently"
+      ],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T10:02:14.047Z"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "VPCatalog/v1",
+  "instructions": [
+    { "instruction_id": "atom-a", "path": "instructions/atom-a.md", "sha256": "" },
+    { "instruction_id": "atom-b", "path": "instructions/atom-b.md", "sha256": "" },
+    { "instruction_id": "atom-c", "path": "instructions/atom-c.md", "sha256": "" },
+    { "instruction_id": "atom-d", "path": "instructions/atom-d.md", "sha256": "" },
+    { "instruction_id": "atom-e", "path": "instructions/atom-e.md", "sha256": "" },
+    { "instruction_id": "csv-one", "path": "instructions/csv-one.md", "sha256": "" }
+  ]
+}

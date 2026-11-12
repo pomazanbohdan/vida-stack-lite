@@ -1,0 +1,47 @@
+---
+schema: VPInstruction/v1.2
+classification_status: unclassified
+classification_reason: h2-csv-pilot-not-classified
+instruction_id: uupm-nuxt-ui-use-unavigationmenu-for-nav-links
+title: "Use UNavigationMenu for nav links"
+summary: "Horizontal or vertical navigation with dropdown support"
+capability_tags:
+  - design-user-interface
+pattern_tags:
+  - interaction-simplification
+conditions_applies_when: "Navigation guidance for nuxt-ui 4.11.1."
+conditions_does_not_apply_when: A context where the platform convention or the stated exception makes the rule unsafe.
+artifact_contract_output_type: none
+artifact_contract_required_data: []
+artifact_contract_verified_by: The interface applies the stated rule and the result is checked against the source guideline.
+compatibility_excludes: []
+compatibility_requires: []
+provenance:
+  - "donor=uupm; license=MIT; revision=56ea9cf174ed86786187daa9de0e6247cb0747e4; path=stacks/nuxt-ui.csv; sha256=fce682a338cfcdbf35d318d20e5befbe7b5d81b05abc37f87677a6d9cde84dc6; locator=stacks/nuxt-ui.csv#L28"
+status: active
+revision: 1
+---
+
+# Use UNavigationMenu for nav links
+
+Horizontal or vertical navigation with dropdown support
+
+**Do:** UNavigationMenu with items array
+
+**Don't:** Manual nav with v-for
+
+**Applies To:** nuxt-ui 4.11.1
+
+**Severity:** Medium
+
+**Good example:**
+
+```text
+<UNavigationMenu :items="navItems"/>
+```
+
+**Bad example:**
+
+```text
+<nav><a v-for="item in items">
+```

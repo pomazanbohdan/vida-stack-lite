@@ -124,6 +124,7 @@ function nameSets(instructions: Map<string, LoadedInstruction>, dimension: Inten
   const entries = new Map<string, Set<string>>();
   const counts = new Map<string, number>();
   for (const instruction of instructions.values()) {
+    if (instruction.familyId !== undefined || instruction.moduleId !== undefined) continue;
     const tags = dimension === 'capability' ? instruction.capability_tags : instruction.pattern_tags;
     for (const tag of tags) {
       counts.set(tag, (counts.get(tag) ?? 0) + 1);
@@ -136,6 +137,7 @@ function nameSets(instructions: Map<string, LoadedInstruction>, dimension: Inten
 export function topPatternFor(instructions: Map<string, LoadedInstruction>, capability: string): string | undefined {
   const counts = new Map<string, number>();
   for (const instruction of instructions.values()) {
+    if (instruction.familyId !== undefined || instruction.moduleId !== undefined) continue;
     if (!instruction.capability_tags.includes(capability)) continue;
     for (const tag of instruction.pattern_tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
   }

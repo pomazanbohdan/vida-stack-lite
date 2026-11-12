@@ -1,0 +1,23 @@
+{
+  "schema": "SBVFFamilyManifest/v1",
+  "families": [
+    {
+      "family_id": "family-use-usestate-for-local-state-3bc378f6",
+      "title": "Use useState for local state",
+      "summary": "Use useState for simple local component state; each framework-specific variant keeps its own guidance.",
+      "variants": ["uupm-react-use-usestate-for-local-state", "uupm-react-native-use-usestate-for-local-state"],
+      "rationale": "React and React Native share the local-state norm; framework APIs and examples stay in separate variants.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-07T00:00:00Z"
+    },
+    {
+      "family_id": "family-use-usereducer-for-complex-state-fc948845",
+      "title": "Use useReducer for complex state",
+      "summary": "Use useReducer for complex state transitions; each framework-specific variant keeps its own guidance.",
+      "variants": ["uupm-react-use-usereducer-for-complex-state", "uupm-react-native-use-usereducer-for-complex-state"],
+      "rationale": "React and React Native share the reducer norm; framework APIs and examples stay in separate variants.",
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-07T00:00:00Z"
+    }
+  ]
+}

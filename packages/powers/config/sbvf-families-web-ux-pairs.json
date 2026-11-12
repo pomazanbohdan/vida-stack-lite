@@ -1,0 +1,59 @@
+{
+  "schema": "SBVFFamilyManifest/v1",
+  "families": [
+    {
+      "family_id": "family-breakpoint-testing-4645d668",
+      "title": "Breakpoint testing",
+      "summary": "Test layouts at common breakpoints; each stack variant keeps its own guidance.",
+      "rationale": "UX guidelines and html-tailwind share the breakpoint-testing norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-ux-breakpoint-testing", "uupm-html-tailwind-breakpoint-testing"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T06:48:32.257Z"
+    },
+    {
+      "family_id": "family-disabled-states-de30c3d9",
+      "title": "Disabled states",
+      "summary": "Clearly indicate non-interactive elements; each stack variant keeps its own guidance.",
+      "rationale": "UX guidelines and html-tailwind share the disabled-states norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-ux-disabled-states", "uupm-html-tailwind-disabled-states"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T06:48:32.257Z"
+    },
+    {
+      "family_id": "family-font-size-scale-5f8992c7",
+      "title": "Font size scale",
+      "summary": "Keep a consistent type hierarchy; each stack variant keeps its own guidance.",
+      "rationale": "UX guidelines and html-tailwind share the font-size-scale norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-ux-font-size-scale", "uupm-html-tailwind-font-size-scale"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T06:48:32.257Z"
+    },
+    {
+      "family_id": "family-line-height-8829c7a7",
+      "title": "Line height",
+      "summary": "Keep line height readable; each stack variant keeps its own guidance.",
+      "rationale": "UX guidelines and html-tailwind share the line-height norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-ux-line-height", "uupm-html-tailwind-line-height"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T06:48:32.257Z"
+    },
+    {
+      "family_id": "family-loading-states-fe4b50d8",
+      "title": "Loading states",
+      "summary": "Show feedback during async operations; each stack variant keeps its own guidance.",
+      "rationale": "UX guidelines and html-tailwind share the loading-states norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-ux-loading-states", "uupm-html-tailwind-loading-states"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T06:48:32.257Z"
+    },
+    {
+      "family_id": "family-reduced-motion-3fee940d",
+      "title": "Reduced motion",
+      "summary": "Respect the user's motion preferences; each stack variant keeps its own guidance.",
+      "rationale": "UX guidelines and html-tailwind share the reduced-motion norm; stack-specific APIs and examples stay in separate variants.",
+      "variants": ["uupm-ux-reduced-motion", "uupm-html-tailwind-reduced-motion"],
+      "approved_by": "human:repository-owner",
+      "approved_at": "2026-11-12T06:48:32.257Z"
+    }
+  ]
+}

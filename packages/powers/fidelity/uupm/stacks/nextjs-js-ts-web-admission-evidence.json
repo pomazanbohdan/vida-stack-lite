@@ -1,0 +1,50 @@
+{
+  "schema": "H2FamilyAdmissionEvidence/v1",
+  "batch": "js-ts-web",
+  "recordedAt": "2026-11-12T07:05:00Z",
+  "source": {
+    "donor": "uupm",
+    "path": "stacks/nextjs.csv",
+    "revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
+    "rawSha256": "ecd2c27b2ea0127d203ae726060efcdd7335b5e83f96b99e4f3befbbfeebd5a4"
+  },
+  "decision": "Admit family-held deferred UUPM CSV rows as SBVF family variants inside one prepared batch per D58/P6: whole-cell verbatim template bodies, whole-cell bindings over every normative column, and H2FidelityReceipt/v2 per admitted row.",
+  "rows": [
+    {
+      "variantId": "uupm-nextjs-analyze-bundle-size",
+      "familyId": "family-analyze-bundle-size-1bee1185",
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=4b7000b806f704fd0da6f2a34705cd858c6385bdbdb8fd35ede04019244e3cc7",
+      "locator": {
+        "line": 39,
+        "row": 38
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/nextjs.csv L39 admitted as SBVF variant uupm-nextjs-analyze-bundle-size of family-analyze-bundle-size-1bee1185; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-nextjs-handle-loading-states",
+      "familyId": "family-handle-loading-states-52f592e1",
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=fe1193ea61bd5c6deb94747207effcb0d0de28a2cc86f0ae5389344cde884519",
+      "locator": {
+        "line": 6,
+        "row": 5
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/nextjs.csv L6 admitted as SBVF variant uupm-nextjs-handle-loading-states of family-handle-loading-states-52f592e1; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    },
+    {
+      "variantId": "uupm-nextjs-use-file-based-routing",
+      "familyId": "family-use-file-based-routing-0927fbb8",
+      "rowKey": "path=stacks/nextjs.csv&headers=38c3842d4917f59c0e01aac56b2d645e7d8c6eb46d93d809d53d841a23539b38&cells=9ffcddb3df3c498263097b32d925ab1f8c2e1f187f4f2e48b7bf9dd5c324b9a6",
+      "locator": {
+        "line": 3,
+        "row": 2
+      },
+      "disposition": "family-held",
+      "verdict": "READY",
+      "notes": "Family-held row stacks/nextjs.csv L3 admitted as SBVF variant uupm-nextjs-use-file-based-routing of family-use-file-based-routing-0927fbb8; whole-cell verbatim template body (cols 2,3,4,5,6,7), H2FidelityReceipt/v2 per D58/P6."
+    }
+  ]
+}

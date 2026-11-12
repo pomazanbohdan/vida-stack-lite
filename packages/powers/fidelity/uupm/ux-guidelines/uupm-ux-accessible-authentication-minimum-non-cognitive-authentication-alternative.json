@@ -1,0 +1,102 @@
+{
+  "schema": "H2FidelityReceipt/v2",
+  "instructionId": "uupm-ux-accessible-authentication-minimum-non-cognitive-authentication-alternative",
+  "variantId": "uupm-ux-accessible-authentication-minimum-non-cognitive-authentication-alternative",
+  "variantBodySha256": "a1fa713f64c3c81fdb28f7399c5440911afe24b6bb566a92423f755a1a859df2",
+  "source": {
+    "donor": "uupm",
+    "path": "ux-guidelines.csv",
+    "rowKey": "path=ux-guidelines.csv&headers=5e284965208985306fd14e0928f127330f15c6aa7067e95e951f3cecebbab3e5&cells=9e2f96d1bcca70d1c12dd075b4f6bb728fb12d293fd96ea70ce6515e9805c302",
+    "cells": [
+      {
+        "columnIndex": 2,
+        "cellHash": "4ea62253ae63aee9ee54ce9bc2e2acfc83d5c9556fa97b08f48317e506f5c52b",
+        "locator": {
+          "line": 108,
+          "row": 107,
+          "column": 3
+        },
+        "locators": [
+          {
+            "line": 108,
+            "row": 107,
+            "column": 3
+          }
+        ]
+      },
+      {
+        "columnIndex": 4,
+        "cellHash": "8f223043a28628e82c468df298df9820452577aaace4032e4d42c6a2913b5640",
+        "locator": {
+          "line": 108,
+          "row": 107,
+          "column": 5
+        },
+        "locators": [
+          {
+            "line": 108,
+            "row": 107,
+            "column": 5
+          }
+        ]
+      },
+      {
+        "columnIndex": 5,
+        "cellHash": "de92d9e652ddc9c9683d93aa5dda770ae73673605a754fd4b32f74afae2acc39",
+        "locator": {
+          "line": 108,
+          "row": 107,
+          "column": 6
+        },
+        "locators": [
+          {
+            "line": 108,
+            "row": 107,
+            "column": 6
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 35,
+            "endCodePoint": 87,
+            "textSha256": "c42d02c66d4fdf51b07d90afd494430ff275aef9c5f69729770721edb923339f"
+          }
+        ]
+      },
+      {
+        "columnIndex": 6,
+        "cellHash": "7f296c1775f61023c49ce0dcf4cf301bf4346eeddc73a50b0131ae15cacccc29",
+        "locator": {
+          "line": 108,
+          "row": 107,
+          "column": 7
+        },
+        "locators": [
+          {
+            "line": 108,
+            "row": 107,
+            "column": 7
+          }
+        ],
+        "subspans": [
+          {
+            "startCodePoint": 15,
+            "endCodePoint": 67,
+            "textSha256": "9fc39c2c4e50bd94b0fe8c2eee9c83bae3010c0aa796bf9e76f2512c55287f0c"
+          }
+        ]
+      }
+    ]
+  },
+  "reviewer": {
+    "kind": "delegated",
+    "actor": "agent:devin",
+    "model": "acpRegistry_devin/swe-2-flash-medium"
+  },
+  "verdict": "READY",
+  "evidence": {
+    "path": "fidelity/uupm/ux-guidelines/h2a2-split-ux-rows-evidence.json",
+    "sha256": "d52b5ca5369d47086ad24b61c79ebd83bfc0186cd0ad08f2ed564ab9c43286c4"
+  },
+  "recordedAt": "2026-11-10T14:31:00Z"
+}

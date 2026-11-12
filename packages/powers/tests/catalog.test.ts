@@ -366,6 +366,26 @@ describe('loadInstructions', () => {
     expect(guidance?.classification).toEqual({ classification_status: 'unclassified', classification_reason: 'Synthetic test fixture.' });
   });
 
+  test('parses v1.2 provenance sha256 and locator without swallowing them into path', async () => {
+    const copy = await copyFixture();
+    const alphaPath = join(copy.dir, 'instructions/alpha.md');
+    const sha256 = 'a'.repeat(64);
+    const locator = 'skills/test-driven-development/SKILL.md#L1-L2';
+    const text = (await readFile(alphaPath, 'utf8')).replace(
+      'path=skills/test-driven-development/SKILL.md',
+      `path=skills/test-driven-development/SKILL.md; sha256=${sha256}; locator=${locator}`,
+    );
+    await writeFile(alphaPath, text);
+    const catalog = await readManifest(copy.catalogPath);
+    await updateInstructionDigest(copy.dir, catalog, 'alpha');
+    await writeManifest(copy.catalogPath, catalog);
+    const loaded = await loadInstructions(await loadCatalog(copy.catalogPath), copy.dir);
+    expect(loaded.get('alpha')?.provenance).toEqual([{
+      donor: 'superpowers', license: 'MIT', revision: 'bb92a77741419a4ab5f06e711a283343f1ada0c3',
+      path: 'skills/test-driven-development/SKILL.md', sha256, locator,
+    }]);
+  });
+
   test('dispatches exact v1.2 states and rejects unsupported markers and closed-field additions', async () => {
     const mixed = await facetedFixture();
     expect(mixed.instructions.get('alpha')?.classification).toEqual({
@@ -1574,12 +1594,13 @@ test('an unresolved context-degradation group asks for a choice before the exclu
 });
 
 test('a deprecated architecture decision stays readable and unlocked', async () => {
-  const source = await readFile(join(resolve(dirname(fileURLToPath(import.meta.url)), '..'), 'instructions/lock-only-an-accepted-architecture-decision.md'), 'utf8');
-  const front = parseFrontmatter(source);
-  expect(front.data.revision).toBe(3);
-  expect(front.data.summary).toContain('deprecated');
-  expect(front.body).toContain('`Deprecated`');
-  expect(front.body).toContain('only `Accepted` counts as locked');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const loaded = await loadInstructions(await loadCatalog(join(root, 'catalog.json')), root);
+  const instruction = loaded.get('lock-only-an-accepted-architecture-decision');
+  expect(instruction?.revision).toBe(3);
+  expect(instruction?.summary).toContain('deprecated');
+  expect(instruction?.content).toContain('`Deprecated`');
+  expect(instruction?.content).toContain('only `Accepted` counts as locked');
 });
 
 test.each(['profile-read', 'profile-json', 'schema-json', 'profile-shape', 'duplicate-groups', 'duplicate-alternatives', 'shared-alternative'])('a warmed canonical policy cache rejects changed invalid %s inputs', async kind => {
