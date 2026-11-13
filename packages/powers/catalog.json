@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8055,
+  "revision": 8056,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-12T12:20:17.416Z",
+  "updated_at": "2026-11-13T00:50:19.142Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -13146,6 +13146,133 @@
       "instruction_id": "write-trigger-prompts-as-user-paraphrases",
       "path": "instructions/write-trigger-prompts-as-user-paraphrases.md",
       "sha256": "3e3539b88feecc941841e38e579849d2d7208a880447ffdbc5a9be05c834f472"
+    }
+  ],
+  "resources": [
+    {
+      "resource_id": "uupm-font-pairing-bold-statement",
+      "path": "resources/uupm-font-pairing-bold-statement.json",
+      "sha256": "08bdbd2a9fcca5d2a83ed6db103f5a1140a765936308cddb046d68c92e21e7cf"
+    },
+    {
+      "resource_id": "uupm-font-pairing-brutalist-raw",
+      "path": "resources/uupm-font-pairing-brutalist-raw.json",
+      "sha256": "076dfc69eaeac0e0b9848f91a856ded8355fa10c99392988178a30020caa4dde"
+    },
+    {
+      "resource_id": "uupm-font-pairing-chinese-simplified",
+      "path": "resources/uupm-font-pairing-chinese-simplified.json",
+      "sha256": "cd31ec9c1aa7b6a08998674584e0c3cf6bfdc2069598029c2a0bcb6b010c25dc"
+    },
+    {
+      "resource_id": "uupm-font-pairing-chinese-traditional",
+      "path": "resources/uupm-font-pairing-chinese-traditional.json",
+      "sha256": "36a3fe5ce83db9299ebfda82d270186aa62c9b0e784aa2cbb414ab32dd325ff8"
+    },
+    {
+      "resource_id": "uupm-font-pairing-classic-elegant",
+      "path": "resources/uupm-font-pairing-classic-elegant.json",
+      "sha256": "b40c1fa56b16d9cc18972ef2d44b8980a28c11c8f8e206df748ced5c34b0d18e"
+    },
+    {
+      "resource_id": "uupm-font-pairing-corporate-trust",
+      "path": "resources/uupm-font-pairing-corporate-trust.json",
+      "sha256": "4bcb415cc17652a69da925e4b5cb52323ae7e62f9f282245ff8eac97f0900dda"
+    },
+    {
+      "resource_id": "uupm-font-pairing-developer-mono",
+      "path": "resources/uupm-font-pairing-developer-mono.json",
+      "sha256": "29549699e80809c7a6f69bc4c3999b7c32cf9aaf0208d075da0351cf8bf21923"
+    },
+    {
+      "resource_id": "uupm-font-pairing-editorial-classic",
+      "path": "resources/uupm-font-pairing-editorial-classic.json",
+      "sha256": "f7f1f5c502ed7642659781c25263e4be1379b4e524c798fb7018270fed85a0f6"
+    },
+    {
+      "resource_id": "uupm-font-pairing-fashion-forward",
+      "path": "resources/uupm-font-pairing-fashion-forward.json",
+      "sha256": "accb6da5f41270b1ccf7ee43d12ff361ca9183af655db8256ede7e73a025be0f"
+    },
+    {
+      "resource_id": "uupm-font-pairing-friendly-saas",
+      "path": "resources/uupm-font-pairing-friendly-saas.json",
+      "sha256": "0b7e33650c84548650e83e987eab00f33b3018daef06e3ea5b4f3bcf1bee7445"
+    },
+    {
+      "resource_id": "uupm-font-pairing-geometric-modern",
+      "path": "resources/uupm-font-pairing-geometric-modern.json",
+      "sha256": "8d2ec93caee92894ce506458bba6d151af2a5c44280d5993d7f0977252ab090c"
+    },
+    {
+      "resource_id": "uupm-font-pairing-handwritten-charm",
+      "path": "resources/uupm-font-pairing-handwritten-charm.json",
+      "sha256": "8a338e28cefbdc744dc37b7c897e146f921511bac1d38cf819d148761a7e7991"
+    },
+    {
+      "resource_id": "uupm-font-pairing-japanese-elegant",
+      "path": "resources/uupm-font-pairing-japanese-elegant.json",
+      "sha256": "644ea46704ad04494271d96a346142f0fda2036a450fa0967638c0aa51a6a3c8"
+    },
+    {
+      "resource_id": "uupm-font-pairing-korean-modern",
+      "path": "resources/uupm-font-pairing-korean-modern.json",
+      "sha256": "487e06fb0a076112ef617d357c152d80e82ef022f796f8a82c7e003002afd2ed"
+    },
+    {
+      "resource_id": "uupm-font-pairing-luxury-serif",
+      "path": "resources/uupm-font-pairing-luxury-serif.json",
+      "sha256": "47a377bae9206c8da03013d4ce47a867a3becd33073517361d39b1ed013ad2e2"
+    },
+    {
+      "resource_id": "uupm-font-pairing-minimal-swiss",
+      "path": "resources/uupm-font-pairing-minimal-swiss.json",
+      "sha256": "da69bf314cec64f5acf93e17a8a44cf9ec9c171e0f651e511e648ed12b573950"
+    },
+    {
+      "resource_id": "uupm-font-pairing-modern-professional",
+      "path": "resources/uupm-font-pairing-modern-professional.json",
+      "sha256": "8b8bd278935683ddd55adeaaf03358bc2b2275bb2861dd6d2ffadf26b94f44eb"
+    },
+    {
+      "resource_id": "uupm-font-pairing-news-editorial",
+      "path": "resources/uupm-font-pairing-news-editorial.json",
+      "sha256": "e83b2c1047744f4cc7342d304d159e048d7b97309d425903d102acc3ff7bf00e"
+    },
+    {
+      "resource_id": "uupm-font-pairing-playful-creative",
+      "path": "resources/uupm-font-pairing-playful-creative.json",
+      "sha256": "b122e68431b9c55d35cf0daa60baa26b1c014cb8203f983b5acbac4965edfbf2"
+    },
+    {
+      "resource_id": "uupm-font-pairing-premium-sans-dm-sans",
+      "path": "resources/uupm-font-pairing-premium-sans-dm-sans.json",
+      "sha256": "b51f6c8961b6214491a2e28464dc65cac62d4153aaa0603820e6107e0f7294fe"
+    },
+    {
+      "resource_id": "uupm-font-pairing-retro-vintage",
+      "path": "resources/uupm-font-pairing-retro-vintage.json",
+      "sha256": "5b515c7f59a6002ee65a225f43723fac828a0af29f14f8e9bd640c8daa23b1ea"
+    },
+    {
+      "resource_id": "uupm-font-pairing-soft-rounded",
+      "path": "resources/uupm-font-pairing-soft-rounded.json",
+      "sha256": "e563276dc01dc92a1fc7271e37e8a92ba2e4137acc7fe1c54d256160a6fb0655"
+    },
+    {
+      "resource_id": "uupm-font-pairing-tech-startup",
+      "path": "resources/uupm-font-pairing-tech-startup.json",
+      "sha256": "8c1e5fc069a648add7c6c6e1554ecd9bc46f9ec68c58a4eaad3fc95eee27287f"
+    },
+    {
+      "resource_id": "uupm-font-pairing-vietnamese-friendly",
+      "path": "resources/uupm-font-pairing-vietnamese-friendly.json",
+      "sha256": "412bde50d6a23e68ca56ecc3ce2c0f1b1d5b997d9e98f66398f7c33ed70e422a"
+    },
+    {
+      "resource_id": "uupm-font-pairing-wellness-calm",
+      "path": "resources/uupm-font-pairing-wellness-calm.json",
+      "sha256": "6815d7905ce49843e2369d1d35a7b239ffcb145961d1faefa0b9b9f01d6db6eb"
     }
   ]
 }

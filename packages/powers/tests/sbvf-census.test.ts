@@ -212,6 +212,53 @@ describe('sbvf-census', () => {
       expect(result.status).toBe(1);
     }
   });
+
+  function addFontsSource(fixture: { root: string }, badRow = false): void {
+    const dataRoot = join(fixture.root, '.tmp', 'donors', 'uupm', 'src', 'data');
+    mkdirSync(join(dataRoot, 'fonts'), { recursive: true });
+    const csvPath = 'fonts/pairings.csv';
+    writeFileSync(join(dataRoot, csvPath), 'Name,Mood\nClassic Elegant,Serif + Sans\nModern Professional,Clean\n', 'utf8');
+    const bytes = readFileSync(join(dataRoot, csvPath));
+    const parsed = parseCsv(bytes);
+    const columns = parsed.headers.map((header, index) => ({ index, header, role: 'metadata-other' }));
+    const rows = parsed.rows.map((parsedRow, index) => {
+      const rowKey = `path=${csvPath}&headers=${parsed.headersDigest}&cells=${cellsDigest(parsedRow.cells)}`;
+      const cellHashes = parsedRow.cells.map(cellHash);
+      const locator = { line: parsedRow.line, row: parsedRow.row };
+      const noResource = badRow && index === 0;
+      return {
+        rowKey, rowHash: rowHash(rowKey, parsed.headersDigest, cellHashes), cellHashes, locator, locators: [locator],
+        disposition: 'admitted', bindings: [], mergedInto: null,
+        resourceIds: noResource ? [{ id: 'res-font-held', disposition: 'deferred', reason: 'held for review' }] : [{ id: `res-font-${parsedRow.row + 1}`, disposition: 'admitted', reason: 'H3 pilot' }],
+      };
+    });
+    const mapPath = join(fixture.root, 'corpus-map.json');
+    const map = JSON.parse(readFileSync(mapPath, 'utf8')) as { schema: string; donors: { uupm: { csvSources: Record<string, { rawSha256?: string; headersDigest?: string; columns?: unknown[]; rows: Array<{ bindings: Array<Record<string, unknown>> }> }> } } };
+    map.schema = 'VPCorpusMap/v3';
+    for (const source of Object.values(map.donors.uupm.csvSources)) {
+      for (const row of source.rows) for (const binding of row.bindings) if (binding.variantId === undefined) binding.variantId = binding.instructionId;
+    }
+    map.donors.uupm.csvSources[csvPath] = { rawSha256: hash(bytes), headersDigest: parsed.headersDigest, columns, rows };
+    json(mapPath, map);
+    json(join(fixture.root, 'config', 'h3-csv-allowlist.json'), [{ donor: 'uupm', path: csvPath, rawSha256: hash(bytes), headersDigest: parsed.headersDigest }]);
+  }
+
+  it('admits resource-only rows listed in the h3 allowlist without instruction units', () => {
+    const fixture = createFixture();
+    addFontsSource(fixture);
+    const result = cli(fixture.root, ['--json']);
+    expect(result.status).toBe(0);
+    const report = JSON.parse(result.stdout) as { counts: { csvRows: number } };
+    expect(report.counts.csvRows).toBe(4);
+  });
+
+  it('rejects an admitted resource-only row with no admitted resourceIds', () => {
+    const fixture = createFixture();
+    addFontsSource(fixture, true);
+    const result = cli(fixture.root, ['--json']);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain('admitted row has no bindings or admitted resources');
+  });
 });
 
 // The spawned CLI runs above do not count toward coverage: a child process is

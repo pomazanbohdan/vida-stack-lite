@@ -1,7 +1,12 @@
 import { createHash } from 'node:crypto';
 import { lstat, readFile, readdir, realpath } from 'node:fs/promises';
 import type { Dirent } from 'node:fs';
-import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { join, resolve } from 'node:path';
+import {
+  isWithinRoot,
+  resourcePathIdentity,
+  validateResourcePath,
+} from '../skills/vp-mode/scripts/resource-paths.ts';
 
 export type FormationPayload = {
   readonly files: ReadonlyMap<string, Buffer>;
@@ -23,26 +28,16 @@ export class FormationPayloadError extends Error {
 const excludedDirectories = new Set(['.tmp', '.git', '.hg', '.svn', 'node_modules', 'coverage']);
 const receiptDomain = Buffer.from('VPFormationPayload/v1\0', 'utf8');
 
-function isWithin(root: string, candidate: string): boolean {
-  const path = relative(root, candidate);
-  return path === '' || (path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path));
-}
-
 function compareUtf8(left: string, right: string): number {
   return Buffer.compare(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'));
 }
 
 function validateRelativePath(path: string): void {
-  if (path.length === 0 || path.includes('\\') || path.includes(':') || path.startsWith('/') || /^[a-z]:/iu.test(path)) {
-    throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Source path is not a normalized relative path: ${path}.`);
+  try {
+    validateResourcePath(path);
+  } catch (error) {
+    throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', error instanceof Error ? error.message : String(error));
   }
-  if (path.split('/').some((segment) => segment.length === 0 || segment === '.' || segment === '..')) {
-    throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Source path contains an unsafe segment: ${path}.`);
-  }
-}
-
-function pathIdentity(path: string): string {
-  return path.normalize('NFC').toUpperCase().toLowerCase();
 }
 
 export function encodeFormationPathLength(byteLength: number, path: string): Buffer {
@@ -108,7 +103,7 @@ export async function planFormationPayload(
         } catch (error) {
           throw new FormationPayloadError('MANIFEST_INPUT_READ_FAILED', `Cannot resolve native formation source directory: ${path}.`, [String(error)]);
         }
-        if (!isWithin(rootReal, resolved)) {
+        if (!isWithinRoot(rootReal, resolved)) {
           throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Native formation source directory escapes the package root: ${path}.`);
         }
         await visit(absolute, path);
@@ -118,7 +113,7 @@ export async function planFormationPayload(
         throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Native formation source contains a non-regular file: ${path}.`);
       }
 
-      const identity = pathIdentity(path);
+      const identity = resourcePathIdentity(path);
       const previous = identities.get(identity);
       if (previous !== undefined && previous !== path) {
         throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Native formation source paths collide after Unicode normalization or case folding: ${previous} and ${path}.`);
@@ -128,7 +123,7 @@ export async function planFormationPayload(
       let bytes: Buffer;
       try {
         const resolved = await realpath(absolute);
-        if (!isWithin(rootReal, resolved)) {
+        if (!isWithinRoot(rootReal, resolved)) {
           throw new FormationPayloadError('MANIFEST_INPUT_UNSAFE', `Native formation source file escapes the package root: ${path}.`);
         }
         bytes = await readFile(absolute);

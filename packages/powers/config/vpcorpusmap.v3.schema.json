@@ -140,7 +140,13 @@
       "allOf": [
         {
           "if": { "properties": { "disposition": { "const": "admitted" } }, "required": ["disposition"] },
-          "then": { "properties": { "bindings": { "minItems": 1 } } }
+          "then": {
+            "description": "An admitted row binds at least one instruction or admits at least one typed resource; resource-only rows carry resourceIds without bindings.",
+            "not": {
+              "required": ["bindings", "resourceIds"],
+              "properties": { "bindings": { "maxItems": 0 }, "resourceIds": { "maxItems": 0 } }
+            }
+          }
         },
         {
           "if": { "properties": { "disposition": { "const": "rejected" } }, "required": ["disposition"] },
@@ -242,10 +248,11 @@
     "resourceId": {
       "type": "object",
       "additionalProperties": false,
+      "description": "Typed-resource disposition for a source unit (SR-84): admitted means the row materialized one or more VPReferenceResource/v1 records; rejected and deferred retain their reason.",
       "required": ["id", "disposition", "reason"],
       "properties": {
         "id": { "type": "string", "minLength": 1 },
-        "disposition": { "enum": ["rejected", "deferred"] },
+        "disposition": { "enum": ["admitted", "rejected", "deferred"] },
         "reason": { "type": "string", "minLength": 1 }
       }
     }

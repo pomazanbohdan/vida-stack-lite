@@ -24,7 +24,7 @@ sources:
   title: Vida Agent package — Bun package conventions
 generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:40:29Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '49'
+revision: '50'
 ---
 
 # Goal and boundaries
@@ -214,9 +214,34 @@ remaining Powers-owned work is:
    disposition audit clean (1,449 bindings, 0 missing/mismatched
    receipts). The pinned Knip external conflict remains open (item 9)
    and is not claimed PASS.
-4. **H3-A — typed reference resources (gate satisfied: H2-D accepted
-   2026-11-12).** Ready to start pending owner go; no H3 work is
-   authorized by the H2 approval itself.
+4. **H3-A — typed reference resources pilot (ACCEPTED 2026-11-13).**
+   The 25-record `font-pairing` pilot is complete and owner-accepted:
+   `VPReferenceResource/v1`, in-place `VPCatalog/v1` `resources[]` and
+   in-place `VPCorpusMap/v3` `admitted` resourceIds are live;
+   `catalog.resource.get`, CLI `resource --id`, compose `--resource-id`
+   and the shared 64,000-byte resource budget are implemented and tested;
+   25 `uupm-font-pairing-*` records are materialized from
+   `typography.csv` rows 1–25 (catalog rev 8056 `ad4afdc6…`, map rev
+   5775 `b76066b8…`; rows 26–74 stay deferred outside the pilot). D18
+   delegated panel: 15 blind reviews, aggregation 25/25 accept
+   (19 direct + 6 orchestrator-adjudicated on deterministic
+   digest/hash/schema evidence; 0 amend / 0 reject). Bound receipt
+   `.agent/work/h2-sbvf-option-b-20261106/H3A-RECEIPT.md` with evidence
+   `h3a-evidence/` and `h3-d18/`; gates — `bun test --coverage` 1,097
+   pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 115 files,
+   format/`check-corpus`/`check-vector`/`check-okf` exit 0, Node
+   v26.13.1 resource smoke; the pinned Knip external conflict remains
+   open (item 9) and is not claimed PASS. AC-52/AC-54/AC-55 are
+   `verified (component)`; AC-50/AC-51/AC-53 and the other H3-family
+   criteria stay open. **Remaining H3 scope (each needs a separate
+   owner-approved admission gate):** the other four D15 resource types
+   (`palette`, `style`, `icon-list`, `standards-checklist`), the 49
+   deferred `typography.csv` rows, and the remaining uupm data families
+   (`colors.csv`, `styles.csv`, `icons.csv`, `charts.csv`, `motion.csv`,
+   `landing.csv`, `products.csv`, `ui-reasoning.csv`, `app-interface.csv`,
+   `google-fonts.csv`); `poteto-plugins` remains unpinned in
+   donors.yaml. All H3-A changes are uncommitted at HEAD `e72fc5b8`;
+   the commit decision is Root-owned.
 5. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
    host installation, Muse first-party catalog digest, public metadata and
    publication, and Runtime acceptance remain open. The `.54` fixtures are not

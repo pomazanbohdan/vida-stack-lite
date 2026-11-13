@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, lstatSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +14,7 @@ import { parseApplicability } from '../skills/vp-mode/scripts/applicability.ts';
 import { parseVariantScalar, parseVariantSections } from '../skills/vp-mode/scripts/variants.ts';
 import { extractModuleBody, ModuleError, parseModule, validateModuleRecord } from '../skills/vp-mode/scripts/modules.ts';
 import { checkCsvSource } from './csv-map.ts';
-import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
+import { canonicalJson, validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/schema.ts';
 
 export type CorpusIssue = { code: string; message: string; details?: Record<string, unknown> };
 type Dict = Record<string, unknown>;
@@ -372,12 +372,13 @@ function checkMethodologyProfile(base: string, catalog: Dict, frontmatterById: M
   }
 }
 
-function checkCsvSources(base: string, map: Dict, donors: DonorSet, instructionIds: Set<string>, variantFamilies: Map<string, string>, familyIds: Set<string>, variantBodyHashes: Map<string, string>, issues: CorpusIssue[]): void {
-  const allowlistPath = join(packageRoot, 'config/h2-csv-allowlist.json');
+function checkCsvSources(base: string, map: Dict, donors: DonorSet, instructionIds: Set<string>, resourceIds: Set<string>, variantFamilies: Map<string, string>, familyIds: Set<string>, variantBodyHashes: Map<string, string>, issues: CorpusIssue[]): void {
   let allowlist: Dict[] = [];
-  if (existsSync(allowlistPath)) {
+  for (const name of ['h2-csv-allowlist.json', 'h3-csv-allowlist.json']) {
+    const allowlistPath = join(packageRoot, 'config', name);
+    if (!existsSync(allowlistPath)) continue;
     const raw = readJson(allowlistPath);
-    if (Array.isArray(raw)) allowlist = raw.filter(isRecord);
+    if (Array.isArray(raw)) allowlist.push(...raw.filter(isRecord));
   }
   const donorMaps = isRecord(map.donors) ? map.donors : {};
   const receipts = new Map<string, { sha256: string; value: Dict }>();
@@ -429,11 +430,106 @@ function checkCsvSources(base: string, map: Dict, donors: DonorSet, instructionI
         issue(issues, 'CORPUS_CSV_MISSING', `cannot read CSV ${donorId}:${path}`, { donor: donorId, path, error: String(error) });
         continue;
       }
-      for (const problem of checkCsvSource({ donor: donorId, path, bytes, source, allowlistEntry, instructionIds, receipts, ...(map.schema === 'VPCorpusMap/v3' ? { variantFamilies, familyIds, variantBodyHashes } : {}) })) {
+      for (const problem of checkCsvSource({ donor: donorId, path, bytes, source, allowlistEntry, instructionIds, resourceIds, receipts, ...(map.schema === 'VPCorpusMap/v3' ? { variantFamilies, familyIds, variantBodyHashes } : {}) })) {
         issue(issues, problem.code, problem.message, problem.details);
       }
     }
   }
+}
+
+const RESOURCE_MAX_BYTES = 65_536;
+
+function checkResourceRecords(base: string, entries: Dict[], issues: CorpusIssue[]): void {
+  const schema = readJson(join(packageRoot, 'config', 'vpreference-resource.v1.schema.json')) as Schema;
+  const resourcesRoot = join(base, 'resources');
+  for (const entry of entries) {
+    const id = String(entry.resource_id ?? '');
+    const rel = typeof entry.path === 'string' ? entry.path : '';
+    const absolute = resolve(base, rel);
+    const inside = !isAbsolute(rel) && absolute.startsWith(`${resourcesRoot}${sep}`);
+    if (!inside) {
+      issue(issues, 'CORPUS_RESOURCE_PATH_INVALID', `catalog resource ${id} path ${rel} must point to a file inside resources/`, { resource_id: id, path: rel });
+      continue;
+    }
+    let bytes: Buffer;
+    try {
+      const stat = lstatSync(absolute);
+      if (stat.isSymbolicLink() || !stat.isFile()) {
+        issue(issues, 'CORPUS_RESOURCE_PATH_INVALID', `catalog resource ${id} path ${rel} is not a regular file`, { resource_id: id, path: rel });
+        continue;
+      }
+      bytes = readFileSync(absolute);
+    } catch (error) {
+      issue(issues, 'CORPUS_RESOURCE_MISSING', `catalog resource ${id} lists unreadable path ${rel}: ${String(error)}`, { resource_id: id, path: rel });
+      continue;
+    }
+    if (bytes.length > RESOURCE_MAX_BYTES) {
+      issue(issues, 'CORPUS_RESOURCE_TOO_LARGE', `resource ${id} exceeds the record size limit`, { resource_id: id, bytes: bytes.length, max_bytes: RESOURCE_MAX_BYTES });
+      continue;
+    }
+    const actual = createHash('sha256').update(bytes).digest('hex');
+    if (actual !== entry.sha256) {
+      issue(issues, 'CORPUS_RESOURCE_DIGEST_MISMATCH', `resource ${id} file sha256 does not match catalog.json`, { resource_id: id, expected: entry.sha256, actual });
+      continue;
+    }
+    let text: string;
+    try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+    catch {
+      issue(issues, 'CORPUS_RESOURCE_MALFORMED', `resource ${id} is not valid UTF-8`, { resource_id: id });
+      continue;
+    }
+    let value: unknown;
+    try { value = JSON.parse(text) as unknown; }
+    catch (error) {
+      issue(issues, 'CORPUS_RESOURCE_MALFORMED', `resource ${id} is malformed JSON: ${error instanceof Error ? error.message : String(error)}`, { resource_id: id });
+      continue;
+    }
+    if (!isRecord(value)) {
+      issue(issues, 'CORPUS_RESOURCE_MALFORMED', `resource ${id} is not a JSON object`, { resource_id: id });
+      continue;
+    }
+    const schemaErrors = validateAgainstSchema(value, schema);
+    if (schemaErrors.length > 0) {
+      issue(issues, 'CORPUS_RESOURCE_SCHEMA_INVALID', `resource ${id} schema validation failed: ${schemaErrors.join('; ')}`, { resource_id: id, errors: schemaErrors });
+      continue;
+    }
+    if (value.resource_id !== id) {
+      issue(issues, 'CORPUS_RESOURCE_ID_MISMATCH', `resource record id ${String(value.resource_id)} does not match manifest id ${id}`, { resource_id: id, actual_id: value.resource_id });
+      continue;
+    }
+    const { digest: _digest, ...unsigned } = value;
+    const canonical = canonicalJson(unsigned);
+    const computed = canonical === undefined ? undefined : `sha256:${createHash('sha256').update(canonical, 'utf8').digest('hex')}`;
+    if (computed === undefined || computed !== value.digest) {
+      issue(issues, 'CORPUS_RESOURCE_DIGEST_MISMATCH', `resource ${id} record digest does not match its canonical content`, { resource_id: id, expected: value.digest, actual: computed ?? null });
+    }
+  }
+}
+
+function checkResources(base: string, catalog: Dict, map: Dict, issues: CorpusIssue[]): void {
+  const entries = Array.isArray(catalog.resources) ? catalog.resources.filter(isRecord) : [];
+  const catalogIds = new Set(entries.map((entry) => String(entry.resource_id ?? '')).filter((id) => id !== ''));
+  const mappedIds = new Set<string>();
+  const donorMaps = isRecord(map.donors) ? map.donors : {};
+  for (const rawDonor of Object.values(donorMaps)) {
+    const donorMap = isRecord(rawDonor) ? rawDonor : {};
+    const csvSources = isRecord(donorMap.csvSources) ? donorMap.csvSources : {};
+    for (const rawSource of Object.values(csvSources)) {
+      const source = isRecord(rawSource) ? rawSource : {};
+      for (const rawRow of Array.isArray(source.rows) ? source.rows.filter(isRecord) : []) {
+        for (const rawItem of Array.isArray(rawRow.resourceIds) ? rawRow.resourceIds.filter(isRecord) : []) {
+          if (rawItem.disposition === 'admitted') mappedIds.add(String(rawItem.id ?? ''));
+        }
+      }
+    }
+  }
+  for (const id of catalogIds) {
+    if (!mappedIds.has(id)) issue(issues, 'CORPUS_RESOURCE_UNMAPPED', `catalog resource ${id} has no admitted corpus map resourceIds entry`, { resource_id: id });
+  }
+  for (const id of mappedIds) {
+    if (id !== '' && !catalogIds.has(id)) issue(issues, 'CORPUS_RESOURCE_UNKNOWN', `corpus map admits unknown catalog resource ${id}`, { resource_id: id });
+  }
+  if (entries.length > 0) checkResourceRecords(base, entries, issues);
 }
 
 function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
@@ -627,7 +723,9 @@ function checkCorpusContents(base: string, issues: CorpusIssue[]): void {
   }
   checkMap(map, donorSet, catalogEntryIds, atomicIds, allIds, moduleAtomIds, familyVariants, variantFamilies, issues);
   const csvBindingIds = new Set([...atomicIds, ...familyVariants.keys()]);
-  checkCsvSources(base, map, donorSet, csvBindingIds, variantFamilies, new Set(familyVariants.keys()), variantBodyHashes, issues);
+  const catalogResourceIds = new Set((Array.isArray(catalog.resources) ? catalog.resources.filter(isRecord) : []).map((entry) => String(entry.resource_id ?? '')).filter((id) => id !== ''));
+  checkCsvSources(base, map, donorSet, csvBindingIds, catalogResourceIds, variantFamilies, new Set(familyVariants.keys()), variantBodyHashes, issues);
+  checkResources(base, catalog, map, issues);
   checkDonorCoverage(map, donorSet, issues);
   checkMethodologyProfile(base, catalog, frontmatterById, issues);
 }

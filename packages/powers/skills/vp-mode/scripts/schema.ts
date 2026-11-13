@@ -121,7 +121,7 @@ function matchesType(value: unknown, type: unknown): boolean {
   return types.some((candidate) => matches[candidate as string]?.(value) === true);
 }
 
-function canonicalJson(value: unknown): string | undefined {
+export function canonicalJson(value: unknown): string | undefined {
   if (Array.isArray(value)) {
     const items = value.map(canonicalJson);
     return items.some((item) => item === undefined) ? undefined : `[${items.join(',')}]`;

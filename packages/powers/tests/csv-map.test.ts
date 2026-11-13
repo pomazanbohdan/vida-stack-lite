@@ -555,3 +555,66 @@ describe('checkCsvSource merged rows', () => {
     expect(missing.map((issue) => issue.code)).toContain('CORPUS_CSV_MERGE');
   });
 });
+
+describe('checkCsvSource resource rows', () => {
+  function resourceFixture(text: string, row: Record<string, unknown>, columns: Array<{ index: number; header: string; role: string }>) {
+    const parsed = parseCsv(bytes(text));
+    const parsedRow = parsed.rows[0]!;
+    const hashes = parsedRow.cells.map(cellHash);
+    const rowKey = `path=a.csv&headers=${parsed.headersDigest}&cells=${cellsDigest(parsedRow.cells)}`;
+    const mapRow = {
+      rowKey,
+      rowHash: rowHash(rowKey, parsed.headersDigest, hashes),
+      cellHashes: hashes,
+      locator: parsedRow.locators[0],
+      locators: parsedRow.locators,
+      disposition: 'admitted',
+      bindings: [],
+      resourceIds: [],
+      mergedInto: null,
+      ...row,
+    };
+    const source = { rawSha256: parsed.rawSha256, headersDigest: parsed.headersDigest, columns, rows: [mapRow] };
+    const allowlistEntry = { donor: 'donor', path: 'a.csv', rawSha256: parsed.rawSha256, headersDigest: parsed.headersDigest };
+    return { source, allowlistEntry };
+  }
+
+  const metaColumns = [
+    { index: 0, header: 'Name', role: 'metadata-other' },
+    { index: 1, header: 'Value', role: 'metadata-other' },
+  ];
+  const text = 'Name,Value\nAlpha,1\n';
+
+  test('accepts an admitted resource-only row', () => {
+    const { source, allowlistEntry } = resourceFixture(text, { resourceIds: [{ id: 'res-a', disposition: 'admitted', reason: 'pilot' }] }, metaColumns);
+    const issues = checkCsvSource({ donor: 'donor', path: 'a.csv', bytes: bytes(text), source, allowlistEntry, instructionIds: new Set(), resourceIds: new Set(['res-a']) });
+    expect(issues).toEqual([]);
+  });
+
+  test('rejects an admitted resource absent from the catalog', () => {
+    const { source, allowlistEntry } = resourceFixture(text, { resourceIds: [{ id: 'res-missing', disposition: 'admitted', reason: 'pilot' }] }, metaColumns);
+    const issues = checkCsvSource({ donor: 'donor', path: 'a.csv', bytes: bytes(text), source, allowlistEntry, instructionIds: new Set(), resourceIds: new Set() });
+    expect(issues.map((issue) => issue.code)).toContain('CORPUS_CSV_RESOURCE_UNKNOWN');
+  });
+
+  test('rejects a non-admitted row that admits a resource', () => {
+    const { source, allowlistEntry } = resourceFixture(text, { disposition: 'deferred', resourceIds: [{ id: 'res-a', disposition: 'admitted', reason: 'pilot' }] }, metaColumns);
+    const issues = checkCsvSource({ donor: 'donor', path: 'a.csv', bytes: bytes(text), source, allowlistEntry, instructionIds: new Set(), resourceIds: new Set(['res-a']) });
+    expect(issues.map((issue) => issue.code)).toContain('CORPUS_CSV_RESOURCE');
+  });
+
+  test('rejects an admitted row with neither bindings nor resources', () => {
+    const { source, allowlistEntry } = resourceFixture(text, {}, metaColumns);
+    const issues = checkCsvSource({ donor: 'donor', path: 'a.csv', bytes: bytes(text), source, allowlistEntry, instructionIds: new Set(), resourceIds: new Set() });
+    expect(issues.map((issue) => issue.code)).toContain('CORPUS_CSV_BINDING');
+  });
+
+  test('rejects bindings on a source without normative columns', () => {
+    const { source, allowlistEntry } = resourceFixture(text, {}, metaColumns);
+    const row = source.rows[0] as Record<string, unknown>;
+    row.bindings = [{ instructionId: 'alpha', cells: [] }];
+    row.disposition = 'admitted';
+    const issues = checkCsvSource({ donor: 'donor', path: 'a.csv', bytes: bytes(text), source, allowlistEntry, instructionIds: new Set(['alpha']), resourceIds: new Set() });
+    expect(issues.map((issue) => issue.code)).toContain('CORPUS_CSV_COLUMNS');
+  });
+});

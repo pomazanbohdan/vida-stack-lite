@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5774,
-  "updated_at": "2026-11-12T07:23:36.821Z",
+  "revision": 5775,
+  "updated_at": "2026-11-13T00:50:19.142Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -220969,6 +220969,2562 @@
               ],
               "resourceIds": [],
               "mergedInto": null
+            }
+          ]
+        },
+        "typography.csv": {
+          "rawSha256": "321fc446e89024488ebae96dda93efc4d2307bd8bddb240857ad51364f6782c8",
+          "headersDigest": "f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270",
+          "columns": [
+            {
+              "index": 0,
+              "header": "No",
+              "role": "metadata-other"
+            },
+            {
+              "index": 1,
+              "header": "Font Pairing Name",
+              "role": "metadata-other"
+            },
+            {
+              "index": 2,
+              "header": "Category",
+              "role": "metadata-other"
+            },
+            {
+              "index": 3,
+              "header": "Heading Font",
+              "role": "metadata-other"
+            },
+            {
+              "index": 4,
+              "header": "Body Font",
+              "role": "metadata-other"
+            },
+            {
+              "index": 5,
+              "header": "Mood/Style Keywords",
+              "role": "metadata-other"
+            },
+            {
+              "index": 6,
+              "header": "Best For",
+              "role": "metadata-other"
+            },
+            {
+              "index": 7,
+              "header": "Google Fonts URL",
+              "role": "metadata-other"
+            },
+            {
+              "index": 8,
+              "header": "CSS Import",
+              "role": "metadata-other"
+            },
+            {
+              "index": 9,
+              "header": "Tailwind Config",
+              "role": "metadata-other"
+            },
+            {
+              "index": 10,
+              "header": "Notes",
+              "role": "metadata-other"
+            }
+          ],
+          "rows": [
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4b723aac24b651add45895a53f46548c5e1a17afc89e96c581afb65704bc13d9",
+              "rowHash": "dedd1c674c2c6e0b55fdc747e2204cf07e5ba52a0f1d7dc5725d61effd768f5e",
+              "cellHashes": [
+                "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+                "c7cde0009ef181a27b9bb15c612c69157a534743ad0aa6fb3e73727feb024b25",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "630165e7ad188e257b119ce020eae98941f2bcddb5b5e228202cb1ecb3ad8355",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "8cea5e92b06fb5abe093a145e6e1ef95864abdbc2aff95ef612daf0a8dac0a6c",
+                "c210a5b7c6695d56ccd0f8ddafbe5a9c9f95d909025f837981eedb0a4ca527cc",
+                "e3a91784da6a5c6c0709533de91409c2021c42c47e7999fd0ee0d0685eafaae5",
+                "6cafe5fdab0aa8efbb629423fccab01bd372b966319226e1c9c6a19b5c584f1e",
+                "1f7df9e8a4c6d6e9df849b63cd18ebc54a4ad1ae069d4e533e8835980abded8f",
+                "6d9091c8e100c9db1619ea48efa9c6c78006bc16f780bdef9b66853e708e9294"
+              ],
+              "locator": {
+                "line": 2,
+                "row": 1
+              },
+              "locators": [
+                {
+                  "line": 2,
+                  "row": 1
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-classic-elegant",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=07858ea9a2ab1ef4d16e7c9c41b6be064745771c9eabbf4e73597f12db1438df",
+              "rowHash": "476aba34f7e2dd4c8fc1b6e2c9447f79f1fc770812f04377e04616fbb8a7bfb7",
+              "cellHashes": [
+                "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+                "2d9d521cd434aa500decb0cb2024498094873901db7340b1781506086df739cb",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "bd3edbd6ee8c179ddac6e9632e7506aff9100d74ddf320af67bbf778d79be994",
+                "d6ffc9f92af141314aac984646a3a3f261fbb9fcee259bcdfed17028766d9b34",
+                "cbb5e8cb89c2cf0eeed58e96cd1a2b63fc6384e6703bcdf7acb71bc6cac4f3b4",
+                "fa32b86413dd209b566950a3896c12258964429d0521b35ada62047cc816fe81",
+                "af469a6a2aa7a49ffdeb4654ef76f9a94056aeaefac363a549f88e7053b19840",
+                "55147a77e67ef6fde70112795e924cbbaf88d73db9844d470d78c2d676d4b808",
+                "23da7356f7b1cb9b4d9270187696023b7c1d707841057e2d3a00d92b25c0228b",
+                "bf30bb2ce3b3ecf44c295564118c4349b90b7c5ad40ec8111a9ebca0c16eaa92"
+              ],
+              "locator": {
+                "line": 3,
+                "row": 2
+              },
+              "locators": [
+                {
+                  "line": 3,
+                  "row": 2
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-modern-professional",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=f96d05282879d1d7f4b2eca3ed8b19da990bde700c70f68898517399ba325886",
+              "rowHash": "4eb74e0e40aa47d173a32bba996107dca33b34000bf3733f0ef2b633357d7780",
+              "cellHashes": [
+                "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce",
+                "57f882aaa9eb5113b8d9fb73ec7a64219711fcbb5dea6c57040c355f94a28483",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "0cf7b0abb942e5ff0e4fe081f7d29a70bc7125c32969647d424c1f7e5fce045e",
+                "9108fbd9a5a58e0f210fb4540ee67c82c88cf001363b44aed2413371d2d04fe2",
+                "afa915590c0bb66766967f67b18fd7b489404dc432e5437e4084ec025deb39cd",
+                "63d1ebb2fc947787795387f2b6ffd5831a81bf2859f951cd6c10e3a12539c900",
+                "14960d03e007c566f29662c6c7b3de57a8ee6065d0ee8db73474908af45b31f1",
+                "d014566c4ca7b2563c0e90eced65c8012d026f4aadff21d7af71badb40b44296",
+                "d08cf02ed7dbd84bbe503d35938a2e9a4bbb7b15d116205df270d50ba33a8ad8",
+                "255ecb05e7da2ee8830300ab1db0912659428bb7d4055b8e4696d262e3102a9d"
+              ],
+              "locator": {
+                "line": 4,
+                "row": 3
+              },
+              "locators": [
+                {
+                  "line": 4,
+                  "row": 3
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-tech-startup",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=9e0eca4bb0bccf4aa8d1f110bb546b46c6ba15de4ef0470e143382e3c9e9c419",
+              "rowHash": "2ea904370a19666babe7025ca5dab6df8ba1451e8d81f8516c8254626120c15d",
+              "cellHashes": [
+                "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
+                "9bf4dafb2a959a7bbefbafdedae3c021057c19a0a485e2f2c85dd4d98ffff71d",
+                "be5765dd4b84eaad441199682845f6d80fa883c7b22a11f21a836bddc1b41c46",
+                "95e7d401e6bc0624b791e7bd28eab4fa0e867beb07ef1ce1f4f8652a4e456ade",
+                "9437defabcbd9b03971094404381ee94cb1bc6ccc1ccd7896052c628f6c2bcba",
+                "a47bae9f1afdbbc378452cb274b00f1467a4ec8a0620b01c568d69716d65ad29",
+                "a1ad21eaffe6a771d7c14778c6be8d7f74e5b3610aa3b28314322e72685bafcf",
+                "a65199bb9a140718772bbcbbe7f49d82be73f76dac0b287c60c0fcd39fbd53f1",
+                "432336b2064b3896cf8afc90c44a0df95b30b8996bce8e898d38946dff5a163d",
+                "76806cb6b9a02fa86875b0c72842920ebeb052658c4023bd00f72ad35968f62d",
+                "ec9bf170cd319e9f996dbe8146fc1bc6682319981a2620e6e4d4659e2f8234a1"
+              ],
+              "locator": {
+                "line": 5,
+                "row": 4
+              },
+              "locators": [
+                {
+                  "line": 5,
+                  "row": 4
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-editorial-classic",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=ab01d05c9f940c77954197acea0cb2729f60331a3992bac18d63ca8cf7cb594d",
+              "rowHash": "f44df9479590712aa318580f47b563ddd65351dd133468fe42039259bd8e86d3",
+              "cellHashes": [
+                "ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d",
+                "ee51dccda0bd6bb9ea0c454eff928bf3aa138ea1baa35f37a1bd0f162b514768",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "2cab2ab55d5feb07c24fad05f7387990c420cbf5eaecf9b3763f7594c5105093",
+                "0e5ed5fde2faa472ec002c68209d7ac89cf685f73259854535865c81c52a404d",
+                "ee7ba94afea4ad688b1e169dbf46b925768446bdc72673fbb0d22e47ae371505",
+                "4de9ce2ea301b51cfb2bc61543fa2493a48092c1894102b4be90f761f40bbac5",
+                "46cd4473471e7f1e9183caced3b7691b6eb41d854da6cf75141a02be54975484",
+                "1840cc7135bc485c3d80dad5ae86ab1654797f17dd807847d8438421e37507e5"
+              ],
+              "locator": {
+                "line": 6,
+                "row": 5
+              },
+              "locators": [
+                {
+                  "line": 6,
+                  "row": 5
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-minimal-swiss",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=a95d0eb7e7a898d202ccf553b111d8c376c3858e629e61ca223e5bededd7ed47",
+              "rowHash": "8a8a71b0bb68c4352de1915d27b9b7e9430815dfade0e8de17905d80707492b9",
+              "cellHashes": [
+                "e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919683",
+                "930403abe729b4dcd9f6c0d363f9f2516ab405431a06dcfc627bb72b0e9b9190",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "ac329c7edb546d730bb252e2b6e1040939fa37b8b40c79260c76de77c9d581cf",
+                "df507d1a6f6b7c0b9cf5a90cbd08a16a9eb4dc7a0a2f7d59e233962ca8e310cb",
+                "2f7e4a8e0310518d71da9e915865f645bd06c5133db228ad17132b0e00486c6b",
+                "89db8ac4fa7f264ef9581ee591e520ac45bfb49b243a5077f69d841c5ec50386",
+                "f8e0c53572d0bae38e35b06b9cbd4c9b62ff33bc9c136f186bf505143e55b620",
+                "a028b4c3da40085f7ecee94cdea783880ca3257595cb3f116fb7b29a73e4535d",
+                "bd55fc9c390e05e04528710afa11b587e4c9a2cf6cf86024f5bf709495b54302",
+                "886b6b2f2cfe051d29a2071262be447d85ce84413303b36697a3cdf1c815adc3"
+              ],
+              "locator": {
+                "line": 7,
+                "row": 6
+              },
+              "locators": [
+                {
+                  "line": 7,
+                  "row": 6
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-playful-creative",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4218c69e527c1bd03a396bcb9ada0c6e09caee64d06f3f2f3a85d938bc2f4bef",
+              "rowHash": "f8bc0df8a82c9e5fd4809799738c6d4127d51f81ef8f4cd1595a831f6f289200",
+              "cellHashes": [
+                "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451",
+                "d3e5d3d7a8f207a63b1722ab2ea145fbe3a776deb2a29b9602352d6fc17dbe68",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "81137e30adc8e381ef98db26a5c0738e65ba22fd4d55c463037976122fa7a2de",
+                "cb4b1a8de4a3ab071b1e1fc2998a994381c961e227d2600b6fd9fce80c807c21",
+                "ccd6dbefce5d23c95c43105ef5c36e7acd497c3a19505b6ba743fa621e5e2db5",
+                "a2730083239d00cb9b3c705b7597e618c577cc849b01811738b3e958e80bd47e",
+                "660f0441d814779fdfc4480708e777124e07a1d97f57de1a2231107a7588828c",
+                "0f560100f2a0af5e604ed698433fbb19732634c2b821db1bcf21cb89f4bc4d63",
+                "e0ae8d45d705ffa52674a0bc7bec0dc428f09b96cad3dba24be34d8f39c61439",
+                "20629a94122697b1718a1df1323fdd327660ae85aa61ddfaff818720f0611d5e"
+              ],
+              "locator": {
+                "line": 8,
+                "row": 7
+              },
+              "locators": [
+                {
+                  "line": 8,
+                  "row": 7
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-bold-statement",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=bb139668208de80edfde1e307d99ed560a712764a51daa1a1870d592dda2706a",
+              "rowHash": "99d410e313b41eebf70ad5ad3e1c5f0a2d5fd2eda4e7403e6218827a7a5a3627",
+              "cellHashes": [
+                "2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
+                "9a6c1145f9e9740b0e9bbacbcb8a3d023975dca3d6b2900c2ea23e3f78fe8aa0",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "3a5d51a2c047a94f43bf3f5e54d344f21c46f91ec18e76a531e00f6936079e8e",
+                "f39ce23d6ce54e4550b88db84d7b2776a410a5b09c6e49de0a96f4a8c096c254",
+                "f5968a64846f305de8308baff5b643539ab4121bb64ee56ac2339950a32098a4",
+                "d8d0b1a0b6f3a3245d45deac19c98c596700e40b872ddcb65ba1dd2e07862145",
+                "ec1ac3860f2ac4b2f708dfae2d8c7ad3ac3aa30bf3b71789d42992b50a366fb9",
+                "fa603729a7da5872b2a9a92081a3429584afc0ffdbd4261387379d02dd054e59",
+                "a0bbf9128a67a3cc02a3105e99e9e701c59fdd1264f3e2f4d2484cd81d98fcc1",
+                "90d66de5d3f3bfcc640462885cd7affa53e9da662a3a36dbf94aabcff0be4048"
+              ],
+              "locator": {
+                "line": 9,
+                "row": 8
+              },
+              "locators": [
+                {
+                  "line": 9,
+                  "row": 8
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-wellness-calm",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=260218fbc6bf11ca25355568ff81c039299aa1ae9a194c29a2a754bf12591a55",
+              "rowHash": "60fa61d40aa3ad0075825c58c9f27757088342314e32f5e5deebb011116f230c",
+              "cellHashes": [
+                "19581e27de7ced00ff1ce50b2047e7a567c76b1cbaebabe5ef03f7c3017bb5b7",
+                "726bbeec39f027a64f2cce10d7a22a60b26b3d1aeffbaac27d521f1c362564b7",
+                "e03bd0c70648bdfe27317882265dbd92fbd4d570e882cd0b7e4be0a53828436c",
+                "22c971284f12c42f7c017cb4a6262d857ebcc34afe941676cf2ed493f529fae7",
+                "f40a9b2e827fa3efde4898849bbc9da45bd83edaa61963a0e0bc7fb5f8d6538f",
+                "d864daf61f1ba3c49b767f311779d8ebaad573b0f9a03384c3c42ed36a0f0357",
+                "0e72637ff3fd42bf8204280b9d2e2af7b624e7f78c58e0f036270124e506e910",
+                "cb0a89108290a61450e2161d21113c8a8a5605e42027284223e5391bbf7709d2",
+                "4128d33af6fc8e8c79f2a1e21da24e0108b061ac76caa6dfa621a30cf2712dfa",
+                "56523fd1a91c5c921478337e778efa8530db578a09c97d2a0074c119566b02d7",
+                "463d8fa46a423a35a6f525be572829749798c9f5cef09a3fb6c37349f3d7a074"
+              ],
+              "locator": {
+                "line": 10,
+                "row": 9
+              },
+              "locators": [
+                {
+                  "line": 10,
+                  "row": 9
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-developer-mono",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=8802538d3fcee5ebe5914337650839391b4720b44e9e5a38a261e3b273f0b30f",
+              "rowHash": "fad2367cd39e67bba1fb44bd0c8414f903cb56c5c003f8e24b79a7db182da608",
+              "cellHashes": [
+                "4a44dc15364204a80fe80e9039455cc1608281820fe2b24f1e5233ade6af1dd5",
+                "f99eb7467d77eec32de7bbe1ed4e5dbadf7e514dafd0f9c57f9b12bd1a1182cc",
+                "1893a13a49c7ca5f5d82f872239d4ed8d3f4dcdc4ede0377798b5f41fa1df467",
+                "5fa693e7f5dff8e896377b86f70ef119a4027a3456a6bfaf6081f813176947db",
+                "bd897f0f300d25c31f038c0507c43176634d13461f281c18b1476964b17efa14",
+                "5cd0316b974a1762f89da4b467cd098b28a3b6d49a58a36d7f5b31db67ec73ad",
+                "06c329ee314537bd529ebff8b89871c9ed829f3ee7fa7df2bd117e49b79749ca",
+                "2708871a4828761094a6c058005f7770c3b09c3f74e3595c88c4d1cc19f0ffba",
+                "00e8415158c3097f505a71396fe695d1384e20968bccfaf904da000fca06b355",
+                "24c42eb4c80569beb5586c86a88f2ad4b611c8e3c5904424810dc9e0fc3d8338",
+                "ebe2fcf307c11f8bf5af611d825d6710e280c6a12b00fa26e60ed3d5b2164760"
+              ],
+              "locator": {
+                "line": 11,
+                "row": 10
+              },
+              "locators": [
+                {
+                  "line": 11,
+                  "row": 10
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-retro-vintage",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3bfb5108705730c17d89148db8cad3d0bec4766554028543dec50b0b8b9d224b",
+              "rowHash": "b264dd9a58e0768cb124d8576671b81702531ff4fb985450940107826e17a1db",
+              "cellHashes": [
+                "4fc82b26aecb47d2868c4efbe3581732a3e7cbcc6c2efb32062c08170a05eeb8",
+                "09107e6c1e753439f89f1e6a85fa28e50efcdae4b9087ef2c9c21d8789c7fdbf",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "2fa46a9387e276790e93ada5eab7f7ff7cf37f370ae8e4a61cd07cb1b85c0676",
+                "7a96c7cc11470ecac4a7cb51d31ae7704ffd43c1743002cbaac0c2981a47ed7f",
+                "ace2b616daf3be6171621d41f913f4efcc9c47c3f406dc90daea16058b62842b",
+                "f80e2b7c910f4e10807216845f293d64178de8326e55d798da8c668386db89c1",
+                "b9c001856c670758f11e90b50b89187269f488b6e3088401bc6b60a3af0ebf48",
+                "f470c6465423d3601eff6c9f3388d66c458d9cff7b615cfa94feaa9221331665",
+                "8ab7f9f0bf1701b4a9ac1eb84c9852d54caf484a8e3b3ab9744f741667095f56",
+                "45911f7528d19041983ba16b846f55c8fb0b3d2df0ded111887e97116eb0f41d"
+              ],
+              "locator": {
+                "line": 12,
+                "row": 11
+              },
+              "locators": [
+                {
+                  "line": 12,
+                  "row": 11
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-geometric-modern",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=bd450572f244ce8bdcbaeb8e9a62dab1bd4bb1f3acc85b2cfa18a8d7db218808",
+              "rowHash": "2dabefee330ac42ef0c7bd11466584c262233e5ee4071998f82544d29bea7cee",
+              "cellHashes": [
+                "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+                "b400c32d8cea16ccc51c649b570921647b4a43da8ae588f05cce76aa62b0ed57",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "6de4046257d346df3a04387b6e21e093929bf185232af3e9b585da36283bf7bd",
+                "127bcfe9766058c95045fa15138dcb1e331ee4f334f35e26d92dd546b274cf9a",
+                "34b9e4c4a2add9c189b5bb5710e539ceffa817f08fdc0121da02ca5cef54d9a4",
+                "2e4e09c74152e6429284cde701e949f0226ac763c885f494b10c93a9dac59df5",
+                "fda000ab10856e1253787e48e97d639ab6509f4b6f11f72c35d70e07aee194b6",
+                "c5e145f2a3e8b5b4011114af2b4849051636676c5616dd94741dfe3604712967",
+                "ca4f52c1edbe7437ce01b1895b2b8015ffb27765d6d13cf8cdda947e0d768b3e",
+                "2b7ebef5cabe02ddff9d4c3bc6186386fac7063e385e91ae6d99775b3b71b7e5"
+              ],
+              "locator": {
+                "line": 13,
+                "row": 12
+              },
+              "locators": [
+                {
+                  "line": 13,
+                  "row": 12
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-luxury-serif",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=6736be76ee39f2693520902ba97daa19d0fec4d470dca932c3f36bdea03c8805",
+              "rowHash": "1367009601c894ece6bc0825b4ca7a6892996be1f8b922f181913a11d6c3395c",
+              "cellHashes": [
+                "3fdba35f04dc8c462986c992bcf875546257113072a909c162f7e470e581e278",
+                "aa2fb79d607818df0092de7c40b52ecc75bb821058ed89c52e92bc1213c4c833",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "55c5aa79268b9797c32cf9fd85093fd63164ccc0f94322ea8b7c988d2eeb9587",
+                "55c5aa79268b9797c32cf9fd85093fd63164ccc0f94322ea8b7c988d2eeb9587",
+                "cc2994648a799fbc61319c6704e84f77c8e0d94e357f2467c6423f9c227ec236",
+                "33a87a2bbad060da8850fe59450ee1c63b60a558e7032e0d08bc7135ad5e969d",
+                "06f427a669fae5826026030d4e89da0e3e0e450dcb254ef92bd83dee53131825",
+                "34d16d126713b267b76f82c29118f00cd966801b190b0c20e7311672d77be500",
+                "6ad27422d42065732f785ac681c37115a09b2a0cccb1a7bbf860ddccfb7d90fe",
+                "c9e177432ff1c7649a302cfc940197dd0d390c68b9871ab233d78b4b3e3bb315"
+              ],
+              "locator": {
+                "line": 14,
+                "row": 13
+              },
+              "locators": [
+                {
+                  "line": 14,
+                  "row": 13
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-friendly-saas",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=30b6b2c79dc57566bdf6e80618b7401159eec71f27ffbe94e73a0c50dac3442b",
+              "rowHash": "e0163aece8335b10bf9f3c5192bdc08b84fe2471eb215f18ae52b4249690716d",
+              "cellHashes": [
+                "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+                "901c244339e46ee23bc8a448f02ea93234ee0df0bae49bdea5df55efb1d768aa",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "0280bb7500a1932719aaf5b0fc5e442e51ceb68cfaf0d9b58eb0c4e1a1da0ef9",
+                "26c12a414c33bdbbe50aad26805143bb833fc9be7e0c855245043ba82d6aa753",
+                "68f8cb68424d56894039d86e8bd2e25c653c937d2a1438bb56984efe8b4ab6c3",
+                "876b0ac2ed577512b9e3aba043865bfd463b7ca94c36680d7530e1229c11350d",
+                "c61a55e07efacde14ecee04e4125ba0f3b42e0a4ca25464c3de18c7a59c8ef43",
+                "6b6a73029b6eb6ba26d3f3c290705cc55634caecb8f6a7d4e2b43bcfde5fe6a3",
+                "810902cef89f0034ab5e249d2c3019dbfe0b211c0275a73db2ec89e0ace1477c",
+                "db9c79eda66f992b3731bafbc683035f73da2e871e776aafa263a63afc4dbe6b"
+              ],
+              "locator": {
+                "line": 15,
+                "row": 14
+              },
+              "locators": [
+                {
+                  "line": 15,
+                  "row": 14
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-news-editorial",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=d5b9d5fe49861c4ca4e7a3ca737c8d042b55e8cce117e91aff4af9a38abfceec",
+              "rowHash": "6ece238a338131b2f2614ed80d69c3ccfb9cbc37b2a70ce933114763aa44d03f",
+              "cellHashes": [
+                "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
+                "e7b0b55ff2901549baa6a0b792d3c79a5bdbfa041c9ab60b900e5f28b240d6ab",
+                "5b70aadd54dc132d6d9f62e965fdbb1ab90322ca4e81b55e3417ce6426f8741a",
+                "863b9343fac4943c6095008c81e41877c75d8d244219dcb754b64934d2b16a5d",
+                "c7df4b55bf83a8a55a292e5e79f0f23c853b924a7881c418668583faf52e6ee9",
+                "88f03b52c7c249bb8ef99b91c1220c7466d1df399665a95f95b3050a05058fa9",
+                "23e7350d2525718f3067f5dae060da117deae89f22f6c594f6b11320f04494c3",
+                "4d8d06a20dc34f5d69622ac713ed4cffec4188f1492083974a6f4e8b76563bdb",
+                "ee6d99dca8040dd441feab60ad2776f6e865f2b43a0cf670fdf61da34a9e357e",
+                "76ab083f8c2a8df3737b9e470f36aa5d7f653fe9447cd09129245836e680b5d7",
+                "b0fdf3c0c367cc9bc1b6f089236905c41b8d61dfef2b384012d5e6eea475933c"
+              ],
+              "locator": {
+                "line": 16,
+                "row": 15
+              },
+              "locators": [
+                {
+                  "line": 16,
+                  "row": 15
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-handwritten-charm",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=848a6157d459f01442fd95d1aa7579a6dcf79594dd561767e03416d70cb68461",
+              "rowHash": "e1bf40b3536629337a22d817b89557d0ee1608eeaf125b01ecc2c19a74eff560",
+              "cellHashes": [
+                "b17ef6d19c7a5b1ee83b907c595526dcb1eb06db8227d650d5dda0a9f4ce8cd9",
+                "d53cd5e2852b9fd5c0074279620f89a794a16cdbca5c6f8c0e6372715d785a73",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "1af198a25aca6d8afaa1b568e39d91c3345ce1b3b118575dfe65aba54e5a4b53",
+                "cb4b1a8de4a3ab071b1e1fc2998a994381c961e227d2600b6fd9fce80c807c21",
+                "b403053d9b53481a80ee72e1ef0a5ceb9bae6b75b7bf429e518ee6451892a1b1",
+                "0f3cd14df083a9ec17d30a87a0cdb2b2b91777e59913a9f7611b45fa7a597f72",
+                "a01c798bf2ec08250f1969a7274011dbc3b70b1ef5b8db2ade2cccfde48db409",
+                "670988f2ead01d1774092d4b744045ada2db1e64faf187c7117276ff05775b81",
+                "0f6dcabe1f9a381c96beee56c036a7b2d1c551892d1b51c3446b607344b9bc37",
+                "289e6eb8c441ca309a8ae67f4e77e74359351466a10fd69acdc78a7a095b25b1"
+              ],
+              "locator": {
+                "line": 17,
+                "row": 16
+              },
+              "locators": [
+                {
+                  "line": 17,
+                  "row": 16
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-corporate-trust",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=9eb87397a2841ffbdfb31565e03a6b0c82eeee322b50d79eb9c58f5da864c659",
+              "rowHash": "c77f2d968a91bfaf28f830919dc71ef7d4a121a21f7a1acd8a81df23aba4c880",
+              "cellHashes": [
+                "4523540f1504cd17100c4835e85b7eefd49911580f8efff0599a8f283be6b9e3",
+                "5663fbb53b22f2ef2c32bc5e1fa0113343ce6919f64ed2c8d15af1c6874e90ea",
+                "0b2b973cc665b621f37c16900d264be8f39d4c59fed94e228876bbcb9c924740",
+                "12148b1f840a64ca319055261b1851569c014ede2f13b71cf08d920ee3c5ba42",
+                "12148b1f840a64ca319055261b1851569c014ede2f13b71cf08d920ee3c5ba42",
+                "cf8fbc00695aca78a4c7f798da4b2ed80c609c15228db4d5a90e2ea70bf24dae",
+                "82fc766cf1f7c8dd6c6726cba66ae23160c740bcc679b1d6a52c4c36fc468d2e",
+                "eb45a1b9ed2cd245f3662bc2f9c39a640bb0e294d85f2a792ba76b7f918f0830",
+                "c0dc26c637407dc43712c50f3843f3b92860ce8c08e4c740e63abb5e9c6c5a36",
+                "0decffe800218b4bb789ceb7df700854a3e95681ba3062b78c4882e8f59b0f0a",
+                "49ec8d10c13a1efe0d13de9f75caac8ee643067a31aa45d4ca3d983b842b0657"
+              ],
+              "locator": {
+                "line": 18,
+                "row": 17
+              },
+              "locators": [
+                {
+                  "line": 18,
+                  "row": 17
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-brutalist-raw",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=0de751e17e8e5a497030d8dae8144957bfab14276980bf634191897c2fac51a0",
+              "rowHash": "4476a10f91eb407a369718c6f9f01a82e33755d732e7c142a698ea383a03e894",
+              "cellHashes": [
+                "4ec9599fc203d176a301536c2e091a19bc852759b255bd6818810a42c5fed14a",
+                "c4f099e691d409a763749497774c265b02ab7d8f10e630bb307fa61918f8d503",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "bb9fd3dac315065e45635c7c6ec80d776b5cec0c143e55bf58242c1fa47d8293",
+                "dfdf6039b8f0bb9f66268a04465efc6e781c67e13bab573e4f5213ca5293d5ef",
+                "1f2d7082ff30150b3d43c52d1a7eef3f3c603525fca930cf87383476263c18ea",
+                "cd7410e3c0514c1ad01fa21151685d9b2c2e6f1303192994bd3c3b0e2d5b75f0",
+                "7628f81198071802115ff243afe686f5b9a6af097e6562949db00b7ace137d7c",
+                "62d78a4f77ab3ed5dc6f7d30b96874c270cafed772f747f7a0cc25e157aadb0c",
+                "34319408faf13a225d217902cdedcb0b7c7549fa68447390d22b7d486a7b5614",
+                "917c233c86211f13ae77a509eefc74d796cf661fb4f9431310212c067943b1c7"
+              ],
+              "locator": {
+                "line": 19,
+                "row": 18
+              },
+              "locators": [
+                {
+                  "line": 19,
+                  "row": 18
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-fashion-forward",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=8a943b650a8a6a5a22a09ee9258f20f1d6890175cf12438987ee9f300f54e7e3",
+              "rowHash": "7573c3914776570274ab52c8230b580ec9e283fe206602d4a538bcb68b2db1f3",
+              "cellHashes": [
+                "9400f1b21cb527d7fa3d3eabba93557a18ebe7a2ca4e471cfe5e4c5b4ca7f767",
+                "c03b57264a8b9b7bb6fd8a60cc0ea1bec57941d281ab6f0a5d60e051b3a3e1c6",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "aa83c2303e7db2d1c10aa4d5a0b7fa18d056f4c380ffdebdf5126ec80de754fe",
+                "c04dcd9a980a5f8c24e478f2236943332972dba5a7e78a070d694ab5fd957f55",
+                "164ffa96fa08f8c8b8272f5e4d418050e2e3ca8650a56f552a094c75de6567cc",
+                "f85462b748df13dfd8a65a281b2b4ca435353496d28903dba68c6f2b7731d8d9",
+                "bb5f422ad4f38e6cf5956d0448eb164d108205e909b6db2575524739a06ac121",
+                "024dbbf924c78bfe603923271006a54131d1332804989db84fa9fc0c55c0e138",
+                "bc9884dd986452efe8f444f87adeaaff6f4d195eb5797a2c527fa234e52ca735",
+                "02e0574602f865175337599f7fde289f8ec04c1ee6b684155435e3cea815b76c"
+              ],
+              "locator": {
+                "line": 20,
+                "row": 19
+              },
+              "locators": [
+                {
+                  "line": 20,
+                  "row": 19
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-soft-rounded",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=f90d4b2fa3a783088c6c256ca79caf67eda3b3f6da4c02fb969aafda97dba350",
+              "rowHash": "9815117e64b77ccb17e093f2bb3b77564e3094ac372e2b09cfb2bd4d3a22d183",
+              "cellHashes": [
+                "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+                "3d55016fdc56b458130a0c032202c3c38dd22ab2f0538ed126423e64dd1d6d38",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "9108fbd9a5a58e0f210fb4540ee67c82c88cf001363b44aed2413371d2d04fe2",
+                "9108fbd9a5a58e0f210fb4540ee67c82c88cf001363b44aed2413371d2d04fe2",
+                "b8478908027fda42a70efee656daf4010ec276039018a5d7e90f5f364ce62265",
+                "b27ed61fc16046e6e1e4c6b3451504aad5d85ee17d98747c081ab5e76b4d8952",
+                "21b685e84782ff72313a066af1da63734a762a363b0c638e15c767c488d104bc",
+                "7b9d0c7ec1db54a49b973c7692bf5c5abc4d207e9a38d40539041f138390b10f",
+                "c419c2008cac630df0b8beb3165dacead4b8f60559be80975b6c50a68f7b0b85",
+                "22629646c16f2b3f4500fa5d24a57575b7f5790f81ace68c6cdf170382d94f16"
+              ],
+              "locator": {
+                "line": 21,
+                "row": 20
+              },
+              "locators": [
+                {
+                  "line": 21,
+                  "row": 20
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-premium-sans-dm-sans",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=da296cc03b557337b653333572fff23d2a7a00797f83a13b42b80b7a1e748bf2",
+              "rowHash": "1a95ee7a4194cba64301b64e361cdb48bd816cbc0731731ec8a43510d18d5b24",
+              "cellHashes": [
+                "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443",
+                "6da2e7c2c5ee6dfd3560fa96f47a763d22529e1b1ec98dc09a5f500fa139bd28",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "930dd8b534cc78b453a32520b1a30b3d201adbe71f078a66f0f3d1fd9a0752e3",
+                "e42550ccd0b1c014802b197b10aa3632ac7e192f8f05718278729ac7b185342d",
+                "d5ff1ae3dce313a6aa996497097143e7b20d2b2678630d0ba706ece327a2e1a4",
+                "410f663c090b381c2fd0011fb7b44fdc18d108dbda8ff402261818db8dc813d6",
+                "5fa9bd3443976a9d51d35673189ec222511de8540322e47b20cd20d4fbf38b6d",
+                "3138271950d7db8e8f9fdf732c13c45b7bfd85c27f84159b17edef4e36067292",
+                "f1170eec7a8896050a99f27ee5060ae71c24243eac8efa57fdbd5da5d47de514",
+                "27310b18d5099ee5ffbcc8a72a07723e556acefc5cc483629ef1b8491c0ace96"
+              ],
+              "locator": {
+                "line": 22,
+                "row": 21
+              },
+              "locators": [
+                {
+                  "line": 22,
+                  "row": 21
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-vietnamese-friendly",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=fd54596aeedf7bd03392fdfc2c2fcfe5c658965da0deeb5a112ac61412d9723d",
+              "rowHash": "729b899a108aa727943739648fb2deae0320c2936019af6e4d936e083cc5684a",
+              "cellHashes": [
+                "785f3ec7eb32f30b90cd0fcf3657d388b5ff4297f2f9716ff66e9b69c05ddd09",
+                "f2856b34f23f0ed9c934524c3b776cb67abd8799b01f790840e24093428eaf67",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "b781a47b9b79fa134cb5f5c647ec2fbf8a030175c29d2c3a0ef875470ba0688d",
+                "e65ad37825ae15f740c38497ff51ba8299c90e708f7a3e9446850f1aaed06d7f",
+                "1c2b537783bfdfa907ba31b01e02d419024c318a03cd312544b20e06eda136f4",
+                "94188c2919edbe210191a504430091f2837d8f6006a820a1533431f341a8f0aa",
+                "168f33b4a52020cca447a318b7a34bb017703c26aa60057d2b5273041ff13a97",
+                "37671e4f3d5e3399dfc41a9eb1c672b5d388cfdaa8a51b74cde259b486a37b3d",
+                "90a3c89c77054dc11508ac9dee0754aa460951eaec741056ea1864fc22975459",
+                "8f26220cf032a9db31d629fc39702ceae7b518b62069f3a5b15a7d8bd64b7cf3"
+              ],
+              "locator": {
+                "line": 23,
+                "row": 22
+              },
+              "locators": [
+                {
+                  "line": 23,
+                  "row": 22
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-japanese-elegant",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=feb3d45a895c434ae6d9dedd3a2003551a1c2abf528c2cb0b102e306e12d7c76",
+              "rowHash": "6423290d10d92160704e5432962b78263ca648a0e3331fff3ccdc61ae10a5a37",
+              "cellHashes": [
+                "535fa30d7e25dd8a49f1536779734ec8286108d115da5045d77f3b4185d8f790",
+                "7c2341db25e62c011be7a5d880c3483754f3ce99469debc0c447ea0bdf121d2d",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "96ad2640b188bf04116df8c675c8439afbfd8da826a77d5716b73f829f1a188c",
+                "96ad2640b188bf04116df8c675c8439afbfd8da826a77d5716b73f829f1a188c",
+                "141d064893b5cf09b40231b7ae6bd7a5944ce25e44b96217817a9d854b339024",
+                "0287898d08f175212c1404e0f7c6e2877ca728f00affd4a3609f0eb34d57c823",
+                "e8e9f54f8b8dbc2079276e52bcef38db615aa1cfd3cc330e6cf3949c842c0a82",
+                "1a64e96ec354ae2b98781aa97eb6ead94ccea4bd2325322cadc91d4676481691",
+                "f74b388e8e15e48393285e44bb6989e831a379a3f9e83ddd8adb1004569b8b2a",
+                "33c2056ccaddca69aa706f8d9d3d6af05047d2d84ac3d7c1969ef6159f36ff72"
+              ],
+              "locator": {
+                "line": 24,
+                "row": 23
+              },
+              "locators": [
+                {
+                  "line": 24,
+                  "row": 23
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-korean-modern",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3ddef98f8b20eabfd8f5b4c829be6500ab7cc9f8a0b4ab85245c9113e9b0d7ff",
+              "rowHash": "d54ef428a7308f346839eb53ffb9b93403c1d25b606357a04575846dadcf25af",
+              "cellHashes": [
+                "c2356069e9d1e79ca924378153cfbbfb4d4416b1f99d41a2940bfdb66c5319db",
+                "796db1e1a7682ea3b66945683069901219dc393c38af60694799d62cb5ef8c6e",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "a6002f2055698817d56c398c4c2377b6734594d668f72ae10a37c8d86383c20a",
+                "61946e0cbb773cf3886d0ecb0aeda069d4bc966a0f8fef61b513ae99ed38f1f5",
+                "1e414ad2266af56d1a4331bc2de9fca32641b1f80a06fd91b8b426cc0912628b",
+                "f80dae574260d8b96497fc33c1d9cd2fc261faaac18d23211bdfaf3453d254ca",
+                "f8166796d45aa1a3301cf5dcbd133ff9c4f44c1097542992d6834ca3dd3b76b0",
+                "4cae7dede16b9a047d1617dad020a0a4ae10001a182fd943901ebeb461f178c2",
+                "8a69e66545621e02d6ca8fff9a12ae4fa588141843c3e416a4c0ccf0c7e16ea8",
+                "0344a99625862b1473a2f0ace8d287cb1345eed2f0801d1708ecd04098662222"
+              ],
+              "locator": {
+                "line": 25,
+                "row": 24
+              },
+              "locators": [
+                {
+                  "line": 25,
+                  "row": 24
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-chinese-traditional",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=56bb18a1a106397c4b9c43933177b095844d9ca42c71da1b169c2edfe44a1db1",
+              "rowHash": "c87a0f29cddc4069ed8055c4c2a7b47573b09c13f0b292c138c090103e596294",
+              "cellHashes": [
+                "b7a56873cd771f2c446d369b649430b65a756ba278ff97ec81bb6f55b2e73569",
+                "bc1eddbdaf248ffdae109bf56ff950f054bf993ce2bd5bd4b899f3084c8a7723",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "21b5d8d35d659cad9022881a0a584b22403c33a9a582ba5acdaa6c716c70fed0",
+                "21b5d8d35d659cad9022881a0a584b22403c33a9a582ba5acdaa6c716c70fed0",
+                "ab65e6b4aff2a973ef2a305695f2be2bd249c59896fee06273f91f2886d8e637",
+                "0c340a8722f7b16fe6e66719b8273425c0dac22ee2656a7ce7c8024ca25cac65",
+                "336c4aac0c07c6cae54c386a7ca223b4459233576e796d170d461dd76ced6eb0",
+                "46e23d42f1339cde263eec55a23d7b596192f8b7b775a26894c387740a06c629",
+                "eb0787cc34ec1e7b01bf78c33b5bcd9d5741ceab9e63c70ade6dd7758049578f",
+                "3fa43c4c724d3f92d085ef5def978952babdf3fc0c5f5153f1506bfea6c5f406"
+              ],
+              "locator": {
+                "line": 26,
+                "row": 25
+              },
+              "locators": [
+                {
+                  "line": 26,
+                  "row": 25
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-chinese-simplified",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=83e2bbd7a0906e4d0054386c561fe44acb13bd7784a518866f0c01118dd50128",
+              "rowHash": "cd286b5d2e2240d2737d93ca7c65e382ad72090d123661d373fef0627234059b",
+              "cellHashes": [
+                "5f9c4ab08cac7457e9111a30e4664920607ea2c115a1433d7be98e97e64244ca",
+                "0a28296a18845832efaefb798c5e7eac0df134cec2d849beaf3f99af62da214a",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "8d14044451482c914fed63b261a702b04db062cddc4a83fce597856450d5a168",
+                "c08098074ff9372ec179d7672ae0fb2a1bc0d3daf8929f3b3585395ba43b35c8",
+                "83daba8b0e19afcda2f0b96d6b316d7f5f0c532c03b19ea2990464d81cbac3be",
+                "c13fa34bae6a332563edef30f14d5757effd91c3f0616ba03a9b93835ceba067",
+                "cb51f1eed1551236d6d795133f9869701689fb9ed7b580f4514eff9a646d32c3",
+                "32a07f77a48fa7a8ac8be1276fdb9fd17b3a74a3e73cdddc53414e89f2d7250c",
+                "5095076c00ec34c76aa0cf47a2e5e6fbc8cfbab5947e0b5acaae12cd57aa531e",
+                "289f4030fd9b2c213fe76278f35d8ce913ddc6b012b31aa3cfe46fa831c6a21f"
+              ],
+              "locator": {
+                "line": 27,
+                "row": 26
+              },
+              "locators": [
+                {
+                  "line": 27,
+                  "row": 26
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=cf3f11a82d654420921571510c8bf89e6617d30e1568093171a96bd284652b17",
+              "rowHash": "d2cf3a1086e0f7f0e376dec73746ab1bf859ccde95ab306c55ff8c2e8bd4e682",
+              "cellHashes": [
+                "670671cd97404156226e507973f2ab8330d3022ca96e0c93bdbdb320c41adcaf",
+                "cc8d4363ead40d61b774c41d21b7c466a18225cc2b34badd13364cd6d84ae790",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "3bf6ec38e101bd7d2c253fd482fdbcb45fd17aa8af8c4125588bdf426f08b756",
+                "3bf6ec38e101bd7d2c253fd482fdbcb45fd17aa8af8c4125588bdf426f08b756",
+                "c33254bcbed91ecbbc982410007c1a8a30ec1961610f0b10f11f2b7cd8172dbc",
+                "75dec1d546e9c63da123af5097208a0542012685f5491fd31cc4a3ad9c89c2d8",
+                "6ff970b37e2cfd294f50aab680ed6ffb36719f3609611ee204314170a441caa4",
+                "6a9ab9be17d3427e173dd79c9babb2cf7c6bdd7e50c8d7f61fa1ecc7f29a8b62",
+                "866ebfe4974ad87b3be398509cafd20686aef3127af35a2a3ebaaf168f3b0944",
+                "0fc88e059ce966d97de8cd29f5968fabfe8ab1af307c04e5a33eba12e5c5058d"
+              ],
+              "locator": {
+                "line": 28,
+                "row": 27
+              },
+              "locators": [
+                {
+                  "line": 28,
+                  "row": 27
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=5f18ad2f3566ea85eca5213a2195df17cfac85fc7c6ace9e251b769cccd7fd08",
+              "rowHash": "e1bab0235f3da83d9998ebd316d0c465c46dd3b34e613505a7ddc0ed79f3af1f",
+              "cellHashes": [
+                "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+                "7a7cae310f421f36d898f050b3f401c67e95c5c881e9accb16d0fffede82214e",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "e10e8ff7f0c496b67d36fd0347f81d1ab443fb02da35d75deaeff629ee64458e",
+                "e10e8ff7f0c496b67d36fd0347f81d1ab443fb02da35d75deaeff629ee64458e",
+                "f928b96c5958f70b90e769257609763b534f88e86a00819841109ebd9a40b470",
+                "bde3ac7700cb8b89d103ddf7faf63439cc8da4d129753ef5019d5dfd39b724a7",
+                "83d61d269326254e87a4026efd9e9930a8b04c7d233a82f96b5a62db2f7c180e",
+                "ab5aae9a01b2f8263cc298e684801808834ea46f17bf6aab4075ca979c104145",
+                "a71274a101a181c7bd2cb0f88b6bd27d812c8538311c278fad7c7ccd9f8040b7",
+                "abb90ef86f655f5f5595337ca9817c712a607feb767dbf09872e0eb8c4c44a75"
+              ],
+              "locator": {
+                "line": 29,
+                "row": 28
+              },
+              "locators": [
+                {
+                  "line": 29,
+                  "row": 28
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7e33fc27241f3536cafea10e80926d2cfd795b2193c8e1b7ecec4024be73197b",
+              "rowHash": "fb935e83769f4d49ef9135eccaa23716f17fe7ab434fbe9c099a9dba407374b5",
+              "cellHashes": [
+                "35135aaa6cc23891b40cb3f378c53a17a1127210ce60e125ccf03efcfdaec458",
+                "2e63b32011e750e2ac4002cc394c6c3a99188307fdd6cdd9e582ddbb0e4c524a",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "f815d4136d9860472ac64ef0af546d02cad1f41884f08b7d241570f95da0ed11",
+                "22ab4cafea0cdc327c6361a2d918db0dafbda0b732d90feed747bfc919e6d9bf",
+                "5eba794861d3164ba582e0eb43170b784f50119bb8f64e12c187ae40fc19d2a3",
+                "2c37f41c5c1c42bdccd1d5163f9f52908a6e1b5618d2e57c386f0f9f4e2401c4",
+                "84c7abcc86517c37b1a3f8c2dc3082aa90994c81722f268067be6dbc0e7ee2bb",
+                "d2a825addd6ab9505993a2c2dd4a63ad6f4d7a8e49b8c0516d2e7c93a24dd22a",
+                "831c79d6009e9e4b60b817a00a0057b4739c49872ce376b25a2d5948a507d5c9",
+                "9aaac8c557d14ed22b4cd82d898606083e23662867977e647c7a0942e4bf8b79"
+              ],
+              "locator": {
+                "line": 30,
+                "row": 29
+              },
+              "locators": [
+                {
+                  "line": 30,
+                  "row": 29
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4b9538ceda342afefce70b2eb3d2c4ec134456ec9450b3ae086719a034a9f6cb",
+              "rowHash": "abf037f331980f8d3f8bfe9ce948826a6caf1b5705a22623e69da5b0723c6a83",
+              "cellHashes": [
+                "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+                "d7097ca2c055e82b04488489344c181e0a9047f02abd1897fbcd9c8ddaf7b949",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "cd859ce5c9d93599660c8ca4d1ff9a0529f5c6d3f13ea023c7abb6039cc5d5e7",
+                "e42550ccd0b1c014802b197b10aa3632ac7e192f8f05718278729ac7b185342d",
+                "23dd7352547f7059e15036d561288834def30960980f599faa8eac9ed11abad4",
+                "d0c16da570b29726061cf2847ee65feab0f62609c792cc9daf7eb47cc07bf2af",
+                "8c448742484422c93560fd15c853d0ac6961e5030f57c28638994f306de77f7f",
+                "b30440fef5198f522c41932b6bb1723c8d7d1c7a9d64ec87cc82ceebb806c610",
+                "61bfb257a2c55704de126869376d78f6c0967eca7040a9df84b8c19ff4be151b",
+                "d7dda3ddc6f474991a40bba7a81f36d0d514ab3ced8012bde046bf57301020cb"
+              ],
+              "locator": {
+                "line": 31,
+                "row": 30
+              },
+              "locators": [
+                {
+                  "line": 31,
+                  "row": 30
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=e46a102e4900af052beceac6686ddd47a5cff13baec87aa1f6c7032b4da28023",
+              "rowHash": "506ad11958d64a1e1e87d09c785bf950bf8f725b54aeb8e054fd17913e802cdb",
+              "cellHashes": [
+                "eb1e33e8a81b697b75855af6bfcdbcbf7cbbde9f94962ceaec1ed8af21f5a50f",
+                "a77ff23aee6381b08a8a7983c959e41dd4c70433ff36d493377250a3ddbff773",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "f40a9b2e827fa3efde4898849bbc9da45bd83edaa61963a0e0bc7fb5f8d6538f",
+                "f40a9b2e827fa3efde4898849bbc9da45bd83edaa61963a0e0bc7fb5f8d6538f",
+                "1f989eb3b215da058fdc1381780ed28adaef59ec8a0b5602a75b89e03a1fbcd0",
+                "524cb552bdc6572c0370d6b581697a414b30dcd2e31fdbca8634f4d04f94b5f4",
+                "c7b543201377411b5dbeabb5d525afeb856d8f03637fd4ad033ff6945e67c94c",
+                "57530f4d991f1df44161b325fc42014031027c2f1419530bdac306ebcdb0df31",
+                "2b308591ab3f918b85484593b6213748e3ad01d2e766e6f40598994778393fe0",
+                "e512b51388d372e883c94eaa269722bbdd46da13f4064298bdada78f6bd3fc23"
+              ],
+              "locator": {
+                "line": 32,
+                "row": 31
+              },
+              "locators": [
+                {
+                  "line": 32,
+                  "row": 31
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=c87023cd699d9d8e7b2b59b6694e13e03d8dd6e037fff674a0e5e73e9a5bb956",
+              "rowHash": "aa2cd8047bfaa676af89b02f3ea2dc32563208d05138a6b9220ba1c8ccb2d6c4",
+              "cellHashes": [
+                "e29c9c180c6279b0b02abd6a1801c7c04082cf486ec027aa13515e4f3884bb6b",
+                "61a4e6702816b668b1e47fa6df745c3942faae09aa7765cb5a782538c93e1c65",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "1cc364db0d2c278724e56665bd264dcaafe451dae5da0f25cad28a0ed89e80c1",
+                "cebef4a02162f946fbf24718a9f9909427aae2b6e91765a210361f3a1317660d",
+                "3f59d18a9ea7a1eb52ae072d650e5e75cedc79fdc8a642e78fe377d5395f1fd2",
+                "1dd5749b3dd6a70f10ec640a8bfe6487ab3c025d3529567bb0c1de7cbfc53ff7",
+                "946be52ac1309bbe6e433d96ac0ec944aac575a94cdc473975811227ac9a77a0",
+                "db6b4749e552a3ed3184cbf88741188c31a2547aa34d0542051d253103e418db",
+                "cbd2e0804d1f56a1c60e3d6bec2485b169a5d41883a1eb96f19737a39e9afc8b",
+                "664ac8d8f40ef1458321c5042f9d8fcdea4e8009fbc04f817cafea1fe998ef55"
+              ],
+              "locator": {
+                "line": 33,
+                "row": 32
+              },
+              "locators": [
+                {
+                  "line": 33,
+                  "row": 32
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=ccabf11a68a17200341a2d5ae63b677f421d6cc0e56aa50d2d05dc4e73cf0f2a",
+              "rowHash": "f51cd5aefdc1fcf1be1e1e7e9f2e0b26d625d9c1931a4e6eaa504df224360127",
+              "cellHashes": [
+                "c6f3ac57944a531490cd39902d0f777715fd005efac9a30622d5f5205e7f6894",
+                "7af26a452152188ca4d36c9338c2caacc39060eeb6f1bf010d11c2b5e2a52771",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "17cad364b9a99d861b7467bb2b53bf5ca414db8771650a2da9bd34eec1e4af00",
+                "adce40ea2bc3c83ce128ad6ebafcc478f5c447c67447a4bfc9bc342225a5bda0",
+                "ca5e224b9b5bba3a9c6f819d0e4826d1eb1976e41992c80733b6ba4b683aa9ec",
+                "556edecc5db7441ebebd55bd66c8f825da9fd676b671f6ab931a55979f28f11c",
+                "8e255f08613715b1540afb856c85a9ddd50fbc8def120e6fb46082b45346faae",
+                "b2ab127147d89b0b783f8ef8cb3f6fdcc198b6e9bf3a9271949e6a8387f6a79d",
+                "cefb2bb0f1c036044db8b0767c6c9f6704d347d7062598fcb0026f1ce41aeff1",
+                "3255c25dd51f819c1cf5984f445ae19648cc8a54796499b8417554027c2c628a"
+              ],
+              "locator": {
+                "line": 34,
+                "row": 33
+              },
+              "locators": [
+                {
+                  "line": 34,
+                  "row": 33
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=886b28f7ac01d8efce80a06048ac6d551be17b351e26ba17a6225ba6280aa06c",
+              "rowHash": "d5237a768114523aa20b0eaf1a55f51f3284f3c6cc66ea285038c2fe8d67ee07",
+              "cellHashes": [
+                "86e50149658661312a9e0b35558d84f6c6d3da797f552a9657fe0558ca40cdef",
+                "268cbbfa2b4d93552020db5b66087c168a5031ef1bb3f7f119afc06f6d713309",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "3122af53de975cab57c53e4bd4ca1451f42d27bb62dbf03199aa946cfcf50b47",
+                "654d575a458df4e32f912a6e42eba7bfd5602e2c9c86218c44ab7ff93d41e1ae",
+                "6055d6ff6d1b145e78e66e879ecc40a9d3cd9cb25ab7d2214a9ce887fa7fa78f",
+                "f68cd01b38aa0cee3dbb5c138f6d10fa5de4aed35a0be616b05fa17b44539d78",
+                "2c08aa36a7c80c0768d30d5605e2091d6f31ce0f74c1df465fffba9c3e9071c4",
+                "7197cae851566856b1199227f130a5c39bc7d5651293871b594be59a77a577a2",
+                "39676549e52771164796f8027db940811fee66432a58730e8156acf1d5761e59",
+                "52fb95bd9d7286ccf267bf37d56667decc71fd041d61002335794044ab53dd09"
+              ],
+              "locator": {
+                "line": 35,
+                "row": 34
+              },
+              "locators": [
+                {
+                  "line": 35,
+                  "row": 34
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=2d0144989c74120c8f24dcb156f5720fa61d88460e47d9ea6e0a8475277337ad",
+              "rowHash": "03a47b9fc911b3321f2157d519e1915c1239557cfb067355387b8f688ce7f4f8",
+              "cellHashes": [
+                "9f14025af0065b30e47e23ebb3b491d39ae8ed17d33739e5ff3827ffb3634953",
+                "493474b1f7a52e9ef5e027c061ec1726cf251a04c9f90b1de1689a994625478a",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "b13f4551e81569d91e7531b387cf886b75801affd7ec06d32fb62b1c589e5357",
+                "628e990fc29fc03b170ddbfcff921c4729cd70bb43fa0f5f649058c84c17710c",
+                "363c8dda2429bd43f5a6fc6eb456dd92f74d0a6d413ac1f5f5b259224ab97412",
+                "77ea4914c6baf14c9ed34c3996db02ccadbf617b5e5f9f9a392546d7517e2b64",
+                "4fbf7f46e7b0b8b0f63727a945702fd42257a5597e9f461eccc90b9590a87887",
+                "d1f2d1444b6bde2692b4c28fdae4067e1ce0ff721f1eb8728ffec4caa3989fa0",
+                "b50ccbb8b9d3655f51645a264e411845c8c325b25c973fb2093a6eb2d2797bea",
+                "852cbfe648a6f8cffe4c8a4010a4c95ff0a9eeb9e3c9503b0f3a18e2a08b9035"
+              ],
+              "locator": {
+                "line": 36,
+                "row": 35
+              },
+              "locators": [
+                {
+                  "line": 36,
+                  "row": 35
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7c2e66240c8bfa8d966e6a5b7bfd8ebb6caf26bb6b0bda2ccb87ad41ac08f508",
+              "rowHash": "d46e522eff6f92ceeaf06cd30cc5d932241c569a82b8c6b1e7abcd0e761a88ca",
+              "cellHashes": [
+                "76a50887d8f1c2e9301755428990ad81479ee21c25b43215cf524541e0503269",
+                "fbf7d99be1dc0b0fd68e66090993c49f39b1f29d2a992bd2f9896d9526cf9745",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "5d6fd73bfdc63d02777247a65d81560f332b0d2dee91e207b9275308058b8228",
+                "eee1ef5373ee21af1de68d257e0f256f2140d62e61b07d6a622b413e223db0e9",
+                "27c948a01c0bcd540dd90c7f57d12013fa026844b3dc123f3e1c6e747781ec70",
+                "4b47a84c1e7254749b4e64742788d4a52ab05d313d11958921a3fbd11f5c2246",
+                "8e4bd8a048f5fcf6915c1ea03d9dbbdceac12d5098a1746b3b695c396593867e",
+                "1d43a706ad9c59602f00eb3b1fd7f71c01917cbe670292b2508b1706b94cf5a7",
+                "e0247d5ba2e75cf3d5e508aaf7b190a0bc5aa5c4955b6af66df4502431d36ab2",
+                "b02866d51e68acf86dffebc8309695967690d24bd7a398765bae4e4756cf35d8"
+              ],
+              "locator": {
+                "line": 37,
+                "row": 36
+              },
+              "locators": [
+                {
+                  "line": 37,
+                  "row": 36
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3554fbd97f600f5a6440de219cd9e158a35fa04f84d4b4472ff44e6bb510dafe",
+              "rowHash": "c72a107f9039cc46e89abcc335d08fa30a8deab4c96deba2035da729ef758c96",
+              "cellHashes": [
+                "7a61b53701befdae0eeeffaecc73f14e20b537bb0f8b91ad7c2936dc63562b25",
+                "665380ec2c4dc58e53daa6d9a27c02f3450c078d2c561ec023dc96acfbad0e86",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "48d88e0ddb3270b492796874c86df7f650f295ce68847d1db34d131f75f687d8",
+                "ca7b344776d17cf6d99d34cda152961c1b56eeec117ba113a57f6002e4d2db4a",
+                "b175cbcd846565849a28d071b7d6c9b84c80798e550a42da4cbde0a32225f0e8",
+                "18eec7f7924e1e1a9e42d03129b7ab88bcc87b334e8c2970deb73917addb5209",
+                "ea8de0d5bb2e1002f691da346e849fc9e9510df44a3a9f7b5f9476bbb6ee1fa9",
+                "bcca2f8891df6c39b6ca84fb915be88f7e1e2edaa5413eff049321d7f817585a",
+                "70e28f53ac5348fca1b8f2e5f848b1fdf9229d31178ff64697fb1d2fb9caafb7",
+                "f33610278899af1b51078a6b32d1b1dbb6f302dfd0a78cb3a8d6c4d14ef80699"
+              ],
+              "locator": {
+                "line": 38,
+                "row": 37
+              },
+              "locators": [
+                {
+                  "line": 38,
+                  "row": 37
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7b127367766d3cb27663203c7d5402672023e024a68244ec83bcd501e186a625",
+              "rowHash": "5690a5ef4c9a26269e477aa127115797227249c4ed0d85bde93de7565bdc5d61",
+              "cellHashes": [
+                "aea92132c4cbeb263e6ac2bf6c183b5d81737f179f21efdc5863739672f0f470",
+                "18d5c500014c20835fe7bf7fed970da7060879927a6b72d94ad389b49bc352b3",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "22341ba55c0906e9f57c284aa224b97f2e903b8e4fff78aec81cb94f99a6c35c",
+                "dfab94fc4a58cc052d52280bfac90055471d566cb5aeab65af2aa0b28f598e04",
+                "8d736aa35afb1c8cc01153cd80981be7fb0fdf41d6d425cdbb970a428550155e",
+                "bb4bf4f89f1ff4b476630b209c9f29abed6438af7db79ac535c59348527dfc45",
+                "14ce149dbb1ceebf6e26bb8501869728d241c532365c450b15c2c48f0056ea8b",
+                "7cc3cfe378b285ca893648095cdbc47a1ba7528384a10aa931a6ba6e9b524d7e",
+                "ca04956a08738ef8fd444205bcb7298e0b32bcb5225002c0cfaded48235ae8d0",
+                "70945630f1b8f4c1e13c7138b7607171177861ea672dc8716d6aab31be0b1893"
+              ],
+              "locator": {
+                "line": 39,
+                "row": 38
+              },
+              "locators": [
+                {
+                  "line": 39,
+                  "row": 38
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=70f413d7f229eaf5c74d5624170b07d678ab56fd49487218c9be082688cdd7a2",
+              "rowHash": "6ae914a4ce0134fdde5d91c777881ad27c137e32e4275373b62a262e16101949",
+              "cellHashes": [
+                "0b918943df0962bc7a1824c0555a389347b4febdc7cf9d1254406d80ce44e3f9",
+                "44b14cd4173272b38f744c7721fc17d320cd57313f9436e7eee161f7b2c39865",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "2fa46a9387e276790e93ada5eab7f7ff7cf37f370ae8e4a61cd07cb1b85c0676",
+                "f622fd9d6b309d77beda65c15d537b9e31e9a7814bd220acbd30d1c3c4a7ee65",
+                "0451509208b371669d33c285d39f8edb2de43d9526aefb74659fd3630d2056ee",
+                "652ec9217085ee20b4742463b2ef996e93591f5689480aa04b8221620f593c18",
+                "7b8f37935cbe02d9e9ffebf830f5dd52f3d7f6c82f4d24e31d0cf65a2409cd03",
+                "c64dcf485dd589daac85b33f6195c1d80976088b3b83ee864ee7697dc1456b79",
+                "5db67c430ff90aef273f7707d03cf7f900c78d41c6c073aa07cd3869f85a35cf",
+                "16da70cb70abc28aeb366dd43386ec4d4e65508a218be4430ff6fd38a1bd7c54"
+              ],
+              "locator": {
+                "line": 40,
+                "row": 39
+              },
+              "locators": [
+                {
+                  "line": 40,
+                  "row": 39
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4dc12860df5bed72c70240a85b9ad28b7528f6e04dc4941b581549789d93a99e",
+              "rowHash": "bc94033444eed4ca3bfc3a4bee93dc86e0d4c1ed65ea8c216c42e7dc88a16f22",
+              "cellHashes": [
+                "d59eced1ded07f84c145592f65bdf854358e009c5cd705f5215bf18697fed103",
+                "f9b2ef526b15f55ae1a2301e26a8e7c73da395d82cfc1e86276a5aaaf271b57d",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "f622fd9d6b309d77beda65c15d537b9e31e9a7814bd220acbd30d1c3c4a7ee65",
+                "c04dcd9a980a5f8c24e478f2236943332972dba5a7e78a070d694ab5fd957f55",
+                "6918c6466dc87a82d3d1650068990f7d9ebfeb169c93294d9dca0bf856e0a86e",
+                "700d40fe1fbc3f449ff1930d26ff7cd840dbb46b2beb2b17f4c64bbdbcb5d390",
+                "74b4fcc4bfdb6159dc4a0871f5c435a9e5df2b0689678b52ab6391943c0c7244",
+                "769dcdc60cd92df2120580aaac838e8ea06f04f358c25768a258619045bd24c5",
+                "0eff209e0e73b7edd13e0a8e2a14e0e592e52e2ef53b3466bbce631d0fd9aa3e",
+                "79bbbf0c737de290e7377f6e3683d3787a1d02e54c4c28bf7361a76016eaaa6c"
+              ],
+              "locator": {
+                "line": 41,
+                "row": 40
+              },
+              "locators": [
+                {
+                  "line": 41,
+                  "row": 40
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=ba35a2a77a7fb94b725a9e623c20d60879d1d8b21c2f68c471f38ca7665b3103",
+              "rowHash": "bf84e0fcdfb34bbbc445ee9caf09e2d05352d3b507da388217bff3dfc33d8fb5",
+              "cellHashes": [
+                "3d914f9348c9cc0ff8a79716700b9fcd4d2f3e711608004eb8f138bcba7f14d9",
+                "d085ea0b60fc729fcf281db40bc8ec4d1e422420d9b2f405cfc69b283d93fd0f",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "d54dea241034a8cfe6be92682f472e55bcce17f47246fa43eed4877cb31a7d72",
+                "6d74360b15e7b80ab09cc4cdf69a1708b3a3aae39c10cf4828268b25d84d8a95",
+                "e213a341c13857b519f5f36a7def55a48f068a75c2c4b1181a3e8a0ba84f339f",
+                "7266c05c5eb5a6efd7aec719a4c8ae8eb1558b016b8a18f5c4808145db47fff3",
+                "df34cbbb05b4d122e8a3accb33678162926ebee4cab46aee4c4e25e9a10863a0",
+                "a306945fb78e0db0ae0f7dd3227da8f5cbe29cb134f67589e43e5939ff28dc6c",
+                "4c948938c6168daa75a9977408476599810fa684299486f8e158d5b0cb131abe",
+                "6b6786137e31b580dfb9c04f3a8b56e326e2bbedc18d743505a2675620fc59d2"
+              ],
+              "locator": {
+                "line": 42,
+                "row": 41
+              },
+              "locators": [
+                {
+                  "line": 42,
+                  "row": 41
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=233cba720114ce51c3a3ef7f924cff6d9d65b8e1ad4b743b6395e179e40fd538",
+              "rowHash": "b43a3cbfd9123f2710106bfd72114c5b124f41450824b6ae966ab54a42da05fe",
+              "cellHashes": [
+                "73475cb40a568e8da8a045ced110137e159f890ac4da883b6b17dc651b3a8049",
+                "47c51cf641b2d8f0f89dff6b1c1ad7777fc1fa13a3a32d11faa097cd439c800f",
+                "e03bd0c70648bdfe27317882265dbd92fbd4d570e882cd0b7e4be0a53828436c",
+                "f1f3348a9d39f16dd28e3374b1fb1c777fa1ab4019618b8e36e0f67abb326cd3",
+                "9cc6f1d9a33a138c5fde491aae99efc272ed1ca8dfdb3009db53d8e228f87293",
+                "541460c658e05c4d7e9c090b9f9ee9fae8e93872986d6a77b4352c6d90cae852",
+                "9c20ea7f552897efa3411a5e34435069d9ab0dcae873aa08900486f75164d396",
+                "0e16480d9a6dfb374c4828e64927f6820d1a2cab0e65d82f9e7af4ec6bf638ba",
+                "dcedfe053621aac1b1f1701892e9cc726671f0c3a797d7d3a55eb48337ad0537",
+                "7b1d49d3b6f0bbad1c4b5e5b63cdfc31f7d3c60009493a916fa108a7e78e5b24",
+                "7b6c7723bf49f545252408e0fabb7c42b8bbee84486a468c3678600036928ee5"
+              ],
+              "locator": {
+                "line": 43,
+                "row": 42
+              },
+              "locators": [
+                {
+                  "line": 43,
+                  "row": 42
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=f17e8e1e64ac28e8186abc1c7d6f5659fe3e92a646f1073a8394225a91e8bfee",
+              "rowHash": "956bc0b98c182a76a13d77f473aa8096e3371e6484d789a6f4e215fdc9368b26",
+              "cellHashes": [
+                "44cb730c420480a0477b505ae68af508fb90f96cf0ec54c6ad16949dd427f13a",
+                "9814ae4da666f083d0e34eff6a459afef2550d1f0af9dff4b36df90da75b5b48",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "c480e45be9c2c6351adb7ff94c95acef6e790b44238a998f5f0c7ea120b0ca07",
+                "bd3edbd6ee8c179ddac6e9632e7506aff9100d74ddf320af67bbf778d79be994",
+                "c2b46d594c2fa90974131d3f2b8fdb381c66495c8c80ee4d3e1ff89840d371cb",
+                "f76619a81814d00ebe3a446ed94a3b9b55c35a583e01e224a65827689ac5d574",
+                "0a3791adccabb13e5e4e9923d9894870180a34ae2df3561fa997ac3f4f0bb6c1",
+                "40ea8ce96a67c7d5416da2366c9199b9c4b920ed4c7acadf6cf3b6825f315d3f",
+                "926085f7bf0384a4b7ca55bfb4bfc91bdee4ea022d45a3008dda62dac702b341",
+                "22bb2c5b2ccb33b72843502c41d6acd3b289bfdc079adf9a639d817a511b93b1"
+              ],
+              "locator": {
+                "line": 44,
+                "row": 43
+              },
+              "locators": [
+                {
+                  "line": 44,
+                  "row": 43
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=aadcac27f3812ee4f378996b3a65456aba69e5be9108f33eb25ddf1f7626c018",
+              "rowHash": "fcfb223f6b026dfe40d05b8726e13e56d35193a6d4fd5679a9e010a99152ec84",
+              "cellHashes": [
+                "71ee45a3c0db9a9865f7313dd3372cf60dca6479d46261f3542eb9346e4a04d6",
+                "638a9766768eb11ba04791dc7b1475627ca293a54de61b1466c0b45439bd15e7",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "75d6b4579e1d29eb63434c20563ac1113686a449ae5928f2956a28a61672d440",
+                "0cf7b0abb942e5ff0e4fe081f7d29a70bc7125c32969647d424c1f7e5fce045e",
+                "088600265931ba6b3e4e9734460aab531b45058e13d106a5f9c21f05c41bfc22",
+                "0afe7ada503a5379cc468b81d31b4e8fe2231784efd92870dd7118d370347fc8",
+                "a6be5ea653a6d16dfd8226c2d8f1d8cd0c7be68e9b22cd3f95871d904836c18a",
+                "64a7f693478d7c9f5682df416ac9303f0a93d8a7c36560a8922446b2d2a537c3",
+                "194672418621756fa1437eefbaba952590da929d93e7e68ad61bee1db4eabc47",
+                "9ee2665c106247bcc2677b23f750adb5eb4e575a3638de6d32a04db2969a5af7"
+              ],
+              "locator": {
+                "line": 45,
+                "row": 44
+              },
+              "locators": [
+                {
+                  "line": 45,
+                  "row": 44
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=22d3f1ba71e50dbc4b286e5728428e4e5f03307bc883a68474cbc9bf50210937",
+              "rowHash": "e34f84521fe99f23e2cd57d3bab35597d7e90970c7e109b3a7e2f6cc11ada333",
+              "cellHashes": [
+                "811786ad1ae74adfdd20dd0372abaaebc6246e343aebd01da0bfc4c02bf0106c",
+                "8d6f7cbbb3b065ccbc6eb76081d425a768efefe78345771ee5218ec492008737",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "ee822d907eaea1ac9e809a4a14484099641d86507c8d4e4042ce64c5c72e5209",
+                "9575c0bea7e6cbd209dfac41f199e78305891fe3881719a77c7b7b60e7d49d7b",
+                "e1e4fcf2bb41d7bdd6bc81b7884427eda66b1f13d61fbff53a4446a21fa5681c",
+                "d15ca4753280526a31532893613d69445e77b34f3b16d0e0859aa9a6115b106b",
+                "555bf3ae42d48759e3b93df3663d481cf697da1eddb142b207bb639b74c9e766",
+                "77ba9fd231b621d524aea7abe4de8337be2e4d6e7ce3f958a2d69901cfc6431b",
+                "b1944a294298d4ec1bc46265f2dc35da8437250b9ec9f5eb8f5b4cbef815e87d",
+                "df983c41a023d360a8a353aea8423e5fa7da74d736b6c78e6f4a2bd94e376640"
+              ],
+              "locator": {
+                "line": 46,
+                "row": 45
+              },
+              "locators": [
+                {
+                  "line": 46,
+                  "row": 45
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=0d6dbed73f5644ba40f0f97b72ad450832bb539bf9b8095cb2312d9e698e146e",
+              "rowHash": "50534f0c3472831ceafa5da6cdf3411798911b115e139024081b2416abffddf6",
+              "cellHashes": [
+                "25fc0e7096fc653718202dc30b0c580b8ab87eac11a700cba03a7c021bc35b0c",
+                "053f24e064f06306dc34582ac6fe0aa4ee3a1b88b0f33cae26cab16fe1a21aa1",
+                "b9111cc5b6fee59b0f328779a36f4a4bcd3b10e2e9fea35803df691ddcb78f7a",
+                "10c6fa951d02cfa5402a7f7092ace6a8024462c4f13dc6be4a7f9a702915b6f4",
+                "5e37577a11c63f9d9a6115403c0a054cc51971418a47be32d0805470c43e8f79",
+                "740a4ec01664e5f2f87e65fbbb12eaefefe8d5b57d0c74feed042c9d684103f1",
+                "39701858911480d71b1820612607a03195a58635a3a9bec2067f4add5343a26d",
+                "70d10071490c1d9a43d23469708234c746e32932f1e03c99f51f51825ee264a6",
+                "9e68e9307ff317adcda85fa1563dbfadeb30e40c2dfe0d0a6e8cda2f98f7e22a",
+                "6cea378f5557bf01c5585419c7a16effc972d93412f82d4ed1403bfa0b87c0ae",
+                "ed787c6aac4b1800838803c4b446e1c209c27a36eaafe6139d2d43f9b1caa3cd"
+              ],
+              "locator": {
+                "line": 47,
+                "row": 46
+              },
+              "locators": [
+                {
+                  "line": 47,
+                  "row": 46
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=139dd2161f3c4171536e87022b710a7bb93d18c75dbd0f629fca43e33128cb1c",
+              "rowHash": "5243bf95e694149d0f491c19cd60b5a0b523d6da763799039a16eabd02f234c8",
+              "cellHashes": [
+                "31489056e0916d59fe3add79e63f095af3ffb81604691f21cad442a85c7be617",
+                "4a732f5a82f18af39a4dc0563a09c63cdab4699631030eb50f98843dd004530e",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "8ef2df9540f01b6e52246bed1b5bde4274c93077b75a59cc1571a50f087b0127",
+                "e7603285613d75e67f3284a201985257bb2c956dd548f85b4d63593e4d2c3afe",
+                "56ae18eadca2db26e21bbc1c23400320c2ad211a51c9ed02ec58cc4523cded57",
+                "d0de722f17792a097ebf4e80ace63b769ad3959a8c4051177e54f00d5350fc40",
+                "78724e1fc1c21de11c7dc769afb8ab2eaf5a92f5c16c1ef602ed95ed880559b8",
+                "0ff9c2911e426f74dc1efba767a645157289a2e5dcc1c63ec1b6cd4ac19fdb2b",
+                "964e1a90f5ae1321bc7cea9fb6de282dedde4b14b968137ffeeb3db91c946364",
+                "c6f296a38040e66e27e626fefb1ad24f4e0320aa56c146ab84352e3dbee33cf1"
+              ],
+              "locator": {
+                "line": 48,
+                "row": 47
+              },
+              "locators": [
+                {
+                  "line": 48,
+                  "row": 47
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=af52dce9dba8422fd3ca5afb0f7caee012cb08b5d4b530ebd122207c8cb8b73f",
+              "rowHash": "bc1bb90e355ba450d5e561f51d0583602fdce5c52fce89794cafd45f56821669",
+              "cellHashes": [
+                "98010bd9270f9b100b6214a21754fd33bdc8d41b2bc9f9dd16ff54d3c34ffd71",
+                "f977dccd57a9c4b612173dc4822968b16d4e9653bdbd511e4dfb175e6c9405ab",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "6d74360b15e7b80ab09cc4cdf69a1708b3a3aae39c10cf4828268b25d84d8a95",
+                "6d74360b15e7b80ab09cc4cdf69a1708b3a3aae39c10cf4828268b25d84d8a95",
+                "8d3b0cdf06d4448c9cf70e54040d2f1e8463e0bd1e776d23f284f081d05593e4",
+                "e3b576aec9fbfc484ffd0d2601855b563f61cdb3eb1c54c41f57ed8fbf053a79",
+                "c673f4b912215a5778efde3d000695b4f848e061cfaacacea359b7a26207f4bc",
+                "de0b22a456faeae9231d3dabf59c55894c8fa65b29df7d7b22c2fc7353048e3f",
+                "de692938937be263321c604258b04ccb8c1fa764a290297a45d7959786b08391",
+                "1c6737df76af46e0c7ccfa1798d7c1c2e5d428e0061ff66cf43125dd7118f8f3"
+              ],
+              "locator": {
+                "line": 49,
+                "row": 48
+              },
+              "locators": [
+                {
+                  "line": 49,
+                  "row": 48
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4b9c14d297cdf4ca7b78e62da7d0179027c73fee8c3dc7ccd60404d2cf32ccd0",
+              "rowHash": "d8c8cd75b9b4e7448a175fd1fddf03fd369372a5349b046f896f40ca85518183",
+              "cellHashes": [
+                "0e17daca5f3e175f448bacace3bc0da47d0655a74c8dd0dc497a3afbdad95f1f",
+                "d753e5ed15e59f4b652d517d8dbf3362ae5d5e4119c03856f95ff35d2f7d9788",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "dd339e285b5d9a897512d3b942f31ffb901e4781c06f601ed41e079abc9421a4",
+                "f88645b73e05809043b5ff9c9ecf5e8c521d31d33cd11b2bf3d1d3703783bed4",
+                "8dd21f4ad2a4024e8c7eec2bcdc020132c4f1f4fda21cc23f2e923b2d4a9f5f2",
+                "bb676ecfab9d4d2f5ead4ab2676460d3a6857abbad54aedde0efd28a68de4de2",
+                "3a320e0ac96add850d1cf06c8229be0f6a336333b705b0938593fabf7798be5a",
+                "c163602b34fd008db25c8b77bd90c17898cdb4cb3a7eae6164bc65e70490e876",
+                "74af483821ba557207a3be91c52e5866fd40bddf30e4f1933933e2d965bb18d8",
+                "bb9c83af3a446ccdb5bf6feb62ea7d576b8d76702891efdfadd842e8083b7d92"
+              ],
+              "locator": {
+                "line": 50,
+                "row": 49
+              },
+              "locators": [
+                {
+                  "line": 50,
+                  "row": 49
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=519a965ced4cc9ed3528043bb661c219de9c4ee4d8bb6c99991855554bff91f1",
+              "rowHash": "fb191fbd03e1275dedee926adc2f213cdf68ff057b61bd8a4783a12caa2c7f3c",
+              "cellHashes": [
+                "1a6562590ef19d1045d06c4055742d38288e9e6dcd71ccde5cee80f1d5a774eb",
+                "63b608012a78ad808edde55e15f8664ec4dbfef1153b07d378e8681807d1fe4c",
+                "f0d5329f690765ffa964f5cc732596c690fa1267baeb80d9956b2224d7c1c7bc",
+                "c6eb24c923baebb6e46d55e6e89daaeaa7d607238a085229999d24f65e203cb3",
+                "c3d23743f7a4b6de24b1dd27e7ffa37c8d22d2862a49448afe37b567e832f8d3",
+                "a1529460c9020d93d7258bc9eae64718b851db902a7d1e036eddc07ab3de5641",
+                "1cb069751a713290fc64ebdd041546f394e8beefaaa3205d1178c71357640610",
+                "495edcd1b82e59367280f2a86d43da75a30ba735a8596db4f9eee8c77c93a45f",
+                "46d7e91b5f931f3737981c021aa29dfeb83cd72a5980eb5a2d19e5657273ef8a",
+                "14480915db9bd0f6833101b80959ac74c8536dddcfaa16da2c0266f055fb1985",
+                "0e26618fe30f8a4b49d92f74988c6f5d6b37c88567a2dfd34ebd1ffe82de78ab"
+              ],
+              "locator": {
+                "line": 51,
+                "row": 50
+              },
+              "locators": [
+                {
+                  "line": 51,
+                  "row": 50
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3f3ed6a0d7fc56522f74846b133f335b01370c28c3808f86ed740dc915f547c2",
+              "rowHash": "54f251be52193df02d92d524053fdbd139653c33a7f88aeba8f44f3050f98823",
+              "cellHashes": [
+                "031b4af5197ec30a926f48cf40e11a7dbc470048a21e4003b7a3c07c5dab1baa",
+                "1f4806b9d8e5ad71de5de506f0f358426c23b7c47b31d014b88a8acea355465c",
+                "0b2b973cc665b621f37c16900d264be8f39d4c59fed94e228876bbcb9c924740",
+                "acf708b3a3836ff2b1898d7b10638d68f590a837b055e304781a2c7595490847",
+                "f1f3348a9d39f16dd28e3374b1fb1c777fa1ab4019618b8e36e0f67abb326cd3",
+                "05a6f23b5499ff601d9f66293c558fd63781752bf1df1ceb4d3e97dacbac103e",
+                "2168b58cd21b0f1be378a7bb723bdad1a4bad0addb022f19221cf991c6deae88",
+                "ea9280d90c0b4f96c97c4445ddcde9afd28d97194bf5942bc1ee2720e17053bb",
+                "4ccdfcbc5e586a2f21ab64aa2827aa2a942de5b9314deaa0df242617c961c440",
+                "fd2ec0a51b1a54f459696211125f227f334a1579f0cca1c79d9c5aae5b78241f",
+                "944896d093ece3f1f1abda9d46117ff6c6ddf6eac22b4e7bbf11948179471313"
+              ],
+              "locator": {
+                "line": 52,
+                "row": 51
+              },
+              "locators": [
+                {
+                  "line": 52,
+                  "row": 51
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=d840f1fb1b74bfe764d50a329c51c9cd235f0039bb9c2f4d85f877b6df4e8802",
+              "rowHash": "c63eade6ef598e8039f17f351283c0fe935b1656146166507aa9eeedad56d7d2",
+              "cellHashes": [
+                "41cfc0d1f2d127b04555b7246d84019b4d27710a3f3aff6e7764375b1e06e05d",
+                "0783a80254d9cb3f45c65cb52da8291e38c22b1feafbd0a8f1115c33f35af274",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "0af5b5c81c754bd7508c6942dc58dae53a62a934ba9682c259418af59eac4be7",
+                "c063222be8415cbba0612bb85faccf5a342ee66f8217b12762cf5e61b21ca6ff",
+                "5d9f50f80a8a4afffe74e677e8f3e454c2b01ee2e54325aedeb41439c8c2e873",
+                "9001700e78747219be2da0e63961c916730eb7d7f3432479ed80fa5a9b4bfb26",
+                "0fff6d38bc4d7df03e910067aa80a4442a6ada58b6adff72ff3cf9ff92527d10",
+                "56eb48be068b1573b4b330b5675fe1eee406025d75e8a2c306f49d430bf30655",
+                "e29b85e8a0ffe32e4e4109c689535efb9681fdac01deb4ce7b4fcf8fba6d5958",
+                "e2c92b882e967093cd447539f9b39b347ec56e03ff0b922836de892166dd33df"
+              ],
+              "locator": {
+                "line": 53,
+                "row": 52
+              },
+              "locators": [
+                {
+                  "line": 53,
+                  "row": 52
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=682587a0e59f565184c2b9e411e8a1274f6698f7bc6eec6749ea1d8bb23b5e09",
+              "rowHash": "f51cd322bf9581de54b2d7da6d97e139d2fd8a9438a7b80b4581fee8a66c4c79",
+              "cellHashes": [
+                "2858dcd1057d3eae7f7d5f782167e24b61153c01551450a628cee722509f6529",
+                "9caa0060c92f8b77851a42e53279b8a142b27eaee89e70bc432e7b7644e6111d",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "b42a38c9cd17a883fba22d7e1b3f7c8b9f6f0c12885f84232b2a6866c4d15d11",
+                "628e990fc29fc03b170ddbfcff921c4729cd70bb43fa0f5f649058c84c17710c",
+                "995d05e3e1ff041456b2cd5044d85d5c2fa0bfe737d0351b93902d2cde9e4308",
+                "a9681acf01f03120ceb738c9378f7677b82081f7bcb8552d24f9a313a6d0b3fc",
+                "8a9d0961ee38d5ce309b646cd279b1c0ddb596bdd5cb9215d95b77a77eb2ce63",
+                "12a8d98445d9d730138771dfbda9aa031b1430ed749345f7ca40069b9417c033",
+                "24ca28d69b0c67461b7db41c200343deb2999e61244f599cbf10d001e5f6ae0f",
+                "be990b89a3d2691829a62c946d6cf37b0160d0e9d6f38562e21c164719354954"
+              ],
+              "locator": {
+                "line": 54,
+                "row": 53
+              },
+              "locators": [
+                {
+                  "line": 54,
+                  "row": 53
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=864506d40aaeb74e4dc4c7bbe8c88e6337f89e480638693a1a06cc626ab46d20",
+              "rowHash": "b46cb4e81ae89d1aaf710a25374bd5cf7c62f1f1a25e7cf6c7f6ae765825b349",
+              "cellHashes": [
+                "2fca346db656187102ce806ac732e06a62df0dbb2829e511a770556d398e1a6e",
+                "e272956104af58308706086e0caf6702b070deb7c7224d04fce564aeb5cda7a3",
+                "be5765dd4b84eaad441199682845f6d80fa883c7b22a11f21a836bddc1b41c46",
+                "f815d4136d9860472ac64ef0af546d02cad1f41884f08b7d241570f95da0ed11",
+                "805fe1a16b37224cbd72801ca14d02c4e373a8c92b6e7692df1031964e628a82",
+                "47c193f0199a4b65e220f972fadf52f49ac7bc3eec9c8b291bc26ab6767a6208",
+                "db25b94a0c4cf305ca13d2b5989fc7e151ace4acea19697ab33b5fe2f0b6b34a",
+                "d53eb5b14a6ed687f529c83d713762b83b8f1f6e9384253336ad9c28a5cf96c2",
+                "27e20b2ad7d31a0d3574c3b425c674f4ff1eeca15afd65263497a0d6c4be863a",
+                "282b962446a3604c994b65d3d8ce3a6b194ed46447f79558b49b620b173785cd",
+                "4fd380549a75c19e147af3156c157d17bafdeb264f0365d472f696bca6dc2a05"
+              ],
+              "locator": {
+                "line": 55,
+                "row": 54
+              },
+              "locators": [
+                {
+                  "line": 55,
+                  "row": 54
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=de1b3278c317b414c3f686184964ad5b80f85e5a82fad25aa7a1f11de56f773c",
+              "rowHash": "4c0d3271d4bfc72c145cd71b9aac9a9bf0a81a5a77bb5473a1e68854951330af",
+              "cellHashes": [
+                "02d20bbd7e394ad5999a4cebabac9619732c343a4cac99470c03e23ba2bdc2bc",
+                "2bcf172a4b14d90e0e2501e6a865991bf4213027c43d94b3a01504343b2f9b95",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "1508d29ef7913235f65c52e176e2177214d95a4e2953e37a686a453c5f42f1ff",
+                "01b6135ab71e54236c23d6c67fb093d47a129a5853c3dbd4caa5528c525a3504",
+                "9c04b989df13c0b3352b00129613360cbf2fa5b2dd6a03640cf4521ad4d7c7f2",
+                "ae143b3075126dcfe0a36298aa7a758a083769b2aeefca6a344b5fbe607bd6f8",
+                "46cd4473471e7f1e9183caced3b7691b6eb41d854da6cf75141a02be54975484",
+                "ac432f2456c59a1516a29014970e9e8d774c2b2ce84bcbe7b9058d76dca0bee7"
+              ],
+              "locator": {
+                "line": 56,
+                "row": 55
+              },
+              "locators": [
+                {
+                  "line": 56,
+                  "row": 55
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=57cf6b78d99a8286445807ac54d549ed9b215f9bf0c216c518470f93fcdc346b",
+              "rowHash": "624c0efb1970cdfbd66291b1c03d6c7760fd743de13408e3330c158e9e2cff5d",
+              "cellHashes": [
+                "7688b6ef52555962d008fff894223582c484517cea7da49ee67800adc7fc8866",
+                "e93bf102bde0546c9142b256870aee5fe0463167df2049e59308c26cbf088e3c",
+                "cbfdf49965977174b5808217ecb175b1edd85ffd4137d0f468f5f0846e0ea075",
+                "4f8bc2a62240885bab620d158c1eba2ae486dd6260f7b80d1ec1884b242a3d31",
+                "12148b1f840a64ca319055261b1851569c014ede2f13b71cf08d920ee3c5ba42",
+                "12feba59bf11383d6384047450ade46c6b0483e3ab18bac503a04f7734c3088f",
+                "d243a96c3378309ddf0372af89dd7ce404726a941413c925c7c2c8589c20722c",
+                "566301c5f19f0ce86ca68e436ca840cd0871b6f3edbb18648d91665a92fd7b99",
+                "6fd2a45f29bc8f45ba5429c06c526c6825359fae034fd344e40057164fce7249",
+                "5bfbb0019e893302746925422b561061c4ad565a7f161156954290b2c60969e1",
+                "4e2c02d555c2fba05dee13a600a6523ff15e162c3fbf6bf79ff73bb17c85d08c"
+              ],
+              "locator": {
+                "line": 57,
+                "row": 56
+              },
+              "locators": [
+                {
+                  "line": 57,
+                  "row": 56
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=468496b2fb31b831bbdcc873e57ed68f0761504d35f9e9ea95b37f25a08b1879",
+              "rowHash": "7f8ce16d1d96d88169e60375815a967cc322ccbc4592c07a5c4c7d609b9aafee",
+              "cellHashes": [
+                "c837649cce43f2729138e72cc315207057ac82599a59be72765a477f22d14a54",
+                "eb374cbb7ada2bdaec9c7a6a1f55c319b486ddc1fb33070a81b132ee0b892013",
+                "e00238f766f5ac8f8a8c9b6b54c8ceffcb66c3bf08288a17a458e717140c0faf",
+                "42972c1b3e85cfd086628e6177d23a0a057132fb6f897d58d987995d442ace69",
+                "64186d3a47fa48395ca92bc8cf24deb55eb59497bbfc14753195928ef292da66",
+                "d2b0f416870ebce4805ace3604617e12194d07bdcd7409176f651155f6010385",
+                "f4f84caa8fd8752fe4c952117ca594a232c09dabc46c589eb4cb000729aaa038",
+                "2ee63fd97f5f46e48c7eca91d5b03f685a4e10a7e857e54c7e4fe595cc5bc97c",
+                "859c0a5e6d264b0030db869fa0156671575860d91c7918d008e9c1aed3a1026f",
+                "9a19e8babef24984e18684e080eeab05f3b79afcb9ec628166ff3063d24d7398",
+                "1b18c2e960cf49f8bbccf5e944a6047151e3d53a4399cd05ee1274ef45bafecb"
+              ],
+              "locator": {
+                "line": 58,
+                "row": 57
+              },
+              "locators": [
+                {
+                  "line": 58,
+                  "row": 57
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=0334fe84dcc6770bfad2f7e4eec4aff104efc85c719130d2d3f4385e2be29fcc",
+              "rowHash": "565441e19431b99568275c9402e07dc625f43ada06612041996123a6196c5021",
+              "cellHashes": [
+                "6208ef0f7750c111548cf90b6ea1d0d0a66f6bff40dbef07cb45ec436263c7d6",
+                "c3f2c7935b3e3f57dee4eac46b65eddf64892e6453ab789292bc8319619148f8",
+                "926d16b001decb04a2bcb29b2fc3ee7c97c38f1a29c01b6719b58bafdc7e1936",
+                "2fa46a9387e276790e93ada5eab7f7ff7cf37f370ae8e4a61cd07cb1b85c0676",
+                "2fa46a9387e276790e93ada5eab7f7ff7cf37f370ae8e4a61cd07cb1b85c0676",
+                "ea21d64c7c12cdb14da826c43e2f91cb17de1e0f0dc420855c0ca8ecdccaec20",
+                "6a95ff6cd4f7fea8a43508b9b43bb8a55db0dcfe281da2b1fdde6891d28f6aa3",
+                "9cf7d9daffd7b9ae8acc2887532e33d821c2d951bbddfb9259b6b4cdd21ba64a",
+                "910ab019e81f6ed62f43725ec52d5100459e2c87c48c633d95d018395a78eb34",
+                "07e1e6a8b778a3d2f57f49c55b67992aa2f6a25203a99f72abbd4805dba30b40",
+                "cadcc2c99ad70486a2e87a81c231cd211849bd6767d8c28dd5e6730a1a20982c"
+              ],
+              "locator": {
+                "line": 59,
+                "row": 58
+              },
+              "locators": [
+                {
+                  "line": 59,
+                  "row": 58
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=dd08ee6553cfeec7b204569dfbb7c4383f6ff5382d7b3c233bff35a99eb14b0c",
+              "rowHash": "87706bccc402c3f5cf129cb22fe3eff0ff4ca64170c69b7f568ab9b29daeb025",
+              "cellHashes": [
+                "3e1e967e9b793e908f8eae83c74dba9bcccce6a5535b4b462bd9994537bfe15c",
+                "bae0cfafca42e280427c2ccb268e097fcd8f1ac49436fe726a3017f7f5d00a03",
+                "be627b6d5a4d1e279cdf28d6eb812023cdb217fb67486e6e8338ac3fec541128",
+                "630165e7ad188e257b119ce020eae98941f2bcddb5b5e228202cb1ecb3ad8355",
+                "d23566bed11b1974ceda8dbda0db15f111eab92057955b3440b3203845c01e3c",
+                "56e810fb790a58bef38aa21ff1ccc93172914d5cc95236f0d55f1a2586352dc7",
+                "fd820944b1efcc47f3c068bfa685b33ed87277a367663e20412e43019f19f3fc",
+                "cd63d4fca58abac847a8e91e62aa16948a976a8ecbbcf88d9a4cd3f461a0dea5",
+                "6bcba22cde14bfedd5d6c98392b2e8fa677cced83f3c994e17be5779d2d2d9aa",
+                "e1ec88dfc1bc0de5b401353be108c53d43b1cc4ff01ddffa214432f549a01d59",
+                "d9c537382b368389931c60f2db024605553d441cc664ed00389e4e78f8d95a78"
+              ],
+              "locator": {
+                "line": 60,
+                "row": 59
+              },
+              "locators": [
+                {
+                  "line": 60,
+                  "row": 59
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=ba19b3b299cce553afd194e2d8de345fe6b6e3495c5ab246d33cb6b747a71dc1",
+              "rowHash": "ae576c98524a3742d1bed54a2f38b56597410adf52106f1baf906c45ffabdbd3",
+              "cellHashes": [
+                "39fa9ec190eee7b6f4dff1100d6343e10918d044c75eac8f9e9a2596173f80c9",
+                "44aeaca8c75c4809d30c6b5a5fdb797d81f828e1c022f0ddf792a6f03c23f548",
+                "0a196ef6b40a31738c4616d10219f7dabca986b803f7cb84b7efa412bd3fa738",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "3679bd7220a566178d4d9173436c4c9d435a4b8ae5ba47cb258b21803863a260",
+                "cd32e24e89c07b5a7416ce092f41e6f2dace1f075e15b1765103c149dbcc31ad",
+                "ee7ba94afea4ad688b1e169dbf46b925768446bdc72673fbb0d22e47ae371505",
+                "4de9ce2ea301b51cfb2bc61543fa2493a48092c1894102b4be90f761f40bbac5",
+                "46cd4473471e7f1e9183caced3b7691b6eb41d854da6cf75141a02be54975484",
+                "5672aa965e536a1b2b4663132c9e5ede80a9bb0dbe2b1386d619bb30241732f9"
+              ],
+              "locator": {
+                "line": 61,
+                "row": 60
+              },
+              "locators": [
+                {
+                  "line": 61,
+                  "row": 60
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=6ef578cd500fad927a681a9fcffdb57db1351eb2241177fe8a4c6ebb294d698c",
+              "rowHash": "dcea89ae1b17514e0bf70d168e1cd62611bdbe2f162920c5be67ced9e9cc3fa1",
+              "cellHashes": [
+                "d029fa3a95e174a19934857f535eb9427d967218a36ea014b70ad704bc6c8d1c",
+                "1445a0f85342f37035db9b53bb7a429b886b99afa2fac7f25df601f6d8b2a3f4",
+                "9424d01555252c561e0cdd9b1febeff3fba4b6426ad494afe73d4e75d86063dc",
+                "16e5c9d28f9f24309fa15acd155d8c0ae9e349cbe9535dbb4749423bba0b3d24",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "606b7df4bae9c88ef905ddb5894e78246cc9af1c9464a2d954ec46c48ea30d01",
+                "c5c337d87b2881c3b1e4be2a2964070fcc245c2cbc0a4d55751faef9288f543b",
+                "69d4acb105fe077c1f2f1d86c4e1961d83c9038a4e4b82ae78ac413895fe2e1f",
+                "952c1f09e5614aaaeea6e6e50646fc0aaf98ccf1d96087d1e4545e5c4db1985f",
+                "ecdceed2352a56a96af495c50a2ccd05fd06b9303bb5ff8249d8d4fa8a39474e",
+                "9b2e82882c44170b18b628cc326145a66e2fda0a2bf166fb61381ad28bb9caed"
+              ],
+              "locator": {
+                "line": 62,
+                "row": 61
+              },
+              "locators": [
+                {
+                  "line": 62,
+                  "row": 61
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3d38623c28e828433f43126ebac2907f7cb54930c9b8080344c0b9615ee0b86d",
+              "rowHash": "b596fccf772d85c7b39a35c029c2d6162d6b3093502d1e33a612825ed4b4c82d",
+              "cellHashes": [
+                "81b8a03f97e8787c53fe1a86bda042b6f0de9b0ec9c09357e107c99ba4d6948a",
+                "0ec0ec9cdf9f15101f4b94993efbdd213f351d45d46cd9d562a20994aee9eb17",
+                "356692d97030701741f82cec1b2bf3d0facc296bf1f6dbdc0b86a4cd2c0592a2",
+                "22c971284f12c42f7c017cb4a6262d857ebcc34afe941676cf2ed493f529fae7",
+                "22c971284f12c42f7c017cb4a6262d857ebcc34afe941676cf2ed493f529fae7",
+                "eb051be1b31dbc00e03efbbf9023e6f0e0d15b8f97514e9c2729a0c73fde9eb4",
+                "8e1eb594d18daf83adc28b0a24bdc9e458ba0a361a6561a1425b5c1a78ccddc2",
+                "a9adf05bd21bd4f2e3e9d57f1a9dc1d7f57ae8da9edf177a0660ba274993338c",
+                "feaad789218ae1788a40bad73420f1bef91f5f1d45445d5948e441a00a0e8fcb",
+                "ab3304be7305b076718c8cefce34ad09016e9cbb7d47e75b5095d8dbcaa166e0",
+                "e22e94be35ae4a1edefb53872d906fe6deff7bff49d384a4926f40d097c3334c"
+              ],
+              "locator": {
+                "line": 63,
+                "row": 62
+              },
+              "locators": [
+                {
+                  "line": 63,
+                  "row": 62
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=0889b1ad06f43bca4d5454076c44a3f4632483a24eeee99d4b065d90205eafab",
+              "rowHash": "11d5ea5e05e118be9eda695f54893c0d4e32ba6ecbf205b9ed93238406675e6e",
+              "cellHashes": [
+                "da4ea2a5506f2693eae190d9360a1f31793c98a1adade51d93533a6f520ace1c",
+                "fecd6b086fa0d1d1d54e7a3b89869428440ba717e31e3cf5f5ab473a80a9c4b7",
+                "634e2fb78b9c78ca2068f4057b611c634438d8e2972880a3c0f2fab3127562bb",
+                "0cf7b0abb942e5ff0e4fe081f7d29a70bc7125c32969647d424c1f7e5fce045e",
+                "0cf7b0abb942e5ff0e4fe081f7d29a70bc7125c32969647d424c1f7e5fce045e",
+                "f0590f676faf06693808abd924990fcd2dfe9788101d71bf492a544106f01bae",
+                "fb94fea334a2cd90762ad9710fbe5de49d24d24189db577484a5aa8944c53932",
+                "158d5e5f772d07aee6994f245ba4cf52f6d48b853a25391134e7b25a976b7687",
+                "8a3366c0560a72fbe7c67146b592bcc7febd17b8eb52ef6e5778bccee13e2615",
+                "f335085bdb150c1aa48aeddeff7fe0f9c251968eea20e9c55d5c811ff90dea4e",
+                "9285d51021b516f1f501709bf651e1e64a1fda253ab501561fb5bbb638bfb5ab"
+              ],
+              "locator": {
+                "line": 64,
+                "row": 63
+              },
+              "locators": [
+                {
+                  "line": 64,
+                  "row": 63
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=761bb6c575e139ac01b8608ebe8b85b1f542f0c3dcb90c1655ea669e3858e0f7",
+              "rowHash": "9231ef5ea41600fc7a694e0895b32ba7bb1d666201d7d027d75ffa6a36368043",
+              "cellHashes": [
+                "a68b412c4282555f15546cf6e1fc42893b7e07f271557ceb021821098dd66c1b",
+                "9cfb8761353dd56b0bca2e4f58a9df2daa6c369942974a040f1dd47ec896980b",
+                "d5c010ffc4904a82550e0c27b37a561fd5609e8b1fe8ddbf503de24f954edaca",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "6c6e577dfc6adfb9bf545d0c440f905bec313c31d08be705f77c16bc221bc608",
+                "ba1f43705e1adb8335193d63f8665e4fab5eeb13712b9e842352dad607d5c23c",
+                "638b53fa09b67b44db6d0dd1d351dee1f2dfdd25026d74fdba961e06623173bd",
+                "2c13e375eaa669ed7d406489156ab9ae718157cab245cc6f3981c7e32b678585",
+                "46cd4473471e7f1e9183caced3b7691b6eb41d854da6cf75141a02be54975484",
+                "6073289558e9430881349c881981af83db746472369ef85cd0d975e4178db304"
+              ],
+              "locator": {
+                "line": 65,
+                "row": 64
+              },
+              "locators": [
+                {
+                  "line": 65,
+                  "row": 64
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=882de0c417d3f6b878746e1df05bfee5895f37a4709f8f8e50407c5be67724fb",
+              "rowHash": "1ba273f3769a1b5591fa55f9c06327619196ec4338e8d2cfa1deb4ec11fb334f",
+              "cellHashes": [
+                "108c995b953c8a35561103e2014cf828eb654a99e310f87fab94c2f4b7d2a04f",
+                "7018e92eddf718a7cdabcc20a824f16f7ec05423603dff5cf24720f25b152efd",
+                "41bc272183bde5f6638ac3c7b355f5bbb49a6f04b3f667d4d941512dc817e2c5",
+                "26c12a414c33bdbbe50aad26805143bb833fc9be7e0c855245043ba82d6aa753",
+                "26c12a414c33bdbbe50aad26805143bb833fc9be7e0c855245043ba82d6aa753",
+                "20c275da7b0cb438f616fcde2217c2b8d4de67a8b759e92ac47ca511f527e9b2",
+                "3176a290e2cd3b4d805e63afb0467b1e9d018228ac512a8644814da775123815",
+                "12a81e5d9a5740da5e342a4dc70f8d159a4155135e5d1e38c0e5c4a76634b253",
+                "1fcf1b886113259e412ab14f2f9d48a5db583e0967276b583fa528cb9cf0b4b4",
+                "ee77e3e439d02ef5e0591b08cd644e557bd25232d21db4672c999491f8606970",
+                "80063b28f97c6ef767fc7fd485c3234ea5e9e9067a86e6a195d5f38184d3d0b4"
+              ],
+              "locator": {
+                "line": 66,
+                "row": 65
+              },
+              "locators": [
+                {
+                  "line": 66,
+                  "row": 65
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=bcbb41582a6ff5b77ad038efbdf7e92973e5624f5e35ce370883c8319582d7be",
+              "rowHash": "087773bd0f03cfb83eb08ec3233829558f7c540a6f3ec6dc0f99e5b058ac78a1",
+              "cellHashes": [
+                "3ada92f28b4ceda38562ebf047c6ff05400d4c572352a1142eedfef67d21e662",
+                "8717332344c82425aaa34966dbbf5052c8e139ec2eb4540af6bd9bda0ef4dbf0",
+                "45bfef417d64d2f48e0a3e973e59019c74ea6f26fa875dea336338b77abcba1a",
+                "0cf7b0abb942e5ff0e4fe081f7d29a70bc7125c32969647d424c1f7e5fce045e",
+                "0cf7b0abb942e5ff0e4fe081f7d29a70bc7125c32969647d424c1f7e5fce045e",
+                "8a729241017e1aa07b99a2c5a4631fab55d2ceb6b10ea4d003bfb41f064ba339",
+                "3c38abc4fb6b52176d9da1a20bf763a97c28cb8a9f9611697098f28e9e48d079",
+                "8a0fe1df5b24de66a0e79a429fda6f9b5916c0755c84b79021bfdadd21b7ec5c",
+                "c8d7d8b9e42b5131d53d4d4670f25c9453f642db0e74165a4b556d3f6c4837a8",
+                "f335085bdb150c1aa48aeddeff7fe0f9c251968eea20e9c55d5c811ff90dea4e",
+                "2172b14471a0f81948a4c4c7e649b33a4310aeb288c3289dd8ecff177a3877f2"
+              ],
+              "locator": {
+                "line": 67,
+                "row": 66
+              },
+              "locators": [
+                {
+                  "line": 67,
+                  "row": 66
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=8ae447d69311e4fb60bac19555db22a0ced8f03b35a8e51a6febc8356aa0bf75",
+              "rowHash": "094ab81dba6d3a65338c91a55ac2d4acb8b755764c2361cb179ff145769d54dd",
+              "cellHashes": [
+                "49d180ecf56132819571bf39d9b7b342522a2ac6d23c1418d3338251bfe469c8",
+                "48cadead2a8079993d23c9f6b06fa52f2ce546f2744f0f7c1fdf0c76b1432ca6",
+                "81db2c0989528cdb24f0530ce603729756565872376a278ffcb7b31c5b8a837b",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "630165e7ad188e257b119ce020eae98941f2bcddb5b5e228202cb1ecb3ad8355",
+                "6994d9076439d5e2735bf55f395b924557ebc5856321083c018899752da71a11",
+                "65f5a2a49fc5d2f44296055b6ab47e068c03ca5aad894ceb19837134bb78f034",
+                "fdfa74f39d03fd86063018cc76f465f53cb8a252a1933ee34aefd5dc30dd2740",
+                "0d33a809417e12022edcf8232b166eafac4099900556d65ffb0326d1a4be56ed",
+                "1a8f0aaeeb1d424e5936a3da6d6daa2e327253b3d78f5259f92f8f2e4f44d2b6",
+                "92ab93002d8251f85d96a741262e21393abf446ba24d43389dfab39a679a5959"
+              ],
+              "locator": {
+                "line": 68,
+                "row": 67
+              },
+              "locators": [
+                {
+                  "line": 68,
+                  "row": 67
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=10c86fd54b3d1e96426c5228bc0bffa55d54e4e6a0a69d79a948a21f9382f84b",
+              "rowHash": "611c413d750050c634b5cbe1caefd9e1e795e308fa7f380836ec50f316000965",
+              "cellHashes": [
+                "a21855da08cb102d1d217c53dc5824a3a795c1c1a44e971bf01ab9da3a2acbbf",
+                "bd400e239aa7732e9961535270dc5a97c5c36ffda38ab65a93920c1f11ade0d0",
+                "c283e13b4abb7c9379fdb343ef884067967fac536549276dd02a1080e49b015d",
+                "95e7d401e6bc0624b791e7bd28eab4fa0e867beb07ef1ce1f4f8652a4e456ade",
+                "d54dea241034a8cfe6be92682f472e55bcce17f47246fa43eed4877cb31a7d72",
+                "e0ca17398173540deb374ff2e111a4942ac321b77724bce21a4a2da393cbdb0c",
+                "a330af405febb99fc092dba090a98c83b3e21f93e4be6336f971e8f00d8ba42b",
+                "a4adf9bf4e067578121ca02009318467ab7dc4ae1c8dddd6619fcaff31e9f25d",
+                "d90eb7ef78308226ee02e24675db979c0de149e2b2991c206f2810439374477a",
+                "272ebd8d6ff7e55ba89866a674f3a10cf045946f5f409e9883240835802ac310",
+                "c83ba983d8c5fc92078aded4d8ae953a9ef033012cf0e6966412551c3fc71095"
+              ],
+              "locator": {
+                "line": 69,
+                "row": 68
+              },
+              "locators": [
+                {
+                  "line": 69,
+                  "row": 68
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=53d02471b3d9dfe4fbcfc9fb7350e2f92bfa906c6b41c456518d7ae4b16430c7",
+              "rowHash": "58684c7470a345fe8d5290d98f0e21822bc65a87dd98a052172a88919e9b7bc9",
+              "cellHashes": [
+                "c75cb66ae28d8ebc6eded002c28a8ba0d06d3a78c6b5cbf9b2ade051f0775ac4",
+                "bba03e20f7725166ecaf9402a3f75877dc87d6d8a269c130ce1bd1d5db052d09",
+                "5e22b254f64d398312c1e475ed57223c7a22271b09656ee6933bcbfb2810e4ac",
+                "5d6fd73bfdc63d02777247a65d81560f332b0d2dee91e207b9275308058b8228",
+                "22c971284f12c42f7c017cb4a6262d857ebcc34afe941676cf2ed493f529fae7",
+                "31e37f79c3dc7c575fdd97d17e5e7cdb91c218ae0fcf5a8be0e10486dcde501b",
+                "dcef4d02fa620e0de8873ca5f62cca19a38fdb3c27b73585bb08d037f01fac1c",
+                "f9d8f8686ebe1099ffb0f76af66a4145b6c808385fe9bd5fe0fd793e0a8b51dc",
+                "81ad2f3afebb5b504390a0c83a4c944c108f7d913867f1fd1cc95d199d95917c",
+                "b690c3c878f1c7e1e057af6f01ecb7d802bc8087a62900799ed780a4cd9f667c",
+                "9486f74f0eeb6c88ec32803e0cb6f4fa07abd30cd2dae0cb2bbc34e4cd2574d7"
+              ],
+              "locator": {
+                "line": 70,
+                "row": 69
+              },
+              "locators": [
+                {
+                  "line": 70,
+                  "row": 69
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7e4ddb6536cec144dbd41520432d41fcf72e5ab5cec51fe78d33a6d04df12954",
+              "rowHash": "19ed48c64575d73e8e2aac257bf4bf2495aecc09609587f7b32c0f5323b0018c",
+              "cellHashes": [
+                "ff5a1ae012afa5d4c889c50ad427aaf545d31a4fac04ffc1c4d03d403ba4250a",
+                "8abdce902e941e6b69a7c9fe86186243d20a1c9437e8b9ee0ee4ebd43abd9eee",
+                "4379d3f6bdcb8bd37d5879d1169e97ae5ffd69cd0424e5aa9febfced489ac76b",
+                "0cf7b0abb942e5ff0e4fe081f7d29a70bc7125c32969647d424c1f7e5fce045e",
+                "30a4a5bca8f4056c1f696b91f0516aebb1a79745acc17b79bb4b081c94336e4d",
+                "65a3b9df019b8892bac166bdd246911542745b6c7666e179495ecaca58a782c3",
+                "f727fc27e86d50ef320d1e6d8128ade0470b097ca976c17c9780a9a20230d92d",
+                "7bf3cd22c4469bd8df0704481fd5b422a26afccb1d99de765b04f830556ee201",
+                "076ad381e4e70f21dc9cc02bac346ca21d273f122369eb3cbe962ac8c63c7864",
+                "28bb752e1007d8c8b0971aea640b984a8cc898201cf2d88889a04f97577d2cce",
+                "72369d00823237c94956cc07a633eea7ce094468501c7ef70cc0d321f424f800"
+              ],
+              "locator": {
+                "line": 71,
+                "row": 70
+              },
+              "locators": [
+                {
+                  "line": 71,
+                  "row": 70
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=07ee3611634c5566ad976bb5e3876e6d57ea6d9a2ab46eface466de100fd3e17",
+              "rowHash": "dc5ea9cb0a0e6f3c7ae9707f877cb98333d1d975f344fda959f6b08d83b8f76d",
+              "cellHashes": [
+                "7f2253d7e228b22a08bda1f09c516f6fead81df6536eb02fa991a34bb38d9be8",
+                "23c904815380465d03f960532177d47b4557ccfa486376eacb96e204f72860be",
+                "129885dd8687f0c31170b14a3395d826d21f343097c9ce704a6cd191ccb0c326",
+                "df507d1a6f6b7c0b9cf5a90cbd08a16a9eb4dc7a0a2f7d59e233962ca8e310cb",
+                "9108fbd9a5a58e0f210fb4540ee67c82c88cf001363b44aed2413371d2d04fe2",
+                "c8ffa2c9f0cf4be03aa6ee91ee91123e86c9be8292e8b799a5ac2af3fc062d19",
+                "7a8fd58e5503e4a0a9ba291dc76f353e12210dbb97b6395e5818df44f89922b8",
+                "3490da723c64fec577bb8f6d061929ecff1a58d6c3bf9f27f992db15d00b74b2",
+                "c2c0f2e65e64860a9be61f5413a5251b2f4305cae59bfc39521a7773174ea4b5",
+                "13bef164fdf57e8426ab7154f32cf95b65f83a6a9fea1977e4ec19010eaa2239",
+                "082e1281f23b23d2999c25ff91ffe5785395f321a1dfe43500b7fe25cca50a3a"
+              ],
+              "locator": {
+                "line": 72,
+                "row": 71
+              },
+              "locators": [
+                {
+                  "line": 72,
+                  "row": 71
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=a81d5dbd1ae04569deef32824b71997fd0f5296a42ba1e1a52e96329ab92f144",
+              "rowHash": "0645e6211f41ede356cb782e2cce6918a67ab081e7bf53554f1b1cb73af35a3e",
+              "cellHashes": [
+                "8722616204217eddb39e7df969e0698aed8e599ba62ed2de1ce49b03ade0fede",
+                "a80f9a91ce61fc7ef0e7e931c77eb4be570db68b9ca5433ce81dca9957081b7c",
+                "a4e8301fbb1d214b43564d54586de3468ca420c87b6dcd94ac9dfb125359fb61",
+                "55c5aa79268b9797c32cf9fd85093fd63164ccc0f94322ea8b7c988d2eeb9587",
+                "55c5aa79268b9797c32cf9fd85093fd63164ccc0f94322ea8b7c988d2eeb9587",
+                "12395d213827c2f69b0b2e781271a25736faef1bb1a55fefa82ff27b85126511",
+                "ac1c0ac76a0233556742426041feddbaa40a578b8976378035deffb30d2606e0",
+                "df74a31c355cac6f96b48820c400d9dc39e6b279cd6a4f5550d617d46207dc9d",
+                "cec737a17f4a5e0e119e95002956cd8c307a5838a540949313dd6f01f138da59",
+                "6ad27422d42065732f785ac681c37115a09b2a0cccb1a7bbf860ddccfb7d90fe",
+                "a32fc3bb20ddde02cb0d11a39a095756b9bb37c49f3d2ebc60eaeab702f010f3"
+              ],
+              "locator": {
+                "line": 73,
+                "row": 72
+              },
+              "locators": [
+                {
+                  "line": 73,
+                  "row": 72
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=8dbeb5b0f805a19094565a26480f21e8e0a2e0809fbde24f7b0e181d98b2f5fa",
+              "rowHash": "1ecd497a98d641ebc7b143da5502ccd8af02e8c9c3d502c6c42ba1955bc11ae6",
+              "cellHashes": [
+                "96061e92f58e4bdcdee73df36183fe3ac64747c81c26f6c83aada8d2aabb1864",
+                "d3c420a601f776bee9dcd2ab3597887b2b1d59977d4821c6200ec97386d36ee7",
+                "dd592e9c8aab38768186279e197409a225ffa856954ab09e56618f56ed6f4fb6",
+                "115c9184729b90e7f08b61da13022016c30142c6a53e43519dfd7e5df8515b40",
+                "48c6207fe88689f81d1d666403d637949107c741ede38741c3d66c705b76d591",
+                "ea64a24afc85e831e84c5fa67cb43f140f31b49cc6634ff8186b53b91055f1b5",
+                "4911a8af28a41b86063b2a7f01d048877127e88048827497f2db88ecd421c9d3",
+                "e1f26d96d682528d17c20c65d8cb2c2f12f92fe62c0ea59eaccaee78229512f9",
+                "e55a0a892c1e1d5692da3a37529227fa850ce56438a902acbc0fb2313af1a21d",
+                "f85c9cc37278b79bce1bfb6c9b96b2cd02a1acb9a3082dc37476ab9dd88eca10",
+                "d4118c641b4060068705fb225a6d508ef2d809e31d3f4a603e7b9f241e018a83"
+              ],
+              "locator": {
+                "line": 74,
+                "row": 73
+              },
+              "locators": [
+                {
+                  "line": 74,
+                  "row": 73
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
+            },
+            {
+              "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=75efbc0bfa7d6475d8e410f44dd3b12d0450b3e14e5c6375444db0c0beab6b77",
+              "rowHash": "d1d15f8760d94629e0418635112c120eb3fde4b723e1a9695e444fd28483d09d",
+              "cellHashes": [
+                "eb624dbe56eb6620ae62080c10a273cab73ae8eca98ab17b731446a31c79393a",
+                "0ed316d676a4dffda89dc00390400750acc460f92b27844c3878ddbdf8925a37",
+                "7c897f8ffd2bbc57cbdef0982201e92506b064daf89970ecee8b697f5fad3dfe",
+                "55c5aa79268b9797c32cf9fd85093fd63164ccc0f94322ea8b7c988d2eeb9587",
+                "55c5aa79268b9797c32cf9fd85093fd63164ccc0f94322ea8b7c988d2eeb9587",
+                "018ccb49575ad628ec07ab0d288f5d1b9cbaeddc45533899065da28271f2b9f2",
+                "1894335b073858f8fd6d34ef272d1dac5affaf550bb282ec80259902b48f9628",
+                "57c9e88f02fe3da056debad72c0aebcf9c271c2fed0f848cc14952d905143396",
+                "8c6ce92c0b829f4dc7f30b6f131b803e79a39b1039dc2039cbb1d690edcdd83d",
+                "6ad27422d42065732f785ac681c37115a09b2a0cccb1a7bbf860ddccfb7d90fe",
+                "01deaa005ffb6ed9bdedfc9a9dccc266fb77ae54cdcc1fee23dd8d59fc6fd78d"
+              ],
+              "locator": {
+                "line": 75,
+                "row": 74
+              },
+              "locators": [
+                {
+                  "line": 75,
+                  "row": 74
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 font-pairing pilot"
             }
           ]
         },

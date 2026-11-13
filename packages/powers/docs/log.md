@@ -29,6 +29,38 @@
   unblocked by the H2-D acceptance and ready to start pending owner
   go.
 
+* **H3-A typed reference resources pilot — implemented, reviewed and
+  owner-accepted:** `VPReferenceResource/v1` plus in-place
+  `VPCatalog/v1` `resources[]` and `VPCorpusMap/v3` `admitted`
+  resourceIds are live; `catalog.resource.get`, CLI `resource --id`,
+  compose `--resource-id` and the shared 64,000-byte resource budget
+  are implemented in the shipped portable scripts. 25
+  `uupm-font-pairing-*` records materialized from `typography.csv`
+  rows 1–25 via staging-first CAS materialization (catalog rev 8056
+  `ad4afdc6…`, map rev 5775 `b76066b8…`); rows 26–74 stay deferred
+  outside the approved pilot. The D18 delegated panel ran 15 blind
+  reviews (5 batches × delphi/adversarial/party, codex gpt-6-luna)
+  with aggregation 25/25 accept — 19 direct accepts plus 6
+  orchestrator-adjudicated capacity manuals resolved on deterministic
+  digest/file-sha/schema evidence; 0 amend / 0 reject
+  (`h3-d18/AGGREGATION.json` `afdc56d0…`).
+* **H3-A gates:** `bun test --coverage` 1,097 pass / 5 skip / 0 fail
+  with All files 100% funcs/lines (1,102 tests / 56 files);
+  typecheck 115 files; format check, `check-corpus` (0 issues),
+  `check-vector` (52 batches) and `check-okf` all exit 0; Node
+  v26.13.1 `resource`/`get --resource-id` smoke passed (Deno
+  excluded). The pinned Knip external conflict (`issues: []`, exit 1)
+  is unchanged and not claimed PASS.
+* **H3-A acceptance:** the owner accepted the H3-A font-pairing pilot
+  on 2026-11-13 after the bound receipt
+  `.agent/work/h2-sbvf-option-b-20261106/H3A-RECEIPT.md` (draft
+  SHA-256 `763e0689…`) was assembled with `h3a-evidence/`. Scope is
+  the pilot only: AC-52/AC-54/AC-55 carry component evidence; the
+  other four D15 resource types, the 49 deferred typography rows and
+  the remaining uupm data families await separate owner-approved
+  gates. All H3-A product changes remain uncommitted at HEAD
+  `e72fc5b8`; the commit decision is Root-owned.
+
 ## 2026-11-12
 
 * **P6 batch 46 — web-ux-pairs SBVF admission (first family batch):**

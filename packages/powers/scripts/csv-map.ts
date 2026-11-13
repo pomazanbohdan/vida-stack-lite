@@ -9,6 +9,7 @@ export type CsvSourceInput = {
   source: Record<string, unknown>;
   allowlistEntry: Record<string, unknown> | undefined;
   instructionIds: Set<string>;
+  resourceIds?: Set<string>;
   variantFamilies?: Map<string, string>;
   familyIds?: Set<string>;
   variantBodyHashes?: Map<string, string>;
@@ -184,7 +185,9 @@ export function checkCsvSource(input: CsvSourceInput): CsvIssue[] {
       identity.set(role, index);
     }
   }
-  if (normative.size === 0) issue('CORPUS_CSV_COLUMNS', `CSV ${input.donor}:${input.path} has no normative column`, { donor: input.donor, path: input.path });
+  const mapRows = Array.isArray(input.source.rows) ? input.source.rows.filter(isRecord) : [];
+  const hasBindings = mapRows.some((row) => Array.isArray(row.bindings) && row.bindings.filter(isRecord).length > 0);
+  if (normative.size === 0 && hasBindings) issue('CORPUS_CSV_COLUMNS', `CSV ${input.donor}:${input.path} has no normative column`, { donor: input.donor, path: input.path });
   const groups = new Map<string, CsvGroup>();
   for (const row of parsed.rows) {
     const entityIndex = identity.get('identity-entity-id');
@@ -199,7 +202,7 @@ export function checkCsvSource(input: CsvSourceInput): CsvIssue[] {
       for (const locator of row.locators) if (!existing.locators.some((item) => item.line === locator.line && item.row === locator.row)) existing.locators.push(locator);
     }
   }
-  const rows = Array.isArray(input.source.rows) ? input.source.rows.filter(isRecord) : [];
+  const rows = mapRows;
   const seenKeys = new Set<string>();
   for (const row of rows) {
     const key = typeof row.rowKey === 'string' ? row.rowKey : '';
@@ -220,8 +223,16 @@ export function checkCsvSource(input: CsvSourceInput): CsvIssue[] {
     for (const locator of group.locators) if (!locators.some((item) => item.line === locator.line && item.row === locator.row)) issue('CORPUS_CSV_LOCATOR_MISSING', `CSV ${input.donor}:${input.path} row ${key} is missing locator line ${locator.line}`, { donor: input.donor, path: input.path, rowKey: key, line: locator.line });
     const disposition = String(row.disposition);
     const bindings = Array.isArray(row.bindings) ? row.bindings.filter(isRecord) : [];
+    const resourceIdEntries = Array.isArray(row.resourceIds) ? row.resourceIds.filter(isRecord) : [];
+    for (const item of resourceIdEntries) {
+      const resourceId = String(item.id ?? '');
+      if (String(item.disposition) === 'admitted') {
+        if (disposition !== 'admitted') issue('CORPUS_CSV_RESOURCE', `CSV ${input.donor}:${input.path} row ${key} has ${disposition} disposition but admits resource ${resourceId}`, { donor: input.donor, path: input.path, rowKey: key, resource_id: resourceId });
+        if (input.resourceIds !== undefined && !input.resourceIds.has(resourceId)) issue('CORPUS_CSV_RESOURCE_UNKNOWN', `CSV ${input.donor}:${input.path} row ${key} admits unknown resource ${resourceId}`, { donor: input.donor, path: input.path, rowKey: key, resource_id: resourceId });
+      }
+    }
     if (disposition === 'admitted') {
-      if (bindings.length === 0) issue('CORPUS_CSV_BINDING', `CSV ${input.donor}:${input.path} admitted row ${key} has no binding`, { donor: input.donor, path: input.path, rowKey: key });
+      if (bindings.length === 0 && !resourceIdEntries.some((item) => item.disposition === 'admitted')) issue('CORPUS_CSV_BINDING', `CSV ${input.donor}:${input.path} admitted row ${key} has no binding or admitted resource`, { donor: input.donor, path: input.path, rowKey: key });
       const covered = new Set<number>();
       const columnBinding = new Map<number, { whole: boolean; intervals: Array<{ start: number; end: number }>; text: string }>();
       for (const binding of bindings) {

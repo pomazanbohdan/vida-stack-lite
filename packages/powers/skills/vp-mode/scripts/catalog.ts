@@ -2,11 +2,11 @@ import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseFrontmatter } from './frontmatter.ts';
 import { FrontmatterError } from './frontmatter.ts';
-import { validateAgainstSchema } from './schema.ts';
+import { validateAgainstSchema, canonicalJson } from './schema.ts';
 import type { Schema } from './schema.ts';
 import {
   INSTRUCTION_DOMAINS,
@@ -27,8 +27,9 @@ import { parseVariantScalar, parseVariantSections } from './variants.ts';
 import type { VariantRecord } from './variants.ts';
 import { extractModuleBody, parseModule, ModuleError } from './modules.ts';
 import type { ModuleRecord } from './modules.ts';
+import { resolveResourcePath, ResourcePathError } from './resource-paths.ts';
 
-export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED' | 'CATALOG_REQUIRED_SELECTION_UNAVAILABLE' | 'CATALOG_FAMILY_REQUIRES_CONTEXT' | 'CATALOG_MODULE_ATOM_REQUIRED';
+export type CatalogErrorCode = 'CATALOG_INVALID' | 'CATALOG_TAG_UNKNOWN' | 'CATALOG_DIGEST_MISMATCH' | 'CATALOG_ID_UNKNOWN' | 'CATALOG_INSTRUCTION_DISABLED' | 'CATALOG_REQUIRED_CONFLICT' | 'CATALOG_PROFILE_CONFLICT' | 'CATALOG_DEPENDENCY_MISSING' | 'CATALOG_DEPENDENCY_DISABLED' | 'CATALOG_BUNDLE_LIMIT_EXCEEDED' | 'CATALOG_REQUIRED_SELECTION_UNAVAILABLE' | 'CATALOG_FAMILY_REQUIRES_CONTEXT' | 'CATALOG_MODULE_ATOM_REQUIRED' | 'CATALOG_RESOURCE_UNKNOWN' | 'CATALOG_RESOURCE_DISABLED' | 'CATALOG_RESOURCE_MALFORMED' | 'CATALOG_RESOURCE_SCHEMA_INVALID' | 'CATALOG_RESOURCE_TYPE_MISMATCH' | 'CATALOG_RESOURCE_DIGEST_MISMATCH' | 'CATALOG_RESOURCE_PATH_UNSAFE' | 'CATALOG_RESOURCE_PATH_MISSING' | 'CATALOG_RESOURCE_TOO_LARGE';
 
 export class CatalogError extends Error {
   readonly code: CatalogErrorCode;
@@ -60,6 +61,7 @@ export type Catalog = {
   tag_aliases: Record<string, string>;
   tag_exemptions: { instruction_id: string; dimension: 'capability' | 'pattern'; reason: string }[];
   instructions: { instruction_id: string; path: string; sha256: string }[];
+  resources?: { resource_id: string; path: string; sha256: string }[];
 };
 export type TagEntry = { tag: string; description: string; aliases: string[] };
 export type CatalogTagMatch = { dimension: 'capability' | 'pattern'; tag: string; description: string };
@@ -80,9 +82,17 @@ export type DecisionFallbackReason = 'no-candidates' | 'unknown-candidate' | 'ca
 export type DecisionApplicabilityDiagnostic = { instructionId: string; applicability: 'inapplicable' | 'unresolved'; reason?: ApplicabilityReason; requiredContext?: string[]; sourceLabels?: string[] };
 export type DecisionResult = { selected: string[]; score: number; rationale: string; provider: 'catalog' | 'agent'; fallback: boolean; fallbackReason: DecisionFallbackReason | null; diagnostics?: { applicability: DecisionApplicabilityDiagnostic[] } };
 export type EffectiveProfile = { schema: 'VPEffectiveProfile/v1'; groups: Record<string, { active: string; alternatives: string[] }>; unresolved_groups?: Record<string, string[]> };
-export type ComposeQuery = SearchQuery & { required_ids?: string[]; profile?: EffectiveProfile; role?: string; task_contract?: string; effective_methodology?: string; work_scope?: string; materialization_requirements?: string[]; artifact_references?: string[] };
+export type ComposeQuery = SearchQuery & { required_ids?: string[]; resource_ids?: string[]; profile?: EffectiveProfile; role?: string; task_contract?: string; effective_methodology?: string; work_scope?: string; materialization_requirements?: string[]; artifact_references?: string[] };
 export type ComposedInstruction = { instruction_id: string; family_id?: string; title: string; summary: string; content: string; capability_tags: string[]; pattern_tags: string[]; artifact_contract: Instruction['artifact_contract']; provenance: Provenance[]; selection_reason: 'matched' | 'dependency' | 'required' };
-export type ComposedBundle = { catalog_id: string; catalog_revision: number; tag_dictionary: Catalog['tag_dictionary']; instructions: ComposedInstruction[]; omitted: { inapplicable: string[]; unresolved: string[] }; role: string; task_contract: string; effective_methodology: string; work_scope: string; materialization_requirements: string[]; artifact_references: string[] };
+export type ReferenceResourceProvenance = { donor: string; license: string; revision: string; path: string; sha256: string; locator: { line: number; row: number; column?: number } };
+export type LoadedReferenceResource = {
+  schema: 'VPReferenceResource/v1'; resource_id: string; resource_type: string; revision: number;
+  status: 'active' | 'disabled'; provenance: ReferenceResourceProvenance[];
+  payload: Record<string, unknown>; digest: string; applicabilityDeclaration?: Applicability;
+};
+export type ReferenceResourceResult = Omit<LoadedReferenceResource, 'applicabilityDeclaration'> & { applicability?: ApplicabilityResult; untrusted: true };
+export type ComposedResource = { resource_id: string; resource_type: string; revision: number; payload: Record<string, unknown>; untrusted: true };
+export type ComposedBundle = { catalog_id: string; catalog_revision: number; tag_dictionary: Catalog['tag_dictionary']; instructions: ComposedInstruction[]; resources: ComposedResource[]; omitted: { inapplicable: string[]; unresolved: string[] }; role: string; task_contract: string; effective_methodology: string; work_scope: string; materialization_requirements: string[]; artifact_references: string[] };
 
 const approachDeclarations = new Map<string, readonly string[]>(Object.entries(APPROACH_VOCABULARY));
 let applicabilityConfigCache: { vocab: ApplicabilityVocab; aliases: ApplicabilityAliases } | undefined;
@@ -234,6 +244,16 @@ export async function loadCatalog(catalogPath: string): Promise<Catalog> {
     if (previousId !== undefined) throw invalid(`duplicate instruction path ${entry.path}`, { path: entry.path, instruction_ids: [previousId, entry.instruction_id] });
     ids.set(entry.instruction_id, entry.path);
     paths.set(entry.path, entry.instruction_id);
+  }
+  const resourceIds = new Map<string, string>();
+  const resourcePaths = new Map<string, string>();
+  for (const entry of catalog.resources ?? []) {
+    const previousPath = resourceIds.get(entry.resource_id);
+    if (previousPath !== undefined) throw invalid(`duplicate resource id ${entry.resource_id}`, { resource_id: entry.resource_id, paths: [previousPath, entry.path] });
+    const previousId = resourcePaths.get(entry.path);
+    if (previousId !== undefined) throw invalid(`duplicate resource path ${entry.path}`, { path: entry.path, resource_ids: [previousId, entry.resource_id] });
+    resourceIds.set(entry.resource_id, entry.path);
+    resourcePaths.set(entry.path, entry.resource_id);
   }
   for (const [alias, canonical] of Object.entries(catalog.tag_aliases)) {
     if (!(canonical in catalog.tag_dictionary.capability) && !(canonical in catalog.tag_dictionary.pattern)) {
@@ -1016,6 +1036,152 @@ export function catalogGet(_catalog: Catalog, instructions: Map<string, LoadedIn
   };
 }
 
+const RESOURCE_SCHEMA_NAME = 'vpreference-resource.v1.schema.json';
+const RESOURCE_MAX_BYTES = 65_536;
+const RESOURCE_TYPES = new Set(['palette', 'font-pairing', 'style', 'icon-list', 'standards-checklist']);
+
+type ResourceManifestEntry = { resource_id: string; path: string; sha256: string };
+type ResourceRecord = Omit<LoadedReferenceResource, 'applicabilityDeclaration'> & { applicability?: unknown };
+
+function resourcePathCatalogError(error: ResourcePathError, entry: ResourceManifestEntry): CatalogError {
+  const code = error.code === 'RESOURCE_PATH_UNSAFE' ? 'CATALOG_RESOURCE_PATH_UNSAFE' : 'CATALOG_RESOURCE_PATH_MISSING';
+  return new CatalogError(code, error.message, { resource_id: entry.resource_id, path: entry.path });
+}
+
+async function resolveResourceFile(directory: string, entry: ResourceManifestEntry): Promise<string> {
+  const resourcesRoot = resolve(directory, 'resources');
+  const target = resolve(directory, entry.path);
+  const relativePath = relative(resourcesRoot, target).split(sep).join('/');
+  try {
+    return await resolveResourcePath(resourcesRoot, relativePath);
+  } catch (error) {
+    throw error instanceof ResourcePathError ? resourcePathCatalogError(error, entry) : error;
+  }
+}
+
+function resourceManifestEntry(catalog: Catalog, id: string): ResourceManifestEntry {
+  const entry = catalog.resources?.find((item) => item.resource_id === id);
+  if (entry === undefined) throw new CatalogError('CATALOG_RESOURCE_UNKNOWN', `unknown resource id: ${id}`, { resource_id: id });
+  return entry;
+}
+
+export async function loadCatalogResources(catalog: Catalog, directory: string): Promise<Map<string, LoadedReferenceResource>> {
+  const resources = new Map<string, LoadedReferenceResource>();
+  const entries = catalog.resources ?? [];
+  if (entries.length === 0) return resources;
+  const schema = await readSchema(directory, RESOURCE_SCHEMA_NAME);
+  for (const entry of entries) {
+    const path = await resolveResourceFile(directory, entry);
+    const bytes = await readFile(path);
+    if (bytes.length > RESOURCE_MAX_BYTES) {
+      throw new CatalogError('CATALOG_RESOURCE_TOO_LARGE', `resource ${entry.resource_id} exceeds the record size limit`, {
+        resource_id: entry.resource_id, path: entry.path, bytes: bytes.length, max_bytes: RESOURCE_MAX_BYTES,
+      });
+    }
+    const actual = createHash('sha256').update(bytes).digest('hex');
+    if (actual !== entry.sha256) {
+      throw new CatalogError('CATALOG_RESOURCE_DIGEST_MISMATCH', `digest mismatch for resource ${entry.resource_id}`, {
+        resource_id: entry.resource_id, expected: entry.sha256, actual,
+      });
+    }
+    let text: string;
+    try {
+      text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch {
+      throw new CatalogError('CATALOG_RESOURCE_MALFORMED', `resource ${entry.resource_id} is not valid UTF-8`, { resource_id: entry.resource_id });
+    }
+    let value: unknown;
+    try {
+      value = JSON.parse(text) as unknown;
+    } catch (error) {
+      throw new CatalogError('CATALOG_RESOURCE_MALFORMED', `resource ${entry.resource_id} is malformed JSON`, {
+        resource_id: entry.resource_id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    const schemaErrors = validateAgainstSchema(value, schema);
+    if (schemaErrors.length > 0) {
+      throw new CatalogError('CATALOG_RESOURCE_SCHEMA_INVALID', `resource schema validation failed for ${entry.resource_id}`, {
+        resource_id: entry.resource_id, schemaErrors,
+      });
+    }
+    const record = value as ResourceRecord;
+    if (record.resource_id !== entry.resource_id) {
+      throw invalid(`resource id mismatch for ${entry.resource_id}`, { resource_id: entry.resource_id, actual_id: record.resource_id });
+    }
+    const { digest: _digest, ...unsigned } = record;
+    const canonical = canonicalJson(unsigned);
+    const computed = canonical === undefined ? undefined : `sha256:${createHash('sha256').update(canonical, 'utf8').digest('hex')}`;
+    if (computed === undefined || computed !== record.digest) {
+      throw new CatalogError('CATALOG_RESOURCE_DIGEST_MISMATCH', `record digest mismatch for ${entry.resource_id}`, {
+        resource_id: entry.resource_id, expected: record.digest, actual: computed ?? null,
+      });
+    }
+    let applicabilityDeclaration: Applicability | undefined;
+    if (record.applicability !== undefined) {
+      try {
+        applicabilityDeclaration = parseApplicability(JSON.stringify(record.applicability));
+      } catch (error) {
+        throw invalid(`applicability is invalid for resource ${entry.resource_id}`, {
+          resource_id: entry.resource_id,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+    resources.set(record.resource_id, {
+      schema: record.schema,
+      resource_id: record.resource_id,
+      resource_type: record.resource_type,
+      revision: record.revision,
+      status: record.status,
+      provenance: record.provenance,
+      payload: record.payload,
+      digest: record.digest,
+      ...(applicabilityDeclaration === undefined ? {} : { applicabilityDeclaration }),
+    });
+  }
+  return resources;
+}
+
+function resourceApplicability(resource: LoadedReferenceResource, context: ApplicabilityContext | undefined): ApplicabilityResult | undefined {
+  if (resource.applicabilityDeclaration === undefined && context === undefined) return undefined;
+  const config = applicabilityConfig();
+  return evaluateApplicability(resource.applicabilityDeclaration, context, config.vocab, config.aliases);
+}
+
+export function catalogResourceGet(
+  catalog: Catalog,
+  resources: ReadonlyMap<string, LoadedReferenceResource>,
+  id: string,
+  options: { resourceType?: string; applicabilityContext?: ApplicabilityContext } = {},
+): ReferenceResourceResult {
+  resourceManifestEntry(catalog, id);
+  const resource = resources.get(id);
+  if (resource === undefined) throw invalid(`resource ${id} was not loaded`, { resource_id: id });
+  if (resource.status === 'disabled') throw new CatalogError('CATALOG_RESOURCE_DISABLED', `resource is disabled: ${id}`, { resource_id: id });
+  if (options.resourceType !== undefined && !RESOURCE_TYPES.has(options.resourceType)) {
+    throw invalid(`unsupported resource type ${options.resourceType}`, { resource_type: options.resourceType });
+  }
+  if (options.resourceType !== undefined && resource.resource_type !== options.resourceType) {
+    throw new CatalogError('CATALOG_RESOURCE_TYPE_MISMATCH', `resource ${id} has type ${resource.resource_type}, not ${options.resourceType}`, {
+      resource_id: id, resource_type: resource.resource_type, requested_type: options.resourceType,
+    });
+  }
+  const applicability = resourceApplicability(resource, options.applicabilityContext);
+  return {
+    schema: resource.schema,
+    resource_id: resource.resource_id,
+    resource_type: resource.resource_type,
+    revision: resource.revision,
+    status: resource.status,
+    provenance: resource.provenance,
+    payload: resource.payload,
+    digest: resource.digest,
+    ...(applicability === undefined ? {} : { applicability }),
+    untrusted: true,
+  };
+}
+
 function addSelected(selected: Map<string, { instruction: LoadedInstruction; reason: ComposedInstruction['selection_reason'] }>, instruction: LoadedInstruction, reason: ComposedInstruction['selection_reason']): void {
   const existing = selected.get(instruction.instruction_id);
   if (existing === undefined || reason === 'required') selected.set(instruction.instruction_id, { instruction, reason });
@@ -1199,8 +1365,11 @@ function checkExcludes(selected: Map<string, { instruction: LoadedInstruction; r
   }
 }
 
-export function catalogCompose(catalog: Catalog, instructions: Map<string, LoadedInstruction>, query: ComposeQuery): ComposedBundle {
+export function catalogCompose(catalog: Catalog, instructions: Map<string, LoadedInstruction>, query: ComposeQuery, resources: ReadonlyMap<string, LoadedReferenceResource> = new Map<string, LoadedReferenceResource>()): ComposedBundle {
   const facets = validateQueryDimensions(query);
+  if (query.resource_ids !== undefined && (!Array.isArray(query.resource_ids) || query.resource_ids.some((id) => typeof id !== 'string' || id.trim() === ''))) {
+    throw invalid('query dimension resource_ids must be an array of non-empty strings', { dimension: 'resource_ids', value: query.resource_ids });
+  }
   const selectors = parseApproachSelectors(query.approaches);
   const requireApproach = (instruction: LoadedInstruction, requiring?: string): void => {
     const decision = evaluateApproaches(instruction, selectors);
@@ -1428,12 +1597,24 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
       provenance: instruction.provenance,
       selection_reason: reason,
     }));
+  const composedResources: ComposedResource[] = [...new Set(query.resource_ids ?? [])].sort(compareNames).map((id) => {
+    resourceManifestEntry(catalog, id);
+    const resource = resources.get(id);
+    if (resource === undefined) throw invalid(`resource ${id} was not loaded; pass loadCatalogResources output to catalogCompose`, { resource_id: id });
+    if (resource.status === 'disabled') throw new CatalogError('CATALOG_RESOURCE_DISABLED', `resource is disabled: ${id}`, { resource_id: id });
+    return { resource_id: resource.resource_id, resource_type: resource.resource_type, revision: resource.revision, payload: resource.payload, untrusted: true as const };
+  });
+  const resourcePayloadBytes = composedResources.reduce((total, resource) => total + Buffer.byteLength(canonicalJson(resource.payload) ?? '', 'utf8'), 0);
   const instructionTextBytes = composed.reduce((total, instruction) => total + Buffer.byteLength(instruction.content, 'utf8'), 0);
-  if (composed.length > 20 || instructionTextBytes > 64_000) {
+  const bundleTextBytes = instructionTextBytes + resourcePayloadBytes;
+  if (composed.length > 20 || bundleTextBytes > 64_000) {
     throw new CatalogError('CATALOG_BUNDLE_LIMIT_EXCEEDED', 'composed bundle exceeds the session instruction limit', {
       instruction_count: composed.length,
       max_instructions: 20,
       instruction_text_bytes: instructionTextBytes,
+      resource_count: composedResources.length,
+      resource_payload_bytes: resourcePayloadBytes,
+      bundle_text_bytes: bundleTextBytes,
       max_instruction_text_bytes: 64_000,
     });
   }
@@ -1442,6 +1623,7 @@ export function catalogCompose(catalog: Catalog, instructions: Map<string, Loade
     catalog_revision: catalog.revision,
     tag_dictionary: catalog.tag_dictionary,
     instructions: composed,
+    resources: composedResources,
     omitted,
     role: query.role ?? '',
     task_contract: query.task_contract ?? '',

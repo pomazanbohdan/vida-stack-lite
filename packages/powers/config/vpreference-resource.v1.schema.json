@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vida-powers.invalid/schemas/vpreference-resource.v1.schema.json",
+  "title": "VPReferenceResource/v1",
+  "description": "Typed reference resource record (SR-83): one canonical JSON file per admitted palette, font-pairing, style, icon-list or standards-checklist resource. The digest is SHA-256 over the canonical UTF-8 JSON serialization of this record with the digest field omitted; it is distinct from raw-file and row hashes. Per-type payload shapes are enforced by the materializer and reader, not by this envelope schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "resource_id", "resource_type", "revision", "status", "provenance", "payload", "digest"],
+  "properties": {
+    "schema": { "const": "VPReferenceResource/v1" },
+    "resource_id": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "resource_type": { "enum": ["palette", "font-pairing", "style", "icon-list", "standards-checklist"] },
+    "revision": { "type": "integer", "minimum": 1 },
+    "status": { "enum": ["active", "disabled"] },
+    "applicability": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional SR-82 applicability declaration in the VPInstruction shape; the shipped reader validates it with parseApplicability.",
+      "properties": {
+        "frameworks": { "type": "array" },
+        "runtimes": { "type": "array" },
+        "platforms": { "type": "array" },
+        "standards": { "type": "array" },
+        "accessibility": { "type": "array" },
+        "requiredContext": { "type": "array" },
+        "optionalContext": { "type": "array" }
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "description": "One entry per source unit (D17 boundary): donor, license label, pinned revision, carrier path, raw-file SHA-256 and exact row/cell locator.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["donor", "license", "revision", "path", "sha256", "locator"],
+        "properties": {
+          "donor": { "type": "string", "minLength": 1 },
+          "license": { "type": "string", "minLength": 1 },
+          "revision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "locator": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["line", "row"],
+            "properties": {
+              "line": { "type": "integer", "minimum": 1 },
+              "row": { "type": "integer", "minimum": 0 },
+              "column": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "payload": { "type": "object" },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+  }
+}

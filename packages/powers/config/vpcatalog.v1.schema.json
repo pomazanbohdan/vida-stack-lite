@@ -37,6 +37,18 @@
           "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
         }
       }
+    },
+    "resources": {
+      "type": "array",
+      "description": "Optional VPReferenceResource/v1 manifest entries (SR-83); absent or empty on catalogs without admitted typed resources.",
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["resource_id", "path", "sha256"],
+        "properties": {
+          "resource_id": { "type": "string", "minLength": 1, "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
     }
   }
 }

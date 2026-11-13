@@ -44,7 +44,7 @@ sources:
   resource: /../.tmp/panel/csv-framework-decision-validate-m31-r2-20261022-64/REVIEW.md
   title: Independent M3.1 R2 review of the amendment
 generated: { by: codex/gpt-6.1-sol, at: '2026-10-26T06:10:47Z' }
-revision: '9'
+revision: '10'
 ---
 
 # Goal and boundaries
@@ -168,6 +168,8 @@ After a partial or unknown result, retain the entire staging directory and origi
 7. Review one resource family at a time. Start with a pilot of 25 records from one admitted family; inspect every record for type, attribution, IDs, provenance and digest. Record actual accepted/rejected counts, elapsed time and review defects before sizing the next batch. Any family-specific attribution or fidelity defect blocks that family.
 
 **H3 acceptance:** every admitted resource has one valid typed record, exact source locators, an attribution/link record, a human fidelity review receipt and digest; the catalog manifest and map agree; exact-ID positive/negative and type mismatch tests pass; path traversal, symlink, malformed JSON, hash mismatch, unsupported encoding, type confusion and length overflow are rejected; no automatic resource inclusion occurs; mixed-bundle byte tests prove the shared cap and all-or-nothing overflow; v1 catalog fixtures remain valid; no second catalog, activation, store, BM25 or Python runtime is added.
+
+**H3-A current state (2026-11-13):** the `font-pairing` pilot is complete and owner-accepted. `VPReferenceResource/v1`, the in-place `VPCatalog/v1` `resources[]` extension and the in-place `VPCorpusMap/v3` `admitted` resourceIds amendment are live; `catalog.resource.get`, CLI `resource --id`, compose `--resource-id` and the shared 64,000-byte resource budget are implemented and tested. 25 `uupm-font-pairing-*` records are materialized from `typography.csv` rows 1–25 (catalog rev 8056 `ad4afdc6…`, map rev 5775 `b76066b8…`); rows 26–74 stay deferred outside the approved pilot. The D18 delegated panel ran 15 blind reviews (5 batches × 3 protocols) with aggregation 25/25 accept — 19 direct, 6 orchestrator-adjudicated on deterministic digest/hash/schema evidence; 0 amend / 0 reject. Bound receipt `.agent/work/h2-sbvf-option-b-20261106/H3A-RECEIPT.md`; evidence `h3a-evidence/` and `h3-d18/`. Gates: `bun test --coverage` 1,097 pass / 5 skip / 0 fail, 100% funcs/lines; typecheck 115 files; format/`check-corpus` (0 issues)/`check-vector`/`check-okf` exit 0; Node v26.13.1 resource smoke recorded; the pinned Knip external conflict remains open and is not claimed PASS. H3-A acceptance covers this pilot scope only: the other four resource types, the 49 deferred typography rows and the remaining uupm data families await their own owner-approved admission gates. All H3-A changes are uncommitted at HEAD `e72fc5b8`; the commit decision is Root-owned.
 
 ## Shared implementation file allowlist and ownership
 

@@ -13,7 +13,7 @@ import { validateAgainstSchema, type Schema } from '../skills/vp-mode/scripts/sc
 type Dict = Record<string, unknown>;
 type Donor = { id: string; local_path: string; head_sha: string; content_path: string };
 type MapBinding = { instructionId: string; variantId: string; cells: Dict[]; receiptPath: string; receiptSha256: string };
-type MapRow = { rowKey: string; rowHash: string; cellHashes: string[]; disposition: string; reason: string; bindings: MapBinding[]; locators: Dict[] };
+type MapRow = { rowKey: string; rowHash: string; cellHashes: string[]; disposition: string; reason: string; bindings: MapBinding[]; locators: Dict[]; resourceIds: Dict[] };
 type Unit = {
   donor: string; file: string; ordinal: number; locator: { line: number; row: number }; rowKey: string;
   disposition: string; status: string; sourceStatus: string | null; instructionId: string | null; instructionIds: string[]; applicabilityLabel: string | null;
@@ -208,8 +208,14 @@ function loadRoot(root: string): { units: Unit[]; mapRows: Map<string, { donor: 
   const mapSchemaErrors = validateAgainstSchema(map, mapSchema);
   if (mapSchemaErrors.length > 0) fail(`corpus-map schema validation failed: ${mapSchemaErrors.join('; ')}`);
   const donorManifest = readDonors(join(root, 'donors.yaml'));
-  const allowlist = readJson(join(root, 'config', 'h2-csv-allowlist.json'));
-  if (!Array.isArray(allowlist)) fail('config/h2-csv-allowlist.json must contain an array');
+  const allowlistRaw = readJson(join(root, 'config', 'h2-csv-allowlist.json'));
+  if (!Array.isArray(allowlistRaw)) fail('config/h2-csv-allowlist.json must contain an array');
+  const allowlist: unknown[] = [...allowlistRaw];
+  const h3AllowlistPath = join(root, 'config', 'h3-csv-allowlist.json');
+  if (existsSync(h3AllowlistPath)) {
+    const h3Raw = readJson(h3AllowlistPath);
+    if (Array.isArray(h3Raw)) allowlist.push(...h3Raw);
+  }
   const catalogById = new Map<string, Dict>();
   for (const raw of catalog.instructions) {
     if (!record(raw) || typeof raw.instruction_id !== 'string') fail('catalog.json contains an invalid instruction entry');
@@ -267,6 +273,7 @@ function loadRoot(root: string): { units: Unit[]; mapRows: Map<string, { donor: 
         reason: typeof rawRow.reason === 'string' ? rawRow.reason : '',
         bindings: [],
         locators: rawRow.locators.filter(record),
+        resourceIds: (Array.isArray(rawRow.resourceIds) ? rawRow.resourceIds.filter(record) : []),
       };
       if (rowsByKey.has(row.rowKey)) fail(`duplicate UUPM map row key: ${csvPath}:${row.rowKey}`);
       rowsByKey.set(row.rowKey, row);
@@ -310,8 +317,13 @@ function loadRoot(root: string): { units: Unit[]; mapRows: Map<string, { donor: 
       const instructionIds: string[] = [];
       let instructionApplicability: string | null = null;
       let instructionId: string | null = null;
+      let resourceOnlyRow = false;
       if (row.disposition === 'admitted') {
-        if (row.bindings.length === 0) fail(`admitted row has no bindings: ${csvPath}:${actualRowKey}`);
+        if (row.bindings.length === 0) {
+          const resourceEntries = row.resourceIds;
+          if (!resourceEntries.some((item) => item.disposition === 'admitted')) fail(`admitted row has no bindings or admitted resources: ${csvPath}:${actualRowKey}`);
+          resourceOnlyRow = true;
+        } else {
         for (const binding of row.bindings) {
           for (const cell of binding.cells) {
             const columnIndex = Number(cell.columnIndex);
@@ -338,6 +350,7 @@ function loadRoot(root: string): { units: Unit[]; mapRows: Map<string, { donor: 
         }
         if (JSON.stringify(normativeIndices) !== JSON.stringify([...boundIndices].sort((a, b) => a - b))) fail(`admitted row does not bind every whole normative cell: ${csvPath}:${actualRowKey}`);
         instructionId = instructionIds[0] ?? null;
+        }
       } else if (row.bindings.length > 0) fail(`non-admitted row unexpectedly has bindings: ${csvPath}:${actualRowKey}`);
       const sourceApplicability = pick('metadata-applicability');
       const statusColumn = roleValues.get('metadata-status')?.map((entry) => entry.value).join('; ') ?? '';
@@ -346,7 +359,7 @@ function loadRoot(root: string): { units: Unit[]; mapRows: Map<string, { donor: 
       const description = pick('normative-description');
       const direction = pick('normative-direction');
       const exception = pick('normative-exception');
-      units.push({ donor: 'uupm', file: csvPath, ordinal: parsedRow.row + 1, locator: { line: parsedRow.line, row: parsedRow.row }, rowKey: actualRowKey,
+      if (!resourceOnlyRow) units.push({ donor: 'uupm', file: csvPath, ordinal: parsedRow.row + 1, locator: { line: parsedRow.line, row: parsedRow.row }, rowKey: actualRowKey,
         disposition: row.disposition, status, sourceStatus: statusColumn || null, instructionId, instructionIds, applicabilityLabel: sourceApplicability || null, instructionApplicability,
         normativeCells: normative, title, description, direction, exception, reason: row.reason, domain: csvPath === 'ux-guidelines.csv' ? 'ux' : 'stack',
         _tokens: tokens(`${title} ${direction} ${exception}`), _titleKey: normalize(title) });

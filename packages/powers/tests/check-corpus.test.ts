@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { checkCorpus, corpusCli, runCorpusCli, startCorpusCli } from '../scripts/check-corpus.ts';
 import { cellHash, cellsDigest, parseCsv, rowHash } from '../scripts/csv-intake.ts';
 import { encodeVariantScalar, type VariantRecord } from '../skills/vp-mode/scripts/variants.ts';
+import { canonicalJson } from '../skills/vp-mode/scripts/schema.ts';
 
 type Instruction = {
   schema: string; classification_status: string; classification_reason: string;
@@ -944,4 +945,120 @@ test('the corpus entry adapter preserves import isolation, printed output and na
     expect(process.exitCode).toBe(0);
     expect(JSON.parse(String(print.mock.calls[0]?.[0]))).toMatchObject({ instructions: 1, issues: [] });
   } finally { print.mockRestore(); process.exitCode = previous ?? 0; }
+});
+
+describe('checkCorpus resources', () => {
+  function resourceRecord(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    const unsigned = {
+      schema: 'VPReferenceResource/v1', resource_id: id, resource_type: 'font-pairing',
+      revision: 1, status: 'active',
+      provenance: [{ donor: donorId, license: 'MIT', revision, path: 'fonts.csv', sha256: 'a'.repeat(64), locator: { line: 2, row: 0 } }],
+      payload: { name: 'Fixture Pairing' },
+      ...overrides,
+    };
+    const canonical = canonicalJson(unsigned);
+    if (canonical === undefined) throw new Error('resource record is not canonicalizable');
+    return { ...unsigned, digest: `sha256:${createHash('sha256').update(canonical, 'utf8').digest('hex')}` };
+  }
+
+  async function resourceFixture(options: { mapResourceIds?: Array<Record<string, unknown>>; manifestPath?: string; record?: Record<string, unknown>; fileText?: string; skipWrite?: boolean } = {}) {
+    const corpus = await fixture();
+    corpus.map.schema = 'VPCorpusMap/v3';
+    corpus.map.donors[donorId].csvSources = {
+      'fonts.csv': {
+        rawSha256: '0'.repeat(64), headersDigest: '1'.repeat(64),
+        columns: [{ index: 0, header: 'Name', role: 'metadata-other' }],
+        rows: [{
+          rowKey: 'row-1', rowHash: '2'.repeat(64), cellHashes: ['3'.repeat(64)],
+          locator: { line: 2, row: 0 }, locators: [{ line: 2, row: 0 }],
+          disposition: 'admitted', bindings: [],
+          resourceIds: options.mapResourceIds ?? [{ id: 'res-a', disposition: 'admitted', reason: 'pilot' }],
+          mergedInto: null,
+        }],
+      },
+    };
+    const record = options.record ?? resourceRecord('res-a');
+    const fileText = options.fileText ?? `${JSON.stringify(record)}\n`;
+    const rel = options.manifestPath ?? 'resources/res-a.json';
+    const absolute = join(corpus.root, rel);
+    if (!options.skipWrite && rel.startsWith('resources/') && !rel.includes('..')) {
+      await mkdir(dirname(absolute), { recursive: true });
+      await writeFile(absolute, fileText);
+    }
+    corpus.catalog.resources = [{ resource_id: 'res-a', path: rel, sha256: digest(fileText) }];
+    await corpus.save();
+    return { corpus, record, fileText };
+  }
+
+  test('accepts a catalog resource admitted by the corpus map', async () => {
+    const { corpus } = await resourceFixture();
+    const found = codes(corpus.root);
+    expect(found.filter((code) => code.startsWith('CORPUS_RESOURCE'))).toEqual([]);
+  });
+
+  test('rejects a catalog resource with no admitted map entry', async () => {
+    const { corpus } = await resourceFixture({ mapResourceIds: [] });
+    expect(codes(corpus.root)).toContain('CORPUS_RESOURCE_UNMAPPED');
+  });
+
+  test('rejects a map row that admits an unknown catalog resource', async () => {
+    const { corpus } = await resourceFixture({ mapResourceIds: [{ id: 'res-ghost', disposition: 'admitted', reason: 'pilot' }] });
+    const found = codes(corpus.root);
+    expect(found).toContain('CORPUS_RESOURCE_UNKNOWN');
+    expect(found).toContain('CORPUS_RESOURCE_UNMAPPED');
+  });
+
+  test('rejects missing, oversized, malformed and schema-invalid resource files', async () => {
+    const missing = await resourceFixture({ manifestPath: 'resources/gone.json', skipWrite: true });
+    expect(codes(missing.corpus.root)).toContain('CORPUS_RESOURCE_MISSING');
+
+    const oversized = await resourceFixture({ fileText: 'x'.repeat(65_537) });
+    expect(codes(oversized.corpus.root)).toContain('CORPUS_RESOURCE_TOO_LARGE');
+
+    const malformed = await resourceFixture({ fileText: '{not json' });
+    expect(codes(malformed.corpus.root)).toContain('CORPUS_RESOURCE_MALFORMED');
+
+    const nonObject = await resourceFixture({ fileText: '[]\n' });
+    expect(codes(nonObject.corpus.root)).toContain('CORPUS_RESOURCE_MALFORMED');
+
+    const invalidUtf8 = await resourceFixture();
+    const badBytes = Buffer.from([0xff, 0xfe, 0x41]);
+    await writeFile(join(invalidUtf8.corpus.root, 'resources', 'res-a.json'), badBytes);
+    invalidUtf8.corpus.catalog.resources[0].sha256 = digest(badBytes);
+    await invalidUtf8.corpus.save();
+    expect(codes(invalidUtf8.corpus.root)).toContain('CORPUS_RESOURCE_MALFORMED');
+
+    const schemaBad = await resourceFixture({ fileText: '{"schema":"VPReferenceResource/v1"}\n' });
+    expect(codes(schemaBad.corpus.root)).toContain('CORPUS_RESOURCE_SCHEMA_INVALID');
+  });
+
+  test('rejects path escapes, non-files, digest mismatches and id mismatches', async () => {
+    const escape = await resourceFixture({ manifestPath: '../catalog.json' });
+    expect(codes(escape.corpus.root)).toContain('CORPUS_RESOURCE_PATH_INVALID');
+
+    const absolute = await resourceFixture({ manifestPath: join(packageRoot, 'catalog.json') });
+    expect(codes(absolute.corpus.root)).toContain('CORPUS_RESOURCE_PATH_INVALID');
+
+    const dirCorpus = await resourceFixture();
+    await rm(join(dirCorpus.corpus.root, 'resources', 'res-a.json'));
+    await mkdir(join(dirCorpus.corpus.root, 'resources', 'res-a.json'), { recursive: true });
+    dirCorpus.corpus.catalog.resources[0].sha256 = '0'.repeat(64);
+    await dirCorpus.corpus.save();
+    expect(codes(dirCorpus.corpus.root)).toContain('CORPUS_RESOURCE_PATH_INVALID');
+
+    const stale = await resourceFixture();
+    stale.corpus.catalog.resources[0].sha256 = '0'.repeat(64);
+    await stale.corpus.save();
+    expect(codes(stale.corpus.root)).toContain('CORPUS_RESOURCE_DIGEST_MISMATCH');
+
+    const wrongId = await resourceFixture({ record: resourceRecord('res-b') });
+    expect(codes(wrongId.corpus.root)).toContain('CORPUS_RESOURCE_ID_MISMATCH');
+
+    const tampered = await resourceFixture();
+    const tamperedRecord = { ...(tampered.record as Record<string, unknown>), payload: { name: 'Changed' } };
+    await writeFile(join(tampered.corpus.root, 'resources', 'res-a.json'), `${JSON.stringify(tamperedRecord)}\n`);
+    tampered.corpus.catalog.resources[0].sha256 = digest(`${JSON.stringify(tamperedRecord)}\n`);
+    await tampered.corpus.save();
+    expect(codes(tampered.corpus.root)).toContain('CORPUS_RESOURCE_DIGEST_MISMATCH');
+  });
 });

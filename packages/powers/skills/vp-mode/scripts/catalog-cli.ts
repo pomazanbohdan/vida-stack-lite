@@ -14,11 +14,13 @@ import {
   catalogCompose,
   catalogFindTags,
   catalogGet,
+  catalogResourceGet,
   catalogSearch,
   catalogSearchWithProfile,
   catalogTags,
   decisionEvaluate,
   loadCatalog,
+  loadCatalogResources,
   loadInstructions,
   readSchema,
   parseApproachSelectors,
@@ -31,7 +33,7 @@ import { parseApplicabilityContext } from './applicability.ts';
 import type { ApplicabilityContext } from './applicability.ts';
 import { nearestInstructionId, resolveIntent, suggestionHint, suggestionText } from './retrieval.ts';
 import type { IntentCandidate } from './retrieval.ts';
-import { validateAgainstSchema } from './schema.ts';
+import { validateAgainstSchema, canonicalJson } from './schema.ts';
 import {
   INSTRUCTION_DOMAINS,
   INSTRUCTION_FORMS,
@@ -42,7 +44,7 @@ import {
 } from './instruction-facets.ts';
 import type { ClassificationStatus, InstructionDomain, InstructionForm } from './instruction-facets.ts';
 
-const commandNames = ['tags', 'search', 'explain', 'get', 'compose', 'evaluate', 'browse', 'findings', 'artifacts'] as const;
+const commandNames = ['tags', 'search', 'explain', 'get', 'compose', 'evaluate', 'browse', 'resource', 'findings', 'artifacts'] as const;
 type Command = typeof commandNames[number];
 type FindingsOperation = 'append' | 'candidates';
 type ArtifactsOperation = 'append' | 'index' | 'verify';
@@ -174,10 +176,11 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--id': { arity: 'repeat-list', value: 'ID', description: 'Exact instruction IDs; repeatable and comma-separated. With --profile all must compose.' },
       '--approach': { arity: 'repeat-list', value: 'DIMENSION=VALUE', description: 'Select one value per approach dimension.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Optional; switch to compose mode with this effective profile.' },
+      '--resource-id': { arity: 'repeat-list', value: 'ID', description: 'Explicit typed resource IDs for the composed bundle; requires --profile.' },
       '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
       '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
     },
-    examples: ['get --id alpha beta --profile .tmp/effective-profile.json'],
+    examples: ['get --id alpha beta --profile .tmp/effective-profile.json', 'get --id alpha --profile .tmp/effective-profile.json --resource-id uupm-font-pairing-classic-elegant'],
   },
   compose: {
     description: 'Compose checked instructions and return the existing structured JSON bundle.',
@@ -193,11 +196,12 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--product': { arity: 'list', value: 'PRODUCT', description: 'Filter products.' },
       '--condition': { arity: 'list', value: 'TOKEN', description: 'Filter applicability conditions.' },
       '--profile': { arity: 'scalar', value: 'PATH', description: 'Use a resolved effective profile from this snapshot.' },
+      '--resource-id': { arity: 'repeat-list', value: 'ID', description: 'Explicit typed resource IDs for the composed bundle; resolved only after instruction/applicability selection.' },
       '--applicability-context': { arity: 'scalar', value: 'JSON', description: 'Evaluate v2 applicability with this context object.' },
       '--context-file': { arity: 'scalar', value: 'PATH', description: 'Read the applicability context JSON from this repository-relative file.' },
       '--json': { arity: 'switch', description: 'Accepted; JSON remains the default output.' },
     },
-    examples: ['compose --required alpha --role engineer'],
+    examples: ['compose --required alpha --role engineer', 'compose --required alpha --resource-id uupm-font-pairing-classic-elegant'],
   },
   evaluate: {
     description: 'Evaluate caller-supplied candidates and return the existing structured JSON result.',
@@ -224,6 +228,15 @@ const commandDefinitions: Record<Command, CommandDefinition> = {
       '--offset': { arity: 'scalar', value: 'N', description: 'Skip N rows after deduplication.' },
     },
     examples: ['browse --axis domain', 'browse --axis form'],
+  },
+  resource: {
+    description: 'Return one exact VPReferenceResource/v1 record by ID; diagnostic retrieval, not a composed bundle.',
+    flags: {
+      '--catalog': { arity: 'scalar', value: 'PATH', description: 'Use this exact catalog snapshot.' },
+      '--id': { arity: 'scalar', value: 'ID', description: 'Exact resource ID from the catalog resources manifest.' },
+      '--type': { arity: 'scalar', value: 'TYPE', description: 'Require this resource_type (palette, font-pairing, style, icon-list, standards-checklist).' },
+    },
+    examples: ['resource --id uupm-font-pairing-classic-elegant', 'resource --id uupm-palette-midnight --type palette'],
   },
   findings: {
     description: 'Append or query the existing findings JSON store.',
@@ -682,6 +695,9 @@ function renderGet(bundle: ComposedBundle, catalog: Catalog, instructions: Map<s
     if (obligations.length === 0) return body;
     return body + (body.endsWith('\n') ? '\n' : '\n\n') + obligations.join('\n');
   });
+  for (const resource of bundle.resources) {
+    sections.push(`resource ${resource.resource_id} (${resource.resource_type}, untrusted):\n${canonicalJson(resource.payload) ?? ''}`);
+  }
   return sections.reduce((output, section) => output + (output === '' ? '' : output.endsWith('\n') ? '\n' : '\n\n') + section, '');
 }
 
@@ -713,6 +729,14 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       ]
       : catalogFindTags(catalog, terms, match).map(({ dimension, tag, description }) => ({ id: `${dimension}:${tag}`, description }));
     return compactRows(rows, flags, 20, 'refine: use a more specific word, or pass --all');
+  }
+  if (command === 'resource') {
+    const resources = await loadCatalogResources(catalog, directory);
+    const resourceType = one(flags, '--type');
+    return {
+      kind: 'json',
+      value: catalogResourceGet(catalog, resources, required(flags, '--id'), resourceType === undefined ? {} : { resourceType }),
+    };
   }
   const instructions = await loadInstructions(catalog, dirname(resolve(catalogPath)));
   switch (command) {
@@ -867,18 +891,27 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       }
       const profileFlag = one(flags, '--profile');
       const approaches = listValues(flags, '--approach');
+      const resourceIds = listValues(flags, '--resource-id');
       const applicabilityContext = await applicabilityContextFromFlags(flags);
       if (profileFlag === undefined) {
+        if (resourceIds !== undefined) throw invalid('flag --resource-id requires --profile', { flag: '--resource-id' });
         const rows = ids.map((id) => catalogGet(catalog, instructions, id, applicabilityContext));
         return { kind: 'json', value: rows.length === 1 ? rows[0] : rows };
       }
       const profile = await profileAt(profileFlag, dirname(resolve(catalogPath)));
-      const bundle = catalogCompose(catalog, instructions, { required_ids: ids, profile, ...(approaches === undefined ? {} : { approaches }), ...(applicabilityContext === undefined ? {} : { applicabilityContext }) });
-      const bytes = bundle.instructions.reduce((total, instruction) => total + Buffer.byteLength(instruction.content, 'utf8'), 0);
+      const resources = await loadCatalogResources(catalog, directory);
+      const bundle = catalogCompose(catalog, instructions, {
+        required_ids: ids, profile,
+        ...(approaches === undefined ? {} : { approaches }),
+        ...(applicabilityContext === undefined ? {} : { applicabilityContext }),
+        ...(resourceIds === undefined ? {} : { resource_ids: resourceIds }),
+      }, resources);
+      const bytes = bundle.instructions.reduce((total, instruction) => total + Buffer.byteLength(instruction.content, 'utf8'), 0)
+        + bundle.resources.reduce((total, resource) => total + Buffer.byteLength(canonicalJson(resource.payload) ?? '', 'utf8'), 0);
       return {
         kind: 'text',
         text: renderGet(bundle, catalog, instructions),
-        stats: `bundle: ${bundle.instructions.length} instructions, ${bytes} of 64000 bytes (max 20 instructions)`,
+        stats: `bundle: ${bundle.instructions.length} instructions, ${bundle.resources.length} resources, ${bytes} of 64000 bytes (max 20 instructions)`,
       };
     }
     case 'compose': {
@@ -890,6 +923,7 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       const patternTags = tagListValues(flags, '--pattern', 'pattern');
       const instructionIds = listValues(flags, '--id');
       const requiredIds = listValues(flags, '--required');
+      const resourceIds = listValues(flags, '--resource-id');
       const role = one(flags, '--role');
       const roles = listValues(flags, '--roles');
       const products = listValues(flags, '--product');
@@ -898,6 +932,7 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       if (patternTags !== undefined) query.pattern_tags = patternTags;
       if (instructionIds !== undefined) query.instruction_ids = instructionIds;
       if (requiredIds !== undefined) query.required_ids = requiredIds;
+      if (resourceIds !== undefined) query.resource_ids = resourceIds;
       if (role !== undefined) query.role = role;
       if (roles !== undefined) query.roles = roles;
       if (products !== undefined) query.products = products;
@@ -905,7 +940,8 @@ async function dispatch(command: Exclude<Command, 'findings' | 'artifacts'>, fla
       if (profile !== undefined) query.profile = profile;
       const applicabilityContext = await applicabilityContextFromFlags(flags);
       if (applicabilityContext !== undefined) query.applicabilityContext = applicabilityContext;
-      return { kind: 'json', value: catalogCompose(catalog, instructions, query) };
+      const resources = await loadCatalogResources(catalog, directory);
+      return { kind: 'json', value: catalogCompose(catalog, instructions, query, resources) };
     }
     case 'evaluate':
       {
