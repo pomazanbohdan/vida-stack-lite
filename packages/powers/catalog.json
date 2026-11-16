@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8060,
+  "revision": 8061,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-16T14:17:47.429Z",
+  "updated_at": "2026-11-16T19:51:42.110Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -13530,6 +13530,11 @@
       "sha256": "a3b8dced20832b86692f0c64fec418d0d40d6fb431103703689a6bcd00455ae6"
     },
     {
+      "resource_id": "uupm-standard-accessibility-dragging-alternatives",
+      "path": "resources/uupm-standard-accessibility-dragging-alternatives.json",
+      "sha256": "e63388d8fa179131c62095c6abb3e70c4700831fc10f83e693909fc7c6928807"
+    },
+    {
       "resource_id": "uupm-standard-accessibility-dynamic-updates",
       "path": "resources/uupm-standard-accessibility-dynamic-updates.json",
       "sha256": "8a8609b55e3b53f8f6b3fab200b156971b127a12c19485a8c8dbbc9958d89fca"
@@ -13565,6 +13570,11 @@
       "sha256": "32c59fe5221fbbe7070bba9c7cd04db9954b6cb68e979bd6d61120573a6238c6"
     },
     {
+      "resource_id": "uupm-standard-anti-pattern-no-gesture-only-actions",
+      "path": "resources/uupm-standard-anti-pattern-no-gesture-only-actions.json",
+      "sha256": "adc418b133f0393a61594edfa340823eaffda043c2d70a9c3b5f541b9c2ac0fd"
+    },
+    {
       "resource_id": "uupm-standard-feedback-error-feedback",
       "path": "resources/uupm-standard-feedback-error-feedback.json",
       "sha256": "a1bb84baf5610af6aa82d70eec75809ea2c217f1becf5df9071dad5f8635db8f"
@@ -13578,6 +13588,11 @@
       "resource_id": "uupm-standard-feedback-success-feedback",
       "path": "resources/uupm-standard-feedback-success-feedback.json",
       "sha256": "bfb3268026e3b7ec457819089e58f1daff3bc541647453e6e55c02a3b4d0ae1b"
+    },
+    {
+      "resource_id": "uupm-standard-forms-authentication-reuse",
+      "path": "resources/uupm-standard-forms-authentication-reuse.json",
+      "sha256": "a632560c95d50b31522928d4500c38ab461093e4bcaaf8632e5cd8fdb4dbab98"
     },
     {
       "resource_id": "uupm-standard-forms-auto-focus-next",
@@ -13630,9 +13645,19 @@
       "sha256": "6827e7433e85908892e5000f0918e1ed699e7cb2320fb7edb46d558c5825e571"
     },
     {
+      "resource_id": "uupm-standard-safe-areas-safe-area-insets",
+      "path": "resources/uupm-standard-safe-areas-safe-area-insets.json",
+      "sha256": "d843499f5d0b2d8de9de0e59530b12e6250b39052bd6b9c6bd9791d46281ab24"
+    },
+    {
       "resource_id": "uupm-standard-state-preserve-screen-state",
       "path": "resources/uupm-standard-state-preserve-screen-state.json",
       "sha256": "fb4714181de838c780a851198d392e42bc37f74428dc82c469a914c87ef4a1af"
+    },
+    {
+      "resource_id": "uupm-standard-theming-light-dark-contrast",
+      "path": "resources/uupm-standard-theming-light-dark-contrast.json",
+      "sha256": "580934a84237c1783cd2a253cd1a6a808be82b76ee7b5258c2ac4f2ba956335e"
     },
     {
       "resource_id": "uupm-standard-touch-gesture-conflicts",
@@ -13648,6 +13673,16 @@
       "resource_id": "uupm-standard-touch-touch-target-size",
       "path": "resources/uupm-standard-touch-touch-target-size.json",
       "sha256": "d2e2a70f86afc161e1ba8a6d83003291869977eb7c9e1e718eae50a2e294d95d"
+    },
+    {
+      "resource_id": "uupm-standard-typography-base-font-size",
+      "path": "resources/uupm-standard-typography-base-font-size.json",
+      "sha256": "2675935cac8580db660e160ee4adeaed415ac474affa6b3ee9028beed72c620d"
+    },
+    {
+      "resource_id": "uupm-standard-typography-dynamic-type-support",
+      "path": "resources/uupm-standard-typography-dynamic-type-support.json",
+      "sha256": "a668e540ab7b525b52a5f05a650b3493a0713ec79ccea47245be0ffa9d7d5ba8"
     },
     {
       "resource_id": "uupm-style-3d-and-hyperrealism",

@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5779,
-  "updated_at": "2026-11-16T14:17:47.429Z",
+  "revision": 5780,
+  "updated_at": "2026-11-16T19:51:42.110Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -20816,11 +20816,16 @@
                   "row": 26
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-typography-base-font-size",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=59795a8419b6fc3a9e468360c15f2cebb45f5872b3fbcabdabc85b914a9115e7",
@@ -20848,11 +20853,16 @@
                   "row": 27
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-typography-dynamic-type-support",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=2253ca4ca70e193ca5255216c2680919d74bd61084077af75317f2bd11ee8bd1",
@@ -20880,11 +20890,16 @@
                   "row": 28
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-safe-areas-safe-area-insets",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=57599c965afdc748b3b934343a308175a7130bfdb335577fc043f6e6919b8fd0",
@@ -20912,11 +20927,16 @@
                   "row": 29
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-theming-light-dark-contrast",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=fe7399ae1e2876c2527f0b513e00455f684712e255398f09456569220a92437a",
@@ -20944,11 +20964,16 @@
                   "row": 30
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-anti-pattern-no-gesture-only-actions",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=344afa3c2218b9df11eea0da183ad481d40539cd053a49eb497de5e0e6374999",
@@ -20976,11 +21001,16 @@
                   "row": 31
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-accessibility-dragging-alternatives",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=955a6f9af8ad73221f4ae65e9bbdf4a1728b34f1bafb78565f6d4433d46c4aa3",
@@ -21008,11 +21038,16 @@
                   "row": 32
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-forms-authentication-reuse",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
             }
           ]
         },

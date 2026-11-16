@@ -262,6 +262,7 @@ function mergeAllowlistEntry(entries: Dict[], entry: Dict): Dict[] {
 
 async function main(): Promise<void> {
   const apply = process.argv.includes('--apply');
+  const remainder = process.argv.includes('--remainder');
   const familyName = familyFromArgv(process.argv);
   const family = FAMILIES[familyName];
   const stageIndex = process.argv.indexOf('--stage');
@@ -306,7 +307,15 @@ async function main(): Promise<void> {
   const donors = isRecord(map.donors) ? map.donors : fail('corpus-map.json has no donors object');
   const uupm = isRecord(donors[DONOR]) ? donors[DONOR] : fail('corpus-map.json has no uupm donor');
   if (!isRecord(uupm.csvSources)) fail('corpus-map.json uupm donor has no csvSources');
-  if (Object.prototype.hasOwnProperty.call(uupm.csvSources, family.csvPath)) fail(`corpus-map.json already maps ${DONOR}:${family.csvPath}`);
+  const existingSourceValue = uupm.csvSources[family.csvPath];
+  const existingSource = isRecord(existingSourceValue) ? existingSourceValue : undefined;
+  if (remainder) {
+    if (existingSource === undefined || !Array.isArray(existingSource.rows)) {
+      fail(`corpus-map.json has no row ledger for ${DONOR}:${family.csvPath}; --remainder requires an existing csvSources entry`);
+    }
+  } else if (existingSource !== undefined) {
+    fail(`corpus-map.json already maps ${DONOR}:${family.csvPath}`);
+  }
   const existingResources = Array.isArray(catalog.resources) ? catalog.resources.filter(isRecord) : [];
   const existingIds = new Set(existingResources.map((entry) => String(entry.resource_id ?? '')));
 
@@ -341,9 +350,9 @@ async function main(): Promise<void> {
       const bodyLicense = licenseByName.get(cell(first, 'Body Font'));
       eligible = headingLicense !== undefined && bodyLicense !== undefined;
     }
-    const admissible = familyName === 'palette' || familyName === 'style' || familyName === 'icon-list' || familyName === 'standards-checklist' ? first.row <= PILOT_LIMIT : true;
+    const admissible = remainder ? first.row > PILOT_LIMIT : familyName === 'palette' || familyName === 'style' || familyName === 'icon-list' || familyName === 'standards-checklist' ? first.row <= PILOT_LIMIT : true;
     let admittedId: string | undefined;
-    if (eligible && admissible && admitted < PILOT_LIMIT) {
+    if (eligible && admissible && admitted < (remainder ? Number.MAX_SAFE_INTEGER : PILOT_LIMIT)) {
       admitted += 1;
       const name = familyName === 'palette' ? cell(first, 'Product Type') : familyName === 'style' ? cell(first, 'Style ID') : familyName === 'icon-list' ? cell(first, 'Icon Name') : familyName === 'standards-checklist' ? `${cell(first, 'Category')} ${cell(first, 'Issue')}` : cell(first, 'Font Pairing Name');
       const base = `${family.idPrefix}-${slugify(name)}`;
@@ -439,9 +448,31 @@ async function main(): Promise<void> {
     rowPlans.push({ key, group, eligible, ...(admittedId === undefined ? {} : { admittedId }) });
   }
 
-  if (admitted !== PILOT_LIMIT) fail(`only ${admitted} eligible rows found; pilot requires ${PILOT_LIMIT}`);
+  const existingRows = remainder && existingSource !== undefined && Array.isArray(existingSource.rows) ? existingSource.rows.filter(isRecord) : [];
+  if (remainder) {
+    if (existingSource === undefined || existingSource.rawSha256 !== parsed.rawSha256 || existingSource.headersDigest !== parsed.headersDigest) {
+      fail(`${DONOR}:${family.csvPath} digests changed since the pilot; refusing to merge remainder rows`);
+    }
+  }
+  const expectedDeferred = existingRows.filter((row) => row.disposition === 'deferred').length;
+  if (remainder ? admitted !== expectedDeferred || admitted === 0 : admitted !== PILOT_LIMIT) {
+    fail(`only ${admitted} eligible rows found; ${remainder ? `remainder requires exactly ${expectedDeferred}` : `pilot requires ${PILOT_LIMIT}`}`);
+  }
 
-  const rows = rowPlans.map((plan) => {
+  const planByKey = new Map(rowPlans.map((plan) => [plan.key, plan]));
+  const rows = remainder
+    ? existingRows.map((existing) => {
+        const plan = planByKey.get(String(existing.rowKey ?? ''));
+        if (plan === undefined) fail(`corpus-map row ${String(existing.rowKey ?? '?')} has no matching CSV group; the source file changed since the pilot`);
+        if (plan.admittedId === undefined) return existing;
+        const { reason: _reason, ...rest } = existing;
+        return {
+          ...rest,
+          disposition: 'admitted',
+          resourceIds: [{ id: plan.admittedId, disposition: 'admitted', reason: `materialized as VPReferenceResource/v1 ${family.resourceType} record` }],
+        };
+      })
+    : rowPlans.map((plan) => {
     const locators = plan.group.records
       .flatMap((record) => record.locators)
       .sort((left, right) => left.line - right.line || left.row - right.row)
@@ -537,7 +568,7 @@ async function main(): Promise<void> {
     await writeFile(output.path, output.content);
   }
   console.log(`staged ${resources.length} resources at ${stageDir}`);
-  console.log(`admitted rows: ${admitted}; deferred: ${rows.length - admitted - skippedIneligible}; ineligible: ${skippedIneligible}`);
+  console.log(`admitted rows: ${admitted}; deferred: ${rows.filter((row) => row.disposition === 'deferred').length}; ineligible: ${skippedIneligible}`);
   console.log(`catalog revision ${String(catalog.revision)} -> ${String(nextCatalog.revision)}; map revision ${String(map.revision)} -> ${String(nextMap.revision)}`);
   for (const resource of resources) console.log(`  ${resource.id} (${Buffer.byteLength(resource.bytes)} bytes)`);
 }
