@@ -24,7 +24,7 @@ type LicensesFile = {
   families: LicenseFamily[];
 };
 
-type FamilyName = 'font-pairing' | 'palette' | 'style';
+type FamilyName = 'font-pairing' | 'palette' | 'style' | 'icon-list';
 type Family = {
   csvPath: string;
   licensesPath?: string;
@@ -99,6 +99,26 @@ const STYLE_COLUMNS: ReadonlyArray<readonly [string, string]> = [
   ['Preferred Mode', 'preferred_mode'],
 ];
 
+// H3 icon-list pilot payload contract (VPReferenceResource/v1, resource_type
+// "icon-list"): every icons.csv column except `No` is admitted verbatim as a
+// snake_case string; `No` is excluded because it duplicates
+// provenance.locator.row. Resource IDs are uupm-icon-<slug of Icon Name>.
+// Provenance carries one entry per source row (donor, license, pinned
+// revision, icons.csv path, raw-file SHA-256, line/row locator); icons.csv
+// has no license companion, so there is no license-file join.
+const ICON_LIST_COLUMNS: ReadonlyArray<readonly [string, string]> = [
+  ['Category', 'category'],
+  ['Icon Name', 'icon_name'],
+  ['Keywords', 'keywords'],
+  ['Library', 'library'],
+  ['Import Code', 'import_code'],
+  ['Usage', 'usage'],
+  ['Best For', 'best_for'],
+  ['Style', 'style'],
+  ['Semantic Role', 'semantic_role'],
+  ['Allowed Contexts', 'allowed_contexts'],
+];
+
 const FAMILIES: Record<FamilyName, Family> = {
   'font-pairing': {
     csvPath: 'typography.csv',
@@ -122,6 +142,13 @@ const FAMILIES: Record<FamilyName, Family> = {
     pilotScope: 'style',
     ineligibleReason: 'style row is not admissible for materialization',
   },
+  'icon-list': {
+    csvPath: 'icons.csv',
+    resourceType: 'icon-list',
+    idPrefix: 'uupm-icon',
+    pilotScope: 'icon-list',
+    ineligibleReason: 'icon-list row is not admissible for materialization',
+  },
 };
 
 function fail(message: string): never {
@@ -144,8 +171,8 @@ function familyFromArgv(argv: string[]): FamilyName {
   const index = argv.indexOf('--family');
   if (index < 0) return 'font-pairing';
   const value = argv[index + 1];
-  if (value === 'font-pairing' || value === 'palette' || value === 'style') return value;
-  fail(`unknown --family ${String(value)}; expected font-pairing, palette or style`);
+  if (value === 'font-pairing' || value === 'palette' || value === 'style' || value === 'icon-list') return value;
+  fail(`unknown --family ${String(value)}; expected font-pairing, palette, style or icon-list`);
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -285,11 +312,11 @@ async function main(): Promise<void> {
       const bodyLicense = licenseByName.get(cell(first, 'Body Font'));
       eligible = headingLicense !== undefined && bodyLicense !== undefined;
     }
-    const admissible = familyName === 'palette' || familyName === 'style' ? first.row <= PILOT_LIMIT : true;
+    const admissible = familyName === 'palette' || familyName === 'style' || familyName === 'icon-list' ? first.row <= PILOT_LIMIT : true;
     let admittedId: string | undefined;
     if (eligible && admissible && admitted < PILOT_LIMIT) {
       admitted += 1;
-      const name = familyName === 'palette' ? cell(first, 'Product Type') : familyName === 'style' ? cell(first, 'Style ID') : cell(first, 'Font Pairing Name');
+      const name = familyName === 'palette' ? cell(first, 'Product Type') : familyName === 'style' ? cell(first, 'Style ID') : familyName === 'icon-list' ? cell(first, 'Icon Name') : cell(first, 'Font Pairing Name');
       const base = `${family.idPrefix}-${slugify(name)}`;
       let id = base;
       for (let suffix = 2; usedSlugs.has(id) || existingIds.has(id); suffix += 1) id = `${base}-${suffix}`;
@@ -312,6 +339,10 @@ async function main(): Promise<void> {
         const stylePayload: Dict = {};
         for (const [header, styleKey] of STYLE_COLUMNS) stylePayload[styleKey] = cell(first, header);
         payload = stylePayload;
+      } else if (familyName === 'icon-list') {
+        const iconPayload: Dict = {};
+        for (const [header, iconKey] of ICON_LIST_COLUMNS) iconPayload[iconKey] = cell(first, header);
+        payload = iconPayload;
       } else {
         const heading = cell(first, 'Heading Font');
         const body = cell(first, 'Body Font');

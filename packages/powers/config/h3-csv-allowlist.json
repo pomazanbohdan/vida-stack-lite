@@ -16,5 +16,11 @@
     "path": "styles.csv",
     "rawSha256": "a93a4d9d7025856575d7b7583bda020be9043013432c5af7c58af9dbdfb206b7",
     "headersDigest": "89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65"
+  },
+  {
+    "donor": "uupm",
+    "path": "icons.csv",
+    "rawSha256": "50816c6012030178195a16ee481ebf58b47bd985d70e8ec58886cc83f6eddafc",
+    "headersDigest": "34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1"
   }
 ]

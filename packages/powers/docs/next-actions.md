@@ -290,13 +290,42 @@ remaining Powers-owned work is:
    `landing.csv`, `products.csv`, `ui-reasoning.csv`,
    `app-interface.csv`, `google-fonts.csv`); `poteto-plugins`
    remains unpinned in donors.yaml. H3-A was committed at
-   `49842c09`; all H3-B and H3-C changes are uncommitted at HEAD
-   `49842c09` — the commit decision is Root-owned.
-7. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
+   `49842c09`; H3-B and H3-C were committed together at
+   `79360c0c` — commit decisions are Root-owned.
+7. **H3-D — `icon-list` typed reference resources pilot (ACCEPTED
+   2026-11-16).** The 25-record `icon-list` pilot is complete and
+   owner-accepted: 25 `uupm-icon-*` `VPReferenceResource/v1`
+   records materialized from `icons.csv` rows 1–25 (catalog rev
+   8059 `0866cb7c…`, map rev 5778 `e7820907…`; the file has 105
+   data rows, rows 26–105 stay deferred outside the pilot with
+   explicit reasons). Payload contract: all 11 CSV columns except
+   `No` as 10 verbatim string keys; `Icon Name` is the slug
+   source. Independent Luna validation READY 0 findings; D18
+   delegated panel: 15 blind reviews, aggregation **25/25 accept —
+   3/3 direct protocol accepts per record, 0 amend / 0 reject /
+   0 manual, no adjudication needed**. Bound receipt
+   `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3D-RECEIPT.md`
+   with evidence `h3d-d18/`; gates — `bun test` 1,115 pass / 5
+   skip / 0 fail, typecheck 117 files, format/`check-corpus` (0
+   issues)/`check-vector`/`check-okf` exit 0; the pinned Knip
+   external conflict remains open (item 12) and is not claimed
+   PASS. AC-52/AC-54/AC-55 keep `verified (component)` scope.
+   **Remaining H3 scope (each needs a separate owner-approved
+   admission gate):** the last D15 resource type
+   (`standards-checklist` from `app-interface.csv` — contract
+   drafted in `.tmp/h3d-next/CONTRACTS.md`), the 80 deferred
+   `icons.csv` rows, the 49 deferred `typography.csv` rows, the
+   167 deferred `colors.csv` rows, the 63 deferred `styles.csv`
+   rows, and the remaining uupm data families (`charts.csv`,
+   `motion.csv`, `landing.csv`, `products.csv`, `ui-reasoning.csv`,
+   `google-fonts.csv`); `poteto-plugins` remains unpinned in
+   donors.yaml. H3-D changes are uncommitted at HEAD `7972b8f7`
+   — the commit decision is Root-owned.
+8. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
    host installation, Muse first-party catalog digest, public metadata and
    publication, and Runtime acceptance remain open. The `.54` fixtures are not
    production outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline only.
-8. **D19 algorithm delegation implementation.** Policy READY; the
+9. **D19 algorithm delegation implementation.** Policy READY; the
    offer/preference/offer-record mechanism is implemented and
    independently validated (Luna READY, 0 findings): decision-type
    registry with canonical exclusion and allowed floors, exact
@@ -304,21 +333,21 @@ remaining Powers-owned work is:
    `VPAlgorithmOffer/v1` artifacts, SHA-verified preference refs.
    Deferred by design: call-site wiring into human-loop instructions,
    algorithm execution/notification, per-decision SHA binding. The
-   changes are uncommitted at HEAD `49842c09` — the commit decision
-   is Root-owned.
-9. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
+   mechanism was committed at `7972b8f7` — commit decisions are
+   Root-owned.
+10. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
    not a prerequisite for the migrated corpus or the compact CLI. The frozen
    40-ID trial stays v1.1-bound.
-10. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
+11. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
    deterministic catalog library, and a minimal scenario on at least two
    compatible hosts.
-11. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
+12. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
    on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
    The H2-D receipt (owner-accepted 2026-11-12) re-confirms the same
    `issues: []` exit 1 external conflict — not PASS; item stays open.
-12. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
+13. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
    verified; they do not establish installation or Runtime acceptance.
-13. **Candidate next scopes (owner approval required; not started).** CSV
+14. **Candidate next scopes (owner approval required; not started).** CSV
     module packaging would extend D59 carriers to the 468 CSV atoms; the
     remaining H2-A2 stack rows are already tracked under item 1. Neither is
     authorized by the current D59 acceptance.

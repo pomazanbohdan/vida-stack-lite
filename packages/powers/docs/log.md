@@ -48,7 +48,35 @@
   `canonicalAllowedTypes`; r3 **READY, 0 findings**. Deferred by
   design: call-site wiring into human-loop instructions,
   algorithm execution/notification and per-decision SHA
-  binding. Changes uncommitted at HEAD `49842c09`.
+  binding. Committed at `7972b8f7`.
+* **H3-D `icon-list` typed reference resources pilot — implemented,
+  reviewed and owner-accepted:** 25 `uupm-icon-*`
+  `VPReferenceResource/v1` records materialized from `icons.csv`
+  rows 1–25 via the same staging-first CAS materialization
+  (catalog rev 8059 `0866cb7c…`, map rev 5778 `e7820907…`); the
+  file has 105 data rows and rows 26–105 stay deferred with
+  explicit pilot reasons. Payload contract: all 11 CSV columns
+  except `No` as 10 verbatim string keys; `Icon Name` is the slug
+  source. Independent Luna validation READY 0 findings; the D18
+  delegated panel ran 15 blind reviews (5 batches ×
+  delphi/adversarial/party, swe-2-flash-medium) with aggregation
+  25/25 accept — 3/3 direct protocol accepts per record, 0 amend /
+  0 reject / 0 manual, and no orchestrator adjudication
+  (`h3d-d18/AGGREGATION.json` canonical `88bd625c…`).
+* **H3-D gates:** `bun test` 1,115 pass / 5 skip / 0 fail;
+  typecheck 117 files; format check, `check-corpus` (0 issues),
+  `check-vector` and `check-okf` all exit 0. The pinned Knip
+  external conflict is unchanged and not claimed PASS.
+* **H3-D acceptance:** the owner accepted the H3-D icon-list
+  pilot on 2026-11-16 ("Продовжуй") after the bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3D-RECEIPT.md`
+  was assembled with `h3d-d18/` evidence. Scope is the pilot only:
+  100 typed resources now live across H3-A/B/C/D for AC-52/AC-54/
+  AC-55 component evidence; the last D15 resource type
+  (`standards-checklist`), deferred rows and remaining uupm data
+  families await separate owner-approved gates. H3-D changes are
+  uncommitted at HEAD `7972b8f7` — the commit decision is
+  Root-owned.
 * **E5/Stage-8 reconnaissance:** read-only gap analysis
   delivered at `packages/powers/.tmp/e5-stage8-recon/PLAN.md` —
   production manifest inputs/outputs cover `portable`+`codex`
