@@ -136,13 +136,22 @@ not a permission, a legal clearance or a Runtime acceptance.
 
 ## Implementation boundary
 
-This decision defines the product policy. It does not implement the offer,
-preference store or automatic path. For decision types outside H1, existing
-human gates remain in force until an offer/preference path is implemented,
-tested and reviewed. The D18 delegated gate for H1 source publication is
-implemented, tested and independently reviewed by T3 Codex/Luna (READY,
-0 Critical / 0 Important / 0 Minor). The D19 offer/preference path itself
-remains unimplemented.
+This decision defines the product policy. The offer/preference
+mechanism is implemented and independently validated (2026-11-16):
+`scripts/algorithm-delegation.ts` provides the decision-type
+registry with canonical exclusion and allowed floors (new
+delegable types require the canonical registry — an owner
+decision), exact decision-type+scope matching, sealed
+`VPStandingPreference/v1` and `VPAlgorithmOffer/v1` artifacts and
+SHA-verified preference loading; Luna review returned READY with
+0 findings. Still unimplemented by design: wiring the offer into
+skill instructions/human-loop call sites, actual algorithm
+execution, notification and escalation, and per-decision
+source SHA-256 binding. For decision types outside H1, existing
+human gates remain in force until those call sites land. The D18
+delegated gate for H1 source publication is implemented, tested
+and independently reviewed by T3 Codex/Luna (READY,
+0 Critical / 0 Important / 0 Minor).
 
 ## Review evidence
 
