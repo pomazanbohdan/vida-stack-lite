@@ -2,6 +2,38 @@
 
 ## 2026-11-16
 
+* **H3-E `standards-checklist` typed reference resources pilot —
+  implemented, reviewed and owner-accepted:** 25 `uupm-standard-*`
+  `VPReferenceResource/v1` records materialized from
+  `app-interface.csv` rows 1–25 via the same staging-first CAS
+  materialization (catalog rev 8060 `ce135a33…`, map rev 5779
+  `0e85c46b…`); the file has 32 data rows and rows 26–32 stay
+  deferred with explicit pilot reasons. Payload contract: all 11
+  CSV columns except `No` as 10 verbatim string keys
+  (`category`, `issue`, `keywords`, `platform`, `description`,
+  `do`, `dont`, `code_example_good`, `code_example_bad`,
+  `severity`); slug derives from composite `Category`+`Issue`.
+  Independent Luna validation READY 0 findings; the D18 delegated
+  panel ran 15 blind reviews (5 batches ×
+  delphi/adversarial/party, swe-2-flash-medium) with aggregation
+  25/25 accept — 3/3 direct protocol accepts per record, 0 amend /
+  0 reject / 0 manual, and no orchestrator adjudication
+  (`h3e-d18/AGGREGATION.json` canonical `f705592a…`).
+* **H3-E gates:** `bun test` 1,115 pass / 5 skip / 0 fail;
+  typecheck 117 files; format check, `check-corpus` (0 issues),
+  `check-vector` and `check-okf` all exit 0. The pinned Knip
+  external conflict is unchanged and not claimed PASS.
+* **H3-E acceptance:** the owner accepted the H3-E
+  standards-checklist pilot on 2026-11-16 ("бери це все в роботу і
+  реалізовуй") after the bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3E-RECEIPT.md`
+  was assembled with `h3e-d18/` evidence. Scope is the pilot only:
+  all five D15 resource types are now piloted — 125 typed
+  resources live across H3-A/B/C/D/E for AC-52/AC-54/AC-55
+  component evidence; deferred rows and remaining uupm data
+  families await separate owner-approved gates. H3-E changes are
+  committed with this documentation update — commit decisions are
+  Root-owned.
 * **H3-C `style` typed reference resources pilot — implemented,
   reviewed and owner-accepted:** 25 `uupm-style-*`
   `VPReferenceResource/v1` records materialized from `styles.csv`

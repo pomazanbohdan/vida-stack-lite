@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8059,
+  "revision": 8060,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-16T12:22:56.208Z",
+  "updated_at": "2026-11-16T14:17:47.429Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -13523,6 +13523,131 @@
       "resource_id": "uupm-palette-social-media-app",
       "path": "resources/uupm-palette-social-media-app.json",
       "sha256": "dc8e021e8542f00f3bc96f5217145c6792ed163b4a08544a0905ca342dc862cd"
+    },
+    {
+      "resource_id": "uupm-standard-accessibility-decorative-icons",
+      "path": "resources/uupm-standard-accessibility-decorative-icons.json",
+      "sha256": "a3b8dced20832b86692f0c64fec418d0d40d6fb431103703689a6bcd00455ae6"
+    },
+    {
+      "resource_id": "uupm-standard-accessibility-dynamic-updates",
+      "path": "resources/uupm-standard-accessibility-dynamic-updates.json",
+      "sha256": "8a8609b55e3b53f8f6b3fab200b156971b127a12c19485a8c8dbbc9958d89fca"
+    },
+    {
+      "resource_id": "uupm-standard-accessibility-form-control-labels",
+      "path": "resources/uupm-standard-accessibility-form-control-labels.json",
+      "sha256": "93dc873db82e8373076f0acc830c8e1b977e5560cc3c2846d5f73a040b8a53c7"
+    },
+    {
+      "resource_id": "uupm-standard-accessibility-icon-button-labels",
+      "path": "resources/uupm-standard-accessibility-icon-button-labels.json",
+      "sha256": "a1baea63c051efac2cc983e58ee34664da739470df2ab04ecc78c2861de34c1f"
+    },
+    {
+      "resource_id": "uupm-standard-accessibility-role-traits",
+      "path": "resources/uupm-standard-accessibility-role-traits.json",
+      "sha256": "4dd04a31a64ef61b7b40fda385ad9e93574182a86c5900c489a5f359c73697b5"
+    },
+    {
+      "resource_id": "uupm-standard-animation-duration-easing",
+      "path": "resources/uupm-standard-animation-duration-easing.json",
+      "sha256": "d549b9acd1df0b74607993c63a694166f476aca8bb91839a046b871f55a5e17c"
+    },
+    {
+      "resource_id": "uupm-standard-animation-limited-continuous-motion",
+      "path": "resources/uupm-standard-animation-limited-continuous-motion.json",
+      "sha256": "a9f894cceb005bfd601a011a9cc9b5361e98bae2d4912e3467e7279d43549c5c"
+    },
+    {
+      "resource_id": "uupm-standard-animation-respect-reduced-motion",
+      "path": "resources/uupm-standard-animation-respect-reduced-motion.json",
+      "sha256": "32c59fe5221fbbe7070bba9c7cd04db9954b6cb68e979bd6d61120573a6238c6"
+    },
+    {
+      "resource_id": "uupm-standard-feedback-error-feedback",
+      "path": "resources/uupm-standard-feedback-error-feedback.json",
+      "sha256": "a1bb84baf5610af6aa82d70eec75809ea2c217f1becf5df9071dad5f8635db8f"
+    },
+    {
+      "resource_id": "uupm-standard-feedback-loading-indicators",
+      "path": "resources/uupm-standard-feedback-loading-indicators.json",
+      "sha256": "8ff38cd9051937dc615718ceb103c59ec4ecdf5f884e43617218fd09720ca7c9"
+    },
+    {
+      "resource_id": "uupm-standard-feedback-success-feedback",
+      "path": "resources/uupm-standard-feedback-success-feedback.json",
+      "sha256": "bfb3268026e3b7ec457819089e58f1daff3bc541647453e6e55c02a3b4d0ae1b"
+    },
+    {
+      "resource_id": "uupm-standard-forms-auto-focus-next",
+      "path": "resources/uupm-standard-forms-auto-focus-next.json",
+      "sha256": "07350c1f66f65746a94ae3c2bc2fe128fd57fc3f185be3da7bc7170423d6ab98"
+    },
+    {
+      "resource_id": "uupm-standard-forms-inline-validation",
+      "path": "resources/uupm-standard-forms-inline-validation.json",
+      "sha256": "d1f3b21bc1376a3f7f71eb7003a07587df6f93a30e5d679b0a7d7fd293e3f2cb"
+    },
+    {
+      "resource_id": "uupm-standard-forms-keyboard-type",
+      "path": "resources/uupm-standard-forms-keyboard-type.json",
+      "sha256": "c36127be1ffdafd3f1cd618d4bf4c16ef7728c50b3fa46fa31153a58bef90966"
+    },
+    {
+      "resource_id": "uupm-standard-forms-password-visibility",
+      "path": "resources/uupm-standard-forms-password-visibility.json",
+      "sha256": "cfb380d84b2a89470ed28e355cb129a59fb8bcbd07157e12fb8b2053d1bb42b7"
+    },
+    {
+      "resource_id": "uupm-standard-navigation-back-behavior",
+      "path": "resources/uupm-standard-navigation-back-behavior.json",
+      "sha256": "880aca3fbcd1fd0bc03e245d2bc3ce3f7ffb889b523107b1fe58744495c134ee"
+    },
+    {
+      "resource_id": "uupm-standard-navigation-bottom-tabs",
+      "path": "resources/uupm-standard-navigation-bottom-tabs.json",
+      "sha256": "6452c39f8a16c3b6a40f64d4d9cd10f2741c7f918af864487886cfbf0e4d6e3f"
+    },
+    {
+      "resource_id": "uupm-standard-navigation-modal-escape",
+      "path": "resources/uupm-standard-navigation-modal-escape.json",
+      "sha256": "11e0aa4390e71b366cb4e2c8e8e09ec3d639f3b254312d45927bf59a8b7669b0"
+    },
+    {
+      "resource_id": "uupm-standard-performance-debounce-high-freq-events",
+      "path": "resources/uupm-standard-performance-debounce-high-freq-events.json",
+      "sha256": "c72e5515bb9cb00a8907f06073cb25e8552f452df2551ceaf76e85cf4a5ae864"
+    },
+    {
+      "resource_id": "uupm-standard-performance-image-size-cache",
+      "path": "resources/uupm-standard-performance-image-size-cache.json",
+      "sha256": "cac0809139f85bcb378eea291036c68507452635d615bf37cb37054bfe4e7655"
+    },
+    {
+      "resource_id": "uupm-standard-performance-virtualize-long-lists",
+      "path": "resources/uupm-standard-performance-virtualize-long-lists.json",
+      "sha256": "6827e7433e85908892e5000f0918e1ed699e7cb2320fb7edb46d558c5825e571"
+    },
+    {
+      "resource_id": "uupm-standard-state-preserve-screen-state",
+      "path": "resources/uupm-standard-state-preserve-screen-state.json",
+      "sha256": "fb4714181de838c780a851198d392e42bc37f74428dc82c469a914c87ef4a1af"
+    },
+    {
+      "resource_id": "uupm-standard-touch-gesture-conflicts",
+      "path": "resources/uupm-standard-touch-gesture-conflicts.json",
+      "sha256": "510a8b2560f5cde1846579520aac1386e69328660436b8b055dc3d2b12920ff7"
+    },
+    {
+      "resource_id": "uupm-standard-touch-touch-spacing",
+      "path": "resources/uupm-standard-touch-touch-spacing.json",
+      "sha256": "1dc2938f5d3ae52ec507beb9649288d2ba77ba378c287117e897d302b617f38d"
+    },
+    {
+      "resource_id": "uupm-standard-touch-touch-target-size",
+      "path": "resources/uupm-standard-touch-touch-target-size.json",
+      "sha256": "d2e2a70f86afc161e1ba8a6d83003291869977eb7c9e1e718eae50a2e294d95d"
     },
     {
       "resource_id": "uupm-style-3d-and-hyperrealism",

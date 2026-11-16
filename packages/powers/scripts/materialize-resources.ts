@@ -24,7 +24,7 @@ type LicensesFile = {
   families: LicenseFamily[];
 };
 
-type FamilyName = 'font-pairing' | 'palette' | 'style' | 'icon-list';
+type FamilyName = 'font-pairing' | 'palette' | 'style' | 'icon-list' | 'standards-checklist';
 type Family = {
   csvPath: string;
   licensesPath?: string;
@@ -119,6 +119,28 @@ const ICON_LIST_COLUMNS: ReadonlyArray<readonly [string, string]> = [
   ['Allowed Contexts', 'allowed_contexts'],
 ];
 
+// H3 standards-checklist pilot payload contract (VPReferenceResource/v1,
+// resource_type "standards-checklist"): every app-interface.csv column except
+// `No` is admitted verbatim as a snake_case string; `No` is excluded because it
+// duplicates provenance.locator.row. Resource IDs are
+// uupm-standard-<slug of Category + Issue>; the composite is the slug source
+// because Issue alone is not guaranteed unique file-wide. Provenance carries
+// one entry per source row (donor, license, pinned revision, app-interface.csv
+// path, raw-file SHA-256, line/row locator); app-interface.csv has no license
+// companion, so there is no license-file join.
+const STANDARDS_CHECKLIST_COLUMNS: ReadonlyArray<readonly [string, string]> = [
+  ['Category', 'category'],
+  ['Issue', 'issue'],
+  ['Keywords', 'keywords'],
+  ['Platform', 'platform'],
+  ['Description', 'description'],
+  ['Do', 'do'],
+  ["Don't", 'dont'],
+  ['Code Example Good', 'code_example_good'],
+  ['Code Example Bad', 'code_example_bad'],
+  ['Severity', 'severity'],
+];
+
 const FAMILIES: Record<FamilyName, Family> = {
   'font-pairing': {
     csvPath: 'typography.csv',
@@ -149,6 +171,13 @@ const FAMILIES: Record<FamilyName, Family> = {
     pilotScope: 'icon-list',
     ineligibleReason: 'icon-list row is not admissible for materialization',
   },
+  'standards-checklist': {
+    csvPath: 'app-interface.csv',
+    resourceType: 'standards-checklist',
+    idPrefix: 'uupm-standard',
+    pilotScope: 'standards-checklist',
+    ineligibleReason: 'standards-checklist row is not admissible for materialization',
+  },
 };
 
 function fail(message: string): never {
@@ -171,8 +200,8 @@ function familyFromArgv(argv: string[]): FamilyName {
   const index = argv.indexOf('--family');
   if (index < 0) return 'font-pairing';
   const value = argv[index + 1];
-  if (value === 'font-pairing' || value === 'palette' || value === 'style' || value === 'icon-list') return value;
-  fail(`unknown --family ${String(value)}; expected font-pairing, palette, style or icon-list`);
+  if (value === 'font-pairing' || value === 'palette' || value === 'style' || value === 'icon-list' || value === 'standards-checklist') return value;
+  fail(`unknown --family ${String(value)}; expected font-pairing, palette, style, icon-list or standards-checklist`);
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -312,11 +341,11 @@ async function main(): Promise<void> {
       const bodyLicense = licenseByName.get(cell(first, 'Body Font'));
       eligible = headingLicense !== undefined && bodyLicense !== undefined;
     }
-    const admissible = familyName === 'palette' || familyName === 'style' || familyName === 'icon-list' ? first.row <= PILOT_LIMIT : true;
+    const admissible = familyName === 'palette' || familyName === 'style' || familyName === 'icon-list' || familyName === 'standards-checklist' ? first.row <= PILOT_LIMIT : true;
     let admittedId: string | undefined;
     if (eligible && admissible && admitted < PILOT_LIMIT) {
       admitted += 1;
-      const name = familyName === 'palette' ? cell(first, 'Product Type') : familyName === 'style' ? cell(first, 'Style ID') : familyName === 'icon-list' ? cell(first, 'Icon Name') : cell(first, 'Font Pairing Name');
+      const name = familyName === 'palette' ? cell(first, 'Product Type') : familyName === 'style' ? cell(first, 'Style ID') : familyName === 'icon-list' ? cell(first, 'Icon Name') : familyName === 'standards-checklist' ? `${cell(first, 'Category')} ${cell(first, 'Issue')}` : cell(first, 'Font Pairing Name');
       const base = `${family.idPrefix}-${slugify(name)}`;
       let id = base;
       for (let suffix = 2; usedSlugs.has(id) || existingIds.has(id); suffix += 1) id = `${base}-${suffix}`;
@@ -343,6 +372,10 @@ async function main(): Promise<void> {
         const iconPayload: Dict = {};
         for (const [header, iconKey] of ICON_LIST_COLUMNS) iconPayload[iconKey] = cell(first, header);
         payload = iconPayload;
+      } else if (familyName === 'standards-checklist') {
+        const checklistPayload: Dict = {};
+        for (const [header, checklistKey] of STANDARDS_CHECKLIST_COLUMNS) checklistPayload[checklistKey] = cell(first, header);
+        payload = checklistPayload;
       } else {
         const heading = cell(first, 'Heading Font');
         const body = cell(first, 'Body Font');

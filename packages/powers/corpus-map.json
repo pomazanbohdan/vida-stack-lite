@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5778,
-  "updated_at": "2026-11-16T12:22:56.208Z",
+  "revision": 5779,
+  "updated_at": "2026-11-16T14:17:47.429Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -19804,6 +19804,1218 @@
       "source_revision": "56ea9cf174ed86786187daa9de0e6247cb0747e4",
       "files": {},
       "csvSources": {
+        "app-interface.csv": {
+          "rawSha256": "331e7cf2c0b222d80c566c5f255c63cb339f65bfd02e471a720f28e4864a9f08",
+          "headersDigest": "aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1",
+          "columns": [
+            {
+              "index": 0,
+              "header": "No",
+              "role": "metadata-other"
+            },
+            {
+              "index": 1,
+              "header": "Category",
+              "role": "metadata-other"
+            },
+            {
+              "index": 2,
+              "header": "Issue",
+              "role": "metadata-other"
+            },
+            {
+              "index": 3,
+              "header": "Keywords",
+              "role": "metadata-other"
+            },
+            {
+              "index": 4,
+              "header": "Platform",
+              "role": "metadata-other"
+            },
+            {
+              "index": 5,
+              "header": "Description",
+              "role": "metadata-other"
+            },
+            {
+              "index": 6,
+              "header": "Do",
+              "role": "metadata-other"
+            },
+            {
+              "index": 7,
+              "header": "Don't",
+              "role": "metadata-other"
+            },
+            {
+              "index": 8,
+              "header": "Code Example Good",
+              "role": "metadata-other"
+            },
+            {
+              "index": 9,
+              "header": "Code Example Bad",
+              "role": "metadata-other"
+            },
+            {
+              "index": 10,
+              "header": "Severity",
+              "role": "metadata-other"
+            }
+          ],
+          "rows": [
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=afa0d76bf3456098016819a1a123c7ad8aa63c6c93d74be678390e04f6eb5ef4",
+              "rowHash": "a8aebaa8ac32959aef2f7156d005a7a2d3d4c44fc134cbeac0b9b4a18e010ac2",
+              "cellHashes": [
+                "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+                "d3368cbffe23c98da887d279a1b5c74b7618ba5c0488cbed30cf304f8f9398a1",
+                "372726cdc9e3a0f08143f94a66db39ce304cb7214dc77429482e582a96490bbb",
+                "2f0baa36b6aa3f069ceb1e9f7f0ab147d67e199fe51367493869dca7f3edf756",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "f9e3a9d3bfa6de695b9282873a2a2c69641366959579c91f75ceb937bd8cbffc",
+                "7651f221147249978da8c42897d05cf437d5197b1e395a99a3764ea881c7006b",
+                "b0f8e98a3d72a45621086990a958c9f4e3780a98d8e1a1a7d9bfb3bd6d1f3ab1",
+                "d70ed272f5b312d2831791414180624f0980623622f5488d0b91de5fca4d8f94",
+                "8ce8d57f0dd3daca3b50c79b1a88b9aaadf3c8a196bd61ff270857e3fcc7955e",
+                "427dd2969bd140bec3c1bcc7983da982f4815938cd4510ad0b2bad48ac5b55f9"
+              ],
+              "locator": {
+                "line": 2,
+                "row": 1
+              },
+              "locators": [
+                {
+                  "line": 2,
+                  "row": 1
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-accessibility-icon-button-labels",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=23c064d9a372d3941d4d820fe3b83fa0c4de36a30697ae045e9782460d16cfa0",
+              "rowHash": "fa8c3105763732f9666801ccf3702c5e645d80ab13c73bb21ed0d1d60e355289",
+              "cellHashes": [
+                "d4735e3a265e16eee03f59718b9b5d03019c07d8b6c51f90da3a666eec13ab35",
+                "d3368cbffe23c98da887d279a1b5c74b7618ba5c0488cbed30cf304f8f9398a1",
+                "f436715e9a220a6724d98f94cbe3936fd79c404db8c0da5af6cd4883b89f887d",
+                "0f1d7ca3a288b57ad152137da1b5b661dd95aae8f33b47c8add341a549cc79b2",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "c1cbf7b7083f37695e1fb63c18e17307d331e08f543c222cbf7f6b5f722847da",
+                "26a3698af7e8b741fb0adb792cf058d52e205ee23da6dc2a37e689ab5e71c190",
+                "010cd9721abeeab00d27e1f2abe4e9ee7d2b5538ca58fb6f32d810f01d8bee28",
+                "c4b735bfe5e045325f9c91e559b9abf694016fd2bb85391482bac92cbfcdec05",
+                "13f16b6736c3932c7ad081d94e5848e2ed7010ac3199076a618bc8a439a0bde0",
+                "427dd2969bd140bec3c1bcc7983da982f4815938cd4510ad0b2bad48ac5b55f9"
+              ],
+              "locator": {
+                "line": 3,
+                "row": 2
+              },
+              "locators": [
+                {
+                  "line": 3,
+                  "row": 2
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-accessibility-form-control-labels",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=1f3d1c34dbb4a77bb5da03f893c092f558b0aca538469cd497628595461515b3",
+              "rowHash": "4b9535a3711aa0ab932a6989aeb671672b8ddf2bb7aab285f38384f9f000e2ac",
+              "cellHashes": [
+                "4e07408562bedb8b60ce05c1decfe3ad16b72230967de01f640b7e4729b49fce",
+                "d3368cbffe23c98da887d279a1b5c74b7618ba5c0488cbed30cf304f8f9398a1",
+                "cec8dec881415d22031f389737dba7901e13f4f054e9e4e3b0e6792c9c6e331f",
+                "004644237b139df3cd33380946ba772f60f1658cb926e459019bc2f76410c0ce",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "00a6265ebad2de4ed4a715d1fbd47d947bace66822ca36b6c78c514dfea1668f",
+                "087f40eb05442b5f94d9d9a8d4b5298725d736923527fd8c2f49c00de320130c",
+                "ab6389e03e5f4f3db8d020eebe05794ad44f20584286b6c6336511f9587be0ca",
+                "e8c615b2d074bd46713dbd1402279e38c787e97f31f799063c21d528c548a898",
+                "52eb718f0b7cd648155416753e83482371e95f06dcc7116968ff616559c4a10e",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 4,
+                "row": 3
+              },
+              "locators": [
+                {
+                  "line": 4,
+                  "row": 3
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-accessibility-role-traits",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=a9e1cda06b86cad37d9fd85ad1f70d89ae1ca21dc0bc3b0964fe9a4dbb6745e5",
+              "rowHash": "a666f81481aafb120d4947eecbc4a53cf24e7a611acfacb5a43d09e95e556612",
+              "cellHashes": [
+                "4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a",
+                "d3368cbffe23c98da887d279a1b5c74b7618ba5c0488cbed30cf304f8f9398a1",
+                "92096c2d8fb0cd4e2321e54417ef9b11a2962a41fd47b80689db568187d8e1af",
+                "3655ab5a3b2af58eb8f5b50442680e56b73a8805f8014d1a71818d67d3182465",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "06b2ebac6206cfad60de54f6584061175cc9a3c87b2ce1474ec3e5139a3a4827",
+                "3b296e9df596c28c22b7504e5ed60fd91770c654725213d7ac7b8b15ec6101b7",
+                "c4de565bfc44c8a9b16b1638dca47f4918eb026da520951f654605e243f3914c",
+                "0bca4efe5cf8d532e51488bd46bd85a3795ed6c187e82d9890cb909847f41d22",
+                "e740a53437151ffbfb48bd6e8a11f412903ab0fe1190dbf1a676f6dc22888ab6",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 5,
+                "row": 4
+              },
+              "locators": [
+                {
+                  "line": 5,
+                  "row": 4
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-accessibility-dynamic-updates",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=58ac455712c8a79ba6cdab7dce2eeebaea7b7770ca5bf60254a282e7d27edc94",
+              "rowHash": "858f3459ddda1c2e27c85453b5ef4bdfc8cffd581937e7cbff04cb7ca00c5c6f",
+              "cellHashes": [
+                "ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d",
+                "d3368cbffe23c98da887d279a1b5c74b7618ba5c0488cbed30cf304f8f9398a1",
+                "f71c908b492591423c0e26753d90faee0451c592c692ccbac47e3bb25174d140",
+                "890b14df5a0b4a06144dcc891a587c7a085fa7942541427c486a0704d2b6e25b",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "41e1965dc791687e09c38edd92a51ea2a3956bdc50a6eb7c1effb9a48ffe56b2",
+                "4a0fa3485dbae99bb319942bd95b3658aee868a4908865c9c272e19322cc6716",
+                "21692a7b04a9e1fd28cbd5ec9bc00641ae15ac8d4bd66c038cfc4df4e050165e",
+                "291f9685ca0856f2f2bf3ab05c5e07f4affe9a9edab5abaa3a9b3798b61419ff",
+                "abecb231e97bc51b70f9bd41dbe6b68bf7415aa2b7e72713261ae4b62e9fe9c0",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 6,
+                "row": 5
+              },
+              "locators": [
+                {
+                  "line": 6,
+                  "row": 5
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-accessibility-decorative-icons",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=7e6ab0d403e1ba9ed762b4c01eb50db538804c48374d1fccd703eb3dc3a4382a",
+              "rowHash": "c09dd17d0cb71d0ef1a9e9c1518ab7f0b2c3e7d3be02634a3189449617478cd8",
+              "cellHashes": [
+                "e7f6c011776e8db7cd330b54174fd76f7d0216b612387a5ffcfb81e6f0919683",
+                "69f6895099870541e49cf26b2c1561c9a476e92ec1dd1cff21a0db9d76953917",
+                "03c55246cce8013b06e0a1030d70a82b922b54bc03d9c73eb5785e42f67f0477",
+                "bc8986bebc83f7fdd16a236e7c41e9b322c67152d86209bbac4b9a669bfd2e63",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "9cde394fd63153f0da995f41cc647a80dadc532efb7cc047a1e9f52b73b613e2",
+                "dd4b437afd5a8deddb80aa1a6c9982ef9b3a302687b020641e9cbed2ad80880a",
+                "5152a271c8e668639d06a12a73517aeb58954bf6884dc5478c740a7f1ef33204",
+                "6dfb6b40cc3fcee8bb4926a330f4cca3612278f7086298511d3a21e0bda5ddeb",
+                "2215cd01965522662150460e2394fb27d09e46bfbfa16d3c51f97a0e3523611a",
+                "427dd2969bd140bec3c1bcc7983da982f4815938cd4510ad0b2bad48ac5b55f9"
+              ],
+              "locator": {
+                "line": 7,
+                "row": 6
+              },
+              "locators": [
+                {
+                  "line": 7,
+                  "row": 6
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-touch-touch-target-size",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=762f727da48700cae93703ed0cf2f37eed5ebd8f2d318d8fbfe986ad975824b0",
+              "rowHash": "a823f1c00fd77b57bb00ec92f78d133445cc69b85387c141239176d947ce5452",
+              "cellHashes": [
+                "7902699be42c8a8e46fbbb4501726517e86b22c56a189f7625a6da49081b2451",
+                "69f6895099870541e49cf26b2c1561c9a476e92ec1dd1cff21a0db9d76953917",
+                "0f709cc3576822aeab035e387a0ca9288f3fa7bcfad47139d678e4489320eb28",
+                "477a3aaf7f124eac32b15cd8db9ebebc722401ccbb8c7398b5cfb7f84d3515a2",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "d192ff6260e2b77413f226e482f406bdd56bda79d8674594029348e5f8f8577a",
+                "ce22186ae6901aac2d8fd5c806811ffed51f2a709b54319554e4d68a0ca693ed",
+                "22c01b7718eb9010d5c597ff7a4377a69a85c4f0d0d41acd42550bdb1a47084b",
+                "15bb251bc8622c13cb1b8d92b413a2062394a719e4f5c73daca9a5c3506156da",
+                "7e0b39b6cb183ae3c81a9f421b87acc861323e064c69a95d7519ae8a2f12125a",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 8,
+                "row": 7
+              },
+              "locators": [
+                {
+                  "line": 8,
+                  "row": 7
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-touch-touch-spacing",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=f866010ac879f06645d75be041bf6fa9b421b58e977ea00180da35ea673d925e",
+              "rowHash": "9e94444ea26ab5d7d93d330323097089b79822c83b3a672662a33839a72559ed",
+              "cellHashes": [
+                "2c624232cdd221771294dfbb310aca000a0df6ac8b66b696d90ef06fdefb64a3",
+                "69f6895099870541e49cf26b2c1561c9a476e92ec1dd1cff21a0db9d76953917",
+                "88e0145d1c2aea1fb3252732cf50d917ba496ff70cb9fd1b37f9af2a0931ebb5",
+                "e8be89205b37f70c4854e7af3b0f90a7453e4788d77fb031bd82f5c4fd0aa39c",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "d960aace884e3097814aaf181bf70a199ca00bf2b31442415f5985004d328005",
+                "e1058eb63a787310c7836fe58f0392824a978149822b96e73dce69353488fe5a",
+                "4261848ccde3fdcde0ea32f9121c9bb0640fd46baa8c47d7a955c92a6cf34c9e",
+                "c436b3d985d9276f5fcf41dabfee57b2b6a2e5ab82de4d9cd3547657b2aef520",
+                "55e71d89d075e89ec42cf51fac7c0d4994a1a617b721122a815c79f50374a8b5",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 9,
+                "row": 8
+              },
+              "locators": [
+                {
+                  "line": 9,
+                  "row": 8
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-touch-gesture-conflicts",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=9e5ccc7d3babc2c9b9f06a7c1486c74e1b8a5908412122b12cebcf0b2b3afa38",
+              "rowHash": "86a611ffe7c49cf6b7ea4a5e677c1dfcb051adcd2f3924b0e81c6b65bbaac142",
+              "cellHashes": [
+                "19581e27de7ced00ff1ce50b2047e7a567c76b1cbaebabe5ef03f7c3017bb5b7",
+                "3db65f8c2a7d1861b4bca37da3adec5aa7905931eb6faddbc595a35f75e6ca40",
+                "9a426db3f765a97d782d62d16b47e0b20fdcad704cf0e4cf04ccfdefe6051fea",
+                "79e2c8bee276447e7093d8ad76a33a75b80c8351af8715974797417317cf49ca",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "445a9da0a8d315160b30e5eaa3b13770eab1e86be5ea138cd00907abae338ee7",
+                "e12ab09ef8e8e022f4ac59596924ee7805350c74931f3974c40c064e0a679606",
+                "1d19d6dcc0a377eb8576044b1d4fa272955f51fa05859327defa6f0dbd8853ff",
+                "fed718fbc943fc59a7e55d297a534e92dd9b38e56e71daeea6343d32f03a9127",
+                "079429c42dca14d1629335fd3bec8e0677d0c14de401f607883d1e362d4e25d6",
+                "427dd2969bd140bec3c1bcc7983da982f4815938cd4510ad0b2bad48ac5b55f9"
+              ],
+              "locator": {
+                "line": 10,
+                "row": 9
+              },
+              "locators": [
+                {
+                  "line": 10,
+                  "row": 9
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-navigation-back-behavior",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=2a03e0d85f8a83cf3ef8d151b70a6b72e3eb5ae4a5dac0e35a7b220169bd1790",
+              "rowHash": "f09f1e2e0cc4847ab6e714bcd085dd238d357f54e4a756812dc1bffe3822c4ca",
+              "cellHashes": [
+                "4a44dc15364204a80fe80e9039455cc1608281820fe2b24f1e5233ade6af1dd5",
+                "3db65f8c2a7d1861b4bca37da3adec5aa7905931eb6faddbc595a35f75e6ca40",
+                "7a93080d93e9ed24fd5d5b6c6a6817623c8757df47d3b728085a35609206ec24",
+                "805a18e651ac813e04b177f5c67e7b4008abd6877c48b76b91aebdaf8d1dcc44",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "da4f5b6c611f00de24f5ba11b341fad87632ae795eb86c032094755e4b92ba86",
+                "02bd259456485637bfe81668b511498b10eae41c587070140b0f87e5d925a615",
+                "b65ecb16665fe758e97cf06f0fe059e25574d3a064be14622011844a088f261d",
+                "bbb39f84dbc8618eebd0f6134f026607b52f1ec3e9d0e741efc6cf03b51185d8",
+                "ce37ef2d12da3358280dcbba317491745889ceffa44534e7a4ea71c106ca37c7",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 11,
+                "row": 10
+              },
+              "locators": [
+                {
+                  "line": 11,
+                  "row": 10
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-navigation-bottom-tabs",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=2f469e8a1e646e8e31c716e0e528a163c011d7a95156d74173f2680a28038eb3",
+              "rowHash": "0367315c6f9c1c9a807614dade750935aa6b6d4ea74614dabbd99e8be45fe4f1",
+              "cellHashes": [
+                "4fc82b26aecb47d2868c4efbe3581732a3e7cbcc6c2efb32062c08170a05eeb8",
+                "3db65f8c2a7d1861b4bca37da3adec5aa7905931eb6faddbc595a35f75e6ca40",
+                "864dea57b7b1143cb204e946ff6e7519275f43b73546bbd392b04851cea534e9",
+                "0db17c343279aefe91220be32a23d9af8f2dd57fe46f193cf28a1fd1bad3e766",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "3531ebf12c222ffdc2e7decb5d44727a0e6c1a5ddf83f4aa4b7fb05fd658a84b",
+                "e4fd1746cd1e3aeb426c17f06bc4afcadc50ab17fdc9f2ea6be490ef367182b7",
+                "9417beb5aa54566b3ce0224e9b87cffaf1e35beaea190d4882ebe5047e4ce8db",
+                "9b1a09715a76a858c1373f45715ea5f5d4391ae911aefc2b11cfa752a2bae150",
+                "c350287159f6dee2b938b7c1e07f97ccd585fb8730e42eafcdb55c585f64d39c",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 12,
+                "row": 11
+              },
+              "locators": [
+                {
+                  "line": 12,
+                  "row": 11
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-navigation-modal-escape",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=219e96e593fdcaaef512331a6ab3b4da575ade907377dfc2771853546f1074eb",
+              "rowHash": "827f5388b1f447c463bf6939f98bb3f27c6b8dbead81d4ebfbba8d9491bce0c3",
+              "cellHashes": [
+                "6b51d431df5d7f141cbececcf79edf3dd861c3b4069f0b11661a3eefacbba918",
+                "a3b50c476732c7409d297c3d7d0e23569fee5e08318553ae76041ab5fe60582e",
+                "a506a57701b1439eb5189bc97220456e22f52c84a45f7fa269abc3ec41f6a8dd",
+                "a6e2d39fa45d213de0d5eb4235599648bc0dc17b399083c97f679ffa62a9e421",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "2e3bba8da0ed8f700262331ec22103f944e887c8a5d779116889bf348cb6ef49",
+                "b0eff1625eefc3b948c1885fdc04cf594008e41486fa75cfbfb71809351808ff",
+                "0a6fb03d8b841a68dacca420217d3d4983813fe2431fd0ebb313cc3ddcd31a9e",
+                "38b513c36dc54fee4fc773074ec9207873c7d2112d1ae0e26434ae95e1d48541",
+                "fcbe52a243c227bdaad3d98a2d7ebb92d1a7ba4f47dbe9593f1452ec041f24a7",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 13,
+                "row": 12
+              },
+              "locators": [
+                {
+                  "line": 13,
+                  "row": 12
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-state-preserve-screen-state",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=7216726bb8fb3456472ba4b39917c932a57081ccacc79f47f2ef3c36824aead5",
+              "rowHash": "cb5236acceabd695a25c1cccb67082461eaa84fa94264d9b16942e31554982a2",
+              "cellHashes": [
+                "3fdba35f04dc8c462986c992bcf875546257113072a909c162f7e470e581e278",
+                "aac77df347205252b074d45aff7891debdba0ff1466cc0c351416d1662bb71ab",
+                "8d3c4e16e602acfaf532f675ba0aee605cc0b8d4c08d859e4528096d0e94dc89",
+                "849a7171e4ad19db9f4b9e181f4da7616034879096583d0f1eef1518935656bf",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "29e534656ce5dbf51dc8bd5d5ffd635dd9eb7b7bf5dccc42d81aac4ddeaeb883",
+                "bfeb03281909286bec6621ef614259b760a0717c974e5750c48d2f4e6ad07cfe",
+                "651a754c2c13a58eecb78f307d09aed9632877042ad9757781179354531c995f",
+                "003f46253582896a665e090a0e3586e519eb509bf837067a9a32d9267c2e51b9",
+                "2ce46d8d81f6d31e56f039de662609a8f4a03385d764b12eccfabea3178eda3b",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 14,
+                "row": 13
+              },
+              "locators": [
+                {
+                  "line": 14,
+                  "row": 13
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-feedback-loading-indicators",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=ee16ce8426bd8dbfb379b064f49ff2ba177cd2e7ffd0f3a3e266becd3c275306",
+              "rowHash": "a3509339ca119fba3a41c3b75302df12b28b232ec9f3d434ee00f21eb3917dc5",
+              "cellHashes": [
+                "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+                "aac77df347205252b074d45aff7891debdba0ff1466cc0c351416d1662bb71ab",
+                "2c5ba0714fed84017d8e39d0d6f526382a8863c224917eb02e12c7de2f9f5fb1",
+                "b55d833a327783271bb03a82f913a27692d26854a91efdb12a8e62c40af1cbcf",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "e2e62a778af3fc6f1c225194be82e8705907f0a0406d1d796a1db08a1d744215",
+                "546148ab8066884b9b03edf03541d418697ed99b042508360b443e30f02323e3",
+                "1f348a779bed86c2271a43be49723a1f453a46ff39e077e27b03830a47073d36",
+                "16d1719496fafe20563aeefd94ecca35c9acd5ad7c11203834e24b2dc4c6ca52",
+                "93a655ef223bf41071fef4154ffd2bfc6656003e0ed1b5a0ff66792ae486bdd7",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 15,
+                "row": 14
+              },
+              "locators": [
+                {
+                  "line": 15,
+                  "row": 14
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-feedback-success-feedback",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=d5bc1ec4c77a83a3708d3a4e51c8324262093352b39a6fb41942e2e8cf24e506",
+              "rowHash": "8e18937d6f9b98c4c0196e4af9e0a7cc3191ba635887c264778002b432180be0",
+              "cellHashes": [
+                "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
+                "aac77df347205252b074d45aff7891debdba0ff1466cc0c351416d1662bb71ab",
+                "8f0c335b77e94018ec0b721851a62ad75968cce40b6366a23a8c0f3bb4eb7032",
+                "3cf6d31eda6a403c5d252a0a89f567f5db924ee79c7de6f62b50b4e06c4e00e6",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "2190b06156e241065fd0d55b35168678e71616fc8db096b4273b045d8f113d80",
+                "a3c9508855fc71153b1349f2f9df49a9987c2b5f26a2c4eb1e49ccb67f610eb6",
+                "5848dc1b839771f2a1e57c00ce1edbbdd98931a0db72342ea88ab06340194a72",
+                "89ee177e95f06796965b615c323da80525b749476bc0429cafab59ca7e659cce",
+                "6d58ef91ddb0544c5c02e6f248d0b1814d746e97de7a95f4de8fddcc7936e970",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 16,
+                "row": 15
+              },
+              "locators": [
+                {
+                  "line": 16,
+                  "row": 15
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-feedback-error-feedback",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=4a1ff1937936896e5a78afb9903f7cb78a0de5abd735a8165de68d0cf5524397",
+              "rowHash": "aeb45f091a97bc175285eb6c5bc39b031e552595f5c516749aab1d35b557e562",
+              "cellHashes": [
+                "b17ef6d19c7a5b1ee83b907c595526dcb1eb06db8227d650d5dda0a9f4ce8cd9",
+                "858451263b1b9b4125fd9fb9a40f5959543162e04a14aec2712a45882f2d6e54",
+                "5cba8ecf9d346e046db86aad127130a9d29e6d53d27636803603ead7e82c4fb9",
+                "442e90c1929ae2278281d6db28613a49e9f102ed717f2532476844c8dc4fad4f",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "dcf2f1f9b00fc7dac4c90043f5c80adde857d163bb5932281e884af0a3cb0428",
+                "5b29fa1c2158d9edce42d2c6d543762d4d03aed73c9cd4624bfe54d81d29eaa5",
+                "e23ab6a865d2c3d880ae08858c493345ef2727395e74640bc773d4f7e3c312f0",
+                "c4fb7e55a0c56e73fe1e25f0a1c290756dbc477118e7f0dc589141f0a2cd2f1c",
+                "ea4b8ae4feb2af6b1b435da2fa8326cf49a54ff402a2f45355f54aad8446a4e1",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 17,
+                "row": 16
+              },
+              "locators": [
+                {
+                  "line": 17,
+                  "row": 16
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-forms-inline-validation",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=c18c33b1ca96cfdafa1b9165f56b9aaa9dd6f825244c21fc067ce90945a12703",
+              "rowHash": "7c462c8f45035f392d245d3d25303706d97201ad1ab2138789d4fbf3b47aea46",
+              "cellHashes": [
+                "4523540f1504cd17100c4835e85b7eefd49911580f8efff0599a8f283be6b9e3",
+                "858451263b1b9b4125fd9fb9a40f5959543162e04a14aec2712a45882f2d6e54",
+                "3ed83689c0dca5f6ecd8e5e37779924bc6998b2d26c3c2dee73f4c0c97eb5582",
+                "75c907372f50cbaef4283b0b9ea4f490570c3302516368d5137a43b3f2049123",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "99b50b02b6a26fc17924b7f870d722a1083f3a36eaaa09ba8c5a0c720472c845",
+                "c36cb2f31a7cd4786e2a5d236d962300a89be14f8c7c416577954576801b6049",
+                "bb033e1326be6ae67158c2f640bd7af70169b18dc129e31a7aeccbde7f12f3c1",
+                "5f75abfdf52b850620c519fdc059726aaa3d2241309e4f9c3bec104806aef064",
+                "77569e3c39708aae58418108ad05ca8a03d2c2e889d521346e6294f4603fd0fc",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 18,
+                "row": 17
+              },
+              "locators": [
+                {
+                  "line": 18,
+                  "row": 17
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-forms-keyboard-type",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=5f72257bb8832ba11a4888f1d9fa7a944d2066f39c313952551bd73e4508dbc5",
+              "rowHash": "6af110ef44d324b4983e5685ac64a4cb97108304bbac56226fb157db432c62df",
+              "cellHashes": [
+                "4ec9599fc203d176a301536c2e091a19bc852759b255bd6818810a42c5fed14a",
+                "858451263b1b9b4125fd9fb9a40f5959543162e04a14aec2712a45882f2d6e54",
+                "60ad3efcc2e18e4be88d18a2312c265ab1a80f13b20b6fdd4d91d75d3b1d0a65",
+                "f04b1faa1b7f7fb30509b8d3cee6854d47a5e65acb3685c95967c93178584f54",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "c9e145eb62585df7c20bc5d5e36e4c55434f8f00ce41ed458ed45e35a5bda56f",
+                "4fee9c7c1d373fb1406388e003ee6cd0c2f173a52371d6dd540bf6e316a8f906",
+                "3a3223e386e0f6649cb5a0e8619c12b3688dbfc37b00ba6376cf1a927d7f8903",
+                "4cecb93241d6ba85b2edd88525bba2c35729639e3b72ce086f8ec958b9bf5f54",
+                "7de8be179e73268cfd314e1f5f48eebdfb9ec4f22f9871c00351837bc6ea4938",
+                "f793de205ead5ac302c4a1627829dea41f176b1068b993a32373fc869918374b"
+              ],
+              "locator": {
+                "line": 19,
+                "row": 18
+              },
+              "locators": [
+                {
+                  "line": 19,
+                  "row": 18
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-forms-auto-focus-next",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=c0d2875f7ae1c1406934e0dffc37de3e2a73b70dfa88534e14f38fc3664a8442",
+              "rowHash": "3bae768b6753a7d0c3859fba07f6556f35ec85845393ed5210beda95127303b0",
+              "cellHashes": [
+                "9400f1b21cb527d7fa3d3eabba93557a18ebe7a2ca4e471cfe5e4c5b4ca7f767",
+                "858451263b1b9b4125fd9fb9a40f5959543162e04a14aec2712a45882f2d6e54",
+                "2acb2387e56a1268384de3438dbbdc36a2333ee6090a9a6751c23278415026b3",
+                "308308fab7ed198f8c5a4281bed95ebc349c9d5d7f77151cd439e7e1071ace8f",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "fc68fbe092d6b4e25775f8715e566128a3a44b41ad9a2666ba0ec9d3639fc381",
+                "0e58d7c969a746822ddf0ee7e5f4aecf89c5420b726128ff3a068d5998477ab1",
+                "8dbf07715242c6ddbd4bc7f3b6b7e2e7422e3c9ae95ea96d6469c22d3cbb5354",
+                "4fe89c8abd895a8c781e4e3155edc05ea668a64bc38167a4f693c1225a5bc76e",
+                "46abd22695c957d04fb81a8b504b1353197769c269b9c110ffa3bcf0c940acd9",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 20,
+                "row": 19
+              },
+              "locators": [
+                {
+                  "line": 20,
+                  "row": 19
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-forms-password-visibility",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=94f41e431070abdc5e2463b6ff106c4de444d04d55ef745936b7f7e4c0e36e36",
+              "rowHash": "346a4d92db47527f22a9dfb12c319074d4ec3b9dc5090655e44804763b0b3004",
+              "cellHashes": [
+                "f5ca38f748a1d6eaf726b8a42fb575c3c71f1864a8143301782de13da2d9202b",
+                "442aded87a55aa8c8f7d5ff0c30228150d4b1cb8756e4be138d615ca4708fc26",
+                "8901b46b601463cf7d92aeefe026d8f2cae45a8d90814961072d2b63733c662c",
+                "d96f0d220ed4f5fbb00eae41a0d2543ab8e0c7718cac10e9633eff72c46e6565",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "67a426730c8f2d2ecb47e6423a6b58110df2e9a60b31cef404fc670d4067c258",
+                "d9a117ba7a5ea788d90847df754ab1d7e2a9127001465683c7f22c79ea07a49c",
+                "580623457ddfcf45f5d1ef2078e4ef34e944ec9712d6da85e4741ed8e77b499e",
+                "f8b8706e91a0df1bcea1077602dda002f779194b506db72835fdd842d5c28c19",
+                "5dc385319a628ff58b1efd00f7a7b35e41b2405b23cbf364a0160c0b7ac8e497",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 21,
+                "row": 20
+              },
+              "locators": [
+                {
+                  "line": 21,
+                  "row": 20
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-performance-virtualize-long-lists",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=61f47aca83b32b537ce8a0201a3672e6eaf5c289973003eff26078d4d0c5d93a",
+              "rowHash": "30c92297ec53e27bae0f2a61051e6f8ae6107eb8e3984ee7b997592714e7748b",
+              "cellHashes": [
+                "6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443",
+                "442aded87a55aa8c8f7d5ff0c30228150d4b1cb8756e4be138d615ca4708fc26",
+                "fcc07bb1e52d18583665e4fee42a074c82d8e31caf14d0e6ae756d3a339d95c7",
+                "d3fb8979e96477be412106b846b5a2ae59f9b0364e7dbda409caf940ae0da843",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "46940c705a50dd46c2c835d23d0625a6b755d769978bce85b075e741a80b7298",
+                "26f9f49bc7ccbea66f34153f29b1309dc52c7ad89261c859db2b422796cd43b8",
+                "99f6f1aa3c81bacd1a5166414f15b803ac623deb5f1d06394a245731173ae6aa",
+                "2b6e9559194a413e4b5a3a8931d085d082a78b48586aa0ed823cc662ea0e42fd",
+                "e095f1c3f3c32b1b1a76e07363465369adff975f23aab5740b43f6239b7d7105",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 22,
+                "row": 21
+              },
+              "locators": [
+                {
+                  "line": 22,
+                  "row": 21
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-performance-image-size-cache",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=959e797e6f72a0df064ee41590419517e3b2b957ae08dc7ed9c862b62b9248e2",
+              "rowHash": "212a657ce552d91e39c1dbf723c87ff109125d33871530c744b97283c36f5483",
+              "cellHashes": [
+                "785f3ec7eb32f30b90cd0fcf3657d388b5ff4297f2f9716ff66e9b69c05ddd09",
+                "442aded87a55aa8c8f7d5ff0c30228150d4b1cb8756e4be138d615ca4708fc26",
+                "03775df227c590ff8ca4173f70de325a1be9562439cdea8d09a486b7e3db2ba4",
+                "f90ddede663416e73ddeb28bf48a13198ee10b9565a4cc0f5fa7806fc932e450",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "afa1dc8ed0db06ed0d86c94f64dd9e4d7b31a50dbb5ef9e713ca8f27f85fe7d0",
+                "60071e520ca268c96b64231655a086ffebc1f29646db4e884df1de74db6ec92a",
+                "37f1ad72371f99ba28ee4823c84f0985566a18e87b492809a9d2703511b3981f",
+                "ee53eabe407d1d87812d26a7126c47b5c8fa4ed4fa6520edf821db5253f2a758",
+                "9f998da9fdd577a148268454d7f20bdcfce2249671039f645fe6aa0237e4d34c",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 23,
+                "row": 22
+              },
+              "locators": [
+                {
+                  "line": 23,
+                  "row": 22
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-performance-debounce-high-freq-events",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=6866d02fe972f5c91420e41425d264efd9cc8ce7a1413495ba31a565fce42164",
+              "rowHash": "0a9ac3687ecf4fac35ac31227aac1beb3d3dd03dd1787d26e70d8f1b56c6bda0",
+              "cellHashes": [
+                "535fa30d7e25dd8a49f1536779734ec8286108d115da5045d77f3b4185d8f790",
+                "1dd10f244a62771bcca9df74a9bc7d13363df8d3cd69ee07f66c2b1666b256ff",
+                "5749132a6771c3bc4f18db38f49e06f61468f1a8f57b54496d08f91e832c4a86",
+                "abb62f6091fb6b0c049aad3e5b79122e5a460eaa5372252b74645cd2ec47188d",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "7c7c91a0c76ae604546757f8ff17027cb6733a21c8a47d19cf392136b34dd0b2",
+                "58dbeb46ff9cd57744a55f85a39a9e9abaf8d2c818a5ac002f7b5cb1f4d0b31b",
+                "795cd09a1aa04f315f0f1ce2cde7d9dd53b8291aa786d16a895ae045b16a1ef5",
+                "7b2314b76263e5a9e37d023e73815194978bc59a997c55c2a150fbee0a288acc",
+                "9824d594edbaeb2e981ddab255ab7acf39df71309adab15a2121a72b16b81a75",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 24,
+                "row": 23
+              },
+              "locators": [
+                {
+                  "line": 24,
+                  "row": 23
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-animation-duration-easing",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=325c20f5ce86c8808df20adf17872293c8c3b74084c263dd576fd33407761966",
+              "rowHash": "6a8faeb316c4311faeaeaf2c18d4785b31d6fd0bba9b2c8e97d8d4f5b65cc537",
+              "cellHashes": [
+                "c2356069e9d1e79ca924378153cfbbfb4d4416b1f99d41a2940bfdb66c5319db",
+                "1dd10f244a62771bcca9df74a9bc7d13363df8d3cd69ee07f66c2b1666b256ff",
+                "283b51b901632678add54607922be97d9a17247fa2ca84505a9d6b03001d22da",
+                "64ab5c264ff489cebd4c3ea2eef7ae65dd5860f7437b0537f154e3345a62e76e",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "cabf365c6f14e9a158874d44eeab8391daaafbd497b21398c5925fddff96c4da",
+                "0dd42e31c77d2da4e67cf10d4131a1f0c766413f22b0f16be465b41e417d5d8d",
+                "a2c455a7cb589004c6552e097022c5ace802fd1327832bd77df88a8544673fa1",
+                "383018d47717453c520d6b6a736967397f1e2cad89db20cd19cfe2673c659a73",
+                "ec5a7ea5b9e8f056ae01d305de361cf7ad047f2b2361e8d4d7a2c9133a7e28d0",
+                "427dd2969bd140bec3c1bcc7983da982f4815938cd4510ad0b2bad48ac5b55f9"
+              ],
+              "locator": {
+                "line": 25,
+                "row": 24
+              },
+              "locators": [
+                {
+                  "line": 25,
+                  "row": 24
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-animation-respect-reduced-motion",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=73075f86c33b113845676bbdf76f51dcd853f735e4f9089b3ce77b25ba9bf510",
+              "rowHash": "c23f54068520628d47c6c33c8075351e2d3ebc4da74227e11772845b3554a9f3",
+              "cellHashes": [
+                "b7a56873cd771f2c446d369b649430b65a756ba278ff97ec81bb6f55b2e73569",
+                "1dd10f244a62771bcca9df74a9bc7d13363df8d3cd69ee07f66c2b1666b256ff",
+                "4e7549993fff9196268dfa11053f81bc07f79b9e909740618e2314698a48429d",
+                "c912e4274e1ca392f6fa4e6ffa1155505a6bc6299555b9524c5e99189708b4cc",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "ff4e543791ca52b361a2ffd6dbb3681a1c5d0de9a751c6203e4119b8b40100f3",
+                "c9229147ad6fff0b33006351040dbff49e4162f25abacdcfabe988be2d67a090",
+                "1c0b097ce8d25df89c6a1b1e1ef2f68cab3552c6950fb0ee4ceaaa018a54aa88",
+                "a0e8235814965f5ad13ce49dca4813f6972f5adbdf120de2183952fcc1ca1a33",
+                "448b8e9ebfd85a76633261699fa3e00cd6a6eb966e01f907ea8e54da81f25cfe",
+                "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873"
+              ],
+              "locator": {
+                "line": 26,
+                "row": 25
+              },
+              "locators": [
+                {
+                  "line": 26,
+                  "row": 25
+                }
+              ],
+              "disposition": "admitted",
+              "bindings": [],
+              "resourceIds": [
+                {
+                  "id": "uupm-standard-animation-limited-continuous-motion",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 standards-checklist record"
+                }
+              ],
+              "mergedInto": null
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=41aeeb7b3f039507443b5362821af8b088dcc8020f65c9db6dbbacf48ac78e7d",
+              "rowHash": "801b10791112b02e1a46eeb6d83c53142066733c8a2f864ffa0d0895aca42b85",
+              "cellHashes": [
+                "5f9c4ab08cac7457e9111a30e4664920607ea2c115a1433d7be98e97e64244ca",
+                "cab94aba84f97f7f8d3f46516a5f92c25363f39f9492415c4d76be84b2873883",
+                "8ab958a5bb74a74ef63f883cbc6678d64b7083ad20cb7c52d7b309a6052616b5",
+                "d3366d9bf1695b3e9f1f3a3f47b8858dd372ccde658e1708c640a75bef7d78da",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "a3aa4690325db738317a7414b06e42e9b4bae264438cde163a1c59b35b6c69b9",
+                "21b27b5d6bf0161cdefc2d587d56b8cc458db01ae7b7f30723dd36e948382097",
+                "934a1ff760d804a0d44c6e1eeae72590bfcc855479108f3296e24feb457b96cd",
+                "42ece5fdeb99938e9b9643632bc0337fce617893f255b1af8d362a05daf20e8b",
+                "3a548ce7ef76ffa4e7d195a69b390710aaea688fd1b1b969db4312fb30e41266",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 27,
+                "row": 26
+              },
+              "locators": [
+                {
+                  "line": 27,
+                  "row": 26
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=59795a8419b6fc3a9e468360c15f2cebb45f5872b3fbcabdabc85b914a9115e7",
+              "rowHash": "f33920589463e90ca5fcf76758d5977901dbb0dd00dba7614ed92ad77790dfc1",
+              "cellHashes": [
+                "670671cd97404156226e507973f2ab8330d3022ca96e0c93bdbdb320c41adcaf",
+                "cab94aba84f97f7f8d3f46516a5f92c25363f39f9492415c4d76be84b2873883",
+                "96554320ce350c73ec674206e80fd969dc497753120adb0b5577b8e60da9685a",
+                "e9d425dfa8288f763cc35bdfbc0ccf5a349cbda9f04e420f62224d459be1ef20",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "7dde6cdc2c159eddf9a563d7231f156b2b54b4a7658b6d5b7c52666f791f9f5a",
+                "cfa407d7dd5bc3402681ea0b354eebfa5f6d8564547b2bc6d8d7d6cab6835de3",
+                "02e87d1b43324a503e6e7e01df7deb4a1b55833230e771a1e882ba6f2aea5d18",
+                "d9a34f94dc15bb39d36a08165bf1d12a610707937d0085b6b171decd1f6a6677",
+                "46a47eec3a6fe93aabd8b6b13c45ddd03aa7706acca1572a0c9e9da1f34350b4",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 28,
+                "row": 27
+              },
+              "locators": [
+                {
+                  "line": 28,
+                  "row": 27
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=2253ca4ca70e193ca5255216c2680919d74bd61084077af75317f2bd11ee8bd1",
+              "rowHash": "93ddc2cdd6e0a4ccbcd3f45ef9b97d3479e9e3ba0ac6a4bcb7939e8fc787e0ff",
+              "cellHashes": [
+                "59e19706d51d39f66711c2653cd7eb1291c94d9b55eb14bda74ce4dc636d015a",
+                "68a13f7dca448761dcd1c77d06f07445d4f499d57962729171b7392a4c1df046",
+                "9708d01b7b8662222c32c8ffb7da7430f2dbc5f148efb85068f0cdc35d73e10a",
+                "c5428651c86d2e923b56a02fc77dfde2d4a3d2c9ddebdee4bac3d7c3d239fd9e",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "bec35d6c22cbe0300d5d7b63506f2dc9c20c921bd35619f6d64ef57c2ada836e",
+                "83581a2f9bae68fc82902327c1378ee85e698a8f47b33dda1a00d563ce813bf4",
+                "2675bb2792c765f7e2a650974cd88e1c84e1d628be84862b775994649851754b",
+                "4c1bd9fad1dbba369b19e6dc1f1e3ed19f58650dd31819a4bf3ddd1cec2cc206",
+                "bce22123ff7bd1f37ab209f023fe93158f9abc3d7b7d60bb66bde771f58bbc51",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 29,
+                "row": 28
+              },
+              "locators": [
+                {
+                  "line": 29,
+                  "row": 28
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=57599c965afdc748b3b934343a308175a7130bfdb335577fc043f6e6919b8fd0",
+              "rowHash": "b073c93a50d6f40b9e6ec7f646b11e293f4b59b65cecabd3674518db66f8d9c3",
+              "cellHashes": [
+                "35135aaa6cc23891b40cb3f378c53a17a1127210ce60e125ccf03efcfdaec458",
+                "6efcf91aaf9552a455f356c987733534ac3096e6f9b79612d50fd52837e33e93",
+                "698c0a0365649d53fd5b58bd723908e62a8a62b00a5404ddf571fd8cd67f9f9a",
+                "0125f79eba29e2df2eeb2259c48008147f741acc3b909e066a2d978de5d83d25",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "9190350a465ab001ffa051fdd5ba29ba6bbb1514704b3955daadcf223df99aeb",
+                "f10881fe43ff12efcbc68a0d66a5950c51229a0c0d2b751cd83418fb03137f6c",
+                "f714ef4548d101939ffe925e67e0eacae80c7021ae68e5f49ac8baa69ae01c30",
+                "72f082bbf45c17d498c37a19d4f8ee9feb471ca53774d22e0d1e343ec5b66a1e",
+                "d95aa5b0fcbf5548c81a44cc6095d382a8be4d5bc1e18eb8b20838b263c705b0",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 30,
+                "row": 29
+              },
+              "locators": [
+                {
+                  "line": 30,
+                  "row": 29
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=fe7399ae1e2876c2527f0b513e00455f684712e255398f09456569220a92437a",
+              "rowHash": "d9dafbe26918d4e2a8551df972cb71bf161fdd2611f29ad2ae630cd9e96848eb",
+              "cellHashes": [
+                "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+                "d3d8f760def12006abc98f46b07ad70158b93b96feb8588b7669bb4e060592d3",
+                "e388683968f71606eeaee19f8bcef0ff6643afc569146ad57f094044a792f9f2",
+                "802bc322afc651f974f593c94546a9960b8f6563a829214df4bd6c2888ce48c7",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "4226f0d7abe18d7a3ccba1043f7ac2e4f06c66afe5dc23c09236a02349d8f8b7",
+                "df6bd01a3bce8283be70d0d02a3eabfedc3975a743715696d8ab231b4900b4b0",
+                "451dc64d31095c36ff0b14f6e470628943c33327e6468a27b057f3a5bab14274",
+                "973e6809f197dd12aa43cc0ff7caa4a4afb0cd03c0e4d0f8f9fcbacc8eab42f9",
+                "5e9b6823eca243824766b1b47e5d691fd25717ca71aa47e26117becb254d0cee",
+                "427dd2969bd140bec3c1bcc7983da982f4815938cd4510ad0b2bad48ac5b55f9"
+              ],
+              "locator": {
+                "line": 31,
+                "row": 30
+              },
+              "locators": [
+                {
+                  "line": 31,
+                  "row": 30
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=344afa3c2218b9df11eea0da183ad481d40539cd053a49eb497de5e0e6374999",
+              "rowHash": "1ffe778b1dff0524358f59f47202a44f4a9b70497aacecaf2defa2c35afdb773",
+              "cellHashes": [
+                "eb1e33e8a81b697b75855af6bfcdbcbf7cbbde9f94962ceaec1ed8af21f5a50f",
+                "d3368cbffe23c98da887d279a1b5c74b7618ba5c0488cbed30cf304f8f9398a1",
+                "7267def6c5710a99f5597a2dab5cd12203430bb305afcb233db57ba0fa3bd8c6",
+                "631390d9206323adfc00626ae76a4aa2144741fb290439c7b9fe6e656cd9e60e",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "ec632b174584c9d3ef36186c5ee021b2aa92c55c9031f4e60a99db39f381a241",
+                "79577623b99d50eaa74783b62ffaefca08eda4bff118d12b559425be33b44ef0",
+                "80e8141724fa61e540e42bcfe1b978c029821d421f8cda6123ea21fb4310af99",
+                "aa8a6fa37ca4bf221fd9de2fefee09add371a4e5909b59cfd83e9aced2075a9b",
+                "bf2022bee2065ba20fe9c56c0ed900ed0ff398ae2a75228a37c7b356deb93814",
+                "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+              ],
+              "locator": {
+                "line": 32,
+                "row": 31
+              },
+              "locators": [
+                {
+                  "line": 32,
+                  "row": 31
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+            },
+            {
+              "rowKey": "path=app-interface.csv&headers=aca918e20362243d06fb033258cffe4aebd9d98e54a95e0e234cff0385ebdab1&cells=955a6f9af8ad73221f4ae65e9bbdf4a1728b34f1bafb78565f6d4433d46c4aa3",
+              "rowHash": "77c070961e34736ef3c49150353eb0258b17f9bff88bb5db843aa397760adeaf",
+              "cellHashes": [
+                "e29c9c180c6279b0b02abd6a1801c7c04082cf486ec027aa13515e4f3884bb6b",
+                "858451263b1b9b4125fd9fb9a40f5959543162e04a14aec2712a45882f2d6e54",
+                "2671ef22c5f51c4f82689e7e5024a2b11fabcf9b432df3b483800d49b11e3fcd",
+                "005a8bd868b17a926300054c630199359995ff3363ec4389f783d16780457eff",
+                "e247a53464bee1c6a9ddccefbc029fc9c566662d5ea5a0ab0ad3f4349773d6bc",
+                "17cbab7bf35a9f420d8e2f77805e142bc3e8dd9be284f77118798342c2616965",
+                "a1c71217dffd89d08a89a69b7abe1ed796138c82a6fcee31cd9520803deec82d",
+                "a0a4405cfdfdef33161bac5b63ce90e54509a653960d33c68e201b640b7a4e61",
+                "9ceada3cb863925bfb0d204712863f18e5c9d13e1b1452c9bd791155f9667117",
+                "4b0201caaa445c7b69afbe945a18706920debaf2330b489e5f7ef2da920e8fe6",
+                "427dd2969bd140bec3c1bcc7983da982f4815938cd4510ad0b2bad48ac5b55f9"
+              ],
+              "locator": {
+                "line": 33,
+                "row": 32
+              },
+              "locators": [
+                {
+                  "line": 33,
+                  "row": 32
+                }
+              ],
+              "disposition": "deferred",
+              "bindings": [],
+              "resourceIds": [],
+              "mergedInto": null,
+              "reason": "outside the approved 25-record H3 standards-checklist pilot"
+            }
+          ]
+        },
         "colors.csv": {
           "rawSha256": "8162429222bce22df62b564085946a30d07cc9722c58d0a3a494bd0d1d00841c",
           "headersDigest": "fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e",
