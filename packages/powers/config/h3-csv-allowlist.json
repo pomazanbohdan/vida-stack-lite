@@ -4,5 +4,17 @@
     "path": "typography.csv",
     "rawSha256": "321fc446e89024488ebae96dda93efc4d2307bd8bddb240857ad51364f6782c8",
     "headersDigest": "f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270"
+  },
+  {
+    "donor": "uupm",
+    "path": "colors.csv",
+    "rawSha256": "8162429222bce22df62b564085946a30d07cc9722c58d0a3a494bd0d1d00841c",
+    "headersDigest": "fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e"
+  },
+  {
+    "donor": "uupm",
+    "path": "styles.csv",
+    "rawSha256": "a93a4d9d7025856575d7b7583bda020be9043013432c5af7c58af9dbdfb206b7",
+    "headersDigest": "89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65"
   }
 ]

@@ -108,6 +108,29 @@ describe('VPReferenceResource/v1 schema', () => {
     }
   });
 
+  test('accepts the H3-B palette payload shape under the envelope', () => {
+    const palettePayload = {
+      palette_name: 'SaaS (General)',
+      colors: {
+        primary: '#2563EB', on_primary: '#FFFFFF', secondary: '#3B82F6', on_secondary: '#000000',
+        accent: '#EA580C', on_accent: '#000000', background: '#F8FAFC', foreground: '#1E293B',
+        card: '#FFFFFF', card_foreground: '#1E293B', muted: '#E9EFF8', muted_foreground: '#475569',
+        border: '#E2E8F0', destructive: '#DC2626', on_destructive: '#FFFFFF', ring: '#2563EB',
+      },
+      notes: 'Trust blue + orange CTA contrast [Accent adjusted from #F97316]',
+    };
+    expect(validateAgainstSchema(resource({
+      resource_id: 'uupm-palette-saas-general',
+      resource_type: 'palette',
+      provenance: [{
+        donor: 'uupm', license: 'MIT', revision: 'a'.repeat(40),
+        path: 'src/ui-ux-pro-max/data/colors.csv', sha256: 'b'.repeat(64),
+        locator: { line: 2, row: 1 },
+      }],
+      payload: palettePayload,
+    }), resourceSchema)).toEqual([]);
+  });
+
   test('rejects unknown resource types and malformed identity fields', () => {
     for (const type of ['color-palette', 'FONT-PAIRING', '']) {
       expect(validateAgainstSchema(resource({ resource_type: type }), resourceSchema)).not.toEqual([]);
@@ -173,6 +196,7 @@ describe('VPCorpusMap/v3 admitted resourceIds', () => {
     expect(validateAgainstSchema(corpusMap('VPCorpusMap/v3', mapRow({ resourceIds: [admittedResource] })), mapV3)).toEqual([]);
     expect(validateAgainstSchema(corpusMap('VPCorpusMap/v3', mapRow({ bindings: [binding()] })), mapV3)).toEqual([]);
     expect(validateAgainstSchema(corpusMap('VPCorpusMap/v3', mapRow({ bindings: [binding()], resourceIds: [admittedResource] })), mapV3)).toEqual([]);
+    expect(validateAgainstSchema(corpusMap('VPCorpusMap/v3', mapRow({ resourceIds: [{ id: 'uupm-palette-saas-general', disposition: 'admitted', reason: 'materialized as VPReferenceResource/v1 palette record' }] })), mapV3)).toEqual([]);
     expect(validateAgainstSchema(corpusMap('VPCorpusMap/v3', mapRow({ disposition: 'deferred', reason: 'held', resourceIds: [{ id: 'uupm-palette-x', disposition: 'deferred', reason: 'not yet reviewed' }] })), mapV3)).toEqual([]);
   });
 

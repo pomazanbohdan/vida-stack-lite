@@ -1,10 +1,69 @@
 # Directory Update Log
 
+## 2026-11-16
+
+* **H3-C `style` typed reference resources pilot — implemented,
+  reviewed and owner-accepted:** 25 `uupm-style-*`
+  `VPReferenceResource/v1` records materialized from `styles.csv`
+  rows 1–25 via the same staging-first CAS materialization
+  (catalog rev 8058 `35833e57…`, map rev 5777 `ad02beae…`); the
+  file has 88 data rows and rows 26–88 stay deferred with explicit
+  pilot reasons. Payload contract: all 29 CSV columns except `No`
+  as 28 verbatim string keys; six donor `Status: deprecated` rows
+  (20–25) admitted under positional-pilot parity with
+  `payload.status` preserving the donor verdict. The D18
+  delegated panel ran 15 blind reviews (5 batches ×
+  delphi/adversarial/party, swe-2-flash-medium) with aggregation
+  25/25 accept — 3/3 direct protocol accepts per record, 0 amend /
+  0 reject / 0 manual, and no orchestrator adjudication
+  (`h3c-d18/AGGREGATION.json` `13fa5cfe…`).
+* **H3-C gates:** `bun test --coverage` 1,112 pass / 5 skip / 0
+  fail with All files 100% funcs/lines; typecheck 117 files;
+  format check, `check-corpus` (0 issues), `check-vector` and
+  `check-okf` all exit 0. The pinned Knip external conflict
+  (`issues: []`, exit 1) is unchanged and not claimed PASS.
+* **H3-C acceptance:** the owner accepted the H3-C style pilot
+  on 2026-11-16 ("роби все паралельно") after the bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3C-RECEIPT.md`
+  was assembled with `h3c-d18/` evidence. Scope is the pilot
+  only: AC-52/AC-54/AC-55 keep component evidence; the other two
+  D15 resource types (`icon-list`, `standards-checklist`), the
+  deferred typography/colors/styles rows and the remaining uupm
+  data families await separate owner-approved gates. H3-A was
+  committed at `49842c09`; all H3-B and H3-C product changes
+  remain uncommitted at HEAD `49842c09` — the commit decision is
+  Root-owned.
+* **D19 algorithm delegation mechanism — implemented and
+  independently validated:** `scripts/algorithm-delegation.ts`
+  adds the decision-type registry (canonical exclusion floor +
+  canonical allowed floor — new delegable types require the
+  canonical registry, i.e. an owner decision), exact
+  decision-type+scope matching, `VPStandingPreference/v1` and
+  `VPAlgorithmOffer/v1` sealed artifacts with coherence rules,
+  and SHA-verified preference loading via `verifyArtifact`.
+  13 focused tests pass; typecheck, format and `check-corpus`
+  exit 0. Luna review rounds: r1 CHANGES_REQUIRED (registry
+  trust, forged preference bindings) → fixed; r2
+  CHANGES_REQUIRED (caller-added allowed type) → fixed via
+  `canonicalAllowedTypes`; r3 **READY, 0 findings**. Deferred by
+  design: call-site wiring into human-loop instructions,
+  algorithm execution/notification and per-decision SHA
+  binding. Changes uncommitted at HEAD `49842c09`.
+* **E5/Stage-8 reconnaissance:** read-only gap analysis
+  delivered at `packages/powers/.tmp/e5-stage8-recon/PLAN.md` —
+  production manifest inputs/outputs cover `portable`+`codex`
+  only; claude/cursor/muse-package/antigravity lack production
+  inputs; Muse catalog hard-blocked
+  (`MANIFEST_MUSE_CATALOG_NOT_READY`, no digest contract);
+  `.67` `NOT_CLOSED` is stale-bound; five owner decisions
+  packaged for approval. No mutations; nothing claimed as
+  Runtime acceptance.
+
 ## 2026-11-13
 
 * **H2-D owner acceptance — H2 accepted:** The owner accepted H2 on
   2026-11-12. Bound receipt
-  `.agent/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md`, SHA-256
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md`, SHA-256
   `857f3001f2fd2e4d665899c36c70bcb60172a3ac97d14c4b2103a6727d147251`,
   with evidence under `h2d-evidence/` in the same folder. Final
   state: corpus-map `VPCorpusMap/v3` rev 5774 (sha `7f02b5bf…`),
@@ -53,13 +112,42 @@
   is unchanged and not claimed PASS.
 * **H3-A acceptance:** the owner accepted the H3-A font-pairing pilot
   on 2026-11-13 after the bound receipt
-  `.agent/work/h2-sbvf-option-b-20261106/H3A-RECEIPT.md` (draft
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3A-RECEIPT.md` (draft
   SHA-256 `763e0689…`) was assembled with `h3a-evidence/`. Scope is
   the pilot only: AC-52/AC-54/AC-55 carry component evidence; the
   other four D15 resource types, the 49 deferred typography rows and
   the remaining uupm data families await separate owner-approved
   gates. All H3-A product changes remain uncommitted at HEAD
   `e72fc5b8`; the commit decision is Root-owned.
+* **H3-B palette typed reference resources pilot — implemented,
+  reviewed and owner-accepted:** 25 `uupm-palette-*`
+  `VPReferenceResource/v1` records materialized from `colors.csv`
+  rows 1–25 via the same staging-first CAS materialization
+  (catalog rev 8057 `966ca770…`, map rev 5776 `6b5d6f5f…`); rows
+  26–192 stay deferred with explicit pilot reasons. The D18
+  delegated panel ran 15 blind reviews (5 batches ×
+  delphi/adversarial/party, swe-2-flash-medium) with aggregation
+  25/25 accept — every record received 3/3 direct protocol accepts,
+  0 amend / 0 reject / 0 manual, and no orchestrator adjudication
+  was needed (`h3b-d18/AGGREGATION.json` `b40dd463…`).
+* **H3-B gates:** `bun test --coverage` 1,102 pass / 5 skip / 0 fail
+  with All files 100% funcs/lines (1,107 tests / 56 files);
+  typecheck 115 files; format check, `check-corpus` (0 issues),
+  `check-vector` (52 batches) and `check-okf` all exit 0; Node
+  v26.13.1 `resource` smoke passed incl. type-mismatch and unknown
+  negatives (Deno excluded). The pinned Knip external conflict
+  (`issues: []`, exit 1) is unchanged and not claimed PASS.
+* **H3-B acceptance:** the owner accepted the H3-B palette pilot
+  on 2026-11-13 after the bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3B-RECEIPT.md` was
+  assembled with `h3b-d18/` evidence. Scope is the pilot only:
+  AC-52/AC-54/AC-55 keep component evidence; the other three D15
+  resource types (`style`, `icon-list`, `standards-checklist`),
+  the 49 deferred typography rows, the 167 deferred colors rows
+  and the remaining uupm data families await separate
+  owner-approved gates. H3-A was committed at `49842c09`; all
+  H3-B product changes remain uncommitted at HEAD `49842c09` —
+  the commit decision is Root-owned.
 
 ## 2026-11-12
 
@@ -3058,7 +3146,7 @@
 
 * **Owner decisions applied to the corpus:** `Deprecated` is now an explicit ADR status that stays readable and unlocked (`lock-only-an-accepted-architecture-decision`, revision 3). The context-degradation pair is now the `context-degradation-policy` user-decision group with the alternatives `context-degradation-signals` and `context-degradation-measured`, so an unresolved policy asks for a choice before the exclusion fires; the pair keeps its declared exclusion and both instructions stay unchanged in substance (revision 5). The `approval-policy` marker stays a topic tag and group membership comes from the profile alternatives; the D12 §4 wording is accepted as written. SR-25, SR-26, BR-13, D8 and the next-actions owner-decision record were reconciled; corpus check reports 2,510 instructions and zero issues. No acceptance criterion changed state.
 
-* **Documentation consolidated to one source:** Deleted the superseded `task-plan-step-c.md`, `task-plan-step-d.md`, `task-plan-step-e.md`, `catalog-design.md` and `implementation-plan.md`. Before deletion the live content moved to its single owner: the E5a/E5b host target table, the forward stages, the quality-gate boundary and the risks now live in `next-actions.md`; the CAT-D deferrals stay in `traceability.md`; the H2/H3 resource contract stays in `task-plan-step-h.md`; the four open owner decisions stay in `.agent/work/vp-next-steps/WORK.md`. The closed step plans and the stage narrative remain readable in Git at commit `04a9a1ee`. README sections 11-12, the bundle index, the traceability matrix, SR-01/SR-79, AC-45, BR-Q2, D3, D10-D13, REQ-D3-D8 and VP-5/VP-6/VP-7 now point at the surviving owners. No rule, acceptance state or evidence binding changed; the deleted files held no accepted task ID, decision, acceptance criterion or receipt locator that was not already owned elsewhere. The bundle now reports 30 concepts, down from 35, with no OKF failures or warnings.
+* **Documentation consolidated to one source:** Deleted the superseded `task-plan-step-c.md`, `task-plan-step-d.md`, `task-plan-step-e.md`, `catalog-design.md` and `implementation-plan.md`. Before deletion the live content moved to its single owner: the E5a/E5b host target table, the forward stages, the quality-gate boundary and the risks now live in `next-actions.md`; the CAT-D deferrals stay in `traceability.md`; the H2/H3 resource contract stays in `task-plan-step-h.md`; the four open owner decisions stay in `.agent-archive-20261113/work/vp-next-steps/WORK.md`. The closed step plans and the stage narrative remain readable in Git at commit `04a9a1ee`. README sections 11-12, the bundle index, the traceability matrix, SR-01/SR-79, AC-45, BR-Q2, D3, D10-D13, REQ-D3-D8 and VP-5/VP-6/VP-7 now point at the surviving owners. No rule, acceptance state or evidence binding changed; the deleted files held no accepted task ID, decision, acceptance criterion or receipt locator that was not already owned elsewhere. The bundle now reports 30 concepts, down from 35, with no OKF failures or warnings.
 * **Package coverage gate:** Added characterization tests for the uncovered `explain` CLI projection (source-bound digests with and without an effective profile), the repository-relative `local_root` resolution and the converter's non-v1.2 overwrite refusal; each was verified against a deliberate production mutation and the source bytes were restored exactly. With owner approval the unreachable duplicate profile-refresh guard in `validateCanonicalPolicySelection` was removed. Current package gate: 659 pass / 4 skip / 0 fail, 100 % functions and lines, strict typecheck 44 files, corpus 2,510 instructions / 0 issues, OKF 35 concepts / 0 failures. Repository Knip remains red on four `packages/agent` research files and is outside this scope; Step F, G and H gates are unchanged.
 * **Migration evidence reconciled to one state:** D16, next actions, Step H, the implementation plan and the README now state the same current facts: the clean cutover to VPInstruction/v1.2 covers all 2,510 instructions; 2,420 are classified and each declares at least one domain, 90 carry an explicit unclassified reason, and no instruction carries an approach assessment. The earlier "form only / no instruction_domains" wording in this entry was wrong and is corrected by the 2026-10-30 D16 audit entry. The gate receipt is 693/693 functions and 5,402/5,402 lines (659 passed, 4 expected Windows skips, 0 failures, seed 20261019). Earlier 467/3,874, 533-test, 547-test, 564-test and 598-test results remain historical and bound to their inputs; AC-60–AC-69 state is tracked in the acceptance document.
 * **D16 corpus migration:** Migrated all 2,510 instructions to VPInstruction/v1.2 through reviewed batches. The final converter receipt reports strict corpus validation and zero remaining; a separate corpus check reports 2,510 instructions and zero issues. The final runner's native exit was observed as code 0. Historical snapshot and process-custody gaps remain open; this does not establish rights, release or Runtime acceptance.
@@ -3129,7 +3217,7 @@
 * **Update**: E5a ROUND2 fixes Codex compatibility `skills` to the scaffold string, adds the Claude marketplace description, validates both selected `SKILL.md` resources from the package root before writes/checks, and makes read-only `--check` reject invalid ownership and retained transactions without changing bytes. The ledger filename is versionless and the transaction guard uses its declared path. Fixture skills are synthetic; no skill payload is copied. RED: 13 pass / 12 fail with the builder source unchanged; focused GREEN: 26 pass / 0 fail / 189 assertions; focused builder + schema coverage: 44 pass / 0 fail / 311 assertions, 100% functions and lines. Windows rollback injection ran; non-Windows runs explicitly skip it. Raw receipts and bound hashes: `.tmp/panel/e5a-format-check-fixes-20261022-39/`. E5b targets, owner inputs, package outputs, host qualification and public release remain open. M31 R3 endpoint was unavailable and the DeepSeek free quota was exhausted; neither produced an independent verdict. No E5 closure is claimed.
 * **Research basis update**: the E5 target table now separates documented import/translation and fallback formats from native target generation and host acceptance. Official Muse docs define Codex/Claude marketplace import plus a package-tree digest that makes root `install.source: "."` self-referential (inference); Devin documents Claude/root manifest fallbacks; Kimi documents Plugin Builder conversion; Antigravity's plugin-root manifest, installation destination and schema/example mismatch are recorded. At that point, the owner layout choice remained open; no D10 decision or target variant had been made. Sources: [Muse marketplace](https://meta-models.github.io/muse-code-sdk/next/guides/plugins/concepts/marketplaces-and-updates/), [Muse compatibility](https://meta-models.github.io/muse-code-sdk/next/guides/plugins/concepts/compatibility/), [Devin](https://docs.devin.ai/cli/extensibility/plugins/overview), [Kimi](https://www.kimi.ai/help/plugins-and-skills/create), [Antigravity](https://antigravity.google/docs/plugins), [Agent Plugins schema](https://agent-plugins.org/schemas/1.0.0/plugin.schema.json). Format docs are not host acceptance.
 * **Update**: **E5 manifest generation is bounded by native host formats and explicit file ownership** (`scripts/build-manifests.ts`, `config/vppluginmanifest.v1.schema.json`, `tests/build-manifests.test.ts`). Owner decision (F2, 2026-10-22): declare `vp-mode`/`vp-setup` via host skill paths, use portable `skills/` discovery, and keep `catalog.json` canonical through the CLI/SKILL without a catalog copy or vendor field. Local generation requires only selected-host metadata; D4b owner-supplied public-release metadata remains pending. The SHA-256 ledger regenerates/prunes only matching owned outputs, conflicts on foreign or changed files before writes, keeps check mode read-only, and fences unresolved transactions. Focused evidence: RED 10 pass / 8 fail then GREEN 20 pass / 0 fail / 167 assertions; scoped typecheck exit 0 in 26 files; `check-okf.ts` and 7-document check report zero failures; receipts under `.tmp/panel/e5a-review-fixes-20261022-31/`. Schema, builder, tests, fixtures and E5 docs are implemented; production metadata and generated package manifests, full Step E gates, host installation and public release remain pending. No E5 closure or host acceptance is claimed.
-* **Update**: The living package documentation now reflects the processed eight-donor corpus, the current decision set and step E status (E1–E3 closed; E4 and E5 open). The package `NOTICE` records donor attribution metadata; legal review remains open. Stage 1 documentation reconciliation is recorded in `.agent/work/vp-next-steps/WORK.md`; no implementation, delivery or runtime acceptance is claimed.
+* **Update**: The living package documentation now reflects the processed eight-donor corpus, the current decision set and step E status (E1–E3 closed; E4 and E5 open). The package `NOTICE` records donor attribution metadata; legal review remains open. Stage 1 documentation reconciliation is recorded in `.agent-archive-20261113/work/vp-next-steps/WORK.md`; no implementation, delivery or runtime acceptance is claimed.
 * **Update**: M3.1 Round 2 follow-up — the Standalone carrier precedence now matches `vp-setup` (`AGENTS.md` first, then `CLAUDE.md`, creating `AGENTS.md` if neither exists), and the README roadmap names E5's manifest schema, metadata inputs and owner-authorized package-build generator while leaving implementation and outputs pending; revisions for the eight changed concept documents were incremented. The original Stage 1 entry above remains historical; F1–F10 corrections remain in place. Focused check outputs and input hashes are captured under `.tmp/panel/stage1-postreview-20261022-19/`; independent final review and publication are pending. No release or Runtime acceptance is claimed.
 
 * **M3.1 status correction .73:** The `.71` findings N1-N4 are reconciled in the Step H plan, roadmap, catalog design, implementation plan, next-actions and WORK record. The `.68` plan review applies to its pre-correction bytes; the `.69` M6 root README spelling change remains rejected. The `.65` receipt marks the `.62` repair CODE+EVIDENCE READY, not package PASS or E5b approval. The `.72` fixture proof applies to `.69` docs and no longer proves parity for the changed `.73` docs. H0 remains open; `.67` remains `NOT_CLOSED` with `packagePass: false`. No product code, Runtime behavior or acceptance changed.

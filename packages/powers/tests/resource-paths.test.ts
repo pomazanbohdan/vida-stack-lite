@@ -26,6 +26,7 @@ async function fixture(): Promise<{ root: string; resources: string }> {
 describe('validateResourcePath', () => {
   test('accepts a normalized relative path', () => {
     expect(() => validateResourcePath('palette/uupm-font-pairing-classic.json')).not.toThrow();
+    expect(() => validateResourcePath('resources/uupm-palette-saas-general.json')).not.toThrow();
   });
 
   test('rejects empty, absolute, drive, backslash, colon and unsafe segments', () => {
@@ -70,8 +71,11 @@ describe('resolveResourcePath', () => {
     const { resources } = await fixture();
     await mkdir(join(resources, 'palette'), { recursive: true });
     await writeFile(join(resources, 'palette', 'pairing.json'), '{}');
+    await writeFile(join(resources, 'uupm-palette-saas-general.json'), '{}');
     const resolved = await resolveResourcePath(resources, 'palette/pairing.json');
     expect(resolved).toBe(await realpath(join(resources, 'palette', 'pairing.json')));
+    const palette = await resolveResourcePath(resources, 'uupm-palette-saas-general.json');
+    expect(palette).toBe(await realpath(join(resources, 'uupm-palette-saas-general.json')));
   });
 
   test('rejects traversal and absolute-path escapes before touching the filesystem', async () => {

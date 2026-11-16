@@ -10,11 +10,10 @@ const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PILOT_LIMIT = 25;
 const RESOURCE_MAX_BYTES = 65_536;
 const DONOR = 'uupm';
-const CSV_PATH = 'typography.csv';
-const LICENSES_PATH = 'google-font-licenses.json';
 const RESOURCE_SCHEMA_PATH = join(packageRoot, 'config', 'vpreference-resource.v1.schema.json');
 const CATALOG_SCHEMA_PATH = join(packageRoot, 'config', 'vpcatalog.v1.schema.json');
 const MAP_SCHEMA_PATH = join(packageRoot, 'config', 'vpcorpusmap.v3.schema.json');
+const ALLOWLIST_PATH = join(packageRoot, 'config', 'h3-csv-allowlist.json');
 const STAGING_DIR = join(packageRoot, '.tmp', 'h3-materialize-staging');
 
 type Dict = Record<string, unknown>;
@@ -23,6 +22,106 @@ type LicenseFamily = { name: string; license: string };
 type LicensesFile = {
   source: { repository: string; revision: string };
   families: LicenseFamily[];
+};
+
+type FamilyName = 'font-pairing' | 'palette' | 'style';
+type Family = {
+  csvPath: string;
+  licensesPath?: string;
+  resourceType: string;
+  idPrefix: string;
+  pilotScope: string;
+  ineligibleReason: string;
+};
+
+// H3 palette pilot payload contract (VPReferenceResource/v1, resource_type
+// "palette"): palette_name is the Product Type cell verbatim; colors maps each
+// colors.csv color column to its snake_case key with the exact hex string;
+// notes is the Notes cell verbatim. Resource IDs are
+// uupm-palette-<slug of Product Type>. Provenance carries one entry per source
+// row (donor, license, pinned revision, colors.csv path, raw-file SHA-256,
+// line/row locator); colors.csv has no license companion, so there is no
+// license-file join.
+const PALETTE_COLOR_COLUMNS: ReadonlyArray<readonly [string, string]> = [
+  ['Primary', 'primary'],
+  ['On Primary', 'on_primary'],
+  ['Secondary', 'secondary'],
+  ['On Secondary', 'on_secondary'],
+  ['Accent', 'accent'],
+  ['On Accent', 'on_accent'],
+  ['Background', 'background'],
+  ['Foreground', 'foreground'],
+  ['Card', 'card'],
+  ['Card Foreground', 'card_foreground'],
+  ['Muted', 'muted'],
+  ['Muted Foreground', 'muted_foreground'],
+  ['Border', 'border'],
+  ['Destructive', 'destructive'],
+  ['On Destructive', 'on_destructive'],
+  ['Ring', 'ring'],
+];
+
+// H3 style pilot payload contract (VPReferenceResource/v1, resource_type
+// "style"): every styles.csv column except `No` is admitted verbatim as a
+// snake_case string; `No` is excluded because it duplicates
+// provenance.locator.row. Resource IDs are uupm-style-<slug of Style ID>.
+// Provenance carries one entry per source row (donor, license, pinned
+// revision, styles.csv path, raw-file SHA-256, line/row locator); styles.csv
+// has no license companion, so there is no license-file join.
+const STYLE_COLUMNS: ReadonlyArray<readonly [string, string]> = [
+  ['Style Category', 'style_category'],
+  ['Type', 'type'],
+  ['Keywords', 'keywords'],
+  ['Primary Colors', 'primary_colors'],
+  ['Secondary Colors', 'secondary_colors'],
+  ['Effects & Animation', 'effects_and_animation'],
+  ['Best For', 'best_for'],
+  ['Do Not Use For', 'do_not_use_for'],
+  ['Light Mode ✓', 'light_mode'],
+  ['Dark Mode ✓', 'dark_mode'],
+  ['Performance', 'performance'],
+  ['Accessibility', 'accessibility'],
+  ['Mobile-Friendly', 'mobile_friendly'],
+  ['Conversion-Focused', 'conversion_focused'],
+  ['Framework Compatibility', 'framework_compatibility'],
+  ['Era/Origin', 'era_origin'],
+  ['Complexity', 'complexity'],
+  ['AI Prompt Keywords', 'ai_prompt_keywords'],
+  ['CSS/Technical Keywords', 'css_technical_keywords'],
+  ['Implementation Checklist', 'implementation_checklist'],
+  ['Design System Variables', 'design_system_variables'],
+  ['Style ID', 'style_id'],
+  ['Aliases', 'aliases'],
+  ['Status', 'status'],
+  ['Parent Style ID', 'parent_style_id'],
+  ['Replacement Domain', 'replacement_domain'],
+  ['Replacement ID', 'replacement_id'],
+  ['Preferred Mode', 'preferred_mode'],
+];
+
+const FAMILIES: Record<FamilyName, Family> = {
+  'font-pairing': {
+    csvPath: 'typography.csv',
+    licensesPath: 'google-font-licenses.json',
+    resourceType: 'font-pairing',
+    idPrefix: 'uupm-font-pairing',
+    pilotScope: 'font-pairing',
+    ineligibleReason: 'font license unresolved in google-font-licenses.json; deferred pending license evidence',
+  },
+  palette: {
+    csvPath: 'colors.csv',
+    resourceType: 'palette',
+    idPrefix: 'uupm-palette',
+    pilotScope: 'palette',
+    ineligibleReason: 'palette row outside the approved 25-record H3 palette pilot',
+  },
+  style: {
+    csvPath: 'styles.csv',
+    resourceType: 'style',
+    idPrefix: 'uupm-style',
+    pilotScope: 'style',
+    ineligibleReason: 'style row is not admissible for materialization',
+  },
 };
 
 function fail(message: string): never {
@@ -39,6 +138,14 @@ function slugify(value: string): string {
 
 function splitList(value: string): string[] {
   return value.split(',').map((item) => item.trim()).filter((item) => item !== '');
+}
+
+function familyFromArgv(argv: string[]): FamilyName {
+  const index = argv.indexOf('--family');
+  if (index < 0) return 'font-pairing';
+  const value = argv[index + 1];
+  if (value === 'font-pairing' || value === 'palette' || value === 'style') return value;
+  fail(`unknown --family ${String(value)}; expected font-pairing, palette or style`);
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -79,24 +186,52 @@ async function writeAtomic(path: string, content: string | Uint8Array): Promise<
   await rename(temporary, path);
 }
 
+async function readAllowlist(): Promise<Dict[]> {
+  if (!existsSync(ALLOWLIST_PATH)) return [];
+  const raw = await readJson(ALLOWLIST_PATH);
+  if (!Array.isArray(raw)) fail('config/h3-csv-allowlist.json is not an array');
+  return raw.filter(isRecord);
+}
+
+function mergeAllowlistEntry(entries: Dict[], entry: Dict): Dict[] {
+  const existing = entries.find((item) => item.donor === entry.donor && item.path === entry.path);
+  if (existing !== undefined) {
+    if (existing.rawSha256 !== entry.rawSha256 || existing.headersDigest !== entry.headersDigest) {
+      fail(`config/h3-csv-allowlist.json already maps ${String(entry.donor)}:${String(entry.path)} to different digests`);
+    }
+    return entries;
+  }
+  return [...entries, entry];
+}
+
 async function main(): Promise<void> {
   const apply = process.argv.includes('--apply');
+  const familyName = familyFromArgv(process.argv);
+  const family = FAMILIES[familyName];
   const stageIndex = process.argv.indexOf('--stage');
   const stageDir = stageIndex >= 0 && process.argv[stageIndex + 1] !== undefined ? resolve(process.argv[stageIndex + 1] as string) : STAGING_DIR;
 
   const donor = await readDonor();
   const contentDir = join(packageRoot, '.tmp', 'donors', donor.local_path as string, donor.content_path as string);
-  const csvPath = join(contentDir, CSV_PATH);
-  const licensesPath = join(contentDir, LICENSES_PATH);
+  const csvPath = join(contentDir, family.csvPath);
   const csvBytes = await readFile(csvPath);
-  const licensesBytes = await readFile(licensesPath);
   const csvSha = sha256Bytes(csvBytes);
-  const licensesSha = sha256Bytes(licensesBytes);
   const parsed = parseCsv(csvBytes);
-  const licenses = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(licensesBytes)) as LicensesFile;
-  if (!Array.isArray(licenses.families)) fail(`${LICENSES_PATH} has no families array`);
-  const licenseByName = new Map(licenses.families.map((family) => [family.name, family.license]));
-  const familyLocation = familyLines(new TextDecoder('utf-8', { fatal: true }).decode(licensesBytes));
+  let licenses: LicensesFile | undefined;
+  let licensesSha: string | undefined;
+  const licenseByName = new Map<string, string>();
+  const familyLocation = new Map<string, { line: number; index: number }>();
+  if (family.licensesPath !== undefined) {
+    const licensesPath = join(contentDir, family.licensesPath);
+    const licensesBytes = await readFile(licensesPath);
+    licensesSha = sha256Bytes(licensesBytes);
+    licenses = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(licensesBytes)) as LicensesFile;
+    if (!Array.isArray(licenses.families)) fail(`${family.licensesPath} has no families array`);
+    for (const item of licenses.families) licenseByName.set(item.name, item.license);
+    for (const [name, location] of familyLines(new TextDecoder('utf-8', { fatal: true }).decode(licensesBytes))) {
+      familyLocation.set(name, location);
+    }
+  }
 
   const headerIndex = new Map(parsed.headers.map((header, index) => [header, index]));
   const cell = (record: CsvRecord, header: string): string => record.cells[headerIndex.get(header) ?? -1] ?? '';
@@ -115,7 +250,7 @@ async function main(): Promise<void> {
   const donors = isRecord(map.donors) ? map.donors : fail('corpus-map.json has no donors object');
   const uupm = isRecord(donors[DONOR]) ? donors[DONOR] : fail('corpus-map.json has no uupm donor');
   if (!isRecord(uupm.csvSources)) fail('corpus-map.json uupm donor has no csvSources');
-  if (Object.prototype.hasOwnProperty.call(uupm.csvSources, CSV_PATH)) fail(`corpus-map.json already maps ${DONOR}:${CSV_PATH}`);
+  if (Object.prototype.hasOwnProperty.call(uupm.csvSources, family.csvPath)) fail(`corpus-map.json already maps ${DONOR}:${family.csvPath}`);
   const existingResources = Array.isArray(catalog.resources) ? catalog.resources.filter(isRecord) : [];
   const existingIds = new Set(existingResources.map((entry) => String(entry.resource_id ?? '')));
 
@@ -130,7 +265,7 @@ async function main(): Promise<void> {
   const groups = new Map<string, { cells: string[]; hashes: string[]; records: CsvRecord[] }>();
   for (const record of parsed.rows) {
     const hashes = record.cells.map(cellHash);
-    const key = `path=${encodePath(CSV_PATH)}&headers=${parsed.headersDigest}&cells=${cellsDigest(record.cells)}`;
+    const key = `path=${encodePath(family.csvPath)}&headers=${parsed.headersDigest}&cells=${cellsDigest(record.cells)}`;
     const group = groups.get(key);
     if (group === undefined) groups.set(key, { cells: record.cells, hashes, records: [record] });
     else group.records.push(record);
@@ -138,57 +273,65 @@ async function main(): Promise<void> {
 
   const usedSlugs = new Set<string>();
   const resources: Array<{ id: string; record: Dict; bytes: Uint8Array }> = [];
-  const rowPlans: Array<{ key: string; group: { cells: string[]; hashes: string[]; records: CsvRecord[] }; admittedId?: string }> = [];
+  const rowPlans: Array<{ key: string; group: { cells: string[]; hashes: string[]; records: CsvRecord[] }; eligible: boolean; admittedId?: string }> = [];
   let admitted = 0;
   let skippedIneligible = 0;
 
   for (const [key, group] of groups) {
     const first = group.records[0] as CsvRecord;
-    const heading = cell(first, 'Heading Font');
-    const body = cell(first, 'Body Font');
-    const headingLicense = licenseByName.get(heading);
-    const bodyLicense = licenseByName.get(body);
-    const eligible = headingLicense !== undefined && bodyLicense !== undefined;
+    let eligible = true;
+    if (familyName === 'font-pairing') {
+      const headingLicense = licenseByName.get(cell(first, 'Heading Font'));
+      const bodyLicense = licenseByName.get(cell(first, 'Body Font'));
+      eligible = headingLicense !== undefined && bodyLicense !== undefined;
+    }
+    const admissible = familyName === 'palette' || familyName === 'style' ? first.row <= PILOT_LIMIT : true;
     let admittedId: string | undefined;
-    if (eligible && admitted < PILOT_LIMIT) {
+    if (eligible && admissible && admitted < PILOT_LIMIT) {
       admitted += 1;
-      const base = `uupm-font-pairing-${slugify(cell(first, 'Font Pairing Name'))}`;
+      const name = familyName === 'palette' ? cell(first, 'Product Type') : familyName === 'style' ? cell(first, 'Style ID') : cell(first, 'Font Pairing Name');
+      const base = `${family.idPrefix}-${slugify(name)}`;
       let id = base;
       for (let suffix = 2; usedSlugs.has(id) || existingIds.has(id); suffix += 1) id = `${base}-${suffix}`;
+      if (id !== base) console.log(`slug disambiguation: ${base} -> ${id}`);
       usedSlugs.add(id);
-      const name = cell(first, 'Font Pairing Name');
       const provenance: Dict[] = group.records.map((record) => ({
         donor: DONOR,
         license: donor.license as string,
         revision: donor.head_sha as string,
-        path: `src/ui-ux-pro-max/data/${CSV_PATH}`,
+        path: `src/ui-ux-pro-max/data/${family.csvPath}`,
         sha256: csvSha,
         locator: { line: record.line, row: record.row },
       }));
-      const fontLicenses: Record<string, string> = {};
-      for (const font of [...new Set([heading, body])]) {
-        const license = licenseByName.get(font);
-        if (license === undefined) fail(`font ${font} lost its license during materialization`);
-        fontLicenses[font] = license;
-        const location = familyLocation.get(font);
-        if (location === undefined) fail(`font ${font} has no line in ${LICENSES_PATH}`);
-        provenance.push({
-          donor: DONOR,
-          license: donor.license as string,
-          revision: donor.head_sha as string,
-          path: `src/ui-ux-pro-max/data/${LICENSES_PATH}`,
-          sha256: licensesSha,
-          locator: { line: location.line, row: location.index },
-        });
-      }
-      const record: Dict = {
-        schema: 'VPReferenceResource/v1',
-        resource_id: id,
-        resource_type: 'font-pairing',
-        revision: 1,
-        status: 'active',
-        provenance,
-        payload: {
+      let payload: Dict;
+      if (familyName === 'palette') {
+        const colors: Dict = {};
+        for (const [header, colorKey] of PALETTE_COLOR_COLUMNS) colors[colorKey] = cell(first, header);
+        payload = { palette_name: name, colors, notes: cell(first, 'Notes') };
+      } else if (familyName === 'style') {
+        const stylePayload: Dict = {};
+        for (const [header, styleKey] of STYLE_COLUMNS) stylePayload[styleKey] = cell(first, header);
+        payload = stylePayload;
+      } else {
+        const heading = cell(first, 'Heading Font');
+        const body = cell(first, 'Body Font');
+        const fontLicenses: Record<string, string> = {};
+        for (const font of [...new Set([heading, body])]) {
+          const license = licenseByName.get(font);
+          if (license === undefined) fail(`font ${font} lost its license during materialization`);
+          fontLicenses[font] = license;
+          const location = familyLocation.get(font);
+          if (location === undefined) fail(`font ${font} has no line in ${family.licensesPath ?? ''}`);
+          provenance.push({
+            donor: DONOR,
+            license: donor.license as string,
+            revision: donor.head_sha as string,
+            path: `src/ui-ux-pro-max/data/${family.licensesPath ?? ''}`,
+            sha256: licensesSha,
+            locator: { line: location.line, row: location.index },
+          });
+        }
+        payload = {
           name,
           category: cell(first, 'Category'),
           heading_font: heading,
@@ -201,11 +344,20 @@ async function main(): Promise<void> {
           notes: cell(first, 'Notes'),
           font_licenses: fontLicenses,
           license_source: {
-            path: `src/ui-ux-pro-max/data/${LICENSES_PATH}`,
-            upstream_repository: licenses.source.repository,
-            upstream_revision: licenses.source.revision,
+            path: `src/ui-ux-pro-max/data/${family.licensesPath ?? ''}`,
+            upstream_repository: licenses?.source.repository,
+            upstream_revision: licenses?.source.revision,
           },
-        },
+        };
+      }
+      const record: Dict = {
+        schema: 'VPReferenceResource/v1',
+        resource_id: id,
+        resource_type: family.resourceType,
+        revision: 1,
+        status: 'active',
+        provenance,
+        payload,
       };
       const unsigned = canonicalJson(record);
       if (unsigned === undefined) fail(`resource ${id} is not canonically serializable`);
@@ -220,7 +372,7 @@ async function main(): Promise<void> {
     } else if (!eligible) {
       skippedIneligible += 1;
     }
-    rowPlans.push({ key, group, ...(admittedId === undefined ? {} : { admittedId }) });
+    rowPlans.push({ key, group, eligible, ...(admittedId === undefined ? {} : { admittedId }) });
   }
 
   if (admitted !== PILOT_LIMIT) fail(`only ${admitted} eligible rows found; pilot requires ${PILOT_LIMIT}`);
@@ -239,12 +391,11 @@ async function main(): Promise<void> {
       locators,
       disposition: admittedId === undefined ? 'deferred' : 'admitted',
       bindings: [],
-      resourceIds: admittedId === undefined ? [] : [{ id: admittedId, disposition: 'admitted', reason: 'materialized as VPReferenceResource/v1 font-pairing record' }],
+      resourceIds: admittedId === undefined ? [] : [{ id: admittedId, disposition: 'admitted', reason: `materialized as VPReferenceResource/v1 ${family.resourceType} record` }],
       mergedInto: null,
     };
     if (admittedId === undefined) {
-      const eligibleGroup = licenseByName.has(cell(plan.group.records[0] as CsvRecord, 'Heading Font')) && licenseByName.has(cell(plan.group.records[0] as CsvRecord, 'Body Font'));
-      return { ...base, reason: eligibleGroup ? 'outside the approved 25-record H3 font-pairing pilot' : 'font license unresolved in google-font-licenses.json; deferred pending license evidence' };
+      return { ...base, reason: plan.eligible ? `outside the approved 25-record H3 ${family.pilotScope} pilot` : family.ineligibleReason };
     }
     return base;
   });
@@ -275,8 +426,8 @@ async function main(): Promise<void> {
   const nextUupm = JSON.parse(JSON.stringify(uupm)) as Dict;
   const nextSources = nextUupm.csvSources as Dict;
   const sortedSources: Dict = {};
-  for (const key of [...Object.keys(nextSources), CSV_PATH].sort()) {
-    sortedSources[key] = key === CSV_PATH ? csvSource : nextSources[key];
+  for (const key of [...Object.keys(nextSources), family.csvPath].sort()) {
+    sortedSources[key] = key === family.csvPath ? csvSource : nextSources[key];
   }
   nextUupm.csvSources = sortedSources;
   nextDonors[DONOR] = nextUupm;
@@ -286,7 +437,8 @@ async function main(): Promise<void> {
 
   const catalogText = `${JSON.stringify(nextCatalog, null, 2)}\n`;
   const mapText = `${JSON.stringify(nextMap, null, 2)}\n`;
-  const allowlistText = `${JSON.stringify([{ donor: DONOR, path: CSV_PATH, rawSha256: parsed.rawSha256, headersDigest: parsed.headersDigest }], null, 2)}\n`;
+  const allowlistEntry = { donor: DONOR, path: family.csvPath, rawSha256: parsed.rawSha256, headersDigest: parsed.headersDigest };
+  const allowlistText = `${JSON.stringify(mergeAllowlistEntry(await readAllowlist(), allowlistEntry), null, 2)}\n`;
 
   const outputs: Array<{ path: string; content: string | Uint8Array }> = [
     { path: join(stageDir, 'catalog.json'), content: catalogText },
@@ -303,12 +455,9 @@ async function main(): Promise<void> {
     if (liveCatalogSha !== before.catalog_sha256 || liveMapSha !== before.map_sha256) {
       fail('live catalog.json or corpus-map.json changed since staging; rebuild the stage');
     }
-    if (!existsSync(join(packageRoot, 'config', 'h3-csv-allowlist.json'))) {
-      await writeAtomic(join(packageRoot, 'config', 'h3-csv-allowlist.json'), allowlistText);
-    } else {
-      const existing = await readFile(join(packageRoot, 'config', 'h3-csv-allowlist.json'), 'utf8');
-      if (existing !== allowlistText) fail('config/h3-csv-allowlist.json already exists with different content');
-    }
+    const mergedAllowlistText = `${JSON.stringify(mergeAllowlistEntry(await readAllowlist(), allowlistEntry), null, 2)}\n`;
+    const existingAllowlistText = existsSync(ALLOWLIST_PATH) ? await readFile(ALLOWLIST_PATH, 'utf8') : undefined;
+    if (existingAllowlistText !== mergedAllowlistText) await writeAtomic(ALLOWLIST_PATH, mergedAllowlistText);
     await mkdir(join(packageRoot, 'resources'), { recursive: true });
     for (const resource of resources) {
       await writeAtomic(join(packageRoot, 'resources', `${resource.id}.json`), resource.bytes);

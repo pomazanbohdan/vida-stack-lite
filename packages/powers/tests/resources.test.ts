@@ -65,6 +65,31 @@ function resourceRecord(id: string, overrides: Record<string, unknown> = {}): Re
   };
 }
 
+function paletteRecord(id: string, overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return resourceRecord(id, {
+    resource_type: 'palette',
+    provenance: [{
+      donor: 'uupm',
+      license: 'MIT',
+      revision: 'a'.repeat(40),
+      path: 'src/ui-ux-pro-max/data/colors.csv',
+      sha256: 'b'.repeat(64),
+      locator: { line: 2, row: 1 },
+    }],
+    payload: {
+      palette_name: 'SaaS (General)',
+      colors: {
+        primary: '#2563EB', on_primary: '#FFFFFF', secondary: '#3B82F6', on_secondary: '#000000',
+        accent: '#EA580C', on_accent: '#000000', background: '#F8FAFC', foreground: '#1E293B',
+        card: '#FFFFFF', card_foreground: '#1E293B', muted: '#E9EFF8', muted_foreground: '#475569',
+        border: '#E2E8F0', destructive: '#DC2626', on_destructive: '#FFFFFF', ring: '#2563EB',
+      },
+      notes: 'Trust blue + orange CTA contrast [Accent adjusted from #F97316]',
+    },
+    ...overrides,
+  });
+}
+
 function signResource(record: Record<string, unknown>): Record<string, unknown> {
   const unsigned = { ...record };
   delete unsigned.digest;
@@ -138,6 +163,18 @@ describe('loadCatalogResources', () => {
     expect(resource?.payload).toEqual({ heading_font: 'Inter', body_font: 'Source Sans 3' });
     expect(resource?.digest).toMatch(/^sha256:[0-9a-f]{64}$/u);
     expect(catalogResourceGet(catalog, resources, 'res-1').untrusted).toBe(true);
+  });
+
+  test('loads a palette VPReferenceResource/v1 record with its payload shape', async () => {
+    const { dir, catalogPath } = await resourceCatalog();
+    await addResource(dir, catalogPath, 'uupm-palette-saas-general', { record: paletteRecord('uupm-palette-saas-general') });
+    const { catalog, resources } = await loaded(dir, catalogPath);
+    const resource = resources.get('uupm-palette-saas-general');
+    expect(resource?.resource_type).toBe('palette');
+    expect(resource?.payload).toEqual(paletteRecord('x').payload as Record<string, unknown>);
+    expect((resource?.payload.colors as Record<string, unknown>).primary).toBe('#2563EB');
+    expect(resource?.digest).toMatch(/^sha256:[0-9a-f]{64}$/u);
+    expect(catalogResourceGet(catalog, resources, 'uupm-palette-saas-general', { resourceType: 'palette' }).untrusted).toBe(true);
   });
 
   test('rejects duplicate resource ids and paths in the manifest', async () => {
@@ -274,6 +311,15 @@ describe('catalogResourceGet', () => {
     expect(() => catalogResourceGet(catalog, resources, 'res-1', { resourceType: 'bogus' })).toThrow(expect.objectContaining({ code: 'CATALOG_INVALID' }));
   });
 
+  test('enforces the requested resource_type across families', async () => {
+    const { dir, catalogPath } = await resourceCatalog();
+    await addResource(dir, catalogPath, 'uupm-palette-saas-general', { record: paletteRecord('uupm-palette-saas-general') });
+    const { catalog, resources } = await loaded(dir, catalogPath);
+    expect(catalogResourceGet(catalog, resources, 'uupm-palette-saas-general', { resourceType: 'palette' }).resource_type).toBe('palette');
+    expect(() => catalogResourceGet(catalog, resources, 'uupm-palette-saas-general', { resourceType: 'font-pairing' }))
+      .toThrow(expect.objectContaining({ code: 'CATALOG_RESOURCE_TYPE_MISMATCH' }));
+  });
+
   test('evaluates resource applicability when a declaration or context is present', async () => {
     const { dir, catalogPath } = await resourceCatalog();
     await addResource(dir, catalogPath, 'res-plain');
@@ -300,6 +346,16 @@ describe('catalogCompose resource_ids', () => {
     expect(bundle.resources[0]).toMatchObject({ resource_id: 'res-1', resource_type: 'font-pairing', untrusted: true });
     const plain = catalogCompose(catalog, instructions, { required_ids: ['guidance'] }, resources);
     expect(plain.resources).toEqual([]);
+  });
+
+  test('composes palette resource ids with the same budget rules', async () => {
+    const { dir, catalogPath } = await resourceCatalog();
+    await addResource(dir, catalogPath, 'uupm-palette-saas-general', { record: paletteRecord('uupm-palette-saas-general') });
+    const { catalog, instructions, resources } = await loaded(dir, catalogPath);
+    const bundle = catalogCompose(catalog, instructions, { required_ids: ['guidance'], resource_ids: ['uupm-palette-saas-general'] }, resources);
+    expect(bundle.resources).toHaveLength(1);
+    expect(bundle.resources[0]).toMatchObject({ resource_id: 'uupm-palette-saas-general', resource_type: 'palette', untrusted: true });
+    expect((bundle.resources[0]?.payload.colors as Record<string, unknown>).ring).toBe('#2563EB');
   });
 
   test('rejects unknown, disabled and unloaded resource ids', async () => {
@@ -365,6 +421,23 @@ describe('catalog-cli resource command', () => {
     const bogus = await runCli([...args, '--id', 'res-1', '--type', 'bogus']);
     expect(bogus.status).toBe(1);
     expect(stderrJson(bogus.stderr).code).toBe('CATALOG_INVALID');
+  });
+
+  test('returns a palette record and enforces --type palette', async () => {
+    const { catalogPath } = await resourceCatalog();
+    const dir = dirname(catalogPath);
+    await addResource(dir, catalogPath, 'uupm-palette-saas-general', { record: paletteRecord('uupm-palette-saas-general') });
+    const args = ['resource', '--catalog', catalogPath];
+    const result = await runCli([...args, '--id', 'uupm-palette-saas-general']);
+    expect(result.status).toBe(0);
+    const record = JSON.parse(result.stdout) as Record<string, unknown>;
+    expect(record.resource_type).toBe('palette');
+    expect((record.payload as Record<string, unknown>).palette_name).toBe('SaaS (General)');
+    const typed = await runCli([...args, '--id', 'uupm-palette-saas-general', '--type', 'palette']);
+    expect(typed.status).toBe(0);
+    const mismatch = await runCli([...args, '--id', 'uupm-palette-saas-general', '--type', 'font-pairing']);
+    expect(mismatch.status).toBe(1);
+    expect(stderrJson(mismatch.stderr).code).toBe('CATALOG_RESOURCE_TYPE_MISMATCH');
   });
 
   test('reports distinct error codes for missing, unknown and malformed input', async () => {

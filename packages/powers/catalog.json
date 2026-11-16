@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8056,
+  "revision": 8058,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-13T00:50:19.142Z",
+  "updated_at": "2026-11-16T11:03:58.772Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -13273,6 +13273,256 @@
       "resource_id": "uupm-font-pairing-wellness-calm",
       "path": "resources/uupm-font-pairing-wellness-calm.json",
       "sha256": "6815d7905ce49843e2369d1d35a7b239ffcb145961d1faefa0b9b9f01d6db6eb"
+    },
+    {
+      "resource_id": "uupm-palette-ai-chatbot-platform",
+      "path": "resources/uupm-palette-ai-chatbot-platform.json",
+      "sha256": "cf525e0540e10fb2550cbb4290a7d9396f9c42e099605d311f0b543cc42e7681"
+    },
+    {
+      "resource_id": "uupm-palette-analytics-dashboard",
+      "path": "resources/uupm-palette-analytics-dashboard.json",
+      "sha256": "1f22db4b1e1894e650e1929d2b47b6a055cbc7f0378322d51dbda9e5ffbb4e15"
+    },
+    {
+      "resource_id": "uupm-palette-b2b-service",
+      "path": "resources/uupm-palette-b2b-service.json",
+      "sha256": "d934989fa58465df9bf8b517d248a49342410c27607904dfaf32dbccd9100441"
+    },
+    {
+      "resource_id": "uupm-palette-creative-agency",
+      "path": "resources/uupm-palette-creative-agency.json",
+      "sha256": "64e9f01964c27802c99f52ad99eab6cf280b9be03931318282a54ba48e9b21ff"
+    },
+    {
+      "resource_id": "uupm-palette-creator-economy-platform",
+      "path": "resources/uupm-palette-creator-economy-platform.json",
+      "sha256": "98ec3f8e4d79523ae70a341e5c9b6e0995961b9264ccdc930651f7ca22d77e8b"
+    },
+    {
+      "resource_id": "uupm-palette-design-system-component-library",
+      "path": "resources/uupm-palette-design-system-component-library.json",
+      "sha256": "2fd94c1d9e4f653850843fff8be1421837c9ebd71890fe79f61f380a1f4d2f9e"
+    },
+    {
+      "resource_id": "uupm-palette-e-commerce",
+      "path": "resources/uupm-palette-e-commerce.json",
+      "sha256": "01427cf959699c74908f2ec77799d4fb7dd6b15d0b9242da3b255fe947e7f42b"
+    },
+    {
+      "resource_id": "uupm-palette-e-commerce-luxury",
+      "path": "resources/uupm-palette-e-commerce-luxury.json",
+      "sha256": "4b60f98748ddff71bacb8fed34af1cc171831c5c87e2638ece44bb50fe52ee10"
+    },
+    {
+      "resource_id": "uupm-palette-educational-app",
+      "path": "resources/uupm-palette-educational-app.json",
+      "sha256": "524dc12947e5bf1f18bc0500554bb31839ba5b5a71a19d3134a4043425442fe3"
+    },
+    {
+      "resource_id": "uupm-palette-ev-charging-ecosystem",
+      "path": "resources/uupm-palette-ev-charging-ecosystem.json",
+      "sha256": "a8a3b5edfb33ea252526057da01da978184d1c6e1bdc25b66729140326fec8aa"
+    },
+    {
+      "resource_id": "uupm-palette-financial-dashboard",
+      "path": "resources/uupm-palette-financial-dashboard.json",
+      "sha256": "a28c4ee0fcd5bf1819e64a3ba8f18ae21ebb7584659a3fad29f705abdc72ffed"
+    },
+    {
+      "resource_id": "uupm-palette-fintech-crypto",
+      "path": "resources/uupm-palette-fintech-crypto.json",
+      "sha256": "530a8dd343b1f5fa7b669c8fd13dcf29532647f6a2c75b6d574644c2fd19aaa5"
+    },
+    {
+      "resource_id": "uupm-palette-gaming",
+      "path": "resources/uupm-palette-gaming.json",
+      "sha256": "00b392855a4181a924b74d2973300823ad8ea49003e432fa936652963aa41e1b"
+    },
+    {
+      "resource_id": "uupm-palette-government-public-service",
+      "path": "resources/uupm-palette-government-public-service.json",
+      "sha256": "f45583357b7625ae70193dc5fff8f438882181b28aa7aa4ddcd1f41712bd1e63"
+    },
+    {
+      "resource_id": "uupm-palette-healthcare-app",
+      "path": "resources/uupm-palette-healthcare-app.json",
+      "sha256": "a27ee6d9531a0dc506b8fbe50cdcdc775a6daf23d8fef2f1353a956f1d25cc77"
+    },
+    {
+      "resource_id": "uupm-palette-mental-health-app",
+      "path": "resources/uupm-palette-mental-health-app.json",
+      "sha256": "c3339e9f536e467140f3a004482198b6c53fdf095687dcd3dba42b7a6548f678"
+    },
+    {
+      "resource_id": "uupm-palette-micro-saas",
+      "path": "resources/uupm-palette-micro-saas.json",
+      "sha256": "3b495e8cb8583f16ebd663eb06c480d23ce0acd4f54a7f08fee99baf5f819951"
+    },
+    {
+      "resource_id": "uupm-palette-nft-web3-platform",
+      "path": "resources/uupm-palette-nft-web3-platform.json",
+      "sha256": "38d3a473ae6102861b4898d6cff7acb07e220de74bcd3287882aa3b829a15f23"
+    },
+    {
+      "resource_id": "uupm-palette-pet-tech-app",
+      "path": "resources/uupm-palette-pet-tech-app.json",
+      "sha256": "e1c98ad5ad44f122235f9481e62d69a817b387fd3a45ca41baf584886dda0a22"
+    },
+    {
+      "resource_id": "uupm-palette-portfolio-personal",
+      "path": "resources/uupm-palette-portfolio-personal.json",
+      "sha256": "97bcdc6e89d1833b82c48532ae9693f32f1989fe15950a22f9399555cbbba7b6"
+    },
+    {
+      "resource_id": "uupm-palette-productivity-tool",
+      "path": "resources/uupm-palette-productivity-tool.json",
+      "sha256": "5192122eff2b5a4e7526cee3d0e7757ea75508158f8977050d1e93f1becf555f"
+    },
+    {
+      "resource_id": "uupm-palette-remote-work-collaboration-tool",
+      "path": "resources/uupm-palette-remote-work-collaboration-tool.json",
+      "sha256": "ee882aaa19bc006b90243b9e9ab69e2855f42f3dfa4f65007a4797dad02b0bfb"
+    },
+    {
+      "resource_id": "uupm-palette-saas-general",
+      "path": "resources/uupm-palette-saas-general.json",
+      "sha256": "72befaadab418c007b85b4ffaebcabcc2c6130d2e9c1f1e287a92555136eeebc"
+    },
+    {
+      "resource_id": "uupm-palette-smart-home-iot-dashboard",
+      "path": "resources/uupm-palette-smart-home-iot-dashboard.json",
+      "sha256": "27712f914a80967da754bbfd54d71194abafbe46803992a4ad960950bf6e64dd"
+    },
+    {
+      "resource_id": "uupm-palette-social-media-app",
+      "path": "resources/uupm-palette-social-media-app.json",
+      "sha256": "dc8e021e8542f00f3bc96f5217145c6792ed163b4a08544a0905ca342dc862cd"
+    },
+    {
+      "resource_id": "uupm-style-3d-and-hyperrealism",
+      "path": "resources/uupm-style-3d-and-hyperrealism.json",
+      "sha256": "37f3da0262a11c0048adb1e688dd6d43017a474c5310a0cc5aaa5b62aa120d67"
+    },
+    {
+      "resource_id": "uupm-style-accessible-and-ethical",
+      "path": "resources/uupm-style-accessible-and-ethical.json",
+      "sha256": "69c53b7bacf858cd4ad93b1c20e36861692d3cd93c7a35ac92b1cd34b5968001"
+    },
+    {
+      "resource_id": "uupm-style-aurora-ui",
+      "path": "resources/uupm-style-aurora-ui.json",
+      "sha256": "a095f0d0be9b827221cfa76ea899d86ac695e23651c0da7ddc2f11f77149fd6e"
+    },
+    {
+      "resource_id": "uupm-style-brutalism",
+      "path": "resources/uupm-style-brutalism.json",
+      "sha256": "c7b9b107e678eb5ff01c5ed7a3c5bd9679a88263bb559e202fa40108d225ad43"
+    },
+    {
+      "resource_id": "uupm-style-claymorphism",
+      "path": "resources/uupm-style-claymorphism.json",
+      "sha256": "81ee55f15c6d60117aef9899b27d19792309dba19433088d5ee03641ea4b112d"
+    },
+    {
+      "resource_id": "uupm-style-conversion-optimized",
+      "path": "resources/uupm-style-conversion-optimized.json",
+      "sha256": "ac7d955377ef46a17eedb1aada3d2900482b329ea91623cf6e9919ae31f66b2a"
+    },
+    {
+      "resource_id": "uupm-style-dark-mode-oled",
+      "path": "resources/uupm-style-dark-mode-oled.json",
+      "sha256": "71c0ac20168e14d531a5e5ff672fa25aa957b841c54da70e642a692329c2d9d3"
+    },
+    {
+      "resource_id": "uupm-style-feature-rich-showcase",
+      "path": "resources/uupm-style-feature-rich-showcase.json",
+      "sha256": "6ff60caf28e890137661cf8026d4254efc6001f4fbc21c12bbefc0c25c919341"
+    },
+    {
+      "resource_id": "uupm-style-flat-design",
+      "path": "resources/uupm-style-flat-design.json",
+      "sha256": "8abba4fd8303736d68343bc9c1b7adbee787e3c9b838c7d80905127266479a32"
+    },
+    {
+      "resource_id": "uupm-style-glassmorphism",
+      "path": "resources/uupm-style-glassmorphism.json",
+      "sha256": "847393e9241141d8b9db561ceb27bca95556d948bbcfdb9c399b3b851f59a6b1"
+    },
+    {
+      "resource_id": "uupm-style-hero-centric-design",
+      "path": "resources/uupm-style-hero-centric-design.json",
+      "sha256": "4e9b34e80a60b09da2d660d3f678149ec0c325ccbf551800647f762e12b55119"
+    },
+    {
+      "resource_id": "uupm-style-inclusive-design",
+      "path": "resources/uupm-style-inclusive-design.json",
+      "sha256": "ec14c099760a679461037509419c1c4ad2f45bcb346c0eef9f64fba43ef1bd67"
+    },
+    {
+      "resource_id": "uupm-style-interactive-product-demo",
+      "path": "resources/uupm-style-interactive-product-demo.json",
+      "sha256": "e6ca08b8f40be63f7c0cac0cabf52a5430dec274e03e17dec4cd30c0e3bd65a3"
+    },
+    {
+      "resource_id": "uupm-style-liquid-glass",
+      "path": "resources/uupm-style-liquid-glass.json",
+      "sha256": "54aba746739d951ce6df64bdee39d38945dc45c6b8f8ba3a5ff630c02ce08504"
+    },
+    {
+      "resource_id": "uupm-style-micro-interactions",
+      "path": "resources/uupm-style-micro-interactions.json",
+      "sha256": "8b1e0a56117063ebcc53845a58d49f20ee14847a3031cb22f036c040ff115b60"
+    },
+    {
+      "resource_id": "uupm-style-minimal-and-direct",
+      "path": "resources/uupm-style-minimal-and-direct.json",
+      "sha256": "3bbc81e7fcf2f8566eccc4a5a82fbaf26c159d036916fa946f721b7ad5fc135e"
+    },
+    {
+      "resource_id": "uupm-style-minimalism-and-swiss-style",
+      "path": "resources/uupm-style-minimalism-and-swiss-style.json",
+      "sha256": "be587e982d816a5239b72dade914b5b5acf14c79e8c01123c5a4e843d30cccdd"
+    },
+    {
+      "resource_id": "uupm-style-motion-driven",
+      "path": "resources/uupm-style-motion-driven.json",
+      "sha256": "bb0d9917128815ad105002ca1dd7e2e9a30884c3361838c12b9c27cfcb3fdab3"
+    },
+    {
+      "resource_id": "uupm-style-neumorphism",
+      "path": "resources/uupm-style-neumorphism.json",
+      "sha256": "95b550319e8702c18140dc148482fd54e91fd29870cd76c379fb8f7daff7f7b9"
+    },
+    {
+      "resource_id": "uupm-style-retro-futurism",
+      "path": "resources/uupm-style-retro-futurism.json",
+      "sha256": "cdc1cae667b59dd5fdaa7a9aa2de0b09695eff5b867f4930423390f73d4486a7"
+    },
+    {
+      "resource_id": "uupm-style-skeuomorphism",
+      "path": "resources/uupm-style-skeuomorphism.json",
+      "sha256": "926b3519e9d98267f09042d1b77c992e80d33d5383806a5bfaa39605d7e6b268"
+    },
+    {
+      "resource_id": "uupm-style-social-proof-focused",
+      "path": "resources/uupm-style-social-proof-focused.json",
+      "sha256": "13bc506a94b6e3e14537d5646c9538ab40d9b4f5661b76ea91da6ccd506877b4"
+    },
+    {
+      "resource_id": "uupm-style-soft-ui-evolution",
+      "path": "resources/uupm-style-soft-ui-evolution.json",
+      "sha256": "76e386e60f9db8da7b9b80356438b5962bdbf4cd23166f1639694c04afd659dc"
+    },
+    {
+      "resource_id": "uupm-style-vibrant-and-block-based",
+      "path": "resources/uupm-style-vibrant-and-block-based.json",
+      "sha256": "6cb4032d3f8e6c404137187f9a28a293dcd2e3e8a53aeaaf3550c9d5c3269e69"
+    },
+    {
+      "resource_id": "uupm-style-zero-interface",
+      "path": "resources/uupm-style-zero-interface.json",
+      "sha256": "8ec4d31529db3a6cb9ffc29465187a37a0847072a8f937e5cdcd0393cc084ad1"
     }
   ]
 }

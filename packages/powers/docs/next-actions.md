@@ -197,12 +197,12 @@ remaining Powers-owned work is:
    P6 scale-up ran under per-batch owner approvals (VECTOR 46–51).
    Family and atomic-variant counts stay separate. **H2-SBVF fully
    closed/accepted:** the owner accepted H2 on 2026-11-12 via the
-   bound H2-D receipt `.agent/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md`
+   bound H2-D receipt `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md`
    (SHA-256 `857f3001f2fd2e4d665899c36c70bcb60172a3ac97d14c4b2103a6727d147251`);
    AC-82/AC-83 are verified (owner, 2026-11-12).
 3. **H2-D — H2 acceptance receipt and sign-off (DONE — owner accepted
    H2 on 2026-11-12).** Bound receipt
-   `.agent/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md` (SHA-256
+   `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H2D-RECEIPT.md` (SHA-256
    `857f3001f2fd2e4d665899c36c70bcb60172a3ac97d14c4b2103a6727d147251`,
    evidence `h2d-evidence/`): corpus-map `VPCorpusMap/v3` rev 5774
    (sha `7f02b5bf…`), catalog rev 8055 (sha `4a88ea15…`, 2,402
@@ -212,7 +212,7 @@ remaining Powers-owned work is:
    batches)/`check-okf` all exit 0, Node runtime search/get exit 0
    under Node v26.13.1 with the H2-C receipt, and an independent
    disposition audit clean (1,449 bindings, 0 missing/mismatched
-   receipts). The pinned Knip external conflict remains open (item 9)
+   receipts). The pinned Knip external conflict remains open (item 11)
    and is not claimed PASS.
 4. **H3-A — typed reference resources pilot (ACCEPTED 2026-11-13).**
    The 25-record `font-pairing` pilot is complete and owner-accepted:
@@ -226,41 +226,99 @@ remaining Powers-owned work is:
    delegated panel: 15 blind reviews, aggregation 25/25 accept
    (19 direct + 6 orchestrator-adjudicated on deterministic
    digest/hash/schema evidence; 0 amend / 0 reject). Bound receipt
-   `.agent/work/h2-sbvf-option-b-20261106/H3A-RECEIPT.md` with evidence
+   `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3A-RECEIPT.md` with evidence
    `h3a-evidence/` and `h3-d18/`; gates — `bun test --coverage` 1,097
    pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 115 files,
    format/`check-corpus`/`check-vector`/`check-okf` exit 0, Node
    v26.13.1 resource smoke; the pinned Knip external conflict remains
-   open (item 9) and is not claimed PASS. AC-52/AC-54/AC-55 are
+   open (item 11) and is not claimed PASS. AC-52/AC-54/AC-55 are
    `verified (component)`; AC-50/AC-51/AC-53 and the other H3-family
-   criteria stay open. **Remaining H3 scope (each needs a separate
-   owner-approved admission gate):** the other four D15 resource types
-   (`palette`, `style`, `icon-list`, `standards-checklist`), the 49
-   deferred `typography.csv` rows, and the remaining uupm data families
-   (`colors.csv`, `styles.csv`, `icons.csv`, `charts.csv`, `motion.csv`,
-   `landing.csv`, `products.csv`, `ui-reasoning.csv`, `app-interface.csv`,
+   criteria stay open.
+5. **H3-B — `palette` typed reference resources pilot (ACCEPTED
+   2026-11-13).** The 25-record `palette` pilot is complete and
+   owner-accepted: 25 `uupm-palette-*` `VPReferenceResource/v1`
+   records materialized from `colors.csv` rows 1–25 (catalog rev
+   8057 `966ca770…`, map rev 5776 `6b5d6f5f…`; rows 26–192 stay
+   deferred outside the pilot with explicit reasons). D18 delegated
+   panel: 15 blind reviews, aggregation **25/25 accept — 3/3 direct
+   protocol accepts per record, 0 amend / 0 reject / 0 manual, no
+   adjudication needed**. Bound receipt
+   `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3B-RECEIPT.md` with
+   evidence `h3b-d18/`; gates — `bun test --coverage` 1,102 pass /
+   5 skip / 0 fail with 100% funcs/lines, typecheck 115 files,
+   format/`check-corpus` (0 issues)/`check-vector`/`check-okf` exit
+   0, Node v26.13.1 resource smoke incl. type-mismatch/unknown
+   negatives; the pinned Knip external conflict remains open
+   (item 9) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   `verified (component)` scope. **Remaining H3 scope (each needs a
+   separate owner-approved admission gate):** the other three D15
+   resource types (`style`, `icon-list`, `standards-checklist`), the
+   49 deferred `typography.csv` rows, the 167 deferred `colors.csv`
+   rows, and the remaining uupm data families (`styles.csv`,
+   `icons.csv`, `charts.csv`, `motion.csv`, `landing.csv`,
+   `products.csv`, `ui-reasoning.csv`, `app-interface.csv`,
    `google-fonts.csv`); `poteto-plugins` remains unpinned in
-   donors.yaml. All H3-A changes are uncommitted at HEAD `e72fc5b8`;
-   the commit decision is Root-owned.
-5. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
+   donors.yaml. H3-A was committed at `49842c09`; all H3-B changes
+   are uncommitted at HEAD `49842c09` — the commit decision is
+   Root-owned.
+6. **H3-C — `style` typed reference resources pilot (ACCEPTED
+   2026-11-16).** The 25-record `style` pilot is complete and
+   owner-accepted: 25 `uupm-style-*` `VPReferenceResource/v1`
+   records materialized from `styles.csv` rows 1–25 (catalog rev
+   8058 `35833e57…`, map rev 5777 `ad02beae…`; the file has 88 data
+   rows, rows 26–88 stay deferred outside the pilot with explicit
+   reasons). Payload contract: all 29 CSV columns except `No` as 28
+   verbatim string keys; complex donor cells (`cost:…|drivers:…`,
+   `☐` checklists, emoji markers) preserved unparsed. Six donor
+   `Status: deprecated` rows (20–25) admitted per positional-pilot
+   parity; `payload.status` preserves the donor verdict. D18
+   delegated panel: 15 blind reviews, aggregation **25/25 accept —
+   3/3 direct protocol accepts per record, 0 amend / 0 reject /
+   0 manual, no adjudication needed**. Bound receipt
+   `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3C-RECEIPT.md`
+   with evidence `h3c-d18/`; gates — `bun test --coverage` 1,112
+   pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 117
+   files, format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
+   exit 0; the pinned Knip external conflict remains open
+   (item 9) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   `verified (component)` scope. **Remaining H3 scope (each needs a
+   separate owner-approved admission gate):** the other two D15
+   resource types (`icon-list`, `standards-checklist`), the
+   49 deferred `typography.csv` rows, the 167 deferred `colors.csv`
+   rows, the 63 deferred `styles.csv` rows, and the remaining uupm
+   data families (`icons.csv`, `charts.csv`, `motion.csv`,
+   `landing.csv`, `products.csv`, `ui-reasoning.csv`,
+   `app-interface.csv`, `google-fonts.csv`); `poteto-plugins`
+   remains unpinned in donors.yaml. H3-A was committed at
+   `49842c09`; all H3-B and H3-C changes are uncommitted at HEAD
+   `49842c09` — the commit decision is Root-owned.
+7. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
    host installation, Muse first-party catalog digest, public metadata and
    publication, and Runtime acceptance remain open. The `.54` fixtures are not
    production outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline only.
-6. **D19 algorithm delegation implementation.** Policy READY; the offer and
-   scoped-preference path are not implemented. Existing human gates remain.
-7. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
+8. **D19 algorithm delegation implementation.** Policy READY; the
+   offer/preference/offer-record mechanism is implemented and
+   independently validated (Luna READY, 0 findings): decision-type
+   registry with canonical exclusion and allowed floors, exact
+   type+scope matching, sealed `VPStandingPreference/v1` and
+   `VPAlgorithmOffer/v1` artifacts, SHA-verified preference refs.
+   Deferred by design: call-site wiring into human-loop instructions,
+   algorithm execution/notification, per-decision SHA binding. The
+   changes are uncommitted at HEAD `49842c09` — the commit decision
+   is Root-owned.
+9. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
    not a prerequisite for the migrated corpus or the compact CLI. The frozen
    40-ID trial stays v1.1-bound.
-8. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
+10. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
    deterministic catalog library, and a minimal scenario on at least two
    compatible hosts.
-9. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
+11. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
    on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
    The H2-D receipt (owner-accepted 2026-11-12) re-confirms the same
    `issues: []` exit 1 external conflict — not PASS; item stays open.
-10. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
+12. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
    verified; they do not establish installation or Runtime acceptance.
-11. **Candidate next scopes (owner approval required; not started).** CSV
+13. **Candidate next scopes (owner approval required; not started).** CSV
     module packaging would extend D59 carriers to the 468 CSV atoms; the
     remaining H2-A2 stack rows are already tracked under item 1. Neither is
     authorized by the current D59 acceptance.
@@ -460,7 +518,7 @@ The CAT-D1, CAT-D2, CAT-D5, CAT-D6 and CAT-D7 deferrals, with their SR/AC state,
 [deferred decisions table](traceability.md#deferred-decisions-cat-d--srac); this queue does not
 restate them.
 
-Four owner decisions outside this queue were recorded in `.agent/work/vp-next-steps/WORK.md`
+Four owner decisions outside this queue were recorded in `.agent-archive-20261113/work/vp-next-steps/WORK.md`
 ("The open items that are not this work"). All four were answered on 2026-10-30: `Deprecated` is a
 valid ADR status and stays unlocked; the `approval-policy` marker stays a topic tag while group
 membership comes from the profile alternatives; the D12 §4 wording is accepted as written; and the
