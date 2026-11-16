@@ -367,7 +367,18 @@ remaining Powers-owned work is:
    40-ID trial stays v1.1-bound.
 12. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
    deterministic catalog library, and a minimal scenario on at least two
-   compatible hosts.
+   compatible hosts. **First dated run evidence (2026-11-16,
+   `stage8-20261116`, HEAD `4db70aa6`, Bun 1.4.4, Node v26.13.1 smoke
+   PASS):** the minimal scenario (install → profile →
+   `catalog-cli search/get` → `resource` → findings append →
+   no-durable-state assertion) passed on four rows — portable
+   (direct CLI), opencode and pi (`install-plugin.ts` project-scope
+   junctions + `--check`), codex (manifest/skill validation). All
+   state assertions clean; receipts under
+   `packages/powers/.tmp/stage8-20261116/` (gitignored). This is
+   install-target/CLI evidence on one Windows host — not live agent
+   sessions, not Runtime acceptance, and marketplace-channel rows
+   remain blocked on owner decisions D-S8-1..3.
 13. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
    on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
    The H2-D receipt (owner-accepted 2026-11-12) re-confirms the same

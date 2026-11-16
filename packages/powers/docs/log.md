@@ -2,6 +2,20 @@
 
 ## 2026-11-16
 
+* **Stage-8 minimal scenario — first dated host-run evidence:**
+  the VP-8 candidate scenario (install → profile →
+  `catalog-cli search/get` → `resource` → findings append →
+  no-durable-state assertion) executed via
+  `packages/powers/.tmp/stage8-20261116/run.ts` at HEAD `4db70aa6`,
+  Bun 1.4.4, Node v26.13.1. All four rows PASS with clean state
+  assertions: portable (direct CLI), opencode and pi
+  (`install-plugin.ts --scope project` junctions, `--check` exit 0),
+  codex (manifest/skill validation). Node runtime smoke on
+  `resource --id uupm-icon-list` exit 0. Receipts and matrix notes
+  under `packages/powers/.tmp/stage8-20261116/` (gitignored). Scope:
+  install-target/CLI evidence on one Windows host — not live agent
+  sessions, not Runtime acceptance; marketplace flows still gated
+  on owner decisions D-S8-1..3.
 * **H3-E `standards-checklist` typed reference resources pilot —
   implemented, reviewed and owner-accepted:** 25 `uupm-standard-*`
   `VPReferenceResource/v1` records materialized from
