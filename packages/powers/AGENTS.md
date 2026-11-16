@@ -359,8 +359,17 @@ files. No separate 100% statement-coverage claim is made because Bun emitted no 
 counter; branches 0/0 are uninstrumented. Host installation and acceptance, public metadata and
 publication, and Runtime acceptance remain open. These are approved targets
 or formed fixtures, not production outputs or host acceptance.
-H0 documentation acceptance and final native fixture parity on the eight `.69` Markdown paths
-remain open.
+H0 baseline is closed for the accepted baseline at Source commit
+`fafb40158d20a2a10155d6ef984dfd55c36be23d` (see
+`docs/task-plan-step-h.md` "Current H0 status"). The `.81` independent
+review (`.tmp/panel/native-final-review-luna-max-r1-20261022-81/REVIEW.md`)
+marks the cumulative H0 baseline criteria MET with 0 Critical / 0 Important /
+2 Minor findings — both minors are stale-text items (a since-deleted
+`task-plan-step-e.md` paragraph and a `.80` preflight attribution label), not
+fixture or eligibility defects. `.67` remains `overall: NOT_CLOSED`,
+`packagePass: false`, bound to superseded inputs; it is retained as history,
+not current evidence. Host installation and acceptance, public metadata and
+publication, and Runtime acceptance remain open.
 
 The effective profile schema `config/vpeffectiveprofile.v1.schema.json` is package-owned.
 The `vp-mode` CLI accepts it through `--profile`; for Standalone, extract the fenced JSON

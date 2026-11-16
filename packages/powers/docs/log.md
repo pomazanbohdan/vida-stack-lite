@@ -2,6 +2,20 @@
 
 ## 2026-11-16
 
+* **H0 baseline doc reconciliation + fresh gate evidence:** the
+  stale "H0 documentation acceptance and `.69` fixture parity
+  remain open" wording in `packages/powers/AGENTS.md` §5 and
+  `next-actions.md` was reconciled with `task-plan-step-h.md`
+  (H0 CLOSED at `fafb4015`) per the `.81` independent review —
+  cumulative H0 baseline criteria MET, 0C/0I/2M where both minors
+  are stale-text items. `.67` stays `NOT_CLOSED` as history.
+  Separately, a fresh gate ran on stable HEAD `4db70aa6` (post
+  H3-E): typecheck 117 files 0 errors, format clean,
+  `check-corpus` 0 issues / 2,402 instructions, `check-vector`
+  52 batches, `check-okf` clean, `bun test` 1,115 pass / 5 skip /
+  0 fail — log at `packages/powers/.tmp/fresh-gate-20261116.log`.
+  This is component evidence freshness, not a frozen package gate
+  or Runtime acceptance.
 * **Stage-8 minimal scenario — first dated host-run evidence:**
   the VP-8 candidate scenario (install → profile →
   `catalog-cli search/get` → `resource` → findings append →

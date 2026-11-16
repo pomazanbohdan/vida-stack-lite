@@ -392,16 +392,19 @@ remaining Powers-owned work is:
 
 Closed or removed from the open set: A0; A-D; E1-E4 (E5 host qualification
 remains open); F (component-only, AC-22 partial/deferred); H0 baseline
-(documentation acceptance and `.69` fixture parity remain open/unreconciled);
+(closed at `fafb4015`; `.81` review MET, doc reconciliation done
+2026-11-16);
 H1 AC-59 (accepted, but AC-47–AC-58 remain open); donor update tracking (all 8
 donors current, baseline 1,258 files); D59 lossless modules (accepted
 2026-11-08; catalog 3,746 → 1,482, 682 carriers / 2,946 atoms;
 `module-update` READY, AC-91); G (outside Powers).
 
 **Open acceptance gap (not active conversion):** H0 documentation acceptance and
-final native fixture parity on the eight `.69` Markdown paths remain described
-as open in `packages/powers/AGENTS.md`; `task-plan-step-h.md` closes only the H0
-baseline. Reconcile the two documents before claiming full H0 closure. F AC-22
+final native fixture parity on the eight `.69` Markdown paths were reconciled
+on 2026-11-16: `packages/powers/AGENTS.md` §5 and this list now record the H0
+baseline as closed at `fafb4015` per `task-plan-step-h.md`, matching the `.81`
+independent review verdict (cumulative H0 baseline criteria MET; its two Minor
+findings are stale-text items, one in a since-deleted file). F AC-22
 remains partial/deferred: no real finding event or semantic/equivalence
 acceptance is claimed. H1 AC-47–AC-58 remain open until per-source attribution,
 D18 panel/aggregation receipts and the delegated gate path are complete. AC-59
