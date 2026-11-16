@@ -212,7 +212,7 @@ remaining Powers-owned work is:
    batches)/`check-okf` all exit 0, Node runtime search/get exit 0
    under Node v26.13.1 with the H2-C receipt, and an independent
    disposition audit clean (1,449 bindings, 0 missing/mismatched
-   receipts). The pinned Knip external conflict remains open (item 11)
+   receipts). The pinned Knip external conflict remains open (item 14)
    and is not claimed PASS.
 4. **H3-A — typed reference resources pilot (ACCEPTED 2026-11-13).**
    The 25-record `font-pairing` pilot is complete and owner-accepted:
@@ -231,7 +231,7 @@ remaining Powers-owned work is:
    pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 115 files,
    format/`check-corpus`/`check-vector`/`check-okf` exit 0, Node
    v26.13.1 resource smoke; the pinned Knip external conflict remains
-   open (item 11) and is not claimed PASS. AC-52/AC-54/AC-55 are
+   open (item 14) and is not claimed PASS. AC-52/AC-54/AC-55 are
    `verified (component)`; AC-50/AC-51/AC-53 and the other H3-family
    criteria stay open.
 5. **H3-B — `palette` typed reference resources pilot (ACCEPTED
@@ -249,7 +249,7 @@ remaining Powers-owned work is:
    format/`check-corpus` (0 issues)/`check-vector`/`check-okf` exit
    0, Node v26.13.1 resource smoke incl. type-mismatch/unknown
    negatives; the pinned Knip external conflict remains open
-   (item 9) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   (item 14) and is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope. **Remaining H3 scope (each needs a
    separate owner-approved admission gate):** the other three D15
    resource types (`style`, `icon-list`, `standards-checklist`), the
@@ -280,7 +280,7 @@ remaining Powers-owned work is:
    pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 117
    files, format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
    exit 0; the pinned Knip external conflict remains open
-   (item 9) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   (item 14) and is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope. **Remaining H3 scope (each needs a
    separate owner-approved admission gate):** the other two D15
    resource types (`icon-list`, `standards-checklist`), the
@@ -308,7 +308,7 @@ remaining Powers-owned work is:
    with evidence `h3d-d18/`; gates — `bun test` 1,115 pass / 5
    skip / 0 fail, typecheck 117 files, format/`check-corpus` (0
    issues)/`check-vector`/`check-okf` exit 0; the pinned Knip
-   external conflict remains open (item 13) and is not claimed
+   external conflict remains open (item 14) and is not claimed
    PASS. AC-52/AC-54/AC-55 keep `verified (component)` scope.
    **Remaining H3 scope (each needs a separate owner-approved
    admission gate):** the deferred rows of the five piloted CSVs
@@ -337,7 +337,7 @@ remaining Powers-owned work is:
    with evidence `h3e-d18/`; gates — `bun test` 1,115 pass / 5
    skip / 0 fail, typecheck 117 files, format/`check-corpus` (0
    issues)/`check-vector`/`check-okf` exit 0; the pinned Knip
-   external conflict remains open (item 13) and is not claimed
+   external conflict remains open (item 14) and is not claimed
    PASS. AC-52/AC-54/AC-55 keep `verified (component)` scope.
    **All five D15 resource types are now piloted (125 typed
    resources live).** Remaining H3 scope (each needs a separate
@@ -348,11 +348,51 @@ remaining Powers-owned work is:
    remains unpinned in donors.yaml. H3-E changes are committed
    with this documentation update — commit decisions are
    Root-owned.
-9. **E5a/E5b host qualification.** Production manifest inputs/outputs, native
-   host installation, Muse first-party catalog digest, public metadata and
-   publication, and Runtime acceptance remain open. The `.54` fixtures are not
-   production outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline only.
-10. **D19 algorithm delegation implementation.** Policy READY; the
+9. **H3-F — `standards-checklist` remainder pilot (ACCEPTED
+   2026-11-16).** The final 7 deferred rows of `app-interface.csv`
+   (rows 26–32) are admitted as `uupm-standard-*`
+   `VPReferenceResource/v1` records — **the CSV is now fully
+   dispositioned: 32/32 admitted, 0 deferred** (catalog rev 8061
+   `ebaca4a4…`, map rev 5780 `f684a978…`; 132 typed resources
+   live). Mechanism: new `--remainder` mode in
+   `materialize-resources.ts` — admits only rows after the pilot
+   limit, requires the existing `csvSources` ledger, re-verifies
+   pinned `rawSha256`/`headersDigest`, and cannot re-admit or
+   re-slug rows 1–25. Independent Luna validation READY 0
+   findings; D18 delegated panel: 6 blind reviews (2 batches × 3
+   protocols), aggregation **7/7 accept — 3/3 direct accepts per
+   record, 0 amend / 0 reject / 0 manual**. Bound receipt
+   `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3F-RECEIPT.md`
+   with evidence `h3f-d18/`; gates — typecheck 117 files,
+   format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
+   exit 0, targeted `bun test` 66 pass / 0 fail after the
+   D-S8-1-driven `plugin-payload.test.ts` target-list update;
+   the pinned Knip external conflict remains open (item 14) and
+   is not claimed PASS. AC-52/AC-54/AC-55 keep
+   `verified (component)` scope.
+   **Remaining H3 scope (each needs a separate owner-approved
+   admission gate):** the deferred rows of the four piloted CSVs
+   (80 `icons.csv`, 49 `typography.csv`, 167 `colors.csv`,
+   63 `styles.csv` — 359 rows total) and the remaining uupm data
+   families (`charts.csv`, `motion.csv`, `landing.csv`,
+   `products.csv`, `ui-reasoning.csv`, `google-fonts.csv`);
+   `poteto-plugins` remains unpinned in donors.yaml.
+10. **E5a/E5b host qualification.** Production manifest inputs now
+   exist (`config/plugin-manifest-inputs.json`, owner-approved
+   D-S8-1 target set: portable, codex, claude, cursor,
+   muse-package, antigravity — devin/kimi/root-marketplace/muse/
+   muse-catalog stay deferred; `muse-catalog` descoped from E5b per
+   D-S8-2). Outputs formed and `--check` clean: root `plugin.json`,
+   `.codex-plugin/`, `.agents/plugins/marketplace.json`,
+   `.claude-plugin/`, `.cursor-plugin/`, and `.tmp/` native
+   formations for muse-package/antigravity. Public metadata
+   (`privacyPolicyUrl`, `termsOfServiceUrl`, `contact.email`)
+   remains unset pending owner values. Native host installation,
+   publication channel (D-S8-3, needs public repo), and Runtime
+   acceptance remain open. The `.54` fixtures are not production
+   outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline
+   only.
+11. **D19 algorithm delegation implementation.**
    offer/preference/offer-record mechanism is implemented and
    independently validated (Luna READY, 0 findings): decision-type
    registry with canonical exclusion and allowed floors, exact
@@ -362,10 +402,10 @@ remaining Powers-owned work is:
    algorithm execution/notification, per-decision SHA binding. The
    mechanism was committed at `7972b8f7` — commit decisions are
    Root-owned.
-11. **D16 v1.2 re-binding.** Only before a new matched-comparison claim; it is
+12. **D16 v1.2 re-binding.**
    not a prerequisite for the migrated corpus or the compact CLI. The frozen
    40-ID trial stays v1.1-bound.
-12. **Stage 8 — Standalone mode, portability and installation.** Host matrix,
+13. **Stage 8 — Standalone mode, portability and installation.**
    deterministic catalog library, and a minimal scenario on at least two
    compatible hosts. **First dated run evidence (2026-11-16,
    `stage8-20261116`, HEAD `4db70aa6`, Bun 1.4.4, Node v26.13.1 smoke
@@ -379,13 +419,13 @@ remaining Powers-owned work is:
    install-target/CLI evidence on one Windows host — not live agent
    sessions, not Runtime acceptance, and marketplace-channel rows
    remain blocked on owner decisions D-S8-1..3.
-13. **External Knip conflict.** The pinned Agent gate exits 1 with `issues: []`
+14. **External Knip conflict.**
    on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
    The H2-D receipt (owner-accepted 2026-11-12) re-confirms the same
    `issues: []` exit 1 external conflict — not PASS; item stays open.
-14. **Separate Runtime acceptance.** AC-65–AC-78 remain component/project
+15. **Separate Runtime acceptance.**
    verified; they do not establish installation or Runtime acceptance.
-15. **Candidate next scopes (owner approval required; not started).** CSV
+16. **Candidate next scopes (owner approval required; not started).**
     module packaging would extend D59 carriers to the 468 CSV atoms; the
     remaining H2-A2 stack rows are already tracked under item 1. Neither is
     authorized by the current D59 acceptance.
@@ -514,7 +554,7 @@ A0 (gate) ──► A harness+skeleton ──► B canonical documents ──►
 | **B** | Product canonical documents: `business-requirements.md`, `system-specification.md`, `acceptance.md`, the matrix research § → SR § → AC id | The matrix is complete; `check-okf.ts` → exit 0; doc-check → `failures: []` | M | **closed 2026-10-19** |
 | **C** | Catalog and scripts: VP schemas in `config/`, the frontmatter parser, the catalog model with the operations `catalog.tags/search/get/compose` and a deterministic `decision.evaluate`, the CLI, the seed corpus, `catalog.json`, `corpus-map.json`, `scripts/check-corpus.ts`, `scripts/convert.ts`; the shipped tooling — in `skills/vp-mode/scripts/` | `bun run --cwd packages/powers test` → 0 fail; `test:coverage` → threshold 1.0; `typecheck` → 0 errors; `check-corpus.ts` → exit 0; knip → `{"issues":[]}`; doc-check → `failures: []` | M | **closed 2026-10-20** |
 | **D** | Full eight-donor corpus: donor inventory, selection, segmentation into atomic instructions, merging of duplicates, rendering `.md` with `provenance`; the processing map `corpus-map.json`; the converter `scripts/convert.ts`; the shipped tooling — in `skills/vp-mode/scripts/` | `check-corpus.ts` → exit 0; map ↔ corpus consistent; `provenance` ↔ `donors.yaml`; mapping pass first; agent creates genuinely new unique tags; owner approves the corpus | M | **closed 2026-10-20 for MVP; extended 2026-10-21** (2510 instructions from 8 donors; 2790 processing-map records) |
-| **E** | The source entries `vida-bootstrap` (project-document role bootstrap), `vp-mode` (orchestration) and `vp-setup` (setup) in `skills/`, together with shipped scripts; per-host manifests generated by the package builder; E5a source/schema/fixture implementation; [E5b native layouts and deferred hosts](#delivery-target-status-e5ae5b) | Repeated setup is idempotent; manifests match supported formats, validate rooted skills and ownership, and preserve read-only recovery checks; shipped skill scripts remain runtime-agnostic | M | **in progress** — E1–E3 closed; E4 implemented; the project-document `vida-bootstrap` source entry is complete and included in the three-skill host manifest/installer inventory; host qualification remains open; `.54` formed local Muse/Antigravity fixtures, but Muse catalog is `MANIFEST_MUSE_CATALOG_NOT_READY` and production input/output are absent. The locally verified `.65` review marks `.62` CODE+EVIDENCE READY with no code blocker. `.67` remains `NOT_CLOSED` with `packagePass: false`; `.70` marks it READY only as an evidence baseline. Muse digest proof, host installation, publication and Runtime acceptance remain open. |
+| **E** | The source entries `vida-bootstrap` (project-document role bootstrap), `vp-mode` (orchestration) and `vp-setup` (setup) in `skills/`, together with shipped scripts; per-host manifests generated by the package builder; E5a source/schema/fixture implementation; [E5b native layouts and deferred hosts](#delivery-target-status-e5ae5b) | Repeated setup is idempotent; manifests match supported formats, validate rooted skills and ownership, and preserve read-only recovery checks; shipped skill scripts remain runtime-agnostic | M | **in progress** — E1–E3 closed; E4 implemented; the project-document `vida-bootstrap` source entry is complete and included in the three-skill host manifest/installer inventory; host qualification remains open; `.54` formed local Muse/Antigravity fixtures; production inputs/outputs now exist for the six D-S8-1 targets (`--check` clean), `muse-catalog` is descoped from E5b (D-S8-2), and Muse digest proof is no longer pending. The locally verified `.65` review marks `.62` CODE+EVIDENCE READY with no code blocker. `.67` remains `NOT_CLOSED` with `packagePass: false`; `.70` marks it READY only as an evidence baseline. Host installation, publication and Runtime acceptance remain open. |
 | **F** | VP Work Items in `docs/work/` (OKF concepts with stable IDs, AC, evidence); append-only Standalone findings store API, CLI caller, `artifact_contract`, and caller procedure | Query-before-append; exact replay; explicit merge event; scope and no-fix boundaries remain separate | M | **closed 2026-11-02 as Powers Standalone component-only; AC-22 remains partial/deferred** — current package suite (2026-11-02): 839 pass / 4 skip / 0 fail; focused F (2026-11-02): 141 pass / 0 fail / 1,258 assertions across findings, artifacts and catalog-cli. No `findings.jsonl` or `artifacts.jsonl` exists. The following F-specific coverage and typecheck counts are historical for their inputs. Coverage fails unchanged 1.0 thresholds: LCOV F 473/480, L 3991/4038, B 0/0; no statement counter. Uncovered lines: `catalog-cli.ts` 40-42, 138, 142-164, 169-183; `findings.ts` 314, 322-323, 343, 354. Typecheck: 29 files; Knip `issues: []`; corpus: 2,510 instructions / 0 issues; donors: 9 / OK; map/pairs/pair agreement: 0 findings; pair table: 22; fidelity audit: 1,910 divergent lines; OKF: 34 concepts / 0 failures or warnings; Markdown: 5 docs / 44 links / 0 failures. `audit specs` has no canonical JSON spec input. On 2026-10-30 the artifact-reference and findings scope-gate extension added component evidence for AC-20, AC-21 and AC-23; AC-22 remains partial and AC-24 component-only; no real event or host/Runtime acceptance; the 839-test and 34-concept numbers are historical for their inputs. F is Powers Standalone only; VP-7 and Agent runtime data are not F dependencies. VP-7/G are historical Agent-runtime evidence; root reconciliation remains open. Closure decision: the owner closed the F task on 2026-11-02 for Powers Standalone component evidence; AC-22 remains partial, and a real finding event plus semantic/equivalence acceptance remain deferred. AC-20/21/23/24 remain component-only. No Runtime/Agent claim. |
 | **G** | Agent-runtime request for D3+D8 (extended instruction registry + profile reading) | Owned by the Agent runtime developer; not a Powers active task | — | **Out of Powers scope.** The historical `REQ-D3-D8` packet remains retained as handoff evidence, but Powers does not own its sending, admission or runtime implementation. No active handoff, send or Runtime acceptance is claimed in this lane. |
 | **H** | D14/D15 accepted scope, implemented only through the gated phases in [Step H](task-plan-step-h.md): baseline closeout, source-attributed Wondelai method subset, engineering/UX applicability and CSV map, then selected typed JSON resources | H0 current hash-bound gates and review record; H1 complete disposition, source attribution/link and D18 panel evidence; H2 versioned applicability and cell-level evidence; H3 exact-ID, safety and shared-budget evidence | L | **25-file H1 pilot + 1 next-batch file are applied; 321 instructions.** The owner allowed general methods plus selected product/business methods, set a 25-file pilot, moved CSV to H2, admitted no typed families, and replaced the H1 human fidelity/owner-admission loop with three blind Codex Luna reviewers (V3 Delphi, V2 Adversarial, V4 Party chat) plus orchestrator aggregation (D18). Ten held captures contain 602 held units and 57 bounded model comparisons; no complete/admitted source packet is evidenced. The owner approved excluding 60 out-of-carrier copies while preserving 421/30/391 intake accounting. The approved 25-file set (8 engineering / 9 product-UX / 8 business-marketing) is captured, mechanically decomposed into 391 draft units and 4,039 spans, and sealed with 25 selections and 25 `PASS_MECHANICAL_ONLY` receipts in the existing H1 evidence directory; a read-only Luna validation returned READY 0/0/0. The D18 panel then ran six batches × three blind Codex Luna protocols on all 25 files: 391 units → 219 unanimous / 164 majority / 8 manual / 0 unresolved; final 230 accept / 80 amend / 0 merge / 81 reject. The panel decisions artifacts contain 310 final units with 25 selections and 25 `PASS_MECHANICAL_ONLY` checks; every file passed `checkDecomposition`. The main defect is mechanical span width: many units cover only the heading/first line, so the specs must use full-section locators. The eight engineering subsets and seventeen product/design and business files are **applied** (297 instructions; corpus 3,278 instructions, map 3,429, baseline 1,258, catalog revision 7,343). The other 1 file is **not admitted**: no `InstructionSpec`/packet exists for them, and the delegated gate path is implemented, tested and independently reviewed by T3 Codex/Luna (READY 0/0/0). Selected-text disposition for the remaining files, per-source attribution, spec drafts, the 25-file pilot, matched measurement, H2/H3 and Runtime acceptance remain open. Further H1 conversion remains blocked by missing per-source attribution/specs for the remaining files; independent preparation may continue. H1 uses the existing `request-clarification.md` gap routing: missing/technical evidence is an automatic block; ambiguity/conflict asks the owner; attribution is recorded, not inferred; the D18 review is delegated model review, not human fidelity. |
@@ -527,24 +567,24 @@ earlier universal `source: "."` layout is superseded for these two targets only.
 
 | Target | Status | Mapping or output | Basis and remaining gap |
 |---|---|---|---|
-| Portable root | `format-mapped` | Root `plugin.json`; standard `skills/` discovery; no `skills` or `catalog` field | Fixture and schema proof only; no package output or host install |
-| Codex | `host-verified` (historical D4b status) | `.codex-plugin/plugin.json` uses `skills: "./skills/"`; `.agents/plugins/marketplace.json` uses local source `./` | Source format and fixtures only; no new host qualification |
-| Claude | `format-mapped` | `.claude-plugin/plugin.json` lists the three shipped skill paths; the marketplace includes the package description | Official format mapping plus fixture and schema proof; no host qualification |
-| Cursor | `format-mapped` | `.cursor-plugin/plugin.json` lists the three current shipped skill paths | Explicit bounded inventory; adding a shipped skill requires mapping, schema, test and golden updates |
-| Muse / root marketplace | Local fixture formed; catalog blocked | Muse package manifest and plugin payload in the `.54` scratch fixture; root marketplace output withheld | Muse catalog is `MANIFEST_MUSE_CATALOG_NOT_READY`: first-party digest proof is absent and `marketplaceWritten` is false |
-| Antigravity | Local plugin-root fixture formed | Root `plugin.json` and plugin payload in the `.54` scratch fixture | The `name`/`description` shape is validated; the published schema and its example disagree, so parser tolerance is unverified |
-| Devin | Docs-declared fallback only | `.devin-plugin/plugin.json` → `.claude-plugin/plugin.json` → root `plugin.json` | Format mapping only; no host installation or acceptance |
+| Portable root | `format-mapped` | Root `plugin.json` formed from production inputs; standard `skills/` discovery; no `skills` or `catalog` field | Output formed and `--check` clean; no host install |
+| Codex | `host-verified` (historical D4b status) | `.codex-plugin/plugin.json` uses `skills: "./skills/"`; `.agents/plugins/marketplace.json` uses local source `./` | Output re-formed under the six-target inputs; `--check` clean; no new host qualification |
+| Claude | `format-mapped` | `.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` formed from production inputs | Output formed and `--check` clean; no host qualification |
+| Cursor | `format-mapped` | `.cursor-plugin/plugin.json` formed from production inputs | Output formed and `--check` clean; no host qualification |
+| Muse package | `format-mapped` | `.tmp/vp-manifest-formations/muse/plugins/vida-powers` package payload + `.muse-plugin/plugin.json` | Formation output under `.tmp` (gitignored); `--check` clean |
+| Muse / root marketplace | Descoped from E5b (D-S8-2, 2026-11-16) | Root marketplace output withheld | `muse-catalog` stays `MANIFEST_MUSE_CATALOG_NOT_READY`; first-party digest proof descoped — no digest work pending |
+| Antigravity | `format-mapped` | `.tmp/vp-manifest-formations/antigravity` plugin-root payload + `plugin.json` | Formation output under `.tmp` (gitignored); `--check` clean; published-schema/parser tolerance still unverified |
+| Devin | Docs-declared fallback only | `.devin-plugin/plugin.json` → `.claude-plugin/plugin.json` → root `plugin.json` | Format mapping only; deferred target; no host installation or acceptance |
 | Kimi | Import documented; native target deferred | Plugin Builder imports the Codex, Claude and root manifests | No Kimi-native manifest is required; no host acceptance claimed |
 
 Host manifest inventory includes all three source entries (`vida-bootstrap`,
-`vp-mode`, `vp-setup`). Host qualification, production input/output and native
-installation acceptance remain separate open gates.
-
-The production manifest check exits 1 with `MANIFEST_INPUT_MISSING` because production inputs and
-outputs are absent. Host installation, public metadata and publication, and Runtime
-acceptance remain open. This section is the current E5a/E5b status owner; superseded per-target
-receipt counts stay bound to their inputs in Git history at commit `04a9a1ee`
-(`docs/task-plan-step-e.md`).
+`vp-mode`, `vp-setup`). Production inputs (`config/plugin-manifest-inputs.json`,
+D-S8-1 target set) and outputs for portable/codex/claude/cursor plus `.tmp`
+muse-package/antigravity formations now exist and pass `--check`. Host
+installation, public metadata values, the publication channel (D-S8-3), and
+Runtime acceptance remain open. This section is the current E5a/E5b status
+owner; superseded per-target receipt counts stay bound to their inputs in Git
+history at commit `04a9a1ee` (`docs/task-plan-step-e.md`).
 
 # Forward stages
 

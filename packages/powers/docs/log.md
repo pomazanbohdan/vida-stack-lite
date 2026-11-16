@@ -2,6 +2,37 @@
 
 ## 2026-11-16
 
+* **H3-F `standards-checklist` remainder pilot — implemented,
+  reviewed and owner-accepted:** the final 7 deferred rows of
+  `app-interface.csv` (rows 26–32) materialized as 7
+  `uupm-standard-*` `VPReferenceResource/v1` records via the new
+  `--remainder` mode in `materialize-resources.ts` (catalog rev
+  8061 `ebaca4a4…`, map rev 5780 `f684a978…`; **132 typed
+  resources**). The CSV is now fully dispositioned: 32/32
+  admitted, 0 deferred. Independent Luna validation READY 0
+  findings; D18 delegated panel: 6 blind reviews (2 batches × 3
+  protocols), aggregation **7/7 accept — 0 amend / 0 reject /
+  0 manual**. Bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3F-RECEIPT.md`
+  with evidence `h3f-d18/`; `app-interface.csv` deferred count is
+  now zero — remaining H3 deferred rows are 359 across
+  `icons.csv`/`typography.csv`/`colors.csv`/`styles.csv`, each
+  behind a separate owner gate.
+* **E5a/E5b manifest targets extended per owner directive
+  (D-S8-1 Option A, D-S8-2 Option B):**
+  `config/plugin-manifest-inputs.json` targets are now
+  `portable, codex, claude, cursor, muse-package, antigravity`;
+  `devin`/`kimi`/`root-marketplace`/`muse`/`muse-catalog` stay
+  deferred and `muse-catalog` is descoped from E5b. New outputs:
+  `.claude-plugin/plugin.json` + `marketplace.json`,
+  `.cursor-plugin/plugin.json`, and `.tmp` native formations for
+  muse-package/antigravity — `build-manifests.ts --check` returns
+  `{"ok":true}` for all six targets. `privacyPolicyUrl`,
+  `termsOfServiceUrl` and `contact.email` remain unset pending
+  owner values (schema-optional; no public claim made). Host
+  installation, publication channel (D-S8-3) and Runtime
+  acceptance remain open. `tests/plugin-payload.test.ts` target
+  assertion updated to the approved set.
 * **H0 baseline doc reconciliation + fresh gate evidence:** the
   stale "H0 documentation acceptance and `.69` fixture parity
   remain open" wording in `packages/powers/AGENTS.md` §5 and
