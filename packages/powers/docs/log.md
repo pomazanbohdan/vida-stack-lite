@@ -1,5 +1,24 @@
 # Directory Update Log
 
+## 2026-11-17
+
+* **H3-G `icon-list` wave-2 pilot — implemented, reviewed and
+  owner-accepted:** icons.csv rows 26–50 materialized as 25
+  `uupm-icon-*` `VPReferenceResource/v1` records via
+  `--remainder --limit 25` bounded-wave mode in
+  `materialize-resources.ts` (catalog rev 8062 `f7ba828f…`, map rev
+  5781 `11d22c85…`; **157 typed resources**). icons.csv now stands
+  at 50 admitted / 55 deferred (rows 51–105). The `--remainder`
+  admissibility was tightened to ledger-deferred rowKeys only —
+  previously admitted rows can never be re-admitted or re-slugged.
+  Independent Luna validation READY 0 findings; D18 delegated panel:
+  15 blind reviews (5 batches × 3 protocols), aggregation
+  **25/25 accept — 0 amend / 0 reject / 0 manual**. Bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3G-RECEIPT.md`
+  with evidence `h3g-d18/`; remaining H3 deferred rows are 334
+  across `icons.csv` (55), `typography.csv` (49), `colors.csv`
+  (167), `styles.csv` (63), each behind a separate owner gate.
+
 ## 2026-11-16
 
 * **H3-F `standards-checklist` remainder pilot — implemented,
