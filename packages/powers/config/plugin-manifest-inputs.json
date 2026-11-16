@@ -1,6 +1,6 @@
 {
   "schema": "VPPluginManifestInputs/v1",
-  "targets": ["portable", "codex"],
+  "targets": ["portable", "codex", "claude", "cursor", "muse-package", "antigravity"],
   "metadata": {
     "contact": {
       "name": "Vida Powers maintainers"

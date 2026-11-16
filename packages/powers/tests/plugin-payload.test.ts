@@ -27,7 +27,7 @@ test('the portable, Codex and Pi payloads share one identity and version', async
   expect(entry.name).toBe(pkg.name);
   expect(entry.version).toBe(pkg.version);
   expect((entry.source as Record<string, unknown>).path).toBe('./');
-  expect(inputs.targets).toEqual(['portable', 'codex']);
+  expect(inputs.targets).toEqual(['portable', 'codex', 'claude', 'cursor', 'muse-package', 'antigravity']);
 });
 
 test('Pi metadata points at all shipped skills and keeps the package discoverable', async () => {
