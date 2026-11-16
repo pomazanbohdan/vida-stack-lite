@@ -263,6 +263,11 @@ function mergeAllowlistEntry(entries: Dict[], entry: Dict): Dict[] {
 async function main(): Promise<void> {
   const apply = process.argv.includes('--apply');
   const remainder = process.argv.includes('--remainder');
+  const limitIndex = process.argv.indexOf('--limit');
+  const waveLimit = limitIndex >= 0 ? Number(process.argv[limitIndex + 1]) : undefined;
+  if (waveLimit !== undefined && (!remainder || !Number.isInteger(waveLimit) || waveLimit <= 0)) {
+    fail('--limit requires --remainder and a positive integer bound');
+  }
   const familyName = familyFromArgv(process.argv);
   const family = FAMILIES[familyName];
   const stageIndex = process.argv.indexOf('--stage');
@@ -318,6 +323,8 @@ async function main(): Promise<void> {
   }
   const existingResources = Array.isArray(catalog.resources) ? catalog.resources.filter(isRecord) : [];
   const existingIds = new Set(existingResources.map((entry) => String(entry.resource_id ?? '')));
+  const existingRows = remainder && existingSource !== undefined && Array.isArray(existingSource.rows) ? existingSource.rows.filter(isRecord) : [];
+  const deferredKeys = new Set(existingRows.filter((row) => row.disposition === 'deferred').map((row) => String(row.rowKey ?? '')));
 
   const encode = (value: string): string => [...Buffer.from(value, 'utf8')]
     .map((byte) => {
@@ -350,9 +357,9 @@ async function main(): Promise<void> {
       const bodyLicense = licenseByName.get(cell(first, 'Body Font'));
       eligible = headingLicense !== undefined && bodyLicense !== undefined;
     }
-    const admissible = remainder ? first.row > PILOT_LIMIT : familyName === 'palette' || familyName === 'style' || familyName === 'icon-list' || familyName === 'standards-checklist' ? first.row <= PILOT_LIMIT : true;
+    const admissible = remainder ? deferredKeys.has(key) : familyName === 'palette' || familyName === 'style' || familyName === 'icon-list' || familyName === 'standards-checklist' ? first.row <= PILOT_LIMIT : true;
     let admittedId: string | undefined;
-    if (eligible && admissible && admitted < (remainder ? Number.MAX_SAFE_INTEGER : PILOT_LIMIT)) {
+    if (eligible && admissible && admitted < (remainder ? (waveLimit ?? Number.MAX_SAFE_INTEGER) : PILOT_LIMIT)) {
       admitted += 1;
       const name = familyName === 'palette' ? cell(first, 'Product Type') : familyName === 'style' ? cell(first, 'Style ID') : familyName === 'icon-list' ? cell(first, 'Icon Name') : familyName === 'standards-checklist' ? `${cell(first, 'Category')} ${cell(first, 'Issue')}` : cell(first, 'Font Pairing Name');
       const base = `${family.idPrefix}-${slugify(name)}`;
@@ -448,15 +455,15 @@ async function main(): Promise<void> {
     rowPlans.push({ key, group, eligible, ...(admittedId === undefined ? {} : { admittedId }) });
   }
 
-  const existingRows = remainder && existingSource !== undefined && Array.isArray(existingSource.rows) ? existingSource.rows.filter(isRecord) : [];
   if (remainder) {
     if (existingSource === undefined || existingSource.rawSha256 !== parsed.rawSha256 || existingSource.headersDigest !== parsed.headersDigest) {
       fail(`${DONOR}:${family.csvPath} digests changed since the pilot; refusing to merge remainder rows`);
     }
   }
   const expectedDeferred = existingRows.filter((row) => row.disposition === 'deferred').length;
-  if (remainder ? admitted !== expectedDeferred || admitted === 0 : admitted !== PILOT_LIMIT) {
-    fail(`only ${admitted} eligible rows found; ${remainder ? `remainder requires exactly ${expectedDeferred}` : `pilot requires ${PILOT_LIMIT}`}`);
+  const expectedAdmitted = remainder ? (waveLimit ?? expectedDeferred) : PILOT_LIMIT;
+  if (remainder ? admitted !== expectedAdmitted || admitted === 0 : admitted !== PILOT_LIMIT) {
+    fail(`only ${admitted} eligible rows found; ${remainder ? `remainder requires exactly ${waveLimit === undefined ? expectedDeferred : waveLimit} deferred rows` : `pilot requires ${PILOT_LIMIT}`}`);
   }
 
   const planByKey = new Map(rowPlans.map((plan) => [plan.key, plan]));

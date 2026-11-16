@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8061,
+  "revision": 8062,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-16T19:51:42.110Z",
+  "updated_at": "2026-11-16T21:29:47.696Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -13290,6 +13290,16 @@
       "sha256": "b187ef48fac4e2dedefba8a89f5b54fc8c17668d31d23618b0d0a25aa1623079"
     },
     {
+      "resource_id": "uupm-icon-bell",
+      "path": "resources/uupm-icon-bell.json",
+      "sha256": "63a1326354b20a7f7c4a410b390e4307f8824e561eca48d920a73e02d57b0191"
+    },
+    {
+      "resource_id": "uupm-icon-camera",
+      "path": "resources/uupm-icon-camera.json",
+      "sha256": "1e5efaeb0ea28924f579be95d1b9b2f82f0d49f7bf917f241f4e00c2b4ebfd41"
+    },
+    {
       "resource_id": "uupm-icon-caret-down",
       "path": "resources/uupm-icon-caret-down.json",
       "sha256": "843186b1639cb458c8e2cedc77f77b03a7e60160684db21e11e40c46c3329c75"
@@ -13298,6 +13308,11 @@
       "resource_id": "uupm-icon-caret-up",
       "path": "resources/uupm-icon-caret-up.json",
       "sha256": "18a6ed80bcae25d21a9797ea5d90204c90a1d7c83bc7165b37ed707a55e5ac9d"
+    },
+    {
+      "resource_id": "uupm-icon-chat-circle",
+      "path": "resources/uupm-icon-chat-circle.json",
+      "sha256": "a24aac79a1e65be919b7eb49cf3c09d1eb20c57007ced8ed9bd65f7665d93887"
     },
     {
       "resource_id": "uupm-icon-check",
@@ -13310,14 +13325,39 @@
       "sha256": "df830e8b5ff74d9603c269c30cd0d5b03e6e363c675f8965366e3829d4a418ef"
     },
     {
+      "resource_id": "uupm-icon-circle-notch",
+      "path": "resources/uupm-icon-circle-notch.json",
+      "sha256": "11ecfdc4c16f7e3adbb363e31ad8d0e7d239f48aa6b947c4cf155a476da4e97f"
+    },
+    {
+      "resource_id": "uupm-icon-clock",
+      "path": "resources/uupm-icon-clock.json",
+      "sha256": "19d5de7444769c27343e57d34dd392f2643785af7a7ea1506c05a1134c7e95c4"
+    },
+    {
       "resource_id": "uupm-icon-copy",
       "path": "resources/uupm-icon-copy.json",
       "sha256": "7159e44cd30e7e5f79b254c06c374cb8c9aca9d75f59040c4521d70bd86c2c9d"
     },
     {
+      "resource_id": "uupm-icon-credit-card",
+      "path": "resources/uupm-icon-credit-card.json",
+      "sha256": "0623896e4c25aff4488294af2ae3f91907cb0d905d849089e9d7b7b894be687d"
+    },
+    {
+      "resource_id": "uupm-icon-currency-dollar",
+      "path": "resources/uupm-icon-currency-dollar.json",
+      "sha256": "fe0891ba8f1250710665bf9fa3e16187769052be1e6cf0d3798b10b64da0c28c"
+    },
+    {
       "resource_id": "uupm-icon-download-simple",
       "path": "resources/uupm-icon-download-simple.json",
       "sha256": "0396d418398b46c0c02c58bb8cbcd098c7132d3213d68141fce127119c032618"
+    },
+    {
+      "resource_id": "uupm-icon-envelope",
+      "path": "resources/uupm-icon-envelope.json",
+      "sha256": "f32c2126f18f5e773a3ae4264ef67bc9cc63bb47cac6084c2689670c0ce9ef0a"
     },
     {
       "resource_id": "uupm-icon-floppy-disk",
@@ -13340,6 +13380,16 @@
       "sha256": "7ff0928701995bf78aa223c65578294b3c882f62847d50373c96d4232602106e"
     },
     {
+      "resource_id": "uupm-icon-image",
+      "path": "resources/uupm-icon-image.json",
+      "sha256": "dab653c579a33efda7f4f0a640225613db122a6139e9307d620db64847f8cd5b"
+    },
+    {
+      "resource_id": "uupm-icon-info",
+      "path": "resources/uupm-icon-info.json",
+      "sha256": "d4d004dd182b3c3201358a83154e3d3047432ead1b7cf9a215a8c8d9d0477289"
+    },
+    {
       "resource_id": "uupm-icon-list",
       "path": "resources/uupm-icon-list.json",
       "sha256": "3c82ba28c851c196514b2095d6cb4f0692a26b90fa70d78ec66433f6c1cb56a3"
@@ -13350,14 +13400,39 @@
       "sha256": "ecad5eabf302a6c6926ef93004b8f206ea07f0eaed58aa286bc723759e262c79"
     },
     {
+      "resource_id": "uupm-icon-microphone",
+      "path": "resources/uupm-icon-microphone.json",
+      "sha256": "8ee7235caaa6151f814ea00d230e20f5b715dc0b886e99bdb281e605f8646018"
+    },
+    {
       "resource_id": "uupm-icon-minus",
       "path": "resources/uupm-icon-minus.json",
       "sha256": "63f29993ef5b2cc2f6abd9ce4bbc561c6ed4f8d99a2e868bca46067bab291eba"
     },
     {
+      "resource_id": "uupm-icon-paper-plane-tilt",
+      "path": "resources/uupm-icon-paper-plane-tilt.json",
+      "sha256": "0044d98e0fb9c49d8c158cc3bbdbf23e7370a0e3787845698dd15b0503db80f4"
+    },
+    {
+      "resource_id": "uupm-icon-pause",
+      "path": "resources/uupm-icon-pause.json",
+      "sha256": "49ed49b61fb83d65f66d80c1bb7a6ba2950371685e90a532d35c07034595c71d"
+    },
+    {
       "resource_id": "uupm-icon-pencil-simple",
       "path": "resources/uupm-icon-pencil-simple.json",
       "sha256": "4a5eca799271657c54fefa68afd1594278b08beb1459a51e347cf0c253dfbea6"
+    },
+    {
+      "resource_id": "uupm-icon-phone",
+      "path": "resources/uupm-icon-phone.json",
+      "sha256": "382480ada09b616933b524cccf91bd756a652713db4ea36a99fb596523b3f830"
+    },
+    {
+      "resource_id": "uupm-icon-play",
+      "path": "resources/uupm-icon-play.json",
+      "sha256": "686f1a6e46b85eb60e80997d5b8e84a0e01cd0794227605ac34af955fef08181"
     },
     {
       "resource_id": "uupm-icon-plus",
@@ -13370,6 +13445,36 @@
       "sha256": "511195f23024800780943672af4f0edc0b0e244d41e25b6c178a1a94f1c87d2e"
     },
     {
+      "resource_id": "uupm-icon-shopping-bag",
+      "path": "resources/uupm-icon-shopping-bag.json",
+      "sha256": "aef6de70acafbede18977111917645dd2e6c2476270694326df619fce1ab669c"
+    },
+    {
+      "resource_id": "uupm-icon-shopping-cart",
+      "path": "resources/uupm-icon-shopping-cart.json",
+      "sha256": "3e45def66b7e462aa58a031942481d6eb3c21fff71dc47b7ae11f550a54a7987"
+    },
+    {
+      "resource_id": "uupm-icon-sign-in",
+      "path": "resources/uupm-icon-sign-in.json",
+      "sha256": "a76c83130ebc44c3b8ae3f959d64e48bf6e6c463e4f323f35310fc16cdf6e4f4"
+    },
+    {
+      "resource_id": "uupm-icon-sign-out",
+      "path": "resources/uupm-icon-sign-out.json",
+      "sha256": "f1c4476a967d4a85fe2dc35ccc721391082c5a2ad64ba08022c8137f5030b174"
+    },
+    {
+      "resource_id": "uupm-icon-speaker-high",
+      "path": "resources/uupm-icon-speaker-high.json",
+      "sha256": "433461e922d97ec9e8f4b2fb45268e552e157a28d0a7cf3a3959fd5f2fe25d17"
+    },
+    {
+      "resource_id": "uupm-icon-tag",
+      "path": "resources/uupm-icon-tag.json",
+      "sha256": "0eed0b9345dcfd1d6ecd5fc6c2b3d7297870423d104f2134f96c47114409347b"
+    },
+    {
       "resource_id": "uupm-icon-trash",
       "path": "resources/uupm-icon-trash.json",
       "sha256": "4c3fc3366c034bc6078b240c8eb2fb695092270d5285193f42eee63388aa1287"
@@ -13378,6 +13483,26 @@
       "resource_id": "uupm-icon-upload-simple",
       "path": "resources/uupm-icon-upload-simple.json",
       "sha256": "44d481a2e94abde8b5de977803149e0a5e56ee8ac4ff6b9581f390c6fca04989"
+    },
+    {
+      "resource_id": "uupm-icon-user",
+      "path": "resources/uupm-icon-user.json",
+      "sha256": "520c6f71b0e3702358642ffcad86c393895e69c3d6edf14b805afa6c7f5ad90e"
+    },
+    {
+      "resource_id": "uupm-icon-user-plus",
+      "path": "resources/uupm-icon-user-plus.json",
+      "sha256": "ee156f341bd30850f5452b1aef4e9c5ea600a67454cf96ef84ac71478177eff2"
+    },
+    {
+      "resource_id": "uupm-icon-users",
+      "path": "resources/uupm-icon-users.json",
+      "sha256": "2b643134aaa2c3fd9bf05cc5552553112a00c24bf25922bd2a2d22f901e3ef15"
+    },
+    {
+      "resource_id": "uupm-icon-video",
+      "path": "resources/uupm-icon-video.json",
+      "sha256": "e92363ca6ff0be7a7c375200b720d9cb2fbd1e6f41c7c836c7ec02089e068250"
     },
     {
       "resource_id": "uupm-icon-warning",

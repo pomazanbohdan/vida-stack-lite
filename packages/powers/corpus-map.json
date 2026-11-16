@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5780,
-  "updated_at": "2026-11-16T19:51:42.110Z",
+  "revision": 5781,
+  "updated_at": "2026-11-16T21:29:47.696Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -29971,11 +29971,16 @@
                   "row": 26
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-info",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=afa1713e1d479b9260647fc8aedc08d0946be53b36081043bf60bb3f648ec14f",
@@ -30003,11 +30008,16 @@
                   "row": 27
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-circle-notch",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=41112a811e504b4abc72654d3f650d3e531b29857f9787eba43c9e4dc5fd613a",
@@ -30035,11 +30045,16 @@
                   "row": 28
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-clock",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=d0a0c348c54203d292c0a2365e3aee079b4c24e9e179ed162798d8a234acef7e",
@@ -30067,11 +30082,16 @@
                   "row": 29
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-envelope",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=3078c7b4c36ff94a3823cc8ef54380f39a4ccdf8e82b3bbc51fa7191bc39259e",
@@ -30099,11 +30119,16 @@
                   "row": 30
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-chat-circle",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=7135212bcc5c517b7378e8992303a132184a823bddb67cd9bfe318835c597936",
@@ -30131,11 +30156,16 @@
                   "row": 31
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-phone",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=470d848a94d887017da5dea1ac8312d57f655516b0a45cf41385661506cab0c3",
@@ -30163,11 +30193,16 @@
                   "row": 32
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-paper-plane-tilt",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=8971c794801ffd25073ffebc9b8616e03f500bfc5b63465496f5f3f81dd05f66",
@@ -30195,11 +30230,16 @@
                   "row": 33
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-bell",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=7939bfa4693f4c13e6d73a7210a41fba594df3f9cb76381a088d5668422c9bfb",
@@ -30227,11 +30267,16 @@
                   "row": 34
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-user",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=74bd5b4267146bd7d2b249dbba6a00d4adff981e70144c0858f7866b4706b473",
@@ -30259,11 +30304,16 @@
                   "row": 35
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-users",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=401eddca25f0e69c3be26f866c356ac4484db680550bc4c7d8feb889d529d787",
@@ -30291,11 +30341,16 @@
                   "row": 36
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-user-plus",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=31fbff8bb0a343e86ef3b737fcd293bd8b17518542752a2dd645cc04c3bed88e",
@@ -30323,11 +30378,16 @@
                   "row": 37
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-sign-in",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=213aa718b0f786dff55fbb4fc39aa406dae0a3241a7322ce4a768cd83889d298",
@@ -30355,11 +30415,16 @@
                   "row": 38
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-sign-out",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=722b971a02714d06c1e9ed3fe79a331f43eefc5342b57d77dc5efb01cb434226",
@@ -30387,11 +30452,16 @@
                   "row": 39
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-image",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=c4cfb4c580a268e7c977c2a14d882b2cdbafd91827edc595795fd2b8c4ab0bae",
@@ -30419,11 +30489,16 @@
                   "row": 40
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-video",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=935576806fcae6ef1dc188ca6a794927a7a538ab2d84f058a33d391823cf573b",
@@ -30451,11 +30526,16 @@
                   "row": 41
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-play",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=31a0995fc1a94a8426579d37e8b901c543534b11ee686280a39024528be56930",
@@ -30483,11 +30563,16 @@
                   "row": 42
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-pause",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=71ed10387ffdc41dad7726ceaecf602b1b5ba360827c3ce018dc916afc0f0557",
@@ -30515,11 +30600,16 @@
                   "row": 43
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-speaker-high",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=666e37f6d8de9904e737279baccf271b75e3554d9c73720203c4279c37442109",
@@ -30547,11 +30637,16 @@
                   "row": 44
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-microphone",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=6b2b00d6b8be0259df0c668c89ff61d2cb74f981d60d85d1319078c44aec4eac",
@@ -30579,11 +30674,16 @@
                   "row": 45
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-camera",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=15f1f475e301ccb8f88e7eb7c1c295e4a6d1a464f509ca4597b8078253592255",
@@ -30611,11 +30711,16 @@
                   "row": 46
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-shopping-cart",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=3f25478172e908b1534a3b14e74546e7b30ea2ba3475bdfadceecee990bbc0f8",
@@ -30643,11 +30748,16 @@
                   "row": 47
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-shopping-bag",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=d6e2057913093c8b19623761455e6ac7b8795f4f255192ee818e61a3ffe2b221",
@@ -30675,11 +30785,16 @@
                   "row": 48
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-credit-card",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=d27d8764429e37bcf622f0cf7cb20be4ea3afefd84f0993d1db07e54f01b530b",
@@ -30707,11 +30822,16 @@
                   "row": 49
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-currency-dollar",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=3feb328c280f8be53f0b99cea43a2faba621f4abcfa0d79672850144feba303d",
@@ -30739,11 +30859,16 @@
                   "row": 50
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 icon-list pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-icon-tag",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 icon-list record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=icons.csv&headers=34d90cfe6d3de48cdc330f9c98e29b1218c41f294b26b46f020a813ad4f116d1&cells=6ed5d68704ab423d66aa4d705c735adadd8c2b48382c57b4e4280c1d880c42ce",
