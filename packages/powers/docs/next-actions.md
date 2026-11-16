@@ -1,4 +1,4 @@
-﻿---
+---
 type: Implementation Plan
 title: 'Vida Powers вЂ” next actions within packages/powers'
 description: 'The single owner of delivery status, order and gates: the A-G sequence, the E5a/E5b host target status, the remaining forward stages, deferred product questions and the separately accepted Step H content extension.'
