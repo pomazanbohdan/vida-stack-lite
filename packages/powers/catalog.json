@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8065,
+  "revision": 8066,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-17T10:20:32.675Z",
+  "updated_at": "2026-11-17T16:05:03.742Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -14335,9 +14335,24 @@
       "sha256": "37f3da0262a11c0048adb1e688dd6d43017a474c5310a0cc5aaa5b62aa120d67"
     },
     {
+      "resource_id": "uupm-style-3d-product-preview",
+      "path": "resources/uupm-style-3d-product-preview.json",
+      "sha256": "59182a2d05536db5857731296cef0dde62dbcfb94d5a150a20bf6d430b31fe89"
+    },
+    {
       "resource_id": "uupm-style-accessible-and-ethical",
       "path": "resources/uupm-style-accessible-and-ethical.json",
       "sha256": "69c53b7bacf858cd4ad93b1c20e36861692d3cd93c7a35ac92b1cd34b5968001"
+    },
+    {
+      "resource_id": "uupm-style-ai-native-ui",
+      "path": "resources/uupm-style-ai-native-ui.json",
+      "sha256": "0864d12ff786c0ea797ed4652270b84afa11887eed9f4492fdd324b04f2361ed"
+    },
+    {
+      "resource_id": "uupm-style-anti-polish-raw-aesthetic",
+      "path": "resources/uupm-style-anti-polish-raw-aesthetic.json",
+      "sha256": "0dcac77ca7d7f99b80517271886580f2e04144fa87dae232e3ef811d9fc480d1"
     },
     {
       "resource_id": "uupm-style-aurora-ui",
@@ -14345,9 +14360,34 @@
       "sha256": "a095f0d0be9b827221cfa76ea899d86ac695e23651c0da7ddc2f11f77149fd6e"
     },
     {
+      "resource_id": "uupm-style-bauhaus",
+      "path": "resources/uupm-style-bauhaus.json",
+      "sha256": "0c637de1ea6bf7b70e147f48dbb54ecb7b72e97f7a98a218fdf6af0c919e092b"
+    },
+    {
+      "resource_id": "uupm-style-bento-box-grid",
+      "path": "resources/uupm-style-bento-box-grid.json",
+      "sha256": "d90e04760d4790f77b6c968c8877ba3c0a2e62d9a00f1a0484d854d420354ec4"
+    },
+    {
+      "resource_id": "uupm-style-bento-grids",
+      "path": "resources/uupm-style-bento-grids.json",
+      "sha256": "4bb0189bda82f50d8d8d5e7cda98e72714dcd5a274f9604ae666d29bd0da7fef"
+    },
+    {
+      "resource_id": "uupm-style-biomimetic-organic-2-0",
+      "path": "resources/uupm-style-biomimetic-organic-2-0.json",
+      "sha256": "51bba7f0558b8aed39d9d96153535c41a361694b4e859928d55927c3d3e73fe9"
+    },
+    {
       "resource_id": "uupm-style-brutalism",
       "path": "resources/uupm-style-brutalism.json",
       "sha256": "c7b9b107e678eb5ff01c5ed7a3c5bd9679a88263bb559e202fa40108d225ad43"
+    },
+    {
+      "resource_id": "uupm-style-chromatic-aberration-rgb-split",
+      "path": "resources/uupm-style-chromatic-aberration-rgb-split.json",
+      "sha256": "c353f1819ae5a8891a31adf96423eb8288dfaa5800757b08b37d53f03f9d00f4"
     },
     {
       "resource_id": "uupm-style-claymorphism",
@@ -14355,9 +14395,19 @@
       "sha256": "81ee55f15c6d60117aef9899b27d19792309dba19433088d5ee03641ea4b112d"
     },
     {
+      "resource_id": "uupm-style-comparative-analysis-dashboard",
+      "path": "resources/uupm-style-comparative-analysis-dashboard.json",
+      "sha256": "9943d10d68466502133fba104d881665b05f3c4117d8e778b97d809e74e009c9"
+    },
+    {
       "resource_id": "uupm-style-conversion-optimized",
       "path": "resources/uupm-style-conversion-optimized.json",
       "sha256": "ac7d955377ef46a17eedb1aada3d2900482b329ea91623cf6e9919ae31f66b2a"
+    },
+    {
+      "resource_id": "uupm-style-cyberpunk-ui",
+      "path": "resources/uupm-style-cyberpunk-ui.json",
+      "sha256": "22c6f99db4be84545d1ba3be9a4c129b69b16530fb9e31c6ffa5d54a09ef99ad"
     },
     {
       "resource_id": "uupm-style-dark-mode-oled",
@@ -14365,9 +14415,49 @@
       "sha256": "71c0ac20168e14d531a5e5ff672fa25aa957b841c54da70e642a692329c2d9d3"
     },
     {
+      "resource_id": "uupm-style-data-dense-dashboard",
+      "path": "resources/uupm-style-data-dense-dashboard.json",
+      "sha256": "188175c1c1570262dc0d15a61fa2a9a80b85dc54397bdbf7ebb3496c40d307e4"
+    },
+    {
+      "resource_id": "uupm-style-dimensional-layering",
+      "path": "resources/uupm-style-dimensional-layering.json",
+      "sha256": "12d8ff37c43a8da6f4b0f3f7c6c1f4d1ffc80749a342f2e232c15211645206f5"
+    },
+    {
+      "resource_id": "uupm-style-drill-down-analytics",
+      "path": "resources/uupm-style-drill-down-analytics.json",
+      "sha256": "e0a2fa19ee4d32e4679b4d2fd206fdcd8847275d675cce5eff1b7bbaf27ad008"
+    },
+    {
+      "resource_id": "uupm-style-e-ink-paper",
+      "path": "resources/uupm-style-e-ink-paper.json",
+      "sha256": "39c5dbec31f0dfee1886f16b2af59538bc6da0391c035ea1d40a4e9688c431ff"
+    },
+    {
+      "resource_id": "uupm-style-editorial-grid-magazine",
+      "path": "resources/uupm-style-editorial-grid-magazine.json",
+      "sha256": "97c4b01ed952a9f32602e8d6f4a18b490081b08cf49e91d0ebdd4987ebce5883"
+    },
+    {
+      "resource_id": "uupm-style-exaggerated-minimalism",
+      "path": "resources/uupm-style-exaggerated-minimalism.json",
+      "sha256": "5c3ca0cdce49ac86fed1a5055fe540a4d534726d31e7ef45415012336e3a5216"
+    },
+    {
+      "resource_id": "uupm-style-executive-dashboard",
+      "path": "resources/uupm-style-executive-dashboard.json",
+      "sha256": "14a71beddff59b224a61ee3b5913a9e9aeab9eaabb69da5bff008abd6ff29161"
+    },
+    {
       "resource_id": "uupm-style-feature-rich-showcase",
       "path": "resources/uupm-style-feature-rich-showcase.json",
       "sha256": "6ff60caf28e890137661cf8026d4254efc6001f4fbc21c12bbefc0c25c919341"
+    },
+    {
+      "resource_id": "uupm-style-financial-dashboard",
+      "path": "resources/uupm-style-financial-dashboard.json",
+      "sha256": "8cd0fdc1860676d386a39a67670672d4dc11932c5b91de4fc5b8ad3fda96b842"
     },
     {
       "resource_id": "uupm-style-flat-design",
@@ -14375,9 +14465,29 @@
       "sha256": "8abba4fd8303736d68343bc9c1b7adbee787e3c9b838c7d80905127266479a32"
     },
     {
+      "resource_id": "uupm-style-flat-design-mobile-touch-first",
+      "path": "resources/uupm-style-flat-design-mobile-touch-first.json",
+      "sha256": "d13727a3e701464748970249a93dce7c60c61e6c5e8fe59b5c0637e6c8be0b6b"
+    },
+    {
+      "resource_id": "uupm-style-gen-z-chaos-maximalism",
+      "path": "resources/uupm-style-gen-z-chaos-maximalism.json",
+      "sha256": "77ed81ea389064d9c017d35421dbe84cc534972c2b6a82011e34ed6217145ac2"
+    },
+    {
       "resource_id": "uupm-style-glassmorphism",
       "path": "resources/uupm-style-glassmorphism.json",
       "sha256": "847393e9241141d8b9db561ceb27bca95556d948bbcfdb9c399b3b851f59a6b1"
+    },
+    {
+      "resource_id": "uupm-style-gradient-mesh-aurora-evolved",
+      "path": "resources/uupm-style-gradient-mesh-aurora-evolved.json",
+      "sha256": "a422ff35e5d0a0cdfdf4057190f9887b8bd34d61184b30b542ec738b4cb18d52"
+    },
+    {
+      "resource_id": "uupm-style-heat-map-and-heatmap-style",
+      "path": "resources/uupm-style-heat-map-and-heatmap-style.json",
+      "sha256": "823bcce1dd75857c119c629834b85a0020c9c02a9524a750e04c1fdc2b78d55e"
     },
     {
       "resource_id": "uupm-style-hero-centric-design",
@@ -14385,9 +14495,19 @@
       "sha256": "4e9b34e80a60b09da2d660d3f678149ec0c325ccbf551800647f762e12b55119"
     },
     {
+      "resource_id": "uupm-style-hud-sci-fi-fui",
+      "path": "resources/uupm-style-hud-sci-fi-fui.json",
+      "sha256": "a4f9569723f8d685d0612bb6b043ab04bdba5791fd296c1bd2b97a4d6dd41749"
+    },
+    {
       "resource_id": "uupm-style-inclusive-design",
       "path": "resources/uupm-style-inclusive-design.json",
       "sha256": "ec14c099760a679461037509419c1c4ad2f45bcb346c0eef9f64fba43ef1bd67"
+    },
+    {
+      "resource_id": "uupm-style-interactive-cursor-design",
+      "path": "resources/uupm-style-interactive-cursor-design.json",
+      "sha256": "6055ae84c390a747bfed4b4d956b3b342c953b1440c598b8c3f70e0277dcd080"
     },
     {
       "resource_id": "uupm-style-interactive-product-demo",
@@ -14395,9 +14515,29 @@
       "sha256": "e6ca08b8f40be63f7c0cac0cabf52a5430dec274e03e17dec4cd30c0e3bd65a3"
     },
     {
+      "resource_id": "uupm-style-kinetic-brutalism-mobile",
+      "path": "resources/uupm-style-kinetic-brutalism-mobile.json",
+      "sha256": "9aa8471406f0159c8ac63e05e4b71158f571e92f78a934075f9707ba94345ffb"
+    },
+    {
+      "resource_id": "uupm-style-kinetic-typography",
+      "path": "resources/uupm-style-kinetic-typography.json",
+      "sha256": "b6b3d48642f424821c111a7fd6617cbe86c7750ed38a8a0a98165cdb3ce1bff7"
+    },
+    {
       "resource_id": "uupm-style-liquid-glass",
       "path": "resources/uupm-style-liquid-glass.json",
       "sha256": "54aba746739d951ce6df64bdee39d38945dc45c6b8f8ba3a5ff630c02ce08504"
+    },
+    {
+      "resource_id": "uupm-style-material-you-md3-mobile",
+      "path": "resources/uupm-style-material-you-md3-mobile.json",
+      "sha256": "a50ec8d663a2b66b1d6c89b221d316384946aaf574cd3020ea29fa58d1b2a18f"
+    },
+    {
+      "resource_id": "uupm-style-memphis-design",
+      "path": "resources/uupm-style-memphis-design.json",
+      "sha256": "a296dfff482c2a96c8b277e111ee222f3a66c2c122acfca23944093df74cc2b5"
     },
     {
       "resource_id": "uupm-style-micro-interactions",
@@ -14415,9 +14555,29 @@
       "sha256": "be587e982d816a5239b72dade914b5b5acf14c79e8c01123c5a4e843d30cccdd"
     },
     {
+      "resource_id": "uupm-style-minimalist-monochrome",
+      "path": "resources/uupm-style-minimalist-monochrome.json",
+      "sha256": "7cb5364820974103acf7daee26204ea7a86339f837640f58093dddcd07eb6939"
+    },
+    {
+      "resource_id": "uupm-style-modern-dark-cinema-mobile",
+      "path": "resources/uupm-style-modern-dark-cinema-mobile.json",
+      "sha256": "47ce07487d04e632a14cfd8a3ce8ab94284c748c1f59bf55698dd8e50ea17fc3"
+    },
+    {
       "resource_id": "uupm-style-motion-driven",
       "path": "resources/uupm-style-motion-driven.json",
       "sha256": "bb0d9917128815ad105002ca1dd7e2e9a30884c3361838c12b9c27cfcb3fdab3"
+    },
+    {
+      "resource_id": "uupm-style-nature-distilled",
+      "path": "resources/uupm-style-nature-distilled.json",
+      "sha256": "30088ca89bc6648336ee3e161e336d81998a03f7906ce50f3fcd6246e0a54b96"
+    },
+    {
+      "resource_id": "uupm-style-neubrutalism",
+      "path": "resources/uupm-style-neubrutalism.json",
+      "sha256": "e6a00895206a398acad194ecba79c37bf2882535d250704db0bc1d6c057446fd"
     },
     {
       "resource_id": "uupm-style-neumorphism",
@@ -14425,9 +14585,44 @@
       "sha256": "95b550319e8702c18140dc148482fd54e91fd29870cd76c379fb8f7daff7f7b9"
     },
     {
+      "resource_id": "uupm-style-organic-biophilic",
+      "path": "resources/uupm-style-organic-biophilic.json",
+      "sha256": "ddf8ceadc10f7b9a1db6bcb06cef462fd5768ef1af7b77cfc25217b882f4fdad"
+    },
+    {
+      "resource_id": "uupm-style-parallax-storytelling",
+      "path": "resources/uupm-style-parallax-storytelling.json",
+      "sha256": "1fa2b2422323234e48630d023a08fa3ece7c49b097af36fe4ecd0d6da5f01e29"
+    },
+    {
+      "resource_id": "uupm-style-pixel-art",
+      "path": "resources/uupm-style-pixel-art.json",
+      "sha256": "c8f1cd5feb4c7628f23e638061f29909ef305d074451d90a838e275297192eab"
+    },
+    {
+      "resource_id": "uupm-style-predictive-analytics",
+      "path": "resources/uupm-style-predictive-analytics.json",
+      "sha256": "a2cb4b0ea689aa99aad75ad76188ef9612073a0477d0e2e6a5899dadf532ce79"
+    },
+    {
+      "resource_id": "uupm-style-real-time-monitoring",
+      "path": "resources/uupm-style-real-time-monitoring.json",
+      "sha256": "435f78beb7a19706d3e802f1ffadcb5b3f691995982cd17db3f91a78029669d8"
+    },
+    {
       "resource_id": "uupm-style-retro-futurism",
       "path": "resources/uupm-style-retro-futurism.json",
       "sha256": "cdc1cae667b59dd5fdaa7a9aa2de0b09695eff5b867f4930423390f73d4486a7"
+    },
+    {
+      "resource_id": "uupm-style-saas-mobile-high-tech-boutique",
+      "path": "resources/uupm-style-saas-mobile-high-tech-boutique.json",
+      "sha256": "19c0e999fd0773d098c7bb402694ea88fca58ef9cfb75e58ad023cb095d7bf8a"
+    },
+    {
+      "resource_id": "uupm-style-sales-intelligence-dashboard",
+      "path": "resources/uupm-style-sales-intelligence-dashboard.json",
+      "sha256": "eae9c8033647e739a8e2b7fd69c450cc99df2d7da3e155369c86153b2f989156"
     },
     {
       "resource_id": "uupm-style-skeuomorphism",
@@ -14445,9 +14640,64 @@
       "sha256": "76e386e60f9db8da7b9b80356438b5962bdbf4cd23166f1639694c04afd659dc"
     },
     {
+      "resource_id": "uupm-style-spatial-ui-visionos",
+      "path": "resources/uupm-style-spatial-ui-visionos.json",
+      "sha256": "e3eecd2ccb351fba3efa8a7a0a9cb2e3ad1a538b67daf0d5d653a3cb0937a728"
+    },
+    {
+      "resource_id": "uupm-style-storytelling-driven",
+      "path": "resources/uupm-style-storytelling-driven.json",
+      "sha256": "d9ac88fd1449399386c9d97afb0216dffa450b87360378d2165fb2215af4e652"
+    },
+    {
+      "resource_id": "uupm-style-swiss-modernism-2-0",
+      "path": "resources/uupm-style-swiss-modernism-2-0.json",
+      "sha256": "50b008cc9cd0c2be32d11a7c8eb13125fa0f0bf1f8aced7bda2a24e5f68b5b6f"
+    },
+    {
+      "resource_id": "uupm-style-tactile-digital-deformable-ui",
+      "path": "resources/uupm-style-tactile-digital-deformable-ui.json",
+      "sha256": "72a4294373327781a41094dec99b1db6c47bda5cb509d98fd220c601b93c4418"
+    },
+    {
+      "resource_id": "uupm-style-terminal-cli-mobile",
+      "path": "resources/uupm-style-terminal-cli-mobile.json",
+      "sha256": "e9e19ab4b6514b52f0d4c893fef283cc3a0ec3627a35cb505db8484ed62cbed0"
+    },
+    {
+      "resource_id": "uupm-style-trust-and-authority",
+      "path": "resources/uupm-style-trust-and-authority.json",
+      "sha256": "8e96bbbb6589b48ad439d69fb07c7a7fe45f31dd16d9eae0945545bfcd1eb01f"
+    },
+    {
+      "resource_id": "uupm-style-user-behavior-analytics",
+      "path": "resources/uupm-style-user-behavior-analytics.json",
+      "sha256": "78cc70d4d1546f794c66e6e2c412b2735d2c2b82ed3379fa74d001858cf1903b"
+    },
+    {
+      "resource_id": "uupm-style-vaporwave",
+      "path": "resources/uupm-style-vaporwave.json",
+      "sha256": "2c1f03b36bf6ad57e86a4e1852beadcbe08e271b268f8b86f08506dfc2588557"
+    },
+    {
       "resource_id": "uupm-style-vibrant-and-block-based",
       "path": "resources/uupm-style-vibrant-and-block-based.json",
       "sha256": "6cb4032d3f8e6c404137187f9a28a293dcd2e3e8a53aeaaf3550c9d5c3269e69"
+    },
+    {
+      "resource_id": "uupm-style-vintage-analog-retro-film",
+      "path": "resources/uupm-style-vintage-analog-retro-film.json",
+      "sha256": "71ba4e09f67ccf6b2a0e8ceefc085f04271a46a9655a1247fbf370a3e42227c1"
+    },
+    {
+      "resource_id": "uupm-style-voice-first-multimodal",
+      "path": "resources/uupm-style-voice-first-multimodal.json",
+      "sha256": "e88a7b7e615f91dad6f59da6b19c92c31bb0c65814d16198dec362efe5e698fd"
+    },
+    {
+      "resource_id": "uupm-style-y2k-aesthetic",
+      "path": "resources/uupm-style-y2k-aesthetic.json",
+      "sha256": "b15baac88685c55777b1b6d8c4307c5c8be3e2ac3ad78ab52a429a11f8ac978a"
     },
     {
       "resource_id": "uupm-style-zero-interface",

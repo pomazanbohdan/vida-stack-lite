@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5784,
-  "updated_at": "2026-11-17T10:20:32.675Z",
+  "revision": 5785,
+  "updated_at": "2026-11-17T16:05:03.742Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -235645,11 +235645,16 @@
                   "row": 26
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-trust-and-authority",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=03df7409964d2f963cf7ab7937923e14f5ec26172af419a9cb41931077bfc2b9",
@@ -235695,11 +235700,16 @@
                   "row": 27
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-storytelling-driven",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=84a0f06dc30066f9de8a3fe8e98c62f3411d0de596e49a3d54b2d1673dc48aeb",
@@ -235745,11 +235755,16 @@
                   "row": 28
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-data-dense-dashboard",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=78b52692ed4f11c503db6fa62b97b4830ad91bf5015c773e2dffde19cf0ed761",
@@ -235795,11 +235810,16 @@
                   "row": 29
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-heat-map-and-heatmap-style",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=817e4c467ea638fb8d459902a66f6a7d44c5317b4c53cfcefd237fe1d9c1e81d",
@@ -235845,11 +235865,16 @@
                   "row": 30
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-executive-dashboard",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=f70210fa5d5368c958be40036dfb3f7f7b15dbe61084470782853d6684c72cdf",
@@ -235895,11 +235920,16 @@
                   "row": 31
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-real-time-monitoring",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=47edc440825c0285c0d0e647178c553f90b738f40531093eaad10bb141fc8937",
@@ -235945,11 +235975,16 @@
                   "row": 32
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-drill-down-analytics",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=76d92af0d11c7b0009e0f9b07b3083441f91fe605b4861dcb507c81b9b2fe4f4",
@@ -235995,11 +236030,16 @@
                   "row": 33
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-comparative-analysis-dashboard",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=791f53c4f971c5336844c2552fbca8f604bdf6b64192e00b66326dc2f9aa671b",
@@ -236045,11 +236085,16 @@
                   "row": 34
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-predictive-analytics",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=5f8c449ec40ef9ca0e347aff01714d01f9ca22c4ea6f0cd3b15d6f1a726554ac",
@@ -236095,11 +236140,16 @@
                   "row": 35
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-user-behavior-analytics",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=04ecfc4a20fad9b7468bf26424f1d7a29e0340235838b7dc53eb2b3583b29790",
@@ -236145,11 +236195,16 @@
                   "row": 36
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-financial-dashboard",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=9a37a3236aa341128c419f7974debbcb46391f13d28f12720bfb1922c7b90c47",
@@ -236195,11 +236250,16 @@
                   "row": 37
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-sales-intelligence-dashboard",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=81ee2ccc9be0b5adb557b10e9fd288c57c58bb62cbf5b1676a2f2a926ca119fe",
@@ -236245,11 +236305,16 @@
                   "row": 38
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-neubrutalism",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=97cae4eb4c021189b94ff97de3e41500b3309366731d8b760d8a0cc827f0b997",
@@ -236295,11 +236360,16 @@
                   "row": 39
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-bento-box-grid",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=93f978a4852fb31735bce2caead9f98362a114b652ab9af211936301979b4df3",
@@ -236345,11 +236415,16 @@
                   "row": 40
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-y2k-aesthetic",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=eec94c51d611361c49f5acada8e39743d3660611c49b20a970cf29dae634d0f3",
@@ -236395,11 +236470,16 @@
                   "row": 41
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-cyberpunk-ui",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=630e042a7bb02490cb029dcfafa7821a7a217fb356ccd4d5ba5c68c06c929306",
@@ -236445,11 +236525,16 @@
                   "row": 42
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-organic-biophilic",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=8699c64da55da23bedf30103dacddc8e896322810a3aeae105e677f9c5cd79df",
@@ -236495,11 +236580,16 @@
                   "row": 43
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-ai-native-ui",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=d37b01f23cd985af8ff3b1e4b13e336496a5aa9f8c64ad5465a78c4307d5df08",
@@ -236545,11 +236635,16 @@
                   "row": 44
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-memphis-design",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=06e2ecb9885540b4f81432b34eb4d3466f34ed3328a85d6b43fe9f520737e674",
@@ -236595,11 +236690,16 @@
                   "row": 45
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-vaporwave",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=2f4dc0b86ddf6584a26865aa62ca86df39e979b2a4998018eed74adaae1a817d",
@@ -236645,11 +236745,16 @@
                   "row": 46
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-dimensional-layering",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=9b08b67b9ed4cd61569fb8f7f0f2785c19f56ef226ed31b8727da9e4347e153a",
@@ -236695,11 +236800,16 @@
                   "row": 47
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-exaggerated-minimalism",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=864427fe8005c29181b611bae10b8925063ff9254035368735e047d44595c2a5",
@@ -236745,11 +236855,16 @@
                   "row": 48
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-kinetic-typography",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=664377432ff72e74c854efac4229f706947a643a7db84c7c01aa4e9b22d422ce",
@@ -236795,11 +236910,16 @@
                   "row": 49
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-parallax-storytelling",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=32338d162f5777d2a7ebc61dd61c1d68dacd0a17d5137a1d95428c8d2f9cd682",
@@ -236845,11 +236965,16 @@
                   "row": 50
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-swiss-modernism-2-0",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=c1757354939862cdba749580fee1b9b635c232e50de91187073a2b39ea1c3ddc",
@@ -236895,11 +237020,16 @@
                   "row": 51
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-hud-sci-fi-fui",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=c43c35d7789461bb6fbc00ec3838a5c9ce8facaa4fb4606448fca0a5421b081e",
@@ -236945,11 +237075,16 @@
                   "row": 52
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-pixel-art",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=a43a79987ac373e7d595f12a4a20120f98e5dd938c68022145ce3a99e3257bc2",
@@ -236995,11 +237130,16 @@
                   "row": 53
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-bento-grids",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=ae5800543a35a491429c170c06a14240bff7011a708a0f2c2494d8542dc31d04",
@@ -237045,11 +237185,16 @@
                   "row": 54
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-spatial-ui-visionos",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=a006b2284eb6529d83cdcf16ef0ad8417b1229a982018ad3fd24648b0a77f002",
@@ -237095,11 +237240,16 @@
                   "row": 55
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-e-ink-paper",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=3476d5075a9b88d739f4e0f277f9a8767ed1df68aff16dede99cbdbcc9082495",
@@ -237145,11 +237295,16 @@
                   "row": 56
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-gen-z-chaos-maximalism",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=154181f55d76d19b74ee37ecb5cf6897c50d5be1215890a6ea0725be45eb6490",
@@ -237195,11 +237350,16 @@
                   "row": 57
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-biomimetic-organic-2-0",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=d0170fe3221adcb3da2d506cb661a6983770eb37429389fcf4913f332c090585",
@@ -237245,11 +237405,16 @@
                   "row": 58
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-anti-polish-raw-aesthetic",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=049ad4fbd501e2dab1c4270809a6ed40525fc1038206c8e48fca146f9cf1bac4",
@@ -237295,11 +237460,16 @@
                   "row": 59
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-tactile-digital-deformable-ui",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=b40cb19738b5749010f9938a3e040f7b1d8e8dd991c5117bcfa0a5a1f5694735",
@@ -237345,11 +237515,16 @@
                   "row": 60
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-nature-distilled",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=f29bab80eef00be66e5b07100309c84fc56ec6645bba69a2ce99741b1d6106d3",
@@ -237395,11 +237570,16 @@
                   "row": 61
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-interactive-cursor-design",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=af324480b8fb3dd709f31a4b35b1888eb26f8513da4738c75399f697b28973b8",
@@ -237445,11 +237625,16 @@
                   "row": 62
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-voice-first-multimodal",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=4db812bf2fb43c6638200a6e2f6eb0b8ebdc1eedfbebb51b279065def0526ea4",
@@ -237495,11 +237680,16 @@
                   "row": 63
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-3d-product-preview",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=ab5344b49b2609b0d6b63252868611fc386af902ea7f9adda3a034311e99d702",
@@ -237545,11 +237735,16 @@
                   "row": 64
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-gradient-mesh-aurora-evolved",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=fa7aff2ed3be82ce811f20cb1cce0a9dccd1524a647c43c6891332baa1aa410e",
@@ -237595,11 +237790,16 @@
                   "row": 65
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-editorial-grid-magazine",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=90681bb70aaf780fd94cd8642bdd959884bb7c8fd80637835438a55200cdf5c3",
@@ -237645,11 +237845,16 @@
                   "row": 66
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-chromatic-aberration-rgb-split",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=10f99d2f3db434028ce1a4406ae29cb109c5a7de07b3ba4f790855eff094e767",
@@ -237695,11 +237900,16 @@
                   "row": 67
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-vintage-analog-retro-film",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=1327537558ad69a1579ede5b63d418144b8df27810688f9cdcbcf81af73fcfad",
@@ -237745,11 +237955,16 @@
                   "row": 68
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-bauhaus",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=2669bf4defc941e46bc514407685af094f3006108e0dcb38b7963b340177f9f3",
@@ -237795,11 +238010,16 @@
                   "row": 69
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-minimalist-monochrome",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=43eca911e1b9e90b2e97dd91dba9307a25ed1173b57a8c81575d0c48626edbcf",
@@ -237845,11 +238065,16 @@
                   "row": 70
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-modern-dark-cinema-mobile",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=72a9592f207c293ef5755cdcd8b871533b9df1bbabc3e103b1ca5bd2278b9777",
@@ -237895,11 +238120,16 @@
                   "row": 71
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-saas-mobile-high-tech-boutique",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=ee3f62d7052e9379da54a24e787a1ff7040c40ab2d3e7461d2834f1ee1a2fa2f",
@@ -237945,11 +238175,16 @@
                   "row": 72
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-terminal-cli-mobile",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=8b1a3c11cde8c466ce9c5fca0e8893868b8cb7e1696bf9b0fd76a32d0d0c9233",
@@ -237995,11 +238230,16 @@
                   "row": 73
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-kinetic-brutalism-mobile",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=0dee32ead873c86351eb3cf99add5801a6ad367541ea5ae9cc83961d012fe633",
@@ -238045,11 +238285,16 @@
                   "row": 74
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-flat-design-mobile-touch-first",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=ce1488492417e2c7559ab71fa1b8828d2143a875650a2340a84fd3a99bcf32c4",
@@ -238095,11 +238340,16 @@
                   "row": 75
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 style pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-style-material-you-md3-mobile",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 style record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=styles.csv&headers=89f2286212e2555e670ea1217234b6c3bda29c27a76ec7fb6e9410072a7a9f65&cells=24b22845b070f252546aa01566d6f4f2720f315ee52b3c79a01cf70d7f8be769",
