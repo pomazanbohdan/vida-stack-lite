@@ -2,6 +2,32 @@
 
 ## 2026-11-17
 
+* **H3-K `style` wave-1 pilot — implemented, reviewed and
+  owner-accepted:** styles.csv rows 26–75 materialized as 50
+  `uupm-style-*` `VPReferenceResource/v1` records via the
+  `--remainder --limit 50` bounded-wave mode (catalog rev 8066
+  `70a451e5…`, map rev 5785 `840f3b26…`; **311 typed resources**).
+  Payload is 28 verbatim string fields mapped positionally from
+  styles.csv columns 1–28 (column `No` excluded); single
+  styles.csv provenance locator per record. styles.csv now stands
+  at 75 admitted / 13 deferred (rows 76–88 — wave-2). No code
+  changes: the bounded-wave mechanism was reused unchanged.
+  Independent hy4-flash-free validation READY 0 findings
+  (owner-authorized substitute for the Luna seat); D18 delegated
+  panel: 30 blind reviews (10 batches × 3 protocols), aggregation
+  **50/50 accept — 0 amend / 0 reject / 0 manual** (no
+  adjudication needed). Five reviewers hit output token limits and
+  were retried script-driven via `h3k-d18/check-batch.ts`. Bound
+  receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3K-RECEIPT.md`
+  with evidence `h3k-d18/`. Full `bun test` reported 1,113 pass /
+  5 skip / 2 fail / 1 error — the same deterministic
+  `build-manifests.test.ts` default-root `--check` timeout debt
+  as H3-J (test-infrastructure, not a product defect). Eight stray
+  zero-byte files from earlier shell quoting accidents at the
+  repository root were removed during closeout. Remaining H3
+  deferred rows are 180 across `styles.csv` (13) and
+  `colors.csv` (167), each behind a separate owner gate.
 * **H3-J `font-pairing` wave-1 pilot — implemented, reviewed and
   owner-accepted:** typography.csv rows 26–74 materialized as 49
   `uupm-font-pairing-*` `VPReferenceResource/v1` records via the

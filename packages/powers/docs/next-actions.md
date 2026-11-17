@@ -502,7 +502,41 @@ remaining Powers-owned work is:
     `landing.csv`, `products.csv`, `ui-reasoning.csv`,
     `google-fonts.csv`); `poteto-plugins` remains unpinned in
     donors.yaml.
-14. **E5a/E5b host qualification.** Production manifest inputs now
+14. **H3-K — `style` wave-1 pilot (ACCEPTED 2026-11-17).**
+    styles.csv rows 26–75 admitted as 50 `uupm-style-*`
+    `VPReferenceResource/v1` records via the `--remainder --limit 50`
+    bounded-wave mode — no code changes (catalog rev 8066
+    `70a451e5…`, map rev 5785 `840f3b26…`; 311 typed
+    resources live). Payload is 28 verbatim string fields mapped
+    positionally from styles.csv columns 1–28 (column `No`
+    excluded); single styles.csv provenance locator per record.
+    styles.csv now stands at 75 admitted / 13 deferred (rows
+    76–88 — wave-2). Independent hy4-flash-free validation READY
+    0 findings (owner-authorized substitute for the Luna seat);
+    D18 delegated panel: 30 blind reviews (10 batches × 3
+    protocols), aggregation **50/50 accept — 0 amend / 0 reject /
+    0 manual** (no adjudication needed). Five reviewers hit output
+    token limits and were retried script-driven via
+    `h3k-d18/check-batch.ts`; the counted 30 reviews are the
+    successful attempts. Bound receipt
+    `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3K-RECEIPT.md`
+    with evidence `h3k-d18/`; gates — typecheck 117 files,
+    format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
+    exit 0, `build-manifests` regenerated + `--check` ok; full
+    `bun test` 1,113 pass / 5 skip / 2 fail / 1 error — the same
+    deterministic `build-manifests.test.ts` default-root
+    `--check` timeout debt as H3-J (test-infrastructure, not a
+    product defect); the pinned Knip external conflict remains
+    open and is not claimed PASS. AC-52/AC-54/AC-55 keep
+    `verified (component)` scope.
+    **Remaining H3 scope (each needs a separate owner-approved
+    admission gate):** the deferred rows of `styles.csv` (13)
+    and `colors.csv` (167) — 180 rows total — and the
+    remaining uupm data families (`charts.csv`, `motion.csv`,
+    `landing.csv`, `products.csv`, `ui-reasoning.csv`,
+    `google-fonts.csv`); `poteto-plugins` remains unpinned in
+    donors.yaml.
+15. **E5a/E5b host qualification.** Production manifest inputs now
    exist (`config/plugin-manifest-inputs.json`, owner-approved
    D-S8-1 target set: portable, codex, claude, cursor,
    muse-package, antigravity — devin/kimi/root-marketplace/muse/
@@ -517,7 +551,7 @@ remaining Powers-owned work is:
    acceptance remain open. The `.54` fixtures are not production
    outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline
    only.
-15. **D19 algorithm delegation implementation.**
+16. **D19 algorithm delegation implementation.**
    offer/preference/offer-record mechanism is implemented and
    independently validated (Luna READY, 0 findings): decision-type
    registry with canonical exclusion and allowed floors, exact
@@ -527,10 +561,10 @@ remaining Powers-owned work is:
    algorithm execution/notification, per-decision SHA binding. The
    mechanism was committed at `7972b8f7` — commit decisions are
    Root-owned.
-16. **D16 v1.2 re-binding.**
+17. **D16 v1.2 re-binding.**
    not a prerequisite for the migrated corpus or the compact CLI. The frozen
    40-ID trial stays v1.1-bound.
-17. **Stage 8 — Standalone mode, portability and installation.**
+18. **Stage 8 — Standalone mode, portability and installation.**
    deterministic catalog library, and a minimal scenario on at least two
    compatible hosts. **First dated run evidence (2026-11-16,
    `stage8-20261116`, HEAD `4db70aa6`, Bun 1.4.4, Node v26.13.1 smoke
@@ -544,13 +578,13 @@ remaining Powers-owned work is:
    install-target/CLI evidence on one Windows host — not live agent
    sessions, not Runtime acceptance, and marketplace-channel rows
    remain blocked on owner decisions D-S8-1..3.
-18. **External Knip conflict.**
+19. **External Knip conflict.**
    on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
    The H2-D receipt (owner-accepted 2026-11-12) re-confirms the same
    `issues: []` exit 1 external conflict — not PASS; item stays open.
-19. **Separate Runtime acceptance.**
+20. **Separate Runtime acceptance.**
    verified; they do not establish installation or Runtime acceptance.
-20. **Candidate next scopes (owner approval required; not started).**
+21. **Candidate next scopes (owner approval required; not started).**
     module packaging would extend D59 carriers to the 468 CSV atoms; the
     remaining H2-A2 stack rows are already tracked under item 1. Neither is
     authorized by the current D59 acceptance.
