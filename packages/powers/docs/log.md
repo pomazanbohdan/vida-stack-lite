@@ -2,6 +2,25 @@
 
 ## 2026-11-17
 
+* **H3-I `icon-list` wave-4 pilot — implemented, reviewed and
+  owner-accepted:** icons.csv rows 76–105 materialized as 30
+  `uupm-icon-*` `VPReferenceResource/v1` records via the
+  `--remainder --limit 30` bounded-wave mode (catalog rev 8064
+  `c65f3225…`, map rev 5783 `84d42324…`; **212 typed resources**).
+  **icons.csv is now fully dispositioned: 105/105 admitted,
+  0 deferred.** No code changes: the H3-G mechanism was reused
+  unchanged. Independent Luna validation READY 0 findings; D18
+  delegated panel: 18 blind reviews (6 batches × 3 protocols),
+  aggregation **30/30 accept — 0 amend / 0 reject / 0 manual**
+  (four reviewers hit output token limits and were retried once
+  each with an early-write instruction). Bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3I-RECEIPT.md`
+  with evidence `h3i-d18/`. Full `bun test` reported 1,114 pass /
+  5 skip / 1 fail where the single failure is the known
+  `build-manifests` concurrent-run flake (passes standalone).
+  Remaining H3 deferred rows are 279 across `typography.csv`
+  (49), `colors.csv` (167), `styles.csv` (63), each behind a
+  separate owner gate.
 * **H3-H `icon-list` wave-3 pilot — implemented, reviewed and
   owner-accepted:** icons.csv rows 51–75 materialized as 25
   `uupm-icon-*` `VPReferenceResource/v1` records via the

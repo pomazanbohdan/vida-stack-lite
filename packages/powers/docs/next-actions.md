@@ -212,7 +212,7 @@ remaining Powers-owned work is:
    batches)/`check-okf` all exit 0, Node runtime search/get exit 0
    under Node v26.13.1 with the H2-C receipt, and an independent
    disposition audit clean (1,449 bindings, 0 missing/mismatched
-   receipts). The pinned Knip external conflict remains open (item 16)
+   receipts). The pinned Knip external conflict remains open (item 17)
    and is not claimed PASS.
 4. **H3-A — typed reference resources pilot (ACCEPTED 2026-11-13).**
    The 25-record `font-pairing` pilot is complete and owner-accepted:
@@ -231,7 +231,7 @@ remaining Powers-owned work is:
    pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 115 files,
    format/`check-corpus`/`check-vector`/`check-okf` exit 0, Node
    v26.13.1 resource smoke; the pinned Knip external conflict remains
-   open (item 16) and is not claimed PASS. AC-52/AC-54/AC-55 are
+   open (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 are
    `verified (component)`; AC-50/AC-51/AC-53 and the other H3-family
    criteria stay open.
 5. **H3-B — `palette` typed reference resources pilot (ACCEPTED
@@ -249,7 +249,7 @@ remaining Powers-owned work is:
    format/`check-corpus` (0 issues)/`check-vector`/`check-okf` exit
    0, Node v26.13.1 resource smoke incl. type-mismatch/unknown
    negatives; the pinned Knip external conflict remains open
-   (item 16) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope. **Remaining H3 scope (each needs a
    separate owner-approved admission gate):** the other three D15
    resource types (`style`, `icon-list`, `standards-checklist`), the
@@ -280,7 +280,7 @@ remaining Powers-owned work is:
    pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 117
    files, format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
    exit 0; the pinned Knip external conflict remains open
-   (item 16) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope. **Remaining H3 scope (each needs a
    separate owner-approved admission gate):** the other two D15
    resource types (`icon-list`, `standards-checklist`), the
@@ -308,7 +308,7 @@ remaining Powers-owned work is:
    with evidence `h3d-d18/`; gates — `bun test` 1,115 pass / 5
    skip / 0 fail, typecheck 117 files, format/`check-corpus` (0
    issues)/`check-vector`/`check-okf` exit 0; the pinned Knip
-   external conflict remains open (item 16) and is not claimed
+   external conflict remains open (item 17) and is not claimed
    PASS. AC-52/AC-54/AC-55 keep `verified (component)` scope.
    **Remaining H3 scope (each needs a separate owner-approved
    admission gate):** the deferred rows of the five piloted CSVs
@@ -337,7 +337,7 @@ remaining Powers-owned work is:
    with evidence `h3e-d18/`; gates — `bun test` 1,115 pass / 5
    skip / 0 fail, typecheck 117 files, format/`check-corpus` (0
    issues)/`check-vector`/`check-okf` exit 0; the pinned Knip
-   external conflict remains open (item 16) and is not claimed
+   external conflict remains open (item 17) and is not claimed
    PASS. AC-52/AC-54/AC-55 keep `verified (component)` scope.
    **All five D15 resource types are now piloted (182 typed
    resources live).** Remaining H3 scope (each needs a separate
@@ -367,7 +367,7 @@ remaining Powers-owned work is:
    format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
    exit 0, targeted `bun test` 66 pass / 0 fail after the
    D-S8-1-driven `plugin-payload.test.ts` target-list update;
-   the pinned Knip external conflict remains open (item 16) and
+   the pinned Knip external conflict remains open (item 17) and
    is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope.
    **Remaining H3 scope (each needs a separate owner-approved
@@ -394,7 +394,7 @@ remaining Powers-owned work is:
     format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
     exit 0, full `bun test` 1,115 pass / 5 skip / 0 fail,
     `build-manifests --check` ok; the pinned Knip external
-    conflict remains open (item 16) and is not claimed PASS.
+    conflict remains open (item 17) and is not claimed PASS.
     AC-52/AC-54/AC-55 keep `verified (component)` scope.
     **Remaining H3 scope (each needs a separate owner-approved
     admission gate):** icons.csv rows 76–105 (30 rows — final
@@ -420,7 +420,7 @@ remaining Powers-owned work is:
     format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
     exit 0, full `bun test` 1,115 pass / 5 skip / 0 fail,
     `build-manifests --check` ok; the pinned Knip external
-    conflict remains open (item 16) and is not claimed PASS.
+    conflict remains open (item 17) and is not claimed PASS.
     AC-52/AC-54/AC-55 keep `verified (component)` scope.
     **Remaining H3 scope (each needs a separate owner-approved
     admission gate):** icons.csv rows 76–105 (30 rows — final
@@ -430,7 +430,36 @@ remaining Powers-owned work is:
     `motion.csv`, `landing.csv`, `products.csv`,
     `ui-reasoning.csv`, `google-fonts.csv`);
     `poteto-plugins` remains unpinned in donors.yaml.
-12. **E5a/E5b host qualification.** Production manifest inputs now
+12. **H3-I — `icon-list` wave-4 pilot (ACCEPTED 2026-11-17).**
+    icons.csv rows 76–105 admitted as 30 `uupm-icon-*`
+    `VPReferenceResource/v1` records via the `--remainder
+    --limit 30` bounded-wave mode — no code changes, the H3-G
+    mechanism was reused (catalog rev 8064 `c65f3225…`, map rev
+    5783 `84d42324…`; 212 typed resources live). **icons.csv is
+    now fully dispositioned: 105/105 admitted, 0 deferred.**
+    Independent Luna validation READY 0 findings; D18 delegated
+    panel: 18 blind reviews (6 batches × 3 protocols),
+    aggregation **30/30 accept — 0 amend / 0 reject / 0 manual**
+    (four reviewers hit output token limits and were retried
+    once each with an early-write instruction; the counted 18
+    reviews are the successful attempts). Bound receipt
+    `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3I-RECEIPT.md`
+    with evidence `h3i-d18/`; gates — typecheck 117 files,
+    format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
+    exit 0, `build-manifests --check` ok; full `bun test`
+    1,114 pass / 5 skip / 1 fail where the single failure is
+    the known `build-manifests` concurrent-run flake (passes
+    standalone); the pinned Knip external conflict remains open
+    (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+    `verified (component)` scope.
+    **Remaining H3 scope (each needs a separate owner-approved
+    admission gate):** the deferred rows of `typography.csv`
+    (49), `colors.csv` (167) and `styles.csv` (63) — 279 rows
+    total — and the remaining uupm data families (`charts.csv`,
+    `motion.csv`, `landing.csv`, `products.csv`,
+    `ui-reasoning.csv`, `google-fonts.csv`);
+    `poteto-plugins` remains unpinned in donors.yaml.
+13. **E5a/E5b host qualification.** Production manifest inputs now
    exist (`config/plugin-manifest-inputs.json`, owner-approved
    D-S8-1 target set: portable, codex, claude, cursor,
    muse-package, antigravity — devin/kimi/root-marketplace/muse/
@@ -445,7 +474,7 @@ remaining Powers-owned work is:
    acceptance remain open. The `.54` fixtures are not production
    outputs; `.67` is `NOT_CLOSED`; `.70` is an evidence baseline
    only.
-13. **D19 algorithm delegation implementation.**
+14. **D19 algorithm delegation implementation.**
    offer/preference/offer-record mechanism is implemented and
    independently validated (Luna READY, 0 findings): decision-type
    registry with canonical exclusion and allowed floors, exact
@@ -455,10 +484,10 @@ remaining Powers-owned work is:
    algorithm execution/notification, per-decision SHA binding. The
    mechanism was committed at `7972b8f7` — commit decisions are
    Root-owned.
-14. **D16 v1.2 re-binding.**
+15. **D16 v1.2 re-binding.**
    not a prerequisite for the migrated corpus or the compact CLI. The frozen
    40-ID trial stays v1.1-bound.
-15. **Stage 8 — Standalone mode, portability and installation.**
+16. **Stage 8 — Standalone mode, portability and installation.**
    deterministic catalog library, and a minimal scenario on at least two
    compatible hosts. **First dated run evidence (2026-11-16,
    `stage8-20261116`, HEAD `4db70aa6`, Bun 1.4.4, Node v26.13.1 smoke
@@ -472,13 +501,13 @@ remaining Powers-owned work is:
    install-target/CLI evidence on one Windows host — not live agent
    sessions, not Runtime acceptance, and marketplace-channel rows
    remain blocked on owner decisions D-S8-1..3.
-16. **External Knip conflict.**
+17. **External Knip conflict.**
    on the `knip.config.ts` self-entry; the Agent/config owner must resolve it.
    The H2-D receipt (owner-accepted 2026-11-12) re-confirms the same
    `issues: []` exit 1 external conflict — not PASS; item stays open.
-17. **Separate Runtime acceptance.**
+18. **Separate Runtime acceptance.**
    verified; they do not establish installation or Runtime acceptance.
-18. **Candidate next scopes (owner approval required; not started).**
+19. **Candidate next scopes (owner approval required; not started).**
     module packaging would extend D59 carriers to the 468 CSV atoms; the
     remaining H2-A2 stack rows are already tracked under item 1. Neither is
     authorized by the current D59 acceptance.
