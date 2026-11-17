@@ -2,6 +2,34 @@
 
 ## 2026-11-17
 
+* **H3-J `font-pairing` wave-1 pilot — implemented, reviewed and
+  owner-accepted:** typography.csv rows 26–74 materialized as 49
+  `uupm-font-pairing-*` `VPReferenceResource/v1` records via the
+  `--remainder --limit 49` bounded-wave mode (catalog rev 8065
+  `06aaf219…`, map rev 5784 `16b6988e…`; **261 typed resources**).
+  Payload carries dual-source provenance: typography.csv row
+  locator plus one google-font-licenses.json family locator per
+  unique heading/body font (`font_licenses`, `license_source`).
+  **typography.csv is now fully dispositioned: 74/74 admitted,
+  0 deferred.** No code changes. Wave sizing follows the
+  2026-11-17 consilium (devin-a/b + Luna): 50-record waves ordered
+  typography → styles → colors, 7 waves total. Independent Luna
+  validation READY 0 findings; D18 delegated panel: 30 blind
+  reviews (10 batches × 3 protocols), aggregation raw 39 accept /
+  10 amend / 0 reject / 0 manual → **49/49 accept after orchestrator
+  adjudication** of the 10 `font_licenses` key-order amend verdicts
+  (canonicalJson sorts object keys recursively for every record;
+  member order is not semantic). Nine reviewers hit output token
+  limits and were retried (later retries script-driven via
+  `h3j-d18/check-batch.ts`). Bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3J-RECEIPT.md`
+  with evidence `h3j-d18/`. Full `bun test` reported 1,113 pass /
+  5 skip / 2 fail / 1 error where both failures are the
+  deterministic `build-manifests.test.ts` default-root `--check`
+  timeout (real check now ~39 s > test budget as the corpus grew —
+  test-infrastructure debt, not a product defect). Remaining H3
+  deferred rows are 230 across `colors.csv` (167) and
+  `styles.csv` (63), each behind a separate owner gate.
 * **H3-I `icon-list` wave-4 pilot — implemented, reviewed and
   owner-accepted:** icons.csv rows 76–105 materialized as 30
   `uupm-icon-*` `VPReferenceResource/v1` records via the
