@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5783,
-  "updated_at": "2026-11-17T07:53:22.144Z",
+  "revision": 5784,
+  "updated_at": "2026-11-17T10:20:32.675Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -239765,11 +239765,16 @@
                   "row": 26
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-arabic-elegant",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=cf3f11a82d654420921571510c8bf89e6617d30e1568093171a96bd284652b17",
@@ -239797,11 +239802,16 @@
                   "row": 27
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-thai-modern",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=5f18ad2f3566ea85eca5213a2195df17cfac85fc7c6ace9e251b769cccd7fd08",
@@ -239829,11 +239839,16 @@
                   "row": 28
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-hebrew-modern",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7e33fc27241f3536cafea10e80926d2cfd795b2193c8e1b7ecec4024be73197b",
@@ -239861,11 +239876,16 @@
                   "row": 29
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-legal-professional",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4b9538ceda342afefce70b2eb3d2c4ec134456ec9450b3ae086719a034a9f6cb",
@@ -239893,11 +239913,16 @@
                   "row": 30
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-medical-clean",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=e46a102e4900af052beceac6686ddd47a5cff13baec87aa1f6c7032b4da28023",
@@ -239925,11 +239950,16 @@
                   "row": 31
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-financial-trust",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=c87023cd699d9d8e7b2b59b6694e13e03d8dd6e037fff674a0e5e73e9a5bb956",
@@ -239957,11 +239987,16 @@
                   "row": 32
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-real-estate-luxury",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=ccabf11a68a17200341a2d5ae63b677f421d6cc0e56aa50d2d05dc4e73cf0f2a",
@@ -239989,11 +240024,16 @@
                   "row": 33
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-restaurant-menu",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=886b28f7ac01d8efce80a06048ac6d551be17b351e26ba17a6225ba6280aa06c",
@@ -240021,11 +240061,16 @@
                   "row": 34
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-art-deco",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=2d0144989c74120c8f24dcb156f5720fa61d88460e47d9ea6e0a8475277337ad",
@@ -240053,11 +240098,16 @@
                   "row": 35
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-magazine-style",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7c2e66240c8bfa8d966e6a5b7bfd8ebb6caf26bb6b0bda2ccb87ad41ac08f508",
@@ -240085,11 +240135,16 @@
                   "row": 36
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-crypto-web3",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3554fbd97f600f5a6440de219cd9e158a35fa04f84d4b4472ff44e6bb510dafe",
@@ -240117,11 +240172,16 @@
                   "row": 37
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-gaming-bold",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7b127367766d3cb27663203c7d5402672023e024a68244ec83bcd501e186a625",
@@ -240149,11 +240209,16 @@
                   "row": 38
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-indie-craft",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=70f413d7f229eaf5c74d5624170b07d678ab56fd49487218c9be082688cdd7a2",
@@ -240181,11 +240246,16 @@
                   "row": 39
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-startup-bold-outfit-rubik",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4dc12860df5bed72c70240a85b9ad28b7528f6e04dc4941b581549789d93a99e",
@@ -240213,11 +240283,16 @@
                   "row": 40
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-e-commerce-clean",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=ba35a2a77a7fb94b725a9e623c20d60879d1d8b21c2f68c471f38ca7665b3103",
@@ -240245,11 +240320,16 @@
                   "row": 41
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-academic-research",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=233cba720114ce51c3a3ef7f924cff6d9d65b8e1ad4b743b6395e179e40fd538",
@@ -240277,11 +240357,16 @@
                   "row": 42
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-dashboard-data",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=f17e8e1e64ac28e8186abc1c7d6f5659fe3e92a646f1073a8394225a91e8bfee",
@@ -240309,11 +240394,16 @@
                   "row": 43
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-music-entertainment",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=aadcac27f3812ee4f378996b3a65456aba69e5be9108f33eb25ddf1f7626c018",
@@ -240341,11 +240431,16 @@
                   "row": 44
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-minimalist-portfolio",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=22d3f1ba71e50dbc4b286e5728428e4e5f03307bc883a68474cbc9bf50210937",
@@ -240373,11 +240468,16 @@
                   "row": 45
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-kids-education",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=0d6dbed73f5644ba40f0f97b72ad450832bb539bf9b8095cb2312d9e698e146e",
@@ -240405,11 +240505,16 @@
                   "row": 46
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-wedding-romance",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=139dd2161f3c4171536e87022b710a7bb93d18c75dbd0f629fca43e33128cb1c",
@@ -240437,11 +240542,16 @@
                   "row": 47
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-science-tech",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=af52dce9dba8422fd3ca5afb0f7caee012cb08b5d4b530ebd122207c8cb8b73f",
@@ -240469,11 +240579,16 @@
                   "row": 48
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-accessibility-first",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=4b9c14d297cdf4ca7b78e62da7d0179027c73fee8c3dc7ccd60404d2cf32ccd0",
@@ -240501,11 +240616,16 @@
                   "row": 49
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-sports-fitness",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=519a965ced4cc9ed3528043bb661c219de9c4ee4d8bb6c99991855554bff91f1",
@@ -240533,11 +240653,16 @@
                   "row": 50
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-luxury-minimalist",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3f3ed6a0d7fc56522f74846b133f335b01370c28c3808f86ed740dc915f547c2",
@@ -240565,11 +240690,16 @@
                   "row": 51
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-tech-hud-mono",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=d840f1fb1b74bfe764d50a329c51c9cd235f0039bb9c2f4d85f877b6df4e8802",
@@ -240597,11 +240727,16 @@
                   "row": 52
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-pixel-retro",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=682587a0e59f565184c2b9e411e8a1274f6698f7bc6eec6749ea1d8bb23b5e09",
@@ -240629,11 +240764,16 @@
                   "row": 53
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-neubrutalist-bold",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=864506d40aaeb74e4dc4c7bbe8c88e6337f89e480638693a1a06cc626ab46d20",
@@ -240661,11 +240801,16 @@
                   "row": 54
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-academic-archival",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=de1b3278c317b414c3f686184964ad5b80f85e5a82fad25aa7a1f11de56f773c",
@@ -240693,11 +240838,16 @@
                   "row": 55
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-spatial-clear",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=57cf6b78d99a8286445807ac54d549ed9b215f9bf0c216c518470f93fcdc346b",
@@ -240725,11 +240875,16 @@
                   "row": 56
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-kinetic-motion",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=468496b2fb31b831bbdcc873e57ed68f0761504d35f9e9ea95b37f25a08b1879",
@@ -240757,11 +240912,16 @@
                   "row": 57
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-gen-z-brutal",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=0334fe84dcc6770bfad2f7e4eec4aff104efc85c719130d2d3f4385e2be29fcc",
@@ -240789,11 +240949,16 @@
                   "row": 58
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-bauhaus-geometric",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=dd08ee6553cfeec7b204569dfbb7c4383f6ff5382d7b3c233bff35a99eb14b0c",
@@ -240821,11 +240986,16 @@
                   "row": 59
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-minimalist-monochrome-editorial",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=ba19b3b299cce553afd194e2d8de345fe6b6e3495c5ab246d33cb6b747a71dc1",
@@ -240853,11 +241023,16 @@
                   "row": 60
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-modern-dark-cinema-inter-system",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=6ef578cd500fad927a681a9fcffdb57db1351eb2241177fe8a4c6ebb294d698c",
@@ -240885,11 +241060,16 @@
                   "row": 61
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-saas-mobile-boutique-calistoga-inter",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=3d38623c28e828433f43126ebac2907f7cb54930c9b8080344c0b9615ee0b86d",
@@ -240917,11 +241097,16 @@
                   "row": 62
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-terminal-cli-monospace",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=0889b1ad06f43bca4d5454076c44a3f4632483a24eeee99d4b065d90205eafab",
@@ -240949,11 +241134,16 @@
                   "row": 63
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-kinetic-brutalism-space-grotesk",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=761bb6c575e139ac01b8608ebe8b85b1f542f0c3dcb90c1655ea669e3858e0f7",
@@ -240981,11 +241171,16 @@
                   "row": 64
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-flat-design-mobile-system-bold",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=882de0c417d3f6b878746e1df05bfee5895f37a4709f8f8e50407c5be67724fb",
@@ -241013,11 +241208,16 @@
                   "row": 65
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-material-you-md3-roboto-system",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=bcbb41582a6ff5b77ad038efbdf7e92973e5624f5e35ce370883c8319582d7be",
@@ -241045,11 +241245,16 @@
                   "row": 66
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-neo-brutalism-mobile-space-grotesk-bold",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=8ae447d69311e4fb60bac19555db22a0ced8f03b35a8e51a6febc8356aa0bf75",
@@ -241077,11 +241282,16 @@
                   "row": 67
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-bold-typography-mobile-inter-poster",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=10c86fd54b3d1e96426c5228bc0bffa55d54e4e6a0a69d79a948a21f9382f84b",
@@ -241109,11 +241319,16 @@
                   "row": 68
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-academia-mobile-cormorant-crimson-cinzel",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=53d02471b3d9dfe4fbcfc9fb7350e2f92bfa906c6b41c456518d7ae4b16430c7",
@@ -241141,11 +241356,16 @@
                   "row": 69
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-cyberpunk-mobile-orbitron-jetbrains-mono",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=7e4ddb6536cec144dbd41520432d41fcf72e5ab5cec51fe78d33a6d04df12954",
@@ -241173,11 +241393,16 @@
                   "row": 70
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-web3-bitcoin-defi-space-grotesk-inter-mono",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=07ee3611634c5566ad976bb5e3876e6d57ea6d9a2ab46eface466de100fd3e17",
@@ -241205,11 +241430,16 @@
                   "row": 71
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-claymorphism-mobile-nunito-dm-sans",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=a81d5dbd1ae04569deef32824b71997fd0f5296a42ba1e1a52e96329ab92f144",
@@ -241237,11 +241467,16 @@
                   "row": 72
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-enterprise-saas-mobile-plus-jakarta-sans",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=8dbeb5b0f805a19094565a26480f21e8e0a2e0809fbde24f7b0e181d98b2f5fa",
@@ -241269,11 +241504,16 @@
                   "row": 73
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-sketch-hand-drawn-mobile-kalam-patrick-hand",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=typography.csv&headers=f5ae8a9fe08f98e3aaffa8e760502147cf544f91168496c59c858431285eb270&cells=75efbc0bfa7d6475d8e410f44dd3b12d0450b3e14e5c6375444db0c0beab6b77",
@@ -241301,11 +241541,16 @@
                   "row": 74
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 font-pairing pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-font-pairing-neumorphism-mobile-plus-jakarta-sans-system",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 font-pairing record"
+                }
+              ],
+              "mergedInto": null
             }
           ]
         },
