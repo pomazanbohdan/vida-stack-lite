@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8063,
+  "revision": 8064,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-16T23:18:09.162Z",
+  "updated_at": "2026-11-17T07:53:22.144Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -13275,6 +13275,21 @@
       "sha256": "6815d7905ce49843e2369d1d35a7b239ffcb145961d1faefa0b9b9f01d6db6eb"
     },
     {
+      "resource_id": "uupm-icon-academia-icon-system",
+      "path": "resources/uupm-icon-academia-icon-system.json",
+      "sha256": "44aca96a93e5e3d5baec1656135a3180ca855d479241d67f2d3a4a22fc349615"
+    },
+    {
+      "resource_id": "uupm-icon-arrow-clockwise",
+      "path": "resources/uupm-icon-arrow-clockwise.json",
+      "sha256": "09959d66c1bc3226369854c1e3705c42ffd2222a8c1d071dfedbef0f598e356f"
+    },
+    {
+      "resource_id": "uupm-icon-arrow-counter-clockwise",
+      "path": "resources/uupm-icon-arrow-counter-clockwise.json",
+      "sha256": "2b8dea7eefcb142b14fd291fe5aa21a5569600efddca07006875319c20950137"
+    },
+    {
       "resource_id": "uupm-icon-arrow-left",
       "path": "resources/uupm-icon-arrow-left.json",
       "sha256": "22e69e8b335ba31227028bf97a284edfb10fa9b2ed16e6e12f734445a44f7d71"
@@ -13290,6 +13305,11 @@
       "sha256": "b187ef48fac4e2dedefba8a89f5b54fc8c17668d31d23618b0d0a25aa1623079"
     },
     {
+      "resource_id": "uupm-icon-arrows-clockwise",
+      "path": "resources/uupm-icon-arrows-clockwise.json",
+      "sha256": "c98586e36a13150f414d5afc5c59c92fcd81850ac57296b8e4b3f2091cb78313"
+    },
+    {
       "resource_id": "uupm-icon-arrows-in",
       "path": "resources/uupm-icon-arrows-in.json",
       "sha256": "fcf6f6d062b5ea9998c03c7e7bab197643fb57f9aaa150f8f87d3506a1a2775e"
@@ -13303,6 +13323,21 @@
       "resource_id": "uupm-icon-bell",
       "path": "resources/uupm-icon-bell.json",
       "sha256": "63a1326354b20a7f7c4a410b390e4307f8824e561eca48d920a73e02d57b0191"
+    },
+    {
+      "resource_id": "uupm-icon-bold-typography-icon-system",
+      "path": "resources/uupm-icon-bold-typography-icon-system.json",
+      "sha256": "f2e93b72f1e946a4290501e45d338ffe45d0f7c5b6cd55151ca4a1e9ad9f75d8"
+    },
+    {
+      "resource_id": "uupm-icon-bookmark",
+      "path": "resources/uupm-icon-bookmark.json",
+      "sha256": "fcfebda98d585000d909d396b0494d80721e51ff42e0c114d303ab1b06ac2e0c"
+    },
+    {
+      "resource_id": "uupm-icon-calendar",
+      "path": "resources/uupm-icon-calendar.json",
+      "sha256": "8699e4de5907c6067f7b96264b2be4598c9cf40c75e02daf174e3ce9abf79b51"
     },
     {
       "resource_id": "uupm-icon-camera",
@@ -13360,9 +13395,19 @@
       "sha256": "19d5de7444769c27343e57d34dd392f2643785af7a7ea1506c05a1134c7e95c4"
     },
     {
+      "resource_id": "uupm-icon-code",
+      "path": "resources/uupm-icon-code.json",
+      "sha256": "925cc44cfd8865d58c03fad016e5025bfe7e3f999afe4b38320084cfa079f130"
+    },
+    {
       "resource_id": "uupm-icon-columns",
       "path": "resources/uupm-icon-columns.json",
       "sha256": "d27af0b76e6c2ab8c1a2da06a7ab2157ab4be43336a2b4cb8f07bc89c1b664aa"
+    },
+    {
+      "resource_id": "uupm-icon-compass",
+      "path": "resources/uupm-icon-compass.json",
+      "sha256": "83d4c0f25db028e2ff53c0fc5c542f9f0e97b7bdc7cf59636d84570bd45f140d"
     },
     {
       "resource_id": "uupm-icon-copy",
@@ -13380,9 +13425,24 @@
       "sha256": "fe0891ba8f1250710665bf9fa3e16187769052be1e6cf0d3798b10b64da0c28c"
     },
     {
+      "resource_id": "uupm-icon-cyberpunk-icon-system",
+      "path": "resources/uupm-icon-cyberpunk-icon-system.json",
+      "sha256": "9a71356301475b8156098bf40ea498dfe06f85f5b005b8c9b34b1ddf48cb156d"
+    },
+    {
       "resource_id": "uupm-icon-database",
       "path": "resources/uupm-icon-database.json",
       "sha256": "384f2f985e76e5ce2928d4c852059aec8c879a8d3044489420f18f52055384b5"
+    },
+    {
+      "resource_id": "uupm-icon-device-mobile",
+      "path": "resources/uupm-icon-device-mobile.json",
+      "sha256": "398d20efc9535560707d8aa4ace3447387086019fe4dff1014c63bd72fdf55f0"
+    },
+    {
+      "resource_id": "uupm-icon-device-tablet",
+      "path": "resources/uupm-icon-device-tablet.json",
+      "sha256": "43a870a63e73346b10a22bb0990aa851aab8d84a979280c867782413cd6cae06"
     },
     {
       "resource_id": "uupm-icon-download-simple",
@@ -13395,6 +13455,16 @@
       "sha256": "f32c2126f18f5e773a3ae4264ef67bc9cc63bb47cac6084c2689670c0ce9ef0a"
     },
     {
+      "resource_id": "uupm-icon-eye",
+      "path": "resources/uupm-icon-eye.json",
+      "sha256": "147d81c94ee044d9f4a8441b88a67d9008a4b055d8cbe164207abc612ac01af3"
+    },
+    {
+      "resource_id": "uupm-icon-eye-slash",
+      "path": "resources/uupm-icon-eye-slash.json",
+      "sha256": "5716dbffacd80a95a540e77cce10bea91c5aba0ebdc6f4ecf7bc08f704be010d"
+    },
+    {
       "resource_id": "uupm-icon-file",
       "path": "resources/uupm-icon-file.json",
       "sha256": "10521f397e4d7234cb204662f303c0f912f8e9d6a04b1123fc1a17f37e4427ce"
@@ -13403,6 +13473,11 @@
       "resource_id": "uupm-icon-file-text",
       "path": "resources/uupm-icon-file-text.json",
       "sha256": "62fd1111e2bf2eae2ee081432094f90f7c99ec3d5bd17188d9dc3cd67bb40521"
+    },
+    {
+      "resource_id": "uupm-icon-flag",
+      "path": "resources/uupm-icon-flag.json",
+      "sha256": "83d7fff9a09cc4ab4737a5461452912c620dd5d8bb606b2805de6d744074d075"
     },
     {
       "resource_id": "uupm-icon-floppy-disk",
@@ -13435,6 +13510,21 @@
       "sha256": "41ed1918fb2f25b6cc35795cdf6d7663e7c59ed8d6a122abd364bf523727aa50"
     },
     {
+      "resource_id": "uupm-icon-git-branch",
+      "path": "resources/uupm-icon-git-branch.json",
+      "sha256": "ec9069d59e003f33d5241a8fffe185555a9603a11ca48ec613d2afe5124911f5"
+    },
+    {
+      "resource_id": "uupm-icon-github-logo",
+      "path": "resources/uupm-icon-github-logo.json",
+      "sha256": "48bee942cb92b2e8223f16da789b0b162200549e85ca4a06c558ce3f50664054"
+    },
+    {
+      "resource_id": "uupm-icon-globe",
+      "path": "resources/uupm-icon-globe.json",
+      "sha256": "eabbf525ea015ba3a61ffbfaa4626aa647bd04b6f2d68bf8d94383645c99af64"
+    },
+    {
       "resource_id": "uupm-icon-grid-four",
       "path": "resources/uupm-icon-grid-four.json",
       "sha256": "a2b8ad8b4c648a646456dc19be34fb3dd74127df212286f79514c80e07de0499"
@@ -13450,6 +13540,11 @@
       "sha256": "7ff0928701995bf78aa223c65578294b3c882f62847d50373c96d4232602106e"
     },
     {
+      "resource_id": "uupm-icon-icon-context-accessibility",
+      "path": "resources/uupm-icon-icon-context-accessibility.json",
+      "sha256": "c5b01f7b2f50b1f10b75cce4d3433b5af60206674bb65e947c15792a6bad0111"
+    },
+    {
       "resource_id": "uupm-icon-image",
       "path": "resources/uupm-icon-image.json",
       "sha256": "dab653c579a33efda7f4f0a640225613db122a6139e9307d620db64847f8cd5b"
@@ -13458,6 +13553,16 @@
       "resource_id": "uupm-icon-info",
       "path": "resources/uupm-icon-info.json",
       "sha256": "d4d004dd182b3c3201358a83154e3d3047432ead1b7cf9a215a8c8d9d0477289"
+    },
+    {
+      "resource_id": "uupm-icon-key",
+      "path": "resources/uupm-icon-key.json",
+      "sha256": "f237a288b936012dedbd7c971afcd58a8c513bdbdebc6296e0f0f5e2f559ac28"
+    },
+    {
+      "resource_id": "uupm-icon-laptop",
+      "path": "resources/uupm-icon-laptop.json",
+      "sha256": "03f39ba63e79af02edf1281c464b8104955fcc83112e3945ae4be040a5dc54e9"
     },
     {
       "resource_id": "uupm-icon-link",
@@ -13475,9 +13580,29 @@
       "sha256": "6373bb813d10b4156e8388bbf376de899b0ca199a98af71bf5ae4c092651bf89"
     },
     {
+      "resource_id": "uupm-icon-lock",
+      "path": "resources/uupm-icon-lock.json",
+      "sha256": "f7559b19ac66a76635c968b7c975b4819e80e2c86d8735823fa364ffbe651333"
+    },
+    {
+      "resource_id": "uupm-icon-lock-open",
+      "path": "resources/uupm-icon-lock-open.json",
+      "sha256": "3c2b93a136c901a8301b394c11f36dc58af0134d181f47beae2cdc64e68d6ce3"
+    },
+    {
       "resource_id": "uupm-icon-magnifying-glass",
       "path": "resources/uupm-icon-magnifying-glass.json",
       "sha256": "ecad5eabf302a6c6926ef93004b8f206ea07f0eaed58aa286bc723759e262c79"
+    },
+    {
+      "resource_id": "uupm-icon-map-pin",
+      "path": "resources/uupm-icon-map-pin.json",
+      "sha256": "69cd5d667afce5e2cb6caa6f88845523049b5f3395371f988fd8b1b5763ce516"
+    },
+    {
+      "resource_id": "uupm-icon-map-trifold",
+      "path": "resources/uupm-icon-map-trifold.json",
+      "sha256": "9c182db3b03cc247d6faebbd240b9206c55e2cebdf6db8509cc8be56c89aaa4f"
     },
     {
       "resource_id": "uupm-icon-microphone",
@@ -13488,6 +13613,11 @@
       "resource_id": "uupm-icon-minus",
       "path": "resources/uupm-icon-minus.json",
       "sha256": "63f29993ef5b2cc2f6abd9ce4bbc561c6ed4f8d99a2e868bca46067bab291eba"
+    },
+    {
+      "resource_id": "uupm-icon-monitor",
+      "path": "resources/uupm-icon-monitor.json",
+      "sha256": "1bc8f4939929b7724665af9742a96db00de9c8f88917c45cd60900433b4d8622"
     },
     {
       "resource_id": "uupm-icon-paper-plane-tilt",
@@ -13530,6 +13660,11 @@
       "sha256": "958813a7d5ae5906a30595f52f0d3cef7f161765103288da61954a853afa9968"
     },
     {
+      "resource_id": "uupm-icon-printer",
+      "path": "resources/uupm-icon-printer.json",
+      "sha256": "d36c2dbfe8db8dfc5865fd27f885febe1e48f7e3bc5a2260c14860a1ed146c1c"
+    },
+    {
       "resource_id": "uupm-icon-pulse",
       "path": "resources/uupm-icon-pulse.json",
       "sha256": "5cad23775bf17c38f7d1f1214eea8954ff0ee85d484fdf02b655e4a705fc9cdf"
@@ -13538,6 +13673,11 @@
       "resource_id": "uupm-icon-share",
       "path": "resources/uupm-icon-share.json",
       "sha256": "511195f23024800780943672af4f0edc0b0e244d41e25b6c178a1a94f1c87d2e"
+    },
+    {
+      "resource_id": "uupm-icon-shield",
+      "path": "resources/uupm-icon-shield.json",
+      "sha256": "91b4974c99fd96f1d7f0802cbd7ea7797f2e0c10740ac4af0b11a35d934db7cf"
     },
     {
       "resource_id": "uupm-icon-shopping-bag",
@@ -13578,6 +13718,11 @@
       "resource_id": "uupm-icon-tag",
       "path": "resources/uupm-icon-tag.json",
       "sha256": "0eed0b9345dcfd1d6ecd5fc6c2b3d7297870423d104f2134f96c47114409347b"
+    },
+    {
+      "resource_id": "uupm-icon-terminal",
+      "path": "resources/uupm-icon-terminal.json",
+      "sha256": "363bbd754a06a9b30b0a0047ab3f29d16d07c32c83a3f24308d0bcd0b77f9ad9"
     },
     {
       "resource_id": "uupm-icon-thumbs-down",
@@ -13638,6 +13783,11 @@
       "resource_id": "uupm-icon-warning-circle",
       "path": "resources/uupm-icon-warning-circle.json",
       "sha256": "45d50b1dd8d722ef0a3eefe08f9ff26c93127ab8a6a9864903243d2e9f1fa3cc"
+    },
+    {
+      "resource_id": "uupm-icon-web3-bitcoin-icon-system",
+      "path": "resources/uupm-icon-web3-bitcoin-icon-system.json",
+      "sha256": "9deb00b85b8bcd92d4cec25237252e80013b351998cf98af8de39a353bb6eb29"
     },
     {
       "resource_id": "uupm-icon-x",
