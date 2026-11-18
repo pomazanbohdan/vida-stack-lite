@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8067,
+  "revision": 8068,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-17T18:58:22.103Z",
+  "updated_at": "2026-11-18T08:08:37.489Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -14045,9 +14045,19 @@
       "sha256": "daff4fcd3dffd1e16922b5b0b45281dfd089c2da30745c664769957a28e7c16f"
     },
     {
+      "resource_id": "uupm-palette-agriculture-farm-tech",
+      "path": "resources/uupm-palette-agriculture-farm-tech.json",
+      "sha256": "b6232012b777f51d5ef31400a77f8bba64e163595815b2407fbdcea5a7631b80"
+    },
+    {
       "resource_id": "uupm-palette-ai-chatbot-platform",
       "path": "resources/uupm-palette-ai-chatbot-platform.json",
       "sha256": "cf525e0540e10fb2550cbb4290a7d9396f9c42e099605d311f0b543cc42e7681"
+    },
+    {
+      "resource_id": "uupm-palette-airline",
+      "path": "resources/uupm-palette-airline.json",
+      "sha256": "89d2a54b224199bd05972847f76706f9488478886ac5e09186888599391043e0"
     },
     {
       "resource_id": "uupm-palette-analytics-dashboard",
@@ -14055,9 +14065,54 @@
       "sha256": "1f22db4b1e1894e650e1929d2b47b6a055cbc7f0378322d51dbda9e5ffbb4e15"
     },
     {
+      "resource_id": "uupm-palette-automotive-car-dealership",
+      "path": "resources/uupm-palette-automotive-car-dealership.json",
+      "sha256": "e84ec9107d83278253d569d7da7753580f3cd0841f4cc6ab2bb40c0151af41d8"
+    },
+    {
       "resource_id": "uupm-palette-b2b-service",
       "path": "resources/uupm-palette-b2b-service.json",
       "sha256": "d934989fa58465df9bf8b517d248a49342410c27607904dfaf32dbccd9100441"
+    },
+    {
+      "resource_id": "uupm-palette-bakery-cafe",
+      "path": "resources/uupm-palette-bakery-cafe.json",
+      "sha256": "ba658fb96b934d9e9600723c0ba6f843b2fbbfa77c487bcc1e4e2aa66b09f60a"
+    },
+    {
+      "resource_id": "uupm-palette-banking-traditional-finance",
+      "path": "resources/uupm-palette-banking-traditional-finance.json",
+      "sha256": "68056d9c4f54b17d73022c8b9aee3d469eac5d9b4d0b17ffa9f807d0f3e5d32f"
+    },
+    {
+      "resource_id": "uupm-palette-beauty-spa-wellness-service",
+      "path": "resources/uupm-palette-beauty-spa-wellness-service.json",
+      "sha256": "393fb64eb13a7d445e7d281db0a7ee83abcd748830494424b60f29602793e34c"
+    },
+    {
+      "resource_id": "uupm-palette-brewery-winery",
+      "path": "resources/uupm-palette-brewery-winery.json",
+      "sha256": "6487f594362a76837e9606c2b733d81a3f7056e0fc0004da476870b7ed8a286d"
+    },
+    {
+      "resource_id": "uupm-palette-childcare-daycare",
+      "path": "resources/uupm-palette-childcare-daycare.json",
+      "sha256": "80d8ac74189c74f481d28a403d6bef2b98541a2ebfbb24da5fdfd691bc0f58a0"
+    },
+    {
+      "resource_id": "uupm-palette-church-religious-organization",
+      "path": "resources/uupm-palette-church-religious-organization.json",
+      "sha256": "314208fd20c7ecf036fb4693bd89ff96c23eedfa98450f936a17ff866308ce1c"
+    },
+    {
+      "resource_id": "uupm-palette-construction-architecture",
+      "path": "resources/uupm-palette-construction-architecture.json",
+      "sha256": "fc6fff6d120827a04db849e2cffa525b84f2d99b3a40ce9458f8b0b1d30240f2"
+    },
+    {
+      "resource_id": "uupm-palette-coworking-space",
+      "path": "resources/uupm-palette-coworking-space.json",
+      "sha256": "d9e83edca78a8fb0b425618e3a36a214c7bc6854daac0095f240d9a10b8dc129"
     },
     {
       "resource_id": "uupm-palette-creative-agency",
@@ -14070,9 +14125,24 @@
       "sha256": "98ec3f8e4d79523ae70a341e5c9b6e0995961b9264ccdc930651f7ca22d77e8b"
     },
     {
+      "resource_id": "uupm-palette-dating-app",
+      "path": "resources/uupm-palette-dating-app.json",
+      "sha256": "9554d83bf01e9a3bfafe59bea0dea5dc8a22354139758f9665acba84322dc9d4"
+    },
+    {
+      "resource_id": "uupm-palette-dental-practice",
+      "path": "resources/uupm-palette-dental-practice.json",
+      "sha256": "9313c0778579744452e5bd40e02b7a73ec7d6a2e672542888b5c71ad745e0b5e"
+    },
+    {
       "resource_id": "uupm-palette-design-system-component-library",
       "path": "resources/uupm-palette-design-system-component-library.json",
       "sha256": "2fd94c1d9e4f653850843fff8be1421837c9ebd71890fe79f61f380a1f4d2f9e"
+    },
+    {
+      "resource_id": "uupm-palette-digital-products-downloads",
+      "path": "resources/uupm-palette-digital-products-downloads.json",
+      "sha256": "c7e62724f6eb5286ddadc3c7f07de12fb17ccb2a303a75b68fe2c2ce1fce4fe1"
     },
     {
       "resource_id": "uupm-palette-e-commerce",
@@ -14095,6 +14165,11 @@
       "sha256": "a8a3b5edfb33ea252526057da01da978184d1c6e1bdc25b66729140326fec8aa"
     },
     {
+      "resource_id": "uupm-palette-event-management",
+      "path": "resources/uupm-palette-event-management.json",
+      "sha256": "c7c76717c332992a3aac287548a7be52131257584045eb99194369edadc5759c"
+    },
+    {
       "resource_id": "uupm-palette-financial-dashboard",
       "path": "resources/uupm-palette-financial-dashboard.json",
       "sha256": "a28c4ee0fcd5bf1819e64a3ba8f18ae21ebb7584659a3fad29f705abdc72ffed"
@@ -14103,6 +14178,21 @@
       "resource_id": "uupm-palette-fintech-crypto",
       "path": "resources/uupm-palette-fintech-crypto.json",
       "sha256": "530a8dd343b1f5fa7b669c8fd13dcf29532647f6a2c75b6d574644c2fd19aaa5"
+    },
+    {
+      "resource_id": "uupm-palette-fitness-gym-app",
+      "path": "resources/uupm-palette-fitness-gym-app.json",
+      "sha256": "b13992542ae8a77a1486053d48cc82679bfc33188afd02f7145461a5554cf74f"
+    },
+    {
+      "resource_id": "uupm-palette-florist-plant-shop",
+      "path": "resources/uupm-palette-florist-plant-shop.json",
+      "sha256": "dc156fcad288922c76f5bab1697f859b24c6f485f44a8f299dbfe503b1e4167b"
+    },
+    {
+      "resource_id": "uupm-palette-freelancer-platform",
+      "path": "resources/uupm-palette-freelancer-platform.json",
+      "sha256": "b2c5ce2af7087e04aa96b4b330df6b5b4e5cebcf66fffe150487fc02ca0fe758"
     },
     {
       "resource_id": "uupm-palette-gaming",
@@ -14120,9 +14210,84 @@
       "sha256": "a27ee6d9531a0dc506b8fbe50cdcdc775a6daf23d8fef2f1353a956f1d25cc77"
     },
     {
+      "resource_id": "uupm-palette-home-services-plumber-electrician",
+      "path": "resources/uupm-palette-home-services-plumber-electrician.json",
+      "sha256": "c16cbfc70e8a05e9ba3b74ec9422f868b5a1bebfaaf1582e06b54458380e7e80"
+    },
+    {
+      "resource_id": "uupm-palette-hotel-hospitality",
+      "path": "resources/uupm-palette-hotel-hospitality.json",
+      "sha256": "5a892471c29ddde64896f02b34a85d99a27154719002f0cbe61b0df6ca7b232c"
+    },
+    {
+      "resource_id": "uupm-palette-hyperlocal-services",
+      "path": "resources/uupm-palette-hyperlocal-services.json",
+      "sha256": "e3211501b47bcbca0021b9a9773b2f4753e76a3ef716943a3dd8c8eafa8aeb8a"
+    },
+    {
+      "resource_id": "uupm-palette-insurance-platform",
+      "path": "resources/uupm-palette-insurance-platform.json",
+      "sha256": "79c4718a481ff909a09c7b5af235ce5ff3ec80dba50fee71671fd30bfc168ba3"
+    },
+    {
+      "resource_id": "uupm-palette-job-board-recruitment",
+      "path": "resources/uupm-palette-job-board-recruitment.json",
+      "sha256": "4e651a42dc22d31c4e028ee297123486e4163d06fe1cee46147b63d2954d8f1a"
+    },
+    {
+      "resource_id": "uupm-palette-knowledge-base-documentation",
+      "path": "resources/uupm-palette-knowledge-base-documentation.json",
+      "sha256": "8eb527eebbcc7cde065e91591c8bd7768bccdcbe7b96ed00f9157f6fd23f7cc8"
+    },
+    {
+      "resource_id": "uupm-palette-legal-services",
+      "path": "resources/uupm-palette-legal-services.json",
+      "sha256": "38481d4ae02159fbfd3d9f57d241681a19b5a4098a06922d6aef3afb99481149"
+    },
+    {
+      "resource_id": "uupm-palette-logistics-delivery",
+      "path": "resources/uupm-palette-logistics-delivery.json",
+      "sha256": "79f960c833ddfe4996314f0874f6d70847ad1a46f5409a640e3f28e061716f77"
+    },
+    {
+      "resource_id": "uupm-palette-luxury-premium-brand",
+      "path": "resources/uupm-palette-luxury-premium-brand.json",
+      "sha256": "25314b736007deb90a097b3f33e5f649ab28a0f4e9e848ebfeb7cfed6160ad81"
+    },
+    {
+      "resource_id": "uupm-palette-magazine-blog",
+      "path": "resources/uupm-palette-magazine-blog.json",
+      "sha256": "9557aa422e43382a789f0ef036e51cbbaafcfdab36ef1fffbbab5008f70589a3"
+    },
+    {
+      "resource_id": "uupm-palette-marketing-agency",
+      "path": "resources/uupm-palette-marketing-agency.json",
+      "sha256": "5685be6fac7f2a574e33c80c670b693748f4a5d8f5193c7b2eae9984f8c5dae4"
+    },
+    {
+      "resource_id": "uupm-palette-marketplace-p2p",
+      "path": "resources/uupm-palette-marketplace-p2p.json",
+      "sha256": "dd2ff9b5c7b8e0813074efb242f1c0db7c76aa7d6b9737d38dee20e4780f02f8"
+    },
+    {
+      "resource_id": "uupm-palette-medical-clinic",
+      "path": "resources/uupm-palette-medical-clinic.json",
+      "sha256": "72fc0239d3948d9724e9d4ac9c14a4978cdf7ac4c90b9edaceb1eaaf5b24e538"
+    },
+    {
+      "resource_id": "uupm-palette-membership-community",
+      "path": "resources/uupm-palette-membership-community.json",
+      "sha256": "713785da7556f823e928aabbce2b36d7e398c0506914f1e8f015f51903a40474"
+    },
+    {
       "resource_id": "uupm-palette-mental-health-app",
       "path": "resources/uupm-palette-mental-health-app.json",
       "sha256": "c3339e9f536e467140f3a004482198b6c53fdf095687dcd3dba42b7a6548f678"
+    },
+    {
+      "resource_id": "uupm-palette-micro-credentials-badges-platform",
+      "path": "resources/uupm-palette-micro-credentials-badges-platform.json",
+      "sha256": "a7e4fd6e0cd9a09340b9708b4ab6cc50ec9e4acd4d9a7154d719cf84b2317ab3"
     },
     {
       "resource_id": "uupm-palette-micro-saas",
@@ -14130,14 +14295,54 @@
       "sha256": "3b495e8cb8583f16ebd663eb06c480d23ce0acd4f54a7f08fee99baf5f819951"
     },
     {
+      "resource_id": "uupm-palette-music-streaming",
+      "path": "resources/uupm-palette-music-streaming.json",
+      "sha256": "bef51fdc970673db8520ab4aab6f4bfc7bf97d6ab847b1e6ebfec3eacfee17a1"
+    },
+    {
+      "resource_id": "uupm-palette-news-media-platform",
+      "path": "resources/uupm-palette-news-media-platform.json",
+      "sha256": "e24d8ef6b533f7942e5f6399db4302f542fb39c2f3315565af282e1b78d0c6cd"
+    },
+    {
+      "resource_id": "uupm-palette-newsletter-platform",
+      "path": "resources/uupm-palette-newsletter-platform.json",
+      "sha256": "1d204440d7da852f5952a2c4c655172ab0570b9d94c80968e3fc571c1c6d0f22"
+    },
+    {
       "resource_id": "uupm-palette-nft-web3-platform",
       "path": "resources/uupm-palette-nft-web3-platform.json",
       "sha256": "38d3a473ae6102861b4898d6cff7acb07e220de74bcd3287882aa3b829a15f23"
     },
     {
+      "resource_id": "uupm-palette-non-profit-charity",
+      "path": "resources/uupm-palette-non-profit-charity.json",
+      "sha256": "39c688b83d87b9d90b3aaa4b1fef8d8393a0e78b7591658c2d5bf00c746cc6d9"
+    },
+    {
+      "resource_id": "uupm-palette-online-course-e-learning",
+      "path": "resources/uupm-palette-online-course-e-learning.json",
+      "sha256": "ebdb768c5130f76479152aeb60a4a0a0afd345ee3aa6142b14d655f122ba8b60"
+    },
+    {
       "resource_id": "uupm-palette-pet-tech-app",
       "path": "resources/uupm-palette-pet-tech-app.json",
       "sha256": "e1c98ad5ad44f122235f9481e62d69a817b387fd3a45ca41baf584886dda0a22"
+    },
+    {
+      "resource_id": "uupm-palette-pharmacy-drug-store",
+      "path": "resources/uupm-palette-pharmacy-drug-store.json",
+      "sha256": "1518dbdf72c3f447f6a7c51c58f1ca42f7c9d1b226e80fd1dfc459a17d9acb3f"
+    },
+    {
+      "resource_id": "uupm-palette-photography-studio",
+      "path": "resources/uupm-palette-photography-studio.json",
+      "sha256": "8181784e3d530f7c3f611182b5e8e7318fa209657c6405357cebac364e5112f3"
+    },
+    {
+      "resource_id": "uupm-palette-podcast-platform",
+      "path": "resources/uupm-palette-podcast-platform.json",
+      "sha256": "acd5196db1f9c5c684c3f9db6aa5af910771421d1f52eb3c2c9fdf0bfa785cd0"
     },
     {
       "resource_id": "uupm-palette-portfolio-personal",
@@ -14150,14 +14355,29 @@
       "sha256": "5192122eff2b5a4e7526cee3d0e7757ea75508158f8977050d1e93f1becf555f"
     },
     {
+      "resource_id": "uupm-palette-real-estate-property",
+      "path": "resources/uupm-palette-real-estate-property.json",
+      "sha256": "40ee982c20b755cc251650e7b0ba64cb32340b274e86d58ec807e6742e4d7a17"
+    },
+    {
       "resource_id": "uupm-palette-remote-work-collaboration-tool",
       "path": "resources/uupm-palette-remote-work-collaboration-tool.json",
       "sha256": "ee882aaa19bc006b90243b9e9ab69e2855f42f3dfa4f65007a4797dad02b0bfb"
     },
     {
+      "resource_id": "uupm-palette-restaurant-food-service",
+      "path": "resources/uupm-palette-restaurant-food-service.json",
+      "sha256": "4817a420204e98c43a7e6f869fe616245a1f694ff528f37c2888ab7b1fc1d0a9"
+    },
+    {
       "resource_id": "uupm-palette-saas-general",
       "path": "resources/uupm-palette-saas-general.json",
       "sha256": "72befaadab418c007b85b4ffaebcabcc2c6130d2e9c1f1e287a92555136eeebc"
+    },
+    {
+      "resource_id": "uupm-palette-senior-care-elderly",
+      "path": "resources/uupm-palette-senior-care-elderly.json",
+      "sha256": "b9e3bf395a35d741760a76218a81f1e764f84ce825f9b4c839c2bfec9bdd8105"
     },
     {
       "resource_id": "uupm-palette-smart-home-iot-dashboard",
@@ -14168,6 +14388,36 @@
       "resource_id": "uupm-palette-social-media-app",
       "path": "resources/uupm-palette-social-media-app.json",
       "sha256": "dc8e021e8542f00f3bc96f5217145c6792ed163b4a08544a0905ca342dc862cd"
+    },
+    {
+      "resource_id": "uupm-palette-sports-team-club",
+      "path": "resources/uupm-palette-sports-team-club.json",
+      "sha256": "a76013f5ba6d876314fbfdbe16f0d985111dd2493e2f349cd56b93672afae0ce"
+    },
+    {
+      "resource_id": "uupm-palette-subscription-box-service",
+      "path": "resources/uupm-palette-subscription-box-service.json",
+      "sha256": "52549f225874fa227b4c150f0d7b8cec01dad5919947246e2fae8ca766af727d"
+    },
+    {
+      "resource_id": "uupm-palette-travel-tourism-agency",
+      "path": "resources/uupm-palette-travel-tourism-agency.json",
+      "sha256": "9638f3eb66fc75a301a946a1f37701db7543a1b24f71c4040848ef2a8477e7f4"
+    },
+    {
+      "resource_id": "uupm-palette-veterinary-clinic",
+      "path": "resources/uupm-palette-veterinary-clinic.json",
+      "sha256": "d00f527ae015d3e5cb6434eabbbb66274b1e86be484cd3f0b90e020fafc400f0"
+    },
+    {
+      "resource_id": "uupm-palette-video-streaming-ott",
+      "path": "resources/uupm-palette-video-streaming-ott.json",
+      "sha256": "624b161751bfeb1090ccd17d0ebbb06f113a81ce0be7178aaf1719df11b52d80"
+    },
+    {
+      "resource_id": "uupm-palette-wedding-event-planning",
+      "path": "resources/uupm-palette-wedding-event-planning.json",
+      "sha256": "0367b4063da4be26881140ff4a07c95db8dbfbc3795660141261a7923b1dc467"
     },
     {
       "resource_id": "uupm-standard-accessibility-decorative-icons",

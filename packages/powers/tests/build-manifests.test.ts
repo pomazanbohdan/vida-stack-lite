@@ -2,7 +2,7 @@ import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import * as fsPromises from 'node:fs/promises';
-import { cp, lstat, mkdir, mkdtemp, readFile, readlink, readdir, rm, rmdir, symlink, writeFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, mkdtemp, readFile, readlink, readdir, realpath, rm, rmdir, symlink, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateAgainstSchema, validateSchemaDefinition, type Schema } from '../skills/vp-mode/scripts/schema.js';
@@ -175,8 +175,8 @@ function invokeManifestCli(
   args: readonly string[],
   cwd: string,
   timeoutMs = 30_000,
+  scriptPath: string = fileURLToPath(new URL('../scripts/build-manifests.ts', import.meta.url)),
 ): { exitCode: number; stdout: string; stderr: string; signal: string | null } {
-  const scriptPath = fileURLToPath(new URL('../scripts/build-manifests.ts', import.meta.url));
   try {
     const stdout = execFileSync(process.execPath, [scriptPath, ...args], {
       cwd,
@@ -1750,6 +1750,17 @@ describe('manifest input and output boundaries', () => {
   test('actual Bun CLI accepts an absolute fixture root and rejects relative roots from another CWD', async () => {
     const cwd = await makeTemporaryRoot('manifest-cli-cwd-');
     const root = await makeNativeProject(['muse-package', 'antigravity']);
+    const cliClosure = [
+      'scripts/build-manifests.ts',
+      'scripts/formation-payload.ts',
+      'skills/vp-mode/scripts/schema.ts',
+      'skills/vp-mode/scripts/resource-paths.ts',
+    ];
+    for (const relativePath of cliClosure) {
+      const destination = join(root, ...relativePath.split('/'));
+      await mkdir(dirname(destination), { recursive: true });
+      await cp(join(packageRoot, ...relativePath.split('/')), destination);
+    }
     const relative = invokeManifestCli(['--root', 'relative-root'], cwd);
     expect(relative.exitCode).toBe(2);
     expect(record(parseJson(relative.stderr).error).code).toBe('MANIFEST_ARGUMENT_INVALID');
@@ -1765,16 +1776,21 @@ describe('manifest input and output boundaries', () => {
     expect(parseJson(checked.stdout)).toMatchObject({ ok: true, mode: 'check', museCatalog: { status: 'blocked' } });
     expect(await readTreeBytes(root)).toEqual(beforeCheck);
 
-    const formationPath = join(packageRoot, ...`${formationRelativeRoot}/muse`.split('/'));
-    const ledgerPath = join(packageRoot, ...ownershipLedgerPath.split('/'));
+    const fixtureReal = await realpath(root);
+    const cliEntrypoint = join(fixtureReal, 'scripts', 'build-manifests.ts');
+    const formationPath = join(fixtureReal, ...`${formationRelativeRoot}/muse`.split('/'));
+    const ledgerPath = join(fixtureReal, ...ownershipLedgerPath.split('/'));
     const formationBefore = Boolean(await lstat(formationPath).catch(() => undefined));
     const ledgerBefore = Boolean(await lstat(ledgerPath).catch(() => undefined));
+    const beforeDefaultRoot = await readTreeBytes(root);
 
-    // The default root resolves to this package and re-plans every shipped
-    // payload file; observed runtimes are ~70-110s depending on host load.
-    const defaultRoot = invokeManifestCli(['--check'], cwd, 150_000);
+    // The default root is the package root derived from the CLI entrypoint
+    // location, so the fixture copy keeps this check off the real package.
+    const defaultRoot = invokeManifestCli(['--check'], cwd, 30_000, cliEntrypoint);
     expect(defaultRoot.exitCode, manifestCliFailure(defaultRoot)).toBe(0);
-    expect(parseJson(defaultRoot.stdout)).toMatchObject({ ok: true, mode: 'check' });
+    expect(defaultRoot.stderr).toBe('');
+    expect(parseJson(defaultRoot.stdout)).toMatchObject({ ok: true, mode: 'check', museCatalog: { status: 'blocked' } });
+    expect(await readTreeBytes(root)).toEqual(beforeDefaultRoot);
     expect(Boolean(await lstat(formationPath).catch(() => undefined))).toBe(formationBefore);
     expect(Boolean(await lstat(ledgerPath).catch(() => undefined))).toBe(ledgerBefore);
   }, 180_000);
@@ -1822,9 +1838,33 @@ describe('manifest input and output boundaries', () => {
       stderr: () => {},
     });
     expect(portableExit).toBe(0);
-    expect(record(parseJson(portableStdout[0] ?? ''))).toMatchObject({ ok: true, mode: 'check' });
-    expect(record(parseJson(portableStdout[0] ?? ''))).not.toHaveProperty('museCatalog');
+    const portableReport = record(parseJson(portableStdout[0] ?? ''));
+    expect(portableReport).toMatchObject({ ok: true, mode: 'check' });
+    expect(portableReport).not.toHaveProperty('museCatalog');
     expect(await readTreeBytes(portableRoot)).toEqual(portableBefore);
+
+    const portablePlan = await buildManifestPlan(portableRoot);
+    const compactReport = record(parseJson(portableStdout[0] ?? ''));
+    expect(compactReport.outputCount).toBe(portablePlan.files.size);
+    expect(compactReport).not.toHaveProperty('outputs');
+
+    const verboseStdout: string[] = [];
+    const verboseExit = await runManifestCli(['--check', '--verbose', '--root', portableRoot], {
+      stdout: (text) => { verboseStdout.push(text); },
+      stderr: () => {},
+    });
+    expect(verboseExit).toBe(0);
+    expect(record(parseJson(verboseStdout[0] ?? '')).outputs).toEqual([...portablePlan.files.keys()]);
+
+    const buildStdout: string[] = [];
+    const buildExit = await runManifestCli(['--root', portableRoot], {
+      stdout: (text) => { buildStdout.push(text); },
+      stderr: () => {},
+    });
+    expect(buildExit).toBe(0);
+    const buildReport = record(parseJson(buildStdout[0] ?? ''));
+    expect(buildReport).toMatchObject({ ok: true, mode: 'build', outputCount: portablePlan.files.size });
+    expect(buildReport).not.toHaveProperty('outputs');
   });
 
   test('foreign and changed files under native output roots block formation before writes', async () => {

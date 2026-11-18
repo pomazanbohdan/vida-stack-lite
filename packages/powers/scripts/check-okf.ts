@@ -15,7 +15,7 @@
  *      timestamps are ISO 8601 with an explicit UTC offset.
  *   5. Markdown links in bodies resolve inside the repository.
  *
- * Usage: bun packages/powers/scripts/check-okf.ts
+ * Usage: bun packages/powers/scripts/check-okf.ts [--verbose]
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -23,6 +23,7 @@ import { collectDefinitions, findDuplicateDefinitions } from './definitions.ts';
 
 const repoRoot = path.resolve(import.meta.dir, '..', '..', '..');
 const bundleRoot = path.join(repoRoot, 'packages', 'powers', 'docs');
+const verbose = process.argv.includes('--verbose');
 const RESERVED = new Set(['index.md', 'log.md']);
 const ACTOR = /^(?:[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*|human:[^\s]+|process:[^\s]+|team:[^\s]+)$/;
 const ISO_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
@@ -179,12 +180,14 @@ for (const [id, bucket] of findDuplicateDefinitions(definitions)) {
   failures.push(`${id} is defined ${bucket.length} times: ${places}`);
 }
 
+const documents = files.map((file) => path.relative(repoRoot, file).replaceAll('\\', '/'));
 console.log(
   JSON.stringify(
     {
       bundle: path.relative(repoRoot, bundleRoot).replaceAll('\\', '/'),
       okf_version: '0.2',
-      documents: files.map((file) => path.relative(repoRoot, file).replaceAll('\\', '/')),
+      documentCount: documents.length,
+      ...(verbose ? { documents } : {}),
       concepts: concepts.length,
       failures,
       warnings,

@@ -199,6 +199,84 @@ describe('checkCsvSource', () => {
 
 });
 
+function identityCase(text: string) {
+  const parsed = parseCsv(bytes(text));
+  const columns = [
+    { index: 0, header: 'Name', role: 'metadata-other' },
+    { index: 1, header: 'Value', role: 'metadata-other' },
+  ];
+  const resourceIds = new Set(parsed.rows.map((row) => `res-${row.cells[0]!.toLowerCase()}`));
+  const rows = parsed.rows.map((row) => {
+    const hashes = row.cells.map(cellHash);
+    const rowKey = `path=a.csv&headers=${parsed.headersDigest}&cells=${cellsDigest(row.cells)}`;
+    return {
+      rowKey,
+      rowHash: rowHash(rowKey, parsed.headersDigest, hashes),
+      cellHashes: hashes,
+      locator: row.locators[0]!,
+      locators: row.locators,
+      disposition: 'admitted',
+      bindings: [],
+      resourceIds: [{ id: `res-${row.cells[0]!.toLowerCase()}`, disposition: 'admitted', reason: 'pilot' }],
+      mergedInto: null,
+    };
+  });
+  const source = { rawSha256: parsed.rawSha256, headersDigest: parsed.headersDigest, columns, rows };
+  const allowlistEntry = { donor: 'donor', path: 'a.csv', rawSha256: parsed.rawSha256, headersDigest: parsed.headersDigest };
+  return {
+    parsed,
+    source,
+    resourceIds,
+    input: () => ({ donor: 'donor', path: 'a.csv', bytes: bytes(text), source, allowlistEntry, instructionIds: new Set<string>(), resourceIds }),
+  };
+}
+
+describe('checkCsvSource row identity', () => {
+  const originalText = 'Name,Value\nAlpha,1\nBeta,2\n';
+  const original = identityCase(originalText);
+
+  test('keeps row identity and row hash stable across CSV reorder while raw digest and locators change', () => {
+    const reordered = identityCase('Name,Value\nBeta,2\nAlpha,1\n');
+    expect(reordered.parsed.rawSha256).not.toBe(original.parsed.rawSha256);
+    const originalAlpha = original.source.rows[0]!;
+    const reorderedAlpha = reordered.source.rows.find((row) => row.resourceIds[0]!.id === 'res-alpha')!;
+    expect(reorderedAlpha.rowKey).toBe(originalAlpha.rowKey);
+    expect(reorderedAlpha.rowHash).toBe(originalAlpha.rowHash);
+    expect(reorderedAlpha.locator).not.toEqual(originalAlpha.locator);
+    expect(checkCsvSource(reordered.input())).toEqual([]);
+  });
+
+  test('changes row identity when a cell changes', () => {
+    const edited = identityCase('Name,Value\nAlpha,9\nBeta,2\n');
+    const editedAlpha = edited.source.rows[0]!;
+    const staleAlpha = original.source.rows[0]!;
+    expect(editedAlpha.rowKey).not.toBe(staleAlpha.rowKey);
+    expect(editedAlpha.rowHash).not.toBe(staleAlpha.rowHash);
+    const staleSource = { ...original.source, rawSha256: edited.parsed.rawSha256 };
+    const issues = checkCsvSource({ ...edited.input(), source: staleSource });
+    expect(issues.map((issue) => issue.code)).toEqual(expect.arrayContaining(['CORPUS_CSV_ROW_MISSING', 'CORPUS_CSV_ROW_EXTRA']));
+  });
+
+  test('requires a map row for every parsed CSV row and rejects extras', () => {
+    const missing = checkCsvSource({ ...original.input(), source: { ...original.source, rows: original.source.rows.slice(0, 1) } });
+    expect(missing.map((issue) => issue.code)).toContain('CORPUS_CSV_ROW_MISSING');
+    const extraRow = {
+      rowKey: 'path=a.csv&headers=x&cells=y',
+      rowHash: '0'.repeat(64),
+      cellHashes: [],
+      locator: { line: 9, row: 9 },
+      locators: [{ line: 9, row: 9 }],
+      disposition: 'deferred',
+      reason: 'extra',
+      bindings: [],
+      resourceIds: [],
+      mergedInto: null,
+    };
+    const extra = checkCsvSource({ ...original.input(), source: { ...original.source, rows: [...original.source.rows, extraRow] } });
+    expect(extra.map((issue) => issue.code)).toContain('CORPUS_CSV_ROW_EXTRA');
+  });
+});
+
 function multiLineCase() {
   const text = 'Title,Description\nAlpha,"First\nline"\n';
   const parsed = parseCsv(bytes(text));

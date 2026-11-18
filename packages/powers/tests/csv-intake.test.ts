@@ -37,6 +37,13 @@ describe('parseCsv', () => {
     expect(() => parseCsv(new Uint8Array([0x41, 0xff]))).toThrow(CsvError);
   });
 
+  test('keeps formula-like cell text as literal CSV text', () => {
+    const values = ['=1+1', '=SUM(A1:A2)', '+cmd|\'/c calc\'', '-2+3', '@SUM(A1:A2)'];
+    const parsed = parseCsv(bytes(`Value\n${values.join('\n')}\n`));
+    expect(parsed.rows.map((row) => row.cells[0])).toEqual(values);
+    expect(parsed.rows.map((row) => cellHash(row.cells[0]!))).toEqual(values.map((value) => cellHash(value)));
+  });
+
   test('decodes doubled quotes and CRLF inside a quoted field', () => {
     const parsed = parseCsv(bytes('Title,Description\r\nAlpha,"First ""quoted"" line\r\nsecond"\r\n'));
     expect(parsed.rows[0]?.cells).toEqual(['Alpha', 'First "quoted" line\r\nsecond']);

@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5786,
-  "updated_at": "2026-11-17T18:58:22.103Z",
+  "revision": 5787,
+  "updated_at": "2026-11-18T08:08:37.489Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -22311,11 +22311,16 @@
                   "row": 26
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-subscription-box-service",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=5ca76f112418fb5fdc4ef6fc5553891d54ac50a5efe8c129eadded967f3f8595",
@@ -22351,11 +22356,16 @@
                   "row": 27
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-podcast-platform",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=febe7b1c5995757859515aa550d510da62477ac7734fbffd31c2c8438933227d",
@@ -22391,11 +22401,16 @@
                   "row": 28
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-dating-app",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=925296ab4c68bb6f7bf44af051cad1521f6058a0cc078c33239be958cbcc6755",
@@ -22431,11 +22446,16 @@
                   "row": 29
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-micro-credentials-badges-platform",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=1d208ee94f17b2e1b786400cddb2cf60619a0b471b81a2b548e1fdb200ccaf7a",
@@ -22471,11 +22491,16 @@
                   "row": 30
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-knowledge-base-documentation",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=3d2ccbb6770c6c32c29ff96d70f8ac4a0c79b33b7846faa86ad37a507c64ef9b",
@@ -22511,11 +22536,16 @@
                   "row": 31
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-hyperlocal-services",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=19623667fcef1010aaee4384fcb1ab7fc8250a91ad8e71cc5e8dc99967f344eb",
@@ -22551,11 +22581,16 @@
                   "row": 32
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-beauty-spa-wellness-service",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=5d7bc6aa49269ef8891a57a75c390c89c8c30aa7f5c0d868522344a33925e2b8",
@@ -22591,11 +22626,16 @@
                   "row": 33
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-luxury-premium-brand",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=528e20531c45daa2891f634dd36c761a06d689e979978893a25e78a7543c2c5d",
@@ -22631,11 +22671,16 @@
                   "row": 34
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-restaurant-food-service",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=7731a73a27d12dd0f5d61b29395b26a497fe08e74404b604ed1e7c33bd290318",
@@ -22671,11 +22716,16 @@
                   "row": 35
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-fitness-gym-app",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=0c2b6cd68058e07da7221a45c223a93fd971dc6ad78afcb51ff89f79fe70b274",
@@ -22711,11 +22761,16 @@
                   "row": 36
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-real-estate-property",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=da67451c6f1255cb81c50a58bbdef5cbd5a039e5cade92c294f085f5c56caf17",
@@ -22751,11 +22806,16 @@
                   "row": 37
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-travel-tourism-agency",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=ffdba591b1314ab560614119481116d221a027e2ed4ad51a61d5310f3e8e6e24",
@@ -22791,11 +22851,16 @@
                   "row": 38
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-hotel-hospitality",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=0003fe69adc79bbf2af83d62f8e85e3af82cc67a4f04edf57dca2619d050c3e3",
@@ -22831,11 +22896,16 @@
                   "row": 39
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-wedding-event-planning",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=d3a67dceddc6684b45d35926fc3304085f152d11540e5ef54ce90b3e3a3db732",
@@ -22871,11 +22941,16 @@
                   "row": 40
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-legal-services",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=817a9ef27c7389175ab52a49d73f780a12ec4e23d937097162bc34b35a6ad4b0",
@@ -22911,11 +22986,16 @@
                   "row": 41
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-insurance-platform",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=a09b1e6b9b6c0fe73bf172c47e720924d3d574b22498d63846c3cde6287ec39f",
@@ -22951,11 +23031,16 @@
                   "row": 42
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-banking-traditional-finance",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=0ca2cb11a95e9cc1fdda708f56a02989989f543109638e7e0b3c105cbee51ccf",
@@ -22991,11 +23076,16 @@
                   "row": 43
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-online-course-e-learning",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=313f27e57c1c3e5dd2bd33d427e688a4f791794c7ac477ff58d1fe1cd25104e2",
@@ -23031,11 +23121,16 @@
                   "row": 44
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-non-profit-charity",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=33d40c60192d2031d1cf94eaed3b07bc87130c919ca4da7eae564828e57e0e75",
@@ -23071,11 +23166,16 @@
                   "row": 45
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-music-streaming",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=4a37560c71245b4ad1f371814619e6035369de514866c292c733f1f0a32e4c8d",
@@ -23111,11 +23211,16 @@
                   "row": 46
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-video-streaming-ott",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=9ff88c812456fbc7210e6fd7554d64fc5c9c493d8a6826401b762e3325d10322",
@@ -23151,11 +23256,16 @@
                   "row": 47
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-job-board-recruitment",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=af9b90b42d9f1f39ddb60468d0826eca556be0aecf255ce17254ae9eb31177a2",
@@ -23191,11 +23301,16 @@
                   "row": 48
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-marketplace-p2p",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=3348db10f40480074630eb1ff2df0cbb44eecd6a78e5f0a0ec568b88b7242cd7",
@@ -23231,11 +23346,16 @@
                   "row": 49
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-logistics-delivery",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=12adff2e178567ed8c2a856af10812b1555d4e19f27d458994baf11d62f02ec6",
@@ -23271,11 +23391,16 @@
                   "row": 50
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-agriculture-farm-tech",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=c15d24bbef467f3ae644a993b3a9686ed41022041437a4e2a75d60f0235a4083",
@@ -23311,11 +23436,16 @@
                   "row": 51
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-construction-architecture",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=4a37e2fa9ef4a5210a173e5f091a99c996bbe72d48017390bc144c8d3fc5e545",
@@ -23351,11 +23481,16 @@
                   "row": 52
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-automotive-car-dealership",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=84a20262b40833cf4a784f73ead457f3fd9da7a678b5c2f5df5979bbf70de5fc",
@@ -23391,11 +23526,16 @@
                   "row": 53
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-photography-studio",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=c279e4f3353b6ff1c853db850e690f5e125266e7c0b47799a293b595dc59c609",
@@ -23431,11 +23571,16 @@
                   "row": 54
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-coworking-space",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=0002bad14afb3b4e56d2ff6247c159b3730ccd2713d39529cc954ff61e33f480",
@@ -23471,11 +23616,16 @@
                   "row": 55
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-home-services-plumber-electrician",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=0e073b166e2f5fa52ec5eb9a40de1c7424c98f5e785c09ecb91ac3dbb6ab65ed",
@@ -23511,11 +23661,16 @@
                   "row": 56
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-childcare-daycare",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=aa60c49bcb2d74857f96a52e706f743b04e5b4a70430ec31494cbbd7c4b8fa92",
@@ -23551,11 +23706,16 @@
                   "row": 57
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-senior-care-elderly",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=1cd5784002e17f6f784895f61350227d1c4e6e53f3d970b9f96d222297bdc19a",
@@ -23591,11 +23751,16 @@
                   "row": 58
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-medical-clinic",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=209fc9aa7fb95df7e28b8e7d492495f455c1398e13e3117ccbba5084e70ad176",
@@ -23631,11 +23796,16 @@
                   "row": 59
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-pharmacy-drug-store",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=2e61590b9dee2fd58f1313bc90b62b71a8a9129bfeaf349f60e7eb08f37089cb",
@@ -23671,11 +23841,16 @@
                   "row": 60
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-dental-practice",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=cd07868d36a129243c27d6c8e2dde667463579d057139d6c15b453371831fc6f",
@@ -23711,11 +23886,16 @@
                   "row": 61
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-veterinary-clinic",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=51b344ab62e98cd5fd3c713324150797bba26dc83ea2934d37a94b6389b820fc",
@@ -23751,11 +23931,16 @@
                   "row": 62
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-florist-plant-shop",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=fe2a5639b5ce07939c78dc1ca0f549a3429d3338596e2d039f837a5ac1085679",
@@ -23791,11 +23976,16 @@
                   "row": 63
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-bakery-cafe",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=dc15420b4ab426d20e1233e4c0c3b1846ef54755356ff17ccd1405124e26ebdb",
@@ -23831,11 +24021,16 @@
                   "row": 64
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-brewery-winery",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=59906e836421519cdb0d1d3d80ef6661f2ae85300131d0d4883464de7828c624",
@@ -23871,11 +24066,16 @@
                   "row": 65
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-airline",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=297863901211f7b9a035c34d0a9d369b97b1617d5bee83eb85479bf3c38cda7e",
@@ -23911,11 +24111,16 @@
                   "row": 66
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-news-media-platform",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=eea1efd35ff51c03624de8092f271930c7d409c1d7d3686d16bb5b91b5ede865",
@@ -23951,11 +24156,16 @@
                   "row": 67
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-magazine-blog",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=f167a5e369b569a8c42fc8f66fafab54dc96c068227955782c980a9946769bfc",
@@ -23991,11 +24201,16 @@
                   "row": 68
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-freelancer-platform",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=5fe24fc264168d924438f0612f315d31d69c55f2656aa946f95c53006a364166",
@@ -24031,11 +24246,16 @@
                   "row": 69
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-marketing-agency",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=fc4029c13363ebcb67ac799adb40ea43ae6fa80d58296867ff361ab777f28022",
@@ -24071,11 +24291,16 @@
                   "row": 70
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-event-management",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=bec83c94eddfffa45b9c9db5b478ac8edfa833149a402532b313e432b6361b53",
@@ -24111,11 +24336,16 @@
                   "row": 71
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-membership-community",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=91897d736e7c8e09ac81914187071a047854e1091fe305ba989560f42654d2c2",
@@ -24151,11 +24381,16 @@
                   "row": 72
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-newsletter-platform",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=e11c9d1003fce1fb137dc6449a5b3a230e63d908d89123509a47ea0a5f7ed5fa",
@@ -24191,11 +24426,16 @@
                   "row": 73
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-digital-products-downloads",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=313b43281bcdb69771e6814e88b71ab199f80cdc1a6264ad91a7776aea96e84f",
@@ -24231,11 +24471,16 @@
                   "row": 74
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-church-religious-organization",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=9a3de8e30c18ba2e93f1a78c23d1772ce9caaba5ba523c0aa73edf52755cfade",
@@ -24271,11 +24516,16 @@
                   "row": 75
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-sports-team-club",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=b861afccc04925fba303def54e4b650b10dec2ff038eeef7570c08dea97d9e05",

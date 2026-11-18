@@ -1065,10 +1065,12 @@ export async function runManifestCli(
   },
 ): Promise<number> {
   let checkOnly = false;
+  let verbose = false;
   let projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === '--check') checkOnly = true;
+    else if (arg === '--verbose') verbose = true;
     else if (arg === '--root') {
       const value = args[index + 1];
       if (value === undefined) {
@@ -1082,7 +1084,8 @@ export async function runManifestCli(
       projectRoot = resolve(value);
       index += 1;
     } else if (arg === '--help') {
-      io.stdout('Usage: bun packages/powers/scripts/build-manifests.ts [--check] [--root <absolute-package-root>]\n');
+      io.stdout('Usage: bun packages/powers/scripts/build-manifests.ts [--check] [--verbose] [--root <absolute-package-root>]\n'
+        + 'Default output reports outputCount only; --verbose restores the full ordered outputs list.\n');
       return 0;
     } else {
       io.stderr(jsonLine({ error: { code: 'MANIFEST_ARGUMENT_INVALID', message: `Unknown argument: ${arg}.`, details: [] } }));
@@ -1092,6 +1095,7 @@ export async function runManifestCli(
 
   try {
     const plan = await buildManifestPlan(projectRoot);
+    const outputSummary = verbose ? { outputs: [...plan.files.keys()] } : { outputCount: plan.files.size };
     if (checkOnly) {
       const check = await checkManifestPlan(projectRoot, plan);
       if (!check.ok) {
@@ -1101,14 +1105,14 @@ export async function runManifestCli(
       const museCatalog = plan.targets.includes('muse-package')
         ? { status: 'blocked', code: 'MANIFEST_MUSE_CATALOG_NOT_READY' }
         : undefined;
-      io.stdout(jsonLine({ ok: true, mode: 'check', outputs: [...plan.files.keys()], ...(museCatalog === undefined ? {} : { museCatalog }) }));
+      io.stdout(jsonLine({ ok: true, mode: 'check', ...outputSummary, ...(museCatalog === undefined ? {} : { museCatalog }) }));
       return 0;
     }
     const applied = await applyManifestPlan(projectRoot, plan);
     const museCatalog = plan.targets.includes('muse-package')
       ? { status: 'blocked', code: 'MANIFEST_MUSE_CATALOG_NOT_READY' }
       : undefined;
-    io.stdout(jsonLine({ ok: true, mode: 'build', outputs: [...plan.files.keys()], written: applied.written, removed: applied.removed, ...(museCatalog === undefined ? {} : { museCatalog }) }));
+    io.stdout(jsonLine({ ok: true, mode: 'build', ...outputSummary, written: applied.written, removed: applied.removed, ...(museCatalog === undefined ? {} : { museCatalog }) }));
     return 0;
   } catch (error) {
     const manifestError = error instanceof ManifestBuildError

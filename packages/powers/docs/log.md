@@ -2,6 +2,49 @@
 
 ## 2026-11-18
 
+* **Docs refresh — AC-ledger and D58 evidence reconciliation (docs
+  only; no approval):** `docs/next-actions.md` revision 56 records
+  the validated reconciliation on top of the H3-M docs.
+  `acceptance.md` revision 27 (SHA-256 `44b50958…5933`, read-only
+  here) carries the reconciled ledger: AC-48/AC-49/AC-51/AC-53/
+  AC-56/AC-58 `verified (component)`, AC-50 `open` bounded to
+  D57/H2 phase/fidelity evidence pending an exact owner decision,
+  AC-47/AC-57 open Wondelai H1 sign-off, AC-59 owner-accepted, and
+  AC-84/AC-85 `verified (component)` from
+  `packages/powers/.tmp/d58-ac84-85-evidence/MATRIX.md` (14/6/4
+  focused D58 logs; Pi READY component; AC-85 automatic-grouping
+  rejection is manifest/schema-policy enforced with no direct
+  negative fixture — disclosed). Reconciliation evidence:
+  `packages/powers/.tmp/ac-ledger-evidence/rework/RESULT.md` — 47
+  focused csv-intake/csv-map tests pass under Devin
+  (`csv-tests.log` exit 0) and independently under Pi, with
+  typecheck, doc-check, check-okf, format:check and scoped
+  `git diff --check` all exit 0. The two completed
+  evidence-reconciliation queue rows are closed; residual open
+  follow-ups stay with the H1 owner-gated sign-off row (AC-47/
+  AC-57) and a new owner-gated AC-50 row. No code, catalog, map,
+  staged data, `acceptance.md`, commit or Runtime change.
+* **H3-M `palette` wave-1 applied and independently validated:**
+  the owner instruction to run implementation for the queue tasks
+  approved the already-presented `colors.csv` rows 26–75 (physical
+  lines 27–76). The assigned Devin child applied the staged wave
+  locally; fresh Pi/GPT-6 Luna validation is READY on the same
+  implementation fingerprint `sha256:3d89422b…0af11d` after
+  absolute-path resolution (the earlier relative-`.tmp` Pi pass is
+  not final). Evidence: D18 aggregation 150/150 accept
+  (`AGGREGATION.json` `e383df8a…`), independent staged audit
+  `independent-check.json` `b6f9c80b…` with 0 findings, and apply
+  result `be41b35c…` `APPLIED_AND_VERIFIED`. Live baseline is
+  catalog rev 8,068 (`9303f1bd…`, 2,402 instructions, 374 typed
+  resources) and corpus-map rev 5,787 (`4eb5a2d0…`); distinct staged
+  envelopes remain catalog `79605aa0…` / map `d1e7c27b…`. Palette is
+  75 admitted / 117 deferred; next waves are rows 76–125,
+  126–175 and 176–192 (50/50/17), with 76–125 next. Live-vs-staged
+  catalog/map are equal except `updated_at`; 50/50 resource payloads
+  are byte-identical. `check-corpus` and `check-vector` exit 0 in
+  the apply evidence; aggregate suite/manifest rebuild and Root
+  commit remain pending. No commit, Runtime acceptance or
+  next-wave admission is claimed.
 * **P0 product test gate — technical closure:** the evidence-backed
   full `bun run --cwd packages/powers test` gate is green under
   `TestReceipt/v1` `packages/powers/.tmp/p0-full-proof-r2/receipt.json`
