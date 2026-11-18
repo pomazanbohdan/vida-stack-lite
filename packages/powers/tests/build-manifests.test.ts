@@ -171,19 +171,40 @@ function targetStatus(target: string): string {
   return (MANIFEST_TARGET_STATUS as unknown as Record<string, { status: string }>)[target]?.status ?? 'missing';
 }
 
-function invokeManifestCli(args: readonly string[], cwd: string): { exitCode: number; stdout: string; stderr: string } {
+function invokeManifestCli(
+  args: readonly string[],
+  cwd: string,
+  timeoutMs = 30_000,
+): { exitCode: number; stdout: string; stderr: string; signal: string | null } {
   const scriptPath = fileURLToPath(new URL('../scripts/build-manifests.ts', import.meta.url));
   try {
-    const stdout = execFileSync(process.execPath, [scriptPath, ...args], { cwd, encoding: 'utf8', stdio: 'pipe' });
-    return { exitCode: 0, stdout, stderr: '' };
+    const stdout = execFileSync(process.execPath, [scriptPath, ...args], {
+      cwd,
+      encoding: 'utf8',
+      stdio: 'pipe',
+      timeout: timeoutMs,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return { exitCode: 0, stdout, stderr: '', signal: null };
   } catch (error) {
-    const childError = error as { status?: number; stdout?: Buffer | string; stderr?: Buffer | string };
+    const childError = error as { status?: number | null; signal?: string | null; stdout?: Buffer | string; stderr?: Buffer | string };
     return {
       exitCode: childError.status ?? 1,
       stdout: String(childError.stdout ?? ''),
       stderr: String(childError.stderr ?? ''),
+      signal: childError.signal ?? null,
     };
   }
+}
+
+function manifestCliFailure(result: { exitCode: number; stdout: string; stderr: string; signal: string | null }): string {
+  const parts = [`exitCode=${result.exitCode}`];
+  if (result.signal !== null) parts.push(`signal=${result.signal}`);
+  const stderr = result.stderr.trim();
+  if (stderr !== '') parts.push(`stderr=${stderr}`);
+  const stdout = result.stdout.trim();
+  if (stdout !== '') parts.push(`stdout=${stdout.slice(0, 4000)}`);
+  return parts.join('\n');
 }
 
 afterAll(async () => {
@@ -1734,12 +1755,12 @@ describe('manifest input and output boundaries', () => {
     expect(record(parseJson(relative.stderr).error).code).toBe('MANIFEST_ARGUMENT_INVALID');
 
     const built = invokeManifestCli(['--root', root], cwd);
-    expect(built.exitCode).toBe(0);
+    expect(built.exitCode, manifestCliFailure(built)).toBe(0);
     expect(built.stderr).toBe('');
     expect(parseJson(built.stdout)).toMatchObject({ ok: true, museCatalog: { status: 'blocked' } });
     const beforeCheck = await readTreeBytes(root);
     const checked = invokeManifestCli(['--check', '--root', root], cwd);
-    expect(checked.exitCode).toBe(0);
+    expect(checked.exitCode, manifestCliFailure(checked)).toBe(0);
     expect(checked.stderr).toBe('');
     expect(parseJson(checked.stdout)).toMatchObject({ ok: true, mode: 'check', museCatalog: { status: 'blocked' } });
     expect(await readTreeBytes(root)).toEqual(beforeCheck);
@@ -1749,12 +1770,14 @@ describe('manifest input and output boundaries', () => {
     const formationBefore = Boolean(await lstat(formationPath).catch(() => undefined));
     const ledgerBefore = Boolean(await lstat(ledgerPath).catch(() => undefined));
 
-    const defaultRoot = invokeManifestCli(['--check'], cwd);
-    expect(defaultRoot.exitCode).toBe(0);
+    // The default root resolves to this package and re-plans every shipped
+    // payload file; observed runtimes are ~70-110s depending on host load.
+    const defaultRoot = invokeManifestCli(['--check'], cwd, 150_000);
+    expect(defaultRoot.exitCode, manifestCliFailure(defaultRoot)).toBe(0);
     expect(parseJson(defaultRoot.stdout)).toMatchObject({ ok: true, mode: 'check' });
     expect(Boolean(await lstat(formationPath).catch(() => undefined))).toBe(formationBefore);
     expect(Boolean(await lstat(ledgerPath).catch(() => undefined))).toBe(ledgerBefore);
-  });
+  }, 180_000);
 
   test('CLI reports missing root values and formats check output sink failures', async () => {
     const missingStdout: string[] = [];

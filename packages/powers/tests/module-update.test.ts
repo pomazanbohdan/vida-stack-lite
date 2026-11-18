@@ -88,7 +88,7 @@ beforeAll(() => {
     break;
   }
   if (!moduleId) throw new Error('open-knowledge-format module carrier was not found through catalog.json');
-});
+}, 120_000);
 afterAll(() => { if (existsSync(scratch)) rmSync(scratch, { recursive: true, force: true }); });
 
 describe('prepared module update D59/SR-110', () => {

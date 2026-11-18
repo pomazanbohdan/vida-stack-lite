@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8066,
+  "revision": 8067,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-17T16:05:03.742Z",
+  "updated_at": "2026-11-17T18:58:22.103Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -14340,6 +14340,11 @@
       "sha256": "59182a2d05536db5857731296cef0dde62dbcfb94d5a150a20bf6d430b31fe89"
     },
     {
+      "resource_id": "uupm-style-academia-scholarly-mobile",
+      "path": "resources/uupm-style-academia-scholarly-mobile.json",
+      "sha256": "950c822db84384e0bda1c10eeaa636654a4c4f9a1bb3373ddd5c2e3d5a9afe3d"
+    },
+    {
       "resource_id": "uupm-style-accessible-and-ethical",
       "path": "resources/uupm-style-accessible-and-ethical.json",
       "sha256": "69c53b7bacf858cd4ad93b1c20e36861692d3cd93c7a35ac92b1cd34b5968001"
@@ -14380,6 +14385,16 @@
       "sha256": "51bba7f0558b8aed39d9d96153535c41a361694b4e859928d55927c3d3e73fe9"
     },
     {
+      "resource_id": "uupm-style-bitcoin-defi-mobile",
+      "path": "resources/uupm-style-bitcoin-defi-mobile.json",
+      "sha256": "9bd6bd82f28e9f207de411a9534dfcbc9cd46c2d887fa04fe24862b8687f7555"
+    },
+    {
+      "resource_id": "uupm-style-bold-typography-mobile-poster",
+      "path": "resources/uupm-style-bold-typography-mobile-poster.json",
+      "sha256": "792fbfcb643fc6a5a27c63f1f6af822ab97301a59c7592d0c1193856baf6a854"
+    },
+    {
       "resource_id": "uupm-style-brutalism",
       "path": "resources/uupm-style-brutalism.json",
       "sha256": "c7b9b107e678eb5ff01c5ed7a3c5bd9679a88263bb559e202fa40108d225ad43"
@@ -14395,6 +14410,11 @@
       "sha256": "81ee55f15c6d60117aef9899b27d19792309dba19433088d5ee03641ea4b112d"
     },
     {
+      "resource_id": "uupm-style-claymorphism-mobile",
+      "path": "resources/uupm-style-claymorphism-mobile.json",
+      "sha256": "f1f3928e7b782d4a4067b129371a3ad3aed05be4072b2bad8a1f610a643c2887"
+    },
+    {
       "resource_id": "uupm-style-comparative-analysis-dashboard",
       "path": "resources/uupm-style-comparative-analysis-dashboard.json",
       "sha256": "9943d10d68466502133fba104d881665b05f3c4117d8e778b97d809e74e009c9"
@@ -14403,6 +14423,11 @@
       "resource_id": "uupm-style-conversion-optimized",
       "path": "resources/uupm-style-conversion-optimized.json",
       "sha256": "ac7d955377ef46a17eedb1aada3d2900482b329ea91623cf6e9919ae31f66b2a"
+    },
+    {
+      "resource_id": "uupm-style-cyberpunk-mobile-hud",
+      "path": "resources/uupm-style-cyberpunk-mobile-hud.json",
+      "sha256": "097ed1e1dc6d55972abed98d63b644774025dda5f0bbdcc664560dc82cdf9b3c"
     },
     {
       "resource_id": "uupm-style-cyberpunk-ui",
@@ -14440,6 +14465,11 @@
       "sha256": "97c4b01ed952a9f32602e8d6f4a18b490081b08cf49e91d0ebdd4987ebce5883"
     },
     {
+      "resource_id": "uupm-style-enterprise-saas-mobile",
+      "path": "resources/uupm-style-enterprise-saas-mobile.json",
+      "sha256": "e73f03b27ddbaad5a76c533b10b3839a0f2d2f032178e047575f5ea64fcf4ff1"
+    },
+    {
       "resource_id": "uupm-style-exaggerated-minimalism",
       "path": "resources/uupm-style-exaggerated-minimalism.json",
       "sha256": "5c3ca0cdce49ac86fed1a5055fe540a4d534726d31e7ef45415012336e3a5216"
@@ -14468,6 +14498,11 @@
       "resource_id": "uupm-style-flat-design-mobile-touch-first",
       "path": "resources/uupm-style-flat-design-mobile-touch-first.json",
       "sha256": "d13727a3e701464748970249a93dce7c60c61e6c5e8fe59b5c0637e6c8be0b6b"
+    },
+    {
+      "resource_id": "uupm-style-fluent-2",
+      "path": "resources/uupm-style-fluent-2.json",
+      "sha256": "07d67af4781c2ca5b522a3f8e4a25c28dff3c37cbdc515b280ef3e5dc14e7725"
     },
     {
       "resource_id": "uupm-style-gen-z-chaos-maximalism",
@@ -14575,6 +14610,11 @@
       "sha256": "30088ca89bc6648336ee3e161e336d81998a03f7906ce50f3fcd6246e0a54b96"
     },
     {
+      "resource_id": "uupm-style-neo-brutalism-mobile",
+      "path": "resources/uupm-style-neo-brutalism-mobile.json",
+      "sha256": "3363ab5d471e3b447e8df3ab089d26b950b3b12bd9841a929fc10ee7f0916100"
+    },
+    {
       "resource_id": "uupm-style-neubrutalism",
       "path": "resources/uupm-style-neubrutalism.json",
       "sha256": "e6a00895206a398acad194ecba79c37bf2882535d250704db0bc1d6c057446fd"
@@ -14583,6 +14623,11 @@
       "resource_id": "uupm-style-neumorphism",
       "path": "resources/uupm-style-neumorphism.json",
       "sha256": "95b550319e8702c18140dc148482fd54e91fd29870cd76c379fb8f7daff7f7b9"
+    },
+    {
+      "resource_id": "uupm-style-neumorphism-mobile",
+      "path": "resources/uupm-style-neumorphism-mobile.json",
+      "sha256": "454ff8f47e339566d83f1066cd0d8e20f92312c16708f372ff61261895e55304"
     },
     {
       "resource_id": "uupm-style-organic-biophilic",
@@ -14625,6 +14670,16 @@
       "sha256": "eae9c8033647e739a8e2b7fd69c450cc99df2d7da3e155369c86153b2f989156"
     },
     {
+      "resource_id": "uupm-style-shopify-polaris",
+      "path": "resources/uupm-style-shopify-polaris.json",
+      "sha256": "2774918b339cf7f526d460de02edd1440db35d6b811c6dcd87ac5a90108b60f0"
+    },
+    {
+      "resource_id": "uupm-style-sketch-hand-drawn-mobile",
+      "path": "resources/uupm-style-sketch-hand-drawn-mobile.json",
+      "sha256": "935725f6bca334d8702dce6d36c4073b728817e8f8ea0425b2d991a41c944fd9"
+    },
+    {
       "resource_id": "uupm-style-skeuomorphism",
       "path": "resources/uupm-style-skeuomorphism.json",
       "sha256": "926b3519e9d98267f09042d1b77c992e80d33d5383806a5bfaa39605d7e6b268"
@@ -14643,6 +14698,16 @@
       "resource_id": "uupm-style-spatial-ui-visionos",
       "path": "resources/uupm-style-spatial-ui-visionos.json",
       "sha256": "e3eecd2ccb351fba3efa8a7a0a9cb2e3ad1a538b67daf0d5d653a3cb0937a728"
+    },
+    {
+      "resource_id": "uupm-style-spectrum-2",
+      "path": "resources/uupm-style-spectrum-2.json",
+      "sha256": "f84f83ecc061286e2c2e4ffb7351c4659ced478ee99bc8dcb700aba6cc75faa3"
+    },
+    {
+      "resource_id": "uupm-style-spectrum-design-system",
+      "path": "resources/uupm-style-spectrum-design-system.json",
+      "sha256": "cd36e40d3fc8fdcb2dde2b3b94ca79a2eff3fed4e4842e541cac83743c7b53f2"
     },
     {
       "resource_id": "uupm-style-storytelling-driven",

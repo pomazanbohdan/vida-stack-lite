@@ -1,7 +1,83 @@
 # Directory Update Log
 
+## 2026-11-18
+
+* **P0 product test gate — technical closure:** the evidence-backed
+  full `bun run --cwd packages/powers test` gate is green under
+  `TestReceipt/v1` `packages/powers/.tmp/p0-full-proof-r2/receipt.json`
+  (assignment `powers-20261118-p0-full-proof-r2`, HEAD `99c0c1f9`,
+  Bun 1.4.4, seed 20261019): 1,115 pass / 5 skip / 0 fail — 1,120
+  tests across 57 files, 5,563 expectations, 697.34 s, exit 0 — with
+  typecheck (117 files), `format:check`, `check-corpus` (0 issues,
+  2,402 instructions), `check-vector` (52 batches) and `check-okf`
+  (0 failures/warnings) all exit 0 and 20/20 SHA-256 binds matched.
+  The r1 run `.tmp/p0-full-proof/` was red on an
+  `sbvf-admission.test.ts` timeout; scoped timeout fixes strictly
+  preserving assertions (the SBVF test keeps its existing CRLF)
+  produced the green r2. This closes the P0 test gate technically
+  only — it is not H3-L owner acceptance, not a commit and not
+  Runtime acceptance.
+* **Docs refresh:** `docs/next-actions.md` revision 52 refreshed the
+  P0 status/evidence, revised the current H3-L technical/test
+  summaries to cite the P0-r2 suite as the latest full-suite
+  evidence (the red `.tmp/h3l-test.log` stays retained historic
+  evidence), and corrected the H3-K failure attribution in the
+  current queue — `.tmp/h3k-test.log` shows a `module-update.test.ts`
+  hook timeout (6,684.80 ms) plus a `build-manifests.test.ts` CLI
+  timeout (5,013.15 ms) and the post-timeout assertion at
+  `tests/build-manifests.test.ts:1753`, not two build-manifests
+  failures. Prior historic log snapshots are unchanged. H3-L stays
+  prepared/uncommitted/awaiting owner acceptance; catalog rev 8,067
+  (`b0404164…`) / map rev 5,786 (`ca0bb810…`) bindings preserved.
+
+* **H3-L `style` wave-2 owner acceptance + docs closeout:** the owner
+  instruction "Продовжуй розробку" at the explicit combined gate
+  (H3-L acceptance plus staging-only preparation of the first
+  `palette` wave) accepted H3-L rows 76–88 — 13 `uupm-style-*`
+  `VPReferenceResource/v1` records closing `styles.csv` at 88/88
+  admitted, 0 deferred. Bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3L-RECEIPT.md`
+  finalized from `H3L-RECEIPT-DRAFT.md` (kept unchanged as frozen
+  evidence): catalog rev 8,067 (`b0404164…`), map rev 5,786
+  (`ca0bb810…`), 324 typed `resources[]` entries; D18 aggregation
+  13/13 accept — 39/39 verdicts accept, 0 amend/reject/manual;
+  independent deterministic recount ALL CLEAN; hy4-flash-free
+  validation READY 0 findings (draft-reported, no standalone
+  retained artifact). Full suite green under `TestReceipt/v1`
+  `.tmp/p0-full-proof-r2/receipt.json` (SHA-256 `77d33259…f6f0`):
+  1,115 pass / 5 skip / 0 fail, 697.34 s, exit 0; earlier failing
+  runs retained historically. `next-actions.md` revision 53 closes
+  P1 and queues P2: `colors.csv` rows 26–75 preparation is
+  authorized staging-only — no palette wave acceptance inferred;
+  rows 76–192 stay owner-gated. `acceptance.md` revision 25 extends
+  AC-52/AC-54/AC-55 evidence to H3-A–H3-L (324 records, catalog
+  rev 8067); statuses stay `verified (component)`. 167 deferred
+  `colors.csv` rows and wave sizes 50/50/50/17 unchanged. The H3-L
+  product changes remain uncommitted at HEAD `99c0c1f9`; commit and
+  integration are Root-owned. This is component evidence — not
+  delivery or Runtime acceptance.
+
 ## 2026-11-17
 
+* **Task-queue refresh (docs only; no approval):** `docs/next-actions.md`
+  was refreshed to 2026-11-17 with the measured H3-L state and the
+  remaining gates. Live bindings are catalog revision 8,067
+  (`b0404164…`, 2,402 instructions, 324 typed `resources[]` entries) and
+  corpus-map revision 5,786 (`ca0bb810…`). `styles.csv` worktree
+  disposition is 88/88 admitted with H3-L rows 76–88 prepared, while
+  owner-accepted style rows remain 75/88 pending the H3-L owner gate.
+  H2 is owner-accepted with 1,434 rows dispositioned (1,414 admitted /
+  0 deferred / 20 rejected), and H0 baseline reconciliation is complete.
+  The retained full suite `packages/powers/.tmp/h3l-test.log` is red:
+  1,113 pass / 5 skip / 2 fail / 1 error, exit 1 — one unnamed
+  `module-update.test.ts` beforeEach/afterEach hook timeout, one
+  `build-manifests.test.ts` actual-Bun-CLI timeout, and one post-timeout
+  unhandled `expected exitCode 0, received 1` at
+  `tests/build-manifests.test.ts:1753`. The queue now tracks P0
+  test-gate diagnosis, P1 H3-L owner decision/scoped commit, and P2
+  `colors.csv` rows 26–192 in owner-gated waves of 50/50/50/17 with the
+  first wave rows 26–75. No H3-L acceptance, commit, admission or
+  Runtime claim is made.
 * **H3-K `style` wave-1 pilot — implemented, reviewed and
   owner-accepted:** styles.csv rows 26–75 materialized as 50
   `uupm-style-*` `VPReferenceResource/v1` records via the

@@ -24,7 +24,7 @@ sources:
   title: Vida Agent package — Bun package conventions
 generated: { by: codex/gpt-6.1-sol, at: '2026-11-02T11:40:29Z' }
 verified: { by: human:repository-owner, at: '2026-10-19T14:11:01Z' }
-revision: '50'
+revision: '53'
 ---
 
 # Goal and boundaries
@@ -56,17 +56,45 @@ instruction separately authorizes Root to adopt the documents through
 `AGENT.sidecar.md` and `vida-project-profile.json`. Root AGENTS, runtime
 templates/configuration and native host delivery are outside this packet.
 
-## Open task list (refreshed 2026-11-10)
+## Open task list (refreshed 2026-11-18)
 
-A0, A-D, F and the H0 baseline are closed for their bound inputs. H0
-documentation acceptance and `.69` native fixture parity remain open or
-unreconciled. H1 AC-59 is accepted, but AC-47–AC-58 remain open as
-source-admission and packet-sign-off criteria; this is not a code gap. E source
-and skills are implemented, but E5a/E5b host qualification remains open. F is
-closed as Standalone component-only, AC-22 remains partial/deferred, and donor
-update tracking is closed. D59 lossless modules are accepted and the
-3,746 → 1,482 campaign is applied; the module update path is READY. The
-remaining Powers-owned work is:
+Current order and gates:
+
+- **P0 — product test gate (TECHNICALLY CLOSED 2026-11-18).** The
+  evidence-backed full `bun run --cwd packages/powers test` gate is
+  green: `TestReceipt/v1` `.tmp/p0-full-proof-r2/receipt.json`
+  (assignment `powers-20261118-p0-full-proof-r2`, HEAD `99c0c1f9`,
+  Bun 1.4.4, seed 20261019) records 1,115 pass / 5 skip / 0 fail —
+  1,120 tests across 57 files, 5,563 expectations, 697.34 s, exit 0 —
+  with typecheck (117 files), `format:check`, `check-corpus`
+  (`issues: []`, 2,402 instructions), `check-vector` (52 batches) and
+  `check-okf` (`failures: []`, `warnings: []`) all exit 0 and 20/20
+  SHA-256 binds matched. The earlier `.tmp/p0-full-proof/` r1 run was
+  red on an `sbvf-admission.test.ts` timeout; scoped timeout fixes on
+  three tests strictly preserving assertions (the SBVF test keeps its
+  existing CRLF) produced the green r2. This is technical closure of
+  the test gate only — not H3-L owner acceptance, not a commit and
+  not Runtime acceptance.
+- **P1 — H3-L owner gate (CLOSED 2026-11-18).** H3-L rows 76–88 are
+  owner-accepted via bound receipt
+  `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3L-RECEIPT.md`;
+  `styles.csv` is fully dispositioned (88/88 admitted, 0 deferred).
+  The retained failing suite runs stay historic evidence; the green
+  suite is `.tmp/p0-full-proof-r2/` (`TestReceipt/v1`, 1,115 pass /
+  5 skip / 0 fail). Commit and integration remain Root-owned.
+- **P2 — H3 `colors.csv` wave plan (queued).** The 2026-11-18 owner
+  instruction ("Продовжуй розробку" at the combined H3-L/palette gate)
+  authorizes **staging-only preparation** of `colors.csv` rows 26–75
+  (first `palette` wave, 50 records); no palette wave acceptance is
+  inferred. Rows 76–192 (117 records) proceed in later owner-gated
+  waves of 50/50/17. Six unmapped UUPM families and unpinned
+  `poteto-plugins` stay gated.
+
+Parallel open tracks remain: H1 packet/admission ACs versus accepted AC-59;
+E5/Stage 8 native host qualification plus owner metadata/publication channel;
+D19 call-site/execution/notification/SHA wiring follow-up; D16 trial rebind
+deferred; AC-22 partial and the external Agent Knip conflict. Runtime
+acceptance stays outside Powers. The detailed evidence entries follow:
 
 1. **H2-A2 — CSV semantic admission (COMPLETE).** All 1,434 UUPM rows
    have terminal dispositions: **1,414 admitted / 0 deferred /
@@ -212,7 +240,7 @@ remaining Powers-owned work is:
    batches)/`check-okf` all exit 0, Node runtime search/get exit 0
    under Node v26.13.1 with the H2-C receipt, and an independent
    disposition audit clean (1,449 bindings, 0 missing/mismatched
-   receipts). The pinned Knip external conflict remains open (item 17)
+   receipts). The pinned Knip external conflict remains open (item 19)
    and is not claimed PASS.
 4. **H3-A — typed reference resources pilot (ACCEPTED 2026-11-13).**
    The 25-record `font-pairing` pilot is complete and owner-accepted:
@@ -231,7 +259,7 @@ remaining Powers-owned work is:
    pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 115 files,
    format/`check-corpus`/`check-vector`/`check-okf` exit 0, Node
    v26.13.1 resource smoke; the pinned Knip external conflict remains
-   open (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 are
+   open (item 19) and is not claimed PASS. AC-52/AC-54/AC-55 are
    `verified (component)`; AC-50/AC-51/AC-53 and the other H3-family
    criteria stay open.
 5. **H3-B — `palette` typed reference resources pilot (ACCEPTED
@@ -249,7 +277,7 @@ remaining Powers-owned work is:
    format/`check-corpus` (0 issues)/`check-vector`/`check-okf` exit
    0, Node v26.13.1 resource smoke incl. type-mismatch/unknown
    negatives; the pinned Knip external conflict remains open
-   (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   (item 19) and is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope. **Remaining H3 scope (each needs a
    separate owner-approved admission gate):** the other three D15
    resource types (`style`, `icon-list`, `standards-checklist`), the
@@ -280,7 +308,7 @@ remaining Powers-owned work is:
    pass / 5 skip / 0 fail with 100% funcs/lines, typecheck 117
    files, format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
    exit 0; the pinned Knip external conflict remains open
-   (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+   (item 19) and is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope. **Remaining H3 scope (each needs a
    separate owner-approved admission gate):** the other two D15
    resource types (`icon-list`, `standards-checklist`), the
@@ -308,7 +336,7 @@ remaining Powers-owned work is:
    with evidence `h3d-d18/`; gates — `bun test` 1,115 pass / 5
    skip / 0 fail, typecheck 117 files, format/`check-corpus` (0
    issues)/`check-vector`/`check-okf` exit 0; the pinned Knip
-   external conflict remains open (item 17) and is not claimed
+   external conflict remains open (item 19) and is not claimed
    PASS. AC-52/AC-54/AC-55 keep `verified (component)` scope.
    **Remaining H3 scope (each needs a separate owner-approved
    admission gate):** the deferred rows of the five piloted CSVs
@@ -337,7 +365,7 @@ remaining Powers-owned work is:
    with evidence `h3e-d18/`; gates — `bun test` 1,115 pass / 5
    skip / 0 fail, typecheck 117 files, format/`check-corpus` (0
    issues)/`check-vector`/`check-okf` exit 0; the pinned Knip
-   external conflict remains open (item 17) and is not claimed
+   external conflict remains open (item 19) and is not claimed
    PASS. AC-52/AC-54/AC-55 keep `verified (component)` scope.
    **All five D15 resource types are now piloted (182 typed
    resources live).** Remaining H3 scope (each needs a separate
@@ -367,7 +395,7 @@ remaining Powers-owned work is:
    format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
    exit 0, targeted `bun test` 66 pass / 0 fail after the
    D-S8-1-driven `plugin-payload.test.ts` target-list update;
-   the pinned Knip external conflict remains open (item 17) and
+   the pinned Knip external conflict remains open (item 19) and
    is not claimed PASS. AC-52/AC-54/AC-55 keep
    `verified (component)` scope.
    **Remaining H3 scope (each needs a separate owner-approved
@@ -394,7 +422,7 @@ remaining Powers-owned work is:
     format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
     exit 0, full `bun test` 1,115 pass / 5 skip / 0 fail,
     `build-manifests --check` ok; the pinned Knip external
-    conflict remains open (item 17) and is not claimed PASS.
+    conflict remains open (item 19) and is not claimed PASS.
     AC-52/AC-54/AC-55 keep `verified (component)` scope.
     **Remaining H3 scope (each needs a separate owner-approved
     admission gate):** icons.csv rows 76–105 (30 rows — final
@@ -420,7 +448,7 @@ remaining Powers-owned work is:
     format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
     exit 0, full `bun test` 1,115 pass / 5 skip / 0 fail,
     `build-manifests --check` ok; the pinned Knip external
-    conflict remains open (item 17) and is not claimed PASS.
+    conflict remains open (item 19) and is not claimed PASS.
     AC-52/AC-54/AC-55 keep `verified (component)` scope.
     **Remaining H3 scope (each needs a separate owner-approved
     admission gate):** icons.csv rows 76–105 (30 rows — final
@@ -450,7 +478,7 @@ remaining Powers-owned work is:
     1,114 pass / 5 skip / 1 fail where the single failure is
     the known `build-manifests` concurrent-run flake (passes
     standalone); the pinned Knip external conflict remains open
-    (item 17) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+    (item 19) and is not claimed PASS. AC-52/AC-54/AC-55 keep
     `verified (component)` scope.
     **Remaining H3 scope (each needs a separate owner-approved
     admission gate):** the deferred rows of `typography.csv`
@@ -493,7 +521,7 @@ remaining Powers-owned work is:
     `--check` timeout (real check now ~39 s > test budget as the
     corpus grew — test-infrastructure debt, not a product
     defect); the pinned Knip external conflict remains open
-    (item 18) and is not claimed PASS. AC-52/AC-54/AC-55 keep
+    (item 19) and is not claimed PASS. AC-52/AC-54/AC-55 keep
     `verified (component)` scope.
     **Remaining H3 scope (each needs a separate owner-approved
     admission gate):** the deferred rows of `colors.csv` (167)
@@ -502,37 +530,77 @@ remaining Powers-owned work is:
     `landing.csv`, `products.csv`, `ui-reasoning.csv`,
     `google-fonts.csv`); `poteto-plugins` remains unpinned in
     donors.yaml.
-14. **H3-K — `style` wave-1 pilot (ACCEPTED 2026-11-17).**
-    styles.csv rows 26–75 admitted as 50 `uupm-style-*`
-    `VPReferenceResource/v1` records via the `--remainder --limit 50`
-    bounded-wave mode — no code changes (catalog rev 8066
-    `70a451e5…`, map rev 5785 `840f3b26…`; 311 typed
+14. **H3-K/H3-L — `style` waves 1–2 (H3-K ACCEPTED 2026-11-17;
+    H3-L ACCEPTED 2026-11-18).** H3-K rows 26–75 were admitted as 50
+    `uupm-style-*` `VPReferenceResource/v1` records via the
+    `--remainder --limit 50` bounded-wave mode — no code changes
+    (catalog rev 8066 `70a451e5…`, map rev 5785 `840f3b26…`; 311 typed
     resources live). Payload is 28 verbatim string fields mapped
     positionally from styles.csv columns 1–28 (column `No`
     excluded); single styles.csv provenance locator per record.
-    styles.csv now stands at 75 admitted / 13 deferred (rows
-    76–88 — wave-2). Independent hy4-flash-free validation READY
-    0 findings (owner-authorized substitute for the Luna seat);
-    D18 delegated panel: 30 blind reviews (10 batches × 3
-    protocols), aggregation **50/50 accept — 0 amend / 0 reject /
-    0 manual** (no adjudication needed). Five reviewers hit output
-    token limits and were retried script-driven via
-    `h3k-d18/check-batch.ts`; the counted 30 reviews are the
-    successful attempts. Bound receipt
+    Independent hy4-flash-free validation READY 0 findings
+    (owner-authorized substitute for the Luna seat); D18 delegated
+    panel: 30 blind reviews (10 batches × 3 protocols), aggregation
+    **50/50 accept — 0 amend / 0 reject / 0 manual** (no adjudication
+    needed). Five reviewers hit output token limits and were retried
+    script-driven via `h3k-d18/check-batch.ts`; the counted 30 reviews
+    are the successful attempts. Bound receipt
     `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3K-RECEIPT.md`
     with evidence `h3k-d18/`; gates — typecheck 117 files,
     format/`check-corpus` (0 issues)/`check-vector`/`check-okf`
     exit 0, `build-manifests` regenerated + `--check` ok; full
-    `bun test` 1,113 pass / 5 skip / 2 fail / 1 error — the same
-    deterministic `build-manifests.test.ts` default-root
-    `--check` timeout debt as H3-J (test-infrastructure, not a
-    product defect); the pinned Knip external conflict remains
-    open and is not claimed PASS. AC-52/AC-54/AC-55 keep
-    `verified (component)` scope.
-    **Remaining H3 scope (each needs a separate owner-approved
-    admission gate):** the deferred rows of `styles.csv` (13)
-    and `colors.csv` (167) — 180 rows total — and the
-    remaining uupm data families (`charts.csv`, `motion.csv`,
+    `bun test` 1,113 pass / 5 skip / 2 fail / 1 error (1,120 tests,
+    57 files, 503.33 s): the retained `.tmp/h3k-test.log` shows one
+    `tests/module-update.test.ts` unnamed beforeEach/afterEach hook
+    timeout (6,684.80 ms) and one `tests/build-manifests.test.ts`
+    actual-Bun-CLI timeout (5,013.15 ms), plus the post-timeout
+    unhandled `expected exitCode 0, received 1` at
+    `tests/build-manifests.test.ts:1753` — the same retained
+    test-infrastructure debt pattern as H3-J while `--check`
+    itself passes (`ok:true`); not claimed PASS. H3-K keeps
+    AC-52/AC-54/AC-55 `verified (component)` scope.
+    H3-L rows 76–88 were admitted as the final 13 `uupm-style-*`
+    `VPReferenceResource/v1` records via the `--remainder`
+    bounded-wave mode — no code changes (catalog rev 8067
+    `b0404164…`, map rev 5786 `ca0bb810…`; 324 typed resources live;
+    `styles.csv` fully dispositioned 88/88). Payload contract and
+    provenance are identical to H3-K. Independent hy4-flash-free
+    validation READY 0 findings (reported by the draft without a
+    standalone retained artifact); D18 delegated panel evidence in
+    `.tmp/h3l-d18/` has 9 blind reviews (3 batches × 3 protocols)
+    and aggregation **13/13 accept — 39/39 verdicts accept, 0 amend
+    / 0 reject / 0 manual** (one b3-delphi retry after an
+    output-token limit). Deterministic verifiers `.tmp/h3l-verify.ts`
+    and `.tmp/h3l-d18/verify.ts` report ALL CLEAN: 88/88 digests,
+    payload verbatim, manifest/map/disk agreement and 13 wave IDs.
+    Other gates — `typecheck` exit 0 (117 files), `format:check`
+    exit 0, `check-corpus` exit 0 (`issues: []`, 2,402 instructions),
+    `check-vector` exit 0 (52 batches), `check-okf` exit 0,
+    `build-manifests` regenerated all six D-S8-1 formations +
+    `--check` ok:true (Muse catalog readiness remains the pre-existing
+    `MANIFEST_MUSE_CATALOG_NOT_READY`). Full suite:
+    `TestReceipt/v1` `.tmp/p0-full-proof-r2/receipt.json` (SHA-256
+    `77d33259…f6f0`, assignment `powers-20261118-p0-full-proof-r2`,
+    HEAD `99c0c1f9`) records `bun test` 1,115 pass / 5 skip / 0 fail
+    — 1,120 tests, 57 files, 5,563 expectations, 697.34 s, seed
+    20261019, exit 0 — with 20/20 SHA-256 binds matched across the
+    7 modified tracked files and 13 untracked H3-L resources. The
+    earlier `.tmp/h3l-test.log` (1,113 pass / 5 skip / 2 fail /
+    1 error) and `.tmp/p0-full-proof/` r1 stay retained historic
+    evidence. **H3-L is owner-accepted 2026-11-18** via bound receipt
+    `.agent-archive-20261113/work/h2-sbvf-option-b-20261106/H3L-RECEIPT.md`
+    (finalized from `H3L-RECEIPT-DRAFT.md`, which stays preserved
+    unchanged as frozen evidence); the same owner instruction
+    authorized staging-only preparation of `colors.csv` rows 26–75.
+    The product changes were uncommitted at HEAD `99c0c1f9` at
+    evidence freeze; the commit is Root-owned and no commit is
+    claimed here. H3-L keeps AC-52/AC-54/AC-55 `verified (component)`
+    scope; it is not Runtime acceptance. `styles.csv` is fully
+    dispositioned: 88/88 admitted, 0 deferred. Remaining H3 scope
+    (each needs a separate owner-approved admission gate): the
+    deferred rows of `colors.csv` (167; wave-1 rows 26–75
+    preparation authorized staging-only, acceptance still gated)
+    and the remaining uupm data families (`charts.csv`, `motion.csv`,
     `landing.csv`, `products.csv`, `ui-reasoning.csv`,
     `google-fonts.csv`); `poteto-plugins` remains unpinned in
     donors.yaml.
@@ -593,22 +661,30 @@ Closed or removed from the open set: A0; A-D; E1-E4 (E5 host qualification
 remains open); F (component-only, AC-22 partial/deferred); H0 baseline
 (closed at `fafb4015`; `.81` review MET, doc reconciliation done
 2026-11-16);
-H1 AC-59 (accepted, but AC-47–AC-58 remain open); donor update tracking (all 8
+H1 AC-59 (accepted, but AC-47–AC-58 remain open); H2 (owner-accepted;
+1,434 rows dispositioned — 1,414 admitted / 0 deferred / 20 rejected);
+H3-A through H3-L owner-accepted typed-resource waves; the P0 product test gate (technical closure
+2026-11-18, suite evidence `.tmp/p0-full-proof-r2/`); donor update
+tracking (all 8
 donors current, baseline 1,258 files); D59 lossless modules (accepted
 2026-11-08; catalog 3,746 → 1,482, 682 carriers / 2,946 atoms;
 `module-update` READY, AC-91); G (outside Powers).
 
-**Open acceptance gap (not active conversion):** H0 documentation acceptance and
-final native fixture parity on the eight `.69` Markdown paths were reconciled
-on 2026-11-16: `packages/powers/AGENTS.md` §5 and this list now record the H0
-baseline as closed at `fafb4015` per `task-plan-step-h.md`, matching the `.81`
-independent review verdict (cumulative H0 baseline criteria MET; its two Minor
-findings are stale-text items, one in a since-deleted file). F AC-22
-remains partial/deferred: no real finding event or semantic/equivalence
-acceptance is claimed. H1 AC-47–AC-58 remain open until per-source attribution,
-D18 panel/aggregation receipts and the delegated gate path are complete. AC-59
-accepts the 25-file pilot as the D18 baseline; it does not by itself authorize
-H1 conversion.
+**Acceptance notes (not active conversion):** H0 baseline documentation was
+reconciled on 2026-11-16: `packages/powers/AGENTS.md` §5 and this list now
+record the H0 baseline as closed at `fafb4015` per `task-plan-step-h.md`,
+matching the `.81` independent review verdict (cumulative H0 baseline criteria
+MET; its two Minor findings are stale-text items, one in a since-deleted
+file). The `.69` native fixture parity material remains retained evidence,
+not a current queue blocker. F AC-22 remains partial/deferred: no real finding
+event or semantic/equivalence acceptance is claimed. H1 AC-47–AC-58 remain
+open until per-source attribution, D18 panel/aggregation receipts and the
+delegated gate path are complete. AC-59 accepts the 25-file pilot as the D18
+baseline; it does not by itself authorize H1 conversion. H3-L is
+owner-accepted 2026-11-18 (bound `H3L-RECEIPT.md`, catalog rev 8067 /
+map rev 5786); `styles.csv` is fully dispositioned 88/88 admitted,
+0 deferred. The same owner instruction authorized staging-only
+preparation of `colors.csv` rows 26–75; no palette wave is accepted.
 
 ## Historical task list (2026-11-02, superseded by the refreshed open list)
 
@@ -716,7 +792,9 @@ A0 (gate) ──► A harness+skeleton ──► B canonical documents ──►
 | **E** | The source entries `vida-bootstrap` (project-document role bootstrap), `vp-mode` (orchestration) and `vp-setup` (setup) in `skills/`, together with shipped scripts; per-host manifests generated by the package builder; E5a source/schema/fixture implementation; [E5b native layouts and deferred hosts](#delivery-target-status-e5ae5b) | Repeated setup is idempotent; manifests match supported formats, validate rooted skills and ownership, and preserve read-only recovery checks; shipped skill scripts remain runtime-agnostic | M | **in progress** — E1–E3 closed; E4 implemented; the project-document `vida-bootstrap` source entry is complete and included in the three-skill host manifest/installer inventory; host qualification remains open; `.54` formed local Muse/Antigravity fixtures; production inputs/outputs now exist for the six D-S8-1 targets (`--check` clean), `muse-catalog` is descoped from E5b (D-S8-2), and Muse digest proof is no longer pending. The locally verified `.65` review marks `.62` CODE+EVIDENCE READY with no code blocker. `.67` remains `NOT_CLOSED` with `packagePass: false`; `.70` marks it READY only as an evidence baseline. Host installation, publication and Runtime acceptance remain open. |
 | **F** | VP Work Items in `docs/work/` (OKF concepts with stable IDs, AC, evidence); append-only Standalone findings store API, CLI caller, `artifact_contract`, and caller procedure | Query-before-append; exact replay; explicit merge event; scope and no-fix boundaries remain separate | M | **closed 2026-11-02 as Powers Standalone component-only; AC-22 remains partial/deferred** — current package suite (2026-11-02): 839 pass / 4 skip / 0 fail; focused F (2026-11-02): 141 pass / 0 fail / 1,258 assertions across findings, artifacts and catalog-cli. No `findings.jsonl` or `artifacts.jsonl` exists. The following F-specific coverage and typecheck counts are historical for their inputs. Coverage fails unchanged 1.0 thresholds: LCOV F 473/480, L 3991/4038, B 0/0; no statement counter. Uncovered lines: `catalog-cli.ts` 40-42, 138, 142-164, 169-183; `findings.ts` 314, 322-323, 343, 354. Typecheck: 29 files; Knip `issues: []`; corpus: 2,510 instructions / 0 issues; donors: 9 / OK; map/pairs/pair agreement: 0 findings; pair table: 22; fidelity audit: 1,910 divergent lines; OKF: 34 concepts / 0 failures or warnings; Markdown: 5 docs / 44 links / 0 failures. `audit specs` has no canonical JSON spec input. On 2026-10-30 the artifact-reference and findings scope-gate extension added component evidence for AC-20, AC-21 and AC-23; AC-22 remains partial and AC-24 component-only; no real event or host/Runtime acceptance; the 839-test and 34-concept numbers are historical for their inputs. F is Powers Standalone only; VP-7 and Agent runtime data are not F dependencies. VP-7/G are historical Agent-runtime evidence; root reconciliation remains open. Closure decision: the owner closed the F task on 2026-11-02 for Powers Standalone component evidence; AC-22 remains partial, and a real finding event plus semantic/equivalence acceptance remain deferred. AC-20/21/23/24 remain component-only. No Runtime/Agent claim. |
 | **G** | Agent-runtime request for D3+D8 (extended instruction registry + profile reading) | Owned by the Agent runtime developer; not a Powers active task | — | **Out of Powers scope.** The historical `REQ-D3-D8` packet remains retained as handoff evidence, but Powers does not own its sending, admission or runtime implementation. No active handoff, send or Runtime acceptance is claimed in this lane. |
-| **H** | D14/D15 accepted scope, implemented only through the gated phases in [Step H](task-plan-step-h.md): baseline closeout, source-attributed Wondelai method subset, engineering/UX applicability and CSV map, then selected typed JSON resources | H0 current hash-bound gates and review record; H1 complete disposition, source attribution/link and D18 panel evidence; H2 versioned applicability and cell-level evidence; H3 exact-ID, safety and shared-budget evidence | L | **25-file H1 pilot + 1 next-batch file are applied; 321 instructions.** The owner allowed general methods plus selected product/business methods, set a 25-file pilot, moved CSV to H2, admitted no typed families, and replaced the H1 human fidelity/owner-admission loop with three blind Codex Luna reviewers (V3 Delphi, V2 Adversarial, V4 Party chat) plus orchestrator aggregation (D18). Ten held captures contain 602 held units and 57 bounded model comparisons; no complete/admitted source packet is evidenced. The owner approved excluding 60 out-of-carrier copies while preserving 421/30/391 intake accounting. The approved 25-file set (8 engineering / 9 product-UX / 8 business-marketing) is captured, mechanically decomposed into 391 draft units and 4,039 spans, and sealed with 25 selections and 25 `PASS_MECHANICAL_ONLY` receipts in the existing H1 evidence directory; a read-only Luna validation returned READY 0/0/0. The D18 panel then ran six batches × three blind Codex Luna protocols on all 25 files: 391 units → 219 unanimous / 164 majority / 8 manual / 0 unresolved; final 230 accept / 80 amend / 0 merge / 81 reject. The panel decisions artifacts contain 310 final units with 25 selections and 25 `PASS_MECHANICAL_ONLY` checks; every file passed `checkDecomposition`. The main defect is mechanical span width: many units cover only the heading/first line, so the specs must use full-section locators. The eight engineering subsets and seventeen product/design and business files are **applied** (297 instructions; corpus 3,278 instructions, map 3,429, baseline 1,258, catalog revision 7,343). The other 1 file is **not admitted**: no `InstructionSpec`/packet exists for them, and the delegated gate path is implemented, tested and independently reviewed by T3 Codex/Luna (READY 0/0/0). Selected-text disposition for the remaining files, per-source attribution, spec drafts, the 25-file pilot, matched measurement, H2/H3 and Runtime acceptance remain open. Further H1 conversion remains blocked by missing per-source attribution/specs for the remaining files; independent preparation may continue. H1 uses the existing `request-clarification.md` gap routing: missing/technical evidence is an automatic block; ambiguity/conflict asks the owner; attribution is recorded, not inferred; the D18 review is delegated model review, not human fidelity. |
+| **H** | D14/D15 accepted scope, implemented only through the gated phases in [Step H](task-plan-step-h.md): baseline closeout, source-attributed Wondelai method subset, engineering/UX applicability and CSV map, then selected typed JSON resources | H0 current hash-bound gates and review record; H1 complete disposition, source attribution/link and D18 panel evidence; H2 versioned applicability and cell-level evidence; H3 exact-ID, safety and shared-budget evidence | L | **H0 baseline closed; H1 AC-59 accepted with AC-47–AC-58 open; H2 owner-accepted (1,414 admitted / 0 deferred / 20 rejected); H3 typed-resource waves applied through H3-L (`styles.csv` fully
+dispositioned 88/88; `colors.csv` rows 26–75 preparation authorized
+staging-only, acceptance still gated).** The owner allowed general methods plus selected product/business methods, set a 25-file pilot, moved CSV to H2, admitted no typed families, and replaced the H1 human fidelity/owner-admission loop with three blind Codex Luna reviewers (V3 Delphi, V2 Adversarial, V4 Party chat) plus orchestrator aggregation (D18). Ten held captures contain 602 held units and 57 bounded model comparisons; no complete/admitted source packet is evidenced. The owner approved excluding 60 out-of-carrier copies while preserving 421/30/391 intake accounting. The approved 25-file set (8 engineering / 9 product-UX / 8 business-marketing) is captured, mechanically decomposed into 391 draft units and 4,039 spans, and sealed with 25 selections and 25 `PASS_MECHANICAL_ONLY` receipts in the existing H1 evidence directory; a read-only Luna validation returned READY 0/0/0. The D18 panel then ran six batches × three blind Codex Luna protocols on all 25 files: 391 units → 219 unanimous / 164 majority / 8 manual / 0 unresolved; final 230 accept / 80 amend / 0 merge / 81 reject. The panel decisions artifacts contain 310 final units with 25 selections and 25 `PASS_MECHANICAL_ONLY` checks; every file passed `checkDecomposition`. The main defect is mechanical span width: many units cover only the heading/first line, so the specs must use full-section locators. The eight engineering subsets and seventeen product/design and business files are **applied** (297 instructions; corpus 3,278 instructions, map 3,429, baseline 1,258, catalog revision 7,343). The other 1 file is **not admitted**: no `InstructionSpec`/packet exists for them, and the delegated gate path is implemented, tested and independently reviewed by T3 Codex/Luna (READY 0/0/0). Selected-text disposition for the remaining H1 files, per-source attribution, spec drafts and matched measurement remain open; H2 is owner-accepted, H3 continues through owner-gated waves, and Runtime acceptance remains separate. Further H1 conversion remains blocked by missing per-source attribution/specs for the remaining files; independent preparation may continue. H1 uses the existing `request-clarification.md` gap routing: missing/technical evidence is an automatic block; ambiguity/conflict asks the owner; attribution is recorded, not inferred; the D18 review is delegated model review, not human fidelity. |
 
 # Delivery target status (E5a/E5b)
 
@@ -807,11 +885,13 @@ Step H (D14/D15) is tracked as a separate owner-gated scope. H1 source admission
 
 These decisions set scope, not per-source admission. The owner approved the proposed 8/9/8 pilot set on 2026-11-03 for preparation only; it is not admitted. AC-47 to AC-58 stay open until per-source attribution, D18 panel/aggregation receipts and the delegated gate path exist. AC-59 was accepted by the owner on 2026-11-06. H1 preparation may proceed; dependent conversion stays blocked at each packet.
 
-**Step H current state (2026-11-10):** H1 AC-59 is accepted; the 25-file pilot is the accepted baseline for scaling the D18 admission method. The H2 contract is approved and tracked as [D56](decisions/D56-h2-contract.md). All 8 H2 Markdown families are admitted as source admission only, 98 instructions total. H2 implementation covers the v2 schemas, applicability, CSV intake, fidelity validation, CLI context flags and the applicator; Node runtime evidence is recorded and Deno is excluded by owner decision. The H2-B coverage gate is closed at 100% functions and lines. The H2-A source gate is closed: donor `uupm` is pinned at `56ea9cf1`, 24 CSVs are allowlisted and all 1,434 rows are mapped. 481 UX/performance/stack rows are admitted (99 non-Mobile KEEP_ATOMIC, 7 Mobile KEEP_ATOMIC, 44 react-performance, 107 KEEP_ATOMIC react/react-native stack, 211 KEEP_ATOMIC angular/astro/avalonia/flutter stack rows and 13 SPLIT rows materialized as singletons) with delegated D18 receipts; 944 rows remain deferred and 9 stack rows are rejected as duplicates. `Touch Target Size` is resolved by SPLIT; `Readable Font Size` stays held pending an owner-approved `mobile` applicability token. The SPLIT contract is implemented in Source (D56 amendment, v3 map/v2 receipt shape, validator tests) and the live map is `VPCorpusMap/v3`; the v3 migration and all 12 prepared SPLIT rows are applied (batch 34; catalog 1,515). The remaining 8 stack SPLIT rows plus 935 undispositioned stack rows are still open. CSV semantic admission for the remaining rows and H2 acceptance remain open. H3 remains gated by H2 acceptance. H2 does not inherit H1 acceptance.
+**Step H current state (2026-11-18):** H0 baseline reconciliation is complete; H1 AC-59 is accepted while AC-47–AC-58 remain open as source-admission/packet criteria. H2 is owner-accepted: donor `uupm` is pinned at `56ea9cf1`, all 1,434 CSV rows are dispositioned (1,414 admitted / 0 deferred / 20 rejected), and H2 does not inherit H1 acceptance. H3 typed-resource waves are live: `app-interface.csv`, `icons.csv`, `typography.csv` and `styles.csv` are fully dispositioned through H3-L (88/88 admitted); `colors.csv` rows 26–75 preparation is authorized staging-only by the 2026-11-18 owner instruction, with rows 76–192 and wave acceptance still owner-gated as the next H3 scope; six unmapped UUPM families and unpinned `poteto-plugins` stay gated. Runtime acceptance remains separate.
 
 # Key decisions of the queue
 
-- **Current package gate state (2026-11-10):** the owner-selected Powers pin is Bun 1.4.4. The canonical package suite records 995 passed, five expected Windows skips, zero failures; strict typecheck passes; the corpus check reports 1,515 catalog carriers with zero issues, of which 682 are modules holding 2,946 atoms, 332 are non-CSV singletons and 501 are CSV entries; catalog revision 8,036; corpus map 5,755 (3,429 records, `VPCorpusMap/v3`) with 502 CSV bindings and matching fidelity receipts; baseline 9 donors / 1,258 files; OKF and documentation checks pass. The coverage gate passes at 100.00% functions and 100.00% lines under the unchanged 1.0 threshold. The 2026-11-06 retrieval hardening adds relevance-ranked `tags --query`, `confidence`/`runnerUp`/`patternSource`, an `ambiguous:` line, `search --for --strict` exit 3, a discovery-only note and English/Ukrainian requirements aliases; the benchmark holds 68 recorded cases plus one split-intent ambiguity case. H2-A2 has 481 admitted CSV rows (99 non-Mobile KEEP_ATOMIC, 7 Mobile, 44 react-performance, 107 react/react-native stack, 211 angular/astro/avalonia/flutter stack and 13 SPLIT rows), 944 deferred rows (943 stack + 1 held UX) and 9 rejected duplicate rows. The 2026-11-09 module update path adds prepared plan/apply/verify/rollback for a changed packaged atom with AC-91 component evidence. The 2026-11-10 H2-A2 work adds the exact code-point subspan contract (v3 map/v2 receipt shapes, validator tests), the v3 migration and the owner-approved staged SPLIT apply (batch 34: 31 singletons). These are component evidence only. The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
+- **Current package gate state (2026-11-18):** the owner-selected Powers pin is Bun 1.4.4. The live catalog is revision 8,067 (`b0404164…`) with 2,402 instructions and 324 typed `resources[]` entries; corpus map revision 5,786 (`ca0bb810…`). Focused product gates reported for the H3-L worktree are green: strict typecheck (117 files), `format:check`, `check-corpus` (`issues: []`, 2,402 instructions), `check-vector`, `check-okf` (`failures: []`, `warnings: []`) and `build-manifests --check` (`ok:true`; Muse catalog readiness remains the pre-existing `MANIFEST_MUSE_CATALOG_NOT_READY`). The product test gate is technically closed 2026-11-18: `.tmp/p0-full-proof-r2/` (`TestReceipt/v1`, assignment `powers-20261118-p0-full-proof-r2`, HEAD `99c0c1f9`, Bun 1.4.4, seed 20261019) records `bun run --cwd packages/powers test` 1,115 pass / 5 skip / 0 fail — 1,120 tests / 57 files / 5,563 expectations / 697.34 s, exit 0 — with typecheck, format, corpus, vector and OKF checks all exit 0 and 20/20 SHA-256 binds matched. The earlier r1 run `.tmp/p0-full-proof/` was red on an `sbvf-admission.test.ts` timeout; scoped timeout fixes strictly preserving assertions closed it. The earlier red `.tmp/h3l-test.log` (module-update hook timeout, build-manifests CLI timeout, post-timeout assertion at `tests/build-manifests.test.ts:1753`) remains retained historic evidence. H3-L owner acceptance closed
+2026-11-18 via the bound `H3L-RECEIPT.md`; the wave commit and
+integration remain Root-owned. H2 is owner-accepted with 1,434 rows dispositioned (1,414 admitted / 0 deferred / 20 rejected). The repository `lint:knip:pinned` gate remains **not green**: it exits 1 with JSON `issues: []` and a config hint for the Agent `knip.config.ts` self-entry. Removing that entry fixes the pinned gate but makes the pre-commit hook report the config file as unused; the entry is restored. This is an unresolved external gate conflict, not a Powers PASS. Earlier test and coverage receipts remain historical for their inputs. F caller qualification, real donor admission, delivery and Runtime acceptance remain separate open gates.
 
 - **B before C:** the S-documents fix the contract of `catalog.*` and of the profile; the code implements
   an already approved contract, not an assumption.

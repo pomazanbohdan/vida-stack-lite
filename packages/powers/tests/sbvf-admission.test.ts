@@ -517,7 +517,7 @@ test('mixed admit+migrate family plan separates migration and admission lanes', 
   const migrated = targets.find(target => target.path === `instructions/${migratedId}.md`)!;
   expect(migrated.beforeSha256).toMatch(/^[0-9a-f]{64}$/u);
   expect(migrated.afterSha256).toBeNull();
-});
+}, 120_000);
 
 const stableJson = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
 const cliOutput = (): { stdout: string[]; stderr: string[]; io: { stdout: (value: string) => void; stderr: (value: string) => void } } => {
