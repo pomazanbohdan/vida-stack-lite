@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8072,
+  "revision": 8073,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-18T20:59:20.983Z",
+  "updated_at": "2026-11-18T22:23:17.613Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -14375,6 +14375,11 @@
       "sha256": "cacd05b02d045530b2e5161fcda86e3436485f82920b35fa14455d656f2f6cdd"
     },
     {
+      "resource_id": "uupm-palette-feature-flag-config-management",
+      "path": "resources/uupm-palette-feature-flag-config-management.json",
+      "sha256": "3975336665af2e36a8b45ae67d1750f0d936df2abb3e646d4a3d397822011df4"
+    },
+    {
       "resource_id": "uupm-palette-file-manager-transfer",
       "path": "resources/uupm-palette-file-manager-transfer.json",
       "sha256": "f6f6e09dfd6df38c98bb2964fcad23db130e490ed58860cd21a9dd14d5f37e39"
@@ -14435,9 +14440,19 @@
       "sha256": "b56eb0d6bbc8f1746196d63f462b2e2c7e03ae195f593ba9258a0b91c8148237"
     },
     {
+      "resource_id": "uupm-palette-government-portal-civic-services",
+      "path": "resources/uupm-palette-government-portal-civic-services.json",
+      "sha256": "1b87337096dc42f8b9ee92b9ddae3750aff1e07f4facccbf1557966111007648"
+    },
+    {
       "resource_id": "uupm-palette-government-public-service",
       "path": "resources/uupm-palette-government-public-service.json",
       "sha256": "f45583357b7625ae70193dc5fff8f438882181b28aa7aa4ddcd1f41712bd1e63"
+    },
+    {
+      "resource_id": "uupm-palette-grant-funding-portal",
+      "path": "resources/uupm-palette-grant-funding-portal.json",
+      "sha256": "a7267ea8de15e503768d083c862fcea182b94c09fa70feb82e7d3afa1d9914e4"
     },
     {
       "resource_id": "uupm-palette-grocery-shopping-list",
@@ -14523,6 +14538,11 @@
       "resource_id": "uupm-palette-link-in-bio-page-builder",
       "path": "resources/uupm-palette-link-in-bio-page-builder.json",
       "sha256": "a86ae964238053cba414baa983b8c5e3bb4cec6a4a465344ec8cba7f8d03aa93"
+    },
+    {
+      "resource_id": "uupm-palette-lms-learning-management-system",
+      "path": "resources/uupm-palette-lms-learning-management-system.json",
+      "sha256": "d6d18cceb387a8a4be322f0672e797fa288d8683a6e41ec1a7a46e00b28cab5d"
     },
     {
       "resource_id": "uupm-palette-local-events-discovery",
@@ -14635,6 +14655,11 @@
       "sha256": "38d3a473ae6102861b4898d6cff7acb07e220de74bcd3287882aa3b829a15f23"
     },
     {
+      "resource_id": "uupm-palette-no-code-low-code-builder",
+      "path": "resources/uupm-palette-no-code-low-code-builder.json",
+      "sha256": "a771659fb3aa45cb9bc40e59c17b8f4254a6786084ba9f188a6922de2700463e"
+    },
+    {
       "resource_id": "uupm-palette-non-profit-charity",
       "path": "resources/uupm-palette-non-profit-charity.json",
       "sha256": "39c688b83d87b9d90b3aaa4b1fef8d8393a0e78b7591658c2d5bf00c746cc6d9"
@@ -14650,6 +14675,11 @@
       "sha256": "ebdb768c5130f76479152aeb60a4a0a0afd345ee3aa6142b14d655f122ba8b60"
     },
     {
+      "resource_id": "uupm-palette-open-source-project-landing",
+      "path": "resources/uupm-palette-open-source-project-landing.json",
+      "sha256": "6f1c9b3ad5460d7da85c4d62be2bedbf9a3aee7ab745cbef3e7d4ee0264727d2"
+    },
+    {
       "resource_id": "uupm-palette-parenting-baby-tracker",
       "path": "resources/uupm-palette-parenting-baby-tracker.json",
       "sha256": "05ba2b91180c93ee94c1455cd1efadd60d303d87f4a6908f29b492af43479f61"
@@ -14663,6 +14693,16 @@
       "resource_id": "uupm-palette-password-manager",
       "path": "resources/uupm-palette-password-manager.json",
       "sha256": "951ae3d3c531efa2c65209992ee3eeb3c9a96e8af1f9175ec9c4ef8d2497f75c"
+    },
+    {
+      "resource_id": "uupm-palette-patent-ip-database",
+      "path": "resources/uupm-palette-patent-ip-database.json",
+      "sha256": "277c0fe059f4139b1e2ab1ac5d8bbe7ea2aa6a012708d9a277607a51f87b3f50"
+    },
+    {
+      "resource_id": "uupm-palette-patient-portal-health-records",
+      "path": "resources/uupm-palette-patient-portal-health-records.json",
+      "sha256": "7658e48f894bcc3903283d9c8407fb7f1ebba7376e06765b63374611523f7a41"
     },
     {
       "resource_id": "uupm-palette-period-cycle-tracker",
@@ -14720,6 +14760,11 @@
       "sha256": "1b5b5e30ae9c78e871e9be7de9a154c9509598122b44ae64b46f7a333c8c7ac6"
     },
     {
+      "resource_id": "uupm-palette-q-a-community-platform",
+      "path": "resources/uupm-palette-q-a-community-platform.json",
+      "sha256": "76dc3ec63a0919f93560165f3c29efca2a6806b3d3a86d4629f877227fe4ff4a"
+    },
+    {
       "resource_id": "uupm-palette-quantum-computing-interface",
       "path": "resources/uupm-palette-quantum-computing-interface.json",
       "sha256": "68e9af6db5f5deaff1fc114105d6fe60fa127547e76106c6c48fdd5f554a7f20"
@@ -14740,9 +14785,24 @@
       "sha256": "ee882aaa19bc006b90243b9e9ab69e2855f42f3dfa4f65007a4797dad02b0bfb"
     },
     {
+      "resource_id": "uupm-palette-research-lab-university-department",
+      "path": "resources/uupm-palette-research-lab-university-department.json",
+      "sha256": "03e03606b394768171cf87874f6033daf99e4b29bfda7cee785c7151668ca919"
+    },
+    {
       "resource_id": "uupm-palette-restaurant-food-service",
       "path": "resources/uupm-palette-restaurant-food-service.json",
       "sha256": "4817a420204e98c43a7e6f869fe616245a1f694ff528f37c2888ab7b1fc1d0a9"
+    },
+    {
+      "resource_id": "uupm-palette-resume-cv-builder",
+      "path": "resources/uupm-palette-resume-cv-builder.json",
+      "sha256": "e96461e05feed02f9841e8d5ff48250faa906bbe3372533a29a5743d3c16a7e9"
+    },
+    {
+      "resource_id": "uupm-palette-review-platform",
+      "path": "resources/uupm-palette-review-platform.json",
+      "sha256": "8d51841338d4641e144acc008a50cafe0b1ac167330af97b99cb280707512166"
     },
     {
       "resource_id": "uupm-palette-ride-hailing-transportation",
@@ -14753,6 +14813,11 @@
       "resource_id": "uupm-palette-road-trip-planner",
       "path": "resources/uupm-palette-road-trip-planner.json",
       "sha256": "f39d3b8c55328adaf836355f9d276fb215f0a8c77c3fbca5231d0155523423ba"
+    },
+    {
+      "resource_id": "uupm-palette-rpa-automation-dashboard",
+      "path": "resources/uupm-palette-rpa-automation-dashboard.json",
+      "sha256": "be98902b89006f65cdd3e24684f85aa979ab38c36e177277e485263dc3b9c02b"
     },
     {
       "resource_id": "uupm-palette-running-cycling-gps",
@@ -14825,14 +14890,34 @@
       "sha256": "52549f225874fa227b4c150f0d7b8cec01dad5919947246e2fae8ca766af727d"
     },
     {
+      "resource_id": "uupm-palette-survey-form-builder",
+      "path": "resources/uupm-palette-survey-form-builder.json",
+      "sha256": "4d3e77d6ceddbda3baf453285dc52b3143d0d509293adf335e1ef79b3019ca33"
+    },
+    {
       "resource_id": "uupm-palette-sustainable-energy-climate-tech",
       "path": "resources/uupm-palette-sustainable-energy-climate-tech.json",
       "sha256": "3c7306722d5a6f59ea7b71ad3713b045ee91877ebdb846dd139de028220d2184"
     },
     {
+      "resource_id": "uupm-palette-telemedicine-platform",
+      "path": "resources/uupm-palette-telemedicine-platform.json",
+      "sha256": "24013c30ce85ef75b226c2ab818d5de6ed04a12a8c6425e5997212a2aba7526e"
+    },
+    {
+      "resource_id": "uupm-palette-testimonial-social-proof-widget",
+      "path": "resources/uupm-palette-testimonial-social-proof-widget.json",
+      "sha256": "329c135de651385570fae9f7456ab27f79ec781670c732d57096c4f63ab8bdc7"
+    },
+    {
       "resource_id": "uupm-palette-theater-cinema",
       "path": "resources/uupm-palette-theater-cinema.json",
       "sha256": "a4c3133fb7d618096ab8a52ef761c3deaa990a0088c3b5bbb51a02ecedb5502d"
+    },
+    {
+      "resource_id": "uupm-palette-ticketing-box-office",
+      "path": "resources/uupm-palette-ticketing-box-office.json",
+      "sha256": "6fc15753d9c1db576a2e61ded0d012d87f84e88898af2d2240acb68596af7b34"
     },
     {
       "resource_id": "uupm-palette-timer-pomodoro",

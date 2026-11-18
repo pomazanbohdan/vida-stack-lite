@@ -1,6 +1,43 @@
 # Directory Update Log
 
-## 2026-11-18
+## 2026-11-19
+
+* **H3-R palette wave-6 apply + docs-only closeout (apply
+  evidence; docs only beyond the 19 data paths):**
+  `docs/next-actions.md` revision 63 and
+  `docs/acceptance.md` revision 34 record the validated state on
+  top of the earlier 2026-11-18 entries; the H3-Q commit
+  `7ea0f900` (`powers: apply the approved H3-Q palette
+  selection`) is now recorded. H3-R `colors.csv` rows 176–192
+  (CSV data rows; physical lines 177–193) was owner-approved via
+  the native user approval
+  (`packages/powers/.tmp/h3r-r17-apply-evidence/owner-approval.json`
+  SHA-256 `4d3a851e…`, captured before the write; distinct named
+  records sharing equal color tuples retained per approval),
+  applied once via
+  `materialize-resources.ts --family palette --remainder --limit
+  17 --stage .tmp/h3r-palette-wave-6-r17 --apply` — no code
+  changes: live catalog rev 8,073 (`86248344…`, 491 typed
+  resources) / map rev 5,792 (`a0384aa1…`), `colors.csv` 192
+  admitted / 0 deferred — fully dispositioned. D18 r17
+  aggregation `1022c7b9…` 51/51 accept across 4 shards × 3
+  protocols (five within-wave and seven cross-wave equal-tuple
+  observations kept as distinct records). Apply result
+  `packages/powers/.tmp/h3r-r17-apply-evidence/result.json`
+  SHA-256 `052badd4…` binds approval, aggregate, live
+  envelope/file hashes, dispositions and scope; preflight
+  `PREFLIGHT_OK` and post-verify `POSTVERIFY_OK` recorded;
+  exactly 19 Powers data paths changed (catalog, map, 17
+  resources; allowlist unchanged `1a437313…`); 22 paths total
+  with the three reconciled docs. The final wave closes
+  `colors.csv`. AC-52 keeps `verified (component)` at 491 records /
+  catalog rev 8073; AC-54/AC-55 stay H3-A–H3-N; all other AC
+  statuses unchanged. The frozen H3-R package receipt
+  `.tmp/h3r-package-closeout/receipt.json` (`320261b0…`) records
+  1,152 tests passed, 5 skipped, 0 failed, with 100% line and
+  function coverage. Typecheck, manifest build/check (9,400
+  outputs), corpus, vector, OKF, doc links and diff checks passed.
+  Runtime acceptance remains a separate gate.
 
 * **H3-Q palette wave-5 apply + docs-only closeout (apply
   evidence; docs only beyond the 27 data paths):**
