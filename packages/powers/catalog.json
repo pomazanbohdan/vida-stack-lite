@@ -1,9 +1,9 @@
 {
   "schema": "VPCatalog/v1",
   "catalog_id": "vida-powers",
-  "revision": 8069,
+  "revision": 8070,
   "source_revision": "c0eb285f53f5450bd7454f0d0452268830cf18aa",
-  "updated_at": "2026-11-18T11:01:41.059Z",
+  "updated_at": "2026-11-18T15:11:01.385Z",
   "tag_dictionary": {
     "capability": {
       "write-tests-first": "Starts a behaviour change by verifying the expected result.",
@@ -14060,9 +14060,19 @@
       "sha256": "89d2a54b224199bd05972847f76706f9488478886ac5e09186888599391043e0"
     },
     {
+      "resource_id": "uupm-palette-alarm-world-clock",
+      "path": "resources/uupm-palette-alarm-world-clock.json",
+      "sha256": "dfed77bcfbc2a85f9690d6cacaec9efa4e1883cca435b1b78de7cb63ce9ef13a"
+    },
+    {
       "resource_id": "uupm-palette-analytics-dashboard",
       "path": "resources/uupm-palette-analytics-dashboard.json",
       "sha256": "1f22db4b1e1894e650e1929d2b47b6a055cbc7f0378322d51dbda9e5ffbb4e15"
+    },
+    {
+      "resource_id": "uupm-palette-arcade-retro-game",
+      "path": "resources/uupm-palette-arcade-retro-game.json",
+      "sha256": "1b9219984499f25c6bc3decc815272a0d6438496b60b71c3465e77be16b69bcc"
     },
     {
       "resource_id": "uupm-palette-architecture-interior",
@@ -14110,9 +14120,39 @@
       "sha256": "f79937fa2f8518c9fe7c0dcdcbd948dba7f2bcae9b293de7f846c91bf6e4d5bb"
     },
     {
+      "resource_id": "uupm-palette-booking-appointment-app",
+      "path": "resources/uupm-palette-booking-appointment-app.json",
+      "sha256": "e51a840a3fa64ffb69658a108ea4b95de3a25b3c364541aa1147fd916a33c6ff"
+    },
+    {
+      "resource_id": "uupm-palette-bookmark-read-later",
+      "path": "resources/uupm-palette-bookmark-read-later.json",
+      "sha256": "f99e0227e34d92095b77e51322d4986df17d9f5a82ebeaf2d39c3b649a276bda"
+    },
+    {
       "resource_id": "uupm-palette-brewery-winery",
       "path": "resources/uupm-palette-brewery-winery.json",
       "sha256": "6487f594362a76837e9606c2b733d81a3f7056e0fc0004da476870b7ed8a286d"
+    },
+    {
+      "resource_id": "uupm-palette-calculator-unit-converter",
+      "path": "resources/uupm-palette-calculator-unit-converter.json",
+      "sha256": "45638edf5aa5a32bdc8b218da3d45de7cc19afa3622d9b0f06e38feca6dcefb2"
+    },
+    {
+      "resource_id": "uupm-palette-calendar-scheduling-app",
+      "path": "resources/uupm-palette-calendar-scheduling-app.json",
+      "sha256": "3975b925a364f99ed6494d92ee8b0af70a9a91250d9c3c3798d48a48f570091a"
+    },
+    {
+      "resource_id": "uupm-palette-card-board-game",
+      "path": "resources/uupm-palette-card-board-game.json",
+      "sha256": "19910fe219cc7193693ccbc2e95d40dfad598f1d41507200d7abdbf11e2230a6"
+    },
+    {
+      "resource_id": "uupm-palette-casual-puzzle-game",
+      "path": "resources/uupm-palette-casual-puzzle-game.json",
+      "sha256": "e0765f78c2ec6d934367144551e48277339fa83fffc6ee8c79180996e6cc4199"
     },
     {
       "resource_id": "uupm-palette-chat-messaging-app",
@@ -14153,6 +14193,11 @@
       "resource_id": "uupm-palette-creator-economy-platform",
       "path": "resources/uupm-palette-creator-economy-platform.json",
       "sha256": "98ec3f8e4d79523ae70a341e5c9b6e0995961b9264ccdc930651f7ca22d77e8b"
+    },
+    {
+      "resource_id": "uupm-palette-crm-client-management",
+      "path": "resources/uupm-palette-crm-client-management.json",
+      "sha256": "faa65c2149723db3e88fbc73075536fc441c295c5c9dc8dc5cec490613167fd6"
     },
     {
       "resource_id": "uupm-palette-cybersecurity-platform",
@@ -14205,6 +14250,11 @@
       "sha256": "524dc12947e5bf1f18bc0500554bb31839ba5b5a71a19d3134a4043425442fe3"
     },
     {
+      "resource_id": "uupm-palette-email-client",
+      "path": "resources/uupm-palette-email-client.json",
+      "sha256": "90ef14fd785e2de71b9f0b39c357a27650d0c815a3cb313ce65751babfe5b135"
+    },
+    {
       "resource_id": "uupm-palette-ev-charging-ecosystem",
       "path": "resources/uupm-palette-ev-charging-ecosystem.json",
       "sha256": "a8a3b5edfb33ea252526057da01da978184d1c6e1bdc25b66729140326fec8aa"
@@ -14213,6 +14263,16 @@
       "resource_id": "uupm-palette-event-management",
       "path": "resources/uupm-palette-event-management.json",
       "sha256": "c7c76717c332992a3aac287548a7be52131257584045eb99194369edadc5759c"
+    },
+    {
+      "resource_id": "uupm-palette-expense-splitter-bill-split",
+      "path": "resources/uupm-palette-expense-splitter-bill-split.json",
+      "sha256": "7a21c7fad073bfa1e00854a615d43de7b60713de4f3489695aa6101ff6fd4d24"
+    },
+    {
+      "resource_id": "uupm-palette-file-manager-transfer",
+      "path": "resources/uupm-palette-file-manager-transfer.json",
+      "sha256": "f6f6e09dfd6df38c98bb2964fcad23db130e490ed58860cd21a9dd14d5f37e39"
     },
     {
       "resource_id": "uupm-palette-financial-dashboard",
@@ -14228,6 +14288,11 @@
       "resource_id": "uupm-palette-fitness-gym-app",
       "path": "resources/uupm-palette-fitness-gym-app.json",
       "sha256": "b13992542ae8a77a1486053d48cc82679bfc33188afd02f7145461a5554cf74f"
+    },
+    {
+      "resource_id": "uupm-palette-flashcard-study-tool",
+      "path": "resources/uupm-palette-flashcard-study-tool.json",
+      "sha256": "89ec5e94fea4468664035544c1a88c327cd80360a95097fb8ae283e4af4a4584"
     },
     {
       "resource_id": "uupm-palette-florist-plant-shop",
@@ -14260,6 +14325,11 @@
       "sha256": "f45583357b7625ae70193dc5fff8f438882181b28aa7aa4ddcd1f41712bd1e63"
     },
     {
+      "resource_id": "uupm-palette-grocery-shopping-list",
+      "path": "resources/uupm-palette-grocery-shopping-list.json",
+      "sha256": "0340e5d0fa9ff28a5eecc9d9a5a0e17d8e22abe7aff10a4f70aedd784999dfcf"
+    },
+    {
       "resource_id": "uupm-palette-habit-tracker",
       "path": "resources/uupm-palette-habit-tracker.json",
       "sha256": "3f6bdc27003d44d34c9be14c14973af6b9254434da13d5f66289ec1ca437f73a"
@@ -14285,9 +14355,24 @@
       "sha256": "e3211501b47bcbca0021b9a9773b2f4753e76a3ef716943a3dd8c8eafa8aeb8a"
     },
     {
+      "resource_id": "uupm-palette-idle-clicker-game",
+      "path": "resources/uupm-palette-idle-clicker-game.json",
+      "sha256": "cd7a2732df6c16b20752fdde0588d04c64322d3b2936a263c73b9f7ee5461c62"
+    },
+    {
       "resource_id": "uupm-palette-insurance-platform",
       "path": "resources/uupm-palette-insurance-platform.json",
       "sha256": "79c4718a481ff909a09c7b5af235ce5ff3ec80dba50fee71671fd30bfc168ba3"
+    },
+    {
+      "resource_id": "uupm-palette-inventory-stock-management",
+      "path": "resources/uupm-palette-inventory-stock-management.json",
+      "sha256": "5e9695589e5ffe39942395404703ba59a47a9d9facbf1249f7afa5fac3c82c65"
+    },
+    {
+      "resource_id": "uupm-palette-invoice-billing-tool",
+      "path": "resources/uupm-palette-invoice-billing-tool.json",
+      "sha256": "9b85f4d5fdda66568d5e52a3a9baf6e6d3a60411f149b3684d1b1aadd9d41f08"
     },
     {
       "resource_id": "uupm-palette-job-board-recruitment",
@@ -14405,6 +14490,16 @@
       "sha256": "ebdb768c5130f76479152aeb60a4a0a0afd345ee3aa6142b14d655f122ba8b60"
     },
     {
+      "resource_id": "uupm-palette-parenting-baby-tracker",
+      "path": "resources/uupm-palette-parenting-baby-tracker.json",
+      "sha256": "05ba2b91180c93ee94c1455cd1efadd60d303d87f4a6908f29b492af43479f61"
+    },
+    {
+      "resource_id": "uupm-palette-password-manager",
+      "path": "resources/uupm-palette-password-manager.json",
+      "sha256": "951ae3d3c531efa2c65209992ee3eeb3c9a96e8af1f9175ec9c4ef8d2497f75c"
+    },
+    {
       "resource_id": "uupm-palette-personal-finance-tracker",
       "path": "resources/uupm-palette-personal-finance-tracker.json",
       "sha256": "d0354465b57c6b29547b096f949d31f93c3c9855061a5138afa94100da207afd"
@@ -14475,6 +14570,11 @@
       "sha256": "72befaadab418c007b85b4ffaebcabcc2c6130d2e9c1f1e287a92555136eeebc"
     },
     {
+      "resource_id": "uupm-palette-scanner-document-manager",
+      "path": "resources/uupm-palette-scanner-document-manager.json",
+      "sha256": "82b3d1c042055d768dd0c58a46b6c6d7d5f40b87c2126029cbffba08fc64b72a"
+    },
+    {
       "resource_id": "uupm-palette-senior-care-elderly",
       "path": "resources/uupm-palette-senior-care-elderly.json",
       "sha256": "b9e3bf395a35d741760a76218a81f1e764f84ce825f9b4c839c2bfec9bdd8105"
@@ -14520,9 +14620,24 @@
       "sha256": "a4c3133fb7d618096ab8a52ef761c3deaa990a0088c3b5bbb51a02ecedb5502d"
     },
     {
+      "resource_id": "uupm-palette-timer-pomodoro",
+      "path": "resources/uupm-palette-timer-pomodoro.json",
+      "sha256": "184884660ed6aa012af760d7c88afba2dad4f858abeab9f35f0f470eb956e18f"
+    },
+    {
+      "resource_id": "uupm-palette-translator-app",
+      "path": "resources/uupm-palette-translator-app.json",
+      "sha256": "1ccfcd34a55cd5469151c1653e857e20d5c53ad5216297fd4de82f248ee34cfd"
+    },
+    {
       "resource_id": "uupm-palette-travel-tourism-agency",
       "path": "resources/uupm-palette-travel-tourism-agency.json",
       "sha256": "9638f3eb66fc75a301a946a1f37701db7543a1b24f71c4040848ef2a8477e7f4"
+    },
+    {
+      "resource_id": "uupm-palette-trivia-quiz-game",
+      "path": "resources/uupm-palette-trivia-quiz-game.json",
+      "sha256": "7d94140586571b2f69c7ca4ed85c306ac667390c1793290cf0b2a9d35313a4d2"
     },
     {
       "resource_id": "uupm-palette-veterinary-clinic",
@@ -14535,6 +14650,11 @@
       "sha256": "624b161751bfeb1090ccd17d0ebbb06f113a81ce0be7178aaf1719df11b52d80"
     },
     {
+      "resource_id": "uupm-palette-voice-recorder-memo",
+      "path": "resources/uupm-palette-voice-recorder-memo.json",
+      "sha256": "2b61d6d2af571372e5544c12cfaf74cc6bf9a1f631d41e6b7d086d69da293866"
+    },
+    {
       "resource_id": "uupm-palette-weather-app",
       "path": "resources/uupm-palette-weather-app.json",
       "sha256": "a050565bb16a8000b02bd634a9878a37484f5c18458c9d6857618af94405fa83"
@@ -14543,6 +14663,11 @@
       "resource_id": "uupm-palette-wedding-event-planning",
       "path": "resources/uupm-palette-wedding-event-planning.json",
       "sha256": "0367b4063da4be26881140ff4a07c95db8dbfbc3795660141261a7923b1dc467"
+    },
+    {
+      "resource_id": "uupm-palette-word-crossword-game",
+      "path": "resources/uupm-palette-word-crossword-game.json",
+      "sha256": "ba35ee0f0835dbbec60b1aec4bad233d9947182fc50c3008b95bc8fd7ca93dc7"
     },
     {
       "resource_id": "uupm-standard-accessibility-decorative-icons",

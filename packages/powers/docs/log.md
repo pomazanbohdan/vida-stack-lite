@@ -2,6 +2,39 @@
 
 ## 2026-11-18
 
+* **Docs-only closeout — H3-O palette wave-3 apply (docs only; no
+  approval):** `docs/next-actions.md` revision 60 and
+  `docs/acceptance.md` revision 31 record the validated state on top
+  of the earlier 2026-11-18 entries. H3-O `colors.csv` rows 101–125
+  (CSV data rows; physical lines 102–126) was owner-approved
+  ("Затвердити й застосувати всі 25"), applied as 25
+  `uupm-palette-*` records via `--remainder --limit 25` — no code
+  changes: live catalog rev 8,070 (`c2d13dee…`, 424 typed
+  resources) / map rev 5,789 (`8b0be535…`), `colors.csv` 125
+  admitted / 67 deferred; apply result
+  `packages/powers/.tmp/h3o-r25-apply-evidence/result.json`
+  SHA-256 `1b9995a2…`, D18 r25 aggregation `fbb0a2c4…` (73 accept /
+  2 v4-manual on the identical 16-color tuple shared by
+  `uupm-palette-crm-client-management` data row 101/physical line
+  102 and `uupm-palette-calendar-scheduling-app` data row
+  110/physical line 111 — the owner retained both as distinct
+  names/notes/locators/IDs and Root's portable `resource --id`
+  command returned both exact IDs), Pi READY,
+  `check-corpus`/`check-vector` passed; auxiliary `verify.log`
+  `contiguous=false` compared a data row to a physical line — the
+  exact locators are valid (`locator-verification.json` PASS) and
+  the original evidence is preserved unchanged. Rows 126–150 /
+  151–175 / 176–192 stay separately owner-gated. AC-52 keeps
+  `verified (component)` at 424 records / catalog rev 8070;
+  AC-54/AC-55 stay H3-A–H3-N; all other AC statuses unchanged.
+  The dated H3-N/frozen-proof-r2 evidence (1,152 pass / 5 skip /
+  0 fail, 399-typed-resource input) remains a prior snapshot — no
+  new full-suite claim. H3-O catalog/map/resource changes are
+  uncommitted pending Root commit; no commit, Runtime or
+  publication. No code, catalog, map, staged data, manifest,
+  suite, commit or Runtime change; scoped doc-link, OKF and diff
+  checks only.
+
 * **Docs-only closeout — H3-M commit, H3-N palette wave-2 and
   AC evidence reconciliation (docs only; no approval):**
   `docs/next-actions.md` revision 57 and `docs/acceptance.md`

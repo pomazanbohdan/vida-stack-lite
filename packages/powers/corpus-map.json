@@ -1,7 +1,7 @@
 {
   "schema": "VPCorpusMap/v3",
-  "revision": 5788,
-  "updated_at": "2026-11-18T11:01:41.059Z",
+  "revision": 5789,
+  "updated_at": "2026-11-18T15:11:01.385Z",
   "donors": {
     "superpowers": {
       "source_revision": "2ce8aa15d05bd57213e6f746f953aafb7ded7a8b",
@@ -25686,11 +25686,16 @@
                   "row": 101
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-crm-client-management",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=9e06e6efd4a298dfc29dee7ba379cfe6f0de32e340d696b711ff98dc5c93d104",
@@ -25726,11 +25731,16 @@
                   "row": 102
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-inventory-stock-management",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=a10333a65790a8e1f7fd67bfa27b3790fd1aae60c74a0bd651c99436c055473c",
@@ -25766,11 +25776,16 @@
                   "row": 103
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-flashcard-study-tool",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=152445f185ef9917117de9c0766e62f22138a2509976666730c3aae37b6e39e6",
@@ -25806,11 +25821,16 @@
                   "row": 104
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-booking-appointment-app",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=d072739596503520f79525c26725c1f7a70a2103867b5d0ef2c48e74126efb89",
@@ -25846,11 +25866,16 @@
                   "row": 105
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-invoice-billing-tool",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=b1ac56f64202f340aff2b310de1ae758354cbccd589f70b3572ff8c8fb962758",
@@ -25886,11 +25911,16 @@
                   "row": 106
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-grocery-shopping-list",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=5fe198bbcd611118bfad7c762791c9172a98e800799634317d7d6d8050649cc5",
@@ -25926,11 +25956,16 @@
                   "row": 107
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-timer-pomodoro",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=c4c0bfff88798d96ad0b98acfe4797c406ae8d4e806d1bb6e3e1d02aae07e3d9",
@@ -25966,11 +26001,16 @@
                   "row": 108
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-parenting-baby-tracker",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=1e3b3638b555a93b89503b1fdbd49dbda9326561c510048cede88e62ecf574f7",
@@ -26006,11 +26046,16 @@
                   "row": 109
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-scanner-document-manager",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=62f0da5cf10f408530025a968fd53d2e2a54e077ad80278eb03d8aea1daffa21",
@@ -26046,11 +26091,16 @@
                   "row": 110
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-calendar-scheduling-app",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=9e95af29c2ec1698979538b1b5cef37ef8dca26ff3ef2b36a4786a86b20d85dc",
@@ -26086,11 +26136,16 @@
                   "row": 111
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-password-manager",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=431862fbabe202945534cd9ecfa516b36326751f60645083701796203aa5771f",
@@ -26126,11 +26181,16 @@
                   "row": 112
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-expense-splitter-bill-split",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=8ddf6869c76160679f1e6ecd07514caf2e4a0cd5ac141ed2ad2634042ce8d47f",
@@ -26166,11 +26226,16 @@
                   "row": 113
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-voice-recorder-memo",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=c4bd91533e1cdf8b0d86b092264648d1720ba907d3a5939de1113015f898a537",
@@ -26206,11 +26271,16 @@
                   "row": 114
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-bookmark-read-later",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=0e345b50c160d39c0537a17c6049778a0eca836998a26ea4f9ae765a57af837c",
@@ -26246,11 +26316,16 @@
                   "row": 115
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-translator-app",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=3686581b4cd010be118cd143b2bc6b1ccc242fe1f65cf4d45ad9bb6ee6d0dedd",
@@ -26286,11 +26361,16 @@
                   "row": 116
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-calculator-unit-converter",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=6d4a039ae79f170ea05d7745d23346079f41f210059fd0b6f8a90838fd92af36",
@@ -26326,11 +26406,16 @@
                   "row": 117
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-alarm-world-clock",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=8586cc6b7b093927cb7290d4fa07ebe4c6e22951295958ef82d156f8bc3a134b",
@@ -26366,11 +26451,16 @@
                   "row": 118
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-file-manager-transfer",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=ce623ce651034bb36aea25cea1ac857f6aeeadedda347917adad1e4af20d0d04",
@@ -26406,11 +26496,16 @@
                   "row": 119
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-email-client",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=cc7da4366c5e779619314b2fe8ef697ccdc1bc8c25c98336f80c83236bef98ec",
@@ -26446,11 +26541,16 @@
                   "row": 120
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-casual-puzzle-game",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=2560439e9a37acd8c5e2c3d46e4db569359b82d4faa88edf244a45eb360a454b",
@@ -26486,11 +26586,16 @@
                   "row": 121
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-trivia-quiz-game",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=ab9399395a8692b363c8345789fd25a42e9058ad944cb456b08ccf46bc44181c",
@@ -26526,11 +26631,16 @@
                   "row": 122
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-card-board-game",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=aa428f278120a2c7866ee9f0145140efe0ecfc6b8f1fd6d19f8caf6de75ec9e9",
@@ -26566,11 +26676,16 @@
                   "row": 123
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-idle-clicker-game",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=110f1c53e51ac2879eb1f3776e0002f5e2a1ce18ba0bf109a2de10d1bd2adb31",
@@ -26606,11 +26721,16 @@
                   "row": 124
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-word-crossword-game",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=22e5f9b5759daffa994250ea17b4b8a9437538f0cfb3e91d4281a0582ded5fd5",
@@ -26646,11 +26766,16 @@
                   "row": 125
                 }
               ],
-              "disposition": "deferred",
+              "disposition": "admitted",
               "bindings": [],
-              "resourceIds": [],
-              "mergedInto": null,
-              "reason": "outside the approved 25-record H3 palette pilot"
+              "resourceIds": [
+                {
+                  "id": "uupm-palette-arcade-retro-game",
+                  "disposition": "admitted",
+                  "reason": "materialized as VPReferenceResource/v1 palette record"
+                }
+              ],
+              "mergedInto": null
             },
             {
               "rowKey": "path=colors.csv&headers=fe7f9d2ad4c292e9ed1b8091eef9f0310ee89e25826a50a77e9d9a013c86852e&cells=797d2814c2ac3c885d9b95426d66fdc3957bcc8450076468fa1e5f657ca4ca2b",
