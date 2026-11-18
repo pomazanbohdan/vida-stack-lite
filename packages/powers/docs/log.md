@@ -2,6 +2,36 @@
 
 ## 2026-11-18
 
+* **Docs-only closeout — H3-P palette wave-4 apply (docs only; no
+  approval):** `docs/next-actions.md` revision 61 and
+  `docs/acceptance.md` revision 32 record the validated state on top
+  of the earlier 2026-11-18 entries. H3-P `colors.csv` rows 126–150
+  (CSV data rows; physical lines 127–151) was owner-approved by the
+  native user selection "Затвердити й застосувати всі 25"
+  (`packages/powers/.tmp/h3p-r25-apply-evidence/owner-approval.json`
+  SHA-256 `2f01bcdb…`, supplied by Root after the apply), applied as
+  25 `uupm-palette-*` records — no code changes: live catalog rev
+  8,071 (`b608dd37…`, 449 typed resources) / map rev 5,790
+  (`dda05bcc…`), `colors.csv` 150 admitted / 42 deferred. D18
+  aggregation `169f8ac6…` 75/75 accept;
+  `uupm-palette-local-events-discovery` and
+  `uupm-palette-study-together-virtual-coworking` repeat earlier
+  color tuples across waves with distinct names/notes/locators/IDs
+  preserved. The delegate reached its output-token limit after the
+  actual write; Root reconciled the live effect as
+  `result-reconciled.json` SHA-256 `2c859d29…` (all 25 exact
+  payloads, no repeat apply). Exact-ID smoke 25/25 plus negative
+  exit 1 (`exact-id-smoke.json`); Pi verified actual
+  data/27 paths/corpus/vector. Rows 151–175 (H3-Q) and 176–192
+  (H3-R) stay separately owner-gated. AC-52 keeps
+  `verified (component)` at 449 records / catalog rev 8071;
+  AC-54/AC-55 stay H3-A–H3-N; all other AC statuses unchanged.
+  The dated H3-O 424-record and H3-N/r2 399-typed-resource/full-suite
+  facts remain prior snapshots — no new full-suite, commit or
+  Runtime claim. No code, catalog, map, staged data, manifest,
+  suite, commit or Runtime change; scoped doc-link, OKF and diff
+  checks only.
+
 * **Docs-only closeout — H3-O palette wave-3 apply (docs only; no
   approval):** `docs/next-actions.md` revision 60 and
   `docs/acceptance.md` revision 31 record the validated state on top
