@@ -289,7 +289,7 @@ export async function runPreCommit(options: KnipPrecommitOptions): Promise<void>
           '--directory',
           snapshotRoot,
           '--config',
-          path.join(snapshotRoot, 'packages/agent/knip.config.ts'),
+          'packages/agent/knip.config.ts',
           '--no-progress',
           '--max-issues',
           '0',
