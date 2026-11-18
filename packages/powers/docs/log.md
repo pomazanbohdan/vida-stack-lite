@@ -2,6 +2,39 @@
 
 ## 2026-11-18
 
+* **H3-Q palette wave-5 apply + docs-only closeout (apply
+  evidence; docs only beyond the 27 data paths):**
+  `docs/next-actions.md` revision 62 and
+  `docs/acceptance.md` revision 33 record the validated state on
+  top of the earlier 2026-11-18 entries. H3-Q `colors.csv` rows
+  151–175 (CSV data rows; physical lines 152–176) was
+  owner-approved by the native user selection "Затвердити й
+  застосувати всі 25" captured before the write
+  (`packages/powers/.tmp/h3q-r25-apply-evidence/owner-approval.json`
+  SHA-256 `1db2ad23…`), applied once via
+  `materialize-resources.ts --family palette --remainder --limit
+  25 --stage .tmp/h3q-palette-wave-5-r25 --apply` — no code
+  changes: live catalog rev 8,072 (`443c8a91…`, 474 typed
+  resources) / map rev 5,791 (`cc7c013a…`), `colors.csv` 175
+  admitted / 17 deferred. D18 r25 aggregation `ad27bcd9…`
+  75/75 accept; `uupm-palette-public-transit-guide`,
+  `uupm-palette-api-developer-portal` and
+  `uupm-palette-forum-discussion-board` repeat earlier color
+  tuples across waves with distinct names/notes/locators/IDs
+  preserved per owner approval. Apply result
+  `packages/powers/.tmp/h3q-r25-apply-evidence/result.json`
+  SHA-256 `0db4439d…` binds approval, aggregate, live
+  envelope/file hashes, dispositions and scope; preflight
+  `PREFLIGHT_OK` and post-verify `POSTVERIFY_OK` recorded;
+  exactly 27 Powers data paths changed (catalog, map, 25
+  resources; allowlist unchanged `1a437313…`). Prior H3-P is
+  committed at `d76511b7`; rows 176–192 (H3-R, 17) await
+  separate owner approval. AC-52 keeps `verified (component)`
+  at 474 records / catalog rev 8072; AC-54/AC-55 stay
+  H3-A–H3-N; all other AC statuses unchanged. No package
+  suite, coverage, commit, manifest-build or Runtime claim;
+  scoped corpus/vector/OKF/doc-link and diff checks only.
+
 * **Docs-only closeout — H3-P palette wave-4 apply (docs only; no
   approval):** `docs/next-actions.md` revision 61 and
   `docs/acceptance.md` revision 32 record the validated state on top
