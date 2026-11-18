@@ -74,6 +74,10 @@ type RebindAgentRuntimeConfig = import('../src/config/runtime-config.ts').AgentR
 type RebindConfiguredContext = import('../src/orchestration/configured-context.ts').ConfiguredContext;
 type RebindInitializationReceipt = import('../src/config/initialization-record.ts').RuntimeInitializationReceipt;
 type RebindHashInput = string | NodeJS.ArrayBufferView;
+function configPrefix(value: string): string {
+  const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return /^[A-Z]/.test(cleaned) ? cleaned : 'P' + cleaned;
+}
 type DeepMutable<T> = T extends readonly [unknown, ...unknown[]]
   ? { -readonly [K in keyof T]: DeepMutable<T[K]> }
   : T extends readonly (infer U)[]
@@ -1429,7 +1433,9 @@ function exactPrewriterTemplateDelta(oldConfig: RebindAgentRuntimeConfig, target
         'maintained prewriter workflow template',
       )
         .replaceAll('{{REPOSITORY}}', oldConfig.repository.repository_id)
+        .replaceAll('{{REPOSITORY_PREFIX}}', configPrefix(oldConfig.repository.repository_id))
         .replaceAll('{{PROJECT}}', projectId)
+        .replaceAll('{{PRODUCT_PREFIX}}', configPrefix(projectId))
         .replaceAll('{{BUNDLE}}', oldConfig.runtime.bundle);
     maintainedTemplate = parseRuntimeConfigYaml(templateYaml);
   } catch {

@@ -12,6 +12,12 @@ function objectSchema(properties: Record<string, Schema>): Schema {
 function check(condition: unknown, reason: string): asserts condition {
   if (!condition) throw new Error(`ALGORITHM_DELEGATION_INVALID: ${reason}`);
 }
+function sameAlgorithm(left: AlgorithmIdentity, right: AlgorithmIdentity): boolean {
+  return left.version === right.version && left.promptIdentity === right.promptIdentity && left.evidencePolicy === right.evidencePolicy;
+}
+function samePreferenceAlgorithm(record: StandingPreference, algorithm: AlgorithmIdentity): boolean {
+  return record.algorithmVersion === algorithm.version && record.promptIdentity === algorithm.promptIdentity && record.evidencePolicy === algorithm.evidencePolicy;
+}
 function validate(value: unknown, schema: Schema): void {
   const errors = validateAgainstSchema(value, schema);
   if (errors.length) throw new Error(`ALGORITHM_DELEGATION_INVALID: ${errors.join('; ')}`);
@@ -65,6 +71,74 @@ export type OfferRecord = Readonly<{
   recordedAt: string;
   pointer: string;
 }>;
+export type AlgorithmDecisionOffer = Readonly<{
+  schema: 'VPAlgorithmDecisionOffer/v1';
+  decisionId: string;
+  decisionType: string;
+  scope: string;
+  algorithm: AlgorithmIdentity;
+  offer: Readonly<{ evidenceRequired: string; algorithmDecides: string; limits: string }>;
+  evaluation: 'excluded' | 'automatic' | 'offer';
+  exclusionReason: string | null;
+  matchReason: OfferMatchReason | null;
+  matchedPreferences: readonly ArtifactRef[];
+  answer: OfferAnswer | null;
+  answeredBy: string | null;
+  answeredAt: string | null;
+  standingPreference: ArtifactRef | null;
+  recordedAt: string;
+  pointer: string;
+}>;
+export type D18ProtocolId = 'V3-delphi' | 'V2-adversarial' | 'V4-party-chat';
+export type D18ProtocolEvidence = Readonly<{ protocol: D18ProtocolId; report: ArtifactRef }>;
+export type AlgorithmDecisionBasis = Readonly<{ kind: 'offer' | 'standing-preference'; ref: ArtifactRef }>;
+export type AlgorithmDecisionRecord = Readonly<{
+  schema: 'VPAlgorithmDecision/v1';
+  decisionId: string;
+  decisionType: string;
+  scope: string;
+  algorithm: AlgorithmIdentity;
+  basis: AlgorithmDecisionBasis;
+  sourceRefs: readonly ArtifactRef[];
+  protocols: readonly D18ProtocolEvidence[];
+  aggregation: ArtifactRef;
+  recordedAt: string;
+  pointer: string;
+}>;
+export type AlgorithmDecisionExpected = Readonly<{ decisionId: string; decisionType: string; scope: string; algorithm: AlgorithmIdentity; sourceRefs: readonly ArtifactRef[]; basis: AlgorithmDecisionBasis }>;
+type AlgorithmDecisionIdentity = Readonly<{ decisionId: string; decisionType: string; scope: string; algorithm: AlgorithmIdentity }>;
+export type AlgorithmDecisionVerification =
+  | Readonly<{ kind: 'verified'; record: AlgorithmDecisionRecord; basis: AlgorithmDecisionOffer | StandingPreference }>
+  | Readonly<{ kind: 'rejected'; reasons: readonly string[] }>;
+export type AlgorithmDispatchEvaluation =
+  | Readonly<{ kind: 'dispatch'; decisionType: string; scope: string; basis: 'offer' | 'standing-preference' }>
+  | Readonly<{ kind: 'owner-action'; decisionType: string; scope: string; reason: string }>;
+
+type DecisionResultValue = Readonly<{ outcome: string; refs: readonly ArtifactRef[] }>;
+type DecisionResult = Readonly<{ status: 'resolved' | 'unresolved' | 'missing'; value: DecisionResultValue | null }>;
+type ReviewerIdentity = Readonly<{ actor: string; session: string }>;
+type ProtocolEvidencePayload = Readonly<{
+  schema: 'VPAlgorithmProtocolEvidence/v1';
+  protocol: D18ProtocolId;
+  decisionId: string;
+  decisionType: string;
+  scope: string;
+  algorithm: AlgorithmIdentity;
+  sourceRefs: readonly ArtifactRef[];
+  reviewer: ReviewerIdentity;
+  result: DecisionResult;
+}>;
+type AggregateEvidencePayload = Readonly<{
+  schema: 'VPAlgorithmAggregateEvidence/v1';
+  decisionId: string;
+  decisionType: string;
+  scope: string;
+  algorithm: AlgorithmIdentity;
+  sourceRefs: readonly ArtifactRef[];
+  protocols: readonly D18ProtocolEvidence[];
+  aggregator: ReviewerIdentity;
+  result: DecisionResult;
+}>;
 
 const decisionTypeEntrySchema = objectSchema({
   decisionType: textSchema,
@@ -116,6 +190,71 @@ const offerSchema = objectSchema({
   answeredBy: nullableHumanSchema,
   answeredAt: nullableTimestampSchema,
   standingPreference: nullableArtifactRefSchema,
+  recordedAt: timestampSchema,
+  pointer: textSchema,
+});
+const d18ProtocolIdSchema = { enum: ['V3-delphi', 'V2-adversarial', 'V4-party-chat'] } satisfies Schema;
+const d18ProtocolIds: readonly D18ProtocolId[] = ['V3-delphi', 'V2-adversarial', 'V4-party-chat'];
+const d18ProtocolEvidenceSchema = objectSchema({ protocol: d18ProtocolIdSchema, report: artifactRefSchema });
+const algorithmIdentitySchema = objectSchema({ version: textSchema, promptIdentity: textSchema, evidencePolicy: textSchema });
+const sourceRefsSchema = { type: 'array', minItems: 1, uniqueItems: true, items: artifactRefSchema } satisfies Schema;
+const reviewerIdentitySchema = objectSchema({ actor: textSchema, session: textSchema });
+const decisionResultValueSchema = objectSchema({ outcome: textSchema, refs: { type: 'array', uniqueItems: true, items: artifactRefSchema } });
+const decisionResultSchema = objectSchema({
+  status: { enum: ['resolved', 'unresolved', 'missing'] },
+  value: { type: ['object', 'null'], if: { type: 'object' }, then: decisionResultValueSchema },
+});
+const protocolEvidenceSchema = objectSchema({
+  schema: { const: 'VPAlgorithmProtocolEvidence/v1' },
+  protocol: d18ProtocolIdSchema,
+  decisionId: textSchema,
+  decisionType: textSchema,
+  scope: textSchema,
+  algorithm: algorithmIdentitySchema,
+  sourceRefs: sourceRefsSchema,
+  reviewer: reviewerIdentitySchema,
+  result: decisionResultSchema,
+});
+const aggregateEvidenceSchema = objectSchema({
+  schema: { const: 'VPAlgorithmAggregateEvidence/v1' },
+  decisionId: textSchema,
+  decisionType: textSchema,
+  scope: textSchema,
+  algorithm: algorithmIdentitySchema,
+  sourceRefs: sourceRefsSchema,
+  protocols: { type: 'array', minItems: 3, maxItems: 3, uniqueItems: true, items: d18ProtocolEvidenceSchema },
+  aggregator: reviewerIdentitySchema,
+  result: decisionResultSchema,
+});
+const algorithmDecisionOfferSchema = objectSchema({
+  schema: { const: 'VPAlgorithmDecisionOffer/v1' },
+  decisionId: textSchema,
+  decisionType: textSchema,
+  scope: textSchema,
+  algorithm: algorithmIdentitySchema,
+  offer: objectSchema({ evidenceRequired: textSchema, algorithmDecides: textSchema, limits: textSchema }),
+  evaluation: { enum: ['excluded', 'automatic', 'offer'] },
+  exclusionReason: { type: ['string', 'null'], minLength: 1 },
+  matchReason: { type: ['string', 'null'], enum: ['no-standing-preference', 'ambiguous-preferences', 'stale-preference', null] },
+  matchedPreferences: { type: 'array', items: artifactRefSchema },
+  answer: { type: ['string', 'null'], enum: ['human', 'delegated-once', 'delegated-standing', 'declined', null] },
+  answeredBy: nullableHumanSchema,
+  answeredAt: nullableTimestampSchema,
+  standingPreference: nullableArtifactRefSchema,
+  recordedAt: timestampSchema,
+  pointer: textSchema,
+});
+const algorithmDecisionBasisSchema = objectSchema({ kind: { enum: ['offer', 'standing-preference'] }, ref: artifactRefSchema });
+const algorithmDecisionSchema = objectSchema({
+  schema: { const: 'VPAlgorithmDecision/v1' },
+  decisionId: textSchema,
+  decisionType: textSchema,
+  scope: textSchema,
+  algorithm: algorithmIdentitySchema,
+  basis: algorithmDecisionBasisSchema,
+  sourceRefs: sourceRefsSchema,
+  protocols: { type: 'array', minItems: 3, maxItems: 3, uniqueItems: true, items: d18ProtocolEvidenceSchema },
+  aggregation: artifactRefSchema,
   recordedAt: timestampSchema,
   pointer: textSchema,
 });
@@ -212,13 +351,33 @@ export async function evaluateHumanLoopDecision(request: Readonly<{
   if (only === undefined) {
     return Object.freeze({ kind: 'offer', decisionType: request.decisionType, scope: request.scope, matchReason: 'no-standing-preference', matches: Object.freeze([]) });
   }
-  const stale = only.record.algorithmVersion !== request.algorithm.version ||
-    only.record.promptIdentity !== request.algorithm.promptIdentity ||
-    only.record.evidencePolicy !== request.algorithm.evidencePolicy;
+  const stale = !samePreferenceAlgorithm(only.record, request.algorithm);
   if (stale) {
     return Object.freeze({ kind: 'offer', decisionType: request.decisionType, scope: request.scope, matchReason: 'stale-preference', matches: Object.freeze([only]) });
   }
   return Object.freeze({ kind: 'automatic', decisionType: request.decisionType, scope: request.scope, preference: only });
+}
+
+export async function evaluateAlgorithmDispatch(root: string, evaluation: HumanLoopEvaluation, algorithm: AlgorithmIdentity, decisionId: string, offerRef: ArtifactRef | null = null): Promise<AlgorithmDispatchEvaluation> {
+  if (evaluation.kind === 'excluded') {
+    return Object.freeze({ kind: 'owner-action', decisionType: evaluation.decisionType, scope: evaluation.scope, reason: evaluation.reason });
+  }
+  const expected: AlgorithmDecisionIdentity = { decisionId, decisionType: evaluation.decisionType, scope: evaluation.scope, algorithm };
+  try {
+    if (evaluation.kind === 'automatic') {
+      await readAlgorithmBasis(root, expected, { kind: 'standing-preference', ref: evaluation.preference.ref });
+      return Object.freeze({ kind: 'dispatch', decisionType: evaluation.decisionType, scope: evaluation.scope, basis: 'standing-preference' });
+    }
+    if (offerRef === null) {
+      return Object.freeze({ kind: 'owner-action', decisionType: evaluation.decisionType, scope: evaluation.scope, reason: 'algorithm offer has no recorded delegation answer' });
+    }
+    await readAlgorithmBasis(root, expected, { kind: 'offer', ref: offerRef });
+    return Object.freeze({ kind: 'dispatch', decisionType: evaluation.decisionType, scope: evaluation.scope, basis: 'offer' });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const reason = message.startsWith('ALGORITHM_DELEGATION_INVALID: ') ? message.slice('ALGORITHM_DELEGATION_INVALID: '.length) : message;
+    return Object.freeze({ kind: 'owner-action', decisionType: evaluation.decisionType, scope: evaluation.scope, reason });
+  }
 }
 
 export function createStandingPreference(input: Readonly<{
@@ -338,4 +497,149 @@ export async function readOfferRecord(root: string, ref: ArtifactRef): Promise<O
 export async function sealOfferRecord(root: string, path: string, value: unknown): Promise<ArtifactRef> {
   parseOfferRecord(value);
   return sealArtifact(root, path, value);
+}
+
+export function parseAlgorithmDecisionOffer(value: unknown): AlgorithmDecisionOffer {
+  validate(value, algorithmDecisionOfferSchema);
+  const offer = value as AlgorithmDecisionOffer;
+  const legacy: Record<string, unknown> = { ...(offer as unknown as Record<string, unknown>) };
+  legacy.schema = 'VPAlgorithmOffer/v1';
+  delete legacy.decisionId;
+  parseOfferRecord(legacy);
+  return offer;
+}
+
+export function createAlgorithmDecisionOffer(input: Readonly<{ decisionId: string } & Parameters<typeof createOfferRecord>[0]>): AlgorithmDecisionOffer {
+  const legacy = createOfferRecord(input);
+  return parseAlgorithmDecisionOffer({ ...legacy, schema: 'VPAlgorithmDecisionOffer/v1', decisionId: input.decisionId });
+}
+
+export async function readAlgorithmDecisionOffer(root: string, ref: ArtifactRef): Promise<AlgorithmDecisionOffer> {
+  return parseAlgorithmDecisionOffer(await readArtifactValue(root, ref));
+}
+
+export async function sealAlgorithmDecisionOffer(root: string, path: string, value: unknown): Promise<ArtifactRef> {
+  parseAlgorithmDecisionOffer(value);
+  return sealArtifact(root, path, value);
+}
+
+async function readAlgorithmBasis(root: string, expected: AlgorithmDecisionIdentity, basis: AlgorithmDecisionBasis): Promise<AlgorithmDecisionOffer | StandingPreference> {
+  if (basis.kind === 'offer') {
+    const offer = await readAlgorithmDecisionOffer(root, basis.ref);
+    check(offer.decisionId === expected.decisionId, 'offer decision binding mismatch');
+    check(offer.decisionType === expected.decisionType && offer.scope === expected.scope && sameAlgorithm(offer.algorithm, expected.algorithm), 'offer binding mismatch');
+    check(offer.evaluation === 'offer', 'offer basis is not an offered decision');
+    check(offer.answer === 'delegated-once' || offer.answer === 'delegated-standing', 'offer answer does not delegate the decision');
+    if (offer.answer === 'delegated-standing') {
+      const standingPreference = offer.standingPreference;
+      if (standingPreference === null) throw new Error('ALGORITHM_DELEGATION_INVALID: standing delegation lacks preference artifact');
+      const preference = await readStandingPreference(root, standingPreference);
+      check(preference.decisionType === expected.decisionType && preference.scope === expected.scope && samePreferenceAlgorithm(preference, expected.algorithm), 'standing preference binding mismatch');
+      check(preference.revocation.state === 'active', 'standing preference is revoked');
+    }
+    return offer;
+  }
+  const preference = await readStandingPreference(root, basis.ref);
+  check(preference.decisionType === expected.decisionType && preference.scope === expected.scope && samePreferenceAlgorithm(preference, expected.algorithm), 'standing preference binding mismatch');
+  check(preference.revocation.state === 'active', 'standing preference is revoked');
+  return preference;
+}
+
+function refKey(ref: ArtifactRef): string {
+  return `${ref.path}\u0000${ref.sha256}`;
+}
+function sortedKeys(values: readonly string[]): string[] {
+  return [...values].sort();
+}
+function sameArtifactRefs(left: readonly ArtifactRef[], right: readonly ArtifactRef[]): boolean {
+  const leftKeys = sortedKeys(left.map(refKey));
+  const rightKeys = sortedKeys(right.map(refKey));
+  return leftKeys.length === rightKeys.length && leftKeys.every((key, index) => key === rightKeys[index]);
+}
+function protocolBindingKey(item: D18ProtocolEvidence): string {
+  return `${item.protocol}\u0000${refKey(item.report)}`;
+}
+function sameProtocolBindings(left: readonly D18ProtocolEvidence[], right: readonly D18ProtocolEvidence[]): boolean {
+  const leftKeys = sortedKeys(left.map(protocolBindingKey));
+  const rightKeys = sortedKeys(right.map(protocolBindingKey));
+  return leftKeys.length === rightKeys.length && leftKeys.every((key, index) => key === rightKeys[index]);
+}
+function sameBasis(left: AlgorithmDecisionBasis, right: AlgorithmDecisionBasis): boolean {
+  return left.kind === right.kind && refKey(left.ref) === refKey(right.ref);
+}
+function sameDecisionResultValue(left: DecisionResultValue, right: DecisionResultValue): boolean {
+  return left.outcome === right.outcome && sameArtifactRefs(left.refs, right.refs);
+}
+function parseProtocolEvidence(value: unknown): ProtocolEvidencePayload {
+  validate(value, protocolEvidenceSchema);
+  const payload = value as ProtocolEvidencePayload;
+  check(payload.result.status === 'resolved' && payload.result.value !== null, 'D18 protocol result is unresolved or missing');
+  return payload;
+}
+function parseAggregateEvidence(value: unknown): AggregateEvidencePayload {
+  validate(value, aggregateEvidenceSchema);
+  const payload = value as AggregateEvidencePayload;
+  check(payload.result.status === 'resolved' && payload.result.value !== null, 'D18 aggregation result is unresolved or missing');
+  return payload;
+}
+
+export function parseAlgorithmDecision(value: unknown): AlgorithmDecisionRecord {
+  validate(value, algorithmDecisionSchema);
+  const record = value as AlgorithmDecisionRecord;
+  const protocols = new Set(record.protocols.map(item => item.protocol));
+  check(protocols.size === d18ProtocolIds.length && d18ProtocolIds.every(protocol => protocols.has(protocol)), 'decision evidence lacks the three D18 protocols');
+  check(new Set(record.protocols.map(item => refKey(item.report))).size === record.protocols.length, 'duplicate D18 protocol report');
+  const refs = [record.basis.ref, record.aggregation, ...record.sourceRefs, ...record.protocols.map(item => item.report)];
+  check(new Set(refs.map(refKey)).size === refs.length, 'decision evidence reuses an artifact ref');
+  return record;
+}
+
+export async function sealAlgorithmDecision(root: string, path: string, value: unknown): Promise<ArtifactRef> {
+  parseAlgorithmDecision(value);
+  return sealArtifact(root, path, value);
+}
+
+export async function readAlgorithmDecision(root: string, ref: ArtifactRef): Promise<AlgorithmDecisionRecord> {
+  return parseAlgorithmDecision(await readArtifactValue(root, ref));
+}
+
+export async function verifyAlgorithmDecision(root: string, ref: ArtifactRef, expected: AlgorithmDecisionExpected): Promise<AlgorithmDecisionVerification> {
+  try {
+    const record = await readAlgorithmDecision(root, ref);
+    const mismatches: string[] = [];
+    if (record.decisionId !== expected.decisionId) mismatches.push('decisionId');
+    if (record.decisionType !== expected.decisionType) mismatches.push('decisionType');
+    if (record.scope !== expected.scope) mismatches.push('scope');
+    if (!sameAlgorithm(record.algorithm, expected.algorithm)) mismatches.push('algorithm');
+    if (!sameArtifactRefs(record.sourceRefs, expected.sourceRefs)) mismatches.push('sourceRefs');
+    if (!sameBasis(record.basis, expected.basis)) mismatches.push('basis');
+    check(mismatches.length === 0, `decision binding mismatch: ${mismatches.join(', ')}`);
+    const basis = await readAlgorithmBasis(root, record, record.basis);
+    for (const sourceRef of record.sourceRefs) await verifyArtifact(root, sourceRef);
+    const reviewers = new Set<string>();
+    let expectedResult: DecisionResultValue | null = null;
+    for (const protocol of record.protocols) {
+      const payload = parseProtocolEvidence(await readArtifactValue(root, protocol.report));
+      check(payload.protocol === protocol.protocol, `D18 ${protocol.protocol} report is mislabeled`);
+      check(payload.decisionId === record.decisionId && payload.decisionType === record.decisionType && payload.scope === record.scope && sameAlgorithm(payload.algorithm, record.algorithm), `D18 ${protocol.protocol} decision binding mismatch`);
+      check(sameArtifactRefs(payload.sourceRefs, record.sourceRefs), `D18 ${protocol.protocol} source refs mismatch`);
+      const resultValue = payload.result.value;
+      check(resultValue !== null, `D18 ${protocol.protocol} result is unresolved or missing`);
+      if (expectedResult === null) expectedResult = resultValue;
+      else check(sameDecisionResultValue(expectedResult, resultValue), `D18 ${protocol.protocol} result disagrees`);
+      const reviewerKey = `${payload.reviewer.actor}\u0000${payload.reviewer.session}`;
+      check(!reviewers.has(reviewerKey), 'D18 protocol reviewer identity is not distinct');
+      reviewers.add(reviewerKey);
+    }
+    check(expectedResult !== null, 'D18 protocol results are missing');
+    const aggregation = parseAggregateEvidence(await readArtifactValue(root, record.aggregation));
+    check(aggregation.decisionId === record.decisionId && aggregation.decisionType === record.decisionType && aggregation.scope === record.scope && sameAlgorithm(aggregation.algorithm, record.algorithm), 'D18 aggregation decision binding mismatch');
+    check(sameArtifactRefs(aggregation.sourceRefs, record.sourceRefs), 'D18 aggregation source refs mismatch');
+    check(sameProtocolBindings(aggregation.protocols, record.protocols), 'D18 aggregation protocol refs mismatch');
+    const aggregateResult = aggregation.result.value;
+    check(aggregateResult !== null && sameDecisionResultValue(expectedResult, aggregateResult), 'D18 aggregation result disagrees');
+    return Object.freeze({ kind: 'verified', record, basis });
+  } catch (error) {
+    return Object.freeze({ kind: 'rejected', reasons: Object.freeze([error instanceof Error ? error.message : String(error)]) });
+  }
 }

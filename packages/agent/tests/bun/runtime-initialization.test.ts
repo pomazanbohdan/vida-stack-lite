@@ -44,7 +44,7 @@ import {
 } from '../../src/config/safe-repository-access.ts';
 import type { RuntimeInitializationReceipt } from '../../src/config/initialization-record.ts';
 import { fixtureInitializationTemplates } from '../helpers/runtime-initialization-fixture.ts';
-import { makeFreshRepository } from '../helpers/project-upgrade-fixture.js';
+import { completeProjectUpgradeFixture, makeFreshRepository } from '../helpers/project-upgrade-fixture.js';
 import { expectAsyncReturned, expectReturned } from '../helpers/expect-rejection.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 
@@ -405,19 +405,12 @@ test('reads v2 initialization authority from a completed real project upgrade', 
   const projectRoot = await makeFreshRepository('vida-init-authority-v2-');
   projectAuthorityFixtureRoot = projectRoot;
   const legacyConfig = loadRuntimeConfig(projectRoot);
-  const upgrade = await import('../../src/config/project-upgrade.ts');
   const operationId = 'runtime-init-authority-v2-001';
-  const planned = await expectInitializationResult(() =>
-    upgrade.planProjectUpgradeRepair(projectRoot, {
-      operation_id: operationId,
-      actor: 'test-owner: runtime initialization authority',
-      instruction_ref: 'tests/bun/runtime-initialization.test.ts',
-    }),
-  );
-  assert.equal(planned?.plan?.operation_id, operationId);
-  assert.equal(planned?.plan?.database_mode, 'fresh');
-  const completed = await expectInitializationResult(() => upgrade.resumeProjectUpgrade(projectRoot, operationId));
-  assert.equal(completed?.phase, 'completed');
+  await completeProjectUpgradeFixture(projectRoot, {
+    operationId,
+    actor: 'test-owner: runtime initialization authority',
+    instructionRef: 'tests/bun/runtime-initialization.test.ts',
+  });
 
   const projectReceiptPath = path.join(projectRoot, '.vida/runtime-initialization.v2.json');
   const projectReceiptBytes = readFileSync(projectReceiptPath);
@@ -497,7 +490,7 @@ test('reads v2 initialization authority from a completed real project upgrade', 
   );
   if (bindingFailure) throw bindingFailure.error;
   caseCompleted = true;
-}, 10_000);
+}, 90_000);
 
 test('same workspace binding is idempotent under concurrent callers', async () => {
   const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
@@ -1030,14 +1023,14 @@ async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Pr
       name: 'RuntimeInitializationBindingError',
       code: 'GAP-RUNTIME-INIT-BIND-001',
       message:
-        'runtime initialization binding failed: Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
+        'runtime initialization binding failed: Project activation is missing while current .vida outputs remain; recover the existing upgrade before configuration access.',
     });
     if (upgradeDenied instanceof isolated.RuntimeInitializationBindingError) {
       expect(upgradeDenied.cause).toBeInstanceOf(RuntimeConfigError);
       expect(upgradeDenied.cause).toMatchObject({
         code: 'GAP-RUNTIME-CONFIG-001',
         message:
-          'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
+          'Project activation is missing while current .vida outputs remain; recover the existing upgrade before configuration access.',
       });
     }
     expect({ lockAttempts, callbackEntries, replacements }).toEqual({

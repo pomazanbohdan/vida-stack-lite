@@ -1,5 +1,6 @@
 import { assertCanonicalJsonValue } from '../contracts/public-ingress.js';
 import { PATH_PROFILE_KEYS } from '../config/runtime-config.js';
+import { productDefinitionSchema, productModelSchema } from '../config/product-model.js';
 import type { WorkflowSessionReservation } from '../runtime-kernel.js';
 import { workflowApprovalConsumptionRecordSchema } from '../governance/workflow-approval-consumption-contract.js';
 import z from 'zod';
@@ -228,6 +229,7 @@ const projectBindingSchema = z
     code_selectors: z.array(text),
     delivery_group: text,
     project_root: text,
+    product_definition: productDefinitionSchema.optional(),
     integration_binding: integrationBindingSchema,
     path_profile: pathProfileSchema,
     path_bindings: pathBindingsSchema,
@@ -242,6 +244,7 @@ const projectContextSchema = z
     integrations_digest: digest,
     repository_id: text,
     project_ids: z.array(text),
+    product_model: productModelSchema.optional(),
     repository_title: text,
     project_bindings: z.array(projectBindingSchema),
     integration_bindings: z.array(integrationBindingSchema),

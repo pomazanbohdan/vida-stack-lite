@@ -41,7 +41,10 @@ import {
   runSynthesisFixtureInProcess,
   runPrewriterFixtureInProcess,
 } from './public-prewriter-fixture.ts';
-import { bindControlledRuntimeInitialization } from './controlled-runtime-initialization-fixture.ts';
+import {
+  bindControlledRuntimeInitialization,
+  writeControlledRuntimeInitializationReceipt,
+} from './controlled-runtime-initialization-fixture.ts';
 import { initializeProjectFromBundle } from '../../bin/init-core.ts';
 import { bindRuntimeInitialization } from '../../src/runtime-initialization.ts';
 import {
@@ -220,6 +223,8 @@ export async function createInitialSourceWorkFixture({
     );
     let configBytes = readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'initial-source-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'INITIALSOURCEREPOSITORY')
+      .replaceAll('{{PRODUCT_PREFIX}}', projectId === 'agent' ? 'AGENT' : 'SAMPLE')
       .replaceAll('{{PROJECT}}', projectId)
       .replaceAll('{{BUNDLE}}', sourceProject ? 'packages/agent' : 'vida-agent');
     if (cooperativeSynthesis) {
@@ -241,11 +246,13 @@ export async function createInitialSourceWorkFixture({
         projects: initial.projects.map((project) => ({
           ...project,
           project_root: 'packages/agent',
-          wiki_root: 'packages/agent/docs',
-          wiki_path: 'packages/agent/AGENT.sidecar.md',
-          wiki_output_root: 'packages/agent/.planning/agent-flow/wiki-output',
-          internal_root: 'packages/agent/docs/internal',
-          ledger_root: 'packages/agent/backlogs',
+          documents: {
+            ...project.documents,
+            root: 'packages/agent/docs',
+            index: 'packages/agent/AGENT.sidecar.md',
+            requirements: { ...project.documents.requirements, root: 'packages/agent/docs/internal' },
+          },
+          work_items: { ...project.work_items, storage_root: 'packages/agent/backlogs' },
           code_selectors: ['packages/agent/src/**'],
         })),
       };
@@ -342,6 +349,8 @@ export async function createInitialSourceWorkFixture({
       );
       if (initialized.status !== 'reconciled_existing')
         throw new Error('Source fixture initialization was not adopted');
+    } else {
+      writeControlledRuntimeInitializationReceipt(root, config);
     }
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
@@ -354,7 +363,7 @@ export async function createInitialSourceWorkFixture({
       database = ledger.sessionProducerBinding().database;
     }
     const store = ledger.hostState;
-    if (sourceProject) await bindRuntimeInitialization(root, store);
+    await bindRuntimeInitialization(root, store);
     const id = 'initial-' + randomUUID();
     const nativeSessionHandle = 'initial-thread-' + randomUUID();
     const scopePath = '.agent/work/' + id + '/scope.json';

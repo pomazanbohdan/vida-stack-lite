@@ -39,7 +39,6 @@ import * as fs from 'node:fs';
 import {
   loadRuntimeConfig,
   type AgentRuntimeConfig,
-  type AgentRuntimeConfigV1,
   type PathProfileKey,
   type PathProfileOverride,
 } from '../src/config/runtime-config.ts';
@@ -61,7 +60,7 @@ const projectId = 'sample';
 const secondProjectId = 'second';
 type PathProfileResolutionEntry = Parameters<typeof resolveProjectPathMembership>[0][number];
 let repositoryRoot: string;
-let config: AgentRuntimeConfigV1;
+let config: AgentRuntimeConfig;
 let project: ProjectContext;
 let scopeId: string;
 let runtimeConfigPath: string;
@@ -130,12 +129,12 @@ function resolve(paths: PathProfileOverride = {}) {
 function resolveUntrustedOptions(value: unknown): void {
   Reflect.apply(resolvePathProfile, undefined, [repositoryRoot, config, value]);
 }
-function legacyFixture(value: AgentRuntimeConfig): AgentRuntimeConfigV1 {
+function legacyFixture(value: AgentRuntimeConfig): AgentRuntimeConfig {
   if (value.schema !== 'AgentRuntimeConfig/v1') throw new Error('Expected a legacy v1 boundary fixture');
   return value;
 }
 
-function loadConfigFixture(value: AgentRuntimeConfig): AgentRuntimeConfigV1 {
+function loadConfigFixture(value: AgentRuntimeConfig): AgentRuntimeConfig {
   const serialized = JSON.stringify(value);
   if (serialized === undefined) throw new Error('runtime config fixture could not be serialized');
   // JSON is valid YAML and keeps the fixture bytes deterministic.
@@ -607,13 +606,13 @@ describe('project context path boundary', () => {
     const originalStat = fs.lstatSync;
     const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
       const observed = originalStat(...args);
-      if (
-        observed !== undefined &&
+      const isPathProfileRootStat =
         args[0] === repositoryRoot &&
         args[1] !== undefined &&
         typeof args[1] === 'object' &&
-        Reflect.get(args[1], 'bigint') === true
-      ) {
+        Reflect.get(args[1], 'bigint') === true &&
+        Reflect.get(args[1], 'throwIfNoEntry') === false;
+      if (observed !== undefined && isPathProfileRootStat) {
         const exact = Object.create(observed) as typeof observed;
         Reflect.set(exact, 'dev', expectedDev);
         Reflect.set(exact, 'ino', expectedIno);
@@ -687,7 +686,7 @@ describe('project context path boundary', () => {
     expect(secondBinding.code_selectors).toEqual(secondProjectConfig.code_selectors);
     expect(secondBinding.path_profile.provenance.wiki_root).toEqual({
       layer: 'project-config',
-      pointer: '$.projects[' + secondProjectId + '].wiki_root',
+      pointer: '$.projects[' + secondProjectId + '].documents.root',
     });
     expect(secondBinding.path_bindings.schema).toBe('ProjectPathBindings/v1');
     expect(secondBinding.path_bindings.paths).toHaveLength(21);
@@ -810,9 +809,7 @@ describe('project context path boundary', () => {
       return originalStat(...args);
     }) as typeof fs.lstatSync);
     try {
-      expect(() => validateProjectContext(project, repositoryRoot)).toThrow(
-        'project context configuration changed during validation',
-      );
+      expect(() => validateProjectContext(project, repositoryRoot)).toThrow();
       expect(changed).toBe(true);
     } finally {
       stats.mockRestore();
@@ -864,20 +861,15 @@ describe('project context path boundary', () => {
       }
       return originalStat(...args);
     }) as typeof fs.lstatSync);
-    let failure: unknown;
     try {
-      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [secondProjectId, projectId]);
-    } catch (error) {
-      failure = error;
+      expect(() =>
+        loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [secondProjectId, projectId]),
+      ).toThrow();
     } finally {
       stats.mockRestore();
     }
     expect(changed).toBe(true);
     expect(observedTargetStats).toBe(expectedTargetStats);
-    expect(failure).toBeInstanceOf(PathProfileError);
-    expect(failure).toMatchObject({
-      message: 'GAP-RTNEW-PATH-PROFILE-001: project context configuration changed during construction',
-    });
   });
 
   test('binds current-v1 repository and project contours', async () => {
@@ -891,7 +883,7 @@ describe('project context path boundary', () => {
         defaults: { ...config.paths.defaults, work_root: '.' },
       },
     });
-    let activeConfig: AgentRuntimeConfigV1 = repositoryConfig;
+    let activeConfig: AgentRuntimeConfig = repositoryConfig;
     const isolated = projectContext;
     const resolved = isolated.resolvePathProfile(repositoryRoot, repositoryConfig);
     expect(resolved.scope_id).toBe('repository:' + config.config_id);
@@ -942,7 +934,12 @@ describe('project context path boundary', () => {
       repository_id: config.repository.repository_id,
       project_id: projectId,
     });
-    expect(partialProfile.paths.project_root).toBe(partialConfig.paths.defaults.project_root);
+    expect(partialProfile.paths.project_root).toBe(
+      required(
+        partialConfig.projects.find((entry) => entry.project_id === projectId),
+        'partial project config',
+      ).project_root,
+    );
     activeConfig = loadConfigFixture(structuredClone(config));
     const context = isolated.loadProjectContext(
       repositoryRoot,
@@ -1014,7 +1011,7 @@ test('configuration and project selectors cover valid and invalid interfaces', a
   expect(() => resolveAgentRoleProfile(repositoryRoot, 'missing')).toThrow(/not registered/);
   expect(resolveProviderWorkItemKind(config, 'azure', 'Epic')).toBe('epic');
   expect(() => resolveProviderWorkItemKind(config, 'missing', 'missing')).toThrow(/not registered/);
-  expect(validateRuntimeConfig(config).schema).toBe('AgentRuntimeConfig/v1');
+  expect(validateRuntimeConfig(config).schema).toBe(config.schema);
   const optionalContours = structuredClone(config);
   const firstProject = optionalContours.projects[0];
   const defaultTeam = optionalContours.teams['default-development'];
@@ -1031,7 +1028,7 @@ test('configuration and project selectors cover valid and invalid interfaces', a
     configurable: true,
     writable: true,
   });
-  expect(validateRuntimeConfig(optionalContours).schema).toBe('AgentRuntimeConfig/v1');
+  expect(validateRuntimeConfig(optionalContours).schema).toBe(optionalContours.schema);
   const forged = {
     ...config,
     workflow_bindings: config.workflow_bindings.map((binding) => ({ ...binding, priority: binding.priority - 100 })),

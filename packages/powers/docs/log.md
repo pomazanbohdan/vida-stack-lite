@@ -2,6 +2,49 @@
 
 ## 2026-11-18
 
+* **Docs-only closeout — H3-M commit, H3-N palette wave-2 and
+  AC evidence reconciliation (docs only; no approval):**
+  `docs/next-actions.md` revision 57 and `docs/acceptance.md`
+  revision 28 record the validated state on top of the earlier
+  2026-11-18 entries. H3-M `colors.csv` rows 26–75 is closed at
+  commit `ed5062a3` (`powers: integrate H3-M and compact CLI
+  reports`) with the integrated proof
+  `packages/powers/.tmp/integrated-h3m-cli-proof/receipt.json`:
+  frozen suite 1,120 pass / 5 skip / 0 fail, same-input
+  `check:manifests` stdout 122 B compact vs 1,025,524 B
+  `--verbose` (9,166 outputs) and `check-okf` 233 B vs 5,117 B
+  `--verbose` (77 documents), corpus 2,402 instructions and
+  vector 52 batches; the default-root manifest-test drift is
+  closed by a hermetic test and no token/time claim is made.
+  H3-N `colors.csv` rows 76–100 was owner-approved ("Затвердити й
+  застосувати 25 палітр"), applied as 25 `uupm-palette-*`
+  records and independently validated: live catalog rev 8,069
+  (`b5a237d2…`, 399 typed resources) / map rev 5,788
+  (`d2833fc6…`), `colors.csv` 100 admitted / 92 deferred; apply
+  result `packages/powers/.tmp/h3n-r25-apply-evidence/result.json`
+  SHA-256 `8697c77c…0172`, D18 r25 aggregation `d5027460…` (50
+  accept / 25 v4-manual on missing canonical-digest recompute,
+  resolved by Root's 25 digest checks and owner 25/25 approval),
+  Pi READY; the original 50-record
+  `.tmp/h3n-palette-wave-2/` staging stays retained fallback
+  history. Later waves rows 101–125 / 126–150 / 151–175 /
+  176–192 stay owner-gated. AC-52/AC-54/AC-55 keep
+  `verified (component)`; AC-22 stays `partial` with the real
+  scratch replay (`packages/powers/.tmp/ac22-observed-replay/`,
+  1 row / 3,483 bytes, byte-identical replay, Pi READY) while
+  semantic dedup and Runtime stay open; AC-34 records the
+  worktree declared-risk audit (103 pass / 0 fail, Pi READY)
+  with declared provenance and no approval, staying `open`;
+  AC-81 stays `open` with the D19 component authority/digest
+  verified (20 pass / 0 fail, Pi READY) and H1
+  wiring/dispatch/notification/adjudication open; AC-44
+  unchanged/open; AC-50/AC-47/AC-57, delivery/Runtime and
+  D-S8-5 formal coverage/Knip remain. H3-N and the D19/AC-34
+  source/data changes are present uncommitted in the main
+  worktree; combined full proof and Root commits are pending.
+  No code, catalog, map, staged data, manifest, suite, commit or
+  Runtime change; scoped doc-link, OKF and diff checks only.
+
 * **Docs refresh — AC-ledger and D58 evidence reconciliation (docs
   only; no approval):** `docs/next-actions.md` revision 56 records
   the validated reconciliation on top of the H3-M docs.

@@ -1839,7 +1839,7 @@ test('release CLI rejects foreign repository, bundle and missing project without
     config.replaceAll('vida-agent/', 'foreign-bundle/').replace('bundle: vida-agent', 'bundle: foreign-bundle'),
     config
       .replaceAll('project_id: agent', 'project_id: agent-foreign')
-      .replace('      - agent\n      - plugin', '      - agent-foreign\n      - plugin'),
+      .replace('      - agent\n      - codex', '      - agent-foreign\n      - codex'),
   ];
   for (const invalidConfig of invalidConfigs) {
     const value = await fixture();

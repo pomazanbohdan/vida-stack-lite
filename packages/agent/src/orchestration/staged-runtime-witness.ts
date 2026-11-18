@@ -3,7 +3,6 @@ import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import {
   loadRuntimeConfig,
-  assertProjectUpgradeInactive,
   runtimeConfigDigest,
   selectWorkflow,
   type WorkItemSelection,
@@ -80,7 +79,6 @@ export async function createStagedRuntimeWitness(input: {
   );
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
   return withHostStateExclusiveTransaction({ repositoryRoot, databaseRelativePath: databasePath, workspaceId }, () => {
-    assertProjectUpgradeInactive(access);
     const database = openAdmittedWorkspaceDatabase(repositoryRoot, databasePath, workspaceId, true);
     let snapshot;
     try {
@@ -168,7 +166,6 @@ export async function createStagedRuntimeWitness(input: {
       };
     } finally {
       closeWorkspaceDatabaseWithAdmission(database);
-      assertProjectUpgradeInactive(access);
     }
     requireWitness(
       snapshot !== null &&

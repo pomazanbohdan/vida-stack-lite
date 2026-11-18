@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { configuredTestContext } from './configured-context.js';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.js';
-import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
+import { completeProjectUpgradeFixture, makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import {
   assertLoadedRuntimeConfig,
   capturedRuntimeConfigurationBinding,
@@ -23,11 +23,6 @@ import {
   runtimeConfigDigest,
 } from '../src/config/runtime-config.js';
 import { PROJECT_CONFIGURATION_PATHS } from '../src/config/project-paths.js';
-import {
-  planProjectUpgradeRepair,
-  resumeFreshProjectUpgrade,
-  resumeProjectUpgrade,
-} from '../src/config/project-upgrade.js';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.js';
 import { deriveWorkspaceId } from '../src/workspace-identity.js';
 import { openHostStateDatabase } from '../src/host-state.js';
@@ -129,25 +124,12 @@ test(
         .sort();
     try {
       assertWithinBudget();
-      const operationId = 'consumer-observation-001';
-      await planProjectUpgradeRepair(root, {
-        operation_id: operationId,
+      await completeProjectUpgradeFixture(root, {
+        operationId: 'consumer-observation-001',
         actor: 'test-owner: configuration observation',
-        instruction_ref: 'tests/consumer-configuration-admission.test.ts',
+        instructionRef: 'tests/consumer-configuration-admission.test.ts',
       });
       assertWithinBudget();
-      const journal = path.join(root, '.vida/project-upgrade.v1.json');
-      const beforeForeign = readFileSync(journal);
-      await Promise.resolve(
-        expect(resumeFreshProjectUpgrade(root, 'foreign-observation-001')).rejects.toThrow(
-          'foreign operation or repository',
-        ),
-      );
-      expect(readFileSync(journal)).toEqual(beforeForeign);
-      assertWithinBudget();
-      const completed = await resumeProjectUpgrade(root, operationId);
-      assertWithinBudget();
-      expect(completed.phase).toBe('completed');
       const authorized = loadRuntimeConfig(root);
       const before = files(root);
       const snapshot = readRuntimeConfigurationForObservation(root);

@@ -10,7 +10,7 @@ import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.
 import { coordinationLedgerDigest, sameCoordinationStrings, type CoordinationLedger } from '../contracts/envelopes.js';
 import type { StateVersion, WorkState } from '../host-state.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
-import { assertProjectUpgradeInactive, type AgentRuntimeConfig } from '../config/runtime-config.js';
+import type { AgentRuntimeConfig } from '../config/runtime-config.js';
 import { correctiveExecutionSchema, validateWorkSessionBinding } from './final-assurance.js';
 
 type Row = { revision: number; payload: string; digest: string; value: unknown };
@@ -107,8 +107,7 @@ export function inspectLocalSession(input: {
   readonly workId: string;
   readonly attempt: number;
 }) {
-  const access = requireSafeRepositoryAccess(input.repositoryRoot);
-  assertProjectUpgradeInactive(access);
+  requireSafeRepositoryAccess(input.repositoryRoot);
   const workspaceId = deriveWorkspaceId(input.config.repository.repository_id, input.repositoryRoot);
   const db = openAdmittedWorkspaceDatabase(
     input.repositoryRoot,
@@ -226,6 +225,5 @@ export function inspectLocalSession(input: {
       .deferred();
   } finally {
     closeWorkspaceDatabaseWithAdmission(db);
-    assertProjectUpgradeInactive(access);
   }
 }

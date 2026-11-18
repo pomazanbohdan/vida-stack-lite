@@ -1049,20 +1049,19 @@ function suspendLocalWorkCore(
   const claims = host.ledger.claims.filter((item) => item.ticket_id === lease.ticket_id && item.status === 'active');
   const expectedResources = [...(ticket?.exclusive_resources ?? [])].sort();
   // An expired preparation may be released, never renewed or treated as an issued no-effect action.
+  // Completed waves must already be terminally observed; only the current frontier may be unissued.
   const expiredUnissued =
     !completedReadonly &&
-    work.lifecycle.phase === 'INTAKE' &&
     work.lifecycle.seal === null &&
     work.lifecycle.assurance.review_generation === 0 &&
     work.lifecycle.assurance.delivery_cycle_id === null &&
     work.execution.assignment_attempts.length === 0 &&
     journal.resume_status === 'ready' &&
     journal.state.step_id !== null &&
-    journal.state.completed.length === 0 &&
     journal.state.items.length > 0 &&
     journal.state.source_scope?.digest === work.binding.work_source_revision &&
     work.lifecycle.source_revision === work.binding.work_source_revision &&
-    issues.every(
+    journal.state.items.every(
       (item) =>
         item.issue_id === null &&
         item.observation === null &&
@@ -1073,6 +1072,18 @@ function suspendLocalWorkCore(
         item.request.workflow_id === work.binding.workflow_id &&
         item.request.config_digest === work.binding.config_digest &&
         item.request.scope_digest === work.binding.work_source_revision,
+    ) &&
+    journal.state.completed.every(
+      (wave) =>
+        wave.items.length > 0 &&
+        wave.items.every(
+          (item) =>
+            item.issue_id !== null &&
+            item.observation !== null &&
+            item.observation.action_id === item.request.action_id &&
+            item.observation.issue_id === item.issue_id &&
+            ['reported_complete', 'reported_failed'].includes(item.observation.status),
+        ),
     ) &&
     ticket?.source_revision === work.binding.work_source_revision &&
     ticket.repository_id === identity.repository_id &&

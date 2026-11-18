@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/execution-catalog-component.schema.json",
+  "title": "Execution Catalog Component",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "kind", "origin", "meta", "entries"],
+  "properties": {
+    "schema": { "const": "ExecutionCatalogComponent" },
+    "kind": { "enum": ["roles", "profiles", "tasks", "teams", "workflows"] },
+    "origin": { "enum": ["package", "custom"] },
+    "meta": { "$ref": "#/$defs/meta" },
+    "entries": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "type": "object" } }
+  },
+  "allOf": [
+    { "if": { "properties": { "kind": { "const": "roles" } }, "required": ["kind"] }, "then": { "properties": { "entries": { "type": "object", "additionalProperties": { "$ref": "#/$defs/role" } } } } },
+    { "if": { "properties": { "kind": { "const": "profiles" } }, "required": ["kind"] }, "then": { "properties": { "entries": { "type": "object", "additionalProperties": { "$ref": "#/$defs/profile" } } } } },
+    { "if": { "properties": { "kind": { "const": "tasks" } }, "required": ["kind"] }, "then": { "properties": { "entries": { "type": "object", "additionalProperties": { "$ref": "#/$defs/task" } } } } },
+    { "if": { "properties": { "kind": { "const": "teams" } }, "required": ["kind"] }, "then": { "properties": { "entries": { "type": "object", "additionalProperties": { "$ref": "#/$defs/team" } } } } },
+    { "if": { "properties": { "kind": { "const": "workflows" } }, "required": ["kind"] }, "then": { "properties": { "entries": { "type": "object", "additionalProperties": { "$ref": "#/$defs/workflow" } } } } },
+    { "if": { "properties": { "origin": { "const": "package" } }, "required": ["origin"] }, "then": { "properties": { "entries": { "type": "object", "minProperties": 1 }, "meta": { "type": "object", "required": ["source"], "properties": { "source": { "$ref": "#/$defs/source" } } } } } },
+    { "if": { "properties": { "origin": { "const": "custom" } }, "required": ["origin"] }, "then": { "properties": { "meta": { "type": "object", "not": { "properties": { "source": { "$ref": "#/$defs/source" } }, "required": ["source"] } } } } }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+    "ref": { "type": "string", "pattern": "^(package|custom):(role|profile|task|team|workflow)/[a-z0-9][a-z0-9._-]{0,79}$" },
+    "effect": { "enum": ["read", "source_write", "test_execute", "delivery_prepare", "delivery_execute"] },
+    "scope": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["repository"], "properties": { "repository": { "const": true } } },
+        { "type": "object", "additionalProperties": false, "required": ["product_ids"], "properties": { "product_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } } } }
+      ]
+    },
+    "source": {
+      "type": "object", "additionalProperties": false, "required": ["package_id", "package_version", "source_id"],
+      "properties": { "package_id": { "$ref": "#/$defs/id" }, "package_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }, "source_id": { "$ref": "#/$defs/id" } }
+    },
+    "meta": {
+      "type": "object", "additionalProperties": false, "required": ["file_id", "revision", "created_at", "updated_at"],
+      "properties": {
+        "file_id": { "$ref": "#/$defs/id" }, "revision": { "type": "integer", "minimum": 1 },
+        "created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$" },
+        "updated_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$" },
+        "source": { "$ref": "#/$defs/source" }
+      }
+    },
+    "stringList": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "role": {
+      "type": "object", "additionalProperties": false, "required": ["scope", "actor_class", "capabilities", "allowed_effects"],
+      "properties": {
+        "scope": { "$ref": "#/$defs/scope" }, "actor_class": { "enum": ["analyst", "source_writer", "independent_validator", "test_executor", "delivery_planner", "delivery_operator"] },
+        "capabilities": { "$ref": "#/$defs/stringList" }, "allowed_effects": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/effect" } },
+        "responsibility": { "type": "string" }, "instructions": { "type": "string" }, "prohibited_capabilities": { "$ref": "#/$defs/stringList" },
+        "prohibited_effects": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/effect" } }
+      }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false, "required": ["scope", "model", "reasoning", "execution_mode", "mutation_scope", "tools_policy", "egress_policy"],
+      "properties": {
+        "scope": { "$ref": "#/$defs/scope" }, "model": { "type": "string", "minLength": 1 }, "reasoning": { "type": "string", "minLength": 1 },
+        "execution_mode": { "enum": ["fast", "standard"] }, "mutation_scope": { "enum": ["none", "repository_source"] },
+        "tools_policy": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+        "egress_policy": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" }, "description": { "type": "string" }
+      }
+    },
+    "task": {
+      "type": "object", "additionalProperties": false, "required": ["scope", "version", "purpose", "inputs", "outputs", "instructions", "acceptance", "required_effects", "terminal_outcomes"],
+      "properties": {
+        "scope": { "$ref": "#/$defs/scope" }, "version": { "type": "integer", "minimum": 1 }, "purpose": { "type": "string", "minLength": 1 },
+        "inputs": { "$ref": "#/$defs/stringList" }, "outputs": { "$ref": "#/$defs/stringList" }, "instructions": { "type": "string", "minLength": 1 },
+        "acceptance": { "$ref": "#/$defs/stringList" }, "required_effects": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/effect" } },
+        "terminal_outcomes": { "$ref": "#/$defs/stringList" }, "failure": { "type": "string" }, "recovery": { "type": "string" },
+        "source_refs": { "$ref": "#/$defs/stringList" }, "checks": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "assignment": {
+      "type": "object", "additionalProperties": false, "required": ["role", "profile"],
+      "properties": { "role": { "$ref": "#/$defs/ref" }, "profile": { "$ref": "#/$defs/ref" } }
+    },
+    "team": {
+      "type": "object", "additionalProperties": false, "required": ["scope", "level", "members", "task_assignments", "assurance_roles", "independent_of", "allowed_work_kinds", "allowed_projects"],
+      "properties": {
+        "scope": { "$ref": "#/$defs/scope" }, "level": { "enum": ["compact", "standard", "extended"] }, "members": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/ref" } },
+        "task_assignments": { "type": "object", "propertyNames": { "$ref": "#/$defs/ref" }, "additionalProperties": { "$ref": "#/$defs/assignment" } },
+        "assurance_roles": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/assignment" } },
+        "independent_of": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["members"], "properties": { "members": { "type": "array", "minItems": 2, "uniqueItems": true, "items": { "$ref": "#/$defs/ref" } } } } },
+        "allowed_work_kinds": { "$ref": "#/$defs/stringList" }, "allowed_projects": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "oneOf": [{ "const": "*" }, { "$ref": "#/$defs/id" }] } }, "description": { "type": "string" }
+      }
+    },
+    "stage": {
+      "type": "object", "additionalProperties": false, "required": ["id", "kind", "mode", "assignments", "consumes", "produces", "required_after", "context_source_ids", "context_skill_refs", "risk_flags"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" }, "kind": { "enum": ["research", "synthesize", "develop", "validate", "test", "deliver"] }, "mode": { "enum": ["single", "parallel"] },
+        "assignments": { "type": "array", "minItems": 1, "items": { "type": "object", "additionalProperties": false, "required": ["task", "role", "profile"], "properties": { "task": { "$ref": "#/$defs/ref" }, "role": { "$ref": "#/$defs/ref" }, "profile": { "$ref": "#/$defs/ref" }, "contour": { "type": "string" }, "risk_flags": { "$ref": "#/$defs/stringList" } } } },
+        "consumes": { "$ref": "#/$defs/stringList" }, "produces": { "$ref": "#/$defs/stringList" }, "required_after": { "$ref": "#/$defs/stringList" }, "context_source_ids": { "$ref": "#/$defs/stringList" }, "context_skill_refs": { "$ref": "#/$defs/stringList" }, "risk_flags": { "$ref": "#/$defs/stringList" }
+      }
+    },
+    "workflow": {
+      "type": "object", "additionalProperties": false, "required": ["scope", "assurance_profile", "max_attempts", "entry_stage", "terminal_stages", "stages", "edges"],
+      "properties": {
+        "scope": { "$ref": "#/$defs/scope" }, "assurance_profile": { "enum": ["research_light", "code_full", "bug_focused", "task_focused"] }, "max_attempts": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "entry_stage": { "$ref": "#/$defs/id" }, "terminal_stages": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }, "stages": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/stage" } },
+        "edges": { "type": "array", "items": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "$ref": "#/$defs/id" } } }
+      }
+    }
+  }
+}

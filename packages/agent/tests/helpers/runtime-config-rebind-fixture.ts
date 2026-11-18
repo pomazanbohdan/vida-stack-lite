@@ -1378,6 +1378,8 @@ export function fixture({
   const template = (name: string): string =>
     readFileSync(path.join(source, 'templates', name), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'fixture-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'FIXTUREREPOSITORY')
+      .replaceAll('{{PRODUCT_PREFIX}}', projectId === 'agent' ? 'AGENT' : 'FIXTUREPROJECT')
       .replaceAll('{{PROJECTS}}', projectId)
       .replaceAll('{{PROJECT}}', projectId)
       .replaceAll('{{BUNDLE}}', bundle)
@@ -1432,6 +1434,7 @@ export function fixture({
           ...originalProject,
           project_id: 'plugin',
           title: 'plugin',
+          prefix: 'PLUGIN',
           project_root: 'packages/plugin',
           code_selectors: ['packages/plugin/**'],
           delivery_group: 'plugin',

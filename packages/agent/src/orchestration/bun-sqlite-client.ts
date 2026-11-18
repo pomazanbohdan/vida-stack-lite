@@ -16,7 +16,6 @@ import {
   type StorageReadAdmission,
 } from '../config/storage-read-admission.js';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { assertProjectUpgradeInactive } from '../config/runtime-config.js';
 
 const connections = new Set<BunSqliteClient>();
 
@@ -319,7 +318,6 @@ class BunSqliteClient implements SqliteClient {
       return;
     }
     requireClient(databaseIdentity(this.#database) === location.identity, 'database was replaced');
-    assertProjectUpgradeInactive(location.access);
   }
 
   #reserve(): Reservation {
@@ -523,7 +521,6 @@ export function openBunSqliteClient(
   priorAdmission?: StorageReadAdmission,
 ): SqliteClient {
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  assertProjectUpgradeInactive(access);
   const database = priorAdmission
     ? openExistingWorkspaceDatabaseWithAdmission(repositoryRoot, relative, priorAdmission, false, true)
     : openAdmittedWorkspaceDatabase(repositoryRoot, relative, workspaceId, false, true);

@@ -141,7 +141,9 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
             externalConfig,
             readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
               .replaceAll('{{REPOSITORY}}', 'ignored-repository')
+              .replaceAll('{{REPOSITORY_PREFIX}}', 'IGNOREDREPOSITORY')
               .replaceAll('{{PROJECT}}', 'ignored-project')
+              .replaceAll('{{PRODUCT_PREFIX}}', 'IGNOREDPROJECT')
               .replaceAll('{{BUNDLE}}', 'ignored-runtime'),
           );
           const invokeCopy = (args: readonly string[], env: NodeJS.ProcessEnv = {}) => {

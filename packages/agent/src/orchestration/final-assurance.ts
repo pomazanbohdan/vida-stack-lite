@@ -257,7 +257,11 @@ export function eligibleReadonlyRelinquishment(
     return (
       item.observation === null && !item.host_reservation && !item.research_activation && !item.research_normalization
     );
-  if (!configuredReadonlyAssignment(config, item.request) || item.host_reservation) return false;
+  if (
+    !configuredReadonlyAssignment(config, item.request, item.observation ? 'completed-readonly' : 'readonly') ||
+    item.host_reservation
+  )
+    return false;
   if (item.observation)
     return (
       item.observation.action_id === item.request.action_id &&

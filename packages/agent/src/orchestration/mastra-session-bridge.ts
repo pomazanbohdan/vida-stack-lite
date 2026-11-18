@@ -11,7 +11,7 @@ import z from 'zod';
 import { type AgentRuntimeConfig, type WorkItemSelection, runtimeConfigDigest } from '../config/runtime-config.js';
 import { loadProjectSetContext } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { assertProjectUpgradeInactive } from '../config/runtime-config.js';
+
 import { deriveWorkspaceId } from '../workspace-identity.js';
 import { acquireStorageReadAdmission } from '../config/storage-read-admission.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
@@ -93,7 +93,6 @@ async function initializeWorkflowStorage(
 ): Promise<LibSQLStore> {
   assertProducer();
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  assertProjectUpgradeInactive(access);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
   const relative = sessionBridgeDatabaseRelativePath(config);
   const admission = acquireStorageReadAdmission(repositoryRoot, workspaceId, relative);

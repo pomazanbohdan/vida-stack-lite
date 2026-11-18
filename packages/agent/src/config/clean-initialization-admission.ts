@@ -22,7 +22,6 @@ import {
   closeWorkspaceDatabaseWithAdmission,
   openExistingWorkspaceDatabaseWithAdmission,
   openExistingWorkspaceDatabaseWithCleanInitializationIntent,
-  openExistingWorkspaceDatabaseWithConfigurationAdoptionIntent,
   withExclusiveStorageInitConfigAdmission,
   type JoinedInitConfigAdmissionProof,
 } from './storage-read-admission.js';
@@ -36,13 +35,6 @@ function requireAdmission(value: unknown, message: string): asserts value {
 export interface CleanInitializationHostAdmissionCapability {
   readonly schema: 'VidaCleanInitializationHostAdmission/v1';
 }
-
-export interface ConfigurationAdoptionHostAdmissionCapability {
-  readonly schema: 'VidaConfigurationAdoptionHostAdmission/v1';
-}
-type HostAdmissionCapability =
-  | CleanInitializationHostAdmissionCapability
-  | ConfigurationAdoptionHostAdmissionCapability;
 
 export interface CleanInitializationHostAdmissionRequest<T> {
   readonly repositoryRoot: string;
@@ -61,19 +53,9 @@ export interface CleanInitializationHostAdmissionRequest<T> {
   ) => Promise<T>;
 }
 
-export type ConfigurationAdoptionHostAdmissionRequest<T> = Omit<
-  CleanInitializationHostAdmissionRequest<T>,
-  'operation' | 'expectedPendingBytes'
-> & {
-  readonly expectedPendingBytes: Uint8Array;
-  readonly operation: (
-    capability: ConfigurationAdoptionHostAdmissionCapability,
-    proof: JoinedInitConfigAdmissionProof<MaintenanceFence>,
-  ) => Promise<T>;
-};
 type HostAdmissionRequest<T> = Omit<CleanInitializationHostAdmissionRequest<T>, 'operation'> & {
   readonly operation: (
-    capability: HostAdmissionCapability,
+    capability: CleanInitializationHostAdmissionCapability,
     proof: JoinedInitConfigAdmissionProof<MaintenanceFence>,
   ) => Promise<T>;
 };
@@ -141,7 +123,6 @@ function verifyCurrentFence(
   database: Database,
   input: ReturnType<typeof validateRequest>['input'],
   expectedFenceBindingDigest: string,
-  kind: 'clean' | 'adoption',
 ) {
   const store = new HostStateStore(
     database,
@@ -155,10 +136,6 @@ function verifyCurrentFence(
       verify: () => null,
     },
     input.repositoryRoot,
-    undefined,
-    undefined,
-    undefined,
-    kind === 'adoption',
   );
   const fence = store.assertMaintenanceFence(input.receipt);
   requireAdmission(fence.status === 'held', 'Host maintenance fence is not held');
@@ -187,21 +164,8 @@ export function assertCleanInitializationHostAdmission(
   assertHostAdmission(capability, repositoryRoot, workspaceId, operationId);
 }
 
-export function assertConfigurationAdoptionHostAdmission(
-  capability: ConfigurationAdoptionHostAdmissionCapability,
-  repositoryRoot: string,
-  workspaceId: string,
-  operationId: string,
-): void {
-  requireAdmission(
-    capability.schema === 'VidaConfigurationAdoptionHostAdmission/v1',
-    'admission capability kind differs',
-  );
-  assertHostAdmission(capability, repositoryRoot, workspaceId, operationId);
-}
-
 function assertHostAdmission(
-  capability: HostAdmissionCapability,
+  capability: CleanInitializationHostAdmissionCapability,
   repositoryRoot: string,
   workspaceId: string,
   operationId: string,
@@ -226,40 +190,19 @@ function assertHostAdmission(
 export async function withCleanInitializationHostAdmission<T>(
   request: CleanInitializationHostAdmissionRequest<T>,
 ): Promise<T> {
-  return withHostAdmission(
-    {
-      ...request,
-      operation: (capability, proof) => {
-        requireAdmission(
-          capability.schema === 'VidaCleanInitializationHostAdmission/v1',
-          'clean initialization capability kind differs',
-        );
-        return request.operation(capability, proof);
-      },
+  return withHostAdmission({
+    ...request,
+    operation: (capability, proof) => {
+      requireAdmission(
+        capability.schema === 'VidaCleanInitializationHostAdmission/v1',
+        'clean initialization capability kind differs',
+      );
+      return request.operation(capability, proof);
     },
-    'clean',
-  );
+  });
 }
 
-export async function withConfigurationAdoptionHostAdmission<T>(
-  request: ConfigurationAdoptionHostAdmissionRequest<T>,
-): Promise<T> {
-  return withHostAdmission(
-    {
-      ...request,
-      operation: (capability, proof) => {
-        requireAdmission(
-          capability.schema === 'VidaConfigurationAdoptionHostAdmission/v1',
-          'configuration adoption capability kind differs',
-        );
-        return request.operation(capability, proof);
-      },
-    },
-    'adoption',
-  );
-}
-
-async function withHostAdmission<T>(request: HostAdmissionRequest<T>, kind: 'clean' | 'adoption'): Promise<T> {
+async function withHostAdmission<T>(request: HostAdmissionRequest<T>): Promise<T> {
   const { input, expectedFenceBindingDigest } = validateRequest(request);
   const rootAccess = requireSafeRepositoryAccess(input.repositoryRoot);
   const repositoryIdentity = rootAccess.directoryIdentity('.', label);
@@ -268,9 +211,7 @@ async function withHostAdmission<T>(request: HostAdmissionRequest<T>, kind: 'cle
   const initialHost =
     input.expectedPendingBytes === undefined
       ? openExistingWorkspaceDatabaseWithAdmission(input.repositoryRoot, input.hostRelative, admission, false, false)
-      : (kind === 'clean'
-          ? openExistingWorkspaceDatabaseWithCleanInitializationIntent
-          : openExistingWorkspaceDatabaseWithConfigurationAdoptionIntent)(
+      : openExistingWorkspaceDatabaseWithCleanInitializationIntent(
           input.repositoryRoot,
           input.hostRelative,
           admission,
@@ -280,7 +221,7 @@ async function withHostAdmission<T>(request: HostAdmissionRequest<T>, kind: 'cle
   const callerHostProof = withWorkspaceDatabaseClose(
     initialHost,
     () => ({
-      fence: verifyCurrentFence(initialHost, input, expectedFenceBindingDigest, kind),
+      fence: verifyCurrentFence(initialHost, input, expectedFenceBindingDigest),
       databaseIdentity: workspaceDatabaseFileIdentity(initialHost),
       pathIdentity: observeHostPathIdentity(rootAccess, input.hostRelative),
     }),
@@ -319,7 +260,7 @@ async function withHostAdmission<T>(request: HostAdmissionRequest<T>, kind: 'cle
             observeHostPathIdentity(rootAccess, input.hostRelative) === callerHostProof.pathIdentity,
             'Host path identity changed before exclusive admission',
           );
-          const fence = verifyCurrentFence(host, input, expectedFenceBindingDigest, kind);
+          const fence = verifyCurrentFence(host, input, expectedFenceBindingDigest);
           requireAdmission(
             rootAccess.directoryIdentity('.', label) === repositoryIdentity,
             'repository root changed during exclusive Host verification',
@@ -339,10 +280,9 @@ async function withHostAdmission<T>(request: HostAdmissionRequest<T>, kind: 'cle
         canonicalJsonDigest(proof.fence.binding) === expectedFenceBindingDigest,
         'exclusive Host fence binding differs',
       );
-      const capability: HostAdmissionCapability =
-        kind === 'clean'
-          ? Object.freeze({ schema: 'VidaCleanInitializationHostAdmission/v1' })
-          : Object.freeze({ schema: 'VidaConfigurationAdoptionHostAdmission/v1' });
+      const capability: CleanInitializationHostAdmissionCapability = Object.freeze({
+        schema: 'VidaCleanInitializationHostAdmission/v1',
+      });
       const state: CapabilityState = {
         repositoryRoot: input.repositoryRoot,
         repositoryIdentity,

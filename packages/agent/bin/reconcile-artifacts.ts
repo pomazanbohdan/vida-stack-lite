@@ -172,7 +172,6 @@ export async function runReconcileArtifacts(args: string[], { onPhase }: Reconci
     required(contract, 'unsupported artifact repair kind');
     const phaseOptions = onPhase === undefined ? {} : { onPhase };
     const handlerTable: Record<string, RepairHandler> = {
-      projectUpgrade: async (argv) => (await import('./project-upgrade-repair.ts')).runProjectUpgradeRepair(argv),
       native: async (argv) =>
         (await import('./repair-native-delivery-evidence.ts')).runNativeDeliveryEvidenceRepair(argv, phaseOptions),
       delivered: async (argv) =>
@@ -182,8 +181,6 @@ export async function runReconcileArtifacts(args: string[], { onPhase }: Reconci
       workState: async (argv) => (await import('./repair-work-state.ts')).runWorkStateRepair(argv),
       documentationPolicy: async (argv) =>
         (await import('./documentation-policy-transition.ts')).runDocumentationPolicyTransition(argv, phaseOptions),
-      runtimeConfig: async (argv) =>
-        (await import('./runtime-config-rebind.ts')).runRuntimeConfigRebind(argv, phaseOptions),
       synthesisQualification: async (argv) =>
         (await import('./reconcile-synthesis-qualification.ts')).runSynthesisQualificationRepair(argv, phaseOptions),
       synthesisObservation: async (argv) =>

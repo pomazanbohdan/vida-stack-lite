@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/project-configuration.schema.json",
+  "title": "VIDA Project Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "revision", "config_id", "catalog_components", "catalog_source", "catalog_provenance", "repository", "integrations", "runtime", "control", "paths", "projects", "work_items", "artifact_contracts", "research_decision", "knowledge", "authorization", "governance", "orchestration", "operations", "verification", "observability", "timing"],
+  "properties": {
+    "schema": { "const": "VidaProjectConfig" },
+    "revision": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+    "config_id": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/config_id" },
+    "catalog_components": { "$ref": "#/$defs/catalogComponents" },
+    "catalog_source": { "$ref": "#/$defs/catalogSource" },
+    "catalog_provenance": { "$ref": "#/$defs/catalogProvenance" },
+    "repository": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/repository" },
+    "integrations": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/integrations" },
+    "runtime": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/runtime" },
+    "control": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/control" },
+    "paths": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/paths" },
+    "projects": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/projects" },
+    "work_items": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/work_items" },
+    "artifact_contracts": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/artifact_contracts" },
+    "research_decision": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/research_decision" },
+    "knowledge": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/knowledge" },
+    "authorization": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/authorization" },
+    "governance": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/governance" },
+    "orchestration": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/orchestration" },
+    "operations": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/operations" },
+    "verification": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/verification" },
+    "observability": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/observability" },
+    "timing": { "$ref": "https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json#/properties/timing" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "kind": { "enum": ["roles", "profiles", "tasks", "teams", "workflows"] },
+    "componentPin": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "file_id", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "file_id": { "$ref": "#/$defs/id" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "componentSet": {
+      "type": "object", "additionalProperties": false,
+      "required": ["roles", "profiles", "tasks", "teams", "workflows"],
+      "properties": {
+        "roles": { "$ref": "#/$defs/componentPin" },
+        "profiles": { "$ref": "#/$defs/componentPin" },
+        "tasks": { "$ref": "#/$defs/componentPin" },
+        "teams": { "$ref": "#/$defs/componentPin" },
+        "workflows": { "$ref": "#/$defs/componentPin" }
+      }
+    },
+    "catalogComponents": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package", "custom", "enablement", "routing"],
+      "properties": {
+        "package": { "$ref": "#/$defs/componentSet" }, "custom": { "$ref": "#/$defs/componentSet" },
+        "enablement": { "$ref": "#/$defs/componentPin" }, "routing": { "$ref": "#/$defs/componentPin" }
+      }
+    },
+    "catalogSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_id", "package_id", "package_version", "artifact_ref", "artifact_sha256"],
+      "properties": {
+        "source_id": { "$ref": "#/$defs/id" }, "package_id": { "$ref": "#/$defs/id" },
+        "package_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "artifact_ref": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+        "artifact_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "provenanceRecord": {
+      "type": "object", "additionalProperties": false,
+      "required": ["file_id", "body_digest"],
+      "properties": {
+        "file_id": { "$ref": "#/$defs/id" }, "body_digest": { "$ref": "#/$defs/sha256" },
+        "derived_from": {
+          "type": "object", "additionalProperties": false, "required": ["ref", "base_body_digest"],
+          "properties": {
+            "ref": { "type": "string", "pattern": "^(package|custom):(role|profile|task|team|workflow)/[a-z0-9][a-z0-9._-]{0,79}$" },
+            "base_body_digest": { "$ref": "#/$defs/sha256" }
+          }
+        }
+      }
+    },
+    "provenanceKind": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/provenanceRecord" } },
+    "provenanceOrigin": {
+      "type": "object", "additionalProperties": false,
+      "required": ["roles", "profiles", "tasks", "teams", "workflows"],
+      "properties": {
+        "roles": { "$ref": "#/$defs/provenanceKind" }, "profiles": { "$ref": "#/$defs/provenanceKind" },
+        "tasks": { "$ref": "#/$defs/provenanceKind" }, "teams": { "$ref": "#/$defs/provenanceKind" },
+        "workflows": { "$ref": "#/$defs/provenanceKind" }
+      }
+    },
+    "catalogProvenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["package", "custom"],
+      "properties": { "package": { "$ref": "#/$defs/provenanceOrigin" }, "custom": { "$ref": "#/$defs/provenanceOrigin" } }
+    }
+  }
+}

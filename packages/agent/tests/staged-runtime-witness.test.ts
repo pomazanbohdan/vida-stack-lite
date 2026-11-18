@@ -55,7 +55,9 @@ test('staged witness inspects actual completed persistence without producing or 
       path.join(root, 'agent-runtime.config.v1.yaml'),
       readFileSync(path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
         .replaceAll('{{REPOSITORY}}', 'witness-repository')
+        .replaceAll('{{REPOSITORY_PREFIX}}', 'WITNESSREPOSITORY')
         .replaceAll('{{PROJECT}}', 'sample')
+        .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
         .replaceAll('{{BUNDLE}}', 'vida-agent'),
     );
     writeFileSync(path.join(root, 'AGENTS.md'), 'Fixture policy');

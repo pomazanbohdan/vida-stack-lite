@@ -26,11 +26,9 @@ import {
   openUnadmittedWorkspaceDatabase,
   retryPendingWorkspaceDatabaseCloses,
 } from '../src/config/workspace-database-raw.js';
-import { inspectProjectUpgrade } from '../src/config/project-upgrade.js';
 import { inspectClosedWorkspaceDatabaseImage } from '../src/config/project-upgrade-storage.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.js';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.js';
-import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 
 test('init config exclusive admission holds across await and releases after throw', async () => {
@@ -274,38 +272,6 @@ test('storage sidecar observations avoid CAS writes and preserve retained conten
   } finally {
     if (passed && performance.now() < deadlineAt) rmSync(fixture.root, { recursive: true, force: true });
     else console.error('Retained failed or expired sidecar observation fixture: ' + fixture.root);
-  }
-});
-
-test('upgrade inspection accepts only a verified admission gate without publishing product state', async () => {
-  const started = process.hrtime.bigint();
-  const root = await makeFreshRepository('upgrade-admission-inspection-');
-  let passed = false;
-  try {
-    const config = loadRuntimeConfig(root);
-    const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-    const lease = acquireStorageReadAdmission(root, workspaceId, '.vida/unused.sqlite');
-    lease.close();
-    const file = path.join(root, '.vida/storage-admission.v1.sqlite');
-    const before = readFileSync(file);
-    const operation = inspectProjectUpgrade(root, {
-      operation_id: 'verified-gate-inspection',
-      actor: 'test-owner',
-      instruction_ref: 'existing admission gate inspection',
-    });
-    expect(operation.plan.workspace_id).toBe(workspaceId);
-    expect(operation.plan.database_mode).toBe('fresh');
-    expect(readFileSync(file)).toEqual(before);
-    expect(() => readFileSync(path.join(root, '.vida/project-upgrade.v1.json'))).toThrow();
-    writeFileSync(path.join(root, '.vida/foreign.json'), '{}', { flag: 'wx' });
-    expect(() => inspectProjectUpgrade(root, operation.plan)).toThrow(
-      'VIDA project upgrade: existing VIDA data requires its retained operation',
-    );
-    expect(readFileSync(file)).toEqual(before);
-    passed = true;
-  } finally {
-    if (passed && process.hrtime.bigint() - started < 5_000_000_000n) rmSync(root, { recursive: true, force: true });
-    else console.error(`Retained failed or expired admission inspection fixture: ${root}`);
   }
 });
 

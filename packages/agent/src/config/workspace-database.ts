@@ -1,7 +1,6 @@
 import { Database } from 'bun:sqlite';
 import { openAdmittedWorkspaceDatabase } from './storage-read-admission.js';
-import { requireSafeRepositoryAccess } from './safe-repository-access.js';
-import { assertProjectUpgradeInactive } from './runtime-config.js';
+
 import {
   assertWorkspaceDatabaseRelativePath,
   queryWorkspaceRowUnknown,
@@ -18,7 +17,6 @@ export function openExistingWorkspaceDatabase(
   readonly: boolean,
   safeIntegers = false,
 ): Database {
-  assertProjectUpgradeInactive(requireSafeRepositoryAccess(repositoryRoot));
   assertWorkspaceDatabaseRelativePath(relative);
   if (typeof readonly !== 'boolean' || typeof safeIntegers !== 'boolean')
     throw new Error('Workspace database: explicit boolean open options required');

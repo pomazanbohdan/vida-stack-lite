@@ -1,7 +1,6 @@
 import { Database, constants } from 'bun:sqlite';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
-import { z } from 'zod';
 import { LibSQLStore } from '@mastra/libsql';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import { initializeHostDatabaseSchema, initializeTaskSourceBindingWorkProjectionSchema } from '../host-state.js';
@@ -15,47 +14,15 @@ import { assertWorkspaceDatabaseRelativePath } from './workspace-database.js';
 import { withWorkspaceDatabaseClose } from './workspace-database-raw.js';
 import { openAdmittedWorkspaceDatabase, closeWorkspaceDatabaseWithAdmission } from './storage-read-admission.js';
 import { initializeServiceOperationCustodySchema } from './service-operation-custody.js';
+import {
+  initialWorkspaceImageSchema,
+  workspaceBootstrapBindingSchema,
+  type InitialWorkspaceDatabaseImage,
+  type WorkspaceBootstrapBinding,
+} from './project-upgrade-existing-storage.js';
 
 const label = 'VIDA upgrade storage';
 const byteLimit = 8 * 1024 * 1024;
-const hash = z.string().regex(/^[a-f0-9]{64}$/u);
-const bindingSchema = z.strictObject({
-  schema: z.literal('VidaWorkspaceBootstrap/v1'),
-  operation_id: z.string().regex(/^[a-z0-9][a-z0-9._-]{0,79}$/u),
-  workspace_id: hash,
-  plan_digest: hash,
-  bundle_digest: hash,
-  input_digest: hash,
-  authority_digest: hash,
-  token_digest: hash,
-});
-export type WorkspaceBootstrapBinding = z.infer<typeof bindingSchema>;
-export const initialWorkspaceImageSchema = z.strictObject({
-  schema: z.literal('VidaInitialWorkspaceImage/v1'),
-  binding: bindingSchema,
-  size: z
-    .number()
-    .int()
-    .positive()
-    .max(4 * 1024 * 1024),
-  sha256: hash,
-  bytes_base64: z
-    .string()
-    .min(1)
-    .max(6 * 1024 * 1024),
-  database_schema: z
-    .array(
-      z.strictObject({
-        type: z.enum(['table', 'index', 'view', 'trigger']),
-        name: z.string().min(1),
-        table_name: z.string().min(1),
-        sql: z.string().nullable(),
-      }),
-    )
-    .min(1)
-    .max(1024),
-});
-export type InitialWorkspaceDatabaseImage = z.infer<typeof initialWorkspaceImageSchema>;
 export interface ClosedWorkspaceDatabaseImage {
   readonly device: string;
   readonly inode: string;
@@ -75,7 +42,7 @@ function requireStorage(condition: unknown, message: string): asserts condition 
 /** Data validation only; an attributable binding is not an initialization capability. */
 function validateWorkspaceBootstrapBinding(value: unknown): WorkspaceBootstrapBinding {
   const snapshot: unknown = JSON.parse(canonicalJson(value));
-  return freezeJsonValue(bindingSchema.parse(snapshot));
+  return freezeJsonValue(workspaceBootstrapBindingSchema.parse(snapshot));
 }
 
 function initializeBootstrapSentinel(database: Database, binding: WorkspaceBootstrapBinding): void {

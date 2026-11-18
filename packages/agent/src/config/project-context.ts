@@ -6,7 +6,6 @@ import {
   productModelForRuntimeConfig,
   runtimeConfigDigest,
   type AgentRuntimeConfig,
-  type AgentRuntimeConfigV2,
   type PathProfileKey,
   type PathProfileOverride,
   type ProcessingScope,
@@ -591,63 +590,40 @@ function applyTrustedOverride(
 function applyProjectFields(
   values: Record<PathProfileKey, string>,
   provenance: Record<PathProfileKey, PathProfileProvenance>,
-  source:
-    | AgentRuntimeConfigV2['projects'][number]
-    | {
-        readonly wiki_root: string;
-        readonly wiki_output_root: string;
-        readonly internal_root: string;
-        readonly ledger_root: string;
-        readonly wiki_path?: string;
-        readonly path_overrides?: unknown;
-      },
+  source: AgentRuntimeConfig['projects'][number],
   layer: 'tenant-config' | 'project-config',
   pointer: string,
 ): void {
-  if ('documents' in source) {
-    applyOverrides(values, provenance, source.path_overrides, layer, pointer + '.path_overrides');
-    assignPath(values, provenance, 'project_root', source.project_root, layer, pointer + '.project_root');
-    assignPath(values, provenance, 'wiki_root', source.documents.root, layer, pointer + '.documents.root');
-    assignPath(values, provenance, 'documentation_root', source.documents.root, layer, pointer + '.documents.root');
-    assignPath(values, provenance, 'wiki_output_root', source.documents.root, layer, pointer + '.documents.root');
-    assignPath(values, provenance, 'wiki_path', source.documents.index, layer, pointer + '.documents.index');
-    assignPath(
-      values,
-      provenance,
-      'internal_root',
-      source.documents.requirements.root,
-      layer,
-      pointer + '.documents.requirements.root',
-    );
-    assignPath(
-      values,
-      provenance,
-      'internal_requirements_root',
-      source.documents.requirements.root,
-      layer,
-      pointer + '.documents.requirements.root',
-    );
-    assignPath(
-      values,
-      provenance,
-      'ledger_root',
-      source.work_items.storage_root,
-      layer,
-      pointer + '.work_items.storage_root',
-    );
-    return;
-  }
-  assignPath(values, provenance, 'wiki_root', source.wiki_root, layer, pointer + '.wiki_root');
-  assignPath(values, provenance, 'documentation_root', source.wiki_root, layer, pointer + '.wiki_root');
-  assignPath(values, provenance, 'wiki_output_root', source.wiki_output_root, layer, pointer + '.wiki_output_root');
-  assignPath(values, provenance, 'internal_root', source.internal_root, layer, pointer + '.internal_root');
-  assignPath(values, provenance, 'ledger_root', source.ledger_root, layer, pointer + '.ledger_root');
-  choose(
-    Boolean(source.wiki_path),
-    () => assignPath(values, provenance, 'wiki_path', source.wiki_path, layer, pointer + '.wiki_path'),
-    noop,
-  );
   applyOverrides(values, provenance, source.path_overrides, layer, pointer + '.path_overrides');
+  assignPath(values, provenance, 'project_root', source.project_root, layer, pointer + '.project_root');
+  assignPath(values, provenance, 'wiki_root', source.documents.root, layer, pointer + '.documents.root');
+  assignPath(values, provenance, 'documentation_root', source.documents.root, layer, pointer + '.documents.root');
+  assignPath(values, provenance, 'wiki_output_root', source.documents.root, layer, pointer + '.documents.root');
+  assignPath(values, provenance, 'wiki_path', source.documents.index, layer, pointer + '.documents.index');
+  assignPath(
+    values,
+    provenance,
+    'internal_root',
+    source.documents.requirements.root,
+    layer,
+    pointer + '.documents.requirements.root',
+  );
+  assignPath(
+    values,
+    provenance,
+    'internal_requirements_root',
+    source.documents.requirements.root,
+    layer,
+    pointer + '.documents.requirements.root',
+  );
+  assignPath(
+    values,
+    provenance,
+    'ledger_root',
+    source.work_items.storage_root,
+    layer,
+    pointer + '.work_items.storage_root',
+  );
 }
 
 function configuredProject(config: AgentRuntimeConfig, repositoryId: string, projectId: string) {
@@ -892,7 +868,7 @@ function projectContextDigest(
   projectIds: readonly string[],
   integrationsDigest: string,
   pathBindingsDigest: string,
-  productModel: ProductModelDefinition | null,
+  productModel: ProductModelDefinition,
 ): string {
   const binding = {
     schema: 'ProjectContext/v1',
@@ -902,7 +878,7 @@ function projectContextDigest(
     registry_hash: projectCatalogDigest(config),
     integrations_digest: integrationsDigest,
     path_bindings_digest: pathBindingsDigest,
-    ...(productModel === null ? {} : { product_model: productModel }),
+    product_model: productModel,
   };
   return canonicalJsonDigest(binding);
 }
@@ -960,8 +936,8 @@ function buildProjectSetContext(
   ids: readonly string[],
   profiles: readonly ResolvedPathProfile[],
 ): ProjectContext {
-  const productModel = productModelForRuntimeConfig(config) ?? null;
-  const productById = new Map(productModel?.projects.map((product) => [product.project_id, product]) ?? []);
+  const productModel = productModelForRuntimeConfig(config);
+  const productById = new Map(productModel.projects.map((product) => [product.project_id, product]));
   const project_bindings = ids.map((projectId, index) => {
     const project = configuredProject(config, repositoryId, projectId);
     const integration_binding = integrationBinding(config, projectId);
@@ -971,7 +947,7 @@ function buildProjectSetContext(
       schema: 'ProjectContextProjectBinding/v1' as const,
       project_id: projectId,
       project_title: project.title,
-      task_prefix: 'documents' in project ? project.prefix : project.task_prefix,
+      task_prefix: project.prefix,
       code_selectors: [...project.code_selectors],
       delivery_group: project.delivery_group,
       project_root: project.project_root,
@@ -994,7 +970,6 @@ function buildProjectSetContext(
     registry_hash: registryHash,
     repository_id: config.repository.repository_id,
     project_ids: ids,
-    ...(productModel === null ? {} : { product_model: productModel }),
     integrations_digest,
     repository_title: config.repository.title,
     project_bindings,
@@ -1002,6 +977,7 @@ function buildProjectSetContext(
     path_profiles,
     path_bindings,
     path_bindings_digest,
+    product_model: productModel,
     project_context_digest: projectContextDigest(
       config,
       repositoryId,

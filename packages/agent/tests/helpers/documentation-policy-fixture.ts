@@ -40,8 +40,10 @@ function fixture(options: PreparedFixtureOptions = {}) {
   const template = (file: string) =>
     readFileSync(path.join(bundle, 'templates', file), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'fixture-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'FIXTUREREPOSITORY')
       .replaceAll('{{PROJECTS}}', 'fixture-project')
       .replaceAll('{{PROJECT}}', 'fixture-project')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'FIXTUREPROJECT')
       .replaceAll('{{BUNDLE}}', 'vida-agent')
       .replaceAll('{{CREATED_AT}}', '2026-09-30T00:00:00.000Z');
   put('AGENTS.md', template('AGENTS.template.md'));

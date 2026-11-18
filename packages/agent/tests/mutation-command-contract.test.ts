@@ -576,9 +576,6 @@ test('mutation inventory assigns maintained sources to runnable partitions', () 
     'bun-project-upgrade-existing-storage-image',
   ]);
   expect(owners.get('src/config/project-upgrade.ts')).toEqual(['bun-project-upgrade-lifecycle']);
-  expect(owners.get('src/config/project-upgrade-existing-storage-admission.ts')).toEqual([
-    'bun-project-upgrade-storage-admission',
-  ]);
 
   expect([...owners.keys()].sort()).toEqual([...inventory.expected_sources].sort());
   for (const source of inventory.expected_sources) {

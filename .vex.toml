@@ -1,8 +1,12 @@
+# Code, docs and instructions share one index; .ignore admits project tooling paths.
 # Synchronous freshness in development; no watcher or queries during frozen checks.
 format = "compact"
 semantic = true
 auto_update = true
 async_update = false
+bm25 = true
+call_graph = true
+pattern_index = false
 exclude = [
   "BASE/**", ".agent/**", ".tmp/**", ".planning/**", ".lean-ctx/**",
   "**/node_modules/**", "**/dist/**", "**/build/**", "**/coverage/**",

@@ -17,7 +17,9 @@ function fixture() {
   const root = mkdtempSync(path.join(tmpdir(), 'audit-state-replay-'));
   const template = readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
     .replaceAll('{{REPOSITORY}}', 'replay-consumer')
+    .replaceAll('{{REPOSITORY_PREFIX}}', 'REPLAYCONSUMER')
     .replaceAll('{{PROJECT}}', 'sample')
+    .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
     .replaceAll('{{BUNDLE}}', 'vida-agent');
   writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), template);
   writeFileSync(path.join(root, 'AGENTS.md'), 'TEST-SETUP policy');

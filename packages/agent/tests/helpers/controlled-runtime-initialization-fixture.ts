@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.js';
 import {
@@ -25,11 +25,7 @@ function sha256(bytes: Uint8Array): string {
 }
 
 /** Controlled Source fixture binding; no installer, native formation or Runtime acceptance proof. */
-export async function bindControlledRuntimeInitialization(
-  root: string,
-  config: AgentRuntimeConfig,
-  store: HostStateStore,
-): Promise<void> {
+export function writeControlledRuntimeInitializationReceipt(root: string, config: AgentRuntimeConfig): void {
   const packageAccess = runtimePackageAccess();
   const receipt: RuntimeInitializationReceipt = {
     schema: 'RuntimeInitialization/v1',
@@ -56,7 +52,16 @@ export async function bindControlledRuntimeInitialization(
     created_at: new Date().toISOString(),
   };
   const receiptPath = path.join(root, '.agent', 'runtime-initialization.v1.json');
+  if (existsSync(receiptPath)) return;
   mkdirSync(path.dirname(receiptPath), { recursive: true });
   writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' });
+}
+
+export async function bindControlledRuntimeInitialization(
+  root: string,
+  config: AgentRuntimeConfig,
+  store: HostStateStore,
+): Promise<void> {
+  writeControlledRuntimeInitializationReceipt(root, config);
   await bindRuntimeInitialization(root, store);
 }

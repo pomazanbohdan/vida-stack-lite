@@ -115,7 +115,7 @@ test('read-only plan rebases typed paths and policy while redacting inventory', 
     if (target.schema !== 'AgentRuntimeConfig/v1') throw new Error('Expected the legacy relocation fixture');
     expect(target.projects[0]?.project_id).toBe('alpha');
     expect(target.projects[0]?.project_root).toBe('new');
-    expect(target.projects[0]?.wiki_root).toBe('new/docs');
+    expect(target.projects[0]?.documents.root).toBe('new/docs');
     expect(parsePolicy(capture.targetPolicy).canonical_roots).toEqual(['new/nested']);
     expect(parsePolicy(capture.targetPolicy).map_paths).toEqual(['new/nested/sentinel.txt']);
     expect(capture.plan.changes.relocation).toMatchObject({ files: 1, projection: 'plan_only' });

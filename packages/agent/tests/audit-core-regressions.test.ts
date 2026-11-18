@@ -16,7 +16,12 @@ import { citedResearchConstraints } from '../src/orchestration/admitted-developm
 import { HostStateStore } from '../src/host-state.ts';
 import { MastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { parseSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
-import { runSourcePrewriterPublicActions, runTaskSynthesisPublicActions } from './helpers/public-prewriter-fixture.ts';
+import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import {
+  createPrewriterPreparationObservation,
+  runSourcePrewriterPublicActions,
+  runTaskSynthesisPublicActions,
+} from './helpers/public-prewriter-fixture.ts';
 
 type PublicFailure = { readonly status: string; readonly message: string };
 type ChildResult = {
@@ -543,5 +548,299 @@ test('audit core preserves risk and labels through resumed prewriter and admits 
     closeSessionDatabase?.();
     if (fixtureComplete) rmSync(root, { recursive: true, force: true });
     else console.error(`Retained incomplete audit writer fixture: ${root}`);
+  }
+}, 120_000);
+
+test('committed prewriter report returns persisted state when attached preparation fails', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-prewriter-ack-'));
+  let fixtureComplete = false;
+  let closeSessionDatabase: (() => void) | undefined;
+  try {
+    const bundle = path.join(root, 'tools', 'agents');
+    mkdirSync(bundle, { recursive: true });
+    for (const entry of [
+      'src',
+      'dist',
+      'bin',
+      'schemas',
+      'instructions',
+      'templates',
+      'tooling',
+      'package.json',
+      'TESTING.md',
+      'bun.lock',
+      '.bun-version',
+    ])
+      cpSync(path.join(packageRoot, entry), path.join(bundle, entry), { recursive: true, dereference: false });
+    symlinkSync(
+      path.join(packageRoot, 'node_modules'),
+      path.join(bundle, 'node_modules'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    const invoke = (entry: string, args: string[]) =>
+      spawnSync('bun', [path.join(bundle, 'bin', entry), ...args], {
+        cwd: bundle,
+        encoding: 'utf8',
+        windowsHide: true,
+      });
+    const initialized = invoke('init.ts', [
+      '--project-root',
+      root,
+      '--repository',
+      'writer-repository',
+      '--project',
+      'writer-project',
+    ]);
+    expect(initialized.status, initialized.stderr).toBe(0);
+    mkdirSync(path.join(root, 'src'), { recursive: true });
+    writeFileSync(path.join(root, 'src', 'task.ts'), 'export const task = true;\n');
+    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['src/task.ts']);
+    const config = loadRuntimeConfig(root);
+    const workDir = path.join(root, '.agent', 'work', 'writer-work');
+    mkdirSync(workDir, { recursive: true });
+    const relative = (name: string) => '.agent/work/writer-work/' + name;
+    const put = (name: string, value: unknown) => writeFileSync(path.join(workDir, name), JSON.stringify(value));
+    put('scope.json', {
+      schema: 'ImplementationScope/v1',
+      scope_id: 'writer-scope',
+      work_id: 'writer-work',
+      source_revision: source.digest,
+      ac_ids: ['AC-WRITER-1'],
+      allowed_paths: ['src/task.ts'],
+      implementation_paths: ['src/task.ts'],
+      documentation_paths: [],
+      changed_symbols: [],
+      non_goals: [],
+      acceptance_trace: ['AC-WRITER-1'],
+      behavior_trace: ['SR-WRITER-1'],
+      test_trace: ['public writer issue'],
+      diagnostic_trace: ['fixture'],
+      attribution: { thread_id: 'writer-thread', pointer: relative('intake.json') },
+      owner: 'fixture',
+      created_at: new Date().toISOString(),
+    });
+    put('acceptance.json', {
+      schema: 'AcceptanceManifest/v1',
+      id: 'writer-acceptance',
+      version: 1,
+      ac_ids: ['AC-WRITER-1'],
+      source: 'AGENT.sidecar.md',
+      scope: 'writer-scope',
+      source_revision: source.digest,
+      contracts: [
+        { id: 'AC-WRITER-1', definition: 'Reserve the exact writer files.', sr: 'SR-WRITER-1', evidence: ['fixture'] },
+      ],
+    });
+    put('source-authorization.json', {
+      schema: 'LocalSourceWriteAuthorization/v1',
+      action: 'source.write',
+      user_instruction_ref: 'fixture:source-write-authorized',
+      work_id: 'writer-work',
+      attempt: 1,
+      scope_digest: source.digest,
+      config_digest: runtimeConfigDigest(config),
+      workflow_id: 'task_execution',
+      stage_ids: ['develop_task'],
+      implementation_paths: ['src/task.ts'],
+      native_session_handle: 'writer-thread',
+    });
+    put('intake.json', {
+      schema: 'VidaLocalSessionIntake/v1',
+      native_session_handle: 'writer-thread',
+      work_item: {
+        schema: 'WorkItem/v1',
+        id: 'writer-work',
+        provider: 'local',
+        provider_type: 'Task',
+        canonical_kind: 'task',
+        intent: 'task_execution',
+        project_id: 'writer-project',
+        title: 'Public writer boundary fixture',
+        description: 'Issue the configured writer.',
+        labels: ['audit-sensitive'],
+        risk_flags: ['concurrency'],
+      },
+      scope_path: relative('scope.json'),
+      acceptance_path: relative('acceptance.json'),
+      source_authorization_path: relative('source-authorization.json'),
+      runtime_code_paths: runtimeExecutableInventory(bundle).map((file) => 'tools/agents/' + file),
+      route: 'R2',
+      risk: 'low',
+      change_kind: 'fix',
+    });
+    const args = [
+      '--project-root',
+      root,
+      '--repository',
+      'writer-repository',
+      '--project',
+      'writer-project',
+      '--work-path',
+      'src',
+      '--work-id',
+      'writer-work',
+      '--attempt',
+      '1',
+      '--scope-digest',
+      source.digest,
+      '--team',
+      'default-development',
+      '--kind',
+      'task',
+      '--intent',
+      'task_execution',
+      '--workflow',
+      'task_execution',
+    ];
+    const prepared = parseInvocation(invoke('run.ts', [...args, '--intake', path.join(workDir, 'intake.json')]));
+    expect(prepared.status, prepared.stderr).toBe(0);
+    const dbPath = path.join(root, '.agent', 'work', 'session-handoff.v1.sqlite');
+    const sessionDatabase = new Database(dbPath);
+    closeSessionDatabase = () => sessionDatabase.close();
+    const workRow = sessionDatabase
+      .query<{ readonly payload: string }, [string]>('SELECT payload FROM agent_host_state WHERE kind=?')
+      .get('work');
+    if (!workRow) throw new Error('persisted work state is missing');
+    const workPayload = requireRecord(JSON.parse(workRow.payload), 'persisted work state');
+    const workspaceId = requireString(workPayload.workspace_id, 'work workspace id');
+    const sessionHost = new HostStateStore(
+      sessionDatabase,
+      workspaceId,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      root,
+    );
+    const sessionLedger = new MastraSessionLedger(sessionDatabase, workspaceId, config, root, sessionHost);
+    const workBinding = requireRecord(workPayload.binding, 'persisted work binding');
+    const fixtureWork = sessionHost.readHostStateSnapshot({
+      repository_id: requireString(workBinding.repository_id, 'work repository id'),
+      project_ids: requireStringArray(workBinding.project_ids, 'work project ids'),
+      integrations_digest: requireString(workBinding.integrations_digest, 'work integrations digest'),
+      work_id: requireString(workBinding.lifecycle_work_id, 'work identity id'),
+    }).work;
+    if (!fixtureWork || fixtureWork.workspace_id !== workspaceId)
+      throw new Error('current Host snapshot did not contain the expected work');
+    const publicFixture = {
+      args,
+      publicRun: (publicArgs: string[]) => {
+        const result = parseInvocation(invoke('run.ts', publicArgs));
+        expect(result.status, result.stderr).toBe(0);
+        return result.payload;
+      },
+      sync: () => sessionLedger.resume('writer-work', 1),
+      repositoryRoot: root,
+      workId: 'writer-work',
+      attempt: 1,
+      work: fixtureWork,
+    };
+    await runTaskSynthesisPublicActions(publicFixture);
+    const prewriteJournal = sessionLedger.resume('writer-work', 1);
+    if (!prewriteJournal) throw new Error('prewriter session journal is unavailable');
+    const issued = parseInvocation(
+      invoke('run.ts', [
+        ...args,
+        '--issue-wave',
+        'true',
+        '--expected-revision',
+        String(prewriteJournal.version.revision),
+        '--expected-digest',
+        prewriteJournal.version.digest,
+      ]),
+    );
+    expect(issued.status, issued.stderr).toBe(0);
+    const issuedPayload = requireRecord(issued.payload, 'issued result');
+    expect(issuedPayload.status).toBe('wave_issued');
+    const issuedActions = requireUnknownArray(issuedPayload.issued_actions, 'issued actions').map((entry) =>
+      requireRecord(entry, 'issued action'),
+    );
+    const plannerEntry = issuedActions.find((entry) => {
+      const request = requireRecord(entry.request, 'issued action request');
+      return request.role === 'source-planner';
+    });
+    if (!plannerEntry || typeof plannerEntry.issue_id !== 'string')
+      throw new Error('configured source planner issuance is missing');
+    const plannerRequest = parseSessionBridgeRequest(plannerEntry.request);
+    const preparation = createPrewriterPreparationObservation(
+      { issue_id: plannerEntry.issue_id, request: plannerRequest },
+      { work: fixtureWork, workId: 'writer-work' },
+      1,
+    );
+    const summary = JSON.stringify(preparation);
+    const observation = {
+      schema: 'VidaSessionObservation/v1',
+      action_id: plannerRequest.action_id,
+      issue_id: plannerEntry.issue_id,
+      agent_id: 'fixture:foreign-observer',
+      tool_call_ref: 'fixture:correction-prewriter-call-' + plannerEntry.issue_id,
+      status: 'reported_complete',
+      summary,
+      output_digest: canonicalJsonDigest(summary),
+      evidence_refs: preparation.evidence_refs,
+    };
+    const reportPath = path.join(root, '.agent', 'work', 'writer-work', 'planner-report.json');
+    writeFileSync(reportPath, JSON.stringify(observation));
+    const issuedVersion = requireRecord(issuedPayload.state_version, 'issued state version');
+    const reportArgs = [
+      ...args,
+      '--report',
+      reportPath,
+      '--expected-revision',
+      String(issuedVersion.revision),
+      '--expected-digest',
+      requireString(issuedVersion.digest, 'issued state version digest'),
+    ];
+    const reported = requireRecord(publicFixture.publicRun(reportArgs), 'committed prewriter report result');
+    expect(reported.status).toBe('report_retrieved');
+    expect(reported.recorded_observation).toEqual(observation);
+    const committed = sessionLedger.resume('writer-work', 1);
+    if (!committed) throw new Error('committed prewriter journal is unavailable');
+    const committedItem = [...committed.state.items, ...committed.state.completed.flatMap((wave) => wave.items)].find(
+      (item) => item.request.action_id === plannerRequest.action_id,
+    );
+    if (!committedItem?.observation) throw new Error('committed prewriter observation is missing');
+    expect(canonicalJsonDigest(committedItem.observation)).toBe(canonicalJsonDigest(observation));
+    const retryVersion = committed.version;
+    const retry = requireRecord(
+      publicFixture.publicRun([
+        ...args,
+        '--report',
+        reportPath,
+        '--expected-revision',
+        String(retryVersion.revision),
+        '--expected-digest',
+        retryVersion.digest,
+      ]),
+      'prewriter report retry result',
+    );
+    expect(retry.status).toBe('report_retrieved');
+    const conflictingSummary = summary + ' ';
+    writeFileSync(
+      reportPath,
+      JSON.stringify({
+        ...observation,
+        summary: conflictingSummary,
+        output_digest: canonicalJsonDigest(conflictingSummary),
+      }),
+    );
+    const conflicting = parseInvocation(
+      invoke('run.ts', [
+        ...args,
+        '--report',
+        reportPath,
+        '--expected-revision',
+        String(retryVersion.revision),
+        '--expected-digest',
+        retryVersion.digest,
+      ]),
+    );
+    expect(conflicting.status).toBe(1);
+    expect(parsePublicFailure(conflicting.payload).status).toBe('blocked');
+    fixtureComplete = true;
+  } finally {
+    closeSessionDatabase?.();
+    if (fixtureComplete) rmSync(root, { recursive: true, force: true });
+    else console.error(`Retained incomplete prewriter acknowledgement fixture: ${root}`);
   }
 }, 120_000);

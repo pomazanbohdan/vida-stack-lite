@@ -142,6 +142,12 @@ function withinProject(root: string, relative: string): string {
   return root === '.' ? relative : relative === '.' ? root : `${root}/${relative}`;
 }
 
+/** @param {string} value */
+function configPrefix(value: string): string {
+  const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return /^[A-Z]/.test(cleaned) ? cleaned : 'P' + cleaned;
+}
+
 /** @param {AgentRuntimeConfig} config @param {readonly ProjectMapping[]} mappings @returns {AgentRuntimeConfig} */
 function expandProjectSet(config: AgentRuntimeConfig, mappings: readonly ProjectMapping[]): AgentRuntimeConfig {
   if (config.schema !== 'AgentRuntimeConfig/v1')
@@ -149,19 +155,44 @@ function expandProjectSet(config: AgentRuntimeConfig, mappings: readonly Project
   const projectTemplate = config.projects[0];
   const integrationTemplate = config.integrations.providers[0];
   if (!projectTemplate || !integrationTemplate) throw new Error('Neutral template must define one project integration');
-  const projects = mappings.map(({ id: project, root }) => ({
-    ...structuredClone(projectTemplate),
-    project_id: project,
-    title: project,
-    delivery_group: project,
-    project_root: root,
-    wiki_root: withinProject(root, projectTemplate.wiki_root),
-    wiki_path: withinProject(root, projectTemplate.wiki_path),
-    wiki_output_root: withinProject(root, projectTemplate.wiki_output_root),
-    internal_root: withinProject(root, projectTemplate.internal_root),
-    ledger_root: withinProject(root, projectTemplate.ledger_root),
-    code_selectors: projectTemplate.code_selectors.map((selector) => withinProject(root, selector)),
-  }));
+  const projects = mappings.map(({ id: project, root }) => {
+    const documents = projectTemplate.documents;
+    return {
+      ...structuredClone(projectTemplate),
+      project_id: project,
+      title: project,
+      prefix: configPrefix(project),
+      delivery_group: project,
+      project_root: root,
+      code_selectors: projectTemplate.code_selectors.map((selector) => withinProject(root, selector)),
+      documents: {
+        ...structuredClone(documents),
+        root: withinProject(root, documents.root),
+        index: withinProject(root, documents.index),
+        requirements: {
+          ...structuredClone(documents.requirements),
+          root: withinProject(root, documents.requirements.root),
+          areas: Object.fromEntries(
+            Object.entries(documents.requirements.areas).map(([area, paths]) => [
+              area,
+              {
+                business: withinProject(root, paths.business),
+                system: withinProject(root, paths.system),
+                acceptance: withinProject(root, paths.acceptance),
+                test_cases: withinProject(root, paths.test_cases),
+              },
+            ]),
+          ),
+        },
+        research: withinProject(root, documents.research),
+        decisions: withinProject(root, documents.decisions),
+      },
+      work_items: {
+        ...structuredClone(projectTemplate.work_items),
+        storage_root: withinProject(root, projectTemplate.work_items.storage_root),
+      },
+    };
+  });
   const providers = mappings.map(({ id: project }) => ({
       ...structuredClone(integrationTemplate),
       id: `local-${project}`,
@@ -404,8 +435,10 @@ function renderTemplates(
 ): RenderedTemplate[] {
   const values = {
     REPOSITORY: repository,
+    REPOSITORY_PREFIX: configPrefix(repository),
     PROJECTS: selectedProjects.map((entry) => entry.id).join(', '),
     PROJECT: requireEntry(selectedProjects, 0, 'Project mapping').id,
+    PRODUCT_PREFIX: configPrefix(requireEntry(selectedProjects, 0, 'Project mapping').id),
     BUNDLE: bundle,
     CREATED_AT: createdAt,
   };
@@ -806,8 +839,6 @@ function preparePendingInitialization(
     (preparedResume && JSON.stringify(planned, null, 2) + '\n' !== preparedResume.intent)
   )
     throw new Error('Pending initialization intent differs from the requested identity or current templates');
-  if (access.fileExists('agent-runtime.config.v1.yaml', 'owner runtime configuration'))
-    requireRuntimeModule(runtimeConfig).assertProjectUpgradeInactive(access);
   if (access.fileExists(initializationReceiptPath(), 'initialization receipt')) {
     const receipt = validateExistingReceipt(
       access,
@@ -974,8 +1005,6 @@ function prepareExistingReconciliation(
   const present = outputs
     .map(([, output]) => output)
     .filter((output) => access.fileExists(output, 'existing project integration file'));
-  if (access.fileExists('agent-runtime.config.v1.yaml', 'existing project configuration'))
-    requireRuntimeModule(runtimeConfig).assertProjectUpgradeInactive(access);
   if (productRequest?.productModel) {
     const actual = requireRuntimeModule(runtimeConfig).productModelForRuntimeConfig(
       readInitializationConfig(access, projectRoot),
@@ -1786,6 +1815,7 @@ export async function derivePendingConfigurationReceipt(
   request: import('./init-configuration.ts').VersionedConsumerConfigurationRequest,
   assertActive: () => void,
   recovery?: import('./init-configuration.ts').ConfigurationRecovery,
+  executorModel?: string,
 ): Promise<{
   readonly plan: import('./init-configuration.ts').ConsumerConfigurationPlan;
   readonly beforeReceipt: Buffer;
@@ -1799,8 +1829,8 @@ export async function derivePendingConfigurationReceipt(
   } = await import('./init-configuration.ts');
   assertActive();
   const capture = recovery
-    ? captureConsumerConfigurationForRecovery(request, recovery)
-    : captureConsumerConfiguration(request);
+    ? captureConsumerConfigurationForRecovery(request, recovery, executorModel)
+    : captureConsumerConfiguration(request, executorModel);
   if (!capture.receipt) throw new Error('A pending initialization receipt is required');
   const context = initializationContext({
     projectRoot: request.projectRoot,
@@ -1838,18 +1868,18 @@ export async function derivePendingConfigurationReceipt(
     target,
     target,
     evidence,
-    request.schema === 'ConsumerConfigurationRequest/v3' ? 'adopted_existing' : oldReceipt.provenance,
+    oldReceipt.provenance,
     oldReceipt.created_at,
   );
   const receipt =
-    oldReceipt.provenance === undefined && request.schema !== 'ConsumerConfigurationRequest/v3'
+    oldReceipt.provenance === undefined
       ? Object.fromEntries(Object.entries(built.receipt).filter(([key]) => key !== 'provenance'))
       : built.receipt;
   validateReceipt(built.rawSchema, receipt);
   assertActive();
   const checked = recovery
-    ? captureConsumerConfigurationForRecovery(request, recovery)
-    : captureConsumerConfiguration(request);
+    ? captureConsumerConfigurationForRecovery(request, recovery, executorModel)
+    : captureConsumerConfiguration(request, executorModel);
   if (
     checked.plan.binding !== capture.plan.binding ||
     !checked.receipt?.equals(capture.receipt) ||

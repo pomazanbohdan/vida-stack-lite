@@ -34,6 +34,7 @@ function fixture() {
     new TextDecoder()
       .decode(ctx.readPackageBytes('templates/documentation-policy.template.v1.json'))
       .replaceAll('{{REPOSITORY}}', 'example')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'EXAMPLE')
       .replaceAll('{{CREATED_AT}}', '2026-11-08T00:00:00.000Z'),
   );
   const model = productModelSchema.parse({

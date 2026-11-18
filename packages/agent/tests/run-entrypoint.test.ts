@@ -1455,6 +1455,8 @@ function unpreparedRecoveryFixture(deadlineAt: number): {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-unprepared-state-'));
   const yaml = readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
     .replaceAll('{{REPOSITORY}}', 'recovery-repository')
+    .replaceAll('{{REPOSITORY_PREFIX}}', 'RECOVERYREPOSITORY')
+    .replaceAll('{{PRODUCT_PREFIX}}', 'PROJECT')
     .replaceAll('{{PROJECT}}', 'project')
     .replaceAll('{{BUNDLE}}', 'vida-agent');
   writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), yaml);
@@ -1648,7 +1650,7 @@ function unpreparedRecoveryFixture(deadlineAt: number): {
   engine.exec('CREATE TABLE mastra_workflow_snapshot (workflow_name TEXT,run_id TEXT,snapshot TEXT)');
   engine.close();
   const input = { identity, attempt: 1, operatorHandle: owner, decisionPointer: 'user:fixture-recovery', config };
-  const observed = () => inspectHostWorkspaceDatabase(root, path.relative(root, file), workspace);
+  const observed = () => inspectHostWorkspaceDatabase(root, sessionHandoffDatabaseRelativePath(config), workspace);
   return {
     root,
     file,
@@ -1878,16 +1880,16 @@ describe('unprepared recovery', () => {
           "  - project_id: 'project'\n    title: 'project'",
           "  - project_id: 'project'\n    title: 'Current recovery descriptor'",
         )
-        .replace('    task_prefix: TASK\n', '    task_prefix: RECOVERY\n')
+        .replace("    prefix: 'PROJECT'\n", "    prefix: 'RECOVERY'\n")
         .replace(
-          '    wiki_output_root: .planning/agent-flow/wiki-output\n    internal_root: docs/internal',
-          '    wiki_output_root: .planning/agent-flow/recovery-output\n    internal_root: docs/internal',
+          '      research: docs/research\n      decisions: docs/decisions',
+          '      research: docs/recovery-research\n      decisions: docs/recovery-decisions',
         );
       if (
         metadataChanged === currentConfig ||
         !metadataChanged.includes("title: 'Current recovery descriptor'") ||
-        !metadataChanged.includes('    task_prefix: RECOVERY\n') ||
-        !metadataChanged.includes('    wiki_output_root: .planning/agent-flow/recovery-output\n')
+        !metadataChanged.includes("    prefix: 'RECOVERY'\n") ||
+        !metadataChanged.includes('      research: docs/recovery-research\n')
       )
         throw Error('current registry metadata fixture did not apply every intended change');
       writeFileSync(configPath, metadataChanged);
@@ -2726,6 +2728,8 @@ writeFileSync(
   path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'),
   readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
     .replaceAll('{{REPOSITORY}}', 'fixture-repository')
+    .replaceAll('{{REPOSITORY_PREFIX}}', 'FIXTUREREPOSITORY')
+    .replaceAll('{{PRODUCT_PREFIX}}', 'FIXTUREPROJECT')
     .replaceAll('{{PROJECT}}', 'fixture-project')
     .replaceAll('{{BUNDLE}}', 'vida-agent'),
 );
@@ -3883,6 +3887,8 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
     );
     let configText = readFileSync(path.join(packageRoot, 'templates', 'agent-runtime.config.template.v1.yaml'), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'mutation-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'MUTATIONREPOSITORY')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'MUTATIONPROJECT')
       .replaceAll('{{PROJECT}}', 'mutation-project')
       .replaceAll('{{BUNDLE}}', bundleName);
     if (multiProject) {

@@ -82,6 +82,8 @@ const configuredRoot =
   process.env.AGENT_RUNTIME_TEST_CONTEXT_ROOT || process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT || undefined;
 const templateText = (await readFile(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
   .replaceAll('{{REPOSITORY}}', 'creatio-sample')
+  .replaceAll('{{REPOSITORY_PREFIX}}', 'CREATIOSAMPLE')
+  .replaceAll('{{PRODUCT_PREFIX}}', 'P3MOB')
   .replaceAll('{{PROJECT}}', '3mob')
   .replaceAll('{{BUNDLE}}', 'vida-agent');
 const configuredAuthorityBytes = configuredRoot
@@ -319,19 +321,13 @@ function portableRuntimeConfigText(yaml: string): string {
   config.repository.repository_id = 'creatio-sample';
   config.repository.title = 'creatio-sample repository';
   config.paths.processing_scope = 'whole_repository';
-  required(config.projects[0], 'first project').task_prefix = 'CRMBX-3MOB';
   if (!configuredRoot) required(config.projects[0], 'first project').project_root = 'project/3mob';
   if (!config.projects.some((project) => project.project_id === 'refactoring')) {
     const project = mutableClone(required(config.projects[0], 'first project'));
     project.project_id = 'refactoring';
     project.title = 'Refactoring fixture';
+    project.prefix = 'REFACTORING';
     project.project_root = 'project/refactoring';
-    project.wiki_root = 'docs/agent-instructions';
-    project.wiki_path = 'docs/agent-instructions/index.md';
-    project.wiki_output_root = '.planning/agent-flow/wiki-output/refactoring';
-    project.internal_root = 'docs/agent-instructions';
-    project.ledger_root = '.agent/coordination';
-    project.task_prefix = 'REFACTORING';
     project.code_selectors = ['project/refactoring/**'];
     project.delivery_group = 'refactoring';
     if (project.path_overrides) project.path_overrides.project_root = project.project_root;
@@ -640,7 +636,7 @@ describe('one strict YAML authority', () => {
     for (const [needle, inserted] of [
       ['  checkpoint_name: resume.json', '  derived_root: .planning/agent-flow'],
       [/^  processing_scope: .+$/m, '  shared_path_keys: []'],
-      [/^    task_prefix: .+$/m, '    dashboard_port: 6422'],
+      [/^    delivery_group: .+$/m, '    dashboard_port: 6422'],
       ['      mutation_scope: repository_source', '      ponytail: full'],
       ['observability:\n', '  schema: AgentTracePolicy/v1\n  capture_payloads: false\n  trace_fields: []'],
     ] as const) {
@@ -1188,7 +1184,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       ['projects', 1, 'project_id'],
       required(config.projects[0], 'first project').project_id,
     );
-    expect(() => validateRuntimeConfigSource(duplicateIdentity)).toThrow(/project ids contains duplicates/);
+    expect(() => validateRuntimeConfigSource(duplicateIdentity)).toThrow(/duplicate project_id/);
   });
 
   test('compiles Mastra from the selected graph and enforces role tools', async () => {
@@ -1508,7 +1504,9 @@ describe('final v1 artifact contracts', () => {
       (await readFile(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
         .replaceAll('{{BUNDLE}}', 'runtime')
         .replaceAll('{{REPOSITORY}}', 'example-repository')
-        .replaceAll('{{PROJECT}}', 'example-project'),
+        .replaceAll('{{REPOSITORY_PREFIX}}', 'EXAMPLEREPOSITORY')
+        .replaceAll('{{PROJECT}}', 'example-project')
+        .replaceAll('{{PRODUCT_PREFIX}}', 'EXAMPLEPROJECT'),
     );
     for (const current of [config, template]) {
       for (const [id, name] of [

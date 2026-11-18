@@ -4353,14 +4353,14 @@ async function captureStoppedSource(args: string[]) {
         requireSafeRepositoryAccess(root),
         input.candidateSnapshot.entries.map((entry) => entry.path),
       );
-      const actual = current.entries.map((entry) =>
-        entry.exists
-          ? { path: entry.path, presence: 'present', sha256: entry.sha256, size: entry.bytes }
-          : { path: entry.path, presence: 'absent', sha256: null, size: null },
-      );
-      const expected = [...input.candidateSnapshot.entries].sort((left, right) =>
-        left.path < right.path ? -1 : left.path > right.path ? 1 : 0,
-      );
+      const actual = current.entries
+        .map((entry) =>
+          entry.exists
+            ? { path: entry.path, presence: 'present', sha256: entry.sha256, size: entry.bytes }
+            : { path: entry.path, presence: 'absent', sha256: null, size: null },
+        )
+        .sort((left, right) => left.path.localeCompare(right.path));
+      const expected = [...input.candidateSnapshot.entries].sort((left, right) => left.path.localeCompare(right.path));
       if (canonicalJsonDigest(actual) !== canonicalJsonDigest(expected))
         throw Error('candidate source changed after frozen request');
     } else {
@@ -7901,7 +7901,24 @@ export async function run(args: string[] = process.argv.slice(2)) {
     if (isRecord(reportValue) && reportValue.schema === 'VidaSessionObservation/v1') {
       try {
         const observation = parseSessionBridgeObservation(reportValue);
-        const recorded = ledger.retrieveReportedObservation(context.work_id, context.attempt, observation);
+        let recorded: ReturnType<typeof ledger.retrieveReportedObservation> = null;
+        try {
+          recorded = ledger.retrieveReportedObservation(context.work_id, context.attempt, observation);
+        } catch (error) {
+          // Attached post-commit processing can fail after the observation is
+          // already persisted; retrieval still owes the caller that state.
+          const persisted = ledger.resume(context.work_id, context.attempt);
+          const committed = persisted
+            ? [...persisted.state.items, ...persisted.state.completed.flatMap((wave) => wave.items)].some(
+                (item) =>
+                  item.request.action_id === observation.action_id &&
+                  item.observation !== null &&
+                  canonicalJsonDigest(item.observation) === canonicalJsonDigest(observation),
+              )
+            : false;
+          if (!persisted || !committed) throw error;
+          recorded = persisted;
+        }
         if (recorded) {
           const { loadProjectSetContext } = await import('../src/config/project-context.ts');
           const project = loadProjectSetContext(
@@ -9224,6 +9241,9 @@ export async function run(args: string[] = process.argv.slice(2)) {
       return null;
     };
     let runCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
+    let committedReportObservation:
+      | import('../src/orchestration/mastra-session-bridge-contract.ts').SessionBridgeObservation
+      | null = null;
     try {
       if ((values.issue_wave || values.report) && !values.intake) {
         const paused = ledger.resume(context.work_id, context.attempt);
@@ -10249,7 +10269,25 @@ export async function run(args: string[] = process.argv.slice(2)) {
               fail('GAP-VIDA-RUN-EXECUTION-001', 'Native host attempt needs explicit reconciliation.');
           }
           if (!issued?.host_reservation && issued) requireConfiguredContext(issued.request);
-          journal = ledger.report(context.work_id, context.attempt, journal.version, observation, sourceSnapshot);
+          try {
+            journal = ledger.report(context.work_id, context.attempt, journal.version, observation, sourceSnapshot);
+          } catch (error) {
+            // The journal CAS commits before attached post-report processing runs;
+            // a later failure must not masquerade as a rejected report.
+            const persisted = ledger.resume(context.work_id, context.attempt);
+            const recorded = persisted
+              ? [...persisted.state.items, ...persisted.state.completed.flatMap((wave) => wave.items)].find(
+                  (item) =>
+                    item.request.action_id === observation.action_id &&
+                    item.observation !== null &&
+                    canonicalJsonDigest(item.observation) === canonicalJsonDigest(observation),
+                )
+              : undefined;
+            if (!persisted || !recorded) throw error;
+            committedReportObservation = observation;
+            throw error;
+          }
+          committedReportObservation = observation;
           status = 'reported';
         }
       }
@@ -10534,6 +10572,28 @@ export async function run(args: string[] = process.argv.slice(2)) {
       }
       return result;
     } catch (error) {
+      const persisted = committedReportObservation === null ? null : ledger.resume(context.work_id, context.attempt);
+      if (committedReportObservation !== null && persisted !== null) {
+        // The exact observation is already committed; return its persisted state
+        // instead of a blocked envelope that would read as a rejected report.
+        const response = {
+          schema: 'VidaAgentRunResult/v1',
+          status: 'report_retrieved',
+          workflow: values.workflow,
+          mastra_run_id: persisted.state.run_id,
+          mastra_step_id: persisted.state.step_id,
+          resume_status: persisted.resume_status,
+          state_version: persisted.version,
+          issued_actions: [],
+          completed_observations: persisted.state.completed.flatMap((wave) =>
+            wave.items.map((item) => item.observation),
+          ),
+          recorded_observation: committedReportObservation,
+          initialization_status: initialization.workspace_binding_status,
+        };
+        runCloseOutcome = { ok: true, value: undefined };
+        return response;
+      }
       runCloseOutcome = { ok: false, error };
       throw error;
     } finally {

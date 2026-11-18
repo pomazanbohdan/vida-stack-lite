@@ -243,7 +243,9 @@ const createFixture = (root: string, bundleName = 'agent-runtime-new', multiProj
   writeFileSync(path.join(root, 'AGENT.sidecar.md'), '# Mutation fixture\n');
   let configText = readFileSync(path.join(packageRoot, 'templates', 'agent-runtime.config.template.v1.yaml'), 'utf8')
     .replaceAll('{{REPOSITORY}}', 'mutation-repository')
+    .replaceAll('{{REPOSITORY_PREFIX}}', 'MUTATIONREPOSITORY')
     .replaceAll('{{PROJECT}}', 'mutation-project')
+    .replaceAll('{{PRODUCT_PREFIX}}', 'MUTATIONPROJECT')
     .replaceAll('{{BUNDLE}}', bundleName);
   if (multiProject) {
     configText = configText.replaceAll('\r\n', '\n');

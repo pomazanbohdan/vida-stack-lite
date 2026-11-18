@@ -18,3 +18,9 @@ graphify-out/
 /.vida/storage-admission.v1.sqlite-journal
 /.vida/storage-admission.v1.sqlite-wal
 /.vida/storage-admission.v1.sqlite-shm
+/.agent-archive-*/
+/.codex-attachments/
+/%PROOF%/
+/%TR%/
+/-p/
+/packages/powers/-p/

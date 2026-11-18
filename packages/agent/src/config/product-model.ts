@@ -112,6 +112,8 @@ const productSchema = z
     }
   });
 
+export const productDefinitionSchema = productSchema;
+
 export const productModelSchema = z
   .strictObject({
     schema: z.literal('ProductModel/v1'),

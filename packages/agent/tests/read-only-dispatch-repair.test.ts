@@ -195,7 +195,7 @@ function makeFixtureRoot(): string {
     'docs/agent-instructions',
     '.agent/work',
     'packages/agent/docs',
-    'packages/plugin/docs',
+    'packages/codex/docs',
     'packages/agent',
   ])
     mkdirSync(path.join(root, directory), { recursive: true });
@@ -560,13 +560,13 @@ test('read-only repair context handoff preserves plan bytes and refuses forged o
     ).toThrow(/repair project context differs/);
     copyFileSync(
       path.join(value.repositoryRoot, 'AGENT.sidecar.md'),
-      path.join(value.repositoryRoot, 'packages/plugin/AGENT.sidecar.md'),
+      path.join(value.repositoryRoot, 'packages/codex/AGENT.sidecar.md'),
     );
     const otherProjects = loadProjectSetContext(
       value.repositoryRoot,
       input.config,
       input.config.repository.repository_id,
-      ['agent', 'plugin'],
+      ['agent', 'codex'],
     );
     expect(() => buildReadOnlyDispatchRepairPlan({ ...input, projectContext: otherProjects })).toThrow(
       /repair project context differs/,
@@ -581,7 +581,7 @@ test('read-only repair context handoff preserves plan bytes and refuses forged o
     expect(() => buildReadOnlyDispatchRepairPlan({ ...input, projectContext: foreignContext })).toThrow(
       /resolved path profile identity is invalid/,
     );
-    for (const projectIds of [[], ['agent', 'agent'], ['plugin', 'agent']])
+    for (const projectIds of [[], ['agent', 'agent'], ['codex', 'agent']])
       expect(() => buildReadOnlyDispatchRepairPlan({ ...input, projectContext, projectIds })).toThrow(
         /project set must be exact sorted unique IDs/,
       );

@@ -124,7 +124,9 @@ function fixture(sourceWriter: boolean = false, publicStore: boolean = false) {
     path.join(root, 'agent-runtime.config.v1.yaml'),
     readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'absorption-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'ABSORPTIONREPOSITORY')
       .replaceAll('{{PROJECT}}', 'sample')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
       .replaceAll('{{BUNDLE}}', 'vida-agent'),
   );
   writeFileSync(path.join(root, 'AGENTS.md'), 'Test fixture policy');

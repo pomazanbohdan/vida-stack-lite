@@ -53,7 +53,7 @@ export interface UnifiedDatabaseImage {
 }
 
 const hash = z.string().regex(/^[a-f0-9]{64}$/u);
-export const existingMergeBindingSchema = z.strictObject({
+const existingMergeBindingSchema = z.strictObject({
   schema: z.literal('VidaExistingStorageMerge/v1'),
   operation_id: z.string().regex(/^[a-z0-9][a-z0-9._-]{0,79}$/u),
   workspace_id: hash,
@@ -75,6 +75,43 @@ export const unifiedDatabaseImageSchema = z.strictObject({
   host_rows_digest: hash,
   mastra_rows_digest: hash,
 });
+export const workspaceBootstrapBindingSchema = z.strictObject({
+  schema: z.literal('VidaWorkspaceBootstrap/v1'),
+  operation_id: z.string().regex(/^[a-z0-9][a-z0-9._-]{0,79}$/u),
+  workspace_id: hash,
+  plan_digest: hash,
+  bundle_digest: hash,
+  input_digest: hash,
+  authority_digest: hash,
+  token_digest: hash,
+});
+export type WorkspaceBootstrapBinding = z.infer<typeof workspaceBootstrapBindingSchema>;
+export const initialWorkspaceImageSchema = z.strictObject({
+  schema: z.literal('VidaInitialWorkspaceImage/v1'),
+  binding: workspaceBootstrapBindingSchema,
+  size: z
+    .number()
+    .int()
+    .positive()
+    .max(4 * 1024 * 1024),
+  sha256: hash,
+  bytes_base64: z
+    .string()
+    .min(1)
+    .max(6 * 1024 * 1024),
+  database_schema: z
+    .array(
+      z.strictObject({
+        type: z.enum(['table', 'index', 'view', 'trigger']),
+        name: z.string().min(1),
+        table_name: z.string().min(1),
+        sql: z.string().nullable(),
+      }),
+    )
+    .min(1)
+    .max(1024),
+});
+export type InitialWorkspaceDatabaseImage = z.infer<typeof initialWorkspaceImageSchema>;
 
 export function validateUnifiedDatabaseImage(value: unknown): UnifiedDatabaseImage {
   const image = unifiedDatabaseImageSchema.parse(JSON.parse(canonicalJson(value)));

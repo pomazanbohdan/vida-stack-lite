@@ -346,7 +346,9 @@ async function prepareFixture({
         path.join(root, 'agent-runtime.config.v1.yaml'),
         readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
           .replaceAll('{{REPOSITORY}}', 'stopped-source-repository')
+          .replaceAll('{{REPOSITORY_PREFIX}}', 'STOPPEDSOURCEREPOSITORY')
           .replaceAll('{{PROJECT}}', 'sample')
+          .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
           .replaceAll('{{BUNDLE}}', 'vida-agent'),
       );
       writeFileSync(path.join(root, 'AGENTS.md'), 'Synthetic fixture policy');

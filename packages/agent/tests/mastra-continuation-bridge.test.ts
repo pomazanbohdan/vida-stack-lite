@@ -65,7 +65,9 @@ function fixture({ afterBoundary = false }: { afterBoundary?: boolean } = {}) {
     path.join(root, 'agent-runtime.config.v1.yaml'),
     readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'continuation-fixture')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'CONTINUATIONFIXTURE')
       .replaceAll('{{PROJECT}}', 'sample')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
       .replaceAll('{{BUNDLE}}', 'vida-agent')
       .replaceAll('.agent/work', '.agent/current-work'),
   );

@@ -3,18 +3,14 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { productModelSchema } from '../src/config/product-model.ts';
-import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { parseConsumerProjectMoves } from './consumer-project-relocation.ts';
 import {
+  consumerConfigurationExecutorModelRequest,
   planConsumerConfiguration,
   type ConsumerConfigurationRequest,
   type VersionedConsumerConfigurationRequest,
-  validateConfigurationAdoptionRequest,
 } from './init-configuration.ts';
-import {
-  validateConfigurationAdoptionBinding,
-  type ConfigurationAdoptionBinding,
-} from './consumer-configuration-adoption.ts';
 import {
   configurationRequestForSetup,
   mergeSetupInput,
@@ -33,22 +29,27 @@ import {
 
 type Parsed =
   | { mode: 'inspect'; projectRoot: string }
-  | { mode: 'apply'; projectRoot: string; plan: string }
+  | { mode: 'apply'; projectRoot: string; plan: string; executorModel?: string }
   | ({ mode: 'plan' } & ConsumerConfigurationRequest)
   | ({ mode: 'resume'; operation: string } & ConsumerConfigurationRequest)
+  | {
+      mode: 'plan' | 'resume';
+      executorModel: string;
+      projectRoot: string;
+      operation?: string;
+    }
   | {
       mode: 'plan' | 'resume';
       setup: { file?: string; projectRoot?: string };
       operation?: string;
       teamProjectGrants: string[];
       projectMoves?: string[];
-      adoptHostPresent?: true;
     };
 type Mode = Parsed['mode'];
 const repeatableOptions = new Set(['--project', '--allow-project', '--move-project']);
 const modeOptions: Record<Mode, readonly string[]> = {
   inspect: ['--project-root'],
-  apply: ['--project-root', '--plan'],
+  apply: ['--project-root', '--plan', '--executor-model'],
   plan: [
     '--project-root',
     '--repository',
@@ -57,7 +58,7 @@ const modeOptions: Record<Mode, readonly string[]> = {
     '--move-project',
     '--product-model',
     '--input',
-    '--adopt-host-present',
+    '--executor-model',
   ],
   resume: [
     '--project-root',
@@ -68,7 +69,7 @@ const modeOptions: Record<Mode, readonly string[]> = {
     '--product-model',
     '--input',
     '--operation',
-    '--adopt-host-present',
+    '--executor-model',
   ],
 };
 
@@ -104,7 +105,12 @@ export function configureArguments(args: readonly string[]): Parsed {
   if (projectRoot !== undefined && !path.isAbsolute(projectRoot)) throw Error('Project root must be absolute');
   if (mode === 'inspect') return { mode, projectRoot: requiredOption(values, '--project-root') };
   if (mode === 'apply')
-    return { mode, projectRoot: requiredOption(values, '--project-root'), plan: requiredOption(values, '--plan') };
+    return {
+      mode,
+      projectRoot: requiredOption(values, '--project-root'),
+      plan: requiredOption(values, '--plan'),
+      ...(values.has('--executor-model') ? { executorModel: requiredOption(values, '--executor-model') } : {}),
+    };
   return configurationRequestArguments(values, mode, projectRoot);
 }
 
@@ -116,12 +122,26 @@ function configurationRequestArguments(
   const file = configurationInputFile(values),
     projects = values.get('--project') ?? [];
   const moves = values.get('--move-project');
+  const executorModel = values.get('--executor-model')?.[0];
+  if (executorModel !== undefined) {
+    if (
+      file !== undefined ||
+      values.has('--repository') ||
+      projects.length ||
+      values.has('--allow-project') ||
+      moves !== undefined
+    )
+      throw new Error('Executor model change excludes product, repository, project, grant and relocation inputs');
+    const root = requiredOption(values, '--project-root');
+    return mode === 'plan'
+      ? { mode, executorModel, projectRoot: root }
+      : { mode, executorModel, projectRoot: root, operation: requiredOption(values, '--operation') };
+  }
   const common = {
     teamProjectGrants: values.get('--allow-project') ?? [],
     ...(moves === undefined ? {} : { projectMoves: moves }),
   };
   const operation = mode === 'resume' ? requiredOption(values, '--operation') : undefined;
-  const adoption = configurationAdoptionArguments(values);
   if (values.has('--repository') || projects.length) {
     if (file !== undefined)
       throw new SetupInputError(
@@ -138,16 +158,8 @@ function configurationRequestArguments(
     mode,
     setup: setupArguments(file, projectRoot),
     ...common,
-    ...adoption,
     ...(operation === undefined ? {} : { operation }),
   };
-}
-
-function configurationAdoptionArguments(values: Map<string, string[]>): { adoptHostPresent?: true } {
-  const value = values.get('--adopt-host-present')?.[0];
-  if (value === undefined) return {};
-  if (value !== 'true') throw Error('--adopt-host-present requires true');
-  return { adoptHostPresent: true };
 }
 
 function setupArguments(
@@ -158,7 +170,6 @@ function setupArguments(
 }
 
 function legacyConfigurationRequest(values: Map<string, string[]>, projects: string[]): ConsumerConfigurationRequest {
-  if (values.has('--adopt-host-present')) throw Error('Host-present adoption requires a complete model input');
   if (!projects.length) throw Error('Missing --project');
   return {
     projectRoot: requiredOption(values, '--project-root'),
@@ -204,17 +215,6 @@ const publicPlanSchema = z.discriminatedUnion('schema', [
       legacy_project_id_map: z.record(z.string(), z.string()),
     }),
   }),
-  z.strictObject({
-    ...planFields,
-    schema: z.literal('ConsumerConfigurationPlan/v3'),
-    request: planRequestSchema.omit({ project_moves: true }).extend({
-      product_model: productModelSchema,
-      legacy_project_id_map: z.record(z.string(), z.string()),
-      team_project_grants: z.array(nonempty).max(0),
-      adoption: z.literal('host_present_pending_receipt'),
-    }),
-    adoption: z.custom<ConfigurationAdoptionBinding>((value) => validateConfigurationAdoptionBinding(value)),
-  }),
 ]);
 type PublicPlan = z.infer<typeof publicPlanSchema>;
 
@@ -242,7 +242,7 @@ function validateRelocation(plan: PublicPlan): string[] | undefined {
 }
 
 function modelRequestFromPlan(
-  plan: Extract<PublicPlan, { schema: 'ConsumerConfigurationPlan/v2' | 'ConsumerConfigurationPlan/v3' }>,
+  plan: Extract<PublicPlan, { schema: 'ConsumerConfigurationPlan/v2' }>,
   projectRoot: string,
 ): VersionedConsumerConfigurationRequest {
   const checked = validateSetupInput({
@@ -273,22 +273,6 @@ export function requestFromPlan(
   const plan = publicPlanSchema.parse(value);
   if (plan.operation_id !== 'config-' + plan.binding) throw Error('Invalid public configuration plan');
   const projectMoves = validateRelocation(plan);
-  if (plan.schema === 'ConsumerConfigurationPlan/v3') {
-    const model = modelRequestFromPlan(plan, projectRoot);
-    if (model.schema !== 'ConsumerConfigurationRequest/v2' || projectMoves !== undefined)
-      throw Error('Invalid Host-present plan');
-    const { teamProjectGrants: _grants, projectMoves: _moves, ...base } = model;
-    return {
-      request: validateConfigurationAdoptionRequest({
-        ...base,
-        schema: 'ConsumerConfigurationRequest/v3',
-        version: 3,
-        adoption: plan.request.adoption,
-      }),
-      binding: plan.binding,
-      operationId: plan.operation_id,
-    };
-  }
   const request =
     plan.schema === 'ConsumerConfigurationPlan/v2'
       ? modelRequestFromPlan(plan, projectRoot)
@@ -297,7 +281,6 @@ export function requestFromPlan(
           repository: plan.request.repository,
           projectMappings: plan.request.projects.map((project) => project.id + '=' + project.root),
         };
-  if (request.schema === 'ConsumerConfigurationRequest/v3') throw Error('Invalid configuration plan version');
   return {
     request: {
       ...request,
@@ -317,12 +300,14 @@ function readPlan(file: string): unknown {
     8 * 1024 * 1024,
   );
   const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
-  if (bytes.length > 32768 && (!isPlainRecord(value) || value.schema !== 'ConsumerConfigurationPlan/v3'))
-    throw Error('Legacy or unknown configuration plan exceeds 32 KiB');
+  if (bytes.length > 32768) throw Error('Configuration plan exceeds 32 KiB');
   return value;
 }
 
-async function requestForParsed(parsed: Exclude<Parsed, { mode: 'apply' | 'inspect' }>, port?: SetupPromptPort) {
+async function requestForParsed(
+  parsed: Exclude<Parsed, { mode: 'apply' | 'inspect' } | { executorModel: string }>,
+  port?: SetupPromptPort,
+) {
   if (!('setup' in parsed)) {
     const { mode: _mode, ...request } = parsed;
     if ('operation' in request) {
@@ -338,24 +323,6 @@ async function requestForParsed(parsed: Exclude<Parsed, { mode: 'apply' | 'inspe
   const resolved = await resolveCliSetup({ ...draft, reconcile: draft.reconcile ?? false }, port);
   if (resolved.status !== 'ready') return resolved;
   const request = configurationRequestForSetup(resolved.input);
-  if (parsed.adoptHostPresent) {
-    if (
-      request.schema !== 'ConsumerConfigurationRequest/v2' ||
-      parsed.teamProjectGrants.length ||
-      parsed.projectMoves?.length
-    )
-      throw Error('Host-present adoption cannot grant projects or relocate data');
-    const { teamProjectGrants: _grants, projectMoves: _moves, ...base } = request;
-    return {
-      status: 'ready' as const,
-      request: validateConfigurationAdoptionRequest({
-        ...base,
-        schema: 'ConsumerConfigurationRequest/v3',
-        version: 3,
-        adoption: 'host_present_pending_receipt',
-      }),
-    };
-  }
   return {
     status: 'ready' as const,
     request: {
@@ -372,9 +339,15 @@ export async function configure(args: readonly string[], port?: SetupPromptPort)
   if (parsed.mode === 'apply') {
     const supplied = readPlan(parsed.plan);
     const { request, binding, operationId } = requestFromPlan(supplied, parsed.projectRoot);
-    const fresh = planConsumerConfiguration(request);
+    const fresh = planConsumerConfiguration(request, parsed.executorModel);
     if (canonicalJsonDigest(supplied) !== canonicalJsonDigest(fresh)) throw Error('Public configuration plan changed');
-    return applyConsumerConfiguration(request, binding, operationId);
+    return applyConsumerConfiguration(request, binding, operationId, parsed.executorModel);
+  }
+  if ('executorModel' in parsed) {
+    const request = consumerConfigurationExecutorModelRequest(parsed.projectRoot);
+    return parsed.mode === 'plan'
+      ? planConsumerConfiguration(request, parsed.executorModel)
+      : resumeConsumerConfiguration(request, z.string().parse(parsed.operation), parsed.executorModel);
   }
   const resolved = await requestForParsed(parsed, port);
   if (resolved.status !== 'ready') return resolved;

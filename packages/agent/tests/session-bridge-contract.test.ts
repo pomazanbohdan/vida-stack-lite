@@ -19,7 +19,9 @@ function fixture() {
       path.join(root, 'agent-runtime.config.v1.yaml'),
       readFileSync(new URL('../templates/agent-runtime.config.template.v1.yaml', import.meta.url), 'utf8')
         .replaceAll('{{REPOSITORY}}', 'contract-fixture')
+        .replaceAll('{{REPOSITORY_PREFIX}}', 'CONTRACTFIXTURE')
         .replaceAll('{{PROJECT}}', 'sample')
+        .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
         .replaceAll('{{BUNDLE}}', 'vida-agent'),
     );
     writeFileSync(path.join(root, 'AGENTS.md'), 'Fixture policy');

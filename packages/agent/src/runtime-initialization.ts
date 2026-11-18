@@ -1,7 +1,6 @@
 import { canonicalJsonDigest } from './contracts/public-ingress.js';
 import {
   activeRuntimeConfigurationSource,
-  assertProjectUpgradeInactive,
   assertLoadedRuntimeConfig,
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -156,7 +155,6 @@ export async function bindRuntimeInitialization(repositoryRoot: string, store: H
   try {
     const selected = await readInitializationWithAdmission(() => {
       assertConsumerCleanInitializationInactive(repositoryReadOnlyObservation(access));
-      assertProjectUpgradeInactive(access);
       return activeRuntimeConfigurationSource(access);
     }, deadline);
     if (selected === PROJECT_CONFIGURATION_PATHS.project) return await bindProjectInitialization(root, store);

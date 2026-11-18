@@ -5,7 +5,7 @@ import eventSchema from '../../schemas/documentation-change-event.v1.schema.json
 import { validateDocumentationClearCheckpointSchema as validCheckpoint } from './clear-checkpoint-validator.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { assertProjectUpgradeInactive, loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
+import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
 import {
@@ -92,7 +92,6 @@ export function documentationPolicyTransitionPreimages(
   currentPolicyBytes: Uint8Array,
 ): Entry[] {
   const access = requireSafeRepositoryAccess(input.repository_root);
-  assertProjectUpgradeInactive(access);
   const file = documentationPolicyTransitionPath(input.work_id);
   if (!access.fileExists(file, 'policy transition dependency')) return [];
   const operation = parseDocumentationPolicyTransition(access.readBytes(file, 'policy transition dependency'));

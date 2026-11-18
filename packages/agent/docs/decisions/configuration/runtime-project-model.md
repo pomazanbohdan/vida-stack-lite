@@ -5,7 +5,7 @@ title: Продукти, wiki та роботи — погоджена моде�
 
 # Продукти, wiki та роботи
 
-Статус: затверджено до реалізації з анотаціями користувача. Codex identity стає `codex`; вкладеність типів налаштовується продуктом без hardcoded type matrix. Source та доставлений runtime реалізують модель; 0.1.20 виконав adoption і public init reconciliation цього репозиторію. Ширша кваліфікація й user Runtime acceptance залишаються відкритими. Попередній review receipt стосується своїх sealed inputs і не є review нових анотацій. Канонічна системна специфікація узгоджує погоджений target з поточним Source. Operational work record: `.agent/work/runtime-project-model-implementation-20261102/WORK.md` під repository root.
+Статус: затверджено до реалізації з анотаціями користувача; продуктові значення (prefixes, documents, work items, hierarchy) чинні. Версійний механізм Task 4/5 скасовано 2026-11-13 — чинне рішення [єдиної версії v1](runtime-config-single-version.md). Codex identity стає `codex`; вкладеність типів налаштовується продуктом без hardcoded type matrix. Source та доставлений runtime реалізують модель; 0.1.20 виконав adoption і public init reconciliation цього репозиторію. Ширша кваліфікація й user Runtime acceptance залишаються відкритими. Попередній review receipt стосується своїх sealed inputs і не є review нових анотацій. Канонічна системна специфікація узгоджує погоджений target з поточним Source. Operational work record: `.agent/work/runtime-project-model-implementation-20261102/WORK.md` під repository root.
 
 ## Результат для користувача
 
@@ -132,7 +132,9 @@ Prefixes у YAML підтверджені користувачем. Цільов
 
 Future GUI, інтеграція Jira/Azure API, Powers runtime integration, нові work-item типи поза початковим набором і загальний `.vida` storage rollout не входять у цей пакет реалізації.
 
-## Task 4/5 versioned runtime contract
+## Task 4/5 versioned runtime contract (скасовано 2026-11-13 — нечинні інструкції)
+
+> **Скасовано 2026-11-13:** версійний контракт замінено рішенням [єдиної версії конфігурації](runtime-config-single-version.md). `AgentRuntimeConfig/v1` — єдина версія й несе весь функціонал цієї моделі; паралельний v2, версійний dispatch і міграційні маршрути не реалізуються. Текст нижче збережено як історію обговорення.
 
 Root resolves the Task4/5 implementation seam under the approved Task4 schema-decision authority on 2026-11-06. The actual Luna drafts and their independent Devin reviews are retained in `.agent/work/init-priority-parallel-20261106/`; both reviews found an incompatible adapter and a second resolver. Those drafts are proposals, not active configuration or Source grants. The following contract replaces their incompatible API proposals.
 

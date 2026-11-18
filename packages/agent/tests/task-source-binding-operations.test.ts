@@ -398,7 +398,9 @@ function makeConfiguredFixtureRoot() {
   const configText = readFileSync(path.join(packageRoot, 'templates', 'agent-runtime.config.template.v1.yaml'), 'utf8')
     .replaceAll('{{BUNDLE}}', 'runtime')
     .replaceAll('{{REPOSITORY}}', 'task-source-fixture')
-    .replaceAll('{{PROJECT}}', 'agent');
+    .replaceAll('{{REPOSITORY_PREFIX}}', 'TASKSOURCEFIXTURE')
+    .replaceAll('{{PROJECT}}', 'agent')
+    .replaceAll('{{PRODUCT_PREFIX}}', 'AGENT');
   writeFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'), configText);
   const config = loadRuntimeConfig(repositoryRoot),
     configuredProject = config.projects[0];

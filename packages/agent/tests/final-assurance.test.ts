@@ -330,6 +330,31 @@ test('completed readonly inspection admits only the exact security prewriter', (
   expect(configuredReadonlyAssignment(config, request)).toBe(false);
   expect(eligibleReadonlyRelinquishment(config, { request, issue_id: 'unknown', observation: null })).toBe(false);
   expect(configuredReadonlyAssignment(config, request, 'settled-validation')).toBe(true);
+  const observedIssue = '223e4567-e89b-42d3-a456-426614174001';
+  const observedItem = (status: SessionBridgeObservation['status']): MastraLedgerItem => ({
+    request,
+    issue_id: observedIssue,
+    observation: {
+      schema: 'VidaSessionObservation/v1',
+      action_id: request.action_id,
+      issue_id: observedIssue,
+      agent_id: 'settled-session-fixture',
+      tool_call_ref: 'local:settled-session-fixture',
+      status,
+      summary: 'Typed terminal ledger fixture.',
+      output_digest: 'd'.repeat(64),
+      evidence_refs: [],
+    },
+  });
+  expect(eligibleReadonlyRelinquishment(config, observedItem('reported_complete'))).toBe(true);
+  expect(eligibleReadonlyRelinquishment(config, observedItem('reported_failed'))).toBe(true);
+  const mismatched = observedItem('reported_complete');
+  expect(
+    eligibleReadonlyRelinquishment(config, {
+      ...mismatched,
+      observation: { ...mismatched.observation!, issue_id: '323e4567-e89b-42d3-a456-426614174002' },
+    }),
+  ).toBe(false);
 
   const prewriterStage = (candidate: AgentRuntimeConfig) => {
     const current = candidate.workflows.task_execution?.stages.find((entry) => entry.id === request.stage_id);

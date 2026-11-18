@@ -91,8 +91,10 @@ const initializeFixture = (root: string, { localSchemas = true }: { localSchemas
       destination,
       readFileSync(path.join(packageRoot, 'templates', template), 'utf8')
         .replaceAll('{{REPOSITORY}}', 'creatio-sample-repository')
+        .replaceAll('{{REPOSITORY_PREFIX}}', 'CREATIOSAMPLEREPOSITORY')
         .replaceAll('{{PROJECTS}}', 'refactoring')
         .replaceAll('{{PROJECT}}', 'refactoring')
+        .replaceAll('{{PRODUCT_PREFIX}}', 'REFACTORING')
         .replaceAll('{{BUNDLE}}', 'vida-agent'),
     );
   if (localSchemas) {

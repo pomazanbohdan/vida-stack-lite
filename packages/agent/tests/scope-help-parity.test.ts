@@ -29,7 +29,7 @@ import { runOptionDetails, runScalarOptionFields, runRepeatedOptions } from '../
 import { captureRuntimeInputClosure, readQualityInputs } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection } from './helpers/expect-rejection.js';
 
-test('public CLI main preserves local exit state for metadata and returns bounded instruction failures', () => {
+test('public CLI main preserves local exit state for metadata and returns bounded instruction failures', async () => {
   const stdout: string[] = [];
   const stderr: string[] = [];
   const stdoutSpy = spyOn(process.stdout, 'write');
@@ -45,13 +45,13 @@ test('public CLI main preserves local exit state for metadata and returns bounde
         return true;
       });
       const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
-      publicCliMain({ args: ['--help'], exit });
+      await publicCliMain({ args: ['--help'], exit });
       expect(exit.exitCode).toBeUndefined();
       expect(JSON.parse(stdout.join(''))).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'help' });
       expect(stderr).toEqual([]);
       for (const name of ['development-lifecycle', 'development-lifecycle.md']) {
         stdout.length = 0;
-        publicCliMain({ args: ['instructions', '--path', name], exit });
+        await publicCliMain({ args: ['instructions', '--path', name], exit });
         expect(JSON.parse(stdout.join(''))).toEqual({
           schema: 'VidaAgentInstruction/v1',
           package: manifest.name,
@@ -71,7 +71,7 @@ test('public CLI main preserves local exit state for metadata and returns bounde
         stdout.length = 0;
         stderr.length = 0;
         const denied: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
-        publicCliMain({ args, exit: denied });
+        await publicCliMain({ args, exit: denied });
         expect(denied.exitCode).toBe(1);
         expect(stdout).toEqual([]);
         expect(JSON.parse(stderr.join(''))).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'blocked' });
@@ -79,7 +79,7 @@ test('public CLI main preserves local exit state for metadata and returns bounde
       stdout.length = 0;
       stderr.length = 0;
       const missing: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
-      publicCliMain({ args: ['instructions', '--path', 'developmnt-lifecycle'], exit: missing });
+      await publicCliMain({ args: ['instructions', '--path', 'developmnt-lifecycle'], exit: missing });
       expect(missing.exitCode).toBe(1);
       expect(stdout).toEqual([]);
       const missingResult = JSON.parse(stderr.join('')) as {
@@ -190,7 +190,7 @@ test('callable scope preserves non-Error dependency refusals without changing pr
   }
 });
 
-test('public CLI resolves each validated embedded context and rejects unsafe package data', () => {
+test('public CLI resolves each validated embedded context and rejects unsafe package data', async () => {
   const packageRoot = path.resolve(import.meta.dirname, '..');
   const dataRoot = mkdtempSync(path.join(realpathSync(tmpdir()), 'public-cli-data-'));
   const variables = ['BUN_BE_BUN', 'VIDA_STANDALONE_ROOT', 'VIDA_STANDALONE_EXECUTABLE'] as const;
@@ -219,20 +219,20 @@ test('public CLI resolves each validated embedded context and rejects unsafe pac
         process.env.BUN_BE_BUN = '1';
         process.env.VIDA_STANDALONE_EXECUTABLE = process.execPath;
         process.env.VIDA_STANDALONE_ROOT = packageRoot;
-        publicCliMain({ args: ['--help'], exit: {} });
+        await publicCliMain({ args: ['--help'], exit: {} });
         expect(JSON.parse(output.join(''))).toEqual(cliMetadataResult(['--help'], manifest));
         const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
-        publicCliMain({ args: ['scope', '--project-root', 'relative'], exit });
+        await publicCliMain({ args: ['scope', '--project-root', 'relative'], exit });
         expect(exit.exitCode).toBe(1);
         process.env.VIDA_STANDALONE_ROOT = dataRoot;
         output.length = 0;
-        publicCliMain({ args: ['--help'], exit: {} });
+        await publicCliMain({ args: ['--help'], exit: {} });
         expect(JSON.parse(output.join(''))).toEqual(cliMetadataResult(['--help'], manifest));
         for (const name of ['directory', 'linked']) {
           output.length = 0;
           errors.length = 0;
           const rejected: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
-          publicCliMain({ args: ['instructions', '--path', name], exit: rejected });
+          await publicCliMain({ args: ['instructions', '--path', name], exit: rejected });
           expect(rejected.exitCode).toBe(1);
           expect(output).toEqual([]);
           expect(JSON.parse(errors.join(''))).toMatchObject({
@@ -262,7 +262,7 @@ test('public CLI resolves each validated embedded context and rejects unsafe pac
   }
 });
 
-test('public CLI forwarding normalizes absolute roots and preserves native refusal and adapter errors', () => {
+test('public CLI forwarding normalizes absolute roots and preserves native refusal and adapter errors', async () => {
   const root = path.resolve(import.meta.dirname, '..');
   const originalArgs = ['scope', '--project-root', path.join(root, '..') + '/agent/../missing-public-project'];
   const before = [...originalArgs];
@@ -286,7 +286,7 @@ test('public CLI forwarding normalizes absolute roots and preserves native refus
       return Reflect.apply(originalSpawn, childProcess, call) as ReturnType<typeof spawnSync>;
     }) as typeof spawnSync);
     const exit: Partial<Pick<NodeJS.Process, 'exitCode'>> = {};
-    publicCliMain({ args: originalArgs, exit });
+    await publicCliMain({ args: originalArgs, exit });
     expect(exit.exitCode).toBe(1);
     expect(originalArgs).toEqual(before);
     const first = forwarded()[0];
@@ -296,10 +296,10 @@ test('public CLI forwarding normalizes absolute roots and preserves native refus
     expect(first?.[2]?.env === process.env).toBe(true);
     expect(first?.[2]?.stdio).toBe('inherit');
     expect(first?.[2]?.windowsHide).toBe(true);
-    publicCliMain({ args: ['reconcile-artifacts'], exit });
+    await publicCliMain({ args: ['reconcile-artifacts'], exit });
     expect(exit.exitCode).toBe(1);
     expect(forwarded()[1]?.[1]).toEqual([path.join(root, 'bin/bun.ts'), path.join(root, 'bin/reconcile-artifacts.ts')]);
-    publicCliMain({ args: ['scope', '--project-root', 'relative'], exit });
+    await publicCliMain({ args: ['scope', '--project-root', 'relative'], exit });
     expect(exit.exitCode).toBe(1);
     expect(forwarded()[2]?.[1]).toEqual([path.join(root, 'bin/scope.ts'), '--project-root', 'relative']);
     const errors: string[] = [];
@@ -310,7 +310,7 @@ test('public CLI forwarding normalizes absolute roots and preserves native refus
         return true;
       });
       fault = 'error';
-      publicCliMain({ args: ['scope'], exit });
+      await publicCliMain({ args: ['scope'], exit });
       expect(exit.exitCode).toBe(1);
       expect(JSON.parse(errors.join(''))).toEqual({
         schema: 'VidaAgentCommandResult/v1',
@@ -319,7 +319,7 @@ test('public CLI forwarding normalizes absolute roots and preserves native refus
         message: failure.message,
       });
       fault = 'signal';
-      publicCliMain({ args: ['scope'], exit });
+      await publicCliMain({ args: ['scope'], exit });
       expect(exit.exitCode).toBe(1);
       expect(forwarded()).toHaveLength(5);
     } finally {

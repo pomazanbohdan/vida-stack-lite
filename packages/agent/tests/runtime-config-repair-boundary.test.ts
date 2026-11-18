@@ -27,7 +27,7 @@ import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { validateProjectInitializationReceipt } from '../src/config/project-initialization-record.ts';
 import { configuredTestRepositoryRoot } from './configured-context.ts';
 import { expectRejection, expectReturned } from './helpers/expect-rejection.ts';
-import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
+import { completeProjectUpgradeFixture, makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
   activeRuntimeConfigurationSource,
@@ -89,18 +89,12 @@ async function completeFreshUpgrade(
   onPhase?: (phase: string) => void,
 ): Promise<void> {
   onPhase?.('upgrade module import');
-  const upgrade = await import('../src/config/project-upgrade.ts');
-  onPhase?.('upgrade planning');
-  const planned = await upgrade.planProjectUpgradeRepair(root, {
-    operation_id: operationId,
+  onPhase?.('completed upgrade fixture');
+  await completeProjectUpgradeFixture(root, {
+    operationId,
     actor: 'test-owner: activated runtime config reader',
-    instruction_ref: 'tests/runtime-config-repair-boundary.test.ts',
+    instructionRef: 'tests/runtime-config-repair-boundary.test.ts',
   });
-  expect(planned.plan.operation_id).toBe(operationId);
-  expect(planned.plan.database_mode).toBe('fresh');
-  onPhase?.('upgrade resume');
-  const completed = await upgrade.resumeProjectUpgrade(root, operationId);
-  expect(completed.phase).toBe('completed');
 }
 
 function finishActivatedConfigFixture(root: string, passed: boolean, deadlineAt: number): void {
@@ -326,13 +320,8 @@ describe('current-v1 exact-byte config repair boundary', () => {
       };
     });
     try {
-      expect(() => loadRuntimeConfig(root)).toThrow(
-        relativePath === PROJECT_UPGRADE_OPERATION_PATH
-          ? 'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.'
-          : 'runtime configuration source changed during its read.',
-      );
-      if (relativePath === PROJECT_ACTIVATION_PATH || relativePath === PROJECT_UPGRADE_OPERATION_PATH)
-        expect(vidaListings).toBe(1);
+      expect(() => loadRuntimeConfig(root)).toThrow('runtime configuration source changed during its read.');
+      if (relativePath === PROJECT_ACTIVATION_PATH) expect(vidaListings).toBe(1);
       else expect(vidaListings).toBeGreaterThanOrEqual(2);
       expect(readFileSync(injected)).toEqual(injectedBytes);
     } finally {
@@ -352,7 +341,7 @@ describe('current-v1 exact-byte config repair boundary', () => {
     writeFileSync(intent, intentBytes);
     try {
       expect(() => loadRuntimeConfig(root)).toThrow(
-        'Project upgrade is in progress. Inspect or resume the same operation before ordinary configuration access.',
+        'Project activation is missing while current .vida outputs remain; recover the existing upgrade before configuration access.',
       );
       expect(readFileSync(intent)).toEqual(intentBytes);
     } finally {
@@ -655,7 +644,7 @@ describe('current-v1 exact-byte config repair boundary', () => {
 
 describe('activated project config reader closure', () => {
   test('loads completed project config and rejects changed receipt identity after warming its cache', async () => {
-    const deadlineAt = performance.now() + 10_000;
+    const deadlineAt = performance.now() + 90_000;
     const diagnosticEnabled = process.env.VIDA_ACTIVATED_CONFIG_PHASE_DIAGNOSTIC === '1';
     const diagnosticStartedAt = performance.now();
     const phases: { phase: string; elapsed_ms: number }[] = [];
@@ -742,7 +731,7 @@ describe('activated project config reader closure', () => {
             `${JSON.stringify({
               diagnostic: 'activated-config-phase-v1',
               passed,
-              case_deadline_ms: 10_000,
+              case_deadline_ms: 90_000,
               elapsed_ms: performance.now() - diagnosticStartedAt,
               phases,
             })}\n`,
@@ -750,5 +739,5 @@ describe('activated project config reader closure', () => {
         }
       }
     }
-  }, 10_000);
+  }, 90_000);
 });

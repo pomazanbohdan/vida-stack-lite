@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { parseDocument } from 'yaml';
 import { validateRuntimeInitializationReceipt } from '../src/config/initialization-record.ts';
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
@@ -17,6 +18,7 @@ import {
   resumeConsumerConfiguration,
   validateConsumerConfigurationOperation,
 } from '../bin/consumer-configuration-operation.ts';
+import { configure } from '../bin/configure.ts';
 
 const encoded = (text: string) => ({
   base64: Buffer.from(text).toString('base64'),
@@ -315,6 +317,250 @@ test('bound or altered receipt and Host state are refused before intent', async 
     console.info('Retained consumer fixture: ' + root);
   }
 }, 30000);
+
+const EXECUTOR_MODEL = 'swe-2-flash-medium';
+const OTHER_MODEL = 'gpt-6-sol';
+const modelPath = ['agents', 'profiles', 'executor', 'model'];
+
+function executorModelRequest(root: string) {
+  return { projectRoot: root, repository: 'example', projectMappings: ['one=one'] };
+}
+
+async function modelIntent(root: string, request: ReturnType<typeof executorModelRequest>, model: string) {
+  const captured = captureConsumerConfiguration(request, model);
+  const derived = captured.receipt
+    ? await withExclusiveInitConfigAdmission(root, deriveWorkspaceId(request.repository, root), ({ assertActive }) =>
+        derivePendingConfigurationReceipt(request, assertActive, undefined, model),
+      )
+    : null;
+  const identity = requireSafeRepositoryAccess(root).directoryIdentity('.', 'configuration root');
+  const journal = {
+    schema: 'ConsumerConfigurationOperation/v1',
+    version: 1,
+    operation_id: captured.plan.operation_id,
+    root,
+    root_identity: identity,
+    workspace_id: deriveWorkspaceId(request.repository, root),
+    request,
+    binding: captured.plan.binding,
+    before: captured.before.map((b) => ({
+      base64: b.toString('base64'),
+      sha256: createHash('sha256').update(b).digest('hex'),
+    })),
+    target: encoded(captured.targetConfig),
+    receipt: derived
+      ? {
+          before: encoded(derived.beforeReceipt.toString('utf8')),
+          target: encoded(derived.targetReceipt),
+        }
+      : null,
+    progress: 'intent',
+  };
+  await writeFile(path.join(root, slot), JSON.stringify(journal) + '\n');
+  return { journal, captured };
+}
+
+function onlyExecutorModelDiffers(before: string, after: string, model: string): void {
+  const beforeDoc = parseDocument(before);
+  const afterDoc = parseDocument(after);
+  const modelNode = afterDoc.getIn(modelPath, true) as { value?: unknown } | undefined;
+  expect(modelNode?.value).toBe(model);
+  const beforeNode = beforeDoc.getIn(modelPath, true) as
+    | { readonly range?: readonly [number, number, number] }
+    | undefined;
+  expect(beforeNode?.range).toBeDefined();
+  const [start, end] = beforeNode!.range!;
+  expect(after).toBe(before.slice(0, start) + JSON.stringify(model) + before.slice(end));
+}
+
+test('executor model plan applies only the executor scalar through CLI apply and replay', async () => {
+  const { root, receipt } = await fixture();
+  try {
+    await writeFile(path.join(root, '.agent/runtime-initialization.v1.json'), receipt);
+    const request = executorModelRequest(root);
+    const before = await readFile(path.join(root, config), 'utf8');
+    const plan = planConsumerConfiguration(request, EXECUTOR_MODEL);
+    expect(plan.schema).toBe('ConsumerConfigurationPlan/v1');
+    expect(await configure(['plan', '--project-root', root, '--executor-model', EXECUTOR_MODEL])).toEqual(plan);
+    const captured = captureConsumerConfiguration(request, EXECUTOR_MODEL);
+    onlyExecutorModelDiffers(before, captured.targetConfig, EXECUTOR_MODEL);
+    const planFile = path.join(root, 'plan.json');
+    await writeFile(planFile, JSON.stringify(plan));
+    await Promise.resolve(
+      expect(
+        configure(['apply', '--project-root', root, '--plan', planFile, '--executor-model', OTHER_MODEL]),
+      ).rejects.toThrow(/plan changed/i),
+    );
+    expect(await Bun.file(path.join(root, slot)).exists()).toBe(false);
+    expect(
+      await configure(['apply', '--project-root', root, '--plan', planFile, '--executor-model', EXECUTOR_MODEL]),
+    ).toEqual({ operation_id: plan.operation_id, status: 'completed' });
+    expect(await readFile(path.join(root, config), 'utf8')).toBe(captured.targetConfig);
+    expect(inspectConsumerConfigurationOperation(root).status).toBe('no_pending');
+    const updated = await readFile(path.join(root, '.agent/runtime-initialization.v1.json'));
+    expect(updated.equals(receipt)).toBe(false);
+    expect(
+      await configure([
+        'resume',
+        '--project-root',
+        root,
+        '--executor-model',
+        EXECUTOR_MODEL,
+        '--operation',
+        plan.operation_id,
+      ]),
+    ).toEqual({ operation_id: plan.operation_id, status: 'completed' });
+    await Promise.resolve(
+      expect(
+        configure([
+          'resume',
+          '--project-root',
+          root,
+          '--executor-model',
+          OTHER_MODEL,
+          '--operation',
+          plan.operation_id,
+        ]),
+      ).rejects.toThrow(),
+    );
+  } finally {
+    console.info('Retained consumer fixture: ' + root);
+  }
+}, 60000);
+
+test('interrupted executor model operation resumes only with the exact model', async () => {
+  const { root, receipt } = await fixture();
+  try {
+    const receiptPath = path.join(root, '.agent/runtime-initialization.v1.json');
+    await writeFile(receiptPath, receipt);
+    const request = executorModelRequest(root);
+    const { journal, captured } = await modelIntent(root, request, EXECUTOR_MODEL);
+    if (!journal.receipt) throw new Error('Expected receipt intent');
+    const intentBytes = await readFile(path.join(root, slot));
+    const configBefore = await readFile(path.join(root, config));
+    const receiptBefore = await readFile(receiptPath);
+    const assertIntentUnchanged = async () => {
+      expect(await readFile(path.join(root, slot))).toEqual(intentBytes);
+      expect(await readFile(path.join(root, config))).toEqual(configBefore);
+      expect(await readFile(receiptPath)).toEqual(receiptBefore);
+    };
+    await Promise.resolve(
+      expect(resumeConsumerConfiguration(request, journal.operation_id)).rejects.toThrow(/binding|differs/i),
+    );
+    await assertIntentUnchanged();
+    await Promise.resolve(
+      expect(resumeConsumerConfiguration(request, journal.operation_id, OTHER_MODEL)).rejects.toThrow(
+        /binding|differs/i,
+      ),
+    );
+    await assertIntentUnchanged();
+    const applied = JSON.stringify({ ...journal, progress: 'config_applied' }) + '\n';
+    await writeFile(path.join(root, config), captured.targetConfig);
+    await writeFile(path.join(root, slot), applied);
+    const appliedBytes = await readFile(path.join(root, slot));
+    const appliedConfig = await readFile(path.join(root, config));
+    const appliedReceipt = await readFile(receiptPath);
+    const assertAppliedUnchanged = async () => {
+      expect(await readFile(path.join(root, slot))).toEqual(appliedBytes);
+      expect(await readFile(path.join(root, config))).toEqual(appliedConfig);
+      expect(await readFile(receiptPath)).toEqual(appliedReceipt);
+    };
+    await Promise.resolve(
+      expect(resumeConsumerConfiguration(request, journal.operation_id)).rejects.toThrow(/binding|differs/i),
+    );
+    await assertAppliedUnchanged();
+    await Promise.resolve(
+      expect(resumeConsumerConfiguration(request, journal.operation_id, OTHER_MODEL)).rejects.toThrow(
+        /binding|differs/i,
+      ),
+    );
+    await assertAppliedUnchanged();
+    await writeFile(path.join(root, slot), JSON.stringify({ ...journal, target: encoded('forged') }) + '\n');
+    await Promise.resolve(
+      expect(resumeConsumerConfiguration(request, journal.operation_id, EXECUTOR_MODEL)).rejects.toThrow(),
+    );
+    await writeFile(path.join(root, slot), applied);
+    expect(await resumeConsumerConfiguration(request, journal.operation_id, EXECUTOR_MODEL)).toEqual({
+      operation_id: journal.operation_id,
+      status: 'completed',
+    });
+    expect(await readFile(path.join(root, config), 'utf8')).toBe(captured.targetConfig);
+    expect(await readFile(receiptPath)).toEqual(Buffer.from(journal.receipt.target.base64, 'base64'));
+    expect(await Bun.file(path.join(root, slot)).exists()).toBe(false);
+    const archive = parseOperation(
+      await readFile(
+        path.join(root, `.agent/consumer-configuration-operation.${journal.operation_id}.v1.json`),
+        'utf8',
+      ),
+    );
+    expect(archive.progress).toBe('complete');
+    expect(archive.request).toEqual(request);
+  } finally {
+    console.info('Retained consumer fixture: ' + root);
+  }
+}, 60000);
+
+test('executor model plan refuses substitution, unchanged values, anchors and conflicting inputs', async () => {
+  const { root } = await fixture();
+  try {
+    const request = executorModelRequest(root);
+    const before = await readFile(path.join(root, config), 'utf8');
+    const currentModel = /executor:\s*\r?\n\s+model: ([^\s#]+)/.exec(before)![1]!;
+    const planA = planConsumerConfiguration(request, EXECUTOR_MODEL);
+    const planB = planConsumerConfiguration(request, OTHER_MODEL);
+    expect(planA.schema).toBe('ConsumerConfigurationPlan/v1');
+    expect(planA.binding).not.toBe(planB.binding);
+    expect(() => planConsumerConfiguration(request, currentModel)).toThrow(/unchanged/);
+    expect(() => planConsumerConfiguration(request, 'not a model')).toThrow(/scalar/);
+    expect(() => planConsumerConfiguration(request, '')).toThrow(/scalar/);
+    expect(() =>
+      captureConsumerConfiguration({ ...request, teamProjectGrants: ['missing=one'] }, EXECUTOR_MODEL),
+    ).toThrow();
+    await Promise.resolve(
+      expect(applyConsumerConfiguration(request, planA.binding, planA.operation_id, OTHER_MODEL)).rejects.toThrow(
+        /binding/i,
+      ),
+    );
+    expect(await Bun.file(path.join(root, slot)).exists()).toBe(false);
+    const anchored = before.replace(/(executor:\s*\r?\n\s+model: )\S+/, `$1&executor-model ${currentModel}`);
+    expect(anchored).not.toBe(before);
+    await writeFile(path.join(root, config), anchored);
+    expect(() => planConsumerConfiguration(request, OTHER_MODEL)).toThrow(/invalid|scalar/i);
+  } finally {
+    console.info('Retained consumer fixture: ' + root);
+  }
+}, 60000);
+
+test('executor model capture preserves a custom runtime path byte-exactly', async () => {
+  const { root } = await fixture();
+  try {
+    const request = executorModelRequest(root);
+    const configPath = path.join(root, config);
+    const before = await readFile(configPath, 'utf8');
+    const custom = before.replace(/instruction_root: ([^\s#]+)/, 'instruction_root: $1-custom');
+    expect(custom).not.toBe(before);
+    await writeFile(configPath, custom);
+    const captured = captureConsumerConfiguration(request, EXECUTOR_MODEL);
+    expect(planConsumerConfiguration(request, EXECUTOR_MODEL)).toEqual(captured.plan);
+    const modelNode = parseDocument(custom).getIn(modelPath, true) as
+      | { readonly range?: readonly [number, number, number] }
+      | undefined;
+    expect(modelNode?.range).toBeDefined();
+    const [start, end] = modelNode!.range!;
+    const expected = custom.slice(0, start) + JSON.stringify(EXECUTOR_MODEL) + custom.slice(end);
+    const customRoot = /instruction_root: ([^\s#]+)/.exec(custom)![1]!;
+    expect(customRoot).not.toBe(/instruction_root: ([^\s#]+)/.exec(before)![1]);
+    expect(captured.targetConfig).toBe(expected);
+    expect(captured.targetConfig).toContain(`instruction_root: ${customRoot}`);
+    expect(
+      await applyConsumerConfiguration(request, captured.plan.binding, captured.plan.operation_id, EXECUTOR_MODEL),
+    ).toEqual({ operation_id: captured.plan.operation_id, status: 'completed' });
+    expect(await readFile(configPath, 'utf8')).toBe(expected);
+    expect(inspectConsumerConfigurationOperation(root).status).toBe('no_pending');
+  } finally {
+    console.info('Retained consumer fixture: ' + root);
+  }
+}, 60000);
 
 function record(): ReturnType<typeof validateConsumerConfigurationOperation> {
   const root = canonicalRepositoryRoot(process.cwd());

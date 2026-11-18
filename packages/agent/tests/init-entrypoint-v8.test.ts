@@ -208,14 +208,14 @@ test('direct init gap: dot template paths rebase to the explicit nested project'
     const before = readFileSync(target, 'utf8');
     const template = fixtureRecord(parseYaml(before));
     if (!Array.isArray(template.projects)) throw new Error('Fixture project template missing');
-    fixtureRecord(template.projects[0]).wiki_root = '.';
+    fixtureRecord(fixtureRecord(template.projects[0]).documents).root = '.';
     writeFileSync(target, stringifyYaml(template));
     mkdirSync(path.join(projectRoot, 'nested'));
     const result = await initializeProjectFromBundle({ ...request, projectMappings: ['alpha=nested'] }, bundle);
     expect(result.status).toBe('initialized');
     const config = loadRuntimeConfig(projectRoot);
     if (config.schema !== 'AgentRuntimeConfig/v1') throw new Error('Fixture requires a v1 runtime config');
-    expect(config.projects[0]?.wiki_root).toBe('nested');
+    expect(config.projects[0]?.documents.root).toBe('nested');
   });
 });
 

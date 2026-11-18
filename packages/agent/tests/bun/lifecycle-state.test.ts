@@ -49,8 +49,10 @@ function clearFixture(): { root: string; write: (relative: string, content: stri
       destination,
       readFileSync(path.join(packageRoot, 'templates', template), 'utf8')
         .replaceAll('{{REPOSITORY}}', 'creatio-sample-repository')
+        .replaceAll('{{REPOSITORY_PREFIX}}', 'CREATIOSAMPLEREPOSITORY')
         .replaceAll('{{PROJECTS}}', 'refactoring')
         .replaceAll('{{PROJECT}}', 'refactoring')
+        .replaceAll('{{PRODUCT_PREFIX}}', 'REFACTORING')
         .replaceAll('{{BUNDLE}}', 'vida-agent'),
     );
   write(

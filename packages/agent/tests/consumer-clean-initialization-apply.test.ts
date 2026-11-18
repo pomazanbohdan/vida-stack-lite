@@ -123,11 +123,18 @@ async function makeFixture(prefix = 'clean-init-operation-', onRoot?: (root: str
   });
   Object.assign(config.projects[0]!, {
     project_root: packageRoot,
-    wiki_root: `${packageRoot}/docs`,
-    wiki_path: `${packageRoot}/AGENT.sidecar.md`,
-    wiki_output_root: `${packageRoot}/.planning/agent-flow/wiki-output`,
-    internal_root: `${packageRoot}/docs`,
-    ledger_root: `${packageRoot}/backlogs`,
+    documents: {
+      root: `${packageRoot}/docs`,
+      index: `${packageRoot}/AGENT.sidecar.md`,
+      requirements: { root: `${packageRoot}/docs/requirements`, areas: {} },
+      research: `${packageRoot}/docs/research`,
+      decisions: `${packageRoot}/docs/decisions`,
+    },
+    work_items: {
+      storage_root: `${packageRoot}/backlogs`,
+      enabled_types: ['EPIC', 'FEATURE', 'PBI', 'STORY', 'BUG', 'TASK', 'RESEARCH'],
+      hierarchy: { mode: 'any' },
+    },
     code_selectors: [`${packageRoot}/src/**`],
   });
   writeFileSync(configPath, stringify(config));

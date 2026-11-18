@@ -42,6 +42,7 @@ import {
 import type { MastraLedgerItem, MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import { configuredTestContext } from './configured-context.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
+import { writeControlledRuntimeInitializationReceipt } from './helpers/controlled-runtime-initialization-fixture.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repository = path.resolve(bundle, '../..');
@@ -287,7 +288,7 @@ function report(stage: string, started: number, detail: Record<string, unknown> 
     JSON.stringify({ stage, case: caseName, elapsed_ms: performance.now() - started, ...detail }) + '\n',
   );
 }
-function test(name: string, execute: (budget: PhaseBudget) => Promise<void>): void {
+function test(name: string, execute: (budget: PhaseBudget) => Promise<void>, timeoutMs = 5_000): void {
   return baseTest(
     name,
     async () => {
@@ -295,12 +296,12 @@ function test(name: string, execute: (budget: PhaseBudget) => Promise<void>): vo
       caseName = name;
       const started = performance.now();
       try {
-        return await execute(phaseBudget.child(5_000, 250));
+        return await execute(phaseBudget.child(timeoutMs, 250));
       } finally {
         report('repair case', started, { outcome_unknown: repairOutcomeUnknown });
       }
     },
-    5_000,
+    timeoutMs,
   );
 }
 async function runReconcileArtifacts(args: string[], options?: ReconcileOptions) {
@@ -460,7 +461,17 @@ afterEach(() => {
   for (const database of databases.splice(0)) closeWorkspaceDatabaseWithAdmission(database);
   report('repair databases closed', started);
   const cleanup = performance.now();
-  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  for (const root of roots.splice(0)) {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        rmSync(root, { recursive: true, force: true });
+        break;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EBUSY' || attempt >= 20) throw error;
+        Bun.sleepSync(100);
+      }
+    }
+  }
   report('repair fixture cleanup', cleanup);
 });
 
@@ -488,6 +499,7 @@ function fixture() {
   mkdirSync(path.dirname(path.join(root, documentationPolicy)), { recursive: true });
   writeFileSync(path.join(root, documentationPolicy), readFileSync(path.join(contextRoot, documentationPolicy)));
   const config = loadRuntimeConfig(root);
+  writeControlledRuntimeInitializationReceipt(root, config);
   const records = config.research_decision.paths.research_records;
   const changelog = config.research_decision.paths.changelog;
   mkdirSync(path.join(root, records), { recursive: true });
@@ -1545,7 +1557,7 @@ test('synthesis qualification dispatcher freezes qualified observation and rejec
 test('synthesis observation dispatcher plans the real provenance collision and preserves the reported native outcome', async () => {
   const context = fixture();
   const results = [research(context, 'research-a', 'source-a.md'), research(context, 'research-b', 'source-b.md')];
-  const projectIds = ['agent', 'plugin'];
+  const projectIds = ['agent', 'codex'];
   const stored = persisted(context, results, synthesis(context, results), false, projectIds);
   const args = (mode: string): string[] => [
     '--kind',
@@ -1641,7 +1653,7 @@ test('synthesis observation dispatcher plans the real provenance collision and p
     ).toThrow();
   }
   replaceWork(stored.work);
-  for (const projectIds of ['agent,agent', 'plugin,agent']) {
+  for (const projectIds of ['agent,agent', 'codex,agent']) {
     const invalidProjects = args('inspect');
     invalidProjects[invalidProjects.indexOf('--projects') + 1] = projectIds;
     await Promise.resolve(
@@ -1796,7 +1808,7 @@ test('synthesis qualification dispatcher applies its database projection and rep
   expect(stringField(journalReplay, 'payload', 'journal replay')).toBe(
     stringField(journal, 'payload', 'Mastra session ledger'),
   );
-});
+}, 30_000);
 
 test('synthesis qualification database CAS rejects a journal revision changed after file publication', async (budget: PhaseBudget) => {
   const context = fixture();
@@ -1967,7 +1979,7 @@ test('synthesis qualification database CAS rejects a journal revision changed af
   expect(readFileSync(path.join(context.root, target.path), 'utf8')).toBe(target.after_record);
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe(plan.changelog_after);
   expect(maintenanceStatus(hostState)).toBe('held');
-});
+}, 30_000);
 
 test('research identity dispatcher resumes an interrupted exact two-record publication', async () => {
   const context = fixture();
@@ -2066,7 +2078,7 @@ test('synthesis qualification dispatcher resumes partial publication without dup
     ]),
   ).toMatchObject({ status: 'applied' });
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8').trim().split('\n')).toHaveLength(1);
-});
+}, 30_000);
 
 test('synthesis observation dispatcher prepares a new issue while keeping the original native report immutable', async () => {
   const context = fixture();

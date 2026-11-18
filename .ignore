@@ -1,0 +1,21 @@
+# Vex skips hidden paths unless its native ignore walker sees an explicit whitelist.
+!/.agents/
+!/.agents/**
+!/.github/
+!/.github/**
+!/.githooks/
+!/.githooks/**
+
+# Restrict .codex discovery to the repository's maintained integration files.
+!/.codex/
+/.codex/*
+!/.codex/README.md
+!/.codex/config.toml
+!/.codex/cloud-environment.patch.json
+!/.codex/cloud-tooling.lock.json
+
+!/.vex.toml
+!/.lean-ctx.toml
+!/.gitignore
+!/.gitattributes
+!/.ignore

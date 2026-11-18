@@ -124,12 +124,15 @@ import {
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
-  assertProjectUpgradeInactive,
   selectWorkflow,
   type WorkItemSelection,
 } from './config/runtime-config.js';
 import { loadProjectSetContext } from './config/project-context.js';
-import { MastraSessionLedger } from './orchestration/persistent-session-handoff.js';
+import {
+  MastraSessionLedger,
+  mastraLedgerStatus,
+  mayShareReadonlySessionInvocation,
+} from './orchestration/persistent-session-handoff.js';
 import {
   readSessionEngineSnapshot,
   readRetainedUnissuedSessionEngineSnapshot,
@@ -191,6 +194,17 @@ import {
   type CompletedSourceReportRecoveryVerifyCurrent,
   type CompletedSourceReportRecoveryVerifiedCurrent,
 } from './orchestration/completed-source-report-recovery.js';
+import {
+  expiredLeaseCompletedReportReason,
+  validateExpiredIssuedSourceReportRecoveryInspection,
+  validateExpiredIssuedSourceReportRecoveryInspectionRequest,
+  validateExpiredIssuedSourceReportRecoveryRequest,
+  type ExpiredIssuedSourceReportRecoveryInspection,
+  type ExpiredIssuedSourceReportRecoveryInspectionRequest,
+  type ExpiredIssuedSourceReportRecoveryRequest,
+  type ExpiredIssuedSourceReportRecoveryState,
+  type ExpiredIssuedSourceReportRecoveryVerifyCurrent,
+} from './orchestration/expired-issued-source-report-recovery.js';
 import {
   resolveTaskSourceRoot,
   taskSourceResourcePair,
@@ -1272,30 +1286,45 @@ export function createTaskSourceMutationPolicyRequest(input: {
   return Object.freeze({ ...unsigned, operation_hash: canonicalJsonDigest(unsigned) });
 }
 
+/** The Host-retained outcome for a marked expired-lease report is the unmarked native observation. */
+function sessionJournalRetainedObservation(observation: SessionBridgeObservation): SessionBridgeObservation {
+  if (observation.recovery_reason !== expiredLeaseCompletedReportReason) return observation;
+  const { recovery_reason: _recoveryReason, ...retained } = observation;
+  return retained as SessionBridgeObservation;
+}
+
 /** Historical Source success is settled only when the authoritative host retained this exact result. */
 export function completedSourceJournalObservationMatches(
   work: WorkState,
   item: MastraSessionLedgerState['items'][number],
 ): boolean {
   const reservation = item.host_reservation,
-    observation = item.observation;
+    observation = item.observation,
+    retained = observation ? sessionJournalRetainedObservation(observation) : null;
   const completed = work.execution.assignment_attempts.find(
     (attempt) => attempt.attempt_id === reservation?.receipt.attempt.attempt_id,
   );
   return Boolean(
     reservation &&
     observation?.status === 'reported_complete' &&
+    retained !== null &&
     observation.issue_id === item.issue_id &&
     observation.host_attempt_id === completed?.attempt_id &&
     completed?.status === 'completed' &&
-    completed.result_digest === canonicalJsonDigest(observation) &&
-    sameJson(completed.result, observation) &&
+    completed.result_digest === canonicalJsonDigest(retained) &&
+    sameJson(completed.result, retained) &&
     completed.stage_id === item.request.stage_id &&
     completed.assignment_index === item.request.assignment_index &&
     sameJson(completed.lease, reservation.receipt.attempt.lease) &&
     sameJson(reservation.receipt.identity, workIdentity(work)) &&
     completed.request_digest === reservation.receipt.attempt.request_digest,
   );
+}
+
+/** Attempt identity fields that survive terminal completion; status/result are bound separately. */
+function expiredIssuedAttemptBinding(attempt: AssignmentAttempt): unknown {
+  const { status: _status, result: _result, result_digest: _resultDigest, ...binding } = attempt;
+  return binding;
 }
 
 function completedSourceTicketEpochMatches(
@@ -5417,7 +5446,6 @@ export function openHostStateDatabase(
   requireState(hashPattern.test(workspaceId), 'Host workspace identity invalid');
   assertWorkspaceDatabaseRelativePath(databaseRelativePath);
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  assertProjectUpgradeInactive(access);
   const parentRelative = path.posix.dirname(databaseRelativePath);
   const databasePath = path.join(access.repository_root, databaseRelativePath);
   requireState(
@@ -5551,7 +5579,6 @@ export async function runConsumerMigrationState<T>(
   assertHostStateDatabasePathSafe(databasePath);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, input.repositoryRoot);
   if (access.fileExists(relativeDatabase, 'consumer migration canonical database')) {
-    assertProjectUpgradeInactive(access);
     const probe = openAdmittedWorkspaceDatabase(input.repositoryRoot, relativeDatabase, workspaceId, true);
     try {
       assertConsumerAdmissionMetadata(probe, workspaceId);
@@ -15467,6 +15494,35 @@ export class HostStateStore {
     requireState(token!.attempt_id === authorization.receipt.attempt.attempt_id, 'workflow approval attempt mismatch');
     return { before, stored: stored!, approval: token! };
   }
+  /** Approval read for an attempt already retained as completed by the trusted session completer. */
+  #storedRetainedWorkflowApproval(authorization: WorkflowAttemptApprovalAuthorization): {
+    before: HostStateSnapshot;
+    stored: { revision: number; digest: string };
+    approval: WorkflowApprovalConsumptionRecord;
+  } {
+    const token = authorization.approval;
+    requireState(token !== null && token.status === 'commit_unknown', 'workflow approval reservation receipt invalid');
+    const before = this.#read(authorization.receipt.identity);
+    this.#assertMaintenanceGeneration(authorization.receipt.maintenanceGeneration);
+    const attempt = before.work?.execution.assignment_attempts.find(
+      (entry) => entry.attempt_id === authorization.receipt.attempt.attempt_id,
+    );
+    requireState(
+      attempt?.status === 'completed' &&
+        sameJson(expiredIssuedAttemptBinding(attempt), expiredIssuedAttemptBinding(authorization.receipt.attempt)),
+      'workflow approval attempt binding invalid',
+    );
+    const stored = this.#governanceRead(token.store_id, 'approval', canonicalJsonDigest(token.binding));
+    requireState(stored !== null, 'workflow approval fencing conflict');
+    const approval = stored.record as WorkflowApprovalConsumptionRecord;
+    requireState(
+      approval.status === 'applied' &&
+        approval.attempt_id === token.attempt_id &&
+        canonicalJsonDigest(approval.binding) === canonicalJsonDigest(token.binding),
+      'workflow approval is not the retained applied consumption',
+    );
+    return { before, stored: stored!, approval };
+  }
   beginWorkflowAttemptEffect(
     authorization: WorkflowAttemptApprovalAuthorization,
   ): WorkflowAttemptApprovalAuthorization {
@@ -18505,6 +18561,479 @@ export class HostStateStore {
     }).immediate();
   }
 
+  /**
+   * Read-only guard chain for the expired-lease issued Source report recovery.
+   * Every denial here is also enforced again inside the commit transaction.
+   */
+  #expiredIssuedSourceReportBasis(input: ExpiredIssuedSourceReportRecoveryInspectionRequest): {
+    readonly before: HostStateSnapshot;
+    readonly work: WorkState;
+    readonly ledger: CoordinationLedger;
+    readonly ticket: CoordinationTicket;
+    readonly claim: CoordinationLedger['claims'][number];
+    readonly journalVersion: StateVersion;
+    readonly priorJournal: MastraSessionLedgerState;
+    readonly item: MastraLedgerItem;
+    readonly reservation: NonNullable<MastraLedgerItem['host_reservation']>;
+    readonly authorization: NonNullable<NonNullable<MastraLedgerItem['host_reservation']>['authorization']> | null;
+    readonly approval: {
+      readonly stored: { readonly revision: number; readonly digest: string };
+      readonly approval: WorkflowApprovalConsumptionRecord;
+    } | null;
+    readonly observation: SessionBridgeObservation;
+    readonly markedObservation: SessionBridgeObservation;
+    readonly sourceScope: ScopedSourceSnapshot;
+    readonly changedPaths: readonly string[];
+    readonly nextJournal: MastraSessionLedgerState;
+  } {
+    const request = validateExpiredIssuedSourceReportRecoveryInspectionRequest(input),
+      before = this.#read(request.identity),
+      priorWork = before.work,
+      priorLedger = before.ledger;
+    requireState(
+      priorWork &&
+        priorLedger &&
+        priorWork.execution.status === 'active' &&
+        priorWork.lease &&
+        priorWork.lease.thread_id === request.nativeSessionHandle,
+      'expired issued Source report recovery requires the original active Work and same-owner Source lease',
+    );
+    const journalRow = readWorkspaceMastraSqlRow(
+      this.#database,
+      this.#workspaceId,
+      request.identity.work_id,
+      request.attempt,
+    );
+    requireState(
+      journalRow !== null && canonicalJsonDigest(journalRow.value) === journalRow.digest,
+      'expired issued Source report recovery Journal row is missing or corrupt',
+    );
+    const journalVersion: StateVersion = { revision: journalRow.revision, digest: journalRow.digest },
+      priorJournal = parseMastraSessionLedgerState(JSON.parse(journalRow.payload));
+    requireState(
+      priorJournal.schema === 'MastraSessionLedger/v1' &&
+        priorJournal.workspace_id === this.#workspaceId &&
+        priorJournal.work_id === request.identity.work_id &&
+        priorJournal.attempt === request.attempt &&
+        priorJournal.run_id === priorWork.execution.run_id &&
+        !priorJournal.corrective_execution &&
+        priorJournal.research_wave_exposure === undefined,
+      'expired issued Source report recovery Journal identity or frontier differs',
+    );
+    validateWorkSessionBinding(priorWork, priorJournal, this.#repositoryRoot);
+    const itemMatches = priorJournal.items.filter(
+        (item) => item.request.action_id === request.actionId && item.issue_id === request.issueId,
+      ),
+      settledMatches = priorJournal.completed.filter((wave) =>
+        wave.items.some((item) => item.request.action_id === request.actionId),
+      );
+    requireState(
+      itemMatches.length === 1 && settledMatches.length === 0,
+      'expired issued Source report recovery action is missing, ambiguous, or already settled',
+    );
+    const item = itemMatches[0]!,
+      reservation = item.host_reservation,
+      ticket = priorLedger.tickets.find((entry) => entry.ticket_id === priorWork.lease!.ticket_id),
+      activeClaims = priorLedger.claims.filter(
+        (entry) => entry.ticket_id === priorWork.lease!.ticket_id && entry.status === 'active',
+      );
+    requireState(
+      item.observation === null &&
+        item.issue_id === request.issueId &&
+        item.research_activation === undefined &&
+        item.research_normalization === undefined &&
+        reservation !== undefined &&
+        reservation.receipt.attempt.attempt_id === request.hostAttemptId &&
+        sameJson(reservation.receipt.identity, request.identity) &&
+        reservation.request.stageId === item.request.stage_id &&
+        reservation.request.assignmentIndex === item.request.assignment_index &&
+        reservation.request.configDigest === priorWork.binding.config_digest &&
+        item.request.config_digest === priorWork.binding.config_digest &&
+        item.request.workflow_id === priorWork.binding.workflow_id &&
+        item.request.run_id === priorJournal.run_id &&
+        item.request.scope_digest === priorJournal.source_scope?.digest &&
+        priorWork.binding.work_source_revision === priorJournal.source_scope?.digest &&
+        reservation.approvalAction === 'source.write' &&
+        reservation.authorization !== null,
+      'expired issued Source report recovery reservation differs from the issued action',
+    );
+    const observation = parseSessionBridgeObservation(request.observation);
+    requireState(
+      observation.status === 'reported_complete' &&
+        observation.action_id === request.actionId &&
+        observation.issue_id === request.issueId &&
+        observation.host_attempt_id === request.hostAttemptId &&
+        observation.recovery_reason === undefined &&
+        observation.output_digest === canonicalJsonDigest(observation.summary) &&
+        Array.isArray(observation.changed_paths),
+      'expired issued Source report recovery report body differs from the issued action',
+    );
+    const markedObservation: SessionBridgeObservation = freezeJsonValue({
+        ...observation,
+        recovery_reason: expiredLeaseCompletedReportReason,
+      }),
+      sourceScope = validateTaskSourceJournalScope(request.sourceScope);
+    const priorAttempt = priorWork.execution.assignment_attempts.find(
+        (attempt) => attempt.attempt_id === request.hostAttemptId,
+      ),
+      authorization = reservation!.authorization,
+      retainedReport = completedSourceJournalObservationMatches(priorWork, {
+        ...item,
+        observation: markedObservation,
+      }),
+      retainedAttemptMatches =
+        retainedReport &&
+        priorAttempt !== undefined &&
+        priorAttempt.status === 'completed' &&
+        priorAttempt.result !== null &&
+        sameJson(priorAttempt.result, observation) &&
+        priorAttempt.result_digest === canonicalJsonDigest(observation) &&
+        sameJson(expiredIssuedAttemptBinding(priorAttempt), expiredIssuedAttemptBinding(reservation!.receipt.attempt));
+    requireState(
+      priorJournal.items.every(
+        (entry) =>
+          entry.request.action_id === request.actionId ||
+          entry.issue_id === null ||
+          (entry.observation !== null &&
+            entry.observation.status === 'reported_complete' &&
+            (entry.host_reservation === undefined || completedSourceJournalObservationMatches(priorWork, entry))),
+      ) &&
+        priorJournal.completed.every((wave) =>
+          wave.items.every(
+            (entry) =>
+              entry.observation?.status === 'reported_complete' &&
+              (entry.host_reservation === undefined || completedSourceJournalObservationMatches(priorWork, entry)),
+          ),
+        ),
+      'expired issued Source report recovery Journal has unresolved or ambiguous siblings',
+    );
+    requireState(
+      this.#repositoryRoot !== undefined,
+      'expired issued Source report recovery repository root unavailable',
+    );
+    const recoveryConfig = loadRuntimeConfig(this.#repositoryRoot!);
+    requireState(
+      runtimeConfigDigest(recoveryConfig) === priorWork.binding.config_digest,
+      'expired issued Source report recovery runtime configuration differs from the issued Work',
+    );
+    const replayedInvocations = [...priorJournal.items, ...priorJournal.completed.flatMap((wave) => wave.items)].filter(
+      (entry) => entry.observation?.tool_call_ref === observation.tool_call_ref,
+    );
+    requireState(
+      replayedInvocations.length === 0 ||
+        (replayedInvocations.length === 1 &&
+          priorJournal.items.includes(replayedInvocations[0]!) &&
+          mayShareReadonlySessionInvocation(recoveryConfig, replayedInvocations[0]!, item, observation)),
+      'expired issued Source report recovery tool call reference was replayed outside an allowed read-only slot batch',
+    );
+    requireState(
+      priorJournal.source_scope !== undefined &&
+        priorJournal.source_scope !== null &&
+        sourceScope.digest !== priorJournal.source_scope.digest,
+      'expired issued Source report recovery evolved Source scope is missing or unchanged',
+    );
+    const changedPaths = compareScopedSourceSnapshots(priorJournal.source_scope, sourceScope)
+      .map((entry) => entry.path)
+      .sort();
+    requireState(
+      changedPaths.length > 0 &&
+        sameJson(changedPaths, [...(observation.changed_paths ?? [])].sort()) &&
+        changedPaths.every(
+          (file) =>
+            priorWork.binding.implementation_paths.includes(file) &&
+            ticket?.exclusive_resources.includes('file:' + file),
+        ),
+      'expired issued Source report recovery source-scope diff differs from report and original ownership',
+    );
+    requireState(
+      ticket?.status === 'active' &&
+        ticket.thread_id === priorWork.lease.thread_id &&
+        ticket.generation === request.leaseGeneration &&
+        ticket.ticket_id === priorWork.lease.ticket_id &&
+        ticket.expires_at !== null &&
+        timestamp(ticket.expires_at) <= Date.now() &&
+        ticket.exclusive_resources.some((resource) => resource.startsWith('file:')) &&
+        ticket.active_resources.some((resource) => resource.startsWith('file:')) &&
+        activeClaims.length === 1 &&
+        activeClaims[0]!.claim_id === ticket.claim_ids[0] &&
+        activeClaims[0]!.thread_id === ticket.thread_id &&
+        activeClaims[0]!.generation === request.leaseGeneration &&
+        activeClaims[0]!.lease_expires_at === ticket.expires_at &&
+        timestamp(activeClaims[0]!.lease_expires_at) <= Date.now() &&
+        sameCoordinationStrings(activeClaims[0]!.resources, ticket.active_resources),
+      'expired issued Source report recovery original Source ticket or claim is not a single expired same-owner claim',
+    );
+    this.#assertNoOverlappingActiveSourceOwner(priorLedger, ticket!);
+    requireState(
+      !priorLedger.tickets.some(
+        (entry) =>
+          entry.ticket_id !== ticket!.ticket_id &&
+          ['queued', 'active', 'ready_for_handoff', 'blocked'].includes(entry.status) &&
+          entry.sequence < ticket!.sequence &&
+          entry.exclusive_resources.some((resource) => ticket!.exclusive_resources.includes(resource)),
+      ) &&
+        !priorLedger.claims.some(
+          (claim) =>
+            claim.status === 'active' &&
+            claim.claim_id !== activeClaims[0]!.claim_id &&
+            claim.resources.some((resource) => ticket!.active_resources.includes(resource)),
+        ),
+      'expired issued Source report recovery has an earlier FIFO owner or a foreign active claim',
+    );
+    requireState(
+      priorAttempt !== undefined &&
+        priorWork.execution.assignment_attempts.every(
+          (attempt) =>
+            attempt.attempt_id === request.hostAttemptId || !['started', 'uncertain'].includes(attempt.status),
+        ) &&
+        retainedAttemptMatches,
+      'expired issued Source report recovery Host attempt is not the retained reservation report outcome',
+    );
+    let approval: {
+      readonly stored: { readonly revision: number; readonly digest: string };
+      readonly approval: WorkflowApprovalConsumptionRecord;
+    } | null = null;
+    if (authorization !== null) {
+      const storedApproval = this.#storedRetainedWorkflowApproval(authorization);
+      requireState(
+        storedApproval.approval.attempt_id === request.hostAttemptId &&
+          authorization.approval?.status === 'commit_unknown',
+        'expired issued Source report recovery Source-write approval is not commit_unknown',
+      );
+      approval = { stored: storedApproval.stored, approval: storedApproval.approval };
+    }
+    const nextJournal: MastraSessionLedgerState = freezeJsonValue({
+      ...priorJournal,
+      source_scope: sourceScope,
+      items: priorJournal.items.map((entry) =>
+        entry.request.action_id === request.actionId ? { ...entry, observation: markedObservation } : entry,
+      ),
+      completed: priorJournal.completed.map((wave) => ({
+        ...wave,
+        items: wave.items.map((entry) =>
+          entry.request.action_id === request.actionId ? { ...entry, observation: markedObservation } : entry,
+        ),
+      })),
+    });
+    return {
+      before,
+      work: priorWork,
+      ledger: priorLedger,
+      ticket: ticket!,
+      claim: activeClaims[0]!,
+      journalVersion,
+      priorJournal,
+      item,
+      reservation: reservation!,
+      authorization,
+      approval,
+      observation,
+      markedObservation,
+      sourceScope,
+      changedPaths,
+      nextJournal,
+    };
+  }
+
+  /** Read-only eligibility proof; performs no writes and grants no rights. */
+  inspectExpiredIssuedSourceReport(
+    input: ExpiredIssuedSourceReportRecoveryInspectionRequest,
+  ): ExpiredIssuedSourceReportRecoveryInspection {
+    const request = validateExpiredIssuedSourceReportRecoveryInspectionRequest(input);
+    requireState(!this.#database.inTransaction, 'nested expired issued Source report recovery inspection forbidden');
+    const basis = this.#expiredIssuedSourceReportBasis(request),
+      resumeStatus = mastraLedgerStatus(basis.nextJournal);
+    requireState(
+      resumeStatus === 'ready' || resumeStatus === 'ready_to_resume',
+      'expired issued Source report recovery Journal does not settle cleanly',
+    );
+    return validateExpiredIssuedSourceReportRecoveryInspection({
+      schema: 'ExpiredIssuedSourceReportRecoveryInspection/v1',
+      action_id: request.actionId,
+      issue_id: request.issueId,
+      host_attempt_id: request.hostAttemptId,
+      lease_generation: request.leaseGeneration,
+      lease_expires_at: basis.ticket.expires_at!,
+      changed_paths: basis.changedPaths,
+      marked_observation_digest: canonicalJsonDigest(basis.markedObservation),
+      expected_work: basis.before.workVersion!,
+      expected_ledger: basis.before.ledgerVersion!,
+      expected_journal: basis.journalVersion,
+      expected_maintenance_generation: basis.before.maintenanceGeneration,
+      journal_resume_status: resumeStatus,
+      source_write_rights: false,
+      runtime_acceptance: false,
+    });
+  }
+
+  /**
+   * Record the exact retained Source report under its expired writer lease and
+   * retire file ownership in one CAS commit. The accepted observation carries
+   * `recovery_reason: 'expired_lease_completed_report'`; Source writes that
+   * post-date expiry remain visible through `changed_paths` and the evolved
+   * journal Source scope. No new source-write right is granted.
+   */
+  commitExpiredIssuedSourceReport(
+    input: ExpiredIssuedSourceReportRecoveryRequest,
+    verifyCurrent: ExpiredIssuedSourceReportRecoveryVerifyCurrent,
+  ): HostStateSnapshot & { readonly journalVersion: StateVersion } {
+    const request = validateExpiredIssuedSourceReportRecoveryRequest(input);
+    requireState(
+      typeof verifyCurrent === 'function' &&
+        verifyCurrent.constructor.name !== 'AsyncFunction' &&
+        !this.#database.inTransaction,
+      'expired issued Source report recovery verifier or transaction invalid',
+    );
+    return this.#transactionWithProducerFence(() => {
+      this.#assertReconciliationWritesAllowed();
+      this.#assertMaintenanceGeneration(request.expectedMaintenanceGeneration);
+      const committed = this.#expiredIssuedSourceReportCommitted(request);
+      if (committed) return committed;
+      const {
+          expectedWork: _expectedWork,
+          expectedLedger: _expectedLedger,
+          expectedJournal: _expectedJournal,
+          expectedMaintenanceGeneration: _expectedMaintenanceGeneration,
+          ...basisRequest
+        } = request,
+        basis = this.#expiredIssuedSourceReportBasis(basisRequest);
+      matchesExpected(basis.before.workVersion, request.expectedWork);
+      matchesExpected(basis.before.ledgerVersion, request.expectedLedger);
+      matchesExpected(basis.journalVersion, request.expectedJournal);
+      const state: ExpiredIssuedSourceReportRecoveryState = freezeJsonValue({
+        host: basis.before,
+        journal: { version: basis.journalVersion, state: basis.priorJournal },
+      });
+      const firstProof = verifyCurrent(request, state);
+      assertCanonicalJsonValue(firstProof);
+      const proofDigest = canonicalJsonDigest(firstProof),
+        verifyAndBind = (): void => {
+          const current = verifyCurrent(request, state);
+          assertCanonicalJsonValue(current);
+          requireState(
+            canonicalJsonDigest(current) === proofDigest,
+            'expired issued Source report recovery proof changed before Host CAS',
+          );
+        };
+      verifyAndBind();
+      const staged = this.#read(request.identity),
+        completedAttempt = staged.work?.execution.assignment_attempts.find(
+          (attempt) => attempt.attempt_id === request.hostAttemptId,
+        );
+      requireState(
+        staged.work !== null &&
+          completedAttempt?.status === 'completed' &&
+          sameJson(completedAttempt.result, basis.observation) &&
+          completedAttempt.result_digest === canonicalJsonDigest(basis.observation),
+        'expired issued Source report recovery Host attempt result differs from the retained report',
+      );
+      if (basis.approval !== null && basis.approval.approval.status !== 'applied')
+        this.#governanceWrite(
+          'approval',
+          canonicalJsonDigest(basis.approval.approval.binding),
+          {
+            ...basis.approval.approval,
+            status: 'applied',
+            terminal_at: new Date().toISOString(),
+          },
+          basis.approval.stored,
+        );
+      const handoff = buildCompletedSourceReportExecutionOnlyHandoff(
+          basis.ledger,
+          basis.ticket,
+          request.identity,
+          request.actionId,
+          request.decisionPointer,
+        ),
+        stagedWork = staged.work!,
+        nextWork: WorkState = {
+          ...stagedWork,
+          revision: stagedWork.revision + 1,
+          lifecycle: { ...stagedWork.lifecycle, revision: stagedWork.revision + 1 },
+          lease: {
+            ticket_id: handoff.executionTicket.ticket_id,
+            thread_id: basis.ticket.thread_id,
+            generation: handoff.executionTicket.generation,
+          },
+        };
+      validatePair(nextWork, handoff.nextLedger);
+      const after = this.#commitHostState(
+        {
+          expectedWork: staged.workVersion,
+          expectedLedger: basis.before.ledgerVersion,
+          expectedMaintenanceGeneration: basis.before.maintenanceGeneration,
+          expectedSessionJournal: { attempt: request.attempt, version: basis.journalVersion },
+          nextWork,
+          nextLedger: handoff.nextLedger,
+        },
+        {
+          actionId: request.actionId,
+          next: basis.nextJournal,
+          verifyCurrent: verifyAndBind,
+        },
+        'producer-fenced',
+      );
+      const committedJournal = readWorkspaceMastraSqlRow(
+          this.#database,
+          this.#workspaceId,
+          request.identity.work_id,
+          request.attempt,
+        ),
+        successorJournalVersion: StateVersion = {
+          revision: basis.journalVersion.revision + 1,
+          digest: canonicalJsonDigest(basis.nextJournal),
+        };
+      requireState(
+        sameJson(after.work, nextWork) &&
+          sameJson(after.ledgerVersion, version(handoff.nextLedger, 'ledger')) &&
+          committedJournal !== null &&
+          committedJournal.revision === successorJournalVersion.revision &&
+          committedJournal.digest === successorJournalVersion.digest &&
+          canonicalJsonDigest(committedJournal.value) === committedJournal.digest,
+        'expired issued Source report recovery successor afterimage differs',
+      );
+      return { ...after, journalVersion: successorJournalVersion };
+    }).immediate();
+  }
+
+  /** Exact-retry read: the Journal already carries this marked report. */
+  #expiredIssuedSourceReportCommitted(
+    request: ExpiredIssuedSourceReportRecoveryRequest,
+  ): (HostStateSnapshot & { readonly journalVersion: StateVersion }) | null {
+    const before = this.#read(request.identity),
+      work = before.work;
+    if (!work?.lease || !work.lease.ticket_id.startsWith('execution-ticket-')) return null;
+    const journalRow = readWorkspaceMastraSqlRow(
+      this.#database,
+      this.#workspaceId,
+      request.identity.work_id,
+      request.attempt,
+    );
+    if (journalRow === null) return null;
+    const journal = parseMastraSessionLedgerState(JSON.parse(journalRow.payload)),
+      item = journal.items.find(
+        (entry) => entry.request.action_id === request.actionId && entry.issue_id === request.issueId,
+      );
+    if (item?.observation?.recovery_reason !== expiredLeaseCompletedReportReason) return null;
+    const observation = parseSessionBridgeObservation(request.observation),
+      marked = { ...observation, recovery_reason: expiredLeaseCompletedReportReason },
+      sourceScope = validateTaskSourceJournalScope(request.sourceScope),
+      attempt = work.execution.assignment_attempts.find((entry) => entry.attempt_id === request.hostAttemptId);
+    requireState(
+      observation.recovery_reason === undefined &&
+        canonicalJsonDigest(item.observation) === canonicalJsonDigest(marked) &&
+        journal.source_scope?.digest === sourceScope.digest &&
+        attempt?.status === 'completed' &&
+        sameJson(attempt.result, observation) &&
+        attempt.result_digest === canonicalJsonDigest(observation),
+      'expired issued Source report recovery exact retry differs',
+    );
+    return {
+      ...before,
+      journalVersion: { revision: journalRow.revision, digest: journalRow.digest },
+    };
+  }
+
   compareAndSwapHostState(input: {
     expectedWork: StateVersion | null;
     expectedLedger: StateVersion | null;
@@ -19263,8 +19792,11 @@ export class HostStateStore {
             ...terminalJournal.next.completed.flatMap((wave) => wave.items),
           ].find((item) => item.request.action_id === terminalJournal.actionId);
           const completed = before.work?.execution.assignment_attempts.find(
-            (attempt) => attempt.attempt_id === oldItem?.host_reservation?.receipt.attempt.attempt_id,
-          );
+              (attempt) => attempt.attempt_id === oldItem?.host_reservation?.receipt.attempt.attempt_id,
+            ),
+            retainedObservation = nextItem?.observation
+              ? sessionJournalRetainedObservation(nextItem.observation)
+              : null;
           requireState(
             oldItem &&
               nextItem?.observation?.status ===
@@ -19272,8 +19804,10 @@ export class HostStateStore {
               oldItem.host_reservation &&
               oldItem.issue_id === nextItem.observation.issue_id &&
               nextItem.observation.host_attempt_id === completed?.attempt_id &&
+              retainedObservation !== null &&
               completed?.status === 'completed' &&
-              completed.result_digest === canonicalJsonDigest(nextItem.observation) &&
+              completed.result_digest === canonicalJsonDigest(retainedObservation) &&
+              sameJson(completed.result, retainedObservation) &&
               sameJson(terminalJournal.next, {
                 ...state,
                 source_scope: terminalJournal.stoppedSource ? state.source_scope : terminalJournal.next.source_scope,

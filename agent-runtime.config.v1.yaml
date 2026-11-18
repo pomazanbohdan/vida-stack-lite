@@ -14,6 +14,7 @@ repository:
   project_root: .
   code_selectors:
     - src/**
+  prefix: VIDA
 integrations:
   providers:
     - id: local-agent
@@ -23,7 +24,7 @@ integrations:
       namespace: agent
     - id: local-plugin
       provider: local
-      project_id: plugin
+      project_id: codex
       tenant_id: local
       namespace: plugin
     - id: local-powers
@@ -68,40 +69,127 @@ paths:
     ledger_root: backlogs
 projects:
   - project_id: agent
-    title: agent
+    title: VIDA Agent
+    prefix: AGENT
     project_root: packages/agent
-    wiki_root: packages/agent/docs
-    wiki_path: packages/agent/AGENT.sidecar.md
-    wiki_output_root: packages/agent/.planning/agent-flow/wiki-output
-    internal_root: packages/agent/docs/internal
-    ledger_root: packages/agent/backlogs
-    task_prefix: TASK
     code_selectors:
       - packages/agent/src/**
+      - packages/agent/bin/**
+      - packages/agent/schemas/**
+      - packages/agent/templates/**
+      - packages/agent/instructions/**
+      - packages/agent/tooling/**
+      - packages/agent/tests/**
+      - packages/agent/package.json
+    documents:
+      root: packages/agent/docs
+      index: packages/agent/docs/index.md
+      requirements:
+        root: packages/agent/docs/requirements
+        areas:
+          runtime:
+            business: packages/agent/docs/requirements/runtime/business
+            system: packages/agent/docs/requirements/runtime/system
+            acceptance: packages/agent/docs/requirements/runtime/acceptance
+            test_cases: packages/agent/docs/requirements/runtime/test-cases
+          delivery:
+            business: packages/agent/docs/requirements/delivery/business
+            system: packages/agent/docs/requirements/delivery/system
+            acceptance: packages/agent/docs/requirements/delivery/acceptance
+            test_cases: packages/agent/docs/requirements/delivery/test-cases
+      research: packages/agent/docs/research
+      decisions: packages/agent/docs/decisions
+    work_items:
+      storage_root: packages/agent/backlogs
+      enabled_types:
+        - TASK
+        - BUG
+        - PBI
+      hierarchy:
+        mode: custom
+        allowed_children:
+          PBI:
+            - TASK
+            - BUG
+          BUG: []
+          TASK: []
     delivery_group: agent
-  - project_id: plugin
-    title: plugin
+  - project_id: codex
+    title: VIDA Codex
+    prefix: CODEX
     project_root: packages/codex
-    wiki_root: packages/codex/docs
-    wiki_path: packages/codex/AGENT.sidecar.md
-    wiki_output_root: packages/codex/.planning/agent-flow/wiki-output
-    internal_root: packages/codex/docs/internal
-    ledger_root: packages/codex/backlogs
-    task_prefix: TASK
     code_selectors:
-      - packages/codex/src/**
+      - packages/codex/package.json
+    documents:
+      root: packages/codex/docs
+      index: packages/codex/docs/index.md
+      requirements:
+        root: packages/codex/docs/requirements
+        areas:
+          integration:
+            business: packages/codex/docs/requirements/integration/business
+            system: packages/codex/docs/requirements/integration/system
+            acceptance: packages/codex/docs/requirements/integration/acceptance
+            test_cases: packages/codex/docs/requirements/integration/test-cases
+      research: packages/codex/docs/research
+      decisions: packages/codex/docs/decisions
+    work_items:
+      storage_root: packages/codex/backlogs
+      enabled_types:
+        - TASK
+        - BUG
+        - PBI
+      hierarchy:
+        mode: custom
+        allowed_children:
+          PBI:
+            - TASK
+            - BUG
+          BUG: []
+          TASK: []
     delivery_group: plugin
   - project_id: powers
-    title: powers
+    title: VidaPowers
+    prefix: POWERS
     project_root: packages/powers
-    wiki_root: packages/powers/docs
-    wiki_path: packages/powers/AGENT.sidecar.md
-    wiki_output_root: packages/powers/.planning/agent-flow/wiki-output
-    internal_root: packages/powers/docs/internal
-    ledger_root: packages/powers/backlogs
-    task_prefix: TASK
     code_selectors:
-      - packages/powers/src/**
+      - packages/powers/skills/**
+      - packages/powers/scripts/**
+      - packages/powers/instructions/**
+      - packages/powers/config/**
+      - packages/powers/tests/**
+      - packages/powers/catalog.json
+      - packages/powers/package.json
+      - packages/powers/plugin.json
+      - packages/powers/.codex-plugin/**
+      - packages/powers/.agents/**
+    documents:
+      root: packages/powers/docs
+      index: packages/powers/docs/index.md
+      requirements:
+        root: packages/powers/docs/requirements
+        areas:
+          methodology:
+            business: packages/powers/docs/requirements/methodology/business
+            system: packages/powers/docs/requirements/methodology/system
+            acceptance: packages/powers/docs/requirements/methodology/acceptance
+            test_cases: packages/powers/docs/requirements/methodology/test-cases
+      research: packages/powers/docs/research
+      decisions: packages/powers/docs/decisions
+    work_items:
+      storage_root: packages/powers/docs/work
+      enabled_types:
+        - TASK
+        - BUG
+        - PBI
+      hierarchy:
+        mode: custom
+        allowed_children:
+          PBI:
+            - TASK
+            - BUG
+          BUG: []
+          TASK: []
     delivery_group: powers
 agents:
   profiles:
@@ -435,7 +523,7 @@ teams:
     default_workflow: task_execution
     allowed_projects:
       - agent
-      - plugin
+      - codex
       - powers
     allowed_work_item_kinds:
       - epic

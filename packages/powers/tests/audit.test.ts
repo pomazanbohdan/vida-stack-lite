@@ -110,7 +110,7 @@ function options(overrides: Partial<AuditOptions> = {}): AuditOptions {
   return {
     command: 'map', root: process.cwd(), limit: 20, offset: 0, filter: undefined,
     summary: false, all: false, json: false, out: undefined, instruction: undefined,
-    specs: [], specDirs: [], ...overrides,
+    specs: [], specDirs: [], change: undefined, ...overrides,
   };
 }
 
@@ -143,6 +143,19 @@ describe('argument parsing', () => {
 
   test('rejects a non-numeric limit', () => {
     expect(() => parseAuditArgs(['map', '--limit', 'many'])).toThrow('AUDIT_ARGUMENT_INVALID');
+  });
+
+  test('reads the change file of the instruction-change command', () => {
+    const parsed = parseAuditArgs(['instruction-change', '--change', 'change.json']);
+    expect(parsed.change).toBe('change.json');
+  });
+
+  test('rejects --change on another command', () => {
+    expect(() => parseAuditArgs(['map', '--change', 'change.json'])).toThrow('AUDIT_ARGUMENT_INVALID');
+  });
+
+  test('rejects the instruction-change command without --change', () => {
+    expect(() => parseAuditArgs(['instruction-change'])).toThrow('AUDIT_ARGUMENT_INVALID');
   });
 });
 
@@ -883,6 +896,203 @@ describe('the CLI', () => {
 
   test('names the tokens of a line', () => {
     expect(tokenize('Write the Tests, first!')).toEqual(['write', 'the', 'tests', 'first']);
+  });
+});
+
+describe('the instruction-change report', () => {
+  const shaA = 'a'.repeat(64);
+  const shaB = 'b'.repeat(64);
+
+  function changeEvidence(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      before: { id: 'instruction-0', sha256: shaA },
+      after: { id: 'instruction-0', sha256: shaB },
+      risk: 'low',
+      semantic_change: false,
+      source: 'change-request-1',
+      assessment: 'assessment-1',
+      ...overrides,
+    };
+  }
+
+  async function changeRoot(): Promise<string> {
+    const root = await mkdtemp(join(tmpdir(), 'vp-change-'));
+    temporaryRoots.push(root);
+    return root;
+  }
+
+  async function writeChange(root: string, value: unknown, name = 'change.json'): Promise<void> {
+    await writeFile(join(root, name), typeof value === 'string' ? value : JSON.stringify(value));
+  }
+
+  function runChange(root: string, name = 'change.json', json = false): { code: number; text: string; stderr: string } {
+    const stdout: string[] = [];
+    const stderr: string[] = [];
+    const args = ['instruction-change', '--root', root, '--change', name];
+    if (json) args.push('--json');
+    const code = runAuditCli(args, {
+      stdout: (text) => stdout.push(text), stderr: (text) => stderr.push(text),
+    });
+    return { code, text: stdout.join(''), stderr: stderr.join('') };
+  }
+
+  test('maps a low change without semantic change to auto-acceptance', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence());
+    const result = runChange(root);
+    expect(result.code).toBe(0);
+    expect(result.text).toContain('== audit instruction-change ==');
+    expect(result.text).toContain('auto-acceptance');
+    expect(result.text).toContain(`sha256:${shaA} (declared)`);
+    expect(result.text).toContain('source: change-request-1');
+  });
+
+  test('maps a medium change to a regression evaluation and an independent review', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence({ risk: 'medium' }));
+    const result = runChange(root, 'change.json', true);
+    expect(result.code).toBe(0);
+    const report = JSON.parse(result.text);
+    expect(report.counters.find((counter: { label: string }) => counter.label === 'risk')?.value).toBe('medium');
+    expect(report.sections.find((section: { name: string }) => section.name === 'required-gate')?.rows)
+      .toEqual(['regression-evaluation', 'independent-review']);
+  });
+
+  test('maps a high change to a human confirmation', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence({ risk: 'high' }));
+    const result = runChange(root);
+    expect(result.code).toBe(0);
+    expect(result.text).toContain('human-confirmation');
+    expect(result.text).not.toContain('auto-acceptance');
+  });
+
+  test('never auto-accepts a semantic change under a new id', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence({
+      after: { id: 'instruction-1', sha256: shaB },
+      semantic_change: true,
+    }));
+    const result = runChange(root, 'change.json', true);
+    const report = JSON.parse(result.text);
+    expect(report.sections.find((section: { name: string }) => section.name === 'required-gate')?.rows)
+      .toEqual(['regression-evaluation', 'independent-review']);
+    expect(report.sections.find((section: { name: string }) => section.name === 'problem')?.rows).toEqual([]);
+  });
+
+  test('maps a high semantic change to a human confirmation', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence({
+      after: { id: 'instruction-1', sha256: shaB },
+      risk: 'high',
+      semantic_change: true,
+    }));
+    const result = runChange(root);
+    expect(result.text).toContain('human-confirmation');
+  });
+
+  test('fails closed on a semantic change under the same id regardless of risk', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence({ risk: 'high', semantic_change: true }));
+    const result = runChange(root, 'change.json', true);
+    const report = JSON.parse(result.text);
+    const problems = report.sections.find((section: { name: string }) => section.name === 'problem')?.rows ?? [];
+    expect(problems.join()).toContain('fails closed');
+    expect(report.sections.find((section: { name: string }) => section.name === 'required-gate')?.rows).toEqual([]);
+    expect(report.counters.find((counter: { label: string }) => counter.label === 'findings')?.value).toBe('1');
+  });
+
+  test('fails closed when identical digests declare a semantic change', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence({
+      after: { id: 'instruction-1', sha256: shaA },
+      semantic_change: true,
+    }));
+    const result = runChange(root);
+    expect(result.text).toContain('identical before/after digests');
+    expect(result.text).not.toContain('auto-acceptance');
+  });
+
+  test('fails closed on malformed change evidence', async () => {
+    const root = await changeRoot();
+    await writeChange(root, '{ not json', 'broken.json');
+    const result = runChange(root, 'broken.json', true);
+    const report = JSON.parse(result.text);
+    expect(report.sections.find((section: { name: string }) => section.name === 'problem')?.rows.join())
+      .toContain('not readable JSON');
+    expect(report.sections.find((section: { name: string }) => section.name === 'required-gate')?.rows).toEqual([]);
+    expect(report.counters.find((counter: { label: string }) => counter.label === 'risk')?.value).toBe('unknown');
+  });
+
+  test('fails closed on a missing change file', async () => {
+    const root = await changeRoot();
+    const result = runChange(root, 'absent.json');
+    expect(result.code).toBe(1);
+    expect(result.text).toContain('not readable JSON');
+  });
+
+  test('fails closed on change evidence that is not a JSON object', async () => {
+    const root = await changeRoot();
+    await writeChange(root, '[]', 'list.json');
+    const result = runChange(root, 'list.json');
+    expect(result.text).toContain('not a JSON object');
+  });
+
+  test('fails closed on every missing or invalid binding', async () => {
+    const root = await changeRoot();
+    const cases: Record<string, unknown>[] = [
+      changeEvidence({ before: undefined }),
+      changeEvidence({ after: 'not-an-object' }),
+      changeEvidence({ before: { id: 'instruction-0' } }),
+      changeEvidence({ after: { sha256: shaB } }),
+      changeEvidence({ risk: 'extreme' }),
+      changeEvidence({ semantic_change: 'yes' }),
+      changeEvidence({ source: '' }),
+      changeEvidence({ assessment: undefined }),
+    ];
+    for (const [index, value] of cases.entries()) {
+      const name = `case-${index}.json`;
+      await writeChange(root, value, name);
+      const report = JSON.parse(runChange(root, name, true).text);
+      const problems = report.sections.find((section: { name: string }) => section.name === 'problem')?.rows ?? [];
+      expect(problems.length).toBeGreaterThan(0);
+      expect(report.sections.find((section: { name: string }) => section.name === 'required-gate')?.rows).toEqual([]);
+    }
+  });
+
+  test('reports the declared bindings without recomputing them', async () => {
+    const root = await changeRoot();
+    await writeChange(root, changeEvidence());
+    const report = JSON.parse(runChange(root, 'change.json', true).text);
+    const evidence = report.sections.find((section: { name: string }) => section.name === 'evidence')?.rows ?? [];
+    expect(evidence).toContain(`before instruction-0 sha256:${shaA} (declared)`);
+    expect(evidence).toContain(`after instruction-0 sha256:${shaB} (declared)`);
+    expect(evidence).toContain('assessment: assessment-1');
+  });
+
+  test('the native instruction-change command exits nonzero on rejected evidence', async () => {
+    const root = await changeRoot();
+    await writeChange(root, '{ not json', 'broken.json');
+    await writeChange(root, changeEvidence({ risk: 'high', semantic_change: true }), 'same-id.json');
+    await writeChange(root, changeEvidence());
+    const script = fileURLToPath(new URL('../scripts/audit.ts', import.meta.url));
+    const command = [process.execPath, script, 'instruction-change', '--root', root, '--json', '--change'];
+
+    const malformed = Bun.spawnSync([...command, 'broken.json']);
+    expect(malformed.exitCode).toBe(1);
+    expect(malformed.stdout.toString()).toContain('not readable JSON');
+
+    const sameId = Bun.spawnSync([...command, 'same-id.json', '--out', 'report.json']);
+    expect(sameId.exitCode).toBe(1);
+    expect(await Bun.file(join(root, 'report.json')).text()).toContain('semantic change under the same instruction id');
+
+    const valid = Bun.spawnSync([...command, 'change.json']);
+    expect(valid.exitCode).toBe(0);
+    expect(valid.stdout.toString()).toContain('auto-acceptance');
+  });
+
+  test('needs --change for the instruction-change command', () => {
+    expect(() => buildReport(options({ command: 'instruction-change' }))).toThrow('needs --change');
   });
 });
 

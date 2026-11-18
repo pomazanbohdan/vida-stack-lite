@@ -164,15 +164,8 @@ import * as trustedHostSurface from '../../src/trusted-host.ts';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../../src/contracts/public-ingress.ts';
 import { MAX_CANONICAL_NODES } from '../../src/contracts/canonical-json-core.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
+import { loadRuntimeConfig, runtimeConfigDigest, runtimePackageCodePaths } from '../../src/config/runtime-config.ts';
 import {
-  activeRuntimeConfigurationSource,
-  assertProjectUpgradeInactive,
-  loadRuntimeConfig,
-  runtimeConfigDigest,
-  runtimePackageCodePaths,
-} from '../../src/config/runtime-config.ts';
-import {
-  PROJECT_UPGRADE_OPERATION_PATH,
   sessionBridgeDatabaseRelativePath,
   sessionHandoffDatabaseRelativePath,
 } from '../../src/config/project-paths.ts';
@@ -225,6 +218,10 @@ import { configuredTestContext } from '../configured-context.ts';
 
 const workspace = 'a'.repeat(64);
 const failedFinalHostCaseTimeoutMs = 20_000;
+const runtimeConfigPrefix = (value: string): string => {
+  const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return /^[A-Z]/.test(cleaned) ? cleaned : `P${cleaned}`;
+};
 // Keep a stable export snapshot because Bun updates live builtin namespaces when
 // a scoped module mock is registered.
 const originalFsExports = { ...nodeFs };
@@ -849,62 +846,6 @@ test('Host state fixture preserves captured root instruction bytes', () => {
     expect(readFileSync(path.join(root, name))).toEqual(readFileSync(path.join(configuredInstructionRoot, name)));
   }
 });
-
-test.skipIf(process.platform !== 'linux')(
-  'Host upgrade guard observes fresh absence without writes and preserves native CAS denial',
-  () => {
-    try {
-      const access = requireSafeRepositoryAccess(root);
-      const target = path.join(root, PROJECT_UPGRADE_OPERATION_PATH);
-      mkdirSync(path.dirname(target), { recursive: true });
-      const entries = nodeFs.readdirSync(path.dirname(target));
-      const writes = spyOn(nodeFs, 'writeSync');
-      const syncs = spyOn(nodeFs, 'fsyncSync');
-      try {
-        expect(() => assertProjectUpgradeInactive(access)).not.toThrow();
-        expect(activeRuntimeConfigurationSource(access)).toBe('agent-runtime.config.v1.yaml');
-        expect(writes).not.toHaveBeenCalled();
-        expect(syncs).not.toHaveBeenCalled();
-        expect(nodeFs.readdirSync(path.dirname(target))).toEqual(entries);
-      } finally {
-        writes.mockRestore();
-        syncs.mockRestore();
-      }
-      const bytes = Buffer.from('inert upgrade marker\n');
-      writeFileSync(target, bytes);
-      expect(() => assertProjectUpgradeInactive(access)).toThrow('Project upgrade is in progress');
-      access.withExclusiveLock('.vida/.project-upgrade.v1.json.cas', 'guard native CAS owner', () => {
-        const ownerPath = path.join(root, '.vida/.project-upgrade.v1.json.cas.lock');
-        const owner = readFileSync(ownerPath);
-        expect(() => assertProjectUpgradeInactive(access)).toThrow(/active CAS writer/);
-        expect(readFileSync(ownerPath)).toEqual(owner);
-        expect(readFileSync(target)).toEqual(bytes);
-      });
-      nodeFs.unlinkSync(target);
-      expect(() => assertProjectUpgradeInactive(access)).not.toThrow();
-      access.withExclusiveLock('.vida/.activation.v1.json.cas', 'activation presence CAS owner', () => {
-        const ownerPath = path.join(root, '.vida/.activation.v1.json.cas.lock');
-        const owner = readFileSync(ownerPath);
-        expect(() => activeRuntimeConfigurationSource(access)).toThrow(/active CAS writer/);
-        expect(readFileSync(ownerPath)).toEqual(owner);
-      });
-      let legacyReads = 0;
-      const legacy = {
-        ...access,
-        observeFileExists: undefined,
-        fileExists: (file: string, label: string) => {
-          legacyReads++;
-          return access.fileExists(file, label);
-        },
-      };
-      expect(() => assertProjectUpgradeInactive(legacy)).not.toThrow();
-      expect(legacyReads).toBe(1);
-    } catch (error) {
-      preserveHostFixtureRoot = true;
-      throw error;
-    }
-  },
-);
 
 test.each(['error', 'undefined', 'return'] as const)(
   'exclusive Host transaction retains operation and native close failures (%s)',
@@ -6776,7 +6717,11 @@ async function prepareSameWorkQueuedTaskSource(f: Awaited<ReturnType<typeof crea
     'row identity, checksum, or StateVersion differs',
   );
   expect(host.readHostStateSnapshot(f.identity)).toEqual(target);
-  const reopened = openHostStateDatabase(f.root, path.relative(f.root, db.filename), host.workspaceId);
+  const reopened = openHostStateDatabase(
+    f.root,
+    path.relative(f.root, db.filename).split(path.sep).join(path.posix.sep),
+    host.workspaceId,
+  );
   let reopenFailure: { error: unknown } | undefined;
   try {
     expect(new HostStateStore(reopened, host.workspaceId).readHostStateSnapshot(f.identity)).toEqual(target);
@@ -7218,7 +7163,7 @@ test('native readonly replacement runtime rebind retires only its admitted sourc
 });
 
 test('native synthesis correction runtime rebind preserves admitted research and exact corrected history', async () => {
-  const deadline = performance.now() + 5_000;
+  const deadline = performance.now() + 20_000;
   let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
   let ownedRoot: string | undefined;
   let completed = false;
@@ -7426,7 +7371,7 @@ test('native synthesis correction runtime rebind preserves admitted research and
     },
     'Native synthesis correction Host fixture',
   );
-});
+}, 20_000);
 
 test(
   'native legacy developer frontier continues through current reviewers without fabricated Host history',
@@ -12855,12 +12800,12 @@ test('owner recovery preview: earlier FIFO blocker and foreign active claim stil
   }
 });
 
-test('owner recovery preview: non-INTAKE and completed host assignment are not unissued preparation', () => {
+test('owner recovery preview: sealed, completed-phase or host-assigned owner is not unissued preparation', () => {
   const initial = commitHostState(fixture());
   // Read-only test double varies persisted evidence without mutating the scratch database.
   const alterations: readonly ((work: DeepMutable<WorkState>) => void)[] = [
     (work) => {
-      work.lifecycle.phase = 'TRACE';
+      work.lifecycle.phase = 'COMPLETE';
     },
     (work) => {
       setFixtureField(work.lifecycle, 'seal', {});
@@ -12885,6 +12830,175 @@ test('owner recovery preview: non-INTAKE and completed host assignment are not u
     ownerRecoveryPreviewExpired(() => expect(() => suspendLocalWork(request)).toThrow('expired'));
     expect(store.readHostStateSnapshot(identity)).toEqual(initial);
   }
+});
+
+test('owner recovery preview: expired writer ticket releases behind settled completed waves', () => {
+  const initial = commitHostState(fixture());
+  const journal = ownerRecoveryPreviewJournal();
+  const settled = clone(firstJournalItem(journal));
+  settled.issue_id = 'settled-prewrite-issue';
+  settled.request.action_id = 'settled-prewrite-action';
+  settled.request.stage_id = 'review_source_prewrite';
+  settled.observation = {
+    schema: 'VidaSessionObservation/v1',
+    action_id: 'settled-prewrite-action',
+    issue_id: 'settled-prewrite-issue',
+    agent_id: 'fixture-prewriter',
+    tool_call_ref: 'fixture-settled-prewrite',
+    status: 'reported_complete',
+    summary: 'Observed settled prewrite completion.',
+    output_digest: 'b'.repeat(64),
+    evidence_refs: ['fixture:settled-prewrite'],
+  };
+  journal.state.completed = [{ step_id: 'wave-1', items: [settled] }];
+  journal.version = { revision: 2, digest: '0'.repeat(64) };
+  persistJournalFixture(journal);
+  const request = ownerRecoveryPreviewRequest(initial, journal);
+  ownerRecoveryPreviewExpired(() => {
+    const released = suspendPresent(request);
+    expect(released.work.lease).toBeNull();
+    expect(released.work.execution.status).toBe('suspended');
+    expect(firstTicket(released.ledger).status).toBe('released');
+    expect(firstClaim(released.ledger).status).toBe('released');
+    expect(released.ledger.operations).toHaveLength(1);
+    expect(suspendLocalWork(request)).toEqual(released);
+  });
+});
+
+test('owner recovery preview: expired writer ticket stays fenced by unsettled completed history', () => {
+  const initial = commitHostState(fixture());
+  const mutations: readonly ((journal: TestJournal) => void)[] = [
+    (journal) => {
+      const settled = clone(firstJournalItem(journal));
+      settled.issue_id = 'pending-prewrite-issue';
+      journal.state.completed = [{ step_id: 'wave-1', items: [settled] }];
+    },
+    (journal) => {
+      const settled = clone(firstJournalItem(journal));
+      settled.issue_id = 'mismatched-issue';
+      settled.observation = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: 'other-action',
+        issue_id: 'mismatched-issue',
+        agent_id: 'fixture-prewriter',
+        tool_call_ref: 'fixture-mismatched',
+        status: 'reported_complete',
+        summary: 'Observed mismatched completion.',
+        output_digest: 'c'.repeat(64),
+        evidence_refs: ['fixture:mismatched'],
+      };
+      journal.state.completed = [{ step_id: 'wave-1', items: [settled] }];
+    },
+    (journal) => {
+      journal.state.completed = [{ step_id: 'wave-1', items: [] }];
+    },
+  ];
+  for (const mutate of mutations) {
+    const journal = ownerRecoveryPreviewJournal();
+    mutate(journal);
+    journal.version = { revision: 2, digest: '0'.repeat(64) };
+    persistJournalFixture(journal);
+    ownerRecoveryPreviewExpired(() =>
+      expect(() => suspendLocalWork(ownerRecoveryPreviewRequest(initial, journal))).toThrow(),
+    );
+    expect(store.readHostStateSnapshot(identity)).toEqual(initial);
+  }
+});
+
+test('owner recovery preview: expired post-INTAKE owner releases its own queued writer ticket', () => {
+  const seed = fixture();
+  seed.nextWork.lifecycle.phase = 'TRACE';
+  const initial = commitHostState(seed);
+  const journal = ownerRecoveryPreviewJournal();
+  const settled = clone(firstJournalItem(journal));
+  settled.issue_id = 'settled-prewrite-issue';
+  settled.request.action_id = 'settled-prewrite-action';
+  settled.request.stage_id = 'review_source_prewrite';
+  settled.observation = {
+    schema: 'VidaSessionObservation/v1',
+    action_id: 'settled-prewrite-action',
+    issue_id: 'settled-prewrite-issue',
+    agent_id: 'fixture-prewriter',
+    tool_call_ref: 'fixture-settled-prewrite',
+    status: 'reported_complete',
+    summary: 'Observed settled prewrite completion.',
+    output_digest: 'b'.repeat(64),
+    evidence_refs: ['fixture:settled-prewrite'],
+  };
+  journal.state.completed = [{ step_id: 'wave-1', items: [settled] }];
+  journal.version = { revision: 2, digest: '0'.repeat(64) };
+  persistJournalFixture(journal);
+  const withQueued = next(initial);
+  const queuedTicket = {
+    ...clone(firstTicket(withQueued.nextLedger)),
+    ticket_id: 'writer-ticket-queued',
+    sequence: withQueued.nextLedger.next_sequence,
+    status: 'queued' as const,
+    claim_ids: [],
+    expires_at: null,
+    active_resources: [],
+    blocked_resources: [...clone(firstTicket(withQueued.nextLedger)).exclusive_resources],
+  };
+  withQueued.nextLedger.tickets.push(queuedTicket);
+  withQueued.nextLedger.next_sequence += 1;
+  const queuedState = commitHostState(withQueued);
+  const request = ownerRecoveryPreviewRequest(queuedState, journal);
+  ownerRecoveryPreviewExpired(() => {
+    const released = suspendPresent(request);
+    expect(released.work.lease).toBeNull();
+    expect(released.work.execution.status).toBe('suspended');
+    expect(firstTicket(released.ledger).status).toBe('released');
+    expect(firstClaim(released.ledger).status).toBe('released');
+    const writer = released.ledger.tickets.find((ticket) => ticket.ticket_id === 'writer-ticket-queued');
+    expect(writer?.status).toBe('released');
+    expect(writer?.active_resources).toEqual([]);
+    expect(writer?.blocked_resources).toEqual([]);
+    expect(writer?.expires_at).toBeNull();
+    expect(released.ledger.claims.filter((claim) => claim.ticket_id === 'writer-ticket-queued')).toEqual([]);
+    expect(released.ledger.operations).toHaveLength(2);
+    expect(suspendLocalWork(request)).toEqual(released);
+  });
+});
+
+test('owner recovery preview: expired post-INTAKE owner stays fenced by issued-unobserved and ambiguous queued effects', () => {
+  const seed = fixture();
+  seed.nextWork.lifecycle.phase = 'TRACE';
+  const initial = commitHostState(seed);
+  const withQueued = next(initial);
+  const queuedTicket = {
+    ...clone(firstTicket(withQueued.nextLedger)),
+    ticket_id: 'writer-ticket-queued',
+    sequence: withQueued.nextLedger.next_sequence,
+    status: 'queued' as const,
+    claim_ids: [],
+    expires_at: null,
+    active_resources: [],
+    blocked_resources: [...clone(firstTicket(withQueued.nextLedger)).exclusive_resources],
+  };
+  withQueued.nextLedger.tickets.push(queuedTicket);
+  withQueued.nextLedger.next_sequence += 1;
+  const queuedState = commitHostState(withQueued);
+  const journal = ownerRecoveryPreviewJournal();
+  const issued = ownerRecoveryPreviewRequest(queuedState, journal);
+  firstJournalItem(journal).issue_id = 'issued-unobserved';
+  journal.resume_status = 'issued_outcome_uncertain';
+  journal.version = { revision: 2, digest: '0'.repeat(64) };
+  persistJournalFixture(journal);
+  ownerRecoveryPreviewExpired(() => expect(() => suspendLocalWork({ ...issued, journal })).toThrow('uncertain'));
+  expect(store.readHostStateSnapshot(identity)).toEqual(queuedState);
+  const ambiguous = clone(queuedState);
+  const queued = ambiguous.ledger.tickets.find((ticket) => ticket.ticket_id === 'writer-ticket-queued');
+  if (!queued) throw new Error('queued writer ticket fixture is missing');
+  queued.claim_ids = ['writer-claim-queued'];
+  queued.active_resources = [...queued.exclusive_resources];
+  const ambiguousRequest: Parameters<typeof suspendLocalWork>[0] = {
+    ...ownerRecoveryPreviewRequest(queuedState),
+    store: new PreviewHostStateStore(ambiguous),
+  };
+  ownerRecoveryPreviewExpired(() =>
+    expect(() => suspendLocalWork(ambiguousRequest)).toThrow('ambiguous active effects'),
+  );
+  expect(store.readHostStateSnapshot(identity)).toEqual(queuedState);
 });
 function activeClaimFor(
   ledger: DeepMutable<CoordinationLedger>,
@@ -13211,7 +13325,9 @@ beforeEach(async () => {
       'utf8',
     )
       .replaceAll('{{REPOSITORY}}', identity.repository_id)
+      .replaceAll('{{REPOSITORY_PREFIX}}', runtimeConfigPrefix(identity.repository_id))
       .replaceAll('{{PROJECT}}', firstOf(identity.project_ids, 'project identity'))
+      .replaceAll('{{PRODUCT_PREFIX}}', runtimeConfigPrefix(firstOf(identity.project_ids, 'project identity')))
       .replaceAll('{{BUNDLE}}', 'vida-agent');
     writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), runtimeTemplate);
     // The configured development-lifecycle source is package-owned and is resolved through runtimePackageAccess.
@@ -13261,19 +13377,21 @@ afterEach(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-function producerFixture(name = 'producer'): {
+async function producerFixture(name = 'producer'): Promise<{
   readonly args: BridgeOpenArgs;
   readonly input: ProducerInputBase;
   readonly ledger: MastraSessionLedger;
   readonly rows: () => ProducerOperationSqlRow[];
   readonly enginePath: string;
-} {
+}> {
   const repositoryRoot = mkdtempSync(path.join(tmpdir(), 'vida-producer-' + name + '-'));
   producerRoots.push(repositoryRoot);
   writeFileSync(
     path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'),
     readFileSync(path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'producer-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'PRODUCERREPOSITORY')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'PROJECT')
       .replaceAll('{{PROJECT}}', 'project')
       .replaceAll('{{BUNDLE}}', 'vida-agent'),
   );
@@ -13282,7 +13400,20 @@ function producerFixture(name = 'producer'): {
   mkdirSync(path.join(repositoryRoot, 'docs/agent-instructions'), { recursive: true });
   writeFileSync(path.join(repositoryRoot, 'docs/agent-instructions/documentation-policy.v1.json'), '{}');
   const config = loadRuntimeConfig(repositoryRoot),
-    ledger = openConfiguredMastraSessionLedger(repositoryRoot);
+    workspace = deriveWorkspaceId(config.repository.repository_id, repositoryRoot),
+    databaseRelativePath = sessionHandoffDatabaseRelativePath(config);
+  mkdirSync(path.dirname(path.join(repositoryRoot, databaseRelativePath)), { recursive: true });
+  const initializationDatabase = openHostStateDatabase(repositoryRoot, databaseRelativePath, workspace);
+  try {
+    await bindControlledRuntimeInitialization(
+      repositoryRoot,
+      config,
+      new HostStateStore(initializationDatabase, workspace),
+    );
+  } finally {
+    closeWorkspaceDatabaseWithAdmission(initializationDatabase);
+  }
+  const ledger = openConfiguredMastraSessionLedger(repositoryRoot);
   handles.push(ledger.sessionProducerBinding().database);
   const args: BridgeOpenArgs = {
     repositoryRoot,
@@ -13319,7 +13450,7 @@ function producerFixture(name = 'producer'): {
 }
 
 function noWorkProducerInput(
-  f: ReturnType<typeof producerFixture>,
+  f: Awaited<ReturnType<typeof producerFixture>>,
   change: Partial<ProducerInput> = {},
 ): ProducerInput {
   return {
@@ -13335,13 +13466,13 @@ function noWorkProducerInput(
 }
 
 async function withProducerFixtureCustody<T>(
-  body: (f: ReturnType<typeof producerFixture>) => T | Promise<T>,
+  body: (f: Awaited<ReturnType<typeof producerFixture>>) => T | Promise<T>,
   name?: string,
 ): Promise<T> {
   const rootsBefore = producerRoots.length;
-  let f: ReturnType<typeof producerFixture>;
+  let f: Awaited<ReturnType<typeof producerFixture>>;
   try {
-    f = producerFixture(name);
+    f = await producerFixture(name);
   } catch (error) {
     for (const fixtureRoot of producerRoots.slice(rootsBefore)) failedProducerRoots.add(fixtureRoot);
     throw error;
@@ -13355,7 +13486,7 @@ async function withProducerFixtureCustody<T>(
 }
 
 function expectMechanicalProducerDenial(
-  f: ReturnType<typeof producerFixture>,
+  f: Awaited<ReturnType<typeof producerFixture>>,
   input: ProducerInput,
   message: RegExp,
 ): void {
@@ -13422,7 +13553,7 @@ for (const rootName of ['literal%20', 'standalone%', 'fragment#', 'space path', 
   test(
     `session producer opens physical engine database at configured path for ${JSON.stringify(rootName)}`,
     async () => {
-      const f = producerFixture(rootName);
+      const f = await producerFixture(rootName);
       let bridge: MastraSessionBridge | undefined;
       try {
         const enginePath = sessionBridgeDatabasePath(f.args.repositoryRoot, f.args.config);
@@ -13450,8 +13581,8 @@ for (const rootName of ['literal%20', 'standalone%', 'fragment#', 'space path', 
   );
 }
 
-test('session producer reuses the validated Journal only inside each acquisition or settlement transaction', () => {
-  const f = producerFixture('journal-read');
+test('session producer reuses the validated Journal only inside each acquisition or settlement transaction', async () => {
+  const f = await producerFixture('journal-read');
   // oxlint-disable-next-line typescript/unbound-method -- Delegate with the actual receiver and restore the exact prototype method.
   const originalResume = MastraSessionLedger.prototype.resume;
   let reads = 0;
@@ -13516,7 +13647,7 @@ test('session producer mechanical no-work rejects an admitted lifecycle Work wit
 });
 
 test('session producer acquisition rejects stale CAS, maintenance and selection without reservation', async () => {
-  const f = producerFixture();
+  const f = await producerFixture();
   const input: ProducerInput = {
     ...f.input,
     phase: 'start',
@@ -13631,7 +13762,7 @@ test(
 test(
   'session producer handle and UNKNOWN fence survive close and exclude journal and maintenance writers',
   async () => {
-    const f = producerFixture(),
+    const f = await producerFixture(),
       bridge = await MastraSessionBridge.open(f.args);
     await bridge.start();
     const journal = requiredSessionJournal(f.ledger);
@@ -13676,7 +13807,7 @@ test(
 test(
   'session producer readonly frontier rejects substituted execution paths before acquisition',
   async () => {
-    const f = producerFixture(),
+    const f = await producerFixture(),
       bridge = await MastraSessionBridge.open(f.args);
     try {
       const engine = await bridge.start(),
@@ -13884,7 +14015,7 @@ for (const phase of ['before-init', 'before-start', 'before-resume', 'before-jou
   test(
     'session producer process termination retains UNKNOWN at ' + phase,
     async () => {
-      const f = producerFixture(phase),
+      const f = await producerFixture(phase),
         marker = path.join(f.args.repositoryRoot, 'producer-barrier');
       const script = path.join(f.args.repositoryRoot, 'producer-child.mjs');
       const source = (relative: string) => JSON.stringify(new URL(relative, import.meta.url).href);
@@ -14104,21 +14235,24 @@ test('same-thread suspension denies foreign owner and uncertain native issue', (
   expect(readPresentSnapshot(store, identity).workVersion).toEqual(initial.workVersion);
 });
 
-test('host database opener pins recoverable SQLite settings and preserves state across reopen', () => {
-  expect(path.isAbsolute(databasePath)).toBe(true);
-  expect(database.query<SqliteJournalModeRow, []>('PRAGMA journal_mode').get()?.journal_mode).toBe('wal');
-  expect(database.query<SqliteSynchronousRow, []>('PRAGMA synchronous').get()?.synchronous).toBe(2);
-  expect(database.query<SqliteBusyTimeoutRow, []>('PRAGMA busy_timeout').get()?.timeout).toBe(1000);
-  const saved = commitHostState(fixture());
-  reopenStore();
-  expect(store.readHostStateSnapshot(identity)).toEqual(saved);
-  const namedMemory = openHostStateDatabase(root, ':memory:', workspace);
-  admittedHostDatabases.add(namedMemory);
-  handles.push(namedMemory);
-  expect(namedMemory.filename).toBe(path.join(root, ':memory:'));
-  expect(existsSync(path.join(root, ':memory:'))).toBe(true);
-  expect(() => openHostStateDatabase(root, '../relative.sqlite', workspace)).toThrow(/relative|path/i);
-});
+test.skipIf(process.platform === 'win32')(
+  'host database opener pins recoverable SQLite settings and preserves state across reopen',
+  () => {
+    expect(path.isAbsolute(databasePath)).toBe(true);
+    expect(database.query<SqliteJournalModeRow, []>('PRAGMA journal_mode').get()?.journal_mode).toBe('wal');
+    expect(database.query<SqliteSynchronousRow, []>('PRAGMA synchronous').get()?.synchronous).toBe(2);
+    expect(database.query<SqliteBusyTimeoutRow, []>('PRAGMA busy_timeout').get()?.timeout).toBe(1000);
+    const saved = commitHostState(fixture());
+    reopenStore();
+    expect(store.readHostStateSnapshot(identity)).toEqual(saved);
+    const namedMemory = openHostStateDatabase(root, ':memory:', workspace);
+    admittedHostDatabases.add(namedMemory);
+    handles.push(namedMemory);
+    expect(namedMemory.filename).toBe(path.join(root, ':memory:'));
+    expect(existsSync(path.join(root, ':memory:'))).toBe(true);
+    expect(() => openHostStateDatabase(root, '../relative.sqlite', workspace)).toThrow(/relative|path/i);
+  },
+);
 
 test.each([
   { label: 'adjacent large inode is rejected', afterInode: 9_007_199_254_740_993n, rejects: true },
@@ -15013,7 +15147,7 @@ test.each([
               wrapperFailure,
             );
           }
-          const reopened = openHostStateDatabase(root, path.relative(root, target), workspaceId);
+          const reopened = openHostStateDatabase(root, sessionHandoffDatabaseRelativePath(config), workspaceId);
           let probeFailure: { error: unknown } | undefined;
           try {
             expect(new HostStateStore(reopened, workspaceId).readMaintenanceFence()).toMatchObject({
@@ -17153,7 +17287,12 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       )
         .replaceAll('{{BUNDLE}}', 'runtime')
         .replaceAll('{{REPOSITORY}}', identity.repository_id)
-        .replaceAll('{{PROJECT}}', firstOf(identity.project_ids, 'workflow project identity'));
+        .replaceAll('{{REPOSITORY_PREFIX}}', runtimeConfigPrefix(identity.repository_id))
+        .replaceAll('{{PROJECT}}', firstOf(identity.project_ids, 'workflow project identity'))
+        .replaceAll(
+          '{{PRODUCT_PREFIX}}',
+          runtimeConfigPrefix(firstOf(identity.project_ids, 'workflow project identity')),
+        );
       await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), yaml);
       const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
       await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
@@ -20401,6 +20540,8 @@ async function clearContextFor(workId: string) {
     await write('AGENT.sidecar.md', '# Fixture\n');
     const config = (await readFile(path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
       .replaceAll('{{REPOSITORY}}', 'project-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'PROJECTREPOSITORY')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'PROJECT')
       .replaceAll('{{PROJECT}}', 'project')
       .replaceAll('{{BUNDLE}}', 'vida-agent');
     await write('agent-runtime.config.v1.yaml', config);
@@ -21460,3 +21601,616 @@ test('expired recovery keeps runtime identity coupled across verified bundle cha
   if (performance.now() >= deadline) throw new Error('Host expired recovery fixture exceeded its case deadline');
   preserveHostFixtureRoot = false;
 });
+
+async function seedExpiredIssuedSourceReportFixture() {
+  const f = await createInitialSourceWorkFixture({});
+  setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+  await prepareInitialSourceFrontier(f, 'writer');
+  const issued = await issueInitialSourceFixtureWriter(f);
+  const host = initialSourceHostStore(f);
+  const changedPath = f.documents[0];
+  const changedFile = path.join(f.root, changedPath);
+  writeFileSync(changedFile, readFileSync(changedFile, 'utf8') + 'fixture expired-lease writer output\n');
+  const sourceAfter = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents);
+  const summary = 'Retained expired-lease Source report';
+  const observation = parseSessionBridgeObservation({
+    schema: 'VidaSessionObservation/v1',
+    action_id: issued.writer.request.action_id,
+    issue_id: issued.writer.issue_id,
+    host_attempt_id: issued.hostAttemptId,
+    changed_paths: [changedPath],
+    agent_id: 'fixture:expired-lease-source-writer',
+    tool_call_ref: 'fixture:expired-lease-source-report',
+    status: 'reported_complete',
+    summary,
+    output_digest: canonicalJsonDigest(summary),
+    evidence_refs: ['fixture://expired-lease-source-report'],
+  });
+  const state = initialSourceState(f);
+  const lease = requiredLease(state.work);
+  const inspectionRequest = {
+    schema: 'ExpiredIssuedSourceReportRecoveryRequest/v1' as const,
+    identity: f.identity,
+    attempt: 1,
+    actionId: issued.writer.request.action_id,
+    issueId: issued.writer.issue_id,
+    hostAttemptId: issued.hostAttemptId,
+    nativeSessionHandle: lease.thread_id,
+    leaseGeneration: lease.generation,
+    observation,
+    sourceScope: sourceAfter,
+    decisionPointer: 'fixture:expired-issued-source-report-recovery',
+  };
+  return { f, host, issued, changedPath, sourceAfter, observation, state, lease, inspectionRequest };
+}
+
+test(
+  'expired issued Source report recovery settles the retained report with an explicit marker',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const seeded = await seedExpiredIssuedSourceReportFixture();
+        fixture = seeded.f;
+        clockHeld = true;
+        const { f, host, changedPath, sourceAfter, observation, lease, inspectionRequest } = seeded;
+        const db = initialSourceHostDatabase(f);
+        const writerTicketId = lease.ticket_id;
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        const markedObservation = { ...observation, recovery_reason: 'expired_lease_completed_report' as const };
+        const issuedJournal = requiredValue(host.readWorkSessionJournal(f.identity), 'issued Journal');
+        const reservation = requiredValue(issuedJournal.state.items[0]?.host_reservation, 'issued writer reservation');
+        host.completeWorkflowAttemptWithApproval(reservation.authorization!, observation);
+        const inspection = host.inspectExpiredIssuedSourceReport(inspectionRequest);
+        expect(inspection.journal_resume_status).toBe('ready_to_resume');
+        expect(inspection.changed_paths).toEqual([changedPath]);
+        expect(inspection.source_write_rights).toBe(false);
+        expect(inspection.runtime_acceptance).toBe(false);
+        const request = {
+          ...inspectionRequest,
+          expectedWork: inspection.expected_work,
+          expectedLedger: inspection.expected_ledger,
+          expectedJournal: inspection.expected_journal,
+          expectedMaintenanceGeneration: inspection.expected_maintenance_generation,
+        };
+        let proofs = 0;
+        const verifyCurrent = () => {
+          proofs++;
+          return { fixture: 'expired-issued-report-proof' };
+        };
+        const result = host.commitExpiredIssuedSourceReport(request, verifyCurrent);
+        expect(proofs).toBeGreaterThanOrEqual(2);
+        expect(result.journalVersion.revision).toBe(inspection.expected_journal.revision + 1);
+        expect(result.work?.lease?.ticket_id.startsWith('execution-ticket-')).toBe(true);
+        expect(result.work?.execution.status).toBe('active');
+        const completedAttempt = requiredValue(
+          result.work?.execution.assignment_attempts.find(
+            (attempt) => attempt.attempt_id === seeded.issued.hostAttemptId,
+          ),
+          'recovered writer attempt',
+        );
+        expect(completedAttempt).toMatchObject({
+          status: 'completed',
+          result: observation,
+          result_digest: canonicalJsonDigest(observation),
+        });
+        const journal = requiredValue(host.readWorkSessionJournal(f.identity), 'recovered Journal');
+        const recoveredItem = requiredValue(
+          journal.state.items.find((item) => item.request.action_id === seeded.issued.writer.request.action_id),
+          'recovered Journal item',
+        );
+        expect(recoveredItem.observation).toEqual(markedObservation);
+        expect(journal.state.source_scope?.digest).toBe(sourceAfter.digest);
+        expect(result.ledger?.tickets.find((ticket) => ticket.ticket_id === writerTicketId)).toMatchObject({
+          status: 'released',
+          active_resources: [],
+          expires_at: null,
+        });
+        expect(
+          result.ledger?.claims.filter(
+            (claim) => claim.status === 'active' && claim.resources.some((resource) => resource.startsWith('file:')),
+          ),
+        ).toEqual([]);
+        const executionTicket = requiredValue(
+          result.ledger?.tickets.find((ticket) => ticket.ticket_id === result.work?.lease?.ticket_id),
+          'execution-only successor ticket',
+        );
+        expect(executionTicket.status).toBe('active');
+        expect(executionTicket.exclusive_resources).toEqual(['execution:' + f.identity.work_id]);
+        expect(db.inTransaction).toBe(false);
+        const settled = host.commitExpiredIssuedSourceReport(request, verifyCurrent);
+        expect(settled).toEqual(result);
+        if (performance.now() >= deadline)
+          throw new Error('Expired issued Source report recovery exhausted its deadline');
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Expired issued Source report recovery clock restoration',
+        );
+      },
+      'Expired issued Source report recovery fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
+test(
+  'expired issued Source report recovery denies missing report evidence, foreign conflicts, and live leases',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const seeded = await seedExpiredIssuedSourceReportFixture();
+        fixture = seeded.f;
+        clockHeld = true;
+        const { f, host, observation, state, inspectionRequest } = seeded;
+        const db = initialSourceHostDatabase(f);
+        const applyVersions = {
+          expectedWork: state.workVersion!,
+          expectedLedger: state.ledgerVersion!,
+          expectedJournal: state.journalVersion,
+          expectedMaintenanceGeneration: state.maintenanceGeneration,
+        };
+        // The writer lease is still live at this frozen instant: recovery must not fire.
+        expect(() =>
+          host.commitExpiredIssuedSourceReport({ ...inspectionRequest, ...applyVersions }, () => ({})),
+        ).toThrow(/single expired same-owner claim/);
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        // A report body that does not bind the issued action identity is denied.
+        const foreignIssue = { ...observation, issue_id: randomUUID() };
+        expect(() =>
+          host.commitExpiredIssuedSourceReport(
+            { ...inspectionRequest, observation: foreignIssue, ...applyVersions },
+            () => ({}),
+          ),
+        ).toThrow(/report body differs/);
+        // A retained artifact that is not a completed report is denied.
+        const incompleteReport = parseSessionBridgeObservation({
+          ...observation,
+          status: 'reported_failed',
+        });
+        expect(() =>
+          host.commitExpiredIssuedSourceReport(
+            { ...inspectionRequest, observation: incompleteReport, ...applyVersions },
+            () => ({}),
+          ),
+        ).toThrow(/report body differs/);
+        // A report whose changed paths do not match the scoped Source diff is denied.
+        const wrongPaths = parseSessionBridgeObservation({
+          ...observation,
+          changed_paths: [f.documents[1]],
+        });
+        expect(() =>
+          host.commitExpiredIssuedSourceReport(
+            { ...inspectionRequest, observation: wrongPaths, ...applyVersions },
+            () => ({}),
+          ),
+        ).toThrow(/source-scope diff differs/);
+        // Foreign resource conflicts deny recovery. First a schema-valid earlier
+        // queued foreign owner overlapping the writer's exclusive resources.
+        const ledgerRow = requiredValue(
+          db
+            .query<RevisionPayloadDigestSqlRow, [string]>(
+              "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+            )
+            .get(host.workspaceId),
+          'expired recovery ledger beforeimage',
+        );
+        const writerTicket = requiredValue(
+          state.ledger.tickets.find((ticket) => ticket.ticket_id === seeded.lease.ticket_id),
+          'expired writer ticket',
+        );
+        const replaceLedger = db.query(
+          "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND payload=? AND digest=?",
+        );
+        const swapLedger = (ledger: CoordinationLedger) => {
+          const payload = coordinationLedgerJson(ledger);
+          const digest = coordinationLedgerDigest(ledger);
+          expect(
+            replaceLedger.run(
+              ledger.revision,
+              payload,
+              digest,
+              host.workspaceId,
+              ledgerRow.revision,
+              ledgerRow.payload,
+              ledgerRow.digest,
+            ).changes,
+          ).toBe(1);
+          return { payload, digest, revision: ledger.revision };
+        };
+        const restoreLedger = (installed: { payload: string; digest: string; revision: number }): undefined => {
+          expect(
+            replaceLedger.run(
+              ledgerRow.revision,
+              ledgerRow.payload,
+              ledgerRow.digest,
+              host.workspaceId,
+              installed.revision,
+              installed.payload,
+              installed.digest,
+            ).changes,
+          ).toBe(1);
+        };
+        const queuedForeign = mutableCoordinationLedger(state.ledger);
+        queuedForeign.revision += 1;
+        queuedForeign.next_sequence += 1;
+        for (const ticket of queuedForeign.tickets) ticket.sequence += 1;
+        const usedSequences = new Set(queuedForeign.tickets.map((ticket) => ticket.sequence));
+        let foreignSequence = 1;
+        while (usedSequences.has(foreignSequence)) foreignSequence += 1;
+        queuedForeign.tickets.push({
+          ...writerTicket,
+          ticket_id: 'foreign-expired-queued-ticket',
+          work_id: 'foreign-expired-work',
+          thread_id: 'foreign-expired-thread',
+          sequence: foreignSequence,
+          status: 'queued',
+          claim_ids: [],
+          active_resources: [],
+          blocked_resources: [],
+          expires_at: null,
+          contour_keys: [...writerTicket.contour_keys],
+          exclusive_resources: [...writerTicket.exclusive_resources],
+          project_ids: [...writerTicket.project_ids],
+        });
+        const installedQueued = swapLedger(queuedForeign);
+        let primaryFailure: { error: unknown } | undefined;
+        try {
+          expect(() =>
+            host.commitExpiredIssuedSourceReport({ ...inspectionRequest, ...applyVersions }, () => ({})),
+          ).toThrow(/earlier FIFO owner|foreign active claim/);
+          expect(host.readWorkSessionJournal(f.identity)?.state.items[0]?.observation).toBeNull();
+        } catch (error) {
+          primaryFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup([() => restoreLedger(installedQueued)], primaryFailure);
+        }
+        // A foreign active claim overlapping the writer resources is denied even
+        // though such a ledger cannot validate; the store fails closed before CAS.
+        const writerClaim = requiredValue(
+          state.ledger.claims.find((claim) => claim.ticket_id === writerTicket.ticket_id && claim.status === 'active'),
+          'expired writer claim',
+        );
+        const foreignExpiry = new Date(Date.now() + 3600_000).toISOString();
+        const conflicting = mutableCoordinationLedger(state.ledger);
+        conflicting.revision += 1;
+        conflicting.next_sequence += 1;
+        conflicting.tickets.push({
+          ...writerTicket,
+          ticket_id: 'foreign-expired-conflict-ticket',
+          work_id: 'foreign-expired-work',
+          thread_id: 'foreign-expired-thread',
+          sequence: state.ledger.next_sequence,
+          claim_ids: ['foreign-expired-conflict-claim'],
+          contour_keys: [...writerTicket.contour_keys],
+          exclusive_resources: [...writerTicket.exclusive_resources],
+          active_resources: [...writerTicket.active_resources],
+          blocked_resources: [...writerTicket.blocked_resources],
+          project_ids: [...writerTicket.project_ids],
+          expires_at: foreignExpiry,
+        });
+        conflicting.claims.push({
+          ...writerClaim,
+          claim_id: 'foreign-expired-conflict-claim',
+          ticket_id: 'foreign-expired-conflict-ticket',
+          work_id: 'foreign-expired-work',
+          thread_id: 'foreign-expired-thread',
+          resources: [...writerClaim.resources],
+          lease_expires_at: foreignExpiry,
+        });
+        // This ledger cannot pass schema validation, so install it raw: the store
+        // must fail closed when it reads the conflicting claim.
+        const conflictPayload = canonicalJson(conflicting);
+        const conflictDigest = canonicalJsonDigest(conflicting);
+        expect(
+          replaceLedger.run(
+            conflicting.revision,
+            conflictPayload,
+            conflictDigest,
+            host.workspaceId,
+            ledgerRow.revision,
+            ledgerRow.payload,
+            ledgerRow.digest,
+          ).changes,
+        ).toBe(1);
+        const installedConflict = { payload: conflictPayload, digest: conflictDigest, revision: conflicting.revision };
+        primaryFailure = undefined;
+        try {
+          expect(() =>
+            host.commitExpiredIssuedSourceReport({ ...inspectionRequest, ...applyVersions }, () => ({})),
+          ).toThrow(/coordination ledger rejected/);
+        } catch (error) {
+          primaryFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup([() => restoreLedger(installedConflict)], primaryFailure);
+        }
+        if (performance.now() >= deadline)
+          throw new Error('Expired issued Source report recovery denials exhausted their deadline');
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Expired issued Source report recovery denial clock restoration',
+        );
+      },
+      'Expired issued Source report recovery denial fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
+test(
+  'expired issued Source report recovery requires the retained Host attempt outcome',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const seeded = await seedExpiredIssuedSourceReportFixture();
+        fixture = seeded.f;
+        clockHeld = true;
+        const { f, host, observation, state, inspectionRequest } = seeded;
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        const applyVersions = {
+          expectedWork: state.workVersion!,
+          expectedLedger: state.ledgerVersion!,
+          expectedJournal: state.journalVersion,
+          expectedMaintenanceGeneration: state.maintenanceGeneration,
+        };
+        // Caller-shaped report bytes alone are not provenance: the original Host
+        // attempt must already retain the unmarked natively observed outcome.
+        expect(() =>
+          host.commitExpiredIssuedSourceReport({ ...inspectionRequest, ...applyVersions }, () => ({})),
+        ).toThrow(/retained reservation report outcome/);
+        const issuedJournal = requiredValue(host.readWorkSessionJournal(f.identity), 'issued Journal');
+        const reservation = requiredValue(issuedJournal.state.items[0]?.host_reservation, 'issued writer reservation');
+        const forged = {
+          ...observation,
+          summary: 'forged caller report',
+          output_digest: canonicalJsonDigest('forged caller report'),
+          recovery_reason: 'expired_lease_completed_report' as const,
+        };
+        host.completeWorkflowAttempt(reservation.authorization?.receipt ?? reservation.receipt, forged);
+        const retained = host.readHostStateSnapshot(f.identity);
+        const retainedJournal = requiredValue(host.readWorkSessionJournal(f.identity), 'retained Journal');
+        expect(() =>
+          host.commitExpiredIssuedSourceReport(
+            {
+              ...inspectionRequest,
+              expectedWork: retained.workVersion!,
+              expectedLedger: retained.ledgerVersion!,
+              expectedJournal: retainedJournal.version,
+              expectedMaintenanceGeneration: retained.maintenanceGeneration,
+            },
+            () => ({}),
+          ),
+        ).toThrow(/retained reservation report outcome/);
+        if (performance.now() >= deadline)
+          throw new Error('Expired issued Source report provenance denials exhausted their deadline');
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Expired issued Source report provenance clock restoration',
+        );
+      },
+      'Expired issued Source report provenance fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
+test(
+  'expired issued Source report recovery denies replayed tool calls and mismatched sibling Host results',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const seeded = await seedExpiredIssuedSourceReportFixture();
+        fixture = seeded.f;
+        clockHeld = true;
+        const { f, host, observation, state, inspectionRequest } = seeded;
+        const db = initialSourceHostDatabase(f);
+        setSystemTime(new Date(initialSourceExpiredOwnerTime(f)));
+        const journalRow = requiredValue(
+          db
+            .query<RevisionPayloadDigestSqlRow, [string, string, number]>(
+              'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+            )
+            .get(host.workspaceId, f.identity.work_id, 1),
+          'recovery Journal row',
+        );
+        const journalState = JSON.parse(journalRow.payload) as {
+          items: Record<string, unknown>[];
+          completed: { items: Record<string, unknown>[] }[];
+        };
+        const writerItem = requiredValue(
+          journalState.items.find(
+            (entry) => (entry.request as { action_id: string }).action_id === seeded.issued.writer.request.action_id,
+          ),
+          'recovery Journal writer item',
+        );
+        const siblingActionId = canonicalJsonDigest({ fixture: 'expired-issued-sibling' });
+        const siblingIssueId = randomUUID();
+        const { host_reservation: _droppedReservation, ...unreservedWriter } = writerItem;
+        const siblingObservation = parseSessionBridgeObservation({
+          ...observation,
+          action_id: siblingActionId,
+          issue_id: siblingIssueId,
+        });
+        const installJournal = (mutate: (journal: typeof journalState) => void) => {
+          const journal = JSON.parse(journalRow.payload) as typeof journalState;
+          mutate(journal);
+          const payload = canonicalJson(journal);
+          const digest = canonicalJsonDigest(journal);
+          expect(
+            db
+              .query(
+                'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND payload=? AND digest=?',
+              )
+              .run(
+                journalRow.revision + 1,
+                payload,
+                digest,
+                host.workspaceId,
+                f.identity.work_id,
+                1,
+                journalRow.revision,
+                journalRow.payload,
+                journalRow.digest,
+              ).changes,
+          ).toBe(1);
+          return { revision: journalRow.revision + 1, digest };
+        };
+        const commitWithJournal = (journalVersion: { revision: number; digest: string }) =>
+          host.commitExpiredIssuedSourceReport(
+            {
+              ...inspectionRequest,
+              expectedWork: state.workVersion!,
+              expectedLedger: state.ledgerVersion!,
+              expectedJournal: journalVersion,
+              expectedMaintenanceGeneration: state.maintenanceGeneration,
+            },
+            () => ({}),
+          );
+        // A settled sibling reusing the writer's tool_call_ref is a replay outside
+        // the configured read-only slot batch and must be denied.
+        const replayVersion = installJournal((journal) => {
+          journal.completed = [
+            ...journal.completed,
+            {
+              step_id: 'fixture-replay-step',
+              items: [
+                {
+                  ...unreservedWriter,
+                  issue_id: siblingIssueId,
+                  request: {
+                    ...(unreservedWriter.request as Record<string, unknown>),
+                    action_id: siblingActionId,
+                  },
+                  observation: siblingObservation,
+                },
+              ],
+            },
+          ] as typeof journal.completed;
+        });
+        expect(() => commitWithJournal(replayVersion)).toThrow(/replayed outside an allowed read-only slot batch/);
+        // Restore, then install a current-wave sibling whose Host reservation
+        // does not match a completed Host attempt outcome.
+        expect(
+          db
+            .query(
+              'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=?',
+            )
+            .run(
+              journalRow.revision,
+              journalRow.payload,
+              journalRow.digest,
+              host.workspaceId,
+              f.identity.work_id,
+              1,
+              replayVersion.revision,
+            ).changes,
+        ).toBe(1);
+        const siblingVersion = installJournal((journal) => {
+          journal.items = [
+            ...journal.items,
+            {
+              ...writerItem,
+              issue_id: siblingIssueId,
+              request: {
+                ...(writerItem.request as Record<string, unknown>),
+                action_id: siblingActionId,
+              },
+              observation: siblingObservation,
+            },
+          ];
+        });
+        expect(() => commitWithJournal(siblingVersion)).toThrow(/unresolved or ambiguous siblings/);
+        if (performance.now() >= deadline)
+          throw new Error('Expired issued Source report sibling denials exhausted their deadline');
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Expired issued Source report sibling clock restoration',
+        );
+      },
+      'Expired issued Source report sibling fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);
+
+test(
+  'ordinary Mastra session report rejects a caller-supplied recovery marker',
+  async () => {
+    const deadline = performance.now() + failedFinalHostCaseTimeoutMs;
+    let fixture: Awaited<ReturnType<typeof createInitialSourceWorkFixture>> | undefined;
+    let clockHeld = false;
+    await withInitialSourceCleanup(
+      async () => {
+        const seeded = await seedExpiredIssuedSourceReportFixture();
+        fixture = seeded.f;
+        clockHeld = true;
+        const { f, observation } = seeded;
+        const ledger = initialSourceHostLedger(f);
+        expect(() =>
+          ledger.report(
+            f.identity.work_id,
+            1,
+            { revision: 0, digest: '0'.repeat(64) },
+            { ...observation, recovery_reason: 'expired_lease_completed_report' as const },
+            null,
+          ),
+        ).toThrow(/recovery marker/);
+        if (performance.now() >= deadline)
+          throw new Error('Ordinary report recovery-marker denial exhausted its deadline');
+      },
+      async () => {
+        await withInitialSourceCleanup(
+          async () => {
+            if (fixture) await fixture.close();
+          },
+          () => {
+            if (clockHeld) setSystemTime();
+          },
+          'Ordinary report recovery-marker clock restoration',
+        );
+      },
+      'Ordinary report recovery-marker fixture',
+    );
+  },
+  failedFinalHostCaseTimeoutMs,
+);

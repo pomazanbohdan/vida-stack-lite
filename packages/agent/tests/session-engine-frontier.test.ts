@@ -17,7 +17,6 @@ import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-sessi
 import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.ts';
 import { assertWorkspaceDatabaseAdmission } from '../src/config/storage-read-admission.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import { PROJECT_UPGRADE_OPERATION_PATH } from '../src/config/project-paths.ts';
 import type { MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import {
   buildSessionBridgeRequest,
@@ -63,7 +62,9 @@ function fixture() {
     path.join(root, 'agent-runtime.config.v1.yaml'),
     readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
       .replaceAll('{{REPOSITORY}}', 'frontier-fixture')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'FRONTIERFIXTURE')
       .replaceAll('{{PROJECT}}', 'sample')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
       .replaceAll('{{BUNDLE}}', 'vida-agent')
       .replaceAll('.agent/work', '.agent/current-work'),
   );
@@ -373,7 +374,7 @@ test('retains unknown frontier validation with its admitted source close failure
           assertWorkspaceDatabaseAdmission(
             this,
             binding.repositoryRoot,
-            path.relative(binding.repositoryRoot, databasePath),
+            path.relative(binding.repositoryRoot, databasePath).split(path.sep).join('/'),
             deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot),
           );
           sourceHandles.push(this);
@@ -468,8 +469,6 @@ test('retains unknown frontier validation with its admitted source close failure
 test.each([
   ['identity', 'success'],
   ['identity', 'failure'],
-  ['upgrade', 'success'],
-  ['upgrade', 'failure'],
 ] as const)('post-close %s fence retains the frontier outcome after read %s', (fence, outcome) => {
   const bodyFails = outcome === 'failure';
   const started = process.hrtime.bigint();
@@ -517,10 +516,6 @@ test.each([
           if (fence === 'identity') {
             renameSync(databasePath, databasePath + '.original');
             writeFileSync(databasePath, beforeBytes, { flag: 'wx' });
-          } else {
-            const operation = path.join(binding.repositoryRoot, PROJECT_UPGRADE_OPERATION_PATH);
-            mkdirSync(path.dirname(operation), { recursive: true });
-            writeFileSync(operation, '{}', { flag: 'wx' });
           }
         }
         return result;
@@ -557,9 +552,7 @@ test.each([
       }
       expect(fenceError).toBeInstanceOf(Error);
       if (!(fenceError instanceof Error)) throw new Error('post-close fence did not reject');
-      expect(fenceError.message).toMatch(
-        fence === 'identity' ? /database was substituted/u : /Project upgrade is in progress/u,
-      );
+      expect(fenceError.message).toMatch(/database was substituted/u);
     },
     { disposeWhen: () => process.hrtime.bigint() - started < 5_000_000_000n },
   );

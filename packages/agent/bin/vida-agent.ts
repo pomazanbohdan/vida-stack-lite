@@ -146,13 +146,13 @@ function forwardPublicCommand(
   }
 }
 
-export function main({
+export async function main({
   args: suppliedArgs = process.argv.slice(2),
   exit = process,
 }: {
   args?: readonly string[];
   exit?: Partial<Pick<NodeJS.Process, 'exitCode'>>;
-} = {}): void {
+} = {}): Promise<void> {
   const context = cliContext();
   const [command = '', ...args] = suppliedArgs;
   try {
@@ -160,7 +160,12 @@ export function main({
     const metadata = cliMetadataResult([command, ...args], context.manifest);
     if (metadata) output(metadata);
     else if (command === 'instructions') output(instructionResult(context, args));
-    else if (commands.has(command)) exit.exitCode = forwardPublicCommand(context, command, args);
+    else if (command === 'run' && args[0] === '--recover-issued-source-report') {
+      if (args[1] !== 'true') throw new Error('Issued Source report recovery requires its exact separate signal');
+      const normalized = commandArguments(args);
+      const { recoverIssuedSourceReport } = await import('./recover-issued-source-report.ts');
+      output(recoverIssuedSourceReport(normalized.slice(2)));
+    } else if (commands.has(command)) exit.exitCode = forwardPublicCommand(context, command, args);
     else throw new Error('Unsupported public command; run vida-agent --help to list supported commands.');
   } catch (error: unknown) {
     process.stderr.write(`${JSON.stringify(cliErrorResult(error))}\n`);
@@ -168,5 +173,5 @@ export function main({
   }
 }
 
-if (import.meta.main || standaloneRuntime()) main();
+if (import.meta.main || standaloneRuntime()) await main();
 else cliContext();

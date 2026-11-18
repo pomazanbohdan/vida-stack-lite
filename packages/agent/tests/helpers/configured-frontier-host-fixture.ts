@@ -463,7 +463,9 @@ export function configuredFrontierRepairHostRoot(
     'utf8',
   )
     .replaceAll('{{REPOSITORY}}', 'vida-agent')
+    .replaceAll('{{REPOSITORY_PREFIX}}', 'VIDAAGENT')
     .replaceAll('{{PROJECT}}', 'agent')
+    .replaceAll('{{PRODUCT_PREFIX}}', 'AGENT')
     .replaceAll('{{BUNDLE}}', 'vida-agent');
   writeFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), template);
   writeFileSync(path.join(root, 'AGENTS.md'), 'Fixture policy\n');

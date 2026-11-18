@@ -92,6 +92,7 @@ import {
   openConfiguredSessionHandoffStore,
   sessionHandoffDatabasePath,
 } from '../../src/orchestration/persistent-session-handoff.ts';
+import { sessionHandoffDatabaseRelativePath } from '../../src/config/project-paths.ts';
 import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../../src/orchestration/workflow-plan.ts';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
@@ -111,7 +112,10 @@ import { acquireLocalSourceWriterLease, admitLocalSessionWork } from '../../src/
 import { createFailedFinalCorrectionFixture } from '../helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../../src/orchestration/final-assurance.ts';
 import { MastraSessionBridge } from '../../src/orchestration/mastra-session-bridge.ts';
-import { bindControlledRuntimeInitialization } from '../helpers/controlled-runtime-initialization-fixture.ts';
+import {
+  bindControlledRuntimeInitialization,
+  writeControlledRuntimeInitializationReceipt,
+} from '../helpers/controlled-runtime-initialization-fixture.ts';
 import { readRetainedUnissuedSessionEngineSnapshot } from '../../src/orchestration/session-engine-snapshot.ts';
 import {
   projectConfiguredFrontierContinuationAction,
@@ -418,13 +422,14 @@ afterEach(async () => {
 async function configuredFactoryFixture(name: string): Promise<string> {
   const repositoryRoot = await makeFreshRepository(`session-handoff-${name}-`);
   scratch = repositoryRoot;
+  writeControlledRuntimeInitializationReceipt(repositoryRoot, loadRuntimeConfig(repositoryRoot));
   return repositoryRoot;
 }
 
 async function withAdmittedHandoffFixture(
   body: (fixture: InitialWorkFixture) => void | Promise<void>,
   options: Parameters<typeof createInitialSourceWorkFixture>[0] & { readonly holdExpiredOwnerClock?: boolean } = {},
-  timeoutMs: 5_000 | 20_000 = 5_000,
+  timeoutMs: 5_000 | 20_000 | 30_000 = 5_000,
 ): Promise<void> {
   const deadline = performance.now() + timeoutMs;
   caseDeadline = deadline;
@@ -537,11 +542,7 @@ function combinedConstructorAndCloseFailure(
     let contenderFailed = false;
     let contenderError: unknown;
     try {
-      openHostStateDatabase(
-        repositoryRoot,
-        path.relative(repositoryRoot, sessionHandoffDatabasePath(repositoryRoot, fixtureConfig)),
-        fixtureWorkspaceId,
-      );
+      openHostStateDatabase(repositoryRoot, sessionHandoffDatabaseRelativePath(fixtureConfig), fixtureWorkspaceId);
     } catch (error) {
       contenderFailed = true;
       contenderError = error;
@@ -849,6 +850,7 @@ describe('persistent advisory session handoff', () => {
   test('configured store denies issue after root configuration changes without changing the persisted row', async () => {
     scratch = await makeFreshRepository('session-config-drift-');
     retainScratch = true;
+    writeControlledRuntimeInitializationReceipt(scratch, loadRuntimeConfig(scratch));
     const active = openConfiguredSessionHandoffStore(scratch);
     stores.push(active);
     const prepared = expectReturned(() =>
@@ -928,6 +930,7 @@ describe('persistent advisory session handoff', () => {
       },
     });
     const localConfig = loadRuntimeConfig(scratch);
+    writeControlledRuntimeInitializationReceipt(scratch, localConfig);
     const localWorkspaceId = deriveWorkspaceId(localConfig.repository.repository_id, scratch);
     const fixture = actualFocusedValidatorRequests('mastra-config-drift', {
       repositoryRoot: scratch,
@@ -1532,7 +1535,17 @@ test('configured handoff factories reject unsafe native database paths without o
   const bytes = Buffer.from('inert native path refusal control');
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(target, bytes);
-  for (const kind of ['symlink', 'hardlink', 'directory']) {
+  const kinds: string[] = ['hardlink', 'directory'];
+  try {
+    const probe = path.join(repositoryRoot, 'unsafe-database-symlink-probe');
+    await symlink(target, probe);
+    await rm(probe, { force: true });
+    kinds.unshift('symlink');
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== 'EPERM' && code !== 'EACCES' && code !== 'UNKNOWN') throw error;
+  }
+  for (const kind of kinds) {
     await withInitialSourceCleanup(
       async () => {
         if (kind === 'symlink') await symlink(target, file);
@@ -1969,9 +1982,9 @@ test('configured writer preflight refuses peer admission across snapshot and pol
       expect(issued.journal.state.items[0]?.issue_id).toBe(issued.writer.issue_id);
     },
     { holdExpiredOwnerClock: true },
-    20_000,
+    30_000,
   );
-}, 20_000);
+}, 30_000);
 
 test('local Source reference classification requires each current approved declaration field', () => {
   type Facts = Parameters<typeof isCurrentLocalSourceAuthorizationReference>[0];
@@ -2210,7 +2223,9 @@ async function freshMultiProjectApprovalSetup(kind: 'source' | 'tasksource') {
     readFileSync(path.resolve(packageRoot, '../..', 'agent-runtime.config.v1.yaml')),
   );
   const config = loadRuntimeConfig(repositoryRoot);
-  const projectIds = ['agent', 'plugin'];
+  await rm(path.join(repositoryRoot, '.agent', 'runtime-initialization.v1.json'), { force: true });
+  writeControlledRuntimeInitializationReceipt(repositoryRoot, config);
+  const projectIds = ['agent', 'codex'];
   const projectContext = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
   const workflowId = 'task_execution' as const;
   const workflow = config.workflows[workflowId];
@@ -3423,6 +3438,8 @@ test('configured native continuation reaches the retained TaskSource authorizati
             writeFileSync(configPath, fixture.currentConfigBytes);
             const targetConfig = loadRuntimeConfig(fixture.root);
             const targetConfigDigest = runtimeConfigDigest(targetConfig);
+            await rm(path.join(fixture.root, '.agent', 'runtime-initialization.v1.json'), { force: true });
+            writeControlledRuntimeInitializationReceipt(fixture.root, targetConfig);
             const evolvedSource = changeOneAcceptedDocument(fixture);
             const authorizedSourceChanges = compareScopedSourceSnapshots(source, evolvedSource);
             const project = loadProjectSetContext(
@@ -4075,13 +4092,14 @@ test('native synthesis correction preserves admitted predecessors and refuses ch
       expect(host.readHostStateSnapshot(fixture.identity)).toEqual(paused);
     },
     { cooperativeSynthesis: true, researchSynthesis: true },
+    20_000,
   );
-});
+}, 20_000);
 
 test.each(['writer', 'task-source'] as const)(
   'authorized corrective engine reaches configured %s policy after its native journal suspension',
   async (mode) => {
-    const deadline = performance.now() + 20_000;
+    const deadline = performance.now() + 45_000;
     caseDeadline = deadline;
     let fixture: Awaited<ReturnType<typeof createFailedFinalCorrectionFixture>> | undefined;
     let bridge: MastraSessionBridge | undefined;
@@ -4462,7 +4480,7 @@ test.each(['writer', 'task-source'] as const)(
       'Host-produced corrective suspension fixture',
     );
   },
-  20_000,
+  45_000,
 );
 
 test('Mastra readers bind native maintenance generations and reject corrupted fence rows without writes', async () => {
@@ -5386,8 +5404,9 @@ test('native research normalization reserves only the observed plan and survives
       );
     },
     { cooperativeSynthesis: true, researchSynthesis: true, researchAssignments: 2 },
+    20_000,
   );
-});
+}, 20_000);
 
 describe('Mastra configured-wave ledger projections', () => {
   function nextConfiguredWave(

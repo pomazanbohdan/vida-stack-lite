@@ -1,15 +1,17 @@
 # Runtime next actions
 
-Owner: runtime maintainers. Updated: 2026-11-09.
+Owner: runtime maintainers. Updated: 2026-11-18.
 Class: derived task queue. The [system specification](system-specification.md),
 [development lifecycle](../instructions/development-lifecycle.md) and
 [testing policy](../TESTING.md) retain their contract ownership.
 
 ## Active implementation
 
-The approved full model is active in this repository. Installed runtime
-0.1.20 completed the supported Host-present adoption and public
-init reconciliation. Repository prefix is VIDA; products are agent/AGENT,
+The approved full model is active in this repository. Delivered runtime
+0.1.20 completed the historical Host-present adoption and public
+init reconciliation; the current installed development payload is the
+non-release 0.1.9 described under Current delivery state. Repository prefix
+is VIDA; products are agent/AGENT,
 codex/CODEX and powers/POWERS. The explicit local plugin-to-codex map is applied.
 The unchanged model values are in
 [the approved setup model](decisions/configuration/project-config.proposed.yaml).
@@ -18,7 +20,7 @@ The filename remains stable for existing references.
 | Task | Current state | Remaining work |
 | --- | --- | --- |
 | [Task 3, clean-init effect owner](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner) | Delivered; C3 and R17/R18/R19 corrections included in current runtime | Retained local release-journal closeout and wider fault/recovery qualification; no repeat implementation. |
-| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity) | Delivered; approved v2 model is active in the real repository | Numeric, full-suite and wider recovery qualification remain open. |
+| [Task 4, config/context adoption and Codex identity](plans/runtime-project-model.md#task-4--configcontext-adoption-and-codex-identity) | Delivered; approved product model is active in the real repository as unified `AgentRuntimeConfig/v1` | Numeric, full-suite and wider recovery qualification remain open. |
 | [Task 5, interactive init/config/help and package parity](plans/runtime-project-model.md#task-5--interactive-initconfighelp-and-package-parity) | Delivered; fresh native init/configure/refusal/resume consumer passes | Physical TTY/SIGINT and wider qualification remain open. |
 | [Task 6, full-model qualification and repository adoption](plans/runtime-project-model.md#task-6--temporary-end-to-end-acceptance-and-delivery) | Real repository adoption and public init reconciliation completed on 0.1.20 | Complete the wider work-operation, interrupted-recovery and numeric matrices; user Runtime acceptance remains unproved. |
 
@@ -26,6 +28,114 @@ The [implementation plan](plans/runtime-project-model.md) describes these same
 tasks. Continue still-current work through the updated installed runtime with
 fresh admission and current configuration bindings; old ownership disposal
 grants no successor rights. Do not repeat completed implementation or init.
+
+## Execution catalog architecture
+
+The user's current design request selects a package baseline and repository-local
+editable/enabled roles, profiles, detailed work definitions, teams and workflows.
+The generic flow has three different team compositions plus one fixed VIDA flow;
+all levels cover research through actual delivery verification. Parallel work
+across tasks/batches retains existing ownership/CAS/UNKNOWN.
+
+The [architecture proposal](research/configuration/execution-catalog-and-teams.md)
+and [accepted intent](decisions/configuration/execution-catalog-and-teams.md)
+record approved intent and architecture with conditions. The eight SWE-2 Flash /
+DeepSeek 4.1 Flash formation reviews completed with APPROVE_WITH_CHANGES.
+Root's revised final-state design closes their themes and Delphi's config
+activation/lost-ack finding at design level. Targeted V3/V2 completed with
+APPROVE_WITH_CHANGES and no Critical; Root corrected the four Important findings.
+The [implementation plan](plans/execution-catalog-and-teams.md) assigns exact
+owners, ordered tasks, checks and the temporary repair/removal handoff.
+The earlier frozen-plan check passed on its old layout. The user's 2026-11-10
+clarification now requires physical package/custom role/profile/task/team/workflow
+components, file metadata and global/product kind routing. Both requested reviews
+completed APPROVE_WITH_CHANGES, no Critical; Root corrected three Important:
+selection dimensions, usable seed and explicit full-fork rebind. User approved
+this revision and requested implementation through repository init, preserving
+settings; development uses Devin SWE-2 Flash medium and validation Codex Luna
+max. Old PASS does not cover these changed contracts. Luna's first-cycle
+review found premature live selection/admission wiring. Root corrected Task 1
+to pure final-value contracts and deferred live caller cutover to Task 9 after
+qualified repair and cohort gates. Luna confirmed that boundary, then identified
+a missing final project-manifest schema and package schema inventory. Root added
+both to prospective Task 1; preserve the existing package version WIP. This last
+scope correction is not independently re-reviewed. r17 attempt 2 synthesis is
+accepted at journal revision 3 `f7064021`; the typed lease recovery was
+refused with no effect, the completed-readonly release passed work2/ledger85,
+and the lease is null/suspended with no successor; a
+successor execution-catalog Task 1 requires fresh admission and an observed
+native launch for swe-2-flash-medium via acpRegistry_devin. The configured
+Luna writer still does not satisfy the user-selected Devin SWE-2 Flash
+medium writer.
+A fresh disposable native `init` succeeded with Luna defaults. Both
+standalone 0.1.9 binaries return `unsupported artifact repair kind` for
+`runtime-config`: current `reconcile-cli-contracts.ts` and
+`reconcile-artifacts.ts` removed the old public rebind routes, so the
+earlier selector refusal is historical. The disposable rebind inspection
+issued no configuration or Source effect. Current proof:
+`%TEMP%/vida-task6-profile-proof/evidence/proof-report.md`.
+
+Root's testfix-r5 release completed: the exact original-owner operation
+applied once under fresh Work/Ledger/Journal CAS, exited 0 with no
+readback deviations, and released the execution lease; Work 9 retains
+Ledger 86, Journal 20, PLAN phase and maintenance 0, with no Runtime
+acceptance established. The packed trusted-host build passed its focused
+rerun 14/14, and a disposable consumer verified exact expired-lease
+release, exact replay, preserved journal and acceptance, and the refusal
+cases. The same-v1 `configure --executor-model` change is implemented at
+Source with Luna's independent diff review PASS. The isolated configure v1
+proof is complete on the exact standalone exe (sha256 `044e51fa…`): a raw
+native disposable v1 init/plan/apply changed cfg in exactly one scalar to
+`swe-2-flash-medium`, the receipt digest matched, the operation archive
+carried the exact before/target bindings, and exact resume replay returned
+`completed` with inspect reporting `no_pending`. Luna independently verified
+all three negative native applies exiting 1 — `Executor model is unchanged`
+and `Public configuration plan changed` — with byte-identical cfg, receipt,
+plan and `.agent` state before/after and no pending or archive effects.
+Results: `.agent/work/agent-p0-bootstrap-20261118/task2-native-proof-20261118/evidence/results.json`
+(sha256 `a86b78f1…f213e3`) and
+`.agent/work/agent-p0-bootstrap-20261118/task2-native-noeffect-proof-20261118/evidence/results.json`
+(sha256 `6a39c2d4…ae6feb`); this closeout rehashed both results files, the
+no-effect manifest (`fcaab04a…`) and the exe. The proof covers only the
+disposable project and HOME: the installed runtime remains non-release 0.1.9
+with no live cfg replacement, and SDK closeout, delivery status and the r17
+journal stay untouched. A future executor launch still requires fresh
+admission and an observed native `acpRegistry_devin` launch binding
+`swe-2-flash-medium`; the disposable proof observed no Devin model binding or
+dispatch. The completed SDK export work is distinct from execution-catalog
+Task 1 and claims no dispatch, live configuration or installation, or task
+acceptance. Two legacy tests timeout at 30 s in matched before+after runs;
+the cause is unassigned. The installed payload remains non-release 0.1.9 — no
+T3 Devin dispatch, live availability or published release is implied — and
+the repair-3 hardening-2 candidate stays uninstalled pending the delivery
+gate.
+
+No Source issuance or prod
+delivery is claimed. Follow P0 bugs → P1 optimizations → P2 catalog; qualification
+and atomic repair/removal precede effectful activation.
+
+## Proposed next contour
+
+The next proposed increment is one ordinary Agent TASK through the existing
+flow on the active unified v1 config: synthesis → prewrite → implementation →
+focused validation → tests → delivery proposal, followed by the applicable
+delivery owners. This extends the open Task 6 end-to-end criteria and requires
+fresh writer admission.
+
+- P0: exercise the existing task_execution path with current scope/AC and native
+  issue/report evidence; qualify a disposable consumer before the small real task.
+- P0: trace actual product-source context and TASK identity through admission/result;
+  repair only a demonstrated missing seam, without a second tracker or resolver.
+- P1, or a demonstrated causal prerequisite: readiness/maps and missing navigation;
+  reuse canonical documents, preserve old IDs/providers and fabricate no BR/AC.
+- P1: clear operational status, causal recovery and unchanged quality gates.
+- P2: scoped Codex/Powers rollout, release-journal closeout and installer recovery.
+
+Missing backlogs does not itself prove a store defect: its existing create owner
+can initialize it. Missing new wiki folders do not generally block a task whose
+canonical sources already exist. Establish the supported path before adding an
+adapter or maturity gate. Graph/GUI/external tracker expansion follows a working
+local vertical slice and its own decision.
 
 ## Current delivery state
 
@@ -42,8 +152,15 @@ was used for recovery.
 GET-only readback verified all nine assets and repeated tag/inventory checks.
 The maintained Windows update verified version, binary SHA256
 `90739face0aff74e63a62fcb912872063c82f4b80d946ff82eda4ef533d02a6e`, cleanup and one effective PATH command.
-Source version 0.1.9, pre-existing run-file WIP and unrelated Powers work remain
-preserved. Main integration used normal hooks and a non-forced push.
+The published release is v0.1.20 (Source e658d1e2, CI42615252275); the local
+installed exe remains the non-release 0.1.9 payload sha256
+`d8636d87043f39dfd19d4936dd73b472fe19271aab3c13f65e820d2f363969f5`. A
+repair-3 hardening-2 candidate (exe `CA774857…`) is built and independently
+source-reviewed with a documented Host-trust caveat; it remains uninstalled
+pending artifact/maintenance readiness — the r17 lease itself is already
+released. Pre-existing run-file WIP and unrelated
+Powers work remain preserved. Main integration used normal hooks and a
+non-forced push.
 
 The terminal-owner correction has accepted Source, two Code views from one
 independent reviewer invocation, and a distinct independent tester: 22 focused
@@ -74,7 +191,7 @@ quiescence/exclusive admission then completed configure v3 operation
 `config-7947f500ad8551fd1f9880f19c6d1715fcff12156f94f2c79bc095bba2685956`. Public init returned `existing` against the adopted
 configuration; this is preserved-output reconciliation, not a data reset.
 
-Active cfg is `AgentRuntimeConfig/v2`; its full model equals the approved input.
+Active cfg is unified `AgentRuntimeConfig/v1` (version 1) carrying the full approved product model — repository/product prefixes, documents areas, work-item stores, enabled types and hierarchy; the parallel v2 contract was cancelled 2026-11-13 per [runtime-config-single-version](decisions/configuration/runtime-config-single-version.md). Its full model equals the approved input.
 The receipt has provenance `adopted_existing`, its cfg digest matches, and the
 operation is archived with no pending init file. AGENTS, sidecar and documentation
 policy bytes are unchanged. Public history inspection verifies all 48
@@ -111,11 +228,18 @@ Technical initialization is complete; attributable user Runtime acceptance is fa
 
 ### Qualify installation recovery and offline resource discovery
 
-Verify Windows rollback through the maintained installer owner, with exact
-artifact bytes and structured native observations. Check first-run resource
-discovery from another cwd with external runtimes absent and exercise the
-required offline boundary. Reuse matching Task 6 evidence for shared scenarios.
-Preserve ambiguous installer/process effects for their reconciliation owner.
+Verified v0.1.20 artifact digests (exe sha256 `90739face0…`, installer
+`install-windows.ps1` sha256 `f3145ae4…`, manifest/provenance consistent) and
+the foreign-cwd first-run resource lookup with Bun/Node absent on PATH passed
+on a warm cache only — see
+`.agent/work/installer-qualification-v0.1.20-20261117/WORK.md`. A separate
+v0.1.20 cold-cache run is observed in `COLD-CACHE-PROOF.md` in the same
+directory: Luna's narrow PASS carries a raw subprocess environment snapshot
+gap. Offline resource discovery and Windows rollback through the maintained
+installer owner remain open; the installer has no isolation mode, so mutating
+install/update/rollback/uninstall cases stay unexercised. Reuse matching
+Task 6 evidence for shared scenarios. Preserve ambiguous installer/process
+effects for their reconciliation owner.
 
 Completion: each claimed recovery/offline path has attributable native evidence.
 

@@ -194,7 +194,7 @@ export function loadDonorClones(root: string): DonorClones {
   return { available: true, note: `${String(donors.size)} donor clones under ${localRoot}`, donors };
 }
 
-function countFindings(report: Report): number {
+export function countFindings(report: Report): number {
   return report.sections
     .filter((section) => section.kind === 'finding')
     .reduce((total, section) => total + section.rows.length, 0);
@@ -655,6 +655,132 @@ export function specsReport(corpus: CorpusView, clones: DonorClones, files: stri
     sections: [
       { name: 'problem', kind: 'finding', rows: problems.sort() },
       { name: 'accepted', kind: 'info', rows: accepted.sort() },
+    ],
+  };
+  report.counters.push({ label: 'findings', value: String(countFindings(report)) });
+  return report;
+}
+
+/**
+ * The instruction-change report (SR-30, SR-68, AC-34).
+ *
+ * One explicit change-evidence JSON file binds the before/after instruction
+ * ids and their declared SHA-256 digests, the declared risk
+ * (low/medium/high), the declared semantic-change flag and the source and
+ * assessment references. The report classifies the required acceptance gates:
+ * low without a semantic change maps to auto-acceptance, medium maps to a
+ * regression evaluation and an independent review, high maps to a human
+ * confirmation. A semantic change under the same instruction id fails closed
+ * regardless of the declared risk (SR-30: a behavior change is a new pattern
+ * id), and missing, unknown or inconsistent evidence implies no acceptance.
+ *
+ * The classifier only reports the gates the evidence requires. It never
+ * grants approval, never infers semantics from a text diff, never treats the
+ * declared file hashes as human evidence, never mutates the corpus and never
+ * persists a store. The digests are reported as declared bindings; this
+ * report does not recompute them from the corpus sources.
+ */
+export type ChangeRisk = 'low' | 'medium' | 'high';
+export type ChangeSide = { id: string; sha256: string };
+export type ChangeEvidence = {
+  before: ChangeSide;
+  after: ChangeSide;
+  risk: ChangeRisk;
+  semanticChange: boolean;
+  source: string;
+  assessment: string;
+};
+
+const CHANGE_RISKS: readonly string[] = ['low', 'medium', 'high'];
+const SHA256_PATTERN = /^[0-9a-f]{64}$/i;
+
+/** The change evidence of one file, or the problems that keep it from binding. */
+export function parseChangeEvidence(value: unknown, file: string): { evidence: ChangeEvidence | undefined; problems: string[] } {
+  const problems: string[] = [];
+  const fail = (message: string): void => {
+    problems.push(`${file} | ${message}`);
+  };
+  if (!isRecord(value)) {
+    fail('the change evidence is not a JSON object');
+    return { evidence: undefined, problems };
+  }
+  const side = (key: 'before' | 'after'): ChangeSide | undefined => {
+    const raw = value[key];
+    if (!isRecord(raw)) {
+      fail(`the ${key} binding is missing or is not an object`);
+      return undefined;
+    }
+    const id = typeof raw.id === 'string' && raw.id.trim() !== '' ? raw.id : undefined;
+    const sha256 = typeof raw.sha256 === 'string' && SHA256_PATTERN.test(raw.sha256) ? raw.sha256 : undefined;
+    if (id === undefined) fail(`the ${key} binding has no instruction id`);
+    if (sha256 === undefined) fail(`the ${key} binding has no SHA-256 digest`);
+    return id === undefined || sha256 === undefined ? undefined : { id, sha256 };
+  };
+  const before = side('before');
+  const after = side('after');
+  const risk = typeof value.risk === 'string' && CHANGE_RISKS.includes(value.risk)
+    ? (value.risk as ChangeRisk)
+    : undefined;
+  if (risk === undefined) fail('the risk is not one of low, medium, high');
+  const semanticChange = typeof value.semantic_change === 'boolean' ? value.semantic_change : undefined;
+  if (semanticChange === undefined) fail('the semantic-change flag is not a boolean');
+  const source = typeof value.source === 'string' && value.source.trim() !== '' ? value.source : undefined;
+  if (source === undefined) fail('the source reference is missing');
+  const assessment = typeof value.assessment === 'string' && value.assessment.trim() !== '' ? value.assessment : undefined;
+  if (assessment === undefined) fail('the assessment reference is missing');
+  if (before === undefined || after === undefined || risk === undefined
+    || semanticChange === undefined || source === undefined || assessment === undefined) {
+    return { evidence: undefined, problems };
+  }
+  return { evidence: { before, after, risk, semanticChange, source, assessment }, problems };
+}
+
+/** The acceptance gates the declared risk and semantic flag require (SR-68). */
+export function changeGates(evidence: ChangeEvidence): string[] {
+  if (evidence.semanticChange) {
+    return evidence.risk === 'high' ? ['human-confirmation'] : ['regression-evaluation', 'independent-review'];
+  }
+  if (evidence.risk === 'low') return ['auto-acceptance'];
+  if (evidence.risk === 'medium') return ['regression-evaluation', 'independent-review'];
+  return ['human-confirmation'];
+}
+
+/** The report of one change-evidence file; the live corpus is not needed. */
+export function instructionChangeReport(file: string): Report {
+  const problems: string[] = [];
+  let value: unknown;
+  try {
+    value = JSON.parse(readFileSync(file, 'utf8'));
+  } catch (error) {
+    problems.push(`${file} | the change evidence is not readable JSON: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  const parsed = problems.length > 0 ? { evidence: undefined, problems } : parseChangeEvidence(value, file);
+  const evidence = parsed.evidence;
+  if (evidence !== undefined) {
+    if (evidence.semanticChange && evidence.before.id === evidence.after.id) {
+      parsed.problems.push(`${file} | a semantic change under the same instruction id ${evidence.before.id} fails closed (SR-30)`);
+    }
+    if (evidence.semanticChange && evidence.before.sha256 === evidence.after.sha256) {
+      parsed.problems.push(`${file} | identical before/after digests declare a semantic change`);
+    }
+  }
+  const evidenceRows = evidence === undefined ? [] : [
+    `before ${evidence.before.id} sha256:${evidence.before.sha256} (declared)`,
+    `after ${evidence.after.id} sha256:${evidence.after.sha256} (declared)`,
+    `source: ${evidence.source}`,
+    `assessment: ${evidence.assessment}`,
+  ];
+  const gates = evidence !== undefined && parsed.problems.length === 0 ? changeGates(evidence) : [];
+  const report: Report = {
+    command: 'instruction-change',
+    counters: [
+      { label: 'risk', value: evidence?.risk ?? 'unknown' },
+      { label: 'semantic-change', value: evidence === undefined ? 'unknown' : evidence.semanticChange ? 'yes' : 'no' },
+    ],
+    sections: [
+      { name: 'problem', kind: 'finding', rows: parsed.problems.sort() },
+      { name: 'evidence', kind: 'info', rows: evidenceRows },
+      { name: 'required-gate', kind: 'info', rows: gates },
     ],
   };
   report.counters.push({ label: 'findings', value: String(countFindings(report)) });

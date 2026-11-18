@@ -14,6 +14,7 @@ repository:
   project_root: .
   code_selectors:
     - src/**
+  prefix: '{{REPOSITORY_PREFIX}}'
 integrations:
   providers:
     - id: local-{{PROJECT}}
@@ -59,15 +60,30 @@ paths:
 projects:
   - project_id: '{{PROJECT}}'
     title: '{{PROJECT}}'
+    prefix: '{{PRODUCT_PREFIX}}'
     project_root: .
-    wiki_root: docs
-    wiki_path: AGENT.sidecar.md
-    wiki_output_root: .planning/agent-flow/wiki-output
-    internal_root: docs/internal
-    ledger_root: backlogs
-    task_prefix: TASK
     code_selectors:
       - src/**
+    documents:
+      root: docs
+      index: AGENT.sidecar.md
+      requirements:
+        root: docs/internal
+        areas: {}
+      research: docs/research
+      decisions: docs/decisions
+    work_items:
+      storage_root: backlogs
+      enabled_types:
+        - EPIC
+        - FEATURE
+        - PBI
+        - STORY
+        - BUG
+        - TASK
+        - RESEARCH
+      hierarchy:
+        mode: any
     delivery_group: '{{PROJECT}}'
 agents:
   profiles:

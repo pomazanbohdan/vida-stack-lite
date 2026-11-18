@@ -100,16 +100,7 @@ function fileObservation(root: string, relative: string, access: ReturnType<type
 
 function configuredProjectPaths(config: AgentRuntimeConfig): string[] {
   return config.projects.flatMap((project) => [
-    ...('documents' in project
-      ? productDefinitionPaths(project).map((value) => value.split(/[?*]/, 1)[0]!.replace(/\/+$/, '') || '.')
-      : [
-          project.project_root,
-          project.wiki_root,
-          project.wiki_path,
-          project.wiki_output_root,
-          project.internal_root,
-          project.ledger_root,
-        ]),
+    ...productDefinitionPaths(project).map((value) => value.split(/[?*]/, 1)[0]!.replace(/\/+$/, '') || '.'),
     ...Object.values(project.path_overrides ?? {}).filter((value): value is string => typeof value === 'string'),
   ]);
 }
@@ -196,13 +187,14 @@ export function captureConsumerCleanInitializationV2(
   const history = `.agent/clean-initialization-history/${operationId}`;
   if (exactPathExists(root, history, access, view)) fail('operation history path is occupied');
   const archiveRoot = `${history}/payload`;
-  const preserved = preservedSources
-    .filter((source) => exactPathExists(root, source, access, view))
-    .map((source) => fileObservation(root, source, access));
-  const inventory = archiveSources
-    .filter((source) => !preserved.some((entry) => entry.path === source))
-    .filter((source) => exactPathExists(root, source, access, view))
-    .map((source) => fileObservation(root, source, access));
+  const preserved = ordered(preservedSources.filter((source) => exactPathExists(root, source, access, view))).map(
+    (source) => fileObservation(root, source, access),
+  );
+  const inventory = ordered(
+    archiveSources
+      .filter((source) => !preserved.some((entry) => entry.path === source))
+      .filter((source) => exactPathExists(root, source, access, view)),
+  ).map((source) => fileObservation(root, source, access));
   const protected_paths = protectedPaths(
     config,
     context.path_bindings.flatMap((binding) =>

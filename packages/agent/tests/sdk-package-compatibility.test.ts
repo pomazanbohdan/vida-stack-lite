@@ -10,6 +10,7 @@ import { captureSdkFormationInputs } from '../tooling/build-package.ts';
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { sdkCompatibilityManifest, verifySdkPackage } from '../tooling/pack-sdk.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
+import * as trustedHost from '../src/trusted-host.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -85,6 +86,7 @@ test('SDK compatibility manifest keeps only the SDK prepack hook and payload', (
   expect(value.exports).toEqual(source.exports);
   expect(value.main).toBe(source.main);
   expect(value.types).toBe(source.types);
+  expect(typeof trustedHost.suspendCompletedSourceWorkflowWork).toBe('function');
   expect(value.files).toContain('dist/src/index.js');
   expect(value.files).toContain('dist/src/runtime.js');
   expect(value.files).toContain('dist/src/documentation/transition-proof.js');

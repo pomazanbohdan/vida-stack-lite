@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-runtime.invalid/schemas/execution-routing.schema.json",
+  "title": "Execution Routing",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "meta", "routes", "global"],
+  "properties": {
+    "schema": { "const": "ExecutionRouting" },
+    "meta": {
+      "type": "object", "additionalProperties": false, "required": ["file_id", "revision", "created_at", "updated_at"],
+      "properties": {
+        "file_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" }, "revision": { "type": "integer", "minimum": 1 },
+        "created_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$" },
+        "updated_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$" }
+      }
+    },
+    "routes": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/route" } },
+    "global": {
+      "type": "object", "additionalProperties": false, "required": ["default_route"],
+      "properties": { "default_route": { "$ref": "#/$defs/id" }, "by_kind": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/id" } } }
+    },
+    "products": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/productRoutes" } }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+    "workflowRef": { "type": "string", "pattern": "^(package|custom):workflow/[a-z0-9][a-z0-9._-]{0,79}$" },
+    "teamRef": { "type": "string", "pattern": "^(package|custom):team/[a-z0-9][a-z0-9._-]{0,79}$" },
+    "level": { "enum": ["compact", "standard", "extended"] },
+    "route": {
+      "type": "object", "additionalProperties": false, "required": ["enabled", "workflow_ref", "teams_by_level", "default_level", "completion_profile"],
+      "properties": {
+        "enabled": { "type": "boolean" }, "workflow_ref": { "$ref": "#/$defs/workflowRef" },
+        "teams_by_level": { "type": "object", "minProperties": 1, "propertyNames": { "$ref": "#/$defs/level" }, "additionalProperties": { "$ref": "#/$defs/teamRef" } },
+        "default_level": { "$ref": "#/$defs/level" }, "completion_profile": { "enum": ["source_only", "artifact", "deployment"] },
+        "delivery_target": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        { "if": { "properties": { "completion_profile": { "const": "deployment" } }, "required": ["completion_profile"] }, "then": { "required": ["delivery_target"], "properties": { "delivery_target": { "type": "string", "minLength": 1 } } } },
+        { "if": { "properties": { "completion_profile": { "enum": ["source_only", "artifact"] } }, "required": ["completion_profile"] }, "then": { "not": { "properties": { "delivery_target": { "type": "string" } }, "required": ["delivery_target"] } } }
+      ]
+    },
+    "productRoutes": {
+      "type": "object", "additionalProperties": false, "minProperties": 1,
+      "properties": { "default_route": { "$ref": "#/$defs/id" }, "by_kind": { "type": "object", "propertyNames": { "$ref": "#/$defs/id" }, "additionalProperties": { "$ref": "#/$defs/id" } } }
+    }
+  }
+}

@@ -34,26 +34,6 @@ type ReconcileCliContract = {
   optionsByBasisMode?: Record<string, Record<string, string[]>>;
 };
 export const reconcileCliContracts: Readonly<Record<string, ReconcileCliContract>> = freezeCliDeclaration({
-  'project-upgrade': {
-    handler: 'projectUpgrade',
-    modes: ['inspect', 'plan', 'apply', 'resume'],
-    optionsByMode: {
-      inspect: [...common, '--repair-id', '--actor', '--instruction-ref'],
-      plan: [...common, '--repair-id', '--actor', '--instruction-ref'],
-      apply: [...common, '--repair-id'],
-      resume: [...common, '--repair-id', '--reconcile-unknown'],
-    },
-    requiredByMode: {
-      inspect: ['--repair-id', '--actor', '--instruction-ref'],
-      plan: ['--repair-id', '--actor', '--instruction-ref'],
-      apply: ['--repair-id'],
-      resume: ['--repair-id'],
-    },
-    optionalByMode: { resume: ['--reconcile-unknown'] },
-    values: { '--reconcile-unknown': ['true', 'false'] },
-    defaults: { '--reconcile-unknown': 'false' },
-    note: 'Fresh storage uses the bundle-owned repair owner. Existing storage remains blocked until old opener exclusion is proved. UNKNOWN permits only exact same-operation afterimage reconciliation.',
-  },
   'research-records': {
     modes: ['inspect', 'plan', 'apply', 'resume', 'restore'],
     optionsByMode: {
@@ -243,81 +223,6 @@ export const reconcileCliContracts: Readonly<Record<string, ReconcileCliContract
       restore: ['--repository', '--project', '--work-id', '--repair-id'],
     },
     optionalGroups: [['--forward-operation', '--payload-root']],
-  },
-  'runtime-config': {
-    handler: 'runtimeConfig',
-    modes: ['inspect', 'plan', 'apply', 'resume', 'restore'],
-    optionsByMode: {
-      inspect: planning(['--instruction-ref', '--target-config']),
-      plan: planning(['--instruction-ref', '--target-config']),
-      apply: applying,
-      resume: applying,
-      restore: applying,
-    },
-    requiredByMode: {
-      inspect: ['--repair-id', '--actor', '--timestamp', '--instruction-ref', '--target-config'],
-      plan: ['--repair-id', '--actor', '--timestamp', '--instruction-ref', '--target-config'],
-      apply: ['--repair-id'],
-      resume: ['--repair-id'],
-      restore: ['--repair-id'],
-    },
-  },
-  'runtime-config-delivery': {
-    handler: 'runtimeConfig',
-    modes: [
-      'inspect',
-      'plan',
-      'apply',
-      'resume',
-      'restore',
-      'repair-inspect',
-      'repair-plan',
-      'repair-apply',
-      'repair-resume',
-      'repair-transition',
-      'repair-withdraw',
-    ],
-    optionsByMode: {
-      inspect: planning(['--instruction-ref', '--target-config', '--baseline-config']),
-      plan: planning(['--instruction-ref', '--target-config', '--baseline-config']),
-      apply: applying,
-      resume: applying,
-      restore: applying,
-      'repair-inspect': [
-        ...common,
-        '--repair-id',
-        '--source-beforeimages',
-        '--authorized-paths',
-        '--prior-system-update',
-        '--publish-operation',
-      ],
-      'repair-plan': [
-        ...common,
-        '--repair-id',
-        '--source-beforeimages',
-        '--authorized-paths',
-        '--prior-system-update',
-        '--publish-operation',
-      ],
-      'repair-apply': [...common, '--repair-id', '--report'],
-      'repair-resume': applying,
-      'repair-transition': applying,
-      'repair-withdraw': [...common, '--repair-id', '--expected-request'],
-    },
-    requiredByMode: {
-      inspect: ['--repair-id', '--actor', '--timestamp', '--instruction-ref', '--target-config', '--baseline-config'],
-      plan: ['--repair-id', '--actor', '--timestamp', '--instruction-ref', '--target-config', '--baseline-config'],
-      apply: ['--repair-id'],
-      resume: ['--repair-id'],
-      restore: ['--repair-id'],
-      'repair-inspect': ['--repair-id', '--source-beforeimages', '--authorized-paths', '--prior-system-update'],
-      'repair-plan': ['--repair-id', '--source-beforeimages', '--authorized-paths', '--prior-system-update'],
-      'repair-apply': ['--repair-id', '--report'],
-      'repair-resume': ['--repair-id'],
-      'repair-transition': ['--repair-id'],
-      'repair-withdraw': ['--repair-id', '--expected-request'],
-    },
-    optionalByMode: { 'repair-inspect': ['--publish-operation'], 'repair-plan': ['--publish-operation'] },
   },
   'synthesis-qualification': {
     handler: 'synthesisQualification',
@@ -719,12 +624,6 @@ function documentationPolicyExpectedOptions(
   return hasOptionalGroup ? [...options] : options.filter((key) => !contract.optionalGroups?.flat().includes(key));
 }
 
-function runtimeConfigDeliveryExpectedOptions(mode: string, values: Record<string, string>, options: string[]) {
-  const repairMode = ['repair-inspect', 'repair-plan'].includes(mode);
-  const hasPublishOperation = Object.hasOwn(values, '--publish-operation');
-  return repairMode && !hasPublishOperation ? options.filter((key) => key !== '--publish-operation') : [...options];
-}
-
 function hasDeclaredOptionalModeOptions(contract: ReconcileCliContract, mode: string) {
   return Boolean(contract.optionalByMode?.[mode]);
 }
@@ -738,7 +637,6 @@ function modeSpecificExpectedOptions(
 ) {
   if (hasDeclaredOptionalModeOptions(contract, mode)) return workStateExpectedOptions(contract, mode, values, options);
   if (kind === 'documentation-policy') return documentationPolicyExpectedOptions(contract, values, options);
-  if (kind === 'runtime-config-delivery') return runtimeConfigDeliveryExpectedOptions(mode, values, options);
   return [...options];
 }
 
@@ -785,16 +683,8 @@ const optionTypes: Readonly<Record<string, string>> = freezeCliDeclaration({
   '--instruction-ref': 'instruction reference',
   '--forward-operation': 'forward-operation identifier',
   '--payload-root': 'absolute path',
-  '--target-config': 'path to target configuration',
-  '--baseline-config': 'path to baseline configuration',
   '--correction-id': 'correction identifier',
   '--owner-correction-pointer': 'owner-correction pointer',
-  '--expected-request': 'request UUID',
-  '--source-beforeimages': 'absolute path',
-  '--authorized-paths': 'JSON array of authorized paths',
-  '--prior-system-update': 'receipt reference',
-  '--publish-operation': 'operation identifier',
-  '--report': 'absolute path',
   '--basis': 'runtime-code basis enum',
   '--parent-manifest': 'manifest reference',
   '--parent-install': 'installation reference',
@@ -829,16 +719,8 @@ const helpSampleValues: Readonly<Record<string, string>> = freezeCliDeclaration(
   '--instruction-ref': 'instruction:example',
   '--forward-operation': 'operation-example',
   '--payload-root': '/workspace/payload',
-  '--target-config': '/workspace/target.yaml',
-  '--baseline-config': '/workspace/baseline.yaml',
   '--correction-id': 'correction-example',
   '--owner-correction-pointer': 'owner-correction-example',
-  '--expected-request': '00000000-0000-4000-8000-000000000000',
-  '--source-beforeimages': '/workspace/beforeimages',
-  '--authorized-paths': '[]',
-  '--prior-system-update': 'receipt-example',
-  '--publish-operation': 'publish-example',
-  '--report': '/workspace/report.json',
   '--forward-operation-id': 'operation-example',
   '--owner-no-call-ref': 'no-call-example',
   '--owner-correction-ref': 'correction-example',

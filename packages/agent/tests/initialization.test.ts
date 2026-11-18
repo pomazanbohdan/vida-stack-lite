@@ -197,7 +197,9 @@ beforeAll(async () => {
     externalConfig,
     originalTemplate
       .replaceAll('{{REPOSITORY}}', 'ignored-repository')
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'IGNOREDREPOSITORY')
       .replaceAll('{{PROJECT}}', 'ignored-project')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'IGNOREDPROJECT')
       .replaceAll('{{BUNDLE}}', 'ignored-runtime'),
   );
 }, 180_000);

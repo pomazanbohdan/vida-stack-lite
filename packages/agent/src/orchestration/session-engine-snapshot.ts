@@ -5,7 +5,7 @@ import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import type { AgentRuntimeConfig, WorkItemSelection } from '../config/runtime-config.js';
 import type { HostStateSnapshot, WorkState } from '../host-state.js';
-import { assertProjectUpgradeInactive, runtimeConfigDigest } from '../config/runtime-config.js';
+import { runtimeConfigDigest } from '../config/runtime-config.js';
 import {
   finishWorkspaceDatabaseClose,
   workspaceDatabaseFileIdentity,
@@ -157,7 +157,6 @@ export function assertUnpreparedSessionEngineAbsent(input: {
   const relative = sessionBridgeDatabaseRelativePath(config);
   requireEngine(access.fileExists(relative, 'existing preparation engine'), 'preparation engine unavailable');
   const target = path.join(repositoryRoot, relative);
-  assertProjectUpgradeInactive(access);
   const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);
   let readOutcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
@@ -250,7 +249,6 @@ function finishSessionEngineRead(
     outcome,
     (owner) => {
       closeWorkspaceDatabaseWithAdmission(owner);
-      assertProjectUpgradeInactive(access);
       const after = lstatSync(target, { bigint: true });
       requireEngine(
         after.isFile() &&
@@ -461,7 +459,6 @@ export function readRetainedUnissuedSessionEngineSnapshot(
   const relative = sessionBridgeDatabaseRelativePath(binding.config);
   requireEngine(access.fileExists(relative, 'retained unissued engine'), 'retained unissued engine unavailable');
   const target = path.join(binding.repositoryRoot, relative);
-  assertProjectUpgradeInactive(access);
   const workspaceId = deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot);
   const database = openAdmittedWorkspaceDatabase(binding.repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);
@@ -831,7 +828,6 @@ export function readConfiguredContinuationSessionEngineSnapshot(
     'configured continuation engine unavailable',
   );
   const target = path.join(binding.repositoryRoot, relative);
-  assertProjectUpgradeInactive(access);
   const workspaceId = deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot);
   const database = openAdmittedWorkspaceDatabase(binding.repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);
@@ -1530,13 +1526,10 @@ function readSessionEngineSnapshotInternal(
   const { repositoryRoot, config, selection, context, workflowId, runId } = binding;
   const relative = sessionBridgeDatabaseRelativePath(config);
   const access = requireSafeRepositoryAccess(repositoryRoot);
-  assertProjectUpgradeInactive(access);
   if (!access.fileExists(relative, 'persisted session engine')) {
-    assertProjectUpgradeInactive(access);
     return null;
   }
   const target = path.join(repositoryRoot, relative);
-  assertProjectUpgradeInactive(access);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
   const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);

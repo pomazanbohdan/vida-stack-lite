@@ -102,16 +102,8 @@ function requireProjectLayout(config: AgentRuntimeConfig): void {
 }
 
 function migratedProject(project: AgentRuntimeConfig['projects'][number]): AgentRuntimeConfig['projects'][number] {
-  if ('documents' in project)
-    return {
-      ...project,
-      ...(project.path_overrides === undefined ? {} : { path_overrides: migratedProfile(project.path_overrides) }),
-    };
   return {
     ...project,
-    wiki_path: migratedPath(project.wiki_path),
-    wiki_output_root: migratedPath(project.wiki_output_root),
-    ledger_root: migratedPath(project.ledger_root),
     ...(project.path_overrides === undefined ? {} : { path_overrides: migratedProfile(project.path_overrides) }),
   };
 }

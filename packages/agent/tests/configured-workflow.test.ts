@@ -427,7 +427,9 @@ beforeEach(async () => {
     yaml = (await readFile(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
       .replaceAll('{{BUNDLE}}', 'runtime')
       .replaceAll('{{REPOSITORY}}', 'example-repository')
-      .replaceAll('{{PROJECT}}', 'example-project');
+      .replaceAll('{{REPOSITORY_PREFIX}}', 'EXAMPLEREPOSITORY')
+      .replaceAll('{{PROJECT}}', 'example-project')
+      .replaceAll('{{PRODUCT_PREFIX}}', 'EXAMPLEPROJECT');
     await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), yaml);
     await writeFile(path.join(root, 'AGENTS.md'), '# Generic test entry\n');
     await writeFile(path.join(root, 'AGENT.sidecar.md'), '# Isolated project fixture\n');

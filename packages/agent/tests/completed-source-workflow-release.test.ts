@@ -3,11 +3,11 @@ import { randomUUID } from 'node:crypto';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { parseRuntimeConfigYaml } from '../src/config/runtime-config.ts';
+import { suspendLocalWork } from '../src/orchestration/suspend-local-work.ts';
 import {
-  suspendLocalWork,
   suspendCompletedSourceWorkflowWork,
   type CompletedSourceWorkflowSuspensionInput,
-} from '../src/orchestration/suspend-local-work.ts';
+} from '../src/trusted-host.ts';
 import type { MastraLedgerItem, MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import {
   historicalFixture,

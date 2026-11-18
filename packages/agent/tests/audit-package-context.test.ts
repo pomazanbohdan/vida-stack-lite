@@ -26,7 +26,9 @@ async function consumer(): Promise<ConsumerFixture> {
   roots.add(root);
   const template = (await readFile(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
     .replaceAll('{{REPOSITORY}}', 'context-consumer')
+    .replaceAll('{{REPOSITORY_PREFIX}}', 'CONTEXTCONSUMER')
     .replaceAll('{{PROJECT}}', 'sample')
+    .replaceAll('{{PRODUCT_PREFIX}}', 'SAMPLE')
     .replaceAll('{{BUNDLE}}', 'vida-agent');
   const parsed = parseRuntimeConfigYaml(template);
   const config: AgentRuntimeConfig = {

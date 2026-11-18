@@ -219,6 +219,18 @@ artifact repair command for all affected active files and dependencies,
 including atomic application and recovery. Until it exists, stop before
 changing active artifacts. Runtime readers accept only current v1; archived
 old state never becomes production input or a reader fallback.
+
+Final-state-only development. Do not add transitional v2/v3 successors,
+dual-read paths, version matrices or long-lived legacy support. The final state
+keeps one schema; do not add a versioned successor just to preserve old readers.
+Build the one final state directly. Existing artifacts may be migrated by one
+temporary bundle-owned repair command with exact beforeimage, authorization,
+CAS and recovery; record its removal condition and delete it, the superseded
+readers, schemas and fallbacks after the final state is active. When a fresher
+successor or replacement exists, remove the legacy path instead of preserving
+it. Migration evidence stays in the work record and does not become a second
+production reader.
+
 The fixed `native-delivery-evidence` repair resets only stale tests, source-seal
 and assurance joins for an original uninstalled `awaiting_assurance` operation.
 It preserves the current release formats, source inputs, requests, results,

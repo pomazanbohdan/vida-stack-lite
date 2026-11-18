@@ -26,6 +26,7 @@ export const observationSchema = z
     summary: z.string().min(1).max(4096),
     output_digest: z.string().regex(/^[a-f0-9]{64}$/),
     evidence_refs: z.array(z.string().min(1).max(512)),
+    recovery_reason: z.literal('expired_lease_completed_report').optional(),
   })
   .strict();
 

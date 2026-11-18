@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync, symlinkSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 import { describe, expect, test } from 'bun:test';
@@ -13,6 +14,22 @@ import {
   draftPatternProfiles,
 } from '../tooling/test-function-audit.js';
 import { functionInventory } from '../tooling/function-inventory.ts';
+
+function symlinksSupported(): boolean {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'function-audit-symlink-probe-'));
+  try {
+    const target = path.join(root, 'target.txt');
+    writeFileSync(target, 'probe');
+    symlinkSync(target, path.join(root, 'link.txt'));
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+const canCreateSymlinks = symlinksSupported();
 
 function runFixture(source: string, tests: Record<string, string>, matrix?: Record<string, unknown>) {
   return runSourcesFixture({ 'src/subject.ts': source }, tests, matrix);
@@ -130,43 +147,47 @@ describe('function test audit', () => {
     }
   });
 
-  test('repository resolution refuses linked tooling and imports outside tooling/agent', () => {
-    for (const forbidden of ['file-link', 'directory-link', 'outside']) {
-      const repository = mkdtempSync(path.join(os.tmpdir(), 'function-audit-repo-denial-'));
-      const root = path.join(repository, 'packages/agent');
-      try {
-        mkdirSync(path.join(root, 'src'), { recursive: true });
-        mkdirSync(path.join(root, 'tests'));
-        mkdirSync(path.join(repository, 'tooling/other'), { recursive: true });
-        writeFileSync(path.join(root, 'src/subject.ts'), 'export function target() {}');
-        writeFileSync(path.join(repository, 'tooling/other/run.ts'), 'export function run() {}');
-        if (forbidden === 'directory-link')
-          symlinkSync(path.join(repository, 'tooling/other'), path.join(repository, 'tooling/agent'), 'dir');
-        else {
-          mkdirSync(path.join(repository, 'tooling/agent'));
-          if (forbidden === 'file-link')
-            symlinkSync(path.join(repository, 'tooling/other/run.ts'), path.join(repository, 'tooling/agent/run.ts'));
+  test.skipIf(!canCreateSymlinks)(
+    'repository resolution refuses linked tooling and imports outside tooling/agent',
+    () => {
+      for (const forbidden of ['file-link', 'directory-link', 'outside']) {
+        const repository = mkdtempSync(path.join(os.tmpdir(), 'function-audit-repo-denial-'));
+        const root = path.join(repository, 'packages/agent');
+        try {
+          mkdirSync(path.join(root, 'src'), { recursive: true });
+          mkdirSync(path.join(root, 'tests'));
+          mkdirSync(path.join(repository, 'tooling/other'), { recursive: true });
+          writeFileSync(path.join(root, 'src/subject.ts'), 'export function target() {}');
+          writeFileSync(path.join(repository, 'tooling/other/run.ts'), 'export function run() {}');
+          if (forbidden === 'directory-link')
+            symlinkSync(path.join(repository, 'tooling/other'), path.join(repository, 'tooling/agent'), 'dir');
+          else {
+            mkdirSync(path.join(repository, 'tooling/agent'));
+            if (forbidden === 'file-link')
+              symlinkSync(path.join(repository, 'tooling/other/run.ts'), path.join(repository, 'tooling/agent/run.ts'));
+          }
+          const importPath =
+            forbidden === 'outside' ? '../../../tooling/other/run.js' : '../../../tooling/agent/run.js';
+          writeFileSync(
+            path.join(root, 'tests/denial.test.ts'),
+            `import { test } from 'bun:test'; import { run } from '${importPath}'; test('run', () => run());`,
+          );
+          const report = auditSources({
+            root,
+            resolutionRoot: repository,
+            sourcePaths: ['src/subject.ts'],
+            testPaths: ['tests/denial.test.ts'],
+          });
+          expect(report.status).toBe('unknown');
+          expect(report.inputHashes.resolution).toEqual({});
+          expect(report.functions).toHaveLength(1);
+          expect(report.functions[0]?.cases).toEqual([]);
+        } finally {
+          rmSync(repository, { recursive: true, force: true });
         }
-        const importPath = forbidden === 'outside' ? '../../../tooling/other/run.js' : '../../../tooling/agent/run.js';
-        writeFileSync(
-          path.join(root, 'tests/denial.test.ts'),
-          `import { test } from 'bun:test'; import { run } from '${importPath}'; test('run', () => run());`,
-        );
-        const report = auditSources({
-          root,
-          resolutionRoot: repository,
-          sourcePaths: ['src/subject.ts'],
-          testPaths: ['tests/denial.test.ts'],
-        });
-        expect(report.status).toBe('unknown');
-        expect(report.inputHashes.resolution).toEqual({});
-        expect(report.functions).toHaveLength(1);
-        expect(report.functions[0]?.cases).toEqual([]);
-      } finally {
-        rmSync(repository, { recursive: true, force: true });
       }
-    }
-  });
+    },
+  );
   test('non-native host adapter retains bounded read-only audit captures', () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'function-audit-portable-'));
     try {
@@ -197,7 +218,7 @@ describe('function test audit', () => {
     }
   });
 
-  test('selected Source and tests reject linked inputs before hashes or evidence', () => {
+  test.skipIf(!canCreateSymlinks)('selected Source and tests reject linked inputs before hashes or evidence', () => {
     for (const kind of ['source', 'test']) {
       const root = mkdtempSync(path.join(os.tmpdir(), 'function-audit-selected-links-'));
       const outside = mkdtempSync(path.join(os.tmpdir(), 'function-audit-outside-links-'));
@@ -393,7 +414,7 @@ describe('function test audit', () => {
     }
   });
 
-  test('helper symlinks cannot escape the bounded resolution input tree', () => {
+  test.skipIf(!canCreateSymlinks)('helper symlinks cannot escape the bounded resolution input tree', () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'function-audit-link-'));
     try {
       mkdirSync(path.join(root, 'src'));
@@ -1744,7 +1765,7 @@ test('outside self names', () => { expect(target()).toBe(1); });`,
           return count;
         });`,
       );
-      const script = new URL('../tooling/test-function-audit.ts', import.meta.url).pathname;
+      const script = fileURLToPath(new URL('../tooling/test-function-audit.ts', import.meta.url));
       const child = spawnSync(process.execPath, ['--preload', preload, script, '--queue=json'], {
         cwd: root,
         encoding: 'utf8',
@@ -1783,7 +1804,7 @@ test('outside self names', () => { expect(target()).toBe(1); });`,
         `import { test, expect } from 'bun:test';\ntest('unrelated', () => { expect(true).toBe(true); });`,
       );
       const before = readdirSync(root, { recursive: true }).sort((a, b) => String(a).localeCompare(String(b)));
-      const script = new URL('../tooling/test-function-audit.ts', import.meta.url).pathname;
+      const script = fileURLToPath(new URL('../tooling/test-function-audit.ts', import.meta.url));
       const child = spawnSync(process.execPath, [script, '--source=src/subject.ts', '--queue=json', '--workers=2'], {
         cwd: root,
         encoding: 'utf8',

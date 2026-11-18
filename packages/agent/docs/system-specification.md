@@ -196,7 +196,7 @@ child execution and pre-commit expansion do not block the current bug delivery.
 | Plan evolution   | Freeze the base plan and record validated expansion/branch decisions. Restart preserves decisions and custody. Expansion cannot rewrite issued bodies, original attempts or prior outcomes.                                                                                                                               |
 | Failure recovery | Correct known-failed read-only work through supported same-attempt operations, retaining exact reports and beforeimages. UNKNOWN effects are never automatically reissued. HostState retains ownership, policy and CAS authority.                                                                                         |
 | Completion       | Select Source, research, artifact or deployment completion by the task's declared outcome. Verified product Source-only completion need not deploy. VIDA self-development still updates the whole qualified runtime before dependent effects. Work completion, installation and human Runtime acceptance remain distinct. |
-| Compatibility    | Preserve current active contracts. Ship the functional artifact repair required by lifecycle policy before changing an active current-v1 schema. Reuse existing libraries and storage owners.                                                                                                                             |
+| Compatibility    | Final-state-only. Do not create transitional v2/v3 successors or long-lived legacy readers. A temporary bundle-owned repair tool may migrate existing active artifacts to the one final schema; ship it before the change, record its removal condition, and delete it and the old reader/schema/fallback after migration. Preserve exact repair evidence and current authorization/CAS boundaries. Reuse existing libraries and storage owners. |
 
 Acceptance covers conditional producer reachability, required inputs and joins,
 restart, child admission and parent results, loop exit/no-progress/exhaustion,
@@ -205,6 +205,19 @@ Actual test execution evidence is assessed separately from a tester's report.
 Audit F04 effective reachability and F05 acceptance remain validation questions;
 the audit alone does not establish reproduced defects. No additional UI, provider
 integration or token/ROI benchmark lane is implied by this engine scope.
+
+### Final-state-only evolution
+
+New behavior targets one final state. Transitional v2/v3 schemas, dual-read
+paths and long-lived legacy support are not added. Existing artifacts may be
+migrated once by a temporary bundle-owned repair operation with exact
+beforeimage, authorization, CAS and recovery; after activation, remove the
+repair tool and the superseded readers/schemas/fallbacks. If a fresher
+successor or replacement exists, delete the legacy path instead of preserving
+it. Migration evidence stays with the work record; it does not become a second
+production reader. This policy governs new evolution. Existing current-v1
+operational contracts remain in force until their final-state repair/adoption
+is qualified; they are not retroactively invalidated by this policy.
 
 ## Initialized project layout and upgrades
 
@@ -2811,6 +2824,10 @@ records typed predecessor/successor relations and releases only the eligible
 old owner's resources and queued intents. Historical phase, evidence, observations and
 pending Runtime acceptance remain intact. A superseded predecessor cannot
 resume; active, reserved or unknown source-writing effects remain guarded.
+Observed terminal read-only predecessor items are judged by the same
+configured completed-read-only capability class used by the completed
+read-only release route, including its exact security-prewriter inspection
+exception; wholly unobserved issued items keep the strict read-only bar.
 Debug corrections carry unfinished predecessor intent and acceptance into the
 successor contract. Status and continuation requests do not create a new request
 group. Functional bundled current-v1 repair, atomic application and recovery
@@ -3503,6 +3520,23 @@ and synthesis normalization path. Undeclared `research_mode`, `answer_only`,
 `save_document` and associated output hints are not supported public scope
 fields. Strict schema validation rejects these fields; the ordinary typed normalization
 path remains the single supported contract.
+
+## Executor model configuration
+
+For an existing `AgentRuntimeConfig/v1` project, `configure plan --project-root ROOT --executor-model MODEL`
+plans a change to `agents.profiles.executor.model`. The plan keeps the existing v1 shape and binds the exact config
+and receipt beforeimages and the target YAML. The target replaces the executor model scalar and preserves all
+other YAML bytes. The operation refuses mixed setup, product, grant and relocation inputs.
+
+`configure apply --project-root ROOT --plan PLAN --executor-model MODEL` and
+`configure resume --project-root ROOT --operation OPERATION --executor-model MODEL` require the exact model
+from the original operation. A missing or changed value, stale binding, unsafe ownership or unrecognized
+afterimage refuses before effects. Recovery rederives the target from the captured beforeimage and reconciles
+the existing pending operation by its original identity. The existing exclusive init/config admission,
+receipt provenance, compare-and-swap and UNKNOWN rules apply.
+
+The configured model becomes the requested model for a future admitted executor action. The actual provider and
+model used by that action require observed launch evidence.
 
 ## Host-present pending-receipt configuration adoption
 

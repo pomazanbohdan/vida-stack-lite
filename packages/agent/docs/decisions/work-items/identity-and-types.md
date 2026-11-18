@@ -2,6 +2,7 @@
 type: Decision Record
 title: Ідентифікація робіт і фіксований каталог типів
 ---
+
 # Ідентифікація робіт і фіксований каталог типів
 
 Статус: затверджено до реалізації з анотаціями. Number наскрізний для типів у продукті; reclassification змінює type prefix. Вкладеність налаштовує продукт generic policy. Source/runtime ще потребують реалізації та доказів.
@@ -9,6 +10,7 @@ title: Ідентифікація робіт і фіксований катал�
 ## Рішення
 
 - Repository prefix і product/project prefix — окремі значення.
+- Користувач підтвердив для чистого init 2026-11-03: repository `VIDA`, Agent `AGENT`, Codex `CODEX`, Powers `POWERS`. Це погоджені display values, а не вже виконана зміна активного cfg або наявних keys.
 - Префікси/коди типів робіт визначає фіксований каталог runtime; продукт не перевизначає їх.
 - Кожен продукт задає тільки enabled types із цього каталогу.
 - Початковий enabled list для Agent, Codex і Powers: `PBI`, `BUG`, `TASK`, як визначено користувачем для цієї ініціалізації.
@@ -26,9 +28,9 @@ title: Ідентифікація робіт і фіксований катал�
 ## Відкриті деталі
 
 - [Затверджений пакет з анотаціями](../configuration/runtime-project-model.md) визначає prefixes, counter, identity та aliases; схема generic product hierarchy уточнюється планом.
-- [Поточна cfg-пропозиція](../configuration/project-config.proposed.yaml) містить обрані початкові enabled lists і hierarchy maps; конкретні prefixes ще потребують підтвердження користувача.
+- [Поточна cfg-пропозиція](../configuration/project-config.proposed.yaml) містить підтверджені prefixes, обрані початкові enabled lists і hierarchy maps. Їх activation має окремий підтримуваний owner.
 - Початкова hierarchy policy для Agent, Codex і Powers — `custom`: `PBI → TASK, BUG; BUG → []; TASK → []`. PBI описує верхньорівневий функціонал, standalone TASK дозволені. BUG є кінцевим елементом за явним уточненням користувача. Кожен продукт зберігає власний map, навіть коли початкові значення однакові.
-- Конкретні prefix values; подальші зміни enabled types та hierarchy є явним налаштуванням продукту.
+- Подальші зміни prefixes, enabled types та hierarchy є явним налаштуванням продукту; наявні keys потребують належного migration owner.
 - Узгодження product enabled types з чинними team-level kinds.
 - Migration existing `task_prefix`, IDs і references без втрати зв’язків.
 
@@ -36,7 +38,7 @@ Topology зберігає нуль/один parent і заборону цикл�
 
 Containment діє в межах продукту, міжпродуктові links є окремими зв’язками. Зміна чинних strict schemas потребує належного migration/repair owner до adoption; цей документ не виконує такої зміни.
 
-## Приклади для погодження
+## Приклади погоджених значень
 
 ```yaml
 repository:
@@ -55,14 +57,14 @@ projects:
           TASK: []
 ```
 
-Prefix values тут ілюстративні; початкові enabled selection та hierarchy погоджені. Product cfg не містить перевизначення type prefix; `allowed_children` задає тільки вкладеність. Код типу надходить із фіксованого runtime catalog.
+Prefix values, початкові enabled selection та hierarchy погоджені користувачем. Product cfg не містить перевизначення type prefix; `allowed_children` задає тільки вкладеність. Код типу надходить із фіксованого runtime catalog. Приклад не є виконаним init.
 
-| Приклад | Тип | Зміст |
-| --- | --- | --- |
-| `VIDA-AGENT-PBI-42` | `PBI` | Продуктовий результат: налаштовувана карта документів |
-| `VIDA-AGENT-BUG-43` | `BUG` | Дочірня робота PBI: loader читає SR іншого продукту |
-| `VIDA-AGENT-TASK-44` | `TASK` | Дочірня робота PBI: реалізувати resolution |
-| `VIDA-AGENT-TASK-45` | `TASK` | Дочірня робота PBI: додати AC/test cases |
+| Приклад               | Тип    | Зміст                                                         |
+| --------------------- | ------ | ------------------------------------------------------------- |
+| `VIDA-AGENT-PBI-42`   | `PBI`  | Продуктовий результат: налаштовувана карта документів         |
+| `VIDA-AGENT-BUG-43`   | `BUG`  | Дочірня робота PBI: loader читає SR іншого продукту           |
+| `VIDA-AGENT-TASK-44`  | `TASK` | Дочірня робота PBI: реалізувати resolution                    |
+| `VIDA-AGENT-TASK-45`  | `TASK` | Дочірня робота PBI: додати AC/test cases                      |
 | `VIDA-POWERS-TASK-42` | `TASK` | Робота Powers; номер не конфліктує за різних product prefixes |
 
 Counter є спільним для типів усередині продукту. Number не змінюється при reclassification. PBI описує результат, TASK — дію, BUG — відхилення; supported catalog належить runtime.

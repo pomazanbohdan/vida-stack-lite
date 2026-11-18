@@ -31,3 +31,7 @@ export {
   type MigrationRebindVerifier,
   type WorkMigrationLineage,
 } from './host-state.js';
+export {
+  suspendCompletedSourceWorkflowWork,
+  type CompletedSourceWorkflowSuspensionInput,
+} from './orchestration/suspend-local-work.js';

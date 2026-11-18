@@ -35,17 +35,9 @@ title: Робота через runtime та цикл виправлень
 
 Task-state re-registration обмежена runtime work state. Source, wiki, канонічні продуктові документи, backups та UNKNOWN мають чинний preservation contract. Окремий [дозвіл на clean init repository](../configuration/clean-init-authorization.md) зберігає свої delivered-version, inventory та backup prerequisites.
 
-C3 Source now contains strict `clean-init plan|inspect|apply|resume|retire`
-routes and the gate-only `.vida` refusal before pending publication. Current
-combined fault/recovery proof closed at1 executed case/28 assertions/0 failures;
-public apply/release/retire closed at1/15/0. Raw JUnit corrects the retained
-Luna25 count. Four older timeouts remain UNKNOWN; Root apply-01/02 remain FAIL;
-Root apply-03/guard-02 remain closed PASS. Root R8, prepared-suite,
-CLI/help/inventory and static checks closed; exact receipts belong to the linked
-Task3 record. Native Code closeout and delivery remain open. Package0.1.9;
-installed runtime0.1.11 is separate. No Task3 delivery or PATCH qualification
-is claimed.
-Follow the [Task 3 implementation record](../../plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner).
+Поточна черга й blocker status належать [канонічному списку задач](../../next-actions.md).
+Source/check/native evidence належать [Task 3 implementation record](../../plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner).
+Це рішення визначає цикл роботи та не дублює поточні версії, counters або статуси задач.
 
 ## Підстави та validation
 

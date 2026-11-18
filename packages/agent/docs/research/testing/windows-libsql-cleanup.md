@@ -1,0 +1,33 @@
+---
+type: Research
+title: Windows LibSQL smoke cleanup — поточні факти та GAP
+---
+# Windows LibSQL smoke cleanup
+
+Статус: PARTIAL. Windows Restart Manager встановив утримувача зареєстрованих DB/WAL/SHM resources: той самий живий Bun-процес після завершення public close. Точний native об'єкт і причина збереження handle залишаються UNKNOWN. Це діагностичний результат на isolated Source base `4261d3742a049ca4a82f24c0c0ae1a0bcd013f35`, Bun1.4.4; повний suite на поточному main не запускався.
+
+## Встановлено
+
+- Помилка `EBUSY: resource busy or locked, rm` виникає під час видалення тимчасових `agent-runtime-new-libsql-*` roots. Stacks вказують на `cleanupLibSqlSmokeResources` у [mastra-boundary.ts](../../../src/orchestration/mastra-boundary.ts) та `removeRetainedLibSqlSmokeRoot` у [runtime-config-yaml.test.ts](../../../tests/runtime-config-yaml.test.ts).
+- `runLibSqlSmoke` уже очікує `first.close()` перед reopen; cleanup уже очікує `owner.store.close()` перед recursive removal. [workspace-database-raw.ts](../../../src/config/workspace-database-raw.ts) зберігає одночасні work/cleanup failures. Додавання ще одного `await` без причинного доказу не є встановленим виправленням.
+- Досліджений dependency stack: `@mastra/libsql`1.26.0, `@libsql/client`0.18.0, `libsql`0.5.29 і Windows native package, за [package manifest](../../../package.json) та [lockfile](../../../bun.lock).
+- Constructor-failure тест містить injected виклик і наступний справжній smoke після відновлення constructor. Retained failure stack вказує на справжній smoke; він не доводить `EBUSY` на порожньому root без DB handle. Окремий bounded probe спостерігав успішне видалення empty constructor root та `EBUSY` після двох awaited real-store close.
+- Pinned close chain: Mastra1.26.0 `LibSQLStore.close()` → @libsql/client0.18.0 `Sqlite3Client.close()` → pool.close() → closeQuietly(db) → libsql0.5.29 `Database.close()` → native databaseClose. Pool закриває idle/borrowed DB; closeQuietly має catch. Сам catch не встановлює причину failure.
+- У R6 спостерігалися4 underlying Database.close на4 DB objects: усі повернулися нормально без throw, JS open:true→false. Hidden-close-error hypothesis для цієї кампанії спростована; JS open:false не доводить завершення всіх native lifetimes.
+- Єдиний R6 rm завершився `EBUSY`. Restart Manager отримав3 окремі resource paths; Start/Register/final List/End codes дорівнюють0, initial List234/Needed1, final Count1. Holder PID29008 і StartedFileTime134381273687611891 точно збігаються з живим campaign Bun. Це attribution одного процесу для registered resource set, не окремого handle або SQLite statement.
+- Root перевірив actual R6 receipt SHA256 `420eda686cc2b1761a0fb62eeb27cbc4572e69f48217bb2008b227c5e9f34011`; prepared inputs не змінилися. Native exit2, signal/spawn error null. Receipt і recovered projection збережено в `.agent/work/runtime-project-model-implementation-20261102/`, raw bytes у `native-close-observation-r6-prepared/` isolated checkout.
+- Попередній query із ListCode6 не є no-holder proof. Виправлений helper має positive control із3 окремими файлами та matching PID/start time. Його контроль і R6 є окремими receipts; попередні FAIL/UNKNOWN не переписувалися.
+- Failed roots, DB/WAL/SHM та raw evidence retained/fenced. Тести/production cleanup owners цим дослідженням не змінювалися; full-suite, release та Runtime acceptance не встановлені.
+- Root відновив upstream знахідку з активності Luna після втрати фінального handoff і перевірив primary source: pinned [database.rs](https://raw.githubusercontent.com/tursodatabase/libsql-js/v0.5.29/src/database.rs) у js_close скидає власне conn; [statement.rs](https://raw.githubusercontent.com/tursodatabase/libsql-js/v0.5.29/src/statement.rs) тримає окремий Arc connection. [Upstream PR236](https://github.com/tursodatabase/libsql-js/pull/236) виправляє retention statements/iterators після close та прямо описує Windows EBUSY. Це source-backed механізм, узгоджений зR6; конкретні retained statement objects нашої кампанії не вимірювалися.
+- Виправлення присутнє в [source v0.6.0-pre.43](https://raw.githubusercontent.com/tursodatabase/libsql-js/v0.6.0-pre.43/src/lib.rs): release_connection закриває tracked resources до скидання connection/database. [Manifest цієї версії](https://raw.githubusercontent.com/tursodatabase/libsql-js/v0.6.0-pre.43/package.json) називає compatibility entry compat.js. Це prerelease candidate, не кваліфіковане оновлення нашого stack; stable fixed dependency не встановлена. npm package page повернула403, registry URL недоступний через web tool; ці маршрути не обходилися. GitHub Latest не перетворює semver prerelease на stable.
+- Compatibility research і Root primary-source check встановили blocker для простого override: [pre43 compat.js](https://raw.githubusercontent.com/tursodatabase/libsql-js/v0.6.0-pre.43/compat.js) не експортує Database.open, тоді як pinned client0.18.0 перевіряє db.open перед close. Його sync повертає replication_index замість потрібного client frame_no. Named Statement APIs наявні, але цього недостатньо для сумісності. Простий manifest override не прийнятий; жодної dependency зміни чи native candidate installation не виконано.
+
+## Невстановлено
+
+Native statements/iterators є встановленим upstream механізмом відкладеного close у pinned source; відповідність конкретним object references нашого R6 лишається inference. Кваліфікація сумісного dependency repair, native regression і Linux/Windows artifact formation ще не виконані. Наявність або відсутність інших holder поза registered set не перевірена.
+
+## Подальша перевірка та межа
+
+Owner: Agent storage adapter та dependency owner; Root інтегрує результат. Public-API compatibility gate для простого pre43 override не пройдено. Bounded owner research не встановило готового portable process-lifetime repair: поточний bounded subprocess helper є test-only, termination request не доводить group closure, а standalone не має готового smoke-child dispatch/resource owner. Process exit також не виправляє public close у довгоживучому процесі; втрату close/error assertions не можна приховати ізоляцією.
+
+Чинний stack і smoke/error-custody contract зберігаються; release qualification лишається відкритим stable-compatible dependency gate. Це стан доказів, а не твердження про відсутність будь-якого нового stable package. Raw owner-options report міститься в `.agent/work/runtime-project-model-implementation-20261102/libsql-smoke-owner-options.md`. Не додавати retry, sleep, GC, vendor patch або неузгоджений backend switch; жодного доступу до retained roots. Повторний Restart Manager campaign не потрібний. Розробка незалежних product-model slices триває; gate не є дозволом оголосити release/runtime PASS.

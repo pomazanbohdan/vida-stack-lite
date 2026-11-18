@@ -2,7 +2,7 @@
  * The corpus audit CLI: one command per report, one option set for every
  * command, and a bounded view of every report by default.
  *
- *   bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [options]
+ *   bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs|instruction-change> [options]
  *
  * The reports are read-only. The converter stays the single writer of the
  * corpus files.
@@ -17,7 +17,9 @@ import { dirname, join, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import {
+  countFindings,
   fidelityReport,
+  instructionChangeReport,
   loadCorpus,
   loadDonorClones,
   mapReport,
@@ -29,7 +31,7 @@ import {
   type Section,
 } from './audit-report.ts';
 
-export type AuditCommand = 'map' | 'pairs' | 'pair-agreement' | 'pair-table' | 'fidelity' | 'specs';
+export type AuditCommand = 'map' | 'pairs' | 'pair-agreement' | 'pair-table' | 'fidelity' | 'specs' | 'instruction-change';
 export type AuditOptions = {
   command: AuditCommand;
   root: string;
@@ -43,14 +45,15 @@ export type AuditOptions = {
   instruction: string | undefined;
   specs: string[];
   specDirs: string[];
+  change: string | undefined;
 };
 export type CliOutput = { stdout: (text: string) => void; stderr: (text: string) => void };
 
-export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'pair-agreement', 'pair-table', 'fidelity', 'specs'];
+export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'pair-agreement', 'pair-table', 'fidelity', 'specs', 'instruction-change'];
 export const DEFAULT_LIMIT = 20;
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const usage = [
-  'usage: audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs> [options]',
+  'usage: audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs|instruction-change> [options]',
   '  --root <dir>        the corpus root (default: the package root)',
   '  --limit <n>         rows per section (default: 20)',
   '  --offset <n>        rows skipped before the first shown row',
@@ -62,6 +65,7 @@ const usage = [
   '  --instruction <id>  limit the fidelity report to one instruction',
   '  --spec <file>       a specification to verify (repeatable)',
   '  --spec-dir <dir>    every specification in <dir> (repeatable)',
+  '  --change <file>     the change-evidence JSON of the instruction-change command',
 ].join('\n');
 
 function invalid(message: string): Error {
@@ -91,6 +95,7 @@ export function parseAuditArgs(argv: string[]): AuditOptions {
     instruction: undefined,
     specs: [],
     specDirs: [],
+    change: undefined,
   };
   for (let index = 1; index < argv.length; index += 1) {
     const flag = argv[index];
@@ -111,7 +116,14 @@ export function parseAuditArgs(argv: string[]): AuditOptions {
     else if (flag === '--instruction') options.instruction = value;
     else if (flag === '--spec') options.specs.push(value);
     else if (flag === '--spec-dir') options.specDirs.push(value);
+    else if (flag === '--change') options.change = value;
     else throw invalid(`unknown flag ${String(flag)}`);
+  }
+  if (options.command === 'instruction-change' && options.change === undefined) {
+    throw invalid('the instruction-change command needs --change <file>');
+  }
+  if (options.command !== 'instruction-change' && options.change !== undefined) {
+    throw invalid('--change is only valid with the instruction-change command');
   }
   return options;
 }
@@ -171,6 +183,10 @@ export function reportJson(report: Report, options: AuditOptions): string {
 
 /** The report of one command, over the corpus of the chosen root. */
 export function buildReport(options: AuditOptions): Report {
+  if (options.command === 'instruction-change') {
+    if (options.change === undefined) throw invalid('the instruction-change command needs --change <file>');
+    return instructionChangeReport(resolve(options.root, options.change));
+  }
   if (options.command === 'specs' && specFiles(options).length === 0) {
     throw invalid('the specs command needs at least one --spec or --spec-dir');
   }
@@ -197,6 +213,7 @@ export function runAuditCli(argv: string[], output: CliOutput): number {
   try {
     const options = parseAuditArgs(argv);
     const report = buildReport(options);
+    const exitCode = options.command === 'instruction-change' && countFindings(report) > 0 ? 1 : 0;
     if (options.out !== undefined) {
       const target = resolve(options.root, options.out);
       const complete = { ...options, summary: false, all: true };
@@ -205,10 +222,10 @@ export function runAuditCli(argv: string[], output: CliOutput): number {
       const summary = { ...options, summary: true };
       output.stdout(options.json ? reportJson(report, summary) : renderReport(report, summary));
       if (!options.json) output.stdout(`the full report is written to ${target}\n`);
-      return 0;
+      return exitCode;
     }
     output.stdout(options.json ? reportJson(report, options) : renderReport(report, options));
-    return 0;
+    return exitCode;
   } catch (error) {
     output.stderr(`${String(error)}\n`);
     return 1;

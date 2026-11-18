@@ -129,6 +129,59 @@ function requestRoleMatchesConfiguredAssignment(config: AgentRuntimeConfig, requ
   );
 }
 
+/** The only configured slot pair allowed to share one caller-reported tool invocation. */
+export function mayShareReadonlySessionInvocation(
+  config: AgentRuntimeConfig,
+  left: MastraLedgerItem,
+  right: MastraLedgerItem,
+  rightObservation: SessionBridgeObservation,
+): boolean {
+  const leftRequest = left.request;
+  const rightRequest = right.request;
+  if (
+    left === right ||
+    left.issue_id === null ||
+    right.issue_id === null ||
+    left.issue_id === right.issue_id ||
+    leftRequest.action_id === rightRequest.action_id ||
+    left.host_reservation ||
+    right.host_reservation ||
+    !requestRoleMatchesConfiguredAssignment(config, leftRequest) ||
+    !requestRoleMatchesConfiguredAssignment(config, rightRequest) ||
+    leftRequest.workflow_id !== 'task_execution' ||
+    rightRequest.workflow_id !== 'task_execution' ||
+    leftRequest.workflow_id !== rightRequest.workflow_id ||
+    leftRequest.run_id !== rightRequest.run_id ||
+    leftRequest.stage_id !== 'validate_focused' ||
+    rightRequest.stage_id !== leftRequest.stage_id ||
+    leftRequest.wave_index !== rightRequest.wave_index ||
+    leftRequest.config_digest !== rightRequest.config_digest ||
+    leftRequest.scope_digest !== rightRequest.scope_digest ||
+    canonicalJsonDigest(leftRequest.configured_context_files ?? []) !==
+      canonicalJsonDigest(rightRequest.configured_context_files ?? []) ||
+    leftRequest.configured_context_digest !== rightRequest.configured_context_digest
+  )
+    return false;
+  if (
+    left.observation?.tool_call_ref !== rightObservation.tool_call_ref ||
+    left.observation?.agent_id !== rightObservation.agent_id
+  )
+    return false;
+  return allowsSharedInvocationForConfiguredSlots(
+    config,
+    {
+      workflow_id: leftRequest.workflow_id,
+      stage_id: leftRequest.stage_id,
+      assignment_index: leftRequest.assignment_index,
+    },
+    {
+      workflow_id: rightRequest.workflow_id,
+      stage_id: rightRequest.stage_id,
+      assignment_index: rightRequest.assignment_index,
+    },
+  );
+}
+
 export interface PersistentSessionHandoffState {
   readonly schema: 'PersistentSessionHandoffState/v1';
   readonly workspace_id: string;
@@ -1382,50 +1435,7 @@ export class MastraSessionLedger {
     right: MastraLedgerItem,
     rightObservation: SessionBridgeObservation,
   ): boolean {
-    const leftRequest = left.request;
-    const rightRequest = right.request;
-    if (
-      left === right ||
-      left.issue_id === null ||
-      right.issue_id === null ||
-      left.issue_id === right.issue_id ||
-      leftRequest.action_id === rightRequest.action_id ||
-      left.host_reservation ||
-      right.host_reservation ||
-      !requestRoleMatchesConfiguredAssignment(this.#config, leftRequest) ||
-      !requestRoleMatchesConfiguredAssignment(this.#config, rightRequest) ||
-      leftRequest.workflow_id !== 'task_execution' ||
-      rightRequest.workflow_id !== 'task_execution' ||
-      leftRequest.workflow_id !== rightRequest.workflow_id ||
-      leftRequest.run_id !== rightRequest.run_id ||
-      leftRequest.stage_id !== 'validate_focused' ||
-      rightRequest.stage_id !== leftRequest.stage_id ||
-      leftRequest.wave_index !== rightRequest.wave_index ||
-      leftRequest.config_digest !== rightRequest.config_digest ||
-      leftRequest.scope_digest !== rightRequest.scope_digest ||
-      canonicalJsonDigest(leftRequest.configured_context_files ?? []) !==
-        canonicalJsonDigest(rightRequest.configured_context_files ?? []) ||
-      leftRequest.configured_context_digest !== rightRequest.configured_context_digest
-    )
-      return false;
-    if (
-      left.observation?.tool_call_ref !== rightObservation.tool_call_ref ||
-      left.observation?.agent_id !== rightObservation.agent_id
-    )
-      return false;
-    return allowsSharedInvocationForConfiguredSlots(
-      this.#config,
-      {
-        workflow_id: leftRequest.workflow_id,
-        stage_id: leftRequest.stage_id,
-        assignment_index: leftRequest.assignment_index,
-      },
-      {
-        workflow_id: rightRequest.workflow_id,
-        stage_id: rightRequest.stage_id,
-        assignment_index: rightRequest.assignment_index,
-      },
-    );
+    return mayShareReadonlySessionInvocation(this.#config, left, right, rightObservation);
   }
   #maintenanceState(): { generation: number; status: string | null } {
     const result = this.#database
@@ -1922,6 +1932,7 @@ export class MastraSessionLedger {
     sourceScope: ScopedSourceSnapshot,
   ): MastraSessionLedgerSnapshot {
     const observation = parseSessionBridgeObservation(supplied);
+    requireState(observation.recovery_reason === undefined, 'Mastra session report cannot carry a recovery marker');
     requireState(!this.#database.inTransaction, 'nested replacement report transaction forbidden');
     return this.#database
       .transaction(() => {
@@ -2331,6 +2342,7 @@ export class MastraSessionLedger {
     observation: SessionBridgeObservation,
     sourceScope: ScopedSourceSnapshot | null = null,
   ): MastraSessionLedgerSnapshot {
+    requireState(observation.recovery_reason === undefined, 'Mastra session report cannot carry a recovery marker');
     const current = this.#read(workId, attempt);
     const recorded =
       current &&

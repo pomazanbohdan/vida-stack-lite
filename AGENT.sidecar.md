@@ -101,6 +101,16 @@ reading and this sidecar do not manufacture them. Preserve authorization,
 one-writer, CAS/lease, no-follow, UNKNOWN and user-acceptance boundaries wherever
 the owning operation requires them.
 
+### Final-state-only development
+
+Build the one final state. Do not add transitional v2/v3 schemas, dual-read
+paths, version matrices or long-lived legacy support. When a fresher successor
+or replacement exists, remove the legacy path instead of preserving it. A
+separate repair tool may migrate existing artifacts only as a temporary aid:
+record its owner, exact beforeimage/recovery and removal condition, then delete
+it and the superseded readers/fallbacks once the final state is active. Do not
+create a new legacy line to avoid the migration.
+
 For Powers use the product commands in `packages/powers/AGENTS.md`. Preserve
 failures outside the assigned scope and all retained test evidence; do not weaken
 gates or run mutation without authority. Code-tooling discovery uses the
@@ -109,6 +119,8 @@ limitation and direct current-source inspection.
 
 Framework instructions stay with their package; project documents and records
 stay project-owned. Initialization preserves this sidecar's project values.
-Before any future current-v1 schema change affecting active artifacts, ship the
-bundle-owned atomic artifact-repair owner required by the existing contract;
-this project-document adoption does not change those active runtime schemas.
+Before any schema change affecting active artifacts, ship the bundle-owned
+atomic artifact-repair owner as a temporary migration aid to the one final
+state. It must not create a v2/v3 legacy line; record its removal condition and
+delete it, the old reader and the fallback after activation. This project-
+document adoption does not change active runtime schemas by itself.

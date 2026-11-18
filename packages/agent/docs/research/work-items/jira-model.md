@@ -2,6 +2,7 @@
 type: Research
 title: Типи робіт і ключі — Jira-модель
 ---
+
 # Типи робіт і ключі: Jira-модель
 
 Статус: поточний результат primary-source research. Дослідник: Luna; повторна перевірка основних публічних джерел: Root. Дата доступу до джерел: 2026-11-02. Видавці: Atlassian, Microsoft; дати публікації Atlassian-сторінок у перевіреному представленні не встановлені.
@@ -26,6 +27,7 @@ Local code pin дослідника: repository `vida-agent`, branch `main`, HEA
 ## Вимоги VIDA
 
 - Репозиторій має свій prefix; продукт має окремий prefix.
+- Для чистого init користувач підтвердив repository `VIDA`, Agent `AGENT`, Codex `CODEX`, Powers `POWERS`. Це погоджені inputs, а не доказ activation чи migration.
 - Коди типів робіт фіксовані у runtime, не перевизначаються продуктом.
 - Продукт вказує перелік enabled types. Потрібно підтримати вибрані типи на кшталт Task, Bug, PBI.
 - Ключ VIDA явно містить тип: `REPO-PRODUCT-TYPE-NUMBER`.
@@ -42,7 +44,7 @@ Local code pin дослідника: repository `vida-agent`, branch `main`, HEA
 
 ## Невирішене
 
-- Конкретні prefix values для фактичної ініціалізації.
+- Підтримуваний setup/adoption підтверджених prefix values у фактичній ініціалізації.
 - Деталі підтриманої migration/repair operation при зміні prefixes чи ownership зі збереженням старих references.
 - Сумісність із поточними team-level kinds та existing `task_prefix`: [runtime paths](../configuration/runtime-paths.md).
 
@@ -50,7 +52,7 @@ Local code pin дослідника: repository `vida-agent`, branch `main`, HEA
 
 Рішення: [ідентифікація і типи](../../decisions/work-items/identity-and-types.md).
 
-Поточні приклади typed keys і погодженого containment наведені в рішенні. Затверджено product counter, stable identity/aliases, single parent без циклів, окремі cross-product links та початкові enabled lists/maps. Prefix values і фактична реалізація/adoption залишаються окремими питаннями; дизайн не є доказом підтримки installed runtime або Jira defaults.
+Поточні приклади typed keys і погодженого containment наведені в рішенні. Затверджено product counter, stable identity/aliases, single parent без циклів, окремі cross-product links та початкові enabled lists/maps. Prefix values підтверджені користувачем; фактична реалізація та adoption залишаються відкритими. Дизайн не є доказом підтримки installed runtime або Jira defaults.
 
 ## Застосовані research-інструкції
 

@@ -230,6 +230,44 @@ test('CLI awaits asynchronous operation before writing output', async () => {
   expect(output).toEqual(['{"status":"completed"}']);
 });
 
+test('configure executor-model option is scoped to plan/apply/resume and exclusive', () => {
+  const root = path.resolve('.');
+  expect(configureArguments(['plan', '--project-root', root, '--executor-model', 'swe-2-flash-medium'])).toEqual({
+    mode: 'plan',
+    executorModel: 'swe-2-flash-medium',
+    projectRoot: root,
+  });
+  expect(
+    configureArguments([
+      'resume',
+      '--project-root',
+      root,
+      '--executor-model',
+      'swe-2-flash-medium',
+      '--operation',
+      `config-${binding}`,
+    ]),
+  ).toEqual({ mode: 'resume', executorModel: 'swe-2-flash-medium', projectRoot: root, operation: `config-${binding}` });
+  expect(configureArguments(['apply', '--project-root', root, '--plan', 'plan.json', '--executor-model', 'm'])).toEqual(
+    { mode: 'apply', projectRoot: root, plan: 'plan.json', executorModel: 'm' },
+  );
+  for (const args of [
+    ['inspect', '--project-root', root, '--executor-model', 'm'],
+    ['plan', '--executor-model', 'm'],
+    ['plan', '--project-root', root, '--executor-model', 'm', '--repository', 'repo'],
+    ['plan', '--project-root', root, '--executor-model', 'm', '--project', 'app=.'],
+    ['plan', '--project-root', root, '--executor-model', 'm', '--allow-project', 'team=app'],
+    ['plan', '--project-root', root, '--executor-model', 'm', '--move-project', 'app=old:new'],
+    ['plan', '--project-root', root, '--executor-model', 'm', '--input', 'setup.json'],
+    ['plan', '--project-root', root, '--executor-model', 'm', '--product-model', 'setup.yaml'],
+    ['resume', '--project-root', root, '--executor-model', 'm'],
+    ['resume', '--project-root', root, '--executor-model', 'm', '--operation', 'op', '--repository', 'repo'],
+    ['apply', '--project-root', root, '--executor-model', 'm'],
+    ['apply', '--project-root', root, '--plan', 'plan.json', '--executor-model', 'm', '--operation', 'op'],
+  ])
+    expect(() => configureArguments(args)).toThrow();
+});
+
 test('configure model arguments preserve mode, grants and moves while refusing mixed forms', () => {
   expect(
     configureArguments([
