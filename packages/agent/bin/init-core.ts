@@ -220,6 +220,26 @@ function expandProjectSet(config: AgentRuntimeConfig, mappings: readonly Project
   };
 }
 
+/** Seed witnessed archived integration and per-project operational facts onto the expanded template. */
+function seedArchivedProjectConfiguration(
+  expanded: AgentRuntimeConfig,
+  archived: AgentRuntimeConfig,
+): AgentRuntimeConfig {
+  const archivedProjects = new Map(archived.projects.map((project) => [project.project_id, project]));
+  if (archivedProjects.size !== archived.projects.length || archivedProjects.size !== expanded.projects.length)
+    throw new Error('Archived initialization configuration project set differs');
+  const projects = expanded.projects.map((project) => {
+    const before = archivedProjects.get(project.project_id);
+    if (before === undefined) throw new Error('Archived initialization configuration project set differs');
+    return {
+      ...project,
+      delivery_group: before.delivery_group,
+      ...(before.path_overrides === undefined ? {} : { path_overrides: structuredClone(before.path_overrides) }),
+    };
+  });
+  return { ...expanded, integrations: structuredClone(archived.integrations), projects };
+}
+
 /** @param {unknown} value @param {string} label */
 function requireCanonicalAbsolute(value: unknown, label: string): asserts value is string {
   if (typeof value !== 'string' || !path.isAbsolute(value) || path.resolve(value) !== value)
@@ -459,23 +479,25 @@ function renderTemplates(
   });
 }
 
-/** @param {RenderedTemplate[]} rendered @param {readonly ProjectMapping[]} selectedProjects @param {InitializationRequest} [request] @param {string} [executorModel] @returns {{ readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig }} */
+/** @param {RenderedTemplate[]} rendered @param {readonly ProjectMapping[]} selectedProjects @param {InitializationRequest} [request] @param {string} [executorModel] @param {AgentRuntimeConfig} [archivedConfig] @returns {{ readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig }} */
 function configureRenderedTemplates(
   rendered: RenderedTemplate[],
   selectedProjects: readonly ProjectMapping[],
   request?: InitializationRequest,
   executorModel?: string,
+  archivedConfig?: AgentRuntimeConfig,
 ): { readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig } {
   const configTemplate = requireEntry(rendered, 2, 'Runtime configuration template');
   const templateConfig = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(configTemplate.content);
   const expanded = expandProjectSet(templateConfig, selectedProjects);
+  const seeded = archivedConfig === undefined ? expanded : seedArchivedProjectConfiguration(expanded, archivedConfig);
   let config = request?.productModel
     ? requireRuntimeModule(runtimeConfig).applyProductModelToRuntimeConfig(
-        expanded,
+        seeded,
         request.productModel,
         request.legacyProjectIdMap === undefined ? {} : { legacy_project_id_map: request.legacyProjectIdMap },
       )
-    : expanded;
+    : seeded;
   if (executorModel !== undefined) {
     const executor = config.agents.profiles['executor'];
     if (executor === undefined) throw new Error('Executor profile is missing');
@@ -805,6 +827,7 @@ function preparePendingInitialization(
   packageAccess: SafeRepositoryAccess,
   preparedResume?: ExactPreparedResumeContext,
   productRequest?: InitializationRequest,
+  archivedConfig?: AgentRuntimeConfig | null,
 ): {
   pendingBytes: Buffer;
   intent: RuntimeInitializationReceipt;
@@ -839,7 +862,13 @@ function preparePendingInitialization(
     throw new Error('Pending initialization intent has no pending workspace binding');
   const rendered = renderTemplates(packageAccess, bundle, repository, selectedProjects, intent.created_at);
   if (preparedResume) applyPreservedOutputs(preparedResume.access, rendered, preparedResume.preserved);
-  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects, productRequest);
+  const { config, validatedConfig } = configureRenderedTemplates(
+    rendered,
+    selectedProjects,
+    productRequest,
+    undefined,
+    archivedConfig ?? undefined,
+  );
   const planned = buildReceipt(
     packageAccess,
     bundle,
@@ -923,6 +952,7 @@ async function resumePendingInitialization(
   assertActive: () => void,
   preparedResume?: ExactPreparedResumeContext,
   productRequest?: InitializationRequest,
+  archivedConfig?: AgentRuntimeConfig | null,
 ): Promise<{ status: string; receipt: string; config_digest: string }> {
   const observation = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(access);
   const { pendingBytes, intent, rawSchema, rendered, existing, existingReceipt } = preparePendingInitialization(
@@ -934,6 +964,7 @@ async function resumePendingInitialization(
     packageAccess,
     preparedResume,
     productRequest,
+    archivedConfig,
   );
   if (existingReceipt) {
     await archivePendingIntent(access, pendingBytes, intent, assertActive);
@@ -1229,6 +1260,7 @@ function renderFreshInitialization(
   createdAt: string,
   preserved: readonly CleanInitializationPreservedFile[] = [],
   executorModel?: string,
+  archivedConfig?: AgentRuntimeConfig,
 ) {
   const startedAt = performance.now();
   const { access, packageAccess, bundle, canonicalRoot, selectedProjects } = context;
@@ -1236,7 +1268,13 @@ function renderFreshInitialization(
   const rendered = renderTemplates(packageAccess, bundle, request.repository, selectedProjects, createdAt);
   reportCleanInitializationPhase('render-templates', startedAt, { output_count: rendered.length });
   applyPreservedOutputs(access, rendered, preserved);
-  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects, request, executorModel);
+  const { config, validatedConfig } = configureRenderedTemplates(
+    rendered,
+    selectedProjects,
+    request,
+    executorModel,
+    archivedConfig,
+  );
   reportCleanInitializationPhase('render-configure', startedAt);
   validateGeneratedBindings(validatedConfig, bundle, request.repository, selectedProjects);
   reportCleanInitializationPhase('render-bindings', startedAt);
@@ -1432,6 +1470,7 @@ function preparedInputs(
   request: CleanInitializationRequest,
   createdAt: string,
   preserved: readonly CleanInitializationPreservedFile[] = [],
+  archivedConfig?: AgentRuntimeConfig | null,
 ): PreparedInitialization {
   if (request.reconcileExisting) throw new Error('Prepared initialization requires a fresh request');
   const context = initializationContext({
@@ -1440,7 +1479,14 @@ function preparedInputs(
     mappings: request.projectMappings,
     bundleRoot: executingPackageRoot,
   });
-  const { receipt } = renderFreshInitialization(request, context, createdAt, preserved, request.executorModel);
+  const { receipt } = renderFreshInitialization(
+    request,
+    context,
+    createdAt,
+    preserved,
+    request.executorModel,
+    archivedConfig ?? undefined,
+  );
   const bindings = preparedInitializationBindings(context, preserved);
   return Object.freeze({ intent: JSON.stringify(receipt, null, 2) + '\n', ...bindings });
 }
@@ -1472,12 +1518,17 @@ function assertPreparedAdmission(proof: InitConfigAdmissionProof, request: Initi
   requireRuntimeModule(storageAdmission).assertInitConfigAdmission(proof, request.projectRoot, workspace);
 }
 
+type CleanInitializationWitness = {
+  readonly bytes: Buffer;
+  readonly archivedConfig: AgentRuntimeConfig | null;
+};
+
 function assertCleanWitness(
   access: SafeRepositoryObservation,
   expectedHash: string,
   request: CleanInitializationRequest,
   expectedPrepared?: PreparedInitialization,
-): Buffer {
+): CleanInitializationWitness {
   if (!/^[a-f0-9]{64}$/u.test(expectedHash)) throw new Error('Invalid clean pending witness');
   const bytes = access.readBytes(
     requireRuntimeModule(projectPaths).CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH,
@@ -1498,7 +1549,7 @@ function assertCleanWitness(
     request.executorModel === undefined &&
     (!expectedPrepared || (expectedPrepared.preserved ?? []).length === 0)
   )
-    return bytes;
+    return { bytes, archivedConfig: null };
   const operationRequest = record.request;
   if (
     record.schema === 'ConsumerCleanInitializationOperation/v2' &&
@@ -1515,19 +1566,22 @@ function assertCleanWitness(
     (operationRequest as Record<string, unknown>).executorModel === request.executorModel &&
     Array.isArray(record.preserved)
   ) {
-    if (request.productModel !== undefined) {
-      const operation = requireRuntimeModule(cleanInitializationCodec).validateCleanInitializationOperationV2(record);
-      const original = operation.inventory.find((entry) => entry.path === 'agent-runtime.config.v1.yaml');
-      const move = operation.moves.find((entry) => entry.source === 'agent-runtime.config.v1.yaml');
-      if (!original || !move || move.state !== 'completed')
-        throw new Error('Product initialization requires the completed original configuration archive');
-      const archived = access.readBytes(move.target, 'archived product configuration witness');
+    const operation = requireRuntimeModule(cleanInitializationCodec).validateCleanInitializationOperationV2(record);
+    const original = operation.inventory.find((entry) => entry.path === 'agent-runtime.config.v1.yaml');
+    const move = operation.moves.find((entry) => entry.source === 'agent-runtime.config.v1.yaml');
+    let archivedConfig: AgentRuntimeConfig | null = null;
+    if (original !== undefined && move !== undefined && move.state === 'completed') {
+      const archived = access.readBytes(move.target, 'archived initialization configuration witness');
       if (archived.length !== original.size || hash(archived) !== original.sha256)
-        throw new Error('Archived product configuration witness changed');
-      const config = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(
+        throw new Error('Archived initialization configuration witness changed');
+      archivedConfig = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(
         new TextDecoder('utf-8', { fatal: true }).decode(archived),
       );
-      const model = requireRuntimeModule(runtimeConfig).productModelForRuntimeConfig(config);
+    }
+    if (request.productModel !== undefined) {
+      if (original === undefined || move === undefined || move.state !== 'completed' || archivedConfig === null)
+        throw new Error('Product initialization requires the completed original configuration archive');
+      const model = requireRuntimeModule(runtimeConfig).productModelForRuntimeConfig(archivedConfig);
       if (
         requireRuntimeModule(publicIngress).canonicalJsonDigest(model ?? null) !==
         requireRuntimeModule(publicIngress).canonicalJsonDigest(request.productModel)
@@ -1540,7 +1594,7 @@ function assertCleanWitness(
       record.prepared === null &&
       record.initialization === 'not-started'
     )
-      return bytes;
+      return { bytes, archivedConfig };
     const stored = record.prepared;
     if (
       expectedPrepared &&
@@ -1558,7 +1612,7 @@ function assertCleanWitness(
         JSON.stringify(expectedPrepared.projectIdentities) &&
       JSON.stringify(record.preserved) === JSON.stringify(expectedPrepared.preserved ?? [])
     )
-      return bytes;
+      return { bytes, archivedConfig };
   }
   throw new Error('Clean initialization pending witness differs');
 }
@@ -1574,7 +1628,8 @@ export function prepareInitializationUnderAdmission(
   const access = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(
     requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(request.projectRoot),
   );
-  const bytes = assertCleanWitness(access, cleanPendingHash, request);
+  const witness = assertCleanWitness(access, cleanPendingHash, request);
+  const bytes = witness.bytes;
   if (access.fileExists(pendingReceiptPath, 'pending initialization intent'))
     throw new Error('Legacy initialization intent already exists');
   const cleanRecord = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)) as {
@@ -1589,10 +1644,10 @@ export function prepareInitializationUnderAdmission(
       throw new Error('Fresh initialization output already exists');
   if (access.fileExists(initializationReceiptPath(), 'initialization receipt'))
     throw new Error('Fresh initialization receipt already exists');
-  const prepared = preparedInputs(request, new Date().toISOString(), preserved);
+  const prepared = preparedInputs(request, new Date().toISOString(), preserved, witness.archivedConfig);
   assertPreparedAdmission(proof, request);
   if (
-    !assertCleanWitness(access, cleanPendingHash, request).equals(bytes) ||
+    !assertCleanWitness(access, cleanPendingHash, request).bytes.equals(bytes) ||
     access.fileExists(pendingReceiptPath, 'pending initialization intent')
   )
     throw new Error('Clean initialization pending witness changed');
@@ -1631,7 +1686,7 @@ export async function finishPreparedInitializationUnderAdmission(
     intent: prepared.intent,
   };
   if (!samePreparedInitialization(beforeRendering, prepared)) throw new Error('Prepared initialization inputs changed');
-  assertCleanWitness(
+  const witness = assertCleanWitness(
     requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(context.access),
     cleanPendingHash,
     request,
@@ -1643,6 +1698,7 @@ export async function finishPreparedInitializationUnderAdmission(
     createdAt,
     prepared.preserved ?? [],
     request.executorModel,
+    witness.archivedConfig ?? undefined,
   );
   const expectedIntent = JSON.stringify(regenerated.receipt, null, 2) + '\n';
   if (expectedIntent !== prepared.intent) throw new Error('Prepared initialization inputs changed');
@@ -1755,6 +1811,7 @@ export async function finishPreparedInitializationUnderAdmission(
     assertCurrent,
     preparedResume,
     request,
+    witness.archivedConfig,
   );
   assertCurrent();
   return result;

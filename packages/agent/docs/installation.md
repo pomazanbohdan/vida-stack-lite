@@ -94,7 +94,10 @@ The repository Source contains strict `clean-init plan|inspect|apply|resume|reti
 routes for the legacy YAML, gate-only contour. `plan` and `apply` accept an
 optional `--executor-model MODEL` scalar that the journaled plan binds and the
 witnessed initializer writes as `agents.profiles.executor.model`; `apply` must
-repeat the exact planned value and `resume`/`retire` take no flag. Publication
+repeat the exact planned value and `resume`/`retire` take no flag. The witnessed
+initializer also restores the archived configuration's integration providers and each
+project's delivery group and path overrides when it regenerates
+`agent-runtime.config.v1.yaml`. Publication
 refuses existing
 `.vida` product data and an absent or unsafe configured Host database file
 before pending state. Check the

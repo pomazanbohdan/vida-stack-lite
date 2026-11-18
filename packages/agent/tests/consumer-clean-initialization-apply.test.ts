@@ -1763,6 +1763,17 @@ test('clean-init applies, witnesses and retires the exact executor model target'
       assertBudget('fixture allocation');
     });
     assertBudget('fixture setup');
+    const archivedConfig = parse(readFileSync(fixture.configPath, 'utf8')) as {
+      integrations: { providers: Array<Record<string, unknown>> };
+      projects: Array<Record<string, unknown>>;
+    };
+    const archivedProvider = archivedConfig.integrations.providers[0]!;
+    archivedProvider.id = 'local-fixture-archived';
+    archivedProvider.namespace = 'fixture-namespace';
+    const archivedProject = archivedConfig.projects[0]!;
+    archivedProject.delivery_group = 'fixture-group';
+    archivedProject.path_overrides = { tests_root: 'packages/agent/tests' };
+    writeFileSync(fixture.configPath, stringify(archivedConfig));
     const model = 'swe-2-flash-medium';
     const plan = (await cleanInitializationResult([
       'plan',
@@ -1802,6 +1813,20 @@ test('clean-init applies, witnesses and retires the exact executor model target'
     expect(applied.operation.request.executorModel).toBe(model);
     const rendered = loadRuntimeConfig(fixture.root);
     expect(rendered.agents.profiles['executor']?.model).toBe(model);
+    expect(rendered.agents.profiles['architect']?.model).toBe('gpt-6-luna');
+    expect(rendered.agents.profiles['researcher']?.model).toBe('gpt-6-luna');
+    expect(rendered.integrations.providers).toEqual([
+      {
+        id: 'local-fixture-archived',
+        provider: 'local',
+        project_id: 'fixture',
+        tenant_id: 'local',
+        namespace: 'fixture-namespace',
+      },
+    ]);
+    const renderedProject = rendered.projects.find((entry) => entry.project_id === 'fixture');
+    expect(renderedProject?.delivery_group).toBe('fixture-group');
+    expect(renderedProject?.path_overrides).toEqual({ tests_root: 'packages/agent/tests' });
     const receiptPath = path.join(fixture.root, '.agent/runtime-initialization.v1.json');
     expect(existsSync(receiptPath)).toBe(true);
     const receipt = JSON.parse(readFileSync(receiptPath, 'utf8')) as { config_digest?: string };
@@ -1823,7 +1848,12 @@ test('clean-init applies, witnesses and retires the exact executor model target'
     ])) as { status: string };
     assertBudget('retire');
     expect(retired.status).toBe('retired');
-    expect(loadRuntimeConfig(fixture.root).agents.profiles['executor']?.model).toBe(model);
+    const retiredConfig = loadRuntimeConfig(fixture.root);
+    expect(retiredConfig.agents.profiles['executor']?.model).toBe(model);
+    expect(retiredConfig.integrations.providers).toEqual(rendered.integrations.providers);
+    expect(retiredConfig.projects.find((entry) => entry.project_id === 'fixture')?.delivery_group).toBe(
+      'fixture-group',
+    );
   } catch (error) {
     failed = true;
     failure = error;
