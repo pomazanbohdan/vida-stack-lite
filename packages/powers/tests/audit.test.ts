@@ -18,6 +18,7 @@ import {
   buildDonorIndex,
   carrierOf,
   fidelityReport,
+  findingSeverityReport,
   loadCorpus,
   loadDonorClones,
   mapReport,
@@ -1093,6 +1094,113 @@ describe('the instruction-change report', () => {
 
   test('needs --change for the instruction-change command', () => {
     expect(() => buildReport(options({ command: 'instruction-change' }))).toThrow('needs --change');
+  });
+});
+
+describe('the finding-severity report', () => {
+  const severityBody = '# T\n\n## Findings by severity\n### Critical (n)\n**[Category]** — Title\n### Important (n) / Minor (n)\n**[Category]** — Title\n';
+
+  function counter(report: ReturnType<typeof findingSeverityReport>, label: string): string | undefined {
+    return report.counters.find((entry) => entry.label === label)?.value;
+  }
+
+  function rows(report: ReturnType<typeof findingSeverityReport>, name: string): string[] {
+    return report.sections.find((section) => section.name === name)?.rows ?? [];
+  }
+
+  test('reports the canonical buckets of an explicit Findings by severity section', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: severityBody })]);
+    const report = findingSeverityReport(corpus.root);
+    expect(report.command).toBe('finding-severity');
+    expect(counter(report, 'instruction files scanned')).toBe('1');
+    expect(counter(report, 'findings-by-severity sections')).toBe('1');
+    expect(counter(report, 'severity buckets')).toBe('3');
+    expect(counter(report, 'findings')).toBe('0');
+    expect(rows(report, 'section')).toEqual(['instructions/instruction-0.md:25']);
+    expect(rows(report, 'severity-bucket')).toEqual([
+      'instructions/instruction-0.md:26 | Critical declared=n',
+      'instructions/instruction-0.md:28 | Important declared=n',
+      'instructions/instruction-0.md:28 | Minor declared=n',
+    ]);
+    expect(rows(report, 'noncanonical-heading')).toEqual([]);
+  });
+
+  test('reports a noncanonical severity heading with its exact path and line', async () => {
+    const body = '# T\n\n## Findings by severity\n### High (n)\ntext\n### Critical\ntext\n';
+    const corpus = await fixture([instruction({ id: 'instruction-0', body })]);
+    const report = findingSeverityReport(corpus.root);
+    expect(rows(report, 'noncanonical-heading')).toEqual([
+      'instructions/instruction-0.md:26 | High (n)',
+      'instructions/instruction-0.md:28 | Critical',
+    ]);
+    expect(counter(report, 'severity buckets')).toBe('0');
+    expect(counter(report, 'findings')).toBe('2');
+    const run = runAuditCli(['finding-severity', '--root', corpus.root], { stdout: () => {}, stderr: () => {} });
+    expect(run).toBe(0);
+  });
+
+  test('ignores severity vocabulary outside the explicit section', async () => {
+    const body = '# T\n\n**Severity:** High\nRisk on every ticket: low, medium, or high\n\n'
+      + '### Critical (n)\nA stray bucket heading.\n\n## Findings\n### Minor (n)\nA different section.\n';
+    const corpus = await fixture([instruction({ id: 'instruction-0', body })]);
+    const report = findingSeverityReport(corpus.root);
+    expect(counter(report, 'findings-by-severity sections')).toBe('0');
+    expect(counter(report, 'severity buckets')).toBe('0');
+    expect(counter(report, 'findings')).toBe('0');
+  });
+
+  test('counts a section without explicit bucket frames as coverage only', async () => {
+    const corpus = await fixture([
+      instruction({ id: 'instruction-0', body: '# T\n\n## Findings by severity\nFindings are grouped below.\n' }),
+      instruction({ id: 'instruction-1', body: '# U\n\nNo severity section here.\n' }),
+    ]);
+    const report = findingSeverityReport(corpus.root);
+    expect(counter(report, 'instruction files scanned')).toBe('2');
+    expect(counter(report, 'findings-by-severity sections')).toBe('1');
+    expect(counter(report, 'severity buckets')).toBe('0');
+    expect(counter(report, 'findings')).toBe('0');
+  });
+
+  test('reads v3-family instruction files that loadCorpus rejects', async () => {
+    const source = instruction({ id: 'family-alpha', body: severityBody })
+      .replace('---\n', '---\nschema: VPInstruction/v3\n');
+    const corpus = await fixture([source]);
+    expect(() => loadCorpus(corpus.root)).toThrow('audit-report does not support VPInstruction/v3');
+    const report = findingSeverityReport(corpus.root);
+    expect(counter(report, 'severity buckets')).toBe('3');
+    expect(rows(report, 'noncanonical-heading')).toEqual([]);
+  });
+
+  test('skips headings inside fenced code blocks', async () => {
+    const body = '# T\n\n```markdown\n## Findings by severity\n### Critical (n)\n```\n\n## Findings by severity\n### Minor (3)\n';
+    const corpus = await fixture([instruction({ id: 'instruction-0', body })]);
+    const report = findingSeverityReport(corpus.root);
+    expect(counter(report, 'findings-by-severity sections')).toBe('1');
+    expect(rows(report, 'severity-bucket')).toEqual(['instructions/instruction-0.md:31 | Minor declared=3']);
+  });
+
+  test('the real CLI entry runs the command, rejects bad arguments and reads the live corpus', async () => {
+    const corpus = await fixture([instruction({ id: 'instruction-0', body: severityBody })]);
+    const script = fileURLToPath(new URL('../scripts/audit.ts', import.meta.url));
+
+    const valid = Bun.spawnSync([process.execPath, script, 'finding-severity', '--root', corpus.root]);
+    expect(valid.exitCode).toBe(0);
+    const output = valid.stdout.toString();
+    expect(output).toContain('== audit finding-severity ==');
+    expect(output).toContain('Critical declared=n');
+    expect(output).toContain('Minor declared=n');
+
+    const invalid = Bun.spawnSync([process.execPath, script, 'finding-severity', '--root', corpus.root, '--bogus', 'x']);
+    expect(invalid.exitCode).toBe(1);
+    expect(invalid.stderr.toString()).toContain('AUDIT_ARGUMENT_INVALID');
+
+    const live = Bun.spawnSync([process.execPath, script, 'finding-severity']);
+    expect(live.exitCode).toBe(0);
+    const liveOutput = live.stdout.toString();
+    expect(liveOutput).toContain('consolidate-the-review-into-one-report.md');
+    expect(liveOutput).toContain('Critical declared=n');
+    expect(liveOutput).toContain('Important declared=n');
+    expect(liveOutput).toContain('Minor declared=n');
   });
 });
 

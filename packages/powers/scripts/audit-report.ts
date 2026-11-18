@@ -11,6 +11,7 @@
  *   - pairs:    an opposing pair is declared mutually and carries a theme tag (D12)
  *   - fidelity: an instruction body carries the donor's own text (D11)
  *   - specs:    a repair specification is consistent with the corpus (D11, D13)
+ *   - finding-severity: an explicit Findings by severity section uses the D13 buckets (D13)
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
@@ -781,6 +782,111 @@ export function instructionChangeReport(file: string): Report {
       { name: 'problem', kind: 'finding', rows: parsed.problems.sort() },
       { name: 'evidence', kind: 'info', rows: evidenceRows },
       { name: 'required-gate', kind: 'info', rows: gates },
+    ],
+  };
+  report.counters.push({ label: 'findings', value: String(countFindings(report)) });
+  return report;
+}
+
+/**
+ * The finding-severity scan (D13, SR-78, AC-44).
+ *
+ * One supported shape: an explicit `Findings by severity` section whose
+ * immediate subheadings are severity buckets — `Critical (n)`,
+ * `Important (n)`, `Minor (n)`, or the combined
+ * `Important (n) / Minor (n)` form. The scan enumerates the instruction
+ * Markdown files directly, so v3 instruction families stay readable; it
+ * never loads frontmatter schemas and never matches severity vocabulary
+ * outside the explicit section. Every other immediate subheading inside
+ * the section is a noncanonical heading, reported with its exact path and
+ * line. Risk, effort, status and donor `Severity:` fields are different
+ * scales and stay outside this gate; the `(n)` counts are the declared
+ * counts of the document, not verified totals. Headings inside fenced
+ * code blocks are not markup and are skipped.
+ */
+const HEADING_PATTERN = /^(#{1,6})[ \t]+(.+?)[ \t]*$/;
+const FENCE_PATTERN = /^[ \t]*(`{3,}|~{3,})/;
+const SEVERITY_SECTION_TITLE = 'findings by severity';
+const SEVERITY_BUCKET_PATTERN = /^(Critical|Important|Minor)\s*\(\s*(n|\d+)\s*\)$/i;
+const SEVERITY_LABELS: Record<string, string> = { critical: 'Critical', important: 'Important', minor: 'Minor' };
+
+type SeverityHeading = { line: number; level: number; text: string };
+
+function instructionHeadings(lines: string[]): SeverityHeading[] {
+  const headings: SeverityHeading[] = [];
+  let fence: { marker: string; length: number } | undefined;
+  for (const [index, raw] of lines.entries()) {
+    const fenceMatch = FENCE_PATTERN.exec(raw);
+    if (fence !== undefined) {
+      const run = fenceMatch?.[1] ?? '';
+      if (run.startsWith(fence.marker) && run.length >= fence.length) fence = undefined;
+      continue;
+    }
+    if (fenceMatch !== null) {
+      const run = fenceMatch[1] ?? '';
+      fence = { marker: run[0] ?? '`', length: run.length };
+      continue;
+    }
+    const heading = HEADING_PATTERN.exec(raw);
+    if (heading === null) continue;
+    const text = (heading[2] ?? '').replace(/[ \t]+#+[ \t]*$/, '').trim();
+    headings.push({ line: index + 1, level: (heading[1] ?? '').length, text });
+  }
+  return headings;
+}
+
+/** The report of the explicit Findings by severity sections of the corpus. */
+export function findingSeverityReport(root: string): Report {
+  const instructionsRoot = join(root, 'instructions');
+  const files = readdirSync(instructionsRoot).filter((name) => name.endsWith('.md')).sort();
+  const sectionRows: string[] = [];
+  const bucketRows: string[] = [];
+  const noncanonicalRows: string[] = [];
+  let sectionCount = 0;
+  let bucketCount = 0;
+  for (const file of files) {
+    const headings = instructionHeadings(readFileSync(join(instructionsRoot, file), 'utf8').split('\n'));
+    for (const [index, heading] of headings.entries()) {
+      if (heading.text.toLowerCase() !== SEVERITY_SECTION_TITLE) continue;
+      sectionCount += 1;
+      sectionRows.push(`instructions/${file}:${String(heading.line)}`);
+      let end = headings.length;
+      for (let next = index + 1; next < headings.length; next += 1) {
+        if ((headings[next] as SeverityHeading).level <= heading.level) { end = next; break; }
+      }
+      for (let next = index + 1; next < end; next += 1) {
+        const bucket = headings[next] as SeverityHeading;
+        if (bucket.level !== heading.level + 1) continue;
+        const buckets: { label: string; declared: string }[] = [];
+        let canonical = true;
+        for (const segment of bucket.text.split('/')) {
+          const match = SEVERITY_BUCKET_PATTERN.exec(segment.trim());
+          const label = match === null ? undefined : SEVERITY_LABELS[(match[1] ?? '').toLowerCase()];
+          if (match === null || label === undefined) { canonical = false; break; }
+          buckets.push({ label, declared: match[2] ?? '' });
+        }
+        if (!canonical) {
+          noncanonicalRows.push(`instructions/${file}:${String(bucket.line)} | ${bucket.text}`);
+          continue;
+        }
+        for (const entry of buckets) {
+          bucketCount += 1;
+          bucketRows.push(`instructions/${file}:${String(bucket.line)} | ${entry.label} declared=${entry.declared}`);
+        }
+      }
+    }
+  }
+  const report: Report = {
+    command: 'finding-severity',
+    counters: [
+      { label: 'instruction files scanned', value: String(files.length) },
+      { label: 'findings-by-severity sections', value: String(sectionCount) },
+      { label: 'severity buckets', value: String(bucketCount) },
+    ],
+    sections: [
+      { name: 'section', kind: 'info', rows: sectionRows },
+      { name: 'severity-bucket', kind: 'info', rows: bucketRows },
+      { name: 'noncanonical-heading', kind: 'finding', rows: noncanonicalRows },
     ],
   };
   report.counters.push({ label: 'findings', value: String(countFindings(report)) });

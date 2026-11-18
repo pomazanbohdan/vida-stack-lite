@@ -151,6 +151,18 @@ test('a supplied registry cannot approve a new decision type for algorithm deleg
   expect(result).toMatchObject({ kind: 'excluded', decisionType: type, scope: customScope, reason: `decision type is not approved for algorithm delegation: ${type}` });
 });
 
+test('a supplied registry can explicitly exclude a canonically allowed decision before preference reads', async () => {
+  const root = await tempRoot('vp-delegation-');
+  const reason = 'H1 delegation paused by the supplied registry.';
+  const registry = initialDecisionTypeRegistry.map(entry => entry.decisionType === decisionType
+    ? { ...entry, algorithmAllowed: false, exclusionReason: reason }
+    : entry);
+  const missingPreference: ArtifactRef = { path: 'prefs/missing.json', sha256: '0'.repeat(64) };
+  const result = await evaluateHumanLoopDecision(request(root, { registry, preferenceRefs: [missingPreference] }));
+  expect(result).toMatchObject({ kind: 'excluded', decisionType, scope, reason });
+  expect(await evaluateAlgorithmDispatch(root, result, algorithm, 'h1-decision-1')).toMatchObject({ kind: 'owner-action', reason });
+});
+
 test('forged or tampered preference artifacts are rejected', async () => {
   const root = await tempRoot('vp-delegation-');
   const ref = await preferenceRef(root, preferenceRecord());

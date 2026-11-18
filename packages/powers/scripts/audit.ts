@@ -2,7 +2,7 @@
  * The corpus audit CLI: one command per report, one option set for every
  * command, and a bounded view of every report by default.
  *
- *   bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs|instruction-change> [options]
+ *   bun packages/powers/scripts/audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs|instruction-change|finding-severity> [options]
  *
  * The reports are read-only. The converter stays the single writer of the
  * corpus files.
@@ -19,6 +19,7 @@ import { fileURLToPath } from 'node:url';
 import {
   countFindings,
   fidelityReport,
+  findingSeverityReport,
   instructionChangeReport,
   loadCorpus,
   loadDonorClones,
@@ -31,7 +32,7 @@ import {
   type Section,
 } from './audit-report.ts';
 
-export type AuditCommand = 'map' | 'pairs' | 'pair-agreement' | 'pair-table' | 'fidelity' | 'specs' | 'instruction-change';
+export type AuditCommand = 'map' | 'pairs' | 'pair-agreement' | 'pair-table' | 'fidelity' | 'specs' | 'instruction-change' | 'finding-severity';
 export type AuditOptions = {
   command: AuditCommand;
   root: string;
@@ -49,11 +50,11 @@ export type AuditOptions = {
 };
 export type CliOutput = { stdout: (text: string) => void; stderr: (text: string) => void };
 
-export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'pair-agreement', 'pair-table', 'fidelity', 'specs', 'instruction-change'];
+export const AUDIT_COMMANDS: AuditCommand[] = ['map', 'pairs', 'pair-agreement', 'pair-table', 'fidelity', 'specs', 'instruction-change', 'finding-severity'];
 export const DEFAULT_LIMIT = 20;
 const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const usage = [
-  'usage: audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs|instruction-change> [options]',
+  'usage: audit.ts <map|pairs|pair-agreement|pair-table|fidelity|specs|instruction-change|finding-severity> [options]',
   '  --root <dir>        the corpus root (default: the package root)',
   '  --limit <n>         rows per section (default: 20)',
   '  --offset <n>        rows skipped before the first shown row',
@@ -187,6 +188,7 @@ export function buildReport(options: AuditOptions): Report {
     if (options.change === undefined) throw invalid('the instruction-change command needs --change <file>');
     return instructionChangeReport(resolve(options.root, options.change));
   }
+  if (options.command === 'finding-severity') return findingSeverityReport(options.root);
   if (options.command === 'specs' && specFiles(options).length === 0) {
     throw invalid('the specs command needs at least one --spec or --spec-dir');
   }
