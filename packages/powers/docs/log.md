@@ -53,9 +53,39 @@
   AC-52/AC-54/AC-55 evidence to H3-A–H3-L (324 records, catalog
   rev 8067); statuses stay `verified (component)`. 167 deferred
   `colors.csv` rows and wave sizes 50/50/50/17 unchanged. The H3-L
-  product changes remain uncommitted at HEAD `99c0c1f9`; commit and
-  integration are Root-owned. This is component evidence — not
+  product changes were uncommitted at HEAD `99c0c1f9` at that
+  writing; the H3-L commit `efb62665` is now observed and further
+  integration is Root-owned. This is component evidence — not
   delivery or Runtime acceptance.
+* **Docs refresh — remaining-work authority (docs only; no approval):**
+  `docs/next-actions.md` revision 54 adds the dated remaining-work
+  authority section and reconciles current queue wording. It records
+  the technically closed P0 gate, owner-accepted H2 (1,434 rows
+  dispositioned), owner-accepted H3-A–H3-L (`styles.csv` 88/88), the
+  staged-only H3-M `colors.csv` rows 26–75 candidate pending owner
+  acceptance/CAS apply (assigned executor implements; Root owns
+  integration/commit), and the still-open host/delivery/publication/
+  Runtime plus external Knip gates. The queue now carries dedicated
+  rows for D-S8-4 (owner choice of live host-session evidence, a
+  second physical host/OS or OS evidence, or an explicit reduced
+  scope; only one Windows host with four local/CLI paths to date)
+  and D-S8-5 (formal package receipt bound to stable release inputs
+  with applicable check coverage and explicit Knip classification;
+  the P0-r2 suite 1,115/5/0 is a distinct witness). It removes the
+  duplicate conditional catch-all and the duplicate marketplace
+  external row (publication stays with the delivery owner-inputs
+  row), corrects F/AC-22 to component mechanical replay only with
+  real event/semantic evidence still open, distinguishes Wondelai H1
+  sign-off from the separate D58 AC-84/AC-85 goal, notes S/M/L are
+  relative planning estimates and owner-decision rows are deferred
+  rather than executable today, and records the observed H3-L commit
+  `efb62665`. It also records the live Wondelai map recount (421
+  file entries, 56 split to 749 unique instruction IDs, 365
+  rejected, zero pending selection) and marks older
+  25-file/297-instruction and selected-text wording historical. Live
+  catalog/map remain rev 8,067/5,786; no source/catalog/map/test/
+  acceptance/sidecar/archive change, no H3-M apply, no commit and no
+  Runtime claim.
 
 ## 2026-11-17
 
