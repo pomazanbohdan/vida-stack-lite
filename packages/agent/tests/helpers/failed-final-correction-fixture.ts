@@ -80,6 +80,7 @@ export interface FailedFinalCorrectionFixture {
 interface FailedFinalCorrectionFixtureOptions {
   readonly capturePlanningTrace?: boolean;
   readonly preparationInputs?: false;
+  readonly stopAfterDeliveryIssue?: boolean;
   readonly noEffectRetry?: 'same-slot' | 'next-writer' | 'two-slots';
   readonly noEffectRetries?: number;
   readonly verifyNoEffectReport?: (input: {
@@ -814,23 +815,24 @@ export async function createFailedFinalCorrectionFixture(
           throw new Error('Expected the configured single delivery proposal wave after tester completion');
         const delivery = journal.state.items[0],
           deliveryEvidence = 'local://fixture/synthetic-delivery-proposal';
-        await reportFocused(
-          delivery,
-          JSON.stringify({
-            schema: 'VidaDeliveryProposal/v1',
-            created: [],
-            modified: ['AGENT.sidecar.md'],
-            deploy: ['AGENT.sidecar.md'],
-            do_not_deploy: [],
-            destination: 'isolated-fixture',
-            order: ['AGENT.sidecar.md'],
-            post_deployment_checks: ['Synthetic caller proposal only; no deployment or Runtime acceptance.'],
-            evidence_refs: [deliveryEvidence],
-          }),
-          'reported_complete',
-          deliveryEvidence,
-          'fixture:synthetic-delivery-proposal',
-        );
+        if (!options?.stopAfterDeliveryIssue)
+          await reportFocused(
+            delivery,
+            JSON.stringify({
+              schema: 'VidaDeliveryProposal/v1',
+              created: [],
+              modified: ['AGENT.sidecar.md'],
+              deploy: ['AGENT.sidecar.md'],
+              do_not_deploy: [],
+              destination: 'isolated-fixture',
+              order: ['AGENT.sidecar.md'],
+              post_deployment_checks: ['Synthetic caller proposal only; no deployment or Runtime acceptance.'],
+              evidence_refs: [deliveryEvidence],
+            }),
+            'reported_complete',
+            deliveryEvidence,
+            'fixture:synthetic-delivery-proposal',
+          );
       }
     }
     await bridge.close();

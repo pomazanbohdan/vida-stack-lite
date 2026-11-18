@@ -10210,6 +10210,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
           }
           if (
             issued &&
+            observation.status === 'reported_complete' &&
             activeWorkflow.stages.find((stage) => stage.id === issued.request.stage_id)?.kind === 'deliver'
           ) {
             const { parseObservedDeliveryProposal } = await import('../src/orchestration/observed-delivery.ts');

@@ -16065,6 +16065,118 @@ if (mutationMode || v8CoverageMode || nativeCoverageMode) {
   );
 }
 
+test('persists a terminal failed delivery report without delivery preparation', async () => {
+  let fixture: Omit<FailedFinalCorrectionFixture, 'preparationPath'> | undefined;
+  let completed = false;
+  try {
+    fixture = await createFailedFinalCorrectionFixture('passing', {
+      preparationInputs: false,
+      stopAfterDeliveryIssue: true,
+    });
+    const delivery = fixture.journal.state.items.find((item) => item.request.stage_id === 'prepare_delivery');
+    assert.ok(delivery?.issue_id);
+    expect(delivery.observation).toBeNull();
+    const work = fixture.store.readHostStateSnapshot(fixture.identity).work;
+    assert.ok(work);
+    const projectId = fixture.identity.project_ids[0];
+    assert.ok(projectId);
+    const runArgs = [
+      '--project-root',
+      fixture.root,
+      '--repository',
+      fixture.config.repository.repository_id,
+      '--project',
+      projectId,
+      '--work-path',
+      'AGENT.sidecar.md',
+      '--work-id',
+      fixture.identity.work_id,
+      '--attempt',
+      '1',
+      '--scope-digest',
+      work.binding.work_source_revision,
+      '--team',
+      fixture.producerInput.selection.team,
+      '--kind',
+      fixture.producerInput.selection.kind,
+      '--intent',
+      fixture.producerInput.selection.intent,
+      '--workflow',
+      fixture.producerInput.workflowId,
+    ];
+    const reportPath = path.join(
+      fixture.root,
+      '.agent',
+      'work',
+      fixture.identity.work_id,
+      'failed-delivery-report.json',
+    );
+    const summary = 'Terminal delivery GAP: fixture stopped before delivery instruction.';
+    const observation: SessionBridgeObservation = {
+      schema: 'VidaSessionObservation/v1',
+      action_id: delivery.request.action_id,
+      issue_id: delivery.issue_id,
+      agent_id: 'fixture:failed-delivery-report',
+      tool_call_ref: 'fixture:failed-delivery-report',
+      status: 'reported_failed',
+      summary,
+      output_digest: canonicalJsonDigest(summary),
+      evidence_refs: ['local://fixture/failed-delivery-gap'],
+    };
+    writeFileSync(reportPath, JSON.stringify(observation));
+    const hostBefore = fixture.store.readHostStateSnapshot(fixture.identity);
+    const reportArgs = [
+      ...runArgs,
+      '--report',
+      reportPath,
+      '--expected-revision',
+      String(fixture.journal.version.revision),
+      '--expected-digest',
+      fixture.journal.version.digest,
+    ];
+    const reported = requireRecord(await run(reportArgs), 'terminal failed delivery report');
+    expect(reported).toMatchObject({
+      status: 'reported',
+      resume_status: 'blocked',
+      delivery_instruction: null,
+      delivery_evidence: null,
+    });
+    expect(reported.issued_actions).toEqual([]);
+    expect(reported.next_actions).toEqual([]);
+    const blockedJournal = fixture.ledger.resume(fixture.identity.work_id, 1);
+    assert.ok(blockedJournal);
+    expect(blockedJournal.resume_status).toBe('blocked');
+    expect(blockedJournal.version).not.toEqual(fixture.journal.version);
+    const persisted = blockedJournal.state.items.find((item) => item.request.action_id === delivery.request.action_id);
+    expect(persisted?.issue_id).toBe(delivery.issue_id);
+    expect(persisted?.observation).toEqual(observation);
+    expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(hostBefore);
+    const replay = requireRecord(await run(reportArgs), 'exact failed delivery report replay');
+    expect(replay).toMatchObject({
+      status: 'report_retrieved',
+      resume_status: 'blocked',
+      state_version: blockedJournal.version,
+      recorded_observation: observation,
+    });
+    expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(blockedJournal);
+    expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(hostBefore);
+    const fresh = requireRecord(await run(runArgs), 'post-failure public run');
+    expect(fresh).toMatchObject({
+      resume_status: 'blocked',
+      state_version: blockedJournal.version,
+      delivery_instruction: null,
+      delivery_evidence: null,
+    });
+    expect(fresh.issued_actions).toEqual([]);
+    expect(fresh.next_actions).toEqual([]);
+    expect(fixture.ledger.resume(fixture.identity.work_id, 1)).toEqual(blockedJournal);
+    expect(fixture.store.readHostStateSnapshot(fixture.identity)).toEqual(hostBefore);
+    completed = true;
+  } finally {
+    fixture?.close(completed);
+  }
+}, 90_000);
+
 test('failed prewriter owner recovery rejects non-string arguments before repository access', () => {
   const cases: unknown[][] = [
     ['--mode', null, '--project-root', '/unused', '--request', 'request.json'],

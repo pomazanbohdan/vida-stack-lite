@@ -47,6 +47,7 @@ export interface ConsumerCleanInitializationOperationV2 {
     readonly repository: string;
     readonly projectMappings: readonly string[];
     readonly reconcileExisting?: false;
+    readonly executorModel?: string;
   };
   readonly runtime: { readonly version: string; readonly bundle_identity: string; readonly resource_digest: string };
   readonly archive_root: string;
@@ -194,6 +195,11 @@ function checkSemantics(record: ConsumerCleanInitializationOperationV2): void {
   lexicalRoot(record.root);
   if (record.root !== record.request.projectRoot || !/^[a-z0-9][a-z0-9-]{0,63}$/u.test(record.request.repository))
     fail('request identity');
+  if (
+    record.request.executorModel !== undefined &&
+    !/^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/u.test(record.request.executorModel)
+  )
+    fail('executor model');
   const mappings = projectMappings(record.request.projectMappings);
   const expectedArchiveRoot = `.agent/clean-initialization-history/${record.operation_id}/payload`;
   if (record.archive_root !== expectedArchiveRoot) fail('archive root');

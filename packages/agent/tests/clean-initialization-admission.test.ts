@@ -1,6 +1,17 @@
 import { expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import {
@@ -27,6 +38,7 @@ import {
 } from '../src/config/storage-read-admission.ts';
 import type { InitConfigAdmissionProof } from '../src/config/storage-read-admission.ts';
 import { sealCleanInitializationOperation } from '../bin/consumer-clean-initialization.ts';
+import { initializeProject } from '../bin/init.ts';
 import {
   decodeCleanInitializationOperationV2,
   sealCleanInitializationOperationV2,
@@ -921,4 +933,34 @@ test('effect locks refuse forged and expired proofs without effects', async () =
     expectSameBytes(readFileSync(file), bytes);
     expect(agentEntries(root)).toEqual(entriesBefore);
   });
+});
+
+test('ordinary initializeProject refuses executorModel before any project file effects', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'clean-init-executor-model-'));
+  let passed = false;
+  try {
+    const entriesBefore = readdirSync(root).sort();
+    const request = {
+      projectRoot: root,
+      repository: 'clean-init-executor-boundary',
+      projectMappings: ['executor-boundary=.'],
+      executorModel: 'swe-2-flash-medium',
+    };
+    let failure: unknown;
+    try {
+      await initializeProject(request);
+    } catch (error) {
+      failure = error;
+    }
+    if (!(failure instanceof Error)) throw new Error('Expected initializeProject to reject executorModel');
+    expect(failure.message).toBe('Executor model requires a witnessed clean initialization');
+    expect(readdirSync(root).sort()).toEqual(entriesBefore);
+    expect(existsSync(path.join(root, 'agent-runtime.config.v1.yaml'))).toBe(false);
+    expect(existsSync(path.join(root, '.agent'))).toBe(false);
+    expect(existsSync(path.join(root, '.vida'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error('Retained failed clean-init executor-model fixture: ' + root);
+  }
 });

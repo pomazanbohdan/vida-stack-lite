@@ -70,9 +70,11 @@ export const cliCommandContracts = freezeCliDeclaration({
       { name: '--operation-id', arity: 1, type: 'operation-id', requiredIn: 'apply|resume|retire' },
       { name: '--approve-plan', arity: 1, type: 'sha256-binding', requiredIn: 'apply|resume|retire' },
       { name: '--pending-sha256', arity: 1, type: 'sha256-pending-bytes', requiredIn: 'resume|retire' },
+      { name: '--executor-model', arity: 1, type: 'executor-model-id' },
     ],
     constraints: [
       'plan requires --project-root, --repository and one or more --project; it does not publish pending state.',
+      'plan/apply --executor-model MODEL binds agents.profiles.executor.model in the witnessed initializer target; apply repeats the exact planned model and a missing or changed value cannot match the frozen plan binding. resume and retire use the persisted request only.',
       'inspect requires only --project-root and is read-only.',
       'apply re-captures the plan by --operation-id and requires exact --approve-plan consent; it journals and verifies each archive/init effect.',
       'resume and retire require exact current pending bytes from inspect plus matching operation id, immutable plan binding and explicit consent.',

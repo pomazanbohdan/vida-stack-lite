@@ -16,6 +16,7 @@ type Parsed =
       readonly projectRoot: string;
       readonly repository: string;
       readonly projectMappings: string[];
+      readonly executorModel?: string;
     }
   | {
       readonly mode: 'apply';
@@ -24,6 +25,7 @@ type Parsed =
       readonly projectMappings: string[];
       readonly operationId: string;
       readonly planBinding: string;
+      readonly executorModel?: string;
     }
   | {
       readonly mode: 'resume' | 'retire';
@@ -50,9 +52,9 @@ export function cleanInitializationArguments(args: readonly string[]): Parsed {
     mode === 'inspect'
       ? ['--project-root']
       : mode === 'plan'
-        ? ['--project-root', '--repository', '--project']
+        ? ['--project-root', '--repository', '--project', '--executor-model']
         : mode === 'apply'
-          ? ['--project-root', '--repository', '--project', '--operation-id', '--approve-plan']
+          ? ['--project-root', '--repository', '--project', '--operation-id', '--approve-plan', '--executor-model']
           : ['--project-root', '--operation-id', '--approve-plan', '--pending-sha256'];
   for (let index = 1; index < args.length;) {
     const key = args[index];
@@ -98,7 +100,17 @@ export function cleanInitializationArguments(args: readonly string[]): Parsed {
   if (!repository || !/^[a-z0-9][a-z0-9-]{0,63}$/u.test(repository) || mappings.length === 0)
     throw Error(`${mode} requires --repository and one or more --project`);
   validateProjectMappings(mappings);
-  if (mode === 'plan') return { mode, projectRoot, repository, projectMappings: mappings };
+  const executorModel = scalar.get('--executor-model');
+  if (executorModel !== undefined && !/^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/u.test(executorModel))
+    throw Error('Invalid --executor-model');
+  if (mode === 'plan')
+    return {
+      mode,
+      projectRoot,
+      repository,
+      projectMappings: mappings,
+      ...(executorModel === undefined ? {} : { executorModel }),
+    };
   const operationId = scalar.get('--operation-id');
   const planBinding = scalar.get('--approve-plan');
   if (
@@ -106,10 +118,18 @@ export function cleanInitializationArguments(args: readonly string[]): Parsed {
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/u.test(operationId) ||
     !planBinding ||
     !/^[a-f0-9]{64}$/u.test(planBinding) ||
-    scalar.size !== 4
+    scalar.size !== (executorModel === undefined ? 4 : 5)
   )
     throw Error('apply requires --operation-id and --approve-plan from the exact reviewed plan');
-  return { mode, projectRoot, repository, projectMappings: mappings, operationId, planBinding };
+  return {
+    mode,
+    projectRoot,
+    repository,
+    projectMappings: mappings,
+    operationId,
+    planBinding,
+    ...(executorModel === undefined ? {} : { executorModel }),
+  };
 }
 
 export async function cleanInitializationResult(args: readonly string[]): Promise<unknown> {
@@ -120,6 +140,7 @@ export async function cleanInitializationResult(args: readonly string[]): Promis
       projectRoot: parsed.projectRoot,
       repository: parsed.repository,
       projectMappings: parsed.projectMappings,
+      ...(parsed.executorModel === undefined ? {} : { executorModel: parsed.executorModel }),
     });
   if (parsed.mode === 'apply') {
     const plan = planConsumerCleanInitialization(
@@ -127,6 +148,7 @@ export async function cleanInitializationResult(args: readonly string[]): Promis
         projectRoot: parsed.projectRoot,
         repository: parsed.repository,
         projectMappings: parsed.projectMappings,
+        ...(parsed.executorModel === undefined ? {} : { executorModel: parsed.executorModel }),
       },
       parsed.operationId as `${string}-${string}-${string}-${string}-${string}`,
     );

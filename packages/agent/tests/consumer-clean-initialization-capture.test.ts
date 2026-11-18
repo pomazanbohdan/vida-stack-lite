@@ -1,96 +1,134 @@
 import { expect, test } from 'bun:test';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parse, stringify } from 'yaml';
+import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import { captureConsumerCleanInitializationV2 } from '../bin/consumer-clean-initialization-capture.ts';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.ts';
+
+type DeepMutable<T> = T extends readonly [unknown, ...unknown[]]
+  ? { -readonly [Key in keyof T]: DeepMutable<T[Key]> }
+  : T extends readonly (infer Item)[]
+    ? DeepMutable<Item>[]
+    : T extends object
+      ? { -readonly [Key in keyof T]: DeepMutable<T[Key]> }
+      : T;
+
+const pendingPaths = [
+  '.agent/consumer-clean-initialization.pending.v1.json',
+  '.agent/runtime-initialization.pending.v1.json',
+  '.agent/clean-initialization-history',
+] as const;
+
+function expectNoInitializationEffects(root: string): void {
+  for (const relative of pendingPaths) expect(existsSync(path.join(root, ...relative.split('/')))).toBe(false);
+}
 
 test('captures approved file observations and protected project paths without effects', async () => {
   const root = await makeFreshRepository('clean-init-capture-');
   let passed = false;
   try {
-    const packageRoot = 'packages/agent';
-    const directories = [
-      `${packageRoot}/src`,
-      `${packageRoot}/docs/agent-instructions`,
-      `${packageRoot}/docs/requirements`,
-      `${packageRoot}/tests`,
-      `${packageRoot}/.planning/agent-flow/wiki-output`,
-      `${packageRoot}/backlogs`,
-    ];
-    for (const directory of directories) mkdirSync(path.join(root, directory), { recursive: true });
-    copyFileSync(path.join(root, 'AGENT.sidecar.md'), path.join(root, packageRoot, 'AGENT.sidecar.md'));
-    copyFileSync(
-      path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'),
-      path.join(root, packageRoot, 'docs/agent-instructions/documentation-policy.v1.json'),
-    );
+    mkdirSync(path.join(root, '.agent/work'), { recursive: true });
+    mkdirSync(path.join(root, '.vida'), { recursive: true });
+    writeFileSync(path.join(root, '.agent/work/evidence.txt'), 'work evidence\n');
+    writeFileSync(path.join(root, '.vida/state.txt'), 'vida state\n');
     const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
-    const config = parse(readFileSync(configPath, 'utf8')) as {
-      repository: { code_selectors: string[] };
-      paths: { defaults: Record<string, string> };
-      projects: Array<Record<string, unknown> & { code_selectors: string[] }>;
-    };
-    config.repository.code_selectors = [`${packageRoot}/src/**`];
-    config.paths.defaults.project_root = packageRoot;
-    config.paths.defaults.code_root = `${packageRoot}/src`;
-    config.paths.defaults.documentation_root = `${packageRoot}/docs`;
-    config.paths.defaults.wiki_root = `${packageRoot}/docs`;
-    config.paths.defaults.wiki_path = `${packageRoot}/AGENT.sidecar.md`;
-    config.paths.defaults.wiki_output_root = `${packageRoot}/.planning/agent-flow/wiki-output`;
-    config.paths.defaults.documentation_policy_path = `${packageRoot}/docs/agent-instructions/documentation-policy.v1.json`;
-    config.paths.defaults.documentation_map_path = `${packageRoot}/AGENT.sidecar.md`;
-    config.paths.defaults.documentation_index_path = `${packageRoot}/AGENT.sidecar.md`;
-    config.paths.defaults.documentation_changelog_root = `${packageRoot}/docs`;
-    config.paths.defaults.documentation_evidence_root = '.agent/work';
-    config.paths.defaults.internal_root = `${packageRoot}/docs`;
-    config.paths.defaults.internal_requirements_root = `${packageRoot}/docs/requirements`;
-    config.paths.defaults.tests_root = `${packageRoot}/tests`;
-    config.paths.defaults.derived_output_root = `${packageRoot}/.planning/agent-flow`;
-    config.paths.defaults.ledger_root = `${packageRoot}/backlogs`;
-    Object.assign(config.projects[0]!, {
-      project_root: packageRoot,
-      documents: {
-        root: `${packageRoot}/docs`,
-        index: `${packageRoot}/AGENT.sidecar.md`,
-        requirements: { root: `${packageRoot}/docs/requirements`, areas: {} },
-        research: `${packageRoot}/docs/research`,
-        decisions: `${packageRoot}/docs/decisions`,
+    const config = parse(readFileSync(configPath, 'utf8')) as DeepMutable<AgentRuntimeConfig>;
+    config.paths.defaults.project_root = '.';
+    const products = [
+      {
+        id: 'agent',
+        root: 'packages/agent',
+        prefix: 'AGENT',
+        selectors: ['packages/agent/src/**', 'packages/agent/bin/**', 'packages/agent/tests/**'],
       },
-      work_items: {
-        storage_root: `${packageRoot}/backlogs`,
-        enabled_types: ['EPIC', 'FEATURE', 'PBI', 'STORY', 'BUG', 'TASK', 'RESEARCH'],
-        hierarchy: { mode: 'any' },
+      {
+        id: 'codex',
+        root: 'packages/codex',
+        prefix: 'CODEX',
+        selectors: ['packages/codex/package.json'],
       },
-      code_selectors: [`${packageRoot}/src/**`],
+      {
+        id: 'powers',
+        root: 'packages/powers',
+        prefix: 'POWERS',
+        selectors: ['packages/powers/skills/**', 'packages/powers/tests/**'],
+      },
+    ] as const;
+    const templateProject = config.projects[0];
+    if (templateProject === undefined) throw new Error('fixture project is missing');
+    config.projects = products.map((product) => {
+      const project = structuredClone(templateProject);
+      project.project_id = product.id;
+      project.title = product.id;
+      project.prefix = product.prefix;
+      project.project_root = product.root;
+      project.code_selectors = [...product.selectors];
+      project.documents.root = `${product.root}/docs`;
+      project.documents.index = `${product.root}/AGENT.sidecar.md`;
+      project.documents.requirements.root = `${product.root}/docs/requirements`;
+      project.documents.requirements.areas = {};
+      project.documents.research = `${product.root}/docs/research`;
+      project.documents.decisions = `${product.root}/docs/decisions`;
+      project.work_items.storage_root = `${product.root}/backlogs`;
+      project.delivery_group = product.id;
+      if (product.id === 'agent') project.path_overrides = { tests_root: 'packages/agent/custom-tests' };
+      return project;
     });
+    config.integrations.providers = products.map((product) => ({
+      id: `local-${product.id}`,
+      provider: 'local',
+      project_id: product.id,
+      tenant_id: 'local',
+      namespace: product.id,
+    }));
+    config.teams['default-development']!.allowed_projects = products.map((product) => product.id);
     writeFileSync(configPath, stringify(config));
-    const before = readFileSync(configPath);
-    const preservedBefore = readFileSync(path.join(root, 'AGENT.sidecar.md'));
-    const plan = captureConsumerCleanInitializationV2({
-      projectRoot: root,
-      repository: 'lifecycle-fixture',
-      projectMappings: [`fixture=${packageRoot}`],
-    });
-    expect(plan.schema).toBe('ConsumerCleanInitializationOperation/v2');
-    expect(plan.inventory.map((entry) => entry.path)).toContain('agent-runtime.config.v1.yaml');
-    expect(plan.preserved.map((entry) => entry.path)).toEqual([
+    const managed = [
+      'agent-runtime.config.v1.yaml',
       'AGENT.sidecar.md',
       'AGENTS.md',
       'docs/agent-instructions/documentation-policy.v1.json',
-    ]);
-    expect(plan.protected_paths).toContain(`${packageRoot}/docs`);
-    expect(plan.protected_paths).toContain('.agent/work');
+      '.agent/work/evidence.txt',
+      '.vida/state.txt',
+    ];
+    const before = new Map(
+      managed.map((relative) => [relative, readFileSync(path.join(root, ...relative.split('/')))] as const),
+    );
+    const plan = captureConsumerCleanInitializationV2({
+      projectRoot: root,
+      repository: 'lifecycle-fixture',
+      projectMappings: products.map((product) => `${product.id}=${product.root}`),
+    });
+    expect(plan.schema).toBe('ConsumerCleanInitializationOperation/v2');
+    expect(plan.phase).toBe('intent');
+    expect(plan.prepared).toBeNull();
+    expect(plan.initialization).toBe('not-started');
+    expect(plan.inventory.map((entry) => entry.path)).toEqual(['agent-runtime.config.v1.yaml']);
+    expect(plan.moves.map((move) => move.source)).toEqual(['agent-runtime.config.v1.yaml']);
     expect(plan.moves[0]).toMatchObject({
       source: 'agent-runtime.config.v1.yaml',
+      target: `${plan.archive_root}/agent-runtime.config.v1.yaml`,
       state: 'not-started',
     });
-    expect(readFileSync(configPath).equals(before)).toBe(true);
-    expect(readFileSync(path.join(root, 'AGENT.sidecar.md')).equals(preservedBefore)).toBe(true);
-    expect(readFileSync(path.join(root, 'AGENTS.md')).length).toBeGreaterThan(0);
-    expect(
-      readFileSync(path.join(root, 'docs/agent-instructions/documentation-policy.v1.json')).length,
-    ).toBeGreaterThan(0);
-    expect(plan.operation_id).toMatch(/^[0-9a-f-]{36}$/u);
+    expect(plan.containers.length).toBeGreaterThan(0);
+    expect(plan.containers.every((container) => container.state === 'not-started' && container.identity === null)).toBe(
+      true,
+    );
+    for (const product of products) {
+      expect(plan.protected_paths).toContain(product.root);
+      expect(plan.protected_paths).toContain(`${product.root}/docs`);
+      expect(plan.protected_paths).toContain(`${product.root}/backlogs`);
+    }
+    expect(plan.protected_paths).toContain('packages/agent/custom-tests');
+    expect(plan.protected_paths).toContain('packages/codex/package.json');
+    expect(plan.protected_paths).toContain('packages/powers/skills');
+    expect(plan.protected_paths).toContain('.agent/work');
+    expect(plan.protected_paths).toContain('.vida');
+    expect(plan.protected_paths).not.toContain('.');
+    for (const [relative, bytes] of before)
+      expect(readFileSync(path.join(root, ...relative.split('/'))).equals(bytes)).toBe(true);
+    expectNoInitializationEffects(root);
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
@@ -98,11 +136,12 @@ test('captures approved file observations and protected project paths without ef
   }
 });
 
-test('refuses a root-wide project mapping without changing managed inputs', async () => {
+test('refuses an explicit repository-root project without changing managed inputs', async () => {
   const root = await makeFreshRepository('clean-init-capture-root-');
   let passed = false;
   try {
-    const config = readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'));
+    const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
+    const config = readFileSync(configPath);
     const sidecar = readFileSync(path.join(root, 'AGENT.sidecar.md'));
     expect(() =>
       captureConsumerCleanInitializationV2({
@@ -110,13 +149,44 @@ test('refuses a root-wide project mapping without changing managed inputs', asyn
         repository: 'lifecycle-fixture',
         projectMappings: ['fixture=.'],
       }),
-    ).toThrow();
-    expect(readFileSync(path.join(root, 'agent-runtime.config.v1.yaml')).equals(config)).toBe(true);
+    ).toThrow(/protected archive source or target/u);
+    expect(readFileSync(configPath).equals(config)).toBe(true);
     expect(readFileSync(path.join(root, 'AGENT.sidecar.md')).equals(sidecar)).toBe(true);
-    expect(existsSync(path.join(root, '.agent/consumer-clean-initialization.pending.v1.json'))).toBe(false);
+    expectNoInitializationEffects(root);
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
     else console.error('Retained failed root-wide clean-init fixture: ' + root);
+  }
+});
+
+test('refuses a non-dot protected default overlap without changing managed inputs', async () => {
+  const root = await makeFreshRepository('clean-init-capture-default-overlap-');
+  let passed = false;
+  try {
+    mkdirSync(path.join(root, 'packages/fixture'), { recursive: true });
+    const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
+    const config = parse(readFileSync(configPath, 'utf8')) as DeepMutable<AgentRuntimeConfig>;
+    const project = config.projects[0];
+    if (project === undefined) throw new Error('fixture project is missing');
+    project.project_root = 'packages/fixture';
+    config.paths.defaults.project_root = '.agent';
+    writeFileSync(configPath, stringify(config));
+    const before = readFileSync(configPath);
+    const sidecar = readFileSync(path.join(root, 'AGENT.sidecar.md'));
+    expect(() =>
+      captureConsumerCleanInitializationV2({
+        projectRoot: root,
+        repository: 'lifecycle-fixture',
+        projectMappings: ['fixture=packages/fixture'],
+      }),
+    ).toThrow(/protected archive source or target/u);
+    expect(readFileSync(configPath).equals(before)).toBe(true);
+    expect(readFileSync(path.join(root, 'AGENT.sidecar.md')).equals(sidecar)).toBe(true);
+    expectNoInitializationEffects(root);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error('Retained failed default-overlap clean-init fixture: ' + root);
   }
 });

@@ -69,6 +69,139 @@ for (const args of [
   });
 }
 
+test('clean-init executor-model option is scoped to plan/apply with the supported scalar grammar', () => {
+  const root = 'C:\\fixture';
+  const operationId = '00000000-0000-4000-8000-000000000001';
+  const binding = 'a'.repeat(64);
+  const pending = 'b'.repeat(64);
+  expect(
+    cleanInitializationArguments([
+      'plan',
+      '--project-root',
+      root,
+      '--repository',
+      'vida',
+      '--project',
+      'agent=packages/agent',
+      '--executor-model',
+      'swe-2-flash-medium',
+    ]),
+  ).toEqual({
+    mode: 'plan',
+    projectRoot: root,
+    repository: 'vida',
+    projectMappings: ['agent=packages/agent'],
+    executorModel: 'swe-2-flash-medium',
+  });
+  expect(
+    cleanInitializationArguments([
+      'apply',
+      '--project-root',
+      root,
+      '--repository',
+      'vida',
+      '--project',
+      'agent=packages/agent',
+      '--operation-id',
+      operationId,
+      '--approve-plan',
+      binding,
+      '--executor-model',
+      'swe-2-flash-medium',
+    ]),
+  ).toEqual({
+    mode: 'apply',
+    projectRoot: root,
+    repository: 'vida',
+    projectMappings: ['agent=packages/agent'],
+    operationId,
+    planBinding: binding,
+    executorModel: 'swe-2-flash-medium',
+  });
+  for (const args of [
+    ['inspect', '--project-root', root, '--executor-model', 'm'],
+    [
+      'resume',
+      '--project-root',
+      root,
+      '--operation-id',
+      operationId,
+      '--approve-plan',
+      binding,
+      '--pending-sha256',
+      pending,
+      '--executor-model',
+      'm',
+    ],
+    [
+      'retire',
+      '--project-root',
+      root,
+      '--operation-id',
+      operationId,
+      '--approve-plan',
+      binding,
+      '--pending-sha256',
+      pending,
+      '--executor-model',
+      'm',
+    ],
+    [
+      'plan',
+      '--project-root',
+      root,
+      '--repository',
+      'vida',
+      '--project',
+      'agent=packages/agent',
+      '--executor-model',
+      'bad model',
+    ],
+    [
+      'plan',
+      '--project-root',
+      root,
+      '--repository',
+      'vida',
+      '--project',
+      'agent=packages/agent',
+      '--executor-model',
+      '-leading',
+    ],
+    [
+      'apply',
+      '--project-root',
+      root,
+      '--repository',
+      'vida',
+      '--project',
+      'agent=packages/agent',
+      '--operation-id',
+      operationId,
+      '--approve-plan',
+      binding,
+      '--executor-model',
+      'a'.repeat(129),
+    ],
+    [
+      'apply',
+      '--project-root',
+      root,
+      '--repository',
+      'vida',
+      '--project',
+      'agent=packages/agent',
+      '--operation-id',
+      operationId,
+      '--approve-plan',
+      binding,
+      '--executor-model',
+    ],
+  ]) {
+    expect(() => cleanInitializationArguments(args)).toThrow();
+  }
+});
+
 test('clean-init is present in public command contracts and package dispatch', () => {
   expect(cliCommandContracts['clean-init'].syntax).toContain('plan|inspect|apply|resume|retire');
   expect(cliCommandEntrypoint('clean-init')).toBe('clean-init.ts');

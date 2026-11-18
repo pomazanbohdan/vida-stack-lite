@@ -5,6 +5,7 @@ import {
   lstatSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   renameSync,
   rmSync,
@@ -20,6 +21,7 @@ import { captureConsumerCleanInitializationV2 } from '../bin/consumer-clean-init
 import { cleanInitializationResult } from '../bin/clean-init.ts';
 import {
   sealCleanInitializationOperationV2,
+  validateCleanInitializationOperationV2,
   type ConsumerCleanInitializationOperationV2,
 } from '../bin/consumer-clean-initialization-v2.ts';
 import { assertCleanInitializationHostAdmission } from '../src/config/clean-initialization-admission.ts';
@@ -63,7 +65,11 @@ async function loadOperationOwner() {
   }
 }
 
-async function makeFixture(prefix = 'clean-init-operation-', onRoot?: (root: string) => void) {
+async function makeFixture(
+  prefix = 'clean-init-operation-',
+  onRoot?: (root: string) => void,
+  createHostDatabase = true,
+) {
   const startedAt = performance.now();
   const reportPhase = (phase: string) => {
     if (process.env.VIDA_CLEAN_INIT_PHASE_TIMING === '1')
@@ -142,10 +148,12 @@ async function makeFixture(prefix = 'clean-init-operation-', onRoot?: (root: str
   const current = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(current.repository.repository_id, root);
   const hostRelative = sessionHandoffDatabaseRelativePath(current);
-  mkdirSync(path.dirname(path.join(root, hostRelative)), { recursive: true });
-  const host = openHostStateDatabase(root, hostRelative, workspaceId);
-  initializeHostDatabaseSchema(host);
-  closeWorkspaceDatabaseWithAdmission(host);
+  if (createHostDatabase) {
+    mkdirSync(path.dirname(path.join(root, hostRelative)), { recursive: true });
+    const host = openHostStateDatabase(root, hostRelative, workspaceId);
+    initializeHostDatabaseSchema(host);
+    closeWorkspaceDatabaseWithAdmission(host);
+  }
   reportPhase('runtime-config-and-host-ready');
   return {
     root,
@@ -691,6 +699,95 @@ test('clean-init publication reuses the gate-only admission refusal for construc
   } catch (budgetError) {
     if (failed)
       throw new AggregateError([failure, budgetError], 'Constructed .vida refusal and full-case budget failed');
+    throw budgetError;
+  }
+  if (failed) throw failure;
+}, 120_000);
+
+test('clean-init publication refuses gate-only .vida without a Host database file', async () => {
+  const startedAt = performance.now();
+  const budgetMs = 120_000;
+  const assertBudget = () => {
+    if (performance.now() - startedAt > budgetMs)
+      throw new Error('Missing Host database refusal exceeded full-case 120000ms');
+  };
+  let fixtureRoot: string | undefined;
+  let failed = false;
+  let failure: unknown;
+  try {
+    const owner = await loadOperationOwner();
+    assertBudget();
+    expect(owner).not.toBeNull();
+    if (!owner) throw new Error('Expected clean initialization owner');
+    const fixture = await makeFixture('clean-init-host-db-gate-', undefined, false);
+    fixtureRoot = fixture.root;
+    retainCleanInitFixture(fixture.root);
+    assertBudget();
+    expect(existsSync(path.join(fixture.root, fixture.hostRelative))).toBe(false);
+    mkdirSync(path.join(fixture.root, '.agent/work'), { recursive: true });
+    const observedFiles = [
+      'agent-runtime.config.v1.yaml',
+      '.agent/runtime-initialization.v1.json',
+      'AGENTS.md',
+      'AGENT.sidecar.md',
+      'docs/agent-instructions/documentation-policy.v1.json',
+      '.agent/work/preserved.json',
+    ];
+    writeFileSync(path.join(fixture.root, '.agent/work/preserved.json'), 'protected fixture bytes\n');
+    const before = observedFiles.map(
+      (relative) =>
+        [
+          relative,
+          existsSync(path.join(fixture.root, relative)) ? readFileSync(path.join(fixture.root, relative)) : null,
+        ] as const,
+    );
+    const plan = owner.planConsumerCleanInitialization(fixture.request);
+    assertBudget();
+    expect(plan.status).toBe('planned');
+    expect(plan.expectedState).toEqual({ pending_sha256: null });
+    await Promise.resolve(
+      expect(owner.publishConsumerCleanInitializationIntent(fixture.request)).rejects.toThrow(
+        'Host database file is absent',
+      ),
+    );
+    assertBudget();
+    await Promise.resolve(
+      expect(
+        owner.publishReviewedConsumerCleanInitialization({
+          operation: plan.operation,
+          expectedState: plan.expectedState,
+          authorization: {
+            action: 'apply',
+            operation_id: plan.operation.operation_id,
+            plan_binding: plan.operation.binding,
+          },
+        }),
+      ).rejects.toThrow('Host database file is absent'),
+    );
+    assertBudget();
+    expect(existsSync(path.join(fixture.root, pendingPath))).toBe(false);
+    expect(existsSync(path.join(fixture.root, plan.operation.archive_root))).toBe(false);
+    expect(existsSync(path.join(fixture.root, HISTORY_ROOT))).toBe(false);
+    expect(existsSync(path.join(fixture.root, fixture.hostRelative))).toBe(false);
+    const vidaDir = path.join(fixture.root, '.vida');
+    if (existsSync(vidaDir)) expect(readdirSync(vidaDir).sort()).toEqual(['storage-admission.v1.sqlite']);
+    for (const [relative, bytes] of before) {
+      const current = existsSync(path.join(fixture.root, relative))
+        ? readFileSync(path.join(fixture.root, relative))
+        : null;
+      expect(current).toEqual(bytes);
+    }
+  } catch (error) {
+    failed = true;
+    failure = error;
+  } finally {
+    if (fixtureRoot) retainCleanInitFixture(fixtureRoot);
+  }
+  try {
+    assertBudget();
+  } catch (budgetError) {
+    if (failed)
+      throw new AggregateError([failure, budgetError], 'Missing Host database refusal and full-case budget failed');
     throw budgetError;
   }
   if (failed) throw failure;
@@ -1552,3 +1649,186 @@ test(
   },
   CLEAN_INIT_CASE_TIMEOUT_MS,
 );
+
+test('clean-init journal binds executorModel only when present and refuses invalid grammar', async () => {
+  const owner = await loadOperationOwner();
+  expect(owner).not.toBeNull();
+  if (!owner) return;
+  const fixture = await makeFixture('clean-init-executor-model-journal-');
+  let passed = false;
+  try {
+    const operationId = '00000000-0000-4000-8000-0000000000aa';
+    const plain = captureConsumerCleanInitializationV2(fixture.request, operationId);
+    expect(Object.hasOwn(plain.request, 'executorModel')).toBe(false);
+    const model = 'swe-2-flash-medium';
+    const selected = captureConsumerCleanInitializationV2({ ...fixture.request, executorModel: model }, operationId);
+    expect(selected.request.executorModel).toBe(model);
+    expect(selected.binding).not.toBe(plain.binding);
+    expect(selected.operation_id).toBe(plain.operation_id);
+    const resealed = validateCleanInitializationOperationV2(
+      JSON.parse(JSON.stringify(plain)) as Record<string, unknown>,
+    );
+    expect(resealed.binding).toBe(plain.binding);
+    expect(Object.hasOwn(resealed.request, 'executorModel')).toBe(false);
+    const invalid = ['bad model', '-leading', 'a'.repeat(129), 'model/name?', ' spaced'];
+    for (const executorModel of invalid) {
+      expect(() => owner.planConsumerCleanInitialization({ ...fixture.request, executorModel })).toThrow();
+      expect(() => captureConsumerCleanInitializationV2({ ...fixture.request, executorModel }, operationId)).toThrow();
+    }
+    const planned = owner.planConsumerCleanInitialization({ ...fixture.request, executorModel: model }, operationId);
+    expect(planned.operation.request.executorModel).toBe(model);
+    expect(planned.operation.binding).toBe(selected.binding);
+    passed = true;
+  } finally {
+    await finishFixture(fixture.root, passed);
+  }
+});
+
+test('clean-init apply refuses a missing or changed executor model before any effect', async () => {
+  const startedAt = performance.now();
+  const budgetMs = 120_000;
+  const assertBudget = () => {
+    if (performance.now() - startedAt > budgetMs) throw new Error('Executor-model refusal exceeded 120000ms');
+  };
+  let fixtureRoot: string | undefined;
+  let failed = false;
+  let failure: unknown;
+  try {
+    const fixture = await makeFixture('clean-init-executor-model-refusal-', (root) => {
+      fixtureRoot = root;
+      retainCleanInitFixture(root);
+    });
+    assertBudget();
+    const configBefore = readFileSync(fixture.configPath);
+    const plan = (await cleanInitializationResult([
+      'plan',
+      '--project-root',
+      fixture.root,
+      '--repository',
+      fixture.request.repository,
+      '--project',
+      fixture.request.projectMappings[0]!,
+      '--executor-model',
+      'swe-2-flash-medium',
+    ])) as { operation: ConsumerCleanInitializationOperationV2 };
+    assertBudget();
+    expect(plan.operation.request.executorModel).toBe('swe-2-flash-medium');
+    const applyArgs = [
+      'apply',
+      '--project-root',
+      fixture.root,
+      '--repository',
+      fixture.request.repository,
+      '--project',
+      fixture.request.projectMappings[0]!,
+      '--operation-id',
+      plan.operation.operation_id,
+      '--approve-plan',
+      plan.operation.binding,
+    ];
+    await Promise.resolve(expect(cleanInitializationResult(applyArgs)).rejects.toThrow(/binding differs/u));
+    assertBudget();
+    await Promise.resolve(
+      expect(cleanInitializationResult([...applyArgs, '--executor-model', 'other-model'])).rejects.toThrow(
+        /binding differs/u,
+      ),
+    );
+    assertBudget();
+    expect(existsSync(path.join(fixture.root, pendingPath))).toBe(false);
+    expect(readFileSync(fixture.configPath)).toEqual(configBefore);
+    expect(existsSync(path.join(fixture.root, plan.operation.archive_root))).toBe(false);
+    expect(existsSync(path.join(fixture.root, HISTORY_ROOT, plan.operation.operation_id))).toBe(false);
+  } catch (error) {
+    failed = true;
+    failure = error;
+  } finally {
+    if (fixtureRoot) retainCleanInitFixture(fixtureRoot);
+  }
+  if (failed) throw failure;
+}, 120_000);
+
+test('clean-init applies, witnesses and retires the exact executor model target', async () => {
+  const startedAt = performance.now();
+  const budgetMs = 120_000;
+  const assertBudget = (label: string) => {
+    if (performance.now() - startedAt > budgetMs) throw new Error(`Executor-model apply exceeded 120000ms at ${label}`);
+  };
+  let fixtureRoot: string | undefined;
+  let failed = false;
+  let failure: unknown;
+  try {
+    const fixture = await makeFixture('clean-init-executor-model-apply-', (root) => {
+      fixtureRoot = root;
+      retainCleanInitFixture(root);
+      assertBudget('fixture allocation');
+    });
+    assertBudget('fixture setup');
+    const model = 'swe-2-flash-medium';
+    const plan = (await cleanInitializationResult([
+      'plan',
+      '--project-root',
+      fixture.root,
+      '--repository',
+      fixture.request.repository,
+      '--project',
+      fixture.request.projectMappings[0]!,
+      '--executor-model',
+      model,
+    ])) as { operation: ConsumerCleanInitializationOperationV2 };
+    assertBudget('plan');
+    expect(plan.operation.request.executorModel).toBe(model);
+    const applied = (await cleanInitializationResult([
+      'apply',
+      '--project-root',
+      fixture.root,
+      '--repository',
+      fixture.request.repository,
+      '--project',
+      fixture.request.projectMappings[0]!,
+      '--operation-id',
+      plan.operation.operation_id,
+      '--approve-plan',
+      plan.operation.binding,
+      '--executor-model',
+      model,
+    ])) as {
+      status: string;
+      operation: ConsumerCleanInitializationOperationV2;
+      expectedState: { pending_sha256: string | null };
+    };
+    assertBudget('apply');
+    expect(applied.status).toBe('complete');
+    expect(applied.operation.phase).toBe('complete');
+    expect(applied.operation.request.executorModel).toBe(model);
+    const rendered = loadRuntimeConfig(fixture.root);
+    expect(rendered.agents.profiles['executor']?.model).toBe(model);
+    const receiptPath = path.join(fixture.root, '.agent/runtime-initialization.v1.json');
+    expect(existsSync(receiptPath)).toBe(true);
+    const receipt = JSON.parse(readFileSync(receiptPath, 'utf8')) as { config_digest?: string };
+    expect(typeof receipt.config_digest).toBe('string');
+    const pending = JSON.parse(readFileSync(path.join(fixture.root, pendingPath), 'utf8')) as {
+      request?: { executorModel?: string };
+    };
+    expect(pending.request?.executorModel).toBe(model);
+    const retired = (await cleanInitializationResult([
+      'retire',
+      '--project-root',
+      fixture.root,
+      '--operation-id',
+      plan.operation.operation_id,
+      '--approve-plan',
+      plan.operation.binding,
+      '--pending-sha256',
+      applied.expectedState.pending_sha256!,
+    ])) as { status: string };
+    assertBudget('retire');
+    expect(retired.status).toBe('retired');
+    expect(loadRuntimeConfig(fixture.root).agents.profiles['executor']?.model).toBe(model);
+  } catch (error) {
+    failed = true;
+    failure = error;
+  } finally {
+    if (fixtureRoot) retainCleanInitFixture(fixtureRoot);
+  }
+  if (failed) throw failure;
+}, 120_000);

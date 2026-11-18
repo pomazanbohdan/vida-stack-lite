@@ -54,9 +54,18 @@ sidecars and retains the journal after an issued callback failure.
 The current Source exposes strict `clean-init plan|inspect|apply|resume|retire`
 routes. Apply binds exact local consent, current recapture and absent pending
 bytes; archive, witnessed initialization, private release verification and
-metadata retirement use the existing effect owner. Publication reuses the
+metadata retirement use the existing effect owner. `clean-init plan|apply
+--executor-model MODEL` accepts the supported scalar grammar and stores the
+exact value in the strict v2 journal request, where the immutable plan binding
+covers it; apply re-capture with a missing or changed model refuses before
+effects, resume/retire replay the persisted request only, and the witnessed
+initializer renders `agents.profiles.executor.model` from that bound request
+after product-model expansion while every other rendered byte is unchanged. Publication reuses the
 gate-only admission predicate: any `.vida` entry beyond its storage gate is
-refused before pending publication. Supported apply requires captured legacy
+refused before pending publication. Publication also requires the configured
+Host database path to remain an existing private regular file under the
+captured configuration; an absent or unsafe Host database refuses before
+pending publication. Supported apply requires captured legacy
 YAML; `.vida` product data is unsupported. Current local Source proof includes
 a combined native fault/recovery case at1 executed/28 assertions/0 failures
 and public apply/release/retire at1/15/0. Raw JUnit corrects the retained Luna25
@@ -945,6 +954,12 @@ a new grant. Unknown or still running writer effects require reconciliation;
 expiry alone never proves a terminal outcome. Cooperative local native evidence
 is consistency evidence, not a cryptographic authentication or physical
 isolation claim.
+
+For a public session `--report`, delivery proposal validation and instruction
+preparation apply only to `reported_complete`. A terminal `reported_failed`
+delivery observation uses the ordinary observation and CAS path, persists the
+blocked Journal result, and grants no delivery instruction, authority or
+acceptance.
 
 Legacy `UnverifiedSourceSnapshot/v1` candidates retain their
 `StoppedSourceCaptureReceipt/v1` encoding. New stopped-source candidates may use

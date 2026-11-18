@@ -99,10 +99,24 @@ Results: `.agent/work/agent-p0-bootstrap-20261118/task2-native-proof-20261118/ev
 no-effect manifest (`fcaab04a…`) and the exe. The proof covers only the
 disposable project and HOME: the installed runtime remains non-release 0.1.9
 with no live cfg replacement, and SDK closeout, delivery status and the r17
-journal stay untouched. A future executor launch still requires fresh
-admission and an observed native `acpRegistry_devin` launch binding
-`swe-2-flash-medium`; the disposable proof observed no Devin model binding or
-dispatch. The completed SDK export work is distinct from execution-catalog
+journal stay untouched. A disposable `task-execution-input-20261118` run on
+the exact candidate exe (sha256 `044e51fa…bd70`) exercised native
+`develop_task`/`task_execution` under a Host attempt: the writer wave
+completed a T3 `acpRegistry_devin` launch binding `swe-2-flash-medium` with
+`executedModel:null`, changed only `proof.txt`, passed the exact 15-byte
+assertion (exit 0) and two accepted validators, and stayed inside the
+disposable project. Runtime verification remained caller-reported
+(`caller_report_consistency`, `test_execution_verified=false`) with no
+delivery authority. The delivery child returned a terminal GAP —
+`prepare_delivery` pending at journal revision 18 `pending_observation` —
+because the caller-reported test receipt and absent native writer/tester
+issue/report evidence are unverified; the GAP report declined (exit 1) and a
+read-only inspect confirmed the same revision-18 `pending_observation` with
+no repeat. Evidence:
+`.agent/work/agent-p0-bootstrap-20261118/task-execution-input-20261118/evidence/{results.json,manifest.json,root-report-wave-5-gap.result.json,root-inspect-after-delivery-gap.result.json,root-inspect-after-delivery-gap.stdout.txt}`
+and
+`.agent/work/agent-p0-bootstrap-20261118/task-execution-input-20261118/disposable/project/.agent/work/task-exec-input-20261118/{writer-native-evidence.json,tester-native-evidence.json,delivery-gap-observation.json,delivery-gap-native-evidence.json}`.
+The completed SDK export work is distinct from execution-catalog
 Task 1 and claims no dispatch, live configuration or installation, or task
 acceptance. Two legacy tests timeout at 30 s in matched before+after runs;
 the cause is unassigned. The installed payload remains non-release 0.1.9 — no
@@ -122,8 +136,53 @@ focused validation → tests → delivery proposal, followed by the applicable
 delivery owners. This extends the open Task 6 end-to-end criteria and requires
 fresh writer admission.
 
-- P0: exercise the existing task_execution path with current scope/AC and native
-  issue/report evidence; qualify a disposable consumer before the small real task.
+The current P0 sequence is clean-init of a real repository with protected
+work/Host and the chosen agents, then one ordinary real Agent task with
+evidence — the latter remains the Task 6 extension above. Clean-init
+evidence so far: the DA2E… portable synthetic three-product existing-Host
+`apply` exited 0 in 171.5 s with archive, preservation and inspect complete
+and the release passed
+(`.agent/work/agent-p0-bootstrap-20261118/clean-init-existing-host-native-apply-single-20261118/evidence/verification.json`,
+sha256 `7c21295d…`); `retire` exited 0 with exact bytes in history and
+inspect absent
+(`.agent/work/agent-p0-bootstrap-20261118/clean-init-existing-host-retire-20261118/evidence/verification.json`,
+sha256 `3c72b96a…`); the actual post-retire configure `plan` exited 1 —
+`Existing work or coordination state is not eligible` — on an unchanged
+snapshot with no apply
+(`.agent/work/agent-p0-bootstrap-20261118/clean-init-post-retire-configure-20261118/evidence/results.json`,
+sha256 `75c5867f…`). The missing-Host pristine intent's prior failure stays
+retained; the source early refusal with exact cfg digest binding was
+independently verified 5/0 at op SHA `84ce…fe7c`, and the isolated old
+artifact proof did not run the updated source. Historical 120 s/hook tests
+remain open. The revised Windows isolated three-product clean-init
+with retained Host passed the exact model-bound plan/apply/refusals/retire on
+exe sha256 `5eddaf31…481c`
+(`.agent/work/agent-p0-bootstrap-20261118/clean-init-executor-model-runtime-20261118/evidence/results.json`,
+`.agent/work/agent-p0-bootstrap-20261118/clean-init-executor-model-native-apply-20261118/evidence/{results.json,retire-results.json}`).
+A fresh `post-clean-init-verified-proof-20261118` task then ran end to end on
+that fixture: the issued `develop_task` completed a T3 `acpRegistry_devin`
+launch requesting `swe-2-flash-medium` with `executedModel` not reported,
+changed only `packages/agent/src/readiness-proof.txt` to the exact 15-byte
+`state=verified`, passed two Luna validators and the independent exact-byte
+test tool (exit 0); runtime classification stayed
+`caller_report_consistency`/`test_execution_verified=false`. The native exe
+accepted a real `VidaDeliveryProposal/v1` and reached terminal
+success/complete at revision 20 with 7 observations, no next actions and a
+`DeliveryInstruction/v1` scoped to `isolated-fixture` only
+(`.agent/work/agent-p0-bootstrap-20261118/clean-init-executor-native-task-20261118/evidence/{root-verified-issue-delivery.stdout.txt,root-verified-report-delivery.stdout.txt}`,
+report sha256 `1757c026…73b42`). The old pre-Host
+configure proof and the historical ts test classifier stay scoped.
+
+- P0: the terminal `prepare_delivery` GAP guard is implemented in Source and
+  independently verified — the failure regression passed 1/0 and the accepted
+  delivery-proposal success check passed 1/0 in this run
+  (`.agent/work/agent-p0-bootstrap-20261118/delivery-success-source-proof/`).
+  The historical native revision-18 `pending_observation` stays fenced as a
+  separate earlier failure, the session-handoff hook timeout remains open,
+  and the next P0 is reviewed source integration plus release
+  qualification/install before any live clean-init and ordinary Agent task —
+  not reissue or a delivery effect. No deployment, live change, commit, push,
+  release or Runtime acceptance is claimed.
 - P0: trace actual product-source context and TASK identity through admission/result;
   repair only a demonstrated missing seam, without a second tracker or resolver.
 - P1, or a demonstrated causal prerequisite: readiness/maps and missing navigation;

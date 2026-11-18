@@ -44,6 +44,10 @@ type InitializationRequest = {
   readonly productModel?: import('../src/config/product-model.ts').ProductModelDefinition;
   readonly legacyProjectIdMap?: Readonly<Record<string, string>>;
 };
+// Witnessed clean initialization is the only request surface that may carry an executor model.
+type CleanInitializationRequest = InitializationRequest & {
+  readonly executorModel?: string;
+};
 type InitializationContext = {
   readonly access: SafeRepositoryAccess;
   readonly packageAccess: SafeRepositoryAccess;
@@ -455,22 +459,34 @@ function renderTemplates(
   });
 }
 
-/** @param {RenderedTemplate[]} rendered @param {readonly ProjectMapping[]} selectedProjects @returns {{ readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig }} */
+/** @param {RenderedTemplate[]} rendered @param {readonly ProjectMapping[]} selectedProjects @param {InitializationRequest} [request] @param {string} [executorModel] @returns {{ readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig }} */
 function configureRenderedTemplates(
   rendered: RenderedTemplate[],
   selectedProjects: readonly ProjectMapping[],
   request?: InitializationRequest,
+  executorModel?: string,
 ): { readonly config: AgentRuntimeConfig; readonly validatedConfig: AgentRuntimeConfig } {
   const configTemplate = requireEntry(rendered, 2, 'Runtime configuration template');
   const templateConfig = requireRuntimeModule(runtimeConfig).parseRuntimeConfigYaml(configTemplate.content);
   const expanded = expandProjectSet(templateConfig, selectedProjects);
-  const config = request?.productModel
+  let config = request?.productModel
     ? requireRuntimeModule(runtimeConfig).applyProductModelToRuntimeConfig(
         expanded,
         request.productModel,
         request.legacyProjectIdMap === undefined ? {} : { legacy_project_id_map: request.legacyProjectIdMap },
       )
     : expanded;
+  if (executorModel !== undefined) {
+    const executor = config.agents.profiles['executor'];
+    if (executor === undefined) throw new Error('Executor profile is missing');
+    config = requireRuntimeModule(runtimeConfig).validateRuntimeConfig({
+      ...config,
+      agents: {
+        ...config.agents,
+        profiles: { ...config.agents.profiles, executor: { ...executor, model: executorModel } },
+      },
+    });
+  }
   configTemplate.content = requireRuntimeModule(yaml).stringify(config);
   configTemplate.output_sha256 = hash(configTemplate.content);
   return {
@@ -1212,6 +1228,7 @@ function renderFreshInitialization(
   context: InitializationContext,
   createdAt: string,
   preserved: readonly CleanInitializationPreservedFile[] = [],
+  executorModel?: string,
 ) {
   const startedAt = performance.now();
   const { access, packageAccess, bundle, canonicalRoot, selectedProjects } = context;
@@ -1219,7 +1236,7 @@ function renderFreshInitialization(
   const rendered = renderTemplates(packageAccess, bundle, request.repository, selectedProjects, createdAt);
   reportCleanInitializationPhase('render-templates', startedAt, { output_count: rendered.length });
   applyPreservedOutputs(access, rendered, preserved);
-  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects, request);
+  const { config, validatedConfig } = configureRenderedTemplates(rendered, selectedProjects, request, executorModel);
   reportCleanInitializationPhase('render-configure', startedAt);
   validateGeneratedBindings(validatedConfig, bundle, request.repository, selectedProjects);
   reportCleanInitializationPhase('render-bindings', startedAt);
@@ -1329,6 +1346,14 @@ function snapshotInitializationRequest(input: InitializationRequest): Initializa
   });
 }
 
+function snapshotCleanInitializationRequest(input: CleanInitializationRequest): CleanInitializationRequest {
+  const snapshot = snapshotInitializationRequest(input);
+  if (input.executorModel === undefined) return snapshot;
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/u.test(input.executorModel))
+    throw new Error('Executor model is not a supported scalar');
+  return Object.freeze({ ...snapshot, executorModel: input.executorModel });
+}
+
 function snapshotPreparedInitialization(input: PreparedInitialization): PreparedInitialization {
   const { intent, rootIdentity, bundleIdentity, projectIdentities, resourceDigest, preserved = [] } = input;
   return Object.freeze({
@@ -1404,7 +1429,7 @@ export function captureInitializationRuntimeBinding(): Readonly<{
 
 /** Bind the inputs that the initializer reads, using uncached package observations. */
 function preparedInputs(
-  request: InitializationRequest,
+  request: CleanInitializationRequest,
   createdAt: string,
   preserved: readonly CleanInitializationPreservedFile[] = [],
 ): PreparedInitialization {
@@ -1415,7 +1440,7 @@ function preparedInputs(
     mappings: request.projectMappings,
     bundleRoot: executingPackageRoot,
   });
-  const { receipt } = renderFreshInitialization(request, context, createdAt, preserved);
+  const { receipt } = renderFreshInitialization(request, context, createdAt, preserved, request.executorModel);
   const bindings = preparedInitializationBindings(context, preserved);
   return Object.freeze({ intent: JSON.stringify(receipt, null, 2) + '\n', ...bindings });
 }
@@ -1450,7 +1475,7 @@ function assertPreparedAdmission(proof: InitConfigAdmissionProof, request: Initi
 function assertCleanWitness(
   access: SafeRepositoryObservation,
   expectedHash: string,
-  request: InitializationRequest,
+  request: CleanInitializationRequest,
   expectedPrepared?: PreparedInitialization,
 ): Buffer {
   if (!/^[a-f0-9]{64}$/u.test(expectedHash)) throw new Error('Invalid clean pending witness');
@@ -1470,6 +1495,7 @@ function assertCleanWitness(
     record.root === request.projectRoot &&
     record.workspace_id === workspace &&
     request.productModel === undefined &&
+    request.executorModel === undefined &&
     (!expectedPrepared || (expectedPrepared.preserved ?? []).length === 0)
   )
     return bytes;
@@ -1486,6 +1512,7 @@ function assertCleanWitness(
     (operationRequest as Record<string, unknown>).repository === request.repository &&
     JSON.stringify((operationRequest as Record<string, unknown>).projectMappings) ===
       JSON.stringify(request.projectMappings) &&
+    (operationRequest as Record<string, unknown>).executorModel === request.executorModel &&
     Array.isArray(record.preserved)
   ) {
     if (request.productModel !== undefined) {
@@ -1539,10 +1566,10 @@ function assertCleanWitness(
 /** Read-only. The caller owns the clean journal and must supply its current pending-byte hash. */
 export function prepareInitializationUnderAdmission(
   proof: InitConfigAdmissionProof,
-  inputRequest: InitializationRequest,
+  inputRequest: CleanInitializationRequest,
   cleanPendingHash: string,
 ): PreparedInitialization {
-  const request = snapshotInitializationRequest(inputRequest);
+  const request = snapshotCleanInitializationRequest(inputRequest);
   assertPreparedAdmission(proof, request);
   const access = requireRuntimeModule(repositoryAccess).repositoryReadOnlyObservation(
     requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(request.projectRoot),
@@ -1575,12 +1602,12 @@ export function prepareInitializationUnderAdmission(
 /** Resume only the exact journaled legacy intent; a matching archived receipt is a read-only lost-ack result. */
 export async function finishPreparedInitializationUnderAdmission(
   proof: InitConfigAdmissionProof,
-  inputRequest: InitializationRequest,
+  inputRequest: CleanInitializationRequest,
   inputPrepared: PreparedInitialization,
   cleanPendingHash: string,
 ): Promise<{ status: string; receipt: string; config_digest: string }> {
   const phaseStartedAt = performance.now();
-  const request = snapshotInitializationRequest(inputRequest);
+  const request = snapshotCleanInitializationRequest(inputRequest);
   assertPreparedAdmission(proof, request);
   if (request.reconcileExisting) throw new Error('Prepared initialization requires a fresh request');
   const prepared = snapshotPreparedInitialization(inputPrepared);
@@ -1610,7 +1637,13 @@ export async function finishPreparedInitializationUnderAdmission(
     request,
     prepared,
   );
-  const regenerated = renderFreshInitialization(request, context, createdAt, prepared.preserved ?? []);
+  const regenerated = renderFreshInitialization(
+    request,
+    context,
+    createdAt,
+    prepared.preserved ?? [],
+    request.executorModel,
+  );
   const expectedIntent = JSON.stringify(regenerated.receipt, null, 2) + '\n';
   if (expectedIntent !== prepared.intent) throw new Error('Prepared initialization inputs changed');
   const assertCurrent = () => {
@@ -1732,6 +1765,7 @@ export async function initializeProjectFromBundle(
   inputRequest: InitializationRequest,
   bundleRoot: string,
 ): Promise<{ status: string; receipt?: string; config_digest?: string; existing?: string[]; next_action?: string }> {
+  if ('executorModel' in inputRequest) throw new Error('Executor model requires a witnessed clean initialization');
   const request = snapshotInitializationRequest(inputRequest);
   const initial = initializationContext({
     projectRoot: request.projectRoot,

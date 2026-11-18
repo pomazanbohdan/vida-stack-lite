@@ -91,8 +91,13 @@ Installation records the selected installed bytes, version and effective PATH. N
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
 The repository Source contains strict `clean-init plan|inspect|apply|resume|retire`
-routes for the legacy YAML, gate-only contour. Publication refuses existing
-`.vida` product data before pending state. Check the
+routes for the legacy YAML, gate-only contour. `plan` and `apply` accept an
+optional `--executor-model MODEL` scalar that the journaled plan binds and the
+witnessed initializer writes as `agents.profiles.executor.model`; `apply` must
+repeat the exact planned value and `resume`/`retire` take no flag. Publication
+refuses existing
+`.vida` product data and an absent or unsafe configured Host database file
+before pending state. Check the
 [canonical delivery state](next-actions.md#current-delivery-state) before using
 an installed clean-init route. Source presence does not establish delivery.
 The [Task 3 record](plans/runtime-project-model.md#task-3--clean-initarchiverepair-effect-owner)

@@ -106,11 +106,15 @@ function captureRequest(value: unknown): CleanInitializationRequest {
     image !== null &&
       typeof image === 'object' &&
       !Array.isArray(image) &&
-      Object.keys(image).length === 3 &&
+      Object.keys(image).every((key) =>
+        ['projectRoot', 'repository', 'projectMappings', 'executorModel'].includes(key),
+      ) &&
       typeof image.projectRoot === 'string' &&
       typeof image.repository === 'string' &&
       Array.isArray(image.projectMappings) &&
-      image.projectMappings.every((mapping) => typeof mapping === 'string'),
+      image.projectMappings.every((mapping) => typeof mapping === 'string') &&
+      (image.executorModel === undefined ||
+        (typeof image.executorModel === 'string' && /^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$/u.test(image.executorModel))),
     'request shape is invalid',
   );
   return freezeJsonValue(image) as CleanInitializationRequest;
@@ -208,6 +212,37 @@ function assertFileObservationAt(
     'file identity or bytes changed',
   );
   return bytes;
+}
+
+function assertPublishableHostDatabase(root: string, operation: ConsumerCleanInitializationOperationV2): void {
+  const legacy = operation.inventory.find((entry) => entry.path === 'agent-runtime.config.v1.yaml');
+  requireOperation(legacy !== undefined, 'captured legacy runtime configuration is absent');
+  const snapshot = readRuntimeConfigurationForObservation(root);
+  requireOperation(
+    snapshot.source === legacy.path && snapshot.source_digest === legacy.path + ':' + legacy.sha256,
+    'observed runtime configuration differs from the captured legacy configuration',
+  );
+  const relative = sessionHandoffDatabaseRelativePath(snapshot.config);
+  assertWorkspaceDatabaseRelativePath(relative);
+  const access = requireSafeRepositoryAccess(root);
+  const view = repositoryReadOnlyObservation(access);
+  const subject = 'clean initialization Host database';
+  requireOperation(view.fileExists(relative, subject), 'Host database file is absent');
+  const identify = view.observeFileIdentity ?? access.observeFileIdentity;
+  requireOperation(identify !== undefined, 'native Host database identity observation is unavailable');
+  const parent = path.posix.dirname(relative);
+  const parentIdentity = access.directoryIdentity(parent, subject + ' parent');
+  const identity = identify(relative, subject);
+  const before = lstatSync(path.join(root, ...relative.split('/')), { bigint: true });
+  requireOperation(
+    before.isFile() && !before.isSymbolicLink() && before.nlink === 1n,
+    'Host database is not a private regular file',
+  );
+  requireOperation(
+    identify(relative, subject) === identity &&
+      access.directoryIdentity(parent, subject + ' parent') === parentIdentity,
+    'Host database identity changed during observation',
+  );
 }
 
 function operationConfig(root: string, operation: ConsumerCleanInitializationOperationV2): AgentRuntimeConfig {
@@ -493,6 +528,7 @@ export async function publishConsumerCleanInitializationIntent(input: CleanIniti
         'captured root or workspace identity differs',
       );
       const expectedBytes = canonicalBytes(captured);
+      assertPublishableHostDatabase(root, captured);
       const access = requireSafeRepositoryAccess(root);
       await access.writeExclusiveAsync(
         CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH,
@@ -632,6 +668,7 @@ export async function publishReviewedConsumerCleanInitialization(input: {
         canonicalBytes(current).equals(canonicalBytes(operation)),
         'reviewed plan no longer matches current inputs',
       );
+      assertPublishableHostDatabase(root, current);
       const next = canonicalBytes(operation);
       const access = requireSafeRepositoryAccess(root);
       await access.writeExclusiveAsync(
@@ -993,6 +1030,7 @@ function initializationRequest(operation: ConsumerCleanInitializationOperationV2
     repository: operation.request.repository,
     projectMappings: operation.request.projectMappings,
     ...(model === undefined ? {} : { productModel: model }),
+    ...(operation.request.executorModel === undefined ? {} : { executorModel: operation.request.executorModel }),
   };
 }
 

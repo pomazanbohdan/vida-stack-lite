@@ -120,7 +120,7 @@ function protectedPaths(config: AgentRuntimeConfig, projectRoots: readonly strin
     config.control.work_root,
     config.control.coordination_ledger,
     ...Object.entries(config.paths.defaults)
-      .filter(([key]) => key !== 'repository_root')
+      .filter(([key, value]) => key !== 'repository_root' && (key !== 'project_root' || value !== '.'))
       .map(([, value]) => value),
     config.research_decision.paths.research_records,
     config.research_decision.paths.decision_records,
@@ -155,6 +155,7 @@ export function captureConsumerCleanInitializationV2(
     readonly projectRoot: string;
     readonly repository: string;
     readonly projectMappings: readonly string[];
+    readonly executorModel?: string;
   },
   operationId = randomUUID(),
 ): ConsumerCleanInitializationOperationV2 {
