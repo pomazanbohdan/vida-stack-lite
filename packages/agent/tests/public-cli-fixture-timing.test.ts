@@ -5,8 +5,6 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import * as fixtureTiming from './helpers/public-cli-fixture-runner.ts';
 
-let lastAllocatedChild = 0;
-
 function profileFixture(): { readonly root: string; readonly profileRoot: string } {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-public-cli-cpu-profile-'));
   const profileRoot = path.join(root, '.tmp', 'release-runtime-diagnostic');
@@ -20,61 +18,30 @@ test('CPU profile opt-out adds no argv and performs no profile-root IO', () => {
   expect(existsSync(absentRoot)).toBe(false);
 });
 
-test('CPU profile args use a fresh exclusive child below the allowed package diagnostic root', () => {
-  const { root, profileRoot } = profileFixture();
-  try {
-    const args = fixtureTiming.bunCpuProfileArgs(root, profileRoot);
-    const child = path.join(profileRoot, 'child-01');
-    expect(args).toEqual(['--cpu-prof', '--cpu-prof-dir=' + child]);
-    expect(lstatSync(child).isDirectory()).toBe(true);
-    lastAllocatedChild = 1;
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test('CPU profile rejects relative, outside, missing, and file roots', () => {
+test('CPU profile allocation validates its root, skips retained children and stops at 64', () => {
   const { root, profileRoot } = profileFixture();
   const outside = path.join(root, 'outside');
   const file = path.join(profileRoot, 'profile-file');
   try {
     mkdirSync(outside);
     writeFileSync(file, 'retained', { flag: 'wx' });
-    expect(() => fixtureTiming.bunCpuProfileArgs(root, 'relative-profile-root')).toThrow();
-    expect(() => fixtureTiming.bunCpuProfileArgs(root, outside)).toThrow();
-    expect(() => fixtureTiming.bunCpuProfileArgs(root, path.join(profileRoot, 'missing'))).toThrow();
-    expect(() => fixtureTiming.bunCpuProfileArgs(root, file)).toThrow();
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, 'relative-profile-root')).toThrow(/absolute and normalized/u);
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, outside)).toThrow(/under the release diagnostic root/u);
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, path.join(profileRoot, 'missing'))).toThrow(/ENOENT/u);
+    expect(() => fixtureTiming.bunCpuProfileArgs(root, file)).toThrow(/non-directory/u);
 
-test('CPU profile skips a retained child directory without replacing its contents', () => {
-  const { root, profileRoot } = profileFixture();
-  const retainedChild = path.join(profileRoot, 'child-' + String(lastAllocatedChild + 1).padStart(2, '0'));
-  mkdirSync(retainedChild);
-  const retainedFile = path.join(retainedChild, 'retained.txt');
-  writeFileSync(retainedFile, 'preserve', { flag: 'wx' });
-  try {
-    const args = fixtureTiming.bunCpuProfileArgs(root, profileRoot);
-    const child = path.join(profileRoot, 'child-' + String(lastAllocatedChild + 2).padStart(2, '0'));
-    expect(args).toEqual(['--cpu-prof', '--cpu-prof-dir=' + child]);
-    expect(readFileSync(retainedFile, 'utf8')).toBe('preserve');
-    lastAllocatedChild += 2;
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
+    const childPath = (index: number) => path.join(profileRoot, 'child-' + String(index).padStart(2, '0'));
+    const retainedChild = childPath(2);
+    mkdirSync(retainedChild);
+    const retainedFile = path.join(retainedChild, 'retained.txt');
+    writeFileSync(retainedFile, 'preserve', { flag: 'wx' });
 
-test('CPU profile child allocation stops at 64 per process', () => {
-  const { root, profileRoot } = profileFixture();
-  try {
-    for (let index = lastAllocatedChild; index < 64; index += 1) {
-      const args = fixtureTiming.bunCpuProfileArgs(root, profileRoot);
-      const child = args.find((argument) => argument.startsWith('--cpu-prof-dir='));
-      expect(child).toBeTypeOf('string');
-      lastAllocatedChild += 1;
+    for (const index of [1, ...Array.from({ length: 62 }, (_, i) => i + 3)]) {
+      const child = childPath(index);
+      expect(fixtureTiming.bunCpuProfileArgs(root, profileRoot)).toEqual(['--cpu-prof', '--cpu-prof-dir=' + child]);
+      expect(lstatSync(child).isDirectory()).toBe(true);
     }
+    expect(readFileSync(retainedFile, 'utf8')).toBe('preserve');
     expect(() => fixtureTiming.bunCpuProfileArgs(root, profileRoot)).toThrow(/bound exceeded/u);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -169,5 +136,56 @@ test('fixture-owned receipts retain the observed setup origin before their path 
   } finally {
     clock.mockRestore();
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('public CLI custody fences a second fixture during a child and after UNKNOWN', async () => {
+  const custody = fixtureTiming.createPublicCliFixtureCustody();
+  let complete: () => void = () => {};
+  const child = new Promise<void>((resolve) => {
+    complete = resolve;
+  });
+  const current = (async () => {
+    using active = custody.enter();
+    await child;
+    active.retainUnknown();
+  })();
+  try {
+    expect(() => custody.enter()).toThrow('public CLI fixture is still active');
+  } finally {
+    complete();
+    await current;
+  }
+  expect(() => custody.enter()).toThrow('public CLI effect is UNKNOWN');
+});
+
+test('bounded real CLI captures a terminal child and allows a clean successor', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-public-cli-bounded-'));
+  const receipt = path.join(root, 'timing.ndjson');
+  let unknown = false;
+  const custody = fixtureTiming.createPublicCliFixtureCustody();
+  try {
+    {
+      using active = custody.enter();
+      const runner = fixtureTiming.createNativeTsPublicCliFixtureRunner({
+        bundleRoot: path.resolve(import.meta.dir, '..'),
+        diagnosticReceiptPath: receipt,
+        fixtureRoot: root,
+        onUnknown: () => {
+          unknown = true;
+          active.retainUnknown();
+        },
+      });
+      const result = await runner.spawnBounded(['--help'], performance.now() + 4000);
+      expect(result.status).toBe(0);
+      expect(result.signal).toBeNull();
+    }
+    expect(unknown).toBe(false);
+    const terminal: unknown = JSON.parse(readFileSync(receipt, 'utf8'));
+    expect(terminal).toMatchObject({ status: 0, close_observed: true, timed_out: false });
+    using next = custody.enter();
+    expect(next).toHaveProperty('retainUnknown');
+  } finally {
+    if (!unknown) rmSync(root, { recursive: true, force: true });
   }
 });

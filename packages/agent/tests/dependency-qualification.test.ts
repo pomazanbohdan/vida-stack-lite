@@ -29,19 +29,30 @@ test('upgraded native provider preserves exclusive creation, CAS failure, lock o
     await access.writeExclusiveAtomicAsync('state.json', 'before', 'dependency qualification');
     await rejects(access.writeExclusiveAtomicAsync('state.json', 'overwrite', 'exclusive contender'));
     expect(readFileSync(path.join(root, 'state.json'), 'utf8')).toBe('before');
-    expect(() => access.replaceAtomic('state.json', sha256('wrong'), 'after', 'stale CAS')).toThrow();
+    const image = Uint8Array.of(0, 0xff, 0x80, 0x0d, 0x0a, 0);
+    await access.writeExclusiveAtomicAsync('workflow.sqlite', image, 'workflow image');
+    await rejects(access.writeExclusiveAtomicAsync('workflow.sqlite', Uint8Array.of(1, 2, 3), 'binary competitor'));
+    expect(readFileSync(path.join(root, 'workflow.sqlite'))).toEqual(Buffer.from(image));
+    await rejects(
+      access.replaceAtomicAsync('state.json', sha256('wrong'), 'after', 'stale CAS'),
+      /hash|content change/i,
+    );
     expect(readFileSync(path.join(root, 'state.json'), 'utf8')).toBe('before');
     await access.withExclusiveLockAsync('state.json', 'owner', async () => {
       await rejects(access.withExclusiveLockAsync('state.json', 'contender', async () => undefined));
+    });
+    expect(await access.withExclusiveLockAsync('state.json', 'reacquire', async () => 'held')).toBe('held');
+    if (process.platform === 'win32') {
+      await access.replaceAtomicAsync('state.json', sha256('before'), 'after', 'matching CAS');
+    } else {
       const receipt = access.compareReserveReplace('state.json', sha256('before'), 'after', 'matching CAS');
       expect(receipt.status).toBe('applied');
       expect(receipt.result_hash).toBe(sha256('after'));
-    });
-    expect(access.withExclusiveLock('state.json', 'reacquire', () => 'held')).toBe('held');
+    }
     expect(readFileSync(path.join(root, 'state.json'), 'utf8')).toBe('after');
     verified = true;
   } finally {
     if (verified) rmSync(root, { recursive: true, force: true });
     else process.stderr.write(`Unverified dependency fixture preserved: ${root}\n`);
   }
-});
+}, 30_000);

@@ -5,7 +5,10 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spyOn, test } from 'bun:test';
 import {
+  type CommittedReleaseRecipe,
+  publishCommittedReleasePreparation,
   publishReleasePreparation,
+  readCommittedReleaseRecipe,
   readReleasePreparation,
   resumeReleasePreparation,
   runReleasePreparation,
@@ -441,7 +444,7 @@ function assertTargetImage(root: string, target: PreparationTarget, expected: st
   assert.deepEqual(readFileSync(file), Buffer.from(expected, 'base64'), target.path);
 }
 
-test('published baseline recovery returns the same successor after a lost preparation ACK', async () => {
+test('legacy published preparation remains resumable by its owner and cannot bind a new commit', async () => {
   const root = ownedRoot();
   const throwingFetch = () => {
     throw new Error('Unexpected remote observation');
@@ -481,20 +484,20 @@ test('published baseline recovery returns the same successor after a lost prepar
     writeBytes(root, operationJournalPath(predecessor), oldBytes);
     writeIntent(root, intent);
 
-    assert.deepEqual(await prepareReleaseAfterPublication(root, predecessor.operation_id), successor);
+    const retainedIntent = readFileSync(path.join(root, intentPath));
+    await assert.rejects(
+      prepareReleaseAfterPublication(root, predecessor.operation_id, 'a'.repeat(40)),
+      /preserve UNKNOWN/,
+    );
+    assert.deepEqual(readFileSync(path.join(root, intentPath)), retainedIntent);
+    assert.deepEqual(readFileSync(path.join(root, manifestPath)), prior);
+    assert.deepEqual(await withReleaseAdmission(root, () => resumeReleasePreparation(root), true), successor);
+    await assert.rejects(
+      prepareReleaseAfterPublication(root, predecessor.operation_id, 'a'.repeat(40)),
+      /preserve UNKNOWN/,
+    );
     assert.equal(fetchSpy.mock.calls.length, 0);
-    const receipt = readFileSync(
-      path.join(root, `.agent/work/agent-local-release/${successor.operation_id}/preparation.json`),
-    );
-    assert.deepEqual(await prepareReleaseAfterPublication(root, predecessor.operation_id), successor);
-    assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
     assert.deepEqual(readFileSync(path.join(root, operationJournalPath(predecessor))), oldBytes);
-    assert.deepEqual(
-      readFileSync(path.join(root, `.agent/work/agent-local-release/${successor.operation_id}/preparation.json`)),
-      receipt,
-    );
-    writeBytes(root, operationJournalPath(predecessor), Buffer.from('changed'));
-    await assert.rejects(prepareReleaseAfterPublication(root, predecessor.operation_id), /preserve UNKNOWN/);
     assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
   } finally {
     fetchSpy.mockRestore();
@@ -533,7 +536,7 @@ async function assertStartedPredecessorDenied(started: 'pending' | 'journal'): P
     });
 
     await assert.rejects(
-      prepareReleaseAfterPublication(root, predecessor.operation_id),
+      prepareReleaseAfterPublication(root, predecessor.operation_id, 'a'.repeat(40)),
       /Published predecessor is not the current uninstalled pending candidate/,
     );
     assert.equal(fetchSpy.mock.calls.length, 0);
@@ -677,5 +680,216 @@ test('release preparation rejects third-state drift at every target without dist
         rmSync(root, { recursive: true, force: true });
       }
     }
+  }
+});
+
+function committedSourcePathFor(operationId: string): string {
+  return `.agent/work/agent-local-release/${operationId}/committed-source.json`;
+}
+
+function makeCommittedRecipe(
+  prepared: PreparedRelease,
+  predecessor: PreparedRelease,
+  commit: string,
+): CommittedReleaseRecipe {
+  const beforeValue = makeManifest(predecessor.version);
+  return {
+    schema: 'VidaCommittedReleaseSource/v1',
+    operation_id: prepared.operation_id,
+    predecessor_operation_id: predecessor.operation_id,
+    commit,
+    version: prepared.version,
+    manifest_path: manifestPath,
+    manifest_before: Buffer.from(releaseJSON(beforeValue)).toString('base64'),
+    manifest_after: Buffer.from(releaseJSON({ ...beforeValue, version: prepared.version })).toString('base64'),
+    expected_source_binding: 'a'.repeat(64),
+  };
+}
+
+function makeWitness(
+  predecessor: PreparedRelease,
+  pendingBytes: Buffer,
+  journalBytes: Buffer,
+): Record<string, unknown> {
+  const digest = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+  return {
+    schema: 'VidaPublishedVersionBaseline/v1',
+    role: 'baseline-only',
+    operation_id: predecessor.operation_id,
+    version: predecessor.version,
+    tag_sha: 'a'.repeat(40),
+    release_id: 1,
+    claim_digest: 'b'.repeat(64),
+    assets_digest: 'c'.repeat(64),
+    historical_source_binding: 'd'.repeat(64),
+    current_source_binding: 'e'.repeat(64),
+    pending_digest: digest(pendingBytes),
+    journal_digest: digest(journalBytes),
+    requests: [
+      { request_id: 'one', digest: 'f'.repeat(64) },
+      { request_id: 'two', digest: '0'.repeat(64) },
+    ],
+  };
+}
+
+function makeCommittedIntent(
+  prepared: PreparedRelease,
+  predecessorBytes: Buffer,
+  witness: unknown,
+  recipe: CommittedReleaseRecipe,
+): PreparationIntent {
+  const operationRoot = `.agent/work/agent-local-release/${prepared.operation_id}`;
+  const stateImage = Buffer.from(releaseJSON(prepared)).toString('base64');
+  return {
+    schema: 'VidaReleasePreparation/v1',
+    prepared,
+    targets: [
+      {
+        path: committedSourcePathFor(prepared.operation_id),
+        before: null,
+        after: Buffer.from(releaseJSON(recipe)).toString('base64'),
+      },
+      {
+        path: `${operationRoot}/disposition.json`,
+        before: null,
+        after: Buffer.from(releaseJSON(witness)).toString('base64'),
+      },
+      { path: `${operationRoot}/release.json`, before: null, after: stateImage },
+      { path: pendingPath, before: Buffer.from(predecessorBytes).toString('base64'), after: stateImage },
+    ],
+  };
+}
+
+test('committed publication binds the recipe without touching the canonical manifest', async () => {
+  const root = ownedRoot();
+  try {
+    const predecessor = makePrepared('published-predecessor', '0.1.2');
+    const successor = makePrepared('committed-successor', '0.1.3');
+    const priorBytes = Buffer.from(releaseJSON(makeManifest('0.1.2')));
+    const predecessorBytes = Buffer.from(releaseJSON(predecessor));
+    const commit = 'b'.repeat(40);
+    writeBytes(root, manifestPath, priorBytes);
+    writeBytes(root, pendingPath, predecessorBytes);
+    writeBytes(root, operationJournalPath(predecessor), predecessorBytes);
+    writeBytes(root, 'tooling/agent/wip.ts', Buffer.from('export const wip = 1;\n'));
+    const recipe = makeCommittedRecipe(successor, predecessor, commit);
+    const witness = makeWitness(predecessor, predecessorBytes, predecessorBytes);
+
+    assert.deepEqual(
+      await withReleaseAdmission(root, () => publishCommittedReleasePreparation(root, successor, recipe, witness)),
+      successor,
+    );
+
+    assert.deepEqual(readFileSync(path.join(root, manifestPath)), priorBytes);
+    assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
+    assert.deepEqual(
+      readFileSync(path.join(root, committedSourcePathFor(successor.operation_id))),
+      Buffer.from(releaseJSON(recipe)),
+    );
+    assert.deepEqual(
+      readFileSync(path.join(root, `.agent/work/agent-local-release/${successor.operation_id}/disposition.json`)),
+      Buffer.from(releaseJSON(witness)),
+    );
+    assert.deepEqual(readReleasePreparation(root, successor), { priorVersion: '0.1.2', disposition: witness });
+    assert.deepEqual(readCommittedReleaseRecipe(root, successor), recipe);
+    assert.equal(readFileSync(path.join(root, 'tooling/agent/wip.ts')).toString(), 'export const wip = 1;\n');
+    assert.deepEqual(readFileSync(path.join(root, operationJournalPath(predecessor))), predecessorBytes);
+    assert.equal(existsSync(path.join(root, intentPath)), false);
+  } finally {
+    assert.ok(path.basename(root).startsWith('vida-release-preparation-v465-'));
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('committed preparation rejects a recipe that is not the exact version-only afterimage', () => {
+  const root = ownedRoot();
+  try {
+    const predecessor = makePrepared('committed-rejected-predecessor', '0.1.2');
+    const successor = makePrepared(`committed-rejected-${Math.random().toString(36).slice(2, 10)}`, '0.1.3');
+    const predecessorBytes = Buffer.from(releaseJSON(predecessor));
+    const witness = makeWitness(predecessor, predecessorBytes, predecessorBytes);
+    writeBytes(root, pendingPath, predecessorBytes);
+    writeBytes(root, operationJournalPath(predecessor), predecessorBytes);
+
+    const beforeValue = makeManifest('0.1.2');
+    const widened = { ...beforeValue, version: '0.1.3', extra: true };
+    const badRecipes: CommittedReleaseRecipe[] = [
+      {
+        ...makeCommittedRecipe(successor, predecessor, 'c'.repeat(40)),
+        manifest_after: Buffer.from(releaseJSON(widened)).toString('base64'),
+      },
+      { ...makeCommittedRecipe(successor, predecessor, 'c'.repeat(40)), commit: 'not-a-sha' },
+      {
+        ...makeCommittedRecipe(successor, predecessor, 'c'.repeat(40)),
+        manifest_before: Buffer.from(releaseJSON({ ...beforeValue, version: '0.1.3' })).toString('base64'),
+      },
+    ];
+    for (const [index, recipe] of badRecipes.entries()) {
+      const intent = makeCommittedIntent(successor, predecessorBytes, witness, recipe);
+      writeIntent(root, intent);
+      assert.throws(
+        () => resumeReleasePreparation(root),
+        /committed release recipe|preparation image|target path/,
+        `case ${index}`,
+      );
+      assert.equal(existsSync(path.join(root, committedSourcePathFor(successor.operation_id))), false, `case ${index}`);
+      rmSync(path.join(root, intentPath));
+    }
+  } finally {
+    assert.ok(path.basename(root).startsWith('vida-release-preparation-v465-'));
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('committed baseline recovery returns the same successor only for the same base commit', async () => {
+  const root = ownedRoot();
+  const throwingFetch = () => {
+    throw new Error('Unexpected remote observation');
+  };
+  const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+    Object.assign(throwingFetch, { preconnect: throwingFetch }),
+  );
+  try {
+    const predecessor = makePrepared('published-predecessor-committed', '0.1.2');
+    const successor = makePrepared('committed-successor', '0.1.3');
+    const oldBytes = Buffer.from(releaseJSON(predecessor));
+    const prior = Buffer.from(releaseJSON(makeManifest('0.1.2')));
+    const commit = 'c'.repeat(40);
+    const otherCommit = 'd'.repeat(40);
+    const witness = makeWitness(predecessor, oldBytes, oldBytes);
+    const recipe = makeCommittedRecipe(successor, predecessor, commit);
+    const intent = makeCommittedIntent(successor, oldBytes, witness, recipe);
+    writeBytes(root, manifestPath, prior);
+    writeBytes(root, 'packages/agent/.bun-version', Buffer.from('1.4.2\n'));
+    writeBytes(root, pendingPath, oldBytes);
+    writeBytes(root, operationJournalPath(predecessor), oldBytes);
+    writeIntent(root, intent);
+
+    assert.deepEqual(await prepareReleaseAfterPublication(root, predecessor.operation_id, commit), successor);
+    assert.equal(fetchSpy.mock.calls.length, 0);
+    const receipt = readFileSync(
+      path.join(root, `.agent/work/agent-local-release/${successor.operation_id}/preparation.json`),
+    );
+    assert.deepEqual(readFileSync(path.join(root, manifestPath)), prior);
+    assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
+    assert.deepEqual(await prepareReleaseAfterPublication(root, predecessor.operation_id, commit), successor);
+    assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
+    assert.deepEqual(
+      readFileSync(path.join(root, `.agent/work/agent-local-release/${successor.operation_id}/preparation.json`)),
+      receipt,
+    );
+    assert.deepEqual(readFileSync(path.join(root, operationJournalPath(predecessor))), oldBytes);
+
+    await assert.rejects(
+      prepareReleaseAfterPublication(root, predecessor.operation_id, otherCommit),
+      /preserve UNKNOWN/,
+    );
+    writeBytes(root, committedSourcePathFor(successor.operation_id), Buffer.from('{"tampered":true}\n'));
+    await assert.rejects(prepareReleaseAfterPublication(root, predecessor.operation_id, commit), /preserve UNKNOWN/);
+    assert.deepEqual(readFileSync(path.join(root, pendingPath)), Buffer.from(releaseJSON(successor)));
+  } finally {
+    fetchSpy.mockRestore();
+    assert.ok(path.basename(root).startsWith('vida-release-preparation-v465-'));
+    rmSync(root, { recursive: true, force: true });
   }
 });

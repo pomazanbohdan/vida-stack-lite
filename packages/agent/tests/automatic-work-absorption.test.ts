@@ -6,7 +6,7 @@ import {
   withAutomaticWorkAdmissionCase,
   retainPendingAutomaticWorkAdmissionCase,
 } from './helpers/automatic-work-admission-fixture.js';
-import { rejectionReason } from './helpers/expect-rejection.ts';
+import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import acceptanceSchema from '../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
@@ -94,7 +94,7 @@ import { prepareLifecycleForCorrection } from '../src/orchestration/final-assura
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
 import { expectCorrectiveAuthorizationMetadata, observeMetadataReads } from './helpers/ledger-cache-observer.ts';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.ts';
-import { runSourcePrewriterPublicActions } from './helpers/public-prewriter-fixture.ts';
+import { runPrewriterFixtureInProcess } from './helpers/public-prewriter-fixture.ts';
 import { requireLiveLocalSessionAdmission } from '../src/runtime-kernel.ts';
 import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
 import { isPlainRecord } from '../src/contracts/public-ingress.ts';
@@ -106,6 +106,7 @@ import { issueObservedResearchActivation } from '../src/orchestration/observed-r
 import type { ObservedResearchRecordPlan } from '../src/research-decision.ts';
 import {
   createNativeTsPublicCliFixtureRunner,
+  createPublicCliFixtureCustody,
   createPublicCliFixturePhaseMarker,
 } from './helpers/public-cli-fixture-runner.ts';
 import type {
@@ -681,10 +682,10 @@ test('admission retains complete original entries and exact retry rejects a diff
   }
 });
 
-test('admission retry never reconstructs missing or changed retained original evidence', () => {
-  for (const mode of ['missing', 'changed']) {
-    const f = fixture();
-    try {
+for (const mode of ['missing', 'changed'] as const) {
+  test('admission retry never reconstructs ' + mode + ' retained original evidence', () =>
+    withAutomaticWorkAdmissionCase(({ createFixture }) => {
+      const f = createFixture();
       const input = f.prepare('retry', 'user:retry'),
         admitted = admitLocalSessionWork(input);
       const reference = requireWorkArtifact(admitted.host.work, 'admission-source-snapshot');
@@ -696,11 +697,9 @@ test('admission retry never reconstructs missing or changed retained original ev
       expect(f.store.readWorkspaceSnapshot()).toEqual(before);
       if (mode === 'missing') expect(existsSync(target)).toBe(false);
       else expect(readFileSync(target, 'utf8')).toBe('{}');
-    } finally {
-      f.close();
-    }
-  }
-});
+    }),
+  );
+}
 
 test('admission uses the validated configured work root for retained evidence', () => {
   const f = fixture();
@@ -723,10 +722,10 @@ test('admission uses the validated configured work root for retained evidence', 
   }
 });
 
-test('partial oversized or linked admission preparation denies without overwriting or granting rights', () => {
-  for (const mode of ['partial', 'oversized', 'hardlink', 'reparse']) {
-    const f = fixture();
-    try {
+for (const mode of ['partial', 'oversized', 'hardlink', 'reparse'] as const) {
+  test('admission preparation refuses ' + mode + ' evidence without overwriting or granting rights', () =>
+    withAutomaticWorkAdmissionCase(({ createFixture }) => {
+      const f = createFixture();
       const input = f.prepare('blocked', 'user:blocked');
       const target = path.join(f.root, f.config.control.work_root, 'blocked', 'scoped-source-attempt-1.v1.json');
       const origin = path.join(f.root, 'foreign-snapshot.json');
@@ -744,11 +743,9 @@ test('partial oversized or linked admission preparation denies without overwriti
         expect(readFileSync(target, 'utf8')).toBe(mode === 'partial' ? '{' : canonicalJson(f.source));
       else expect(() => readFileSync(target)).toThrow();
       expect(readFileSync(origin, 'utf8')).toBe(canonicalJson(f.source));
-    } finally {
-      f.close();
-    }
-  }
-});
+    }),
+  );
+}
 
 test('historical admitted Work without a retained snapshot is not backfilled from current source', () => {
   const f = fixture();
@@ -2448,6 +2445,7 @@ test('admission rejects forged foreign implementation paths before source snapsh
     const foreignProject = {
       ...structuredClone(project),
       project_id: 'foreign',
+      prefix: 'FOREIGN',
       title: 'foreign',
       delivery_group: 'foreign',
       project_root: 'products/foreign',
@@ -3595,10 +3593,15 @@ test.each(['started', 'completed'] as const)('explicit correction-generation rep
   }
 });
 
+const correctiveCliCustody = createPublicCliFixtureCustody();
+const correctiveCaseTimeoutMs = 60_000;
+
 for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
   test(
     'public same-work correction after real report resume sync ' + scenario,
     async () => {
+      using fixtureCustody = correctiveCliCustody.enter();
+      const deadline = performance.now() + correctiveCaseTimeoutMs;
       const failureStage = ['runtime-rebind', 'success'].includes(scenario) ? 'validate' : scenario;
       const fixtureSetupStartedNs = process.hrtime.bigint();
       const f = fixture(true, true);
@@ -3614,11 +3617,12 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
         fixtureRoot: f.root,
         onUnknown: () => {
           retainFixtureRootOnUnknown = true;
+          fixtureCustody.retainUnknown();
         },
       });
-      const publicRun = (args: Parameters<typeof publicCli.spawn>[0]) => {
-        const result = publicCli.spawn(args);
-        if (result.status !== 0)
+      const publicRun = async (args: readonly string[]) => {
+        const result = await publicCli.spawnBounded(args, deadline);
+        if (result.status !== 0 || result.error || result.signal)
           throw new Error(
             JSON.stringify({
               status: result.status,
@@ -3806,15 +3810,18 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           });
           await bridge.resume(suspendedStepId, suspendedObservations, fixtureSource);
           journal = sync();
-          journal = await runSourcePrewriterPublicActions({
-            args,
-            publicRun: runFixture,
-            sync,
-            repositoryRoot: f.root,
-            workId: id,
-            attempt: input.context.attempt,
-            work,
-          });
+          journal = await runPrewriterFixtureInProcess(
+            {
+              args,
+              publicRun: runFixture,
+              sync,
+              repositoryRoot: f.root,
+              workId: id,
+              attempt: input.context.attempt,
+              work,
+            },
+            { ledger, bridge, source: fixtureSource },
+          );
           const issuedWriter = requireUnknownRecord(
             await runFixture([
               ...args,
@@ -3939,15 +3946,18 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             const beforeHost = f.store.readHostStateSnapshot(identity),
               beforeJournal = sync();
             assertCompleteHostSnapshot(beforeHost);
-            const denied = publicCli.spawn([
-              ...args,
-              '--issue-wave',
-              'true',
-              '--expected-revision',
-              String(beforeJournal.version.revision),
-              '--expected-digest',
-              beforeJournal.version.digest,
-            ]);
+            const denied = await publicCli.spawnBounded(
+              [
+                ...args,
+                '--issue-wave',
+                'true',
+                '--expected-revision',
+                String(beforeJournal.version.revision),
+                '--expected-digest',
+                beforeJournal.version.digest,
+              ],
+              deadline,
+            );
             expect(denied.status).toBe(1);
             expect(denied.signal).toBeNull();
             expect(denied.error).toBeUndefined();
@@ -4355,7 +4365,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           // The CLI retry is a read-only retrieval: run.mjs calls retrieveCorrectiveAuthorization
           // first and returns that existing authorization before any preparation or write.
           markPhase('public_authorize_deny_resume');
-          const authorized = publicRun([
+          const authorized = await publicRun([
             ...args,
             '--correct',
             planPath,
@@ -4372,7 +4382,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           const changedPlan = parseJsonRecord(originalPlan.toString('utf8'));
           changedPlan.user_instruction_ref = 'fixture:changed-owner';
           writeFileSync(planPath, JSON.stringify(changedPlan));
-          expect(() =>
+          await expectRejection(
             publicRun([
               ...args,
               '--correct',
@@ -4382,7 +4392,8 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
               '--expected-digest',
               originalVersion.digest,
             ]),
-          ).toThrow('blocked');
+            'blocked',
+          );
           writeFileSync(planPath, originalPlan);
           expect(authorized.status).toBe('correction_authorized');
           const baseRunId = authorizedExecution.base_run_id;
@@ -4395,7 +4406,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
               .readHostStateSnapshot(identity)
               .work?.lifecycle.references.find((ref) => ref.kind === 'correction_authorization')?.disposition,
           ).toBe('retired');
-          const resumed = publicRun(args);
+          const resumed = await publicRun(args);
           const resumedRunId = resumed.mastra_run_id;
           if (typeof resumedRunId !== 'string') throw new Error('corrective resume omitted Mastra run id');
           expect(resumedRunId).toBe(authorizedExecution.engine_run_id);
@@ -4451,7 +4462,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             }
           }
           markPhase('public_issue_wave');
-          const issued = publicRun([
+          const issued = await publicRun([
             ...args,
             '--issue-wave',
             'true',
@@ -4513,7 +4524,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             };
             const correctionReport = path.join(f.root, '.agent/work/' + id + '/correction-writer-report.json');
             writeFileSync(correctionReport, JSON.stringify(corrected));
-            publicRun([
+            await publicRun([
               ...args,
               '--report',
               correctionReport,
@@ -4527,7 +4538,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
               'validate_focused',
               'validate_focused',
             ]);
-            publicRun([
+            await publicRun([
               ...args,
               '--issue-wave',
               'true',
@@ -4552,7 +4563,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
               journal = requireSessionJournal(ledger.resume(id, 1));
             }
             expect(journal.state.items.map((item) => item.request.stage_id)).toEqual(['test_task']);
-            publicRun([
+            await publicRun([
               ...args,
               '--issue-wave',
               'true',
@@ -4632,5 +4643,5 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
       }
       if (didFail) throw failure;
     },
-    60000,
+    correctiveCaseTimeoutMs,
   );

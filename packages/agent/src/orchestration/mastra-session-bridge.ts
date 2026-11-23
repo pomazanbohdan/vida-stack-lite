@@ -1,12 +1,17 @@
 import { createHash } from 'node:crypto';
+import { Database } from 'bun:sqlite';
 import { lstatSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
-import { sessionBridgeDatabasePath, sessionBridgeDatabaseRelativePath } from '../config/project-paths.js';
+import {
+  PROJECT_WORKSPACE_DATABASE_PATH,
+  sessionBridgeDatabasePath,
+  sessionBridgeDatabaseRelativePath,
+} from '../config/project-paths.js';
 export { sessionBridgeDatabasePath } from '../config/project-paths.js';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
-import { openBunSqliteClient } from './bun-sqlite-client.js';
+import { createInMemoryBunSqliteClient, openBunSqliteClient } from './bun-sqlite-client.js';
 import z from 'zod';
 import { type AgentRuntimeConfig, type WorkItemSelection, runtimeConfigDigest } from '../config/runtime-config.js';
 import { loadProjectSetContext } from '../config/project-context.js';
@@ -86,6 +91,31 @@ function workflowDatabaseIdentity(file: string): string {
   return `${stat.dev}:${stat.ino}`;
 }
 
+async function prepareWorkflowStorageSeed(): Promise<Buffer> {
+  const memory = new Database(':memory:', { strict: true, safeIntegers: true });
+  let client: ReturnType<typeof createInMemoryBunSqliteClient> | undefined;
+  let store: LibSQLStore | undefined;
+  let image: Buffer;
+  try {
+    client = createInMemoryBunSqliteClient(memory);
+    store = new LibSQLStore({ id: 'vida-workflow-state', client });
+    await store.init();
+    await client.settle();
+    image = Buffer.from(memory.serialize());
+  } catch (error) {
+    try {
+      if (store) await store.close();
+      else if (client) await client.close();
+      else memory.close(true);
+    } catch (cleanup) {
+      throw new AggregateError([error, cleanup], 'Mastra seed preparation and close failed');
+    }
+    throw error;
+  }
+  await store.close();
+  return image;
+}
+
 async function initializeWorkflowStorage(
   repositoryRoot: string,
   config: AgentRuntimeConfig,
@@ -99,10 +129,30 @@ async function initializeWorkflowStorage(
   try {
     access.ensureDirectory(config.control.work_root, 'Mastra workflow storage root');
     const databasePath = sessionBridgeDatabasePath(repositoryRoot, config);
-    if (!access.fileExists(relative, 'Mastra workflow database'))
-      await access.writeExclusiveAsync(relative, '', 'fresh Mastra database');
+    let seedIdentity: string | undefined;
+    if (!access.fileExists(relative, 'Mastra workflow database')) {
+      requireBridge(
+        relative !== PROJECT_WORKSPACE_DATABASE_PATH,
+        'shared workspace DB belongs to project initialization',
+      );
+      const image = await prepareWorkflowStorageSeed();
+      requireBridge(image.length > 0 && image.length <= 8 * 1024 * 1024, 'workflow schema seed exceeds bound');
+      const digest = createHash('sha256').update(image).digest('hex');
+      for (const suffix of ['-journal', '-wal', '-shm'])
+        requireBridge(!access.fileExists(relative + suffix, 'workflow seed sidecars'), 'workflow seed sidecar exists');
+      assertProducer();
+      await access.writeExclusiveAtomicAsync(relative, image, 'fresh Mastra database seed');
+      assertProducer();
+      seedIdentity = workflowDatabaseIdentity(databasePath);
+      const published = access.readCapturedBytes(relative, 'Mastra database seed readback', image.length);
+      requireBridge(
+        published.length === image.length && createHash('sha256').update(published).digest('hex') === digest,
+        'workflow seed publication disagrees with prepared bytes',
+      );
+    }
     assertProducer();
     const before = workflowDatabaseIdentity(databasePath);
+    requireBridge(seedIdentity === undefined || seedIdentity === before, 'Mastra database seed was substituted');
     const client = openBunSqliteClient(repositoryRoot, relative, workspaceId, admission);
     let storage: LibSQLStore | undefined;
     try {

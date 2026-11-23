@@ -1057,22 +1057,6 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
       packedAsset[0]?.size === assetBytes.length,
     'CI native pack inventory differs',
   );
-  const files: Array<[string, Buffer, number]> = [
-    [pack.filename, archiveBytes, ciArchiveLimit],
-    [manifest.asset.file, assetBytes, ciArchiveLimit],
-    ['manifest.json', manifestBytes, 8 * 1024 * 1024],
-    ['candidate.json', candidateBytes, 8 * 1024 * 1024],
-    ['native-build.result.json', receiptBytes, 1024 * 1024],
-    ...(installerBytes ? [['install-windows.ps1', installerBytes, 1024 * 1024] as [string, Buffer, number]] : []),
-  ];
-  const names = files.map(([name]) => name);
-  requireCI(
-    names.length === (installerBytes ? 6 : 5) &&
-      new Set(names).size === names.length &&
-      names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)),
-    'CI build artifact inventory differs',
-  );
-  validateCIArtifactMemberSizes(files.map(([name, bytes, limit]) => ({ name, size: bytes.length, limit })));
   exclusive(ctx.root, intent, {
     request_id: ctx.request.request_id,
     run_id: ctx.run_id,
@@ -1080,6 +1064,48 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
     phase: phaseName,
     status: 'issued',
   });
+  const sdkFiles: Array<[string, Buffer, number]> = [];
+  if (ctx.request.target === 'bun-linux-x64') {
+    const { packSdkCompatibility } = await import('../../packages/agent/tooling/pack-sdk.ts');
+    const destination = releaseDirectory(ctx.root, 'sdk');
+    const packed = await packSdkCompatibility({ root: ctx.packageRoot, destination });
+    requireCI(packed.manifest.value.version === ctx.request.version, 'CI SDK manifest version differs');
+    requireCI(path.dirname(packed.archive) === destination, 'CI SDK archive destination differs');
+    const archive = physical(ctx.root, 'sdk/' + path.basename(packed.archive), ciArchiveLimit);
+    const sdkReceipt = Buffer.from(
+      json({
+        schema: 'VidaCISdkPack/v1',
+        operation_id: ctx.request.operation_id,
+        version: ctx.request.version,
+        source_commit: ctx.source_commit,
+        source_binding: ctx.request.source_binding,
+        request_id: ctx.request.request_id,
+        run_id: ctx.run_id,
+        run_attempt: ctx.run_attempt,
+        archive_sha256: sha(archive),
+        archive_size: archive.length,
+        manifest_sha256: sha(packed.manifest.bytes),
+      }),
+    );
+    sdkFiles.push(['sdk-package.tgz', archive, ciArchiveLimit], ['sdk-package.receipt.json', sdkReceipt, 1024 * 1024]);
+  }
+  const files: Array<[string, Buffer, number]> = [
+    [pack.filename, archiveBytes, ciArchiveLimit],
+    [manifest.asset.file, assetBytes, ciArchiveLimit],
+    ['manifest.json', manifestBytes, 8 * 1024 * 1024],
+    ['candidate.json', candidateBytes, 8 * 1024 * 1024],
+    ['native-build.result.json', receiptBytes, 1024 * 1024],
+    ...(installerBytes ? [['install-windows.ps1', installerBytes, 1024 * 1024] as [string, Buffer, number]] : []),
+    ...sdkFiles,
+  ];
+  const names = files.map(([name]) => name);
+  requireCI(
+    names.length === (installerBytes ? 6 : 7) &&
+      new Set(names).size === names.length &&
+      names.every((name) => /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name)),
+    'CI build artifact inventory differs',
+  );
+  validateCIArtifactMemberSizes(files.map(([name, bytes, limit]) => ({ name, size: bytes.length, limit })));
   console.log(
     json({
       phase: phaseName,

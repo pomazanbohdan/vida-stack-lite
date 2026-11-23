@@ -1,7 +1,20 @@
-import { closeSync, existsSync, fsyncSync, lstatSync, openSync, readFileSync, writeFileSync, writeSync } from 'node:fs';
+import {
+  closeSync,
+  existsSync,
+  fsyncSync,
+  lstatSync,
+  openSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  writeSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
+import { isDeepStrictEqual } from 'node:util';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { readBunPackBytes, type BunPackEntry } from '../../packages/agent/tooling/bun-pack-metadata.ts';
+import { sdkCompatibilityManifest } from '../../packages/agent/tooling/pack-sdk.ts';
 import { fsSafeArchiveEntry } from '../../packages/agent/tooling/fs-safe-archive-entry.ts';
 import { ownedTempWorkspace, cleanupOwnedWorkspace } from '../../packages/agent/tooling/owned-staging.ts';
 import { readRuntimeConfigIdentityForObservation } from '../../packages/agent/src/config/runtime-config.ts';
@@ -11,6 +24,7 @@ import type {
   AgentReadArchiveEntry,
 } from '../../packages/agent/tooling/release-dependency-types.js';
 import {
+  readReleaseBytes,
   releaseDigest as digest,
   releaseJSON as canonicalJSON,
   releasePath,
@@ -20,12 +34,19 @@ import {
   releaseSourceBinding,
   parseReleaseVersion,
   releaseIdPattern,
+  assertCommittedReleaseAncestry,
+  materializeCommittedReleaseSource,
+  withCommittedReleaseSource,
   withReleaseAdmission,
 } from '../../packages/agent/bin/local-release-artifacts.ts';
 import {
   readNativeRetargetCandidate,
   recheckNativeRetargetCandidate,
 } from '../../packages/agent/bin/repair-release-retarget.ts';
+import {
+  assertUnsealedReleaseSourceAllowed,
+  readCommittedReleaseRecipe,
+} from '../../packages/agent/bin/release-preparation.ts';
 
 const hex = /^[a-f0-9]{64}$/;
 const targetPattern = /^bun-(windows|linux|darwin)-(x64|arm64)(-baseline)?$/;
@@ -157,6 +178,7 @@ export interface FormationMembers {
   asset_bytes: Buffer;
   native_build_result_bytes: Buffer;
   installer_bytes: Buffer;
+  sdk?: ObservedCISdkPack;
 }
 export interface FormationPointer {
   schema: 'VidaLocalReleaseFormation/v1';
@@ -192,6 +214,7 @@ export interface FormationPointerV2 {
 type TargetCI = {
   target: NativeReleaseTarget;
   request_id: string;
+  request?: CIDeliveryRequest | undefined;
   profile: CIDeliveryProfile;
   observe: (args: { request: CIDeliveryRequest; candidate: CIDeliveryCandidate }) => Promise<CIDeliveryObservation>;
 };
@@ -563,26 +586,85 @@ export function recordCIDeliveryRequest(args: {
   target: string;
 }): CIDeliveryRequest {
   const body = requestBody(args);
-  const request: CIDeliveryRequest = {
-    ...body,
-    request_id: digest(canonicalJSON(body)),
-  };
-  const relative = requestPath(args.operation, request.request_id);
+  return persistCIDeliveryRequest(args.root, requestIdentity(body));
+}
+
+function requestIdentity(body: Omit<CIDeliveryRequest, 'request_id'>): CIDeliveryRequest {
+  return { ...body, request_id: digest(canonicalJSON(body)) };
+}
+
+function persistCIDeliveryRequest(root: string, request: CIDeliveryRequest): CIDeliveryRequest {
+  const relative = requestPath(request.operation_id, request.request_id);
   const bytes = Buffer.from(canonicalJSON(request));
-  const file = releasePath(args.root, relative, true);
+  const file = releasePath(root, relative, true);
   if (existsSync(file)) {
-    check(regularBytes(args.root, relative).equals(bytes), 'partial or changed request; preserve UNKNOWN');
+    check(readReleaseBytes(root, relative).equals(bytes), 'partial or changed request; preserve UNKNOWN');
   } else {
-    releaseDirectory(args.root, path.posix.dirname(relative));
+    releaseDirectory(root, path.posix.dirname(relative));
     writeFileSync(file, bytes, { flag: 'wx', mode: 0o600 });
   }
   return request;
 }
+const nativePairCommit = /^[0-9a-f]{40}$/;
+function nativePairSelectionPath(operation: string): string {
+  check(releaseIdPattern.test(operation), 'native pair operation invalid');
+  return `.agent/work/agent-local-release/${operation}/native-pair.json`;
+}
+function nativePairSelection(args: {
+  operation: string;
+  version: string;
+  commit: string;
+  source_binding: string;
+  linux_request_id: string;
+  windows_request_id: string;
+}) {
+  const body = {
+    schema: 'VidaNativePairSelection/v1',
+    operation_id: args.operation,
+    version: args.version,
+    commit: args.commit,
+    source_binding: args.source_binding,
+    linux_request_id: args.linux_request_id,
+    windows_request_id: args.windows_request_id,
+  };
+  return { ...body, digest: digest(canonicalJSON(body)) };
+}
+
+function assertNativePairRequestCustody(
+  root: string,
+  operation: string,
+  requests: readonly CIDeliveryRequest[] | null,
+): void {
+  const ci = releasePath(root, `.agent/work/agent-local-release/${operation}/ci`, true);
+  if (!existsSync(ci)) return;
+  const entries = readdirSync(ci, { withFileTypes: true });
+  if (requests === null) {
+    check(entries.length === 0, 'existing CI requests have no native pair selection; preserve issued evidence');
+    return;
+  }
+  for (const entry of entries) {
+    const request = requests.find(({ request_id }) => request_id === entry.name);
+    check(entry.isDirectory() && request, 'native pair CI namespace differs; preserve issued evidence');
+    const relative = requestPath(operation, request.request_id);
+    const file = releasePath(root, relative, true);
+    if (existsSync(file))
+      check(
+        readReleaseBytes(root, relative).equals(Buffer.from(canonicalJSON(request))),
+        'partial or changed native pair request; preserve UNKNOWN',
+      );
+    else
+      check(
+        readdirSync(path.dirname(file)).length === 0,
+        'native pair request custody is incomplete; preserve UNKNOWN',
+      );
+  }
+}
 /** Issue the fixed repository workflow's two dispatch inputs through the existing request owner. */
-export function issueApprovedNativePair(args: { root: string; operation: string }): {
+export async function issueApprovedNativePair(args: { root: string; operation: string; commit: string }): Promise<{
   linux: CIDeliveryRequest;
   windows: CIDeliveryRequest;
-} {
+}> {
+  check(nativePairCommit.test(args.commit), 'native pair requires an exact committed Source SHA');
   const identity = readRuntimeConfigIdentityForObservation(args.root);
   check(
     identity.repository_id === 'vida-agent' &&
@@ -590,28 +672,287 @@ export function issueApprovedNativePair(args: { root: string; operation: string 
       identity.project_ids.includes('agent'),
     'approved repository project identity differs',
   );
-  const context = {
-    schema: 'ProjectContext/v1',
-    repository_id: identity.repository_id,
-    project_ids: ['agent'],
-  };
-  const linux = recordCIDeliveryRequest({
-    ...args,
-    context,
-    target: 'bun-linux-x64',
+  return withReleaseAdmission(args.root, () => {
+    const relative = nativePairSelectionPath(args.operation);
+    const file = releasePath(args.root, relative, true);
+    const sealed = existsSync(file);
+    if (!sealed) assertNativePairRequestCustody(args.root, args.operation, null);
+    const state = releaseState(
+      releasePath(args.root, `.agent/work/agent-local-release/${args.operation}/release.json`),
+    );
+    const pending = releaseState(releasePath(args.root, '.agent/work/agent-local-release/pending.json'));
+    check(
+      state.operation_id === args.operation &&
+        pending.operation_id === args.operation &&
+        state.version === pending.version &&
+        !pending.install_started &&
+        !state.install_started,
+      'request operation differs or installation started',
+    );
+    const recipe = readCommittedReleaseRecipe(args.root, {
+      operation_id: args.operation,
+      version: pending.version,
+    });
+    return withCommittedReleaseSource(args.root, args.commit, (sourceRoot) => {
+      const context = {
+        schema: 'ProjectContext/v1',
+        repository_id: identity.repository_id,
+        project_ids: ['agent'],
+      };
+      const source_binding = releaseSourceBinding(sourceRoot).source_binding;
+      const manifestBytes = readReleaseBytes(sourceRoot, 'packages/agent/package.json');
+      const manifestValue: unknown = parseJSON(new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes));
+      check(
+        isRecord(manifestValue) &&
+          manifestValue.name === 'vida-agent' &&
+          manifestValue.version === pending.version &&
+          parseReleaseVersion(manifestValue.version) !== null,
+        'committed manifest identity or version differs from the pending journal',
+      );
+      if (recipe) {
+        check(
+          recipe.expected_source_binding === source_binding &&
+            manifestBytes.equals(Buffer.from(recipe.manifest_after, 'base64')),
+          'committed Source differs from the prepared release afterimage; preserve issued evidence',
+        );
+        assertCommittedReleaseAncestry(args.root, recipe.commit, args.commit);
+      }
+      const requestArgs = { root: args.root, operation: args.operation, context, source_binding };
+      const linuxBody = requestBody({ ...requestArgs, target: 'bun-linux-x64' });
+      const windowsBody = requestBody({ ...requestArgs, target: 'bun-windows-x64' });
+      const linuxRequest = requestIdentity(linuxBody);
+      const windowsRequest = requestIdentity(windowsBody);
+      const selection = nativePairSelection({
+        operation: args.operation,
+        version: pending.version,
+        commit: args.commit,
+        source_binding,
+        linux_request_id: linuxRequest.request_id,
+        windows_request_id: windowsRequest.request_id,
+      });
+      if (sealed) {
+        check(
+          readReleaseBytes(args.root, relative).equals(Buffer.from(canonicalJSON(selection))),
+          'native pair selection differs; preserve issued evidence',
+        );
+        assertNativePairRequestCustody(args.root, args.operation, [linuxRequest, windowsRequest]);
+      } else {
+        releaseDirectory(args.root, path.posix.dirname(relative));
+        saveReceipt(file, selection);
+      }
+      return {
+        linux: persistCIDeliveryRequest(args.root, linuxRequest),
+        windows: persistCIDeliveryRequest(args.root, windowsRequest),
+      };
+    });
   });
-  const windows = recordCIDeliveryRequest({
-    ...args,
-    context,
-    target: 'bun-windows-x64',
-  });
+}
+
+interface NativePairSelection {
+  schema: 'VidaNativePairSelection/v1';
+  operation_id: string;
+  version: string;
+  commit: string;
+  source_binding: string;
+  linux_request_id: string;
+  windows_request_id: string;
+  digest: string;
+}
+export interface NativePairSelectionContext {
+  selection: NativePairSelection;
+  linux: CIDeliveryRequest;
+  windows: CIDeliveryRequest;
+  recipe: ReturnType<typeof readCommittedReleaseRecipe>;
+}
+const nativePairSelectionFields = [
+  'schema',
+  'operation_id',
+  'version',
+  'commit',
+  'source_binding',
+  'linux_request_id',
+  'windows_request_id',
+  'digest',
+] as const;
+function parseNativePairSelectionValue(value: unknown, operation: string): NativePairSelection {
+  exact(value, nativePairSelectionFields);
+  const { digest: supplied, ...body } = value;
   check(
-    linux.operation_id === windows.operation_id &&
-      linux.version === windows.version &&
-      linux.source_binding === windows.source_binding,
-    'request pair changed during issuance; retain issued requests',
+    value.schema === 'VidaNativePairSelection/v1' &&
+      value.operation_id === operation &&
+      typeof value.version === 'string' &&
+      parseReleaseVersion(value.version) !== null &&
+      typeof value.commit === 'string' &&
+      nativePairCommit.test(value.commit) &&
+      typeof value.source_binding === 'string' &&
+      hex.test(value.source_binding) &&
+      typeof value.linux_request_id === 'string' &&
+      hex.test(value.linux_request_id) &&
+      typeof value.windows_request_id === 'string' &&
+      hex.test(value.windows_request_id) &&
+      value.linux_request_id !== value.windows_request_id &&
+      typeof supplied === 'string' &&
+      supplied === digest(canonicalJSON(body)),
+    'native pair selection is invalid',
   );
-  return { linux, windows };
+  return value as unknown as NativePairSelection;
+}
+function nativePairSelectionBytes(root: string, operation: string): Buffer | null {
+  const relative = nativePairSelectionPath(operation);
+  if (!existsSync(releasePath(root, relative, true))) return null;
+  return readReleaseBytes(root, relative);
+}
+function assertNativePairJournals(root: string, operation: string, version: string): void {
+  const state = releaseState(releasePath(root, `.agent/work/agent-local-release/${operation}/release.json`));
+  const pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
+  check(
+    state.operation_id === operation &&
+      pending.operation_id === operation &&
+      state.version === version &&
+      pending.version === version &&
+      !state.install_started &&
+      !pending.install_started,
+    'native pair selection differs from the current journals',
+  );
+}
+function nativePairRequest(
+  root: string,
+  operation: string,
+  requestId: string,
+  target: 'bun-linux-x64' | 'bun-windows-x64',
+  selection: NativePairSelection,
+  repositoryId: string,
+): CIDeliveryRequest {
+  const value = parseJSON(readReleaseBytes(root, requestPath(operation, requestId)).toString('utf8'));
+  validateCIDeliveryRequest(value);
+  check(
+    value.request_id === requestId &&
+      value.operation_id === operation &&
+      value.version === selection.version &&
+      value.target === target &&
+      value.source_binding === selection.source_binding &&
+      value.repository_id === repositoryId &&
+      equal(value.project_ids, ['agent']),
+    'native pair request bytes differ from the selection',
+  );
+  return value;
+}
+/**
+ * Strict intake reader for the operation-owned native pair seal. Returns null only
+ * when no selection exists (historic unsealed operations); any stale, missing,
+ * drifted or foreign selection refuses before provider fetch or write.
+ */
+export function readNativePairSelection(
+  root: string,
+  operation: string,
+  purpose: 'intake' | 'historical' = 'intake',
+): NativePairSelectionContext | null {
+  const bytes = nativePairSelectionBytes(root, operation);
+  if (bytes === null) {
+    assertUnsealedReleaseSourceAllowed(root, operation);
+    return null;
+  }
+  const selection = parseNativePairSelectionValue(parseJSON(bytes.toString('utf8')), operation);
+  check(bytes.equals(Buffer.from(canonicalJSON(selection))), 'native pair selection bytes differ');
+  if (purpose === 'intake') {
+    assertNativePairJournals(root, operation, selection.version);
+    const identity = readRuntimeConfigIdentityForObservation(root);
+    check(
+      identity.repository_id === 'vida-agent' &&
+        (identity.bundle === 'vida-agent' || identity.bundle === 'packages/agent') &&
+        identity.project_ids.includes('agent'),
+      'approved repository project identity differs',
+    );
+  }
+  assertNativePairOperation(root, operation, selection.version);
+  const recipe = readCommittedReleaseRecipe(root, {
+    operation_id: operation,
+    version: selection.version,
+  });
+  const linux = nativePairRequest(
+    root,
+    operation,
+    selection.linux_request_id,
+    'bun-linux-x64',
+    selection,
+    'vida-agent',
+  );
+  const windows = nativePairRequest(
+    root,
+    operation,
+    selection.windows_request_id,
+    'bun-windows-x64',
+    selection,
+    'vida-agent',
+  );
+  assertNativePairRequestCustody(root, operation, [linux, windows]);
+  return { selection, linux, windows, recipe };
+}
+
+export function openNativePairCommittedSource(root: string, { selection, recipe }: NativePairSelectionContext) {
+  const materialized = materializeCommittedReleaseSource(root, selection.commit, { linuxInstaller: true });
+  try {
+    check(
+      releaseSourceBinding(materialized.sourceRoot).source_binding === selection.source_binding,
+      'native pair committed Source differs',
+    );
+    const manifestBytes = readReleaseBytes(materialized.sourceRoot, 'packages/agent/package.json');
+    const manifestValue: unknown = parseJSON(new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes));
+    check(
+      isRecord(manifestValue) &&
+        manifestValue.name === 'vida-agent' &&
+        manifestValue.version === selection.version &&
+        parseReleaseVersion(manifestValue.version) !== null,
+      'native pair committed manifest differs from the selection',
+    );
+    if (recipe) {
+      check(
+        recipe.expected_source_binding === selection.source_binding &&
+          manifestBytes.equals(Buffer.from(recipe.manifest_after, 'base64')),
+        'native pair committed Source differs from the prepared release afterimage',
+      );
+      assertCommittedReleaseAncestry(root, recipe.commit, selection.commit);
+    }
+    return materialized;
+  } catch (error) {
+    materialized.release();
+    throw error;
+  }
+}
+/** Recheck the exact sealed identities after async boundaries and at owner CAS. */
+export function recheckNativePairSelection(
+  root: string,
+  operation: string,
+  context: NativePairSelectionContext,
+  purpose: 'intake' | 'historical' = 'intake',
+): void {
+  const bytes = nativePairSelectionBytes(root, operation);
+  check(bytes !== null && bytes.equals(Buffer.from(canonicalJSON(context.selection))), 'native pair selection changed');
+  const { selection } = context;
+  if (purpose === 'intake') assertNativePairJournals(root, operation, selection.version);
+  else assertNativePairOperation(root, operation, selection.version);
+  const recipe = readCommittedReleaseRecipe(root, {
+    operation_id: operation,
+    version: selection.version,
+  });
+  check(equal(recipe, context.recipe), 'native pair preparation recipe changed');
+  check(
+    readReleaseBytes(root, requestPath(operation, selection.linux_request_id)).equals(
+      Buffer.from(canonicalJSON(context.linux)),
+    ) &&
+      readReleaseBytes(root, requestPath(operation, selection.windows_request_id)).equals(
+        Buffer.from(canonicalJSON(context.windows)),
+      ),
+    'native pair request bytes changed',
+  );
+  assertNativePairRequestCustody(root, operation, [context.linux, context.windows]);
+}
+function assertNativePairOperation(root: string, operation: string, version: string): void {
+  const state = releaseState(releasePath(root, `.agent/work/agent-local-release/${operation}/release.json`));
+  check(
+    state.operation_id === operation && state.version === version,
+    'native pair selection differs from its operation journal',
+  );
 }
 function profileMatches(request: CIDeliveryRequest, profile: CIDeliveryProfile): void {
   check(
@@ -825,6 +1166,8 @@ export async function verifyCIDeliveryEvidence(args: {
   root: string;
   operation: string;
   version: string;
+  sourceRoot?: string | undefined;
+  recheck?: (() => void) | undefined;
   ci?:
     | {
         request_id: string;
@@ -850,6 +1193,7 @@ export async function verifyCIDeliveryEvidence(args: {
     root,
     operation,
     published: true,
+    sourceRoot: args.sourceRoot,
   });
   const requestValue = parseJSON(regularBytes(root, requestPath(operation, ci.request_id)).toString('utf8'));
   validateCIDeliveryRequest(requestValue);
@@ -870,6 +1214,7 @@ export async function verifyCIDeliveryEvidence(args: {
     request: structuredClone(request),
     candidate: structuredClone(candidate),
   });
+  args.recheck?.();
   recheckNativeRetargetCandidate(root, candidate);
   check(
     regularBytes(root, requestPath(operation, ci.request_id)).equals(Buffer.from(canonicalJSON(request))),
@@ -891,6 +1236,7 @@ export async function verifyCIDeliveryEvidence(args: {
       'pending release or CI request changed during result publication',
     );
     recheckNativeRetargetCandidate(root, candidate);
+    args.recheck?.();
     persistCIDeliveryFormation(root, request, observation);
   });
   return validated;
@@ -1362,6 +1708,8 @@ export async function verifyCIDeliveryFormationPair(args: {
   operation: string;
   version: string;
   targets: readonly TargetCI[];
+  sourceRoot?: string | undefined;
+  recheck?: (() => void) | undefined;
   recheckLocalTests: () => void;
 }): Promise<FormationPointerV2> {
   const { root, operation, version, targets, recheckLocalTests } = args;
@@ -1378,6 +1726,7 @@ export async function verifyCIDeliveryFormationPair(args: {
     root,
     operation,
     published: true,
+    sourceRoot: args.sourceRoot,
   });
   check(
     primary.version === version && selected.some((entry) => entry.target === primary.manifest.target),
@@ -1397,13 +1746,15 @@ export async function verifyCIDeliveryFormationPair(args: {
             root,
             operation,
             target: selectedTarget.target,
+            sourceRoot: args.sourceRoot,
           });
-    const requestValue = parseJSON(
-      regularBytes(root, requestPath(operation, selectedTarget.request_id)).toString('utf8'),
-    );
+    args.recheck?.();
+    const requestBytes = readReleaseBytes(root, requestPath(operation, selectedTarget.request_id));
+    const requestValue: unknown = selectedTarget.request ?? parseJSON(requestBytes.toString('utf8'));
     validateCIDeliveryRequest(requestValue);
     check(
-      requestValue.request_id === selectedTarget.request_id &&
+      requestBytes.equals(Buffer.from(canonicalJSON(requestValue))) &&
+        requestValue.request_id === selectedTarget.request_id &&
         requestValue.operation_id === operation &&
         requestValue.version === version &&
         requestValue.target === selectedTarget.target &&
@@ -1417,6 +1768,7 @@ export async function verifyCIDeliveryFormationPair(args: {
       request: structuredClone(requestValue),
       candidate: structuredClone(candidate),
     });
+    args.recheck?.();
     recheckNativeRetargetCandidate(root, candidate);
     check(
       regularBytes(root, requestPath(operation, requestValue.request_id)).equals(
@@ -1475,6 +1827,7 @@ export async function verifyCIDeliveryFormationPair(args: {
       'pending release changed',
     );
     recheckLocalTests();
+    args.recheck?.();
     for (const item of observations) {
       recheckNativeRetargetCandidate(root, item.candidate);
       validateCIDeliveryObservation(item);
@@ -1652,14 +2005,14 @@ function isQualifiedArchiveModule(value: unknown): value is AgentFsSafeArchiveMo
     typeof value.extractArchive === 'function'
   );
 }
-async function qualifiedZIPReader(root: string): Promise<QualifiedZipReader> {
+async function qualifiedZIPReader(root: string, sourceRoot = root): Promise<QualifiedZipReader> {
   try {
     const archiveEntry = fsSafeArchiveEntry(path.join(root, 'packages/agent'));
     const fsSafe = parseJSON(readFileSync(path.join(path.dirname(archiveEntry), '../package.json'), 'utf8'));
     const zipRequire = createRequire(archiveEntry);
     const zip = parseJSON(readFileSync(zipRequire.resolve('jszip/package.json'), 'utf8'));
-    const declared = parseJSON(regularBytes(root, 'packages/agent/package.json').toString('utf8'));
-    const lock = regularBytes(root, 'packages/agent/bun.lock').toString('utf8');
+    const declared = parseJSON(regularBytes(sourceRoot, 'packages/agent/package.json').toString('utf8'));
+    const lock = regularBytes(sourceRoot, 'packages/agent/bun.lock').toString('utf8');
     validateCIZIPReaderVersions({ declared, lock, fsSafe, zip });
     const loaded: unknown = await import(pathToFileURL(archiveEntry).href);
     check(isQualifiedArchiveModule(loaded), 'qualified archive entry or preflight capability unavailable');
@@ -1708,6 +2061,7 @@ interface DownloadOptions {
 interface ObserveGitHubOptions extends DownloadOptions {
   candidate: CIDeliveryCandidate;
   transport_path: string;
+  source_root?: string;
 }
 type ObserveGitHubFormationOptions = Omit<ObserveGitHubOptions, 'candidate'>;
 interface GitHubRun {
@@ -2136,19 +2490,80 @@ export async function downloadGitHubCIProducerArtifact(options: DownloadOptions)
   );
   return downloadGitHubArtifact(options, false);
 }
+interface CISdkIdentity {
+  source_commit: string;
+  run_id: string;
+  run_attempt: number;
+}
+
+export interface ObservedCISdkPack {
+  archive_bytes: Buffer;
+  receipt_bytes: Buffer;
+  pack_metadata: BunPackEntry[];
+}
+
+async function readCISdkPack(input: {
+  sourceRoot: string;
+  request: CIDeliveryRequest;
+  identity: CISdkIdentity;
+  archive: Buffer;
+  receipt: Buffer;
+}): Promise<ObservedCISdkPack> {
+  const { sourceRoot, request, identity, archive, receipt } = input;
+  const manifest = sdkCompatibilityManifest({ root: path.join(sourceRoot, 'packages/agent') }).bytes;
+  const expected = Buffer.from(
+    canonicalJSON({
+      schema: 'VidaCISdkPack/v1',
+      operation_id: request.operation_id,
+      version: request.version,
+      source_commit: identity.source_commit,
+      source_binding: request.source_binding,
+      request_id: request.request_id,
+      run_id: identity.run_id,
+      run_attempt: identity.run_attempt,
+      archive_sha256: digest(archive),
+      archive_size: archive.length,
+      manifest_sha256: digest(manifest),
+    }),
+  );
+  check(receipt.equals(expected), 'SDK archive receipt differs from selected CI or Source');
+  const metadata = await readBunPackBytes({
+    bytes: archive,
+    name: 'vida-agent',
+    version: request.version,
+    filename: `vida-agent-${request.version}.tgz`,
+    manifest,
+  });
+  const files = metadata[0]?.files;
+  check(
+    files !== undefined &&
+      files.some((file) => file.path === 'dist/src/index.js') &&
+      files.some((file) => file.path === 'dist/src/trusted-host.js') &&
+      files.every((file) => !/^(dist\/standalone|node_modules)(\/|$)/u.test(file.path)),
+    'CI SDK archive inventory differs',
+  );
+  return { archive_bytes: archive, receipt_bytes: receipt, pack_metadata: metadata };
+}
+
+const ciSdkArchiveName = 'sdk-package.tgz';
+const ciSdkReceiptName = 'sdk-package.receipt.json';
+
 export async function readCIProducerFormationMembers(args: {
   root: string;
   request: CIDeliveryRequest;
   transport_path: string;
   installer_bytes: Buffer;
+  source_root?: string | undefined;
+  sdk?: CISdkIdentity;
 }): Promise<FormationMembers> {
-  const { root, request, transport_path, installer_bytes } = args;
+  const { root, request, transport_path, installer_bytes, source_root = root, sdk } = args;
   validateCIDeliveryRequest(request);
   check(Buffer.isBuffer(installer_bytes), 'source installer must be bytes');
   const target = request.target;
   check(target === 'bun-windows-x64' || target === 'bun-linux-x64', 'unsupported producer target');
+  check(sdk === undefined || target === 'bun-linux-x64', 'SDK requires the Linux producer');
   const currentInstaller = regularBytes(
-    root,
+    source_root,
     target === 'bun-windows-x64' ? 'packages/agent/tooling/install-windows.ps1' : 'install/install.sh',
     1024 * 1024,
   );
@@ -2166,17 +2581,18 @@ export async function readCIProducerFormationMembers(args: {
     transportInfo.ctimeMs,
   ]);
   const transport = regularBytes(root, transport_path, ciTransportLimit);
-  const { extractArchive, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root);
+  const { extractArchive, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root, source_root);
   const archiveName = `vida-agent-${request.version}.tgz`;
   const assetName = `vida-agent-${target}${target === 'bun-windows-x64' ? '.exe' : ''}`;
   const names = ['candidate.json', archiveName, 'manifest.json', assetName, 'native-build.result.json'];
   if (target === 'bun-windows-x64') names.push('install-windows.ps1');
+  if (sdk) names.push(ciSdkArchiveName, ciSdkReceiptName);
   const allowed = new Set(names);
   const limits = {
     maxArchiveBytes: ciTransportLimit,
     maxEntries: names.length,
     maxEntryBytes: ciArchiveLimit,
-    maxExtractedBytes: 2 * ciArchiveLimit + 18 * 1024 * 1024,
+    maxExtractedBytes: sdk ? ciTransportLimit : 2 * ciArchiveLimit + 18 * 1024 * 1024,
   };
   const inventory = await loadZipArchiveWithPreflight(transport, limits);
   check(equal(Object.keys(inventory.files).sort(), [...names].sort()), 'producer ZIP member set differs');
@@ -2215,7 +2631,9 @@ export async function readCIProducerFormationMembers(args: {
             ? ciArchiveLimit
             : entry.path === 'candidate.json' || entry.path === 'manifest.json'
               ? 8 * 1024 * 1024
-              : 1024 * 1024)
+              : entry.path === ciSdkArchiveName
+                ? ciArchiveLimit
+                : 1024 * 1024)
           ? 'extract'
           : 'skip',
       onFiltered: 'reject-archive',
@@ -2245,6 +2663,17 @@ export async function readCIProducerFormationMembers(args: {
       asset_bytes: regularBytes(directory, assetName, ciArchiveLimit),
       native_build_result_bytes: regularBytes(directory, 'native-build.result.json', 1024 * 1024),
       installer_bytes: selectedInstaller,
+      ...(sdk
+        ? {
+            sdk: await readCISdkPack({
+              sourceRoot: source_root,
+              request,
+              identity: sdk,
+              archive: regularBytes(directory, ciSdkArchiveName, ciArchiveLimit),
+              receipt: regularBytes(directory, ciSdkReceiptName, 1024 * 1024),
+            }),
+          }
+        : {}),
     };
     const transportAfter = lstatSync(releasePath(root, transport_path));
     check(
@@ -2281,8 +2710,21 @@ async function observeGitHubCIDeliveryInternal(
   candidate: CIDeliveryCandidate;
   archive_bytes: Buffer;
   transport_sha256: string;
+  sdk?: ObservedCISdkPack;
 }> {
-  let { root, request, candidate, profile, run_id, run_attempt, artifact_id, transport_path, token, signal } = options;
+  let {
+    root,
+    request,
+    candidate,
+    profile,
+    run_id,
+    run_attempt,
+    artifact_id,
+    transport_path,
+    token,
+    signal,
+    source_root,
+  } = options;
   request = structuredClone(request);
   if (candidate) candidate = structuredClone(candidate);
   profile = structuredClone(profile);
@@ -2375,6 +2817,7 @@ async function observeGitHubCIDeliveryInternal(
   });
   const artifact = githubArtifact(await get(`/actions/artifacts/${artifact_id}`));
   check(artifact.id === Number(artifact_id), 'artifact identity differs');
+  const nativeBuild = artifact.name === nativeBuildArtifactName(request.request_id, String(run_id), run_attempt);
   validateCIArtifactAttempt({
     artifact,
     request,
@@ -2383,10 +2826,58 @@ async function observeGitHubCIDeliveryInternal(
     repository_id: policy.repository_id,
     source_commit: policy.source_commit,
     job: selectedJob,
+    ...(nativeBuild ? { artifact_kind: 'native-build' as const } : {}),
   });
   const transport = regularBytes(root, transport_path, ciTransportLimit);
-  check(`sha256:${digest(transport)}` === artifact.digest, 'provider ZIP transport differs');
-  const { readArchiveEntry, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root);
+  const transportDigest = digest(transport);
+  check(`sha256:${transportDigest}` === artifact.digest, 'provider ZIP transport differs');
+  if (nativeBuild) {
+    const sourceRoot = source_root ?? root;
+    const linux = request.target === 'bun-linux-x64';
+    const producer = await readCIProducerFormationMembers({
+      root,
+      source_root: sourceRoot,
+      request,
+      transport_path,
+      installer_bytes: regularBytes(
+        sourceRoot,
+        linux ? 'install/install.sh' : 'packages/agent/tooling/install-windows.ps1',
+        1024 * 1024,
+      ),
+      ...(linux ? { sdk: { source_commit: policy.source_commit, run_id: String(run_id), run_attempt } } : {}),
+    });
+    const validated = validateCIDeliveryFormationMembers({
+      request,
+      members: producer,
+      profile,
+      providerObservation: {
+        issuer: profile.issuer,
+        run_id: String(run_id),
+        run_attempt,
+        artifact_id: String(artifact_id),
+      },
+    });
+    check(
+      (candidate === undefined ||
+        (candidate.operation_id === validated.candidate.operation_id &&
+          candidate.version === validated.candidate.version &&
+          candidate.source_binding === validated.candidate.source_binding &&
+          candidate.archive_sha256 === validated.candidate.archive_sha256 &&
+          candidate.manifest_sha256 === validated.candidate.manifest_sha256 &&
+          isDeepStrictEqual(candidate.manifest, validated.candidate.manifest) &&
+          isDeepStrictEqual(candidate.pack_metadata, validated.candidate.pack_metadata))) &&
+        regularBytes(root, transport_path, ciTransportLimit).equals(transport),
+      'producer candidate or ZIP changed',
+    );
+    return {
+      candidate: validated.candidate,
+      observation: validated.observation,
+      archive_bytes: producer.archive_bytes,
+      transport_sha256: transportDigest,
+      ...(producer.sdk ? { sdk: producer.sdk } : {}),
+    };
+  }
+  const { readArchiveEntry, loadZipArchiveWithPreflight } = await qualifiedZIPReader(root, source_root ?? root);
   const zip = releasePath(root, transport_path);
   let resultBytes: Buffer | undefined;
   let archiveBytes: Buffer | undefined;

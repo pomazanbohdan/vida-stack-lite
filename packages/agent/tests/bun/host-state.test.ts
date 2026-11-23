@@ -14011,7 +14011,34 @@ for (const completed of [false, true]) {
   );
 }
 
-for (const phase of ['before-init', 'before-start', 'before-resume', 'before-journal', 'before-settle']) {
+test.each(['-journal', '-wal', '-shm'])(
+  'first workflow database open preserves a contradictory %s sidecar',
+  async (suffix) => {
+    await withProducerFixtureCustody(async (f) => {
+      const sidecar = f.enginePath + suffix;
+      const foreign = Buffer.from('foreign SQLite sidecar');
+      writeFileSync(sidecar, foreign, { flag: 'wx' });
+      await expectRejection(MastraSessionBridge.open(f.args), /sidecar/i);
+      expect(existsSync(f.enginePath)).toBe(false);
+      expect(readFileSync(sidecar)).toEqual(foreign);
+      const retained = f.rows();
+      expect(parseJsonRecord(retained.at(-1)?.payload ?? '').status).toBe('commit_unknown');
+      await expectRejection(MastraSessionBridge.open(f.args), /producer is pending or unknown/);
+      expect(f.rows()).toEqual(retained);
+      expect(readFileSync(sidecar)).toEqual(foreign);
+    }, 'seed-sidecar' + suffix);
+  },
+  30_000,
+);
+
+for (const phase of [
+  'before-seed',
+  'before-init',
+  'before-start',
+  'before-resume',
+  'before-journal',
+  'before-settle',
+]) {
   test(
     'session producer process termination retains UNKNOWN at ' + phase,
     async () => {
@@ -14022,7 +14049,7 @@ for (const phase of ['before-init', 'before-start', 'before-resume', 'before-jou
       writeFileSync(
         script,
         `
-      import {writeFileSync} from 'node:fs';
+      import {existsSync,writeFileSync} from 'node:fs';
       import {LibSQLStore} from ${JSON.stringify(new URL('../../node_modules/@mastra/libsql/dist/index.js', import.meta.url).href)};
       import {HostStateStore} from ${source('../../src/host-state.ts')};
       import {loadRuntimeConfig} from ${source('../../src/config/runtime-config.ts')};
@@ -14034,7 +14061,14 @@ for (const phase of ['before-init', 'before-start', 'before-resume', 'before-jou
       args.ledger = openConfiguredMastraSessionLedger(args.repositoryRoot);
       const pause = () => {writeFileSync(${JSON.stringify(marker)}, 'actual protected producer reached'); Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0);};
       const phase = ${JSON.stringify(phase)};
-      if (phase === 'before-init') LibSQLStore.prototype.init = async function() {pause();};
+      if (phase === 'before-seed' || phase === 'before-init') {
+        const init = LibSQLStore.prototype.init;
+        LibSQLStore.prototype.init = async function() {
+          const placed = existsSync(${JSON.stringify(f.enginePath)});
+          if (placed === (phase === 'before-init')) pause();
+          return init.call(this);
+        };
+      }
       const bridge = await MastraSessionBridge.open(args);
       if (phase === 'before-start' || phase === 'before-resume') {
         const actual = HostStateStore.prototype.assertSessionProducerCurrent;
@@ -14103,13 +14137,30 @@ for (const phase of ['before-init', 'before-start', 'before-resume', 'before-jou
                 stderr_tail: stderr.slice(-4000),
               }),
           );
+        if (phase === 'before-seed') expect(existsSync(f.enginePath)).toBe(false);
+        if (phase === 'before-init') {
+          const image = new Database(f.enginePath, { readonly: true });
+          try {
+            expect(image.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+            expect(
+              image.query("SELECT name FROM sqlite_schema WHERE name = 'mastra_workflow_snapshot'").values(),
+            ).toEqual([['mastra_workflow_snapshot']]);
+          } finally {
+            image.close(true);
+          }
+        }
         const retained = f.rows();
         expect(parseJsonRecord(retained.at(-1)?.payload ?? '').status).toBe('commit_unknown');
         await Promise.resolve(
           expect(MastraSessionBridge.open(f.args)).rejects.toThrow(/producer is pending or unknown/),
         );
         const journal = f.ledger.resume('producer', 1);
-        if (phase === 'before-init' || phase === 'before-start' || phase === 'before-journal')
+        if (
+          phase === 'before-seed' ||
+          phase === 'before-init' ||
+          phase === 'before-start' ||
+          phase === 'before-journal'
+        )
           expect(journal).toBeNull();
         else expect(journal).not.toBeNull();
         if (journal?.state.step_id)
@@ -14162,7 +14213,10 @@ for (const phase of ['before-init', 'before-start', 'before-resume', 'before-jou
         }
       }
       if (!terminal) throw new Error('Producer child outcome unknown; fixture retained: ' + f.args.repositoryRoot);
-      if (caughtFailure) throw caughtOutcome;
+      if (caughtFailure) {
+        failedProducerRoots.add(f.args.repositoryRoot);
+        throw caughtOutcome;
+      }
     },
     { timeout: 30_000 },
   );

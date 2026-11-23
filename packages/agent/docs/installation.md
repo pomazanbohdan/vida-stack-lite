@@ -449,13 +449,24 @@ The paired formation profile uses repository `pomazanbohdan/vida-stack-lite`
 and the `native-linux-x64` and `native-windows-x64` jobs. Each job must have a
 successful `native-build` step. Dispatch the Windows request as `request` and
 the Linux request as `request_linux`, both for the same operation, version and
-Source. Produce these requests with `bun run release:local -- --issue-native-pair OPERATION`.
-Use the returned `windows` and `linux` JSON objects for the workflow inputs.
-For `source_commit`, supply the full 40-character SHA of the already published
-commit selected by `workflow_dispatch` on `main`. It must equal that run's
-`GITHUB_SHA`. This command neither dispatches the workflow nor publishes the commit.
-The command validates the configured repository identity and records each request
-through the existing CI request owner. A partial issuance is retained for inspection.
+Source.
+
+For a PATCH successor to a verified publication, prepare the reviewed
+pre-version commit descended from the published release commit with
+`bun run release:local -- --prepare-after-publication OP BASE_COMMIT`.
+The release owner retains the manifest afterimage as `manifest_after` (base64)
+in the successor's `committed-source.json` beside its preparation receipt.
+Apply those exact bytes to the isolated candidate before committing it.
+
+Produce the native requests with
+`bun run release:local -- --issue-native-pair OPERATION COMMIT`.
+Use the returned `windows` and `linux` JSON objects for the workflow inputs. Pass
+the same full 40-character commit SHA as `source_commit` when you select the
+published commit with `workflow_dispatch` on `main`. It must equal that run's
+`GITHUB_SHA`. The command validates the repository identity and the commit's
+package version, then records the selected commit, Source digest and both
+request identities in the release operation. Exact retry uses the same commit
+and request bytes. Push and dispatch have their own owners.
 Linux publishes its five formation files; Windows retains its six.
 The run must complete successfully before local observation.
 
@@ -464,7 +475,11 @@ and observe both targets with
 `bun run release:local -- --stage-observe-native-pair OPERATION SOURCE_COMMIT RUN_ID ATTEMPT LINUX_REQUEST_ID LINUX_ARTIFACT_ID LINUX_ZIP WINDOWS_REQUEST_ID WINDOWS_ARTIFACT_ID WINDOWS_ZIP ACTOR`.
 The ZIP paths are repository-relative. The controller verifies both artifacts
 through GitHub before staging, uses the existing retarget owner, then records the
-paired formation. A partial stage or retarget is retained for inspection. This
+paired formation. Retarget requires the same operation's prior SDK archive and
+its recorded digest. For committed preparation the controller requires the
+retained pair selection and reads Source from the selected commit. It rechecks
+the selection and request bytes before staging and at retarget publication.
+A partial stage or retarget is retained for inspection. This
 does not publish a release or install an agent. Older ZIPs without candidate
 metadata continue to use the manual staging and observation route below.
 

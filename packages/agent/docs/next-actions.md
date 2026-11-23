@@ -1,16 +1,102 @@
 # Runtime next actions
 
-Owner: runtime maintainers. Updated: 2026-11-18.
+Owner: runtime maintainers. Updated: 2026-11-23.
 Class: derived task queue. The [system specification](system-specification.md),
 [development lifecycle](../instructions/development-lifecycle.md) and
 [testing policy](../TESTING.md) retain their contract ownership.
+
+## Current delivery cycle
+
+**Active:** finish the Bun 1.4.5 cycle and its causal expired-owner repair.
+**Next:** resume Execution Catalog Task 1 through the delivered runtime.
+Follow [one task per runtime-first delivery cycle](decisions/work-items/runtime-first-development.md).
+
+The installed runtime is v0.1.21. Fresh inspection of
+`agent-bun-145-20261120-r2`, attempt 1, returned Work 8, Ledger 146 and
+Journal 19 with an expired lease, no pending actions and no recovery route.
+The Source repair passed 11 focused cases, including ordinary live suspension
+and release after expiry. Source and test typechecks covered 113 and 590 files.
+The isolated Windows build and standalone verifier passed on Bun 1.4.5.
+The in-memory readback projected release of one ticket and one claim, with
+Journal 19 and phase PLAN retained. Actual ownership and delivery are open.
+
+The wider run before package formation recorded 106 passes and six failures.
+After formation, three of those six cases passed. The test-only distinct
+prefix correction passed the foreign-scope refusal on a formed baseline.
+In the serial Bun 1.4.5 comparison, validate reached its 60-second limit
+on the baseline and passed on the candidate. Success reached that limit on
+both. The candidate entered public issue at 53.0 s and its child exited on
+SIGTERM at the case deadline. Devin reused the maintained readonly prewriter
+fixture helper for setup. The four correction variants and foreign-scope
+case then passed on the formed candidate. The implementation receipt records
+success at 43.1 s and validate at 45.4 s. Independent OpenCode Go review
+accepted the exact test diff and repeated success in 44.35 s with 66
+assertions. The isolated preflight used published Source 8a4947a7, seven
+reviewed file inputs and two scoped documentation updates. Frozen install,
+typecheck, lint, SDK test inputs and 13 selected repair/provider tests
+passed. The full absorption file recorded 52 passes and one workspace
+projection timeout. All four correction variants and the foreign-scope
+refusal passed. The projection repeat passed in 6.81 s with its unchanged
+10 s test budget. The full-file timeout remains recorded. The release owner
+finds 10 additional file differences outside those selected paths in the live
+checkout, with broader manifest and lock changes inside the selected paths.
+The repair keeps release history and admission in the canonical workspace.
+The release owner prepares the version for the isolated candidate and binds
+the final commit and exact Source digest before issuing both native requests.
+An exact retry returns the same pair. The published 0.1.21 operation supplies
+the baseline for the successor PATCH and retains its recorded assurance state.
+The native issuer now binds committed Source and refuses a historical request
+namespace without its own pair selection. Published-successor preparation and
+issuance now require the exact preparation receipt, version-only afterimage
+and committed Source lineage. The CLI fixture observed the publication
+through the test GitHub boundary and retained the dirty working manifest.
+Native artifact intake passed the staged-pair fixture with an existing SDK
+archive. The reviewed intake correction passed 14 focused cases. The local
+pack owner now publishes its retained SDK directory in one rename after
+checking the dependency link, Source inventory and formation receipt. Packed
+resume and custody readback check that directory before accepting the archive.
+The focused SDK cases use mocked commands. Release qualification still needs
+bound evidence from the actual pinned SDK build and pack, then native intake
+for the same release operation.
+The 5 s Windows formation test timed out on both the baseline and candidate
+when configured with the same junctions. The 30 s diagnostic completed
+the original test in 14.19 s. The fixture now separates pack and retarget
+from the provider, refusal, integrity and assurance scenarios. The scoped
+Windows repeat passed 13/13 at the configured 5 s limit. The original
+failures and UNKNOWN roots remain retained. The older provider-bound
+retarget fixture still reports Windows symlink EPERM on baseline and
+candidate. The sealed committed intake case passed under its declared
+30 s integration ceiling.
+The combined absorption run on the scoped PATCH candidate recorded 48 passes
+and five timeouts. A fresh validate-only fixture reproduced the 60 s failure.
+The prior report returned exit 0 and the next issue child exited on SIGTERM
+at the enclosing deadline. The current host's release CLI also fails at
+module load because the primary checkout has a deleted SDK pack tool. Keep
+the isolated Source staged for the next verified version preparation.
+The isolation, process receipts,
+and actual versus projected state are in
+`.agent/work/agent-bun-145-20261120-r2/failed-delivery-owner-repair/WORK.md`.
+
+| Order | Work and owner | Acceptance and check |
+| --- | --- | --- |
+| 1. Resolve the development gates | Root binds the clean Source baseline and candidate to Bun 1.4.5, the same environment and formed exports. Use `tests/automatic-work-absorption.test.ts` to separate fixture construction from the admission assertion. Compare each stalled correction across baseline and candidate. Record the last completed operation, child result and process closure before selecting a cause. Route any proven defect to its owner before editing. | The two-project fixture loads distinct prefixes. Admission refuses with `outside selected project membership`, creates no Work and records the one attempted admission. Each timeout has a measured boundary and a supported passing check or an explicit unresolved gate. Retain original failures and test budgets. |
+| 2. Freeze the release packet | Root uses the existing release owner to select the next PATCH from verified publication and current pending state before final Source checks. Freeze the Bun pin, manifest and lock closure, the two repair files, affected checks and docs. Keep the independent dependency refresh and catalog work outside this packet. | Exact file hashes, version, currentness and scoped diff agree. The maintained frozen install, affected behavior suite, statics and applicable assurance pass on the final packet. Reuse independent evidence where its inputs still match. A required open check blocks this packet. |
+| 3. Deliver and install | Root integrates the packet with normal hooks. Push requires the sidecar's separate instruction. Use the existing native CI/release owner for the authorized packet, then the maintained Windows installer on its selected public artifact. | Actual CI terminal and publication receipts bind Source, version and exact assets. Installed version, artifact hash, effective PATH and native instruction resolution agree. Preserve pending or uncertain owner effects for reconciliation before any retry. |
+| 4. Recover the original owner | Through the repaired public continuation, Root refreshes the original work/attempt, configuration, ticket, claim, maintenance and Work/Ledger/Journal CAS. Use the current attributable binding at the effect boundary. | Exactly the expired owner is released. Readback retains Journal 19, phase, assurance and later queued rights. Any changed binding or unknown effect returns to its owner; the projection grants no execution rights. |
+| 5. Resume Task 1 | Root prepares a fresh Task 0 packet and obtains ordinary admission/issue on the updated runtime. The assigned writer works within the issued scope and an independent validator checks the bound evidence. | Close the current structural-obligation gaps before issuing the pure YAML codec packet. Follow the [catalog implementation queue](plans/execution-catalog-and-teams.md#task-1--typed-final-contracts-and-finite-compiler-obligations). User Runtime acceptance requires its own attributable observation of the delivered version. |
+
+Planning and acceptance criteria use the installed requirement-routing
+instruction. Diagnostics use the Vida Powers root-cause and boundary-evidence
+instructions. Independent proof follows the installed agent-allocation and
+testing policies. Formation, installation, recovery and closeout follow the
+installed development lifecycle. The checked Vida Powers selection is retained
+in the repair record's `next-steps.retrieval.json`.
 
 ## Active implementation
 
 The approved full model is active in this repository. Delivered runtime
 0.1.20 completed the historical Host-present adoption and public
-init reconciliation; the current installed development payload is the
-non-release 0.1.9 described under Current delivery state. Repository prefix
+init reconciliation. The installed runtime is v0.1.21. Repository prefix
 is VIDA; products are agent/AGENT,
 codex/CODEX and powers/POWERS. The explicit local plugin-to-codex map is applied.
 The unchanged model values are in
@@ -199,40 +285,42 @@ local vertical slice and its own decision.
 ## Current delivery state
 
 Published and installed runtime is
-[v0.1.20](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.20),
-Source [e658d1e2](https://github.com/pomazanbohdan/vida-stack-lite/commit/e658d1e2d76296c9cecdfeade0eccdacf295eecf).
-[CI42615252275](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/42615252275) passed assurance, both native producers, publication
-and external Linux installation. The first publisher attempt stopped after
-creating an exact owned empty draft. Read-only tag/claim/draft/artifact
-reconciliation preceded one failed-job resume using the same original producer
-artifacts. The original FAIL remains retained; no tag replacement or rebuild
-was used for recovery.
+[v0.1.21](https://github.com/pomazanbohdan/vida-stack-lite/releases/tag/v0.1.21),
+Source [8a4947a7](https://github.com/pomazanbohdan/vida-stack-lite/commit/8a4947a72ef0e385f8d4e0b661fea9c3a2c73541).
+[CI44425055346](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/44425055346)
+completed release assurance and both native producers on producer attempt 1,
+then completed publication as attempt 2 after the retained attempt-1 publisher
+failure. GET-only readback verified the release, tag, claim, all nine assets,
+the successful jobs and the external Linux installation. The earlier 0.1.21
+run [44412070386](https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/44412070386)
+remains a retained FAIL with `CI Source differs from current request`; it
+created no tag or release.
 
-GET-only readback verified all nine assets and repeated tag/inventory checks.
-The maintained Windows update verified version, binary SHA256
-`90739face0aff74e63a62fcb912872063c82f4b80d946ff82eda4ef533d02a6e`, cleanup and one effective PATH command.
-The published release is v0.1.20 (Source e658d1e2, CI42615252275); the local
-installed exe remains the non-release 0.1.9 payload sha256
-`d8636d87043f39dfd19d4936dd73b472fe19271aab3c13f65e820d2f363969f5`. A
-repair-3 hardening-2 candidate (exe `CA774857…`) is built and independently
-source-reviewed with a documented Host-trust caveat; it remains uninstalled
-pending artifact/maintenance readiness — the r17 lease itself is already
-released. Pre-existing run-file WIP and unrelated
-Powers work remain preserved. Main integration used normal hooks and a
-non-forced push.
+The maintained Windows update installed exe SHA256
+`298107c13ec6fe3f5f41df7ced4f9ee7fd80271b4a08be5de193c813757435a2`,
+replacing the non-release 0.1.9 exe `d8636d87043f39dfd19d4936dd73b472fe19271aab3c13f65e820d2f363969f5`.
+Verification recorded installer SHA256
+`f3145ae49175eb15d594ac5b116110d883ea6a8baf7e5ec6e4f531fa790a08f0`, receipt
+path addition and `clean-init --help` exit 0; `runtime_accepted` remains
+false. The bound local release state remains `awaiting_assurance`.
 
-The terminal-owner correction has accepted Source, two Code views from one
-independent reviewer invocation, and a distinct independent tester: 22 focused
-cases/163 Bun expect calls plus unaggregated Node assertions; 6 old controls/40
-expects; clean 168-bin/590-test-file types. Fresh Target checks and normal hooks
-passed strict staged Knip, format 618, types 629 and lint 588. This is bounded
-proof; native TestEvidence and numeric/full-suite qualification are not inferred.
+A real clean-init on the installed 0.1.21 completed operation
+`d709ca8e-6989-48e7-97c4-aa6deaad5969` for workspace
+`4d47f323554bf4cee65c7071467d48f8ac1cbca50c87c959336df7fbb9008bfe` with
+executor `swe-2-flash-medium`. Apply and retire completed under plan binding
+`7514dfb2539da1d2d83a44154ff85c9a76b538dc963a0821ce5ac602deb786a5`;
+`inspect-retire` reports absent, the resulting initialization receipt keeps
+`workspace_binding_status` pending, and the before/after
+`HostWorkspaceInspection/v1` snapshots are byte-identical with SHA256
+`0e32ab0d40f02e0c9ef0cb2e9f175553d5898f7629af1dde78b29d39e67a7ab3`. This is
+platform proof, not Runtime acceptance.
 
-Fresh delivered consumers passed full-model legacy-Host configuration,
-tampered-plan and ordinary refusals, archived resume, public init reconciliation,
-and terminal-owner inspect/apply/exact replay for both terminal tester outcomes.
-Source SDK fixture creation and cooperative agent bodies remain separately
-attributed from the installed native CLI effects.
+The v0.1.20 release evidence, the replaced non-release 0.1.9 payload proof and
+the repair-3 hardening-2 candidate proof are historical. Their retained FAIL
+and UNKNOWN records remain unchanged, as do the rejected 0.1.21 run and the
+initial publication failure. Broader work-operation, interrupted-recovery,
+numeric/full-suite qualification and attributable user Runtime acceptance
+remain open.
 
 ## Real repository adoption boundary
 

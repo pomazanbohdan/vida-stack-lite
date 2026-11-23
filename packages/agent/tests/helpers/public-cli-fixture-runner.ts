@@ -2,6 +2,7 @@ import { appendFileSync, lstatSync, mkdirSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { pinnedEnvironment, readPin } from '../../bin/bun.ts';
+import { runBoundedSubprocess, subprocessFailure } from './bounded-subprocess.ts';
 import { isUnknownSynchronousChild } from './synchronous-child-outcome.ts';
 
 interface PublicCliFixtureRunnerOptions {
@@ -83,9 +84,35 @@ function operationFor(args: readonly string[]): string {
   return 'other';
 }
 
+type FixtureProcessOutcome = Pick<SpawnSyncReturns<string>, 'error' | 'status' | 'signal' | 'stdout' | 'stderr'>;
+
+/** Hold scenario custody until its body settles. An UNKNOWN child fences later scenarios in the group. */
+export function createPublicCliFixtureCustody() {
+  let state: 'ready' | 'active' | 'unknown' = 'ready';
+  return {
+    enter() {
+      if (state === 'active') throw new Error('The previous public CLI fixture is still active');
+      if (state === 'unknown') throw new Error('The previous public CLI effect is UNKNOWN; its fixture was retained');
+      state = 'active';
+      let retained = false;
+      let disposed = false;
+      return {
+        retainUnknown() {
+          retained = true;
+        },
+        [Symbol.dispose]() {
+          if (disposed) return;
+          disposed = true;
+          state = retained ? 'unknown' : 'ready';
+        },
+      };
+    },
+  };
+}
+
 function makeTimingRecord(
   args: readonly string[],
-  result: SpawnSyncReturns<string>,
+  result: FixtureProcessOutcome,
   startedAt: string,
   elapsedMs: number,
   fixtureRoot: string,
@@ -121,29 +148,73 @@ export function createNativeTsPublicCliFixtureRunner(options: PublicCliFixtureRu
     delete testEnvironment.BUN_RUNTIME_TRANSPILER_CACHE_PATH;
   const environment = pinnedEnvironment(process.execPath, testEnvironment, options.bundleRoot);
 
+  const commandArgs = (args: readonly string[]) => [
+    '--no-env-file',
+    '--no-install',
+    '--config=' + path.join(options.bundleRoot, 'bunfig.toml'),
+    path.join(options.bundleRoot, 'bin/run.ts'),
+    ...args,
+  ];
+  const record = (
+    args: readonly string[],
+    result: FixtureProcessOutcome,
+    startedAt: string,
+    startedNs: bigint,
+    timing?: { timeout_ms: number; close_observed: boolean; termination_request_confirmed: boolean | null },
+  ): void => {
+    if (isUnknownSynchronousChild(result)) options.onUnknown();
+    const elapsedMs = Number(process.hrtime.bigint() - startedNs) / 1_000_000;
+    const receipt = makeTimingRecord(args, result, startedAt, elapsedMs, options.fixtureRoot);
+    mkdirSync(path.dirname(options.diagnosticReceiptPath), { recursive: true });
+    appendFileSync(options.diagnosticReceiptPath, JSON.stringify({ ...receipt, ...timing }) + '\n', { mode: 0o600 });
+  };
+
   return Object.freeze({
     spawn(args: readonly string[]): SpawnSyncReturns<string> {
       const startedAt = new Date().toISOString();
       const startedNs = process.hrtime.bigint();
-      const commandArgs = [
-        '--no-env-file',
-        '--no-install',
-        '--config=' + path.join(options.bundleRoot, 'bunfig.toml'),
-        path.join(options.bundleRoot, 'bin/run.ts'),
-        ...args,
-      ];
-      const result = spawnSync(process.execPath, commandArgs, {
+      const result = spawnSync(process.execPath, commandArgs(args), {
         cwd: options.bundleRoot,
         encoding: 'utf8',
         env: environment,
         windowsHide: true,
-        timeout: 30000,
+        timeout: 30_000,
       });
-      const elapsedMs = Number(process.hrtime.bigint() - startedNs) / 1_000_000;
-      if (isUnknownSynchronousChild(result)) options.onUnknown();
-      const record = makeTimingRecord(args, result, startedAt, elapsedMs, options.fixtureRoot);
-      mkdirSync(path.dirname(options.diagnosticReceiptPath), { recursive: true });
-      appendFileSync(options.diagnosticReceiptPath, JSON.stringify(record) + '\n', { mode: 0o600 });
+      record(args, result, startedAt, startedNs);
+      return result;
+    },
+    async spawnBounded(args: readonly string[], deadlineAt: number): Promise<FixtureProcessOutcome> {
+      const receiptAndCleanupReserveMs = 250;
+      const timeoutMs = Math.min(30_000, Math.floor(deadlineAt - performance.now() - receiptAndCleanupReserveMs));
+      if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0)
+        throw new Error('Public CLI fixture deadline leaves no time to start a child');
+      const startedAt = new Date().toISOString();
+      const startedNs = process.hrtime.bigint();
+      const observed = await runBoundedSubprocess(process.execPath, commandArgs(args), {
+        cwd: options.bundleRoot,
+        env: environment,
+        timeoutMs,
+        stdoutLimitBytes: 1024 * 1024,
+        stderrLimitBytes: 1024 * 1024,
+        terminateOnOutputLimit: true,
+      });
+      const error = observed.timedOut
+        ? Object.assign(new Error(observed.diagnostic), { code: 'ETIMEDOUT' })
+        : !observed.closeObserved || observed.childError || observed.stdoutTruncated || observed.stderrTruncated
+          ? new Error(subprocessFailure('Public CLI fixture', observed))
+          : undefined;
+      const result = {
+        status: observed.exitCode,
+        signal: observed.signal,
+        stdout: observed.stdout.toString('utf8'),
+        stderr: observed.stderr.toString('utf8'),
+        ...(error ? { error } : {}),
+      };
+      record(args, result, startedAt, startedNs, {
+        timeout_ms: timeoutMs,
+        close_observed: observed.closeObserved,
+        termination_request_confirmed: observed.terminationRequestConfirmed,
+      });
       return result;
     },
   });

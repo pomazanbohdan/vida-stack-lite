@@ -456,6 +456,12 @@ export interface LargeFileObservation {
   readonly size: number;
   readonly sha256: string;
 }
+type CaptureFile = (target: string, label: string, maxBytes?: number) => Buffer;
+type VerifiedCaptureFile = CaptureFile & {
+  /** Reuse one verified root only while the synchronous capture callback runs. */
+  readonly withRoot?: <T>(use: (read: CaptureFile) => T) => T;
+};
+
 export interface SafeRepositoryAccess {
   readonly schema: 'SafeRepositoryAccess/v1';
   readonly provider: 'linux-proc-fd' | 'fs-safe-windows' | 'unavailable';
@@ -487,7 +493,7 @@ export interface SafeRepositoryAccess {
   /** No-follow bounded byte capture without CAS locks or writes; not a stable or multi-file snapshot. */
   readonly readCapturedBytes: (target: string, label: string, maxBytes?: number) => Buffer;
   /** Optional verified one-file observation without writes; not CAS ownership or a multi-file snapshot. */
-  readonly readVerifiedCaptureBytes?: (target: string, label: string, maxBytes?: number) => Buffer;
+  readonly readVerifiedCaptureBytes?: VerifiedCaptureFile;
   /** Optional cooperative stable read under one per-file CAS lock; null is twice-observed absence. */
   readonly readStableBytes?: (target: string, label: string) => Buffer | null;
   /** Windows best-effort, single-file observation; fixed 64 MiB maximum. */
@@ -530,7 +536,7 @@ export interface SafeRepositoryAccess {
   readonly writeExclusive: (target: string, contents: string, label: string) => void;
   readonly writeExclusiveAsync: (target: string, contents: string, label: string) => Promise<void>;
   /** Publish complete bytes with the pinned Root.create no-replace contract. */
-  readonly writeExclusiveAtomicAsync: (target: string, contents: string, label: string) => Promise<void>;
+  readonly writeExclusiveAtomicAsync: (target: string, contents: string | Uint8Array, label: string) => Promise<void>;
   readonly writeExclusiveBytesAsync: (target: string, contents: Uint8Array, label: string) => Promise<void>;
   readonly replaceAtomic: (target: string, expectedHash: string, contents: string, label: string) => void;
   readonly replaceAtomicAsync: (target: string, expectedHash: string, contents: string, label: string) => Promise<void>;
@@ -2425,6 +2431,29 @@ function windowsReadBytes(root: string, target: string, label: string, limit = m
     closeSync(rootFd);
   }
 }
+function withWindowsVerifiedCaptureReader<T>(root: string, use: (read: CaptureFile) => T): T {
+  const label = 'verified capture sequence';
+  const binding = liveQualifiedWindowsBinding();
+  if (!binding) fail(label + ' requires the live qualified Windows native provider');
+  assertAncestorChain(root, label);
+  const rootFd = windowsOpenRoot(root, label).fd;
+  let active = true;
+  try {
+    const result = use((target, purpose, limit = maxRepositoryReadBytes) => {
+      reject(!active || liveQualifiedWindowsBinding() !== binding, purpose + ' verified capture is unavailable');
+      const relative = safeRelative(root, target, purpose).join('/');
+      const bytes = windowsReadPinnedFile(root, rootFd, relative, binding, purpose, captureReadLimit(limit), true);
+      reject(liveQualifiedWindowsBinding() !== binding, purpose + ' Windows native provider changed during read');
+      return bytes;
+    });
+    windowsCheckReadRoot(root, rootFd, label);
+    return result;
+  } finally {
+    active = false;
+    closeSync(rootFd);
+  }
+}
+
 function fsSafeAssertDirectory(root: string, target: string, label: string): void {
   const absolutePath = target === '.' ? root : fsSafeAbsolute(root, target, label);
   assertNoSymlinkParentsSync({
@@ -3793,8 +3822,11 @@ function windowsAccess(root: string): SafeRepositoryAccess {
     readBytes: (target, label) => windowsReadBytes(root, target, label),
     readCapturedBytes: (target, label, limit = maxRepositoryReadBytes) =>
       windowsReadBytes(root, target, label, captureReadLimit(limit)),
-    readVerifiedCaptureBytes: (target, label, limit = maxRepositoryReadBytes) =>
-      windowsReadBytes(root, target, label, captureReadLimit(limit)),
+    readVerifiedCaptureBytes: Object.assign(
+      (target: string, label: string, limit = maxRepositoryReadBytes) =>
+        windowsReadBytes(root, target, label, captureReadLimit(limit)),
+      { withRoot: <T>(use: (read: CaptureFile) => T) => withWindowsVerifiedCaptureReader(root, use) },
+    ),
     observeLargeFile: (target, label) => windowsWithLargeFile(root, target, label, (observation) => observation),
     observeReadOnlyLargeFile: (target, label) =>
       windowsWithLargeFile(root, target, label, (observation) => observation, windowsReadOnlyMetadataProvider),

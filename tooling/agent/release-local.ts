@@ -6,6 +6,8 @@ import {
   releaseJournalFile as journalFile,
   operationMutex,
   withReleaseAdmission,
+  withReleaseRepairLocks,
+  releaseJSON,
   selectedTarball,
   packedDistribution,
   assertReleaseRetargetSettled,
@@ -14,7 +16,8 @@ import {
   releasePath,
   releaseRelative,
   readReleaseBytes,
-  releaseSourceBinding,
+  releaseSourceInputs,
+  assertCommittedReleaseAncestry,
 } from '../../packages/agent/bin/local-release-artifacts.ts';
 export {
   withReleaseAdmission,
@@ -27,14 +30,19 @@ import {
   closeSync,
   constants,
   copyFileSync,
+  cpSync,
   fsyncSync,
   existsSync,
   lstatSync,
   mkdirSync,
+  mkdtempSync,
   openSync,
   readFileSync,
   readdirSync,
+  realpathSync,
   renameSync,
+  rmSync,
+  symlinkSync,
   unlinkSync,
   writeFileSync,
 } from 'node:fs';
@@ -43,6 +51,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { homedir } from 'node:os';
 import { sdkCompatibilityManifest } from '../../packages/agent/tooling/pack-sdk.ts';
+import { ownedDirectoryIdentity, removeOwnedDirectory } from '../../packages/agent/tooling/owned-staging.ts';
 import { checkManifest, readPin } from '../../packages/agent/bin/bun.ts';
 
 import {
@@ -50,14 +59,24 @@ import {
   verifyCompletedReleaseRetargetHandoff,
 } from '../../packages/agent/bin/repair-release-retarget.ts';
 import { assertNativeDeliveryEvidenceRepairSettled } from '../../packages/agent/bin/repair-native-delivery-evidence.ts';
-import { readConfirmedCIDeliveryFormation, validateCIDeliveryRequest } from './release-ci-evidence.ts';
+import {
+  readConfirmedCIDeliveryFormation,
+  readNativePairSelection,
+  openNativePairCommittedSource,
+  recheckNativePairSelection,
+  validateCIDeliveryRequest,
+  type ObservedCISdkPack,
+} from './release-ci-evidence.ts';
 import {
   activeRuntimeConfigurationSource,
   readRuntimeConfigIdentityForObservation,
 } from '../../packages/agent/src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../../packages/agent/src/config/safe-repository-access.ts';
 import {
+  committedReleaseRecipe,
+  publishCommittedReleasePreparation,
   publishReleasePreparation,
+  readCommittedReleaseRecipe,
   readReleasePreparation,
   resumeReleasePreparation,
 } from '../../packages/agent/bin/release-preparation.ts';
@@ -372,6 +391,8 @@ type ReleaseQualificationInput = {
   operation: string;
   version: string;
   ci?: ReleaseCIEvidence | null | undefined;
+  sourceRoot?: string | undefined;
+  recheck?: (() => void) | undefined;
 };
 type ReleaseQualifier = (input: ReleaseQualificationInput) => Promise<unknown>;
 type ReleaseWorkerOptions = {
@@ -755,7 +776,8 @@ async function verifyPackAfterimage(
   const archive = selectedTarball(metadata, path.join(root, '.tmp/releases', operation), state.version);
   const archiveDigest = sha(readFileSync(archive));
   if (archiveDigest !== archiveSha256) throw new Error('Same-operation package afterimage differs.');
-  await verifyPackedSources(root, metadata, archive, undefined, sdkManifest(root));
+  const sdkPackage = sealedSdkPackRoot(root, operation, metadata);
+  await verifyPackedSources(root, metadata, archive, undefined, operationSdkManifest(root, sdkPackage), sdkPackage);
   return {
     phase: state.status === 'awaiting_assurance' ? 'terminal' : 'prepared',
     evidence_digest: releaseEvidenceDigest(state, archiveDigest),
@@ -771,12 +793,14 @@ async function verifyInterruptedPack(
   const folder = path.join(root, '.tmp/releases', operation);
   const log = path.join(folder, 'pack.json');
   if (state.status !== 'packing' || !existsSync(log)) return null;
+  const sdkPackage = sealedSdkPackRoot(root, operation);
+  const packRoot = sdkPackage ?? path.join(root, 'packages/agent');
   const prior = requireJsonRecord(read(log), 'Interrupted package command receipt must be an object.');
   const expectedArgs = [
-    path.join(root, 'packages/agent/tooling/pack-sdk.ts'),
+    path.join(packRoot, 'tooling/pack-sdk.ts'),
     '--pack',
     '--root',
-    path.join(root, 'packages/agent'),
+    packRoot,
     '--destination',
     folder,
   ];
@@ -785,7 +809,7 @@ async function verifyInterruptedPack(
   const metadata = parsePackOutput(prior.stdout);
   const archive = selectedTarball(metadata, folder, state.version);
   const archiveDigest = sha(readFileSync(archive));
-  await verifyPackedSources(root, metadata, archive, undefined, sdkManifest(root));
+  await verifyPackedSources(root, metadata, archive, undefined, operationSdkManifest(root, sdkPackage), sdkPackage);
   const logDigest = sha(readFileSync(log));
   return {
     phase: 'prepared',
@@ -801,8 +825,10 @@ function verifyQualifiedPackBeforeimage(
 ): ServiceOperationProof | null {
   const folder = path.join(root, '.tmp/releases', operation);
   const log = path.join(folder, 'pack.json');
-  const archive = path.join(folder, `${manifest(root).value.name}-${state.version}.tgz`);
-  if (state.status !== 'qualified' || existsSync(log) || existsSync(archive)) return null;
+  if (state.status !== 'qualified') return null;
+  const name = sealedManifestName(root, state) ?? manifest(root).value.name;
+  const archive = path.join(folder, `${name}-${state.version}.tgz`);
+  if (existsSync(log) || existsSync(archive)) return null;
   return { phase: 'prepared', evidence_digest: releaseEvidenceDigest(state, null) };
 }
 
@@ -865,10 +891,11 @@ async function verifyReleaseWorkerProof(
   const archiveDigest = sha(readFileSync(archive));
   if (archiveDigest !== current.tarball_sha256) throw new Error('Same-operation package receipt differs.');
   const packMetadata = parseReleasePackMetadata(current.pack_metadata);
+  const sdkPackage = sealedSdkPackRoot(root, operation, packMetadata);
   const expectedManifest = packMetadata[0].files.some((file) => file.path === 'tooling/pack-sdk.ts')
-    ? sdkManifest(root)
+    ? operationSdkManifest(root, sdkPackage)
     : undefined;
-  await verifyPackedSources(root, packMetadata, archive, undefined, expectedManifest);
+  await verifyPackedSources(root, packMetadata, archive, undefined, expectedManifest, sdkPackage);
   if (current.install_started === true) {
     const installed = verifyInstalledReleaseReceipt(root, current);
     return {
@@ -901,13 +928,84 @@ async function verifyReleaseOperationProof(
     : verifyReleaseWorkerProof(root, operation, workerImage, journalBytes);
 }
 
+/** Sealed native-pair operations read retarget Source from the committed selection, never live WIP. */
+function sealedNativePairSource(
+  root: string,
+  operation: string,
+): {
+  sourceRoot?: string;
+  recheck?(): void;
+  release(): void;
+} {
+  const context = readNativePairSelection(root, operation, 'historical');
+  if (!context) return { release: () => {} };
+  return {
+    ...openNativePairCommittedSource(root, context),
+    recheck: () => recheckNativePairSelection(root, operation, context, 'historical'),
+  };
+}
+
+/**
+ * The retained operation-owned SDK package root formed from the sealed committed
+ * successor. SDK beforeimages verify against those exact bytes; native archives
+ * and unsealed operations keep the working-root behavior.
+ */
+function sealedSdkPackRoot(root: string, operation: string, metadata?: ReleasePackMetadata): string | undefined {
+  if (metadata && packedDistribution(metadata) !== 'npm') return undefined;
+  const sealed = openSealedSdkPack(root, operation, path.join(root, '.tmp/releases', operation));
+  if (!sealed) return undefined;
+  try {
+    verifyRetainedSdkPackage(sealed, sealed.sdkPackage, path.join(root, 'packages/agent/node_modules'));
+    return sealed.sdkPackage;
+  } finally {
+    sealed.release();
+  }
+}
+
+/** @param {string} root @param {string|undefined} sdkPackage @returns {Buffer} */
+function operationSdkManifest(root: string, sdkPackage: string | undefined): Buffer {
+  return sdkPackage ? sdkCompatibilityManifest({ root: sdkPackage }).bytes : sdkManifest(root);
+}
+
+/** @param {string} root @param {{operation_id:string,version:string}} prepared @returns {import('../../packages/agent/bin/release-preparation.ts').CommittedReleaseRecipe|null} */
+function preparedReleaseRecipe(
+  root: string,
+  prepared: { operation_id: string; version: string },
+): import('../../packages/agent/bin/release-preparation.ts').CommittedReleaseRecipe | null {
+  if (readReleasePreparation(root, prepared) === null) return null;
+  return readCommittedReleaseRecipe(root, prepared);
+}
+
+/** @param {import('../../packages/agent/bin/release-preparation.ts').CommittedReleaseRecipe} recipe @returns {string} */
+function committedRecipeName(
+  recipe: import('../../packages/agent/bin/release-preparation.ts').CommittedReleaseRecipe,
+): string {
+  const value: unknown = JSON.parse(Buffer.from(recipe.manifest_after, 'base64').toString('utf8'));
+  if (!isRecord(value) || typeof value.name !== 'string')
+    throw new Error('Committed release manifest differs; preserve UNKNOWN.');
+  return value.name;
+}
+
+/** @param {string} root @param {{operation_id:string,version:string}} prepared @returns {string|null} */
+function sealedManifestName(root: string, prepared: { operation_id: string; version: string }): string | null {
+  const recipe = preparedReleaseRecipe(root, prepared);
+  return recipe === null ? null : committedRecipeName(recipe);
+}
+
 /** @param {string} root @param {string} operation @param {ServiceOperationCustody} prior @returns {Promise<RetargetHandoffProof | null>} */
 async function verifyRetargetHandoffProof(
   root: string,
   operation: string,
   prior: ServiceOperationCustody,
 ): Promise<RetargetHandoffProof | null> {
-  const handoff = await verifyCompletedReleaseRetargetHandoff({ root, operation });
+  const sealed = sealedNativePairSource(root, operation);
+  let handoff: Awaited<ReturnType<typeof verifyCompletedReleaseRetargetHandoff>>;
+  try {
+    handoff = await verifyCompletedReleaseRetargetHandoff({ root, operation, sourceRoot: sealed.sourceRoot });
+    sealed.recheck?.();
+  } finally {
+    sealed.release();
+  }
   if (!handoff) return null;
   const custodyPrior = requirePresentValue(prior, 'Retarget custody lineage is unavailable; preserve UNKNOWN.');
   assertRetargetHandoffIdentity(handoff, operation);
@@ -915,6 +1013,7 @@ async function verifyRetargetHandoffProof(
   const previousDigest = releaseEvidenceDigest(handoff.previous, handoff.previous_archive_sha256);
   assertRetargetPackOwnerEvidence(custodyPrior, previousDigest);
   const current = await verifyReleaseOperationProof(root, operation, 'release-worker', handoff.current);
+  sealed.recheck?.();
   if (current.phase !== 'prepared') throw new Error('Retargeted native release is not a prepared install image.');
   return {
     phase: 'prepared',
@@ -961,7 +1060,14 @@ async function verifyRetargetedPackTerminalProof(
   operation: string,
   prior: ServiceOperationCustodyRow,
 ): Promise<ServiceOperationProof | null> {
-  const handoff = await verifyCompletedReleaseRetargetHandoff({ root, operation });
+  const sealed = sealedNativePairSource(root, operation);
+  let handoff: Awaited<ReturnType<typeof verifyCompletedReleaseRetargetHandoff>>;
+  try {
+    handoff = await verifyCompletedReleaseRetargetHandoff({ root, operation, sourceRoot: sealed.sourceRoot });
+    sealed.recheck?.();
+  } finally {
+    sealed.release();
+  }
   if (!handoff) return null;
   if (
     prior.owner_kind !== 'release-pack-worker' ||
@@ -1233,15 +1339,19 @@ async function advancePackCustodyToRelease(
 function assertInitialPackImage(root: string, operation: string, state: ReleaseJournalState): ServiceOperationProof {
   const preparedState = preparedRunningReleaseImage(state);
   const folder = path.join(root, '.tmp/releases', operation);
-  const expectedArchive = path.join(folder, `${manifest(root).value.name}-${preparedState.version}.tgz`);
   const pending = releaseState(path.join(root, '.agent/work/agent-local-release/pending.json'));
   const preparation = readReleasePreparation(root, preparedState);
+  const recipe = preparation === null ? null : readCommittedReleaseRecipe(root, preparedState);
+  const name = recipe !== null ? committedRecipeName(recipe) : manifest(root).value.name;
+  const expectedArchive = path.join(folder, `${name}-${preparedState.version}.tgz`);
   const preparedKeys = ['operation_id', 'schema', 'status', 'version'];
+  const versionMatches =
+    recipe !== null ? recipe.version === preparedState.version : manifest(root).value.version === preparedState.version;
   if (
     preparedState.status !== 'awaiting_assurance' ||
     Object.keys(preparedState).sort().join(',') !== preparedKeys.join(',') ||
     json(pending) !== json(preparedState) ||
-    manifest(root).value.version !== preparedState.version ||
+    !versionMatches ||
     preparation === null ||
     existsSync(path.join(folder, 'pack.json')) ||
     existsSync(expectedArchive)
@@ -2809,7 +2919,6 @@ function publishedPreparationSnapshot(root: string, operation: string) {
   if (!idPattern.test(operation)) throw new Error('Published predecessor identity is invalid.');
   const base = '.agent/work/agent-local-release';
   const paths = [
-    'packages/agent/package.json',
     `${base}/pending.json`,
     `${base}/${operation}/release.json`,
     `${base}/${operation}/preparation.json`,
@@ -2822,15 +2931,13 @@ function publishedPreparationSnapshot(root: string, operation: string) {
     const file = releasePath(root, relative, true);
     images.set(relative, existsSync(file) ? readReleaseBytes(root, relative) : null);
   }
-  if (paths.slice(0, 4).some((relative) => !images.get(relative)))
+  if (paths.slice(0, 3).some((relative) => !images.get(relative)))
     throw new Error('Published predecessor state or preparation receipt is missing; preserve UNKNOWN.');
   const pending = releaseState(releasePath(root, `${base}/pending.json`));
   const journal = releaseState(journalFile(root, operation));
-  const currentManifest = manifest(root).value;
   if (
     pending.operation_id !== operation ||
     journal.operation_id !== operation ||
-    pending.version !== currentManifest.version ||
     journal.version !== pending.version ||
     pending.status !== 'awaiting_assurance' ||
     journal.status !== 'awaiting_assurance' ||
@@ -2842,7 +2949,7 @@ function publishedPreparationSnapshot(root: string, operation: string) {
   const identity = readRuntimeConfigIdentityForObservation(root);
   if (
     identity.repository_id !== 'vida-agent' ||
-    identity.bundle !== 'packages/agent' ||
+    (identity.bundle !== 'packages/agent' && identity.bundle !== 'vida-agent') ||
     !identity.project_ids.includes('agent')
   )
     throw new Error('Approved repository project identity differs.');
@@ -2872,13 +2979,14 @@ function publishedPreparationSnapshot(root: string, operation: string) {
     images,
     requests,
     version: pending.version,
-    sourceBinding: releaseSourceBinding(root).source_binding,
     identity: json(identity),
     formation: json(readReleaseFormation(root)),
   };
 }
 
-export async function prepareReleaseAfterPublication(root: string, operation: string) {
+export async function prepareReleaseAfterPublication(root: string, operation: string, commit: string) {
+  if (!/^[0-9a-f]{40}$/.test(commit))
+    throw new Error('Published preparation requires the immutable pre-version commit SHA.');
   const captured = await withReleaseAdmission(
     root,
     () => {
@@ -2900,6 +3008,18 @@ export async function prepareReleaseAfterPublication(root: string, operation: st
           witness.operation_id !== operation
         )
           throw new Error('Published preparation intent differs; preserve UNKNOWN.');
+        const preparedRecord = isRecord(intent) && isRecord(intent.prepared) ? intent.prepared : null;
+        const preparedOperation =
+          preparedRecord && typeof preparedRecord.operation_id === 'string' ? preparedRecord.operation_id : '';
+        const first: unknown = targets[0];
+        const recipe: unknown =
+          isRecord(first) &&
+          first.path === `${base}/${preparedOperation}/committed-source.json` &&
+          typeof first.after === 'string'
+            ? parseJson(Buffer.from(first.after, 'base64').toString('utf8'))
+            : null;
+        if (!isRecord(recipe) || recipe.commit !== commit)
+          throw new Error('Published preparation intent differs; preserve UNKNOWN.');
       }
       resumeReleasePreparation(root);
       const pendingBytes = readReleaseBytes(root, `${base}/pending.json`);
@@ -2910,16 +3030,7 @@ export async function prepareReleaseAfterPublication(root: string, operation: st
         const previous = receipt?.previousPending;
         const journalBytes = readReleaseBytes(root, `${base}/${operation}/release.json`);
         const newJournal = readReleaseBytes(root, `${base}/${pending.operation_id}/release.json`);
-        const intent: unknown = parseJson(
-          readReleaseBytes(root, `${base}/${pending.operation_id}/preparation.json`).toString('utf8'),
-        );
-        const targets = isRecord(intent) && Array.isArray(intent.targets) ? intent.targets : [];
-        const exactAfter = (index: number, bytes: Buffer) => {
-          const target: unknown = targets[index];
-          return (
-            isRecord(target) && typeof target.after === 'string' && bytes.equals(Buffer.from(target.after, 'base64'))
-          );
-        };
+        const recipe = readCommittedReleaseRecipe(root, pending);
         if (
           !receipt ||
           !isRecord(witness) ||
@@ -2932,11 +3043,8 @@ export async function prepareReleaseAfterPublication(root: string, operation: st
           !pendingBytes.equals(Buffer.from(json(pending))) ||
           pending.status !== 'awaiting_assurance' ||
           pending.install_started ||
-          manifest(root).value.version !== pending.version ||
-          targets.length !== 4 ||
-          !exactAfter(0, readReleaseBytes(root, 'packages/agent/package.json')) ||
-          !exactAfter(2, newJournal) ||
-          !exactAfter(3, pendingBytes)
+          recipe?.commit !== commit ||
+          recipe.predecessor_operation_id !== operation
         )
           throw new Error('Published preparation retry differs; preserve UNKNOWN.');
         return { prepared: pending } as const;
@@ -2962,7 +3070,6 @@ export async function prepareReleaseAfterPublication(root: string, operation: st
     () => {
       const current = publishedPreparationSnapshot(root, operation);
       if (
-        current.sourceBinding !== snapshot.sourceBinding ||
         current.identity !== snapshot.identity ||
         current.formation !== snapshot.formation ||
         current.images.size !== snapshot.images.size ||
@@ -2972,7 +3079,7 @@ export async function prepareReleaseAfterPublication(root: string, operation: st
         })
       )
         throw new Error('Published predecessor changed during observation; preserve UNKNOWN.');
-      return prepareCandidate(root, false, { mode: 'patch' }, undefined, observedBaseline, current.sourceBinding);
+      return prepareCandidate(root, false, { mode: 'patch' }, undefined, observedBaseline, commit);
     },
     true,
   );
@@ -3086,24 +3193,24 @@ function preflightSystemUpdate(
   if (!successful || successful.version !== currentVersion)
     throw new Error('System update must preserve the successful manifest version.');
 }
-/** @param {string} root @param {boolean} [systemUpdate] @param {ReleaseVersionSelection} [selection] @param {unknown} [dispositionProposal] */
+/** @param {string} root @param {boolean} [systemUpdate] @param {ReleaseVersionSelection} [selection] @param {unknown} [dispositionProposal] @param {PublishedBaseline} [publishedBaseline] @param {string} [committedCommit] */
 function prepareCandidate(
   root: string,
   systemUpdate: boolean = false,
   selection: ReleaseVersionSelection = { mode: 'patch' },
   dispositionProposal?: unknown,
   publishedBaseline?: PublishedBaseline,
-  currentSourceBinding?: string,
+  committedCommit?: string,
 ) {
   const releases = directory(root, '.agent/work/agent-local-release');
   resumeReleasePreparation(root);
   const pendingFile = path.join(releases, 'pending.json');
   const successFile = path.join(releases, 'successful.json');
-  const { value } = manifest(root);
   let successful = existsSync(successFile) ? releaseState(successFile) : null;
   const pending = existsSync(pendingFile) ? releaseState(pendingFile) : null;
   if (publishedBaseline) {
     const claim = publishedBaseline.claim;
+    const commit = typeof committedCommit === 'string' ? committedCommit : '';
     if (
       systemUpdate ||
       dispositionProposal ||
@@ -3112,10 +3219,9 @@ function prepareCandidate(
       !pending ||
       pending.operation_id !== claim.operation_id ||
       pending.version !== claim.version ||
-      value.version !== claim.version ||
       pending.status !== 'awaiting_assurance' ||
       pending.install_started ||
-      !/^[a-f0-9]{64}$/.test(currentSourceBinding ?? '') ||
+      !/^[0-9a-f]{40}$/.test(commit) ||
       !/^[a-f0-9]{40}$/.test(publishedBaseline.tagSha) ||
       !Number.isSafeInteger(publishedBaseline.releaseId) ||
       publishedBaseline.releaseId <= 0 ||
@@ -3124,6 +3230,7 @@ function prepareCandidate(
     )
       throw new Error('Published baseline does not match the current pending candidate.');
     if (successful) successfulBaseline(root, successful);
+    assertCommittedReleaseAncestry(root, claim.source_commit, commit);
     const confirmed = confirmedVersionBaseline(successful, readReleaseFormation(root));
     if (confirmed && compareVersions(confirmed.version, claim.version) > 0)
       throw new Error('Published baseline precedes a confirmed version.');
@@ -3150,6 +3257,7 @@ function prepareCandidate(
         version: candidateVersion(claim.version, claim.version, { mode: 'patch' }),
         status: 'awaiting_assurance',
       };
+      const committed = committedReleaseRecipe(root, commit, prepared, claim.operation_id, claim.version);
       const witness = {
         schema: 'VidaPublishedVersionBaseline/v1',
         role: 'baseline-only',
@@ -3160,7 +3268,7 @@ function prepareCandidate(
         claim_digest: publishedBaseline.claimDigest,
         assets_digest: publishedBaseline.assetInventoryDigest,
         historical_source_binding: claim.source_binding,
-        current_source_binding: currentSourceBinding,
+        current_source_binding: committed.source_binding,
         requests: claim.producers.map(({ request }) => ({
           request_id: request.request_id,
           digest: sha(json(request)),
@@ -3168,11 +3276,12 @@ function prepareCandidate(
         pending_digest: sha(pendingBytes),
         journal_digest: sha(journalBytes),
       };
-      return publishReleasePreparation(root, prepared, { ...value, version: prepared.version }, witness);
+      return publishCommittedReleasePreparation(root, prepared, committed.recipe, witness);
     } finally {
       worker?.close();
     }
   }
+  const { value } = manifest(root);
   if (successful) successfulBaseline(root, successful);
   if (systemUpdate) preflightSystemUpdate(root, value.version, pending, successful);
   if (pending) assertReleaseRetargetSettled(root, pending.operation_id);
@@ -3332,14 +3441,16 @@ function sdkManifest(root: string): Buffer {
   return sdkCompatibilityManifest({ root: path.join(root, 'packages/agent') }).bytes;
 }
 type NativeRetargetCandidate = NonNullable<ReturnType<typeof readNativeRetargetCandidate>>;
-/** @param {string} root @param {ReleasePackMetadata} metadata @param {string} tarball @param {string|undefined} npmCli @param {Buffer|undefined} expectedManifest @returns {Promise<void>} */
+/** @param {string} root @param {ReleasePackMetadata} metadata @param {string} tarball @param {string|undefined} npmCli @param {Buffer|undefined} expectedManifest @param {string|undefined} [sourcePackageRoot] @returns {Promise<void>} */
 export async function verifyPackedSources(
   root: string,
   metadata: ReleasePackMetadata,
   tarball: string,
   npmCli: string | undefined,
   expectedManifest: Buffer | undefined,
+  sourcePackageRoot?: string,
 ): Promise<void> {
+  const packageRoot = sourcePackageRoot ?? path.join(root, 'packages/agent');
   const tarValue: unknown = createRequire(npmCli ?? path.join(root, 'packages/agent/package.json'))('tar');
   if (!isAgentTarModule(tarValue)) throw new Error('Pinned tar archive API is unavailable.');
   const tar = tarValue;
@@ -3359,7 +3470,7 @@ export async function verifyPackedSources(
       const chunks: Buffer[] = [];
       entry.on('data', (chunk) => chunks.push(chunk));
       entry.on('end', () => {
-        const source = path.join(root, 'packages/agent', entry.path.slice('package/'.length));
+        const source = path.join(packageRoot, entry.path.slice('package/'.length));
         if (
           !existsSync(source) ||
           lstatSync(source).isSymbolicLink() ||
@@ -3482,9 +3593,19 @@ export function publishNativeExecutable(
 
 /** @param {string} root @param {ReleasePackMetadata} metadata @param {string} operation @returns {NativeRetargetCandidate['asset']} */
 function nativeAsset(root: string, metadata: ReleasePackMetadata, operation: string): NativeRetargetCandidate['asset'] {
-  const candidate = readNativeRetargetCandidate({ root, operation, published: true });
-  if (json(metadata) !== json(candidate.pack_metadata)) throw Error('Native candidate metadata differs.');
-  return candidate.asset;
+  const sealed = sealedNativePairSource(root, operation);
+  try {
+    const candidate = readNativeRetargetCandidate({
+      root,
+      operation,
+      published: true,
+      sourceRoot: sealed.sourceRoot,
+    });
+    if (json(metadata) !== json(candidate.pack_metadata)) throw Error('Native candidate metadata differs.');
+    return candidate.asset;
+  } finally {
+    sealed.release();
+  }
 }
 /** @param {string} root @param {ReleasePackMetadata} metadata @param {string} tarball @param {string|undefined} npmCli @param {string} destination @returns {Promise<void>} */
 async function extractNativeTree(
@@ -3842,6 +3963,294 @@ async function installNativeRelease({
   }
   return locations;
 }
+type SealedSdkPack = {
+  sourceRoot: string;
+  packageRoot: string;
+  sdkPackage: string;
+  version: string;
+  sourceInputs: ReturnType<typeof releaseSourceInputs>;
+  recheck: () => void;
+  release: () => void;
+};
+
+/**
+ * Resolve the durable native-pair selection for a pack-only SDK operation and
+ * materialize its exact committed Source. Returns null for ordinary operations;
+ * committed preparations without a selection are refused by the selection owner.
+ */
+function openSealedSdkPack(root: string, operation: string, folder: string): SealedSdkPack | null {
+  const context = readNativePairSelection(root, operation, 'historical');
+  if (!context) return null;
+  const materialized = openNativePairCommittedSource(root, context);
+  try {
+    return {
+      sourceRoot: materialized.sourceRoot,
+      packageRoot: path.join(materialized.sourceRoot, 'packages/agent'),
+      sdkPackage: path.join(folder, 'sdk-package'),
+      version: context.selection.version,
+      sourceInputs: releaseSourceInputs(materialized.sourceRoot, 'packages/agent').map((entry) => ({
+        ...entry,
+        path: entry.path.slice('packages/agent/'.length),
+      })),
+      recheck: () => recheckNativePairSelection(root, operation, context),
+      release: () => materialized.release(),
+    };
+  } catch (error) {
+    materialized.release();
+    throw error;
+  }
+}
+
+/**
+ * Validate the qualified SDK formation receipt retained by the pack owner: every
+ * declared captured input must equal the sealed committed Source bytes, every
+ * declared output must equal the retained dist bytes, and the receipt must be a
+ * delivery build (never the development-tests projection).
+ */
+function assertSealedSdkFormation(sealed: SealedSdkPack, packageRoot: string): void {
+  const receipt = requireJsonRecord(
+    parseJson(readReleaseBytes(packageRoot, 'dist/sdk-formation.json').toString('utf8')),
+    'SDK formation receipt must be an object.',
+  );
+  if (
+    receipt.schema !== 'CandidatePackageBuild/v1' ||
+    receipt.version !== sealed.version ||
+    'purpose' in receipt ||
+    receipt.test_issuers_shipped !== false ||
+    receipt.declaration_runtime !== 'bun' ||
+    receipt.bun_version !== readPin(sealed.packageRoot) ||
+    !Array.isArray(receipt.inputs) ||
+    !Array.isArray(receipt.outputs) ||
+    receipt.inputs.length === 0 ||
+    receipt.outputs.length === 0
+  )
+    throw new Error('SDK formation receipt is not a qualified delivery build for the sealed Source.');
+  const seen = new Set<string>();
+  for (const entry of receipt.inputs) {
+    if (
+      !isRecord(entry) ||
+      typeof entry.path !== 'string' ||
+      entry.path.includes('\\') ||
+      entry.path.startsWith('/') ||
+      entry.path.split('/').some((part) => !part || part === '.' || part === '..') ||
+      typeof entry.sha256 !== 'string' ||
+      !isIntegerNumber(entry.bytes) ||
+      seen.has(entry.path)
+    )
+      throw new Error('SDK formation input identity differs.');
+    seen.add(entry.path);
+    const committed = readReleaseBytes(sealed.sourceRoot, 'packages/agent/' + entry.path, 64 * 1024 * 1024);
+    if (committed.length !== entry.bytes || sha(committed) !== entry.sha256)
+      throw new Error('SDK formation input differs from the sealed committed Source.');
+  }
+  const outputs = new Map<string, string>();
+  for (const entry of receipt.outputs) {
+    if (
+      !isRecord(entry) ||
+      typeof entry.path !== 'string' ||
+      !entry.path.startsWith('dist/') ||
+      entry.path === 'dist/sdk-formation.json' ||
+      outputs.has(entry.path) ||
+      typeof entry.sha256 !== 'string' ||
+      !isIntegerNumber(entry.bytes)
+    )
+      throw new Error('SDK formation output identity differs.');
+    const bytes = readReleaseBytes(packageRoot, entry.path, 64 * 1024 * 1024);
+    if (bytes.length !== entry.bytes || sha(bytes) !== entry.sha256)
+      throw new Error('SDK formation output differs from its qualified receipt.');
+    outputs.set(entry.path, entry.sha256);
+  }
+  const actualOutputs = releaseSourceInputs(packageRoot, 'dist').filter(
+    (entry) => entry.path !== 'dist/sdk-formation.json',
+  );
+  if (actualOutputs.length !== outputs.size || actualOutputs.some((entry) => outputs.get(entry.path) !== entry.sha256))
+    throw new Error('SDK formation output inventory differs from its qualified receipt.');
+}
+
+class SealedSdkCustodyError extends Error {}
+
+function verifyRetainedSdkPackage(sealed: SealedSdkPack, packageRoot: string, nodeModules: string): void {
+  try {
+    const dependencyLink = path.join(packageRoot, 'node_modules');
+    if (
+      !lstatSync(dependencyLink).isSymbolicLink() ||
+      path.relative(realpathSync(nodeModules), realpathSync(dependencyLink)) !== ''
+    )
+      throw new Error('SDK dependency link differs.');
+    const sourceInputs = readdirSync(packageRoot)
+      .sort()
+      .filter((name) => name !== 'node_modules' && name !== 'dist')
+      .flatMap((name) => releaseSourceInputs(packageRoot, name));
+    if (json(sourceInputs) !== json(sealed.sourceInputs)) throw new Error('SDK package Source inventory differs.');
+    assertSealedSdkFormation(sealed, packageRoot);
+  } catch (error) {
+    throw new SealedSdkCustodyError('Sealed SDK package custody differs; preserve UNKNOWN. ' + errorMessage(error), {
+      cause: error,
+    });
+  }
+}
+
+/**
+ * Form the genuine SDK beforeimage for a sealed committed successor: run the
+ * qualified package build owner inside the materialized committed Source, prove
+ * its delivery receipt binds every captured input to the sealed bytes, then
+ * retain the exact package root as operation-owned evidence for the pack owner
+ * and all later readback.
+ */
+async function formSealedSdkPackage(input: {
+  root: string;
+  sealed: SealedSdkPack;
+  command: typeof runCommand;
+  env: NodeJS.ProcessEnv;
+}): Promise<void> {
+  const { root, sealed, command, env } = input;
+  const nodeModules = path.join(root, 'packages/agent/node_modules');
+  if (lstatSync(sealed.sdkPackage, { throwIfNoEntry: false })) {
+    verifyRetainedSdkPackage(sealed, sealed.sdkPackage, nodeModules);
+    return;
+  }
+  const packageRoot = sealed.packageRoot;
+  if (!existsSync(nodeModules))
+    throw new Error('Qualified SDK dependency inputs are unavailable for the sealed committed Source.');
+  const dependencyLink = path.join(packageRoot, 'node_modules');
+  symlinkSync(nodeModules, dependencyLink, process.platform === 'win32' ? 'junction' : 'dir');
+  try {
+    sealed.recheck();
+    await command(process.execPath, [path.join(packageRoot, 'tooling/build-package.ts')], {
+      cwd: packageRoot,
+      env,
+      log: path.join(path.dirname(sealed.sdkPackage), 'sdk-build.json'),
+    });
+  } finally {
+    // Dependency links stay outside committed Source custody; the materialized
+    // tree must remain link-free for every later Source binding.
+    rmSync(dependencyLink, { force: true });
+  }
+  const stage = mkdtempSync(path.join(path.dirname(sealed.sdkPackage), 'sdk-package-'));
+  const identity = ownedDirectoryIdentity(stage);
+  try {
+    cpSync(packageRoot, stage, {
+      recursive: true,
+      filter: (source) => source !== path.join(packageRoot, '.tmp'),
+    });
+    symlinkSync(nodeModules, path.join(stage, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
+    verifyRetainedSdkPackage(sealed, stage, nodeModules);
+    sealed.recheck();
+    if (lstatSync(sealed.sdkPackage, { throwIfNoEntry: false }))
+      throw new SealedSdkCustodyError('Sealed SDK package root appeared before publication; preserve UNKNOWN.');
+    renameSync(stage, sealed.sdkPackage);
+  } finally {
+    removeOwnedDirectory(stage, identity);
+  }
+}
+
+/**
+ * `--pack-npm` for a sealed committed successor: identical custody and receipt
+ * shape to the ordinary local pack, but every Source read, qualification input
+ * and archive verification binds the sealed committed tree and its retained
+ * qualified SDK package root instead of the mutable working tree.
+ */
+async function executeSealedPackRelease(input: {
+  root: string;
+  operation: string;
+  qualify: ReleaseQualifier;
+  ci?: ReleaseCIEvidence | undefined;
+  command: typeof runCommand;
+  env: NodeJS.ProcessEnv;
+  sealed: SealedSdkPack;
+}): Promise<ReleaseJournalState> {
+  const { root, operation, qualify, ci, command, env, sealed } = input;
+  const folder = path.join(root, '.tmp/releases', operation);
+  const stateFile = journalFile(root, operation);
+  let state = releaseState(stateFile);
+  const pending = releaseState(path.join(root, '.agent/work/agent-local-release/pending.json'));
+  const { value } = manifest(sealed.sourceRoot);
+  if (pending.operation_id !== operation || state.operation_id !== operation || state.version !== value.version)
+    throw new Error('Release candidate is not current.');
+  let packedMetadata = state.pack_metadata ? parseReleasePackMetadata(state.pack_metadata) : null;
+  const started = Date.now();
+  /** @param {ReleaseJournalState['status']} status @param {Record<string,unknown>} [extra] */
+  const update = (status: ReleaseJournalState['status'], extra: Record<string, unknown> = {}): void => {
+    const currentState = { ...state };
+    delete currentState.launch_source_status;
+    state = { ...currentState, ...extra, status, elapsed_ms: Date.now() - started };
+    save(stateFile, state);
+  };
+  try {
+    sealed.recheck();
+    const priorLog = path.join(folder, 'pack.json');
+    if (packedMetadata || state.status === 'packing' || existsSync(priorLog)) {
+      verifyRetainedSdkPackage(sealed, sealed.sdkPackage, path.join(root, 'packages/agent/node_modules'));
+    }
+    const qualifyInput: ReleaseQualificationInput = {
+      root,
+      operation,
+      version: value.version,
+      ci,
+      sourceRoot: sealed.sourceRoot,
+      recheck: sealed.recheck,
+    };
+    const qualification = await qualify(qualifyInput);
+    // Qualification is issued by the fixed repository-owned assurance adapter, never a caller boolean.
+    assertQualifiedSourceBinding(qualification);
+    const changed = typeof state.source_binding === 'string' && state.source_binding !== qualification.source_binding;
+    if (changed && state.install_started)
+      throw new Error('Release source changed; explicit pre-install requalification required.');
+    const expectedManifest = sdkCompatibilityManifest({ root: sealed.packageRoot }).bytes;
+    const packRoot = sealed.sdkPackage;
+    const sdkArgs = [path.join(packRoot, 'tooling/pack-sdk.ts'), '--pack', '--root', packRoot, '--destination', folder];
+    let tarball: string | undefined;
+    if (packedMetadata) {
+      tarball = selectedTarball(packedMetadata, folder, value.version);
+      const archiveDigest = requireString(state.tarball_sha256, 'Pending tarball digest is missing.');
+      if (sha(readFileSync(tarball)) !== archiveDigest) throw new Error('Pending tarball changed.');
+      if (changed) await verifyPackedSources(root, packedMetadata, tarball, undefined, expectedManifest, packRoot);
+    } else {
+      await formSealedSdkPackage({ root, sealed, command, env });
+      let output: string;
+      const savedPack = existsSync(priorLog) ? read(priorLog) : null;
+      if (isSuccessfulPackReceipt(savedPack, sdkArgs, 'Saved pack observation differs from this operation.')) {
+        output = savedPack.stdout;
+      } else {
+        if (changed) throw new Error('Changed source lacks an exact prior package to requalify.');
+        sealed.recheck();
+        update('packing', { source_binding: qualification.source_binding });
+        output = await command(process.execPath, sdkArgs, { cwd: packRoot, env, log: priorLog });
+        sealed.recheck();
+      }
+      const metadata = parsePackOutput(output);
+      packedMetadata = metadata;
+      tarball = selectedTarball(metadata, folder, value.version);
+      if (existsSync(priorLog))
+        await verifyPackedSources(root, metadata, tarball, undefined, expectedManifest, packRoot);
+      const current = await qualify(qualifyInput);
+      assertQualifiedSourceBinding(current);
+      if (current.source_binding !== qualification.source_binding)
+        throw new Error('Source changed during npm prepack.');
+      sealed.recheck();
+      update('packed', { pack_metadata: metadata, tarball_sha256: sha(readFileSync(tarball)) });
+    }
+    const releaseMetadata = requirePresentValue(packedMetadata, 'Qualified release package image is unavailable.');
+    const releaseTarball = requirePresentValue(tarball, 'Qualified release package image is unavailable.');
+    if (packedDistribution(releaseMetadata) !== 'npm')
+      throw new Error('Packed distribution differs from the explicit request.');
+    npmArchiveFiles(releaseMetadata);
+    await verifyPackedSources(root, releaseMetadata, releaseTarball, undefined, expectedManifest, packRoot);
+    sealed.recheck();
+    verifyRetainedSdkPackage(sealed, packRoot, path.join(root, 'packages/agent/node_modules'));
+    update('qualified', { source_binding: qualification.source_binding, error: undefined });
+    update('awaiting_assurance');
+    return state;
+  } catch (error) {
+    if (error instanceof SealedSdkCustodyError) throw error;
+    const message = errorMessage(error);
+    update(message.startsWith('awaiting_assurance:') ? 'awaiting_assurance' : 'failed', {
+      error: message,
+    });
+    throw error;
+  }
+}
+
 /** @param {ReleaseExecutionInput} input */
 export async function executeRelease({
   root = repositoryRoot,
@@ -3864,6 +4273,16 @@ export async function executeRelease({
   const stateFile = journalFile(root, operation);
   let state = releaseState(stateFile);
   const pending = releaseState(path.join(root, '.agent/work/agent-local-release/pending.json'));
+  if (packOnly && distribution === 'npm') {
+    const sealed = openSealedSdkPack(root, operation, folder);
+    if (sealed) {
+      try {
+        return await executeSealedPackRelease({ root, operation, qualify, ci, command, env, sealed });
+      } finally {
+        sealed.release();
+      }
+    }
+  }
   const { value } = manifest(root);
   if (pending.operation_id !== operation || state.operation_id !== operation || state.version !== value.version)
     throw new Error('Release candidate is not current.');
@@ -3985,18 +4404,133 @@ export async function executeRelease({
     throw error;
   }
 }
+/** Journal the already verified SDK member before native retarget can consume it. */
+export async function recordCISdkBeforeimage(input: {
+  root: string;
+  operation: string;
+  version: string;
+  sourceBinding: string;
+  runId: string;
+  runAttempt: number;
+  sdk: ObservedCISdkPack;
+  pair: ReadonlyArray<{ request_id: string; artifact_id: string; transport_sha256: string }>;
+  expectedJournal: Buffer;
+  expectedPending: Buffer;
+  recheck: () => void;
+}): Promise<void> {
+  const {
+    root,
+    operation,
+    version,
+    sourceBinding,
+    runId,
+    runAttempt,
+    sdk,
+    pair,
+    expectedJournal,
+    expectedPending,
+    recheck,
+  } = input;
+  await withReleaseRepairLocks(root, operation, () => {
+    recheck();
+    const base = `.agent/work/agent-local-release/${operation}`;
+    const journal = base + '/release.json';
+    const pending = '.agent/work/agent-local-release/pending.json';
+    const receipt = base + '/ci-sdk-intake.json';
+    const current = releaseState(releasePath(root, journal));
+    const currentBytes = readReleaseBytes(root, journal);
+    const pendingBytes = readReleaseBytes(root, pending);
+    if (
+      !currentBytes.equals(expectedJournal) ||
+      !pendingBytes.equals(expectedPending) ||
+      current.operation_id !== operation ||
+      current.version !== version ||
+      current.status !== 'awaiting_assurance' ||
+      current.install_started
+    )
+      throw new Error('CI SDK intake state changed; preserve UNKNOWN.');
+    const metadata = parseReleasePackMetadata(sdk.pack_metadata);
+    if (packedDistribution(metadata) !== 'npm') throw new Error('CI SDK beforeimage has the wrong distribution.');
+    const archiveHash = sha(sdk.archive_bytes);
+    const next = { ...current, source_binding: sourceBinding, pack_metadata: metadata, tarball_sha256: archiveHash };
+    const nextHash = sha(Buffer.from(releaseJSON(next)));
+    const evidence = {
+      schema: 'VidaCISdkIntake/v1',
+      operation_id: operation,
+      version,
+      source_binding: sourceBinding,
+      run_id: runId,
+      run_attempt: runAttempt,
+      sdk_receipt_sha256: sha(sdk.receipt_bytes),
+      archive_sha256: archiveHash,
+      pair,
+      pending_sha256: sha(pendingBytes),
+      packed_journal_sha256: nextHash,
+    };
+    const archiveFolder = '.tmp/releases/' + operation;
+    directory(root, archiveFolder);
+    const relativeArchive = archiveFolder + '/' + metadata[0]!.filename;
+    const filename = releasePath(root, relativeArchive, true);
+    const receiptPath = releasePath(root, receipt, true);
+    const existing = existsSync(receiptPath);
+    if (existing) {
+      const recorded = parseJson(readReleaseBytes(root, receipt).toString('utf8'));
+      if (
+        !isRecord(recorded) ||
+        typeof recorded.before_journal_sha256 !== 'string' ||
+        !readReleaseBytes(root, receipt).equals(
+          Buffer.from(
+            releaseJSON({
+              ...evidence,
+              before_journal_sha256: recorded.before_journal_sha256,
+            }),
+          ),
+        ) ||
+        (sha(currentBytes) !== nextHash && sha(currentBytes) !== recorded.before_journal_sha256)
+      )
+        throw new Error('CI SDK intake receipt or beforeimage differs; preserve UNKNOWN.');
+    } else {
+      if (current.pack_metadata !== undefined || current.tarball_sha256 !== undefined || existsSync(filename))
+        throw new Error('CI SDK intake found foreign pack evidence; preserve UNKNOWN.');
+      save(receiptPath, { ...evidence, before_journal_sha256: sha(currentBytes) });
+    }
+    if (sha(currentBytes) === nextHash && !existsSync(filename))
+      throw new Error('CI SDK journal has no retained archive; preserve UNKNOWN.');
+    if (!existsSync(filename)) {
+      const fd = openSync(filename, 'wx', 0o600);
+      try {
+        writeFileSync(fd, sdk.archive_bytes);
+        fsyncSync(fd);
+      } finally {
+        closeSync(fd);
+      }
+    }
+    if (
+      selectedTarball(metadata, path.dirname(filename), version) !== filename ||
+      !readReleaseBytes(root, relativeArchive, 240 * 1024 * 1024).equals(sdk.archive_bytes)
+    )
+      throw new Error('Retained CI SDK archive differs; preserve UNKNOWN.');
+    recheck();
+    if (!readReleaseBytes(root, journal).equals(currentBytes) || !readReleaseBytes(root, pending).equals(pendingBytes))
+      throw new Error('CI SDK intake lost its journal comparison; preserve UNKNOWN.');
+    if (sha(currentBytes) !== nextHash) save(releasePath(root, journal), next);
+    if (sha(readReleaseBytes(root, journal)) !== nextHash)
+      throw new Error('CI SDK packed journal readback differs; preserve UNKNOWN.');
+  });
+}
+
 /** @param {string[]} args */
 export async function main(args: string[], issueRoot = path.resolve(repositoryRoot)) {
   const usageMessage =
     'Usage: release:local -- --prepare [--minor | --major | --version X.Y.Z] | ' +
     '--prepare-after-disposition --proposal REL [--minor | --major | --version X.Y.Z] | ' +
-    '--prepare-after-publication OP | ' +
+    '--prepare-after-publication OP BASE_COMMIT | ' +
     '--prepare-independent-successor ID | ' +
-    '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID | --issue-native-pair ID | ' +
+    '--prepare-system-update | --pack ID | --pack-npm ID | --operation ID | --status ID | --issue-native-pair ID COMMIT | ' +
     '--stage-observe-native-pair OP SOURCE RUN ATTEMPT LREQ LART LZIP WREQ WART WZIP ACTOR';
-  if (args.length === 2 && args[0] === '--issue-native-pair' && args[1] && idPattern.test(args[1])) {
+  if (args.length === 3 && args[0] === '--issue-native-pair' && args[1] && args[2]) {
     const { issueApprovedNativePair } = await import('./release-ci-evidence.ts');
-    return issueApprovedNativePair({ root: issueRoot, operation: args[1] });
+    return issueApprovedNativePair({ root: issueRoot, operation: args[1], commit: args[2] });
   }
   if (args.length === 12 && args[0] === '--stage-observe-native-pair') {
     const [
@@ -4093,10 +4627,10 @@ export async function main(args: string[], issueRoot = path.resolve(repositoryRo
       !Number.isSafeInteger(Number(attempt))
     )
       throw Error('Native pair observation arguments are invalid.');
-    const state = releaseState(journalFile(repositoryRoot, operation));
+    const state = releaseState(journalFile(issueRoot, operation));
     const { verifyApprovedGitHubFormationPair } = await import('./release-assurance.ts');
     return verifyApprovedGitHubFormationPair({
-      root: repositoryRoot,
+      root: issueRoot,
       operation,
       version: state.version,
       source_commit: sourceCommit,
@@ -4115,8 +4649,8 @@ export async function main(args: string[], issueRoot = path.resolve(repositoryRo
       ...(process.env.GITHUB_TOKEN ? { token: process.env.GITHUB_TOKEN } : {}),
     });
   }
-  if (args.length === 2 && args[0] === '--prepare-after-publication' && args[1])
-    return await prepareReleaseAfterPublication(issueRoot, args[1]);
+  if (args.length === 3 && args[0] === '--prepare-after-publication' && args[1] && args[2])
+    return await prepareReleaseAfterPublication(issueRoot, args[1], args[2]);
   if (args[0] === '--prepare-after-disposition') {
     const parsed = parseDispositionPreparationArgs(args.slice(1));
     const proposal = readDispositionProposal(repositoryRoot, parsed.proposalPath);

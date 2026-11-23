@@ -51,7 +51,31 @@ type SuspensionInput = {
   readonly expectedMaintenanceGeneration?: number;
 };
 
+type ConfiguredSuspensionInput = SuspensionInput & { readonly config: AgentRuntimeConfig };
+
 export function suspendLocalWork(input: SuspensionInput): HostStateSnapshot {
+  if (input.config !== undefined) {
+    const configured: ConfiguredSuspensionInput = { ...input, config: input.config },
+      failedDelivery = settledDeliveryFailureItem(configured);
+    if (failedDelivery !== null) {
+      const current = input.store.readWorkSessionSnapshot(input.identity, input.journal.state.attempt),
+        { work, ledger } = current.host;
+      const expiresAt = ledger?.tickets.find((ticket) => ticket.ticket_id === work?.lease?.ticket_id)?.expires_at;
+      if (expiresAt && Date.parse(expiresAt) <= Date.now()) {
+        requireSuspension(
+          work &&
+            ledger &&
+            current.journal &&
+            canonicalJsonDigest(current.journal.version) === canonicalJsonDigest(input.journal.version) &&
+            canonicalJsonDigest(current.journal.state) === canonicalJsonDigest(input.journal.state) &&
+            runtimeConfigDigest(configured.config) === work.binding.config_digest,
+          'settled delivery failure journal, work or configuration differs',
+        );
+        requireSettledDeliveryFailure(configured, work, ledger, failedDelivery);
+        return suspendLocalWorkCore(input, false, false, false, false, false, false, undefined, undefined, true);
+      }
+    }
+  }
   return suspendLocalWorkCore(input, false);
 }
 
@@ -290,6 +314,131 @@ export function suspendCompletedSourceWorkflowWork(input: CompletedSourceWorkflo
   return suspendLocalWorkCore(input, false, true);
 }
 
+/** The one current issued delivery whose persisted terminal report is a decline, if any. */
+function settledDeliveryFailureItem(input: ConfiguredSuspensionInput): SettledWorkflowItem | null {
+  const state = input.journal.state;
+  if (state.step_id === null) return null;
+  const deliveries = state.items.filter((item) => {
+    const stage = input.config.workflows[item.request.workflow_id]?.stages.find(
+      (entry) => entry.id === item.request.stage_id,
+    );
+    return (
+      stage?.kind === 'deliver' &&
+      item.request.run_id === state.run_id &&
+      item.issue_id !== null &&
+      item.observation?.status === 'reported_failed'
+    );
+  });
+  return deliveries.length === 1 ? deliveries[0]! : null;
+}
+
+/** Release only the expired owner of a settled workflow whose exact configured delivery declined.
+ * This grants no lease renewal, delivery instruction, source right or task acceptance.
+ */
+function requireSettledDeliveryFailure(
+  input: ConfiguredSuspensionInput,
+  work: WorkState,
+  ledger: HostStateSnapshot['ledger'],
+  delivery: SettledWorkflowItem,
+): void {
+  const state = input.journal.state,
+    { observed, inert } = settledSessionItems(state);
+  requireSuspension(
+    input.journal.resume_status === 'blocked' &&
+      state.step_id !== null &&
+      state.items.includes(delivery) &&
+      inert.length === 0 &&
+      observed.length > 0 &&
+      observed.at(-1) === delivery &&
+      new Set(observed.map((item) => item.request.action_id)).size === observed.length &&
+      observed.every(
+        (item) =>
+          item.issue_id !== null &&
+          item.observation !== null &&
+          !item.research_activation &&
+          !item.research_normalization &&
+          !item.request.corrective_execution &&
+          item.request.run_id === state.run_id &&
+          item.request.workflow_id === work.binding.workflow_id &&
+          item.request.config_digest === work.binding.config_digest &&
+          item.request.scope_digest === work.binding.work_source_revision &&
+          item.observation.action_id === item.request.action_id &&
+          item.observation.issue_id === item.issue_id,
+      ) &&
+      !state.corrective_execution &&
+      state.source_scope !== undefined &&
+      state.source_scope !== null &&
+      state.source_scope.digest !== work.binding.work_source_revision &&
+      work.lifecycle.seal === null &&
+      work.lifecycle.assurance.review_generation === 0 &&
+      work.lifecycle.assurance.delivery_cycle_id === null &&
+      work.execution.assignment_attempts.length > 0 &&
+      work.execution.assignment_attempts.every((attempt) => attempt.status === 'completed'),
+    'settled delivery failure journal, scope or lifecycle is not frozen terminal',
+  );
+  const kinds = observed.map((item) => (item === delivery ? 'deliver' : completedWorkflowItemKind(input, work, item)));
+  const writers = observed.filter((item) => item.host_reservation);
+  requireSuspension(
+    kinds.filter((kind) => kind === 'deliver').length === 1 &&
+      kinds.includes('develop') &&
+      kinds.includes('validate-code') &&
+      kinds.includes('test') &&
+      writers.length === 1 &&
+      kinds[observed.indexOf(writers[0]!)] === 'develop',
+    'settled delivery failure lacks its unique declined delivery and accepted writer/test predecessors',
+  );
+  const request = delivery.request,
+    observation = delivery.observation,
+    stage = input.config.workflows[request.workflow_id]?.stages.find((entry) => entry.id === request.stage_id),
+    assignment = stage?.assignments[request.assignment_index],
+    profile = assignment && input.config.agents.profiles[assignment.profile];
+  requireSuspension(
+    stage?.kind === 'deliver' &&
+      assignment?.role === request.role &&
+      profile?.mutation_scope === 'none' &&
+      input.config.agents.tool_policies[profile.tools_policy]?.source_write === false &&
+      !delivery.host_reservation &&
+      delivery.issue_id !== null &&
+      observation !== null &&
+      observation.status === 'reported_failed' &&
+      observation.action_id === request.action_id &&
+      observation.issue_id === delivery.issue_id &&
+      observation.output_digest === canonicalJsonDigest(observation.summary),
+    'settled delivery failure is not the exact persisted declined delivery',
+  );
+  const lease = work.lease;
+  requireSuspension(lease !== null, 'settled delivery failure has no owner lease');
+  const ticket = ledger?.tickets.find((entry) => entry.ticket_id === lease.ticket_id),
+    claims = (ledger?.claims ?? []).filter((entry) => entry.ticket_id === lease.ticket_id && entry.status === 'active'),
+    resources = [...(ticket?.exclusive_resources ?? [])].sort();
+  requireSuspension(
+    ticket?.status === 'active' &&
+      ticket.thread_id === input.nativeSessionHandle &&
+      ticket.work_id === input.identity.work_id &&
+      ticket.generation === lease.generation &&
+      ticket.repository_id === input.identity.repository_id &&
+      sameCoordinationStrings(ticket.project_ids, input.identity.project_ids) &&
+      ticket.integrations_digest === input.identity.integrations_digest &&
+      ticket.source_revision === work.binding.work_source_revision &&
+      ticket.expires_at !== null &&
+      Date.parse(ticket.expires_at) <= Date.now() &&
+      claims.length === 1 &&
+      claims[0]!.thread_id === input.nativeSessionHandle &&
+      claims[0]!.work_id === input.identity.work_id &&
+      claims[0]!.generation === lease.generation &&
+      claims[0]!.lease_expires_at === ticket.expires_at &&
+      Date.parse(claims[0]!.lease_expires_at) <= Date.now() &&
+      sameCoordinationStrings([...claims[0]!.resources].sort(), resources) &&
+      !(ledger?.claims ?? []).some(
+        (other) =>
+          other.ticket_id !== lease.ticket_id &&
+          other.status === 'active' &&
+          other.resources.some((resource) => resources.includes(resource)),
+      ),
+    'settled delivery failure owner is not the exact expired ticket and claim',
+  );
+}
+
 type SettledWorkflowItem = MastraSessionLedgerSnapshot['state']['items'][number];
 
 function requireCompletedSourceWorkflow(input: CompletedSourceWorkflowSuspensionInput, work: WorkState): void {
@@ -316,11 +465,7 @@ function requireCompletedSourceWorkflow(input: CompletedSourceWorkflowSuspension
   );
 }
 
-function completedWorkflowAssignment(
-  input: CompletedSourceWorkflowSuspensionInput,
-  work: WorkState,
-  item: SettledWorkflowItem,
-) {
+function completedWorkflowAssignment(input: ConfiguredSuspensionInput, work: WorkState, item: SettledWorkflowItem) {
   const request = item.request;
   requireSuspension(
     request.run_id === input.journal.state.run_id &&
@@ -340,7 +485,7 @@ function completedWorkflowAssignment(
 }
 
 function completedWorkflowItemKind(
-  input: CompletedSourceWorkflowSuspensionInput,
+  input: ConfiguredSuspensionInput,
   work: WorkState,
   item: SettledWorkflowItem,
 ): string {
@@ -857,6 +1002,7 @@ function suspendLocalWorkCore(
   readonlyBookkeeping = false,
   terminalSynthesisCapture?: HistoricalTerminalSynthesisCaptureInput['capture'],
   terminalOwner?: TerminalOwnerCoreBinding,
+  settledDeliveryFailure = false,
 ): HostStateSnapshot {
   const {
     store,
@@ -1121,6 +1267,7 @@ function suspendLocalWorkCore(
         readonlyBookkeeping ||
         settledResearch ||
         settledWriter ||
+        settledDeliveryFailure ||
         expiredUnissued ||
         unknownReadonly ||
         terminalOwner !== undefined ||
@@ -1139,6 +1286,7 @@ function suspendLocalWorkCore(
         expiredUnissued ||
         unknownReadonly ||
         settledWriter ||
+        settledDeliveryFailure ||
         terminalOwner !== undefined ||
         Date.parse(claims[0]!.lease_expires_at) > Date.now()) &&
       claims[0]!.lease_expires_at === ticket.expires_at &&
@@ -1195,7 +1343,9 @@ function suspendLocalWorkCore(
   );
   const releasedIds = new Set([
     ticket.ticket_id,
-    ...(terminalSynthesisCapture || terminalOwner ? [] : ownedQueued.map((item) => item.ticket_id)),
+    ...(terminalSynthesisCapture || terminalOwner || settledDeliveryFailure
+      ? []
+      : ownedQueued.map((item) => item.ticket_id)),
   ]);
   const nextWork = {
     ...work,
@@ -1203,7 +1353,9 @@ function suspendLocalWorkCore(
     lease: null,
     execution: {
       ...work.execution,
-      ...(completedReadonly || settledWriter || terminalOwner ? {} : { phase: 'awaiting_followup' }),
+      ...(completedReadonly || settledWriter || settledDeliveryFailure || terminalOwner
+        ? {}
+        : { phase: 'awaiting_followup' }),
       status: 'suspended' as const,
     },
     lifecycle: {
@@ -1213,13 +1365,15 @@ function suspendLocalWorkCore(
         ? 'The synthesis body is known terminal but unaccepted; the task remains unfinished and continuation needs normal admission.'
         : terminalOwner
           ? 'Only the original owner rights were released; the journal and lifecycle phase remain unchanged and continuation needs normal admission.'
-          : readonlyBookkeeping
-            ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
-            : unissuedPrepared || settledResearch
-              ? 'The original unissued frontier remains inert; continuation needs normal admission.'
-              : requestIntent === 'linked_correction'
-                ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
-                : 'Prior work awaits user testing; new work must be admitted separately.',
+          : settledDeliveryFailure
+            ? 'Only the expired settled delivery owner rights were released; the journal, lifecycle phase and assurance remain unchanged and continuation needs normal admission.'
+            : readonlyBookkeeping
+              ? 'Readonly observations, canonical artifact GAPs and pending UNKNOWN remain frozen; continuation needs normal admission.'
+              : unissuedPrepared || settledResearch
+                ? 'The original unissued frontier remains inert; continuation needs normal admission.'
+                : requestIntent === 'linked_correction'
+                  ? 'Attributable correction may acquire a fresh fence; Runtime acceptance remains pending.'
+                  : 'Prior work awaits user testing; new work must be admitted separately.',
     },
   };
   const nextLedger = {
@@ -1252,25 +1406,23 @@ function suspendLocalWorkCore(
         decision_pointer: userRequestPointer,
         created_at: now,
       },
-      ...(terminalSynthesisCapture
+      ...(terminalSynthesisCapture || terminalOwner || settledDeliveryFailure
         ? []
-        : terminalOwner
-          ? []
-          : ownedQueued.map((item) => ({
-              schema: 'CoordinationOperation/v1' as const,
-              operation_id: operationId + '-' + item.ticket_id,
-              kind: 'release' as const,
-              ticket_id: item.ticket_id,
-              work_id: item.work_id,
-              thread_id: item.thread_id,
-              source_revision: item.source_revision,
-              resources: item.exclusive_resources,
-              from_ledger_revision: host.ledger!.revision,
-              to_ledger_revision: host.ledger!.revision + 1,
-              decided_by: nativeSessionHandle,
-              decision_pointer: userRequestPointer,
-              created_at: now,
-            }))),
+        : ownedQueued.map((item) => ({
+            schema: 'CoordinationOperation/v1' as const,
+            operation_id: operationId + '-' + item.ticket_id,
+            kind: 'release' as const,
+            ticket_id: item.ticket_id,
+            work_id: item.work_id,
+            thread_id: item.thread_id,
+            source_revision: item.source_revision,
+            resources: item.exclusive_resources,
+            from_ledger_revision: host.ledger!.revision,
+            to_ledger_revision: host.ledger!.revision + 1,
+            decided_by: nativeSessionHandle,
+            decision_pointer: userRequestPointer,
+            created_at: now,
+          }))),
     ],
   };
   if (inspectOnly) return host;

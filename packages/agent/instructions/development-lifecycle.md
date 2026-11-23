@@ -535,12 +535,14 @@ Separately, complete canonical direct readback of the owned annotated tag, claim
 non-draft release and exact assets consumes the published SemVer even if local
 assurance or closeout failed or is UNKNOWN. `published_version_baseline` proves
 version consumption only, not CI, Code, formation, assurance or Runtime PASS.
-The explicit Source-only `--prepare-after-publication OP` selects the default
-next PATCH through existing intent and CAS, binds current patched Source
-separately from that historical publication, and preserves the predecessor's
-journal, evidence and debt without declaring its operation complete. New release
-CI gates remain unchanged. User JSON receipts confer no authority; this route
-creates no new ledger or database initialization.
+The explicit Source-only `--prepare-after-publication OP BASE_COMMIT` selects
+the default next PATCH through existing intent and CAS. It binds the base
+commit to the exact version-only manifest afterimage and the expected final
+Source digest in the successor's preparation. Apply those bytes to the
+isolated candidate and issue requests from its validated final commit. The
+working manifest and the predecessor's journal, evidence and debt are
+preserved. The successor uses the existing release CI gates, ledger and
+database. Authority comes from the owner's direct publication observation.
 
 Persist each current CI terminal result and published artifact before closing
 its release operation and confirming the version baseline. Use the existing

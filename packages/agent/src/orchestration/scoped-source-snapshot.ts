@@ -50,20 +50,22 @@ export function snapshotRuntimePackageSources(
     requireSnapshot(relative.startsWith(prefix), 'runtime source is outside the configured package identity');
     return relative.slice(prefix.length);
   };
-  const stableRead = runtimePackageStableRead(reader);
-  return snapshotDeclaredSources(
-    {
-      fileExists: (relative, purpose) => reader.fileExists(packagePath(relative), purpose),
-      readBytes: (relative, purpose) => reader.readBytes(packagePath(relative), purpose),
-      ...(stableRead === undefined
-        ? {}
-        : {
-            readStableBytes: (relative: string, purpose: string) =>
-              stableRead.call(reader, packagePath(relative), purpose, MAX_RUNTIME_PACKAGE_RESOURCE_BYTES),
-          }),
-    },
-    paths,
-  );
+  const snapshot = (stableRead: ReturnType<typeof runtimePackageStableRead>) =>
+    snapshotDeclaredSources(
+      {
+        fileExists: (relative, purpose) => reader.fileExists(packagePath(relative), purpose),
+        readBytes: (relative, purpose) => reader.readBytes(packagePath(relative), purpose),
+        ...(stableRead === undefined
+          ? {}
+          : {
+              readStableBytes: (relative: string, purpose: string) =>
+                stableRead(packagePath(relative), purpose, MAX_RUNTIME_PACKAGE_RESOURCE_BYTES),
+            }),
+      },
+      paths,
+    );
+  const withRoot = reader.readVerifiedCaptureBytes?.withRoot;
+  return paths.length > 0 && withRoot ? withRoot(snapshot) : snapshot(runtimePackageStableRead(reader));
 }
 
 export interface ScopedSourceEntry {

@@ -1,4 +1,10 @@
-import { standaloneBuildInputInventory } from '../tooling/maintained-source-inventory.ts';
+import {
+  expectedJavascriptFiles,
+  isInventorySourceEntry,
+  runtimeExecutableInventory,
+  standaloneBuildInputInventory,
+  standaloneDiscoveryFiles,
+} from '../tooling/maintained-source-inventory.ts';
 import {
   assertReconcileOptionKeys,
   reconcileAllowedOptions,
@@ -29,7 +35,13 @@ import {
 } from './local-release-artifacts.ts';
 
 type FileIdentity = readonly [number, number, number, number, number];
-type ReadObservation = { path: string; sha256?: string | null; identity: FileIdentity | null; kind?: 'directory' };
+type ReadObservation = {
+  path: string;
+  sha256?: string | null;
+  identity: FileIdentity | null;
+  kind?: 'directory';
+  sourceRoot?: string | undefined;
+};
 type JsonRecord = Record<string, unknown>;
 type EligibleRelease = {
   operation_id: string;
@@ -148,15 +160,15 @@ function observation(root: string, relative: string, limit: number = textLimit):
 
 function sameObservations(root: string, observations: readonly ReadObservation[]) {
   for (const entry of observations)
-    require(json(identity(root, entry.path, entry.kind === 'directory')) ===
+    require(json(identity(entry.sourceRoot ?? root, entry.path, entry.kind === 'directory')) ===
       json(entry.identity), 'repair input changed: ' + entry.path);
 }
 
-function sourceObservations(root: string, expected: string): ReadObservation[] {
-  const source = releaseSourceBinding(root, true);
+function sourceObservations(sourceRoot: string, expected: string): ReadObservation[] {
+  const source = releaseSourceBinding(sourceRoot, true);
   require(source.source_binding === expected, 'frozen Source differs');
   require(source.observations, 'source observations missing');
-  return source.observations;
+  return source.observations.map((entry) => ({ ...entry, sourceRoot }));
 }
 
 async function access(root: string): Promise<Awaited<ReturnType<typeof safeRoot>>> {
@@ -186,11 +198,11 @@ function inventory(root: string, relative: string): ReadObservation[] {
   return result;
 }
 
-function eligible(root: string, operation: string): EligibleRelease {
+function eligible(root: string, operation: string, sourceRoot?: string): EligibleRelease {
   require(releaseIdPattern.test(operation), 'operation invalid');
   const state = releaseState(releasePath(root, base(operation) + '/release.json'));
   const pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
-  const manifest = object(root, 'packages/agent/package.json');
+  const manifest = object(sourceRoot ?? root, 'packages/agent/package.json');
   require(isRecord(manifest), 'package manifest invalid');
   assertEligibleIdentity(state, pending, manifest, operation);
   assertEligibleMetadata(state);
@@ -362,8 +374,8 @@ function assertNativeBuildInputs(
   manifest: StandaloneManifest,
   folder: string,
   observations: ReadObservation[],
+  expected: readonly string[] = standaloneBuildInputInventory(packageRoot),
 ) {
-  const expected = standaloneBuildInputInventory(packageRoot);
   require(json(manifest.inputs.map(observationPath)) ===
     json(expected), 'candidate complete build input inventory differs');
   const observedByPath = new Map(observations.map((item) => [item.path, item]));
@@ -376,6 +388,51 @@ function assertNativeBuildInputs(
   }
 }
 
+function committedResourcePaths(root: string, relative: string, files: string[], budget: { nodes: number }): void {
+  const directory = lstatSync(path.join(root, relative));
+  if (!directory.isDirectory() || directory.isSymbolicLink())
+    throw new Error('Committed resource directory is unsafe.');
+  const entries = readdirSync(path.join(root, relative), { withFileTypes: true });
+  if ((budget.nodes += entries.length) > 16384) throw new Error('Committed resource inventory exceeds the path bound.');
+  for (const entry of entries.filter(isInventorySourceEntry)) {
+    const file = relative + '/' + entry.name;
+    if (entry.isSymbolicLink()) throw new Error('Committed source link forbidden.');
+    if (entry.isDirectory()) committedResourcePaths(root, file, files, budget);
+    else {
+      if (!entry.isFile()) throw new Error('Committed source must be regular.');
+      files.push(file);
+    }
+  }
+}
+
+/**
+ * Build input path contract for a sealed committed Source tree. The committed tree
+ * carries no CI build output, so the deterministic dist closure (expected runtime
+ * modules plus the schemas mirror) is derived from committed paths; staged payload
+ * bytes are still verified against the manifest input digests.
+ */
+function committedReleaseBuildInputs(packageRoot: string): string[] {
+  const executable = runtimeExecutableInventory(packageRoot, 'source');
+  const schemaJson = executable.filter((file) => /^schemas\/.+\.json$/.test(file));
+  const files = [
+    ...executable,
+    ...expectedJavascriptFiles.map((file) => 'dist/src/' + file),
+    ...schemaJson.map((file) => 'dist/schemas/' + file.slice('schemas/'.length)),
+    ...standaloneDiscoveryFiles,
+    'TESTING.md',
+    '.bun-version',
+    'bun.lock',
+    'bunfig.toml',
+    'tooling/build-standalone.ts',
+    'tooling/pack-sdk.ts',
+    'tooling/owned-staging.ts',
+  ];
+  const budget = { nodes: 0 };
+  for (const directory of ['instructions', 'templates', 'schemas'])
+    committedResourcePaths(packageRoot, directory, files, budget);
+  return [...new Set(files)].sort();
+}
+
 /** Read only: exact sealed archive-owned bytes; no generated Source output or qualification. */
 
 export function readNativeRetargetCandidate({
@@ -383,11 +440,13 @@ export function readNativeRetargetCandidate({
   operation,
   published = false,
   target,
+  sourceRoot,
 }: {
   root: string;
   operation: string;
   published?: boolean;
   target?: NativeReleaseTarget;
+  sourceRoot?: string | undefined;
 }): {
   operation_id: string;
   version: string;
@@ -402,6 +461,7 @@ export function readNativeRetargetCandidate({
 } {
   require(releaseIdPattern.test(operation), 'operation invalid');
   require(target === undefined || !published, 'target-indexed candidate has not acquired published authority');
+  const sourceTree = sourceRoot ?? root;
   const eligibilityObservations =
     target === undefined
       ? []
@@ -411,7 +471,7 @@ export function readNativeRetargetCandidate({
   if (target !== undefined) {
     const state = releaseState(releasePath(root, base(operation) + '/release.json'));
     const pending = releaseState(releasePath(root, '.agent/work/agent-local-release/pending.json'));
-    const manifest = object(root, 'packages/agent/package.json');
+    const manifest = object(sourceTree, 'packages/agent/package.json');
     require(isRecord(manifest) &&
       state.operation_id === operation &&
       pending.operation_id === operation &&
@@ -424,8 +484,8 @@ export function readNativeRetargetCandidate({
   if (published) assertReleaseRetargetSettled(root, operation);
   const { seal, observations } = candidateSeal(root, operation, target);
   observations.push(...eligibilityObservations);
-  const source = releaseSourceBinding(root, true);
-  const packageManifest = object(root, 'packages/agent/package.json');
+  const source = releaseSourceBinding(sourceTree, true);
+  const packageManifest = object(sourceTree, 'packages/agent/package.json');
   require(isRecord(packageManifest) &&
     seal.version === packageManifest.version &&
     seal.source_binding === source.source_binding, 'candidate Source differs');
@@ -472,7 +532,7 @@ export function readNativeRetargetCandidate({
     );
   }
   require(source.observations, 'Source observations missing');
-  observations.push(...source.observations);
+  observations.push(...source.observations.map((entry) => ({ ...entry, sourceRoot: sourceTree })));
   return {
     operation_id: operation,
     version: seal.version,
@@ -523,20 +583,25 @@ export async function stageNativeRetargetCandidate({
   root,
   operation,
   candidateFile,
+  sourceRoot,
+  guard,
 }: {
   root: string;
   operation: string;
   candidateFile: string;
+  sourceRoot?: string | undefined;
+  guard?: (() => void) | undefined;
 }): Promise<{ status: 'staged'; operation_id: string; version: string }> {
   require(typeof candidateFile === 'string' &&
     !path.isAbsolute(candidateFile), 'candidate input must be repository relative');
   const candidateValue = object(root, releaseRelative(candidateFile));
   const candidate = nativeCandidate(candidateValue, operation);
-  const original = eligible(root, operation);
+  const sourceTree = sourceRoot ?? root;
+  const original = eligible(root, operation, sourceTree);
   require(packedDistribution(original.pack_metadata) === 'npm' &&
     candidate.version === original.version &&
     packedDistribution(candidate.pack_metadata) === 'native', 'candidate channel or version differs');
-  require(candidate.source_binding === releaseSourceBinding(root).source_binding, 'candidate Source differs');
+  require(candidate.source_binding === releaseSourceBinding(sourceTree).source_binding, 'candidate Source differs');
   releaseRelative(candidate.archive);
   const selected = selectedTarball(
     candidate.pack_metadata,
@@ -549,6 +614,7 @@ export async function stageNativeRetargetCandidate({
       archivePath(operation, original.pack_metadata[0].filename), 'candidate archive location differs');
   const folder = candidateFolder(operation, candidate.target),
     api = await access(root);
+  guard?.();
   if (identity(root, folder + '/seal.json')) {
     const { seal } = candidateSeal(root, operation, candidate.target);
     require(seal.source_binding === candidate.source_binding &&
@@ -559,6 +625,7 @@ export async function stageNativeRetargetCandidate({
   reserve(root, folder); // Existing incomplete staging is UNKNOWN and is never reconstructed.
   const input = observation(root, candidate.archive, binaryLimit);
   await api.copyIn(folder + '/archive.tgz', selected);
+  guard?.();
   releaseDirectory(root, folder + '/payload');
   const files = candidate.pack_metadata[0].files;
   require(files.length <= 16384 &&
@@ -601,7 +668,7 @@ export async function stageNativeRetargetCandidate({
     require(entry.identity &&
       files.some((file) => file.path === relative && file.size === entry.identity?.[2]), 'candidate payload differs');
     if (!relative.startsWith('dist/'))
-      require(sha(read(root, 'packages/agent/' + relative, binaryLimit)) ===
+      require(sha(read(sourceTree, 'packages/agent/' + relative, binaryLimit)) ===
         entry.sha256, 'candidate packaged Source differs');
   }
   const pin = read(root, folder + '/payload/.bun-version')
@@ -614,7 +681,14 @@ export async function stageNativeRetargetCandidate({
     pin,
   );
   if (candidate.target !== undefined) require(native.target === candidate.target, 'candidate manifest target differs');
-  assertNativeBuildInputs(path.join(root, 'packages/agent'), native, folder, payload);
+  const packageRoot = path.join(sourceTree, 'packages/agent');
+  assertNativeBuildInputs(
+    packageRoot,
+    native,
+    folder,
+    payload,
+    sourceRoot === undefined ? undefined : committedReleaseBuildInputs(packageRoot),
+  );
   const asset = payload.find(
     (entry) => entry.path === folder + '/payload/dist/standalone/' + releaseRelative(native.asset?.file),
   );
@@ -623,8 +697,10 @@ export async function stageNativeRetargetCandidate({
     asset.sha256 === native.asset.sha256 &&
     asset.identity[2] === native.asset.bytes, 'native asset differs');
   sameObservations(root, [input]);
-  require(candidate.source_binding === releaseSourceBinding(root).source_binding, 'Source changed during staging');
+  require(candidate.source_binding ===
+    releaseSourceBinding(sourceTree).source_binding, 'Source changed during staging');
   const entries = inventory(root, folder).map(({ path: file, sha256 }) => ({ path: file, sha256 }));
+  guard?.();
   await api.create(
     folder + '/seal.json',
     json(
@@ -681,7 +757,12 @@ function retainedFiles(root: string, operation: string, original: EligibleReleas
   };
   for (const relative of files) {
     require(files.size <= 4096, 'receipt closure oversized');
-    if (relative.endsWith('.json') && !relative.endsWith('/source-seal.json') && !relative.endsWith('/release.json'))
+    if (
+      relative.endsWith('.json') &&
+      relative !== base(operation) + '/preparation.json' &&
+      !relative.endsWith('/source-seal.json') &&
+      !relative.endsWith('/release.json')
+    )
       visit(object(root, relative));
   }
   return [...files].sort();
@@ -796,11 +877,13 @@ function pointers(root: string, operation: string): ReadObservation[] {
 export async function inspectReleaseRetarget({
   root,
   operation,
+  sourceRoot,
 }: {
   root: string;
   operation: string;
+  sourceRoot?: string | undefined;
 }): Promise<Record<string, unknown>> {
-  const original = eligible(root, operation);
+  const original = eligible(root, operation, sourceRoot);
   const file = repair(operation) + '/plan.json';
   if (identity(root, file)) {
     const plan = loadPlan(root, operation);
@@ -832,12 +915,20 @@ async function finishPlanning(
   root: string,
   operation: string,
   plan: RetargetPlan,
-  { onPhase }: { onPhase?: ((phase: string) => unknown) | undefined } = {},
+  {
+    onPhase,
+    guard,
+    sourceRoot,
+  }: {
+    onPhase?: ((phase: string) => unknown) | undefined;
+    guard?: (() => void) | undefined;
+    sourceRoot?: string | undefined;
+  } = {},
   frozenInputs?: ReadObservation[],
   frozenCandidate?: { seal: RetargetSeal; observations: ReadObservation[] },
 ): Promise<Record<string, unknown>> {
   const { seal, observations: staged } = frozenCandidate ?? candidateSeal(root, operation),
-    original = eligible(root, operation);
+    original = eligible(root, operation, sourceRoot);
   require(seal.digest === plan.candidate_digest &&
     seal.version === plan.version &&
     original.tarball_sha256 === plan.archive_before &&
@@ -855,7 +946,7 @@ async function finishPlanning(
         require(observed.sha256 === entry.sha256, 'planning preimage changed');
         return observed;
       })
-      .concat(staged, sourceObservations(root, plan.source_binding));
+      .concat(staged, sourceObservations(sourceRoot ?? root, plan.source_binding));
   require(json(retainedFiles(root, operation, original)) ===
     json(plan.custody.map((entry) => entry.path)), 'planning receipt closure changed');
   const before = pointers(root, operation);
@@ -865,8 +956,9 @@ async function finishPlanning(
   const api = await access(root),
     custody = repair(operation) + '/custody';
   await withReleaseRepairLocks(root, operation, async () => {
+    guard?.();
     sameObservations(root, stable.concat(before));
-    eligible(root, operation);
+    eligible(root, operation, sourceRoot);
     require(loadPlan(root, operation).digest === plan.digest, 'planning plan changed');
     const state = planningState(root, operation, plan);
     require(!state || state.phase === 'planning', 'planning phase differs');
@@ -889,8 +981,9 @@ async function finishPlanning(
   stable.push(observation(root, custody + '/publication.tgz', binaryLimit));
   await onPhase?.('custody_ready');
   await withReleaseRepairLocks(root, operation, async () => {
+    guard?.();
     sameObservations(root, stable.concat(before));
-    eligible(root, operation);
+    eligible(root, operation, sourceRoot);
     require(planningState(root, operation, plan)?.phase === 'planning', 'planning reservation changed');
     await savePhase(api, operation, plan, 'custody');
   });
@@ -898,8 +991,13 @@ async function finishPlanning(
 }
 
 export async function planReleaseRetarget(
-  { root, operation, actor }: { root: string; operation: string; actor: unknown },
-  { onPhase }: { onPhase?: ((phase: string) => unknown) | undefined } = {},
+  {
+    root,
+    operation,
+    actor,
+    sourceRoot,
+  }: { root: string; operation: string; actor: unknown; sourceRoot?: string | undefined },
+  { onPhase, guard }: { onPhase?: ((phase: string) => unknown) | undefined; guard?: (() => void) | undefined } = {},
 ): Promise<Record<string, unknown>> {
   require(typeof actor === 'string' && actor.trim() && actor.length <= 256, 'repair actor missing');
   const existing = repair(operation) + '/plan.json';
@@ -907,14 +1005,16 @@ export async function planReleaseRetarget(
     const plan = loadPlan(root, operation);
     require(plan.actor === actor, 'repair attribution differs');
     const state = planningState(root, operation, plan);
-    if (!state || state.phase === 'planning') return finishPlanning(root, operation, plan, { onPhase });
-    return inspectReleaseRetarget({ root, operation });
+    if (!state || state.phase === 'planning')
+      return finishPlanning(root, operation, plan, { onPhase, guard, sourceRoot });
+    return inspectReleaseRetarget({ root, operation, sourceRoot });
   }
-  const original = eligible(root, operation),
+  const sourceTree = sourceRoot ?? root,
+    original = eligible(root, operation, sourceTree),
     { seal, observations: staged } = candidateSeal(root, operation);
   require(packedDistribution(original.pack_metadata) === 'npm' &&
     seal.version === original.version, 'original or candidate binding differs');
-  const sources = sourceObservations(root, seal.source_binding);
+  const sources = sourceObservations(sourceTree, seal.source_binding);
   const archive = archivePath(operation, archiveName(original.pack_metadata));
   selectedTarball(original.pack_metadata, path.dirname(releasePath(root, archive)), original.version);
   require(sha(read(root, archive, binaryLimit)) === original.tarball_sha256, 'original archive differs');
@@ -948,25 +1048,30 @@ export async function planReleaseRetarget(
   const plan = sealed(planBody);
   const stable = retained.concat(staged, sources);
   await withReleaseRepairLocks(root, operation, async () => {
+    guard?.();
     sameObservations(root, stable.concat(before));
-    eligible(root, operation);
+    eligible(root, operation, sourceTree);
     await api.create(existing, json(plan));
     await savePhase(api, operation, plan, 'planning');
   });
   await onPhase?.('planning');
-  return finishPlanning(root, operation, plan, { onPhase }, stable, { seal, observations: staged });
+  return finishPlanning(root, operation, plan, { onPhase, guard, sourceRoot }, stable, {
+    seal,
+    observations: staged,
+  });
 }
 
 /** Known-phase reconciliation only. The optional observer is a fault-test seam, never a CLI input. */
 
 export async function applyReleaseRetarget(
-  { root, operation }: { root: string; operation: string },
-  { onPhase }: { onPhase?: ((phase: string) => unknown) | undefined } = {},
+  { root, operation, sourceRoot }: { root: string; operation: string; sourceRoot?: string | undefined },
+  { onPhase, guard }: { onPhase?: ((phase: string) => unknown) | undefined; guard?: (() => void) | undefined } = {},
 ): Promise<Record<string, unknown>> {
+  const sourceTree = sourceRoot ?? root;
   const plan = loadPlan(root, operation);
   const phase = planningState(root, operation, plan);
   if ((!phase || phase.phase === 'planning') && custodyAbsent(root, operation))
-    await finishPlanning(root, operation, plan, { onPhase });
+    await finishPlanning(root, operation, plan, { onPhase, guard, sourceRoot });
   const { seal, observations: staged } = candidateSeal(root, operation);
   require(seal.digest === plan.candidate_digest, 'frozen candidate differs');
   const custodySeal = unseal(object(root, repair(operation) + '/custody/seal.json'), 'VidaReleaseRetargetCustody/v1', [
@@ -978,7 +1083,7 @@ export async function applyReleaseRetarget(
     json(custodySeal.entries) === json(plan.custody), 'custody seal differs');
   const stable = staged.concat(
     observation(root, repair(operation) + '/custody/seal.json'),
-    sourceObservations(root, plan.source_binding),
+    sourceObservations(sourceTree, plan.source_binding),
   );
   for (const entry of plan.custody) {
     const copy = observation(root, entry.copy, binaryLimit);
@@ -1021,8 +1126,9 @@ export async function applyReleaseRetarget(
   stable.push(observedArchive, publication, observation(root, repair(operation) + '/plan.json'));
   const api = await access(root);
   return withReleaseRepairLocks(root, operation, async () => {
+    guard?.();
     sameObservations(root, stable);
-    const original = eligible(root, operation),
+    const original = eligible(root, operation, sourceTree),
       current = pointers(root, operation);
     for (const pointer of plan.before.slice(0, 2))
       require(current.find((entry) => entry.path === pointer.path)?.sha256 ===
@@ -1115,10 +1221,11 @@ function completedRetargetCustody(
   operation: string,
   plan: RetargetPlan,
   published: ReturnType<typeof readNativeRetargetCandidate>,
+  sourceRoot?: string,
 ): { previous: ReturnType<typeof completedRetargetPreviousRelease>; observations: ReadObservation[] } {
   return {
     previous: completedRetargetPreviousRelease(root, operation, plan, published),
-    observations: completedRetargetCustodyObservations(root, operation, plan, published),
+    observations: completedRetargetCustodyObservations(root, operation, plan, published, sourceRoot),
   };
 }
 
@@ -1127,6 +1234,7 @@ function completedRetargetCustodyObservations(
   operation: string,
   plan: RetargetPlan,
   published: ReturnType<typeof readNativeRetargetCandidate>,
+  sourceRoot?: string,
 ): ReadObservation[] {
   const custodySealPath = repair(operation) + '/custody/seal.json';
   const custodySeal = unseal(object(root, custodySealPath), 'VidaReleaseRetargetCustody/v1', [
@@ -1139,7 +1247,7 @@ function completedRetargetCustodyObservations(
   const observations = [
     ...published.observations,
     observation(root, custodySealPath),
-    ...sourceObservations(root, plan.source_binding),
+    ...sourceObservations(sourceRoot ?? root, plan.source_binding),
   ];
   for (const entry of plan.custody) {
     const copy = observation(root, entry.copy, binaryLimit);
@@ -1206,8 +1314,9 @@ function completedRetargetAfterimage(
   operation: string,
   plan: RetargetPlan,
   observations: ReadObservation[],
+  sourceRoot?: string,
 ): EligibleRelease {
-  const current = eligible(root, operation);
+  const current = eligible(root, operation, sourceRoot);
   require(current.version === plan.version &&
     json(current) === json(plan.release_after), 'completed retarget release afterimage differs');
   const currentPointers = pointers(root, operation);
@@ -1232,19 +1341,21 @@ function completedRetargetAfterimage(
 export async function verifyCompletedReleaseRetargetHandoff({
   root,
   operation,
+  sourceRoot,
 }: {
   root: string;
   operation: string;
+  sourceRoot?: string | undefined;
 }): Promise<CompletedRetargetHandoff | null> {
   const completed = completedRetargetPlan(root, operation);
   if (!completed) return null;
   const { plan, planBefore, stateBefore } = completed,
-    published = readNativeRetargetCandidate({ root, operation, published: true });
+    published = readNativeRetargetCandidate({ root, operation, published: true, sourceRoot });
   assertCompletedCandidate(operation, plan, published);
-  const custody = completedRetargetCustody(root, operation, plan, published),
+  const custody = completedRetargetCustody(root, operation, plan, published, sourceRoot),
     observations = custody.observations.concat(planBefore, stateBefore);
   assertCompletedContinuity(plan, published, custody.previous);
-  const current = completedRetargetAfterimage(root, operation, plan, observations);
+  const current = completedRetargetAfterimage(root, operation, plan, observations, sourceRoot);
   sameObservations(root, observations);
   return Object.freeze({
     operation_id: operation,

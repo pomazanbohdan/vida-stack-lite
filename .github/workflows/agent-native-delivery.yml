@@ -369,6 +369,8 @@ jobs:
             ${{ steps.emit-build.outputs.directory }}/manifest.json
             ${{ steps.emit-build.outputs.directory }}/candidate.json
             ${{ steps.emit-build.outputs.directory }}/native-build.result.json
+            ${{ steps.emit-build.outputs.directory }}/sdk-package.tgz
+            ${{ steps.emit-build.outputs.directory }}/sdk-package.receipt.json
           archive: true
           compression-level: 0
           overwrite: false

@@ -2979,6 +2979,14 @@ Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
 
+The exact case `sealed native pair stage-observe binds the committed Source
+and ignores working-tree WIP` in `tests/release-retarget-state.test.ts` has a
+30,000 ms isolated integration ceiling. It covers a provider-response drift
+refusal, complete dual-target archive staging and retarget, and terminal
+readback through both release CLI commands. It includes real local archive
+operations with in-memory provider responses. The default applies to the
+separate intake refusals and retained-selection tests.
+
 The exact case `v2 preparation adopts exact preserved bytes into the fresh
 initialization receipt` in `tests/prepared-initialization-admission.test.ts`
 has a prospective 30,000ms component-fixture ceiling. Its monotonic clock starts
@@ -3910,6 +3918,8 @@ When a caller sets a parent deadline, every nested command uses its remaining al
 Reserve cleanup and report time within the parent budget. A positive reserve gives cleanup at most its allocated half. A zero reserve keeps the existing unpartitioned behavior. No remaining cleanup time means an unattempted UNKNOWN outcome.
 
 Record timeout, status, signal, spawn error and cleanup result separately. A signal or cleanup attempt does not prove that descendants stopped. Require an observed integer terminal status without timeout, signal or spawn error before parsing command output. An expected exit 1 still needs the exact denial and unchanged-state assertions.
+
+The four corrective public CLI cases use the same fixture custody guard. A case starts only after the previous fixture finishes. An UNKNOWN child outcome retains that fixture and fences later cases in the file.
 
 Bun-only subprocess fixtures launch `process.execPath`. For `-e` programs,
 embed inert path literals with `JSON.stringify` or use named environment fields;

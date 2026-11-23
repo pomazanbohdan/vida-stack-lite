@@ -680,7 +680,7 @@ localWorkItemTest(
     } satisfies CreateLocalWorkItemRequest;
     const alternateAccess = Object.freeze({
       ...native,
-      writeExclusiveAtomicAsync: async (_target: string, _contents: string, _label: string) => {
+      writeExclusiveAtomicAsync: async (_target: string, _contents: string | Uint8Array, _label: string) => {
         throw new Error('live replacement capability must not be used by captured operation');
       },
     });

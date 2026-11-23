@@ -1,5 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
 import {
   closeSync,
   constants as fileConstants,
@@ -8,6 +10,7 @@ import {
   fstatSync,
   lstatSync,
   mkdirSync,
+  mkdtempSync,
   opendirSync,
   openSync,
   readFileSync,
@@ -15,6 +18,7 @@ import {
   readdirSync,
   realpathSync,
   renameSync,
+  rmSync,
   writeFileSync,
 } from 'node:fs';
 import path from 'node:path';
@@ -742,6 +746,185 @@ export function releaseSourceBinding(
     releaseSourceInputs(root, relative, observations, repairPass),
   );
   return { source_binding: releaseDigest(JSON.stringify(entries)), entries, ...(observations ? { observations } : {}) };
+}
+
+const committedSourceSha = /^[0-9a-f]{40}$/;
+const committedSourceByteLimit = 256 * 1024 * 1024;
+const committedSourceEntryLimit = 65536;
+
+function committedGitEnvironment(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {};
+  for (const [key, value] of Object.entries(process.env)) if (!/^GIT_/i.test(key)) env[key] = value;
+  env.GIT_NO_LAZY_FETCH = '1';
+  env.GIT_NO_REPLACE_OBJECTS = '1';
+  env.GIT_OPTIONAL_LOCKS = '0';
+  return env;
+}
+
+function committedGit(root: string, args: readonly string[], input?: Buffer, maxBuffer?: number): Buffer {
+  const result = spawnSync('git', ['--no-replace-objects', '--literal-pathspecs', '-C', root, ...args], {
+    windowsHide: true,
+    encoding: 'buffer',
+    input,
+    env: committedGitEnvironment(),
+    timeout: 60000,
+    maxBuffer: maxBuffer ?? 32 * 1024 * 1024,
+  });
+  requireRelease(!result.error && result.signal === null && result.status === 0, 'committed Source Git reader failed');
+  return Buffer.from(result.stdout);
+}
+
+type CommittedSourceEntry = { path: string; mode: '100644' | '100755'; oid: string };
+
+export function assertCommittedReleaseAncestry(root: string, predecessor: string, successor: string): void {
+  requireRelease(
+    committedSourceSha.test(predecessor) && committedSourceSha.test(successor),
+    'committed release ancestry requires exact commit SHAs',
+  );
+  try {
+    committedGit(root, ['merge-base', '--is-ancestor', predecessor, successor]);
+  } catch {
+    throw new Error('Committed release Source does not descend from the selected predecessor.');
+  }
+}
+
+function committedSourceEntries(root: string, commit: string, linuxInstaller: boolean): CommittedSourceEntry[] {
+  const paths: string[] = releaseSourceRoots.map((source) => source.path);
+  if (linuxInstaller) paths.push('install/install.sh');
+  const listing = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(
+    committedGit(root, ['ls-tree', '-r', '-z', '--full-tree', commit, '--', ...paths], undefined, 64 * 1024 * 1024),
+  );
+  const entries: CommittedSourceEntry[] = [];
+  const spellings = new Map<string, string>();
+  for (const record of listing.split('\0')) {
+    if (!record) continue;
+    const tab = record.indexOf('\t');
+    requireRelease(tab > 0, 'committed Source tree record invalid');
+    const metadata = record.slice(0, tab).split(' ');
+    const file = record.slice(tab + 1);
+    requireRelease(
+      metadata.length === 3 &&
+        metadata[1] === 'blob' &&
+        (metadata[0] === '100644' || metadata[0] === '100755') &&
+        typeof metadata[2] === 'string' &&
+        /^[0-9a-f]{40}$/.test(metadata[2]),
+      'committed Source entry is not a regular blob',
+    );
+    const parts = releaseRelative(file).split('/');
+    let prefix = '';
+    for (const part of parts) {
+      prefix = prefix ? `${prefix}/${part}` : part;
+      const key = prefix.toUpperCase();
+      const spelling = spellings.get(key);
+      requireRelease(spelling === undefined || spelling === prefix, 'committed Source path has a case alias');
+      spellings.set(key, prefix);
+    }
+    entries.push({ path: file, mode: metadata[0] as '100644' | '100755', oid: metadata[2] });
+  }
+  requireRelease(entries.length <= committedSourceEntryLimit, 'committed Source inventory exceeds its bound');
+  return entries;
+}
+
+function committedSourceBlobs(root: string, oids: readonly string[]): Map<string, Buffer> {
+  const stream = committedGit(
+    root,
+    ['cat-file', '--batch'],
+    Buffer.from(oids.map((oid) => oid + '\n').join('')),
+    committedSourceByteLimit + 16 * 1024 * 1024,
+  );
+  const blobs = new Map<string, Buffer>();
+  let offset = 0,
+    total = 0;
+  for (const oid of oids) {
+    const end = stream.indexOf(10, offset);
+    requireRelease(end >= offset, 'committed Source blob header is absent');
+    const header = stream.subarray(offset, end).toString('ascii').split(' ');
+    const size = Number(header[2]);
+    requireRelease(
+      header.length === 3 &&
+        header[0] === oid &&
+        header[1] === 'blob' &&
+        typeof header[2] === 'string' &&
+        /^[0-9]+$/.test(header[2]) &&
+        Number.isSafeInteger(size) &&
+        size >= 0,
+      'committed Source blob header differs',
+    );
+    offset = end + 1;
+    total += size;
+    requireRelease(
+      total <= committedSourceByteLimit && offset + size < stream.length && stream[offset + size] === 10,
+      'committed Source bytes exceed bound or stream is truncated',
+    );
+    blobs.set(oid, Buffer.from(stream.subarray(offset, offset + size)));
+    offset += size + 1;
+  }
+  requireRelease(offset === stream.length, 'committed Source stream has extra data');
+  return blobs;
+}
+
+/**
+ * Materialize the exact committed Source byte inventory for the maintained release
+ * roots into an owned temporary tree. Callers that span asynchronous boundaries
+ * must hold the result and call `release`; working-root WIP, CRLF normalization
+ * and untracked files cannot become candidate inputs.
+ */
+export function materializeCommittedReleaseSource(
+  root: string,
+  commit: string,
+  { linuxInstaller = false }: { linuxInstaller?: boolean } = {},
+): { sourceRoot: string; release(): void } {
+  requireRelease(committedSourceSha.test(commit), 'committed Source selection must be a full commit SHA');
+  requireRelease(path.isAbsolute(root), 'absolute root required');
+  requireRelease(
+    lstatSync(root).isDirectory() && !lstatSync(root).isSymbolicLink(),
+    'committed Source root must be a real directory',
+  );
+  const base = realpathSync(root);
+  const [top, resolved, ...extra] = committedGit(base, [
+    'rev-parse',
+    '--show-toplevel',
+    '--verify',
+    commit + '^{commit}',
+  ])
+    .toString('utf8')
+    .trimEnd()
+    .split(/\r?\n/);
+  requireRelease(
+    typeof top === 'string' && path.isAbsolute(top) && extra.length === 0,
+    'committed Source repository root differs',
+  );
+  const toplevel = path.resolve(top);
+  requireRelease(
+    process.platform === 'win32' ? toplevel.toLowerCase() === base.toLowerCase() : toplevel === base,
+    'committed Source repository root differs',
+  );
+  requireRelease(resolved === commit, 'committed Source selection is not a commit');
+  const entries = committedSourceEntries(base, commit, linuxInstaller);
+  const blobs = committedSourceBlobs(base, [...new Set(entries.map((entry) => entry.oid))]);
+  const temporary = mkdtempSync(path.join(tmpdir(), 'vida-committed-source-'));
+  try {
+    for (const entry of entries) {
+      const file = path.join(temporary, ...entry.path.split('/'));
+      mkdirSync(path.dirname(file), { recursive: true });
+      const bytes = blobs.get(entry.oid);
+      requireRelease(bytes !== undefined, 'committed Source blob is missing');
+      writeFileSync(file, bytes, { flag: 'wx', mode: entry.mode === '100755' ? 0o755 : 0o644 });
+    }
+  } catch (error) {
+    rmSync(temporary, { recursive: true, force: true });
+    throw error;
+  }
+  return { sourceRoot: temporary, release: () => rmSync(temporary, { recursive: true, force: true }) };
+}
+
+export function withCommittedReleaseSource<T>(root: string, commit: string, action: (sourceRoot: string) => T): T {
+  const materialized = materializeCommittedReleaseSource(root, commit);
+  try {
+    return action(materialized.sourceRoot);
+  } finally {
+    materialized.release();
+  }
 }
 
 export function retargetStateRelative(operation: string): string {

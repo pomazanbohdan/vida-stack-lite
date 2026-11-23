@@ -687,9 +687,14 @@ canonical direct readback of the owned annotated tag, claim, non-draft release a
 exact assets consumes that SemVer even when predecessor local assurance or
 closeout failed or is UNKNOWN. `published_version_baseline` establishes version
 consumption only, not CI, Code, formation, assurance or Runtime PASS. The explicit
-Source-only `--prepare-after-publication OP` selects the default next PATCH via
-the existing intent and CAS, preserves predecessor journal, evidence and debt,
-and binds current patched Source separately from the historical publication.
+Source-only `--prepare-after-publication OP BASE_COMMIT` selects the default
+next PATCH via the existing intent and CAS. It stores the committed Source
+recipe with the manifest beforeimage, version-only afterimage and expected
+final Source digest. The base commit must descend from the verified publication
+commit. Preparation leaves the working manifest intact and preserves the
+predecessor journal, evidence and debt. The successor's native pair requires
+the intact preparation receipt and recipe. The final commit must descend from
+the base and match the expected Source and manifest afterimage.
 New release CI gates remain unchanged. User JSON receipts confer no authority;
 this route creates no new ledger or database initialization.
 
@@ -713,11 +718,32 @@ Runtime acceptance.
 
 ### GitHub publication in the native workflow
 
+One Linux producer also forms the pinned Bun SDK package. It places the
+archive and the SDK receipt inside its existing internal producer ZIP. The
+receipt binds the exact archive and normalized package manifest to the
+Linux request, Source commit, run, attempt, version, and operation.
+The publisher validates both SDK members before the first publication
+write. The public asset set contains the two standalone distributions.
+
+The canonical pair intake consumes the verified producer ZIPs. After all
+provider observations agree, the release owner records the SDK archive and
+its receipt under the release and operation locks, then atomically records
+the packed journal beforeimage before native retarget. Exact reread returns
+the retained result after a lost acknowledgement. A changed request,
+archive, or journal leaves any partial effect fenced for inspection.
+
 The existing release owner selects the version and issues the exact operation's
 Linux and Windows requests before dispatch. The native delivery workflow remains
 the single workflow. Build-only dispatch retains its existing behavior. Explicit
 `publish: true` requires both native producers and gives `contents: write` only
 to its publisher job; publication runs serialize under one concurrency group.
+
+Native pair issuance takes the full Git commit SHA and derives the Source
+binding from the maintained inventory of committed bytes. Release admission
+binds the commit, package version, Source digest and both request identities
+before creating either request. Exact retry reuses that selection and verifies
+the retained request bytes. Existing requests without a matching selection
+remain fenced. The commit and digest must match the selected CI checkout.
 
 The publisher checks the actual completed successful native jobs and required
 steps, exact Source/workflow, producer run attempt, artifact identity and creation
@@ -960,6 +986,14 @@ preparation apply only to `reported_complete`. A terminal `reported_failed`
 delivery observation uses the ordinary observation and CAS path, persists the
 blocked Journal result, and grants no delivery instruction, authority or
 acceptance.
+
+Explicit continuation may release the exact expired predecessor owner when its
+only current issue is a persisted failed delivery preparation and its preceding
+Source result, validators and tester succeeded. The release binds the original
+work, configuration and issue identities, the evolved Journal and current
+Work, Ledger and maintenance versions. It preserves the Journal, assurance,
+lifecycle phase and later queued rights. Successor admission still checks its
+own scope and authority.
 
 Legacy `UnverifiedSourceSnapshot/v1` candidates retain their
 `StoppedSourceCaptureReceipt/v1` encoding. New stopped-source candidates may use
@@ -1989,6 +2023,18 @@ metadata. This inspection grants no recovery authority or Runtime acceptance.
 Separate database commits are not atomic. Termination, drift or failed settlement
 retains UNKNOWN; close, elapsed time, PID or restart cannot clear or replay it.
 Generic governance operations cannot create or settle this protected namespace.
+
+On the first open of an absent separate workflow database, the current
+producer prepares the full empty schema from pinned LibSQL in memory.
+After the in-memory owner settles and closes, the producer checks its
+current reservation and conflicting SQLite sidecars. The native repository
+provider publishes the bounded binary image with one atomic no-replace create
+and verifies its exact bytes before the ordinary admitted open and initialization.
+An existing workflow database keeps the ordinary open and migration path.
+The shared workspace database belongs to project initialization and upgrade.
+A publication conflict or missing acknowledgment retains the reservation and
+fences later producers. Matching image bytes do not establish settlement or
+authorize retry, adoption or cleanup.
 
 The CLI admits intake and validates current scope before opening the producer.
 Journal-only retrieval inspects actual persisted engine state through the readonly

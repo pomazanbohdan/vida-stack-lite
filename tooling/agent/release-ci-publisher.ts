@@ -574,6 +574,9 @@ async function publisherMain(
           request: selectedRequest,
           transport_path: downloaded.transport_path,
           installer_bytes: installer,
+          ...(windows
+            ? {}
+            : { sdk: { source_commit: source, run_id: producer.run_id, run_attempt: producer.run_attempt } }),
         });
         if (diagnostic) {
           diagnostic.stage = 'validation';

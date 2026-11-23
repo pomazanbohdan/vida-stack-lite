@@ -9,6 +9,7 @@ import {
   lstatSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   renameSync,
   rmSync,
@@ -35,6 +36,8 @@ import {
   operationMutex,
   admissionMutex,
   assertReleaseRetargetSettled,
+  getReleaseSourceRoots,
+  withCommittedReleaseSource,
 } from '../bin/local-release-artifacts.ts';
 import {
   stageNativeRetargetCandidate,
@@ -80,6 +83,7 @@ import {
   observeGitHubCIDelivery,
 } from '../../../tooling/agent/release-ci-evidence.ts';
 import * as ciEvidence from '../../../tooling/agent/release-ci-evidence.ts';
+import * as releasePreparation from '../bin/release-preparation.ts';
 import {
   validateNativeCIInvocation,
   validateCISourceQualityInvocation,
@@ -1214,6 +1218,133 @@ test('CI archive capability rejects installed or transitive lock drift before re
   }
 });
 
+test('CI SDK proof binds the real Bun archive and replays one legacy beforeimage', async () => {
+  const packageSource = path.resolve(import.meta.dir, '../../..');
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-ci-sdk-'));
+  roots.add(root);
+  const transportRoot = path.join(packageSource, '.tmp');
+  mkdirSync(transportRoot, { recursive: true });
+  const zipDirectory = mkdtempSync(path.join(transportRoot, 'vida-ci-sdk-'));
+  try {
+    const packageDir = path.join(root, 'sdk');
+    const manifestValue: unknown = JSON.parse(read(packageSource, 'packages/agent/package.json').toString('utf8'));
+    assert.ok(isFixtureRecord(manifestValue));
+    write(root, 'packages/agent/package.json', { ...manifestValue, version });
+    write(root, 'packages/agent/bun.lock', read(packageSource, 'packages/agent/bun.lock'));
+    const installer = read(packageSource, 'install/install.sh');
+    write(root, 'install/install.sh', installer);
+    const expected = sdkCompatibilityManifest({ root: path.join(root, 'packages/agent') }).bytes;
+    write(root, 'sdk/package.json', expected);
+    write(root, 'sdk/dist/src/index.js', 'export const sdk = true;\n');
+    write(root, 'sdk/dist/src/trusted-host.js', 'export const host = true;\n');
+    const pack = spawnSync(process.execPath, ['pm', 'pack', '--ignore-scripts', '--filename', 'sdk-package.tgz'], {
+      cwd: packageDir,
+      encoding: 'utf8',
+      timeout: 3000,
+      windowsHide: true,
+    });
+    if (isUnknownSynchronousChild(pack)) outcomeUnknown = true;
+    assert.equal(pack.status, 0, pack.stderr);
+    const archiveBytes = read(root, 'sdk/sdk-package.tgz');
+    const before = {
+      schema: 'VidaLocalReleaseState/v1',
+      operation_id: operation,
+      version,
+      status: 'awaiting_assurance',
+    };
+    write(root, folder + '/release.json', before);
+    write(root, pending, before);
+    const requestId = 'c'.repeat(64);
+    const identity = { source_commit: 'a'.repeat(40), run_id: '123', run_attempt: 1 };
+    const requestFixture = await fixture();
+    const request = requestForCI({ ...requestFixture.input, context: ciContext, target: 'bun-linux-x64' });
+    const sdkReceipt = {
+      schema: 'VidaCISdkPack/v1',
+      operation_id: operation,
+      version,
+      source_commit: identity.source_commit,
+      source_binding: request.source_binding,
+      request_id: request.request_id,
+      run_id: identity.run_id,
+      run_attempt: identity.run_attempt,
+      archive_sha256: sha(archiveBytes),
+      archive_size: archiveBytes.length,
+      manifest_sha256: sha(expected),
+    };
+    const archiveEntry = createRequire(path.join(packageSource, 'packages/agent/package.json')).resolve(
+      '@openclaw/fs-safe/archive',
+    );
+    const JSZip = createRequire(archiveEntry)('jszip') as typeof JSZipConstructor;
+    const members = {
+      'candidate.json': Buffer.from('{}'),
+      [`vida-agent-${version}.tgz`]: Buffer.from('native archive'),
+      'manifest.json': Buffer.from('{}'),
+      'vida-agent-bun-linux-x64': Buffer.from('inert native executable'),
+      'native-build.result.json': Buffer.from('{}'),
+      'sdk-package.tgz': archiveBytes,
+    };
+    const verify = async (name: string, receipt: object) => {
+      const zip = new JSZip();
+      for (const [file, bytes] of Object.entries(members)) zip.file(file, bytes);
+      zip.file('sdk-package.receipt.json', json(receipt));
+      const absolute = path.join(zipDirectory, name + '.zip');
+      writeFileSync(absolute, await zip.generateAsync({ type: 'nodebuffer' }), { flag: 'wx' });
+      return readCIProducerFormationMembers({
+        root: packageSource,
+        source_root: root,
+        request,
+        transport_path: path.relative(packageSource, absolute).split(path.sep).join('/'),
+        installer_bytes: installer,
+        sdk: identity,
+      });
+    };
+    await assert.rejects(
+      verify('wrong-operation', { ...sdkReceipt, operation_id: 'local-foreign' }),
+      /SDK archive receipt differs/,
+    );
+    const observed = await verify('valid', sdkReceipt);
+    assert.ok(observed.sdk);
+    const pendingBefore = read(root, pending);
+    const intake = (): Parameters<typeof releaseLocal.recordCISdkBeforeimage>[0] => ({
+      root,
+      operation,
+      version,
+      sourceBinding: request.source_binding,
+      sdk: observed.sdk!,
+      runId: identity.run_id,
+      runAttempt: identity.run_attempt,
+      pair: [
+        { request_id: request.request_id, artifact_id: '1', transport_sha256: sha('linux') },
+        { request_id: requestId, artifact_id: '2', transport_sha256: sha('windows') },
+      ],
+      expectedJournal: read(root, folder + '/release.json'),
+      expectedPending: pendingBefore,
+      recheck: () => {
+        assert.equal(existsSync(path.join(root, '.vida/project.yaml')), false);
+      },
+    });
+    const first = intake();
+    await releaseLocal.recordCISdkBeforeimage(first);
+    const committed = read(root, folder + '/release.json');
+    const intakeReceipt = read(root, folder + '/ci-sdk-intake.json');
+    assert.deepEqual(read(root, archive), archiveBytes);
+    assert.equal(releaseState(path.join(root, folder, 'release.json')).tarball_sha256, sha(archiveBytes));
+    await releaseLocal.recordCISdkBeforeimage(intake());
+    assert.deepEqual(read(root, folder + '/release.json'), committed);
+    assert.deepEqual(read(root, folder + '/ci-sdk-intake.json'), intakeReceipt);
+    await assert.rejects(
+      releaseLocal.recordCISdkBeforeimage({ ...intake(), pair: [first.pair[0]!] }),
+      /receipt or beforeimage differs/,
+    );
+    assert.deepEqual(read(root, pending), pendingBefore);
+  } finally {
+    if (!outcomeUnknown) {
+      assert.equal(path.dirname(zipDirectory), transportRoot);
+      rmSync(zipDirectory, { recursive: true, force: true });
+    }
+  }
+});
+
 test('CI producer ZIP extracts only the exact bounded member set', async () => {
   const root = path.resolve(process.env.VIDA_CI_READER_ROOT ?? path.resolve(import.meta.dir, '../../..'));
   const archiveEntry = createRequire(path.join(root, 'packages/agent/package.json')).resolve(
@@ -1739,77 +1870,110 @@ function ciRecord(value: RetargetFixture, checks = nativeDeliveryChecks) {
   return { request, candidate, profile, observation };
 }
 
-test('approved native pair issuance binds both dispatch requests to the current operation and Source', async () => {
-  const sourceRoot = path.resolve(import.meta.dir, '../../..');
-  const issueApprovedNativePair = (
-    ciEvidence as unknown as {
-      issueApprovedNativePair: (input: RetargetFixture['input']) => {
-        linux: CIDeliveryRequest;
-        windows: CIDeliveryRequest;
-      };
-    }
-  ).issueApprovedNativePair;
-  assert.equal(typeof issueApprovedNativePair, 'function');
-  const currentConfig = read(sourceRoot, 'agent-runtime.config.v1.yaml').toString();
-  for (const [bundle, config] of [
-    ['vida-agent', currentConfig],
-    [
-      'packages/agent',
-      currentConfig
-        .replaceAll('vida-agent/', 'packages/agent/')
-        .replace('bundle: vida-agent', 'bundle: packages/agent'),
-    ],
-  ] as const) {
-    const value = await fixture();
-    write(value.root, 'agent-runtime.config.v1.yaml', config);
-    write(value.root, 'AGENTS.md', 'fixture policy\n');
-    assert.equal(readRuntimeConfigIdentityForObservation(value.root).bundle, bundle);
-    const pair = issueApprovedNativePair(value.input);
-    assert.equal(pair.linux.schema, 'VidaCIDeliveryRequest/v1');
-    assert.equal(pair.windows.schema, 'VidaCIDeliveryRequest/v1');
-    assert.equal(pair.linux.target, 'bun-linux-x64');
-    assert.equal(pair.windows.target, 'bun-windows-x64');
-    assert.equal(pair.linux.operation_id, operation);
-    assert.equal(pair.windows.operation_id, operation);
-    assert.equal(pair.linux.version, version);
-    assert.equal(pair.windows.version, version);
-    assert.equal(pair.linux.source_binding, pair.windows.source_binding);
-    assert.equal(pair.linux.source_binding, releaseSourceBinding(value.root).source_binding);
-    assert.equal(pair.linux.repository_id, 'vida-agent');
-    assert.deepEqual(pair.linux.project_ids, ['agent']);
-    assert.deepEqual(pair.windows.project_ids, ['agent']);
-    assert.notEqual(pair.linux.request_id, pair.windows.request_id);
-    assert.deepEqual(issueApprovedNativePair(value.input), pair);
-    for (const request of [pair.linux, pair.windows]) {
-      assert.deepEqual(
-        JSON.parse(read(value.root, folder + '/ci/' + request.request_id + '/request.json').toString()),
-        request,
-      );
-    }
+function fixtureGit(root: string, args: string[], input?: string): string {
+  const result = spawnSync('git', ['-c', 'core.autocrlf=false', '-C', root, ...args], {
+    encoding: 'utf8',
+    input,
+    windowsHide: true,
+  });
+  assert.equal(result.status, 0, 'fixture git ' + args[0] + ' failed: ' + result.stderr);
+  return result.stdout.trim();
+}
+function commitFixture(root: string): string {
+  if (!existsSync(path.join(root, '.git'))) fixtureGit(root, ['init', '-q', '-b', 'main']);
+  const sources: string[] = getReleaseSourceRoots().map(({ path: source }) => source);
+  if (existsSync(path.join(root, 'install/install.sh'))) sources.push('install/install.sh');
+  fixtureGit(root, ['add', '--', ...sources]);
+  fixtureGit(root, ['-c', 'user.name=fixture', '-c', 'user.email=fixture@invalid', 'commit', '-qm', 'fixture']);
+  return fixtureGit(root, ['rev-parse', 'HEAD']);
+}
+function committedFixtureBinding(root: string, commit: string): string {
+  return withCommittedReleaseSource(root, commit, (sourceRoot) => releaseSourceBinding(sourceRoot).source_binding);
+}
+async function nativePairFixture(config?: string, manifestExtra: Record<string, unknown> = {}) {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-'));
+  roots.add(root);
+  for (const source of getReleaseSourceRoots()) {
+    const file = source.kind === 'directory' ? source.path + '/fixture.txt' : source.path;
+    write(root, file, '{}\n');
   }
-});
+  const manifest = {
+    name: 'vida-agent',
+    version,
+    bin: { 'vida-agent': './bin/vida-agent.ts' },
+    packageManager: 'bun@1.4.5',
+    engines: { bun: '1.4.5' },
+    ...manifestExtra,
+  };
+  write(root, 'packages/agent/package.json', manifest);
+  write(root, 'packages/agent/.bun-version', '1.4.5\n');
+  write(root, 'packages/agent/lib.js', 'export const inert = 1;\n');
+  const sourceRoot = path.resolve(import.meta.dir, '../../..');
+  write(root, 'agent-runtime.config.v1.yaml', config ?? read(sourceRoot, 'agent-runtime.config.v1.yaml'));
+  write(root, 'AGENTS.md', 'fixture policy\n');
+  const state = {
+    schema: 'VidaLocalReleaseState/v1',
+    operation_id: operation,
+    version,
+    status: 'awaiting_assurance',
+  } as const;
+  await withReleaseAdmission(root, () => releasePreparation.publishReleasePreparation(root, state, manifest, null));
+  return { root, input: { root, operation } };
+}
 
-test('release CLI issues the native dispatch pair for current and legacy bundle identities', async () => {
-  const sourceRoot = path.resolve(import.meta.dir, '../../..');
-  const config = read(sourceRoot, 'agent-runtime.config.v1.yaml').toString('utf8');
-  const main = (
-    releaseLocal as unknown as {
-      main: (args: string[], root: string) => Promise<{ linux: CIDeliveryRequest; windows: CIDeliveryRequest }>;
-    }
-  ).main;
-  assert.equal(typeof main, 'function');
-  for (const [bundle, candidateConfig] of [
-    ['vida-agent', config],
-    [
-      'packages/agent',
-      config.replaceAll('vida-agent/', 'packages/agent/').replace('bundle: vida-agent', 'bundle: packages/agent'),
-    ],
-  ] as const) {
-    const value = await fixture();
-    write(value.root, 'agent-runtime.config.v1.yaml', candidateConfig);
-    write(value.root, 'AGENTS.md', 'fixture policy\n');
+const pairBundles = ['vida-agent', 'packages/agent'] as const;
+function fixtureConfigForBundle(bundle: (typeof pairBundles)[number]): string {
+  const config = read(path.resolve(import.meta.dir, '../../..'), 'agent-runtime.config.v1.yaml').toString('utf8');
+  return bundle === 'packages/agent'
+    ? config.replaceAll('vida-agent/', 'packages/agent/').replace('bundle: vida-agent', 'bundle: packages/agent')
+    : config;
+}
+
+for (const bundle of pairBundles) {
+  test(
+    'approved native pair issuance binds both dispatch requests to the operation and Source for ' + bundle,
+    async () => {
+      const { issueApprovedNativePair } = ciEvidence;
+      const value = await nativePairFixture(fixtureConfigForBundle(bundle));
+      assert.equal(readRuntimeConfigIdentityForObservation(value.root).bundle, bundle);
+      const commit = commitFixture(value.root);
+      const pair = await issueApprovedNativePair({ ...value.input, commit });
+      assert.equal(pair.linux.schema, 'VidaCIDeliveryRequest/v1');
+      assert.equal(pair.windows.schema, 'VidaCIDeliveryRequest/v1');
+      assert.equal(pair.linux.target, 'bun-linux-x64');
+      assert.equal(pair.windows.target, 'bun-windows-x64');
+      assert.equal(pair.linux.operation_id, operation);
+      assert.equal(pair.windows.operation_id, operation);
+      assert.equal(pair.linux.version, version);
+      assert.equal(pair.windows.version, version);
+      assert.equal(pair.linux.source_binding, pair.windows.source_binding);
+      assert.equal(pair.linux.source_binding, committedFixtureBinding(value.root, commit));
+      assert.equal(pair.linux.source_binding, releaseSourceBinding(value.root).source_binding);
+      assert.equal(pair.linux.repository_id, 'vida-agent');
+      assert.deepEqual(pair.linux.project_ids, ['agent']);
+      assert.deepEqual(pair.windows.project_ids, ['agent']);
+      assert.notEqual(pair.linux.request_id, pair.windows.request_id);
+      assert.deepEqual(await issueApprovedNativePair({ ...value.input, commit }), pair);
+      for (const request of [pair.linux, pair.windows]) {
+        assert.deepEqual(
+          JSON.parse(read(value.root, folder + '/ci/' + request.request_id + '/request.json').toString()),
+          request,
+        );
+      }
+    },
+  );
+}
+
+for (const bundle of pairBundles) {
+  test('release CLI issues the native dispatch pair for ' + bundle, async () => {
+    const main = (
+      releaseLocal as unknown as {
+        main: (args: string[], root: string) => Promise<{ linux: CIDeliveryRequest; windows: CIDeliveryRequest }>;
+      }
+    ).main;
+    const value = await nativePairFixture(fixtureConfigForBundle(bundle));
     assert.equal(readRuntimeConfigIdentityForObservation(value.root).bundle, bundle);
-    const pair = await main(['--issue-native-pair', operation], value.root);
+    const pair = await main(['--issue-native-pair', operation, commitFixture(value.root)], value.root);
     assert.equal(pair.linux.schema, 'VidaCIDeliveryRequest/v1');
     assert.equal(pair.windows.schema, 'VidaCIDeliveryRequest/v1');
     assert.equal(pair.linux.target, 'bun-linux-x64');
@@ -1823,8 +1987,8 @@ test('release CLI issues the native dispatch pair for current and legacy bundle 
     assert.deepEqual(pair.linux.project_ids, ['agent']);
     assert.deepEqual(pair.windows.project_ids, ['agent']);
     assert.notEqual(pair.linux.request_id, pair.windows.request_id);
-  }
-});
+  });
+}
 
 test('release CLI rejects foreign repository, bundle and missing project without request effects', async () => {
   const sourceRoot = path.resolve(import.meta.dir, '../../..');
@@ -1842,13 +2006,11 @@ test('release CLI rejects foreign repository, bundle and missing project without
       .replace('      - agent\n      - codex', '      - agent-foreign\n      - codex'),
   ];
   for (const invalidConfig of invalidConfigs) {
-    const value = await fixture();
-    write(value.root, 'agent-runtime.config.v1.yaml', invalidConfig);
-    write(value.root, 'AGENTS.md', 'fixture policy\n');
+    const value = await nativePairFixture(invalidConfig);
     const pendingBefore = read(value.root, pending),
       releaseBefore = read(value.root, folder + '/release.json');
     await assert.rejects(
-      main(['--issue-native-pair', operation], value.root),
+      main(['--issue-native-pair', operation, 'f'.repeat(40)], value.root),
       /approved repository project identity differs/,
     );
     assert.equal(existsSync(path.join(value.root, folder, 'ci')), false);
@@ -1856,6 +2018,651 @@ test('release CLI rejects foreign repository, bundle and missing project without
     assert.deepEqual(read(value.root, folder + '/release.json'), releaseBefore);
   }
 });
+
+test('approved native pair ignores dirty WIP and untracked files and resumes only matching requests', async () => {
+  const issueApprovedNativePair = (
+    ciEvidence as unknown as {
+      issueApprovedNativePair: (input: { root: string; operation: string; commit: string }) => Promise<{
+        linux: CIDeliveryRequest;
+        windows: CIDeliveryRequest;
+      }>;
+    }
+  ).issueApprovedNativePair;
+  const value = await nativePairFixture();
+  const commit = commitFixture(value.root);
+  const pair = await issueApprovedNativePair({ ...value.input, commit });
+  const liveBefore = releaseSourceBinding(value.root).source_binding;
+  assert.equal(pair.linux.source_binding, committedFixtureBinding(value.root, commit));
+  assert.equal(liveBefore, pair.linux.source_binding);
+  const selectionBytes = read(value.root, folder + '/native-pair.json');
+  const linuxBytes = read(value.root, folder + '/ci/' + pair.linux.request_id + '/request.json');
+  const windowsRelative = folder + '/ci/' + pair.windows.request_id + '/request.json';
+  const foreignRelative = '.agent/work/agent-local-release/foreign-op/ci/' + 'a'.repeat(64) + '/request.json';
+  write(value.root, foreignRelative, '{"foreign":"preserved"}\n');
+  const foreignBytes = read(value.root, foreignRelative);
+  rmSync(path.join(value.root, windowsRelative));
+  write(value.root, 'packages/agent/lib.js', 'export const inert = 1;\r\n');
+  write(value.root, 'tooling/agent/release-ci-evidence.ts', 'changed in-scope consumer\n');
+  write(value.root, 'tooling/agent/untracked-wip.ts', 'export const wip = true;\n');
+  assert.notEqual(releaseSourceBinding(value.root).source_binding, pair.linux.source_binding);
+  const resumed = await issueApprovedNativePair({ ...value.input, commit });
+  assert.deepEqual(resumed, pair);
+  assert.deepEqual(read(value.root, folder + '/native-pair.json'), selectionBytes);
+  assert.deepEqual(read(value.root, folder + '/ci/' + pair.linux.request_id + '/request.json'), linuxBytes);
+  assert.deepEqual(read(value.root, windowsRelative), Buffer.from(json(pair.windows)));
+  assert.deepEqual(read(value.root, foreignRelative), foreignBytes);
+  assert.deepEqual(JSON.parse(read(value.root, pending).toString()), {
+    schema: 'VidaLocalReleaseState/v1',
+    operation_id: operation,
+    version,
+    status: 'awaiting_assurance',
+  });
+});
+
+test('approved native pair refuses earlier requests for the same operation before sealing', async () => {
+  const value = await nativePairFixture();
+  const earlier = recordCIDeliveryRequest({
+    ...value.input,
+    context: { schema: 'ProjectContext/v1', repository_id: 'vida-agent', project_ids: ['agent'] },
+    target: 'bun-linux-x64',
+  });
+  const earlierPath = `${folder}/ci/${earlier.request_id}/request.json`;
+  const before = [pending, folder + '/release.json', earlierPath].map((file) => read(value.root, file));
+
+  await assert.rejects(
+    ciEvidence.issueApprovedNativePair({ ...value.input, commit: 'a'.repeat(40) }),
+    /existing CI requests have no native pair selection/,
+  );
+
+  assert.equal(existsSync(path.join(value.root, folder, 'native-pair.json')), false);
+  assert.deepEqual(readdirSync(path.join(value.root, folder, 'ci')), [earlier.request_id]);
+  assert.deepEqual(
+    [pending, folder + '/release.json', earlierPath].map((file) => read(value.root, file)),
+    before,
+  );
+});
+
+test('approved native pair rejects a different commit with the same Source digest and a tampered seal', async () => {
+  const issueApprovedNativePair = (
+    ciEvidence as unknown as {
+      issueApprovedNativePair: (input: { root: string; operation: string; commit: string }) => Promise<{
+        linux: CIDeliveryRequest;
+        windows: CIDeliveryRequest;
+      }>;
+    }
+  ).issueApprovedNativePair;
+  const value = await nativePairFixture();
+  const commit = commitFixture(value.root);
+  const pair = await issueApprovedNativePair({ ...value.input, commit });
+  fixtureGit(value.root, [
+    '-c',
+    'user.name=fixture',
+    '-c',
+    'user.email=fixture@invalid',
+    'commit',
+    '--allow-empty',
+    '-qm',
+    'same tree',
+  ]);
+  const sameTreeCommit = fixtureGit(value.root, ['rev-parse', 'HEAD']);
+  assert.notEqual(sameTreeCommit, commit);
+  assert.equal(releaseSourceBinding(value.root).source_binding, pair.linux.source_binding);
+  await assert.rejects(issueApprovedNativePair({ ...value.input, commit: sameTreeCommit }), /selection differs/);
+  write(value.root, folder + '/native-pair.json', '{"tampered":true}\n');
+  await assert.rejects(issueApprovedNativePair({ ...value.input, commit }), /selection differs/);
+  const fresh = await nativePairFixture();
+  await assert.rejects(
+    issueApprovedNativePair({ ...fresh.input, commit: 'a'.repeat(40) }),
+    /committed Source Git reader failed|repository root differs/,
+  );
+  await assert.rejects(
+    issueApprovedNativePair({ ...fresh.input, commit: commit.toUpperCase() }),
+    /exact committed Source SHA/,
+  );
+});
+
+test('approved native pair rejects a committed manifest version differing from the pending journal', async () => {
+  const issueApprovedNativePair = (
+    ciEvidence as unknown as {
+      issueApprovedNativePair: (input: { root: string; operation: string; commit: string }) => Promise<{
+        linux: CIDeliveryRequest;
+        windows: CIDeliveryRequest;
+      }>;
+    }
+  ).issueApprovedNativePair;
+  const value = await nativePairFixture();
+  const manifest = JSON.parse(read(value.root, 'packages/agent/package.json').toString('utf8')) as Record<
+    string,
+    unknown
+  >;
+  manifest.version = '0.1.3';
+  write(value.root, 'packages/agent/package.json', manifest);
+  const commit = commitFixture(value.root);
+  await assert.rejects(
+    issueApprovedNativePair({ ...value.input, commit }),
+    /committed manifest identity or version differs/,
+  );
+  assert.equal(existsSync(path.join(value.root, folder, 'native-pair.json')), false);
+});
+
+test('approved native pair rejects unsafe committed Source entries', async () => {
+  const issueApprovedNativePair = (
+    ciEvidence as unknown as {
+      issueApprovedNativePair: (input: { root: string; operation: string; commit: string }) => Promise<{
+        linux: CIDeliveryRequest;
+        windows: CIDeliveryRequest;
+      }>;
+    }
+  ).issueApprovedNativePair;
+  const value = await nativePairFixture();
+  fixtureGit(value.root, ['init', '-q', '-b', 'main']);
+  fixtureGit(value.root, ['add', '-A']);
+  const linkBlob = fixtureGit(value.root, ['hash-object', '-w', '--stdin'], 'target-path\n');
+  fixtureGit(value.root, ['update-index', '--add', '--cacheinfo', '120000,' + linkBlob + ',packages/agent/evil-link']);
+  fixtureGit(value.root, ['-c', 'user.name=fixture', '-c', 'user.email=fixture@invalid', 'commit', '-qm', 'fixture']);
+  const commit = fixtureGit(value.root, ['rev-parse', 'HEAD']);
+  await assert.rejects(issueApprovedNativePair({ ...value.input, commit }), /not a regular blob/);
+});
+
+test('committed release recipe binds the exact pre-version commit and expected final inventory', async () => {
+  const { committedReleaseRecipe } = releasePreparation;
+  const value = await nativePairFixture();
+  const baseCommit = commitFixture(value.root);
+  const prepared = {
+    schema: 'VidaLocalReleaseState/v1',
+    operation_id: 'local-committed-successor',
+    version: '0.1.3',
+    status: 'awaiting_assurance',
+  } as const;
+  const result = committedReleaseRecipe(value.root, baseCommit, prepared, 'published-predecessor', '0.1.2');
+  assert.equal(result.recipe.schema, 'VidaCommittedReleaseSource/v1');
+  assert.equal(result.recipe.operation_id, prepared.operation_id);
+  assert.equal(result.recipe.predecessor_operation_id, 'published-predecessor');
+  assert.equal(result.recipe.commit, baseCommit);
+  assert.equal(result.recipe.version, '0.1.3');
+  assert.equal(result.recipe.manifest_path, 'packages/agent/package.json');
+  assert.equal(result.source_binding, releaseSourceBinding(value.root).source_binding);
+  const manifest = JSON.parse(read(value.root, 'packages/agent/package.json').toString('utf8')) as Record<
+    string,
+    unknown
+  >;
+  manifest.version = '0.1.3';
+  write(value.root, 'packages/agent/package.json', manifest);
+  const finalCommit = commitFixture(value.root);
+  assert.notEqual(finalCommit, baseCommit);
+  assert.equal(committedFixtureBinding(value.root, finalCommit), result.recipe.expected_source_binding);
+  write(value.root, 'tooling/agent/untracked-wip.ts', 'export const wip = true;\n');
+  assert.notEqual(releaseSourceBinding(value.root).source_binding, result.recipe.expected_source_binding);
+});
+
+async function preparedNativePairFixture(manifestExtra: Record<string, unknown> = {}) {
+  const { committedReleaseRecipe } = releasePreparation;
+  const value = await nativePairFixture(undefined, manifestExtra);
+  const successor = {
+    schema: 'VidaLocalReleaseState/v1',
+    operation_id: 'committed-successor',
+    version: '0.1.3',
+    status: 'awaiting_assurance',
+  } as const;
+  const input = { root: value.root, operation: successor.operation_id };
+  const successorFolder = `.agent/work/agent-local-release/${input.operation}`;
+  const baseCommit = commitFixture(value.root);
+  const { recipe, source_binding } = committedReleaseRecipe(value.root, baseCommit, successor, operation, version);
+  const predecessorBytes = read(value.root, pending);
+  const witness = {
+    schema: 'VidaPublishedVersionBaseline/v1',
+    role: 'baseline-only',
+    operation_id: operation,
+    version,
+    tag_sha: 'a'.repeat(40),
+    release_id: 1,
+    claim_digest: 'b'.repeat(64),
+    assets_digest: 'c'.repeat(64),
+    historical_source_binding: 'd'.repeat(64),
+    current_source_binding: source_binding,
+    pending_digest: sha(predecessorBytes),
+    journal_digest: sha(predecessorBytes),
+    requests: [
+      { request_id: 'one', digest: 'f'.repeat(64) },
+      { request_id: 'two', digest: '0'.repeat(64) },
+    ],
+  };
+  await withReleaseAdmission(value.root, () =>
+    releasePreparation.publishCommittedReleasePreparation(value.root, successor, recipe, witness),
+  );
+  return { root: value.root, input, successorFolder, baseCommit, recipe };
+}
+
+test('approved native pair requires the intact committed preparation for the operation', async () => {
+  const value = await preparedNativePairFixture();
+  const { input, successorFolder, baseCommit, recipe } = value;
+  const recipeFile = successorFolder + '/committed-source.json';
+  const sealedRecipe = read(value.root, recipeFile);
+  rmSync(path.join(value.root, recipeFile));
+  await assert.rejects(
+    ciEvidence.issueApprovedNativePair({ ...input, commit: baseCommit }),
+    /committed release recipe differs/,
+  );
+  write(value.root, recipeFile, '{}\n');
+  await assert.rejects(
+    ciEvidence.issueApprovedNativePair({ ...input, commit: baseCommit }),
+    /committed release recipe differs/,
+  );
+  assert.equal(existsSync(path.join(value.root, successorFolder, 'native-pair.json')), false);
+  write(value.root, recipeFile, sealedRecipe);
+  write(value.root, 'packages/agent/package.json', Buffer.from(recipe.manifest_after, 'base64'));
+  const finalCommit = commitFixture(value.root);
+  const pair = await ciEvidence.issueApprovedNativePair({ ...input, commit: finalCommit });
+  assert.equal(pair.linux.source_binding, recipe.expected_source_binding);
+  rmSync(path.join(value.root, successorFolder, 'preparation.json'));
+  await assert.rejects(
+    ciEvidence.issueApprovedNativePair({ ...input, commit: finalCommit }),
+    /preparation receipt is missing/,
+  );
+});
+
+test('approved native pair rejects a published successor with changed committed Source', async () => {
+  const { root, input, successorFolder, recipe } = await preparedNativePairFixture();
+  write(root, 'packages/agent/package.json', Buffer.from(recipe.manifest_after, 'base64'));
+  write(root, 'packages/agent/lib.js', 'export const changed = true;\n');
+  const drift = commitFixture(root);
+  await assert.rejects(ciEvidence.issueApprovedNativePair({ ...input, commit: drift }), /prepared release afterimage/);
+  assert.equal(existsSync(path.join(root, successorFolder, 'native-pair.json')), false);
+});
+
+/**
+ * Full retarget fixture sealed by an ordinary preparation receipt, a committed
+ * Source tree and an issued durable native-pair selection.
+ */
+async function sealedRetargetFixture(withSdkProducer = false) {
+  const value = await fixture();
+  const sourceRoot = path.resolve(import.meta.dir, '../../..');
+  write(value.root, 'agent-runtime.config.v1.yaml', read(sourceRoot, 'agent-runtime.config.v1.yaml'));
+  write(value.root, 'AGENTS.md', 'fixture policy\n');
+  const maintained: unknown = JSON.parse(read(sourceRoot, 'packages/agent/package.json').toString());
+  const declared: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString());
+  assert.ok(isFixtureRecord(maintained) && isFixtureRecord(maintained.dependencies) && isFixtureRecord(declared));
+  write(value.root, 'packages/agent/package.json', {
+    ...declared,
+    ...(withSdkProducer ? { engines: { bun: '1.4.2', npm: '10.x', node: '22.0.0' }, scripts: {} } : {}),
+    dependencies: { '@openclaw/fs-safe': maintained.dependencies['@openclaw/fs-safe'] },
+  });
+  write(value.root, 'packages/agent/bun.lock', read(sourceRoot, 'packages/agent/bun.lock'));
+  const journalBytes = read(value.root, folder + '/release.json');
+  const testsBytes = read(value.root, folder + '/tests.json');
+  const sealBytes = read(value.root, folder + '/source-seal.json');
+  const archiveBytes = read(value.root, archive);
+  rmSync(path.join(value.root, folder), { recursive: true, force: true });
+  rmSync(path.join(value.root, '.tmp/releases', operation), { recursive: true, force: true });
+  const manifest: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString('utf8'));
+  await withReleaseAdmission(value.root, () =>
+    releasePreparation.publishReleasePreparation(
+      value.root,
+      {
+        schema: 'VidaLocalReleaseState/v1',
+        operation_id: operation,
+        version,
+        status: 'awaiting_assurance',
+      },
+      manifest,
+      null,
+    ),
+  );
+  if (!withSdkProducer) write(value.root, folder + '/release.json', journalBytes);
+  write(value.root, folder + '/tests.json', testsBytes);
+  write(value.root, folder + '/source-seal.json', sealBytes);
+  if (!withSdkProducer) write(value.root, archive, archiveBytes);
+  else {
+    for (const name of ['install/install.sh', 'packages/agent/tooling/install-windows.ps1']) {
+      write(value.root, name, read(sourceRoot, name));
+    }
+  }
+  const commit = commitFixture(value.root);
+  const pair = await ciEvidence.issueApprovedNativePair({ ...value.input, commit });
+  return { ...value, commit, pair };
+}
+
+test('sealed native pair refuses a missing selection for a committed operation before provider access', async () => {
+  const { root, input, successorFolder, baseCommit } = await preparedNativePairFixture();
+  const previousFetch = globalThis.fetch;
+  let fetches = 0;
+  globalThis.fetch = mockedFetch(previousFetch, async () => {
+    fetches++;
+    throw Error('provider fetch must not run for a refused selection');
+  });
+  try {
+    const selection = [
+      input.operation,
+      baseCommit,
+      '123',
+      '1',
+      'a'.repeat(64),
+      '1',
+      '.tmp/linux.zip',
+      'b'.repeat(64),
+      '2',
+      '.tmp/windows.zip',
+    ];
+    for (const step of ['--stage-observe-native-pair', '--observe-native-pair']) {
+      const args = [step, ...selection, ...(step === '--stage-observe-native-pair' ? ['fixture controller'] : [])];
+      await assert.rejects(releaseLocal.main(args, root), /native pair selection is missing/);
+    }
+    rmSync(path.join(root, successorFolder, 'committed-source.json'));
+    assert.throws(
+      () => ciEvidence.readNativePairSelection(root, input.operation, 'historical'),
+      /native pair selection is missing/,
+    );
+    assert.equal(fetches, 0);
+    assert.equal(existsSync(path.join(root, successorFolder, 'retarget')), false);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test('sealed native pair historical read survives installation and a successor pending release', async () => {
+  const value = await nativePairFixture();
+  const commit = commitFixture(value.root);
+  const pair = await ciEvidence.issueApprovedNativePair({ ...value.input, commit });
+  write(value.root, folder + '/release.json', {
+    schema: 'VidaLocalReleaseState/v1',
+    operation_id: operation,
+    version,
+    status: 'successful',
+    install_started: true,
+  });
+  write(value.root, pending, {
+    schema: 'VidaLocalReleaseState/v1',
+    operation_id: 'later-operation',
+    version: '0.1.3',
+    status: 'awaiting_assurance',
+  });
+  assert.throws(() => ciEvidence.readNativePairSelection(value.root, operation), /current journals/);
+  const retained = ciEvidence.readNativePairSelection(value.root, operation, 'historical');
+  assert.deepEqual(retained?.linux, pair.linux);
+  assert.deepEqual(retained?.windows, pair.windows);
+});
+
+test('sealed native pair stage and observe refuse drifted selection before any provider fetch', async () => {
+  const value = await nativePairFixture();
+  const commit = commitFixture(value.root);
+  const pair = await ciEvidence.issueApprovedNativePair({ ...value.input, commit });
+  const main = (
+    releaseLocal as unknown as {
+      main: (args: string[], root: string) => Promise<unknown>;
+    }
+  ).main;
+  const stageArgs = [
+    '--stage-observe-native-pair',
+    operation,
+    commit,
+    '123',
+    '1',
+    pair.linux.request_id,
+    '1',
+    '.tmp/linux.zip',
+    pair.windows.request_id,
+    '2',
+    '.tmp/windows.zip',
+    'isolated fixture controller',
+  ];
+  const observeArgs = [
+    '--observe-native-pair',
+    operation,
+    commit,
+    '123',
+    '1',
+    pair.linux.request_id,
+    '1',
+    '.tmp/linux.zip',
+    pair.windows.request_id,
+    '2',
+    '.tmp/windows.zip',
+  ];
+  const previousFetch = globalThis.fetch;
+  let fetches = 0;
+  globalThis.fetch = mockedFetch(previousFetch, async () => {
+    fetches++;
+    throw Error('provider fetch must not run for a refused selection');
+  });
+  try {
+    await assert.rejects(
+      main(
+        stageArgs.map((arg, index) => (index === 2 ? 'b'.repeat(40) : arg)),
+        value.root,
+      ),
+      /commit differs/,
+    );
+    await assert.rejects(
+      main(
+        stageArgs.map((arg, index) => (index === 5 ? 'f'.repeat(64) : arg)),
+        value.root,
+      ),
+      /request selection differs/,
+    );
+    write(value.root, folder + '/native-pair.json', '{"tampered":true}\n');
+    await assert.rejects(main(stageArgs, value.root), /contract fields differ|selection is invalid/);
+    await assert.rejects(main(observeArgs, value.root), /contract fields differ|selection is invalid/);
+    assert.equal(fetches, 0);
+    assert.equal(existsSync(path.join(value.root, folder + '/retarget')), false);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test('sealed native pair receives a verified Linux SDK before retarget and replays', async () => {
+  const value = await sealedRetargetFixture(true);
+  const sourceRoot = path.resolve(import.meta.dir, '../../..');
+  const inputs = ['packages/agent/lib.js'];
+  const tests = ['retained-behavior', 'static', 'release-local'].map((lane) => {
+    const file = '.tmp/' + lane + '-sealed-fixture.json';
+    write(value.root, file, { exit_code: 0, command: 'fixture', started_at: 'fixture', completed_at: 'fixture' });
+    return {
+      lane,
+      path: file,
+      inputs,
+      sha256: sha(read(value.root, file)),
+      input_binding: testInputBinding(value.root, inputs),
+    };
+  });
+  write(value.root, folder + '/tests.json', { operation_id: operation, version, tests });
+  const readerEntry = createRequire(path.join(sourceRoot, 'packages/agent/package.json')).resolve(
+    '@openclaw/fs-safe/archive',
+  );
+  const archiveReader: unknown = await import(readerEntry);
+  assert.ok(isArchiveReader(archiveReader), 'qualified archive reader is unavailable');
+  const JSZip = createRequire(readerEntry)('jszip') as typeof JSZipConstructor;
+  const { commit, pair } = value;
+  const committedBinding = pair.linux.source_binding;
+  const sdkManifest = sdkCompatibilityManifest({ root: path.join(value.root, 'packages/agent') }).bytes;
+  write(value.root, '.tmp/sdk-input/package.json', sdkManifest);
+  write(value.root, '.tmp/sdk-input/dist/src/index.js', 'export const sdk = true;\n');
+  write(value.root, '.tmp/sdk-input/dist/src/trusted-host.js', 'export const host = true;\n');
+  const packed = spawnSync(process.execPath, ['pm', 'pack', '--ignore-scripts', '--filename', 'package.tgz'], {
+    cwd: path.join(value.root, '.tmp/sdk-input'),
+    encoding: 'utf8',
+    timeout: 3000,
+    windowsHide: true,
+  });
+  if (isUnknownSynchronousChild(packed)) outcomeUnknown = true;
+  assert.equal(packed.status, 0, packed.stderr);
+  const sdkBytes = read(value.root, '.tmp/sdk-input/package.tgz');
+  const run = {
+    id: 123,
+    run_attempt: 1,
+    head_sha: commit,
+    workflow_id: 374583166,
+    path: '.github/workflows/agent-native-delivery.yml',
+    event: 'workflow_dispatch',
+    status: 'completed',
+    conclusion: 'success',
+    repository: { id: 1340911900, full_name: 'pomazanbohdan/vida-stack-lite' },
+    head_repository: { id: 1340911900 },
+  };
+  const jobs = ['linux', 'windows'].map((platform) => ({
+    name: 'native-' + platform + '-x64',
+    run_id: 123,
+    run_attempt: 1,
+    status: 'completed',
+    conclusion: 'success',
+    started_at: '2026-10-04T09:00:00Z',
+    completed_at: '2026-10-04T09:01:00Z',
+    steps: [{ name: 'native-build', status: 'completed', conclusion: 'success' }],
+  }));
+  const artifacts: Record<string, unknown> = {};
+  const selected: Array<{ request_id: string; artifact_id: string; transport_path: string }> = [];
+  const requests = { 'bun-linux-x64': pair.linux, 'bun-windows-x64': pair.windows };
+  for (const [index, target] of (['bun-linux-x64', 'bun-windows-x64'] as const).entries()) {
+    const item = await targetCandidateFixture(value.root, target);
+    const descriptor: unknown = JSON.parse(read(value.root, item.candidatePath).toString());
+    assert.ok(isFixtureRecord(descriptor) && typeof descriptor.archive === 'string');
+    write(value.root, item.candidatePath, { ...descriptor, source_binding: committedBinding });
+    const manifestBytes = await archiveReader.readArchiveEntry(
+      path.join(value.root, descriptor.archive),
+      'package/dist/standalone/manifest.json',
+      { kind: 'tar', maxBytes: 8 * 1024 * 1024 },
+    );
+    const candidate: CIDeliveryCandidate = {
+      operation_id: operation,
+      version,
+      source_binding: committedBinding,
+      pack_metadata: descriptor.pack_metadata as CIDeliveryCandidate['pack_metadata'],
+      archive_sha256: sha(item.bytes),
+      manifest_sha256: sha(manifestBytes),
+      manifest: JSON.parse(manifestBytes.toString()) as CIDeliveryCandidate['manifest'],
+    };
+    const request = requests[target];
+    const nativeAsset = await archiveReader.readArchiveEntry(
+      path.join(value.root, descriptor.archive),
+      'package/dist/standalone/' + candidate.manifest.asset.file,
+      { kind: 'tar', maxBytes: 8 * 1024 * 1024 },
+    );
+    const zip = new JSZip()
+      .file('candidate.json', json(candidate))
+      .file('manifest.json', manifestBytes)
+      .file(candidate.manifest.asset.file, nativeAsset)
+      .file(candidate.pack_metadata[0]!.filename, item.bytes)
+      .file(
+        'native-build.result.json',
+        json({
+          schema: 'VidaCIPhaseResult/v2',
+          request_id: request.request_id,
+          run_id: '123',
+          run_attempt: 1,
+          source_binding: committedBinding,
+          archive_sha256: candidate.archive_sha256,
+          phase: 'native-build',
+          status: 'passed',
+          dependency_cache: dependencyCacheFixture(),
+        }),
+      );
+    if (target === 'bun-linux-x64') {
+      zip.file('sdk-package.tgz', sdkBytes).file(
+        'sdk-package.receipt.json',
+        json({
+          schema: 'VidaCISdkPack/v1',
+          operation_id: operation,
+          version,
+          source_commit: commit,
+          source_binding: committedBinding,
+          request_id: request.request_id,
+          run_id: '123',
+          run_attempt: 1,
+          archive_sha256: sha(sdkBytes),
+          archive_size: sdkBytes.length,
+          manifest_sha256: sha(sdkManifest),
+        }),
+      );
+    } else {
+      zip.file('install-windows.ps1', read(value.root, 'packages/agent/tooling/install-windows.ps1'));
+    }
+    const bytes = await zip.generateAsync({ type: 'nodebuffer', compression: 'STORE' });
+    const transport = '.tmp/sealed-formed-' + index + '.zip';
+    write(value.root, transport, bytes);
+    const artifactId = String(index + 1);
+    artifacts[artifactId] = {
+      id: index + 1,
+      name: ciEvidence.nativeBuildArtifactName(request.request_id, '123', 1),
+      expired: false,
+      created_at: '2026-10-04T09:00:30Z',
+      digest: 'sha256:' + sha(bytes),
+      workflow_run: { id: 123, repository_id: 1340911900, head_repository_id: 1340911900, head_sha: commit },
+    };
+    selected.push({ request_id: request.request_id, artifact_id: artifactId, transport_path: transport });
+  }
+  mkdirSync(path.join(value.root, 'packages/agent/node_modules'));
+  symlinkSync(
+    path.join(sourceRoot, 'packages/agent/node_modules/@openclaw'),
+    path.join(value.root, 'packages/agent/node_modules/@openclaw'),
+    process.platform === 'win32' ? 'junction' : 'dir',
+  );
+  write(value.root, 'tooling/agent/release-ci-evidence.ts', 'changed in-scope consumer\n');
+  write(value.root, 'tooling/agent/sealed-wip.ts', 'export const wip = true;\n');
+  const workingManifest = Buffer.from('working manifest; not the committed package\r\n');
+  write(value.root, 'packages/agent/package.json', workingManifest);
+  assert.notEqual(releaseSourceBinding(value.root).source_binding, committedBinding);
+  const workflow = read(value.root, '.github/workflows/agent-native-delivery.yml');
+  const sealPath = folder + '/native-pair.json';
+  const sealedBytes = read(value.root, sealPath);
+  let driftOnObservation = true;
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = mockedFetch(previousFetch, async (input) => {
+    const suffix = String(fetchURL(input)).replace('https://api.github.com/repos/pomazanbohdan/vida-stack-lite', '');
+    if (suffix === '/actions/runs/123/attempts/1') {
+      if (driftOnObservation) {
+        driftOnObservation = false;
+        write(value.root, sealPath, '{}\n');
+      }
+      return Response.json(run);
+    }
+    if (suffix.includes('/contents/'))
+      return Response.json({ encoding: 'base64', content: workflow.toString('base64') });
+    if (suffix.includes('/jobs?')) return Response.json({ total_count: jobs.length, jobs });
+    if (suffix.startsWith('/actions/artifacts/'))
+      return Response.json(artifacts[suffix.slice('/actions/artifacts/'.length)]);
+    throw Error('Unexpected provider fixture request');
+  });
+  const main = (
+    releaseLocal as unknown as {
+      main: (args: string[], root: string) => Promise<{ schema: string; targets: unknown[] }>;
+    }
+  ).main;
+  try {
+    const stageArgs = [
+      '--stage-observe-native-pair',
+      operation,
+      commit,
+      '123',
+      '1',
+      ...selected.flatMap(({ request_id, artifact_id, transport_path }) => [request_id, artifact_id, transport_path]),
+      'isolated fixture controller',
+    ];
+    await assert.rejects(main(stageArgs, value.root), /native pair selection changed/);
+    assert.equal(existsSync(path.join(value.root, folder + '/retarget')), false);
+    assert.equal(existsSync(path.join(value.root, '.tmp/ci-retarget', operation)), false);
+    write(value.root, sealPath, sealedBytes);
+    const formed = (await main(stageArgs, value.root)) as { schema: string; targets: unknown[] };
+    assert.equal(formed.schema, 'VidaLocalReleaseFormation/v2');
+    assert.equal(formed.targets.length, 2);
+    const sdkIntake = read(value.root, folder + '/ci-sdk-intake.json');
+    const journal = read(value.root, folder + '/release.json');
+    assert.deepEqual(await main(stageArgs, value.root), formed);
+    const foreignPair = stageArgs.slice();
+    foreignPair[3] = '124';
+    await assert.rejects(main(foreignPair, value.root), /CI SDK pair readback differs/);
+    assert.deepEqual(read(value.root, folder + '/ci-sdk-intake.json'), sdkIntake);
+    assert.deepEqual(read(value.root, folder + '/release.json'), journal);
+    assert.equal(existsSync(path.join(value.root, '.vida/project.yaml')), false);
+    assert.notEqual(releaseSourceBinding(value.root).source_binding, committedBinding);
+    const observed = (await main(['--observe-native-pair', ...stageArgs.slice(1, -1)], value.root)) as {
+      schema: string;
+    };
+    assert.deepEqual(observed, formed);
+    assert.deepEqual(read(value.root, 'packages/agent/package.json'), workingManifest);
+    assert.equal(existsSync(path.join(value.root, successful)), false);
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+}, 30000);
 
 test('CI request retry preserves custody and Source changes keep the original operation', async () => {
   const value = await fixture(),
@@ -3348,11 +4155,246 @@ test('local pack qualification uses current local test evidence without granting
   }
 });
 
-test('prepare then formation-only pack and two target stages retain CI install gate', async () => {
+const sdkPackManifestExtra = {
+  files: ['lib.js', 'dist/src/index.js'],
+  scripts: {},
+  main: './lib.js',
+  types: './lib.js',
+  engines: { bun: '1.4.5', node: '24.0.0', npm: '12.x' },
+  dependencies: {},
+};
+
+test('sealed committed successor publishes the SDK package and refuses reuse on custody drift', async () => {
+  const value = await preparedNativePairFixture(sdkPackManifestExtra);
+  let complete = false;
+  try {
+    const { root, input } = value;
+    const selectedVersion = '0.1.3';
+    write(root, 'packages/agent/package.json', Buffer.from(value.recipe.manifest_after, 'base64'));
+    const finalCommit = commitFixture(root);
+    const repoRoot = path.resolve(import.meta.dir, '../../..');
+    mkdirSync(path.join(root, 'packages/agent/node_modules'), { recursive: true });
+    symlinkSync(
+      path.join(repoRoot, 'packages/agent/node_modules/tar'),
+      path.join(root, 'packages/agent/node_modules/tar'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    const pair = await ciEvidence.issueApprovedNativePair({ ...input, commit: finalCommit });
+    assert.equal(pair.linux.source_binding, value.recipe.expected_source_binding);
+    const inputs = ['packages/agent/lib.js'];
+    const tests = ['retained-behavior', 'static', 'release-local'].map((lane) => {
+      const file = '.tmp/' + lane + '-sealed-pack.json';
+      write(root, file, { exit_code: 0, command: 'fixture', started_at: 'fixture', completed_at: 'fixture' });
+      return {
+        lane,
+        path: file,
+        inputs,
+        sha256: sha(read(root, file)),
+        input_binding: testInputBinding(root, inputs),
+      };
+    });
+    write(root, '.agent/work/agent-local-release/' + input.operation + '/tests.json', {
+      operation_id: input.operation,
+      version: selectedVersion,
+      tests,
+    });
+    const tarballPath = '.tmp/releases/' + input.operation + '/vida-agent-' + selectedVersion + '.tgz';
+    const sdkPackage = '.tmp/releases/' + input.operation + '/sdk-package';
+    const sdk = sdkCompatibilityManifest({ root: path.join(root, 'packages/agent') }).bytes;
+    let buildCalls = 0;
+    let packCalls = 0;
+    const command: typeof runCommand = async (_command, args, options) => {
+      if (typeof args[0] === 'string' && args[0].endsWith('build-package.ts')) {
+        buildCalls++;
+        assert.equal(existsSync(path.join(root, sdkPackage)), false);
+        const packageRoot = options?.cwd;
+        assert.ok(typeof packageRoot === 'string');
+        const distFile = path.join(packageRoot, 'dist', 'src', 'index.js');
+        mkdirSync(path.dirname(distFile), { recursive: true });
+        writeFileSync(distFile, 'export {};\n');
+        const manifestBytes = readFileSync(path.join(packageRoot, 'package.json'));
+        const outputBytes = readFileSync(distFile);
+        const receipt = {
+          schema: 'CandidatePackageBuild/v1',
+          version: selectedVersion,
+          declared_node_engine: '24.0.0',
+          declaration_runtime: 'bun',
+          bun_version: readPin(packageRoot),
+          production_entrypoints: ['dist/src/index.js'],
+          test_issuers_shipped: false,
+          schemas: 1,
+          inputs: [{ path: 'package.json', bytes: manifestBytes.length, sha256: sha(manifestBytes) }],
+          outputs: [{ path: 'dist/src/index.js', bytes: outputBytes.length, sha256: sha(outputBytes) }],
+          dependency_custody: 'fixture',
+        };
+        writeFileSync(path.join(packageRoot, 'dist', 'sdk-formation.json'), json(receipt));
+        return '{}';
+      }
+      assert.ok(args.includes('--pack'));
+      packCalls++;
+      const packRoot = options?.cwd;
+      assert.ok(typeof packRoot === 'string');
+      assert.equal(packRoot, path.join(root, sdkPackage));
+      const contents = {
+        'package/package.json': sdk,
+        'package/lib.js': readFileSync(path.join(packRoot, 'lib.js')),
+      };
+      const tarball = Buffer.from(await new Bun.Archive(contents, { compress: 'gzip' }).bytes());
+      write(root, tarballPath, tarball);
+      const files = Object.entries(contents).map(([name, data]) => ({
+        path: name.slice('package/'.length),
+        size: data.length,
+      }));
+      return json(metadata(tarball, files, selectedVersion));
+    };
+    const journalFile = '.agent/work/agent-local-release/' + input.operation + '/release.json';
+    const pendingBefore = read(root, pending);
+    const pack = () =>
+      executeRelease({
+        root,
+        operation: input.operation,
+        packOnly: true,
+        distribution: 'npm',
+        qualify: verifyLocalPackTests,
+        command,
+        env: process.env,
+      });
+    const result = await pack();
+    assert.equal(result.status, 'awaiting_assurance');
+    const journalBytes = read(root, journalFile);
+    const journal: unknown = JSON.parse(journalBytes.toString('utf8'));
+    assert.ok(typeof journal === 'object' && journal !== null && 'source_binding' in journal);
+    assert.equal(journal.source_binding, value.recipe.expected_source_binding);
+    assert.deepEqual(read(root, pending), pendingBefore);
+    assert.ok(existsSync(path.join(root, tarballPath)));
+    assert.ok(existsSync(path.join(root, sdkPackage, 'dist', 'sdk-formation.json')));
+    const tarballBytes = read(root, tarballPath);
+    const link = path.join(root, sdkPackage, 'node_modules');
+    renameSync(link, link + '.retained');
+    try {
+      await assert.rejects(pack(), /SDK package custody differs; preserve UNKNOWN.*node_modules/);
+    } finally {
+      renameSync(link + '.retained', link);
+    }
+    assert.deepEqual(read(root, journalFile), journalBytes);
+    assert.deepEqual(read(root, pending), pendingBefore);
+    assert.deepEqual(read(root, tarballPath), tarballBytes);
+    assert.equal(buildCalls, 1);
+    assert.equal(packCalls, 1);
+    complete = true;
+  } finally {
+    if (complete) {
+      rmSync(value.root, { recursive: true, force: true });
+      roots.delete(value.root);
+    }
+  }
+});
+
+test('sealed committed successor refuses unavailable inputs and incomplete SDK publication', async () => {
+  const value = await preparedNativePairFixture(sdkPackManifestExtra);
+  let complete = false;
+  try {
+    const { root, input } = value;
+    const selectedVersion = '0.1.3';
+    write(root, 'packages/agent/package.json', Buffer.from(value.recipe.manifest_after, 'base64'));
+    const finalCommit = commitFixture(root);
+    await ciEvidence.issueApprovedNativePair({ ...input, commit: finalCommit });
+    const inputs = ['packages/agent/lib.js'];
+    const tests = ['retained-behavior', 'static', 'release-local'].map((lane) => {
+      const file = '.tmp/' + lane + '-sealed-denied.json';
+      write(root, file, { exit_code: 0, command: 'fixture', started_at: 'fixture', completed_at: 'fixture' });
+      return {
+        lane,
+        path: file,
+        inputs,
+        sha256: sha(read(root, file)),
+        input_binding: testInputBinding(root, inputs),
+      };
+    });
+    write(root, '.agent/work/agent-local-release/' + input.operation + '/tests.json', {
+      operation_id: input.operation,
+      version: selectedVersion,
+      tests,
+    });
+    const journalFile = '.agent/work/agent-local-release/' + input.operation + '/release.json';
+    const pendingBefore = read(root, pending);
+    const dependencies = path.join(root, 'packages/agent/node_modules');
+    mkdirSync(dependencies);
+    const journalBeforeBuild = read(root, journalFile);
+    await assert.rejects(
+      executeRelease({
+        root,
+        operation: input.operation,
+        packOnly: true,
+        distribution: 'npm',
+        qualify: verifyLocalPackTests,
+        env: process.env,
+        command: async (_command, args, options) => {
+          assert.ok(args[0]?.endsWith('build-package.ts'));
+          assert.ok(typeof options?.cwd === 'string');
+          write(options.cwd, 'fixture.txt', 'changed unpackaged Source\n');
+          return '{}';
+        },
+      }),
+      /SDK package custody differs; preserve UNKNOWN.*Source inventory differs/,
+    );
+    assert.deepEqual(read(root, journalFile), journalBeforeBuild);
+    assert.equal(existsSync(path.join(root, '.tmp/releases', input.operation, 'sdk-package')), false);
+    renameSync(dependencies, dependencies + '.fixture');
+    const command: typeof runCommand = async () => {
+      throw new Error('pack owner must not run without qualified SDK inputs');
+    };
+    await assert.rejects(
+      executeRelease({
+        root,
+        operation: input.operation,
+        packOnly: true,
+        distribution: 'npm',
+        qualify: verifyLocalPackTests,
+        command,
+        env: process.env,
+      }),
+      /dependency inputs are unavailable/,
+    );
+    assert.deepEqual(read(root, pending), pendingBefore);
+    const journal: unknown = JSON.parse(read(root, journalFile).toString('utf8'));
+    assert.ok(typeof journal === 'object' && journal !== null && 'error' in journal);
+    assert.match(String(journal.error), /dependency inputs are unavailable/);
+    assert.equal(existsSync(path.join(root, '.tmp/releases', input.operation, 'sdk-package')), false);
+    assert.equal(existsSync(path.join(root, '.tmp/releases', input.operation, 'pack.json')), false);
+    assert.equal(
+      existsSync(path.join(root, '.tmp/releases', input.operation, 'vida-agent-' + selectedVersion + '.tgz')),
+      false,
+    );
+    complete = true;
+  } finally {
+    if (complete) {
+      rmSync(value.root, { recursive: true, force: true });
+      roots.delete(value.root);
+    }
+  }
+});
+
+async function formationPairCase(
+  caseName:
+    | 'integration'
+    | 'provider'
+    | 'cardinality'
+    | 'commit'
+    | 'failed'
+    | 'mixed-version'
+    | 'mixed-source'
+    | 'duplicate'
+    | 'drift'
+    | 'job'
+    | 'success'
+    | 'integrity'
+    | 'assurance',
+) {
   const value = await fixture();
   let complete = false;
   try {
-    rmSync(path.join(value.root, '.agent'), { recursive: true });
+    if (caseName === 'integration') rmSync(path.join(value.root, '.agent'), { recursive: true });
     const originalManifest: unknown = JSON.parse(read(value.root, 'packages/agent/package.json').toString('utf8'));
     assert.ok(typeof originalManifest === 'object' && originalManifest !== null && !Array.isArray(originalManifest));
     const sourceRoot = path.resolve(import.meta.dir, '../../..');
@@ -3377,12 +4419,12 @@ test('prepare then formation-only pack and two target stages retain CI install g
     symlinkSync(
       path.join(sourceRoot, 'packages/agent/node_modules/@openclaw'),
       path.join(value.root, 'packages/agent/node_modules/@openclaw'),
-      'dir',
+      process.platform === 'win32' ? 'junction' : 'dir',
     );
     symlinkSync(
       path.join(sourceRoot, 'packages/agent/node_modules/tar'),
       path.join(value.root, 'packages/agent/node_modules/tar'),
-      'dir',
+      process.platform === 'win32' ? 'junction' : 'dir',
     );
     assert.equal(
       createRequire(path.join(value.root, 'packages/agent/package.json')).resolve('tar'),
@@ -3393,9 +4435,10 @@ test('prepare then formation-only pack and two target stages retain CI install g
     );
     assert.ok(typeof installedTar === 'object' && installedTar !== null && 'version' in installedTar);
     assert.equal(installedTar.version, maintainedDevDependencies.tar);
-    const prepared = await prepareRelease(value.root);
+    const prepared =
+      caseName === 'integration' ? await prepareRelease(value.root) : { version, operation_id: operation };
     assert.ok(prepared);
-    assert.equal(prepared.version, '0.1.3');
+    if (caseName === 'integration') assert.equal(prepared.version, '0.1.3');
     const current = { root: value.root, operation: prepared.operation_id };
     const selectedVersion = prepared.version;
     const releaseFolder = '.agent/work/agent-local-release/' + prepared.operation_id;
@@ -3418,51 +4461,61 @@ test('prepare then formation-only pack and two target stages retain CI install g
       version: selectedVersion,
       tests,
     });
-    let calls = 0;
-    const sdk = sdkCompatibilityManifest({ root: path.join(value.root, 'packages/agent') }).bytes;
-    const contents = { 'package/package.json': sdk, 'package/lib.js': read(value.root, 'packages/agent/lib.js') };
-    const tarball = Buffer.from(await new Bun.Archive(contents, { compress: 'gzip' }).bytes());
-    const files = Object.entries(contents).map(([name, data]) => ({
-      path: name.slice('package/'.length),
-      size: data.length,
-    }));
-    const pack = metadata(tarball, files, selectedVersion);
-    const command: typeof runCommand = async (_command, args) => {
-      calls++;
-      assert.ok(args.includes('--pack'));
-      write(value.root, tarballPath, tarball);
-      return json(pack);
-    };
-    await assert.rejects(
-      executeRelease({
+    if (caseName === 'integration') {
+      let calls = 0;
+      const sdk = sdkCompatibilityManifest({ root: path.join(value.root, 'packages/agent') }).bytes;
+      const contents = { 'package/package.json': sdk, 'package/lib.js': read(value.root, 'packages/agent/lib.js') };
+      const tarball = Buffer.from(await new Bun.Archive(contents, { compress: 'gzip' }).bytes());
+      const files = Object.entries(contents).map(([name, data]) => ({
+        path: name.slice('package/'.length),
+        size: data.length,
+      }));
+      const pack = metadata(tarball, files, selectedVersion);
+      const command: typeof runCommand = async (_command, args) => {
+        calls++;
+        assert.ok(args.includes('--pack'));
+        write(value.root, tarballPath, tarball);
+        return json(pack);
+      };
+      await assert.rejects(
+        executeRelease({
+          ...current,
+          packOnly: true,
+          distribution: 'npm',
+          qualify: verifyLocalReleaseTests,
+          command,
+          npmCli: import.meta.filename,
+        }),
+        /trusted controller observation/,
+      );
+      assert.equal(calls, 0);
+      write(value.root, releaseFolder + '/release.json', initial);
+      const result = await executeRelease({
         ...current,
         packOnly: true,
         distribution: 'npm',
-        qualify: verifyLocalReleaseTests,
+        qualify: verifyLocalPackTests,
         command,
         npmCli: import.meta.filename,
-      }),
-      /trusted controller observation/,
-    );
-    assert.equal(calls, 0);
-    write(value.root, releaseFolder + '/release.json', initial);
-    const result = await executeRelease({
-      ...current,
-      packOnly: true,
-      distribution: 'npm',
-      qualify: verifyLocalPackTests,
-      command,
-      npmCli: import.meta.filename,
-    });
-    assert.equal(result.status, 'awaiting_assurance');
-    assert.equal(calls, 1);
-    assert.deepEqual(read(value.root, tarballPath), tarball);
-    await assert.rejects(verifyLocalReleaseAssurance({ ...current, version: selectedVersion }), /CI evidence invalid/);
-    await assert.rejects(
-      executeRelease({ ...current, distribution: 'npm', qualify: verifyLocalPackTests, npmCli: import.meta.filename }),
-      /SDK archives are library-only/,
-    );
-    assert.equal(calls, 1);
+      });
+      assert.equal(result.status, 'awaiting_assurance');
+      assert.equal(calls, 1);
+      assert.deepEqual(read(value.root, tarballPath), tarball);
+      await assert.rejects(
+        verifyLocalReleaseAssurance({ ...current, version: selectedVersion }),
+        /CI evidence invalid/,
+      );
+      await assert.rejects(
+        executeRelease({
+          ...current,
+          distribution: 'npm',
+          qualify: verifyLocalPackTests,
+          npmCli: import.meta.filename,
+        }),
+        /SDK archives are library-only/,
+      );
+      assert.equal(calls, 1);
+    }
     const primary = await targetCandidateFixture(
       value.root,
       'bun-linux-x64',
@@ -3484,34 +4537,49 @@ test('prepare then formation-only pack and two target stages retain CI install g
       selectedVersion,
     );
     await stageNativeRetargetCandidate({ ...current, candidateFile: peer.candidatePath });
-    await planReleaseRetarget({ ...current, actor: 'isolated fixture controller' });
-    await applyReleaseRetarget(current);
-    assert.equal(readNativeRetargetCandidate({ ...current, published: true }).manifest.target, 'bun-linux-x64');
-    assert.equal(
-      readNativeRetargetCandidate({ ...current, target: 'bun-windows-x64' }).manifest.target,
-      'bun-windows-x64',
+    if (caseName === 'integration') {
+      await planReleaseRetarget({ ...current, actor: 'isolated fixture controller' });
+      await applyReleaseRetarget(current);
+      assert.equal(readNativeRetargetCandidate({ ...current, published: true }).manifest.target, 'bun-linux-x64');
+      assert.equal(
+        readNativeRetargetCandidate({ ...current, target: 'bun-windows-x64' }).manifest.target,
+        'bun-windows-x64',
+      );
+      const beforeDeniedInstall = read(value.root, releaseFolder + '/release.json');
+      let installCalls = 0;
+      const denyInstall: typeof runCommand = async () => {
+        installCalls++;
+        throw new Error('Native install must not run without CI');
+      };
+      await assert.rejects(
+        executeRelease({ ...current, qualify: verifyLocalReleaseAssurance, command: denyInstall }),
+        /CI evidence invalid/,
+      );
+      assert.equal(installCalls, 0);
+      const deniedJournal = read(value.root, releaseFolder + '/release.json');
+      const denied: unknown = JSON.parse(deniedJournal.toString('utf8'));
+      assert.ok(typeof denied === 'object' && denied !== null && !Array.isArray(denied));
+      assert.notEqual((denied as Record<string, unknown>).install_started, true);
+      assert.equal(existsSync(path.join(value.root, '.agent/work/agent-local-release/successful.json')), false);
+      write(value.root, '.tmp/denied-native-install.json', deniedJournal);
+      write(value.root, releaseFolder + '/release.json', beforeDeniedInstall);
+      complete = true;
+      return;
+    }
+    const candidate = readNativeRetargetCandidate(current);
+    write(value.root, tarballPath, primary.bytes);
+    const journal = releaseState(path.join(value.root, releaseFolder, 'release.json'));
+    write(
+      value.root,
+      releaseFolder + '/release.json',
+      parseReleaseState({
+        ...journal,
+        status: 'running',
+        source_binding: candidate.source_binding,
+        pack_metadata: candidate.pack_metadata,
+        tarball_sha256: candidate.archive_sha256,
+      }),
     );
-    const beforeDeniedInstall = read(value.root, releaseFolder + '/release.json');
-    let installCalls = 0;
-    const denyInstall: typeof runCommand = async () => {
-      installCalls++;
-      throw new Error('Native install must not run without CI');
-    };
-    await assert.rejects(
-      executeRelease({ ...current, qualify: verifyLocalReleaseAssurance, command: denyInstall }),
-      /CI evidence invalid/,
-    );
-    assert.equal(installCalls, 0);
-    const deniedJournal = read(value.root, releaseFolder + '/release.json');
-    const denied: unknown = JSON.parse(deniedJournal.toString('utf8'));
-    assert.ok(typeof denied === 'object' && denied !== null && !Array.isArray(denied));
-    assert.notEqual((denied as Record<string, unknown>).install_started, true);
-    assert.equal(existsSync(path.join(value.root, '.agent/work/agent-local-release/successful.json')), false);
-    write(value.root, '.tmp/denied-native-install.json', deniedJournal);
-    write(value.root, releaseFolder + '/release.json', beforeDeniedInstall);
-    const journal: unknown = JSON.parse(read(value.root, releaseFolder + '/release.json').toString('utf8'));
-    assert.ok(typeof journal === 'object' && journal !== null && !Array.isArray(journal));
-    write(value.root, releaseFolder + '/release.json', { ...journal, status: 'running' });
     const context = { schema: 'ProjectContext/v1', repository_id: 'vida-agent', project_ids: ['agent'] };
     const targets: Parameters<typeof verifyCIDeliveryFormationPair>[0]['targets'] = (
       ['bun-linux-x64', 'bun-windows-x64'] as const
@@ -3573,121 +4641,173 @@ test('prepare then formation-only pack and two target stages retain CI install g
     });
     const formedPath = path.join(value.root, '.agent/work/agent-local-release/formed.json');
     const oldFetch = globalThis.fetch;
-    let providerCalls = 0;
-    globalThis.fetch = mockedFetch(oldFetch, async (input) => {
-      providerCalls++;
-      assert.equal(
-        String(fetchURL(input)),
-        'https://api.github.com/repos/pomazanbohdan/vida-stack-lite/actions/runs/123/attempts/1',
-      );
-      return new Response(
-        JSON.stringify({
-          id: 123,
-          run_attempt: 1,
-          head_sha: 'a'.repeat(40),
-          workflow_id: 374583166,
-          path: '.github/workflows/agent-native-delivery.yml',
-          event: 'workflow_dispatch',
-          status: 'in_progress',
-          conclusion: null,
-          repository: { id: 1340911900, full_name: 'pomazanbohdan/vida-stack-lite' },
-          head_repository: { id: 1340911900 },
-        }),
-      );
-    });
-    try {
-      await assert.rejects(
-        verifyApprovedGitHubFormationPair({
-          ...current,
-          version: selectedVersion,
-          source_commit: 'a'.repeat(40),
-          run_id: '123',
-          run_attempt: 1,
-          linux: { request_id: targets[0]!.request_id, artifact_id: '1', transport_path: '.tmp/linux.zip' },
-          windows: { request_id: targets[1]!.request_id, artifact_id: '2', transport_path: '.tmp/windows.zip' },
-        }),
-        /provider run response malformed|run\/attempt\/workflow differs/,
-      );
-    } finally {
-      globalThis.fetch = oldFetch;
+    if (caseName === 'provider') {
+      let providerCalls = 0;
+      globalThis.fetch = mockedFetch(oldFetch, async (input) => {
+        providerCalls++;
+        assert.equal(
+          String(fetchURL(input)),
+          'https://api.github.com/repos/pomazanbohdan/vida-stack-lite/actions/runs/123/attempts/1',
+        );
+        return new Response(
+          JSON.stringify({
+            id: 123,
+            run_attempt: 1,
+            head_sha: 'a'.repeat(40),
+            workflow_id: 374583166,
+            path: '.github/workflows/agent-native-delivery.yml',
+            event: 'workflow_dispatch',
+            status: 'in_progress',
+            conclusion: null,
+            repository: { id: 1340911900, full_name: 'pomazanbohdan/vida-stack-lite' },
+            head_repository: { id: 1340911900 },
+          }),
+        );
+      });
+      try {
+        await assert.rejects(
+          verifyApprovedGitHubFormationPair({
+            ...current,
+            version: selectedVersion,
+            source_commit: 'a'.repeat(40),
+            run_id: '123',
+            run_attempt: 1,
+            linux: { request_id: targets[0]!.request_id, artifact_id: '1', transport_path: '.tmp/linux.zip' },
+            windows: { request_id: targets[1]!.request_id, artifact_id: '2', transport_path: '.tmp/windows.zip' },
+          }),
+          /provider run response malformed|run\/attempt\/workflow differs/,
+        );
+      } finally {
+        globalThis.fetch = oldFetch;
+      }
+      assert.equal(providerCalls, 1);
+      assert.equal(existsSync(formedPath), false);
+      complete = true;
+      return;
     }
-    assert.equal(providerCalls, 1);
-    assert.equal(existsSync(formedPath), false);
-    await assert.rejects(
-      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: targets.slice(0, 1) } }),
-      /two target/,
-    );
-    assert.equal(existsSync(formedPath), false);
-    const mismatchedCommit = [...targets];
-    const second = mismatchedCommit[1];
-    assert.ok(second?.profile.github);
-    mismatchedCommit[1] = {
-      ...second,
-      profile: { ...second.profile, github: { ...second.profile.github, source_commit: 'e'.repeat(40) } },
-    };
-    await assert.rejects(
-      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: mismatchedCommit } }),
-      /provider run/,
-    );
-    assert.equal(existsSync(formedPath), false);
-    const failedTargets = [...targets];
-    const failed = failedTargets[1];
-    assert.ok(failed);
-    failedTargets[1] = {
-      ...failed,
-      observe: async (input) => ({ ...(await failed.observe(input)), conclusion: 'failed' }),
-    };
-    await assert.rejects(
-      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: failedTargets } }),
-      /actual complete controller observation/,
-    );
-    assert.equal(existsSync(formedPath), false);
-    await assert.rejects(
-      verifyLocalReleaseAssurance({ ...current, version: selectedVersion, ci: { targets: failedTargets } }),
-      /actual complete controller observation/,
-    );
-    for (const field of ['version', 'source_binding'] as const) {
-      const mixedTargets = [...targets];
-      mixedTargets[1] = {
+    if (caseName === 'cardinality') {
+      await assert.rejects(
+        verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: targets.slice(0, 1) } }),
+        /two target/,
+      );
+      assert.equal(existsSync(formedPath), false);
+      complete = true;
+      return;
+    }
+    if (caseName === 'commit') {
+      const mismatchedCommit = [...targets];
+      const second = mismatchedCommit[1];
+      assert.ok(second?.profile.github);
+      mismatchedCommit[1] = {
+        ...second,
+        profile: { ...second.profile, github: { ...second.profile.github, source_commit: 'e'.repeat(40) } },
+      };
+      await assert.rejects(
+        verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: mismatchedCommit } }),
+        /provider run/,
+      );
+      assert.equal(existsSync(formedPath), false);
+      complete = true;
+      return;
+    }
+    if (caseName === 'failed') {
+      const failed = targets[1];
+      assert.ok(failed);
+      const failedTargets = [...targets];
+      failedTargets[1] = {
+        ...failed,
+        observe: async (input) => ({ ...(await failed.observe(input)), conclusion: 'failed' }),
+      };
+      await assert.rejects(
+        verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: failedTargets } }),
+        /actual complete controller observation/,
+      );
+      assert.equal(existsSync(formedPath), false);
+      await assert.rejects(
+        verifyLocalReleaseAssurance({ ...current, version: selectedVersion, ci: { targets: failedTargets } }),
+        /actual complete controller observation/,
+      );
+      complete = true;
+      return;
+    }
+    if (caseName === 'mixed-version' || caseName === 'mixed-source') {
+      const failed = targets[1];
+      assert.ok(failed);
+      for (const field of [caseName === 'mixed-version' ? 'version' : 'source_binding'] as const) {
+        const mixedTargets = [...targets];
+        mixedTargets[1] = {
+          ...failed,
+          observe: async (input) => {
+            const observed = await failed.observe(input);
+            const parsed: unknown = JSON.parse(observed.result_bytes.toString('utf8'));
+            assert.ok(typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed));
+            return {
+              ...observed,
+              result_bytes: Buffer.from(json({ ...parsed, [field]: field === 'version' ? '0.1.4' : 'f'.repeat(64) })),
+            };
+          },
+        };
+        await assert.rejects(
+          verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: mixedTargets } }),
+          /result request differs/,
+        );
+      }
+      complete = true;
+      return;
+    }
+    if (caseName === 'duplicate') {
+      await assert.rejects(
+        verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: [targets[0]!, targets[0]!] } }),
+        /exact Linux and Windows/,
+      );
+      complete = true;
+      return;
+    }
+    if (caseName === 'drift') {
+      const failed = targets[1];
+      assert.ok(failed);
+      const logPath = '.tmp/static-pack-fixture.json';
+      const priorLog = read(value.root, logPath);
+      const driftTargets = [...targets];
+      driftTargets[1] = {
         ...failed,
         observe: async (input) => {
           const observed = await failed.observe(input);
-          const parsed: unknown = JSON.parse(observed.result_bytes.toString('utf8'));
-          assert.ok(typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed));
-          return {
-            ...observed,
-            result_bytes: Buffer.from(json({ ...parsed, [field]: field === 'version' ? '0.1.4' : 'f'.repeat(64) })),
-          };
+          write(value.root, logPath, 'changed during observation');
+          return observed;
         },
       };
       await assert.rejects(
-        verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: mixedTargets } }),
-        /result request differs/,
+        verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: driftTargets } }),
+        /Local test evidence changed/,
       );
+      write(value.root, logPath, priorLog);
+      assert.equal(existsSync(formedPath), false);
+      for (const target of targets)
+        assert.equal(existsSync(path.join(value.root, releaseFolder, 'ci', target.request_id, 'result.json')), false);
+      complete = true;
+      return;
     }
-    await assert.rejects(
-      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: [targets[0]!, targets[0]!] } }),
-      /exact Linux and Windows/,
-    );
-    const logPath = '.tmp/static-pack-fixture.json';
-    const priorLog = read(value.root, logPath);
-    const driftTargets = [...targets];
-    driftTargets[1] = {
-      ...failed,
-      observe: async (input) => {
-        const observed = await failed.observe(input);
-        write(value.root, logPath, 'changed during observation');
-        return observed;
-      },
-    };
-    await assert.rejects(
-      verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets: driftTargets } }),
-      /Local test evidence changed/,
-    );
-    write(value.root, logPath, priorLog);
-    assert.equal(existsSync(formedPath), false);
-    for (const target of targets)
-      assert.equal(existsSync(path.join(value.root, releaseFolder, 'ci', target.request_id, 'result.json')), false);
+    if (caseName === 'integrity' || caseName === 'assurance') {
+      const formed = await verifyLocalReleaseTests({ ...current, version: selectedVersion, ci: { targets } });
+      if (!('targets' in formed)) throw new Error('Target formation is missing.');
+      assert.deepEqual(readConfirmedCIDeliveryFormation(value.root), formed);
+      if (caseName === 'integrity') {
+        const resultPath = path.join(value.root, releaseFolder, 'ci', formed.targets[0]!.request_id, 'result.json');
+        const beforeResult = readFileSync(resultPath);
+        writeFileSync(resultPath, 'changed');
+        assert.throws(() => readConfirmedCIDeliveryFormation(value.root), /result changed/);
+        writeFileSync(resultPath, beforeResult);
+      }
+      if (caseName === 'assurance') {
+        assert.equal(
+          (await verifyLocalReleaseAssurance({ ...current, version: selectedVersion, ci: { targets } })).source_binding,
+          formed.source_binding,
+        );
+      }
+      complete = true;
+      return;
+    }
     const archiveEntry = createRequire(path.join(sourceRoot, 'packages/agent/package.json')).resolve(
       '@openclaw/fs-safe/archive',
     );
@@ -3719,14 +4839,12 @@ test('prepare then formation-only pack and two target stages retain CI install g
     const transportPaths: string[] = [];
     for (const [index, target] of targets.entries()) {
       const request = recordCIDeliveryRequest({ ...current, context, target: target.target });
-      const candidate =
-        index === 0
-          ? readNativeRetargetCandidate({ ...current, published: true })
-          : readNativeRetargetCandidate({ ...current, target: 'bun-windows-x64' });
-      const result = await target.observe({ request, candidate });
+      const targetCandidate =
+        index === 0 ? candidate : readNativeRetargetCandidate({ ...current, target: 'bun-windows-x64' });
+      const result = await target.observe({ request, candidate: targetCandidate });
       const bytes = await new JSZip()
         .file('result.json', result.result_bytes)
-        .file(candidate.pack_metadata[0].filename, index === 0 ? primary.bytes : peer.bytes)
+        .file(targetCandidate.pack_metadata[0].filename, index === 0 ? primary.bytes : peer.bytes)
         .generateAsync({ type: 'nodebuffer', compression: 'STORE' });
       const transport = '.tmp/provider-' + index + '.zip';
       write(value.root, transport, bytes);
@@ -3764,12 +4882,15 @@ test('prepare then formation-only pack and two target stages retain CI install g
     });
     let formed;
     try {
-      jobs[1]!.conclusion = 'failure';
-      await assert.rejects(verifyApprovedGitHubFormationPair(pairInput), /required native job differs/);
-      assert.equal(existsSync(formedPath), false);
-      for (const target of targets)
-        assert.equal(existsSync(path.join(value.root, releaseFolder, 'ci', target.request_id, 'result.json')), false);
-      jobs[1]!.conclusion = 'success';
+      if (caseName === 'job') {
+        jobs[1]!.conclusion = 'failure';
+        await assert.rejects(verifyApprovedGitHubFormationPair(pairInput), /required native job differs/);
+        assert.equal(existsSync(formedPath), false);
+        for (const target of targets)
+          assert.equal(existsSync(path.join(value.root, releaseFolder, 'ci', target.request_id, 'result.json')), false);
+        complete = true;
+        return;
+      }
       observedProviderCalls = 0;
       formed = await verifyApprovedGitHubFormationPair(pairInput);
       assert.equal(observedProviderCalls, 8);
@@ -3783,23 +4904,32 @@ test('prepare then formation-only pack and two target stages retain CI install g
       ['bun-linux-x64', 'bun-windows-x64'],
     );
     assert.deepEqual(readConfirmedCIDeliveryFormation(value.root), formed);
-    const resultPath = path.join(value.root, releaseFolder, 'ci', formed.targets[0]!.request_id, 'result.json');
-    const beforeResult = readFileSync(resultPath);
-    writeFileSync(resultPath, 'changed');
-    assert.throws(() => readConfirmedCIDeliveryFormation(value.root), /result changed/);
-    writeFileSync(resultPath, beforeResult);
-    assert.equal(
-      (await verifyLocalReleaseAssurance({ ...current, version: selectedVersion, ci: { targets } })).source_binding,
-      formed.source_binding,
-    );
     complete = true;
   } finally {
-    if (complete) {
+    if (complete && !outcomeUnknown) {
       rmSync(value.root, { recursive: true, force: true });
       roots.delete(value.root);
     }
   }
-});
+}
+
+for (const caseName of [
+  'integration',
+  'provider',
+  'cardinality',
+  'commit',
+  'failed',
+  'mixed-version',
+  'mixed-source',
+  'duplicate',
+  'drift',
+  'job',
+  'success',
+  'integrity',
+  'assurance',
+] as const) {
+  test('formation pair isolated ' + caseName, () => formationPairCase(caseName));
+}
 
 test('native formation instruction smoke requires typed payload and complete owned execution', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-native-instruction-'));

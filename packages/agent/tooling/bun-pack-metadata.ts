@@ -47,16 +47,7 @@ export async function readBunPackMetadata(input: {
   filename: string;
   nativeTarget?: string;
 }): Promise<BunPackEntry[]> {
-  const { archive, name, version, filename, nativeTarget } = input;
-  const nativeAsset =
-    nativeTarget === undefined
-      ? undefined
-      : nativeTarget === 'bun-linux-x64'
-        ? 'dist/standalone/vida-agent-bun-linux-x64'
-        : nativeTarget === 'bun-windows-x64'
-          ? 'dist/standalone/vida-agent-bun-windows-x64.exe'
-          : null;
-  if (nativeAsset === null) throw new Error('Bun package archive native target is unsupported');
+  const { archive, filename } = input;
   if (!path.isAbsolute(archive)) throw new Error('Bun package archive path must be absolute');
   if (!filename || path.basename(filename) !== filename || filename !== path.basename(archive))
     throw new Error('Bun package archive filename differs');
@@ -92,6 +83,32 @@ export async function readBunPackMetadata(input: {
     closeSync(opened.fd);
   }
 
+  return readBunPackBytes({ ...input, bytes });
+}
+
+/** Reads metadata and verifies the manifest in already captured archive bytes. */
+export async function readBunPackBytes(input: {
+  bytes: Buffer;
+  name: string;
+  version: string;
+  filename: string;
+  nativeTarget?: string;
+  manifest?: Buffer;
+}): Promise<BunPackEntry[]> {
+  const { bytes, name, version, filename, nativeTarget } = input;
+  if (!Buffer.isBuffer(bytes) || bytes.length === 0 || bytes.length > maxArchiveBytes)
+    throw new Error('Bun package archive exceeds its size limit');
+  if (!filename || path.basename(filename) !== filename) throw new Error('Bun package archive filename differs');
+  const nativeAsset =
+    nativeTarget === undefined
+      ? undefined
+      : nativeTarget === 'bun-linux-x64'
+        ? 'dist/standalone/vida-agent-bun-linux-x64'
+        : nativeTarget === 'bun-windows-x64'
+          ? 'dist/standalone/vida-agent-bun-windows-x64.exe'
+          : null;
+  if (nativeAsset === null) throw new Error('Bun package archive native target is unsupported');
+
   const paths = new Set<string>();
   let expandedBytes = 0;
   let manifestBytes: Buffer | undefined;
@@ -101,6 +118,8 @@ export async function readBunPackMetadata(input: {
     let relative: string;
     try {
       if (entry.type !== 'File') throw new Error('Bun package archive must contain regular files only');
+      if (entry.header.path !== entry.path)
+        throw new Error(`Bun package archive path is not canonical: ${entry.header.path}`);
       relative = canonicalPackagePath(entry.path);
       if (paths.has(relative)) throw new Error(`Bun package archive contains a duplicate path: ${relative}`);
       if (paths.size >= maxFiles) throw new Error('Bun package archive contains too many files');
@@ -157,6 +176,8 @@ export async function readBunPackMetadata(input: {
     parser.end(bytes);
   });
   if (manifestBytes === undefined) throw new Error('Bun package archive has no package.json');
+  if (input.manifest !== undefined && !manifestBytes.equals(input.manifest))
+    throw new Error('Bun package archive manifest differs from Source');
   let manifest: unknown;
   try {
     manifest = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(manifestBytes));

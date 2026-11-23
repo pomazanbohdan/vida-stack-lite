@@ -1,5 +1,5 @@
 import { describe, expect, test, spyOn } from 'bun:test';
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { linkSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +8,7 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 import { initializeProject } from '../bin/init.ts';
 import { inspectScope, main as scopeMain } from '../bin/scope.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
+import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,
@@ -56,6 +57,54 @@ function recordArray(value: unknown, key: string): Record<string, unknown>[] {
   if (!Array.isArray(candidate) || !candidate.every(isRecord)) throw new Error(`Expected record array ${key}`);
   return candidate;
 }
+
+test.skipIf(process.platform !== 'win32')(
+  'Windows runtime capture scopes the root and observes each file freshly',
+  () => {
+    const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'vida-runtime-capture-')));
+    let passed = false;
+    try {
+      mkdirSync(path.join(root, 'code'));
+      const first = path.join(root, 'code', 'first');
+      writeFileSync(first, 'original');
+      writeFileSync(path.join(root, 'code', 'second'), 'second');
+      const access = requireSafeRepositoryAccess(root);
+      const verified = access.readVerifiedCaptureBytes;
+      if (!verified?.withRoot) throw new Error('Windows verified capture does not expose scoped root custody');
+      const paths = ['packages/agent/code/first', 'packages/agent/code/second'] as const;
+      const capture = () => snapshotRuntimePackageSources(access, 'packages/agent', paths);
+      const before = capture();
+      const individualReads: string[] = [];
+      const singleReader = {
+        ...access,
+        readVerifiedCaptureBytes: (target: string, purpose: string, maxBytes?: number) => {
+          individualReads.push(target);
+          return verified(target, purpose, maxBytes);
+        },
+      };
+      expect(snapshotRuntimePackageSources(singleReader, 'packages/agent', paths)).toEqual(before);
+      expect(individualReads).toEqual(['code/first', 'code/second']);
+      writeFileSync(first, 'replaced');
+      expect(compareScopedSourceSnapshots(before, capture()).map(({ path }) => path)).toEqual([paths[0]]);
+      expect(() => snapshotRuntimePackageSources(access, 'packages/agent', ['foreign/code/first'])).toThrow(
+        'outside the configured package identity',
+      );
+      const expired = verified.withRoot((read) => {
+        expect(read('code/second', 'scoped capture').toString()).toBe('second');
+        symlinkSync(path.join(root, 'code'), path.join(root, 'redirect'), 'junction');
+        expect(() => read('redirect/second', 'scoped capture')).toThrow();
+        linkSync(first, path.join(root, 'code', 'alias'));
+        expect(() => read('code/first', 'scoped capture')).toThrow('file is unsafe');
+        return read;
+      });
+      expect(() => expired('code/second', 'expired capture')).toThrow('verified capture is unavailable');
+      passed = true;
+    } finally {
+      if (passed) rmSync(root, { recursive: true, force: true });
+      else console.error('Retained failed runtime capture fixture: ' + root);
+    }
+  },
+);
 
 describe('cooperative scoped source evidence', () => {
   test('runtime endpoint evidence keeps generated exports and copied schemas separate from maintained Source targets', () => {

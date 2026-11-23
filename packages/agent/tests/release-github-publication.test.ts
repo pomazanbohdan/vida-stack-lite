@@ -1,12 +1,20 @@
-import { describe, test } from 'bun:test';
+import { describe, spyOn, test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { randomInt } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { runBoundedSubprocess } from './helpers/bounded-subprocess.ts';
-import { releaseDigest, releaseJSON } from '../../../packages/agent/bin/local-release-artifacts.ts';
+import {
+  getReleaseSourceRoots,
+  releaseDigest,
+  releaseJSON,
+  releaseState,
+  withReleaseAdmission,
+} from '../bin/local-release-artifacts.ts';
+import { publishReleasePreparation, readCommittedReleaseRecipe } from '../bin/release-preparation.ts';
 import {
   publishGitHubRelease,
   observePublishedRelease,
@@ -16,7 +24,8 @@ import {
   type PublicationIdentity,
   type PublicationProducer,
 } from '../../../tooling/agent/release-github-publication.ts';
-import type { CIDeliveryRequest } from '../../../tooling/agent/release-ci-evidence.ts';
+import { recordCIDeliveryRequest, type CIDeliveryRequest } from '../../../tooling/agent/release-ci-evidence.ts';
+import { main as releaseMain } from '../../../tooling/agent/release-local.ts';
 import {
   main as publisherMain,
   observedPublicationFetch,
@@ -245,6 +254,135 @@ function observe(
 }
 
 describe('published version baseline', () => {
+  test('public preparation observes the publication and selects a descendant commit despite manifest WIP', async () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'vida-committed-publication-'));
+    const write = (relative: string, bytes: string | Buffer) => {
+      const file = path.join(root, relative);
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, bytes);
+    };
+    const git = (...args: string[]) =>
+      execFileSync(
+        'git',
+        [
+          '-c',
+          'core.autocrlf=false',
+          '-c',
+          'user.name=fixture',
+          '-c',
+          'user.email=fixture@invalid',
+          '-C',
+          root,
+          ...args,
+        ],
+        { encoding: 'utf8', windowsHide: true, timeout: 3000 },
+      ).trim();
+    const predecessor = {
+      schema: 'VidaLocalReleaseState/v1',
+      operation_id: identity.operation_id,
+      version: identity.version,
+      status: 'awaiting_assurance',
+    } as const;
+    const manifest = {
+      name: 'vida-agent',
+      version: predecessor.version,
+      bin: { 'vida-agent': './bin/vida-agent.ts' },
+      engines: { bun: '1.4.5' },
+      packageManager: 'bun@1.4.5',
+    };
+    const manifestFile = 'packages/agent/package.json';
+    const custody = '.agent/work/agent-local-release';
+    const oldToken = process.env.GH_TOKEN;
+    const api = new MemoryGitHub();
+    let fetchSpy: { mockRestore(): void } | undefined;
+    try {
+      for (const source of getReleaseSourceRoots()) {
+        write(source.kind === 'file' ? source.path : source.path + '/fixture.txt', '{}\n');
+      }
+      write(manifestFile, releaseJSON(manifest));
+      write('packages/agent/.bun-version', '1.4.5\n');
+      write('AGENTS.md', 'fixture policy\n');
+      write(
+        'agent-runtime.config.v1.yaml',
+        readFileSync(path.resolve(import.meta.dir, '../../..', 'agent-runtime.config.v1.yaml')),
+      );
+      git('init', '-qb', 'main');
+      git('add', '-A');
+      git('commit', '-qm', 'published fixture');
+      const publishedCommit = git('rev-parse', 'HEAD');
+      await withReleaseAdmission(root, () => publishReleasePreparation(root, predecessor, manifest, null));
+      const context = { schema: 'ProjectContext/v1', repository_id: 'vida-agent', project_ids: ['agent'] };
+      const issued = producers().map((item) => ({
+        ...item,
+        request: recordCIDeliveryRequest({
+          root,
+          operation: predecessor.operation_id,
+          context,
+          target: item.request.target,
+        }),
+      }));
+      const source_binding = issued[0]?.request.source_binding ?? assert.fail('missing predecessor request');
+      await publishGitHubRelease({
+        api,
+        identity: { ...identity, source_commit: publishedCommit, source_binding },
+        tagger_date: taggerDate,
+        formAssets: async () => ({ producers: issued, assets: managedAssets }),
+      });
+      const beforeRemote = [...api.mutations];
+      const predecessorJournal = path.join(root, custody, predecessor.operation_id, 'release.json');
+      const oldJournal = readFileSync(predecessorJournal);
+      write('packages/agent/patch.txt', 'reviewed patch\n');
+      git('add', '--', 'packages/agent/patch.txt');
+      git('commit', '-qm', 'reviewed patch');
+      const base = git('rev-parse', 'HEAD');
+      const unrelated = git('commit-tree', 'HEAD^{tree}', '-m', 'unrelated root');
+      const wip = Buffer.from('working manifest bytes\r\n');
+      write(manifestFile, wip);
+      await assert.rejects(releaseMain(['--prepare-after-publication', predecessor.operation_id], root), /Usage:/);
+      await assert.rejects(releaseMain(['--issue-native-pair', predecessor.operation_id], root), /Usage:/);
+      const fetcher = async (input: string | URL | Request, init?: RequestInit) => {
+        const url = new URL(input instanceof Request ? input.url : input);
+        const prefix = '/repos/pomazanbohdan/vida-stack-lite';
+        assert.equal(url.origin, 'https://api.github.com');
+        assert.ok(url.pathname.startsWith(prefix + '/'));
+        assert.equal(init?.method ?? 'GET', 'GET');
+        const suffix = url.pathname.slice(prefix.length) + url.search;
+        const asset = /^\/releases\/assets\/(\d+)$/.exec(suffix);
+        if (asset) {
+          const bytes = await api.download(Number(asset[1]));
+          return new Response(new Uint8Array(bytes), { headers: { 'Content-Length': String(bytes.length) } });
+        }
+        return Response.json(await api.json('GET', suffix));
+      };
+      fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(Object.assign(fetcher, { preconnect: () => undefined }));
+      process.env.GH_TOKEN = 'fixture-read-token';
+      await assert.rejects(
+        releaseMain(['--prepare-after-publication', predecessor.operation_id, unrelated], root),
+        /does not descend/,
+      );
+      assert.deepEqual(readFileSync(predecessorJournal), oldJournal);
+      assert.equal(releaseState(path.join(root, custody, 'pending.json')).operation_id, predecessor.operation_id);
+      await releaseMain(['--prepare-after-publication', predecessor.operation_id, base], root);
+      const successor = releaseState(path.join(root, custody, 'pending.json'));
+      const recipe = readCommittedReleaseRecipe(root, successor) ?? assert.fail('missing successor recipe');
+      assert.equal(successor.version, '0.1.7');
+      assert.equal(recipe.commit, base);
+      assert.equal(
+        Buffer.from(recipe.manifest_after, 'base64').toString(),
+        releaseJSON({ ...manifest, version: '0.1.7' }),
+      );
+      assert.deepEqual(readFileSync(path.join(root, manifestFile)), wip);
+      assert.deepEqual(readFileSync(predecessorJournal), oldJournal);
+      assert.deepEqual(api.mutations, beforeRemote);
+    } finally {
+      fetchSpy?.mockRestore();
+      if (oldToken === undefined) delete process.env.GH_TOKEN;
+      else process.env.GH_TOKEN = oldToken;
+      assert.ok(path.basename(root).startsWith('vida-committed-publication-'));
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   test('reads exact managed assets without mutation', async () => {
     const api = new MemoryGitHub();
     await publish(api, managedAssets);
