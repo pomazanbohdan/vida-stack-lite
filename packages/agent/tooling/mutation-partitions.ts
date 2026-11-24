@@ -559,6 +559,17 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       report: 'mutation-bun-source-preflight-and-task-binding.json',
     },
     {
+      name: 'execution-catalog-task1-structural',
+      environment: 'bun',
+      sources: ['src/orchestration/workflow-obligations.ts'],
+      tests: [
+        'tests/execution-catalog-compiler.test.ts',
+        'tests/execution-catalog-contract.test.ts',
+        'tests/workflow-plan-contract.test.ts',
+      ],
+      report: 'mutation-execution-catalog-task1-structural.json',
+    },
+    {
       name: 'linux',
       environment: 'linux',
       requiredReportedSource: 'src/config/safe-repository-access.ts',
