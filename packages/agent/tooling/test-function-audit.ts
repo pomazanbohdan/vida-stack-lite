@@ -5,7 +5,7 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { parse } from '@babel/parser';
 import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
-import { getBindingIdentifiers, isFunction, isReferenced, isTSType, VISITOR_KEYS } from '@babel/types';
+import { getBindingIdentifiers, isFunction, isReferenced, isTSType, traverse } from '@babel/types';
 import type {
   ClassDeclaration,
   ClassExpression,
@@ -530,17 +530,11 @@ function isBabelNode(value: unknown): value is BabelNode {
 function collectAst(ast: BabelFile): { nodes: BabelNode[]; parents: Map<BabelNode, BabelNode> } {
   const nodes: BabelNode[] = [];
   const parents = new Map<BabelNode, BabelNode>();
-  const visit = (node: BabelNode, parent?: BabelNode): void => {
+  traverse(ast, (node, ancestors) => {
     nodes.push(node);
+    const parent = ancestors.at(-1)?.node;
     if (parent) parents.set(node, parent);
-    for (const key of VISITOR_KEYS[node.type] ?? []) {
-      const child = astRecord(node)[key];
-      if (Array.isArray(child)) {
-        for (const item of child) if (isBabelNode(item)) visit(item, node);
-      } else if (isBabelNode(child)) visit(child, node);
-    }
-  };
-  visit(ast);
+  });
   return { nodes, parents };
 }
 
@@ -2560,7 +2554,7 @@ function printAuditTable(report: AuditReport): void {
   report.diagnostics.forEach((issue) => process.stderr.write(`${issue.code} ${issue.file}: ${issue.message}\n`));
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(import.meta.url).pathname)) {
+if (import.meta.main) {
   try {
     process.exitCode = main(process.argv.slice(2));
   } catch (error) {

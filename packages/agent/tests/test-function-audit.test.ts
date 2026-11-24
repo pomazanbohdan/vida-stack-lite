@@ -1756,13 +1756,13 @@ test('outside self names', () => { expect(target()).toBe(1); });`,
         preload,
         `import * as fs from 'node:fs'; import {spyOn} from 'bun:test';
         const target = ${JSON.stringify(path.join(root, 'package.json'))};
-        const identity = fs.statSync(target); const originalRead = fs.readSync; let changed = false;
-        spyOn(fs, 'readSync').mockImplementation((...args) => {
-          const descriptor = fs.fstatSync(args[0]); const count = originalRead(...args);
-          if (!changed && count === 0 && descriptor.dev === identity.dev && descriptor.ino === identity.ino) {
+        const sourceDirectory = ${JSON.stringify(path.join(root, 'src'))};
+        const originalReadDirectory = fs.readdirSync; let changed = false;
+        spyOn(fs, 'readdirSync').mockImplementation((directory, ...args) => {
+          if (!changed && directory === sourceDirectory) {
             changed = true; fs.writeFileSync(target, ${JSON.stringify(changed)});
           }
-          return count;
+          return originalReadDirectory(directory, ...args);
         });`,
       );
       const script = fileURLToPath(new URL('../tooling/test-function-audit.ts', import.meta.url));
