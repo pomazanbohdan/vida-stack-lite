@@ -341,7 +341,7 @@
     "source_mappings": [],
     "current_source_bindings": [
       {
-        "path": "src/orchestration/workflow-obligations.ts",
+        "file": "src/orchestration/workflow-obligations.ts",
         "sha256": "b847e81741d4ea6a275c2e60b84bedbfd7cc0f72c9e21854eab65851fcb07185"
       }
     ]
