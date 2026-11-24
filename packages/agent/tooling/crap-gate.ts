@@ -371,6 +371,10 @@ const scopedBudgetReviews = new Map([
   ],
   ['4b9fa9adf90a4cb9af424f84efd246bd720e01e1:main-envelopes', 'scope_review_main_envelopes_fraction_reuse_20261018'],
   [`${fsSafeApplicabilityReview.commit}:${fsSafeApplicabilityReview.contour}`, fsSafeApplicabilityReview.key],
+  [
+    '435816c21507e1d42caa77f57f299defe1fdc251:execution-catalog-task1-structural',
+    'scope_review_execution_catalog_task1_structural_20261124',
+  ],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
