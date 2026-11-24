@@ -1,0 +1,349 @@
+{
+  "schema": "VidaReviewedFunctionLineagePartial/v1",
+  "baseline_ref": "b549951",
+  "baseline_functions": [],
+  "new_functions": [
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:refuse#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:emptyObligations#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:obligationsForRisk#0",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:obligationsForEffects#0",
+      "max_complexity": 7,
+      "max_crap": 7,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 7 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:completionObligations#0",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:mergeObligationSets#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:deriveWorkflowObligations#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:stageIndex#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:dependencyMaps#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:dependencyMaps#0/binding:dependencies/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:dependencyMaps#0/binding:dependents/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:acyclicReady#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:acyclicReady#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:acyclicReady#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:releaseDependents#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertAcyclic#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertAcyclic#0/binding:remaining/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:buildGraphIndex#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:reachableSet#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:reachableSet#0/binding:unseen/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:reaches#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:producerStages#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:producerStages#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertProducedArtifact#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertProducedArtifact#0/binding:upstream/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertArtifactFlow#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertAssignmentClasses#0",
+      "max_complexity": 5,
+      "max_crap": 5,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 5 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:addStageGateEntries#0",
+      "max_complexity": 5,
+      "max_crap": 5,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 5 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:groupGateEntries#0",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertGateActorUnique#0",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertGateContract#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 10 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertGateContract#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:gateEntries#0",
+      "max_complexity": 5,
+      "max_crap": 5,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 5 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertContractArtifact#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertImplementationResultProducer#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertAuthoritativeOutputs#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertAuthoritativeOutputs#0/closure:CallExpression:arguments[2]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertAuthoritativeOutputs#0/closure:CallExpression:arguments[2]#1",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertAuthoritativeOutputs#0/closure:CallExpression:arguments[2]#2",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:compatibleWriterStage#0",
+      "max_complexity": 8,
+      "max_crap": 8,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 8 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:compatibleWriterStage#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:sourceWriter#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:sourceWriter#0/binding:develops/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:sourceWritingCount#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:addUpstreamAuthors#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:upstreamAuthors#0",
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 2 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:sourceAuthors#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:requiredGates#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertRequiredGates#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertPrewriteGate#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:assertPostwriteGate#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 4 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:validateGateOrder#0",
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 3 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:validateSourceObligations#0",
+      "max_complexity": 6,
+      "max_crap": 6,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 6 and requires measured full coverage."
+    },
+    {
+      "identity": "src/orchestration/workflow-obligations.ts#fn:validateWorkflowObligations#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "The immutable baseline lacks this Source. The independent review holds this role at its exact current CC of 1 and requires measured full coverage."
+    }
+  ],
+  "removed_functions": [],
+  "new_sources": [
+    {
+      "path": "src/orchestration/workflow-obligations.ts",
+      "rationale": "The exact immutable baseline tree contains no obligation-checker Source at this path."
+    }
+  ],
+  "removed_sources": [],
+  "scope_review_execution_catalog_task1_structural_20261124": {
+    "files": [],
+    "source_mappings": [],
+    "current_source_bindings": [
+      {
+        "path": "src/orchestration/workflow-obligations.ts",
+        "sha256": "b847e81741d4ea6a275c2e60b84bedbfd7cc0f72c9e21854eab65851fcb07185"
+      }
+    ]
+  }
+}
