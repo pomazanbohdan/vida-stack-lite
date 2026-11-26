@@ -942,24 +942,36 @@ controller or grant execution rights. Later missing `controller.json`, malformed
 metadata, permission failures and other non-ENOENT errors retain their existing
 outcomes.
 
-The existing `reconcile-artifacts --kind runtime-config` operation accepts a
-schema-valid change limited to the executor model and reasoning, or the exact
-maintained prewriter workflow delta. Prewriter adoption supports multiple
-configured projects and preserves their registry, integrations and other
-settings exactly. It does not
-select a model on the caller's behalf or reinterpret an issued invocation.
-Selected consumer installations retain their selector binding. Source without a
-selector requires the `agent` project at `packages/agent`, a private workspace
-that declares that package, the `vida-agent` package identity and its complete
-maintained executable inventory. In the existing operation fields,
-`selector_digest` binds selector absence and workspace metadata, while
-`bundle_digest` binds the Source executable bytes. Every phase rechecks this
-identity, inventory and selection; appearing selectors or changed bytes deny
-continuation. No synthetic selector, alternate operation format or source lease
-is created. The maintenance fence, unchanged-state CAS, exact YAML/receipt
-checks and global quiescence remain mandatory. An expired active owner or an
-unknown effect still blocks applying a new configuration. Only the public
-operation updates the initialization receipt after the authorized YAML edit.
+### Profile changes on an initialized Host
+
+`configure plan --project-root ABS --profile-target REL --operation
+profile-config-ID --actor ACTOR --instruction-ref REF` accepts a unified v1
+target that changes only `model` and `reasoning` on the executor and focused
+correctness and requirements reviewer profiles. The plan writes an operation
+record with the exact target and accepted baseline, initialization receipt,
+runtime identity, and quiescent Host snapshot. The returned `plan_digest`
+binds approval. With `--profile-baseline REL` and `--profile-target
+agent-runtime.config.v1.yaml`, the plan binds already authored root YAML to
+the retained accepted baseline and authorizes a receipt-only adoption.
+
+`configure apply` and `configure resume` take `--project-root ABS`,
+`--profile-operation profile-config-ID` and `--approve-plan SHA256`. The
+existing rebind owner acquires its typed Host maintenance fence after
+rechecking the operation and underlying state. It publishes target YAML by
+CAS when necessary and then updates the initialization receipt. It records
+the applied phase before releasing maintenance. The operation resumes from
+the observed prefix, with the exact released fence and both afterimages
+required for acknowledgement after release. Old Work and Journal bindings
+remain historical. Active leases, unresolved effects and drift block a new
+profile application.
+
+The planned runtime identity binds the selected runtime or the executing
+native standalone package for a consumer initialized without a selector.
+Source execution binds the local Agent workspace and complete executable
+inventory. Pending initialization or configuration blocks profile rebind.
+Clean initialization checks Host maintenance under its exclusive storage
+admission before publishing pending intent. A held fence prevents publication
+so the current operation can resume without a competing pending owner.
 
 The frozen global-state digest includes each checked row's scalar metadata and
 the SHA-256 digest of its exact stored payload bytes. Row parsing, integrity and
@@ -967,6 +979,18 @@ quiescence checks still run before aggregation; the aggregate omits duplicate
 parsed values and raw payload text while preserving deterministic row order.
 
 ## Terminal observations and exact owner release
+
+`run --release-terminal-owner true --mode inspect|apply` accepts a
+`TerminalOwnerReleaseRequest/v1` of kind `completed_source_workflow` for
+an exact expired execution-only owner. The persisted successful Journal must
+contain the accepted writer, passing configured validation and test, and
+the terminal delivery observation. The existing receipt must still bind the
+supplied baseline. Current unified YAML may differ only by the executor model.
+Inspection binds the original native session, exact ticket and claim, current
+Work/Ledger/Journal and maintenance versions, config bytes, receipt and
+executing runtime. Apply rechecks that evidence before releasing the exact
+owner. Exact repeats observe the prior release. The Journal, workflow phase,
+and acceptance retain their original records.
 
 Task outcome, effect certainty and lease ownership are independent. A known
 terminal partial Source invocation may be captured as `reported_failed` and its
@@ -2192,26 +2216,23 @@ Foreign/orphan ownership, uncertain writer/governance effects, surviving engine
 outcomes and unsupported corrective shapes remain blocked. Build/install evidence
 belongs to CI/CD; agent-state fault/CAS/retry checks belong to the local test lane.
 
-The explicit reconciliation kind `runtime-config-delivery` adopts an already
-delivered executor model/reasoning change. Inspect/plan require a bounded local
-`--baseline-config` that matches the initialization receipt and the current root
-YAML as `--target-config`. Repository, projects, storage, integrations and schema
-remain exact. It freezes the baseline, target, receipt, runtime and quiescent
-global state in a separate strict `SourceDeliveryConfigRebindOperation/v1` at
+The initialized-Host `configure` receipt-only mode adopts already authored
+profile changes from an exact accepted baseline. It freezes the baseline, target,
+receipt, runtime and quiescent global state in the existing strict
+`SourceDeliveryConfigRebindOperation/v1` at
 `runtime-config-delivery-operation.v1.json`. The standard artifact and its schema
 remain unchanged. A reader never converts or resumes an artifact of another kind.
 The delivery digest binds its artifact kind and plan. A changed schema tag cannot
 reuse a standard operation's digest or maintenance fence.
 
-Apply holds the existing maintenance fence and returns `receipt_rebind_ready`.
-Resume changes only the receipt through atomic CAS after checking the frozen
-target and dependencies again. YAML and historical work are not written. Restore
-may abandon only before a receipt effect while the target and old receipt remain
-exact. After an effect, resume forward. Pending acceptance and FAIL/UNKNOWN remain.
+Apply holds the existing maintenance fence and changes only the receipt through
+atomic CAS after checking the frozen target and dependencies again. Resume
+continues that exact operation from its observed phase. Pending acceptance and
+historical FAIL/UNKNOWN remain retained.
 
-A Source correction during that held operation uses the same public
-`runtime-config-delivery` owner and one additive
-`RuntimeConfigSourceCorrectionRepair/v1` sidecar. Repair inspect and plan freeze
+The historical `reconcile-artifacts` runtime-config-delivery flow recorded a
+Source correction in a `RuntimeConfigSourceCorrectionRepair/v1` sidecar.
+Its repair inspect and plan freeze
 the original operation and fence, Source beforeimages and exact authorized
 changed paths. Repair apply accepts a bounded report of the new whole package's
 formation, native integrity and actual installed observations. The trusted

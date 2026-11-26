@@ -87,7 +87,7 @@ export type CompletedSourceWorkflowSuspensionInput = SuspensionInput & {
 export type TerminalOwnerSuspensionInput = SuspensionInput & {
   readonly config: AgentRuntimeConfig;
   readonly expectedMaintenanceGeneration: number;
-  readonly kind: 'corrective_source_frontier' | 'observed_terminal_readonly';
+  readonly kind: 'corrective_source_frontier' | 'observed_terminal_readonly' | 'completed_source_workflow';
   readonly engineSnapshot?: SessionBridgeSnapshot;
   readonly ownerTicketId: string;
   readonly ownerClaimId: string;
@@ -148,7 +148,26 @@ function releaseTerminalOwner(
   let correctiveExecution: CorrectiveExecution | undefined;
   if (input.kind === 'corrective_source_frontier') {
     correctiveExecution = requireCorrectiveTerminalFrontier(input, work, items);
-  } else requireObservedTerminalReadonly(input, work, items);
+  } else if (input.kind === 'observed_terminal_readonly') {
+    requireObservedTerminalReadonly(input, work, items);
+  } else {
+    requireCompletedSourceWorkflow(input, work);
+    requireSuspension(
+      !state.corrective_execution &&
+        work.execution.assignment_attempts.length > 0 &&
+        work.execution.assignment_attempts.every((attempt) => attempt.status === 'completed'),
+      'completed Source owner has unsettled assignment history',
+    );
+    if (work.lease) {
+      const ticket = current.host.ledger?.tickets.find((entry) => entry.ticket_id === work.lease?.ticket_id);
+      requireSuspension(
+        ticket?.expires_at &&
+          Date.parse(ticket.expires_at) <= Date.now() &&
+          sameCoordinationStrings(ticket.exclusive_resources, [`execution:${input.identity.work_id}`]),
+        'completed Source owner requires the exact expired execution ticket',
+      );
+    }
+  }
   return suspendLocalWorkCore(input, false, false, inspectOnly, false, false, false, undefined, {
     kind: input.kind,
     requestDigest,

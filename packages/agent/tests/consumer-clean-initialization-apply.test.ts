@@ -1196,6 +1196,66 @@ test('publication refuses a legacy runtime-initialization owner unchanged', asyn
 test('publication refuses an unknown pending owner unchanged', async () =>
   assertPublicationRefusesPending(() => ({ relative: pendingPath, bytes: Buffer.from('unknown pending owner\n') })));
 
+test.skipIf(process.platform !== 'win32')(
+  'clean-init refuses pending publication while a profile operation holds Host maintenance',
+  async () => {
+    const owner = await loadOperationOwner();
+    if (!owner) throw new Error('Clean initialization operation is unavailable');
+    const fixture = await makeFixture();
+    let passed = false;
+    try {
+      const binding: MaintenanceFenceBinding = {
+        schema: 'MaintenanceFenceBinding/v1',
+        project_ids: ['fixture'],
+        operation_id: 'profile-config-interrupted',
+        manifest_digest: 'a'.repeat(64),
+        request_digest: 'b'.repeat(64),
+        bindings_digest: 'c'.repeat(64),
+        closure_digest: 'd'.repeat(64),
+        bundle_digest: 'e'.repeat(64),
+      };
+      const database = openHostStateDatabase(fixture.root, fixture.hostRelative, fixture.workspaceId);
+      try {
+        new HostStateStore(
+          database,
+          fixture.workspaceId,
+          undefined,
+          undefined,
+          undefined,
+          { principal: 'vida-agent-project-config-rebind', projectIds: binding.project_ids, verify: () => null },
+          fixture.root,
+        ).acquireMaintenanceFence(binding);
+      } finally {
+        closeWorkspaceDatabaseWithAdmission(database);
+      }
+      const plan = owner.planConsumerCleanInitialization(fixture.request);
+      await Promise.resolve(
+        expect(
+          owner.publishReviewedConsumerCleanInitialization({
+            operation: plan.operation,
+            expectedState: plan.expectedState,
+            authorization: {
+              action: 'apply',
+              operation_id: plan.operation.operation_id,
+              plan_binding: plan.operation.binding,
+            },
+          }),
+        ).rejects.toThrow('Host maintenance fence is held'),
+      );
+      await Promise.resolve(
+        expect(owner.publishConsumerCleanInitializationIntent(fixture.request)).rejects.toThrow(
+          'Host maintenance fence is held',
+        ),
+      );
+      expect(existsSync(path.join(fixture.root, pendingPath))).toBe(false);
+      passed = true;
+    } finally {
+      await finishFixture(fixture.root, passed);
+    }
+  },
+  CLEAN_INIT_CASE_TIMEOUT_MS,
+);
+
 test('acquisition refuses a real foreign held Host fence and preserves the pending image', async () => {
   const owner = await loadOperationOwner();
   expect(owner).not.toBeNull();

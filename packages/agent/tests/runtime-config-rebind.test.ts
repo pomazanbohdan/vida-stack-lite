@@ -20,10 +20,13 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import * as fs from 'node:fs';
 import { spawnSync, type SpawnSyncOptionsWithStringEncoding } from 'node:child_process';
+import { configure } from '../bin/configure.ts';
 import {
   cooperativeReadonlyAssignments,
   currentState,
+  isExactProfileRebindDelta,
   inspectHistoricalOwnerContext,
+  runConfigureProfileRebind,
 } from '../bin/runtime-config-rebind.ts';
 import { readAppliedRuntimeConfigRebind } from '../bin/runtime-config-rebind.ts';
 import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
@@ -156,6 +159,197 @@ import type {
 } from './helpers/runtime-config-rebind-fixture.ts';
 
 registerRuntimeConfigFixtureCleanup();
+
+test('profile rebind delta permits only the three profile models and reasoning', () => {
+  const f = fixture();
+  const baseline = parseRuntimeConfigYaml(f.oldYaml);
+  const executor = withAgentProfileChange(baseline, 'executor', { reasoning: 'low' });
+  const validator = withAgentProfileChange(executor, 'reviewer-correctness', { reasoning: 'low' });
+  const bothValidators = withAgentProfileChange(validator, 'reviewer-requirements', { reasoning: 'low' });
+  expect(isExactProfileRebindDelta(baseline, baseline)).toBe(false);
+  expect(isExactProfileRebindDelta(baseline, executor)).toBe(true);
+  expect(isExactProfileRebindDelta(baseline, validator)).toBe(true);
+  expect(isExactProfileRebindDelta(baseline, bothValidators)).toBe(true);
+  expect(
+    isExactProfileRebindDelta(baseline, withAgentProfileChange(validator, 'architect', { reasoning: 'low' })),
+  ).toBe(false);
+  expect(isExactProfileRebindDelta(baseline, withProjectTitle(validator, 0, 'changed'))).toBe(false);
+});
+
+const profileOperation = 'profile-config-fixture';
+const profileIntegrationTimeout = 45_000;
+
+function profilePlanArgs(root: string, target: string): string[] {
+  return [
+    'plan',
+    '--project-root',
+    root,
+    '--profile-target',
+    target,
+    '--operation',
+    profileOperation,
+    '--actor',
+    'fixture-operator',
+    '--instruction-ref',
+    'fixture:profiles',
+  ];
+}
+
+function profileEffectArgs(root: string, mode: 'apply' | 'resume', approval: string): string[] {
+  return [mode, '--project-root', root, '--profile-operation', profileOperation, '--approve-plan', approval];
+}
+
+function configureProfile(args: string[]): Promise<unknown> {
+  return fixtureCall((input) => configure(input), args);
+}
+
+test(
+  'profile configure recovers interrupted writes and acknowledges release after a later Work',
+  async () => {
+    await withRuntimeConfigFixtureCase(async () => {
+      const f = fixture();
+      const { work, identity } = seedState(f, { native: true });
+      const original = parseRuntimeConfigYaml(f.oldYaml);
+      const developer = withAgentProfileChange(original, 'executor', { model: 'gpt-6.1-terra', reasoning: 'xhigh' });
+      const correctness = withAgentProfileChange(developer, 'reviewer-correctness', {
+        model: 'swe-2-flash-medium',
+        reasoning: 'medium',
+      });
+      const target = withAgentProfileChange(correctness, 'reviewer-requirements', {
+        model: 'swe-2-flash-medium',
+        reasoning: 'medium',
+      });
+      const yaml = JSON.stringify(target, null, 2) + '\n';
+      f.put('profile-target.yaml', yaml);
+      const configFile = path.join(f.root, 'agent-runtime.config.v1.yaml');
+      const receiptFile = path.join(f.root, '.agent/runtime-initialization.v1.json');
+      const receipt = readFileSync(receiptFile);
+      const before = databaseState(f);
+      const plan = checkedCliObject(
+        await configureProfile(profilePlanArgs(f.root, 'profile-target.yaml')),
+        'profile plan',
+      );
+      const approval = requiredCliString(plan, 'plan_digest', 'approved profile plan');
+      expect(plan.status).toBe('planned');
+      expect(databaseState(f)).toEqual(before);
+      expect(readFileSync(configFile, 'utf8')).toBe(f.oldYaml);
+
+      await expectRejection(
+        configureProfile(profileEffectArgs(f.root, 'apply', '0'.repeat(64))),
+        /differs from approval/,
+      );
+      expect(fence(f)).toBeNull();
+      expect(readFileSync(receiptFile)).toEqual(receipt);
+
+      const interrupt = (mode: 'apply' | 'resume', stop: string) =>
+        fixtureCall(
+          () =>
+            runConfigureProfileRebind(
+              { mode, projectRoot: f.root, operationId: profileOperation, approval },
+              {
+                onPhase: (phase) => {
+                  if (phase === stop) throw Error(`fixture interruption at ${stop}`);
+                },
+              },
+            ),
+          profileEffectArgs(f.root, mode, approval),
+        );
+      await expectRejection(interrupt('apply', 'yaml_published'), /fixture interruption at yaml_published/);
+      expect(readFileSync(configFile, 'utf8')).toBe(yaml);
+      expect(readFileSync(receiptFile)).toEqual(receipt);
+      expect(fence(f)?.status).toBe('held');
+      await expectRejection(interrupt('resume', 'released'), /fixture interruption at released/);
+      expect(fence(f)?.status).toBe('released');
+      const adopted = databaseState(f);
+      expect(adopted.agent_host_state).toEqual(before.agent_host_state);
+      expect(adopted.agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+      expect(adopted.agent_host_governance).toEqual(before.agent_host_governance);
+
+      const laterId = 'later-profile-work';
+      const digest = runtimeConfigDigest(target);
+      const later: WorkState = {
+        ...work,
+        binding: { ...work.binding, config_digest: digest, lifecycle_work_id: laterId },
+        lifecycle: { ...work.lifecycle, config_binding: { ...work.lifecycle.config_binding, config_digest: digest } },
+      };
+      withDatabase(f, (db) =>
+        db
+          .query('INSERT INTO agent_host_state VALUES(?,?,?,?,?,?)')
+          .run(
+            f.workspace,
+            'work',
+            JSON.stringify([identity.repository_id, identity.project_ids, identity.integrations_digest, laterId]),
+            later.revision,
+            json(later),
+            canonicalJsonDigest(later),
+          ),
+      );
+      const afterLaterWork = databaseState(f);
+      const resume = () => configureProfile(profileEffectArgs(f.root, 'resume', approval));
+      const result = checkedCliObject(await resume(), 'resumed profile operation');
+      expect(result.status).toBe('applied');
+      expect(result.target_config_digest).toBe(digest);
+      expect(checkedFixtureInitializationReceipt(f, readFileSync(receiptFile, 'utf8')).config_digest).toBe(digest);
+      expect(await resume()).toEqual(result);
+      expect(databaseState(f)).toEqual(afterLaterWork);
+      f.put('agent-runtime.config.v1.yaml', f.oldYaml);
+      await expectRejection(resume(), /cannot precede target YAML/);
+      expect(databaseState(f)).toEqual(afterLaterWork);
+    }, profileIntegrationTimeout);
+  },
+  profileIntegrationTimeout,
+);
+
+test(
+  'profile configure can adopt already authored YAML with an exact accepted baseline',
+  async () => {
+    await withRuntimeConfigFixtureCase(async () => {
+      const f = fixture();
+      seedState(f, { native: true });
+      f.put('accepted.yaml', f.oldYaml);
+      f.put('agent-runtime.config.v1.yaml', f.target);
+      const args = profilePlanArgs(f.root, 'agent-runtime.config.v1.yaml');
+      await expectRejection(configureProfile(args), /unchanged baseline YAML and receipt/);
+      const plan = checkedCliObject(
+        await configureProfile([...args, '--profile-baseline', 'accepted.yaml']),
+        'profile adoption plan',
+      );
+      const approval = requiredCliString(plan, 'plan_digest', 'approved profile adoption');
+      const before = databaseState(f);
+      const result = checkedCliObject(
+        await configureProfile(profileEffectArgs(f.root, 'apply', approval)),
+        'applied profile adoption',
+      );
+      expect(result.status).toBe('applied');
+      const config = loadRuntimeConfig(f.root);
+      expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.target);
+      expect(result.target_config_digest).toBe(runtimeConfigDigest(config));
+      expect(databaseState(f).agent_host_state).toEqual(before.agent_host_state);
+      expect(databaseState(f).agent_host_mastra_session_ledger).toEqual(before.agent_host_mastra_session_ledger);
+    }, profileIntegrationTimeout);
+  },
+  profileIntegrationTimeout,
+);
+
+test.each(['lease', 'unknown'] as const)(
+  'profile configure plan refuses a retained %s without effects',
+  async (blocked) => {
+    await withRuntimeConfigFixtureCase(async () => {
+      const f = fixture();
+      seedState(f, blocked === 'lease' ? { lease: true } : { native: true, issued: true });
+      const before = databaseState(f);
+      const receipt = readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'));
+      await expectRejection(
+        configureProfile(profilePlanArgs(f.root, 'proposed.yaml')),
+        blocked === 'lease' ? /queued\/active ownership blocks rebind/ : /issued native outcome is pending\/unknown/,
+      );
+      expect(existsSync(path.join(f.root, '.agent/work', profileOperation))).toBe(false);
+      expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(f.oldYaml);
+      expect(readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'))).toEqual(receipt);
+      expect(databaseState(f)).toEqual(before);
+    });
+  },
+);
 
 const originalFsExports = { ...fs };
 

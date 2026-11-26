@@ -892,17 +892,17 @@ export async function withCleanInitializationEffectLocks<T, TOperation extends C
 export function withExclusiveInitConfigAdmission<T>(
   root: string,
   workspaceId: string,
-  operation: (proof: InitConfigAdmissionProof) => Promise<T>,
+  operation: (proof: InitConfigAdmissionProof, sourceOwner: ExclusiveStorageSourceOwner) => Promise<T>,
 ): Promise<T> {
   return withExclusiveStorageAdmissionOwner(
     root,
     workspaceId,
     () => undefined,
-    async ({ assertActive }) => {
+    async ({ assertActive, captureSource, closeSource }) => {
       const proof = Object.freeze({ assertActive });
       initConfigProofs.set(proof, { root, workspaceId });
       try {
-        return await operation(proof);
+        return await operation(proof, Object.freeze({ captureSource, closeSource }));
       } finally {
         initConfigProofs.delete(proof);
       }

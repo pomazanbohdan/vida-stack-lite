@@ -172,6 +172,7 @@ type RecoveryFixtureOptions = {
   markerlessExcerpt?: boolean;
   aggregateContext?: boolean;
   officialDocs?: boolean;
+  includeExecutionResource?: boolean;
 };
 
 type HistoricalPredicate = Parameters<typeof suspendHistoricalOwnerWork>[0]['predicate'];
@@ -2787,6 +2788,7 @@ export function historicalFixture(
     markerlessExcerpt = false,
     aggregateContext = false,
     officialDocs = false,
+    includeExecutionResource = false,
   }: RecoveryFixtureOptions = {},
 ): HistoricalFixtureResult {
   const f = fixture({ sourceMode: true });
@@ -2889,6 +2891,7 @@ export function historicalFixture(
     ...(configuredContext ? [fixtureContextPath, '.codex/skills/historical-review/SKILL.md'] : []),
     ...extraContextIds.map((id) => `docs/${id}.md`),
   ].sort();
+  const fileResources = paths.map((file) => 'file:' + file);
   const preimage = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), paths);
   f.put('original-scope.json', json(preimage));
   const context: SessionHandoffContext = { work_id: identity.work_id, attempt: 1, scope_digest: preimage.digest };
@@ -2928,7 +2931,9 @@ export function historicalFixture(
           work_source_revision: preimage.digest,
           work_item_digest: canonicalJsonDigest(workItem),
           implementation_paths: paths,
-          allowed_resources: paths.map((p) => 'file:' + p),
+          allowed_resources: includeExecutionResource
+            ? [`execution:${identity.work_id}`, ...fileResources]
+            : fileResources,
         },
         lifecycle: {
           ...storedWork.lifecycle,
@@ -2966,13 +2971,11 @@ export function historicalFixture(
       tickets: storedLedger.tickets.map((ticket) => ({
         ...ticket,
         source_revision: preimage.digest,
-        exclusive_resources: work.binding.allowed_resources,
-        active_resources: work.binding.allowed_resources,
-        contour_keys: work.binding.allowed_resources,
+        exclusive_resources: fileResources,
+        active_resources: fileResources,
+        contour_keys: fileResources,
       })),
-      claims: storedLedger.claims.map((entry, index) =>
-        index === 0 ? { ...entry, resources: work.binding.allowed_resources } : entry,
-      ),
+      claims: storedLedger.claims.map((entry, index) => (index === 0 ? { ...entry, resources: fileResources } : entry)),
     };
     db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'").run(
       json(ledger),
