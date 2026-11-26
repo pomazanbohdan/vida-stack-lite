@@ -21,6 +21,7 @@ import {
 } from './init-cli-input.ts';
 import { validateSetupInput, type SetupInputDraft } from './init-product-input.ts';
 import type { SetupPromptPort } from './init-prompt.ts';
+import type { ConfigureProfileRebindRequest } from './runtime-config-rebind.ts';
 import {
   applyConsumerConfiguration,
   inspectConsumerConfigurationOperation,
@@ -28,6 +29,7 @@ import {
 } from './consumer-configuration-operation.ts';
 
 type Parsed =
+  | { mode: ConfigureProfileRebindRequest['mode']; profileRebind: ConfigureProfileRebindRequest }
   | { mode: 'inspect'; projectRoot: string }
   | { mode: 'apply'; projectRoot: string; plan: string; executorModel?: string }
   | ({ mode: 'plan' } & ConsumerConfigurationRequest)
@@ -49,7 +51,7 @@ type Mode = Parsed['mode'];
 const repeatableOptions = new Set(['--project', '--allow-project', '--move-project']);
 const modeOptions: Record<Mode, readonly string[]> = {
   inspect: ['--project-root'],
-  apply: ['--project-root', '--plan', '--executor-model'],
+  apply: ['--project-root', '--plan', '--executor-model', '--profile-operation', '--approve-plan'],
   plan: [
     '--project-root',
     '--repository',
@@ -59,6 +61,11 @@ const modeOptions: Record<Mode, readonly string[]> = {
     '--product-model',
     '--input',
     '--executor-model',
+    '--profile-target',
+    '--profile-baseline',
+    '--operation',
+    '--actor',
+    '--instruction-ref',
   ],
   resume: [
     '--project-root',
@@ -70,6 +77,8 @@ const modeOptions: Record<Mode, readonly string[]> = {
     '--input',
     '--operation',
     '--executor-model',
+    '--profile-operation',
+    '--approve-plan',
   ],
 };
 
@@ -98,12 +107,57 @@ function configurationInputFile(values: Map<string, string[]>): string | undefin
   return values.get('--product-model')?.[0] ?? values.get('--input')?.[0];
 }
 
+const profilePlanOptions = ['--project-root', '--profile-target', '--operation', '--actor', '--instruction-ref'];
+const profileApplyOptions = ['--project-root', '--profile-operation', '--approve-plan'];
+
+function profileArguments(
+  values: Map<string, string[]>,
+  mode: Exclude<Mode, 'inspect'>,
+): ConfigureProfileRebindRequest {
+  const baselinePath = values.get('--profile-baseline')?.[0];
+  const allowed = mode === 'plan' ? [...profilePlanOptions, '--profile-baseline'] : profileApplyOptions;
+  if ([...values.keys()].some((key) => !allowed.includes(key)))
+    throw Error('Profile rebind excludes other configuration inputs');
+  const projectRoot = requiredOption(values, '--project-root');
+  if (mode === 'plan')
+    return {
+      mode,
+      projectRoot,
+      operationId: requiredOption(values, '--operation'),
+      targetPath: requiredOption(values, '--profile-target'),
+      actor: requiredOption(values, '--actor'),
+      instructionRef: requiredOption(values, '--instruction-ref'),
+      ...(baselinePath === undefined ? {} : { baselinePath }),
+    };
+  return {
+    mode,
+    projectRoot,
+    operationId: requiredOption(values, '--profile-operation'),
+    approval: requiredOption(values, '--approve-plan'),
+  };
+}
+
 export function configureArguments(args: readonly string[]): Parsed {
   const mode = z.enum(['plan', 'inspect', 'apply', 'resume']).parse(args[0]);
   const values = optionValues(args, mode);
   const projectRoot = values.get('--project-root')?.[0];
   if (projectRoot !== undefined && !path.isAbsolute(projectRoot)) throw Error('Project root must be absolute');
   if (mode === 'inspect') return { mode, projectRoot: requiredOption(values, '--project-root') };
+  if (
+    [...values.keys()].some((name) =>
+      [
+        '--profile-target',
+        '--profile-baseline',
+        '--profile-operation',
+        '--approve-plan',
+        '--actor',
+        '--instruction-ref',
+      ].includes(name),
+    )
+  )
+    return { mode, profileRebind: profileArguments(values, mode) };
+  if (mode === 'plan' && values.has('--operation'))
+    throw Error('Configuration plan requires a profile target for an operation ID');
   if (mode === 'apply')
     return {
       mode,
@@ -305,7 +359,7 @@ function readPlan(file: string): unknown {
 }
 
 async function requestForParsed(
-  parsed: Exclude<Parsed, { mode: 'apply' | 'inspect' } | { executorModel: string }>,
+  parsed: Exclude<Parsed, { mode: 'apply' | 'inspect' } | { executorModel: string } | { profileRebind: unknown }>,
   port?: SetupPromptPort,
 ) {
   if (!('setup' in parsed)) {
@@ -335,6 +389,8 @@ async function requestForParsed(
 
 export async function configure(args: readonly string[], port?: SetupPromptPort): Promise<unknown> {
   const parsed = configureArguments(args);
+  if ('profileRebind' in parsed)
+    return (await import('./runtime-config-rebind.ts')).runConfigureProfileRebind(parsed.profileRebind);
   if (parsed.mode === 'inspect') return inspectConsumerConfigurationOperation(parsed.projectRoot);
   if (parsed.mode === 'apply') {
     const supplied = readPlan(parsed.plan);

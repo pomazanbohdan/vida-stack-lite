@@ -3021,6 +3021,16 @@ product latency or numeric qualification.
 | initial intent refuses same-byte preserved identity drift on held-fence reattach        |             45,000ms |
 | a real Host reader blocks callback admission and leaves the exact fence and intent held |             45,000ms |
 
+`clean-init refuses pending publication while a profile operation holds Host maintenance`
+uses the Windows 45s fixture bound for both publication paths. Linux's
+baseline read-only root listing currently refuses before publication.
+The two `profile configure` recovery/adoption cases and the two
+`public completed Source owner` cases use a 45-second whole-case bound for
+isolated Host setup, multiple entrypoint calls and exact replay. In the
+initial Linux diagnostic the configure cases completed their assertions in
+10.6s and 18.6s and exceeded the per-case test deadline. All existing
+deadlines and the five-second default remain in force.
+
 The named C3 case `clean-init reviewed publication binds approval and reports
 pristine intent as planned` has an explicit120000ms integration ceiling across
 fresh Host fixture setup, native plan/publication/refusal observations and owned

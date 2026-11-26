@@ -24,7 +24,7 @@ import {
   validateRuntimeConfigRepairTargetBytes,
 } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
-import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { repositoryReadOnlyObservation, requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { queryWorkspaceRowUnknown, queryWorkspaceRowsUnknown } from '../src/config/workspace-database.ts';
 import { finishWorkspaceDatabaseClose, type DatabaseWorkOutcome } from '../src/config/workspace-database-raw.ts';
@@ -36,6 +36,8 @@ import {
   PROJECT_INITIALIZATION_PATH,
   bindLoadedConfigurationSource,
   runtimeConfigurationSourceFor,
+  assertConsumerCleanInitializationInactive,
+  RUNTIME_INITIALIZATION_PENDING_PATH,
 } from '../src/config/project-paths.ts';
 import {
   parseProjectConfiguration,
@@ -48,7 +50,7 @@ import {
 } from '../src/config/project-initialization-record.ts';
 import { inspectHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { readAdmittedSessionIntake } from '../src/orchestration/admitted-session-execution.ts';
-import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { canonicalRepositoryRoot, deriveWorkspaceId } from '../src/workspace-identity.ts';
 import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
 import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.ts';
 import { compareScopedSourceSnapshots, snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -653,6 +655,19 @@ type CorrectionRequestForInputs = {
   readonly frozenRequest?: SourceCorrectionRequestView;
 };
 type RebindRunOptions = { readonly onPhase?: ((phase: string) => void) | undefined };
+export type ConfigureProfileRebindRequest = {
+  readonly projectRoot: string;
+  readonly operationId: string;
+} & (
+  | {
+      readonly mode: 'plan';
+      readonly targetPath: string;
+      readonly baselinePath?: string;
+      readonly actor: string;
+      readonly instructionRef: string;
+    }
+  | { readonly mode: 'apply' | 'resume'; readonly approval: string }
+);
 
 const requireRebind: (valid: unknown, message: string) => asserts valid = (valid, message) => {
   if (!valid) throw new Error(`vida runtime-config rebind: ${message}`);
@@ -684,6 +699,8 @@ const deliveryOperationName = 'runtime-config-delivery-operation.v1.json';
 const sourceCorrectionName = 'runtime-config-source-correction-repair.v1.json';
 const sourceCustodyByteLimit = 96 * 1024 * 1024;
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;
+const profileOperationId = /^profile-config-[a-z0-9][a-z0-9._-]{0,64}$/;
+const profileYamlByteLimit = 1024 * 1024;
 const stableVersion = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
 const ajv = new Ajv2020({ strict: true, allErrors: true });
 const operationSchemaValue = parseJsonUnknown(
@@ -1479,14 +1496,55 @@ function exactPrewriterTemplateDelta(oldConfig: RebindAgentRuntimeConfig, target
   return sameJson(normalized, baseline);
 }
 
+export function isExactProfileRebindDelta(
+  oldConfig: RebindAgentRuntimeConfig,
+  target: RebindAgentRuntimeConfig,
+): boolean {
+  if (oldConfig.schema !== 'AgentRuntimeConfig/v1' || target.schema !== 'AgentRuntimeConfig/v1') return false;
+  const normalized = structuredClone(target) as DeepMutable<RebindAgentRuntimeConfig>;
+  for (const id of ['executor', 'reviewer-correctness', 'reviewer-requirements']) {
+    const before = oldConfig.agents.profiles[id],
+      after = normalized.agents.profiles[id];
+    if (!before || !after) return false;
+    after.model = before.model;
+    after.reasoning = before.reasoning;
+  }
+  return sameJson(normalized, oldConfig) && runtimeConfigDigest(target) !== runtimeConfigDigest(oldConfig);
+}
+
+function boundedProfileYaml(access: RebindSafeRepositoryAccess): RebindConfigBytesReader {
+  return { readBytes: (name, label) => access.readCapturedBytes(name, label, profileYamlByteLimit) };
+}
+
+function assertProfileConfigurationAvailable(access: RebindSafeRepositoryAccess, config: RebindAgentRuntimeConfig) {
+  requireRebind(
+    runtimeConfigurationSourceFor(config) === configPath,
+    'profile rebind requires the active unified v1 configuration',
+  );
+  const view = repositoryReadOnlyObservation(access);
+  assertConsumerCleanInitializationInactive(view);
+  requireRebind(
+    !view.fileExists(RUNTIME_INITIALIZATION_PENDING_PATH, 'initialization intent'),
+    'initialization or configuration is pending',
+  );
+}
+
 function targetConfig(
   access: RebindConfigBytesReader,
   root: string,
   oldConfig: RebindAgentRuntimeConfig,
   targetPath: string,
+  profileChange = false,
 ) {
   const bytes = access.readBytes(targetPath, 'authored target YAML');
   const target = validateRuntimeConfigRepairTargetBytes(bytes, root, runtimeConfigurationSourceFor(oldConfig));
+  if (profileChange) {
+    requireRebind(
+      isExactProfileRebindDelta(oldConfig, target),
+      'only model and reasoning of the three profiles may change',
+    );
+    return { bytes, config: target };
+  }
   const unchanged = structuredClone(target) as DeepMutable<RebindAgentRuntimeConfig>,
     unchangedExecutor = unchanged.agents.profiles.executor,
     oldExecutor = oldConfig.agents.profiles.executor;
@@ -3116,10 +3174,15 @@ function assertSourceSelectorAbsent(selection: RebindScopedSourceSnapshot) {
   );
 }
 
-function runtimeBinding(access: RebindSafeRepositoryAccess, config: RebindAgentRuntimeConfig) {
+function runtimeBinding(access: RebindSafeRepositoryAccess, config: RebindAgentRuntimeConfig, profileChange = false) {
   const bundle = config.runtime.bundle;
   const selectedExists = access.fileExists(selectorPath, 'active selector presence');
   if (bundle !== 'packages/agent') {
+    if (profileChange && !selectedExists && bundle === 'vida-agent') {
+      const native = currentNativeSelfAttestation();
+      requireRebind(native, 'initialized consumer profile rebind requires the executing standalone runtime');
+      return { selector_digest: canonicalJsonDigest(native), bundle_digest: native.resource_payload_id };
+    }
     requireRebind(selectedExists, 'selector absence is supported only for the Source project');
     const selected = selector(access);
     requireRebind(typeof selected.value.payload_manifest_sha256 === 'string', 'selector payload digest invalid');
@@ -3156,10 +3219,12 @@ function frozenPlan(
   config: RebindAgentRuntimeConfig,
   access: RebindSafeRepositoryAccess,
   db: RebindDatabase,
+  profileChange = false,
 ) {
   const delivery = values['--kind'] === 'runtime-config-delivery';
   const baselinePath = delivery ? requireRebindPath(values['--baseline-config'], 'baseline config') : configPath;
-  const baselineBytes = access.readBytes(baselinePath, 'local accepted baseline YAML');
+  const reader = profileChange ? boundedProfileYaml(access) : access;
+  const baselineBytes = reader.readBytes(baselinePath, 'local accepted baseline YAML');
   const receipt = readReceipt(access, config);
   if (delivery) {
     sameIdentity(root, config, receipt.value);
@@ -3171,8 +3236,14 @@ function frozenPlan(
     receipt.value.config_digest === runtimeConfigDigest(config),
     'plan requires unchanged baseline YAML and receipt',
   );
-  const binding = runtimeBinding(access, config);
-  const target = targetConfig(access, root, config, requireRebindPath(values['--target-config'], 'target config'));
+  const binding = runtimeBinding(access, config, profileChange);
+  const target = targetConfig(
+    reader,
+    root,
+    config,
+    requireRebindPath(values['--target-config'], 'target config'),
+    profileChange,
+  );
   const schema = readRuntimePackageResourceBytes(
     runtimePackageAccess(),
     'schemas/runtime-initialization.v1.schema.json',
@@ -3273,7 +3344,10 @@ function readOperation(
 /** Read an already applied normal config edge; no maintenance or receipt mutation. */
 
 export function readAppliedRuntimeConfigRebind(root: string, config: RebindAgentRuntimeConfig, operationId: string) {
-  requireRebind(identifier.test(operationId), 'normal config operation identity invalid');
+  requireRebind(
+    identifier.test(operationId) && !profileOperationId.test(operationId),
+    'normal config operation identity invalid',
+  );
   const access = requireSafeRepositoryAccess(root),
     operationPath = `${config.control.work_root}/${operationId}/${operationName}`,
     stored = readOperation(access, operationPath, operationId, root, false),
@@ -5485,18 +5559,37 @@ function exactContext(
   maintenanceReceipt: import('../src/host-state.ts').MaintenanceFenceReceipt | undefined,
   operationPath: string,
   operationBytes: Uint8Array,
+  profileChange = false,
+  releasedProfileFence = false,
 ) {
   const plan = operation.plan;
+  if (profileChange) assertProfileConfigurationAvailable(access, config);
   const old = validateRuntimeConfigRepairTargetBytes(Buffer.from(plan.baseline_yaml), root);
-  const target = targetConfig({ readBytes: () => Buffer.from(plan.target_yaml) }, root, old, configPath).config;
+  const target = targetConfig(
+    { readBytes: () => Buffer.from(plan.target_yaml) },
+    root,
+    old,
+    configPath,
+    profileChange,
+  ).config;
   const receipt = readReceipt(access, config);
-  sameIdentity(root, old, parseInitializationReceipt(plan.baseline_receipt));
+  const baselineReceipt = parseInitializationReceipt(plan.baseline_receipt);
+  sameIdentity(root, old, baselineReceipt);
   sameIdentity(root, target, receipt.value);
-  const binding = runtimeBinding(access, old);
+  const binding = runtimeBinding(access, old, profileChange);
   const verifyCurrentState = () => currentState(db, plan.workspace_id, root, old, hostStore, maintenanceReceipt);
-  const currentStateDigest = maintenanceReceipt
-    ? hostStore.withMaintenanceInspection(maintenanceReceipt, verifyCurrentState)
-    : verifyCurrentState();
+  const stateMatches =
+    releasedProfileFence ||
+    (maintenanceReceipt
+      ? hostStore.withMaintenanceInspection(maintenanceReceipt, verifyCurrentState)
+      : verifyCurrentState()) === plan.state_digest;
+  if (profileChange)
+    requireRebind(
+      baselineReceipt.config_digest === plan.old_config_digest &&
+        baselineReceipt.workspace_id === plan.workspace_id &&
+        baselineReceipt.schema_sha256 === plan.initialization_schema_digest,
+      'accepted profile baseline receipt differs from the frozen configuration or workspace',
+    );
   requireRebind(
     runtimeConfigDigest(old) === plan.old_config_digest &&
       runtimeConfigDigest(target) === plan.target_config_digest &&
@@ -5508,10 +5601,11 @@ function exactContext(
           'initialization schema',
         ),
       ) === plan.initialization_schema_digest &&
-      currentStateDigest === plan.state_digest,
+      stateMatches,
     'current selector/schema/global state differs from plan',
   );
   if (binding.bundle_digest !== plan.bundle_digest) {
+    requireRebind(!profileChange, 'current runtime bundle differs from the approved profile plan');
     requireRebind(
       operation.schema === 'SourceDeliveryConfigRebindOperation/v1' &&
         ((operation.phase === 'fenced' && operation.revision === 2 && !operation.maintenance_released) ||
@@ -5544,13 +5638,18 @@ function exactContext(
     'authored YAML bytes differ from frozen target/baseline',
   );
   const nextReceipt = json({
-    ...parseInitializationReceipt(plan.baseline_receipt),
+    ...baselineReceipt,
     config_digest: plan.target_config_digest,
   });
   requireRebind(
     receipt.bytes.toString('utf8') === plan.baseline_receipt || receipt.bytes.toString('utf8') === nextReceipt,
     'initialization receipt changed outside rebind',
   );
+  if (profileChange)
+    requireRebind(
+      currentYaml !== plan.baseline_yaml || receipt.bytes.toString('utf8') === plan.baseline_receipt,
+      'profile rebind receipt cannot precede target YAML',
+    );
   return {
     baseline: currentYaml === plan.baseline_yaml,
     oldReceipt: receipt.bytes.toString('utf8') === plan.baseline_receipt,
@@ -6088,21 +6187,86 @@ async function runProjectRuntimeConfigRebindCommand(
   }
 }
 
-/** Only the existing initialization receipt is rebound; caller-owned YAML is never written. */
+/** Public configure owns only approved profile changes on the unified configuration. */
+export async function runConfigureProfileRebind(
+  request: ConfigureProfileRebindRequest,
+  options: RebindRunOptions = {},
+) {
+  const { projectRoot, operationId, mode } = request;
+  requireRebind(
+    path.isAbsolute(projectRoot) &&
+      path.resolve(projectRoot) === projectRoot &&
+      canonicalRepositoryRoot(projectRoot) === projectRoot,
+    'profile rebind requires a canonical physical project root',
+  );
+  requireRebind(profileOperationId.test(operationId), 'profile rebind operation ID must begin with profile-config-');
+  const values: Record<string, string> = {
+    '--project-root': projectRoot,
+    '--mode': mode,
+    '--repair-id': operationId,
+  };
+  if (request.mode === 'plan') {
+    const { targetPath, baselinePath, actor, instructionRef } = request;
+    requireRebind(isCanonicalSnapshotPath(targetPath), 'profile target must be a canonical repository-relative path');
+    if (baselinePath !== undefined) {
+      requireRebind(
+        isCanonicalSnapshotPath(baselinePath) && baselinePath !== configPath && targetPath === configPath,
+        'profile baseline adoption requires a separate repository-relative baseline and the current root YAML target',
+      );
+      values['--baseline-config'] = baselinePath;
+      values['--kind'] = 'runtime-config-delivery';
+    }
+    values['--target-config'] = targetPath;
+    values['--actor'] = actor;
+    values['--instruction-ref'] = instructionRef;
+    values['--timestamp'] = new Date().toISOString();
+  } else {
+    requireRebind(/^[a-f0-9]{64}$/.test(request.approval), 'profile rebind requires the exact plan digest');
+  }
+  return executeRuntimeConfigRebind(values, options, request);
+}
 
-async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: RebindRunOptions = {}) {
-  const values = parse(args),
-    root = requireRebindPath(values['--project-root'], 'project root');
+function profileOperationIsDelivery(
+  access: RebindSafeRepositoryAccess,
+  directory: string,
+  planning: boolean,
+  adopt: boolean,
+): boolean {
+  const standard = access.fileExists(`${directory}/${operationName}`, 'profile rebind operation');
+  const delivery = access.fileExists(`${directory}/${deliveryOperationName}`, 'profile adoption operation');
+  if (planning) {
+    requireRebind(!standard && !delivery, 'profile operation already exists');
+    return adopt;
+  }
+  requireRebind(standard !== delivery, 'profile operation is missing or ambiguous');
+  return delivery;
+}
+
+async function executeRuntimeConfigRebind(
+  values: Record<string, string>,
+  { onPhase }: RebindRunOptions = {},
+  profile?: ConfigureProfileRebindRequest,
+) {
+  const root = requireRebindPath(values['--project-root'], 'project root');
   const access = requireSafeRepositoryAccess(root),
     config = loadRuntimeConfig(root);
+  if (profile) assertProfileConfigurationAvailable(access, config);
   const mode = requireRebindPath(values['--mode'], 'mode'),
     id = requireRebindPath(values['--repair-id'], 'repair id'),
-    delivery = values['--kind'] === 'runtime-config-delivery';
-  const operationPath = `${config.control.work_root}/${id}/${delivery ? deliveryOperationName : operationName}`;
+    operationDirectory = `${config.control.work_root}/${id}`,
+    delivery = profile
+      ? profileOperationIsDelivery(
+          access,
+          operationDirectory,
+          mode === 'plan',
+          values['--kind'] === 'runtime-config-delivery',
+        )
+      : values['--kind'] === 'runtime-config-delivery';
+  const operationPath = `${operationDirectory}/${delivery ? deliveryOperationName : operationName}`;
   const db = database(root, config, ['inspect', 'plan'].includes(mode));
   try {
     if (['inspect', 'plan'].includes(mode)) {
-      const operation = frozenPlan(values, root, config, access, db);
+      const operation = frozenPlan(values, root, config, access, db, profile !== undefined);
       if (mode === 'plan') {
         access.ensureDirectory(`${config.control.work_root}/${id}`, 'config rebind operation directory');
         access.writeExclusive(operationPath, json(operation), 'config rebind operation');
@@ -6113,13 +6277,27 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
         operation_path: operationPath,
         writes_yaml: false,
         writes_receipt: false,
+        ...(profile
+          ? { plan_digest: operation.plan_digest, target_config_digest: operation.plan.target_config_digest }
+          : {}),
       };
     }
     return await access.withExclusiveLockAsync(operationPath, 'config rebind operation', async () => {
       let stored = readOperation(access, operationPath, id, root, delivery),
         operation = stored.value;
+      if (profile && profile.mode !== 'plan')
+        requireRebind(
+          operation.plan_digest === profile.approval,
+          'profile operation plan digest differs from approval',
+        );
       const plan = operation.plan,
         binding = fenceBinding(plan, operation.plan_digest);
+      const profileResult = {
+        status: 'applied',
+        operation_id: id,
+        plan_digest: operation.plan_digest,
+        target_config_digest: plan.target_config_digest,
+      } as const;
 
       const receiptFor = (
         fence: import('../src/host-state.ts').MaintenanceFence | null,
@@ -6128,7 +6306,7 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
           ? { fence, token: plan.token }
           : undefined;
 
-      const context = (fence: import('../src/host-state.ts').MaintenanceFence | null) =>
+      const context = (fence: import('../src/host-state.ts').MaintenanceFence | null, releasedProfileFence = false) =>
         exactContext(
           access,
           root,
@@ -6139,6 +6317,8 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
           receiptFor(fence),
           operationPath,
           stored.bytes,
+          profile !== undefined,
+          releasedProfileFence,
         );
       const verifier: import('../src/host-state.ts').MaintenanceReleaseVerifier = {
         principal: 'vida-agent-project-config-rebind',
@@ -6179,6 +6359,8 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
       };
       const store = createCliHostStateStore(db, plan.workspace_id, undefined, undefined, undefined, verifier, root);
       const observedMaintenance = store.readMaintenanceFence();
+      const own =
+        observedMaintenance && canonicalJsonDigest(observedMaintenance.binding) === canonicalJsonDigest(binding);
 
       const save = async (phase: RebindOperationView['phase'], released: boolean = false) => {
         const next = { ...operation, revision: operation.revision + 1, phase, maintenance_released: released };
@@ -6186,6 +6368,16 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
         stored = { bytes: Buffer.from(json(next)), value: next };
         operation = next;
       };
+      if (profile && operation.phase === 'applied' && own && observedMaintenance?.status === 'released') {
+        const completed = context(observedMaintenance, true);
+        requireRebind(!completed.baseline && !completed.oldReceipt, 'released profile operation afterimages differ');
+        if (!operation.maintenance_released) await save('applied', true);
+        return profileResult;
+      }
+      if (profile) {
+        requireRebind(!operation.maintenance_released, 'exact released profile maintenance fence is unavailable');
+        requireRebind(operation.phase !== 'abandoned_no_effect', 'profile operation was abandoned');
+      }
       const current = context(observedMaintenance);
       if (mode === 'restore')
         requireRebind(
@@ -6203,7 +6395,6 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
         return { status: operation.phase, operation_id: id, rollback_performed: false };
       }
       let held = observedMaintenance;
-      const own = held && canonicalJsonDigest(held.binding) === canonicalJsonDigest(binding);
       if (mode === 'restore') {
         requireRebind(
           (delivery || current.baseline) && current.oldReceipt,
@@ -6216,28 +6407,42 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
         }
         requireRebind(own, 'foreign maintenance fence');
         await save('abandoned_no_effect');
-      } else if (operation.phase === 'planned') {
-        requireRebind(
-          (delivery || current.baseline) && current.oldReceipt,
-          'root YAML edit must wait for held maintenance fence',
-        );
-        const acquired = store.acquireMaintenanceFenceWithRecordedToken(binding, plan.token);
-        held = acquired.fence;
-        onPhase?.('fence_acquired');
-        await save('fenced');
-        onPhase?.('fenced');
-        return {
-          status: delivery ? 'receipt_rebind_ready' : 'author_config_required',
-          operation_id: id,
-          maintenance_held: true,
-          target_config_digest: plan.target_config_digest,
-          writes_yaml: false,
-          writes_receipt: false,
-        };
       } else {
-        requireRebind(own, 'foreign or absent maintenance fence');
+        if (operation.phase === 'planned') {
+          requireRebind(
+            (delivery || current.baseline) && current.oldReceipt,
+            'root YAML edit must wait for held maintenance fence',
+          );
+          const acquired = store.acquireMaintenanceFenceWithRecordedToken(binding, plan.token);
+          held = acquired.fence;
+          onPhase?.('fence_acquired');
+          await save('fenced');
+          onPhase?.('fenced');
+          if (!profile)
+            return {
+              status: delivery ? 'receipt_rebind_ready' : 'author_config_required',
+              operation_id: id,
+              maintenance_held: true,
+              target_config_digest: plan.target_config_digest,
+              writes_yaml: false,
+              writes_receipt: false,
+            };
+        } else requireRebind(own, 'foreign or absent maintenance fence');
         assertFencePresent(held);
-        if (operation.phase === 'fenced' && current.baseline)
+        if (profile && !delivery && operation.phase === 'fenced' && current.baseline) {
+          requireRebind(held.status === 'held', 'profile YAML write needs the held maintenance fence');
+          store.assertMaintenanceFence({ fence: held, token: plan.token });
+          requireRebind(context(held).baseline, 'profile baseline changed before YAML CAS');
+          await access.replaceAtomicAsync(
+            configPath,
+            sha(plan.baseline_yaml),
+            plan.target_yaml,
+            'profile configuration rebind',
+          );
+          onPhase?.('yaml_published');
+        }
+        const observed = profile ? context(held) : current;
+        if (operation.phase === 'fenced' && observed.baseline)
           return {
             status: 'author_config_required',
             operation_id: id,
@@ -6245,9 +6450,9 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
             writes_yaml: false,
             writes_receipt: false,
           };
-        requireRebind(!current.baseline, 'target authored root YAML required');
+        requireRebind(!observed.baseline, 'target authored root YAML required');
         if (held.status === 'held') store.assertMaintenanceFence({ fence: held, token: plan.token });
-        if (current.oldReceipt) {
+        if (observed.oldReceipt) {
           requireRebind(operation.phase === 'fenced' && held.status === 'held', 'receipt write needs fenced phase');
           await access.withExclusiveLockAsync(receiptPath, 'configuration receipt rebind', async () => {
             const latest = context(held);
@@ -6274,6 +6479,7 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
         );
       onPhase?.('released');
       await save(operation.phase, true);
+      if (profile) return profileResult;
       if (
         delivery &&
         access.fileExists(
@@ -6316,6 +6522,11 @@ async function runRuntimeConfigRebind(args: readonly string[], { onPhase }: Rebi
 /** Select project recovery before ordinary config loading; legacy callers keep their original path. */
 
 export async function dispatchProjectAwareRuntimeConfigRebind(args: readonly string[], options: RebindRunOptions = {}) {
+  const repairIdIndex = args.indexOf('--repair-id');
+  requireRebind(
+    repairIdIndex === -1 || !profileOperationId.test(args[repairIdIndex + 1] ?? ''),
+    'profile operations require configure',
+  );
   const modeValue = args[args.indexOf('--mode') + 1] ?? '';
   if (
     ['repair-inspect', 'repair-plan', 'repair-apply', 'repair-resume', 'repair-transition', 'repair-withdraw'].includes(
@@ -6339,7 +6550,7 @@ export async function dispatchProjectAwareRuntimeConfigRebind(args: readonly str
     options.onPhase,
   );
   if (projectResult !== undefined) return projectResult;
-  return runRuntimeConfigRebind(args, options);
+  return executeRuntimeConfigRebind(values, options);
 }
 
 export { dispatchProjectAwareRuntimeConfigRebind as runRuntimeConfigRebind };

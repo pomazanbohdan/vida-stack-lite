@@ -1,5 +1,7 @@
 import { expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { run } from '../bin/run.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { parseRuntimeConfigYaml } from '../src/config/runtime-config.ts';
@@ -13,13 +15,16 @@ import {
   historicalFixture,
   withDatabase,
   registerRuntimeConfigFixtureCleanup,
+  withRuntimeConfigFixtureCase,
+  withAgentProfileChange,
+  checkedRecord,
 } from './helpers/runtime-config-rebind-fixture.ts';
 
 registerRuntimeConfigFixtureCleanup();
 
 /** Cooperative persisted fixture; readonly role bodies are not native executions. */
-function completedFixture() {
-  const historical = historicalFixture('settled_writer_failed_validators');
+function completedFixture(includeExecutionResource = false) {
+  const historical = historicalFixture('settled_writer_failed_validators', { includeExecutionResource });
   const { f, request, state } = historical;
   f.put('agent-runtime.config.v1.yaml', f.oldYaml);
   const validators = state.items.map((item) => {
@@ -126,6 +131,132 @@ function currentInput(
     },
   };
 }
+
+function completedOwnerCliFixture(expired: boolean) {
+  const { f, identity, config } = completedFixture(true);
+  const snapshot = () =>
+    withDatabase(f, (db) => new HostStateStore(db, f.workspace).readWorkSessionSnapshot(identity, 1));
+  const { host } = snapshot();
+  const work = host.work;
+  const ticket = host.ledger?.tickets.find((entry) => entry.ticket_id === work?.lease?.ticket_id);
+  if (!work || !host.ledger || !ticket?.expires_at) throw Error('Expected the completed fixture execution lease');
+  const resources = [`execution:${identity.work_id}`];
+  const expiry = expired ? new Date(Date.now() - 60_000).toISOString() : ticket.expires_at;
+  const ledger = {
+    ...host.ledger,
+    tickets: host.ledger.tickets.map((entry) =>
+      entry === ticket
+        ? {
+            ...entry,
+            exclusive_resources: resources,
+            active_resources: resources,
+            contour_keys: resources,
+            expires_at: expiry,
+          }
+        : entry,
+    ),
+    claims: host.ledger.claims.map((entry) =>
+      entry.ticket_id === ticket.ticket_id && entry.status === 'active'
+        ? {
+            ...entry,
+            resources,
+            lease_expires_at: expiry,
+          }
+        : entry,
+    ),
+  };
+  withDatabase(f, (db) => {
+    db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'").run(
+      JSON.stringify(ledger),
+      canonicalJsonDigest(ledger),
+    );
+  });
+  const request = {
+    schema: 'TerminalOwnerReleaseRequest/v1',
+    kind: 'completed_source_workflow',
+    identity,
+    attempt: 1,
+    userRequestPointer: 'fixture:expired-completed-source-owner',
+    requestIntent: 'next_work',
+  };
+  const authored = JSON.stringify(withAgentProfileChange(config, 'executor', { model: 'gpt-6.1-terra' })) + '\n';
+  f.put('agent-runtime.config.v1.yaml', authored);
+  const writeRequest = (value: unknown) => f.put('completed-owner-release.json', JSON.stringify(value) + '\n');
+  writeRequest(request);
+  const args = (mode: 'inspect' | 'apply', owner = 'fixture-thread') => [
+    '--release-terminal-owner',
+    'true',
+    '--mode',
+    mode,
+    '--project-root',
+    f.root,
+    '--native-session-handle',
+    owner,
+    '--baseline-config',
+    'baseline.yaml',
+    '--request',
+    'completed-owner-release.json',
+  ];
+  return { f, identity, config, snapshot, args, writeRequest };
+}
+
+const completedOwnerIntegrationTimeout = 45_000;
+
+test(
+  'public completed Source owner releases an expired execution claim with its accepted baseline and exact replay',
+  async () => {
+    await withRuntimeConfigFixtureCase(async () => {
+      const fixture = completedOwnerCliFixture(true);
+      const before = fixture.snapshot();
+      const inspected = checkedRecord(await run(fixture.args('inspect')), 'completed owner inspection');
+      expect(inspected.status).toBe('terminal_owner_release_inspected');
+      expect(fixture.snapshot()).toEqual(before);
+      const request = checkedRecord(inspected.request, 'completed owner apply request');
+      const inspection = checkedRecord(request.inspection, 'completed owner exact bindings');
+      fixture.writeRequest({ ...request, inspection: { ...inspection, ownerGeneration: 999 } });
+      await assert.rejects(run(fixture.args('apply')), /fresh CAS binding changed/);
+      expect(fixture.snapshot()).toEqual(before);
+
+      fixture.writeRequest(request);
+      const applied = checkedRecord(await run(fixture.args('apply')), 'completed owner release');
+      expect(applied.status).toBe('terminal_owner_released');
+      expect(applied.native_outcome).toBe('completed_source_workflow');
+      expect(applied.rights_granted).toBe(false);
+      expect(applied.runtime_acceptance).toBe(false);
+      const after = fixture.snapshot();
+      expect(after.host.work?.lease).toBeNull();
+      expect(after.host.work?.execution.status).toBe('suspended');
+      expect(after.host.work?.execution.phase).toBe(before.host.work?.execution.phase);
+      expect(after.host.work?.lifecycle.phase).toBe(before.host.work?.lifecycle.phase);
+      expect(after.host.work?.lifecycle.assurance).toEqual(before.host.work?.lifecycle.assurance);
+      expect(after.host.work?.execution.assignment_attempts).toEqual(before.host.work?.execution.assignment_attempts);
+      expect(after.journal).toEqual(before.journal);
+      const replay = checkedRecord(await run(fixture.args('apply')), 'completed owner release replay');
+      expect(replay.status).toBe('terminal_owner_release_replayed');
+      expect(fixture.snapshot()).toEqual(after);
+    }, completedOwnerIntegrationTimeout);
+  },
+  completedOwnerIntegrationTimeout,
+);
+
+test(
+  'public completed Source owner denies a foreign session, unexpired rights and unrelated configuration drift',
+  async () => {
+    await withRuntimeConfigFixtureCase(async () => {
+      const fixture = completedOwnerCliFixture(false);
+      const before = fixture.snapshot();
+      await assert.rejects(run(fixture.args('inspect', 'foreign-thread')), /original native-session handle/);
+      await assert.rejects(run(fixture.args('inspect')), /exact expired execution ticket/);
+      fixture.f.put(
+        'agent-runtime.config.v1.yaml',
+        JSON.stringify(withAgentProfileChange(fixture.config, 'executor', { reasoning: 'medium' })),
+      );
+      await assert.rejects(run(fixture.args('inspect')), /executor-model-only configuration delta/);
+      expect(fixture.snapshot()).toEqual(before);
+    }, completedOwnerIntegrationTimeout);
+  },
+  completedOwnerIntegrationTimeout,
+);
 
 test('expired successful Source ownership releases exactly once without accepting the task', () => {
   const subject = completedFixture();

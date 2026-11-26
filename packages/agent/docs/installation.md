@@ -161,29 +161,23 @@ Apply derives the plan again before effects. Resume uses the same setup/model,
 grants/moves and `--operation OPERATION_ID`. Existing pre-Host eligibility,
 consent, receipt, journal/CAS, UNKNOWN and recovery rules below still apply.
 
-## Adopt a pending-receipt legacy Host
+## Update execution profiles on an initialized Host
 
 Check the [current delivered version](next-actions.md#current-delivery-state) and
-command help before using the Source v3 route. Source presence does not install it.
-Use `vida-agent configure plan --product-model SETUP_FILE --adopt-host-present true`
-with the complete approved model and explicit legacyProjectIdMap. Save the exact
-returned JSON plan to a regular UTF-8 file; apply uses
-`vida-agent configure apply --project-root ABS --plan PLAN_FILE`. Resume supplies
-the same model input, `--adopt-host-present true` and `--operation OPERATION_ID`.
+its `configure --help` for support. Author repository-relative target YAML with
+the desired `model` and `reasoning` of the executor, correctness reviewer and
+requirements reviewer. Resolve exact existing owner rights before planning.
 
-The generated v3 plan can exceed the 32 KiB setup-input limit: its captured
-transport is bounded by the existing 8 MiB operation envelope. Legacy v1/v2
-plans retain 32 KiB. Use the exact generated plan; a larger file does not bypass
-strict schema, currentness or consent checks.
+```text
+vida-agent configure plan --project-root ABS --profile-target TARGET_YAML --operation profile-config-ID --actor ACTOR --instruction-ref REF
+vida-agent configure apply --project-root ABS --profile-operation profile-config-ID --approve-plan PLAN_DIGEST
+```
 
-This explicit route supports a valid pending receipt with existing legacy Host
-storage. It preserves current project-owned outputs, old receipt provenance,
-provider metadata and work/history; it does not migrate DB layout or grant old-work
-rights. Native maintenance measures current quiescence before effects. Active
-ownership must be disposed through its supported owner, never by editing leases,
-work, journals or DBs. Refused/UNKNOWN effects remain fenced; no blind retry,
-manual receipt rewrite or reset is a recovery route. Qualify a fresh delivered
-Host-present consumer before real repository adoption/init.
+Use the returned `plan_digest` for apply. For an already authored allowed
+change, plan with `--profile-target agent-runtime.config.v1.yaml` and
+`--profile-baseline ACCEPTED_YAML`. Apply in that mode reconciles the receipt
+under maintenance. An interrupted operation uses `configure resume` with the
+same root, operation and approval. See the [system contract](system-specification.md#profile-changes-on-an-initialized-host).
 
 ## Dispose exact terminal ownership before adoption
 
@@ -192,11 +186,15 @@ The terminal-owner extension is delivered in 0.1.20; the [current delivery recor
 separates ownership disposal from successful work and actual Host quiescence.
 
 Prepare the strict `TerminalOwnerReleaseRequest/v1` in the evidence store. It
-contains `kind` (`corrective_source_frontier` or `observed_terminal_readonly`),
+contains `kind` (`corrective_source_frontier`, `observed_terminal_readonly` or
+`completed_source_workflow` on a build that supports it),
 exact `identity`, `attempt`, `userRequestPointer` and `requestIntent`. Readonly
 requests also contain five path/SHA256 refs: `originalIssue`, `originalDispatch`,
 `frozenBrief`, `currentTask` and `currentThread`. Use the original baseline cfg;
 corrective disposal requires that cfg to equal the current accepted cfg.
+Completed Source disposal requires a terminal successful workflow and an exact
+expired execution-only lease. Its accepted baseline may differ from the current
+unified config only in the executor model.
 
 `vida-agent run --release-terminal-owner true --mode inspect --project-root ABS_PROJECT_ROOT --native-session-handle ORIGINAL_HANDLE --baseline-config .agent/work/OWNER/baseline.yaml --request .agent/work/OWNER/request.json`
 

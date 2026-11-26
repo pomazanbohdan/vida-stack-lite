@@ -2362,7 +2362,7 @@ type TerminalOwnerReleaseEvidence = {
 };
 type TerminalOwnerReleaseRequest = {
   schema: 'TerminalOwnerReleaseRequest/v1';
-  kind: 'corrective_source_frontier' | 'observed_terminal_readonly';
+  kind: TerminalOwnerSuspension['kind'];
   identity: WorkIdentity;
   attempt: number;
   userRequestPointer: string;
@@ -3003,7 +3003,9 @@ function isTerminalOwnerReleaseRequest(
     !value.userRequestPointer.length ||
     /\p{Cc}/u.test(value.userRequestPointer) ||
     !['next_work', 'linked_correction'].includes(String(value.requestIntent)) ||
-    !['corrective_source_frontier', 'observed_terminal_readonly'].includes(String(value.kind))
+    !['corrective_source_frontier', 'observed_terminal_readonly', 'completed_source_workflow'].includes(
+      String(value.kind),
+    )
   )
     return false;
   const readonly = value.kind === 'observed_terminal_readonly',
@@ -6298,6 +6300,73 @@ async function releaseCompletedReadonly(args: string[]) {
   }
 }
 
+function completedSourceOwnerConfigMatches(
+  baseline: import('../src/config/runtime-config.ts').AgentRuntimeConfig,
+  current: import('../src/config/runtime-config.ts').AgentRuntimeConfig,
+): boolean {
+  const oldExecutor = baseline.agents.profiles.executor;
+  const executor = current.agents.profiles.executor;
+  if (
+    !oldExecutor ||
+    !executor ||
+    baseline.schema !== 'AgentRuntimeConfig/v1' ||
+    current.schema !== 'AgentRuntimeConfig/v1'
+  )
+    return false;
+  return (
+    canonicalJson(baseline) ===
+    canonicalJson({
+      ...current,
+      agents: {
+        ...current.agents,
+        profiles: { ...current.agents.profiles, executor: { ...executor, model: oldExecutor.model } },
+      },
+    })
+  );
+}
+
+async function completedSourceOwnerEvidence(
+  access: import('../src/config/safe-repository-access.ts').SafeRepositoryAccess,
+) {
+  const { currentNativeSelfAttestation } = await import('./runtime-config-rebind.ts');
+  const { LEGACY_RUNTIME_CONFIGURATION_PATH, RUNTIME_INITIALIZATION_PATH } =
+    await import('../src/config/project-paths.ts');
+  const native = currentNativeSelfAttestation();
+  let runtime: string;
+  if (native) {
+    runtime = digest(Buffer.from(canonicalJson(native)));
+  } else {
+    const { runtimePackageAccess } = await import('../src/config/runtime-config.ts');
+    const { runtimeExecutableInventory } = await import('../tooling/maintained-source-inventory.ts');
+    const { snapshotDeclaredSources } = await import('../src/orchestration/scoped-source-snapshot.ts');
+    const source = runtimePackageAccess();
+    const snapshot = snapshotDeclaredSources(
+      source,
+      runtimeExecutableInventory(source.repository_root, 'source', source),
+    );
+    if (snapshot.entries.some((entry) => !entry.exists))
+      throw Error('Terminal owner executing Source inventory changed');
+    runtime = snapshot.digest;
+  }
+  return digest(
+    Buffer.from(
+      canonicalJson({
+        runtime,
+        config: digest(
+          access.readCapturedBytes(
+            LEGACY_RUNTIME_CONFIGURATION_PATH,
+            'terminal owner current configuration',
+            1024 * 1024,
+          ),
+        ),
+        receipt: digest(
+          access.readCapturedBytes(RUNTIME_INITIALIZATION_PATH, 'terminal owner initialization receipt', 1024 * 1024),
+        ),
+      }),
+    ),
+  );
+}
+
 /** @param {string[]} args */
 async function releaseTerminalOwner(args: string[]): Promise<unknown> {
   if (args.length !== 10) throw Error('Terminal owner release requires its exact argument set');
@@ -6336,7 +6405,8 @@ async function releaseTerminalOwner(args: string[]): Promise<unknown> {
   const request = parseTerminalOwnerReleaseRequest(requestBytes, mode),
     { inspection: suppliedInspection, ...base } = request,
     identity = base.identity,
-    nativeSessionHandle = values['--native-session-handle']!;
+    nativeSessionHandle = values['--native-session-handle']!,
+    completedSource = request.kind === 'completed_source_workflow';
   if (identity.project_ids.length !== 1 || !identity.work_id || request.attempt <= 0)
     throw Error('Terminal owner work identity invalid');
   const baselineBytes = access.readCapturedBytes(
@@ -6360,9 +6430,21 @@ async function releaseTerminalOwner(args: string[]): Promise<unknown> {
   if (
     currentAuthority.binding.repository_id !== identity.repository_id ||
     !currentConfig.projects.some((project) => project.project_id === identity.project_ids[0]) ||
-    currentAuthority.binding.config_digest !== currentConfigDigest
+    currentAuthority.binding.config_digest !== (completedSource ? originalConfigDigest : currentConfigDigest)
   )
     throw Error('Terminal owner current accepted configuration differs');
+  if (
+    completedSource &&
+    (request.requestIntent !== 'next_work' ||
+      currentAuthority.format !== 'RuntimeInitialization/v1' ||
+      currentAuthority.binding.workspace_id !== workspaceId ||
+      currentAuthority.receipt.bundle !== originalConfig.runtime.bundle ||
+      digestJson(currentAuthority.binding.project_ids) !==
+        digestJson(originalConfig.projects.map((project) => project.project_id).sort()) ||
+      currentAuthority.binding.integrations_digest !== digestJson(originalConfig.integrations) ||
+      !completedSourceOwnerConfigMatches(originalConfig, currentConfig))
+  )
+    throw Error('Completed Source owner requires the accepted baseline and an executor-model-only configuration delta');
   if (
     originalConfig.repository.repository_id !== identity.repository_id ||
     !originalConfig.projects.some((project) => project.project_id === identity.project_ids[0])
@@ -6370,6 +6452,7 @@ async function releaseTerminalOwner(args: string[]): Promise<unknown> {
     throw Error('Terminal owner original configuration identity differs');
   if (request.kind === 'corrective_source_frontier' && originalConfigDigest !== currentConfigDigest)
     throw Error('Corrective terminal owner requires the current accepted configuration');
+  const completedSourceBinding = completedSource ? await completedSourceOwnerEvidence(access) : null;
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts'),
     { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts'),
     { configuredReadonlyAssignment, validateWorkSessionBindingAndReturnCorrectiveAuthority } =
@@ -6399,7 +6482,9 @@ async function releaseTerminalOwner(args: string[]): Promise<unknown> {
     if (!scopes.length || scopes.length !== 1) throw Error('Terminal owner journal scope is missing or mixed');
     const resumeStatus = allItems.some((item) => item.issue_id !== null && item.observation === null)
       ? 'issued_outcome_uncertain'
-      : 'ready_to_resume';
+      : completedSource && journal.state.step_id === null && journal.state.items.length === 0
+        ? 'complete'
+        : 'ready_to_resume';
     const journalSnapshot: import('../src/orchestration/persistent-session-handoff.ts').MastraSessionLedgerSnapshot = {
       state: journal.state,
       version: journal.version,
@@ -6451,6 +6536,10 @@ async function releaseTerminalOwner(args: string[]): Promise<unknown> {
       engineSnapshot = reader.readSessionEngineSnapshot(readerBinding) ?? undefined;
       if (!engineSnapshot) throw Error('Corrective terminal persisted engine snapshot is missing');
       engineBinding = digestJson(engineSnapshot);
+    } else if (completedSource) {
+      if (work.binding.config_digest !== originalConfigDigest)
+        throw Error('Completed Source owner Work does not match its accepted baseline');
+      authorityBinding = digestJson({ intake, originalConfigDigest, completedSourceBinding });
     } else {
       if (work.binding.config_digest !== originalConfigDigest)
         throw Error('Readonly terminal owner original configuration binding differs');
@@ -6615,7 +6704,8 @@ async function releaseTerminalOwner(args: string[]): Promise<unknown> {
       freshAuthority = readRuntimeInitializationAuthority(root, freshConfig);
     if (
       runtimeConfigDigest(freshConfig) !== currentConfigDigest ||
-      digestJson(freshAuthority) !== digestJson(currentAuthority)
+      digestJson(freshAuthority) !== digestJson(currentAuthority) ||
+      (completedSource && (await completedSourceOwnerEvidence(access)) !== completedSourceBinding)
     )
       throw Error('Terminal owner current configuration or accepted authority changed before CAS');
     if (request.kind === 'corrective_source_frontier') {
@@ -6662,7 +6752,11 @@ async function releaseTerminalOwner(args: string[]): Promise<unknown> {
       rights_granted: false,
       caller_identity_authenticated: false,
       runtime_acceptance: false,
-      native_outcome: request.kind === 'observed_terminal_readonly' ? 'preserved_unknown' : 'terminal_source_frontier',
+      native_outcome: {
+        corrective_source_frontier: 'terminal_source_frontier',
+        observed_terminal_readonly: 'preserved_unknown',
+        completed_source_workflow: 'completed_source_workflow',
+      }[request.kind],
     };
   } finally {
     closeWorkspaceDatabaseWithAdmission(db);

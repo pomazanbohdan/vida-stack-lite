@@ -23,11 +23,13 @@ import {
   openExistingWorkspaceDatabaseWithCleanInitializationIntent,
   withCleanInitializationPublicationLocks,
   withExclusiveInitConfigAdmission,
+  type ExclusiveStorageSourceOwner,
   type JoinedInitConfigAdmissionProof,
 } from '../src/config/storage-read-admission.js';
 import {
   assertWorkspaceDatabaseRelativePath,
   openUnadmittedWorkspaceDatabase,
+  withWorkspaceDatabaseClose,
   withWorkspaceDatabaseCloseAsync,
 } from '../src/config/workspace-database-raw.js';
 import { requireSafeRepositoryAccess, repositoryReadOnlyObservation } from '../src/config/safe-repository-access.js';
@@ -214,7 +216,11 @@ function assertFileObservationAt(
   return bytes;
 }
 
-function assertPublishableHostDatabase(root: string, operation: ConsumerCleanInitializationOperationV2): void {
+function assertPublishableHostDatabase(
+  root: string,
+  operation: ConsumerCleanInitializationOperationV2,
+  sourceOwner: ExclusiveStorageSourceOwner,
+): void {
   const legacy = operation.inventory.find((entry) => entry.path === 'agent-runtime.config.v1.yaml');
   requireOperation(legacy !== undefined, 'captured legacy runtime configuration is absent');
   const snapshot = readRuntimeConfigurationForObservation(root);
@@ -237,6 +243,28 @@ function assertPublishableHostDatabase(root: string, operation: ConsumerCleanIni
   requireOperation(
     before.isFile() && !before.isSymbolicLink() && before.nlink === 1n,
     'Host database is not a private regular file',
+  );
+  const host = openUnadmittedWorkspaceDatabase(root, relative, true, false, sourceOwner.captureSource);
+  withWorkspaceDatabaseClose(
+    host,
+    () => {
+      const store = new HostStateStore(
+        host,
+        operation.workspace_id,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        root,
+        undefined,
+        undefined,
+        undefined,
+        true,
+      );
+      requireOperation(store.readMaintenanceFence()?.status !== 'held', 'Host maintenance fence is held');
+    },
+    sourceOwner.closeSource,
+    'clean initialization Host observation and close failed',
   );
   requireOperation(
     identify(relative, subject) === identity &&
@@ -520,7 +548,7 @@ export async function publishConsumerCleanInitializationIntent(input: CleanIniti
   requireOperation(root === request.projectRoot, 'project root must be canonical and physical');
   const workspaceId = deriveWorkspaceId(request.repository, root);
   const operationId = randomUUID();
-  await withExclusiveInitConfigAdmission(root, workspaceId, async (proof) => {
+  await withExclusiveInitConfigAdmission(root, workspaceId, async (proof, sourceOwner) => {
     await withCleanInitializationPublicationLocks(proof, root, workspaceId, async () => {
       const captured = captureConsumerCleanInitializationV2(request, operationId);
       requireOperation(
@@ -528,7 +556,7 @@ export async function publishConsumerCleanInitializationIntent(input: CleanIniti
         'captured root or workspace identity differs',
       );
       const expectedBytes = canonicalBytes(captured);
-      assertPublishableHostDatabase(root, captured);
+      assertPublishableHostDatabase(root, captured, sourceOwner);
       const access = requireSafeRepositoryAccess(root);
       await access.writeExclusiveAsync(
         CONSUMER_CLEAN_INITIALIZATION_PENDING_PATH,
@@ -657,7 +685,7 @@ export async function publishReviewedConsumerCleanInitialization(input: {
     'reviewed plan is not a pristine initial v2 operation',
   );
   const root = operation.root;
-  await withExclusiveInitConfigAdmission(root, operation.workspace_id, async (proof) => {
+  await withExclusiveInitConfigAdmission(root, operation.workspace_id, async (proof, sourceOwner) => {
     await withCleanInitializationPublicationLocks(proof, root, operation.workspace_id, async () => {
       requireOperation(readPending(root) === null, 'pending initialization state is not absent');
       const current = captureConsumerCleanInitializationV2(
@@ -668,7 +696,7 @@ export async function publishReviewedConsumerCleanInitialization(input: {
         canonicalBytes(current).equals(canonicalBytes(operation)),
         'reviewed plan no longer matches current inputs',
       );
-      assertPublishableHostDatabase(root, current);
+      assertPublishableHostDatabase(root, current, sourceOwner);
       const next = canonicalBytes(operation);
       const access = requireSafeRepositoryAccess(root);
       await access.writeExclusiveAsync(
